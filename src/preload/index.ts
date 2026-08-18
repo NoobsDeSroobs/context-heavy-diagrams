@@ -4,9 +4,10 @@ import type { DiagramFile } from '@shared/diagram'
 
 // Custom APIs for renderer. See docs/decisions/0003-diagram-persistence-v1.md
 // for why saveDiagramAs orchestrates two IPC round trips here rather than
-// exposing the lower-level main-process handlers directly — window.prompt()
-// doesn't exist in Electron, so naming happens via the OS folder picker's
-// own "New folder" control instead of an in-app text prompt.
+// exposing the lower-level main-process handlers directly — a native
+// showSaveDialog lets the user type the diagram's name, which becomes its
+// folder name; saveNew then creates that folder and writes diagram.json
+// inside it.
 const api = {
   openDiagram(): Promise<{ path: string; diagram: DiagramFile } | null> {
     return ipcRenderer.invoke('diagram:open')
@@ -17,7 +18,7 @@ const api = {
   },
 
   async saveDiagramAs(diagram: DiagramFile): Promise<string | null> {
-    const dir: string | null = await ipcRenderer.invoke('diagram:pickDirectory')
+    const dir: string | null = await ipcRenderer.invoke('diagram:pickSaveFolder')
     if (!dir) return null
     return ipcRenderer.invoke('diagram:saveNew', dir, diagram)
   }

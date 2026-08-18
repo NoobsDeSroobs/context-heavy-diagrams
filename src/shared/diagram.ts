@@ -17,10 +17,13 @@ export interface DiagramNode {
 
 export interface DiagramEdge {
   id: string
+  // 'labeled' — see epic 0012. Plain string, same reasoning as DiagramNode.type.
+  type?: string
   source: string
   target: string
   sourceHandle?: string
   targetHandle?: string
+  label?: string
 }
 
 export interface DiagramFile {
@@ -52,10 +55,12 @@ export function serializeDiagram(diagram: DiagramFile): string {
     })),
     edges: diagram.edges.map((e) => ({
       id: e.id,
+      type: e.type,
       source: e.source,
       target: e.target,
       sourceHandle: e.sourceHandle,
-      targetHandle: e.targetHandle
+      targetHandle: e.targetHandle,
+      label: e.label
     }))
   }
   return JSON.stringify(ordered, null, 2) + '\n'

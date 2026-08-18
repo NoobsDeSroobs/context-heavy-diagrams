@@ -99,3 +99,46 @@ body {
   background: var(--color-background-soft);
   cursor: grab;
 }
+
+.editable-label-input {
+  font: inherit;
+  color: inherit;
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--ev-c-gray-1);
+  outline: none;
+  padding: 0;
+}
+
+.edge-label-text {
+  font-size: 12px;
+  color: var(--color-text);
+  text-align: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 1px 6px;
+  cursor: text;
+  min-width: 8px;
+  min-height: 1em;
+}
+
+/* Only look like a chip once there's actually a label — an empty one would
+   otherwise clutter every unlabeled edge with a visible box. */
+.edge-label-text:not(:empty) {
+  background: var(--color-background-soft);
+  border-color: var(--ev-c-gray-2);
+}
+
+.edge-label-input {
+  min-width: 40px;
+  background: var(--color-background-soft);
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 12px;
+  text-align: center;
+}

@@ -1,5 +1,6 @@
 import { memo, useCallback, useRef, useState } from 'react'
 import { NodeResizer, useReactFlow, type NodeProps } from '@xyflow/react'
+import EditableLabel from '../components/EditableLabel'
 
 export const TEXT_MIN_WIDTH = 40
 export const TEXT_MIN_HEIGHT = 24
@@ -58,7 +59,12 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
           title="Drag to rotate"
         />
       )}
-      <div className="text-node-label">{String(data?.label ?? '')}</div>
+      <EditableLabel
+        className="text-node-label"
+        inputClassName="text-node-label-input"
+        value={String(data?.label ?? '')}
+        onCommit={(label) => updateNodeData(id, { label })}
+      />
     </div>
   )
 }

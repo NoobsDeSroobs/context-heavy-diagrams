@@ -20,10 +20,12 @@ import '@xyflow/react/dist/style.css'
 import type { DiagramFile } from '@shared/diagram'
 import ShapeNode, { SHAPE_MIN_WIDTH, SHAPE_MIN_HEIGHT } from './nodes/ShapeNode'
 import TextNode, { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from './nodes/TextNode'
+import LabeledEdge from './edges/LabeledEdge'
 
 // Defined at module scope so React Flow gets a stable reference — recreating
-// this object every render triggers a React Flow warning and remounts.
+// these objects every render triggers a React Flow warning and remounts.
 const nodeTypes = { shape: ShapeNode, text: TextNode }
+const edgeTypes = { labeled: LabeledEdge }
 
 let nextId = 1
 function newNodeId(prefix: string): string {
@@ -44,10 +46,12 @@ function toDiagramFile(nodes: Node[], edges: Edge[], viewport: Viewport): Diagra
     })),
     edges: edges.map((e) => ({
       id: e.id,
+      type: e.type,
       source: e.source,
       target: e.target,
       sourceHandle: e.sourceHandle ?? undefined,
-      targetHandle: e.targetHandle ?? undefined
+      targetHandle: e.targetHandle ?? undefined,
+      label: typeof e.data?.label === 'string' && e.data.label ? e.data.label : undefined
     }))
   }
 }
@@ -64,10 +68,12 @@ function fromDiagramFile(diagram: DiagramFile): { nodes: Node[]; edges: Edge[] }
     })),
     edges: diagram.edges.map((e) => ({
       id: e.id,
+      type: e.type,
       source: e.source,
       target: e.target,
       sourceHandle: e.sourceHandle,
-      targetHandle: e.targetHandle
+      targetHandle: e.targetHandle,
+      data: { label: e.label ?? '' }
     }))
   }
 }
@@ -79,7 +85,8 @@ function CanvasInner(): React.JSX.Element {
   const rfInstance = useReactFlow()
 
   const onConnect = useCallback(
-    (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
+    (connection: Connection) =>
+      setEdges((eds) => addEdge({ ...connection, type: 'labeled' }, eds)),
     [setEdges]
   )
 
@@ -115,22 +122,36 @@ function CanvasInner(): React.JSX.Element {
 
   const handleSave = useCallback(async () => {
     const diagram = toDiagramFile(nodes, edges, rfInstance.getViewport())
-    if (currentPath) {
-      await window.api.saveDiagram(currentPath, diagram)
-      return
+    try {
+      if (currentPath) {
+        await window.api.saveDiagram(currentPath, diagram)
+        return
+      }
+      const path = await window.api.saveDiagramAs(diagram)
+      if (path) setCurrentPath(path)
+    } catch (error) {
+      alert(`Save failed: ${error instanceof Error ? error.message : String(error)}`)
     }
-    const path = await window.api.saveDiagramAs(diagram)
-    if (path) setCurrentPath(path)
   }, [nodes, edges, currentPath, rfInstance])
 
   const handleSaveAs = useCallback(async () => {
     const diagram = toDiagramFile(nodes, edges, rfInstance.getViewport())
-    const path = await window.api.saveDiagramAs(diagram)
-    if (path) setCurrentPath(path)
+    try {
+      const path = await window.api.saveDiagramAs(diagram)
+      if (path) setCurrentPath(path)
+    } catch (error) {
+      alert(`Save failed: ${error instanceof Error ? error.message : String(error)}`)
+    }
   }, [nodes, edges, rfInstance])
 
   const handleOpen = useCallback(async () => {
-    const result = await window.api.openDiagram()
+    let result: Awaited<ReturnType<typeof window.api.openDiagram>>
+    try {
+      result = await window.api.openDiagram()
+    } catch (error) {
+      alert(`Open failed: ${error instanceof Error ? error.message : String(error)}`)
+      return
+    }
     if (!result) return
     const { nodes: openedNodes, edges: openedEdges } = fromDiagramFile(result.diagram)
     setNodes(openedNodes)
@@ -153,11 +174,12 @@ function CanvasInner(): React.JSX.Element {
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         connectionMode={ConnectionMode.Loose}
-        defaultEdgeOptions={{ markerEnd: { type: MarkerType.ArrowClosed } }}
+        defaultEdgeOptions={{ type: 'labeled', markerEnd: { type: MarkerType.ArrowClosed } }}
         colorMode="dark" // hardcoded until epic 0005 adds a real light/dark toggle
         fitView
       >

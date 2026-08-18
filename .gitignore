@@ -4,3 +4,8 @@ out
 .DS_Store
 .eslintcache
 *.log*
+
+# Personal scratch notes — kept on disk locally, deliberately not pushed to
+# the remote (avoids ever needing a git-history scrub for content that's
+# already captured properly elsewhere, e.g. in an ADR).
+notes_and_supporting_assets/

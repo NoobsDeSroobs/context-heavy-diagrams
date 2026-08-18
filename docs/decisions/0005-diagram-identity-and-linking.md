@@ -1,0 +1,32 @@
+# 0005: Diagram identity and linking — content over filename/folder convention
+
+## Status
+Accepted
+
+## Context
+The project brief's original file-format section mandates every diagram be a folder (`diagram.json` + `assets/` + `details/`), specifically rejecting a bare single-file format to keep binary assets out of JSON and diffs clean. In practice, discussed at length after epic 0012, this always-a-folder rule has a real cost: a diagram with no attachments at all still can't be shared as one artifact (dragged into a chat, pasted into an email) without zipping first — draw.io manages this fine with a single file.
+
+Attempts to fix this by finding a *different* filename/folder convention (a sidecar `name.json` next to a matching `name/` folder; an app-managed promotion from bare file to folder on first attachment) kept running into the same underlying issue from different angles: any convention that infers meaning from a name or a name-match is vulnerable to the user renaming the wrong piece on disk, since no filesystem enforces these implicit relationships. This includes the *current*, already-shipped model — renaming the inner `diagram.json` while leaving its folder alone breaks it exactly as badly as renaming a sidecar folder out of sync with its file.
+
+## Decision
+Diagram identity and linking rely on the file's own content, never on what it's named or where it sits:
+
+- A diagram is a single file (extension TBD, leaning `.chd` — see Consequences — still plain JSON underneath). Nothing about opening or navigating it depends on its filename; it can be freely renamed without breaking anything about itself.
+- Colocating a diagram's own `assets/`/`details/` in a same-named sibling folder remains the *recommended convention* — our own app follows it when creating those files — but the app never detects or enforces it by scanning for name-matching folders. It's a tidiness convention, not a structural requirement.
+- Linked diagrams stay exactly the brief's original mechanism: an explicit relative path stored on the linking node. What's new is recognizing *why* this already works: **links only ever point downward** (parent → child), never back up. Because of that, any diagram file is independently, symmetrically openable as its own root — opening a diagram partway down a link tree is no different from opening the true top-level one. This downward-only property is what actually makes the model rename-safe, not any filename convention: a link either resolves (the file exists at that path right now) or it doesn't, and that's a normal, expected, recoverable condition to design for — not something to structurally prevent, which isn't achievable with plain files anyway.
+- Missing/broken links are first-class and graceful: a diagram opens fine standalone even without its linked children present (e.g. shared without them). Only *following* a specific broken link surfaces a clear "linked diagram not found at `<path>`" error — never a silent failure, never a crash, never blocking the rest of the diagram from working.
+- Creating a *new* linked diagram from a node: default its filename to a sanitized version of that node's current label text. Linking to an *existing* diagram instead: the user browses to or types a path directly — no new file gets created.
+
+## Alternatives considered
+- **Always-a-folder, fixed `diagram.json` name** (the brief's original mechanism; what epics 0001–0012 actually built): free folder-identification (check one fixed filename), but forces even an attachment-free diagram to be a folder — exactly what blocks single-file sharing. Not actually rename-proof either, as above.
+- **Sidecar file-plus-matching-folder** (`name.json` next to `name/`): an implicit same-name convention that drifts apart the moment either half is renamed independently, with nothing on disk enforcing the link. Rejected.
+- **App-managed atomic promotion** (bare file until first attachment, then transparently become a folder): resolved the original rename objection, but superseded by content-based identity, which resolves the same objection without needing a shape-changing promotion step at all — a diagram never has to change structure depending on whether it happens to have attachments yet.
+
+## Consequences
+- The common, attachment-free case becomes a single shareable file — solves the concrete "drag into a Slack chat" problem that reopened this decision.
+- A custom extension (leaning `.chd`) is worth adopting regardless, for OS-level file association/icon/branding — plain `.json` won't default-open in our app or get a distinct icon. Costs free JSON syntax highlighting in generic text editors unless the user adds a one-time file association — acceptable given the likely audience (this project's own author, and eventually an open-source audience comfortable with that kind of editor config).
+- Emergent, not specifically designed for but now available for free: a diagram can link to something entirely outside its own folder, repo, or ownership — e.g. a rough diagram of an externally-maintained integrated service — since a link is just a path with nothing forcing it to stay "inside" anything.
+- Logged as a distant future idea, not now (epic 0017): URL-based linking, letting different teams maintain diagrams in separate repos and still link them together. Real appeal, but a much bigger undertaking (fetching, caching, trust/security) and in tension with the brief's "local, offline, no server" framing — worth revisiting only if the tool gets far enough for that tension to be worth resolving.
+- `topLevelDiagram: true`-style metadata was discussed but isn't structurally necessary — the downward-only-links property already makes every diagram symmetrically self-sufficient as an open target. Deferred; might resurface purely as a UI nicety later (e.g. a "known top-level diagrams" quick-access list), not a functional requirement.
+- This changes the brief's original "reject a single JSON file" file-format section. The brief itself stays frozen as the historical record of original requirements (per [CLAUDE.md](../../CLAUDE.md)'s persistence rule) — this ADR and [docs/architecture/overview.md](../architecture/overview.md) are where the current, living design actually lives.
+- Already-shipped epic 0001/0002/0012 persistence code (the folder-based save/open flow, iterated on twice already) needs real rework, not just a new epic building on top — see epic 0015.

@@ -18,7 +18,7 @@
         "height": 80
       },
       "data": {
-        "label": "shape-1"
+        "label": "Web App"
       }
     },
     {
@@ -33,17 +33,19 @@
         "height": 80
       },
       "data": {
-        "label": "shape-2"
+        "label": "Database"
       }
     }
   ],
   "edges": [
     {
       "id": "xy-edge__shape-2right-shape-1left",
+      "type": "labeled",
       "source": "shape-2",
       "target": "shape-1",
       "sourceHandle": "right",
-      "targetHandle": "left"
+      "targetHandle": "left",
+      "label": "reads from"
     }
   ]
 }
