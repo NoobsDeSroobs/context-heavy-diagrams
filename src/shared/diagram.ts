@@ -1,7 +1,11 @@
 // v1 diagram file schema. See docs/decisions/0003-diagram-persistence-v1.md —
-// later epics add fields here (style, icons, details, linkedDiagram)
-// additively, not as a rewrite. `size`/`rotation` added in epic 0002, see
-// docs/decisions/0004-shape-text-node-split.md.
+// later epics add fields here (style, details, linkedDiagram) additively,
+// not as a rewrite. `size`/`rotation` added in epic 0002 (see ADR 0004),
+// `icons` added in epic 0007 (see ADR 0006).
+
+export type IconRef = { source: 'builtin'; id: string } | { source: 'custom'; path: string }
+
+export type IconSlot = 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight'
 
 export interface DiagramNode {
   id: string
@@ -12,7 +16,7 @@ export interface DiagramNode {
   position: { x: number; y: number }
   size?: { width: number; height: number }
   rotation?: number
-  data: { label: string }
+  data: { label: string; icons?: Partial<Record<IconSlot, IconRef>> }
 }
 
 export interface DiagramEdge {
@@ -40,7 +44,7 @@ export function createEmptyDiagram(): DiagramFile {
 // Fixed key order on every object built here is what makes JSON.stringify's
 // output deterministic — see the ADR for why this matters for git diffs.
 // Optional fields left `undefined` are dropped by JSON.stringify, so nodes
-// without a size/rotation set don't grow noisy keys in the saved file.
+// without a size/rotation/icons set don't grow noisy keys in the saved file.
 export function serializeDiagram(diagram: DiagramFile): string {
   const ordered: DiagramFile = {
     version: diagram.version,
@@ -51,7 +55,10 @@ export function serializeDiagram(diagram: DiagramFile): string {
       position: { x: n.position.x, y: n.position.y },
       size: n.size ? { width: n.size.width, height: n.size.height } : undefined,
       rotation: n.rotation,
-      data: { label: n.data.label }
+      data: {
+        label: n.data.label,
+        icons: n.data.icons && Object.keys(n.data.icons).length > 0 ? n.data.icons : undefined
+      }
     })),
     edges: diagram.edges.map((e) => ({
       id: e.id,

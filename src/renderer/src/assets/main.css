@@ -47,6 +47,7 @@ body {
 }
 
 .shape-node {
+  position: relative;
   width: 100%;
   height: 100%;
   box-sizing: border-box;
@@ -57,6 +58,36 @@ body {
   align-items: center;
   justify-content: center;
   padding: 4px 8px;
+}
+
+.shape-node-icon {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+}
+
+.shape-node-icon svg {
+  width: 100%;
+  height: 100%;
+  color: var(--color-text);
+}
+
+.shape-node-icon-top-left {
+  top: 2px;
+  left: 2px;
+}
+.shape-node-icon-top-right {
+  top: 2px;
+  right: 2px;
+}
+.shape-node-icon-bottom-left {
+  bottom: 2px;
+  left: 2px;
+}
+.shape-node-icon-bottom-right {
+  bottom: 2px;
+  right: 2px;
 }
 
 .shape-node-label {
@@ -141,4 +172,174 @@ body {
   padding: 1px 6px;
   font-size: 12px;
   text-align: center;
+}
+
+.context-menu {
+  position: fixed;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-background-soft);
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 6px;
+  padding: 4px;
+  min-width: 140px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.context-menu-item {
+  cursor: pointer;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+.context-menu-item:hover {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.icon-picker {
+  position: fixed;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--color-background-soft);
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 6px;
+  padding: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  cursor: default;
+}
+
+/* Only this part scrolls — corner picker, search, and actions always stay
+   visible. Capped to roughly 3 rows of icons. */
+.icon-picker-scroll {
+  max-height: 112px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.corner-picker {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto;
+}
+
+.corner-picker-box {
+  position: absolute;
+  inset: 10px;
+  border: 1.5px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+}
+
+.corner-picker-dot {
+  cursor: pointer;
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 1.5px solid var(--ev-c-gray-2);
+  border-radius: 50%;
+  background: var(--ev-button-alt-bg);
+}
+
+.corner-picker-dot.active {
+  background: var(--ev-c-text-1);
+  border-color: var(--ev-c-text-1);
+}
+
+/* Occupied (has an icon already) is a distinct signal from active (the one
+   currently being edited) — a ring rather than a fill, so both can show at
+   once without being confused for each other. */
+.corner-picker-dot.occupied {
+  border-width: 2.5px;
+  border-color: var(--ev-c-text-2);
+}
+
+.corner-picker-dot-topLeft {
+  top: 0;
+  left: 0;
+}
+.corner-picker-dot-topRight {
+  top: 0;
+  right: 0;
+}
+.corner-picker-dot-bottomLeft {
+  bottom: 0;
+  left: 0;
+}
+.corner-picker-dot-bottomRight {
+  bottom: 0;
+  right: 0;
+}
+
+.icon-picker-search {
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 12px;
+}
+
+.icon-picker-label {
+  font-size: 11px;
+  color: var(--ev-c-text-3);
+}
+
+.icon-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+}
+
+.icon-picker-grid button {
+  cursor: pointer;
+  aspect-ratio: 1;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  border-radius: 4px;
+  padding: 3px;
+  color: var(--color-text);
+}
+
+.icon-picker-grid button:hover {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.icon-picker-grid button svg,
+.icon-picker-grid button img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.icon-picker-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.icon-picker-actions button {
+  cursor: pointer;
+  flex: 1;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 12px;
+}
+
+.icon-picker-actions button:hover {
+  background: var(--ev-button-alt-hover-bg);
 }

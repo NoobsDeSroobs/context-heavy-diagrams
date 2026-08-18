@@ -17,10 +17,13 @@ import {
   type Viewport
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import type { DiagramFile } from '@shared/diagram'
+import type { DiagramFile, IconRef, IconSlot } from '@shared/diagram'
 import ShapeNode, { SHAPE_MIN_WIDTH, SHAPE_MIN_HEIGHT } from './nodes/ShapeNode'
 import TextNode, { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from './nodes/TextNode'
 import LabeledEdge from './edges/LabeledEdge'
+import DiagramContext from './DiagramContext'
+import ContextMenu, { type ContextMenuItem } from './components/ContextMenu'
+import IconPicker from './components/IconPicker'
 
 // Defined at module scope so React Flow gets a stable reference — recreating
 // these objects every render triggers a React Flow warning and remounts.
@@ -42,7 +45,10 @@ function toDiagramFile(nodes: Node[], edges: Edge[], viewport: Viewport): Diagra
       position: { x: n.position.x, y: n.position.y },
       size: n.width != null && n.height != null ? { width: n.width, height: n.height } : undefined,
       rotation: typeof n.data?.rotation === 'number' ? (n.data.rotation as number) : undefined,
-      data: { label: String(n.data?.label ?? '') }
+      data: {
+        label: String(n.data?.label ?? ''),
+        icons: n.data?.icons as Partial<Record<IconSlot, IconRef>> | undefined
+      }
     })),
     edges: edges.map((e) => ({
       id: e.id,
@@ -64,7 +70,11 @@ function fromDiagramFile(diagram: DiagramFile): { nodes: Node[]; edges: Edge[] }
       position: n.position,
       width: n.size?.width,
       height: n.size?.height,
-      data: { label: n.data.label, ...(n.rotation != null ? { rotation: n.rotation } : {}) }
+      data: {
+        label: n.data.label,
+        ...(n.rotation != null ? { rotation: n.rotation } : {}),
+        ...(n.data.icons ? { icons: n.data.icons } : {})
+      }
     })),
     edges: diagram.edges.map((e) => ({
       id: e.id,
@@ -82,7 +92,28 @@ function CanvasInner(): React.JSX.Element {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
   const [currentPath, setCurrentPath] = useState<string | null>(null)
+  const [contextMenu, setContextMenu] = useState<{
+    x: number
+    y: number
+    items: ContextMenuItem[]
+  } | null>(null)
+  const [iconPicker, setIconPicker] = useState<{ nodeId: string; anchorRect: DOMRect } | null>(
+    null
+  )
   const rfInstance = useReactFlow()
+
+  const openContextMenu = useCallback((x: number, y: number, items: ContextMenuItem[]) => {
+    setContextMenu({ x, y, items })
+  }, [])
+
+  const openIconPicker = useCallback((nodeId: string, anchorRect: DOMRect) => {
+    setIconPicker({ nodeId, anchorRect })
+  }, [])
+
+  const iconPickerNode = iconPicker ? nodes.find((n) => n.id === iconPicker.nodeId) : undefined
+  const iconPickerIcons = (iconPickerNode?.data?.icons ?? {}) as Partial<
+    Record<IconSlot, IconRef>
+  >
 
   const onConnect = useCallback(
     (connection: Connection) =>
@@ -161,33 +192,64 @@ function CanvasInner(): React.JSX.Element {
   }, [rfInstance, setNodes, setEdges])
 
   return (
-    <div style={{ width: '100vw', height: '100vh' }}>
-      <div className="toolbar">
-        <button onClick={addShapeNode}>Add shape</button>
-        <button onClick={addTextNode}>Add text</button>
-        <button onClick={handleOpen}>Open…</button>
-        <button onClick={handleSave}>Save</button>
-        <button onClick={handleSaveAs}>Save As…</button>
-        {currentPath && <span className="toolbar-path">{currentPath}</span>}
+    <DiagramContext.Provider value={{ diagramPath: currentPath, openContextMenu, openIconPicker }}>
+      <div style={{ width: '100vw', height: '100vh' }}>
+        <div className="toolbar">
+          <button onClick={addShapeNode}>Add shape</button>
+          <button onClick={addTextNode}>Add text</button>
+          <button onClick={handleOpen}>Open…</button>
+          <button onClick={handleSave}>Save</button>
+          <button onClick={handleSaveAs}>Save As…</button>
+          {currentPath && <span className="toolbar-path">{currentPath}</span>}
+        </div>
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          connectionMode={ConnectionMode.Loose}
+          defaultEdgeOptions={{ type: 'labeled', markerEnd: { type: MarkerType.ArrowClosed } }}
+          colorMode="dark" // hardcoded until epic 0005 adds a real light/dark toggle
+          fitView
+        >
+          <Background />
+          <Controls />
+          <MiniMap />
+        </ReactFlow>
+        {contextMenu && (
+          <ContextMenu
+            x={contextMenu.x}
+            y={contextMenu.y}
+            items={contextMenu.items}
+            onClose={() => setContextMenu(null)}
+          />
+        )}
+        {iconPicker && iconPickerNode && (
+          <IconPicker
+            diagramPath={currentPath}
+            icons={iconPickerIcons}
+            initialSlot="topRight"
+            anchorRect={iconPicker.anchorRect}
+            onPick={(slot, icon) => {
+              rfInstance.updateNodeData(iconPicker.nodeId, {
+                icons: { ...iconPickerIcons, [slot]: icon }
+              })
+              setIconPicker(null)
+            }}
+            onRemove={(slot) => {
+              const next = { ...iconPickerIcons }
+              delete next[slot]
+              rfInstance.updateNodeData(iconPicker.nodeId, { icons: next })
+              setIconPicker(null)
+            }}
+            onClose={() => setIconPicker(null)}
+          />
+        )}
       </div>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        connectionMode={ConnectionMode.Loose}
-        defaultEdgeOptions={{ type: 'labeled', markerEnd: { type: MarkerType.ArrowClosed } }}
-        colorMode="dark" // hardcoded until epic 0005 adds a real light/dark toggle
-        fitView
-      >
-        <Background />
-        <Controls />
-        <MiniMap />
-      </ReactFlow>
-    </div>
+    </DiagramContext.Provider>
   )
 }
 

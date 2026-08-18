@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "viewport": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  },
+  "nodes": [
+    {
+      "id": "shape-1",
+      "type": "shape",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 140,
+        "height": 90
+      },
+      "data": {
+        "label": "Web App",
+        "icons": {
+          "topRight": {
+            "source": "builtin",
+            "id": "browser"
+          }
+        }
+      }
+    },
+    {
+      "id": "shape-2",
+      "type": "shape",
+      "position": {
+        "x": 220,
+        "y": 0
+      },
+      "size": {
+        "width": 140,
+        "height": 90
+      },
+      "data": {
+        "label": "Database",
+        "icons": {
+          "topRight": {
+            "source": "builtin",
+            "id": "database"
+          }
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "xy-edge__shape-1right-shape-2left",
+      "type": "labeled",
+      "source": "shape-1",
+      "target": "shape-2",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "reads from"
+    }
+  ]
+}

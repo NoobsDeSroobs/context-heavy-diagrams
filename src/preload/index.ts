@@ -19,6 +19,20 @@ const api = {
     if (!path) return null
     await ipcRenderer.invoke('diagram:save', path, diagram)
     return path
+  },
+
+  // Custom icons — see docs/decisions/0006-icon-storage-model.md. All three
+  // need the diagram's own path to resolve its sibling assets/ folder.
+  pickAndCopyCustomIcon(diagramPath: string): Promise<string | null> {
+    return ipcRenderer.invoke('icons:pickAndCopyCustom', diagramPath)
+  },
+
+  listCustomIcons(diagramPath: string): Promise<string[]> {
+    return ipcRenderer.invoke('icons:listCustom', diagramPath)
+  },
+
+  readIconAsDataUrl(diagramPath: string, relativePath: string): Promise<string> {
+    return ipcRenderer.invoke('icons:readAsDataUrl', diagramPath, relativePath)
   }
 }
 
