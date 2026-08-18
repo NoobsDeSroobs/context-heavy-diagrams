@@ -1,0 +1,47 @@
+@import './base.css';
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+}
+
+.toolbar {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 10;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: var(--color-background-soft);
+  padding: 6px 8px;
+  border-radius: 8px;
+}
+
+.toolbar button {
+  cursor: pointer;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+.toolbar button:hover {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.toolbar-path {
+  font-size: 12px;
+  color: var(--ev-c-text-3);
+  margin-left: 4px;
+  font-family: 'Menlo', 'Lucida Console', monospace;
+}

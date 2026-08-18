@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "viewport": {
+    "x": 133,
+    "y": 34.325164794921875,
+    "zoom": 2
+  },
+  "nodes": [
+    {
+      "id": "node-1",
+      "type": "default",
+      "position": {
+        "x": -22.5,
+        "y": 25
+      },
+      "data": {
+        "label": "node-1"
+      }
+    },
+    {
+      "id": "node-2",
+      "type": "default",
+      "position": {
+        "x": 120,
+        "y": 120
+      },
+      "data": {
+        "label": "node-2"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "xy-edge__node-2-node-1",
+      "source": "node-2",
+      "target": "node-1"
+    }
+  ]
+}
