@@ -3,8 +3,10 @@ import { electronAPI } from '@electron-toolkit/preload'
 import type { DiagramFile } from '@shared/diagram'
 
 // Custom APIs for renderer. See docs/decisions/0005-diagram-identity-and-linking.md
-// for the single-file model — saveDiagramAs is just "pick a path, write to
-// it," no folder/directory handling at all.
+// for the single-file model. pickSavePath and saveDiagram are deliberately
+// separate (not one combined "save as" call) — epic 0008 needs to pick the
+// path, flush any pending detail-panel drafts using it, *then* write the
+// final diagram content, all before the file actually lands on disk.
 const api = {
   openDiagram(): Promise<{ path: string; diagram: DiagramFile } | null> {
     return ipcRenderer.invoke('diagram:open')
@@ -14,11 +16,8 @@ const api = {
     return ipcRenderer.invoke('diagram:save', path, diagram)
   },
 
-  async saveDiagramAs(diagram: DiagramFile): Promise<string | null> {
-    const path: string | null = await ipcRenderer.invoke('diagram:pickSavePath')
-    if (!path) return null
-    await ipcRenderer.invoke('diagram:save', path, diagram)
-    return path
+  pickSavePath(): Promise<string | null> {
+    return ipcRenderer.invoke('diagram:pickSavePath')
   },
 
   // Custom icons — see docs/decisions/0006-icon-storage-model.md. All three
@@ -33,6 +32,18 @@ const api = {
 
   readIconAsDataUrl(diagramPath: string, relativePath: string): Promise<string> {
     return ipcRenderer.invoke('icons:readAsDataUrl', diagramPath, relativePath)
+  },
+
+  // Detail files — see epic 0008. readDetails takes an already-known
+  // relative path; writeDetails takes a node id and computes the
+  // conventional path itself, returning it so the caller can store it on
+  // data.details the first time.
+  readDetails(diagramPath: string, relativePath: string): Promise<string> {
+    return ipcRenderer.invoke('details:read', diagramPath, relativePath)
+  },
+
+  writeDetails(diagramPath: string, nodeId: string, content: string): Promise<string> {
+    return ipcRenderer.invoke('details:write', diagramPath, nodeId, content)
   }
 }
 

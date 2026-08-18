@@ -4,17 +4,12 @@ Short pointer only — the full backlog lives in [docs/planning/](docs/planning/
 
 ## Current status (2026-08-18)
 
-Epic [0007](docs/planning/epics/0007-icon-slots.md) (icon slots) done, committed on branch `epic/0007-icon-slots`, not yet merged. Built-in icons (Tabler, MIT-licensed) via a searchable picker, custom icon upload, remove, right-click context-menu infrastructure (reusable for epics 0008/0013). See [ADR 0006](docs/decisions/0006-icon-storage-model.md) for the storage model and [docs/licensing.md](docs/licensing.md) for why vendor icon packs (AWS/Azure/etc.) are deliberately out of scope.
+Epic [0008](docs/planning/epics/0008-detail-sublayer.md) (detail sublayer) done, committed on branch `epic/0008-detail-sublayer`, not yet pushed/merged. Right-click "See details" on any node (first context-menu use on `TextNode`), fixed right-side Markdown panel with edit/preview toggle and basic formatting buttons, draft state flushed on save (Ctrl+S now works, not just the toolbar button), hover tooltip. Manually tested and confirmed working.
 
-**"Complete PoC" batch, agreed and ordered** (everything else is usability/feature-expansion work for a later batch):
+**"Complete PoC" batch — all four done**: 0015 (single-file format), 0007 (icon slots), 0008 (detail sublayer). Only [0009](docs/planning/epics/0009-linked-diagram-navigation.md) (linked-diagram navigation) remains — deliberately saved for last since it's the highest-complexity/integration-risk of the four, and now icons/details are stable to build on.
 
-1. ~~0015 — single-file diagram format~~ **done**
-2. ~~0007 — icon slots~~ **done**
-3. [0008](docs/planning/epics/0008-detail-sublayer.md) — detail sublayer (Markdown panel)
-4. [0009](docs/planning/epics/0009-linked-diagram-navigation.md) — linked-diagram navigation. Deliberately last: highest complexity/integration-risk, done once icons and details already exist and are stable.
-
-Rationale: 0008 and 0009 are the two features the brief itself names as this tool's actual differentiator from generic tools like draw.io. Everything in the "later batch" pile (styling panel, containers, dark/light mode, undo/redo, alignment/snapping, configurable connection points, drag-to-create-shape, zip export, selection/keyboard shortcuts, icon-picker GUI polish) makes an already-working tool nicer, but doesn't prove the core concept.
+Small addition folded into 0008 on request: Delete key now works (was blocking testing) — pulled forward from epic [0018](docs/planning/epics/0018-selection-and-keyboard-shortcuts.md).
 
 ## Next up
 
-Merge epic 0007, then start epic 0008 (detail sublayer).
+Push and merge epic 0008, then epic 0009 — the last of the "complete PoC" batch.

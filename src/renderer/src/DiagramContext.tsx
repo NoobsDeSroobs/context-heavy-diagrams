@@ -11,6 +11,8 @@ export interface DiagramContextValue {
   // itself, so it doesn't inherit React Flow's zoom/pan transform and end
   // up scaling like a shape on the canvas.
   openIconPicker: (nodeId: string, anchorRect: DOMRect) => void
+  // Fixed right-side dock — no anchor needed, it's not attached to the node.
+  openDetailsPanel: (nodeId: string) => void
 }
 
 const DiagramContext = createContext<DiagramContextValue | null>(null)

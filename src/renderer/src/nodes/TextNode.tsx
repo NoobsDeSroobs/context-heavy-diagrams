@@ -1,6 +1,8 @@
 import { memo, useCallback, useRef, useState } from 'react'
 import { NodeResizer, useReactFlow, type NodeProps } from '@xyflow/react'
 import EditableLabel from '../components/EditableLabel'
+import { useDiagramContext } from '../DiagramContext'
+import { useDetailsTooltip } from '../hooks/useDetailsTooltip'
 
 export const TEXT_MIN_WIDTH = 40
 export const TEXT_MIN_HEIGHT = 24
@@ -13,9 +15,22 @@ export const TEXT_MIN_HEIGHT = 24
 // slightly off. Accepted for now — see the epic 0002 notes.
 function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
   const { updateNodeData } = useReactFlow()
+  const { diagramPath, openContextMenu, openDetailsPanel } = useDiagramContext()
   const rotation = typeof data?.rotation === 'number' ? (data.rotation as number) : 0
   const nodeRef = useRef<HTMLDivElement>(null)
   const [rotating, setRotating] = useState(false)
+  const detailsPath = typeof data?.details === 'string' ? data.details : undefined
+  const tooltip = useDetailsTooltip(diagramPath, detailsPath)
+
+  const onContextMenu = useCallback(
+    (event: React.MouseEvent) => {
+      event.preventDefault()
+      openContextMenu(event.clientX, event.clientY, [
+        { label: 'See details', onSelect: () => openDetailsPanel(id) }
+      ])
+    },
+    [id, openContextMenu, openDetailsPanel]
+  )
 
   const onRotateStart = useCallback(
     (event: React.MouseEvent) => {
@@ -50,6 +65,8 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
       ref={nodeRef}
       className={`text-node${rotating ? ' rotating' : ''}`}
       style={{ transform: `rotate(${rotation}deg)` }}
+      onContextMenu={onContextMenu}
+      title={tooltip}
     >
       <NodeResizer isVisible={selected} minWidth={TEXT_MIN_WIDTH} minHeight={TEXT_MIN_HEIGHT} />
       {selected && (

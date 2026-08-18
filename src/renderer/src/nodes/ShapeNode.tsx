@@ -4,6 +4,7 @@ import type { IconRef, IconSlot } from '@shared/diagram'
 import EditableLabel from '../components/EditableLabel'
 import IconSlotView from '../components/IconSlotView'
 import { useDiagramContext } from '../DiagramContext'
+import { useDetailsTooltip } from '../hooks/useDetailsTooltip'
 
 export const SHAPE_MIN_WIDTH = 60
 export const SHAPE_MIN_HEIGHT = 40
@@ -22,26 +23,30 @@ const SLOTS = Object.keys(SLOT_CLASS) as IconSlot[]
 // Icon slots deliberately render at the true corners with no special
 // handling to dodge NodeResizer's corner handles — same stacking order the
 // shape's own body already has under them, per user direction on epic 0007.
-// The icon *picker* itself is NOT rendered here — see DiagramContext for why.
+// The icon *picker* and details panel are NOT rendered here — see
+// DiagramContext for why.
 function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
-  const { diagramPath, openContextMenu, openIconPicker } = useDiagramContext()
+  const { diagramPath, openContextMenu, openIconPicker, openDetailsPanel } = useDiagramContext()
   const { updateNodeData } = useReactFlow()
 
   const icons = (data?.icons ?? {}) as Partial<Record<IconSlot, IconRef>>
+  const detailsPath = typeof data?.details === 'string' ? data.details : undefined
+  const tooltip = useDetailsTooltip(diagramPath, detailsPath)
 
   const onContextMenu = useCallback(
     (event: MouseEvent<HTMLDivElement>) => {
       event.preventDefault()
       const rect = event.currentTarget.getBoundingClientRect()
       openContextMenu(event.clientX, event.clientY, [
-        { label: 'Add icon', onSelect: () => openIconPicker(id, rect) }
+        { label: 'Add icon', onSelect: () => openIconPicker(id, rect) },
+        { label: 'See details', onSelect: () => openDetailsPanel(id) }
       ])
     },
-    [id, openContextMenu, openIconPicker]
+    [id, openContextMenu, openIconPicker, openDetailsPanel]
   )
 
   return (
-    <div className="shape-node" onContextMenu={onContextMenu}>
+    <div className="shape-node" onContextMenu={onContextMenu} title={tooltip}>
       <NodeResizer isVisible={selected} minWidth={SHAPE_MIN_WIDTH} minHeight={SHAPE_MIN_HEIGHT} />
       <Handle type="source" position={Position.Top} id="top" />
       <Handle type="source" position={Position.Right} id="right" />

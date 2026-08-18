@@ -4,6 +4,7 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { registerDiagramHandlers } from './diagram'
 import { registerIconHandlers } from './icons'
+import { registerDetailsHandlers } from './details'
 
 function createWindow(): void {
   // Create the browser window.
@@ -56,6 +57,7 @@ app.whenReady().then(() => {
 
   registerDiagramHandlers()
   registerIconHandlers()
+  registerDetailsHandlers()
 
   createWindow()
 

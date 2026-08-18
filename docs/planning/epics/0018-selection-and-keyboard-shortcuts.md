@@ -10,7 +10,7 @@ Standard editor selection/deletion shortcuts. Raised during epic 0015 testing, n
 - [ ] Ctrl+A: select all nodes/edges
 - [ ] Drag-to-select (marquee/box selection) on empty canvas
 - [ ] Ctrl+click for multi-select
-- [ ] Delete key removes selected nodes/edges
+- [x] ~~Delete key removes selected nodes/edges~~ — pulled forward into epic [0008](0008-detail-sublayer.md) on explicit request (no way to delete anything at all was blocking testing); done there, not here
 - [ ] Probably more — revisit when this epic starts
 
 ## Notes
