@@ -4,10 +4,18 @@ Short pointer only — the full backlog lives in [docs/planning/](docs/planning/
 
 ## Current status (2026-08-18)
 
-Epic [0012](docs/planning/epics/0012-editable-anchored-labels.md) (editable shape/text/edge labels) is done, committed on branch `epic/0012-editable-anchored-labels`, not yet merged. Along the way it surfaced a big design discussion: [ADR 0005](docs/decisions/0005-diagram-identity-and-linking.md) moves diagram identity/linking away from folder-and-filename conventions (not rename-safe in either direction) to content-based identity + explicit downward-only links — **supersedes the brief's original always-a-folder file format**. Not yet implemented; that's epic [0015](docs/planning/epics/0015-single-file-diagram-format.md), user-flagged as high priority for the next batch.
+Epic [0015](docs/planning/epics/0015-single-file-diagram-format.md) (single-file diagram format, ADR 0005) done, committed on branch `epic/0015-single-file-diagram-format`, not yet merged. Save/open round-trip with the new `.chd` single-file model manually confirmed.
 
-Four new epics logged from that discussion: [0015](docs/planning/epics/0015-single-file-diagram-format.md) (single-file format migration, high priority), [0016](docs/planning/epics/0016-zip-export-for-sharing.md) (zip export), [0017](docs/planning/epics/0017-url-based-linking.md) (speculative, distant). Epic [0009](docs/planning/epics/0009-linked-diagram-navigation.md) updated to match the new model.
+**"Complete PoC" batch, agreed and ordered** (everything else is usability/feature-expansion work for a later batch):
+
+1. ~~0015 — single-file diagram format~~ **done**
+2. [0007](docs/planning/epics/0007-icon-slots.md) — icon slots
+3. [0008](docs/planning/epics/0008-detail-sublayer.md) — detail sublayer (Markdown panel)
+   - (0007 and 0008 in either order between themselves)
+4. [0009](docs/planning/epics/0009-linked-diagram-navigation.md) — linked-diagram navigation. Deliberately last: highest complexity/integration-risk of the four, done once icons and details already exist and are stable.
+
+Rationale: 0008 and 0009 are the two features the brief itself names as this tool's actual differentiator from generic tools like draw.io. 0007 is close behind. Everything in the "later batch" pile (styling panel, containers, dark/light mode, undo/redo, alignment/snapping, configurable connection points, drag-to-create-shape, zip export, selection/keyboard shortcuts) makes an already-working tool nicer, but doesn't prove the core concept.
 
 ## Next up
 
-Merge epic 0012, then order the next batch of 3-5 epics together (epic 0015 confirmed high priority for that batch).
+Merge epic 0015, then start epic 0007 or 0008 (either order).

@@ -2,12 +2,9 @@ import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import type { DiagramFile } from '@shared/diagram'
 
-// Custom APIs for renderer. See docs/decisions/0003-diagram-persistence-v1.md
-// for why saveDiagramAs orchestrates two IPC round trips here rather than
-// exposing the lower-level main-process handlers directly — a native
-// showSaveDialog lets the user type the diagram's name, which becomes its
-// folder name; saveNew then creates that folder and writes diagram.json
-// inside it.
+// Custom APIs for renderer. See docs/decisions/0005-diagram-identity-and-linking.md
+// for the single-file model — saveDiagramAs is just "pick a path, write to
+// it," no folder/directory handling at all.
 const api = {
   openDiagram(): Promise<{ path: string; diagram: DiagramFile } | null> {
     return ipcRenderer.invoke('diagram:open')
@@ -18,9 +15,10 @@ const api = {
   },
 
   async saveDiagramAs(diagram: DiagramFile): Promise<string | null> {
-    const dir: string | null = await ipcRenderer.invoke('diagram:pickSaveFolder')
-    if (!dir) return null
-    return ipcRenderer.invoke('diagram:saveNew', dir, diagram)
+    const path: string | null = await ipcRenderer.invoke('diagram:pickSavePath')
+    if (!path) return null
+    await ipcRenderer.invoke('diagram:save', path, diagram)
+    return path
   }
 }
 
