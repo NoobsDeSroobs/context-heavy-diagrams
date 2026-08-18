@@ -1,11 +1,17 @@
 // v1 diagram file schema. See docs/decisions/0003-diagram-persistence-v1.md —
-// later epics add fields here (style, rotation, icons, details, linkedDiagram)
-// additively, not as a rewrite.
+// later epics add fields here (style, icons, details, linkedDiagram)
+// additively, not as a rewrite. `size`/`rotation` added in epic 0002, see
+// docs/decisions/0004-shape-text-node-split.md.
 
 export interface DiagramNode {
   id: string
+  // 'shape' (resizable, connectable, never rotated) | 'text' (resizable,
+  // rotatable, never connectable) — see ADR 0004. Kept as a plain string,
+  // not a union, since more types (e.g. container) arrive in later epics.
   type?: string
   position: { x: number; y: number }
+  size?: { width: number; height: number }
+  rotation?: number
   data: { label: string }
 }
 
@@ -13,6 +19,8 @@ export interface DiagramEdge {
   id: string
   source: string
   target: string
+  sourceHandle?: string
+  targetHandle?: string
 }
 
 export interface DiagramFile {
@@ -28,6 +36,8 @@ export function createEmptyDiagram(): DiagramFile {
 
 // Fixed key order on every object built here is what makes JSON.stringify's
 // output deterministic — see the ADR for why this matters for git diffs.
+// Optional fields left `undefined` are dropped by JSON.stringify, so nodes
+// without a size/rotation set don't grow noisy keys in the saved file.
 export function serializeDiagram(diagram: DiagramFile): string {
   const ordered: DiagramFile = {
     version: diagram.version,
@@ -36,9 +46,17 @@ export function serializeDiagram(diagram: DiagramFile): string {
       id: n.id,
       type: n.type,
       position: { x: n.position.x, y: n.position.y },
+      size: n.size ? { width: n.size.width, height: n.size.height } : undefined,
+      rotation: n.rotation,
       data: { label: n.data.label }
     })),
-    edges: diagram.edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))
+    edges: diagram.edges.map((e) => ({
+      id: e.id,
+      source: e.source,
+      target: e.target,
+      sourceHandle: e.sourceHandle,
+      targetHandle: e.targetHandle
+    }))
   }
   return JSON.stringify(ordered, null, 2) + '\n'
 }

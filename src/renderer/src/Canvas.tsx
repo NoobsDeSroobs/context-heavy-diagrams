@@ -6,6 +6,7 @@ import {
   Controls,
   MiniMap,
   MarkerType,
+  ConnectionMode,
   addEdge,
   useNodesState,
   useEdgesState,
@@ -17,10 +18,16 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import type { DiagramFile } from '@shared/diagram'
+import ShapeNode, { SHAPE_MIN_WIDTH, SHAPE_MIN_HEIGHT } from './nodes/ShapeNode'
+import TextNode, { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from './nodes/TextNode'
+
+// Defined at module scope so React Flow gets a stable reference — recreating
+// this object every render triggers a React Flow warning and remounts.
+const nodeTypes = { shape: ShapeNode, text: TextNode }
 
 let nextId = 1
-function newNodeId(): string {
-  return `node-${nextId++}`
+function newNodeId(prefix: string): string {
+  return `${prefix}-${nextId++}`
 }
 
 function toDiagramFile(nodes: Node[], edges: Edge[], viewport: Viewport): DiagramFile {
@@ -31,9 +38,17 @@ function toDiagramFile(nodes: Node[], edges: Edge[], viewport: Viewport): Diagra
       id: n.id,
       type: n.type,
       position: { x: n.position.x, y: n.position.y },
+      size: n.width != null && n.height != null ? { width: n.width, height: n.height } : undefined,
+      rotation: typeof n.data?.rotation === 'number' ? (n.data.rotation as number) : undefined,
       data: { label: String(n.data?.label ?? '') }
     })),
-    edges: edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))
+    edges: edges.map((e) => ({
+      id: e.id,
+      source: e.source,
+      target: e.target,
+      sourceHandle: e.sourceHandle ?? undefined,
+      targetHandle: e.targetHandle ?? undefined
+    }))
   }
 }
 
@@ -43,9 +58,17 @@ function fromDiagramFile(diagram: DiagramFile): { nodes: Node[]; edges: Edge[] }
       id: n.id,
       type: n.type,
       position: n.position,
-      data: { label: n.data.label }
+      width: n.size?.width,
+      height: n.size?.height,
+      data: { label: n.data.label, ...(n.rotation != null ? { rotation: n.rotation } : {}) }
     })),
-    edges: diagram.edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))
+    edges: diagram.edges.map((e) => ({
+      id: e.id,
+      source: e.source,
+      target: e.target,
+      sourceHandle: e.sourceHandle,
+      targetHandle: e.targetHandle
+    }))
   }
 }
 
@@ -60,15 +83,32 @@ function CanvasInner(): React.JSX.Element {
     [setEdges]
   )
 
-  const addNode = useCallback(() => {
-    const id = newNodeId()
+  const addShapeNode = useCallback(() => {
+    const id = newNodeId('shape')
     setNodes((nds) => [
       ...nds,
       {
         id,
-        type: 'default',
+        type: 'shape',
         position: { x: 80 + nds.length * 40, y: 80 + nds.length * 40 },
+        width: SHAPE_MIN_WIDTH * 2,
+        height: SHAPE_MIN_HEIGHT * 2,
         data: { label: id }
+      }
+    ])
+  }, [setNodes])
+
+  const addTextNode = useCallback(() => {
+    const id = newNodeId('text')
+    setNodes((nds) => [
+      ...nds,
+      {
+        id,
+        type: 'text',
+        position: { x: 80 + nds.length * 40, y: 80 + nds.length * 40 },
+        width: TEXT_MIN_WIDTH * 3,
+        height: TEXT_MIN_HEIGHT * 2,
+        data: { label: 'Text', rotation: 0 }
       }
     ])
   }, [setNodes])
@@ -102,7 +142,8 @@ function CanvasInner(): React.JSX.Element {
   return (
     <div style={{ width: '100vw', height: '100vh' }}>
       <div className="toolbar">
-        <button onClick={addNode}>Add node</button>
+        <button onClick={addShapeNode}>Add shape</button>
+        <button onClick={addTextNode}>Add text</button>
         <button onClick={handleOpen}>Open…</button>
         <button onClick={handleSave}>Save</button>
         <button onClick={handleSaveAs}>Save As…</button>
@@ -111,9 +152,11 @@ function CanvasInner(): React.JSX.Element {
       <ReactFlow
         nodes={nodes}
         edges={edges}
+        nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        connectionMode={ConnectionMode.Loose}
         defaultEdgeOptions={{ markerEnd: { type: MarkerType.ArrowClosed } }}
         colorMode="dark" // hardcoded until epic 0005 adds a real light/dark toggle
         fitView

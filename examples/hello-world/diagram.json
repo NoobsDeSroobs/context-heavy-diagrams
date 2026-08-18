@@ -7,33 +7,43 @@
   },
   "nodes": [
     {
-      "id": "node-1",
-      "type": "default",
+      "id": "shape-1",
+      "type": "shape",
       "position": {
         "x": -22.5,
         "y": 25
       },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
       "data": {
-        "label": "node-1"
+        "label": "shape-1"
       }
     },
     {
-      "id": "node-2",
-      "type": "default",
+      "id": "shape-2",
+      "type": "shape",
       "position": {
         "x": 120,
         "y": 120
       },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
       "data": {
-        "label": "node-2"
+        "label": "shape-2"
       }
     }
   ],
   "edges": [
     {
-      "id": "xy-edge__node-2-node-1",
-      "source": "node-2",
-      "target": "node-1"
+      "id": "xy-edge__shape-2right-shape-1left",
+      "source": "shape-2",
+      "target": "shape-1",
+      "sourceHandle": "right",
+      "targetHandle": "left"
     }
   ]
 }
