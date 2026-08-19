@@ -16,7 +16,12 @@ export interface DiagramNode {
   position: { x: number; y: number }
   size?: { width: number; height: number }
   rotation?: number
-  data: { label: string; icons?: Partial<Record<IconSlot, IconRef>>; details?: string }
+  data: {
+    label: string
+    icons?: Partial<Record<IconSlot, IconRef>>
+    details?: string
+    linkedDiagram?: string
+  }
 }
 
 export interface DiagramEdge {
@@ -58,7 +63,8 @@ export function serializeDiagram(diagram: DiagramFile): string {
       data: {
         label: n.data.label,
         icons: n.data.icons && Object.keys(n.data.icons).length > 0 ? n.data.icons : undefined,
-        details: n.data.details
+        details: n.data.details,
+        linkedDiagram: n.data.linkedDiagram
       }
     })),
     edges: diagram.edges.map((e) => ({

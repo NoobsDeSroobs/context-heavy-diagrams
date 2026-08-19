@@ -8,6 +8,14 @@ import { parseDiagram, serializeDiagram, type DiagramFile } from '@shared/diagra
 // this model over the folder-based one it replaced (ADR 0003).
 const FILTERS = [{ name: 'Diagram', extensions: ['chd'] }]
 
+// Shared by diagram:open (dialog-driven) and diagram:openPath / links:resolve
+// (already-known absolute path, no dialog) — one place that reads+parses a
+// .chd off disk.
+export async function openDiagramAtPath(path: string): Promise<DiagramFile> {
+  const raw = await readFile(path, 'utf-8')
+  return parseDiagram(raw)
+}
+
 export function registerDiagramHandlers(): void {
   ipcMain.handle('diagram:pickSavePath', async () => {
     const result = await dialog.showSaveDialog({
@@ -31,7 +39,12 @@ export function registerDiagramHandlers(): void {
     })
     if (result.canceled || result.filePaths.length === 0) return null
     const path = result.filePaths[0]
-    const raw = await readFile(path, 'utf-8')
-    return { path, diagram: parseDiagram(raw) }
+    return { path, diagram: await openDiagramAtPath(path) }
+  })
+
+  // No dialog — used for breadcrumb back-navigation, where the absolute
+  // path is already known from a previous visit.
+  ipcMain.handle('diagram:openPath', async (_event, path: string) => {
+    return openDiagramAtPath(path)
   })
 }

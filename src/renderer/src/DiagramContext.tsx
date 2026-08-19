@@ -13,6 +13,10 @@ export interface DiagramContextValue {
   openIconPicker: (nodeId: string, anchorRect: DOMRect) => void
   // Fixed right-side dock — no anchor needed, it's not attached to the node.
   openDetailsPanel: (nodeId: string) => void
+  // Ctrl/Cmd+click on a node — see epic 0009. Fully decided/implemented in
+  // Canvas.tsx (it owns `nodes` and `openContextMenu`); node components just
+  // forward the click, they don't decide chooser-vs-navigate themselves.
+  handleLinkClick: (nodeId: string, clientX: number, clientY: number) => void
 }
 
 const DiagramContext = createContext<DiagramContextValue | null>(null)

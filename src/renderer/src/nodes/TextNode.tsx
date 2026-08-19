@@ -15,21 +15,49 @@ export const TEXT_MIN_HEIGHT = 24
 // slightly off. Accepted for now — see the epic 0002 notes.
 function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
   const { updateNodeData } = useReactFlow()
-  const { diagramPath, openContextMenu, openDetailsPanel } = useDiagramContext()
+  const { diagramPath, openContextMenu, openDetailsPanel, handleLinkClick } = useDiagramContext()
   const rotation = typeof data?.rotation === 'number' ? (data.rotation as number) : 0
   const nodeRef = useRef<HTMLDivElement>(null)
   const [rotating, setRotating] = useState(false)
   const detailsPath = typeof data?.details === 'string' ? data.details : undefined
+  const linkedPath = typeof data?.linkedDiagram === 'string' ? data.linkedDiagram : undefined
   const tooltip = useDetailsTooltip(diagramPath, detailsPath)
 
   const onContextMenu = useCallback(
     (event: React.MouseEvent) => {
       event.preventDefault()
+      const linkItems = linkedPath
+        ? [
+            {
+              label: 'Open linked diagram',
+              onSelect: () => handleLinkClick(id, event.clientX, event.clientY)
+            },
+            { label: 'Remove link', onSelect: () => updateNodeData(id, { linkedDiagram: undefined }) }
+          ]
+        : [
+            {
+              label: 'Link to diagram…',
+              onSelect: () => handleLinkClick(id, event.clientX, event.clientY)
+            }
+          ]
       openContextMenu(event.clientX, event.clientY, [
-        { label: 'See details', onSelect: () => openDetailsPanel(id) }
+        { label: 'See details', onSelect: () => openDetailsPanel(id) },
+        ...linkItems
       ])
     },
-    [id, openContextMenu, openDetailsPanel]
+    [id, openContextMenu, openDetailsPanel, linkedPath, handleLinkClick, updateNodeData]
+  )
+
+  // Ctrl/Cmd+click is distinct from plain click (selection) and right-click
+  // (context menu, above) — see epic 0009. multiSelectionKeyCode is pinned
+  // to Shift in Canvas.tsx so this doesn't collide with React Flow's own
+  // default Ctrl/Cmd multi-select toggle.
+  const onClick = useCallback(
+    (event: React.MouseEvent) => {
+      if (!(event.ctrlKey || event.metaKey)) return
+      handleLinkClick(id, event.clientX, event.clientY)
+    },
+    [id, handleLinkClick]
   )
 
   const onRotateStart = useCallback(
@@ -66,6 +94,7 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
       className={`text-node${rotating ? ' rotating' : ''}`}
       style={{ transform: `rotate(${rotation}deg)` }}
       onContextMenu={onContextMenu}
+      onClick={onClick}
       title={tooltip}
     >
       <NodeResizer isVisible={selected} minWidth={TEXT_MIN_WIDTH} minHeight={TEXT_MIN_HEIGHT} />

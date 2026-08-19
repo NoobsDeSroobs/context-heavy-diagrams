@@ -44,6 +44,33 @@ const api = {
 
   writeDetails(diagramPath: string, nodeId: string, content: string): Promise<string> {
     return ipcRenderer.invoke('details:write', diagramPath, nodeId, content)
+  },
+
+  // No dialog — used for breadcrumb back-navigation, where the absolute
+  // path is already known from a previous visit.
+  openDiagramAtPath(path: string): Promise<DiagramFile> {
+    return ipcRenderer.invoke('diagram:openPath', path)
+  },
+
+  // Linked diagrams — see epic 0009 / docs/decisions/0005-diagram-identity-and-linking.md.
+  // createLinkedDiagram/pickExistingLinkedDiagram both return a relative
+  // path (relative to diagramPath's own directory) to store on the node,
+  // same convention as custom icon/detail paths.
+  createLinkedDiagram(diagramPath: string, label: string): Promise<string> {
+    return ipcRenderer.invoke('links:createNew', diagramPath, label)
+  },
+
+  pickExistingLinkedDiagram(diagramPath: string): Promise<string | null> {
+    return ipcRenderer.invoke('links:pickExisting', diagramPath)
+  },
+
+  resolveLinkedDiagram(
+    diagramPath: string,
+    relativePath: string
+  ): Promise<
+    { found: true; path: string; diagram: DiagramFile } | { found: false; resolvedPath: string }
+  > {
+    return ipcRenderer.invoke('links:resolve', diagramPath, relativePath)
   }
 }
 

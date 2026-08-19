@@ -36,7 +36,8 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
   "data": {
     "label": "Web App",
     "icons": { "topRight": { "source": "builtin", "id": "server" } },
-    "details": "web-app/details/shape-1.md"
+    "details": "web-app/details/shape-1.md",
+    "linkedDiagram": "web-app/Database.chd"
   }
 }
 ```
@@ -51,6 +52,7 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
 | `data.label` | string | yes | Display text. May be empty. |
 | `data.icons` | object | no | Only meaningful on `"shape"` nodes. Up to four keys — `topLeft`, `topRight`, `bottomLeft`, `bottomRight` — each an icon reference (see below). |
 | `data.details` | string | no | Relative path to a Markdown file with free-form notes about this node (purpose, integration type, inputs/outputs, whatever's useful) — rendered in-app as a side panel, never a second canvas object. Same relative-path-from-the-diagram's-own-directory convention as custom icon paths. Absent means the node has no details yet. |
+| `data.linkedDiagram` | string | no | Relative path (from this diagram file's own directory) to another `.chd` file — a drill-down link. Resolved and opened on demand (e.g. Ctrl/Cmd+click in this app), never eagerly. Absent means the node has no link. See the Linking section below for the missing-target and directionality rules. |
 
 ### Icon reference
 
@@ -94,15 +96,15 @@ Files are written with a fixed key order (matching the tables above) and 2-space
 
 ## Linking and file organization
 
-**Assets** (custom-uploaded icons, `data.icons.*` with `source: "custom"`) and **details** (`data.details`) are both relative-path references pointing into a sibling folder named after the diagram file — e.g. `my-diagram.chd` next to `my-diagram/assets/logo.svg` and `my-diagram/details/shape-1.md`. That folder is never required or detected by name; the path stored on the node is what actually matters. A diagram with neither has no such folder at all. This app always names detail files after the node's own `id` (`<node-id>.md`), but a reader shouldn't rely on that — the stored path is authoritative, not the naming pattern.
+**Assets** (custom-uploaded icons, `data.icons.*` with `source: "custom"`), **details** (`data.details`), and newly-created **linked diagrams** (`data.linkedDiagram`) are all relative-path references. By default this app colocates them into a sibling folder named after the diagram file — e.g. `my-diagram.chd` next to `my-diagram/assets/logo.svg`, `my-diagram/details/shape-1.md`, and `my-diagram/Database.chd` for a newly-created link. That folder is never required or detected by name; the path stored on the node is what actually matters. A diagram with none of these has no such folder at all. This app always names detail files after the node's own `id` (`<node-id>.md`), but a reader shouldn't rely on that — the stored path is authoritative, not the naming pattern. Nothing requires a linked diagram to live inside that sibling folder either — it's just where this app defaults to when *creating* one; linking to an *existing* `.chd` file anywhere on disk (including outside the colocation folder, outside this diagram's own directory tree entirely, or on another drive) is equally valid, since the format has no notion of an enclosing project or repo.
 
 The `.chd` file itself is always plain, deterministic JSON — kept git-friendly on purpose (fixed key order, no inline binaries, see Determinism above). Files under a colocation folder (`assets/*` especially) are ordinary binary/text files with no special handling from this app; if you're versioning a repo full of diagrams with many or large custom icons, [Git LFS](https://git-lfs.com/) tracking `*.svg`/`*.png` under these folders is a reasonable, standard way to keep the repo itself light — this app has no opinion on it either way, since it never touches git directly.
 
-**Linked diagrams** (drill-down navigation to another `.chd` file) don't exist in the schema yet — noted here so the eventual shape is clear, not because it's usable today. Will follow the same pattern: an explicit relative path stored on the node, resolved at use time, never inferred from a naming convention. Links only ever point downward (parent → child) — a child never references its parent — which is what makes any diagram independently openable as its own root. A missing target (a broken link, a diagram shared without its children) is expected to be a recoverable error ("linked diagram not found at `<path>`"), not a hard failure — the diagram containing the broken reference still opens and works. Detail file references follow the same "missing is recoverable" handling already.
+**Linked diagrams** are how drill-down navigation works (e.g. Ctrl/Cmd+click in this app): an explicit relative path stored on the node, resolved at use time, never inferred from a naming convention. Links only ever point downward (parent → child) — a child never references its parent — which is what makes any diagram independently openable as its own root. A missing target (a broken link, a diagram shared without its children) is expected to be a recoverable error ("linked diagram not found at `<path>`"), not a hard failure — the diagram containing the broken reference still opens and works. Detail file references follow the same "missing is recoverable" handling already.
 
 ## Versioning
 
-`version` is currently always `1`. Fields have been added over time (`size`, `rotation`, edge `type`/`label`, `data.icons`, `data.details`) but always additively — a reader from an earlier point in this project's history can still open a newer file and just won't recognize the newer fields. A breaking change to the meaning of an existing field would bump `version`; nothing has required that yet.
+`version` is currently always `1`. Fields have been added over time (`size`, `rotation`, edge `type`/`label`, `data.icons`, `data.details`, `data.linkedDiagram`) but always additively — a reader from an earlier point in this project's history can still open a newer file and just won't recognize the newer fields. A breaking change to the meaning of an existing field would bump `version`; nothing has required that yet.
 
 ## Example
 

@@ -26,27 +26,56 @@ const SLOTS = Object.keys(SLOT_CLASS) as IconSlot[]
 // The icon *picker* and details panel are NOT rendered here — see
 // DiagramContext for why.
 function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
-  const { diagramPath, openContextMenu, openIconPicker, openDetailsPanel } = useDiagramContext()
+  const { diagramPath, openContextMenu, openIconPicker, openDetailsPanel, handleLinkClick } =
+    useDiagramContext()
   const { updateNodeData } = useReactFlow()
 
   const icons = (data?.icons ?? {}) as Partial<Record<IconSlot, IconRef>>
   const detailsPath = typeof data?.details === 'string' ? data.details : undefined
+  const linkedPath = typeof data?.linkedDiagram === 'string' ? data.linkedDiagram : undefined
   const tooltip = useDetailsTooltip(diagramPath, detailsPath)
 
   const onContextMenu = useCallback(
     (event: MouseEvent<HTMLDivElement>) => {
       event.preventDefault()
       const rect = event.currentTarget.getBoundingClientRect()
+      const linkItems = linkedPath
+        ? [
+            {
+              label: 'Open linked diagram',
+              onSelect: () => handleLinkClick(id, event.clientX, event.clientY)
+            },
+            { label: 'Remove link', onSelect: () => updateNodeData(id, { linkedDiagram: undefined }) }
+          ]
+        : [
+            {
+              label: 'Link to diagram…',
+              onSelect: () => handleLinkClick(id, event.clientX, event.clientY)
+            }
+          ]
       openContextMenu(event.clientX, event.clientY, [
         { label: 'Add icon', onSelect: () => openIconPicker(id, rect) },
-        { label: 'See details', onSelect: () => openDetailsPanel(id) }
+        { label: 'See details', onSelect: () => openDetailsPanel(id) },
+        ...linkItems
       ])
     },
-    [id, openContextMenu, openIconPicker, openDetailsPanel]
+    [id, openContextMenu, openIconPicker, openDetailsPanel, linkedPath, handleLinkClick, updateNodeData]
+  )
+
+  // Ctrl/Cmd+click is distinct from plain click (selection, handled by React
+  // Flow itself) and right-click (context menu, above) — see epic 0009.
+  // multiSelectionKeyCode is pinned to Shift in Canvas.tsx so this doesn't
+  // collide with React Flow's own default Ctrl/Cmd multi-select toggle.
+  const onClick = useCallback(
+    (event: MouseEvent<HTMLDivElement>) => {
+      if (!(event.ctrlKey || event.metaKey)) return
+      handleLinkClick(id, event.clientX, event.clientY)
+    },
+    [id, handleLinkClick]
   )
 
   return (
-    <div className="shape-node" onContextMenu={onContextMenu} title={tooltip}>
+    <div className="shape-node" onContextMenu={onContextMenu} onClick={onClick} title={tooltip}>
       <NodeResizer isVisible={selected} minWidth={SHAPE_MIN_WIDTH} minHeight={SHAPE_MIN_HEIGHT} />
       <Handle type="source" position={Position.Top} id="top" />
       <Handle type="source" position={Position.Right} id="right" />

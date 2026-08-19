@@ -5,6 +5,7 @@ import icon from '../../resources/icon.png?asset'
 import { registerDiagramHandlers } from './diagram'
 import { registerIconHandlers } from './icons'
 import { registerDetailsHandlers } from './details'
+import { registerLinkHandlers } from './links'
 
 function createWindow(): void {
   // Create the browser window.
@@ -58,6 +59,7 @@ app.whenReady().then(() => {
   registerDiagramHandlers()
   registerIconHandlers()
   registerDetailsHandlers()
+  registerLinkHandlers()
 
   createWindow()
 
