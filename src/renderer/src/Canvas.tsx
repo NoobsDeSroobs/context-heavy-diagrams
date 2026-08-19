@@ -353,12 +353,34 @@ function CanvasInner(): React.JSX.Element {
       // Deleting a container promotes its children rather than removing
       // them too (ADR 0012) — handled separately from React Flow's default
       // remove-change application, which would otherwise just drop them.
-      const containerRemovalIds = changes
-        .filter((c) => c.type === 'remove')
-        .map((c) => c.id)
-        .filter((removedId) => nodes.find((n) => n.id === removedId)?.type === 'container')
+      //
+      // React Flow's own delete handling (deleteElements/getElementsToRemove
+      // in @xyflow/system) cascades to every descendant automatically —
+      // selecting just the container still produces a `remove` change for
+      // each nested node too, transitively, not only the container itself.
+      // Every descendant's remove-change needs stripping here as well, or
+      // they get deleted via the normal path before removeContainerReparenting
+      // ever runs (and by the time it does, there's nothing left to promote).
+      const removedIds = new Set(changes.filter((c) => c.type === 'remove').map((c) => c.id))
+      const containerRemovalIds = Array.from(removedIds).filter(
+        (removedId) => nodes.find((n) => n.id === removedId)?.type === 'container'
+      )
+      const isDescendantOfRemovedContainer = (id: string): boolean => {
+        let current = nodes.find((n) => n.id === id)
+        while (current?.parentId) {
+          if (containerRemovalIds.includes(current.parentId)) return true
+          current = nodes.find((n) => n.id === current!.parentId)
+        }
+        return false
+      }
       const passthroughChanges = containerRemovalIds.length
-        ? changes.filter((c) => !(c.type === 'remove' && containerRemovalIds.includes(c.id)))
+        ? changes.filter(
+            (c) =>
+              !(
+                c.type === 'remove' &&
+                (containerRemovalIds.includes(c.id) || isDescendantOfRemovedContainer(c.id))
+              )
+          )
         : changes
       onNodesChangeBase(passthroughChanges)
       if (containerRemovalIds.length > 0) {
