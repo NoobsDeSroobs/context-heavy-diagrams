@@ -27,6 +27,7 @@ import {
 } from '@shared/diagram'
 import ShapeNode, { SHAPE_MIN_WIDTH, SHAPE_MIN_HEIGHT } from './nodes/ShapeNode'
 import TextNode, { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from './nodes/TextNode'
+import ContainerNode, { CONTAINER_MIN_WIDTH, CONTAINER_MIN_HEIGHT } from './nodes/ContainerNode'
 import LabeledEdge from './edges/LabeledEdge'
 import DiagramContext from './DiagramContext'
 import ContextMenu, { type ContextMenuItem } from './components/ContextMenu'
@@ -35,12 +36,20 @@ import DetailsPanel from './components/DetailsPanel'
 
 // Defined at module scope so React Flow gets a stable reference — recreating
 // these objects every render triggers a React Flow warning and remounts.
-const nodeTypes = { shape: ShapeNode, text: TextNode }
+const nodeTypes = { shape: ShapeNode, text: TextNode, container: ContainerNode }
 const edgeTypes = { labeled: LabeledEdge }
 
-let nextId = 1
+// A sequential per-session counter (shape-1, shape-2, ...) collided with
+// ids already used in a *loaded* file, since a fresh session always starts
+// back at 1 — opening a diagram that already had "shape-1" and adding
+// another shape silently overwrote it. A random UUID suffix makes that
+// whole class of collision structurally impossible (no cross-session
+// coordination needed) rather than something to patch around on every load
+// path. Keeps the readable type prefix — this project's file format is
+// meant to stay git-diff-friendly and human-debuggable, and "shape-<uuid>"
+// is still a lot easier to recognize at a glance than a bare UUID.
 function newNodeId(prefix: string): string {
-  return `${prefix}-${nextId++}`
+  return `${prefix}-${crypto.randomUUID()}`
 }
 
 // No Node `path` module in the renderer (see docs/architecture/overview.md's
@@ -48,6 +57,72 @@ function newNodeId(prefix: string): string {
 // path-parsing library.
 function basename(path: string): string {
   return path.split(/[/\\]/).pop() ?? path
+}
+
+// Containers (epic 0004, ADR 0012) — a child node's `position` is relative
+// to its immediate parent's own position, cascading up through any nesting
+// depth. These helpers convert between that relative space and true
+// absolute canvas coordinates, and keep the invariant React Flow requires:
+// a parent node must appear earlier in the `nodes` array than its children.
+
+function absolutePosition(node: Node, byId: Map<string, Node>): { x: number; y: number } {
+  let x = node.position.x
+  let y = node.position.y
+  let parentId = node.parentId
+  const seen = new Set<string>([node.id])
+  while (parentId && !seen.has(parentId)) {
+    const parent = byId.get(parentId)
+    if (!parent) break
+    x += parent.position.x
+    y += parent.position.y
+    seen.add(parentId)
+    parentId = parent.parentId
+  }
+  return { x, y }
+}
+
+function subtractPosition(
+  a: { x: number; y: number },
+  b: { x: number; y: number }
+): { x: number; y: number } {
+  return { x: a.x - b.x, y: a.y - b.y }
+}
+
+function sortNodesForHierarchy(nodes: Node[]): Node[] {
+  const byId = new Map(nodes.map((n) => [n.id, n]))
+  const placed = new Set<string>()
+  const visiting = new Set<string>()
+  const result: Node[] = []
+  const visit = (node: Node): void => {
+    if (placed.has(node.id) || visiting.has(node.id)) return
+    visiting.add(node.id)
+    const parent = node.parentId ? byId.get(node.parentId) : undefined
+    if (parent) visit(parent)
+    visiting.delete(node.id)
+    placed.add(node.id)
+    result.push(node)
+  }
+  nodes.forEach(visit)
+  return result
+}
+
+// Deleting a container promotes its children to the container's own parent
+// (or top-level) rather than deleting them too — see ADR 0012.
+function removeContainerReparenting(nodes: Node[], containerId: string): Node[] {
+  const byId = new Map(nodes.map((n) => [n.id, n]))
+  const container = byId.get(containerId)
+  if (!container) return nodes
+  const newParentId = container.parentId
+  const newParentAbs = newParentId ? absolutePosition(byId.get(newParentId)!, byId) : undefined
+  const updated = nodes
+    .filter((n) => n.id !== containerId)
+    .map((n) => {
+      if (n.parentId !== containerId) return n
+      const abs = absolutePosition(n, byId)
+      const position = newParentAbs ? subtractPosition(abs, newParentAbs) : abs
+      return { ...n, parentId: newParentId, position }
+    })
+  return sortNodesForHierarchy(updated)
 }
 
 // Undo/redo — see epic 0006. Deliberately just {nodes, edges}, not
@@ -71,6 +146,7 @@ function toDiagramFile(nodes: Node[], edges: Edge[], viewport: Viewport): Diagra
       connectionPoints: Array.isArray(n.data?.connectionPoints)
         ? (n.data.connectionPoints as ConnectionPoint[])
         : undefined,
+      parentId: n.parentId,
       data: {
         label: String(n.data?.label ?? ''),
         icons: n.data?.icons as Partial<Record<IconSlot, IconRef>> | undefined,
@@ -93,23 +169,29 @@ function toDiagramFile(nodes: Node[], edges: Edge[], viewport: Viewport): Diagra
 
 function fromDiagramFile(diagram: DiagramFile): { nodes: Node[]; edges: Edge[] } {
   return {
-    nodes: diagram.nodes.map((n) => ({
-      id: n.id,
-      type: n.type,
-      position: n.position,
-      width: n.size?.width,
-      height: n.size?.height,
-      data: {
-        label: n.data.label,
-        ...(n.rotation != null ? { rotation: n.rotation } : {}),
-        ...(n.connectionPoints && n.connectionPoints.length > 0
-          ? { connectionPoints: n.connectionPoints }
-          : {}),
-        ...(n.data.icons ? { icons: n.data.icons } : {}),
-        ...(n.data.details ? { details: n.data.details } : {}),
-        ...(n.data.linkedDiagram ? { linkedDiagram: n.data.linkedDiagram } : {})
-      }
-    })),
+    // sortNodesForHierarchy defensively re-orders in case an external
+    // writer didn't honor the parent-before-child requirement — see
+    // docs/file-format.md's parentId entry.
+    nodes: sortNodesForHierarchy(
+      diagram.nodes.map((n) => ({
+        id: n.id,
+        type: n.type,
+        position: n.position,
+        width: n.size?.width,
+        height: n.size?.height,
+        ...(n.parentId ? { parentId: n.parentId } : {}),
+        data: {
+          label: n.data.label,
+          ...(n.rotation != null ? { rotation: n.rotation } : {}),
+          ...(n.connectionPoints && n.connectionPoints.length > 0
+            ? { connectionPoints: n.connectionPoints }
+            : {}),
+          ...(n.data.icons ? { icons: n.data.icons } : {}),
+          ...(n.data.details ? { details: n.data.details } : {}),
+          ...(n.data.linkedDiagram ? { linkedDiagram: n.data.linkedDiagram } : {})
+        }
+      }))
+    ),
     edges: diagram.edges.map((e) => ({
       id: e.id,
       type: e.type,
@@ -238,9 +320,37 @@ function CanvasInner(): React.JSX.Element {
         else if (discrete) pushSnapshot()
         if (ending) endContinuousEdit()
       }
-      onNodesChangeBase(changes)
+      // Deleting a container promotes its children rather than removing
+      // them too (ADR 0012) — handled separately from React Flow's default
+      // remove-change application, which would otherwise just drop them.
+      const containerRemovalIds = changes
+        .filter((c) => c.type === 'remove')
+        .map((c) => c.id)
+        .filter((removedId) => nodes.find((n) => n.id === removedId)?.type === 'container')
+      const passthroughChanges = containerRemovalIds.length
+        ? changes.filter((c) => !(c.type === 'remove' && containerRemovalIds.includes(c.id)))
+        : changes
+      onNodesChangeBase(passthroughChanges)
+      if (containerRemovalIds.length > 0) {
+        setNodes((nds) =>
+          containerRemovalIds.reduce((acc, cid) => removeContainerReparenting(acc, cid), nds)
+        )
+        setEdges((eds) =>
+          eds.filter(
+            (e) => !containerRemovalIds.includes(e.source) && !containerRemovalIds.includes(e.target)
+          )
+        )
+      }
     },
-    [onNodesChangeBase, pushSnapshot, beginContinuousEdit, endContinuousEdit]
+    [
+      onNodesChangeBase,
+      pushSnapshot,
+      beginContinuousEdit,
+      endContinuousEdit,
+      nodes,
+      setNodes,
+      setEdges
+    ]
   )
 
   // Edges have no drag/resize concept — every non-select change is already
@@ -293,37 +403,153 @@ function CanvasInner(): React.JSX.Element {
     [setEdges, pushSnapshot]
   )
 
+  // Anchors new nodes to the middle of whatever part of the canvas is
+  // currently visible, not a fixed canvas-coordinate origin — on a large,
+  // panned/zoomed-into diagram, a fixed spawn point is very likely off
+  // whatever the user is actually looking at. `index` adds a small bounded
+  // jitter (wraps every 5) so repeated clicks don't stack exactly on top of
+  // each other, without letting position drift indefinitely over a long
+  // session the way the old length-based offset did.
+  const spawnPosition = useCallback(
+    (width: number, height: number, index: number): { x: number; y: number } => {
+      const center = rfInstance.screenToFlowPosition({
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2
+      })
+      const jitter = (index % 5) * 24
+      return { x: center.x - width / 2 + jitter, y: center.y - height / 2 + jitter }
+    },
+    [rfInstance]
+  )
+
   const addShapeNode = useCallback(() => {
     pushSnapshot()
     const id = newNodeId('shape')
+    const width = SHAPE_MIN_WIDTH * 2
+    const height = SHAPE_MIN_HEIGHT * 2
     setNodes((nds) => [
       ...nds,
-      {
-        id,
-        type: 'shape',
-        position: { x: 80 + nds.length * 40, y: 80 + nds.length * 40 },
-        width: SHAPE_MIN_WIDTH * 2,
-        height: SHAPE_MIN_HEIGHT * 2,
-        data: { label: 'Shape' }
-      }
+      { id, type: 'shape', position: spawnPosition(width, height, nds.length), width, height, data: { label: 'Shape' } }
     ])
-  }, [setNodes, pushSnapshot])
+  }, [setNodes, pushSnapshot, spawnPosition])
 
   const addTextNode = useCallback(() => {
     pushSnapshot()
     const id = newNodeId('text')
+    const width = TEXT_MIN_WIDTH * 3
+    const height = TEXT_MIN_HEIGHT * 2
     setNodes((nds) => [
       ...nds,
       {
         id,
         type: 'text',
-        position: { x: 80 + nds.length * 40, y: 80 + nds.length * 40 },
-        width: TEXT_MIN_WIDTH * 3,
-        height: TEXT_MIN_HEIGHT * 2,
+        position: spawnPosition(width, height, nds.length),
+        width,
+        height,
         data: { label: 'Text', rotation: 0 }
       }
     ])
-  }, [setNodes, pushSnapshot])
+  }, [setNodes, pushSnapshot, spawnPosition])
+
+  const addContainerNode = useCallback(() => {
+    pushSnapshot()
+    const id = newNodeId('container')
+    const width = CONTAINER_MIN_WIDTH * 2
+    const height = CONTAINER_MIN_HEIGHT * 1.5
+    setNodes((nds) => [
+      ...nds,
+      {
+        id,
+        type: 'container',
+        position: spawnPosition(width, height, nds.length),
+        width,
+        height,
+        data: { label: 'Container' }
+      }
+    ])
+  }, [setNodes, pushSnapshot, spawnPosition])
+
+  // Drag-into/out-of a container: fires once at the end of a drag gesture,
+  // after the position changes from onNodesChange above have already
+  // applied (so each node's `.position` here reflects its final drop
+  // position). No pushSnapshot here — reparenting is part of the same
+  // gesture whose start already snapshotted via beginContinuousEdit, not a
+  // separate action.
+  //
+  // React Flow's third callback arg is *every* node that moved as part of
+  // this drag, not just the one under the cursor — a multi-selected drag
+  // must reparent each of them independently (each against its own
+  // geometry), or only the grabbed node ends up attached.
+  const onNodeDragStop = useCallback(
+    (_event: unknown, draggedNode: Node, draggedNodes: Node[]) => {
+      const nodesToProcess = draggedNodes.length > 0 ? draggedNodes : [draggedNode]
+
+      setNodes((nds) => {
+        const byId = new Map(nds.map((n) => [n.id, n]))
+        nodesToProcess.forEach((n) => byId.set(n.id, n))
+
+        const isDescendantOf = (candidateId: string, ofId: string): boolean => {
+          let current = byId.get(candidateId)
+          while (current?.parentId) {
+            if (current.parentId === ofId) return true
+            current = byId.get(current.parentId)
+          }
+          return false
+        }
+
+        let result = nds
+        for (const dragged of nodesToProcess) {
+          const target = rfInstance
+            .getIntersectingNodes(dragged, false)
+            .find((n) => n.type === 'container' && n.id !== dragged.id && !isDescendantOf(n.id, dragged.id))
+          const newParentId = target?.id
+          const current = byId.get(dragged.id)
+          if (!current || newParentId === current.parentId) continue
+          const abs = absolutePosition(dragged, byId)
+          const position = newParentId
+            ? subtractPosition(abs, absolutePosition(byId.get(newParentId)!, byId))
+            : abs
+          const patched = { ...current, parentId: newParentId, position }
+          byId.set(dragged.id, patched)
+          result = result.map((n) => (n.id === dragged.id ? patched : n))
+        }
+        return sortNodesForHierarchy(result)
+      })
+    },
+    [rfInstance, setNodes]
+  )
+
+  // Bulk version of the drag-in reparenting above, for a container's
+  // "Attach contained shapes" menu item — encapsulating a lot of
+  // already-positioned nodes shouldn't require one drag per node. Only
+  // currently-top-level nodes fully inside the container's bounds qualify —
+  // a node already parented elsewhere is left alone, not silently moved
+  // out of its existing container.
+  const attachContainedNodes = useCallback(
+    (containerId: string) => {
+      pushSnapshot()
+      setNodes((nds) => {
+        const byId = new Map(nds.map((n) => [n.id, n]))
+        const container = byId.get(containerId)
+        if (!container) return nds
+        const candidateIds = new Set(
+          rfInstance
+            .getIntersectingNodes(container, false)
+            .filter((n) => n.id !== containerId && !n.parentId)
+            .map((n) => n.id)
+        )
+        if (candidateIds.size === 0) return nds
+        const containerAbs = absolutePosition(container, byId)
+        const updated = nds.map((n) => {
+          if (!candidateIds.has(n.id)) return n
+          const abs = absolutePosition(n, byId)
+          return { ...n, parentId: containerId, position: subtractPosition(abs, containerAbs) }
+        })
+        return sortNodesForHierarchy(updated)
+      })
+    },
+    [pushSnapshot, rfInstance, setNodes]
+  )
 
   const selectAll = useCallback(() => {
     setNodes((nds) => nds.map((n) => (n.selected ? n : { ...n, selected: true })))
@@ -694,13 +920,15 @@ function CanvasInner(): React.JSX.Element {
         handleLinkClick,
         beginContinuousEdit,
         endContinuousEdit,
-        pushSnapshot
+        pushSnapshot,
+        attachContainedNodes
       }}
     >
       <div style={{ width: '100vw', height: '100vh' }}>
         <div className="toolbar">
           <button onClick={addShapeNode}>Add shape</button>
           <button onClick={addTextNode}>Add text</button>
+          <button onClick={addContainerNode}>Add container</button>
           <button onClick={handleNew}>New</button>
           <button onClick={handleOpen}>Open…</button>
           <button onClick={handleSave}>Save</button>
@@ -729,6 +957,7 @@ function CanvasInner(): React.JSX.Element {
           edgeTypes={edgeTypes}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
+          onNodeDragStop={onNodeDragStop}
           onConnect={onConnect}
           connectionMode={ConnectionMode.Loose}
           defaultEdgeOptions={{ type: 'labeled', markerEnd: { type: MarkerType.ArrowClosed } }}

@@ -30,6 +30,13 @@ export interface DiagramContextValue {
   // internal store directly), so nothing else observes them for undo
   // history. Call this immediately before the updateNodeData call.
   pushSnapshot: () => void
+  // Container's "Attach contained shapes" menu item (epic 0004) — bulk
+  // version of the drag-in reparenting, for encapsulating a lot of
+  // already-positioned free-floating nodes at once rather than one drag per
+  // node. Only ever attaches currently-top-level nodes fully inside the
+  // container's bounds — a node already inside some other container is left
+  // alone, not silently moved.
+  attachContainedNodes: (containerId: string) => void
 }
 
 const DiagramContext = createContext<DiagramContextValue | null>(null)

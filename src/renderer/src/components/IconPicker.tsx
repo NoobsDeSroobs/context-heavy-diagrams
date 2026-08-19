@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { IconRef, IconSlot } from '@shared/diagram'
 import { loadBuiltinIconSvg, searchBuiltinIconIds } from '../icons/builtinIcons'
 
@@ -41,14 +41,18 @@ export default function IconPicker({
 }: IconPickerProps): React.JSX.Element {
   const [slot, setSlot] = useState<IconSlot>(initialSlot)
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<string[]>(() => searchBuiltinIconIds('').slice(0, MAX_RESULTS))
   const [previews, setPreviews] = useState<Record<string, string>>({})
   const [customIcons, setCustomIcons] = useState<string[]>([])
   const [customPreviews, setCustomPreviews] = useState<Record<string, string>>({})
 
-  useEffect(() => {
-    setResults(searchBuiltinIconIds(query).slice(0, MAX_RESULTS))
-  }, [query])
+  // searchBuiltinIconIds is a plain synchronous lookup — no need to store
+  // its result in state and set it from an effect, it can just be computed
+  // during render. useMemo (not a bare recompute) so this only produces a
+  // new array reference when `query` actually changes — the effect below
+  // keys off it, and a fresh reference on every render would re-run that
+  // effect (and re-fetch every icon preview) on every render, not just
+  // every query change.
+  const results = useMemo(() => searchBuiltinIconIds(query).slice(0, MAX_RESULTS), [query])
 
   useEffect(() => {
     let cancelled = false
@@ -132,7 +136,7 @@ export default function IconPicker({
         </div>
         {customIcons.length > 0 && (
           <>
-            <div className="icon-picker-label">This diagram's custom icons</div>
+            <div className="icon-picker-label">This diagram&apos;s custom icons</div>
             <div className="icon-picker-grid">
               {customIcons.map((path) => (
                 <button

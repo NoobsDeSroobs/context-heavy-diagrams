@@ -22,8 +22,9 @@ export interface ConnectionPoint {
 export interface DiagramNode {
   id: string
   // 'shape' (resizable, connectable, never rotated) | 'text' (resizable,
-  // rotatable, never connectable) — see ADR 0004. Kept as a plain string,
-  // not a union, since more types (e.g. container) arrive in later epics.
+  // rotatable, never connectable) | 'container' (resizable, connectable,
+  // never rotated, can parent other nodes) — see ADR 0004, ADR 0012. Kept
+  // as a plain string, not a union, since more types may arrive later.
   type?: string
   position: { x: number; y: number }
   size?: { width: number; height: number }
@@ -32,6 +33,10 @@ export interface DiagramNode {
   // this — same reasoning as size/rotation being optional. Absent/empty
   // means "just the 4 default points," not "no connection points at all."
   connectionPoints?: ConnectionPoint[]
+  // Another node's id — this node is a child of that container, and
+  // `position` is relative to the parent's origin, not the canvas's. See
+  // ADR 0012. Absent means top-level (no container).
+  parentId?: string
   data: {
     label: string
     icons?: Partial<Record<IconSlot, IconRef>>
@@ -78,6 +83,7 @@ export function serializeDiagram(diagram: DiagramFile): string {
       rotation: n.rotation,
       connectionPoints:
         n.connectionPoints && n.connectionPoints.length > 0 ? n.connectionPoints : undefined,
+      parentId: n.parentId,
       data: {
         label: n.data.label,
         icons: n.data.icons && Object.keys(n.data.icons).length > 0 ? n.data.icons : undefined,
