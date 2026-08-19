@@ -1,10 +1,11 @@
 import { memo, useCallback, type MouseEvent } from 'react'
 import { NodeResizer, useReactFlow, type NodeProps } from '@xyflow/react'
-import type { ConnectionPoint, IconRef, IconSlot } from '@shared/diagram'
+import type { ConnectionPoint, IconRef, IconSlot, NodeStyle } from '@shared/diagram'
 import EditableLabel from '../components/EditableLabel'
 import IconSlotView from '../components/IconSlotView'
 import { useDiagramContext } from '../DiagramContext'
 import { useDetailsTooltip } from '../hooks/useDetailsTooltip'
+import { nodeContainerCss, nodeLabelCss } from '../styles/nodeStyleCss'
 import { ConnectionHandles } from './ConnectionHandles'
 import { useConnectionPointMenu } from './connectionPoints'
 
@@ -32,6 +33,7 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
     diagramPath,
     openContextMenu,
     openIconPicker,
+    openColorPicker,
     openDetailsPanel,
     handleLinkClick,
     pushSnapshot
@@ -42,6 +44,7 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
   const detailsPath = typeof data?.details === 'string' ? data.details : undefined
   const linkedPath = typeof data?.linkedDiagram === 'string' ? data.linkedDiagram : undefined
   const customPoints = (data?.connectionPoints ?? []) as ConnectionPoint[]
+  const style = data?.style as NodeStyle | undefined
   const tooltip = useDetailsTooltip(diagramPath, detailsPath)
   const { addConnectionPointItem, onPointContextMenu } = useConnectionPointMenu(id, customPoints)
 
@@ -71,6 +74,8 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
           ]
       openContextMenu(event.clientX, event.clientY, [
         { label: 'Add icon', onSelect: () => openIconPicker(id, rect) },
+        { label: 'Fill…', onSelect: () => openColorPicker(id, 'fill', rect) },
+        { label: 'Border…', onSelect: () => openColorPicker(id, 'border', rect) },
         { label: 'See details', onSelect: () => openDetailsPanel(id) },
         ...linkItems,
         addConnectionPointItem(rect, event.clientX, event.clientY)
@@ -80,6 +85,7 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
       id,
       openContextMenu,
       openIconPicker,
+      openColorPicker,
       openDetailsPanel,
       linkedPath,
       handleLinkClick,
@@ -102,7 +108,13 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
   )
 
   return (
-    <div className="shape-node" onContextMenu={onContextMenu} onClick={onClick} title={tooltip}>
+    <div
+      className="shape-node"
+      style={nodeContainerCss(style)}
+      onContextMenu={onContextMenu}
+      onClick={onClick}
+      title={tooltip}
+    >
       <NodeResizer isVisible={selected} minWidth={SHAPE_MIN_WIDTH} minHeight={SHAPE_MIN_HEIGHT} />
       <ConnectionHandles customPoints={customPoints} onPointContextMenu={onPointContextMenu} />
       {SLOTS.map((slot) => (
@@ -116,6 +128,7 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
       <EditableLabel
         className="shape-node-label"
         inputClassName="shape-node-label-input"
+        style={nodeLabelCss(style)}
         value={String(data?.label ?? '')}
         onCommit={(label) => {
           pushSnapshot()

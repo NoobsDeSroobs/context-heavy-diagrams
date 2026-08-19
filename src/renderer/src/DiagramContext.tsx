@@ -11,6 +11,9 @@ export interface DiagramContextValue {
   // itself, so it doesn't inherit React Flow's zoom/pan transform and end
   // up scaling like a shape on the canvas.
   openIconPicker: (nodeId: string, anchorRect: DOMRect) => void
+  // "Fill…"/"Border…" context-menu items (ADR 0010) — same fixed-popup
+  // reasoning as openIconPicker above.
+  openColorPicker: (nodeId: string, kind: 'fill' | 'border', anchorRect: DOMRect) => void
   // Fixed right-side dock — no anchor needed, it's not attached to the node.
   openDetailsPanel: (nodeId: string) => void
   // Ctrl/Cmd+click on a node — see epic 0009. Fully decided/implemented in

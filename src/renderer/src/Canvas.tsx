@@ -22,17 +22,25 @@ import {
   createEmptyDiagram,
   type ConnectionPoint,
   type DiagramFile,
+  type EdgeStyle,
   type IconRef,
-  type IconSlot
+  type IconSlot,
+  type NodeStyle
 } from '@shared/diagram'
 import ShapeNode, { SHAPE_MIN_WIDTH, SHAPE_MIN_HEIGHT } from './nodes/ShapeNode'
 import TextNode, { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from './nodes/TextNode'
 import ContainerNode, { CONTAINER_MIN_WIDTH, CONTAINER_MIN_HEIGHT } from './nodes/ContainerNode'
 import LabeledEdge from './edges/LabeledEdge'
+import EdgeMarkerDefs from './edges/edgeMarkers'
 import DiagramContext from './DiagramContext'
 import ContextMenu, { type ContextMenuItem } from './components/ContextMenu'
 import IconPicker from './components/IconPicker'
+import ColorPickerPopup from './components/ColorPickerPopup'
+import StylePicker from './components/StylePicker'
 import DetailsPanel from './components/DetailsPanel'
+import DiagramDock from './panels/DiagramDock'
+import UtilityDock from './panels/UtilityDock'
+import type { TransformPatch } from './panels/PropertyPanel'
 
 // Defined at module scope so React Flow gets a stable reference — recreating
 // these objects every render triggers a React Flow warning and remounts.
@@ -147,6 +155,7 @@ function toDiagramFile(nodes: Node[], edges: Edge[], viewport: Viewport): Diagra
         ? (n.data.connectionPoints as ConnectionPoint[])
         : undefined,
       parentId: n.parentId,
+      style: n.data?.style as NodeStyle | undefined,
       data: {
         label: String(n.data?.label ?? ''),
         icons: n.data?.icons as Partial<Record<IconSlot, IconRef>> | undefined,
@@ -162,7 +171,8 @@ function toDiagramFile(nodes: Node[], edges: Edge[], viewport: Viewport): Diagra
       target: e.target,
       sourceHandle: e.sourceHandle ?? undefined,
       targetHandle: e.targetHandle ?? undefined,
-      label: typeof e.data?.label === 'string' && e.data.label ? e.data.label : undefined
+      label: typeof e.data?.label === 'string' && e.data.label ? e.data.label : undefined,
+      style: e.data?.style as EdgeStyle | undefined
     }))
   }
 }
@@ -188,7 +198,8 @@ function fromDiagramFile(diagram: DiagramFile): { nodes: Node[]; edges: Edge[] }
             : {}),
           ...(n.data.icons ? { icons: n.data.icons } : {}),
           ...(n.data.details ? { details: n.data.details } : {}),
-          ...(n.data.linkedDiagram ? { linkedDiagram: n.data.linkedDiagram } : {})
+          ...(n.data.linkedDiagram ? { linkedDiagram: n.data.linkedDiagram } : {}),
+          ...(n.style ? { style: n.style } : {})
         }
       }))
     ),
@@ -199,7 +210,7 @@ function fromDiagramFile(diagram: DiagramFile): { nodes: Node[]; edges: Edge[] }
       target: e.target,
       sourceHandle: e.sourceHandle,
       targetHandle: e.targetHandle,
-      data: { label: e.label ?? '' }
+      data: { label: e.label ?? '', ...(e.style ? { style: e.style } : {}) }
     }))
   }
 }
@@ -214,6 +225,17 @@ function CanvasInner(): React.JSX.Element {
     items: ContextMenuItem[]
   } | null>(null)
   const [iconPicker, setIconPicker] = useState<{ nodeId: string; anchorRect: DOMRect } | null>(
+    null
+  )
+  // "Fill…"/"Border…" (nodes) and "Line style…" (edges) context-menu
+  // popups — see ADR 0010. Two separate pieces of state since they target
+  // different element kinds and render different popup components.
+  const [colorPicker, setColorPicker] = useState<{
+    nodeId: string
+    kind: 'fill' | 'border'
+    anchorRect: DOMRect
+  } | null>(null)
+  const [linePicker, setLinePicker] = useState<{ edgeId: string; anchorRect: DOMRect } | null>(
     null
   )
   const [detailsPanelNodeId, setDetailsPanelNodeId] = useState<string | null>(null)
@@ -371,6 +393,34 @@ function CanvasInner(): React.JSX.Element {
     setIconPicker({ nodeId, anchorRect })
   }, [])
 
+  const openColorPicker = useCallback(
+    (nodeId: string, kind: 'fill' | 'border', anchorRect: DOMRect) => {
+      setColorPicker({ nodeId, kind, anchorRect })
+    },
+    []
+  )
+
+  // Edges have no single DOM element with a natural bounding rect the way
+  // nodes do — anchor the popup at the click point instead (RF's
+  // onEdgeContextMenu gives us the DOM event directly, no per-edge ref
+  // needed).
+  const onEdgeContextMenu = useCallback(
+    (event: React.MouseEvent, edge: Edge) => {
+      event.preventDefault()
+      openContextMenu(event.clientX, event.clientY, [
+        {
+          label: 'Line style…',
+          onSelect: () =>
+            setLinePicker({
+              edgeId: edge.id,
+              anchorRect: new DOMRect(event.clientX, event.clientY, 0, 0)
+            })
+        }
+      ])
+    },
+    [openContextMenu]
+  )
+
   const openDetailsPanel = useCallback((nodeId: string) => {
     setDetailsPanelNodeId(nodeId)
   }, [])
@@ -379,6 +429,9 @@ function CanvasInner(): React.JSX.Element {
   const iconPickerIcons = (iconPickerNode?.data?.icons ?? {}) as Partial<
     Record<IconSlot, IconRef>
   >
+
+  const colorPickerNode = colorPicker ? nodes.find((n) => n.id === colorPicker.nodeId) : undefined
+  const colorPickerStyle = (colorPickerNode?.data?.style as NodeStyle | undefined) ?? {}
 
   // Seed the draft the first time a node's details panel is opened this
   // session — from an existing file if it has one, empty otherwise.
@@ -464,7 +517,11 @@ function CanvasInner(): React.JSX.Element {
         position: spawnPosition(width, height, nds.length),
         width,
         height,
-        data: { label: 'Container' }
+        // A visible-but-faint default fill (the same neutral tone as the
+        // dashed border) rather than fully transparent — a freshly-added
+        // container should read as "a container" at a glance, not require
+        // opening the property panel first to see anything at all.
+        data: { label: 'Container', style: { fill: 'var(--ev-c-gray-1)', fillOpacity: 20 } }
       }
     ])
   }, [setNodes, pushSnapshot, spawnPosition])
@@ -584,6 +641,66 @@ function CanvasInner(): React.JSX.Element {
     })
   }, [nodes, setNodes, pushSnapshot])
 
+  // Property panel writes (epic 0003) — bypass onNodesChange/onEdgesChange
+  // entirely (direct setNodes/setEdges), same as IconPicker's onPick already
+  // does. Undo grouping is the caller's job: PropertyPanel brackets each
+  // field's edit session with beginContinuousEdit/endContinuousEdit (color/
+  // number inputs) or calls pushSnapshot directly (selects), passed straight
+  // through as props rather than duplicated here.
+  const updateNodeStyle = useCallback(
+    (nodeIds: string[], patch: Partial<NodeStyle>) => {
+      setNodes((nds) =>
+        nds.map((n) =>
+          nodeIds.includes(n.id)
+            ? { ...n, data: { ...n.data, style: { ...(n.data?.style as NodeStyle | undefined), ...patch } } }
+            : n
+        )
+      )
+    },
+    [setNodes]
+  )
+
+  const updateEdgeStyle = useCallback(
+    (edgeIds: string[], patch: Partial<EdgeStyle>) => {
+      setEdges((eds) =>
+        eds.map((e) =>
+          edgeIds.includes(e.id)
+            ? { ...e, data: { ...e.data, style: { ...(e.data?.style as EdgeStyle | undefined), ...patch } } }
+            : e
+        )
+      )
+    },
+    [setEdges]
+  )
+
+  // x/y/width/height are effectively required (or default-sized) fields on
+  // a node, unlike the optional style properties above — an empty/cleared
+  // number field (patch value undefined, mid-typing) is treated as "leave
+  // unchanged" rather than "unset," since there's no meaningful "no
+  // position" state to fall into. Rotation is the exception (genuinely
+  // optional, defaults to 0 — see TextNode).
+  const updateTransform = useCallback(
+    (nodeIds: string[], patch: TransformPatch) => {
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (!nodeIds.includes(n.id)) return n
+          const position =
+            patch.x !== undefined || patch.y !== undefined
+              ? { x: patch.x ?? n.position.x, y: patch.y ?? n.position.y }
+              : n.position
+          return {
+            ...n,
+            position,
+            width: patch.width !== undefined ? patch.width : n.width,
+            height: patch.height !== undefined ? patch.height : n.height,
+            data: patch.rotation !== undefined ? { ...n.data, rotation: patch.rotation } : n.data
+          }
+        })
+      )
+    },
+    [setNodes]
+  )
+
   // Writes any dirty detail drafts to disk and returns nodes with
   // data.details updated to point at them — must happen before the main
   // diagram.chd write so that write reflects the new references.
@@ -661,6 +778,8 @@ function CanvasInner(): React.JSX.Element {
       setDetailsDrafts({})
       setContextMenu(null)
       setIconPicker(null)
+      setColorPicker(null)
+      setLinePicker(null)
       setDetailsPanelNodeId(null)
     },
     [rfInstance, setNodes, setEdges]
@@ -876,6 +995,10 @@ function CanvasInner(): React.JSX.Element {
           setDetailsPanelNodeId(null)
         } else if (iconPicker) {
           setIconPicker(null)
+        } else if (colorPicker) {
+          setColorPicker(null)
+        } else if (linePicker) {
+          setLinePicker(null)
         } else if (contextMenu) {
           setContextMenu(null)
         } else {
@@ -907,8 +1030,28 @@ function CanvasInner(): React.JSX.Element {
     navigateToBreadcrumb,
     detailsPanelNodeId,
     iconPicker,
+    colorPicker,
+    linePicker,
     contextMenu
   ])
+
+  // Drives the diagram dock's mode (item palette vs. property panel) — see
+  // ADR 0013/epic 0003. Recomputed from `nodes`/`edges` each render rather
+  // than tracked separately; the tree is small enough that this isn't worth
+  // memoizing.
+  const selectedNodes = nodes.filter((n) => n.selected)
+  const selectedEdges = edges.filter((e) => e.selected)
+
+  // Containers must always render behind shapes/text, regardless of
+  // creation order or drag history — a container is a background grouping
+  // box, not something that should ever visually cover a sibling shape it
+  // happens to overlap. React Flow computes each node's actual stacking as
+  // zIndex + (selected ? 1000 : 0) (elevateNodesOnSelect, on by default —
+  // see @xyflow/system's calculateZ), so the two tiers need more than 1000
+  // apart, or a *selected* container would still jump above an unselected
+  // shape. Derived purely from `type` at render time, never persisted —
+  // this is a rendering concern, not diagram content.
+  const zIndexedNodes = nodes.map((n) => ({ ...n, zIndex: n.type === 'container' ? 0 : 2000 }))
 
   return (
     <DiagramContext.Provider
@@ -916,6 +1059,7 @@ function CanvasInner(): React.JSX.Element {
         diagramPath: currentPath,
         openContextMenu,
         openIconPicker,
+        openColorPicker,
         openDetailsPanel,
         handleLinkClick,
         beginContinuousEdit,
@@ -924,92 +1068,156 @@ function CanvasInner(): React.JSX.Element {
         attachContainedNodes
       }}
     >
-      <div style={{ width: '100vw', height: '100vh' }}>
-        <div className="toolbar">
-          <button onClick={addShapeNode}>Add shape</button>
-          <button onClick={addTextNode}>Add text</button>
-          <button onClick={addContainerNode}>Add container</button>
-          <button onClick={handleNew}>New</button>
-          <button onClick={handleOpen}>Open…</button>
-          <button onClick={handleSave}>Save</button>
-          <button onClick={handleSaveAs}>Save As…</button>
-          <button onClick={undo} disabled={past.length === 0} title="Undo (Ctrl+Z)">
-            Undo
-          </button>
-          <button onClick={redo} disabled={future.length === 0} title="Redo (Ctrl+Shift+Z)">
-            Redo
-          </button>
-          {breadcrumbs.length > 0 && (
-            <nav className="breadcrumbs">
-              {breadcrumbs.map((crumb, index) => (
-                <button key={crumb.path} onClick={() => navigateToBreadcrumb(index)}>
-                  {crumb.label}
-                </button>
-              ))}
-            </nav>
+      {/* Outer app shell: [canvas view [diagram dock]] [utility dock], nested
+          not flat — see ADR 0013. */}
+      <div className="app-shell">
+        <div className="canvas-view">
+          <div className="toolbar">
+            <button onClick={handleNew}>New</button>
+            <button onClick={handleOpen}>Open…</button>
+            <button onClick={handleSave}>Save</button>
+            <button onClick={handleSaveAs}>Save As…</button>
+            <button onClick={undo} disabled={past.length === 0} title="Undo (Ctrl+Z)">
+              Undo
+            </button>
+            <button onClick={redo} disabled={future.length === 0} title="Redo (Ctrl+Shift+Z)">
+              Redo
+            </button>
+            {breadcrumbs.length > 0 && (
+              <nav className="breadcrumbs">
+                {breadcrumbs.map((crumb, index) => (
+                  <button key={crumb.path} onClick={() => navigateToBreadcrumb(index)}>
+                    {crumb.label}
+                  </button>
+                ))}
+              </nav>
+            )}
+            {currentPath && <span className="toolbar-path">{currentPath}</span>}
+          </div>
+          <div className="canvas-view-body">
+            <div className="canvas-view-flow">
+              <EdgeMarkerDefs />
+              <ReactFlow
+                nodes={zIndexedNodes}
+                edges={edges}
+                nodeTypes={nodeTypes}
+                edgeTypes={edgeTypes}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onNodeDragStop={onNodeDragStop}
+                onConnect={onConnect}
+                onEdgeContextMenu={onEdgeContextMenu}
+                connectionMode={ConnectionMode.Loose}
+                defaultEdgeOptions={{ type: 'labeled', markerEnd: { type: MarkerType.ArrowClosed } }}
+                deleteKeyCode={['Delete', 'Backspace']}
+                multiSelectionKeyCode="Shift" // frees Ctrl/Cmd+click for linked-diagram navigation — epic 0009
+                colorMode="dark" // hardcoded until epic 0005 adds a real light/dark toggle
+                fitView
+              >
+                <Background />
+                <Controls />
+                <MiniMap />
+              </ReactFlow>
+            </div>
+            <DiagramDock
+              selectedNodes={selectedNodes}
+              selectedEdges={selectedEdges}
+              onAddShape={addShapeNode}
+              onAddText={addTextNode}
+              onAddContainer={addContainerNode}
+              onUpdateNodeStyle={updateNodeStyle}
+              onUpdateEdgeStyle={updateEdgeStyle}
+              onUpdateTransform={updateTransform}
+              beginContinuousEdit={beginContinuousEdit}
+              endContinuousEdit={endContinuousEdit}
+              pushSnapshot={pushSnapshot}
+            />
+          </div>
+          {contextMenu && (
+            <ContextMenu
+              x={contextMenu.x}
+              y={contextMenu.y}
+              items={contextMenu.items}
+              onClose={() => setContextMenu(null)}
+            />
           )}
-          {currentPath && <span className="toolbar-path">{currentPath}</span>}
+          {iconPicker && iconPickerNode && (
+            <IconPicker
+              diagramPath={currentPath}
+              icons={iconPickerIcons}
+              initialSlot="topRight"
+              anchorRect={iconPicker.anchorRect}
+              onPick={(slot, icon) => {
+                pushSnapshot()
+                rfInstance.updateNodeData(iconPicker.nodeId, {
+                  icons: { ...iconPickerIcons, [slot]: icon }
+                })
+                setIconPicker(null)
+              }}
+              onRemove={(slot) => {
+                pushSnapshot()
+                const next = { ...iconPickerIcons }
+                delete next[slot]
+                rfInstance.updateNodeData(iconPicker.nodeId, { icons: next })
+                setIconPicker(null)
+              }}
+              onClose={() => setIconPicker(null)}
+            />
+          )}
+          {colorPicker && colorPickerNode && (
+            <ColorPickerPopup
+              title={colorPicker.kind === 'fill' ? 'Fill' : 'Border'}
+              anchorRect={colorPicker.anchorRect}
+              color={colorPicker.kind === 'fill' ? colorPickerStyle.fill : colorPickerStyle.stroke}
+              opacity={
+                colorPicker.kind === 'fill' ? colorPickerStyle.fillOpacity : colorPickerStyle.strokeOpacity
+              }
+              width={colorPicker.kind === 'border' ? colorPickerStyle.strokeWidth : undefined}
+              onChangeColor={(value) =>
+                updateNodeStyle(
+                  [colorPicker.nodeId],
+                  colorPicker.kind === 'fill' ? { fill: value } : { stroke: value }
+                )
+              }
+              onChangeOpacity={(value) =>
+                updateNodeStyle(
+                  [colorPicker.nodeId],
+                  colorPicker.kind === 'fill' ? { fillOpacity: value } : { strokeOpacity: value }
+                )
+              }
+              onChangeWidth={
+                colorPicker.kind === 'border'
+                  ? (value) => updateNodeStyle([colorPicker.nodeId], { strokeWidth: value })
+                  : undefined
+              }
+              onSessionStart={beginContinuousEdit}
+              onSessionEnd={endContinuousEdit}
+              onClose={() => setColorPicker(null)}
+            />
+          )}
+          {linePicker && (
+            <StylePicker
+              anchorRect={linePicker.anchorRect}
+              onPick={(patch) => {
+                pushSnapshot()
+                updateEdgeStyle([linePicker.edgeId], patch)
+                setLinePicker(null)
+              }}
+              onClose={() => setLinePicker(null)}
+            />
+          )}
         </div>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onNodeDragStop={onNodeDragStop}
-          onConnect={onConnect}
-          connectionMode={ConnectionMode.Loose}
-          defaultEdgeOptions={{ type: 'labeled', markerEnd: { type: MarkerType.ArrowClosed } }}
-          deleteKeyCode={['Delete', 'Backspace']}
-          multiSelectionKeyCode="Shift" // frees Ctrl/Cmd+click for linked-diagram navigation — epic 0009
-          colorMode="dark" // hardcoded until epic 0005 adds a real light/dark toggle
-          fitView
-        >
-          <Background />
-          <Controls />
-          <MiniMap />
-        </ReactFlow>
-        {contextMenu && (
-          <ContextMenu
-            x={contextMenu.x}
-            y={contextMenu.y}
-            items={contextMenu.items}
-            onClose={() => setContextMenu(null)}
-          />
-        )}
-        {iconPicker && iconPickerNode && (
-          <IconPicker
-            diagramPath={currentPath}
-            icons={iconPickerIcons}
-            initialSlot="topRight"
-            anchorRect={iconPicker.anchorRect}
-            onPick={(slot, icon) => {
-              pushSnapshot()
-              rfInstance.updateNodeData(iconPicker.nodeId, {
-                icons: { ...iconPickerIcons, [slot]: icon }
-              })
-              setIconPicker(null)
-            }}
-            onRemove={(slot) => {
-              pushSnapshot()
-              const next = { ...iconPickerIcons }
-              delete next[slot]
-              rfInstance.updateNodeData(iconPicker.nodeId, { icons: next })
-              setIconPicker(null)
-            }}
-            onClose={() => setIconPicker(null)}
-          />
-        )}
-        {detailsPanelNodeId && (
-          <DetailsPanel
-            content={detailsDrafts[detailsPanelNodeId] ?? ''}
-            onChange={(content) =>
-              setDetailsDrafts((prev) => ({ ...prev, [detailsPanelNodeId]: content }))
-            }
-            onClose={() => setDetailsPanelNodeId(null)}
-          />
-        )}
+        <UtilityDock>
+          {detailsPanelNodeId && (
+            <DetailsPanel
+              content={detailsDrafts[detailsPanelNodeId] ?? ''}
+              onChange={(content) =>
+                setDetailsDrafts((prev) => ({ ...prev, [detailsPanelNodeId]: content }))
+              }
+              onClose={() => setDetailsPanelNodeId(null)}
+            />
+          )}
+        </UtilityDock>
       </div>
     </DiagramContext.Provider>
   )

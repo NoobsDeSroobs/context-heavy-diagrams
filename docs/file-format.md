@@ -35,6 +35,7 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
   "rotation": 0,
   "connectionPoints": [{ "id": "cp-1", "side": "top", "offset": 0.25 }],
   "parentId": "container-1",
+  "style": { "fill": "#2b6cb0", "stroke": "#1a365d", "strokeWidth": 2 },
   "data": {
     "label": "Web App",
     "icons": { "topRight": { "source": "builtin", "id": "server" } },
@@ -53,6 +54,7 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
 | `rotation` | number | no | Degrees. Only meaningful for `"text"` nodes — `"shape"` and `"container"` nodes are never rotated by this app, so a reader can safely ignore rotation on anything else, though there's no harm in a writer omitting it for them either. |
 | `connectionPoints` | array | no | Only meaningful on `"shape"`/`"container"` nodes. *Additional* points beyond the 4 always-present defaults (`"top"`/`"right"`/`"bottom"`/`"left"`, each centered on their side) — absent or empty means just those 4, not zero. Each entry: `id` (string, unique within this node, referenced by edges' `sourceHandle`/`targetHandle`), `side` (`"top"`/`"right"`/`"bottom"`/`"left"`), `offset` (number 0–1, fraction along that side — not a pixel value, so it stays correct across a resize). The 4 defaults are never listed here and can't be removed. |
 | `parentId` | string | no | Another node's `id` — this node is a child of that container. Absent means top-level. A parent node must appear earlier in the `nodes` array than its children (React Flow's own requirement — a reader building the same in-memory model needs to preserve this ordering). Nesting containers inside containers is allowed, to any depth. Deleting a container reparents its children (to the container's own `parentId`, or top-level) rather than deleting them. |
+| `style` | object | no | Visual overrides — see Node style below. Absent means "use the current hardcoded look." |
 | `data.label` | string | yes | Display text. May be empty. |
 | `data.icons` | object | no | Only meaningful on `"shape"`/`"container"` nodes. Up to four keys — `topLeft`, `topRight`, `bottomLeft`, `bottomRight` — each an icon reference (see below). |
 | `data.details` | string | no | Relative path to a Markdown file with free-form notes about this node (purpose, integration type, inputs/outputs, whatever's useful) — rendered in-app as a side panel, never a second canvas object. Same relative-path-from-the-diagram's-own-directory convention as custom icon paths. Absent means the node has no details yet. |
@@ -72,6 +74,28 @@ A bundled icon, identified by name from [Tabler Icons](https://tabler.io/icons) 
 ```
 A path to an SVG or PNG file, relative to the diagram file's own directory (not to the diagram file itself) — by convention inside a sibling folder named after the diagram (see the Linking section below). Same graceful-if-missing handling as any other relative-path reference in this format.
 
+### Node style
+
+```json
+{ "fill": "#2b6cb0", "fillOpacity": 100, "stroke": "#1a365d", "strokeOpacity": 100, "strokeWidth": 2, "textAlign": "center", "fontSize": 13, "fontColor": "#f7fafc", "fontOpacity": 100, "fontWeight": "bold", "fontFamily": "sans-serif" }
+```
+
+Every field is optional; an absent field means "use the current hardcoded look," same as the parent `style` object being absent entirely.
+
+| Field | Type | Meaning |
+|---|---|---|
+| `fill` | string (CSS color) | Body fill. Meaningful for `"shape"`, `"container"`, and `"text"` nodes (all three can have a background), though usually unset on `"text"`. |
+| `fillOpacity` | number, 0-100 | Fill opacity — a percentage, not CSS's native 0-1 fraction, so it reads directly as "50%" in a hand-edited file. Absent means 100 (fully opaque). Independent of `strokeOpacity`/`fontOpacity` — this is per-channel, not one whole-element opacity, so the fill can fade without the border or label fading with it. |
+| `stroke` | string (CSS color) | Border color. Not meaningful for `"text"` nodes (no border). |
+| `strokeOpacity` | number, 0-100 | Border opacity. Same percentage convention as `fillOpacity`. |
+| `strokeWidth` | number | Border width in pixels. Not meaningful for `"text"` nodes. |
+| `textAlign` | `"start"` \| `"center"` \| `"end"` | Label text alignment. CSS logical values (RTL-correct), not `"left"`/`"right"`. |
+| `fontSize` | number | Label font size in pixels. |
+| `fontColor` | string (CSS color) | Label text color. |
+| `fontOpacity` | number, 0-100 | Label text opacity. Same percentage convention as `fillOpacity`. |
+| `fontWeight` | `"normal"` \| `"bold"` | Label font weight. |
+| `fontFamily` | string (CSS `font-family` value) | Label font. A raw CSS value, not an enum — this app's own picker currently only offers generic families (`"sans-serif"`, `"serif"`, `"monospace"`, `"cursive"`) since a specific named font isn't reliably available across this app's supported platforms (Windows/Linux), but a reader should treat it as an arbitrary CSS font-family string (a specific font name is valid here too, just not yet offered by this app's own UI). |
+
 ## Edge
 
 ```json
@@ -82,7 +106,8 @@ A path to an SVG or PNG file, relative to the diagram file's own directory (not 
   "target": "shape-1",
   "sourceHandle": "right",
   "targetHandle": "left",
-  "label": "reads from"
+  "label": "reads from",
+  "style": { "stroke": "#1a365d", "lineStyle": "dashed", "startMarker": "none", "endMarker": "arrowOpen" }
 }
 ```
 
@@ -93,6 +118,28 @@ A path to an SVG or PNG file, relative to the diagram file's own directory (not 
 | `source` / `target` | string | yes | Node `id`s this edge connects. |
 | `sourceHandle` / `targetHandle` | string | no | Which connection point on the source/target node, when a node has more than one. A `"shape"` or `"container"` node always exposes `"top"`/`"right"`/`"bottom"`/`"left"`, plus whatever `id`s are listed in that node's own `connectionPoints`. Absent means "let the renderer pick a reasonable point." |
 | `label` | string | no | Text shown on the edge, e.g. describing the relationship. |
+| `style` | object | no | Visual overrides — see Edge style below. Absent means "use the current hardcoded look." |
+
+### Edge style
+
+```json
+{ "stroke": "#1a365d", "strokeOpacity": 100, "strokeWidth": 2, "lineStyle": "dashed", "startMarker": "none", "endMarker": "arrowOpen", "fontSize": 12, "fontColor": "#f7fafc", "fontOpacity": 100, "fontWeight": "normal", "fontFamily": "sans-serif" }
+```
+
+Every field is optional, same absent-means-default rule as node style.
+
+| Field | Type | Meaning |
+|---|---|---|
+| `stroke` | string (CSS color) | Line color. |
+| `strokeOpacity` | number, 0-100 | Line (and marker) opacity — see the same field on Node style above. Independent of `fontOpacity` — the label can fade without the line fading with it, or vice versa. Absent means 100 (fully opaque). |
+| `strokeWidth` | number | Line width in pixels. |
+| `lineStyle` | `"solid"` \| `"dashed"` \| `"dotted"` | Line dash pattern. |
+| `startMarker` / `endMarker` | marker kind | Arrowhead/terminator drawn at the source/target end. One of `"none"`, `"arrowOpen"`, `"arrowClosed"`, `"circle"`, `"circleFilled"`, `"diamond"`, `"diamondFilled"`, `"crowsFootOne"`, `"crowsFootMany"`, `"crowsFootOneOrMany"`, `"crowsFootZeroOrOne"`, `"crowsFootZeroOrMany"`. These are deliberately shape-described, not tied to any one notation system (UML/ERD/BPMN) — a reader shouldn't infer semantic meaning from the name beyond what's actually drawn. |
+| `fontSize` | number | Label font size in pixels. |
+| `fontColor` | string (CSS color) | Label text color. |
+| `fontOpacity` | number, 0-100 | Label text opacity — see the same field on Node style above. |
+| `fontWeight` | `"normal"` \| `"bold"` | Label font weight. |
+| `fontFamily` | string (CSS `font-family` value) | Label font — see the same field on Node style above. |
 
 ## Determinism
 
@@ -108,7 +155,7 @@ The `.chd` file itself is always plain, deterministic JSON — kept git-friendly
 
 ## Versioning
 
-`version` is currently always `1`. Fields have been added over time (`size`, `rotation`, `connectionPoints`, `parentId`, edge `type`/`label`, `data.icons`, `data.details`, `data.linkedDiagram`) but always additively — a reader from an earlier point in this project's history can still open a newer file and just won't recognize the newer fields. A breaking change to the meaning of an existing field would bump `version`; nothing has required that yet.
+`version` is currently always `1`. Fields have been added over time (`size`, `rotation`, `connectionPoints`, `parentId`, `style` on both Node and Edge, edge `type`/`label`, `data.icons`, `data.details`, `data.linkedDiagram`) but always additively — a reader from an earlier point in this project's history can still open a newer file and just won't recognize the newer fields. A breaking change to the meaning of an existing field would bump `version`; nothing has required that yet.
 
 ## Example
 

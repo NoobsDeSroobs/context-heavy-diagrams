@@ -1,10 +1,14 @@
-import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent } from 'react'
 
 interface EditableLabelProps {
   value: string
   onCommit: (value: string) => void
   className?: string
   inputClassName?: string
+  // Font styling from NodeStyle/EdgeStyle (ADR 0014) — applied to both the
+  // display div and the edit-mode input so the look doesn't jump on
+  // double-click.
+  style?: CSSProperties
 }
 
 // Double-click to edit, Enter/blur commits, Escape cancels. dir="auto" so
@@ -17,7 +21,8 @@ export default function EditableLabel({
   value,
   onCommit,
   className,
-  inputClassName
+  inputClassName,
+  style
 }: EditableLabelProps): React.JSX.Element {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(value)
@@ -62,6 +67,7 @@ export default function EditableLabel({
         ref={inputRef}
         className={`editable-label-input nodrag nopan${inputClassName ? ` ${inputClassName}` : ''}`}
         dir="auto"
+        style={style}
         value={draft}
         onChange={(event) => setDraft(event.target.value)}
         onBlur={commit}
@@ -71,7 +77,7 @@ export default function EditableLabel({
   }
 
   return (
-    <div className={className} dir="auto" onDoubleClick={startEditing}>
+    <div className={className} dir="auto" style={style} onDoubleClick={startEditing}>
       {value}
     </div>
   )

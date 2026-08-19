@@ -1,8 +1,10 @@
 import { memo, useCallback, useRef, useState } from 'react'
 import { NodeResizer, useReactFlow, type NodeProps } from '@xyflow/react'
+import type { NodeStyle } from '@shared/diagram'
 import EditableLabel from '../components/EditableLabel'
 import { useDiagramContext } from '../DiagramContext'
 import { useDetailsTooltip } from '../hooks/useDetailsTooltip'
+import { nodeContainerCss, nodeLabelCss } from '../styles/nodeStyleCss'
 
 export const TEXT_MIN_WIDTH = 40
 export const TEXT_MIN_HEIGHT = 24
@@ -30,6 +32,7 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
   const detailsPath = typeof data?.details === 'string' ? data.details : undefined
   const linkedPath = typeof data?.linkedDiagram === 'string' ? data.linkedDiagram : undefined
   const tooltip = useDetailsTooltip(diagramPath, detailsPath)
+  const style = data?.style as NodeStyle | undefined
 
   const onContextMenu = useCallback(
     (event: React.MouseEvent) => {
@@ -113,7 +116,7 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
     <div
       ref={nodeRef}
       className={`text-node${rotating ? ' rotating' : ''}`}
-      style={{ transform: `rotate(${rotation}deg)` }}
+      style={{ transform: `rotate(${rotation}deg)`, ...nodeContainerCss(style) }}
       onContextMenu={onContextMenu}
       onClick={onClick}
       title={tooltip}
@@ -129,6 +132,7 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
       <EditableLabel
         className="text-node-label"
         inputClassName="text-node-label-input"
+        style={nodeLabelCss(style)}
         value={String(data?.label ?? '')}
         onCommit={(label) => {
           pushSnapshot()

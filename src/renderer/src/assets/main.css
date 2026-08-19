@@ -12,6 +12,59 @@ body {
   overflow: hidden;
 }
 
+/* Two-slot dock layout — see ADR 0013. Nested, not flat:
+   [canvas-view [diagram-dock]] [utility-dock]. Both docks are real flex
+   layout (React Flow auto-resizes via ResizeObserver), zero-width when
+   empty. */
+.app-shell {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+}
+
+.canvas-view {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.canvas-view-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: row;
+}
+
+.canvas-view-flow {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
+
+.diagram-dock {
+  flex: 0 0 auto;
+  height: 100%;
+  overflow-y: auto;
+  background: var(--color-background-soft);
+  border-left: 1px solid var(--ev-c-gray-2);
+}
+
+/* Per-mode width, not one fixed value for the dock as a whole — a palette
+   of a few icons needs less room than a property panel with several
+   sections. Neither is user-resizable in v1. */
+.diagram-dock-palette {
+  width: 96px;
+}
+
+.diagram-dock-properties {
+  width: 260px;
+}
+
 .toolbar {
   position: absolute;
   top: 8px;
@@ -136,6 +189,12 @@ body {
   align-items: center;
   justify-content: center;
   position: relative;
+  /* Neutral base so an optional style.stroke/strokeWidth (ADR 0014 — rare
+     but valid on text nodes) has a border-style to actually render against;
+     border-width 0 keeps it invisible until a style override sets one. */
+  border-style: solid;
+  border-color: transparent;
+  border-width: 0;
 }
 
 .text-node.rotating {
@@ -375,18 +434,23 @@ body {
   background: var(--ev-button-alt-hover-bg);
 }
 
-.details-panel {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 25;
+/* Retrofitted from a position:fixed overlay into a flex child of
+   .utility-dock — see ADR 0013. Internal layout (toolbar + body) unchanged,
+   just its outer positioning. .utility-dock owns the width. */
+.utility-dock {
+  flex: 0 0 auto;
+  height: 100%;
   width: 360px;
+  border-left: 1px solid var(--ev-c-gray-2);
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.4);
+}
+
+.details-panel {
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   background: var(--color-background-soft);
-  border-left: 1px solid var(--ev-c-gray-2);
-  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.4);
 }
 
 .details-panel-toolbar {
@@ -473,4 +537,257 @@ body {
   border-radius: 3px;
   padding: 1px 4px;
   font-size: 12px;
+}
+
+.item-palette {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 8px;
+}
+
+.item-palette-hint {
+  font-size: 11px;
+  color: var(--ev-c-text-3);
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.item-palette-button {
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 6px;
+  padding: 8px 4px;
+  font-size: 11px;
+}
+
+.item-palette-button:hover {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.item-palette-icon {
+  width: 22px;
+  height: 16px;
+  border: 1.5px solid currentColor;
+  box-sizing: border-box;
+}
+
+.item-palette-icon-shape {
+  border-radius: 3px;
+}
+
+.item-palette-icon-container {
+  border-radius: 3px;
+  border-style: dashed;
+}
+
+.item-palette-icon-text {
+  height: 2px;
+  border: none;
+  border-bottom: 2px solid currentColor;
+  margin-top: 7px;
+}
+
+.property-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.property-panel-empty {
+  padding: 16px 12px;
+  font-size: 12px;
+  color: var(--ev-c-text-3);
+  text-align: center;
+}
+
+.property-section {
+  border-bottom: 1px solid var(--ev-c-gray-2);
+}
+
+.property-section-header {
+  cursor: pointer;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  padding: 8px 10px;
+}
+
+.property-section-header:hover {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.property-section-caret {
+  display: inline-block;
+  font-size: 10px;
+  transition: transform 0.1s ease;
+}
+
+.property-section-caret.open {
+  transform: rotate(90deg);
+}
+
+.property-section-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 2px 10px 10px;
+}
+
+.property-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--ev-c-text-2);
+}
+
+.property-field-label {
+  flex: 0 0 auto;
+  min-width: 44px;
+}
+
+.property-number-field,
+.property-select-field,
+.property-color-text {
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  padding: 3px 5px;
+  width: 100%;
+  min-width: 0;
+}
+
+.property-color-field {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.property-color-swatch {
+  cursor: pointer;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  background: none;
+}
+
+.property-color-swatch.mixed {
+  border-style: dashed;
+}
+
+.property-field-clear {
+  cursor: pointer;
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: var(--ev-c-text-3);
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 4px;
+}
+
+.property-field-clear:hover {
+  color: var(--color-text);
+}
+
+.property-opacity-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.property-opacity-slider {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--ev-c-text-1);
+}
+
+.property-opacity-slider.mixed {
+  opacity: 0.5;
+}
+
+.property-opacity-number {
+  flex: 0 0 auto;
+  width: 48px;
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  padding: 3px 2px;
+  text-align: center;
+  /* No native up/down spinner — the linked slider already covers that
+     interaction, and the spinner's own width was eating into the space
+     available for the digits, clipping "100" at this field's narrow
+     width. */
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.property-opacity-number::-webkit-inner-spin-button,
+.property-opacity-number::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.style-picker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.style-picker-item {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 12px;
+  text-align: left;
+}
+
+.style-picker-item:hover {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.style-picker-swatch {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 0;
+  border-top: 2px solid var(--ev-c-text-2);
+}
+
+.style-picker-swatch-dashed {
+  border-top-style: dashed;
+}
+
+.style-picker-swatch-dotted {
+  border-top-style: dotted;
 }

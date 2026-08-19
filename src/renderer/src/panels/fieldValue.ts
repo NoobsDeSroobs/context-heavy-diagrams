@@ -1,0 +1,21 @@
+// Split out from fields.tsx: react-refresh/only-export-components flags a
+// file that exports both components and plain values/functions. Whether a
+// field's value is uniform across the current selection — `mixed: true`
+// means at least two selected items disagree; `value` is then meaningless
+// and callers should show a blank/placeholder instead. See epic 0003's
+// design (docs/planning/epics/0003-styling-panel.md) for the mixed-value
+// convention this supports.
+export interface FieldValue<T> {
+  value: T | undefined
+  mixed: boolean
+}
+
+export function computeFieldValue<T, I>(
+  items: I[],
+  getter: (item: I) => T | undefined
+): FieldValue<T> {
+  if (items.length === 0) return { value: undefined, mixed: false }
+  const first = getter(items[0])
+  const allSame = items.every((item) => getter(item) === first)
+  return allSame ? { value: first, mixed: false } : { value: undefined, mixed: true }
+}
