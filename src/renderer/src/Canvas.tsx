@@ -17,7 +17,13 @@ import {
   type Viewport
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { createEmptyDiagram, type DiagramFile, type IconRef, type IconSlot } from '@shared/diagram'
+import {
+  createEmptyDiagram,
+  type ConnectionPoint,
+  type DiagramFile,
+  type IconRef,
+  type IconSlot
+} from '@shared/diagram'
 import ShapeNode, { SHAPE_MIN_WIDTH, SHAPE_MIN_HEIGHT } from './nodes/ShapeNode'
 import TextNode, { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from './nodes/TextNode'
 import LabeledEdge from './edges/LabeledEdge'
@@ -53,6 +59,9 @@ function toDiagramFile(nodes: Node[], edges: Edge[], viewport: Viewport): Diagra
       position: { x: n.position.x, y: n.position.y },
       size: n.width != null && n.height != null ? { width: n.width, height: n.height } : undefined,
       rotation: typeof n.data?.rotation === 'number' ? (n.data.rotation as number) : undefined,
+      connectionPoints: Array.isArray(n.data?.connectionPoints)
+        ? (n.data.connectionPoints as ConnectionPoint[])
+        : undefined,
       data: {
         label: String(n.data?.label ?? ''),
         icons: n.data?.icons as Partial<Record<IconSlot, IconRef>> | undefined,
@@ -84,6 +93,9 @@ function fromDiagramFile(diagram: DiagramFile): { nodes: Node[]; edges: Edge[] }
       data: {
         label: n.data.label,
         ...(n.rotation != null ? { rotation: n.rotation } : {}),
+        ...(n.connectionPoints && n.connectionPoints.length > 0
+          ? { connectionPoints: n.connectionPoints }
+          : {}),
         ...(n.data.icons ? { icons: n.data.icons } : {}),
         ...(n.data.details ? { details: n.data.details } : {}),
         ...(n.data.linkedDiagram ? { linkedDiagram: n.data.linkedDiagram } : {})

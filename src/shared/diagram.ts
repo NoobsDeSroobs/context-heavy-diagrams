@@ -7,6 +7,18 @@ export type IconRef = { source: 'builtin'; id: string } | { source: 'custom'; pa
 
 export type IconSlot = 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight'
 
+// Beyond the 4 default centered points (one per side, always present,
+// never removable, never stored explicitly) — see epic 0013. `offset` is a
+// 0-1 fraction along that side, not a pixel value, so a point survives
+// resize without recomputing anything.
+export type ConnectionPointSide = 'top' | 'right' | 'bottom' | 'left'
+
+export interface ConnectionPoint {
+  id: string
+  side: ConnectionPointSide
+  offset: number
+}
+
 export interface DiagramNode {
   id: string
   // 'shape' (resizable, connectable, never rotated) | 'text' (resizable,
@@ -16,6 +28,10 @@ export interface DiagramNode {
   position: { x: number; y: number }
   size?: { width: number; height: number }
   rotation?: number
+  // Only 'shape' nodes are connectable, so only they meaningfully have
+  // this — same reasoning as size/rotation being optional. Absent/empty
+  // means "just the 4 default points," not "no connection points at all."
+  connectionPoints?: ConnectionPoint[]
   data: {
     label: string
     icons?: Partial<Record<IconSlot, IconRef>>
@@ -60,6 +76,8 @@ export function serializeDiagram(diagram: DiagramFile): string {
       position: { x: n.position.x, y: n.position.y },
       size: n.size ? { width: n.size.width, height: n.size.height } : undefined,
       rotation: n.rotation,
+      connectionPoints:
+        n.connectionPoints && n.connectionPoints.length > 0 ? n.connectionPoints : undefined,
       data: {
         label: n.data.label,
         icons: n.data.icons && Object.keys(n.data.icons).length > 0 ? n.data.icons : undefined,
