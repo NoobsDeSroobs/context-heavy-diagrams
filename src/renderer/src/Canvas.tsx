@@ -17,7 +17,7 @@ import {
   type Viewport
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import type { DiagramFile, IconRef, IconSlot } from '@shared/diagram'
+import { createEmptyDiagram, type DiagramFile, type IconRef, type IconSlot } from '@shared/diagram'
 import ShapeNode, { SHAPE_MIN_WIDTH, SHAPE_MIN_HEIGHT } from './nodes/ShapeNode'
 import TextNode, { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from './nodes/TextNode'
 import LabeledEdge from './edges/LabeledEdge'
@@ -195,6 +195,37 @@ function CanvasInner(): React.JSX.Element {
     ])
   }, [setNodes])
 
+  const selectAll = useCallback(() => {
+    setNodes((nds) => nds.map((n) => (n.selected ? n : { ...n, selected: true })))
+    setEdges((eds) => eds.map((e) => (e.selected ? e : { ...e, selected: true })))
+  }, [setNodes, setEdges])
+
+  const deselectAll = useCallback(() => {
+    setNodes((nds) => nds.map((n) => (n.selected ? { ...n, selected: false } : n)))
+    setEdges((eds) => eds.map((e) => (e.selected ? { ...e, selected: false } : e)))
+  }, [setNodes, setEdges])
+
+  // No clipboard involved (deliberately simpler than real copy/paste — see
+  // epic 0025), just clones selected nodes in place with a small offset and
+  // selects the clones so they're immediately draggable. Edges between
+  // duplicated nodes are not duplicated — same reasoning as epic 0025's
+  // notes: that's real clipboard-shaped complexity this shortcut isn't
+  // trying to take on.
+  const duplicateSelected = useCallback(() => {
+    setNodes((nds) => {
+      const selected = nds.filter((n) => n.selected)
+      if (selected.length === 0) return nds
+      const clones = selected.map((n) => ({
+        ...n,
+        id: newNodeId(n.type ?? 'shape'),
+        position: { x: n.position.x + 20, y: n.position.y + 20 },
+        selected: true,
+        data: { ...n.data }
+      }))
+      return [...nds.map((n) => (n.selected ? { ...n, selected: false } : n)), ...clones]
+    })
+  }, [setNodes])
+
   // Writes any dirty detail drafts to disk and returns nodes with
   // data.details updated to point at them — must happen before the main
   // diagram.chd write so that write reflects the new references.
@@ -251,17 +282,6 @@ function CanvasInner(): React.JSX.Element {
   const handleSave = useCallback(() => performSave(false), [performSave])
   const handleSaveAs = useCallback(() => performSave(true), [performSave])
 
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent): void => {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
-        event.preventDefault()
-        handleSave()
-      }
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [handleSave])
-
   // Shared by "Open", forward link-navigation, and breadcrumb back-nav — the
   // one place that applies a loaded DiagramFile to all canvas state. Also
   // closes any panel/menu left open from the diagram just navigated away
@@ -269,7 +289,7 @@ function CanvasInner(): React.JSX.Element {
   // but link-navigation is frequent enough that a stale panel referencing a
   // node id from the previous diagram becomes a real, visible bug).
   const loadDiagramIntoCanvas = useCallback(
-    (path: string, diagram: DiagramFile) => {
+    (path: string | null, diagram: DiagramFile) => {
       const { nodes: openedNodes, edges: openedEdges } = fromDiagramFile(diagram)
       setNodes(openedNodes)
       setEdges(openedEdges)
@@ -294,6 +314,17 @@ function CanvasInner(): React.JSX.Element {
     if (!result) return
     setBreadcrumbs([])
     loadDiagramIntoCanvas(result.path, result.diagram)
+  }, [loadDiagramIntoCanvas])
+
+  // In-memory only — see epic 0018. No file is written, nothing is linked
+  // from anywhere, and (like Open/link-navigation) any unsaved edits in the
+  // current diagram are silently discarded — no dirty-tracking exists yet
+  // (epic 0020). Replaces the current diagram in place, single-window
+  // model; once tabs/windows exist (epic 0024) this should open a new tab
+  // instead and leave the current one alone.
+  const handleNew = useCallback(() => {
+    setBreadcrumbs([])
+    loadDiagramIntoCanvas(null, createEmptyDiagram())
   }, [loadDiagramIntoCanvas])
 
   // Pure navigation: resolves a stored relative path and, on success, pushes
@@ -418,6 +449,96 @@ function CanvasInner(): React.JSX.Element {
     [breadcrumbs, loadDiagramIntoCanvas]
   )
 
+  // Global shortcuts — see epic 0018. One handler rather than one useEffect
+  // per shortcut, now that there are enough of these to make that
+  // unwieldy. Checks both ctrlKey and metaKey throughout (not just on
+  // Windows/Linux's Ctrl) — no reason to make this actively worse for Mac
+  // users over a one-line check, even though macOS isn't a primary target.
+  // Undo/redo (Ctrl/Shift+Ctrl+Z) is deliberately NOT bound here — there's
+  // no undo mechanism yet to bind it to; that lands as part of epic 0006.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent): void => {
+      const target = event.target as HTMLElement | null
+      const isEditingText =
+        !!target &&
+        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
+      const mod = event.ctrlKey || event.metaKey
+
+      if (mod && event.key.toLowerCase() === 's') {
+        event.preventDefault()
+        if (event.shiftKey) handleSaveAs()
+        else handleSave()
+        return
+      }
+      if (mod && event.key.toLowerCase() === 'o') {
+        event.preventDefault()
+        handleOpen()
+        return
+      }
+      if (mod && event.key.toLowerCase() === 'n') {
+        event.preventDefault()
+        handleNew()
+        return
+      }
+      // Ctrl+A/D are text-editing conventions (select-all-text, and in some
+      // apps duplicate-line) — defer to native behavior while a text field
+      // has focus rather than hijacking them for canvas actions.
+      if (mod && event.key.toLowerCase() === 'a' && !isEditingText) {
+        event.preventDefault()
+        selectAll()
+        return
+      }
+      if (mod && event.key.toLowerCase() === 'd' && !isEditingText) {
+        event.preventDefault()
+        duplicateSelected()
+        return
+      }
+      if (mod && event.key === '0') {
+        event.preventDefault()
+        rfInstance.fitView()
+        return
+      }
+      if (event.altKey && event.key === 'ArrowLeft') {
+        if (breadcrumbs.length > 0) navigateToBreadcrumb(breadcrumbs.length - 1)
+        return
+      }
+      if (event.key === 'Escape') {
+        if (detailsPanelNodeId) {
+          setDetailsPanelNodeId(null)
+        } else if (iconPicker) {
+          setIconPicker(null)
+        } else if (contextMenu) {
+          setContextMenu(null)
+        } else {
+          deselectAll()
+        }
+        return
+      }
+      // No custom arrow-key nudge here — React Flow already moves selected
+      // nodes on arrow keys natively (1px, 4px with Shift; see
+      // arrowKeyDiffs/moveSelectedNodes in @xyflow/react). Adding our own
+      // handler double-applied on top of it (confirmed: a single ArrowRight
+      // moved a node 6px, not the 1px expected) rather than being additive
+      // with nothing already there, unlike drag-to-select/multi-select.
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [
+    handleSave,
+    handleSaveAs,
+    handleOpen,
+    handleNew,
+    selectAll,
+    duplicateSelected,
+    deselectAll,
+    rfInstance,
+    breadcrumbs,
+    navigateToBreadcrumb,
+    detailsPanelNodeId,
+    iconPicker,
+    contextMenu
+  ])
+
   return (
     <DiagramContext.Provider
       value={{
@@ -432,6 +553,7 @@ function CanvasInner(): React.JSX.Element {
         <div className="toolbar">
           <button onClick={addShapeNode}>Add shape</button>
           <button onClick={addTextNode}>Add text</button>
+          <button onClick={handleNew}>New</button>
           <button onClick={handleOpen}>Open…</button>
           <button onClick={handleSave}>Save</button>
           <button onClick={handleSaveAs}>Save As…</button>
