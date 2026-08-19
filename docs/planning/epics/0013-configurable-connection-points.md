@@ -14,3 +14,5 @@ Beyond the default 4 fixed connection points per `ShapeNode` (one per side, cent
 
 ## Notes
 Same split-out-from-0002 situation as epic 0012 — see that epic's notes.
+
+Distinct from epic 0003's arrow marker styling (what an edge's end looks like — arrowhead, crow's-foot, diamond, etc., see [ADR 0010](../../decisions/0010-named-searchable-style-presets.md)). This epic is only about *where on a shape* an edge can attach, not what it looks like once it does — easy to conflate since both surfaced around the same "arrow ends" conversation.
