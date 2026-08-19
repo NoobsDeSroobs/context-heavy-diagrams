@@ -15,7 +15,15 @@ export const TEXT_MIN_HEIGHT = 24
 // slightly off. Accepted for now — see the epic 0002 notes.
 function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
   const { updateNodeData } = useReactFlow()
-  const { diagramPath, openContextMenu, openDetailsPanel, handleLinkClick } = useDiagramContext()
+  const {
+    diagramPath,
+    openContextMenu,
+    openDetailsPanel,
+    handleLinkClick,
+    beginContinuousEdit,
+    endContinuousEdit,
+    pushSnapshot
+  } = useDiagramContext()
   const rotation = typeof data?.rotation === 'number' ? (data.rotation as number) : 0
   const nodeRef = useRef<HTMLDivElement>(null)
   const [rotating, setRotating] = useState(false)
@@ -32,7 +40,13 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
               label: 'Open linked diagram',
               onSelect: () => handleLinkClick(id, event.clientX, event.clientY)
             },
-            { label: 'Remove link', onSelect: () => updateNodeData(id, { linkedDiagram: undefined }) }
+            {
+              label: 'Remove link',
+              onSelect: () => {
+                pushSnapshot()
+                updateNodeData(id, { linkedDiagram: undefined })
+              }
+            }
           ]
         : [
             {
@@ -45,7 +59,7 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
         ...linkItems
       ])
     },
-    [id, openContextMenu, openDetailsPanel, linkedPath, handleLinkClick, updateNodeData]
+    [id, openContextMenu, openDetailsPanel, linkedPath, handleLinkClick, updateNodeData, pushSnapshot]
   )
 
   // Ctrl/Cmd+click is distinct from plain click (selection) and right-click
@@ -66,6 +80,12 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
       const nodeEl = nodeRef.current
       if (!nodeEl) return
       setRotating(true)
+      // Rotation has no dragging/resizing flag the way position/dimension
+      // changes do (it's just repeated updateNodeData calls in the
+      // mousemove loop below), so the undo history (epic 0006) needs an
+      // explicit start/end marker to group the whole drag into one step
+      // instead of one step per mousemove tick.
+      beginContinuousEdit()
 
       const rect = nodeEl.getBoundingClientRect()
       const center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }
@@ -79,13 +99,14 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
       }
       const onMouseUp = (): void => {
         setRotating(false)
+        endContinuousEdit()
         window.removeEventListener('mousemove', onMouseMove)
         window.removeEventListener('mouseup', onMouseUp)
       }
       window.addEventListener('mousemove', onMouseMove)
       window.addEventListener('mouseup', onMouseUp)
     },
-    [id, updateNodeData]
+    [id, updateNodeData, beginContinuousEdit, endContinuousEdit]
   )
 
   return (
@@ -109,7 +130,10 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
         className="text-node-label"
         inputClassName="text-node-label-input"
         value={String(data?.label ?? '')}
-        onCommit={(label) => updateNodeData(id, { label })}
+        onCommit={(label) => {
+          pushSnapshot()
+          updateNodeData(id, { label })
+        }}
       />
     </div>
   )

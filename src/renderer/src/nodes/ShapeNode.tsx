@@ -67,8 +67,14 @@ function nearestConnectionPoint(
 // The icon *picker* and details panel are NOT rendered here — see
 // DiagramContext for why.
 function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
-  const { diagramPath, openContextMenu, openIconPicker, openDetailsPanel, handleLinkClick } =
-    useDiagramContext()
+  const {
+    diagramPath,
+    openContextMenu,
+    openIconPicker,
+    openDetailsPanel,
+    handleLinkClick,
+    pushSnapshot
+  } = useDiagramContext()
   const { updateNodeData, getEdges } = useReactFlow()
 
   const icons = (data?.icons ?? {}) as Partial<Record<IconSlot, IconRef>>
@@ -87,7 +93,13 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
               label: 'Open linked diagram',
               onSelect: () => handleLinkClick(id, event.clientX, event.clientY)
             },
-            { label: 'Remove link', onSelect: () => updateNodeData(id, { linkedDiagram: undefined }) }
+            {
+              label: 'Remove link',
+              onSelect: () => {
+                pushSnapshot()
+                updateNodeData(id, { linkedDiagram: undefined })
+              }
+            }
           ]
         : [
             {
@@ -102,6 +114,7 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
         {
           label: 'Add connection point here',
           onSelect: () => {
+            pushSnapshot()
             const point = nearestConnectionPoint(rect, event.clientX, event.clientY)
             updateNodeData(id, {
               connectionPoints: [
@@ -121,7 +134,8 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
       linkedPath,
       handleLinkClick,
       updateNodeData,
-      customPoints
+      customPoints,
+      pushSnapshot
     ]
   )
 
@@ -147,6 +161,7 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
               alert('This connection point has an edge attached — disconnect it first.')
               return
             }
+            pushSnapshot()
             updateNodeData(id, {
               connectionPoints: customPoints.filter((p) => p.id !== point.id)
             })
@@ -154,7 +169,7 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
         }
       ])
     },
-    [id, customPoints, getEdges, openContextMenu, updateNodeData]
+    [id, customPoints, getEdges, openContextMenu, updateNodeData, pushSnapshot]
   )
 
   // Ctrl/Cmd+click is distinct from plain click (selection, handled by React
@@ -198,7 +213,10 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
         className="shape-node-label"
         inputClassName="shape-node-label-input"
         value={String(data?.label ?? '')}
-        onCommit={(label) => updateNodeData(id, { label })}
+        onCommit={(label) => {
+          pushSnapshot()
+          updateNodeData(id, { label })
+        }}
       />
     </div>
   )

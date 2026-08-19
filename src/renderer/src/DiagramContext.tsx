@@ -17,6 +17,19 @@ export interface DiagramContextValue {
   // Canvas.tsx (it owns `nodes` and `openContextMenu`); node components just
   // forward the click, they don't decide chooser-vs-navigate themselves.
   handleLinkClick: (nodeId: string, clientX: number, clientY: number) => void
+  // Undo history (epic 0006) groups a continuous mouse gesture into one
+  // step by watching React Flow's own dragging/resizing change flags — but
+  // rotation has no such flag (it's just repeated updateNodeData calls
+  // during a mousemove loop), so TextNode's rotate handler calls these
+  // itself at drag-start/drag-end to get the same grouping.
+  beginContinuousEdit: () => void
+  endContinuousEdit: () => void
+  // For discrete (non-continuous) edits made via rfInstance.updateNodeData
+  // — label commits, link/connection-point add-remove — which bypass
+  // Canvas's own onNodesChange entirely (updateNodeData calls React Flow's
+  // internal store directly), so nothing else observes them for undo
+  // history. Call this immediately before the updateNodeData call.
+  pushSnapshot: () => void
 }
 
 const DiagramContext = createContext<DiagramContextValue | null>(null)

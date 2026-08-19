@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -14,6 +14,7 @@ import {
   type Connection,
   type Edge,
   type Node,
+  type NodeChange,
   type Viewport
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
@@ -48,6 +49,14 @@ function newNodeId(prefix: string): string {
 function basename(path: string): string {
   return path.split(/[/\\]/).pop() ?? path
 }
+
+// Undo/redo — see epic 0006. Deliberately just {nodes, edges}, not
+// viewport: panning/zooming isn't a content edit worth undoing.
+interface HistorySnapshot {
+  nodes: Node[]
+  edges: Edge[]
+}
+const MAX_HISTORY = 50
 
 function toDiagramFile(nodes: Node[], edges: Edge[], viewport: Viewport): DiagramFile {
   return {
@@ -114,8 +123,8 @@ function fromDiagramFile(diagram: DiagramFile): { nodes: Node[]; edges: Edge[] }
 }
 
 function CanvasInner(): React.JSX.Element {
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
+  const [nodes, setNodes, onNodesChangeBase] = useNodesState<Node>([])
+  const [edges, setEdges, onEdgesChangeBase] = useEdgesState<Edge>([])
   const [currentPath, setCurrentPath] = useState<string | null>(null)
   const [contextMenu, setContextMenu] = useState<{
     x: number
@@ -138,6 +147,111 @@ function CanvasInner(): React.JSX.Element {
   // dirty-tracking/autosave yet at all — epic 0020).
   const [breadcrumbs, setBreadcrumbs] = useState<{ path: string; label: string }[]>([])
   const rfInstance = useReactFlow()
+
+  // Undo/redo history — see epic 0006. Explicit calls at each real mutation
+  // site (pushSnapshot before mutating), not a useEffect reacting to
+  // nodes/edges changing — an earlier version tried the effect approach and
+  // it broke under React StrictMode's dev-mode double-invoke: the effect's
+  // only observable "output" was a ref mutation (lastSettledRef), and an
+  // effect whose side effect isn't safe to run twice is exactly what
+  // StrictMode's double-invoke exists to catch. Explicit calls from event
+  // handlers don't have this problem — StrictMode only double-invokes
+  // render bodies and effects, not regular callbacks.
+  const [past, setPast] = useState<HistorySnapshot[]>([])
+  const [future, setFuture] = useState<HistorySnapshot[]>([])
+  // Mid-drag/resize/rotate: don't split one continuous gesture into many
+  // undo steps. Only beginContinuousEdit/endContinuousEdit touch this —
+  // once from the onNodesChange wrapper below (position/dimension changes
+  // carry their own dragging/resizing flag), once from TextNode's rotation
+  // handler (no such flag there — it's just repeated updateNodeData calls).
+  const interactionInProgressRef = useRef(false)
+
+  const pushSnapshot = useCallback(() => {
+    setPast((prev) => {
+      const next = [...prev, { nodes, edges }]
+      return next.length > MAX_HISTORY ? next.slice(next.length - MAX_HISTORY) : next
+    })
+    setFuture([])
+  }, [nodes, edges])
+
+  // Push once at the start of a continuous gesture (guarded so a mid-drag
+  // call is a no-op, not a fresh snapshot), never at the end.
+  const beginContinuousEdit = useCallback(() => {
+    if (!interactionInProgressRef.current) {
+      pushSnapshot()
+      interactionInProgressRef.current = true
+    }
+  }, [pushSnapshot])
+
+  const endContinuousEdit = useCallback(() => {
+    interactionInProgressRef.current = false
+  }, [])
+
+  const undo = useCallback(() => {
+    if (past.length === 0) return
+    const previous = past[past.length - 1]
+    setFuture((prev) => [...prev, { nodes, edges }])
+    setPast((prev) => prev.slice(0, -1))
+    setNodes(previous.nodes)
+    setEdges(previous.edges)
+  }, [past, nodes, edges, setNodes, setEdges])
+
+  const redo = useCallback(() => {
+    if (future.length === 0) return
+    const next = future[future.length - 1]
+    setPast((prev) => [...prev, { nodes, edges }])
+    setFuture((prev) => prev.slice(0, -1))
+    setNodes(next.nodes)
+    setEdges(next.edges)
+  }, [future, nodes, edges, setNodes, setEdges])
+
+  // Wraps the raw onNodesChange from useNodesState to snapshot at the right
+  // granularity: once per discrete change (remove/add/replace, or a
+  // position/dimension change with no dragging/resizing flag at all — e.g.
+  // React Flow's own keyboard-triggered arrow-key nudge), once at the
+  // *start* of a continuous drag/resize (via beginContinuousEdit, which
+  // itself no-ops on subsequent mid-drag calls), never on pure selection
+  // changes.
+  const onNodesChange = useCallback(
+    (changes: NodeChange[]) => {
+      const meaningful = changes.filter((change) => change.type !== 'select')
+      if (meaningful.length > 0) {
+        const starting = meaningful.some(
+          (change) =>
+            (change.type === 'position' && change.dragging === true) ||
+            (change.type === 'dimensions' && change.resizing === true)
+        )
+        const ending = meaningful.some(
+          (change) =>
+            (change.type === 'position' && change.dragging === false) ||
+            (change.type === 'dimensions' && change.resizing === false)
+        )
+        const discrete = meaningful.some(
+          (change) =>
+            change.type === 'remove' ||
+            change.type === 'add' ||
+            change.type === 'replace' ||
+            (change.type === 'position' && change.dragging === undefined) ||
+            (change.type === 'dimensions' && change.resizing === undefined)
+        )
+        if (starting) beginContinuousEdit()
+        else if (discrete) pushSnapshot()
+        if (ending) endContinuousEdit()
+      }
+      onNodesChangeBase(changes)
+    },
+    [onNodesChangeBase, pushSnapshot, beginContinuousEdit, endContinuousEdit]
+  )
+
+  // Edges have no drag/resize concept — every non-select change is already
+  // discrete (remove/add/replace), so this is simpler than onNodesChange.
+  const onEdgesChange = useCallback(
+    (changes: Parameters<typeof onEdgesChangeBase>[0]) => {
+      if (changes.some((change) => change.type !== 'select')) pushSnapshot()
+      onEdgesChangeBase(changes)
+    },
+    [onEdgesChangeBase, pushSnapshot]
+  )
 
   const openContextMenu = useCallback((x: number, y: number, items: ContextMenuItem[]) => {
     setContextMenu({ x, y, items })
@@ -172,12 +286,15 @@ function CanvasInner(): React.JSX.Element {
   }, [detailsPanelNodeId, detailsDrafts, nodes, currentPath])
 
   const onConnect = useCallback(
-    (connection: Connection) =>
-      setEdges((eds) => addEdge({ ...connection, type: 'labeled' }, eds)),
-    [setEdges]
+    (connection: Connection) => {
+      pushSnapshot()
+      setEdges((eds) => addEdge({ ...connection, type: 'labeled' }, eds))
+    },
+    [setEdges, pushSnapshot]
   )
 
   const addShapeNode = useCallback(() => {
+    pushSnapshot()
     const id = newNodeId('shape')
     setNodes((nds) => [
       ...nds,
@@ -190,9 +307,10 @@ function CanvasInner(): React.JSX.Element {
         data: { label: 'Shape' }
       }
     ])
-  }, [setNodes])
+  }, [setNodes, pushSnapshot])
 
   const addTextNode = useCallback(() => {
+    pushSnapshot()
     const id = newNodeId('text')
     setNodes((nds) => [
       ...nds,
@@ -205,7 +323,7 @@ function CanvasInner(): React.JSX.Element {
         data: { label: 'Text', rotation: 0 }
       }
     ])
-  }, [setNodes])
+  }, [setNodes, pushSnapshot])
 
   const selectAll = useCallback(() => {
     setNodes((nds) => nds.map((n) => (n.selected ? n : { ...n, selected: true })))
@@ -224,6 +342,8 @@ function CanvasInner(): React.JSX.Element {
   // notes: that's real clipboard-shaped complexity this shortcut isn't
   // trying to take on.
   const duplicateSelected = useCallback(() => {
+    if (!nodes.some((n) => n.selected)) return
+    pushSnapshot()
     setNodes((nds) => {
       const selected = nds.filter((n) => n.selected)
       if (selected.length === 0) return nds
@@ -236,7 +356,7 @@ function CanvasInner(): React.JSX.Element {
       }))
       return [...nds.map((n) => (n.selected ? { ...n, selected: false } : n)), ...clones]
     })
-  }, [setNodes])
+  }, [nodes, setNodes, pushSnapshot])
 
   // Writes any dirty detail drafts to disk and returns nodes with
   // data.details updated to point at them — must happen before the main
@@ -303,6 +423,11 @@ function CanvasInner(): React.JSX.Element {
   const loadDiagramIntoCanvas = useCallback(
     (path: string | null, diagram: DiagramFile) => {
       const { nodes: openedNodes, edges: openedEdges } = fromDiagramFile(diagram)
+      // A different diagram entirely — old undo history doesn't apply to
+      // it (and, worse, undoing across a load boundary would try to
+      // restore a previous diagram's nodes into the wrong file context).
+      setPast([])
+      setFuture([])
       setNodes(openedNodes)
       setEdges(openedEdges)
       rfInstance.setViewport(diagram.viewport)
@@ -466,8 +591,6 @@ function CanvasInner(): React.JSX.Element {
   // unwieldy. Checks both ctrlKey and metaKey throughout (not just on
   // Windows/Linux's Ctrl) — no reason to make this actively worse for Mac
   // users over a one-line check, even though macOS isn't a primary target.
-  // Undo/redo (Ctrl/Shift+Ctrl+Z) is deliberately NOT bound here — there's
-  // no undo mechanism yet to bind it to; that lands as part of epic 0006.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent): void => {
       const target = event.target as HTMLElement | null
@@ -503,6 +626,14 @@ function CanvasInner(): React.JSX.Element {
       if (mod && event.key.toLowerCase() === 'd' && !isEditingText) {
         event.preventDefault()
         duplicateSelected()
+        return
+      }
+      // Same reasoning as Ctrl+A/D — defer to native text-field undo while
+      // typing. Figma-style redo binding (Ctrl+Shift+Z), not Ctrl+Y.
+      if (mod && event.key.toLowerCase() === 'z' && !isEditingText) {
+        event.preventDefault()
+        if (event.shiftKey) redo()
+        else undo()
         return
       }
       if (mod && event.key === '0') {
@@ -543,6 +674,8 @@ function CanvasInner(): React.JSX.Element {
     selectAll,
     duplicateSelected,
     deselectAll,
+    undo,
+    redo,
     rfInstance,
     breadcrumbs,
     navigateToBreadcrumb,
@@ -558,7 +691,10 @@ function CanvasInner(): React.JSX.Element {
         openContextMenu,
         openIconPicker,
         openDetailsPanel,
-        handleLinkClick
+        handleLinkClick,
+        beginContinuousEdit,
+        endContinuousEdit,
+        pushSnapshot
       }}
     >
       <div style={{ width: '100vw', height: '100vh' }}>
@@ -569,6 +705,12 @@ function CanvasInner(): React.JSX.Element {
           <button onClick={handleOpen}>Open…</button>
           <button onClick={handleSave}>Save</button>
           <button onClick={handleSaveAs}>Save As…</button>
+          <button onClick={undo} disabled={past.length === 0} title="Undo (Ctrl+Z)">
+            Undo
+          </button>
+          <button onClick={redo} disabled={future.length === 0} title="Redo (Ctrl+Shift+Z)">
+            Redo
+          </button>
           {breadcrumbs.length > 0 && (
             <nav className="breadcrumbs">
               {breadcrumbs.map((crumb, index) => (
@@ -614,12 +756,14 @@ function CanvasInner(): React.JSX.Element {
             initialSlot="topRight"
             anchorRect={iconPicker.anchorRect}
             onPick={(slot, icon) => {
+              pushSnapshot()
               rfInstance.updateNodeData(iconPicker.nodeId, {
                 icons: { ...iconPickerIcons, [slot]: icon }
               })
               setIconPicker(null)
             }}
             onRemove={(slot) => {
+              pushSnapshot()
               const next = { ...iconPickerIcons }
               delete next[slot]
               rfInstance.updateNodeData(iconPicker.nodeId, { icons: next })
