@@ -1,7 +1,7 @@
 # 0009: Custom metadata bucket, separate from standard node/edge/diagram data
 
 ## Status
-Accepted
+Superseded by [ADR 0022](0022-unified-tag-and-metadata-system.md) — the separate-`data.tags`-vs-opaque-bucket split and the "never the app's business" premise this ADR was built on both turned out not to hold up once tagging (epic 0026) was designed properly; see ADR 0022 for the full reasoning and the unified design that replaced this one. Kept here for historical context, not as current guidance.
 
 ## Context
 Discussing how well this tool supports being driven both graphically and textually/programmatically (e.g. a script or an AI generating most of a diagram's structure, then a person opening it to visually arrange shapes and connections), investigation into the actual code — not just the docs — found a real gap: `src/shared/diagram.ts`'s `serializeDiagram` and `src/renderer/src/Canvas.tsx`'s `toDiagramFile`/`fromDiagramFile` all reconstruct every node/edge/file object from a fixed whitelist of known fields, on both save *and* load. Any field outside that whitelist is silently dropped the moment a file is opened in the app — before any edit happens, not just on the next save.

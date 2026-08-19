@@ -1,7 +1,7 @@
 # 0023: Custom metadata bucket
 
 ## Status
-Not Started
+Superseded 2026-08-20 by [epic 0034](0034-unified-tag-and-metadata-system.md) — see [ADR 0022](../../decisions/0022-unified-tag-and-metadata-system.md), which supersedes this epic's own [ADR 0009](../../decisions/0009-custom-metadata-bucket.md) in turn. The separate-bucket-vs-tags split and raw-JSON-textarea GUI below were both revised once tagging (epic 0026) was designed properly alongside this. Kept here for historical context; epic 0034 is where this actually gets implemented.
 
 ## Goal
 A free-form, arbitrary-JSON metadata dict on nodes, edges, and the diagram itself — separate from the fields the tool already understands and manages (`data.label`/`icons`/`details`/`linkedDiagram`) — viewable and editable both through the raw `.chd` file and from the GUI, and guaranteed to survive being opened and saved by the app. See [ADR 0009](../../decisions/0009-custom-metadata-bucket.md) for the full design and reasoning; this epic is the implementation checklist.

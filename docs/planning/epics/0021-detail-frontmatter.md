@@ -1,7 +1,7 @@
 # 0021: YAML frontmatter for detail files
 
 ## Status
-Not Started
+Retired 2026-08-20, superseded by [epic 0034](0034-unified-tag-and-metadata-system.md) — see [ADR 0022](../../decisions/0022-unified-tag-and-metadata-system.md). Discussed at the point this epic was about to start; both of its actual motivations (semi-structured fields like integration type, a richer hover tooltip than "first line of the file") turned out to already be covered by the tag/metadata system once that was designed properly, with no need for a separate YAML-in-markdown mechanism. Not implemented, not planned to be.
 
 ## Goal
 Parse optional YAML frontmatter in detail `.md` files for semi-structured fields (integration type, inputs/outputs, technical vs. functional, or whatever ends up useful) — the brief explicitly anticipated this as a deliberately-deferred, zero-migration-cost addition ("no frontmatter present" and "frontmatter not yet parsed" are indistinguishable to a parser). Raised again during epic 0008 design discussion as a way to make the hover tooltip (epic 0008) richer than just "first line of the file."
