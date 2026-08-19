@@ -4,7 +4,7 @@
 Accepted
 
 ## Context
-Needed a way to scaffold and build an Electron app with a React + TypeScript renderer, with a proper main/preload/renderer split. Three options considered: `electron-vite`, `electron-forge`, or wiring Vite + Electron + electron-builder by hand.
+Needed a way to scaffold and build an Electron app with a React + TypeScript renderer, with a proper main/preload/renderer split. Three options considered: `electron-vite`, `electron-forge`, or wiring Vite + Electron + electron-builder by hand. This decision presupposes Electron + React + TypeScript as the stack — that choice (and React Flow as the canvas engine) is itself recorded separately in [ADR 0016](0016-shell-and-canvas-stack.md), numbered later only because it was written up retroactively.
 
 ## Decision
 Use **electron-vite**. It's purpose-built for the main/preload/renderer split, gives a fast dev loop (HMR) with good TypeScript defaults out of the box, and gets us to writing actual application code (the interesting learning here — Electron's process model, IPC design, React Flow) faster than hand-wiring three build configs or working through `electron-forge`'s newer/less-proven Vite template.

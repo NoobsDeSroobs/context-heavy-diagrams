@@ -209,6 +209,38 @@ body {
   color: var(--color-text);
 }
 
+.anchor-node {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border: 1.5px solid var(--ev-c-gray-1);
+  border-radius: 50%;
+  background: var(--color-background-soft);
+}
+
+/* Connection handles stay hidden until the node itself is hovered, then all
+   of them appear together (not just the nearest one) — requested after
+   epic 0014 testing; handles were previously always visible on every node.
+   `:hover` on the wrapper still covers a handle positioned a few px outside
+   its own box (React Flow's default handle offset) because CSS `:hover`
+   cascades to ancestors of whatever's actually under the cursor, not by
+   visual containment — no extra "proximity margin" trick needed. Applies
+   everywhere ConnectionHandles is used: ShapeNode, ContainerNode, and the
+   placeholder AnchorNode (epic 0014). */
+.shape-node .react-flow__handle,
+.container-node .react-flow__handle,
+.anchor-node .react-flow__handle {
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+.shape-node:hover .react-flow__handle,
+.container-node:hover .react-flow__handle,
+.anchor-node:hover .react-flow__handle {
+  opacity: 1;
+}
+
 .text-node {
   width: 100%;
   height: 100%;

@@ -1,12 +1,14 @@
 # 0011: Alignment and snapping
 
 ## Status
-Implemented 2026-08-19 (branch `epic/0011-alignment-and-snapping`, not yet merged) — pending user verification. See Implementation notes.
+Done — merged to `master` (#14). See Implementation notes; the interactive drag/snap feel itself was never independently re-confirmed after merge (see Verification gap below), but nothing's been reported wrong since.
 
 ## Goal
 Accurately align shapes vertically/horizontally while dragging, with snapping — requested during epic 0002 design discussion, not part of the original brief. Numeric position/size fields already exist on every node; this epic is about mouse-driven precision on top of that, since direct mouse interaction is the primary way shapes actually get positioned.
 
 ## Scope, decided when this epic started
+See [ADR 0019](../../decisions/0019-snap-to-shape-not-grid.md) for the full write-up of this decision and its alternatives — summarized here as it was originally scoped:
+
 Two items from the original task list were genuinely open and resolved with the user before implementing:
 - **No snap-to-grid.** Proximity-based snap-to-shape only — a 5px (screen-pixel) threshold, not requiring edges to touch, so e.g. two shapes with a gap between them can still snap into a matching column/row.
 - **Connection-aware alignment (positioning a node relative to what it's connected to) is deferred** to its own epic — see [epic 0031](0031-connection-aware-alignment.md). It was flagged in this epic's original task list as a real fork (lightweight snap extension vs. full graph auto-layout) not a small addition, so it's being kept out of this epic entirely rather than guessed at.
