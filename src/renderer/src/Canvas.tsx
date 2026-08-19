@@ -40,6 +40,8 @@ import StylePicker from './components/StylePicker'
 import DetailsPanel from './components/DetailsPanel'
 import DiagramDock from './panels/DiagramDock'
 import UtilityDock from './panels/UtilityDock'
+import AlignmentGuides from './components/AlignmentGuides'
+import { SNAP_THRESHOLD_PX, boundsFrom, computeSnap } from './alignment'
 import type { TransformPatch } from './panels/PropertyPanel'
 
 // Defined at module scope so React Flow gets a stable reference — recreating
@@ -236,6 +238,12 @@ function CanvasInner(): React.JSX.Element {
     anchorRect: DOMRect
   } | null>(null)
   const [linePicker, setLinePicker] = useState<{ edgeId: string; anchorRect: DOMRect } | null>(
+    null
+  )
+  // Drag-time alignment guides (epic 0011) — flow-space positions of the
+  // guide line(s) currently matched, or null when nothing's being dragged/
+  // nothing's in snap range. Set from onNodeDrag, cleared on drag stop.
+  const [alignmentGuides, setAlignmentGuides] = useState<{ x: number[]; y: number[] } | null>(
     null
   )
   const [detailsPanelNodeId, setDetailsPanelNodeId] = useState<string | null>(null)
@@ -526,6 +534,84 @@ function CanvasInner(): React.JSX.Element {
     ])
   }, [setNodes, pushSnapshot, spawnPosition])
 
+  // Alignment guides + snap-to-shape while dragging — see epic 0011.
+  // Shared by onNodeDrag (live, every tick) and onNodeDragStop (once more
+  // on release — see its own comment for why that second call is
+  // necessary, not redundant). Snap is computed from the lead dragged node
+  // only; a multi-node drag applies the same resulting delta to every node
+  // in the group, so their relative offsets to each other are preserved.
+  //
+  // A dragged node's own descendants move with it, but comparing against
+  // them is meaningless (a container always "aligns" with its own
+  // contents) and would produce distracting guide lines, so they're
+  // excluded from the comparison set.
+  const computeGroupSnap = useCallback(
+    (draggedNode: Node, nodesToMove: Node[]): { dx: number; dy: number; guideX: number[]; guideY: number[] } => {
+      const movedIds = new Set(nodesToMove.map((n) => n.id))
+      const byId = new Map(nodes.map((n) => [n.id, n]))
+      nodesToMove.forEach((n) => byId.set(n.id, n))
+
+      const isDescendantOfMoved = (id: string): boolean => {
+        let current = byId.get(id)
+        while (current?.parentId) {
+          if (movedIds.has(current.parentId)) return true
+          current = byId.get(current.parentId)
+        }
+        return false
+      }
+
+      const draggedAbs = absolutePosition(draggedNode, byId)
+      const draggedBounds = boundsFrom(
+        draggedAbs.x,
+        draggedAbs.y,
+        draggedNode.width ?? 0,
+        draggedNode.height ?? 0
+      )
+      const others = nodes
+        .filter((n) => !movedIds.has(n.id) && !isDescendantOfMoved(n.id))
+        .map((n) => {
+          const abs = absolutePosition(n, byId)
+          return boundsFrom(abs.x, abs.y, n.width ?? 0, n.height ?? 0)
+        })
+
+      const thresholdFlow = SNAP_THRESHOLD_PX / rfInstance.getViewport().zoom
+      return computeSnap(draggedBounds, others, thresholdFlow)
+    },
+    [nodes, rfInstance]
+  )
+
+  // Fires on every drag tick with the *live* (pre-snap) position already
+  // applied to `node`/`draggedNodes` by React Flow's own onNodesChange
+  // pass; this then nudges that position by the computed snap delta via a
+  // follow-up setNodes call, which wins as the tick's final state. React
+  // Flow's own drag math recomputes each tick from the drag's *start*
+  // position plus total pointer movement (not incrementally from the
+  // previous tick), so this correction doesn't get "fought" — it just
+  // holds the snapped position for as long as the pointer stays within the
+  // threshold band, exactly like a Figma/Illustrator smart guide.
+  const onNodeDrag = useCallback(
+    (_event: unknown, draggedNode: Node, draggedNodes: Node[]) => {
+      const nodesToMove = draggedNodes.length > 0 ? draggedNodes : [draggedNode]
+      const movedIds = new Set(nodesToMove.map((n) => n.id))
+      const { dx, dy, guideX, guideY } = computeGroupSnap(draggedNode, nodesToMove)
+
+      if (dx !== 0 || dy !== 0) {
+        setNodes((nds) =>
+          nds.map((n) =>
+            movedIds.has(n.id)
+              ? { ...n, position: { x: n.position.x + dx, y: n.position.y + dy } }
+              : n
+          )
+        )
+      }
+      setAlignmentGuides((prev) => {
+        if (guideX.length === 0 && guideY.length === 0) return prev === null ? prev : null
+        return { x: guideX, y: guideY }
+      })
+    },
+    [computeGroupSnap, setNodes]
+  )
+
   // Drag-into/out-of a container: fires once at the end of a drag gesture,
   // after the position changes from onNodesChange above have already
   // applied (so each node's `.position` here reflects its final drop
@@ -537,13 +623,32 @@ function CanvasInner(): React.JSX.Element {
   // this drag, not just the one under the cursor — a multi-selected drag
   // must reparent each of them independently (each against its own
   // geometry), or only the grabbed node ends up attached.
+  //
+  // Re-applies the same snap correction onNodeDrag already did, recomputed
+  // fresh rather than reused (the pointer may have moved slightly between
+  // the last onNodeDrag tick and release). This is NOT redundant: React
+  // Flow commits one final position update straight from the raw pointer
+  // position internally (XYDrag's drag-end handler calls
+  // updateNodePositions before invoking onNodeDragStop), which silently
+  // overwrites whatever onNodeDrag's per-tick corrections had already
+  // applied — without this, a node visibly snaps while dragging and then
+  // jumps back to the unsnapped position the instant it's released.
   const onNodeDragStop = useCallback(
     (_event: unknown, draggedNode: Node, draggedNodes: Node[]) => {
-      const nodesToProcess = draggedNodes.length > 0 ? draggedNodes : [draggedNode]
+      setAlignmentGuides(null)
+      const rawNodesToProcess = draggedNodes.length > 0 ? draggedNodes : [draggedNode]
+      const { dx, dy } = computeGroupSnap(draggedNode, rawNodesToProcess)
+      const nodesToProcess =
+        dx !== 0 || dy !== 0
+          ? rawNodesToProcess.map((n) => ({ ...n, position: { x: n.position.x + dx, y: n.position.y + dy } }))
+          : rawNodesToProcess
 
       setNodes((nds) => {
         const byId = new Map(nds.map((n) => [n.id, n]))
         nodesToProcess.forEach((n) => byId.set(n.id, n))
+        // Carry the snap correction into the actual state, not just this
+        // local byId lookup used for the reparenting math below.
+        let result = nds.map((n) => byId.get(n.id) ?? n)
 
         const isDescendantOf = (candidateId: string, ofId: string): boolean => {
           let current = byId.get(candidateId)
@@ -554,7 +659,6 @@ function CanvasInner(): React.JSX.Element {
           return false
         }
 
-        let result = nds
         for (const dragged of nodesToProcess) {
           const target = rfInstance
             .getIntersectingNodes(dragged, false)
@@ -573,7 +677,7 @@ function CanvasInner(): React.JSX.Element {
         return sortNodesForHierarchy(result)
       })
     },
-    [rfInstance, setNodes]
+    [rfInstance, setNodes, computeGroupSnap]
   )
 
   // Bulk version of the drag-in reparenting above, for a container's
@@ -1104,6 +1208,7 @@ function CanvasInner(): React.JSX.Element {
                 edgeTypes={edgeTypes}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
+                onNodeDrag={onNodeDrag}
                 onNodeDragStop={onNodeDragStop}
                 onConnect={onConnect}
                 onEdgeContextMenu={onEdgeContextMenu}
@@ -1118,6 +1223,7 @@ function CanvasInner(): React.JSX.Element {
                 <Controls />
                 <MiniMap />
               </ReactFlow>
+              <AlignmentGuides guides={alignmentGuides} />
             </div>
             <DiagramDock
               selectedNodes={selectedNodes}

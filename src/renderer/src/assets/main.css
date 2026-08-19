@@ -46,6 +46,34 @@ body {
   height: 100%;
 }
 
+/* Drag-time alignment guides — see epic 0011. Sits above the canvas,
+   never intercepts pointer events (it's illustrating a drag, not
+   participating in one). */
+.alignment-guides {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 5;
+}
+
+.alignment-guide {
+  position: absolute;
+  background: #ff3399;
+}
+
+.alignment-guide-vertical {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+
+.alignment-guide-horizontal {
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+
 .diagram-dock {
   flex: 0 0 auto;
   height: 100%;
