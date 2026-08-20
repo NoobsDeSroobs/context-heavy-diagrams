@@ -1,3 +1,6 @@
+/* Raw palette — theme-invariant building blocks, never used directly in
+   component CSS (main.css only ever reaches for the semantic tokens
+   below). See epic 0005/ADR 0027 for the theme system this feeds. */
 :root {
   --ev-c-white: #ffffff;
   --ev-c-white-soft: #f8f8f8;
@@ -6,7 +9,15 @@
   --ev-c-black: #1b1b1f;
   --ev-c-black-soft: #222222;
   --ev-c-black-mute: #282828;
+}
 
+/* Semantic tokens, defined twice — once per theme — and selected by
+   whichever block below actually matches. Never define a semantic token
+   outside these two blocks, or the theme it "belongs to" becomes
+   ambiguous. */
+
+/* Dark theme values. */
+:root:not([data-theme='light']) {
   --ev-c-gray-1: #515c67;
   --ev-c-gray-2: #414853;
   --ev-c-gray-3: #32363f;
@@ -15,20 +26,67 @@
   --ev-c-text-2: rgba(235, 235, 245, 0.6);
   --ev-c-text-3: rgba(235, 235, 245, 0.38);
 
+  --color-background: var(--ev-c-black);
+  --color-background-soft: var(--ev-c-black-soft);
+  --color-background-mute: var(--ev-c-black-mute);
+}
+
+/* Light theme's raw values — not applied to anything by themselves, just
+   intermediate tokens the two rules below both pull from so the actual
+   colors only ever need to change in one place. */
+:root {
+  --ev-c-gray-1-light: #c7ccd1;
+  --ev-c-gray-2-light: #dfe2e6;
+  --ev-c-gray-3-light: #eceef0;
+
+  --ev-c-text-1-light: rgba(27, 27, 31, 0.86);
+  --ev-c-text-2-light: rgba(27, 27, 31, 0.6);
+  --ev-c-text-3-light: rgba(27, 27, 31, 0.38);
+}
+
+/* Before any JS runs (or if it never runs — e.g. JS disabled), the OS
+   preference alone decides — never a hardcoded default in either
+   direction, see epic 0005/ADR 0027. Equal specificity to the dark block
+   above (:root + one pseudo-class each); this one wins when both match
+   (OS light, no explicit choice) purely by appearing later in the file. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    --ev-c-gray-1: var(--ev-c-gray-1-light);
+    --ev-c-gray-2: var(--ev-c-gray-2-light);
+    --ev-c-gray-3: var(--ev-c-gray-3-light);
+    --ev-c-text-1: var(--ev-c-text-1-light);
+    --ev-c-text-2: var(--ev-c-text-2-light);
+    --ev-c-text-3: var(--ev-c-text-3-light);
+    --color-background: var(--ev-c-white);
+    --color-background-soft: var(--ev-c-white-soft);
+    --color-background-mute: var(--ev-c-white-mute);
+  }
+}
+
+/* An explicit user choice (theme.ts's applyTheme, persisted to
+   localStorage) always wins over OS preference — highest specificity
+   position, last in source order. */
+[data-theme='light'] {
+  --ev-c-gray-1: var(--ev-c-gray-1-light);
+  --ev-c-gray-2: var(--ev-c-gray-2-light);
+  --ev-c-gray-3: var(--ev-c-gray-3-light);
+  --ev-c-text-1: var(--ev-c-text-1-light);
+  --ev-c-text-2: var(--ev-c-text-2-light);
+  --ev-c-text-3: var(--ev-c-text-3-light);
+  --color-background: var(--ev-c-white);
+  --color-background-soft: var(--ev-c-white-soft);
+  --color-background-mute: var(--ev-c-white-mute);
+}
+
+:root {
+  --color-text: var(--ev-c-text-1);
+
   --ev-button-alt-border: transparent;
   --ev-button-alt-text: var(--ev-c-text-1);
   --ev-button-alt-bg: var(--ev-c-gray-3);
   --ev-button-alt-hover-border: transparent;
   --ev-button-alt-hover-text: var(--ev-c-text-1);
   --ev-button-alt-hover-bg: var(--ev-c-gray-2);
-}
-
-:root {
-  --color-background: var(--ev-c-black);
-  --color-background-soft: var(--ev-c-black-soft);
-  --color-background-mute: var(--ev-c-black-mute);
-
-  --color-text: var(--ev-c-text-1);
 }
 
 *,

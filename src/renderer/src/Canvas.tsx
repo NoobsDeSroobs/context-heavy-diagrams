@@ -55,6 +55,7 @@ import UtilityDock from './panels/UtilityDock'
 import AlignmentGuides from './components/AlignmentGuides'
 import { SNAP_THRESHOLD_PX, boundsFrom, computeSnap } from './alignment'
 import type { TransformPatch } from './panels/PropertyPanel'
+import { useTheme } from './theme'
 
 // Defined at module scope so React Flow gets a stable reference — recreating
 // these objects every render triggers a React Flow warning and remounts.
@@ -366,6 +367,7 @@ function syncElementMetadata(
 }
 
 function CanvasInner(): React.JSX.Element {
+  const { theme, setTheme } = useTheme()
   const [nodes, setNodes, onNodesChangeBase] = useNodesState<Node>([])
   const [edges, setEdges, onEdgesChangeBase] = useEdgesState<Edge>([])
   const [currentPath, setCurrentPath] = useState<string | null>(null)
@@ -1885,6 +1887,13 @@ function CanvasInner(): React.JSX.Element {
               Highlights{highlights.length > 0 ? ` (${highlights.length})` : ''}
             </button>
             {currentPath && <span className="toolbar-path">{currentPath}</span>}
+            <button
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {theme === 'dark' ? '☀️' : '🌙'}
+            </button>
           </div>
           <div className="canvas-view-body">
             <div className="canvas-view-flow">
@@ -1910,7 +1919,7 @@ function CanvasInner(): React.JSX.Element {
                 defaultEdgeOptions={{ type: 'labeled', markerEnd: { type: MarkerType.ArrowClosed } }}
                 deleteKeyCode={['Delete', 'Backspace']}
                 multiSelectionKeyCode="Shift" // frees Ctrl/Cmd+click for linked-diagram navigation — epic 0009
-                colorMode="dark" // hardcoded until epic 0005 adds a real light/dark toggle
+                colorMode={theme}
                 fitView
               >
                 <Background />
