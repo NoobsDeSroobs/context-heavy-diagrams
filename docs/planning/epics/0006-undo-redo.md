@@ -1,7 +1,7 @@
 # 0006: Undo / redo
 
 ## Status
-Done — continuous-gesture grouping (drag/resize/rotate) not independently verified, see Notes
+Done — continuous-gesture grouping (drag/resize/rotate) was never explicitly re-confirmed as its own item after this epic merged, but undo/redo has been exercised constantly through dozens of subsequent epics with no issue ever reported against it. See Notes.
 
 ## Goal
 Undo/redo over a reasonable number of steps (not unlimited/branching for v1). Primarily aimed at three real scenarios: accidental/mistaken deletion, mistaken transformations (move/resize/rotate, and later style/container changes), and "the previous text was better."

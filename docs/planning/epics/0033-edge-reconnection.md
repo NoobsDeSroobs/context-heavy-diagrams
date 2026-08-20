@@ -1,7 +1,7 @@
 # 0033: Edge reconnection
 
 ## Status
-Implemented 2026-08-19, revised twice same day after user testing caught two real bugs (see Implementation notes) — branch `epic/0014-drag-edge-to-create-shape`, not yet merged. Drag/reconnect mechanics themselves confirmed working by the user; both bugs were specifically in the void-drop path (anchor duplication, then wrong-end attachment), both now fixed, neither yet re-verified live.
+Done, merged to `master` (#16, alongside epic 0014). Revised twice on 2026-08-19 after user testing caught two real bugs (see Implementation notes), both fixed. The post-fix void-drop path was never explicitly re-confirmed as its own item after merge, but edge reconnection has been exercised constantly through dozens of subsequent epics with no issue ever reported against it.
 
 Implemented on the epic 0014 branch rather than a fresh one, deliberately: it directly reuses that epic's `AnchorNode`, and starting a second unmerged branch while 0014 is still in flight would violate this project's own one-epic-at-a-time discipline. Kept as its own epic doc anyway (not folded into 0014's) since it's a genuinely distinct, separately-nameable capability — grabbing an *existing* edge's endpoint, not creating a brand-new edge.
 

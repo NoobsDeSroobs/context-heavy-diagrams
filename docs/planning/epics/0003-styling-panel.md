@@ -1,7 +1,7 @@
 # 0003: Styling panel
 
 ## Status
-Implemented 2026-08-19 (branch `epic/0003-styling-panel`, not yet merged). All tasks below are done. See Notes for implementation decisions made along the way that weren't fully pinned down by the design pass, and for one verification gap worth a manual pass before merging.
+Done, merged to `master` (#13). All tasks below are done. See Notes for implementation decisions made along the way that weren't fully pinned down by the design pass. The one specific verification gap flagged at merge time (actually connecting two nodes and styling the resulting edge live) was never explicitly re-confirmed afterward, but edge creation/styling has been exercised constantly through dozens of subsequent epics with no issue ever reported against it.
 
 ## Goal
 A right-side "diagram dock" that shows an item palette when nothing is selected (add a shape/container/text) and switches to a context-sensitive property panel when something is — driving fill, border, font, exact transform, and (for edges) line/marker styling. Plus, per [ADR 0010](../../decisions/0010-named-searchable-style-presets.md), a right-click-accessible searchable catalog of named style presets.

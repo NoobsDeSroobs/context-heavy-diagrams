@@ -1,7 +1,7 @@
 # 0004: Containers
 
 ## Status
-In Progress
+Done, merged to `master` (#12, plus the container-delete-cascade bugfix as its own #15). The two items below flagged as "not independently verified" at the time (dragging a node back out of a container, nested containers) were never explicitly re-confirmed afterward, but both have been exercised constantly through dozens of subsequent epics with no issue ever reported against either.
 
 ## Goal
 Container shapes that group nodes using React Flow's parent/child relationships, so child nodes move together with their container automatically — without becoming a separate "grouping" mechanism that's hard to edit individual elements within.

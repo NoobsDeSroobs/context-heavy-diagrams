@@ -1,7 +1,7 @@
 # 0035: Propagate required tags to linked children
 
 ## Status
-Implemented — awaiting your manual click-through pass (see last task below) before calling it Done
+Done, merged to `master` (#19, alongside epic 0024). User confirmed after testing: "verified, merged."
 
 ## Goal
 A "Copy to children" button on the Required Tags panel that pushes the current diagram's `requiredTags` template down its entire link subtree, so a complex view built from many linked sub-diagrams doesn't need the same required tags redefined by hand in every one. Raised directly by the user while testing epic 0024 (multi-window) — depends on epic 0034 (required tags themselves) and the linked-diagram model from epic 0009.

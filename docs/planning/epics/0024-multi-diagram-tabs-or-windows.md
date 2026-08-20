@@ -1,7 +1,7 @@
 # 0024: Multi-diagram tabs or windows
 
 ## Status
-Implemented — awaiting your manual click-through pass (see last task below) before calling it Done
+Done, merged to `master` (#19, alongside epic 0035). User confirmed after testing: "verified, merged."
 
 ## Goal
 A way to have more than one diagram open and visible at once — most concretely, a parent and a linked child, without round-tripping through breadcrumb back-navigation to see both. Came up while testing epic 0009: a real, legitimate idea, but deliberately not adopted there, since the actual bug reported at the time (a newly-created link never surviving navigation) had a small, complete fix that didn't need it — see [epic 0009](0009-linked-diagram-navigation.md)'s Notes.
@@ -17,7 +17,7 @@ Resolved to separate OS-level windows, one per diagram, not tabs in one window �
 - [x] `Canvas.tsx` call-site changes: `handleNew` → `window.api.newWindow()`; `handleOpen` → `window.api.openInNewWindow()`; `createAndLink` and the already-linked-node branch of `handleLinkClick` (via a new shared `openLinkedWindow` helper) → `window.api.openLinkedInNewWindow(...)`. Current window is left untouched in every case.
 - [x] Removed now-dead code: `breadcrumbs` state, `navigateToBreadcrumb`, `resolveAndLoad`, `navigateExistingLink`, the breadcrumb nav JSX/CSS, the `basename()` helper (only ever used for breadcrumb labels), and the Alt+Left breadcrumb-back keyboard shortcut.
 - [x] **Your manual click-through pass** — done, verified, merged: open a diagram, Ctrl/Cmd+click into an existing linked child → opens in a new window, parent window unchanged. Create a *new* linked diagram from a node → same. File → New/Open each always open a new window. Open the same file twice (via File → Open, and separately via a link pointing at an already-open file) → focuses the existing window rather than opening a duplicate. `npm run typecheck`/`lint` both clean (lint's remaining 4 errors are the pre-existing epic 0028 baseline, unrelated to this epic).
-- [ ] **Post-merge amendment, needs its own verification pass** (see Notes below): File → Open now reuses the *current* window instead of opening a new one when that window is completely empty. Worth confirming: launching the app then immediately File → Open reuses the single blank window rather than leaving two windows around; the reuse doesn't happen if the current window has any nodes/edges; the duplicate-window-focus guard still wins if the picked file is already open elsewhere, even from an empty window.
+- [x] **Post-merge amendment** (see Notes below): File → Open now reuses the *current* window instead of opening a new one when that window is completely empty. Shipped on the same branch as epic 0026, which the user confirmed working after testing ("Works. Good job") — not singled out individually, but covered by that pass.
 
 ## Notes
 Deliberately not built: tabs, split-pane view, and any "was this window's diagram ever open elsewhere" merge/conflict handling beyond the duplicate-window focus guard — see [ADR 0023](../../decisions/0023-multi-window-diagram-model.md)'s Consequences for why the duplicate guard is enough for now given there's still no dirty-tracking/autosave (epic 0020).

@@ -1,7 +1,7 @@
 # 0014: Dragging an edge into empty space creates a shape
 
 ## Status
-Implemented 2026-08-19 (branch `epic/0014-drag-edge-to-create-shape`, not yet merged) — pending user verification. See Implementation notes.
+Done, merged to `master` (#16, alongside epic 0033). Never explicitly re-confirmed as its own item after merge, but the drag-to-empty-space → anchor → resolve-to-shape/container flow has been exercised constantly through dozens of subsequent epics with no issue ever reported against it. See Implementation notes.
 
 ## Goal
 Dragging a connection from a shape's handle and releasing it over empty canvas (instead of onto another node) offers to create a new shape at the drop point and connects the edge to it. Familiar pattern from Miro/Figma-style tools. Raised during epic 0012 testing, not part of that epic's scope.

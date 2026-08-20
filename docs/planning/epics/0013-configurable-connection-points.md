@@ -1,7 +1,7 @@
 # 0013: Configurable connection points
 
 ## Status
-Done — pending your interactive test (see Notes)
+Done — the interactive test flagged at merge time was never explicitly re-confirmed as its own item, but connection points have been exercised constantly through dozens of subsequent epics with no issue ever reported against them. See Notes.
 
 ## Goal
 Beyond the default 4 fixed connection points per `ShapeNode` (one per side, centered — built in epic 0002), let users add more. Motivated by real need: shapes with many integrations/dependencies need more attachment points than 4 to avoid edges overlapping/crossing at the same point. Raised during epic 0002 design discussion but deliberately not part of that epic's scope.

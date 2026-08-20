@@ -22,13 +22,29 @@ A local, offline desktop diagramming tool for IT architecture work — filling t
 ## Process model
 
 Electron runs two JS contexts:
-- **Main process** (Node.js) — owns the OS window, has filesystem access. This is where diagram files actually get read/written.
-- **Renderer process** (Chromium, sandboxed) — the React app. No direct filesystem access.
+- **Main process** (Node.js) — owns every OS window (one per open diagram, see Component overview below), has filesystem access. This is where diagram files actually get read/written.
+- **Renderer process** (Chromium, sandboxed) — the React app. One renderer per window, no direct filesystem access. Every renderer shares the same `localStorage` (app-level preferences like theme) but each owns its own diagram's `nodes`/`edges`/undo history independently.
 - **Preload script** — the only bridge between them, exposing a small explicit API (e.g. `window.api.saveDiagram(data)`) instead of giving the renderer raw Node access.
 
 ## Component overview
 
-Not written yet — there's nothing built to describe. Will be added once the shell and first custom nodes exist (epic [0001](../planning/epics/0001-bare-electron-react-shell.md) onward).
+**Main process** (`src/main/`), one small module per concern, each registering its own IPC handlers:
+- `windows.ts` — one `BrowserWindow` per open diagram (ADR 0023), a path→window registry so opening an already-open file focuses it instead of duplicating, and the File→Open empty-window-reuse special case (ADR 0023's post-merge addendum).
+- `diagram.ts` — save/open/pick-save-path for the `.chd` file itself.
+- `links.ts` — creating and browsing to linked diagrams (epic 0009).
+- `icons.ts` — custom icon upload/storage in a diagram's sibling `assets/` folder.
+- `details.ts` — the detail-sublayer Markdown files in a diagram's sibling `details/` folder.
+- `requiredTags.ts` — the directory-bounded link-tree walk behind "copy required tags to children" (epic 0035) — reused as-is by nothing else yet, but written generically enough to be (see epic 0026's Notes on a possible future highlights version).
+
+**Renderer** (`src/renderer/src/`):
+- `Canvas.tsx` — the one big stateful component per window: owns `nodes`/`edges` (via React Flow's own state hooks), undo/redo history, diagram-level `metadata`/`requiredTags`/`highlights`, and every save/load/link-navigation flow. Deliberately not split further — see ADR 0018 for why undo/redo in particular ended up as explicit `pushSnapshot()` calls at each mutation site rather than a reactive effect.
+- `DiagramContext.tsx` — the callbacks `Canvas.tsx` exposes downward (open a picker, push an undo snapshot, look up current highlight matches, …) so node/edge components can trigger cross-cutting behavor without prop-drilling.
+- Node components (`nodes/`): `ShapeNode`, `ContainerNode`, `TextNode`, `AnchorNode` (epic 0014's placeholder-until-resolved node for drag-to-empty-space). Edge: `edges/LabeledEdge.tsx`.
+- `panels/` + `components/` — the UI chrome: `DiagramDock` (item palette / property panel, mutually exclusive per ADR 0013), `UtilityDock` hosting `DetailsPanel`/`RequiredTagsPanel`/`DiagnosticsPanel`/`HighlightsPanel` (also mutually exclusive, one at a time), plus anchored popups (`IconPicker`, `ColorPickerPopup`, `StylePicker`, `ContextMenu`).
+- `theme.ts` — the light/dark theme hook (epic 0005/ADR 0027), paired with `assets/base.css`'s CSS-variable theme layer.
+- `highlights.ts` — pure matching/grouping/reconcile logic for tag-based highlights (epics 0026/0036), imported by both `Canvas.tsx` and the node/edge components that render matches.
+
+**Shared** (`src/shared/diagram.ts`) — the `.chd` file format's TypeScript types plus `serializeDiagram`/`parseDiagram`, imported by both main (to validate/write) and renderer (to build/read). See [docs/file-format.md](../file-format.md) for the format itself, kept as a standalone spec.
 
 ## Current status
 

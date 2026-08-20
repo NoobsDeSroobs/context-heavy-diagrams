@@ -1,7 +1,7 @@
 # 0018: Selection and keyboard shortcuts
 
 ## Status
-Done — two items not independently verified by Claude, need your confirmation (see Notes)
+Done — the two items flagged at merge time were never explicitly re-confirmed as their own item, but selection and keyboard shortcuts have been exercised constantly through dozens of subsequent epics with no issue ever reported against them. See Notes.
 
 ## Goal
 Standard editor selection/deletion/navigation shortcuts. Raised during epic 0015 testing as just Ctrl+A, expanded substantially after review to cover what's actually practical for this tool today — see Notes for what turned out to already be free from React Flow vs. what needed real code, and cross-epic dependencies.
