@@ -12,6 +12,10 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
 {
   "version": 1,
   "viewport": { "x": 0, "y": 0, "zoom": 1 },
+  "metadata": { "owner": "platform-team" },
+  "requiredTags": [
+    { "key": "environment", "allowedValues": ["dev", "staging", "prod"], "defaultValue": "dev", "lock": "lockedEditable" }
+  ],
   "nodes": [ /* Node objects */ ],
   "edges": [ /* Edge objects */ ]
 }
@@ -21,6 +25,8 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
 |---|---|---|
 | `version` | `1` | Format version. Currently always `1`. See Versioning below. |
 | `viewport` | object | Camera position when the file was last saved: `x`, `y` (pan offset in canvas units) and `zoom` (scale factor, `1` = 100%). Purely cosmetic — restores where the view was, has no effect on the diagram's meaning. |
+| `metadata` | object | Diagram-level free-form key/value bag — plain JSON values, no locking concept at this level (that's what `requiredTags` is for). Absent means none set. See [Metadata](#metadata) below for the value shape's general rules (this is the same `JsonValue` type, just not wrapped in a per-entry `MetadataEntry`). |
+| `requiredTags` | array of RequiredTagDefinition | The diagram's own template for what every Shape/Container/Edge must carry — see [Required tags](#required-tags) below. Absent means no required tags. |
 | `nodes` | array of Node | See below. |
 | `edges` | array of Edge | See below. |
 
@@ -36,6 +42,10 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
   "connectionPoints": [{ "id": "cp-1", "side": "top", "offset": 0.25 }],
   "parentId": "container-1",
   "style": { "fill": "#2b6cb0", "stroke": "#1a365d", "strokeWidth": 2 },
+  "metadata": {
+    "environment": { "value": "prod", "lock": "lockedEditable" },
+    "owner": { "value": "platform-team" }
+  },
   "data": {
     "label": "Web App",
     "icons": { "topRight": { "source": "builtin", "id": "server" } },
@@ -55,6 +65,7 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
 | `connectionPoints` | array | no | Only meaningful on `"shape"`/`"container"` nodes. *Additional* points beyond the 4 always-present defaults (`"top"`/`"right"`/`"bottom"`/`"left"`, each centered on their side) — absent or empty means just those 4, not zero. Each entry: `id` (string, unique within this node, referenced by edges' `sourceHandle`/`targetHandle`), `side` (`"top"`/`"right"`/`"bottom"`/`"left"`), `offset` (number 0–1, fraction along that side — not a pixel value, so it stays correct across a resize). The 4 defaults are never listed here and can't be removed. |
 | `parentId` | string | no | Another node's `id` — this node is a child of that container. Absent means top-level. A parent node must appear earlier in the `nodes` array than its children (React Flow's own requirement — a reader building the same in-memory model needs to preserve this ordering). Nesting containers inside containers is allowed, to any depth. Deleting a container reparents its children (to the container's own `parentId`, or top-level) rather than deleting them. |
 | `style` | object | no | Visual overrides — see Node style below. Absent means "use the current hardcoded look." |
+| `metadata` | object | no | Only meaningful on `"shape"`/`"container"` nodes — `"text"` and `"anchor"` never carry this. Key/value entries, each either free (human-added) or diagram-required — see [Metadata](#metadata) below. Absent means none set. |
 | `data.label` | string | yes | Display text. May be empty. |
 | `data.icons` | object | no | Only meaningful on `"shape"`/`"container"` nodes. Up to four keys — `topLeft`, `topRight`, `bottomLeft`, `bottomRight` — each an icon reference (see below). |
 | `data.details` | string | no | Relative path to a Markdown file with free-form notes about this node (purpose, integration type, inputs/outputs, whatever's useful) — rendered in-app as a side panel, never a second canvas object. Same relative-path-from-the-diagram's-own-directory convention as custom icon paths. Absent means the node has no details yet. |
@@ -107,7 +118,8 @@ Every field is optional; an absent field means "use the current hardcoded look,"
   "sourceHandle": "right",
   "targetHandle": "left",
   "label": "reads from",
-  "style": { "stroke": "#1a365d", "lineStyle": "dashed", "startMarker": "none", "endMarker": "arrowOpen" }
+  "style": { "stroke": "#1a365d", "lineStyle": "dashed", "startMarker": "none", "endMarker": "arrowOpen" },
+  "metadata": { "environment": { "value": "prod", "lock": "lockedStatic" } }
 }
 ```
 
@@ -119,6 +131,7 @@ Every field is optional; an absent field means "use the current hardcoded look,"
 | `sourceHandle` / `targetHandle` | string | no | Which connection point on the source/target node, when a node has more than one. A `"shape"` or `"container"` node always exposes `"top"`/`"right"`/`"bottom"`/`"left"`, plus whatever `id`s are listed in that node's own `connectionPoints`. Absent means "let the renderer pick a reasonable point." |
 | `label` | string | no | Text shown on the edge, e.g. describing the relationship. |
 | `style` | object | no | Visual overrides — see Edge style below. Absent means "use the current hardcoded look." |
+| `metadata` | object | no | Same shape and rules as a node's `metadata` — see [Metadata](#metadata) below. Absent means none set. |
 
 ### Edge style
 
@@ -141,6 +154,43 @@ Every field is optional, same absent-means-default rule as node style.
 | `fontWeight` | `"normal"` \| `"bold"` | Label font weight. |
 | `fontFamily` | string (CSS `font-family` value) | Label font — see the same field on Node style above. |
 
+## Metadata
+
+Free-form, structured key/value data on a Shape/Container node or an Edge — not opaque to interpretation: the app's own highlighting features and external tooling are both meant to read and act on it, not just display it. `"text"` and `"anchor"` nodes never carry this.
+
+```json
+{
+  "environment": { "value": "prod", "lock": "lockedEditable" },
+  "owner": { "value": "platform-team" }
+}
+```
+
+Each key maps to an entry, not a bare value:
+
+| Field | Type | Required | Meaning |
+|---|---|---|---|
+| `value` | JSON value (string, number, boolean, null, array, or object) | yes | The entry's own value. A nested array/object is valid — there's no restriction to flat scalars. |
+| `lock` | `"lockedEditable"` \| `"lockedStatic"` | no | Absent means a free entry: added by a human (or any writer), removable, freely editable. `"lockedEditable"` means this key came from the diagram's `requiredTags` template and can't be removed, but a human can still fill in/change its value. `"lockedStatic"` means the same, except the value itself is also fixed — always whatever the template's own `defaultValue` currently is. `lock` is a provenance signal, not an access-control mechanism a reader needs to enforce — nothing stops a writer from changing a locked value directly; this app's own GUI just chooses not to offer that. |
+
+## Required tags
+
+A diagram-level template — `requiredTags` on the top-level object — describing which metadata keys every Shape/Container/Edge in the diagram must carry, and how.
+
+```json
+[
+  { "key": "environment", "allowedValues": ["dev", "staging", "prod"], "defaultValue": "dev", "lock": "lockedEditable" }
+]
+```
+
+| Field | Type | Required | Meaning |
+|---|---|---|---|
+| `key` | string | yes | The metadata key this definition governs. |
+| `allowedValues` | array of string | no | If set, constrains what a `lockedEditable` entry's value is allowed to be (this app resets an out-of-range value back to `defaultValue` when the diagram is opened or the template is edited — see below). Absent means no constraint; anything is valid. Only meaningful for `lockedEditable` — a `lockedStatic` entry's value is never anything but the template's own, so there's nothing to validate. |
+| `defaultValue` | JSON value | no | The value a freshly-created element gets seeded with, and the value a `lockedStatic` entry always holds. Absent is treated as `null`. |
+| `lock` | `"lockedEditable"` \| `"lockedStatic"` | yes | Which of the two locked kinds every element's entry for this key gets — see [Metadata](#metadata) above. Never absent here (an unlocked entry isn't "required" by definition). |
+
+This app applies the template two ways: seeding it onto every newly-created Shape/Container/Edge, and retroactively reconciling every *existing* one whenever the template itself changes (or, defensively, whenever a file is opened, in case of hand-edited drift) — a `lockedEditable` entry keeps its current value if still valid or resets to `defaultValue` if not, a `lockedStatic` entry always takes the template's current value, and a key removed from `requiredTags` demotes any existing entries under that key to free rather than deleting them. A reader that only cares about reading the file back doesn't need to reimplement any of this — `requiredTags` is metadata about the metadata, not something a passive reader has to enforce.
+
 ## Determinism
 
 Files are written with a fixed key order (matching the tables above) and 2-space indentation, plus a trailing newline. This is deliberate: two saves of an unchanged diagram produce byte-identical output, so git diffs only show real changes. A compatible writer should aim for the same property if it wants clean diffs, though it isn't required for a file to be readable.
@@ -155,8 +205,8 @@ The `.chd` file itself is always plain, deterministic JSON — kept git-friendly
 
 ## Versioning
 
-`version` is currently always `1`. Fields have been added over time (`size`, `rotation`, `connectionPoints`, `parentId`, `style` on both Node and Edge, edge `type`/`label`, `data.icons`, `data.details`, `data.linkedDiagram`) but always additively — a reader from an earlier point in this project's history can still open a newer file and just won't recognize the newer fields. A breaking change to the meaning of an existing field would bump `version`; nothing has required that yet.
+`version` is currently always `1`. Fields have been added over time (`size`, `rotation`, `connectionPoints`, `parentId`, `style` on both Node and Edge, edge `type`/`label`, `data.icons`, `data.details`, `data.linkedDiagram`, top-level `metadata`/`requiredTags`, and `metadata` on both Node and Edge) but always additively — a reader from an earlier point in this project's history can still open a newer file and just won't recognize the newer fields. A breaking change to the meaning of an existing field would bump `version`; nothing has required that yet.
 
 ## Example
 
-See [`examples/hello-world.chd`](../examples/hello-world.chd) for a minimal real file, and [`examples/README.md`](../examples/README.md) for what else is there.
+See [`examples/hello-world.chd`](../examples/hello-world.chd) for a minimal real file, [`examples/with-metadata.chd`](../examples/with-metadata.chd) for a `requiredTags` template plus a required and a free tag on a node, and [`examples/README.md`](../examples/README.md) for what else is there.

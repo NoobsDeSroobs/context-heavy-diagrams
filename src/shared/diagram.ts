@@ -59,6 +59,32 @@ export interface NodeStyle extends FontStyle {
   textAlign?: 'start' | 'center' | 'end'
 }
 
+// Tag/metadata schema — see ADR 0022 (supersedes ADR 0009). One
+// `metadata` bag per node/edge, entries either free (human-added, `lock`
+// absent) or diagram-required (see `RequiredTagDefinition` below).
+// `lockedEditable`: diagram-required, key can't be removed, value can
+// still be filled in/edited by a human. `lockedStatic`: diagram-required,
+// fixed, not editable at all. Never used for a free entry — that's what
+// `lock` being absent already means.
+export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue }
+export type MetadataLock = 'lockedEditable' | 'lockedStatic'
+export interface MetadataEntry {
+  value: JsonValue
+  lock?: MetadataLock
+}
+
+// Diagram-level template: what every applicable element (shape/container/
+// edge, not text/anchor — see epic 0034) must carry. Not stored per
+// element; used to seed new elements and to retroactively backfill
+// existing ones when the template itself changes (see Canvas.tsx's
+// `syncRequiredTags`).
+export interface RequiredTagDefinition {
+  key: string
+  allowedValues?: string[]
+  defaultValue?: JsonValue
+  lock: MetadataLock
+}
+
 export type LineStyleKind = 'solid' | 'dashed' | 'dotted'
 export type MarkerKind =
   | 'none'
@@ -102,6 +128,9 @@ export interface DiagramNode {
   // ADR 0012. Absent means top-level (no container).
   parentId?: string
   style?: NodeStyle
+  // Only 'shape'/'container' meaningfully have this — see epic 0034/ADR
+  // 0022. 'text' and 'anchor' nodes never get seeded or edited here.
+  metadata?: Record<string, MetadataEntry>
   data: {
     label: string
     icons?: Partial<Record<IconSlot, IconRef>>
@@ -120,17 +149,51 @@ export interface DiagramEdge {
   targetHandle?: string
   label?: string
   style?: EdgeStyle
+  metadata?: Record<string, MetadataEntry>
 }
 
 export interface DiagramFile {
   version: 1
   viewport: { x: number; y: number; zoom: number }
+  // Diagram-level free-form bag — always unlocked, no requiredTags concept
+  // at this level (see ADR 0022's Consequences).
+  metadata?: Record<string, JsonValue>
+  requiredTags?: RequiredTagDefinition[]
   nodes: DiagramNode[]
   edges: DiagramEdge[]
 }
 
 export function createEmptyDiagram(): DiagramFile {
   return { version: 1, viewport: { x: 0, y: 0, zoom: 1 }, nodes: [], edges: [] }
+}
+
+// Recursively sorts object keys alphabetically — applied to metadata dicts
+// specifically (see ADR 0022's Determinism note, carried over from ADR
+// 0009), so a bucket entry's own nested object values also get consistent
+// key order, not just the top level. Arrays keep their existing element
+// order (position is meaningful there); only plain-object keys get sorted.
+function sortKeysDeep<T extends JsonValue>(value: T): T {
+  if (Array.isArray(value)) return value.map((v) => sortKeysDeep(v)) as T
+  if (value !== null && typeof value === 'object') {
+    const sorted: Record<string, JsonValue> = {}
+    for (const key of Object.keys(value).sort()) {
+      sorted[key] = sortKeysDeep((value as Record<string, JsonValue>)[key])
+    }
+    return sorted as T
+  }
+  return value
+}
+
+function sortedMetadata(
+  metadata: Record<string, MetadataEntry> | undefined
+): Record<string, MetadataEntry> | undefined {
+  if (!metadata || Object.keys(metadata).length === 0) return undefined
+  const sorted: Record<string, MetadataEntry> = {}
+  for (const key of Object.keys(metadata).sort()) {
+    const entry = metadata[key]
+    sorted[key] = entry.lock ? { value: sortKeysDeep(entry.value), lock: entry.lock } : { value: sortKeysDeep(entry.value) }
+  }
+  return sorted
 }
 
 // Fixed key order on every object built here is what makes JSON.stringify's
@@ -141,6 +204,10 @@ export function serializeDiagram(diagram: DiagramFile): string {
   const ordered: DiagramFile = {
     version: diagram.version,
     viewport: { x: diagram.viewport.x, y: diagram.viewport.y, zoom: diagram.viewport.zoom },
+    metadata: diagram.metadata && Object.keys(diagram.metadata).length > 0
+      ? (sortKeysDeep(diagram.metadata) as Record<string, JsonValue>)
+      : undefined,
+    requiredTags: diagram.requiredTags && diagram.requiredTags.length > 0 ? diagram.requiredTags : undefined,
     nodes: diagram.nodes.map((n) => ({
       id: n.id,
       type: n.type,
@@ -151,6 +218,7 @@ export function serializeDiagram(diagram: DiagramFile): string {
         n.connectionPoints && n.connectionPoints.length > 0 ? n.connectionPoints : undefined,
       parentId: n.parentId,
       style: n.style,
+      metadata: sortedMetadata(n.metadata),
       data: {
         label: n.data.label,
         icons: n.data.icons && Object.keys(n.data.icons).length > 0 ? n.data.icons : undefined,
@@ -166,12 +234,20 @@ export function serializeDiagram(diagram: DiagramFile): string {
       sourceHandle: e.sourceHandle,
       targetHandle: e.targetHandle,
       label: e.label,
-      style: e.style
+      style: e.style,
+      metadata: sortedMetadata(e.metadata)
     }))
   }
   return JSON.stringify(ordered, null, 2) + '\n'
 }
 
+// Deliberately no metadata/requiredTags-specific validation here (epic
+// 0034) — parseDiagram has never validated the shape of any other optional
+// field either (icons, style, connectionPoints, ...), so singling out
+// metadata for stricter treatment would be inconsistent rather than more
+// correct. A malformed metadata value just flows through as-is; Canvas's
+// own sync pass (syncElementMetadata) is what actually reconciles required
+// tags against reality, on every file open.
 export function parseDiagram(raw: string): DiagramFile {
   const parsed: unknown = JSON.parse(raw)
   if (

@@ -29,7 +29,10 @@ import {
   type EdgeStyle,
   type IconRef,
   type IconSlot,
-  type NodeStyle
+  type JsonValue,
+  type MetadataEntry,
+  type NodeStyle,
+  type RequiredTagDefinition
 } from '@shared/diagram'
 import ShapeNode, { SHAPE_MIN_WIDTH, SHAPE_MIN_HEIGHT } from './nodes/ShapeNode'
 import TextNode, { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from './nodes/TextNode'
@@ -43,6 +46,8 @@ import IconPicker from './components/IconPicker'
 import ColorPickerPopup from './components/ColorPickerPopup'
 import StylePicker from './components/StylePicker'
 import DetailsPanel from './components/DetailsPanel'
+import RequiredTagsPanel from './components/RequiredTagsPanel'
+import DiagnosticsPanel from './components/DiagnosticsPanel'
 import DiagramDock from './panels/DiagramDock'
 import UtilityDock from './panels/UtilityDock'
 import AlignmentGuides from './components/AlignmentGuides'
@@ -172,10 +177,26 @@ interface HistorySnapshot {
 }
 const MAX_HISTORY = 50
 
-function toDiagramFile(nodes: Node[], edges: Edge[], viewport: Viewport): DiagramFile {
+// Only shape/container nodes and edges meaningfully carry metadata — see
+// ADR 0022. Kept as a helper since both toDiagramFile and the metadata-only
+// node type guard elsewhere need the same "does this node type qualify"
+// check.
+function nodeMetadataEligible(type: string | undefined): boolean {
+  return type === 'shape' || type === 'container'
+}
+
+function toDiagramFile(
+  nodes: Node[],
+  edges: Edge[],
+  viewport: Viewport,
+  metadata: Record<string, JsonValue>,
+  requiredTags: RequiredTagDefinition[]
+): DiagramFile {
   return {
     version: 1,
     viewport,
+    metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
+    requiredTags: requiredTags.length > 0 ? requiredTags : undefined,
     nodes: nodes.map((n) => ({
       id: n.id,
       type: n.type,
@@ -187,6 +208,9 @@ function toDiagramFile(nodes: Node[], edges: Edge[], viewport: Viewport): Diagra
         : undefined,
       parentId: n.parentId,
       style: n.data?.style as NodeStyle | undefined,
+      metadata: nodeMetadataEligible(n.type)
+        ? (n.data?.metadata as Record<string, MetadataEntry> | undefined)
+        : undefined,
       data: {
         label: String(n.data?.label ?? ''),
         icons: n.data?.icons as Partial<Record<IconSlot, IconRef>> | undefined,
@@ -203,12 +227,18 @@ function toDiagramFile(nodes: Node[], edges: Edge[], viewport: Viewport): Diagra
       sourceHandle: e.sourceHandle ?? undefined,
       targetHandle: e.targetHandle ?? undefined,
       label: typeof e.data?.label === 'string' && e.data.label ? e.data.label : undefined,
-      style: e.data?.style as EdgeStyle | undefined
+      style: e.data?.style as EdgeStyle | undefined,
+      metadata: e.data?.metadata as Record<string, MetadataEntry> | undefined
     }))
   }
 }
 
-function fromDiagramFile(diagram: DiagramFile): { nodes: Node[]; edges: Edge[] } {
+function fromDiagramFile(diagram: DiagramFile): {
+  nodes: Node[]
+  edges: Edge[]
+  metadata: Record<string, JsonValue>
+  requiredTags: RequiredTagDefinition[]
+} {
   return {
     // sortNodesForHierarchy defensively re-orders in case an external
     // writer didn't honor the parent-before-child requirement — see
@@ -230,7 +260,8 @@ function fromDiagramFile(diagram: DiagramFile): { nodes: Node[]; edges: Edge[] }
           ...(n.data.icons ? { icons: n.data.icons } : {}),
           ...(n.data.details ? { details: n.data.details } : {}),
           ...(n.data.linkedDiagram ? { linkedDiagram: n.data.linkedDiagram } : {}),
-          ...(n.style ? { style: n.style } : {})
+          ...(n.style ? { style: n.style } : {}),
+          ...(n.metadata && nodeMetadataEligible(n.type) ? { metadata: n.metadata } : {})
         }
       }))
     ),
@@ -241,15 +272,116 @@ function fromDiagramFile(diagram: DiagramFile): { nodes: Node[]; edges: Edge[] }
       target: e.target,
       sourceHandle: e.sourceHandle,
       targetHandle: e.targetHandle,
-      data: { label: e.label ?? '', ...(e.style ? { style: e.style } : {}) }
-    }))
+      data: {
+        label: e.label ?? '',
+        ...(e.style ? { style: e.style } : {}),
+        ...(e.metadata ? { metadata: e.metadata } : {})
+      }
+    })),
+    metadata: diagram.metadata ?? {},
+    requiredTags: diagram.requiredTags ?? []
   }
+}
+
+// Fresh metadata for a brand-new Shape/Container/Edge — every requiredTags
+// entry, seeded at its own defaultValue/lock. No diagnostics involved (a
+// new element has nothing to "reset"); that only applies to syncElementMetadata
+// below, which reconciles *existing* elements against a changed template.
+function seedMetadata(requiredTags: RequiredTagDefinition[]): Record<string, MetadataEntry> | undefined {
+  if (requiredTags.length === 0) return undefined
+  const result: Record<string, MetadataEntry> = {}
+  for (const def of requiredTags) {
+    result[def.key] = { value: def.defaultValue ?? null, lock: def.lock }
+  }
+  return result
+}
+
+function isValidForTag(value: JsonValue, def: RequiredTagDefinition): boolean {
+  // No allowedValues means nothing to be invalid against — see ADR 0022.
+  if (!def.allowedValues) return true
+  return typeof value === 'string' && def.allowedValues.includes(value)
+}
+
+// Reconciles one element's existing metadata against the diagram's current
+// requiredTags template — see ADR 0022's "Retroactive backfill" and its
+// exact rules (lockedEditable keeps a still-valid value / resets an invalid
+// one, lockedStatic always takes the template value, a removed key demotes
+// rather than deletes). Pushes one message per correction onto `diagnostics`
+// (mutated in place — called once per node/edge per sync pass, so a shared
+// array avoids threading an accumulator return value through every call).
+//
+// The "collision-affixing" case from the ADR (demote-then-reinstate: a key
+// leaves requiredTags, becomes a free entry, then gets re-added later) is
+// handled on the *reinstating* side below — when a required key's own slot
+// is already occupied by an old free entry, that free entry is the one that
+// gets bumped aside (" (demoted)", numbered if that's also taken), not the
+// reinstated required entry, so the template's key always stays clean.
+function syncElementMetadata(
+  metadata: Record<string, MetadataEntry> | undefined,
+  requiredTags: RequiredTagDefinition[],
+  elementLabel: string,
+  diagnostics: string[]
+): Record<string, MetadataEntry> | undefined {
+  const next: Record<string, MetadataEntry> = { ...metadata }
+  const requiredKeys = new Set(requiredTags.map((def) => def.key))
+
+  for (const def of requiredTags) {
+    const existing = next[def.key]
+    const templateEntry: MetadataEntry = { value: def.defaultValue ?? null, lock: def.lock }
+
+    if (existing?.lock === def.lock) {
+      if (def.lock === 'lockedStatic') {
+        if (existing.value !== templateEntry.value) {
+          next[def.key] = templateEntry
+          diagnostics.push(`Invalid value in ${elementLabel}.${def.key}, reset to default value.`)
+        }
+      } else if (!isValidForTag(existing.value, def)) {
+        next[def.key] = templateEntry
+        diagnostics.push(`Invalid value in ${elementLabel}.${def.key}, reset to default value.`)
+      }
+      continue
+    }
+
+    if (existing && !existing.lock) {
+      // A pre-existing free entry sitting on a key that's just become
+      // required (or reinstated after an earlier demotion) — preserve it
+      // under a bumped key rather than silently discarding it.
+      let affixed = `${def.key} (demoted)`
+      let n = 2
+      while (affixed in next) affixed = `${def.key} (demoted ${n++})`
+      next[affixed] = existing
+      diagnostics.push(`${elementLabel}.${def.key} is now required; previous free value moved to "${affixed}".`)
+    }
+    next[def.key] = templateEntry
+  }
+
+  for (const key of Object.keys(next)) {
+    const entry = next[key]
+    if (entry.lock && !requiredKeys.has(key)) {
+      next[key] = { value: entry.value }
+      diagnostics.push(`${elementLabel}.${key} is no longer required, kept as a free tag.`)
+    }
+  }
+
+  return Object.keys(next).length > 0 ? next : undefined
 }
 
 function CanvasInner(): React.JSX.Element {
   const [nodes, setNodes, onNodesChangeBase] = useNodesState<Node>([])
   const [edges, setEdges, onEdgesChangeBase] = useEdgesState<Edge>([])
   const [currentPath, setCurrentPath] = useState<string | null>(null)
+  // Diagram-level metadata/requiredTags (epic 0034/ADR 0022) — analogous to
+  // currentPath: file-scoped state with no React Flow home of its own,
+  // reset on every load, carried into every save via toDiagramFile.
+  const [diagramMetadata, setDiagramMetadata] = useState<Record<string, JsonValue>>({})
+  const [requiredTags, setRequiredTags] = useState<RequiredTagDefinition[]>([])
+  // Non-blocking notices from the most recent syncElementMetadata pass —
+  // deliberately *replaced*, not appended, on every sync: this reflects
+  // current state (what the last backfill run had to correct), not a
+  // growing history log. A file with nothing to correct clears the list.
+  const [diagnostics, setDiagnostics] = useState<string[]>([])
+  const [requiredTagsPanelOpen, setRequiredTagsPanelOpen] = useState(false)
+  const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false)
   const [contextMenu, setContextMenu] = useState<{
     x: number
     y: number
@@ -326,6 +458,48 @@ function CanvasInner(): React.JSX.Element {
   // connectStartRef for a gesture onReconnectEnd already owns, reset in
   // onReconnectEnd once the gesture is fully over.
   const isReconnectingRef = useRef(false)
+
+  // Reconciles every eligible node/edge's metadata against `tags`, via
+  // syncElementMetadata — see that function's own comment for the exact
+  // rules. Runs on file open (defensively, in case of hand-edited drift)
+  // and whenever the requiredTags template itself is edited. Deliberately
+  // NOT wrapped in pushSnapshot/undo history: this is a diagram-level
+  // settings change, not a canvas gesture, and requiredTags itself isn't
+  // part of the {nodes, edges} history snapshot shape — undoing the
+  // resulting metadata edits without also undoing the template change that
+  // caused them would just leave the two out of sync again.
+  const runSync = useCallback(
+    (tags: RequiredTagDefinition[]) => {
+      const notices: string[] = []
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (!nodeMetadataEligible(n.type)) return n
+          const label = `${n.type === 'shape' ? 'Shape' : 'Container'} "${String(n.data?.label ?? n.id)}"`
+          const metadata = syncElementMetadata(
+            n.data?.metadata as Record<string, MetadataEntry> | undefined,
+            tags,
+            label,
+            notices
+          )
+          return { ...n, data: { ...n.data, metadata } }
+        })
+      )
+      setEdges((eds) =>
+        eds.map((e) => {
+          const label = `Edge "${(typeof e.data?.label === 'string' && e.data.label) || e.id}"`
+          const metadata = syncElementMetadata(
+            e.data?.metadata as Record<string, MetadataEntry> | undefined,
+            tags,
+            label,
+            notices
+          )
+          return { ...e, data: { ...e.data, metadata } }
+        })
+      )
+      setDiagnostics(notices)
+    },
+    [setNodes, setEdges]
+  )
 
   const pushSnapshot = useCallback(() => {
     setPast((prev) => {
@@ -500,9 +674,33 @@ function CanvasInner(): React.JSX.Element {
     [openContextMenu]
   )
 
+  // The utility dock shows one surface at a time (see ADR 0013) — opening
+  // any of the three closes the other two, same as clicking a different tab.
   const openDetailsPanel = useCallback((nodeId: string) => {
+    setRequiredTagsPanelOpen(false)
+    setDiagnosticsPanelOpen(false)
     setDetailsPanelNodeId(nodeId)
   }, [])
+
+  const toggleRequiredTagsPanel = useCallback(() => {
+    setDetailsPanelNodeId(null)
+    setDiagnosticsPanelOpen(false)
+    setRequiredTagsPanelOpen((open) => !open)
+  }, [])
+
+  const toggleDiagnosticsPanel = useCallback(() => {
+    setDetailsPanelNodeId(null)
+    setRequiredTagsPanelOpen(false)
+    setDiagnosticsPanelOpen((open) => !open)
+  }, [])
+
+  const updateRequiredTags = useCallback(
+    (tags: RequiredTagDefinition[]) => {
+      setRequiredTags(tags)
+      runSync(tags)
+    },
+    [runSync]
+  )
 
   const iconPickerNode = iconPicker ? nodes.find((n) => n.id === iconPicker.nodeId) : undefined
   const iconPickerIcons = (iconPickerNode?.data?.icons ?? {}) as Partial<
@@ -530,9 +728,11 @@ function CanvasInner(): React.JSX.Element {
   const onConnect = useCallback(
     (connection: Connection) => {
       pushSnapshot()
-      setEdges((eds) => addEdge({ ...connection, type: 'labeled' }, eds))
+      setEdges((eds) =>
+        addEdge({ ...connection, type: 'labeled', data: { metadata: seedMetadata(requiredTags) } }, eds)
+      )
     },
-    [setEdges, pushSnapshot]
+    [setEdges, pushSnapshot, requiredTags]
   )
 
   // Grabbing an existing edge's own endpoint and redropping it elsewhere —
@@ -582,10 +782,15 @@ function CanvasInner(): React.JSX.Element {
           const centerY = n.position.y + (n.height ?? ANCHOR_SIZE) / 2
           const width = type === 'shape' ? SHAPE_MIN_WIDTH * 2 : CONTAINER_MIN_WIDTH * 2
           const height = type === 'shape' ? SHAPE_MIN_HEIGHT * 2 : CONTAINER_MIN_HEIGHT * 1.5
+          const metadata = seedMetadata(requiredTags)
           const data =
             type === 'shape'
-              ? { label: 'Shape' }
-              : { label: 'Container', style: { fill: 'var(--ev-c-gray-1)', fillOpacity: 20 } }
+              ? { label: 'Shape', metadata }
+              : {
+                  label: 'Container',
+                  style: { fill: 'var(--ev-c-gray-1)', fillOpacity: 20 },
+                  metadata
+                }
           return {
             ...n,
             type,
@@ -597,7 +802,7 @@ function CanvasInner(): React.JSX.Element {
         })
       )
     },
-    [setNodes, pushSnapshot]
+    [setNodes, pushSnapshot, requiredTags]
   )
 
   // Shared tail of onConnectEnd/onReconnectEnd once a drop has already been
@@ -653,14 +858,15 @@ function CanvasInner(): React.JSX.Element {
               sourceHandle: origin.handleId,
               target: anchorId,
               targetHandle: 'left',
-              type: 'labeled'
+              type: 'labeled',
+              data: { metadata: seedMetadata(requiredTags) }
             },
             eds
           )
         )
       )
     },
-    [spawnAnchorAt, setEdges]
+    [spawnAnchorAt, setEdges, requiredTags]
   )
 
   // Grabbing an existing edge's own endpoint and dropping it on empty
@@ -726,9 +932,16 @@ function CanvasInner(): React.JSX.Element {
     const height = SHAPE_MIN_HEIGHT * 2
     setNodes((nds) => [
       ...nds,
-      { id, type: 'shape', position: spawnPosition(width, height, nds.length), width, height, data: { label: 'Shape' } }
+      {
+        id,
+        type: 'shape',
+        position: spawnPosition(width, height, nds.length),
+        width,
+        height,
+        data: { label: 'Shape', metadata: seedMetadata(requiredTags) }
+      }
     ])
-  }, [setNodes, pushSnapshot, spawnPosition])
+  }, [setNodes, pushSnapshot, spawnPosition, requiredTags])
 
   const addTextNode = useCallback(() => {
     pushSnapshot()
@@ -765,10 +978,14 @@ function CanvasInner(): React.JSX.Element {
         // dashed border) rather than fully transparent — a freshly-added
         // container should read as "a container" at a glance, not require
         // opening the property panel first to see anything at all.
-        data: { label: 'Container', style: { fill: 'var(--ev-c-gray-1)', fillOpacity: 20 } }
+        data: {
+          label: 'Container',
+          style: { fill: 'var(--ev-c-gray-1)', fillOpacity: 20 },
+          metadata: seedMetadata(requiredTags)
+        }
       }
     ])
-  }, [setNodes, pushSnapshot, spawnPosition])
+  }, [setNodes, pushSnapshot, spawnPosition, requiredTags])
 
   // Alignment guides + snap-to-shape while dragging — see epic 0011.
   // Shared by onNodeDrag (live, every tick) and onNodeDragStop (once more
@@ -1013,6 +1230,23 @@ function CanvasInner(): React.JSX.Element {
     [setEdges]
   )
 
+  // Metadata section writes (epic 0034) — same bypass-onNodesChange pattern
+  // as updateNodeStyle/updateEdgeStyle above; undo grouping is MetadataSection's
+  // own job (it calls pushSnapshot before each commit), not duplicated here.
+  const updateNodeMetadata = useCallback(
+    (nodeId: string, metadata: Record<string, MetadataEntry> | undefined) => {
+      setNodes((nds) => nds.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, metadata } } : n)))
+    },
+    [setNodes]
+  )
+
+  const updateEdgeMetadata = useCallback(
+    (edgeId: string, metadata: Record<string, MetadataEntry> | undefined) => {
+      setEdges((eds) => eds.map((e) => (e.id === edgeId ? { ...e, data: { ...e.data, metadata } } : e)))
+    },
+    [setEdges]
+  )
+
   // x/y/width/height are effectively required (or default-sized) fields on
   // a node, unlike the optional style properties above — an empty/cleared
   // number field (patch value undefined, mid-typing) is treated as "leave
@@ -1069,12 +1303,18 @@ function CanvasInner(): React.JSX.Element {
   const persistDiagram = useCallback(
     async (path: string, nodesToSave: Node[]): Promise<Node[]> => {
       const savedNodes = await flushDetailsDrafts(path, nodesToSave)
-      const diagram = toDiagramFile(savedNodes, edges, rfInstance.getViewport())
+      const diagram = toDiagramFile(
+        savedNodes,
+        edges,
+        rfInstance.getViewport(),
+        diagramMetadata,
+        requiredTags
+      )
       await window.api.saveDiagram(path, diagram)
       setNodes(savedNodes)
       return savedNodes
     },
-    [edges, rfInstance, flushDetailsDrafts, setNodes]
+    [edges, rfInstance, flushDetailsDrafts, setNodes, diagramMetadata, requiredTags]
   )
 
   const performSave = useCallback(
@@ -1105,7 +1345,12 @@ function CanvasInner(): React.JSX.Element {
   // node id from the previous diagram becomes a real, visible bug).
   const loadDiagramIntoCanvas = useCallback(
     (path: string | null, diagram: DiagramFile) => {
-      const { nodes: openedNodes, edges: openedEdges } = fromDiagramFile(diagram)
+      const {
+        nodes: openedNodes,
+        edges: openedEdges,
+        metadata: openedMetadata,
+        requiredTags: openedRequiredTags
+      } = fromDiagramFile(diagram)
       // A different diagram entirely — old undo history doesn't apply to
       // it (and, worse, undoing across a load boundary would try to
       // restore a previous diagram's nodes into the wrong file context).
@@ -1115,14 +1360,21 @@ function CanvasInner(): React.JSX.Element {
       setEdges(openedEdges)
       rfInstance.setViewport(diagram.viewport)
       setCurrentPath(path)
+      setDiagramMetadata(openedMetadata)
+      setRequiredTags(openedRequiredTags)
       setDetailsDrafts({})
       setContextMenu(null)
       setIconPicker(null)
       setColorPicker(null)
       setLinePicker(null)
       setDetailsPanelNodeId(null)
+      setRequiredTagsPanelOpen(false)
+      setDiagnosticsPanelOpen(false)
+      // Defensive, per ADR 0022 — reconcile against hand-edited drift on
+      // every load, not just when the template is edited from within the app.
+      runSync(openedRequiredTags)
     },
-    [rfInstance, setNodes, setEdges]
+    [rfInstance, setNodes, setEdges, runSync]
   )
 
   const handleOpen = useCallback(async () => {
@@ -1333,6 +1585,10 @@ function CanvasInner(): React.JSX.Element {
       if (event.key === 'Escape') {
         if (detailsPanelNodeId) {
           setDetailsPanelNodeId(null)
+        } else if (requiredTagsPanelOpen) {
+          setRequiredTagsPanelOpen(false)
+        } else if (diagnosticsPanelOpen) {
+          setDiagnosticsPanelOpen(false)
         } else if (iconPicker) {
           setIconPicker(null)
         } else if (colorPicker) {
@@ -1369,6 +1625,8 @@ function CanvasInner(): React.JSX.Element {
     breadcrumbs,
     navigateToBreadcrumb,
     detailsPanelNodeId,
+    requiredTagsPanelOpen,
+    diagnosticsPanelOpen,
     iconPicker,
     colorPicker,
     linePicker,
@@ -1423,6 +1681,10 @@ function CanvasInner(): React.JSX.Element {
             <button onClick={redo} disabled={future.length === 0} title="Redo (Ctrl+Shift+Z)">
               Redo
             </button>
+            <button onClick={toggleRequiredTagsPanel}>Required tags…</button>
+            <button onClick={toggleDiagnosticsPanel}>
+              Diagnostics{diagnostics.length > 0 ? ` (${diagnostics.length})` : ''}
+            </button>
             {breadcrumbs.length > 0 && (
               <nav className="breadcrumbs">
                 {breadcrumbs.map((crumb, index) => (
@@ -1476,6 +1738,9 @@ function CanvasInner(): React.JSX.Element {
               onUpdateNodeStyle={updateNodeStyle}
               onUpdateEdgeStyle={updateEdgeStyle}
               onUpdateTransform={updateTransform}
+              onUpdateNodeMetadata={updateNodeMetadata}
+              onUpdateEdgeMetadata={updateEdgeMetadata}
+              requiredTags={requiredTags}
               beginContinuousEdit={beginContinuousEdit}
               endContinuousEdit={endContinuousEdit}
               pushSnapshot={pushSnapshot}
@@ -1563,6 +1828,20 @@ function CanvasInner(): React.JSX.Element {
                 setDetailsDrafts((prev) => ({ ...prev, [detailsPanelNodeId]: content }))
               }
               onClose={() => setDetailsPanelNodeId(null)}
+            />
+          )}
+          {requiredTagsPanelOpen && (
+            <RequiredTagsPanel
+              requiredTags={requiredTags}
+              onChange={updateRequiredTags}
+              onClose={() => setRequiredTagsPanelOpen(false)}
+            />
+          )}
+          {diagnosticsPanelOpen && (
+            <DiagnosticsPanel
+              entries={diagnostics}
+              onRecheck={() => runSync(requiredTags)}
+              onClose={() => setDiagnosticsPanelOpen(false)}
             />
           )}
         </UtilityDock>

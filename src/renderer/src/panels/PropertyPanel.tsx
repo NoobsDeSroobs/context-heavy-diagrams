@@ -1,7 +1,8 @@
 import type { Edge, Node } from '@xyflow/react'
-import type { EdgeStyle, MarkerKind, NodeStyle } from '@shared/diagram'
+import type { EdgeStyle, MarkerKind, MetadataEntry, NodeStyle, RequiredTagDefinition } from '@shared/diagram'
 import { CollapsibleSection, ColorField, NumberField, OpacityField, SelectField } from './fields'
 import { computeFieldValue } from './fieldValue'
+import MetadataSection from './MetadataSection'
 
 export interface TransformPatch {
   x?: number
@@ -17,6 +18,9 @@ interface PropertyPanelProps {
   onUpdateNodeStyle: (nodeIds: string[], patch: Partial<NodeStyle>) => void
   onUpdateEdgeStyle: (edgeIds: string[], patch: Partial<EdgeStyle>) => void
   onUpdateTransform: (nodeIds: string[], patch: TransformPatch) => void
+  onUpdateNodeMetadata: (nodeId: string, metadata: Record<string, MetadataEntry> | undefined) => void
+  onUpdateEdgeMetadata: (edgeId: string, metadata: Record<string, MetadataEntry> | undefined) => void
+  requiredTags: RequiredTagDefinition[]
   beginContinuousEdit: () => void
   endContinuousEdit: () => void
   pushSnapshot: () => void
@@ -410,6 +414,9 @@ export default function PropertyPanel({
   onUpdateNodeStyle,
   onUpdateEdgeStyle,
   onUpdateTransform,
+  onUpdateNodeMetadata,
+  onUpdateEdgeMetadata,
+  requiredTags,
   beginContinuousEdit,
   endContinuousEdit,
   pushSnapshot
@@ -421,6 +428,18 @@ export default function PropertyPanel({
   }
   const nodeGroups = Array.from(byType.entries())
   const groupCount = nodeGroups.length + (selectedEdges.length > 0 ? 1 : 0)
+
+  // Metadata section: single-selection only (see MetadataSection's own
+  // comment), and only for the node types that actually carry metadata —
+  // Text/Anchor never do (ADR 0022).
+  const metadataTarget: { kind: 'node'; node: Node } | { kind: 'edge'; edge: Edge } | undefined =
+    selectedNodes.length + selectedEdges.length === 1
+      ? selectedNodes.length === 1 && (selectedNodes[0].type === 'shape' || selectedNodes[0].type === 'container')
+        ? { kind: 'node', node: selectedNodes[0] }
+        : selectedEdges.length === 1
+          ? { kind: 'edge', edge: selectedEdges[0] }
+          : undefined
+      : undefined
 
   const renderNodeGroup = (type: string, nodes: Node[]): React.JSX.Element => {
     const ids = nodes.map((n) => n.id)
@@ -464,6 +483,22 @@ export default function PropertyPanel({
       <div className="property-panel">
         {nodeGroups.map(([type, nodes]) => renderNodeGroup(type, nodes))}
         {selectedEdges.length > 0 && renderEdgeGroup()}
+        {metadataTarget && (
+          <MetadataSection
+            metadata={
+              metadataTarget.kind === 'node'
+                ? (metadataTarget.node.data?.metadata as Record<string, MetadataEntry> | undefined)
+                : (metadataTarget.edge.data?.metadata as Record<string, MetadataEntry> | undefined)
+            }
+            onChange={(metadata) =>
+              metadataTarget.kind === 'node'
+                ? onUpdateNodeMetadata(metadataTarget.node.id, metadata)
+                : onUpdateEdgeMetadata(metadataTarget.edge.id, metadata)
+            }
+            requiredTags={requiredTags}
+            pushSnapshot={pushSnapshot}
+          />
+        )}
       </div>
     )
   }

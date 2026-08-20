@@ -4,5 +4,6 @@ Real, working diagram files, kept as manual regression fixtures and as a startin
 
 - **`hello-world.chd`** — the minimal case: two nodes, one edge. Proves save/load round-trips correctly.
 - **`with-icons.chd`** — two shapes with built-in corner icons (epic 0007).
+- **`with-metadata.chd`** — a diagram-level `requiredTags` template plus one required tag and one free tag on a node (epic 0034/ADR 0022).
 
 More get added as features land — e.g. a containers example once epic 0004 exists, a detailed one once epic 0008 exists — so this folder ends up demonstrating whatever the tool can currently do.

@@ -851,3 +851,293 @@ body {
 .style-picker-swatch-dotted {
   border-top-style: dotted;
 }
+
+/* Metadata section (epic 0034/ADR 0022) — a list-view of key/value rows
+   inside the Properties Panel, single-selection only. Reuses .property-*
+   spacing conventions from the rest of the panel rather than inventing new
+   ones. */
+.metadata-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metadata-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.metadata-key {
+  flex: 0 0 auto;
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ev-c-text-2);
+}
+
+.metadata-key.locked {
+  color: var(--ev-c-text-3);
+}
+
+.metadata-lock-icon {
+  font-size: 10px;
+  margin-right: 2px;
+}
+
+.metadata-value {
+  flex: 1;
+  min-width: 24px;
+  min-height: 1.2em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  color: var(--color-text);
+  /* An empty value is otherwise a zero-content, borderless div — visually
+     indistinguishable from "there's no field here at all." The dashed
+     underline gives it a click target even with no text in it yet. */
+  border-bottom: 1px dashed var(--ev-c-gray-2);
+}
+
+.metadata-value:hover {
+  border-bottom-color: var(--ev-c-text-2);
+}
+
+.metadata-value-static {
+  cursor: default;
+  color: var(--ev-c-text-3);
+}
+
+.metadata-value-select {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 12px;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+
+.metadata-value-input {
+  width: 100%;
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+
+.metadata-remove {
+  cursor: pointer;
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: var(--ev-c-text-3);
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 4px;
+}
+
+.metadata-remove:hover {
+  color: var(--color-text);
+}
+
+.metadata-add-row {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.metadata-add-key,
+.metadata-add-value {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  padding: 3px 5px;
+}
+
+.metadata-add-row button {
+  cursor: pointer;
+  flex: 0 0 auto;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 12px;
+}
+
+.metadata-add-row button:hover:not(:disabled) {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.metadata-add-row button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Required-tags template editor and diagnostics panel — same fixed
+   right-side dock shell as .details-panel (toolbar + scrollable body),
+   different body content. */
+.required-tags-panel,
+.diagnostics-panel {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-background-soft);
+}
+
+.required-tags-panel-toolbar,
+.diagnostics-panel-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  border-bottom: 1px solid var(--ev-c-gray-2);
+}
+
+.required-tags-panel-title,
+.diagnostics-panel-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.required-tags-panel-toolbar button,
+.diagnostics-panel-toolbar button {
+  cursor: pointer;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  min-width: 26px;
+}
+
+.required-tags-panel-toolbar button:hover,
+.diagnostics-panel-toolbar button:hover {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.required-tags-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.required-tags-panel-hint {
+  font-size: 12px;
+  color: var(--ev-c-text-3);
+  margin: 0 0 4px;
+  line-height: 1.4;
+}
+
+.required-tags-panel-hint code {
+  font-family: 'Menlo', 'Lucida Console', monospace;
+  background: var(--color-background-mute);
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-size: 11px;
+}
+
+.required-tag-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.required-tag-key,
+.required-tag-lock,
+.required-tag-default,
+.required-tag-allowed {
+  font: inherit;
+  font-size: 12px;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  padding: 3px 5px;
+  min-width: 0;
+}
+
+.required-tag-key {
+  flex: 1 1 25%;
+}
+
+.required-tag-lock {
+  flex: 1 1 30%;
+}
+
+.required-tag-default,
+.required-tag-allowed {
+  flex: 1 1 20%;
+}
+
+.required-tag-remove {
+  cursor: pointer;
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: var(--ev-c-text-3);
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 4px;
+}
+
+.required-tag-remove:hover {
+  color: var(--color-text);
+}
+
+.required-tag-add {
+  cursor: pointer;
+  align-self: flex-start;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.required-tag-add:hover {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.diagnostics-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.diagnostics-panel-empty {
+  font-size: 12px;
+  color: var(--ev-c-text-3);
+  margin: 0;
+}
+
+.diagnostics-panel-list {
+  margin: 0;
+  padding-left: 1.2em;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--color-text);
+  line-height: 1.4;
+}

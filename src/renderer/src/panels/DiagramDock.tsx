@@ -1,5 +1,5 @@
 import type { Edge, Node } from '@xyflow/react'
-import type { EdgeStyle, NodeStyle } from '@shared/diagram'
+import type { EdgeStyle, MetadataEntry, NodeStyle, RequiredTagDefinition } from '@shared/diagram'
 import ItemPalette from './ItemPalette'
 import PropertyPanel, { type TransformPatch } from './PropertyPanel'
 
@@ -16,6 +16,9 @@ export default function DiagramDock({
   onUpdateNodeStyle,
   onUpdateEdgeStyle,
   onUpdateTransform,
+  onUpdateNodeMetadata,
+  onUpdateEdgeMetadata,
+  requiredTags,
   beginContinuousEdit,
   endContinuousEdit,
   pushSnapshot
@@ -28,6 +31,9 @@ export default function DiagramDock({
   onUpdateNodeStyle: (nodeIds: string[], patch: Partial<NodeStyle>) => void
   onUpdateEdgeStyle: (edgeIds: string[], patch: Partial<EdgeStyle>) => void
   onUpdateTransform: (nodeIds: string[], patch: TransformPatch) => void
+  onUpdateNodeMetadata: (nodeId: string, metadata: Record<string, MetadataEntry> | undefined) => void
+  onUpdateEdgeMetadata: (edgeId: string, metadata: Record<string, MetadataEntry> | undefined) => void
+  requiredTags: RequiredTagDefinition[]
   beginContinuousEdit: () => void
   endContinuousEdit: () => void
   pushSnapshot: () => void
@@ -43,6 +49,9 @@ export default function DiagramDock({
           onUpdateNodeStyle={onUpdateNodeStyle}
           onUpdateEdgeStyle={onUpdateEdgeStyle}
           onUpdateTransform={onUpdateTransform}
+          onUpdateNodeMetadata={onUpdateNodeMetadata}
+          onUpdateEdgeMetadata={onUpdateEdgeMetadata}
+          requiredTags={requiredTags}
           beginContinuousEdit={beginContinuousEdit}
           endContinuousEdit={endContinuousEdit}
           pushSnapshot={pushSnapshot}

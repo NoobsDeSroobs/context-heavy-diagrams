@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "viewport": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  },
+  "requiredTags": [
+    {
+      "key": "environment",
+      "allowedValues": ["dev", "staging", "prod"],
+      "defaultValue": "dev",
+      "lock": "lockedEditable"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "shape-1",
+      "type": "shape",
+      "position": {
+        "x": -22.5,
+        "y": 25
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "metadata": {
+        "environment": {
+          "value": "prod",
+          "lock": "lockedEditable"
+        },
+        "owner": {
+          "value": "platform-team"
+        }
+      },
+      "data": {
+        "label": "Web App"
+      }
+    },
+    {
+      "id": "shape-2",
+      "type": "shape",
+      "position": {
+        "x": 120,
+        "y": 120
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "metadata": {
+        "environment": {
+          "value": "dev",
+          "lock": "lockedEditable"
+        }
+      },
+      "data": {
+        "label": "Database"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "xy-edge__shape-2right-shape-1left",
+      "type": "labeled",
+      "source": "shape-2",
+      "target": "shape-1",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "reads from"
+    }
+  ]
+}
