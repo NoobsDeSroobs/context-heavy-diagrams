@@ -1,6 +1,7 @@
-import { dialog, ipcMain } from 'electron'
+import { BrowserWindow, dialog, ipcMain } from 'electron'
 import { readFile, writeFile } from 'fs/promises'
 import { parseDiagram, serializeDiagram, type DiagramFile } from '@shared/diagram'
+import { registerWindowPath } from './windows'
 
 // Diagram files are a single file (.chd, plain JSON underneath) — see
 // docs/decisions/0005-diagram-identity-and-linking.md. Nothing about
@@ -8,9 +9,8 @@ import { parseDiagram, serializeDiagram, type DiagramFile } from '@shared/diagra
 // this model over the folder-based one it replaced (ADR 0003).
 const FILTERS = [{ name: 'Diagram', extensions: ['chd'] }]
 
-// Shared by diagram:open (dialog-driven) and diagram:openPath / links:resolve
-// (already-known absolute path, no dialog) — one place that reads+parses a
-// .chd off disk.
+// The one place that reads+parses a .chd off disk from an already-known
+// absolute path — used by diagram:openPath.
 export async function openDiagramAtPath(path: string): Promise<DiagramFile> {
   const raw = await readFile(path, 'utf-8')
   return parseDiagram(raw)
@@ -27,23 +27,19 @@ export function registerDiagramHandlers(): void {
     return result.filePath
   })
 
-  ipcMain.handle('diagram:save', async (_event, path: string, diagram: DiagramFile) => {
+  // Registers this window's path in the windows.ts registry so a later
+  // attempt to open the same file elsewhere focuses this window instead
+  // of opening a duplicate (ADR 0023) — covers both Save and the first
+  // Save As, the only two points a window's path becomes known if it
+  // wasn't opened with one already (e.g. File -> New).
+  ipcMain.handle('diagram:save', async (event, path: string, diagram: DiagramFile) => {
     await writeFile(path, serializeDiagram(diagram), 'utf-8')
+    const win = BrowserWindow.fromWebContents(event.sender)
+    if (win) registerWindowPath(win, path)
   })
 
-  ipcMain.handle('diagram:open', async () => {
-    const result = await dialog.showOpenDialog({
-      properties: ['openFile'],
-      filters: FILTERS,
-      title: 'Open diagram'
-    })
-    if (result.canceled || result.filePaths.length === 0) return null
-    const path = result.filePaths[0]
-    return { path, diagram: await openDiagramAtPath(path) }
-  })
-
-  // No dialog — used for breadcrumb back-navigation, where the absolute
-  // path is already known from a previous visit.
+  // No dialog — used by a window's own initial-load mount effect (path
+  // passed via ?path= query string, ADR 0023).
   ipcMain.handle('diagram:openPath', async (_event, path: string) => {
     return openDiagramAtPath(path)
   })

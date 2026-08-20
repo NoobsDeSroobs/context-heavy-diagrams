@@ -1,6 +1,12 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import type { DiagramFile } from '@shared/diagram'
+import type { DiagramFile, RequiredTagDefinition } from '@shared/diagram'
+
+interface RequiredTagsWalkResult {
+  reached: string[]
+  external: string[]
+  unreadable: string[]
+}
 
 // Custom APIs for renderer. See docs/decisions/0005-diagram-identity-and-linking.md
 // for the single-file model. pickSavePath and saveDiagram are deliberately
@@ -8,10 +14,6 @@ import type { DiagramFile } from '@shared/diagram'
 // path, flush any pending detail-panel drafts using it, *then* write the
 // final diagram content, all before the file actually lands on disk.
 const api = {
-  openDiagram(): Promise<{ path: string; diagram: DiagramFile } | null> {
-    return ipcRenderer.invoke('diagram:open')
-  },
-
   saveDiagram(path: string, diagram: DiagramFile): Promise<void> {
     return ipcRenderer.invoke('diagram:save', path, diagram)
   },
@@ -46,8 +48,8 @@ const api = {
     return ipcRenderer.invoke('details:write', diagramPath, nodeId, content)
   },
 
-  // No dialog — used for breadcrumb back-navigation, where the absolute
-  // path is already known from a previous visit.
+  // No dialog — used by a window's own initial-load mount effect, given
+  // an absolute path via ?path= query string (ADR 0023).
   openDiagramAtPath(path: string): Promise<DiagramFile> {
     return ipcRenderer.invoke('diagram:openPath', path)
   },
@@ -64,13 +66,46 @@ const api = {
     return ipcRenderer.invoke('links:pickExisting', diagramPath)
   },
 
-  resolveLinkedDiagram(
+  // Multi-window model — see ADR 0023. All three open a new window (or
+  // focus an existing one already showing that path) rather than ever
+  // replacing the diagram in the window they were called from.
+  newWindow(): Promise<void> {
+    return ipcRenderer.invoke('windows:openNew')
+  },
+
+  openInNewWindow(): Promise<void> {
+    return ipcRenderer.invoke('windows:pickAndOpen')
+  },
+
+  openLinkedInNewWindow(
     diagramPath: string,
     relativePath: string
-  ): Promise<
-    { found: true; path: string; diagram: DiagramFile } | { found: false; resolvedPath: string }
-  > {
-    return ipcRenderer.invoke('links:resolve', diagramPath, relativePath)
+  ): Promise<{ found: true } | { found: false; resolvedPath: string }> {
+    return ipcRenderer.invoke('windows:openLinked', diagramPath, relativePath)
+  },
+
+  // Propagating a required-tags template down the link tree — see epic
+  // 0035 / ADR 0024. directChildRelativePaths comes from the caller's own
+  // live node state (may include unsaved link edits); every deeper level
+  // is discovered by reading each reached diagram's own file.
+  previewRequiredTagsChildren(
+    diagramPath: string,
+    directChildRelativePaths: string[]
+  ): Promise<RequiredTagsWalkResult> {
+    return ipcRenderer.invoke('requiredTags:previewChildren', diagramPath, directChildRelativePaths)
+  },
+
+  copyRequiredTagsToChildren(
+    diagramPath: string,
+    requiredTags: RequiredTagDefinition[],
+    directChildRelativePaths: string[]
+  ): Promise<RequiredTagsWalkResult> {
+    return ipcRenderer.invoke(
+      'requiredTags:copyToChildren',
+      diagramPath,
+      requiredTags,
+      directChildRelativePaths
+    )
   }
 }
 

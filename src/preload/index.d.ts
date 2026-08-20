@@ -1,12 +1,13 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
-import type { DiagramFile } from '@shared/diagram'
+import type { DiagramFile, RequiredTagDefinition } from '@shared/diagram'
 
-export type ResolveLinkResult =
-  | { found: true; path: string; diagram: DiagramFile }
-  | { found: false; resolvedPath: string }
+export interface RequiredTagsWalkResult {
+  reached: string[]
+  external: string[]
+  unreadable: string[]
+}
 
 export interface DiagramApi {
-  openDiagram(): Promise<{ path: string; diagram: DiagramFile } | null>
   openDiagramAtPath(path: string): Promise<DiagramFile>
   saveDiagram(path: string, diagram: DiagramFile): Promise<void>
   pickSavePath(): Promise<string | null>
@@ -17,7 +18,21 @@ export interface DiagramApi {
   writeDetails(diagramPath: string, nodeId: string, content: string): Promise<string>
   createLinkedDiagram(diagramPath: string, label: string): Promise<string>
   pickExistingLinkedDiagram(diagramPath: string): Promise<string | null>
-  resolveLinkedDiagram(diagramPath: string, relativePath: string): Promise<ResolveLinkResult>
+  newWindow(): Promise<void>
+  openInNewWindow(): Promise<void>
+  openLinkedInNewWindow(
+    diagramPath: string,
+    relativePath: string
+  ): Promise<{ found: true } | { found: false; resolvedPath: string }>
+  previewRequiredTagsChildren(
+    diagramPath: string,
+    directChildRelativePaths: string[]
+  ): Promise<RequiredTagsWalkResult>
+  copyRequiredTagsToChildren(
+    diagramPath: string,
+    requiredTags: RequiredTagDefinition[],
+    directChildRelativePaths: string[]
+  ): Promise<RequiredTagsWalkResult>
 }
 
 declare global {

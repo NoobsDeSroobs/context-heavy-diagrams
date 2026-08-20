@@ -5,6 +5,7 @@ interface RequiredTagsPanelProps {
   requiredTags: RequiredTagDefinition[]
   onChange: (tags: RequiredTagDefinition[]) => void
   onClose: () => void
+  onCopyToChildren: () => void
 }
 
 function stringifyDefault(value: JsonValue | undefined): string {
@@ -148,7 +149,8 @@ function RequiredTagRow({
 export default function RequiredTagsPanel({
   requiredTags,
   onChange,
-  onClose
+  onClose,
+  onCopyToChildren
 }: RequiredTagsPanelProps): React.JSX.Element {
   const updateTag = (index: number, patch: Partial<RequiredTagDefinition>): void => {
     onChange(requiredTags.map((tag, i) => (i === index ? { ...tag, ...patch } : tag)))
@@ -170,6 +172,14 @@ export default function RequiredTagsPanel({
       <div className="required-tags-panel-toolbar">
         <span className="required-tags-panel-title">Required tags</span>
         <div className="details-panel-spacer" />
+        <button
+          type="button"
+          onClick={onCopyToChildren}
+          disabled={requiredTags.length === 0}
+          title="Merge this template into every linked diagram in this diagram's own folder, recursively"
+        >
+          Copy to children
+        </button>
         <button type="button" title="Close" aria-label="Close" onClick={onClose}>
           ✕
         </button>

@@ -23,7 +23,6 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import {
-  createEmptyDiagram,
   type ConnectionPoint,
   type DiagramFile,
   type EdgeStyle,
@@ -94,13 +93,6 @@ function isVoidDrop(event: MouseEvent | TouchEvent, connectionState: FinalConnec
 // MouseEvent and TouchEvent expose the release coordinates differently.
 function pointFromEvent(event: MouseEvent | TouchEvent): { clientX: number; clientY: number } {
   return 'changedTouches' in event ? event.changedTouches[0] : event
-}
-
-// No Node `path` module in the renderer (see docs/architecture/overview.md's
-// process model) — breadcrumb labels just need the file name, not a real
-// path-parsing library.
-function basename(path: string): string {
-  return path.split(/[/\\]/).pop() ?? path
 }
 
 // Containers (epic 0004, ADR 0012) — a child node's `position` is relative
@@ -411,14 +403,6 @@ function CanvasInner(): React.JSX.Element {
   // Editing a node's details doesn't write to disk immediately — it's just
   // draft state here, flushed as part of the main save flow. See epic 0008.
   const [detailsDrafts, setDetailsDrafts] = useState<Record<string, string>>({})
-  // Trail of diagrams navigated away from via a linked-diagram Ctrl/Cmd+click
-  // — see epic 0009. Forward navigation persists the diagram being left
-  // first (see persistDiagram/navigateExistingLink), so that's never lost —
-  // but breadcrumb *back*-navigation re-opens fresh from disk, same as
-  // "Open" does, so any edits made after arriving somewhere via a breadcrumb
-  // and before clicking back out are not preserved (this app has no
-  // dirty-tracking/autosave yet at all — epic 0020).
-  const [breadcrumbs, setBreadcrumbs] = useState<{ path: string; label: string }[]>([])
   const rfInstance = useReactFlow()
 
   // Undo/redo history — see epic 0006. Explicit calls at each real mutation
@@ -701,6 +685,63 @@ function CanvasInner(): React.JSX.Element {
     },
     [runSync]
   )
+
+  // Gathers this diagram's own direct linked-node relative paths (deeper
+  // levels are discovered from disk during the walk — see ADR 0024),
+  // previews the reachable subtree, confirms with the user, then copies.
+  // A link resolving outside this diagram's own directory tree is never
+  // followed or written to — reported as excluded, not silently skipped.
+  const copyRequiredTagsToChildren = useCallback(async () => {
+    if (!currentPath) {
+      alert('Save the diagram before copying required tags to linked children.')
+      return
+    }
+    const directChildRelativePaths = nodes
+      .map((n) =>
+        typeof n.data?.linkedDiagram === 'string' ? (n.data.linkedDiagram as string) : undefined
+      )
+      .filter((p): p is string => p !== undefined)
+    if (directChildRelativePaths.length === 0) {
+      alert('This diagram has no linked children yet.')
+      return
+    }
+    const preview = await window.api
+      .previewRequiredTagsChildren(currentPath, directChildRelativePaths)
+      .catch((error: unknown) => {
+        alert(`Couldn't scan linked diagrams: ${error instanceof Error ? error.message : String(error)}`)
+        return null
+      })
+    if (!preview) return
+    if (preview.reached.length === 0) {
+      alert('No linked diagrams to copy to (all links were external or unreadable).')
+      return
+    }
+    const externalNote =
+      preview.external.length > 0
+        ? `\n\nExcluded (not nested inside this diagram's own colocation folder):\n${preview.external.map((p) => `  ${p}`).join('\n')}`
+        : ''
+    const confirmMessage =
+      `Copy required tags to ${preview.reached.length} linked diagram(s)?\n\n` +
+      preview.reached.map((p) => `  ${p}`).join('\n') +
+      externalNote
+    if (!confirm(confirmMessage)) return
+    const result = await window.api
+      .copyRequiredTagsToChildren(currentPath, requiredTags, directChildRelativePaths)
+      .catch((error: unknown) => {
+        alert(`Couldn't copy required tags: ${error instanceof Error ? error.message : String(error)}`)
+        return null
+      })
+    if (!result) return
+    const unreadableNote =
+      result.unreadable.length > 0
+        ? `\n\nCouldn't be read, skipped:\n${result.unreadable.map((p) => `  ${p}`).join('\n')}`
+        : ''
+    alert(
+      `Copied required tags to ${result.reached.length} linked diagram(s):\n\n` +
+        result.reached.map((p) => `  ${p}`).join('\n') +
+        unreadableNote
+    )
+  }, [currentPath, nodes, requiredTags])
 
   const iconPickerNode = iconPicker ? nodes.find((n) => n.id === iconPicker.nodeId) : undefined
   const iconPickerIcons = (iconPickerNode?.data?.icons ?? {}) as Partial<
@@ -1337,12 +1378,12 @@ function CanvasInner(): React.JSX.Element {
   const handleSave = useCallback(() => performSave(false), [performSave])
   const handleSaveAs = useCallback(() => performSave(true), [performSave])
 
-  // Shared by "Open", forward link-navigation, and breadcrumb back-nav — the
-  // one place that applies a loaded DiagramFile to all canvas state. Also
-  // closes any panel/menu left open from the diagram just navigated away
-  // from (handleOpen alone never needed this — a rare deliberate action —
-  // but link-navigation is frequent enough that a stale panel referencing a
-  // node id from the previous diagram becomes a real, visible bug).
+  // The one place that applies a loaded DiagramFile to all canvas state —
+  // called by this window's own initial-load mount effect below (a window
+  // never loads a *different* diagram into itself after that; File Open
+  // and both link-navigation flows all open new windows instead, ADR
+  // 0023). Also resets any panel/menu state, defensively, in case this
+  // ever gets a second caller again.
   const loadDiagramIntoCanvas = useCallback(
     (path: string | null, diagram: DiagramFile) => {
       const {
@@ -1377,72 +1418,81 @@ function CanvasInner(): React.JSX.Element {
     [rfInstance, setNodes, setEdges, runSync]
   )
 
+  // A window opened with an initial diagram (File -> Open, or either
+  // link-navigation flow) gets it via a ?path= query string on its URL —
+  // read here rather than in main, so this reuses the same tested load
+  // path as everything else instead of duplicating file-read logic
+  // (ADR 0023). Ref-guarded, not an empty deps array, so this survives
+  // React StrictMode's dev-mode double-invoke and doesn't re-fire if
+  // loadDiagramIntoCanvas's identity changes across renders — see epic
+  // 0006/ADR 0018 for why this file is careful about effect double-runs.
+  const initialLoadDone = useRef(false)
+  useEffect(() => {
+    if (initialLoadDone.current) return
+    initialLoadDone.current = true
+    const path = new URLSearchParams(window.location.search).get('path')
+    if (!path) return
+    window.api
+      .openDiagramAtPath(path)
+      .then((diagram) => loadDiagramIntoCanvas(path, diagram))
+      .catch((error) => {
+        alert(`Couldn't open ${path}: ${error instanceof Error ? error.message : String(error)}`)
+      })
+  }, [loadDiagramIntoCanvas])
+
+  // Always opens (or focuses, if already open) a new window, never
+  // replaces the current one — see ADR 0023.
   const handleOpen = useCallback(async () => {
-    let result: Awaited<ReturnType<typeof window.api.openDiagram>>
     try {
-      result = await window.api.openDiagram()
+      await window.api.openInNewWindow()
     } catch (error) {
       alert(`Open failed: ${error instanceof Error ? error.message : String(error)}`)
-      return
     }
-    if (!result) return
-    setBreadcrumbs([])
-    loadDiagramIntoCanvas(result.path, result.diagram)
-  }, [loadDiagramIntoCanvas])
+  }, [])
 
-  // In-memory only — see epic 0018. No file is written, nothing is linked
-  // from anywhere, and (like Open/link-navigation) any unsaved edits in the
-  // current diagram are silently discarded — no dirty-tracking exists yet
-  // (epic 0020). Replaces the current diagram in place, single-window
-  // model; once tabs/windows exist (epic 0024) this should open a new tab
-  // instead and leave the current one alone.
+  // Always opens a new window, never replaces the current one — see
+  // ADR 0023. No file is written, nothing is linked from anywhere.
   const handleNew = useCallback(() => {
-    setBreadcrumbs([])
-    loadDiagramIntoCanvas(null, createEmptyDiagram())
-  }, [loadDiagramIntoCanvas])
+    window.api.newWindow()
+  }, [])
 
-  // Pure navigation: resolves a stored relative path and, on success, pushes
-  // the diagram being left onto the breadcrumb trail and loads the target.
-  // Never mutates current state on failure — a missing or unreadable link
-  // must leave the diagram containing it fully intact (ADR 0005). Does NOT
-  // save anything itself — callers persist first if the parent needs it.
-  const resolveAndLoad = useCallback(
-    async (parentPath: string, relativePath: string) => {
-      try {
-        const result = await window.api.resolveLinkedDiagram(parentPath, relativePath)
-        if (!result.found) {
-          alert(`Linked diagram not found at ${result.resolvedPath}`)
-          return
-        }
-        setBreadcrumbs((prev) => [...prev, { path: parentPath, label: basename(parentPath) }])
-        loadDiagramIntoCanvas(result.path, result.diagram)
-      } catch (error) {
-        alert(
-          `Linked diagram at ${relativePath} couldn't be read: ${error instanceof Error ? error.message : String(error)}`
-        )
+  // Opens (or focuses, if already open elsewhere) a linked diagram in its
+  // own window — used by both link-navigation flows below. Never mutates
+  // current state on failure — a missing or unreadable link must leave the
+  // diagram containing it fully intact (ADR 0005). Does NOT save anything
+  // itself — callers persist first if the parent needs it.
+  const openLinkedWindow = useCallback(async (parentPath: string, relativePath: string) => {
+    try {
+      const result = await window.api.openLinkedInNewWindow(parentPath, relativePath)
+      if (!result.found) {
+        alert(`Linked diagram not found at ${result.resolvedPath}`)
       }
-    },
-    [loadDiagramIntoCanvas]
-  )
+    } catch (error) {
+      alert(
+        `Linked diagram at ${relativePath} couldn't be read: ${error instanceof Error ? error.message : String(error)}`
+      )
+    }
+  }, [])
 
   // Ctrl/Cmd+click on an already-linked node: persist the parent first —
   // forward link navigation is a natural save point, and skipping this was
   // exactly the bug where a just-created link never survived navigating
   // away from the diagram that holds it (nothing else was ever going to
   // write it to disk once in-memory state gets replaced by the target).
+  // Opens the child in a new window rather than replacing this one — see
+  // ADR 0023.
   const navigateExistingLink = useCallback(
     async (parentPath: string, relativePath: string) => {
       await persistDiagram(parentPath, nodes)
-      await resolveAndLoad(parentPath, relativePath)
+      await openLinkedWindow(parentPath, relativePath)
     },
-    [nodes, persistDiagram, resolveAndLoad]
+    [nodes, persistDiagram, openLinkedWindow]
   )
 
   // Creating a new linked diagram: link the node (computed directly, not via
   // updateNodeData + re-reading state later — that update wouldn't have been
-  // visible to a synchronous save call in the same tick) and persist, then
-  // navigate straight in — the point of "create new" is to start working in
-  // it immediately.
+  // visible to a synchronous save call in the same tick), persist, then
+  // open it in a new window — this window stays exactly as it was (ADR 0023).
   const createAndLink = useCallback(
     async (nodeId: string, parentPath: string, label: string) => {
       try {
@@ -1451,14 +1501,14 @@ function CanvasInner(): React.JSX.Element {
           n.id === nodeId ? { ...n, data: { ...n.data, linkedDiagram: relativePath } } : n
         )
         await persistDiagram(parentPath, updatedNodes)
-        await resolveAndLoad(parentPath, relativePath)
+        await openLinkedWindow(parentPath, relativePath)
       } catch (error) {
         alert(
           `Couldn't create linked diagram: ${error instanceof Error ? error.message : String(error)}`
         )
       }
     },
-    [nodes, persistDiagram, resolveAndLoad]
+    [nodes, persistDiagram, openLinkedWindow]
   )
 
   // Linking to an existing diagram: link and persist, but deliberately stay
@@ -1483,7 +1533,7 @@ function CanvasInner(): React.JSX.Element {
   // Ctrl/Cmd+click entry point, exposed via DiagramContext — see epic 0009.
   // A node with no link yet shows a chooser (create new / link existing) at
   // the click point using the existing generic ContextMenu; an already-
-  // linked node navigates straight in.
+  // linked node opens straight into a new window (ADR 0023).
   const handleLinkClick = useCallback(
     (nodeId: string, clientX: number, clientY: number) => {
       if (!currentPath) {
@@ -1507,20 +1557,6 @@ function CanvasInner(): React.JSX.Element {
       ])
     },
     [currentPath, nodes, navigateExistingLink, openContextMenu, createAndLink, pickAndLink]
-  )
-
-  const navigateToBreadcrumb = useCallback(
-    async (index: number) => {
-      const target = breadcrumbs[index]
-      try {
-        const diagram = await window.api.openDiagramAtPath(target.path)
-        setBreadcrumbs((prev) => prev.slice(0, index))
-        loadDiagramIntoCanvas(target.path, diagram)
-      } catch (error) {
-        alert(`Couldn't open ${target.path}: ${error instanceof Error ? error.message : String(error)}`)
-      }
-    },
-    [breadcrumbs, loadDiagramIntoCanvas]
   )
 
   // Global shortcuts — see epic 0018. One handler rather than one useEffect
@@ -1578,10 +1614,6 @@ function CanvasInner(): React.JSX.Element {
         rfInstance.fitView()
         return
       }
-      if (event.altKey && event.key === 'ArrowLeft') {
-        if (breadcrumbs.length > 0) navigateToBreadcrumb(breadcrumbs.length - 1)
-        return
-      }
       if (event.key === 'Escape') {
         if (detailsPanelNodeId) {
           setDetailsPanelNodeId(null)
@@ -1622,8 +1654,6 @@ function CanvasInner(): React.JSX.Element {
     undo,
     redo,
     rfInstance,
-    breadcrumbs,
-    navigateToBreadcrumb,
     detailsPanelNodeId,
     requiredTagsPanelOpen,
     diagnosticsPanelOpen,
@@ -1685,15 +1715,6 @@ function CanvasInner(): React.JSX.Element {
             <button onClick={toggleDiagnosticsPanel}>
               Diagnostics{diagnostics.length > 0 ? ` (${diagnostics.length})` : ''}
             </button>
-            {breadcrumbs.length > 0 && (
-              <nav className="breadcrumbs">
-                {breadcrumbs.map((crumb, index) => (
-                  <button key={crumb.path} onClick={() => navigateToBreadcrumb(index)}>
-                    {crumb.label}
-                  </button>
-                ))}
-              </nav>
-            )}
             {currentPath && <span className="toolbar-path">{currentPath}</span>}
           </div>
           <div className="canvas-view-body">
@@ -1835,6 +1856,7 @@ function CanvasInner(): React.JSX.Element {
               requiredTags={requiredTags}
               onChange={updateRequiredTags}
               onClose={() => setRequiredTagsPanelOpen(false)}
+              onCopyToChildren={copyRequiredTagsToChildren}
             />
           )}
           {diagnosticsPanelOpen && (

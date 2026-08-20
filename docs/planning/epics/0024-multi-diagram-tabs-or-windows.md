@@ -1,15 +1,26 @@
 # 0024: Multi-diagram tabs or windows
 
 ## Status
-Not Started — not yet scoped
+Implemented — awaiting your manual click-through pass (see last task below) before calling it Done
 
 ## Goal
 A way to have more than one diagram open and visible at once — most concretely, a parent and a linked child, without round-tripping through breadcrumb back-navigation to see both. Came up while testing epic 0009: a real, legitimate idea, but deliberately not adopted there, since the actual bug reported at the time (a newly-created link never surviving navigation) had a small, complete fix that didn't need it — see [epic 0009](0009-linked-diagram-navigation.md)'s Notes.
 
-Two shapes worth weighing when this starts: tabs within one window vs. separate `BrowserWindow`s per diagram. Genuinely undecided — not scoped yet.
+Resolved to separate OS-level windows, one per diagram, not tabs in one window — see [ADR 0023](../../decisions/0023-multi-window-diagram-model.md) for the full reasoning (the stated goal needs simultaneous visibility, which tabs alone don't provide; the codebase is already shaped for one-diagram-per-renderer, so windows are close to free while tabs would need real new architecture). Tabs remain a plausible future epic layered on top if the need grows.
 
 ## Tasks
-(Not broken down — revisit when this epic starts.)
+- [x] `windows.ts` (new, `src/main/`): path→`BrowserWindow` registry (normalized absolute path key; case-insensitive on `win32`) with register/unregister/find, wired into window creation, `diagram:save`, and each window's `closed` event. `openOrFocusWindow(path)` focuses (and un-minimizes) an existing window for that path instead of creating a duplicate.
+- [x] `createWindow()` moved from `src/main/index.ts` into `windows.ts`, now optionally taking an initial absolute path, passed to the renderer via a `?path=` query string on the loaded URL (not read eagerly in main — the new window's own mount effect loads it via the existing `diagram:openPath` IPC, reusing tested code instead of duplicating file-read logic).
+- [x] New IPC handlers in `windows.ts`: `windows:openNew` (File → New — plain blank `createWindow()`, no dialog, no duplicate concern), `windows:pickAndOpen` (File → Open — show the open-dialog, then `openOrFocusWindow`), `windows:openLinked` (given a diagram path + stored relative path, resolve it — `resolveLinkPath`/existence-check logic, same shape `links.ts`'s now-removed `links:resolve` used — then `openOrFocusWindow` or return `{found: false, resolvedPath}` for the existing "linked diagram not found" alert).
+- [x] Preload (`src/preload/index.ts` + `.d.ts`): expose `newWindow()`, `openInNewWindow()`, `openLinkedInNewWindow(diagramPath, relativePath)`. Removed the now-dead `openDiagram()`/`resolveLinkedDiagram()` (and the main-process `diagram:open`/`links:resolve` handlers behind them) — nothing calls them anymore now that both flows go through `windows.ts` instead.
+- [x] Renderer mount effect (ref-guarded against StrictMode double-invoke, not an empty-deps effect — see epic 0006/ADR 0018): reads `path` from `window.location.search`; if present, loads it via `openDiagramAtPath` → `loadDiagramIntoCanvas`, with the same error handling breadcrumb back-nav used to have.
+- [x] `Canvas.tsx` call-site changes: `handleNew` → `window.api.newWindow()`; `handleOpen` → `window.api.openInNewWindow()`; `createAndLink` and the already-linked-node branch of `handleLinkClick` (via a new shared `openLinkedWindow` helper) → `window.api.openLinkedInNewWindow(...)`. Current window is left untouched in every case.
+- [x] Removed now-dead code: `breadcrumbs` state, `navigateToBreadcrumb`, `resolveAndLoad`, `navigateExistingLink`, the breadcrumb nav JSX/CSS, the `basename()` helper (only ever used for breadcrumb labels), and the Alt+Left breadcrumb-back keyboard shortcut.
+- [ ] **Your manual click-through pass** (not done by Claude — see collaboration note below): open a diagram, Ctrl/Cmd+click into an existing linked child → should open in a new window, parent window unchanged. Create a *new* linked diagram from a node → same. File → New and File → Open should each always open a new window. Open the same file twice (via File → Open, and separately via a link pointing at an already-open file) → should focus the existing window rather than opening a duplicate. `npm run typecheck` and `npm run lint` are both clean (lint's remaining 4 errors are the pre-existing epic 0028 baseline, unrelated to this epic; the CRLF `prettier/prettier` warnings across the repo are a pre-existing checkout line-ending issue, also unrelated).
 
 ## Notes
-Epic 0006 (undo/redo) references this: for now, the undo stack is scoped per-diagram and resets on any navigation. Once tabs/windows exist, it should instead persist per-tab for that tab's whole lifetime (closing a tab is the natural point to discard its history, not navigating within it). That's this epic's problem to solve, not 0006's.
+Deliberately not built: tabs, split-pane view, and any "was this window's diagram ever open elsewhere" merge/conflict handling beyond the duplicate-window focus guard — see [ADR 0023](../../decisions/0023-multi-window-diagram-model.md)'s Consequences for why the duplicate guard is enough for now given there's still no dirty-tracking/autosave (epic 0020).
+
+Implementation done by Claude in full, not split with a user-implemented piece as usually happens for a well-contained task (the `windows.ts` registry was offered, but the user was mid-meetings and asked for the whole thing) — flagging this deviation from the usual pattern explicitly rather than silently.
+
+Not verifiable via the Browser pane's automated tools — this is a real multi-`BrowserWindow` Electron feature (`window.api` IPC calls, actual OS windows, focus/restore behavior), not something a plain browser tab hitting the Vite dev server can meaningfully exercise. Needs your own `npm run dev` click-through per the last task above.

@@ -40,8 +40,17 @@ export default function ContextMenu({ x, y, items, onClose }: ContextMenuProps):
           key={item.label}
           className="context-menu-item"
           onClick={() => {
-            item.onSelect()
+            // Close first, then run the action — not the other way round.
+            // An item whose onSelect() itself opens a *new* context menu
+            // (e.g. ShapeNode/TextNode's "Link to diagram…", which opens a
+            // create-new/link-existing chooser) sets the same contextMenu
+            // state this menu is rendered from; calling onClose() after
+            // onSelect() would immediately null that new menu back out in
+            // the same synchronous batch, since both go through the same
+            // setState call. Closing first means onSelect()'s own state
+            // update is always the one that wins.
             onClose()
+            item.onSelect()
           }}
         >
           {item.label}
