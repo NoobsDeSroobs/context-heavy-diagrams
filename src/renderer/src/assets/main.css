@@ -1163,6 +1163,85 @@ body {
   cursor: default;
 }
 
+.highlight-add-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.highlight-add-actions .highlight-add-button {
+  flex: 1;
+}
+
+/* Grouped highlights — see epic 0036/ADR 0026. A key with 2+ entries
+   renders as one of these instead of a plain .highlight-row. */
+.highlight-group {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.highlight-group-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  background: var(--color-background-mute);
+}
+
+.highlight-group-collapse {
+  cursor: pointer;
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  padding: 2px;
+  line-height: 1;
+}
+
+.highlight-group-caret {
+  display: inline-block;
+  transition: transform 0.1s ease;
+}
+
+.highlight-group-caret.open {
+  transform: rotate(90deg);
+}
+
+.highlight-group-title {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.highlight-group-resync {
+  cursor: pointer;
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: var(--ev-c-text-3);
+  font-size: 13px;
+  line-height: 1;
+  padding: 2px 4px;
+}
+
+.highlight-group-resync:hover {
+  color: var(--color-text);
+}
+
+.highlight-group-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+}
+
+.highlight-group-rows .highlight-row-label {
+  font-style: italic;
+}
+
 .highlight-add-picker {
   display: flex;
   flex-direction: column;

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { HighlightDefinition, JsonValue } from '@shared/diagram'
-import { highlightId } from '../highlights'
+import { DEFAULT_HIGHLIGHT_COLOR, highlightId } from '../highlights'
 
 interface HighlightsPanelProps {
   highlights: HighlightDefinition[]
@@ -10,6 +10,11 @@ interface HighlightsPanelProps {
   onUpdateColor: (id: string, color: string) => void
   onRemove: (id: string) => void
   onToggle: (id: string) => void
+  // Bulk set (not toggle) for a group's "select all" checkbox.
+  onToggleGroup: (ids: string[], enable: boolean) => void
+  // Both creates a brand new group and resyncs an existing one — see
+  // epic 0036/ADR 0026: it's the same reconcile either way.
+  onAddOrResyncGroup: (key: string) => void
   onClose: () => void
 }
 
@@ -20,14 +25,90 @@ function stringifyValue(value: JsonValue): string {
   return typeof value === 'string' ? value : JSON.stringify(value)
 }
 
-// Cycled by how many highlights already exist, not a single fixed default
-// — so adding several in a row starts them visually distinct instead of
-// all landing on the same color until someone edits them.
-const DEFAULT_PALETTE = ['#e6194b', '#3cb44b', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6']
+// A key with 2+ entries renders as a collapsible group; exactly one entry
+// for a key stays a plain row. Pure display split, no schema behind it —
+// grouping is entirely derived from `highlights` sharing a `.key`.
+function groupByKey(highlights: HighlightDefinition[]): Map<string, HighlightDefinition[]> {
+  const groups = new Map<string, HighlightDefinition[]>()
+  for (const h of highlights) {
+    const existing = groups.get(h.key)
+    if (existing) existing.push(h)
+    else groups.set(h.key, [h])
+  }
+  return groups
+}
+
+function HighlightRow({
+  h,
+  enabled,
+  label,
+  onToggle,
+  onUpdateColor,
+  onRemove
+}: {
+  h: HighlightDefinition
+  enabled: boolean
+  label: string
+  onToggle: () => void
+  onUpdateColor: (color: string) => void
+  onRemove: () => void
+}): React.JSX.Element {
+  return (
+    <div className="highlight-row">
+      <input
+        type="checkbox"
+        checked={enabled}
+        onChange={onToggle}
+        title={enabled ? 'Enabled' : 'Disabled'}
+        aria-label={enabled ? 'Enabled' : 'Disabled'}
+      />
+      <input
+        type="color"
+        className="highlight-row-swatch"
+        value={h.color}
+        onChange={(event) => onUpdateColor(event.target.value)}
+        title="Color"
+      />
+      <span className="highlight-row-label">{label}</span>
+      <button
+        type="button"
+        className="highlight-row-remove"
+        title="Remove"
+        aria-label="Remove"
+        onClick={onRemove}
+      >
+        ×
+      </button>
+    </div>
+  )
+}
+
+// Native checkboxes have no `indeterminate` attribute — it's a DOM
+// property only, set imperatively via a ref, never through JSX props.
+function GroupCheckbox({
+  state,
+  onChange
+}: {
+  state: 'all' | 'none' | 'mixed'
+  onChange: () => void
+}): React.JSX.Element {
+  return (
+    <input
+      type="checkbox"
+      checked={state === 'all'}
+      ref={(el) => {
+        if (el) el.indeterminate = state === 'mixed'
+      }}
+      onChange={onChange}
+      title={state === 'all' ? 'All enabled' : state === 'none' ? 'All disabled' : 'Some enabled'}
+      aria-label="Toggle whole group"
+    />
+  )
+}
 
 // Diagram-level settings surface, same UtilityDock shell as RequiredTagsPanel/
-// DiagnosticsPanel — see epic 0026/ADR 0025. "Add highlight" is an inline
-// searchable list (not a floating anchored popup like IconPicker) — this
+// DiagnosticsPanel — see epic 0026/ADR 0025. Both add flows are inline
+// searchable lists (not a floating anchored popup like IconPicker) — this
 // panel already has a fixed-position dock's worth of space, no anchor
 // coordinate needed.
 export default function HighlightsPanel({
@@ -38,21 +119,43 @@ export default function HighlightsPanel({
   onUpdateColor,
   onRemove,
   onToggle,
+  onToggleGroup,
+  onAddOrResyncGroup,
   onClose
 }: HighlightsPanelProps): React.JSX.Element {
   const [adding, setAdding] = useState(false)
   const [query, setQuery] = useState('')
+  const [addingGroup, setAddingGroup] = useState(false)
+  const [groupQuery, setGroupQuery] = useState('')
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
 
   const catalogIds = new Set(highlights.map(highlightId))
   const availableTags = usedTags.filter((t) => !catalogIds.has(highlightId(t)))
-  const filtered = availableTags.filter((t) =>
+  const filteredTags = availableTags.filter((t) =>
     `${t.key} = ${stringifyValue(t.value)}`.toLowerCase().includes(query.toLowerCase())
   )
+
+  const usedKeys = [...new Set(usedTags.map((t) => t.key))]
+  const filteredKeys = usedKeys.filter((k) => k.toLowerCase().includes(groupQuery.toLowerCase()))
 
   const closeAdd = (): void => {
     setAdding(false)
     setQuery('')
   }
+  const closeAddGroup = (): void => {
+    setAddingGroup(false)
+    setGroupQuery('')
+  }
+  const toggleCollapsed = (key: string): void => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  const groups = groupByKey(highlights)
 
   return (
     <div className="highlights-panel">
@@ -70,40 +173,72 @@ export default function HighlightsPanel({
           Enabled/disabled state isn&rsquo;t saved with the file — everyone starts with highlights off.
         </p>
         {highlights.length === 0 && <p className="highlights-panel-hint">No highlights yet.</p>}
-        {highlights.map((h) => {
-          const id = highlightId(h)
+        {[...groups.entries()].map(([key, members]) => {
+          if (members.length === 1) {
+            const h = members[0]
+            const id = highlightId(h)
+            return (
+              <HighlightRow
+                key={id}
+                h={h}
+                enabled={enabledIds.has(id)}
+                label={`${h.key} = ${stringifyValue(h.value)}`}
+                onToggle={() => onToggle(id)}
+                onUpdateColor={(color) => onUpdateColor(id, color)}
+                onRemove={() => onRemove(id)}
+              />
+            )
+          }
+          const memberIds = members.map(highlightId)
+          const enabledCount = memberIds.filter((id) => enabledIds.has(id)).length
+          const state = enabledCount === 0 ? 'none' : enabledCount === memberIds.length ? 'all' : 'mixed'
+          const collapsed = collapsedGroups.has(key)
           return (
-            <div key={id} className="highlight-row">
-              <input
-                type="checkbox"
-                checked={enabledIds.has(id)}
-                onChange={() => onToggle(id)}
-                title={enabledIds.has(id) ? 'Enabled' : 'Disabled'}
-                aria-label={enabledIds.has(id) ? 'Enabled' : 'Disabled'}
-              />
-              <input
-                type="color"
-                className="highlight-row-swatch"
-                value={h.color}
-                onChange={(event) => onUpdateColor(id, event.target.value)}
-                title="Color"
-              />
-              <span className="highlight-row-label">
-                {h.key} = {stringifyValue(h.value)}
-              </span>
-              <button
-                type="button"
-                className="highlight-row-remove"
-                title="Remove"
-                aria-label="Remove"
-                onClick={() => onRemove(id)}
-              >
-                ×
-              </button>
+            <div key={key} className="highlight-group">
+              <div className="highlight-group-header">
+                <button
+                  type="button"
+                  className="highlight-group-collapse"
+                  onClick={() => toggleCollapsed(key)}
+                  aria-expanded={!collapsed}
+                  title={collapsed ? 'Expand' : 'Collapse'}
+                >
+                  <span className={collapsed ? 'highlight-group-caret' : 'highlight-group-caret open'}>▸</span>
+                </button>
+                <GroupCheckbox state={state} onChange={() => onToggleGroup(memberIds, state !== 'all')} />
+                <span className="highlight-group-title">{key}</span>
+                <button
+                  type="button"
+                  className="highlight-group-resync"
+                  title="Resync with current tag values — adds missing ones, removes ones nothing carries anymore"
+                  aria-label="Resync group"
+                  onClick={() => onAddOrResyncGroup(key)}
+                >
+                  ↻
+                </button>
+              </div>
+              {!collapsed && (
+                <div className="highlight-group-rows">
+                  {members.map((h) => {
+                    const id = highlightId(h)
+                    return (
+                      <HighlightRow
+                        key={id}
+                        h={h}
+                        enabled={enabledIds.has(id)}
+                        label={stringifyValue(h.value)}
+                        onToggle={() => onToggle(id)}
+                        onUpdateColor={(color) => onUpdateColor(id, color)}
+                        onRemove={() => onRemove(id)}
+                      />
+                    )
+                  })}
+                </div>
+              )}
             </div>
           )
         })}
-        {adding ? (
+        {adding && (
           <div className="highlight-add-picker">
             <input
               className="highlight-add-picker-search"
@@ -113,14 +248,14 @@ export default function HighlightsPanel({
               autoFocus
             />
             <div className="highlight-add-picker-list">
-              {filtered.length === 0 && <p className="highlights-panel-hint">No matching tags.</p>}
-              {filtered.map((t) => (
+              {filteredTags.length === 0 && <p className="highlights-panel-hint">No matching tags.</p>}
+              {filteredTags.map((t) => (
                 <button
                   key={highlightId(t)}
                   type="button"
                   className="highlight-add-picker-item"
                   onClick={() => {
-                    onAdd(t.key, t.value, DEFAULT_PALETTE[highlights.length % DEFAULT_PALETTE.length])
+                    onAdd(t.key, t.value, DEFAULT_HIGHLIGHT_COLOR)
                     closeAdd()
                   }}
                 >
@@ -132,20 +267,62 @@ export default function HighlightsPanel({
               Cancel
             </button>
           </div>
-        ) : (
-          <button
-            type="button"
-            className="highlight-add-button"
-            onClick={() => setAdding(true)}
-            disabled={availableTags.length === 0}
-            title={
-              availableTags.length === 0
-                ? 'No tags left to highlight — every tag in use already has a highlight'
-                : undefined
-            }
-          >
-            Add highlight
-          </button>
+        )}
+        {addingGroup && (
+          <div className="highlight-add-picker">
+            <input
+              className="highlight-add-picker-search"
+              placeholder="Search keys…"
+              value={groupQuery}
+              onChange={(event) => setGroupQuery(event.target.value)}
+              autoFocus
+            />
+            <div className="highlight-add-picker-list">
+              {filteredKeys.length === 0 && <p className="highlights-panel-hint">No matching keys.</p>}
+              {filteredKeys.map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  className="highlight-add-picker-item"
+                  onClick={() => {
+                    onAddOrResyncGroup(k)
+                    closeAddGroup()
+                  }}
+                >
+                  {k}
+                </button>
+              ))}
+            </div>
+            <button type="button" onClick={closeAddGroup}>
+              Cancel
+            </button>
+          </div>
+        )}
+        {!adding && !addingGroup && (
+          <div className="highlight-add-actions">
+            <button
+              type="button"
+              className="highlight-add-button"
+              onClick={() => setAdding(true)}
+              disabled={availableTags.length === 0}
+              title={
+                availableTags.length === 0
+                  ? 'No tags left to highlight — every tag in use already has a highlight'
+                  : undefined
+              }
+            >
+              Add highlight
+            </button>
+            <button
+              type="button"
+              className="highlight-add-button"
+              onClick={() => setAddingGroup(true)}
+              disabled={usedKeys.length === 0}
+              title={usedKeys.length === 0 ? 'No tags in use yet' : undefined}
+            >
+              Add group…
+            </button>
+          </div>
         )}
       </div>
     </div>

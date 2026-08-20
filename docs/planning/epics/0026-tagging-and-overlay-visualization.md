@@ -34,7 +34,7 @@ Tag nodes and edges with freeform labels, then visualize the diagram *by* tag vi
 - [ ] **Your manual click-through pass**: tag two elements with the same key/value, add a highlight for it, confirm both get the border override; add a second highlight matching one of the same elements, confirm it switches to chips; toggle highlights off/on; save, reopen the file, confirm the catalog persisted but nothing is enabled; confirm an element with icons in all 4 corner slots still reads clearly with chips active. `npm run typecheck`/`lint` both clean (lint's 4 remaining errors are the pre-existing epic 0028 baseline, confirmed by file/line match).
 
 ## Notes
-**[Epic 0036](0036-key-level-highlight-scales.md)**, logged separately: a key-level "macro filter" highlight (highlight on `GDPR` alone with a whole value→color mapping, not one highlight per exact `GDPR = value`). Raised while designing this epic, deliberately not folded in — the user wants to think it through themselves before it's scoped. Not this epic's problem to solve.
+**[Epic 0036](0036-grouped-highlights.md)**, logged separately: originally a key-level "macro filter" highlight idea, raised while designing this epic and deliberately left undesigned. The user came back with a simpler "Add group" proposal that fully supersedes it — see ADR 0026. Not this epic's problem to solve either way.
 
 Deliberately not this epic's scope, carried over from the original scoping discussion, not re-litigated:
 - **Tag autocomplete while tagging an element** (not just while building a highlight) — natural follow-on once the highlight picker's autocomplete exists, not required for this epic's core scope.

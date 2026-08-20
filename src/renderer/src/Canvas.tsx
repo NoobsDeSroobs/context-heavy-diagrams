@@ -39,7 +39,7 @@ import TextNode, { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from './nodes/TextNode'
 import ContainerNode, { CONTAINER_MIN_WIDTH, CONTAINER_MIN_HEIGHT } from './nodes/ContainerNode'
 import AnchorNode, { ANCHOR_SIZE } from './nodes/AnchorNode'
 import LabeledEdge from './edges/LabeledEdge'
-import { highlightId, matchingHighlights } from './highlights'
+import { highlightId, matchingHighlights, reconcileHighlightGroup } from './highlights'
 import EdgeMarkerDefs from './edges/edgeMarkers'
 import DiagramContext from './DiagramContext'
 import ContextMenu, { type ContextMenuItem } from './components/ContextMenu'
@@ -753,6 +753,20 @@ function CanvasInner(): React.JSX.Element {
     })
   }, [])
 
+  // Bulk set (not toggle) — used by a group's tri-state "select all"
+  // checkbox, epic 0036/ADR 0026: enabling/disabling every member at
+  // once needs a uniform target state, not per-id toggling.
+  const toggleHighlightGroup = useCallback((ids: string[], enable: boolean) => {
+    setEnabledHighlightIds((prev) => {
+      const next = new Set(prev)
+      for (const id of ids) {
+        if (enable) next.add(id)
+        else next.delete(id)
+      }
+      return next
+    })
+  }, [])
+
   // Every distinct key/value pair currently tagged somewhere in the
   // diagram — the "Add highlight" picker only ever offers a tag that's
   // actually in use, not a blank freeform entry (a highlight for a tag
@@ -770,6 +784,27 @@ function CanvasInner(): React.JSX.Element {
     for (const e of edges) collect(e.data?.metadata as Record<string, MetadataEntry> | undefined)
     return [...seen.values()]
   }, [nodes, edges])
+
+  // "Add group" and each existing group's resync control both call this
+  // with the same key — epic 0036/ADR 0026. Reconciles against usedTags
+  // (already a live scan of every node/edge's metadata), not a separate
+  // scan: a value with no entry gets a new white one, an entry for a
+  // value nothing carries anymore is dropped, everything else untouched.
+  // Also prunes enabledHighlightIds for whatever got dropped, so a
+  // removed row can't leave an orphaned enabled-id behind.
+  const addOrResyncHighlightGroup = useCallback(
+    (key: string) => {
+      const currentValues = usedTags.filter((t) => t.key === key).map((t) => t.value)
+      const next = reconcileHighlightGroup(highlights, key, currentValues)
+      const nextIds = new Set(next.map(highlightId))
+      setHighlights(next)
+      setEnabledHighlightIds((prev) => {
+        const filtered = new Set([...prev].filter((id) => nextIds.has(id)))
+        return filtered.size === prev.size ? prev : filtered
+      })
+    },
+    [highlights, usedTags]
+  )
 
   const matchHighlights = useCallback(
     (metadata: Record<string, MetadataEntry> | undefined) =>
@@ -2009,6 +2044,8 @@ function CanvasInner(): React.JSX.Element {
               onUpdateColor={updateHighlightColor}
               onRemove={removeHighlight}
               onToggle={toggleHighlightEnabled}
+              onToggleGroup={toggleHighlightGroup}
+              onAddOrResyncGroup={addOrResyncHighlightGroup}
               onClose={() => setHighlightsPanelOpen(false)}
             />
           )}
