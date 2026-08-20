@@ -73,8 +73,12 @@ const api = {
     return ipcRenderer.invoke('windows:openNew')
   },
 
-  openInNewWindow(): Promise<void> {
-    return ipcRenderer.invoke('windows:pickAndOpen')
+  // isCurrentWindowEmpty: pass true when the calling window's own diagram
+  // has zero nodes/edges — reuses that window instead of leaving it
+  // sitting there empty next to the newly-opened one (main only actually
+  // reuses it if the picked path isn't already open elsewhere).
+  openInNewWindow(isCurrentWindowEmpty: boolean): Promise<void> {
+    return ipcRenderer.invoke('windows:pickAndOpen', isCurrentWindowEmpty)
   },
 
   openLinkedInNewWindow(

@@ -127,6 +127,25 @@ body {
   font-family: 'Menlo', 'Lucida Console', monospace;
 }
 
+/* Brief post-save confirmation — appears next to Save/Save As, fades in
+   rather than popping, and is removed from the DOM (by its parent's
+   conditional render) after ~2s rather than just fading to invisible. */
+.toolbar-saved-flash {
+  font-size: 12px;
+  font-weight: 600;
+  color: #2e9e44;
+  animation: toolbar-saved-flash-in 0.15s ease-out;
+}
+
+@keyframes toolbar-saved-flash-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .shape-node {
   position: relative;
   width: 100%;
@@ -974,11 +993,12 @@ body {
   cursor: default;
 }
 
-/* Required-tags template editor and diagnostics panel — same fixed
-   right-side dock shell as .details-panel (toolbar + scrollable body),
-   different body content. */
+/* Required-tags template editor, diagnostics panel, and highlights panel —
+   same fixed right-side dock shell as .details-panel (toolbar +
+   scrollable body), different body content. */
 .required-tags-panel,
-.diagnostics-panel {
+.diagnostics-panel,
+.highlights-panel {
   width: 100%;
   height: 100%;
   display: flex;
@@ -987,7 +1007,8 @@ body {
 }
 
 .required-tags-panel-toolbar,
-.diagnostics-panel-toolbar {
+.diagnostics-panel-toolbar,
+.highlights-panel-toolbar {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -996,13 +1017,15 @@ body {
 }
 
 .required-tags-panel-title,
-.diagnostics-panel-title {
+.diagnostics-panel-title,
+.highlights-panel-title {
   font-size: 13px;
   font-weight: 600;
 }
 
 .required-tags-panel-toolbar button,
-.diagnostics-panel-toolbar button {
+.diagnostics-panel-toolbar button,
+.highlights-panel-toolbar button {
   cursor: pointer;
   border: 1px solid var(--ev-c-gray-2);
   background: var(--ev-button-alt-bg);
@@ -1014,11 +1037,13 @@ body {
 }
 
 .required-tags-panel-toolbar button:hover,
-.diagnostics-panel-toolbar button:hover {
+.diagnostics-panel-toolbar button:hover,
+.highlights-panel-toolbar button:hover {
   background: var(--ev-button-alt-hover-bg);
 }
 
-.required-tags-panel-body {
+.required-tags-panel-body,
+.highlights-panel-body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -1028,7 +1053,8 @@ body {
   gap: 8px;
 }
 
-.required-tags-panel-hint {
+.required-tags-panel-hint,
+.highlights-panel-hint {
   font-size: 12px;
   color: var(--ev-c-text-3);
   margin: 0 0 4px;
@@ -1085,6 +1111,128 @@ body {
   font-size: 14px;
   line-height: 1;
   padding: 2px 4px;
+}
+
+/* Highlights panel — see epic 0026/ADR 0025. */
+.highlight-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.highlight-row-swatch {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.highlight-row-label {
+  flex: 1;
+  font-size: 12px;
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+.highlight-row-remove {
+  cursor: pointer;
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: var(--ev-c-text-3);
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 4px;
+}
+
+.highlight-add-button {
+  cursor: pointer;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+.highlight-add-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.highlight-add-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.highlight-add-picker-search {
+  font: inherit;
+  font-size: 12px;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  padding: 4px 6px;
+}
+
+.highlight-add-picker-list {
+  max-height: 160px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.highlight-add-picker-item {
+  cursor: pointer;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 12px;
+}
+
+.highlight-add-picker-item:hover {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+/* Small color chips shown on a node/edge when 2+ enabled highlights match
+   it at once (single-match instead overrides the border/stroke directly —
+   see ShapeNode/ContainerNode/LabeledEdge). Positioning (node corner vs.
+   edge midpoint) is set by each caller; these two classes are just the
+   swatch row and its individual dots. */
+.highlight-chips {
+  display: flex;
+  gap: 3px;
+}
+
+.highlight-chip {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--color-background);
+}
+
+.highlight-chips-anchor {
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  pointer-events: none;
+}
+
+.edge-highlight-chips {
+  z-index: 5;
 }
 
 .required-tag-remove:hover {

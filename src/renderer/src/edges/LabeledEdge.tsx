@@ -6,8 +6,11 @@ import {
   useReactFlow,
   type EdgeProps
 } from '@xyflow/react'
-import type { EdgeStyle } from '@shared/diagram'
+import type { EdgeStyle, MetadataEntry } from '@shared/diagram'
 import EditableLabel from '../components/EditableLabel'
+import HighlightChips from '../components/HighlightChips'
+import { useDiagramContext } from '../DiagramContext'
+import { HIGHLIGHT_BORDER_WIDTH } from '../highlights'
 import { withOpacity } from '../styles/colorOpacity'
 import { markerUrl } from './markerIds'
 
@@ -44,7 +47,9 @@ function LabeledEdge({
   data
 }: EdgeProps): React.JSX.Element {
   const { updateEdgeData } = useReactFlow()
+  const { matchHighlights } = useDiagramContext()
   const edgeStyle = data?.style as EdgeStyle | undefined
+  const highlightMatches = matchHighlights(data?.metadata as Record<string, MetadataEntry> | undefined)
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
     sourceY,
@@ -64,7 +69,12 @@ function LabeledEdge({
     ...style,
     ...(edgeStyle?.stroke ? { stroke: withOpacity(edgeStyle.stroke, edgeStyle.strokeOpacity) } : {}),
     ...(edgeStyle?.strokeWidth != null ? { strokeWidth: edgeStyle.strokeWidth } : {}),
-    ...(edgeStyle?.lineStyle ? { strokeDasharray: DASH_ARRAY[edgeStyle.lineStyle] } : {})
+    ...(edgeStyle?.lineStyle ? { strokeDasharray: DASH_ARRAY[edgeStyle.lineStyle] } : {}),
+    // A single matching highlight overrides the stroke, same treatment as
+    // ShapeNode/ContainerNode's border override — epic 0026/ADR 0025.
+    ...(highlightMatches.length === 1
+      ? { stroke: highlightMatches[0].color, strokeWidth: HIGHLIGHT_BORDER_WIDTH }
+      : {})
   }
   const computedMarkerEnd = edgeStyle?.endMarker !== undefined ? markerUrl(edgeStyle.endMarker) : markerEnd
   const computedMarkerStart =
@@ -103,6 +113,22 @@ function LabeledEdge({
             onCommit={(label) => updateEdgeData(id, { label })}
           />
         </div>
+        {highlightMatches.length >= 2 && (
+          // Offset above the label point, same anchor coordinates — an
+          // edge has no "corner" the way a node does, so this is the
+          // closest equivalent to ShapeNode/ContainerNode's chip
+          // placement (epic 0026/ADR 0025).
+          <div
+            className="edge-highlight-chips"
+            style={{
+              position: 'absolute',
+              transform: `translate(-50%, -100%) translate(${labelX}px, ${labelY - 10}px)`,
+              pointerEvents: 'none'
+            }}
+          >
+            <HighlightChips highlights={highlightMatches} />
+          </div>
+        )}
       </EdgeLabelRenderer>
     </>
   )

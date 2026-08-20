@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -26,6 +26,7 @@ import {
   type ConnectionPoint,
   type DiagramFile,
   type EdgeStyle,
+  type HighlightDefinition,
   type IconRef,
   type IconSlot,
   type JsonValue,
@@ -38,6 +39,7 @@ import TextNode, { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from './nodes/TextNode'
 import ContainerNode, { CONTAINER_MIN_WIDTH, CONTAINER_MIN_HEIGHT } from './nodes/ContainerNode'
 import AnchorNode, { ANCHOR_SIZE } from './nodes/AnchorNode'
 import LabeledEdge from './edges/LabeledEdge'
+import { highlightId, matchingHighlights } from './highlights'
 import EdgeMarkerDefs from './edges/edgeMarkers'
 import DiagramContext from './DiagramContext'
 import ContextMenu, { type ContextMenuItem } from './components/ContextMenu'
@@ -47,6 +49,7 @@ import StylePicker from './components/StylePicker'
 import DetailsPanel from './components/DetailsPanel'
 import RequiredTagsPanel from './components/RequiredTagsPanel'
 import DiagnosticsPanel from './components/DiagnosticsPanel'
+import HighlightsPanel from './components/HighlightsPanel'
 import DiagramDock from './panels/DiagramDock'
 import UtilityDock from './panels/UtilityDock'
 import AlignmentGuides from './components/AlignmentGuides'
@@ -182,12 +185,14 @@ function toDiagramFile(
   edges: Edge[],
   viewport: Viewport,
   metadata: Record<string, JsonValue>,
-  requiredTags: RequiredTagDefinition[]
+  requiredTags: RequiredTagDefinition[],
+  highlights: HighlightDefinition[]
 ): DiagramFile {
   return {
     version: 1,
     viewport,
     metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
+    highlights: highlights.length > 0 ? highlights : undefined,
     requiredTags: requiredTags.length > 0 ? requiredTags : undefined,
     nodes: nodes.map((n) => ({
       id: n.id,
@@ -230,8 +235,10 @@ function fromDiagramFile(diagram: DiagramFile): {
   edges: Edge[]
   metadata: Record<string, JsonValue>
   requiredTags: RequiredTagDefinition[]
+  highlights: HighlightDefinition[]
 } {
   return {
+    highlights: diagram.highlights ?? [],
     // sortNodesForHierarchy defensively re-orders in case an external
     // writer didn't honor the parent-before-child requirement — see
     // docs/file-format.md's parentId entry.
@@ -362,11 +369,23 @@ function CanvasInner(): React.JSX.Element {
   const [nodes, setNodes, onNodesChangeBase] = useNodesState<Node>([])
   const [edges, setEdges, onEdgesChangeBase] = useEdgesState<Edge>([])
   const [currentPath, setCurrentPath] = useState<string | null>(null)
+  // Brief post-save confirmation next to the toolbar's Save button — see
+  // flashSaved below. Purely transient UI state, not persisted, not reset
+  // on load (nothing to reset — it's already false by the time any load
+  // finishes).
+  const [showSavedFlash, setShowSavedFlash] = useState(false)
+  const savedFlashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Diagram-level metadata/requiredTags (epic 0034/ADR 0022) — analogous to
   // currentPath: file-scoped state with no React Flow home of its own,
   // reset on every load, carried into every save via toDiagramFile.
   const [diagramMetadata, setDiagramMetadata] = useState<Record<string, JsonValue>>({})
   const [requiredTags, setRequiredTags] = useState<RequiredTagDefinition[]>([])
+  // Highlight catalog (epic 0026/ADR 0025) — persisted, same file-scoped
+  // treatment as diagramMetadata/requiredTags above. Which highlights are
+  // currently *enabled* is a separate, deliberately volatile Set below —
+  // reset on every load, never included in toDiagramFile's payload.
+  const [highlights, setHighlights] = useState<HighlightDefinition[]>([])
+  const [enabledHighlightIds, setEnabledHighlightIds] = useState<Set<string>>(new Set())
   // Non-blocking notices from the most recent syncElementMetadata pass —
   // deliberately *replaced*, not appended, on every sync: this reflects
   // current state (what the last backfill run had to correct), not a
@@ -374,6 +393,7 @@ function CanvasInner(): React.JSX.Element {
   const [diagnostics, setDiagnostics] = useState<string[]>([])
   const [requiredTagsPanelOpen, setRequiredTagsPanelOpen] = useState(false)
   const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false)
+  const [highlightsPanelOpen, setHighlightsPanelOpen] = useState(false)
   const [contextMenu, setContextMenu] = useState<{
     x: number
     y: number
@@ -659,23 +679,33 @@ function CanvasInner(): React.JSX.Element {
   )
 
   // The utility dock shows one surface at a time (see ADR 0013) — opening
-  // any of the three closes the other two, same as clicking a different tab.
+  // any of the four closes the other three, same as clicking a different tab.
   const openDetailsPanel = useCallback((nodeId: string) => {
     setRequiredTagsPanelOpen(false)
     setDiagnosticsPanelOpen(false)
+    setHighlightsPanelOpen(false)
     setDetailsPanelNodeId(nodeId)
   }, [])
 
   const toggleRequiredTagsPanel = useCallback(() => {
     setDetailsPanelNodeId(null)
     setDiagnosticsPanelOpen(false)
+    setHighlightsPanelOpen(false)
     setRequiredTagsPanelOpen((open) => !open)
   }, [])
 
   const toggleDiagnosticsPanel = useCallback(() => {
     setDetailsPanelNodeId(null)
     setRequiredTagsPanelOpen(false)
+    setHighlightsPanelOpen(false)
     setDiagnosticsPanelOpen((open) => !open)
+  }, [])
+
+  const toggleHighlightsPanel = useCallback(() => {
+    setDetailsPanelNodeId(null)
+    setRequiredTagsPanelOpen(false)
+    setDiagnosticsPanelOpen(false)
+    setHighlightsPanelOpen((open) => !open)
   }, [])
 
   const updateRequiredTags = useCallback(
@@ -684,6 +714,67 @@ function CanvasInner(): React.JSX.Element {
       runSync(tags)
     },
     [runSync]
+  )
+
+  // Add: enforces key+value uniqueness in the catalog (two highlights for
+  // the same exact match would be ambiguous — which color applies?), same
+  // reasoning as highlightId's own doc comment. Silently no-ops on a
+  // duplicate rather than erroring — the picker only ever offers tags
+  // already in use, so a duplicate attempt means the same tag was already
+  // added, not a real error condition worth interrupting the user for.
+  const addHighlight = useCallback((key: string, value: JsonValue, color: string) => {
+    setHighlights((prev) =>
+      prev.some((h) => h.key === key && JSON.stringify(h.value) === JSON.stringify(value))
+        ? prev
+        : [...prev, { key, value, color }]
+    )
+  }, [])
+
+  const updateHighlightColor = useCallback((id: string, color: string) => {
+    setHighlights((prev) => prev.map((h) => (highlightId(h) === id ? { ...h, color } : h)))
+  }, [])
+
+  const removeHighlight = useCallback((id: string) => {
+    setHighlights((prev) => prev.filter((h) => highlightId(h) !== id))
+    setEnabledHighlightIds((prev) => {
+      if (!prev.has(id)) return prev
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
+  }, [])
+
+  const toggleHighlightEnabled = useCallback((id: string) => {
+    setEnabledHighlightIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
+
+  // Every distinct key/value pair currently tagged somewhere in the
+  // diagram — the "Add highlight" picker only ever offers a tag that's
+  // actually in use, not a blank freeform entry (a highlight for a tag
+  // nothing carries yet would never match anything).
+  const usedTags = useMemo(() => {
+    const seen = new Map<string, { key: string; value: JsonValue }>()
+    const collect = (metadata: Record<string, MetadataEntry> | undefined): void => {
+      if (!metadata) return
+      for (const [key, entry] of Object.entries(metadata)) {
+        const id = `${key}::${JSON.stringify(entry.value)}`
+        if (!seen.has(id)) seen.set(id, { key, value: entry.value })
+      }
+    }
+    for (const n of nodes) collect(n.data?.metadata as Record<string, MetadataEntry> | undefined)
+    for (const e of edges) collect(e.data?.metadata as Record<string, MetadataEntry> | undefined)
+    return [...seen.values()]
+  }, [nodes, edges])
+
+  const matchHighlights = useCallback(
+    (metadata: Record<string, MetadataEntry> | undefined) =>
+      matchingHighlights(metadata, highlights, enabledHighlightIds),
+    [highlights, enabledHighlightIds]
   )
 
   // Gathers this diagram's own direct linked-node relative paths (deeper
@@ -1349,14 +1440,33 @@ function CanvasInner(): React.JSX.Element {
         edges,
         rfInstance.getViewport(),
         diagramMetadata,
-        requiredTags
+        requiredTags,
+        highlights
       )
       await window.api.saveDiagram(path, diagram)
       setNodes(savedNodes)
       return savedNodes
     },
-    [edges, rfInstance, flushDetailsDrafts, setNodes, diagramMetadata, requiredTags]
+    [edges, rfInstance, flushDetailsDrafts, setNodes, diagramMetadata, requiredTags, highlights]
   )
+
+  // Brief "Saved" confirmation next to the toolbar's Save button — the
+  // user reported missing that a save actually happened (there was only
+  // ever an alert on *failure*, nothing on success). Re-triggering the
+  // timeout on every successful save (not just the first) means rapid
+  // successive saves each restart the same visible flash rather than the
+  // indicator disappearing mid-flash.
+  const flashSaved = useCallback(() => {
+    if (savedFlashTimeoutRef.current != null) clearTimeout(savedFlashTimeoutRef.current)
+    setShowSavedFlash(true)
+    savedFlashTimeoutRef.current = setTimeout(() => setShowSavedFlash(false), 2000)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (savedFlashTimeoutRef.current != null) clearTimeout(savedFlashTimeoutRef.current)
+    }
+  }, [])
 
   const performSave = useCallback(
     async (forceNewPath: boolean) => {
@@ -1368,11 +1478,12 @@ function CanvasInner(): React.JSX.Element {
         }
         await persistDiagram(path, nodes)
         setCurrentPath(path)
+        flashSaved()
       } catch (error) {
         alert(`Save failed: ${error instanceof Error ? error.message : String(error)}`)
       }
     },
-    [currentPath, nodes, persistDiagram]
+    [currentPath, nodes, persistDiagram, flashSaved]
   )
 
   const handleSave = useCallback(() => performSave(false), [performSave])
@@ -1390,7 +1501,8 @@ function CanvasInner(): React.JSX.Element {
         nodes: openedNodes,
         edges: openedEdges,
         metadata: openedMetadata,
-        requiredTags: openedRequiredTags
+        requiredTags: openedRequiredTags,
+        highlights: openedHighlights
       } = fromDiagramFile(diagram)
       // A different diagram entirely — old undo history doesn't apply to
       // it (and, worse, undoing across a load boundary would try to
@@ -1403,6 +1515,10 @@ function CanvasInner(): React.JSX.Element {
       setCurrentPath(path)
       setDiagramMetadata(openedMetadata)
       setRequiredTags(openedRequiredTags)
+      setHighlights(openedHighlights)
+      // Enabled state is deliberately never loaded from the file — always
+      // starts at none-enabled, ADR 0025's "split persistence" decision.
+      setEnabledHighlightIds(new Set())
       setDetailsDrafts({})
       setContextMenu(null)
       setIconPicker(null)
@@ -1411,6 +1527,7 @@ function CanvasInner(): React.JSX.Element {
       setDetailsPanelNodeId(null)
       setRequiredTagsPanelOpen(false)
       setDiagnosticsPanelOpen(false)
+      setHighlightsPanelOpen(false)
       // Defensive, per ADR 0022 — reconcile against hand-edited drift on
       // every load, not just when the template is edited from within the app.
       runSync(openedRequiredTags)
@@ -1440,15 +1557,20 @@ function CanvasInner(): React.JSX.Element {
       })
   }, [loadDiagramIntoCanvas])
 
-  // Always opens (or focuses, if already open) a new window, never
-  // replaces the current one — see ADR 0023.
+  // Opens (or focuses, if already open elsewhere) a new window — except
+  // when this window's own diagram is currently empty, in which case that
+  // empty window is reused instead of leaving it around unused (see
+  // ADR 0023's window-reuse addendum).
   const handleOpen = useCallback(async () => {
     try {
-      await window.api.openInNewWindow()
+      // A window with nothing in it yet has nothing to lose by being
+      // reused, rather than leaving it sitting there empty next to the
+      // diagram you actually meant to open.
+      await window.api.openInNewWindow(nodes.length === 0 && edges.length === 0)
     } catch (error) {
       alert(`Open failed: ${error instanceof Error ? error.message : String(error)}`)
     }
-  }, [])
+  }, [nodes, edges])
 
   // Always opens a new window, never replaces the current one — see
   // ADR 0023. No file is written, nothing is linked from anywhere.
@@ -1621,6 +1743,8 @@ function CanvasInner(): React.JSX.Element {
           setRequiredTagsPanelOpen(false)
         } else if (diagnosticsPanelOpen) {
           setDiagnosticsPanelOpen(false)
+        } else if (highlightsPanelOpen) {
+          setHighlightsPanelOpen(false)
         } else if (iconPicker) {
           setIconPicker(null)
         } else if (colorPicker) {
@@ -1657,6 +1781,7 @@ function CanvasInner(): React.JSX.Element {
     detailsPanelNodeId,
     requiredTagsPanelOpen,
     diagnosticsPanelOpen,
+    highlightsPanelOpen,
     iconPicker,
     colorPicker,
     linePicker,
@@ -1693,7 +1818,8 @@ function CanvasInner(): React.JSX.Element {
         beginContinuousEdit,
         endContinuousEdit,
         pushSnapshot,
-        attachContainedNodes
+        attachContainedNodes,
+        matchHighlights
       }}
     >
       {/* Outer app shell: [canvas view [diagram dock]] [utility dock], nested
@@ -1705,6 +1831,11 @@ function CanvasInner(): React.JSX.Element {
             <button onClick={handleOpen}>Open…</button>
             <button onClick={handleSave}>Save</button>
             <button onClick={handleSaveAs}>Save As…</button>
+            {showSavedFlash && (
+              <span className="toolbar-saved-flash" role="status">
+                ✓ Saved
+              </span>
+            )}
             <button onClick={undo} disabled={past.length === 0} title="Undo (Ctrl+Z)">
               Undo
             </button>
@@ -1714,6 +1845,9 @@ function CanvasInner(): React.JSX.Element {
             <button onClick={toggleRequiredTagsPanel}>Required tags…</button>
             <button onClick={toggleDiagnosticsPanel}>
               Diagnostics{diagnostics.length > 0 ? ` (${diagnostics.length})` : ''}
+            </button>
+            <button onClick={toggleHighlightsPanel}>
+              Highlights{highlights.length > 0 ? ` (${highlights.length})` : ''}
             </button>
             {currentPath && <span className="toolbar-path">{currentPath}</span>}
           </div>
@@ -1864,6 +1998,18 @@ function CanvasInner(): React.JSX.Element {
               entries={diagnostics}
               onRecheck={() => runSync(requiredTags)}
               onClose={() => setDiagnosticsPanelOpen(false)}
+            />
+          )}
+          {highlightsPanelOpen && (
+            <HighlightsPanel
+              highlights={highlights}
+              enabledIds={enabledHighlightIds}
+              usedTags={usedTags}
+              onAdd={addHighlight}
+              onUpdateColor={updateHighlightColor}
+              onRemove={removeHighlight}
+              onToggle={toggleHighlightEnabled}
+              onClose={() => setHighlightsPanelOpen(false)}
             />
           )}
         </UtilityDock>

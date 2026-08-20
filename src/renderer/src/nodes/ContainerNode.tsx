@@ -1,8 +1,10 @@
-import { memo, useCallback, type MouseEvent } from 'react'
+import { memo, useCallback, type CSSProperties, type MouseEvent } from 'react'
 import { NodeResizer, useReactFlow, type NodeProps } from '@xyflow/react'
-import type { ConnectionPoint, NodeStyle } from '@shared/diagram'
+import type { ConnectionPoint, MetadataEntry, NodeStyle } from '@shared/diagram'
 import EditableLabel from '../components/EditableLabel'
+import HighlightChips from '../components/HighlightChips'
 import { useDiagramContext } from '../DiagramContext'
+import { HIGHLIGHT_BORDER_WIDTH } from '../highlights'
 import { nodeContainerCss, nodeLabelCss } from '../styles/nodeStyleCss'
 import { ConnectionHandles } from './ConnectionHandles'
 import { useConnectionPointMenu } from './connectionPoints'
@@ -21,11 +23,19 @@ export const CONTAINER_MIN_HEIGHT = 120
 // tree, not DOM children of this div, so they aren't affected by anything
 // this component does with pointer events or z-order.
 function ContainerNode({ id, data, selected }: NodeProps): React.JSX.Element {
-  const { pushSnapshot, openContextMenu, openColorPicker, attachContainedNodes } = useDiagramContext()
+  const { pushSnapshot, openContextMenu, openColorPicker, attachContainedNodes, matchHighlights } =
+    useDiagramContext()
   const { updateNodeData } = useReactFlow()
   const customPoints = (data?.connectionPoints ?? []) as ConnectionPoint[]
   const style = data?.style as NodeStyle | undefined
   const { addConnectionPointItem, onPointContextMenu } = useConnectionPointMenu(id, customPoints)
+
+  // See ShapeNode's identical treatment / epic 0026's ADR 0025.
+  const highlightMatches = matchHighlights(data?.metadata as Record<string, MetadataEntry> | undefined)
+  const highlightCss: CSSProperties =
+    highlightMatches.length === 1
+      ? { borderColor: highlightMatches[0].color, borderWidth: HIGHLIGHT_BORDER_WIDTH }
+      : {}
 
   const onContextMenu = useCallback(
     (event: MouseEvent<HTMLDivElement>) => {
@@ -42,13 +52,22 @@ function ContainerNode({ id, data, selected }: NodeProps): React.JSX.Element {
   )
 
   return (
-    <div className="container-node" style={nodeContainerCss(style)} onContextMenu={onContextMenu}>
+    <div
+      className="container-node"
+      style={{ ...nodeContainerCss(style), ...highlightCss }}
+      onContextMenu={onContextMenu}
+    >
       <NodeResizer
         isVisible={selected}
         minWidth={CONTAINER_MIN_WIDTH}
         minHeight={CONTAINER_MIN_HEIGHT}
       />
       <ConnectionHandles customPoints={customPoints} onPointContextMenu={onPointContextMenu} />
+      {highlightMatches.length >= 2 && (
+        <div className="highlight-chips-anchor">
+          <HighlightChips highlights={highlightMatches} />
+        </div>
+      )}
       <EditableLabel
         className="container-node-label"
         inputClassName="container-node-label-input"

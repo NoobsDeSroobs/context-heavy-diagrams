@@ -16,6 +16,9 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
   "requiredTags": [
     { "key": "environment", "allowedValues": ["dev", "staging", "prod"], "defaultValue": "dev", "lock": "lockedEditable" }
   ],
+  "highlights": [
+    { "key": "environment", "value": "prod", "color": "#e6194b" }
+  ],
   "nodes": [ /* Node objects */ ],
   "edges": [ /* Edge objects */ ]
 }
@@ -27,6 +30,7 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
 | `viewport` | object | Camera position when the file was last saved: `x`, `y` (pan offset in canvas units) and `zoom` (scale factor, `1` = 100%). Purely cosmetic — restores where the view was, has no effect on the diagram's meaning. |
 | `metadata` | object | Diagram-level free-form key/value bag — plain JSON values, no locking concept at this level (that's what `requiredTags` is for). Absent means none set. See [Metadata](#metadata) below for the value shape's general rules (this is the same `JsonValue` type, just not wrapped in a per-entry `MetadataEntry`). |
 | `requiredTags` | array of RequiredTagDefinition | The diagram's own template for what every Shape/Container/Edge must carry — see [Required tags](#required-tags) below. Absent means no required tags. |
+| `highlights` | array of HighlightDefinition | Saved catalog of tag-based visual highlights — see [Highlights](#highlights) below. Absent means no highlights defined. Note there is no on/off state stored here: this app treats "which highlights are currently enabled" as local, in-memory, per-session state, never written to the file — a reader that only cares about reading the file back doesn't need to reconstruct or care about that. |
 | `nodes` | array of Node | See below. |
 | `edges` | array of Edge | See below. |
 
@@ -191,6 +195,24 @@ A diagram-level template — `requiredTags` on the top-level object — describi
 
 This app applies the template two ways: seeding it onto every newly-created Shape/Container/Edge, and retroactively reconciling every *existing* one whenever the template itself changes (or, defensively, whenever a file is opened, in case of hand-edited drift) — a `lockedEditable` entry keeps its current value if still valid or resets to `defaultValue` if not, a `lockedStatic` entry always takes the template's current value, and a key removed from `requiredTags` demotes any existing entries under that key to free rather than deleting them. A reader that only cares about reading the file back doesn't need to reimplement any of this — `requiredTags` is metadata about the metadata, not something a passive reader has to enforce.
 
+## Highlights
+
+A saved catalog of visual highlights — `highlights` on the top-level object — each one a display color tied to an exact metadata key/value match. This app renders a highlight on a Shape/Container/Edge whenever the element's own [Metadata](#metadata) has that exact key with that exact value, *and* the highlight is currently toggled on in the app's UI — but which highlights are toggled on is never stored in the file (see below).
+
+```json
+[
+  { "key": "environment", "value": "prod", "color": "#e6194b" }
+]
+```
+
+| Field | Type | Required | Meaning |
+|---|---|---|---|
+| `key` | string | yes | The metadata key this highlight matches against. |
+| `value` | JSON value | yes | The exact value this highlight matches against — compared for equality against a matching element's `metadata[key].value`, not a substring or pattern. |
+| `color` | string (CSS color, typically `#rrggbb`) | yes | The highlight's display color. This app renders it as a border/stroke override when an element matches exactly one enabled highlight, or as a small color chip (one per match) when an element matches two or more at once — purely a rendering detail, not something a passive reader needs to reproduce. |
+
+**Enabled/disabled state is deliberately not part of this file.** Only the catalog of *available* highlights is persisted — whether a given highlight happens to be switched on right now is local, in-memory, per-session UI state in this app, reset every time the file is (re)opened. A reader doesn't need to track or reproduce this; it isn't in the file to begin with.
+
 ## Determinism
 
 Files are written with a fixed key order (matching the tables above) and 2-space indentation, plus a trailing newline. This is deliberate: two saves of an unchanged diagram produce byte-identical output, so git diffs only show real changes. A compatible writer should aim for the same property if it wants clean diffs, though it isn't required for a file to be readable.
@@ -205,7 +227,7 @@ The `.chd` file itself is always plain, deterministic JSON — kept git-friendly
 
 ## Versioning
 
-`version` is currently always `1`. Fields have been added over time (`size`, `rotation`, `connectionPoints`, `parentId`, `style` on both Node and Edge, edge `type`/`label`, `data.icons`, `data.details`, `data.linkedDiagram`, top-level `metadata`/`requiredTags`, and `metadata` on both Node and Edge) but always additively — a reader from an earlier point in this project's history can still open a newer file and just won't recognize the newer fields. A breaking change to the meaning of an existing field would bump `version`; nothing has required that yet.
+`version` is currently always `1`. Fields have been added over time (`size`, `rotation`, `connectionPoints`, `parentId`, `style` on both Node and Edge, edge `type`/`label`, `data.icons`, `data.details`, `data.linkedDiagram`, top-level `metadata`/`requiredTags`/`highlights`, and `metadata` on both Node and Edge) but always additively — a reader from an earlier point in this project's history can still open a newer file and just won't recognize the newer fields. A breaking change to the meaning of an existing field would bump `version`; nothing has required that yet.
 
 ## Example
 

@@ -41,6 +41,18 @@ function resolveLinkPath(diagramPath: string, relativePath: string): string {
   return isAbsolute(relativePath) ? relativePath : join(dirname(diagramPath), relativePath)
 }
 
+// Navigates an existing window to a path (re-registers it too) — shared
+// by createWindow's initial load and by reusing an already-open, empty
+// window instead of spawning a new one (see openOrFocusWindow below).
+function loadPathIntoWindow(win: BrowserWindow, path: string): void {
+  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+    win.loadURL(`${process.env['ELECTRON_RENDERER_URL']}?path=${encodeURIComponent(path)}`)
+  } else {
+    win.loadFile(join(__dirname, '../renderer/index.html'), { query: { path } })
+  }
+  registerWindowPath(win, path)
+}
+
 // initialPath, when given, is passed to the renderer via a ?path= query
 // string rather than read here — the new window's own mount effect loads
 // it through the existing diagram:openPath IPC, reusing tested code
@@ -66,30 +78,33 @@ export function createWindow(initialPath?: string): BrowserWindow {
     return { action: 'deny' }
   })
 
-  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    const query = initialPath ? `?path=${encodeURIComponent(initialPath)}` : ''
-    win.loadURL(process.env['ELECTRON_RENDERER_URL'] + query)
+  if (initialPath) {
+    loadPathIntoWindow(win, initialPath)
+  } else if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+    win.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
-    win.loadFile(
-      join(__dirname, '../renderer/index.html'),
-      initialPath ? { query: { path: initialPath } } : undefined
-    )
+    win.loadFile(join(__dirname, '../renderer/index.html'))
   }
-
-  if (initialPath) registerWindowPath(win, initialPath)
 
   return win
 }
 
-// Focuses an existing window already showing this path, or opens a new
-// one — used by File -> Open and by both link-navigation flows (create
-// new / follow existing both open the target in its own window, never
-// in-place; ADR 0023).
-function openOrFocusWindow(path: string): void {
+// Focuses an existing window already showing this path; otherwise, if the
+// calling window was passed in and is currently empty (File -> Open with
+// nothing to lose in the window you're opening from — see the comment at
+// its call site), navigates that window to the path instead of opening a
+// new one; otherwise opens a brand new window. Both link-navigation flows
+// (create new / follow existing) never pass a reuse candidate — they
+// always open the target in its own window, never in-place (ADR 0023).
+function openOrFocusWindow(path: string, reuseWindow?: BrowserWindow): void {
   const existing = findWindowForPath(path)
   if (existing) {
     if (existing.isMinimized()) existing.restore()
     existing.focus()
+    return
+  }
+  if (reuseWindow) {
+    loadPathIntoWindow(reuseWindow, path)
     return
   }
   createWindow(path)
@@ -100,14 +115,20 @@ export function registerWindowHandlers(): void {
     createWindow()
   })
 
-  ipcMain.handle('windows:pickAndOpen', async () => {
+  // callingWindowEmpty: the renderer's own nodes.length === 0 &&
+  // edges.length === 0 check at the moment File -> Open was triggered —
+  // if true, and the picked path isn't already open elsewhere, this
+  // reuses the calling window instead of leaving a genuinely empty
+  // window sitting around next to the newly-opened one.
+  ipcMain.handle('windows:pickAndOpen', async (event, callingWindowEmpty: boolean) => {
     const result = await dialog.showOpenDialog({
       properties: ['openFile'],
       filters: FILTERS,
       title: 'Open diagram'
     })
     if (result.canceled || result.filePaths.length === 0) return
-    openOrFocusWindow(result.filePaths[0])
+    const callingWindow = callingWindowEmpty ? BrowserWindow.fromWebContents(event.sender) : null
+    openOrFocusWindow(result.filePaths[0], callingWindow ?? undefined)
   })
 
   // Resolves a stored relative link path and opens/focuses a window for

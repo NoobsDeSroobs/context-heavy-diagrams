@@ -19,7 +19,7 @@ export interface DiagramApi {
   createLinkedDiagram(diagramPath: string, label: string): Promise<string>
   pickExistingLinkedDiagram(diagramPath: string): Promise<string | null>
   newWindow(): Promise<void>
-  openInNewWindow(): Promise<void>
+  openInNewWindow(isCurrentWindowEmpty: boolean): Promise<void>
   openLinkedInNewWindow(
     diagramPath: string,
     relativePath: string

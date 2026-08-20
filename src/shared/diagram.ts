@@ -85,6 +85,18 @@ export interface RequiredTagDefinition {
   lock: MetadataLock
 }
 
+// Highlight catalog — see epic 0026/ADR 0025. Each entry pairs an exact
+// metadata key=value match with a display color. Deliberately no
+// `enabled` field here: whether a given highlight is currently toggled on
+// is session-only state, never persisted (ADR 0025's "split persistence"
+// decision) — a reopened/shared file always starts with every highlight
+// off, even though the catalog itself is shared.
+export interface HighlightDefinition {
+  key: string
+  value: JsonValue
+  color: string
+}
+
 export type LineStyleKind = 'solid' | 'dashed' | 'dotted'
 export type MarkerKind =
   | 'none'
@@ -159,6 +171,7 @@ export interface DiagramFile {
   // at this level (see ADR 0022's Consequences).
   metadata?: Record<string, JsonValue>
   requiredTags?: RequiredTagDefinition[]
+  highlights?: HighlightDefinition[]
   nodes: DiagramNode[]
   edges: DiagramEdge[]
 }
@@ -208,6 +221,7 @@ export function serializeDiagram(diagram: DiagramFile): string {
       ? (sortKeysDeep(diagram.metadata) as Record<string, JsonValue>)
       : undefined,
     requiredTags: diagram.requiredTags && diagram.requiredTags.length > 0 ? diagram.requiredTags : undefined,
+    highlights: diagram.highlights && diagram.highlights.length > 0 ? diagram.highlights : undefined,
     nodes: diagram.nodes.map((n) => ({
       id: n.id,
       type: n.type,

@@ -1,10 +1,12 @@
-import { memo, useCallback, type MouseEvent } from 'react'
+import { memo, useCallback, type CSSProperties, type MouseEvent } from 'react'
 import { NodeResizer, useReactFlow, type NodeProps } from '@xyflow/react'
-import type { ConnectionPoint, IconRef, IconSlot, NodeStyle } from '@shared/diagram'
+import type { ConnectionPoint, IconRef, IconSlot, MetadataEntry, NodeStyle } from '@shared/diagram'
 import EditableLabel from '../components/EditableLabel'
+import HighlightChips from '../components/HighlightChips'
 import IconSlotView from '../components/IconSlotView'
 import { useDiagramContext } from '../DiagramContext'
 import { useDetailsTooltip } from '../hooks/useDetailsTooltip'
+import { HIGHLIGHT_BORDER_WIDTH } from '../highlights'
 import { nodeContainerCss, nodeLabelCss } from '../styles/nodeStyleCss'
 import { ConnectionHandles } from './ConnectionHandles'
 import { useConnectionPointMenu } from './connectionPoints'
@@ -36,7 +38,8 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
     openColorPicker,
     openDetailsPanel,
     handleLinkClick,
-    pushSnapshot
+    pushSnapshot,
+    matchHighlights
   } = useDiagramContext()
   const { updateNodeData } = useReactFlow()
 
@@ -47,6 +50,16 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
   const style = data?.style as NodeStyle | undefined
   const tooltip = useDetailsTooltip(diagramPath, detailsPath)
   const { addConnectionPointItem, onPointContextMenu } = useConnectionPointMenu(id, customPoints)
+
+  // See epic 0026/ADR 0025: exactly one matching enabled highlight
+  // overrides the border; two or more render as chips instead. Layered
+  // after nodeContainerCss(style) so it takes precedence without touching
+  // the actually-stored style.
+  const highlightMatches = matchHighlights(data?.metadata as Record<string, MetadataEntry> | undefined)
+  const highlightCss: CSSProperties =
+    highlightMatches.length === 1
+      ? { borderColor: highlightMatches[0].color, borderWidth: HIGHLIGHT_BORDER_WIDTH }
+      : {}
 
   const onContextMenu = useCallback(
     (event: MouseEvent<HTMLDivElement>) => {
@@ -110,13 +123,18 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
   return (
     <div
       className="shape-node"
-      style={nodeContainerCss(style)}
+      style={{ ...nodeContainerCss(style), ...highlightCss }}
       onContextMenu={onContextMenu}
       onClick={onClick}
       title={tooltip}
     >
       <NodeResizer isVisible={selected} minWidth={SHAPE_MIN_WIDTH} minHeight={SHAPE_MIN_HEIGHT} />
       <ConnectionHandles customPoints={customPoints} onPointContextMenu={onPointContextMenu} />
+      {highlightMatches.length >= 2 && (
+        <div className="highlight-chips-anchor">
+          <HighlightChips highlights={highlightMatches} />
+        </div>
+      )}
       {SLOTS.map((slot) => (
         <IconSlotView
           key={slot}

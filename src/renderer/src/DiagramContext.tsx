@@ -1,4 +1,5 @@
 import { createContext, useContext } from 'react'
+import type { HighlightDefinition, MetadataEntry } from '@shared/diagram'
 import type { ContextMenuItem } from './components/ContextMenu'
 
 export interface DiagramContextValue {
@@ -40,6 +41,11 @@ export interface DiagramContextValue {
   // container's bounds — a node already inside some other container is left
   // alone, not silently moved.
   attachContainedNodes: (containerId: string) => void
+  // Every currently-enabled highlight matching this element's metadata —
+  // see epic 0026/ADR 0025. Bound to Canvas's own highlights/enabled-set
+  // state so node/edge components don't need either piece directly, just
+  // the element's own metadata to check.
+  matchHighlights: (metadata: Record<string, MetadataEntry> | undefined) => HighlightDefinition[]
 }
 
 const DiagramContext = createContext<DiagramContextValue | null>(null)
