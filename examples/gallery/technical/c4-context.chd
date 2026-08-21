@@ -1,9 +1,9 @@
 {
   "version": 1,
   "viewport": {
-    "x": 835.7565315133585,
-    "y": 522.8849586311541,
-    "zoom": 0.8690081256901534
+    "x": 838.1669458542524,
+    "y": 188.52274087359228,
+    "zoom": 0.9548416308409902
   },
   "nodes": [
     {
@@ -223,24 +223,6 @@
   ],
   "edges": [
     {
-      "id": "xy-edge__system-ticketingcp-3-ext-payment-gatewayleft",
-      "type": "labeled",
-      "source": "system-ticketing",
-      "target": "ext-payment-gateway",
-      "sourceHandle": "cp-3",
-      "targetHandle": "left",
-      "label": "charges fares via",
-      "style": {
-        "stroke": "#4a5568",
-        "strokeWidth": 2,
-        "lineStyle": "solid",
-        "startMarker": "none",
-        "endMarker": "arrowOpen",
-        "fontSize": 11,
-        "fontColor": "#f2f2f3"
-      }
-    },
-    {
       "id": "xy-edge__system-ticketingcp-2-ext-rail-interopleft",
       "type": "labeled",
       "source": "system-ticketing",
@@ -328,6 +310,25 @@
         "endMarker": "arrowOpen",
         "fontSize": 11,
         "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__system-ticketingcp-3-ext-payment-gatewayleft",
+      "type": "labeled",
+      "source": "system-ticketing",
+      "target": "ext-payment-gateway",
+      "sourceHandle": "cp-3",
+      "targetHandle": "left",
+      "label": "charges fares via",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3",
+        "labelPosition": 0.5
       }
     }
   ]

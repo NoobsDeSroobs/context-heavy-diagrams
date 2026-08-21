@@ -316,6 +316,22 @@ body {
   z-index: 5000;
 }
 
+/* Reconnect grab points (React Flow's own <circle>s, one per end) render
+   fully transparent by design — an invisible hit target, not a visible
+   element. Once the edge is selected, show them as a small solid dot, so
+   it's clear where to grab to reconnect that specific edge — epic 0046.
+   `r` here matches Canvas.tsx's `reconnectRadius` prop exactly, so the
+   visible dot is the same size as the actual grabbable area, not smaller
+   or larger than what you can really click. `fill`/`stroke: transparent`
+   on these circles are SVG presentation attributes, which sit below any
+   class selector in specificity, so this cleanly overrides them. */
+.react-flow__edge.selected .react-flow__edgeupdater {
+  r: 8;
+  fill: var(--color-text);
+  stroke: var(--color-background);
+  stroke-width: 1;
+}
+
 .edge-label-text {
   font-size: 12px;
   color: var(--color-text);

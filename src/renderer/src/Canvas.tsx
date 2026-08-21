@@ -1860,6 +1860,18 @@ function CanvasInner(): React.JSX.Element {
   // this is a rendering concern, not diagram content.
   const zIndexedNodes = nodes.map((n) => ({ ...n, zIndex: n.type === 'container' ? 0 : 2000 }))
 
+  // Selected edges render last, so they win any overlapping-click tie at a
+  // shared connection point (grabbing a reconnect handle where several
+  // edges converge) — epic 0046. React Flow's own z-index elevation on
+  // select (elevateEdgesOnSelect, @xyflow/system's getElevatedEdgeZIndex)
+  // didn't reliably win that tie for the reconnect-handle hit area in
+  // testing, so this fixes actual paint/hit-test order directly (DOM
+  // order, not z-index) instead of relying on it. Derived purely from
+  // `selected` at render time, never persisted — same reasoning as
+  // zIndexedNodes above, a rendering concern, not diagram content order
+  // (the canonical `edges` state, used for save/undo, is untouched).
+  const orderedEdges = [...edges.filter((e) => !e.selected), ...edges.filter((e) => e.selected)]
+
   return (
     <DiagramContext.Provider
       value={{
@@ -1924,7 +1936,7 @@ function CanvasInner(): React.JSX.Element {
               <EdgeMarkerDefs />
               <ReactFlow
                 nodes={zIndexedNodes}
-                edges={edges}
+                edges={orderedEdges}
                 nodeTypes={nodeTypes}
                 edgeTypes={edgeTypes}
                 onNodesChange={onNodesChange}
@@ -1938,6 +1950,12 @@ function CanvasInner(): React.JSX.Element {
                 onReconnectStart={onReconnectStart}
                 onReconnectEnd={onReconnectEnd}
                 edgesReconnectable
+                // A little smaller than React Flow's own default (10) — and
+                // kept equal to main.css's `.react-flow__edgeupdater` `r`
+                // value, epic 0046, so the visible dot on a selected edge
+                // matches the actual grabbable area exactly rather than
+                // over- or under-promising it.
+                reconnectRadius={8}
                 onEdgeContextMenu={onEdgeContextMenu}
                 connectionMode={ConnectionMode.Loose}
                 defaultEdgeOptions={{ type: 'labeled', markerEnd: { type: MarkerType.ArrowClosed } }}

@@ -23,6 +23,17 @@ const DASH_ARRAY: Record<Exclude<EdgeStyle['lineStyle'], undefined>, string | un
   dotted: '2 4'
 }
 
+// React Flow's own CSS default (--xy-edge-stroke-width-default) — needed
+// explicitly here since a selected edge's width is computed as "whatever
+// it already is, plus a bit," and that base has to be a real number even
+// when nothing overrides it.
+const DEFAULT_STROKE_WIDTH = 1
+// Additive, not a replacement value — composes with the highlight-override
+// width (epic 0026/ADR 0025) instead of competing with it, so a
+// highlighted *and* selected edge just gets both effects layered. Epic
+// 0046.
+const SELECTED_STROKE_WIDTH_DELTA = 2
+
 // Point at an arbitrary fraction of the path's arc length — epic 0045.
 // SVG path geometry doesn't depend on DOM attachment or layout, so a
 // throwaway, never-inserted <path> is enough; no ref/measurement pass
@@ -58,6 +69,7 @@ function LabeledEdge({
   style,
   markerEnd,
   markerStart,
+  selected,
   data
 }: EdgeProps): React.JSX.Element {
   const { updateEdgeData } = useReactFlow()
@@ -84,16 +96,21 @@ function LabeledEdge({
   // separately to the path and the label since EdgeLabelRenderer portals
   // the label into its own DOM container outside the SVG — it isn't a
   // descendant of the path and wouldn't inherit anything from it.
+  // Width is always resolved to a concrete number (not left to CSS's own
+  // default) since a selected edge needs a real base to add the selection
+  // delta on top of — see SELECTED_STROKE_WIDTH_DELTA above.
+  const baseStrokeWidth =
+    highlightMatches.length === 1 ? HIGHLIGHT_BORDER_WIDTH : (edgeStyle?.strokeWidth ?? DEFAULT_STROKE_WIDTH)
   const computedStyle: CSSProperties = {
     ...style,
     ...(edgeStyle?.stroke ? { stroke: withOpacity(edgeStyle.stroke, edgeStyle.strokeOpacity) } : {}),
-    ...(edgeStyle?.strokeWidth != null ? { strokeWidth: edgeStyle.strokeWidth } : {}),
+    strokeWidth: selected ? baseStrokeWidth + SELECTED_STROKE_WIDTH_DELTA : baseStrokeWidth,
     ...(edgeStyle?.lineStyle ? { strokeDasharray: DASH_ARRAY[edgeStyle.lineStyle] } : {}),
-    // A single matching highlight overrides the stroke, same treatment as
-    // ShapeNode/ContainerNode's border override — epic 0026/ADR 0025.
-    ...(highlightMatches.length === 1
-      ? { stroke: highlightMatches[0].color, strokeWidth: HIGHLIGHT_BORDER_WIDTH }
-      : {})
+    // A single matching highlight overrides the stroke color, same
+    // treatment as ShapeNode/ContainerNode's border override — epic
+    // 0026/ADR 0025. Width is handled by baseStrokeWidth above instead of
+    // here, so it can still be added to when also selected.
+    ...(highlightMatches.length === 1 ? { stroke: highlightMatches[0].color } : {})
   }
   const computedMarkerEnd = edgeStyle?.endMarker !== undefined ? markerUrl(edgeStyle.endMarker) : markerEnd
   const computedMarkerStart =
