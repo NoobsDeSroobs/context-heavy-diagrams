@@ -25,7 +25,8 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
     beginContinuousEdit,
     endContinuousEdit,
     pushSnapshot,
-    theme
+    theme,
+    entityHighlightNodeId
   } = useDiagramContext()
   const rotation = typeof data?.rotation === 'number' ? (data.rotation as number) : 0
   const nodeRef = useRef<HTMLDivElement>(null)
@@ -116,7 +117,7 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
   return (
     <div
       ref={nodeRef}
-      className={`text-node${rotating ? ' rotating' : ''}`}
+      className={`text-node${rotating ? ' rotating' : ''}${entityHighlightNodeId === id ? ' entity-highlighted' : ''}`}
       style={{ transform: `rotate(${rotation}deg)`, ...nodeContainerCss(style, theme) }}
       onContextMenu={onContextMenu}
       onClick={onClick}

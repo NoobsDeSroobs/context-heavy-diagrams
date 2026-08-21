@@ -53,6 +53,8 @@ import RequiredTagsPanel from './components/RequiredTagsPanel'
 import DiagnosticsPanel from './components/DiagnosticsPanel'
 import HighlightsPanel from './components/HighlightsPanel'
 import LegendPanel from './components/LegendPanel'
+import LayerPanel from './components/LayerPanel'
+import { backfillZIndex, nextZIndexAbove, reorderZIndex } from './layers/zIndexOrdering'
 import SettingsPanel from './components/SettingsPanel'
 import DiagramDock from './panels/DiagramDock'
 import UtilityDock from './panels/UtilityDock'
@@ -152,6 +154,31 @@ function sortNodesForHierarchy(nodes: Node[]): Node[] {
   return result
 }
 
+// Adapter between React Flow's Node shape (zIndex lives in data.zIndex) and
+// zIndexOrdering.ts's plain, React-Flow-agnostic ZIndexed shape — see epic
+// 0043/ADR 0035. Only touches nodes that actually needed a value; a fully
+// backfilled array is returned as-is (same node references, no new objects)
+// so this is a safe no-op to call on every load.
+function applyZIndexBackfill(nodes: Node[]): Node[] {
+  const extracted = nodes.map((n) => ({ id: n.id, type: n.type, zIndex: n.data?.zIndex as number | undefined }))
+  const backfilled = backfillZIndex(extracted)
+  if (backfilled === extracted) return nodes
+  return nodes.map((n, i) =>
+    backfilled[i].zIndex === n.data?.zIndex ? n : { ...n, data: { ...n.data, zIndex: backfilled[i].zIndex } }
+  )
+}
+
+// Same data.zIndex extraction as applyZIndexBackfill, for a freshly-created
+// node — see epic 0043/ADR 0035. `ofType`, when given, scopes "above
+// everything" to just that node type — a brand new container should still
+// default to sitting behind existing shapes (matching the backfilled
+// default arrangement), not jump in front of them just because it's new;
+// a brand new shape/text has no such expectation and looks at every node.
+function nextZIndex(nodes: Node[], ofType?: string): number {
+  const scoped = ofType ? nodes.filter((n) => n.type === ofType) : nodes
+  return nextZIndexAbove(scoped.map((n) => ({ id: n.id, zIndex: n.data?.zIndex as number | undefined })))
+}
+
 // Deleting a container promotes its children to the container's own parent
 // (or top-level) rather than deleting them too — see ADR 0012.
 function removeContainerReparenting(nodes: Node[], containerId: string): Node[] {
@@ -209,6 +236,7 @@ function toDiagramFile(
       position: { x: n.position.x, y: n.position.y },
       size: n.width != null && n.height != null ? { width: n.width, height: n.height } : undefined,
       rotation: typeof n.data?.rotation === 'number' ? (n.data.rotation as number) : undefined,
+      zIndex: typeof n.data?.zIndex === 'number' ? (n.data.zIndex as number) : undefined,
       connectionPoints: Array.isArray(n.data?.connectionPoints)
         ? (n.data.connectionPoints as ConnectionPoint[])
         : undefined,
@@ -252,28 +280,34 @@ function fromDiagramFile(diagram: DiagramFile): {
     legend: diagram.legend ?? [],
     // sortNodesForHierarchy defensively re-orders in case an external
     // writer didn't honor the parent-before-child requirement — see
-    // docs/file-format.md's parentId entry.
-    nodes: sortNodesForHierarchy(
-      diagram.nodes.map((n) => ({
-        id: n.id,
-        type: n.type,
-        position: n.position,
-        width: n.size?.width,
-        height: n.size?.height,
-        ...(n.parentId ? { parentId: n.parentId } : {}),
-        data: {
-          label: n.data.label,
-          ...(n.rotation != null ? { rotation: n.rotation } : {}),
-          ...(n.connectionPoints && n.connectionPoints.length > 0
-            ? { connectionPoints: n.connectionPoints }
-            : {}),
-          ...(n.data.icons ? { icons: n.data.icons } : {}),
-          ...(n.data.details ? { details: n.data.details } : {}),
-          ...(n.data.linkedDiagram ? { linkedDiagram: n.data.linkedDiagram } : {}),
-          ...(n.style ? { style: n.style } : {}),
-          ...(n.metadata && nodeMetadataEligible(n.type) ? { metadata: n.metadata } : {})
-        }
-      }))
+    // docs/file-format.md's parentId entry. applyZIndexBackfill runs on
+    // that *final* order, not the raw file order, so "array position"
+    // means the same thing it does for today's actual rendering — see
+    // epic 0043/ADR 0035.
+    nodes: applyZIndexBackfill(
+      sortNodesForHierarchy(
+        diagram.nodes.map((n) => ({
+          id: n.id,
+          type: n.type,
+          position: n.position,
+          width: n.size?.width,
+          height: n.size?.height,
+          ...(n.parentId ? { parentId: n.parentId } : {}),
+          data: {
+            label: n.data.label,
+            ...(n.rotation != null ? { rotation: n.rotation } : {}),
+            ...(n.zIndex != null ? { zIndex: n.zIndex } : {}),
+            ...(n.connectionPoints && n.connectionPoints.length > 0
+              ? { connectionPoints: n.connectionPoints }
+              : {}),
+            ...(n.data.icons ? { icons: n.data.icons } : {}),
+            ...(n.data.details ? { details: n.data.details } : {}),
+            ...(n.data.linkedDiagram ? { linkedDiagram: n.data.linkedDiagram } : {}),
+            ...(n.style ? { style: n.style } : {}),
+            ...(n.metadata && nodeMetadataEligible(n.type) ? { metadata: n.metadata } : {})
+          }
+        }))
+      )
     ),
     edges: diagram.edges.map((e) => ({
       id: e.id,
@@ -407,6 +441,13 @@ function CanvasInner(): React.JSX.Element {
   // Anchors the floating panel next to whichever <ControlButton> opened it —
   // same convention as iconPicker/colorPicker/linePicker's own anchorRect.
   const [legendPanelAnchor, setLegendPanelAnchor] = useState<DOMRect | null>(null)
+  // Layer panel (epic 0043/ADR 0035) — same UtilityDock family as
+  // Highlights/Required tags/Diagnostics. No catalog of its own: it reads
+  // straight off `nodes`' own zIndex, there's nothing separate to persist.
+  const [layerPanelOpen, setLayerPanelOpen] = useState(false)
+  // Which node the panel currently points at — an "entity highlight," see
+  // DiagramContext's own comment on this field. Session-only, reset on load.
+  const [entityHighlightNodeId, setEntityHighlightNodeId] = useState<string | null>(null)
   // Non-blocking notices from the most recent syncElementMetadata pass —
   // deliberately *replaced*, not appended, on every sync: this reflects
   // current state (what the last backfill run had to correct), not a
@@ -705,12 +746,13 @@ function CanvasInner(): React.JSX.Element {
   )
 
   // The utility dock shows one surface at a time (see ADR 0013) — opening
-  // any of the five closes the other four, same as clicking a different tab.
+  // any of the six closes the other five, same as clicking a different tab.
   const openDetailsPanel = useCallback((nodeId: string) => {
     setRequiredTagsPanelOpen(false)
     setDiagnosticsPanelOpen(false)
     setHighlightsPanelOpen(false)
     setSettingsPanelOpen(false)
+    setLayerPanelOpen(false)
     setDetailsPanelNodeId(nodeId)
   }, [])
 
@@ -719,6 +761,7 @@ function CanvasInner(): React.JSX.Element {
     setDiagnosticsPanelOpen(false)
     setHighlightsPanelOpen(false)
     setSettingsPanelOpen(false)
+    setLayerPanelOpen(false)
     setRequiredTagsPanelOpen((open) => !open)
   }, [])
 
@@ -727,6 +770,7 @@ function CanvasInner(): React.JSX.Element {
     setRequiredTagsPanelOpen(false)
     setHighlightsPanelOpen(false)
     setSettingsPanelOpen(false)
+    setLayerPanelOpen(false)
     setDiagnosticsPanelOpen((open) => !open)
   }, [])
 
@@ -735,6 +779,7 @@ function CanvasInner(): React.JSX.Element {
     setRequiredTagsPanelOpen(false)
     setDiagnosticsPanelOpen(false)
     setHighlightsPanelOpen(false)
+    setLayerPanelOpen(false)
     setSettingsPanelOpen((open) => !open)
   }, [])
 
@@ -743,7 +788,18 @@ function CanvasInner(): React.JSX.Element {
     setRequiredTagsPanelOpen(false)
     setDiagnosticsPanelOpen(false)
     setSettingsPanelOpen(false)
+    setLayerPanelOpen(false)
     setHighlightsPanelOpen((open) => !open)
+  }, [])
+
+  const toggleLayerPanel = useCallback(() => {
+    setDetailsPanelNodeId(null)
+    setRequiredTagsPanelOpen(false)
+    setDiagnosticsPanelOpen(false)
+    setSettingsPanelOpen(false)
+    setHighlightsPanelOpen(false)
+    setEntityHighlightNodeId(null)
+    setLayerPanelOpen((open) => !open)
   }, [])
 
   const updateRequiredTags = useCallback(
@@ -1011,11 +1067,16 @@ function CanvasInner(): React.JSX.Element {
           const width = type === 'shape' ? SHAPE_MIN_WIDTH * 2 : CONTAINER_MIN_WIDTH * 2
           const height = type === 'shape' ? SHAPE_MIN_HEIGHT * 2 : CONTAINER_MIN_HEIGHT * 1.5
           const metadata = seedMetadata(requiredTags)
+          // An anchor never has a zIndex (epic 0043/ADR 0035) — resolving it
+          // into a real shape/container needs one now, same default as
+          // addShapeNode/addContainerNode.
+          const zIndex = type === 'shape' ? nextZIndex(nds) : nextZIndex(nds, 'container')
           const data =
             type === 'shape'
-              ? { label: 'Shape', metadata }
+              ? { label: 'Shape', zIndex, metadata }
               : {
                   label: 'Container',
+                  zIndex,
                   style: { fill: 'var(--ev-c-gray-1)', fillOpacity: 20 },
                   metadata
                 }
@@ -1166,7 +1227,7 @@ function CanvasInner(): React.JSX.Element {
         position: spawnPosition(width, height, nds.length),
         width,
         height,
-        data: { label: 'Shape', metadata: seedMetadata(requiredTags) }
+        data: { label: 'Shape', zIndex: nextZIndex(nds), metadata: seedMetadata(requiredTags) }
       }
     ])
   }, [setNodes, pushSnapshot, spawnPosition, requiredTags])
@@ -1184,7 +1245,7 @@ function CanvasInner(): React.JSX.Element {
         position: spawnPosition(width, height, nds.length),
         width,
         height,
-        data: { label: 'Text', rotation: 0 }
+        data: { label: 'Text', rotation: 0, zIndex: nextZIndex(nds) }
       }
     ])
   }, [setNodes, pushSnapshot, spawnPosition])
@@ -1208,6 +1269,7 @@ function CanvasInner(): React.JSX.Element {
         // opening the property panel first to see anything at all.
         data: {
           label: 'Container',
+          zIndex: nextZIndex(nds, 'container'),
           style: { fill: 'var(--ev-c-gray-1)', fillOpacity: 20 },
           metadata: seedMetadata(requiredTags)
         }
@@ -1456,6 +1518,30 @@ function CanvasInner(): React.JSX.Element {
       )
     },
     [setEdges]
+  )
+
+  // Layer panel drag-reorder (epic 0043/ADR 0035) — a discrete action, not
+  // a continuous drag session, so this snapshots itself rather than
+  // relying on a caller's beginContinuousEdit/endContinuousEdit pair (same
+  // "snapshot right before the one-shot mutation" treatment as the icon
+  // picker's onPick). `orderedDescending` is built fresh from current
+  // `nodes` state each call — the panel doesn't own its own copy of the
+  // ordering, `nodes` is the only source of truth.
+  const reorderNodeZIndex = useCallback(
+    (movedId: string, newIndex: number) => {
+      pushSnapshot()
+      setNodes((nds) => {
+        const orderedDescending = [...nds]
+          .map((n) => ({ id: n.id, type: n.type, zIndex: (n.data?.zIndex as number | undefined) ?? 0 }))
+          .sort((a, b) => b.zIndex - a.zIndex)
+        const updates = reorderZIndex(orderedDescending, movedId, newIndex)
+        const updateMap = new Map(updates.map((u) => [u.id, u.zIndex]))
+        return nds.map((n) =>
+          updateMap.has(n.id) ? { ...n, data: { ...n.data, zIndex: updateMap.get(n.id) } } : n
+        )
+      })
+    },
+    [setNodes, pushSnapshot]
   )
 
   // Metadata section writes (epic 0034) — same bypass-onNodesChange pattern
@@ -1918,16 +2004,16 @@ function CanvasInner(): React.JSX.Element {
   const selectedNodes = nodes.filter((n) => n.selected)
   const selectedEdges = edges.filter((e) => e.selected)
 
-  // Containers must always render behind shapes/text, regardless of
-  // creation order or drag history — a container is a background grouping
-  // box, not something that should ever visually cover a sibling shape it
-  // happens to overlap. React Flow computes each node's actual stacking as
-  // zIndex + (selected ? 1000 : 0) (elevateNodesOnSelect, on by default —
-  // see @xyflow/system's calculateZ), so the two tiers need more than 1000
-  // apart, or a *selected* container would still jump above an unselected
-  // shape. Derived purely from `type` at render time, never persisted —
-  // this is a rendering concern, not diagram content.
-  const zIndexedNodes = nodes.map((n) => ({ ...n, zIndex: n.type === 'container' ? 0 : 2000 }))
+  // Each node's persisted stacking order — see epic 0043/ADR 0035. No
+  // type-based special-casing here: the "containers render behind shapes"
+  // look most diagrams start with is purely a consequence of the
+  // load-time backfill's starting values (applyZIndexBackfill/nextZIndex),
+  // not a rule enforced at render time — drag a container above a shape in
+  // the layer panel and it genuinely renders above it from then on. React
+  // Flow still adds its own selection elevation on top of whatever's set
+  // here (elevateNodesOnSelect, on by default).
+  const zIndexedNodes = nodes.map((n) => ({ ...n, zIndex: (n.data?.zIndex as number | undefined) ?? 0 }))
+  const nodeZIndexById = new Map(zIndexedNodes.map((n) => [n.id, n.zIndex as number]))
 
   // Selected edges render last, so they win any overlapping-click tie at a
   // shared connection point (grabbing a reconnect handle where several
@@ -1940,6 +2026,30 @@ function CanvasInner(): React.JSX.Element {
   // zIndexedNodes above, a rendering concern, not diagram content order
   // (the canonical `edges` state, used for save/undo, is untouched).
   const orderedEdges = [...edges.filter((e) => !e.selected), ...edges.filter((e) => e.selected)]
+
+  // An edge has no zIndex of its own to control — epic 0043/ADR 0035
+  // deliberately scoped this feature to Shape/Container/Text only. Instead
+  // it always sits at the midpoint of its two endpoints' current stacking,
+  // computed fresh here alongside orderedEdges above, never persisted.
+  const zIndexedEdges = orderedEdges.map((e) => {
+    const sourceZ = nodeZIndexById.get(e.source) ?? 0
+    const targetZ = nodeZIndexById.get(e.target) ?? 0
+    return { ...e, zIndex: (sourceZ + targetZ) / 2 }
+  })
+
+  // Plain-data projection for LayerPanel — keeps that component decoupled
+  // from React Flow's own Node type, same reasoning as passing plain
+  // derived data to other panels elsewhere in this file. Sorted highest
+  // z-index first, matching the panel's own top-of-list-is-frontmost
+  // display convention — see epic 0043/ADR 0035.
+  const layerRows = [...nodes]
+    .map((n) => ({
+      id: n.id,
+      type: n.type ?? 'shape',
+      label: String(n.data?.label ?? ''),
+      zIndex: (n.data?.zIndex as number | undefined) ?? 0
+    }))
+    .sort((a, b) => b.zIndex - a.zIndex)
 
   return (
     <DiagramContext.Provider
@@ -1956,7 +2066,8 @@ function CanvasInner(): React.JSX.Element {
         attachContainedNodes,
         matchHighlights,
         edgeStraightSegmentLength: settings.edgeStraightSegmentLength,
-        theme
+        theme,
+        entityHighlightNodeId
       }}
     >
       {/* Outer app shell: [canvas view [diagram dock]] [utility dock], nested
@@ -1993,6 +2104,7 @@ function CanvasInner(): React.JSX.Element {
             <button onClick={toggleHighlightsPanel}>
               Highlights{highlights.length > 0 ? ` (${highlights.length})` : ''}
             </button>
+            <button onClick={toggleLayerPanel}>Layers…</button>
             <button onClick={toggleSettingsPanel}>Settings…</button>
             {currentPath && <span className="toolbar-path">{currentPath}</span>}
             <button
@@ -2008,7 +2120,7 @@ function CanvasInner(): React.JSX.Element {
               <EdgeMarkerDefs />
               <ReactFlow
                 nodes={zIndexedNodes}
-                edges={orderedEdges}
+                edges={zIndexedEdges}
                 nodeTypes={nodeTypes}
                 edgeTypes={edgeTypes}
                 onNodesChange={onNodesChange}
@@ -2199,6 +2311,18 @@ function CanvasInner(): React.JSX.Element {
               onToggleGroup={toggleHighlightGroup}
               onAddOrResyncGroup={addOrResyncHighlightGroup}
               onClose={() => setHighlightsPanelOpen(false)}
+            />
+          )}
+          {layerPanelOpen && (
+            <LayerPanel
+              rows={layerRows}
+              entityHighlightNodeId={entityHighlightNodeId}
+              onPointAt={setEntityHighlightNodeId}
+              onReorder={reorderNodeZIndex}
+              onClose={() => {
+                setEntityHighlightNodeId(null)
+                setLayerPanelOpen(false)
+              }}
             />
           )}
           {settingsPanelOpen && (

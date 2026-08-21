@@ -1030,6 +1030,7 @@ body {
 .required-tags-panel,
 .diagnostics-panel,
 .highlights-panel,
+.layer-panel,
 .settings-panel {
   width: 100%;
   height: 100%;
@@ -1041,6 +1042,7 @@ body {
 .required-tags-panel-toolbar,
 .diagnostics-panel-toolbar,
 .highlights-panel-toolbar,
+.layer-panel-toolbar,
 .settings-panel-toolbar {
   display: flex;
   align-items: center;
@@ -1052,6 +1054,7 @@ body {
 .required-tags-panel-title,
 .diagnostics-panel-title,
 .highlights-panel-title,
+.layer-panel-title,
 .settings-panel-title {
   font-size: 13px;
   font-weight: 600;
@@ -1060,6 +1063,7 @@ body {
 .required-tags-panel-toolbar button,
 .diagnostics-panel-toolbar button,
 .highlights-panel-toolbar button,
+.layer-panel-toolbar button,
 .settings-panel-toolbar button {
   cursor: pointer;
   border: 1px solid var(--ev-c-gray-2);
@@ -1074,12 +1078,14 @@ body {
 .required-tags-panel-toolbar button:hover,
 .diagnostics-panel-toolbar button:hover,
 .highlights-panel-toolbar button:hover,
+.layer-panel-toolbar button:hover,
 .settings-panel-toolbar button:hover {
   background: var(--ev-button-alt-hover-bg);
 }
 
 .required-tags-panel-body,
 .highlights-panel-body,
+.layer-panel-body,
 .settings-panel-body {
   flex: 1;
   min-height: 0;
@@ -1092,6 +1098,7 @@ body {
 
 .required-tags-panel-hint,
 .highlights-panel-hint,
+.layer-panel-hint,
 .settings-panel-hint {
   font-size: 12px;
   color: var(--ev-c-text-3);
@@ -1105,6 +1112,82 @@ body {
   border-radius: 3px;
   padding: 1px 4px;
   font-size: 11px;
+}
+
+/* Layer panel — see epic 0043/ADR 0035. */
+.layer-row {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+
+.layer-row:hover {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+/* A row currently being pointed at from the panel — see the
+   .entity-highlighted node/container/text rule below for its canvas-side
+   counterpart. */
+.layer-row.pointed {
+  background: var(--ev-button-alt-hover-bg);
+  border-color: var(--ev-c-text-2);
+}
+
+/* A visible insertion line between rows while dragging — replaces an
+   earlier "drop onto a row" version that left which side it'd land on as
+   a hidden implementation detail (epic 0043 follow-up feedback). */
+.layer-drop-indicator {
+  height: 2px;
+  margin: -1px 6px;
+  border-radius: 1px;
+  background: var(--ev-c-text-1);
+}
+
+.layer-row-badge {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: var(--color-background-mute);
+  color: var(--ev-c-text-2);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.layer-row-label {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.layer-row-zindex {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ev-c-text-3);
+}
+
+/* Canvas-side counterpart of a .layer-row.pointed click — an "entity
+   highlight" (epic 0043/ADR 0035), a different concept from the *property*
+   highlight system (epic 0026/ADR 0025, .highlight-chips/matchHighlights)
+   despite the shared word. A simple outline, deliberately distinct from
+   both the selection outline and the property-highlight border override. */
+.shape-node.entity-highlighted,
+.container-node.entity-highlighted,
+.text-node.entity-highlighted {
+  outline: 2px dashed var(--ev-c-text-1);
+  outline-offset: 2px;
 }
 
 .required-tag-row {

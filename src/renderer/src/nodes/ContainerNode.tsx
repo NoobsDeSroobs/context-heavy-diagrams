@@ -23,8 +23,15 @@ export const CONTAINER_MIN_HEIGHT = 120
 // tree, not DOM children of this div, so they aren't affected by anything
 // this component does with pointer events or z-order.
 function ContainerNode({ id, data, selected }: NodeProps): React.JSX.Element {
-  const { pushSnapshot, openContextMenu, openColorPicker, attachContainedNodes, matchHighlights, theme } =
-    useDiagramContext()
+  const {
+    pushSnapshot,
+    openContextMenu,
+    openColorPicker,
+    attachContainedNodes,
+    matchHighlights,
+    theme,
+    entityHighlightNodeId
+  } = useDiagramContext()
   const { updateNodeData } = useReactFlow()
   const customPoints = (data?.connectionPoints ?? []) as ConnectionPoint[]
   const style = data?.style as NodeStyle | undefined
@@ -53,7 +60,7 @@ function ContainerNode({ id, data, selected }: NodeProps): React.JSX.Element {
 
   return (
     <div
-      className="container-node"
+      className={entityHighlightNodeId === id ? 'container-node entity-highlighted' : 'container-node'}
       style={{ ...nodeContainerCss(style, theme), ...highlightCss }}
       onContextMenu={onContextMenu}
     >

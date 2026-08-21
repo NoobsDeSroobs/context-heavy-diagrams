@@ -160,6 +160,14 @@ export interface DiagramNode {
   position: { x: number; y: number }
   size?: { width: number; height: number }
   rotation?: number
+  // Stacking order — see epic 0043/ADR 0035. Higher renders on top. No
+  // type-based special-casing anywhere that reads this: the "containers
+  // render behind shapes" look most diagrams start with is just a
+  // consequence of the backfilled starting values (containers seeded low,
+  // shapes/text seeded high), not a rule enforced on top of this field.
+  // Absent means "never touched by the layer panel" — see Canvas.tsx's
+  // load-time backfill for how an old file gets real values on first open.
+  zIndex?: number
   // Only 'shape' nodes are connectable, so only they meaningfully have
   // this — same reasoning as size/rotation being optional. Absent/empty
   // means "just the 4 default points," not "no connection points at all."
@@ -262,6 +270,7 @@ export function serializeDiagram(diagram: DiagramFile): string {
       position: { x: n.position.x, y: n.position.y },
       size: n.size ? { width: n.size.width, height: n.size.height } : undefined,
       rotation: n.rotation,
+      zIndex: n.zIndex,
       connectionPoints:
         n.connectionPoints && n.connectionPoints.length > 0 ? n.connectionPoints : undefined,
       parentId: n.parentId,

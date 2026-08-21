@@ -40,7 +40,8 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
     handleLinkClick,
     pushSnapshot,
     matchHighlights,
-    theme
+    theme,
+    entityHighlightNodeId
   } = useDiagramContext()
   const { updateNodeData } = useReactFlow()
 
@@ -123,7 +124,7 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
 
   return (
     <div
-      className="shape-node"
+      className={entityHighlightNodeId === id ? 'shape-node entity-highlighted' : 'shape-node'}
       style={{ ...nodeContainerCss(style, theme), ...highlightCss }}
       onContextMenu={onContextMenu}
       onClick={onClick}

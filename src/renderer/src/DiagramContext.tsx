@@ -55,6 +55,12 @@ export interface DiagramContextValue {
   // an explicit fill/stroke/fontColor, for the theme-adaptive Value flip
   // (epic 0040/ADR 0034). Same threading reasoning as the two fields above.
   theme: Theme
+  // Which node the layer panel is currently pointing at — an "entity
+  // highlight" (epic 0043/ADR 0035), a different concept from
+  // matchHighlights above ("property highlight": every entity sharing a
+  // metadata value) despite the shared English word. Deliberately not
+  // real selection — see the ADR for why. Session-only, null means none.
+  entityHighlightNodeId: string | null
 }
 
 const DiagramContext = createContext<DiagramContextValue | null>(null)
