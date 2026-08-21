@@ -18,7 +18,7 @@ export default function DetailsPanel({
   onChange,
   onClose
 }: DetailsPanelProps): React.JSX.Element {
-  const [mode, setMode] = useState<Mode>('edit')
+  const [mode, setMode] = useState<Mode>('preview')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const wrapSelection = (before: string, after: string = before): void => {

@@ -1615,6 +1615,23 @@ function CanvasInner(): React.JSX.Element {
     window.api.newWindow()
   }, [])
 
+  // Re-reads this window's own file from disk and reloads it in place,
+  // reusing the same loadDiagramIntoCanvas the initial mount effect uses
+  // — for picking up changes made outside the app (hand-edited, or
+  // written by other tooling) without quitting and relaunching. There's
+  // no dirty-tracking in this app yet (epic 0020), so this can't tell
+  // whether there are actually unsaved changes to lose — always confirms.
+  const handleReload = useCallback(async () => {
+    if (!currentPath) return
+    if (!confirm('Reload from disk? Any changes since the last save will be lost.')) return
+    try {
+      const diagram = await window.api.openDiagramAtPath(currentPath)
+      loadDiagramIntoCanvas(currentPath, diagram)
+    } catch (error) {
+      alert(`Couldn't reload: ${error instanceof Error ? error.message : String(error)}`)
+    }
+  }, [currentPath, loadDiagramIntoCanvas])
+
   // Opens (or focuses, if already open elsewhere) a linked diagram in its
   // own window — used by both link-navigation flows below. Never mutates
   // current state on failure — a missing or unreadable link must leave the
@@ -1868,6 +1885,13 @@ function CanvasInner(): React.JSX.Element {
             <button onClick={handleOpen}>Open…</button>
             <button onClick={handleSave}>Save</button>
             <button onClick={handleSaveAs}>Save As…</button>
+            <button
+              onClick={handleReload}
+              disabled={!currentPath}
+              title="Re-read this file from disk, discarding unsaved changes"
+            >
+              Reload
+            </button>
             {showSavedFlash && (
               <span className="toolbar-saved-flash" role="status">
                 ✓ Saved

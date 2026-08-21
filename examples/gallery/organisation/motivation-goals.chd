@@ -1,0 +1,439 @@
+{
+  "version": 1,
+  "viewport": {
+    "x": 752.1551339087337,
+    "y": 616.9125432595439,
+    "zoom": 0.7399920687407788
+  },
+  "nodes": [
+    {
+      "id": "blurb",
+      "type": "text",
+      "position": {
+        "x": -900,
+        "y": -650
+      },
+      "size": {
+        "width": 1550,
+        "height": 160
+      },
+      "style": {
+        "fill": "#fefcbf",
+        "fontColor": "#744210",
+        "fontSize": 12,
+        "textAlign": "start",
+        "fontFamily": "sans-serif"
+      },
+      "data": {
+        "label": "EXAMPLE — Modernization Drivers & Goals\n\nIllustrates: a motivation view (drivers → goals → objectives), labeled edges rather than a sequence or hierarchy of systems — deliberately markdown-heavy, this gallery's flagship use of the details sublayer. Every node has real, substantial detail behind it; the diagram itself is deliberately just the map.\n\nPersona: the modernization task force itself, working through why the program exists.\n\nColor key: red = drivers (external/internal pressures). Amber = goals (what the program aims to achieve). Green = objectives (measurable targets under each goal).\n\nPart of the Meridian Rail example gallery — epic 0022 (docs/planning/epics/0022-example-diagram-gallery.md)."
+      }
+    },
+    {
+      "id": "driver-declining-ridership",
+      "type": "shape",
+      "position": {
+        "x": -900,
+        "y": -97.13369757279733
+      },
+      "size": {
+        "width": 260,
+        "height": 100
+      },
+      "style": {
+        "fill": "#b91c1c",
+        "stroke": "#7f1d1d",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Declining Ridership",
+        "details": "motivation-goals/details/driver-declining-ridership.md"
+      }
+    },
+    {
+      "id": "driver-legacy-risk",
+      "type": "shape",
+      "position": {
+        "x": -900,
+        "y": -370.78072403270676
+      },
+      "size": {
+        "width": 260,
+        "height": 100
+      },
+      "style": {
+        "fill": "#b91c1c",
+        "stroke": "#7f1d1d",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Legacy System Risk",
+        "details": "motivation-goals/details/driver-legacy-risk.md"
+      }
+    },
+    {
+      "id": "driver-regulatory-pressure",
+      "type": "shape",
+      "position": {
+        "x": -900,
+        "y": 46.352973540090574
+      },
+      "size": {
+        "width": 260,
+        "height": 100
+      },
+      "style": {
+        "fill": "#b91c1c",
+        "stroke": "#7f1d1d",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Regulatory Pressure",
+        "details": "motivation-goals/details/driver-regulatory-pressure.md"
+      }
+    },
+    {
+      "id": "driver-customer-expectations",
+      "type": "shape",
+      "position": {
+        "x": -900,
+        "y": -233.78500959617537
+      },
+      "size": {
+        "width": 260,
+        "height": 100
+      },
+      "connectionPoints": [
+        {
+          "id": "cp-2",
+          "side": "right",
+          "offset": 0.15516660962006967
+        }
+      ],
+      "style": {
+        "fill": "#b91c1c",
+        "stroke": "#7f1d1d",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Rising Customer Expectations",
+        "details": "motivation-goals/details/driver-customer-expectations.md"
+      }
+    },
+    {
+      "id": "goal-modernize-platform",
+      "type": "shape",
+      "position": {
+        "x": -400,
+        "y": -400
+      },
+      "size": {
+        "width": 280,
+        "height": 110
+      },
+      "connectionPoints": [
+        {
+          "id": "cp-3",
+          "side": "left",
+          "offset": 0.8145291276263552
+        }
+      ],
+      "style": {
+        "fill": "#b45309",
+        "stroke": "#78350f",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Modernize Ticketing Platform",
+        "details": "motivation-goals/details/goal-modernize-platform.md"
+      }
+    },
+    {
+      "id": "goal-improve-compliance",
+      "type": "shape",
+      "position": {
+        "x": -400,
+        "y": 36.352973540090574
+      },
+      "size": {
+        "width": 280,
+        "height": 110
+      },
+      "style": {
+        "fill": "#b45309",
+        "stroke": "#78350f",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Improve Regulatory Compliance",
+        "details": "motivation-goals/details/goal-improve-compliance.md"
+      }
+    },
+    {
+      "id": "goal-grow-ridership",
+      "type": "shape",
+      "position": {
+        "x": -400,
+        "y": -171.35404534336476
+      },
+      "size": {
+        "width": 280,
+        "height": 110
+      },
+      "connectionPoints": [
+        {
+          "id": "cp-1",
+          "side": "left",
+          "offset": 0.12752165787782999
+        }
+      ],
+      "style": {
+        "fill": "#b45309",
+        "stroke": "#78350f",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Grow Ridership",
+        "details": "motivation-goals/details/goal-grow-ridership.md"
+      }
+    },
+    {
+      "id": "objective-decommission-mainframe",
+      "type": "shape",
+      "position": {
+        "x": 150,
+        "y": -400
+      },
+      "size": {
+        "width": 300,
+        "height": 110
+      },
+      "style": {
+        "fill": "#15803d",
+        "stroke": "#14532d",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Decommission Legacy Mainframe by Q4 2027",
+        "details": "motivation-goals/details/objective-decommission-mainframe.md"
+      }
+    },
+    {
+      "id": "objective-nis2-readiness",
+      "type": "shape",
+      "position": {
+        "x": 150,
+        "y": 36.35297354009058
+      },
+      "size": {
+        "width": 300,
+        "height": 110
+      },
+      "style": {
+        "fill": "#15803d",
+        "stroke": "#14532d",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Achieve NIS2 Essential-Service Readiness",
+        "details": "motivation-goals/details/objective-nis2-readiness.md"
+      }
+    },
+    {
+      "id": "objective-increase-bookings",
+      "type": "shape",
+      "position": {
+        "x": 150,
+        "y": -171.35404534336476
+      },
+      "size": {
+        "width": 300,
+        "height": 110
+      },
+      "style": {
+        "fill": "#15803d",
+        "stroke": "#14532d",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Increase Online Bookings 30% YoY",
+        "details": "motivation-goals/details/objective-increase-bookings.md"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "xy-edge__driver-regulatory-pressureright-goal-improve-complianceleft",
+      "type": "labeled",
+      "source": "driver-regulatory-pressure",
+      "target": "goal-improve-compliance",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "motivates",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__driver-legacy-riskright-goal-modernize-platformleft",
+      "type": "labeled",
+      "source": "driver-legacy-risk",
+      "target": "goal-modernize-platform",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "motivates",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__driver-customer-expectationscp-2-goal-modernize-platformcp-3",
+      "type": "labeled",
+      "source": "driver-customer-expectations",
+      "target": "goal-modernize-platform",
+      "sourceHandle": "cp-2",
+      "targetHandle": "cp-3",
+      "label": "motivates",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__goal-improve-complianceright-objective-nis2-readinessleft",
+      "type": "labeled",
+      "source": "goal-improve-compliance",
+      "target": "objective-nis2-readiness",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "measured by",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__goal-modernize-platformright-objective-decommission-mainframeleft",
+      "type": "labeled",
+      "source": "goal-modernize-platform",
+      "target": "objective-decommission-mainframe",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "measured by",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__goal-grow-ridershipright-objective-increase-bookingsleft",
+      "type": "labeled",
+      "source": "goal-grow-ridership",
+      "target": "objective-increase-bookings",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "measured by",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__driver-declining-ridershipright-goal-grow-ridershipleft",
+      "type": "labeled",
+      "source": "driver-declining-ridership",
+      "target": "goal-grow-ridership",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "motivates",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__driver-customer-expectationsright-goal-grow-ridershipcp-1",
+      "type": "labeled",
+      "source": "driver-customer-expectations",
+      "target": "goal-grow-ridership",
+      "sourceHandle": "right",
+      "targetHandle": "cp-1",
+      "label": "motivates",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    }
+  ]
+}

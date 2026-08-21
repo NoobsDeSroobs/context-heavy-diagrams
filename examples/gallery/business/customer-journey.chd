@@ -1,0 +1,98 @@
+{
+  "version": 1,
+  "viewport": { "x": 0, "y": 0, "zoom": 1 },
+  "nodes": [
+    {
+      "id": "blurb",
+      "type": "text",
+      "position": { "x": -1600, "y": -250 },
+      "size": { "width": 2700, "height": 150 },
+      "style": { "fill": "#fefcbf", "fontColor": "#744210", "fontSize": 12, "textAlign": "start", "fontFamily": "sans-serif" },
+      "data": {
+        "label": "EXAMPLE — Customer Journey: Booking a Ticket\n\nIllustrates: edges-as-sequence rather than hierarchy — a business architect (or a PO, this isn't architect-exclusive) walking through the passenger's experience end to end, not a system diagram. Deliberately the \"simple\" pick of the gallery's starting trio: one straight line of steps, no containers, no linking, no highlights.\n\nPersona: a business architect on Meridian Rail's modernization task force, mapping the current passenger experience.\n\nPart of the Meridian Rail example gallery — epic 0022 (docs/planning/epics/0022-example-diagram-gallery.md)."
+      }
+    },
+    {
+      "id": "step-1-realize",
+      "type": "shape",
+      "position": { "x": -1600, "y": 0 },
+      "size": { "width": 220, "height": 100 },
+      "style": { "fill": "#d97706", "stroke": "#92400e", "strokeWidth": 2, "textAlign": "center", "fontSize": 13, "fontColor": "#ffffff" },
+      "data": { "label": "Realizes need to travel", "details": "customer-journey/details/step-1-realize.md" }
+    },
+    {
+      "id": "step-2-search",
+      "type": "shape",
+      "position": { "x": -1300, "y": 0 },
+      "size": { "width": 220, "height": 100 },
+      "style": { "fill": "#d97706", "stroke": "#92400e", "strokeWidth": 2, "textAlign": "center", "fontSize": 13, "fontColor": "#ffffff" },
+      "data": { "label": "Searches routes & times", "details": "customer-journey/details/step-2-search.md" }
+    },
+    {
+      "id": "step-3-compare",
+      "type": "shape",
+      "position": { "x": -1000, "y": 0 },
+      "size": { "width": 220, "height": 100 },
+      "style": { "fill": "#d97706", "stroke": "#92400e", "strokeWidth": 2, "textAlign": "center", "fontSize": 13, "fontColor": "#ffffff" },
+      "data": { "label": "Compares fares & options", "details": "customer-journey/details/step-3-compare.md" }
+    },
+    {
+      "id": "step-4-select",
+      "type": "shape",
+      "position": { "x": -700, "y": 0 },
+      "size": { "width": 220, "height": 100 },
+      "style": { "fill": "#d97706", "stroke": "#92400e", "strokeWidth": 2, "textAlign": "center", "fontSize": 13, "fontColor": "#ffffff" },
+      "data": { "label": "Selects journey & seat", "details": "customer-journey/details/step-4-select.md" }
+    },
+    {
+      "id": "step-5-details",
+      "type": "shape",
+      "position": { "x": -400, "y": 0 },
+      "size": { "width": 220, "height": 100 },
+      "style": { "fill": "#d97706", "stroke": "#92400e", "strokeWidth": 2, "textAlign": "center", "fontSize": 13, "fontColor": "#ffffff" },
+      "data": { "label": "Enters passenger & loyalty details", "details": "customer-journey/details/step-5-details.md" }
+    },
+    {
+      "id": "step-6-pay",
+      "type": "shape",
+      "position": { "x": -100, "y": 0 },
+      "size": { "width": 220, "height": 100 },
+      "style": { "fill": "#d97706", "stroke": "#92400e", "strokeWidth": 2, "textAlign": "center", "fontSize": 13, "fontColor": "#ffffff" },
+      "data": { "label": "Pays for ticket", "details": "customer-journey/details/step-6-pay.md" }
+    },
+    {
+      "id": "step-7-confirm",
+      "type": "shape",
+      "position": { "x": 200, "y": 0 },
+      "size": { "width": 220, "height": 100 },
+      "style": { "fill": "#d97706", "stroke": "#92400e", "strokeWidth": 2, "textAlign": "center", "fontSize": 13, "fontColor": "#ffffff" },
+      "data": { "label": "Receives e-ticket & confirmation", "details": "customer-journey/details/step-7-confirm.md" }
+    },
+    {
+      "id": "step-8-travel",
+      "type": "shape",
+      "position": { "x": 500, "y": 0 },
+      "size": { "width": 220, "height": 100 },
+      "style": { "fill": "#d97706", "stroke": "#92400e", "strokeWidth": 2, "textAlign": "center", "fontSize": 13, "fontColor": "#ffffff" },
+      "data": { "label": "Travels: boards & validates ticket", "details": "customer-journey/details/step-8-travel.md" }
+    },
+    {
+      "id": "step-9-loyalty",
+      "type": "shape",
+      "position": { "x": 800, "y": 0 },
+      "size": { "width": 220, "height": 100 },
+      "style": { "fill": "#d97706", "stroke": "#92400e", "strokeWidth": 2, "textAlign": "center", "fontSize": 13, "fontColor": "#ffffff" },
+      "data": { "label": "Post-trip: earns loyalty points", "details": "customer-journey/details/step-9-loyalty.md" }
+    }
+  ],
+  "edges": [
+    { "id": "edge-1-2", "type": "labeled", "source": "step-1-realize", "target": "step-2-search", "style": { "stroke": "#4a5568", "strokeWidth": 2, "lineStyle": "solid", "startMarker": "none", "endMarker": "arrowOpen" } },
+    { "id": "edge-2-3", "type": "labeled", "source": "step-2-search", "target": "step-3-compare", "style": { "stroke": "#4a5568", "strokeWidth": 2, "lineStyle": "solid", "startMarker": "none", "endMarker": "arrowOpen" } },
+    { "id": "edge-3-4", "type": "labeled", "source": "step-3-compare", "target": "step-4-select", "style": { "stroke": "#4a5568", "strokeWidth": 2, "lineStyle": "solid", "startMarker": "none", "endMarker": "arrowOpen" } },
+    { "id": "edge-4-5", "type": "labeled", "source": "step-4-select", "target": "step-5-details", "style": { "stroke": "#4a5568", "strokeWidth": 2, "lineStyle": "solid", "startMarker": "none", "endMarker": "arrowOpen" } },
+    { "id": "edge-5-6", "type": "labeled", "source": "step-5-details", "target": "step-6-pay", "style": { "stroke": "#4a5568", "strokeWidth": 2, "lineStyle": "solid", "startMarker": "none", "endMarker": "arrowOpen" } },
+    { "id": "edge-6-7", "type": "labeled", "source": "step-6-pay", "target": "step-7-confirm", "style": { "stroke": "#4a5568", "strokeWidth": 2, "lineStyle": "solid", "startMarker": "none", "endMarker": "arrowOpen" } },
+    { "id": "edge-7-8", "type": "labeled", "source": "step-7-confirm", "target": "step-8-travel", "style": { "stroke": "#4a5568", "strokeWidth": 2, "lineStyle": "solid", "startMarker": "none", "endMarker": "arrowOpen" } },
+    { "id": "edge-8-9", "type": "labeled", "source": "step-8-travel", "target": "step-9-loyalty", "style": { "stroke": "#4a5568", "strokeWidth": 2, "lineStyle": "solid", "startMarker": "none", "endMarker": "arrowOpen" } }
+  ]
+}

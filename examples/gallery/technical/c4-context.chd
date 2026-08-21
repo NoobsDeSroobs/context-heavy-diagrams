@@ -1,0 +1,334 @@
+{
+  "version": 1,
+  "viewport": {
+    "x": 835.7565315133585,
+    "y": 522.8849586311541,
+    "zoom": 0.8690081256901534
+  },
+  "nodes": [
+    {
+      "id": "blurb",
+      "type": "text",
+      "position": {
+        "x": -700,
+        "y": -430
+      },
+      "size": {
+        "width": 620,
+        "height": 150
+      },
+      "style": {
+        "fill": "#fefcbf",
+        "fontColor": "#744210",
+        "fontSize": 12,
+        "textAlign": "start",
+        "fontFamily": "sans-serif"
+      },
+      "data": {
+        "label": "EXAMPLE — C4 Context: Ticketing & Booking Platform\n\nIllustrates: the top level of a C4 drill-down (Context → Container → Component), using linked-diagram navigation.\nPersona: a technical/solution architect on Meridian Rail's modernization task force, scoping the new booking platform.\n\nReading this diagram: blue = the system in scope. Purple = human actors. Grey = external/existing systems. Solid edges are ongoing relationships; the dashed edge is transitional (being retired during migration). Click any shape for a fuller description — a real legend feature is tracked as epic 0037, not built yet.\n\nPart of the Meridian Rail example gallery — epic 0022 (docs/planning/epics/0022-example-diagram-gallery.md)."
+      }
+    },
+    {
+      "id": "system-ticketing",
+      "type": "shape",
+      "position": {
+        "x": -110,
+        "y": -40
+      },
+      "size": {
+        "width": 240,
+        "height": 120
+      },
+      "connectionPoints": [
+        {
+          "id": "cp-1",
+          "side": "right",
+          "offset": 0.8973982555966786
+        },
+        {
+          "id": "cp-2",
+          "side": "right",
+          "offset": 0.11222506830150619
+        },
+        {
+          "id": "cp-3",
+          "side": "top",
+          "offset": 0.7916777223388182
+        },
+        {
+          "id": "cp-4",
+          "side": "left",
+          "offset": 0.09781822082820028
+        }
+      ],
+      "style": {
+        "fill": "#1a73e8",
+        "stroke": "#0b47a1",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 14,
+        "fontColor": "#ffffff",
+        "fontWeight": "bold"
+      },
+      "data": {
+        "label": "Ticketing & Booking Platform\n(system in scope)",
+        "details": "c4-context/details/system-ticketing.md",
+        "linkedDiagram": "c4-context/c4-container.chd"
+      }
+    },
+    {
+      "id": "actor-passenger",
+      "type": "shape",
+      "position": {
+        "x": -570,
+        "y": -140.62731451558807
+      },
+      "size": {
+        "width": 180,
+        "height": 90
+      },
+      "style": {
+        "fill": "#6b46c1",
+        "stroke": "#44337a",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Passenger",
+        "details": "c4-context/details/actor-passenger.md"
+      }
+    },
+    {
+      "id": "actor-station-staff",
+      "type": "shape",
+      "position": {
+        "x": -570,
+        "y": -10
+      },
+      "size": {
+        "width": 180,
+        "height": 90
+      },
+      "style": {
+        "fill": "#6b46c1",
+        "stroke": "#44337a",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Station Staff",
+        "details": "c4-context/details/actor-station-staff.md"
+      }
+    },
+    {
+      "id": "ext-payment-gateway",
+      "type": "shape",
+      "position": {
+        "x": 399.881451784224,
+        "y": -300.62731451558807
+      },
+      "size": {
+        "width": 220,
+        "height": 90
+      },
+      "style": {
+        "fill": "#718096",
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Payment Gateway\n(external system)",
+        "details": "c4-context/details/ext-payment-gateway.md"
+      }
+    },
+    {
+      "id": "ext-rail-interop",
+      "type": "shape",
+      "position": {
+        "x": 399.881451784224,
+        "y": -140.62731451558807
+      },
+      "size": {
+        "width": 220,
+        "height": 90
+      },
+      "style": {
+        "fill": "#718096",
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "National Rail Interop Network\n(external system)",
+        "details": "c4-context/details/ext-rail-interop.md"
+      }
+    },
+    {
+      "id": "ext-loyalty-crm",
+      "type": "shape",
+      "position": {
+        "x": 399.881451784224,
+        "y": 19.372685484411917
+      },
+      "size": {
+        "width": 220,
+        "height": 90
+      },
+      "style": {
+        "fill": "#718096",
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Loyalty & CRM System\n(existing system)",
+        "details": "c4-context/details/ext-loyalty-crm.md"
+      }
+    },
+    {
+      "id": "ext-legacy-mainframe",
+      "type": "shape",
+      "position": {
+        "x": 399.8814517842241,
+        "y": 179.37268548441193
+      },
+      "size": {
+        "width": 220,
+        "height": 90
+      },
+      "style": {
+        "fill": "#718096",
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Legacy Reservation Mainframe\n(existing system, being retired)",
+        "details": "c4-context/details/ext-legacy-mainframe.md"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "xy-edge__system-ticketingcp-3-ext-payment-gatewayleft",
+      "type": "labeled",
+      "source": "system-ticketing",
+      "target": "ext-payment-gateway",
+      "sourceHandle": "cp-3",
+      "targetHandle": "left",
+      "label": "charges fares via",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__system-ticketingcp-2-ext-rail-interopleft",
+      "type": "labeled",
+      "source": "system-ticketing",
+      "target": "ext-rail-interop",
+      "sourceHandle": "cp-2",
+      "targetHandle": "left",
+      "label": "validates cross-operator tickets via",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__system-ticketingright-ext-loyalty-crmleft",
+      "type": "labeled",
+      "source": "system-ticketing",
+      "target": "ext-loyalty-crm",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "syncs customer profile & loyalty points with",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__system-ticketingcp-1-ext-legacy-mainframeleft",
+      "type": "labeled",
+      "source": "system-ticketing",
+      "target": "ext-legacy-mainframe",
+      "sourceHandle": "cp-1",
+      "targetHandle": "left",
+      "label": "reads legacy seat inventory from (during migration)",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "dashed",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__actor-station-staffright-system-ticketingleft",
+      "type": "labeled",
+      "source": "actor-station-staff",
+      "target": "system-ticketing",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "issues tickets & assists passengers via",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__actor-passengerright-system-ticketingcp-4",
+      "type": "labeled",
+      "source": "actor-passenger",
+      "target": "system-ticketing",
+      "sourceHandle": "right",
+      "targetHandle": "cp-4",
+      "label": "books & manages tickets via",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    }
+  ]
+}

@@ -1,0 +1,254 @@
+{
+  "version": 1,
+  "viewport": {
+    "x": 678.4715183502558,
+    "y": 657.5568188635991,
+    "zoom": 1.047294093282502
+  },
+  "nodes": [
+    {
+      "id": "blurb",
+      "type": "text",
+      "position": {
+        "x": -750,
+        "y": -350
+      },
+      "size": {
+        "width": 1100,
+        "height": 180
+      },
+      "style": {
+        "fill": "#fefcbf",
+        "fontColor": "#744210",
+        "fontSize": 12,
+        "textAlign": "start",
+        "fontFamily": "sans-serif"
+      },
+      "data": {
+        "label": "EXAMPLE — C4 Component: Booking Web/Mobile App\n\nIllustrates: the third and final level of the C4 drill-down (Context → Container → Component) — this container's own internal structure, one level deeper than the Container diagram.\nPersona: the same technical/solution architect on the modernization task force.\n\nColor key: light blue = internal components (matches this container's own color at Container level). Purple = the human actor. Darker blue = another container, shown here only as the thing this app calls, not decomposed on this diagram.\n\nPart of the Meridian Rail example gallery — epic 0022 (docs/planning/epics/0022-example-diagram-gallery.md)."
+      }
+    },
+    {
+      "id": "actor-passenger",
+      "type": "shape",
+      "position": {
+        "x": -750,
+        "y": -45
+      },
+      "size": {
+        "width": 180,
+        "height": 90
+      },
+      "style": {
+        "fill": "#6b46c1",
+        "stroke": "#44337a",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Passenger",
+        "details": "../details/actor-passenger.md"
+      }
+    },
+    {
+      "id": "boundary",
+      "type": "container",
+      "position": {
+        "x": -370,
+        "y": -125
+      },
+      "size": {
+        "width": 569,
+        "height": 380
+      },
+      "style": {
+        "fill": "#eef4fd",
+        "stroke": "#94a3b8",
+        "strokeWidth": 2,
+        "textAlign": "start",
+        "fontSize": 15,
+        "fontColor": "#1a365d",
+        "fontWeight": "bold"
+      },
+      "data": {
+        "label": "Booking Web/Mobile App — component boundary",
+        "details": "details/booking-web-app.md"
+      }
+    },
+    {
+      "id": "ui-layer",
+      "type": "shape",
+      "position": {
+        "x": 30,
+        "y": 80
+      },
+      "size": {
+        "width": 210,
+        "height": 110
+      },
+      "parentId": "boundary",
+      "style": {
+        "fill": "#2b6cb0",
+        "stroke": "#1a365d",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "UI Layer",
+        "details": "booking-web-app-component/details/ui-layer.md"
+      }
+    },
+    {
+      "id": "local-state-store",
+      "type": "shape",
+      "position": {
+        "x": 30,
+        "y": 259.63266994857963
+      },
+      "size": {
+        "width": 210,
+        "height": 110
+      },
+      "parentId": "boundary",
+      "style": {
+        "fill": "#2b6cb0",
+        "stroke": "#1a365d",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Local State Store",
+        "details": "booking-web-app-component/details/local-state-store.md"
+      }
+    },
+    {
+      "id": "booking-client",
+      "type": "shape",
+      "position": {
+        "x": 328.5800901402119,
+        "y": 80
+      },
+      "size": {
+        "width": 200,
+        "height": 110
+      },
+      "parentId": "boundary",
+      "style": {
+        "fill": "#2b6cb0",
+        "stroke": "#1a365d",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Booking Client",
+        "details": "booking-web-app-component/details/booking-client.md"
+      }
+    },
+    {
+      "id": "booking-api",
+      "type": "shape",
+      "position": {
+        "x": 240,
+        "y": -35
+      },
+      "size": {
+        "width": 220,
+        "height": 90
+      },
+      "style": {
+        "fill": "#1a73e8",
+        "stroke": "#0b47a1",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff",
+        "fontWeight": "bold"
+      },
+      "data": {
+        "label": "Booking API\n[backend service]",
+        "details": "details/booking-api.md"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "xy-edge__actor-passengerright-ui-layerleft",
+      "type": "labeled",
+      "source": "actor-passenger",
+      "target": "ui-layer",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "uses",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__ui-layerbottom-local-state-store",
+      "type": "labeled",
+      "source": "ui-layer",
+      "target": "local-state-store",
+      "sourceHandle": "bottom",
+      "label": "reads/writes session state",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__ui-layerright-booking-clientleft",
+      "type": "labeled",
+      "source": "ui-layer",
+      "target": "booking-client",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "delegates booking actions to",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__booking-clientright-booking-apileft",
+      "type": "labeled",
+      "source": "booking-client",
+      "target": "booking-api",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "calls",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    }
+  ]
+}

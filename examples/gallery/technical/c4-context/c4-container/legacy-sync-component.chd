@@ -1,0 +1,212 @@
+{
+  "version": 1,
+  "viewport": {
+    "x": 830.4772255367926,
+    "y": 474.5340153447562,
+    "zoom": 1.2226945674420104
+  },
+  "nodes": [
+    {
+      "id": "blurb",
+      "type": "text",
+      "position": {
+        "x": -650,
+        "y": -320
+      },
+      "size": {
+        "width": 1100,
+        "height": 150
+      },
+      "style": {
+        "fill": "#fefcbf",
+        "fontColor": "#744210",
+        "fontSize": 12,
+        "textAlign": "start",
+        "fontFamily": "sans-serif"
+      },
+      "data": {
+        "label": "EXAMPLE — C4 Component: Legacy Sync Service\n\nIllustrates: the third and final level of the C4 drill-down (Context → Container → Component) — deliberately the thinnest of the seven component diagrams. This service is transitional (see its own Container-level details), so it isn't built with the same layered structure as the services meant to last — two components, not three or four.\nPersona: the same technical/solution architect on the modernization task force.\n\nColor key: blue = internal components. Grey = the external system. All edges are dashed, same transitional convention as the Context and Container diagrams.\n\nPart of the Meridian Rail example gallery — epic 0022 (docs/planning/epics/0022-example-diagram-gallery.md)."
+      }
+    },
+    {
+      "id": "booking-api",
+      "type": "shape",
+      "position": {
+        "x": -650,
+        "y": -20
+      },
+      "size": {
+        "width": 220,
+        "height": 90
+      },
+      "style": {
+        "fill": "#1a73e8",
+        "stroke": "#0b47a1",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff",
+        "fontWeight": "bold"
+      },
+      "data": {
+        "label": "Booking API\n[backend service]",
+        "details": "details/booking-api.md"
+      }
+    },
+    {
+      "id": "boundary",
+      "type": "container",
+      "position": {
+        "x": -250,
+        "y": -115
+      },
+      "size": {
+        "width": 500,
+        "height": 230
+      },
+      "style": {
+        "fill": "#eef4fd",
+        "stroke": "#94a3b8",
+        "strokeWidth": 2,
+        "textAlign": "start",
+        "fontSize": 15,
+        "fontColor": "#1a365d",
+        "fontWeight": "bold"
+      },
+      "data": {
+        "label": "Legacy Sync Service — component boundary",
+        "details": "details/legacy-sync.md"
+      }
+    },
+    {
+      "id": "inventory-request-handler",
+      "type": "shape",
+      "position": {
+        "x": 30,
+        "y": 90
+      },
+      "size": {
+        "width": 210,
+        "height": 100
+      },
+      "parentId": "boundary",
+      "style": {
+        "fill": "#1a73e8",
+        "stroke": "#0b47a1",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Inventory Request Handler",
+        "details": "legacy-sync-component/details/inventory-request-handler.md"
+      }
+    },
+    {
+      "id": "legacy-protocol-adapter",
+      "type": "shape",
+      "position": {
+        "x": 270,
+        "y": 90
+      },
+      "size": {
+        "width": 210,
+        "height": 100
+      },
+      "parentId": "boundary",
+      "style": {
+        "fill": "#1a73e8",
+        "stroke": "#0b47a1",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Legacy Protocol Adapter",
+        "details": "legacy-sync-component/details/legacy-protocol-adapter.md"
+      }
+    },
+    {
+      "id": "ext-legacy-mainframe",
+      "type": "shape",
+      "position": {
+        "x": 364.7215833612949,
+        "y": -20
+      },
+      "size": {
+        "width": 230,
+        "height": 90
+      },
+      "style": {
+        "fill": "#718096",
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Legacy Reservation Mainframe\n(existing system, being retired)",
+        "details": "../details/ext-legacy-mainframe.md"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "xy-edge__booking-apiright-inventory-request-handlerleft",
+      "type": "labeled",
+      "source": "booking-api",
+      "target": "inventory-request-handler",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "requests seat inventory via (during migration)",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "dashed",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__inventory-request-handlerright-legacy-protocol-adapterleft",
+      "type": "labeled",
+      "source": "inventory-request-handler",
+      "target": "legacy-protocol-adapter",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "delegates to",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "dashed",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__legacy-protocol-adapterright-ext-legacy-mainframeleft",
+      "type": "labeled",
+      "source": "legacy-protocol-adapter",
+      "target": "ext-legacy-mainframe",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "reads legacy seat inventory from",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "dashed",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    }
+  ]
+}

@@ -14,3 +14,5 @@ Periodic recovery snapshots so unsaved work survives a crash, plus a proper "sav
 
 ## Notes
 Right now the app has no unsaved-changes tracking or close-time prompt at all — closing without saving silently discards everything, for both the main diagram and (once epic 0008 lands) any open detail-panel drafts. This epic covers all of that uniformly, not just details specifically.
+
+**2026-08-20**: the user re-raised the close-time prompt specifically (independent of the autosave half of this epic) — three options, **Save / Discard / Cancel**, when closing a window with an unsaved diagram. Consistent with the task already listed above; recorded here so the exact three-option shape isn't lost by the time this epic actually gets scoped. Not started.

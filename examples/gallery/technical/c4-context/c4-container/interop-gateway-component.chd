@@ -1,0 +1,255 @@
+{
+  "version": 1,
+  "viewport": {
+    "x": 1074.10326616588,
+    "y": 646.5911147909147,
+    "zoom": 1.047294093282502
+  },
+  "nodes": [
+    {
+      "id": "blurb",
+      "type": "text",
+      "position": {
+        "x": -750,
+        "y": -350
+      },
+      "size": {
+        "width": 1100,
+        "height": 180
+      },
+      "style": {
+        "fill": "#fefcbf",
+        "fontColor": "#744210",
+        "fontSize": 12,
+        "textAlign": "start",
+        "fontFamily": "sans-serif"
+      },
+      "data": {
+        "label": "EXAMPLE — C4 Component: Interop Gateway Service\n\nIllustrates: the third and final level of the C4 drill-down (Context → Container → Component) — this container's own internal structure, one level deeper than the Container diagram.\nPersona: the same technical/solution architect on the modernization task force.\n\nColor key: blue = internal components (matches this container's own color at Container level). Grey = the external system this service integrates with. Also-blue box on the left = the container that calls this one, shown for context only.\n\nPart of the Meridian Rail example gallery — epic 0022 (docs/planning/epics/0022-example-diagram-gallery.md)."
+      }
+    },
+    {
+      "id": "booking-api",
+      "type": "shape",
+      "position": {
+        "x": -750,
+        "y": -35
+      },
+      "size": {
+        "width": 220,
+        "height": 90
+      },
+      "style": {
+        "fill": "#1a73e8",
+        "stroke": "#0b47a1",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff",
+        "fontWeight": "bold"
+      },
+      "data": {
+        "label": "Booking API\n[backend service]",
+        "details": "details/booking-api.md"
+      }
+    },
+    {
+      "id": "boundary",
+      "type": "container",
+      "position": {
+        "x": -370,
+        "y": -125
+      },
+      "size": {
+        "width": 740,
+        "height": 250
+      },
+      "style": {
+        "fill": "#eef4fd",
+        "stroke": "#94a3b8",
+        "strokeWidth": 2,
+        "textAlign": "start",
+        "fontSize": 15,
+        "fontColor": "#1a365d",
+        "fontWeight": "bold"
+      },
+      "data": {
+        "label": "Interop Gateway Service — component boundary",
+        "details": "details/interop-gateway.md"
+      }
+    },
+    {
+      "id": "validation-controller",
+      "type": "shape",
+      "position": {
+        "x": 30,
+        "y": 80
+      },
+      "size": {
+        "width": 210,
+        "height": 110
+      },
+      "parentId": "boundary",
+      "style": {
+        "fill": "#1a73e8",
+        "stroke": "#0b47a1",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Validation Controller",
+        "details": "interop-gateway-component/details/validation-controller.md"
+      }
+    },
+    {
+      "id": "format-translator",
+      "type": "shape",
+      "position": {
+        "x": 270,
+        "y": 80
+      },
+      "size": {
+        "width": 210,
+        "height": 110
+      },
+      "parentId": "boundary",
+      "style": {
+        "fill": "#1a73e8",
+        "stroke": "#0b47a1",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Format Translator",
+        "details": "interop-gateway-component/details/format-translator.md"
+      }
+    },
+    {
+      "id": "network-client",
+      "type": "shape",
+      "position": {
+        "x": 510,
+        "y": 80
+      },
+      "size": {
+        "width": 200,
+        "height": 110
+      },
+      "parentId": "boundary",
+      "style": {
+        "fill": "#1a73e8",
+        "stroke": "#0b47a1",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Network Client",
+        "details": "interop-gateway-component/details/network-client.md"
+      }
+    },
+    {
+      "id": "ext-rail-interop",
+      "type": "shape",
+      "position": {
+        "x": 550,
+        "y": -45
+      },
+      "size": {
+        "width": 220,
+        "height": 90
+      },
+      "style": {
+        "fill": "#718096",
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "National Rail Interop Network\n(external system)",
+        "details": "../details/ext-rail-interop.md"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "xy-edge__booking-apiright-validation-controllerleft",
+      "type": "labeled",
+      "source": "booking-api",
+      "target": "validation-controller",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "requests validation via",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__validation-controllerright-format-translatorleft",
+      "type": "labeled",
+      "source": "validation-controller",
+      "target": "format-translator",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "delegates to",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__format-translatorright-network-clientleft",
+      "type": "labeled",
+      "source": "format-translator",
+      "target": "network-client",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "uses",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__network-clientright-ext-rail-interopleft",
+      "type": "labeled",
+      "source": "network-client",
+      "target": "ext-rail-interop",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "validates cross-operator tickets via",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    }
+  ]
+}

@@ -1,0 +1,702 @@
+{
+  "version": 1,
+  "viewport": {
+    "x": 741.4901129871589,
+    "y": 394.2947650270859,
+    "zoom": 0.5
+  },
+  "nodes": [
+    {
+      "id": "blurb",
+      "type": "text",
+      "position": {
+        "x": -900,
+        "y": -560
+      },
+      "size": {
+        "width": 900,
+        "height": 190
+      },
+      "style": {
+        "fill": "#fefcbf",
+        "fontColor": "#744210",
+        "fontSize": 12,
+        "textAlign": "start",
+        "fontFamily": "sans-serif"
+      },
+      "data": {
+        "label": "EXAMPLE — C4 Container: Ticketing & Booking Platform\n\nIllustrates: the second level of the C4 drill-down (Context → Container → Component) — decomposing the system in scope from the Context diagram into its own internal deployable units, using this tool's container/grouping feature (epic 0004) for the system boundary itself.\nPersona: the same technical/solution architect on the modernization task force, one level deeper.\n\nReading this diagram: darker blue = backend services (in scope). Lighter blue = frontend applications (in scope). Teal = the data store (in scope). Purple = human actors (same as Context level). Grey = external/existing systems (same as Context level). The dashed edge is transitional, same convention as the Context diagram.\n\nPart of the Meridian Rail example gallery — epic 0022 (docs/planning/epics/0022-example-diagram-gallery.md). Linked from the Context diagram's \"Ticketing & Booking Platform\" shape."
+      }
+    },
+    {
+      "id": "actor-passenger",
+      "type": "shape",
+      "position": {
+        "x": -900,
+        "y": -260
+      },
+      "size": {
+        "width": 180,
+        "height": 90
+      },
+      "connectionPoints": [
+        {
+          "id": "cp-2",
+          "side": "right",
+          "offset": 0.18086567488917293
+        }
+      ],
+      "style": {
+        "fill": "#6b46c1",
+        "stroke": "#44337a",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Passenger",
+        "details": "details/actor-passenger.md"
+      }
+    },
+    {
+      "id": "actor-station-staff",
+      "type": "shape",
+      "position": {
+        "x": -877.0838008598162,
+        "y": -70
+      },
+      "size": {
+        "width": 180,
+        "height": 90
+      },
+      "style": {
+        "fill": "#6b46c1",
+        "stroke": "#44337a",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Station Staff",
+        "details": "details/actor-station-staff.md"
+      }
+    },
+    {
+      "id": "system-boundary",
+      "type": "container",
+      "position": {
+        "x": -450,
+        "y": -350
+      },
+      "size": {
+        "width": 900,
+        "height": 600
+      },
+      "style": {
+        "fill": "#eef4fd",
+        "stroke": "#94a3b8",
+        "strokeWidth": 2,
+        "textAlign": "start",
+        "fontSize": 15,
+        "fontColor": "#1a365d",
+        "fontWeight": "bold"
+      },
+      "data": {
+        "label": "Ticketing & Booking Platform — system boundary",
+        "details": "details/system-ticketing.md"
+      }
+    },
+    {
+      "id": "booking-web-app",
+      "type": "shape",
+      "position": {
+        "x": 15.174117598134274,
+        "y": 160
+      },
+      "size": {
+        "width": 220,
+        "height": 80
+      },
+      "parentId": "system-boundary",
+      "style": {
+        "fill": "#2b6cb0",
+        "stroke": "#1a365d",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Booking Web/Mobile App\n[frontend]",
+        "details": "c4-container/details/booking-web-app.md",
+        "linkedDiagram": "c4-container/booking-web-app-component.chd"
+      }
+    },
+    {
+      "id": "staff-portal",
+      "type": "shape",
+      "position": {
+        "x": 15.174117598134274,
+        "y": 260
+      },
+      "size": {
+        "width": 220,
+        "height": 80
+      },
+      "parentId": "system-boundary",
+      "style": {
+        "fill": "#2b6cb0",
+        "stroke": "#1a365d",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Staff Portal\n[frontend]",
+        "details": "c4-container/details/staff-portal.md",
+        "linkedDiagram": "c4-container/staff-portal-component.chd"
+      }
+    },
+    {
+      "id": "notification-service",
+      "type": "shape",
+      "position": {
+        "x": 15.174117598134274,
+        "y": 55
+      },
+      "size": {
+        "width": 220,
+        "height": 80
+      },
+      "parentId": "system-boundary",
+      "style": {
+        "fill": "#1a73e8",
+        "stroke": "#0b47a1",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Notification Service\n[backend service]",
+        "details": "c4-container/details/notification-service.md",
+        "linkedDiagram": "c4-container/notification-service-component.chd"
+      }
+    },
+    {
+      "id": "booking-api",
+      "type": "shape",
+      "position": {
+        "x": 310,
+        "y": 210
+      },
+      "size": {
+        "width": 300,
+        "height": 100
+      },
+      "connectionPoints": [
+        {
+          "id": "cp-1",
+          "side": "top",
+          "offset": 0.8244810263304103
+        },
+        {
+          "id": "cp-3",
+          "side": "top",
+          "offset": 0.24095297669232232
+        }
+      ],
+      "parentId": "system-boundary",
+      "style": {
+        "fill": "#1a73e8",
+        "stroke": "#0b47a1",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 14,
+        "fontColor": "#ffffff",
+        "fontWeight": "bold"
+      },
+      "data": {
+        "label": "Booking API\n[backend service]",
+        "details": "c4-container/details/booking-api.md",
+        "linkedDiagram": "c4-container/booking-api-component.chd"
+      }
+    },
+    {
+      "id": "payment-orchestration",
+      "type": "shape",
+      "position": {
+        "x": 593.8081458877741,
+        "y": 55
+      },
+      "size": {
+        "width": 230,
+        "height": 80
+      },
+      "parentId": "system-boundary",
+      "style": {
+        "fill": "#1a73e8",
+        "stroke": "#0b47a1",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Payment Orchestration Service\n[backend service]",
+        "details": "c4-container/details/payment-orchestration.md",
+        "linkedDiagram": "c4-container/payment-orchestration-component.chd"
+      }
+    },
+    {
+      "id": "interop-gateway",
+      "type": "shape",
+      "position": {
+        "x": 59.83149271966067,
+        "y": 461.21321286914497
+      },
+      "size": {
+        "width": 230,
+        "height": 80
+      },
+      "parentId": "system-boundary",
+      "style": {
+        "fill": "#1a73e8",
+        "stroke": "#0b47a1",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Interop Gateway Service\n[backend service]",
+        "details": "c4-container/details/interop-gateway.md",
+        "linkedDiagram": "c4-container/interop-gateway-component.chd"
+      }
+    },
+    {
+      "id": "legacy-sync",
+      "type": "shape",
+      "position": {
+        "x": 656.3873304672792,
+        "y": 400
+      },
+      "size": {
+        "width": 230,
+        "height": 80
+      },
+      "parentId": "system-boundary",
+      "style": {
+        "fill": "#1a73e8",
+        "stroke": "#0b47a1",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Legacy Sync Service\n[backend service, transitional]",
+        "details": "c4-container/details/legacy-sync.md",
+        "linkedDiagram": "c4-container/legacy-sync-component.chd"
+      }
+    },
+    {
+      "id": "platform-database",
+      "type": "shape",
+      "position": {
+        "x": 426.3873304672792,
+        "y": 501.21321286914497
+      },
+      "size": {
+        "width": 230,
+        "height": 80
+      },
+      "parentId": "system-boundary",
+      "style": {
+        "fill": "#0f766e",
+        "stroke": "#134e4a",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Platform Database\n[data store]",
+        "details": "c4-container/details/platform-database.md"
+      }
+    },
+    {
+      "id": "ext-payment-gateway",
+      "type": "shape",
+      "position": {
+        "x": 824.0395480513641,
+        "y": -314.32262446261484
+      },
+      "size": {
+        "width": 230,
+        "height": 90
+      },
+      "style": {
+        "fill": "#718096",
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Payment Gateway\n(external system)",
+        "details": "details/ext-payment-gateway.md"
+      }
+    },
+    {
+      "id": "ext-rail-interop",
+      "type": "shape",
+      "position": {
+        "x": 824.0395480513641,
+        "y": 238.8693324746308
+      },
+      "size": {
+        "width": 230,
+        "height": 90
+      },
+      "style": {
+        "fill": "#718096",
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "National Rail Interop Network\n(external system)",
+        "details": "details/ext-rail-interop.md"
+      }
+    },
+    {
+      "id": "ext-loyalty-crm",
+      "type": "shape",
+      "position": {
+        "x": 824.0395480513641,
+        "y": -34.322624462614854
+      },
+      "size": {
+        "width": 230,
+        "height": 90
+      },
+      "style": {
+        "fill": "#718096",
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Loyalty & CRM System\n(existing system)",
+        "details": "details/ext-loyalty-crm.md"
+      }
+    },
+    {
+      "id": "ext-legacy-mainframe",
+      "type": "shape",
+      "position": {
+        "x": 824.0395480513641,
+        "y": 105.67737553738513
+      },
+      "size": {
+        "width": 230,
+        "height": 90
+      },
+      "style": {
+        "fill": "#718096",
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "textAlign": "center",
+        "fontSize": 13,
+        "fontColor": "#ffffff"
+      },
+      "data": {
+        "label": "Legacy Reservation Mainframe\n(existing system, being retired)",
+        "details": "details/ext-legacy-mainframe.md"
+      }
+    },
+    {
+      "id": "anchor-1edaa15d-9335-4555-ab55-0e2fb66cab59",
+      "type": "anchor",
+      "position": {
+        "x": -30.612669532720815,
+        "y": 342.82093989165656
+      },
+      "size": {
+        "width": 14,
+        "height": 14
+      },
+      "data": {
+        "label": ""
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "xy-edge__actor-passengerright-booking-web-appleft",
+      "type": "labeled",
+      "source": "actor-passenger",
+      "target": "booking-web-app",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "uses",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__legacy-syncright-ext-legacy-mainframeleft",
+      "type": "labeled",
+      "source": "legacy-sync",
+      "target": "ext-legacy-mainframe",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "reads legacy seat inventory from",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "dashed",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__booking-apiright-legacy-sync",
+      "type": "labeled",
+      "source": "booking-api",
+      "target": "legacy-sync",
+      "sourceHandle": "right",
+      "label": "requests seat inventory via (during migration)",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "dashed",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__booking-web-appright-booking-apileft",
+      "type": "labeled",
+      "source": "booking-web-app",
+      "target": "booking-api",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "calls",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__payment-orchestrationright-ext-payment-gatewayleft",
+      "type": "labeled",
+      "source": "payment-orchestration",
+      "target": "ext-payment-gateway",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "charges fares via",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__booking-apicp-1-payment-orchestrationleft",
+      "type": "labeled",
+      "source": "booking-api",
+      "target": "payment-orchestration",
+      "sourceHandle": "cp-1",
+      "targetHandle": "left",
+      "label": "requests charges via",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__staff-portalright-booking-apileft",
+      "type": "labeled",
+      "source": "staff-portal",
+      "target": "booking-api",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "calls",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__notification-serviceleft-actor-passengercp-2",
+      "type": "labeled",
+      "source": "notification-service",
+      "target": "actor-passenger",
+      "sourceHandle": "left",
+      "targetHandle": "cp-2",
+      "label": "sends e-tickets & notifications to",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__booking-apicp-3-notification-serviceright",
+      "type": "labeled",
+      "source": "booking-api",
+      "target": "notification-service",
+      "sourceHandle": "cp-3",
+      "targetHandle": "right",
+      "label": "triggers",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__booking-apibottom-interop-gateway",
+      "type": "labeled",
+      "source": "booking-api",
+      "target": "interop-gateway",
+      "sourceHandle": "bottom",
+      "label": "requests validation via",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__booking-apibottom-platform-database",
+      "type": "labeled",
+      "source": "booking-api",
+      "target": "platform-database",
+      "sourceHandle": "bottom",
+      "label": "reads/writes",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__interop-gatewayright-ext-rail-interopleft",
+      "type": "labeled",
+      "source": "interop-gateway",
+      "target": "anchor-1edaa15d-9335-4555-ab55-0e2fb66cab59",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "validates cross-operator tickets via",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__booking-apiright-ext-loyalty-crmleft",
+      "type": "labeled",
+      "source": "booking-api",
+      "target": "ext-loyalty-crm",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "syncs customer profile & loyalty points with",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__actor-station-staffright-staff-portalleft",
+      "type": "labeled",
+      "source": "actor-station-staff",
+      "target": "staff-portal",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "uses",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__anchor-1edaa15d-9335-4555-ab55-0e2fb66cab59right-ext-rail-interopleft",
+      "type": "labeled",
+      "source": "anchor-1edaa15d-9335-4555-ab55-0e2fb66cab59",
+      "target": "ext-rail-interop",
+      "sourceHandle": "right",
+      "targetHandle": "left"
+    }
+  ]
+}

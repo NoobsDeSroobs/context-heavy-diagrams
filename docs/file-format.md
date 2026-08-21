@@ -227,7 +227,7 @@ The `.chd` file itself is always plain, deterministic JSON — kept git-friendly
 
 ## Versioning
 
-`version` is currently always `1`. Fields have been added over time (`size`, `rotation`, `connectionPoints`, `parentId`, `style` on both Node and Edge, edge `type`/`label`, `data.icons`, `data.details`, `data.linkedDiagram`, top-level `metadata`/`requiredTags`/`highlights`, and `metadata` on both Node and Edge) but always additively — a reader from an earlier point in this project's history can still open a newer file and just won't recognize the newer fields. A breaking change to the meaning of an existing field would bump `version`; nothing has required that yet.
+`version` is currently always `1`. Fields have been added over time (`size`, `rotation`, `connectionPoints`, `parentId`, `style` on both Node and Edge, edge `type`/`label`, `data.icons`, `data.details`, `data.linkedDiagram`, top-level `metadata`/`requiredTags`/`highlights`, and `metadata` on both Node and Edge) but always additively — a reader from an earlier point in this project's history can still open a newer file and just won't recognize the newer fields. The same holds in reverse: this app's own current code must still open a file from *before* one of these fields existed, without failing or requiring migration — see [ADR 0029](decisions/0029-backward-compatible-loading-is-a-standing-rule.md), which makes this a standing rule for every future field, not just an incidental property of the fields added so far. A breaking change to the meaning of an existing field would bump `version`; nothing has required that yet.
 
 ## Example
 

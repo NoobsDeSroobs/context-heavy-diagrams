@@ -1,5 +1,5 @@
 import { useCallback, type MouseEvent } from 'react'
-import { Position, useReactFlow } from '@xyflow/react'
+import { Position, useReactFlow, useUpdateNodeInternals } from '@xyflow/react'
 import type { ConnectionPoint, ConnectionPointSide } from '@shared/diagram'
 import { useDiagramContext } from '../DiagramContext'
 import type { ContextMenuItem } from '../components/ContextMenu'
@@ -64,6 +64,7 @@ export function useConnectionPointMenu(
 } {
   const { pushSnapshot, openContextMenu } = useDiagramContext()
   const { updateNodeData, getEdges } = useReactFlow()
+  const updateNodeInternals = useUpdateNodeInternals()
 
   const addConnectionPointItem = useCallback(
     (rect: DOMRect, clientX: number, clientY: number): ContextMenuItem => ({
@@ -74,9 +75,13 @@ export function useConnectionPointMenu(
         updateNodeData(id, {
           connectionPoints: [...customPoints, { id: `cp-${nextConnectionPointId++}`, ...point }]
         })
+        // React Flow caches each node's handle bounds for connection
+        // validation at mount time — a handle added afterwards renders fine
+        // but silently refuses connections until this runs.
+        updateNodeInternals(id)
       }
     }),
-    [id, customPoints, pushSnapshot, updateNodeData]
+    [id, customPoints, pushSnapshot, updateNodeData, updateNodeInternals]
   )
 
   // Right-click on an existing custom point removes it, distinct from the
@@ -105,11 +110,12 @@ export function useConnectionPointMenu(
             updateNodeData(id, {
               connectionPoints: customPoints.filter((p) => p.id !== point.id)
             })
+            updateNodeInternals(id)
           }
         }
       ])
     },
-    [id, customPoints, getEdges, openContextMenu, updateNodeData, pushSnapshot]
+    [id, customPoints, getEdges, openContextMenu, updateNodeData, pushSnapshot, updateNodeInternals]
   )
 
   return { addConnectionPointItem, onPointContextMenu }
