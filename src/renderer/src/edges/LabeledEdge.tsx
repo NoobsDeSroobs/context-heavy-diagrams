@@ -1,4 +1,4 @@
-import { memo, type CSSProperties } from 'react'
+import { memo, useMemo, type CSSProperties } from 'react'
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -21,6 +21,20 @@ const DASH_ARRAY: Record<Exclude<EdgeStyle['lineStyle'], undefined>, string | un
   solid: undefined,
   dashed: '8 6',
   dotted: '2 4'
+}
+
+// Point at an arbitrary fraction of the path's arc length — epic 0045.
+// SVG path geometry doesn't depend on DOM attachment or layout, so a
+// throwaway, never-inserted <path> is enough; no ref/measurement pass
+// needed. Kept separate from getBezierPath's own labelX/labelY (used
+// untouched when labelPosition is unset) so every edge predating this
+// epic renders its label at exactly the same pixel it always has.
+function pointAtRatio(pathD: string, ratio: number): { x: number; y: number } {
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+  path.setAttribute('d', pathD)
+  const length = path.getTotalLength()
+  const point = path.getPointAtLength(length * ratio)
+  return { x: point.x, y: point.y }
 }
 
 // Fixed midpoint only, no drag-along-path — deliberately simple for v1, see
@@ -50,7 +64,7 @@ function LabeledEdge({
   const { matchHighlights } = useDiagramContext()
   const edgeStyle = data?.style as EdgeStyle | undefined
   const highlightMatches = matchHighlights(data?.metadata as Record<string, MetadataEntry> | undefined)
-  const [edgePath, labelX, labelY] = getBezierPath({
+  const [edgePath, midX, midY] = getBezierPath({
     sourceX,
     sourceY,
     sourcePosition,
@@ -58,6 +72,11 @@ function LabeledEdge({
     targetY,
     targetPosition
   })
+  const labelRatio = edgeStyle?.labelPosition
+  const { x: labelX, y: labelY } = useMemo(
+    () => (labelRatio != null ? pointAtRatio(edgePath, labelRatio) : { x: midX, y: midY }),
+    [edgePath, labelRatio, midX, midY]
+  )
 
   // Opacity is per-channel (strokeOpacity/fontOpacity), not one whole-
   // element value — see FontStyle.fontOpacity's comment for why. Each is

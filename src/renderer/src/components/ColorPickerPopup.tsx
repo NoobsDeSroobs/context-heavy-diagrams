@@ -1,4 +1,4 @@
-import { ColorField, NumberField, OpacityField } from '../panels/fields'
+import { ColorField, NumberField, SliderField } from '../panels/fields'
 
 interface ColorPickerPopupProps {
   title: string
@@ -48,7 +48,7 @@ export default function ColorPickerPopup({
         onSessionStart={onSessionStart}
         onSessionEnd={onSessionEnd}
       />
-      <OpacityField
+      <SliderField
         label="Opacity"
         value={opacity}
         mixed={false}

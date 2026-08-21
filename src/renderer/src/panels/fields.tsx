@@ -191,15 +191,20 @@ export function NumberField({
 
 // Slider + number, linked — both are controlled from the same value/
 // onChange, so dragging one and typing the other naturally stay in sync
-// without extra wiring. Used for the fillOpacity/strokeOpacity/fontOpacity
-// fields, always right next to the color it modifies (per-channel opacity,
-// not one whole-element value — see FontStyle.fontOpacity's comment).
-// Mixed selections show the slider at a neutral 100 — a range input has no
-// way to represent "blank" the way NumberField's placeholder does.
-export function OpacityField({
+// without extra wiring. Originally built for the fillOpacity/strokeOpacity/
+// fontOpacity fields (per-channel opacity, not one whole-element value — see
+// FontStyle.fontOpacity's comment), generalized for any bounded numeric
+// field that reads naturally as a slider — e.g. epic 0045's edge label
+// position. Mixed selections show the slider at `defaultValue` — a range
+// input has no way to represent "blank" the way NumberField's placeholder
+// does.
+export function SliderField({
   label,
   value,
   mixed,
+  min = 0,
+  max = 100,
+  defaultValue = 100,
   onChange,
   onSessionStart,
   onSessionEnd
@@ -207,12 +212,18 @@ export function OpacityField({
   label: string
   value: number | undefined
   mixed: boolean
+  min?: number
+  max?: number
+  defaultValue?: number
   onChange: (value: number | undefined) => void
   onSessionStart: () => void
   onSessionEnd: () => void
 }): React.JSX.Element {
-  const [draft, setDraft, onDraftFocus, onDraftBlur] = useDraft(value != null ? String(value) : '100', mixed)
-  const sliderValue = mixed ? 100 : (value ?? 100)
+  const [draft, setDraft, onDraftFocus, onDraftBlur] = useDraft(
+    value != null ? String(value) : String(defaultValue),
+    mixed
+  )
+  const sliderValue = mixed ? defaultValue : (value ?? defaultValue)
 
   const applyNumeric = (raw: number): void => {
     setDraft(String(raw))
@@ -221,12 +232,12 @@ export function OpacityField({
 
   return (
     <FieldRow label={label}>
-      <div className="property-opacity-field">
+      <div className="property-slider-field">
         <input
           type="range"
-          min={0}
-          max={100}
-          className={mixed ? 'property-opacity-slider mixed' : 'property-opacity-slider'}
+          min={min}
+          max={max}
+          className={mixed ? 'property-range-slider mixed' : 'property-range-slider'}
           value={sliderValue}
           onFocus={onSessionStart}
           onChange={(event) => applyNumeric(Number(event.target.value))}
@@ -234,9 +245,9 @@ export function OpacityField({
         />
         <input
           type="number"
-          className="property-opacity-number"
-          min={0}
-          max={100}
+          className="property-range-number"
+          min={min}
+          max={max}
           placeholder={mixed ? 'Mixed' : undefined}
           value={draft}
           onFocus={() => {

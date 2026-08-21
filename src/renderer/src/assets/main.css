@@ -793,7 +793,7 @@ body {
   color: var(--color-text);
 }
 
-.property-opacity-field {
+.property-slider-field {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -801,17 +801,17 @@ body {
   min-width: 0;
 }
 
-.property-opacity-slider {
+.property-range-slider {
   flex: 1;
   min-width: 0;
   accent-color: var(--ev-c-text-1);
 }
 
-.property-opacity-slider.mixed {
+.property-range-slider.mixed {
   opacity: 0.5;
 }
 
-.property-opacity-number {
+.property-range-number {
   flex: 0 0 auto;
   width: 48px;
   font: inherit;
@@ -829,8 +829,8 @@ body {
   -moz-appearance: textfield;
 }
 
-.property-opacity-number::-webkit-inner-spin-button,
-.property-opacity-number::-webkit-outer-spin-button {
+.property-range-number::-webkit-inner-spin-button,
+.property-range-number::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }

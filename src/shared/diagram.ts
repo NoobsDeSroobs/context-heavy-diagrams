@@ -119,6 +119,11 @@ export interface EdgeStyle extends FontStyle {
   lineStyle?: LineStyleKind
   startMarker?: MarkerKind
   endMarker?: MarkerKind
+  // 0-1 fraction along the rendered path, same convention as
+  // ConnectionPoint's `offset` — stays meaningful if the edge's endpoints
+  // move, unlike a fixed pixel offset. Absent means 0.5 (today's only
+  // behavior, the path midpoint) — see epic 0045.
+  labelPosition?: number
 }
 
 export interface DiagramNode {

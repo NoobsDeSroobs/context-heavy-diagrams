@@ -1,6 +1,6 @@
 import type { Edge, Node } from '@xyflow/react'
 import type { EdgeStyle, MarkerKind, MetadataEntry, NodeStyle, RequiredTagDefinition } from '@shared/diagram'
-import { CollapsibleSection, ColorField, NumberField, OpacityField, SelectField } from './fields'
+import { CollapsibleSection, ColorField, NumberField, SliderField, SelectField } from './fields'
 import { computeFieldValue } from './fieldValue'
 import MetadataSection from './MetadataSection'
 
@@ -116,7 +116,7 @@ function NodeStyleFields({
           onSessionStart={beginContinuousEdit}
           onSessionEnd={endContinuousEdit}
         />
-        <OpacityField
+        <SliderField
           label="Opacity"
           value={fillOpacity.value}
           mixed={fillOpacity.mixed}
@@ -134,7 +134,7 @@ function NodeStyleFields({
           onSessionStart={beginContinuousEdit}
           onSessionEnd={endContinuousEdit}
         />
-        <OpacityField
+        <SliderField
           label="Opacity"
           value={strokeOpacity.value}
           mixed={strokeOpacity.mixed}
@@ -178,7 +178,7 @@ function NodeStyleFields({
           onSessionStart={beginContinuousEdit}
           onSessionEnd={endContinuousEdit}
         />
-        <OpacityField
+        <SliderField
           label="Opacity"
           value={fontOpacity.value}
           mixed={fontOpacity.mixed}
@@ -284,6 +284,7 @@ function EdgeFields({
   const fontOpacity = computeFieldValue(edges, (e) => edgeStyleOf(e).fontOpacity)
   const fontWeight = computeFieldValue(edges, (e) => edgeStyleOf(e).fontWeight)
   const fontFamily = computeFieldValue(edges, (e) => edgeStyleOf(e).fontFamily)
+  const labelPosition = computeFieldValue(edges, (e) => edgeStyleOf(e).labelPosition)
 
   return (
     <>
@@ -306,7 +307,7 @@ function EdgeFields({
           onSessionStart={beginContinuousEdit}
           onSessionEnd={endContinuousEdit}
         />
-        <OpacityField
+        <SliderField
           label="Opacity"
           value={strokeOpacity.value}
           mixed={strokeOpacity.mixed}
@@ -346,7 +347,16 @@ function EdgeFields({
           pushSnapshot={pushSnapshot}
         />
       </CollapsibleSection>
-      <CollapsibleSection title="Font">
+      <CollapsibleSection title="Label">
+        <SliderField
+          label="Position"
+          value={labelPosition.value != null ? labelPosition.value * 100 : undefined}
+          mixed={labelPosition.mixed}
+          defaultValue={50}
+          onChange={(v) => updateStyle({ labelPosition: v == null ? undefined : v / 100 })}
+          onSessionStart={beginContinuousEdit}
+          onSessionEnd={endContinuousEdit}
+        />
         <SelectField
           label="Family"
           value={fontFamily.value ?? ''}
@@ -372,7 +382,7 @@ function EdgeFields({
           onSessionStart={beginContinuousEdit}
           onSessionEnd={endContinuousEdit}
         />
-        <OpacityField
+        <SliderField
           label="Opacity"
           value={fontOpacity.value}
           mixed={fontOpacity.mixed}

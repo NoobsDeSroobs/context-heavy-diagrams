@@ -140,7 +140,7 @@ Every field is optional; an absent field means "use the current hardcoded look,"
 ### Edge style
 
 ```json
-{ "stroke": "#1a365d", "strokeOpacity": 100, "strokeWidth": 2, "lineStyle": "dashed", "startMarker": "none", "endMarker": "arrowOpen", "fontSize": 12, "fontColor": "#f7fafc", "fontOpacity": 100, "fontWeight": "normal", "fontFamily": "sans-serif" }
+{ "stroke": "#1a365d", "strokeOpacity": 100, "strokeWidth": 2, "lineStyle": "dashed", "startMarker": "none", "endMarker": "arrowOpen", "labelPosition": 0.5, "fontSize": 12, "fontColor": "#f7fafc", "fontOpacity": 100, "fontWeight": "normal", "fontFamily": "sans-serif" }
 ```
 
 Every field is optional, same absent-means-default rule as node style.
@@ -152,6 +152,7 @@ Every field is optional, same absent-means-default rule as node style.
 | `strokeWidth` | number | Line width in pixels. |
 | `lineStyle` | `"solid"` \| `"dashed"` \| `"dotted"` | Line dash pattern. |
 | `startMarker` / `endMarker` | marker kind | Arrowhead/terminator drawn at the source/target end. One of `"none"`, `"arrowOpen"`, `"arrowClosed"`, `"circle"`, `"circleFilled"`, `"diamond"`, `"diamondFilled"`, `"crowsFootOne"`, `"crowsFootMany"`, `"crowsFootOneOrMany"`, `"crowsFootZeroOrOne"`, `"crowsFootZeroOrMany"`. These are deliberately shape-described, not tied to any one notation system (UML/ERD/BPMN) — a reader shouldn't infer semantic meaning from the name beyond what's actually drawn. |
+| `labelPosition` | number, 0-1 | Where along the rendered path the label sits, as a fraction of arc length (`0` = source end, `1` = target end) — same fraction-not-pixels convention as a node's `connectionPoints[].offset`, so it stays meaningful if the edge's endpoints move. Absent means `0.5` (the midpoint). |
 | `fontSize` | number | Label font size in pixels. |
 | `fontColor` | string (CSS color) | Label text color. |
 | `fontOpacity` | number, 0-100 | Label text opacity — see the same field on Node style above. |
@@ -227,7 +228,7 @@ The `.chd` file itself is always plain, deterministic JSON — kept git-friendly
 
 ## Versioning
 
-`version` is currently always `1`. Fields have been added over time (`size`, `rotation`, `connectionPoints`, `parentId`, `style` on both Node and Edge, edge `type`/`label`, `data.icons`, `data.details`, `data.linkedDiagram`, top-level `metadata`/`requiredTags`/`highlights`, and `metadata` on both Node and Edge) but always additively — a reader from an earlier point in this project's history can still open a newer file and just won't recognize the newer fields. The same holds in reverse: this app's own current code must still open a file from *before* one of these fields existed, without failing or requiring migration — see [ADR 0029](decisions/0029-backward-compatible-loading-is-a-standing-rule.md), which makes this a standing rule for every future field, not just an incidental property of the fields added so far. A breaking change to the meaning of an existing field would bump `version`; nothing has required that yet.
+`version` is currently always `1`. Fields have been added over time (`size`, `rotation`, `connectionPoints`, `parentId`, `style` on both Node and Edge, edge `type`/`label`, `data.icons`, `data.details`, `data.linkedDiagram`, top-level `metadata`/`requiredTags`/`highlights`, `metadata` on both Node and Edge, and Edge style's `labelPosition`) but always additively — a reader from an earlier point in this project's history can still open a newer file and just won't recognize the newer fields. The same holds in reverse: this app's own current code must still open a file from *before* one of these fields existed, without failing or requiring migration — see [ADR 0029](decisions/0029-backward-compatible-loading-is-a-standing-rule.md), which makes this a standing rule for every future field, not just an incidental property of the fields added so far. A breaking change to the meaning of an existing field would bump `version`; nothing has required that yet.
 
 ## Example
 
