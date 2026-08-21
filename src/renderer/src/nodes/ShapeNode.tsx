@@ -131,7 +131,7 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
       title={tooltip}
     >
       <NodeResizer isVisible={selected} minWidth={SHAPE_MIN_WIDTH} minHeight={SHAPE_MIN_HEIGHT} />
-      <ConnectionHandles customPoints={customPoints} onPointContextMenu={onPointContextMenu} />
+      <ConnectionHandles storedPoints={customPoints} onPointContextMenu={onPointContextMenu} />
       {highlightMatches.length >= 2 && (
         <div className="highlight-chips-anchor">
           <HighlightChips highlights={highlightMatches} />

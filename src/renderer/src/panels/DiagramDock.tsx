@@ -1,5 +1,5 @@
 import type { Edge, Node } from '@xyflow/react'
-import type { EdgeStyle, MetadataEntry, NodeStyle, RequiredTagDefinition } from '@shared/diagram'
+import type { ConnectionPointSide, EdgeStyle, MetadataEntry, NodeStyle, RequiredTagDefinition } from '@shared/diagram'
 import ItemPalette from './ItemPalette'
 import PropertyPanel, { type TransformPatch } from './PropertyPanel'
 
@@ -18,6 +18,8 @@ export default function DiagramDock({
   onUpdateTransform,
   onUpdateNodeMetadata,
   onUpdateEdgeMetadata,
+  onSetConnectionPointCount,
+  maxConnectionPointsPerSide,
   requiredTags,
   beginContinuousEdit,
   endContinuousEdit,
@@ -33,6 +35,8 @@ export default function DiagramDock({
   onUpdateTransform: (nodeIds: string[], patch: TransformPatch) => void
   onUpdateNodeMetadata: (nodeId: string, metadata: Record<string, MetadataEntry> | undefined) => void
   onUpdateEdgeMetadata: (edgeId: string, metadata: Record<string, MetadataEntry> | undefined) => void
+  onSetConnectionPointCount: (nodeId: string, side: ConnectionPointSide, totalCount: number) => void
+  maxConnectionPointsPerSide: number
   requiredTags: RequiredTagDefinition[]
   beginContinuousEdit: () => void
   endContinuousEdit: () => void
@@ -51,6 +55,8 @@ export default function DiagramDock({
           onUpdateTransform={onUpdateTransform}
           onUpdateNodeMetadata={onUpdateNodeMetadata}
           onUpdateEdgeMetadata={onUpdateEdgeMetadata}
+          onSetConnectionPointCount={onSetConnectionPointCount}
+          maxConnectionPointsPerSide={maxConnectionPointsPerSide}
           requiredTags={requiredTags}
           beginContinuousEdit={beginContinuousEdit}
           endContinuousEdit={endContinuousEdit}

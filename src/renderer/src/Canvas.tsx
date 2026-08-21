@@ -13,6 +13,7 @@ import {
   useNodesState,
   useEdgesState,
   useReactFlow,
+  useUpdateNodeInternals,
   type Connection,
   type Edge,
   type FinalConnectionState,
@@ -25,6 +26,7 @@ import {
 import '@xyflow/react/dist/style.css'
 import {
   type ConnectionPoint,
+  type ConnectionPointSide,
   type DiagramFile,
   type EdgeStyle,
   type HighlightDefinition,
@@ -55,6 +57,7 @@ import HighlightsPanel from './components/HighlightsPanel'
 import LegendPanel from './components/LegendPanel'
 import LayerPanel from './components/LayerPanel'
 import { backfillZIndex, nextZIndexAbove, reorderZIndex } from './layers/zIndexOrdering'
+import { reassignConnectionPointHandles, setSideCustomPointCount } from './nodes/connectionPoints'
 import SettingsPanel from './components/SettingsPanel'
 import DiagramDock from './panels/DiagramDock'
 import UtilityDock from './panels/UtilityDock'
@@ -491,6 +494,7 @@ function CanvasInner(): React.JSX.Element {
   // draft state here, flushed as part of the main save flow. See epic 0008.
   const [detailsDrafts, setDetailsDrafts] = useState<Record<string, string>>({})
   const rfInstance = useReactFlow()
+  const updateNodeInternals = useUpdateNodeInternals()
 
   // Undo/redo history — see epic 0006. Explicit calls at each real mutation
   // site (pushSnapshot before mutating), not a useEffect reacting to
@@ -1561,6 +1565,29 @@ function CanvasInner(): React.JSX.Element {
     [setEdges]
   )
 
+  // Connection point count field (epic 0039/ADR 0036) — a discrete,
+  // structural action rather than a style patch: it can both reposition
+  // and delete/create points on the target node, and reassign edges off
+  // any point it removes. `totalCount` is the side's whole point count,
+  // same number the property panel shows and edits directly — no
+  // default/custom split to convert between (see ADR 0036's second
+  // revision for why that split was removed).
+  const setConnectionPointCount = useCallback(
+    (nodeId: string, side: ConnectionPointSide, totalCount: number) => {
+      const node = nodes.find((n) => n.id === nodeId)
+      if (!node) return
+      const customPoints = (node.data?.connectionPoints as ConnectionPoint[] | undefined) ?? []
+      const { points, handleReassignments } = setSideCustomPointCount(customPoints, side, totalCount)
+      pushSnapshot()
+      setNodes((nds) =>
+        nds.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, connectionPoints: points } } : n))
+      )
+      setEdges((eds) => reassignConnectionPointHandles(eds, nodeId, handleReassignments))
+      updateNodeInternals(nodeId)
+    },
+    [nodes, setNodes, setEdges, pushSnapshot, updateNodeInternals]
+  )
+
   // x/y/width/height are effectively required (or default-sized) fields on
   // a node, unlike the optional style properties above — an empty/cleared
   // number field (patch value undefined, mid-typing) is treated as "leave
@@ -2066,6 +2093,7 @@ function CanvasInner(): React.JSX.Element {
         attachContainedNodes,
         matchHighlights,
         edgeStraightSegmentLength: settings.edgeStraightSegmentLength,
+        maxConnectionPointsPerSide: settings.maxConnectionPointsPerSide,
         theme,
         entityHighlightNodeId
       }}
@@ -2178,6 +2206,8 @@ function CanvasInner(): React.JSX.Element {
               onUpdateTransform={updateTransform}
               onUpdateNodeMetadata={updateNodeMetadata}
               onUpdateEdgeMetadata={updateEdgeMetadata}
+              onSetConnectionPointCount={setConnectionPointCount}
+              maxConnectionPointsPerSide={settings.maxConnectionPointsPerSide}
               requiredTags={requiredTags}
               beginContinuousEdit={beginContinuousEdit}
               endContinuousEdit={endContinuousEdit}

@@ -13,7 +13,7 @@ export const ANCHOR_SIZE = 14
 function AnchorNode(): React.JSX.Element {
   return (
     <div className="anchor-node">
-      <ConnectionHandles customPoints={[]} onPointContextMenu={() => {}} />
+      <ConnectionHandles storedPoints={[]} onPointContextMenu={() => {}} />
     </div>
   )
 }

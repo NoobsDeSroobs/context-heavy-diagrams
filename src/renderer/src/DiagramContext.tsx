@@ -51,6 +51,12 @@ export interface DiagramContextValue {
   // diagram content — same "thread it through context so edges don't need
   // Canvas's own state directly" reasoning as matchHighlights above.
   edgeStraightSegmentLength: number
+  // Global setting (settings.ts/SettingsPanel, epic 0039/ADR 0036) — the
+  // property panel's count field already clamps to this via its own `max`
+  // prop, but manual right-click "add point here" needed the same limit
+  // threaded down to the node components, same reasoning as
+  // edgeStraightSegmentLength above.
+  maxConnectionPointsPerSide: number
   // Current resolved theme — needed by every render/edit site that touches
   // an explicit fill/stroke/fontColor, for the theme-adaptive Value flip
   // (epic 0040/ADR 0034). Same threading reasoning as the two fields above.

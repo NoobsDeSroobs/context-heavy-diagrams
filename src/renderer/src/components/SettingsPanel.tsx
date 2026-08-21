@@ -41,6 +41,15 @@ export default function SettingsPanel({ settings, onChange, onClose }: SettingsP
           onSessionStart={() => {}}
           onSessionEnd={() => {}}
         />
+        <NumberField
+          label="Max connection points per side"
+          value={settings.maxConnectionPointsPerSide}
+          mixed={false}
+          min={1}
+          onChange={(v) => onChange({ maxConnectionPointsPerSide: v ?? 1 })}
+          onSessionStart={() => {}}
+          onSessionEnd={() => {}}
+        />
       </div>
     </div>
   )

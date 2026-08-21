@@ -69,7 +69,7 @@ function ContainerNode({ id, data, selected }: NodeProps): React.JSX.Element {
         minWidth={CONTAINER_MIN_WIDTH}
         minHeight={CONTAINER_MIN_HEIGHT}
       />
-      <ConnectionHandles customPoints={customPoints} onPointContextMenu={onPointContextMenu} />
+      <ConnectionHandles storedPoints={customPoints} onPointContextMenu={onPointContextMenu} />
       {highlightMatches.length >= 2 && (
         <div className="highlight-chips-anchor">
           <HighlightChips highlights={highlightMatches} />

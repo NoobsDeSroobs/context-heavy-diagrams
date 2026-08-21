@@ -1,7 +1,17 @@
+import { useRef } from 'react'
 import type { Edge, Node } from '@xyflow/react'
-import type { EdgeStyle, MarkerKind, MetadataEntry, NodeStyle, RequiredTagDefinition } from '@shared/diagram'
+import type {
+  ConnectionPoint,
+  ConnectionPointSide,
+  EdgeStyle,
+  MarkerKind,
+  MetadataEntry,
+  NodeStyle,
+  RequiredTagDefinition
+} from '@shared/diagram'
 import { useDiagramContext } from '../DiagramContext'
 import { themeAdaptiveColor } from '../styles/themeAdaptiveColor'
+import { connectionPointCountForSide } from '../nodes/connectionPoints'
 import { CollapsibleSection, ColorField, NumberField, SliderField, SelectField } from './fields'
 import { computeFieldValue } from './fieldValue'
 import MetadataSection from './MetadataSection'
@@ -22,6 +32,8 @@ interface PropertyPanelProps {
   onUpdateTransform: (nodeIds: string[], patch: TransformPatch) => void
   onUpdateNodeMetadata: (nodeId: string, metadata: Record<string, MetadataEntry> | undefined) => void
   onUpdateEdgeMetadata: (edgeId: string, metadata: Record<string, MetadataEntry> | undefined) => void
+  onSetConnectionPointCount: (nodeId: string, side: ConnectionPointSide, totalCount: number) => void
+  maxConnectionPointsPerSide: number
   requiredTags: RequiredTagDefinition[]
   beginContinuousEdit: () => void
   endContinuousEdit: () => void
@@ -410,6 +422,64 @@ function EdgeFields({
   )
 }
 
+const CONNECTION_POINT_SIDES: ConnectionPointSide[] = ['top', 'right', 'bottom', 'left']
+const CONNECTION_POINT_SIDE_LABELS: Record<ConnectionPointSide, string> = {
+  top: 'Top',
+  right: 'Right',
+  bottom: 'Bottom',
+  left: 'Left'
+}
+
+// Single-node-selection only (epic 0039) — unlike the style fields above,
+// a count here reads from and structurally rewrites one specific node's
+// own connectionPoints/edges, which doesn't generalize to "apply this
+// patch to every selected node" the way a color or opacity does.
+//
+// Deliberately applies on blur/Enter (onSessionEnd), not per-keystroke
+// like every other NumberField in this panel: unlike a style patch, commit
+// here regenerates points and can transfer edges between handles, so
+// typing "12" must not run that as "1" then "12". A ref tracks the
+// in-progress value between onChange and onSessionEnd.
+function ConnectionPointFields({
+  node,
+  maxPerSide,
+  onSetCount
+}: {
+  node: Node
+  maxPerSide: number
+  onSetCount: (side: ConnectionPointSide, totalCount: number) => void
+}): React.JSX.Element {
+  const customPoints = (node.data?.connectionPoints as ConnectionPoint[] | undefined) ?? []
+  const pending = useRef<Partial<Record<ConnectionPointSide, number>>>({})
+
+  return (
+    <CollapsibleSection title="Connection points">
+      {CONNECTION_POINT_SIDES.map((side) => {
+        const count = connectionPointCountForSide(customPoints, side)
+        return (
+          <NumberField
+            key={side}
+            label={CONNECTION_POINT_SIDE_LABELS[side]}
+            value={count}
+            mixed={false}
+            min={1}
+            max={maxPerSide}
+            onChange={(v) => {
+              pending.current[side] = v
+            }}
+            onSessionStart={() => {}}
+            onSessionEnd={() => {
+              const v = pending.current[side]
+              pending.current[side] = undefined
+              if (v != null && v !== count) onSetCount(side, Math.min(maxPerSide, Math.max(1, v)))
+            }}
+          />
+        )
+      })}
+    </CollapsibleSection>
+  )
+}
+
 // Shape/container share NodeStyleFields' four groups; text gets the same
 // component minus fill/border, since a text node's "look" is font +
 // transform only (deliberately still allows a fill for consistency's sake —
@@ -430,6 +500,8 @@ export default function PropertyPanel({
   onUpdateTransform,
   onUpdateNodeMetadata,
   onUpdateEdgeMetadata,
+  onSetConnectionPointCount,
+  maxConnectionPointsPerSide,
   requiredTags,
   beginContinuousEdit,
   endContinuousEdit,
@@ -497,6 +569,13 @@ export default function PropertyPanel({
       <div className="property-panel">
         {nodeGroups.map(([type, nodes]) => renderNodeGroup(type, nodes))}
         {selectedEdges.length > 0 && renderEdgeGroup()}
+        {metadataTarget?.kind === 'node' && (
+          <ConnectionPointFields
+            node={metadataTarget.node}
+            maxPerSide={maxConnectionPointsPerSide}
+            onSetCount={(side, count) => onSetConnectionPointCount(metadataTarget.node.id, side, count)}
+          />
+        )}
         {metadataTarget && (
           <MetadataSection
             metadata={

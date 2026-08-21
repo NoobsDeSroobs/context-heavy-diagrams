@@ -1,27 +1,30 @@
 import type { MouseEvent } from 'react'
-import { Handle, Position } from '@xyflow/react'
+import { Handle } from '@xyflow/react'
 import type { ConnectionPoint } from '@shared/diagram'
-import { SIDE_POSITION, connectionPointStyle } from './connectionPoints'
+import { SIDE_POSITION, connectionPointStyle, effectiveConnectionPoints } from './connectionPoints'
 
-// The 4 always-present default points plus whatever custom ones exist —
-// shared between ShapeNode and ContainerNode. Split into its own file (kept
-// out of connectionPoints.ts) so that file stays component-free — mixing a
-// component export with hook/function exports in one file breaks React
-// Fast Refresh.
+// Every point a node's sides currently have — shared between ShapeNode and
+// ContainerNode. Split into its own file (kept out of connectionPoints.ts)
+// so that file stays component-free — mixing a component export with
+// hook/function exports in one file breaks React Fast Refresh.
+//
+// Epic 0039 originally special-cased 4 always-present, unmovable default
+// points here (hardcoded, no style override, no context menu) plus
+// whatever was in `storedPoints`. That split turned out to be the root
+// cause of two real bugs the user found — every point a side has is now
+// rendered uniformly from `effectiveConnectionPoints`, which synthesizes a
+// side's implicit single centered point only where nothing's been stored
+// for it yet (see that function's own comment).
 export function ConnectionHandles({
-  customPoints,
+  storedPoints,
   onPointContextMenu
 }: {
-  customPoints: ConnectionPoint[]
+  storedPoints: ConnectionPoint[]
   onPointContextMenu: (event: MouseEvent<HTMLDivElement>, point: ConnectionPoint) => void
 }): React.JSX.Element {
   return (
     <>
-      <Handle type="source" position={Position.Top} id="top" />
-      <Handle type="source" position={Position.Right} id="right" />
-      <Handle type="source" position={Position.Bottom} id="bottom" />
-      <Handle type="source" position={Position.Left} id="left" />
-      {customPoints.map((point) => (
+      {effectiveConnectionPoints(storedPoints).map((point) => (
         <Handle
           key={point.id}
           type="source"

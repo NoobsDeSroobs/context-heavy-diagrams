@@ -12,10 +12,15 @@ export interface AppSettings {
   // curving toward the other end — 0 means "no forced straight segment,"
   // today's only behavior. Epic 0047.
   edgeStraightSegmentLength: number
+  // Upper bound on the property panel's per-side connection point count
+  // field (epic 0039) — the total shown to the user, including the
+  // always-present default point for that side.
+  maxConnectionPointsPerSide: number
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
-  edgeStraightSegmentLength: 8
+  edgeStraightSegmentLength: 8,
+  maxConnectionPointsPerSide: 12
 }
 
 const STORAGE_KEY = 'settings'
