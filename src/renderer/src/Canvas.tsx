@@ -50,12 +50,14 @@ import DetailsPanel from './components/DetailsPanel'
 import RequiredTagsPanel from './components/RequiredTagsPanel'
 import DiagnosticsPanel from './components/DiagnosticsPanel'
 import HighlightsPanel from './components/HighlightsPanel'
+import SettingsPanel from './components/SettingsPanel'
 import DiagramDock from './panels/DiagramDock'
 import UtilityDock from './panels/UtilityDock'
 import AlignmentGuides from './components/AlignmentGuides'
 import { SNAP_THRESHOLD_PX, boundsFrom, computeSnap } from './alignment'
 import type { TransformPatch } from './panels/PropertyPanel'
 import { useTheme } from './theme'
+import { useSettings } from './settings'
 
 // Defined at module scope so React Flow gets a stable reference — recreating
 // these objects every render triggers a React Flow warning and remounts.
@@ -396,6 +398,11 @@ function CanvasInner(): React.JSX.Element {
   const [requiredTagsPanelOpen, setRequiredTagsPanelOpen] = useState(false)
   const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false)
   const [highlightsPanelOpen, setHighlightsPanelOpen] = useState(false)
+  const [settingsPanelOpen, setSettingsPanelOpen] = useState(false)
+  // Global app preference, not diagram content — see settings.ts/ADR 0032.
+  // Deliberately not reset by loadDiagramIntoCanvas below; only the panel's
+  // open/closed UI state is.
+  const { settings, updateSettings } = useSettings()
   const [contextMenu, setContextMenu] = useState<{
     x: number
     y: number
@@ -681,11 +688,12 @@ function CanvasInner(): React.JSX.Element {
   )
 
   // The utility dock shows one surface at a time (see ADR 0013) — opening
-  // any of the four closes the other three, same as clicking a different tab.
+  // any of the five closes the other four, same as clicking a different tab.
   const openDetailsPanel = useCallback((nodeId: string) => {
     setRequiredTagsPanelOpen(false)
     setDiagnosticsPanelOpen(false)
     setHighlightsPanelOpen(false)
+    setSettingsPanelOpen(false)
     setDetailsPanelNodeId(nodeId)
   }, [])
 
@@ -693,6 +701,7 @@ function CanvasInner(): React.JSX.Element {
     setDetailsPanelNodeId(null)
     setDiagnosticsPanelOpen(false)
     setHighlightsPanelOpen(false)
+    setSettingsPanelOpen(false)
     setRequiredTagsPanelOpen((open) => !open)
   }, [])
 
@@ -700,13 +709,23 @@ function CanvasInner(): React.JSX.Element {
     setDetailsPanelNodeId(null)
     setRequiredTagsPanelOpen(false)
     setHighlightsPanelOpen(false)
+    setSettingsPanelOpen(false)
     setDiagnosticsPanelOpen((open) => !open)
+  }, [])
+
+  const toggleSettingsPanel = useCallback(() => {
+    setDetailsPanelNodeId(null)
+    setRequiredTagsPanelOpen(false)
+    setDiagnosticsPanelOpen(false)
+    setHighlightsPanelOpen(false)
+    setSettingsPanelOpen((open) => !open)
   }, [])
 
   const toggleHighlightsPanel = useCallback(() => {
     setDetailsPanelNodeId(null)
     setRequiredTagsPanelOpen(false)
     setDiagnosticsPanelOpen(false)
+    setSettingsPanelOpen(false)
     setHighlightsPanelOpen((open) => !open)
   }, [])
 
@@ -1565,6 +1584,7 @@ function CanvasInner(): React.JSX.Element {
       setRequiredTagsPanelOpen(false)
       setDiagnosticsPanelOpen(false)
       setHighlightsPanelOpen(false)
+      setSettingsPanelOpen(false)
       // Defensive, per ADR 0022 — reconcile against hand-edited drift on
       // every load, not just when the template is edited from within the app.
       runSync(openedRequiredTags)
@@ -1799,6 +1819,8 @@ function CanvasInner(): React.JSX.Element {
           setDiagnosticsPanelOpen(false)
         } else if (highlightsPanelOpen) {
           setHighlightsPanelOpen(false)
+        } else if (settingsPanelOpen) {
+          setSettingsPanelOpen(false)
         } else if (iconPicker) {
           setIconPicker(null)
         } else if (colorPicker) {
@@ -1836,6 +1858,7 @@ function CanvasInner(): React.JSX.Element {
     requiredTagsPanelOpen,
     diagnosticsPanelOpen,
     highlightsPanelOpen,
+    settingsPanelOpen,
     iconPicker,
     colorPicker,
     linePicker,
@@ -1885,7 +1908,8 @@ function CanvasInner(): React.JSX.Element {
         endContinuousEdit,
         pushSnapshot,
         attachContainedNodes,
-        matchHighlights
+        matchHighlights,
+        edgeStraightSegmentLength: settings.edgeStraightSegmentLength
       }}
     >
       {/* Outer app shell: [canvas view [diagram dock]] [utility dock], nested
@@ -1922,6 +1946,7 @@ function CanvasInner(): React.JSX.Element {
             <button onClick={toggleHighlightsPanel}>
               Highlights{highlights.length > 0 ? ` (${highlights.length})` : ''}
             </button>
+            <button onClick={toggleSettingsPanel}>Settings…</button>
             {currentPath && <span className="toolbar-path">{currentPath}</span>}
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
@@ -2098,6 +2123,13 @@ function CanvasInner(): React.JSX.Element {
               onToggleGroup={toggleHighlightGroup}
               onAddOrResyncGroup={addOrResyncHighlightGroup}
               onClose={() => setHighlightsPanelOpen(false)}
+            />
+          )}
+          {settingsPanelOpen && (
+            <SettingsPanel
+              settings={settings}
+              onChange={updateSettings}
+              onClose={() => setSettingsPanelOpen(false)}
             />
           )}
         </UtilityDock>

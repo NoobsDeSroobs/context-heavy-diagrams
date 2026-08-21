@@ -4,6 +4,7 @@ import {
   EdgeLabelRenderer,
   getBezierPath,
   useReactFlow,
+  Position,
   type EdgeProps
 } from '@xyflow/react'
 import type { EdgeStyle, MetadataEntry } from '@shared/diagram'
@@ -34,18 +35,70 @@ const DEFAULT_STROKE_WIDTH = 1
 // 0046.
 const SELECTED_STROKE_WIDTH_DELTA = 2
 
-// Point at an arbitrary fraction of the path's arc length — epic 0045.
-// SVG path geometry doesn't depend on DOM attachment or layout, so a
-// throwaway, never-inserted <path> is enough; no ref/measurement pass
-// needed. Kept separate from getBezierPath's own labelX/labelY (used
-// untouched when labelPosition is unset) so every edge predating this
-// epic renders its label at exactly the same pixel it always has.
+// Point at an arbitrary fraction of the path's arc length — epic 0045,
+// also used for the plain midpoint (ratio 0.5) since epic 0047, so a label
+// stays centered on the *whole* rendered path, straight lead-in segments
+// included, not just its curved middle portion. SVG path geometry doesn't
+// depend on DOM attachment or layout, so a throwaway, never-inserted
+// <path> is enough; no ref/measurement pass needed.
 function pointAtRatio(pathD: string, ratio: number): { x: number; y: number } {
   const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
   path.setAttribute('d', pathD)
   const length = path.getTotalLength()
   const point = path.getPointAtLength(length * ratio)
   return { x: point.x, y: point.y }
+}
+
+// Outward from the node at each side — the direction an edge already
+// travels leaving/entering a handle, used below to place the straight
+// lead-in's other end.
+const OUTWARD_DIRECTION: Record<Position, { dx: number; dy: number }> = {
+  [Position.Top]: { dx: 0, dy: -1 },
+  [Position.Right]: { dx: 1, dy: 0 },
+  [Position.Bottom]: { dx: 0, dy: 1 },
+  [Position.Left]: { dx: -1, dy: 0 }
+}
+
+// Straight lead-in/out before curving — the global edgeStraightSegmentLength
+// setting (settings.ts/SettingsPanel, ADR 0032), epic 0047. getBezierPath
+// has no concept of this, so the curve itself is instead run between two
+// points offset straight outward from the real endpoints, and a straight
+// `L` segment splices each real endpoint onto that curve's own path
+// string. Relies on getBezierPath's returned path always starting
+// "M<x>,<y> C..." (its actual, stable implementation, not just documented
+// behavior) — the same assumption pointAtRatio above already makes by
+// treating the returned string as valid path data either way. Clamped to
+// half the straight-line distance between the real endpoints so two short
+// segments can never overlap or fold a short edge's path back on itself.
+function buildEdgePath(
+  sourceX: number,
+  sourceY: number,
+  sourcePosition: Position,
+  targetX: number,
+  targetY: number,
+  targetPosition: Position,
+  straightSegmentLength: number
+): string {
+  if (straightSegmentLength <= 0) {
+    return getBezierPath({ sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition })[0]
+  }
+  const distance = Math.hypot(targetX - sourceX, targetY - sourceY)
+  const length = Math.min(straightSegmentLength, distance / 2)
+  const sourceDir = OUTWARD_DIRECTION[sourcePosition]
+  const targetDir = OUTWARD_DIRECTION[targetPosition]
+  const offsetSourceX = sourceX + sourceDir.dx * length
+  const offsetSourceY = sourceY + sourceDir.dy * length
+  const offsetTargetX = targetX + targetDir.dx * length
+  const offsetTargetY = targetY + targetDir.dy * length
+  const [curve] = getBezierPath({
+    sourceX: offsetSourceX,
+    sourceY: offsetSourceY,
+    sourcePosition,
+    targetX: offsetTargetX,
+    targetY: offsetTargetY,
+    targetPosition
+  })
+  return `M${sourceX},${sourceY} L${offsetSourceX},${offsetSourceY} ${curve.slice(curve.indexOf('C'))} L${targetX},${targetY}`
 }
 
 // Fixed midpoint only, no drag-along-path — deliberately simple for v1, see
@@ -73,21 +126,18 @@ function LabeledEdge({
   data
 }: EdgeProps): React.JSX.Element {
   const { updateEdgeData } = useReactFlow()
-  const { matchHighlights } = useDiagramContext()
+  const { matchHighlights, edgeStraightSegmentLength } = useDiagramContext()
   const edgeStyle = data?.style as EdgeStyle | undefined
   const highlightMatches = matchHighlights(data?.metadata as Record<string, MetadataEntry> | undefined)
-  const [edgePath, midX, midY] = getBezierPath({
-    sourceX,
-    sourceY,
-    sourcePosition,
-    targetX,
-    targetY,
-    targetPosition
-  })
+  const edgePath = useMemo(
+    () =>
+      buildEdgePath(sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition, edgeStraightSegmentLength),
+    [sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition, edgeStraightSegmentLength]
+  )
   const labelRatio = edgeStyle?.labelPosition
   const { x: labelX, y: labelY } = useMemo(
-    () => (labelRatio != null ? pointAtRatio(edgePath, labelRatio) : { x: midX, y: midY }),
-    [edgePath, labelRatio, midX, midY]
+    () => pointAtRatio(edgePath, labelRatio ?? 0.5),
+    [edgePath, labelRatio]
   )
 
   // Opacity is per-channel (strokeOpacity/fontOpacity), not one whole-

@@ -1024,12 +1024,13 @@ body {
   cursor: default;
 }
 
-/* Required-tags template editor, diagnostics panel, and highlights panel —
-   same fixed right-side dock shell as .details-panel (toolbar +
-   scrollable body), different body content. */
+/* Required-tags template editor, diagnostics panel, highlights panel, and
+   settings panel — same fixed right-side dock shell as .details-panel
+   (toolbar + scrollable body), different body content. */
 .required-tags-panel,
 .diagnostics-panel,
-.highlights-panel {
+.highlights-panel,
+.settings-panel {
   width: 100%;
   height: 100%;
   display: flex;
@@ -1039,7 +1040,8 @@ body {
 
 .required-tags-panel-toolbar,
 .diagnostics-panel-toolbar,
-.highlights-panel-toolbar {
+.highlights-panel-toolbar,
+.settings-panel-toolbar {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -1049,14 +1051,16 @@ body {
 
 .required-tags-panel-title,
 .diagnostics-panel-title,
-.highlights-panel-title {
+.highlights-panel-title,
+.settings-panel-title {
   font-size: 13px;
   font-weight: 600;
 }
 
 .required-tags-panel-toolbar button,
 .diagnostics-panel-toolbar button,
-.highlights-panel-toolbar button {
+.highlights-panel-toolbar button,
+.settings-panel-toolbar button {
   cursor: pointer;
   border: 1px solid var(--ev-c-gray-2);
   background: var(--ev-button-alt-bg);
@@ -1069,12 +1073,14 @@ body {
 
 .required-tags-panel-toolbar button:hover,
 .diagnostics-panel-toolbar button:hover,
-.highlights-panel-toolbar button:hover {
+.highlights-panel-toolbar button:hover,
+.settings-panel-toolbar button:hover {
   background: var(--ev-button-alt-hover-bg);
 }
 
 .required-tags-panel-body,
-.highlights-panel-body {
+.highlights-panel-body,
+.settings-panel-body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -1085,7 +1091,8 @@ body {
 }
 
 .required-tags-panel-hint,
-.highlights-panel-hint {
+.highlights-panel-hint,
+.settings-panel-hint {
   font-size: 12px;
   color: var(--ev-c-text-3);
   margin: 0 0 4px;

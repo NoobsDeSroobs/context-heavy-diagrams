@@ -46,6 +46,10 @@ export interface DiagramContextValue {
   // state so node/edge components don't need either piece directly, just
   // the element's own metadata to check.
   matchHighlights: (metadata: Record<string, MetadataEntry> | undefined) => HighlightDefinition[]
+  // Global setting (settings.ts/SettingsPanel, epic 0047/ADR 0032), not
+  // diagram content — same "thread it through context so edges don't need
+  // Canvas's own state directly" reasoning as matchHighlights above.
+  edgeStraightSegmentLength: number
 }
 
 const DiagramContext = createContext<DiagramContextValue | null>(null)

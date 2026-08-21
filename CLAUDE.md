@@ -22,7 +22,9 @@ The user is the sole barrier between Claude and anything permanent or running on
 - Creating and editing files inside the project folder: allowed by default, no need to ask. If an operation seems problematic or potentially harmful (large-scale deletion, overwriting something that looks like unsaved user work, a drastic restructure), pause and ask first rather than proceeding.
 - Running Bash/PowerShell/terminal commands (`npm install`, `npm run dev`, `git init`, etc.): ask for approval **every single time**. Never assume standing/blanket approval just because a similar command was approved before.
 - Exception: creating git branches and making commits **on a feature branch** is pre-approved — no need to ask each time for those specifically.
+- Exception: deleting a **local** branch that's already merged into `master` (verify with `git diff master <branch>` — expect no output) is also pre-approved, no need to ask each time. Do this either right after the epic it was for is merged, or batched at the end of a sequenced group of epics — whichever fits the moment. Never delete a branch that isn't confirmed merged, and never touch remote branches (see "Local git only" below).
 - Merging a feature branch into `main`/`master` (including via PR) is never something Claude does, under any circumstance. That step always goes through the user.
+- Local git only: never `fetch`/`pull`/`push`/create a PR/merge remotely — the user handles all remote git themselves. Claude only ever touches local repo state.
 
 ## Documentation conventions
 
