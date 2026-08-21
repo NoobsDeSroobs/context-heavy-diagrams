@@ -11,6 +11,7 @@ Everything that needs to survive must be written to disk in this repo, in git-fr
 - `docs/architecture/` — living high-level documentation: purpose, design principles, stack, component overview. Updated as the system evolves, unlike the frozen brief.
 - `docs/file-format.md` — standalone spec of the `.chd` diagram file format, deliberately written so a third party could build a compatible importer/exporter without reading this codebase or its decision history (less lock-in). Update it whenever `src/shared/diagram.ts` changes — it must stay current, not just accurate at the moment it was written.
 - `docs/planning/` — epics (`docs/planning/epics/NNNN-title.md`) with task checklists inside them. See [docs/planning/README.md](docs/planning/README.md) and [docs/decisions/0002-planning-structure.md](docs/decisions/0002-planning-structure.md).
+- `docs/known-issues.md` — a single-file, symptom-first log of real bugs/hard problems found during development, each marked Solved/Worked around/Open with root cause and resolution. Not a duplicate of ADRs or epics' own Notes — a lookup table for "does this look familiar?" across the whole project. See [docs/decisions/0037-known-issues-log.md](docs/decisions/0037-known-issues-log.md). Add an entry whenever a bug takes real investigation to track down, not for routine fixes.
 - `PROGRESS.md` — short pointer: current epic/task, last updated. Not a duplicate backlog — the full backlog lives in `docs/planning/`.
 
 Keep these updated as we go, not retroactively.
