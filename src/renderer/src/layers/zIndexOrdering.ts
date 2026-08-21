@@ -11,12 +11,17 @@
 // without ever needing the cascade fallback below.
 export const LAYER_GAP = 10
 
-// Deep enough that the initial backfill's two ranges can never accidentally
-// cross on first load — not a hard boundary once the user starts dragging
-// things around in the panel (see ADR 0035: containers-behind-shapes is a
-// default arrangement, not a rule enforced afterward).
-const CONTAINER_BASE = LAYER_GAP
-const NON_CONTAINER_BASE = 100_000
+// Deep enough that the initial backfill's three ranges can never
+// accidentally cross on first load — not a hard boundary once the user
+// starts dragging things around in the panel (see ADR 0035:
+// containers-behind-shapes is a default arrangement, not a rule enforced
+// afterward). Text sits above shapes by the same "annotations should stay
+// readable over the thing they're labeling" reasoning as its default
+// render-on-top-of-shapes expectation — see the epic 0043 correction this
+// was fixed alongside.
+export const CONTAINER_BASE = LAYER_GAP
+export const SHAPE_BASE = 100_000
+export const TEXT_BASE = 200_000
 
 export interface ZIndexed {
   id: string
@@ -24,32 +29,40 @@ export interface ZIndexed {
   zIndex?: number
 }
 
+function baseForType(type: string | undefined): number {
+  if (type === 'container') return CONTAINER_BASE
+  if (type === 'text') return TEXT_BASE
+  return SHAPE_BASE
+}
+
 // Assigns a real zIndex to every node missing one, in array order —
-// containers from a low range, everything else from a much higher one, so
-// an old file's current visual stacking (today's implicit "containers
-// always behind, later-in-array paints on top") comes out identical on
-// first load under this code (ADR 0029). A no-op once every node already
-// has a value.
+// containers from the lowest range, shapes from a much higher one, text
+// higher still, so an old file's current visual stacking (today's implicit
+// "containers always behind, later-in-array paints on top") comes out
+// identical on first load under this code (ADR 0029). A no-op once every
+// node already has a value.
 export function backfillZIndex<T extends ZIndexed>(nodes: T[]): T[] {
   if (nodes.every((n) => n.zIndex != null)) return nodes
-  let containerCount = 0
-  let otherCount = 0
+  const counts: Record<string, number> = {}
   return nodes.map((n) => {
     if (n.zIndex != null) return n
-    if (n.type === 'container') {
-      containerCount += 1
-      return { ...n, zIndex: CONTAINER_BASE + containerCount * LAYER_GAP }
-    }
-    otherCount += 1
-    return { ...n, zIndex: NON_CONTAINER_BASE + otherCount * LAYER_GAP }
+    const base = baseForType(n.type)
+    const count = (counts[base] ?? 0) + 1
+    counts[base] = count
+    return { ...n, zIndex: base + count * LAYER_GAP }
   })
 }
 
-// zIndex for a freshly created node — always above everything that
-// currently exists, matching the existing "a new shape appears on top"
-// expectation.
-export function nextZIndexAbove(nodes: ZIndexed[]): number {
-  const max = nodes.reduce((m, n) => (n.zIndex != null && n.zIndex > m ? n.zIndex : m), 0)
+// zIndex for a freshly created node — always above every *other node of
+// the same tier* that currently exists (matching the existing "a new
+// shape appears on top" expectation), but never below that tier's own
+// base even when nothing of that tier exists yet. Without the `base`
+// floor, a brand new node in a small or empty diagram fell back to
+// "current max across whatever was passed in, plus one gap" — as low as
+// 10 or 20 in a fresh diagram, nowhere near its intended tier; caught by
+// the user directly, see docs/known-issues.md.
+export function nextZIndexAbove(nodes: ZIndexed[], base: number = SHAPE_BASE): number {
+  const max = nodes.reduce((m, n) => (n.zIndex != null && n.zIndex > m ? n.zIndex : m), base)
   return max + LAYER_GAP
 }
 

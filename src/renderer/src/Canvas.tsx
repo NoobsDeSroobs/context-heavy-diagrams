@@ -56,7 +56,7 @@ import DiagnosticsPanel from './components/DiagnosticsPanel'
 import HighlightsPanel from './components/HighlightsPanel'
 import LegendPanel from './components/LegendPanel'
 import LayerPanel from './components/LayerPanel'
-import { backfillZIndex, nextZIndexAbove, reorderZIndex } from './layers/zIndexOrdering'
+import { CONTAINER_BASE, SHAPE_BASE, TEXT_BASE, backfillZIndex, nextZIndexAbove, reorderZIndex } from './layers/zIndexOrdering'
 import { reassignConnectionPointHandles, setSideCustomPointCount } from './nodes/connectionPoints'
 import SettingsPanel from './components/SettingsPanel'
 import DiagramDock from './panels/DiagramDock'
@@ -172,14 +172,23 @@ function applyZIndexBackfill(nodes: Node[]): Node[] {
 }
 
 // Same data.zIndex extraction as applyZIndexBackfill, for a freshly-created
-// node — see epic 0043/ADR 0035. `ofType`, when given, scopes "above
-// everything" to just that node type — a brand new container should still
-// default to sitting behind existing shapes (matching the backfilled
-// default arrangement), not jump in front of them just because it's new;
-// a brand new shape/text has no such expectation and looks at every node.
-function nextZIndex(nodes: Node[], ofType?: string): number {
-  const scoped = ofType ? nodes.filter((n) => n.type === ofType) : nodes
-  return nextZIndexAbove(scoped.map((n) => ({ id: n.id, zIndex: n.data?.zIndex as number | undefined })))
+// node — see epic 0043/ADR 0035. Always scopes "above everything" to just
+// that node's own type/tier (CONTAINER_BASE/SHAPE_BASE/TEXT_BASE), so a
+// brand new node lands solidly within its tier — behind existing shapes if
+// it's a container, above existing shapes if it's text, etc. — matching
+// the backfilled default arrangement, rather than jumping in front of (or
+// behind) nodes of a different tier just because it's new. An earlier
+// version scoped shapes/text to *every* node regardless of type with no
+// tier floor at all, so a fresh diagram's first shape/container landed at
+// 10 or 20 instead of its intended tier — caught by the user directly, see
+// docs/known-issues.md.
+function nextZIndex(nodes: Node[], type: 'shape' | 'text' | 'container'): number {
+  const base = type === 'container' ? CONTAINER_BASE : type === 'text' ? TEXT_BASE : SHAPE_BASE
+  const scoped = nodes.filter((n) => n.type === type)
+  return nextZIndexAbove(
+    scoped.map((n) => ({ id: n.id, zIndex: n.data?.zIndex as number | undefined })),
+    base
+  )
 }
 
 // Deleting a container promotes its children to the container's own parent
@@ -1074,7 +1083,7 @@ function CanvasInner(): React.JSX.Element {
           // An anchor never has a zIndex (epic 0043/ADR 0035) — resolving it
           // into a real shape/container needs one now, same default as
           // addShapeNode/addContainerNode.
-          const zIndex = type === 'shape' ? nextZIndex(nds) : nextZIndex(nds, 'container')
+          const zIndex = nextZIndex(nds, type)
           const data =
             type === 'shape'
               ? { label: 'Shape', zIndex, metadata }
@@ -1231,7 +1240,7 @@ function CanvasInner(): React.JSX.Element {
         position: spawnPosition(width, height, nds.length),
         width,
         height,
-        data: { label: 'Shape', zIndex: nextZIndex(nds), metadata: seedMetadata(requiredTags) }
+        data: { label: 'Shape', zIndex: nextZIndex(nds, 'shape'), metadata: seedMetadata(requiredTags) }
       }
     ])
   }, [setNodes, pushSnapshot, spawnPosition, requiredTags])
@@ -1249,7 +1258,7 @@ function CanvasInner(): React.JSX.Element {
         position: spawnPosition(width, height, nds.length),
         width,
         height,
-        data: { label: 'Text', rotation: 0, zIndex: nextZIndex(nds) }
+        data: { label: 'Text', rotation: 0, zIndex: nextZIndex(nds, 'text') }
       }
     ])
   }, [setNodes, pushSnapshot, spawnPosition])

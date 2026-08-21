@@ -14,6 +14,20 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 ---
 
+## New-node z-index seeding ignored its own tier scheme
+**Status:** Solved
+**Found:** 2026-08-22, live use by the user, right after epic 0044 shipped
+
+**Symptom:** creating a container then a shape in a diagram gave them z-index values of 10 and 20 — nowhere near the tiered ranges epic 0043 established (containers low, shapes/text much higher, so a fresh container defaults behind existing shapes and vice versa).
+
+**Root cause:** `nextZIndex` (the helper behind `addShapeNode`/`addTextNode`/`addContainerNode`) only scoped *containers* correctly (to other existing containers). Shapes and text both scoped to *every* node regardless of type, with no tier floor at all — so in a small or empty diagram, "current max across everything, plus one gap" landed far below the intended tier. The load-time backfill (`backfillZIndex`, used for old files) had always done this correctly; only the new-node-creation path had the bug, so it went unnoticed until enough manual node creation happened in one session for the user to notice the numbers directly (visible in the layer panel).
+
+**Resolution:** `nextZIndex` now always scopes to the node's own type and passes that type's own base floor into `nextZIndexAbove`, so a brand new node of any type lands solidly within its tier even when nothing of that type exists yet. Also added a third tier: text now seeds above shapes (`TEXT_BASE`, higher than `SHAPE_BASE`), a small enhancement bundled into the same fix at the user's request, since annotations reasonably belong on top of the shapes they label.
+
+**References:** `docs/planning/epics/0043-layer-order-control.md`'s Notes, `src/renderer/src/layers/zIndexOrdering.ts`, `src/renderer/src/Canvas.tsx`
+
+---
+
 ## React Flow requires `updateNodeInternals()` after dynamically adding a handle
 **Status:** Solved
 **Found:** 2026-08-20, epic 0022 gallery testing (originally shipped as part of epic 0013)
