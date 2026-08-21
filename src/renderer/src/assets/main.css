@@ -332,6 +332,40 @@ body {
   stroke-width: 1;
 }
 
+/* Epic 0044: React Flow's default resize handles/lines are too small to
+   reliably grab (5x5px corner dots, a 1px-wide invisible grab corridor
+   along each edge). Scoped under .canvas-view-flow so this cleanly beats
+   the library's own same-specificity `.react-flow__resize-control...`
+   rules regardless of CSS bundling order, rather than relying on source
+   order or `!important`.
+
+   Corner handles: the handle div IS the visible dot AND the entire hit
+   target, so a bigger grab area unavoidably means a bigger dot — no way
+   to split the two here. Same tradeoff epic 0046 already worked through
+   for edge reconnect points (tried a smaller-visible/larger-invisible
+   split, walked it back after live testing felt like an approximation,
+   landed on "the visible size is the real grab size"); same call here,
+   roughly doubled rather than a token bump. Border/radius scaled to
+   match the larger box, same proportions as the library's own default.
+
+   Edge lines: free improvement, no visual tradeoff — the invisible grab
+   corridor (this rule) is a separate box from the always-1px visible
+   border the library draws inside it, so widening the corridor doesn't
+   thicken the line at all. */
+.canvas-view-flow .react-flow__resize-control.handle {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+.canvas-view-flow .react-flow__resize-control.line.left,
+.canvas-view-flow .react-flow__resize-control.line.right {
+  width: 8px;
+}
+.canvas-view-flow .react-flow__resize-control.line.top,
+.canvas-view-flow .react-flow__resize-control.line.bottom {
+  height: 8px;
+}
+
 .edge-label-text {
   font-size: 12px;
   color: var(--color-text);
