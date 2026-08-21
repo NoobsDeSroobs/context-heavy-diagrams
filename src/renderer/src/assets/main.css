@@ -301,6 +301,21 @@ body {
   padding: 0;
 }
 
+/* React Flow gives every non-container node an inline z-index of 2000
+   unconditionally (Canvas.tsx's zIndexedNodes), and separately elevates a
+   selected edge, or any edge touching a contained/selected node, by another
+   1000+ on top of that node's z (@xyflow/system's getElevatedEdgeZIndex).
+   The edge-label-renderer div that portals every edge label (LabeledEdge's
+   EdgeLabelRenderer) gets no z-index of its own (auto, ~0) — so without this
+   override, a label paints behind any node it overlaps, and behind its own
+   edge line whenever that edge or either endpoint is selected or contained.
+   That's the root cause of epic 0042. 5000 stays comfortably above today's
+   ceiling (2000 node + up to ~2000 more from elevation); revisit this value
+   if epic 0043's layer/z-height control changes what Canvas.tsx assigns. */
+.react-flow__edgelabel-renderer {
+  z-index: 5000;
+}
+
 .edge-label-text {
   font-size: 12px;
   color: var(--color-text);
