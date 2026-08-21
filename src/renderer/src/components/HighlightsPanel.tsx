@@ -6,6 +6,7 @@ interface HighlightsPanelProps {
   highlights: HighlightDefinition[]
   enabledIds: Set<string>
   usedTags: { key: string; value: JsonValue }[]
+  anchorRect: DOMRect | null
   onAdd: (key: string, value: JsonValue, color: string) => void
   onUpdateColor: (id: string, color: string) => void
   onRemove: (id: string) => void
@@ -17,6 +18,8 @@ interface HighlightsPanelProps {
   onAddOrResyncGroup: (key: string) => void
   onClose: () => void
 }
+
+const PANEL_WIDTH = 300
 
 // Same stringify-for-display convention as MetadataSection/RequiredTagsPanel
 // (small independent copy, not a shared import — this codebase's existing
@@ -106,15 +109,19 @@ function GroupCheckbox({
   )
 }
 
-// Diagram-level settings surface, same UtilityDock shell as RequiredTagsPanel/
-// DiagnosticsPanel — see epic 0026/ADR 0025. Both add flows are inline
-// searchable lists (not a floating anchored popup like IconPicker) — this
-// panel already has a fixed-position dock's worth of space, no anchor
-// coordinate needed.
+// Small floating panel next to the canvas's bottom-left <Controls> widget,
+// alongside LegendPanel — see epic 0026/ADR 0025 for the feature itself.
+// Originally the same fixed-position UtilityDock shell as RequiredTagsPanel/
+// DiagnosticsPanel; moved to this floating-popup treatment
+// (fix/highlights-free-tags-and-toggle) to sit next to the Legend toggle
+// instead, at the user's request. Both add flows stay inline searchable
+// lists (not a second nested floating popup like IconPicker) — unchanged
+// by the move, they never needed their own anchor.
 export default function HighlightsPanel({
   highlights,
   enabledIds,
   usedTags,
+  anchorRect,
   onAdd,
   onUpdateColor,
   onRemove,
@@ -128,6 +135,10 @@ export default function HighlightsPanel({
   const [addingGroup, setAddingGroup] = useState(false)
   const [groupQuery, setGroupQuery] = useState('')
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
+
+  const rect = anchorRect ?? new DOMRect(0, 0, 0, 0)
+  const left = Math.min(rect.right + 8, window.innerWidth - PANEL_WIDTH - 8)
+  const bottom = Math.max(window.innerHeight - rect.bottom, 8)
 
   const catalogIds = new Set(highlights.map(highlightId))
   const availableTags = usedTags.filter((t) => !catalogIds.has(highlightId(t)))
@@ -158,7 +169,7 @@ export default function HighlightsPanel({
   const groups = groupByKey(highlights)
 
   return (
-    <div className="highlights-panel">
+    <div className="highlights-panel nodrag nopan" style={{ left, bottom, width: PANEL_WIDTH }}>
       <div className="highlights-panel-toolbar">
         <span className="highlights-panel-title">Highlights</span>
         <div className="details-panel-spacer" />

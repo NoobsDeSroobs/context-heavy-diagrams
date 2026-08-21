@@ -468,6 +468,11 @@ function CanvasInner(): React.JSX.Element {
   const [requiredTagsPanelOpen, setRequiredTagsPanelOpen] = useState(false)
   const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false)
   const [highlightsPanelOpen, setHighlightsPanelOpen] = useState(false)
+  // Floating popup next to Legend's, in the bottom-left <Controls> cluster
+  // (fix/highlights-free-tags-and-toggle) — same anchorRect convention as
+  // legendPanelAnchor above, no longer the fixed-position UtilityDock shell
+  // it used to be.
+  const [highlightsPanelAnchor, setHighlightsPanelAnchor] = useState<DOMRect | null>(null)
   const [settingsPanelOpen, setSettingsPanelOpen] = useState(false)
   // Global app preference, not diagram content — see settings.ts/ADR 0032.
   // Deliberately not reset by loadDiagramIntoCanvas below; only the panel's
@@ -759,11 +764,15 @@ function CanvasInner(): React.JSX.Element {
   )
 
   // The utility dock shows one surface at a time (see ADR 0013) — opening
-  // any of the six closes the other five, same as clicking a different tab.
+  // any of the five closes the other four, same as clicking a different
+  // tab. Highlights moved out of this family (fix/highlights-free-tags-and-
+  // toggle) into its own floating popup next to Legend's, in the bottom-left
+  // <Controls> cluster — it doesn't compete for the same dock slot anymore,
+  // same independence Legend already had, so opening/closing it no longer
+  // touches these five and vice versa.
   const openDetailsPanel = useCallback((nodeId: string) => {
     setRequiredTagsPanelOpen(false)
     setDiagnosticsPanelOpen(false)
-    setHighlightsPanelOpen(false)
     setSettingsPanelOpen(false)
     setLayerPanelOpen(false)
     setDetailsPanelNodeId(nodeId)
@@ -772,7 +781,6 @@ function CanvasInner(): React.JSX.Element {
   const toggleRequiredTagsPanel = useCallback(() => {
     setDetailsPanelNodeId(null)
     setDiagnosticsPanelOpen(false)
-    setHighlightsPanelOpen(false)
     setSettingsPanelOpen(false)
     setLayerPanelOpen(false)
     setRequiredTagsPanelOpen((open) => !open)
@@ -781,7 +789,6 @@ function CanvasInner(): React.JSX.Element {
   const toggleDiagnosticsPanel = useCallback(() => {
     setDetailsPanelNodeId(null)
     setRequiredTagsPanelOpen(false)
-    setHighlightsPanelOpen(false)
     setSettingsPanelOpen(false)
     setLayerPanelOpen(false)
     setDiagnosticsPanelOpen((open) => !open)
@@ -791,17 +798,15 @@ function CanvasInner(): React.JSX.Element {
     setDetailsPanelNodeId(null)
     setRequiredTagsPanelOpen(false)
     setDiagnosticsPanelOpen(false)
-    setHighlightsPanelOpen(false)
     setLayerPanelOpen(false)
     setSettingsPanelOpen((open) => !open)
   }, [])
 
-  const toggleHighlightsPanel = useCallback(() => {
-    setDetailsPanelNodeId(null)
-    setRequiredTagsPanelOpen(false)
-    setDiagnosticsPanelOpen(false)
-    setSettingsPanelOpen(false)
-    setLayerPanelOpen(false)
+  // Anchors the floating panel to whichever element opened it — same
+  // convention as toggleLegendPanel/iconPicker/colorPicker/linePicker's own
+  // anchorRect.
+  const toggleHighlightsPanel = useCallback((anchorRect: DOMRect) => {
+    setHighlightsPanelAnchor(anchorRect)
     setHighlightsPanelOpen((open) => !open)
   }, [])
 
@@ -810,7 +815,6 @@ function CanvasInner(): React.JSX.Element {
     setRequiredTagsPanelOpen(false)
     setDiagnosticsPanelOpen(false)
     setSettingsPanelOpen(false)
-    setHighlightsPanelOpen(false)
     setEntityHighlightNodeId(null)
     setLayerPanelOpen((open) => !open)
   }, [])
@@ -2138,9 +2142,6 @@ function CanvasInner(): React.JSX.Element {
             <button onClick={toggleDiagnosticsPanel}>
               Diagnostics{diagnostics.length > 0 ? ` (${diagnostics.length})` : ''}
             </button>
-            <button onClick={toggleHighlightsPanel}>
-              Highlights{highlights.length > 0 ? ` (${highlights.length})` : ''}
-            </button>
             <button onClick={toggleLayerPanel}>Layers…</button>
             <button onClick={toggleSettingsPanel}>Settings…</button>
             {currentPath && <span className="toolbar-path">{currentPath}</span>}
@@ -2197,6 +2198,18 @@ function CanvasInner(): React.JSX.Element {
                       <line x1="10" y1="7" x2="20" y2="7" stroke="currentColor" strokeWidth="2" />
                       <circle cx="5" cy="17" r="2.5" fill="currentColor" />
                       <line x1="10" y1="17" x2="20" y2="17" stroke="currentColor" strokeWidth="2" />
+                    </svg>
+                  </ControlButton>
+                  <ControlButton
+                    title={`Highlights${highlights.length > 0 ? ` (${highlights.length})` : ''}`}
+                    aria-label="Show highlights"
+                    onClick={(event) => toggleHighlightsPanel(event.currentTarget.getBoundingClientRect())}
+                  >
+                    <svg viewBox="0 0 24 24" width="16" height="16">
+                      <path
+                        d="M12 3 L14.5 9.5 L21 12 L14.5 14.5 L12 21 L9.5 14.5 L3 12 L9.5 9.5 Z"
+                        fill="currentColor"
+                      />
                     </svg>
                   </ControlButton>
                 </Controls>
@@ -2312,6 +2325,21 @@ function CanvasInner(): React.JSX.Element {
               onClose={() => setLegendPanelOpen(false)}
             />
           )}
+          {highlightsPanelOpen && (
+            <HighlightsPanel
+              highlights={highlights}
+              enabledIds={enabledHighlightIds}
+              usedTags={usedTags}
+              anchorRect={highlightsPanelAnchor}
+              onAdd={addHighlight}
+              onUpdateColor={updateHighlightColor}
+              onRemove={removeHighlight}
+              onToggle={toggleHighlightEnabled}
+              onToggleGroup={toggleHighlightGroup}
+              onAddOrResyncGroup={addOrResyncHighlightGroup}
+              onClose={() => setHighlightsPanelOpen(false)}
+            />
+          )}
         </div>
         <UtilityDock>
           {detailsPanelNodeId && (
@@ -2336,20 +2364,6 @@ function CanvasInner(): React.JSX.Element {
               entries={diagnostics}
               onRecheck={() => runSync(requiredTags)}
               onClose={() => setDiagnosticsPanelOpen(false)}
-            />
-          )}
-          {highlightsPanelOpen && (
-            <HighlightsPanel
-              highlights={highlights}
-              enabledIds={enabledHighlightIds}
-              usedTags={usedTags}
-              onAdd={addHighlight}
-              onUpdateColor={updateHighlightColor}
-              onRemove={removeHighlight}
-              onToggle={toggleHighlightEnabled}
-              onToggleGroup={toggleHighlightGroup}
-              onAddOrResyncGroup={addOrResyncHighlightGroup}
-              onClose={() => setHighlightsPanelOpen(false)}
             />
           )}
           {layerPanelOpen && (
