@@ -97,6 +97,30 @@ export interface HighlightDefinition {
   color: string
 }
 
+// Legend catalog — see epic 0037/ADR 0033. Each entry explains one visual
+// convention the diagram author deliberately used, in the author's own
+// words — never auto-derived from `highlights` or anything else. `color`
+// only applies to 'line'/'shape' kinds: this app's icons are fixed
+// multi-color bundled/custom assets, not tintable, so an 'icon' entry
+// carries no color at all (see the epic's Decided section for why a
+// background chip was also rejected — same ambiguity as a colored box).
+export type LegendEntryKind = 'line' | 'icon' | 'shape'
+export interface LegendEntry {
+  id: string
+  kind: LegendEntryKind
+  label: string
+  // 'line' and 'shape' kinds only.
+  color?: string
+  // 'line' kind only — same fields/vocabulary as EdgeStyle's, reusing the
+  // existing named line-style preset picker (ADR 0010) rather than a
+  // parallel one.
+  lineStyle?: LineStyleKind
+  startMarker?: MarkerKind
+  endMarker?: MarkerKind
+  // 'icon' kind only.
+  icon?: IconRef
+}
+
 export type LineStyleKind = 'solid' | 'dashed' | 'dotted'
 export type MarkerKind =
   | 'none'
@@ -177,6 +201,10 @@ export interface DiagramFile {
   metadata?: Record<string, JsonValue>
   requiredTags?: RequiredTagDefinition[]
   highlights?: HighlightDefinition[]
+  // Legend catalog — see epic 0037/ADR 0033. Unlike `highlights`, there is
+  // no separate "enabled" concept per entry; the whole panel's shown/hidden
+  // state is what's session-local (never stored here), not per-entry.
+  legend?: LegendEntry[]
   nodes: DiagramNode[]
   edges: DiagramEdge[]
 }
@@ -227,6 +255,7 @@ export function serializeDiagram(diagram: DiagramFile): string {
       : undefined,
     requiredTags: diagram.requiredTags && diagram.requiredTags.length > 0 ? diagram.requiredTags : undefined,
     highlights: diagram.highlights && diagram.highlights.length > 0 ? diagram.highlights : undefined,
+    legend: diagram.legend && diagram.legend.length > 0 ? diagram.legend : undefined,
     nodes: diagram.nodes.map((n) => ({
       id: n.id,
       type: n.type,

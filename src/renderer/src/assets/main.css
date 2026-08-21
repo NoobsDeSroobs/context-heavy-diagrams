@@ -1322,6 +1322,227 @@ body {
   background: var(--ev-button-alt-hover-bg);
 }
 
+/* Legend panel — see epic 0037/ADR 0033. Deliberately NOT the shared
+   .highlights-panel/.settings-panel UtilityDock shell (that's a fixed-size
+   right-side dock slot) — this is a small floating box positioned next to
+   the canvas's bottom-left <Controls> widget, same `position: fixed`
+   family as .icon-picker but anchored from the bottom instead of the top. */
+.legend-panel {
+  position: fixed;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  max-height: 320px;
+  background: var(--color-background-soft);
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  cursor: default;
+}
+
+.legend-panel-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  border-bottom: 1px solid var(--ev-c-gray-2);
+}
+
+.legend-panel-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.legend-panel-toolbar button {
+  cursor: pointer;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  min-width: 26px;
+}
+
+.legend-panel-toolbar button:hover {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.legend-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.legend-panel-hint {
+  font-size: 12px;
+  color: var(--ev-c-text-3);
+  margin: 0;
+}
+
+.legend-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+/* Generous default width for the swatch column — a dashed/dotted line
+   needs real horizontal room to actually read as dashed rather than
+   aliasing into what looks like a solid line at a glance. */
+.legend-swatch-slot {
+  position: relative;
+  flex: 0 0 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.legend-swatch {
+  flex: 0 0 auto;
+}
+
+.legend-swatch-icon {
+  width: 28px;
+  height: 28px;
+}
+
+/* A circle, deliberately never a box — see ADR 0033's reasoning: a
+   rectangle risks implying the meaning only applies to rectangular
+   shapes, where a plain color chip reads as "this color means X." */
+.legend-swatch-dot {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--ev-c-gray-1);
+}
+
+/* Invisible on top of the swatch itself — no separate visible color box
+   competing for row width, but the whole swatch stays clickable to change
+   color. Sized to cover the widest swatch (the line) so the click target
+   is generous for every kind. */
+.legend-swatch-color-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.legend-row-label {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+  white-space: normal;
+  padding-top: 2px;
+}
+
+.legend-row-remove {
+  cursor: pointer;
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: var(--ev-c-text-3);
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 4px;
+}
+
+.legend-add-button {
+  cursor: pointer;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+.legend-kind-picker,
+.legend-draft-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.legend-kind-picker button,
+.legend-draft-actions button {
+  cursor: pointer;
+  flex: 1;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 6px 4px;
+  font-size: 12px;
+}
+
+.legend-draft-actions button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.legend-icon-subpicker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.legend-icon-subpicker > button {
+  cursor: pointer;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+.legend-draft-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.legend-draft-color {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--color-text);
+}
+
+.legend-draft-color input {
+  width: 28px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.legend-draft-label {
+  font: inherit;
+  font-size: 12px;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  padding: 4px 6px;
+}
+
 /* Small color chips shown on a node/edge when 2+ enabled highlights match
    it at once (single-match instead overrides the border/stroke directly —
    see ShapeNode/ContainerNode/LabeledEdge). Positioning (node corner vs.

@@ -19,6 +19,9 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
   "highlights": [
     { "key": "environment", "value": "prod", "color": "#e6194b" }
   ],
+  "legend": [
+    { "id": "legend-1", "kind": "line", "label": "Sensitive data transfer", "color": "#e6194b", "lineStyle": "solid", "startMarker": "none", "endMarker": "arrowClosed" }
+  ],
   "nodes": [ /* Node objects */ ],
   "edges": [ /* Edge objects */ ]
 }
@@ -31,6 +34,7 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
 | `metadata` | object | Diagram-level free-form key/value bag — plain JSON values, no locking concept at this level (that's what `requiredTags` is for). Absent means none set. See [Metadata](#metadata) below for the value shape's general rules (this is the same `JsonValue` type, just not wrapped in a per-entry `MetadataEntry`). |
 | `requiredTags` | array of RequiredTagDefinition | The diagram's own template for what every Shape/Container/Edge must carry — see [Required tags](#required-tags) below. Absent means no required tags. |
 | `highlights` | array of HighlightDefinition | Saved catalog of tag-based visual highlights — see [Highlights](#highlights) below. Absent means no highlights defined. Note there is no on/off state stored here: this app treats "which highlights are currently enabled" as local, in-memory, per-session state, never written to the file — a reader that only cares about reading the file back doesn't need to reconstruct or care about that. |
+| `legend` | array of LegendEntry | Saved catalog of manually-authored legend entries explaining the diagram's own visual conventions — see [Legend](#legend) below. Absent means no legend defined. Like `highlights`, whether the legend panel is currently shown is local, in-memory, per-session state, never written to the file. |
 | `nodes` | array of Node | See below. |
 | `edges` | array of Edge | See below. |
 
@@ -214,6 +218,31 @@ A saved catalog of visual highlights — `highlights` on the top-level object �
 
 **Enabled/disabled state is deliberately not part of this file.** Only the catalog of *available* highlights is persisted — whether a given highlight happens to be switched on right now is local, in-memory, per-session UI state in this app, reset every time the file is (re)opened. A reader doesn't need to track or reproduce this; it isn't in the file to begin with.
 
+## Legend
+
+A saved catalog of legend entries — `legend` on the top-level object — each one explaining, in the diagram author's own words, what a color/line style/icon means in this specific diagram. Unlike [Highlights](#highlights), entries here are manually authored and not derived from or linked to any other data (metadata, highlights, or otherwise); a legend entry has no matching behavior at all, it exists purely to be displayed.
+
+```json
+[
+  { "id": "legend-1", "kind": "line", "label": "Sensitive data transfer", "color": "#e6194b", "lineStyle": "solid", "startMarker": "none", "endMarker": "arrowClosed" },
+  { "id": "legend-2", "kind": "line", "label": "Planned, not yet built", "color": "#4a5568", "lineStyle": "dashed", "startMarker": "none", "endMarker": "arrowClosed" },
+  { "id": "legend-3", "kind": "shape", "label": "GDPR-relevant data", "color": "#e6194b" },
+  { "id": "legend-4", "kind": "icon", "label": "Managed database", "icon": { "source": "builtin", "id": "database" } }
+]
+```
+
+| Field | Type | Required | Meaning |
+|---|---|---|---|
+| `id` | string | yes | Unique within the file. No other significance. |
+| `kind` | `"line"` \| `"icon"` \| `"shape"` | yes | Which visual property this entry explains. `"line"` renders a short sample line/arrow; `"icon"` renders the referenced icon as-is; `"shape"` renders a plain colored circle (deliberately a circle, not a box — see [ADR 0033](decisions/0033-diagram-legend-design.md), a box risks implying the meaning only applies to rectangular shapes). |
+| `label` | string | yes | Free-text explanation, shown next to the rendered swatch. |
+| `color` | string (CSS color) | no | The swatch's display color. Valid for `"line"` and `"shape"` kinds only. Never set for `"icon"` — this app's icons are fixed multi-color assets, not tintable, so an icon entry's color is meaningless and should be ignored by a reader if present. |
+| `lineStyle` | `"solid"` \| `"dashed"` \| `"dotted"` | no | `"line"` kind only. Same vocabulary as an Edge's own `style.lineStyle` — see [Edge](#edge) above. |
+| `startMarker` / `endMarker` | MarkerKind | no | `"line"` kind only. Same vocabulary as an Edge's own `style.startMarker`/`style.endMarker`. |
+| `icon` | IconRef | no (yes for `"icon"` kind) | `"icon"` kind only. Same shape as a Node's `data.icons.*` entries — see [Node](#node) above. |
+
+**Shown/hidden state is deliberately not part of this file**, same treatment as highlight enablement above — the catalog is shared, whether the legend panel is currently open is local, in-memory, per-session UI state, always starting closed.
+
 ## Determinism
 
 Files are written with a fixed key order (matching the tables above) and 2-space indentation, plus a trailing newline. This is deliberate: two saves of an unchanged diagram produce byte-identical output, so git diffs only show real changes. A compatible writer should aim for the same property if it wants clean diffs, though it isn't required for a file to be readable.
@@ -228,7 +257,7 @@ The `.chd` file itself is always plain, deterministic JSON — kept git-friendly
 
 ## Versioning
 
-`version` is currently always `1`. Fields have been added over time (`size`, `rotation`, `connectionPoints`, `parentId`, `style` on both Node and Edge, edge `type`/`label`, `data.icons`, `data.details`, `data.linkedDiagram`, top-level `metadata`/`requiredTags`/`highlights`, `metadata` on both Node and Edge, and Edge style's `labelPosition`) but always additively — a reader from an earlier point in this project's history can still open a newer file and just won't recognize the newer fields. The same holds in reverse: this app's own current code must still open a file from *before* one of these fields existed, without failing or requiring migration — see [ADR 0029](decisions/0029-backward-compatible-loading-is-a-standing-rule.md), which makes this a standing rule for every future field, not just an incidental property of the fields added so far. A breaking change to the meaning of an existing field would bump `version`; nothing has required that yet.
+`version` is currently always `1`. Fields have been added over time (`size`, `rotation`, `connectionPoints`, `parentId`, `style` on both Node and Edge, edge `type`/`label`, `data.icons`, `data.details`, `data.linkedDiagram`, top-level `metadata`/`requiredTags`/`highlights`/`legend`, `metadata` on both Node and Edge, and Edge style's `labelPosition`) but always additively — a reader from an earlier point in this project's history can still open a newer file and just won't recognize the newer fields. The same holds in reverse: this app's own current code must still open a file from *before* one of these fields existed, without failing or requiring migration — see [ADR 0029](decisions/0029-backward-compatible-loading-is-a-standing-rule.md), which makes this a standing rule for every future field, not just an incidental property of the fields added so far. A breaking change to the meaning of an existing field would bump `version`; nothing has required that yet.
 
 ## Example
 

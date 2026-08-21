@@ -4,6 +4,7 @@ import {
   ReactFlowProvider,
   Background,
   Controls,
+  ControlButton,
   MiniMap,
   MarkerType,
   ConnectionMode,
@@ -30,6 +31,7 @@ import {
   type IconRef,
   type IconSlot,
   type JsonValue,
+  type LegendEntry,
   type MetadataEntry,
   type NodeStyle,
   type RequiredTagDefinition
@@ -50,6 +52,7 @@ import DetailsPanel from './components/DetailsPanel'
 import RequiredTagsPanel from './components/RequiredTagsPanel'
 import DiagnosticsPanel from './components/DiagnosticsPanel'
 import HighlightsPanel from './components/HighlightsPanel'
+import LegendPanel from './components/LegendPanel'
 import SettingsPanel from './components/SettingsPanel'
 import DiagramDock from './panels/DiagramDock'
 import UtilityDock from './panels/UtilityDock'
@@ -189,13 +192,15 @@ function toDiagramFile(
   viewport: Viewport,
   metadata: Record<string, JsonValue>,
   requiredTags: RequiredTagDefinition[],
-  highlights: HighlightDefinition[]
+  highlights: HighlightDefinition[],
+  legend: LegendEntry[]
 ): DiagramFile {
   return {
     version: 1,
     viewport,
     metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
     highlights: highlights.length > 0 ? highlights : undefined,
+    legend: legend.length > 0 ? legend : undefined,
     requiredTags: requiredTags.length > 0 ? requiredTags : undefined,
     nodes: nodes.map((n) => ({
       id: n.id,
@@ -239,9 +244,11 @@ function fromDiagramFile(diagram: DiagramFile): {
   metadata: Record<string, JsonValue>
   requiredTags: RequiredTagDefinition[]
   highlights: HighlightDefinition[]
+  legend: LegendEntry[]
 } {
   return {
     highlights: diagram.highlights ?? [],
+    legend: diagram.legend ?? [],
     // sortNodesForHierarchy defensively re-orders in case an external
     // writer didn't honor the parent-before-child requirement — see
     // docs/file-format.md's parentId entry.
@@ -390,6 +397,15 @@ function CanvasInner(): React.JSX.Element {
   // reset on every load, never included in toDiagramFile's payload.
   const [highlights, setHighlights] = useState<HighlightDefinition[]>([])
   const [enabledHighlightIds, setEnabledHighlightIds] = useState<Set<string>>(new Set())
+  // Legend catalog (epic 0037/ADR 0033) — same file-scoped, persisted
+  // treatment as highlights above. Unlike highlights, there's no per-entry
+  // enabled state; the whole panel's shown/hidden state below is what's
+  // session-local instead.
+  const [legend, setLegend] = useState<LegendEntry[]>([])
+  const [legendPanelOpen, setLegendPanelOpen] = useState(false)
+  // Anchors the floating panel next to whichever <ControlButton> opened it —
+  // same convention as iconPicker/colorPicker/linePicker's own anchorRect.
+  const [legendPanelAnchor, setLegendPanelAnchor] = useState<DOMRect | null>(null)
   // Non-blocking notices from the most recent syncElementMetadata pass —
   // deliberately *replaced*, not appended, on every sync: this reflects
   // current state (what the last backfill run had to correct), not a
@@ -786,6 +802,29 @@ function CanvasInner(): React.JSX.Element {
       }
       return next
     })
+  }, [])
+
+  // Legend CRUD — no uniqueness constraint (unlike highlights, two entries
+  // can legitimately look identical, e.g. two red dots explaining two
+  // different unrelated conventions) and no undo/redo integration, same
+  // treatment as the highlight catalog above.
+  const addLegendEntry = useCallback((entry: Omit<LegendEntry, 'id'>) => {
+    setLegend((prev) => [...prev, { ...entry, id: newNodeId('legend') }])
+  }, [])
+
+  const updateLegendEntry = useCallback((id: string, patch: Partial<Omit<LegendEntry, 'id'>>) => {
+    setLegend((prev) => prev.map((entry) => (entry.id === id ? { ...entry, ...patch } : entry)))
+  }, [])
+
+  const removeLegendEntry = useCallback((id: string) => {
+    setLegend((prev) => prev.filter((entry) => entry.id !== id))
+  }, [])
+
+  // Anchors the floating panel to whichever element opened it — same
+  // convention as iconPicker/colorPicker/linePicker's own anchorRect.
+  const toggleLegendPanel = useCallback((anchorRect: DOMRect) => {
+    setLegendPanelAnchor(anchorRect)
+    setLegendPanelOpen((open) => !open)
   }, [])
 
   // Every distinct key/value pair currently tagged somewhere in the
@@ -1497,13 +1536,14 @@ function CanvasInner(): React.JSX.Element {
         rfInstance.getViewport(),
         diagramMetadata,
         requiredTags,
-        highlights
+        highlights,
+        legend
       )
       await window.api.saveDiagram(path, diagram)
       setNodes(savedNodes)
       return savedNodes
     },
-    [edges, rfInstance, flushDetailsDrafts, setNodes, diagramMetadata, requiredTags, highlights]
+    [edges, rfInstance, flushDetailsDrafts, setNodes, diagramMetadata, requiredTags, highlights, legend]
   )
 
   // Brief "Saved" confirmation next to the toolbar's Save button — the
@@ -1558,7 +1598,8 @@ function CanvasInner(): React.JSX.Element {
         edges: openedEdges,
         metadata: openedMetadata,
         requiredTags: openedRequiredTags,
-        highlights: openedHighlights
+        highlights: openedHighlights,
+        legend: openedLegend
       } = fromDiagramFile(diagram)
       // A different diagram entirely — old undo history doesn't apply to
       // it (and, worse, undoing across a load boundary would try to
@@ -1575,6 +1616,10 @@ function CanvasInner(): React.JSX.Element {
       // Enabled state is deliberately never loaded from the file — always
       // starts at none-enabled, ADR 0025's "split persistence" decision.
       setEnabledHighlightIds(new Set())
+      setLegend(openedLegend)
+      // Shown/hidden state is deliberately never loaded from the file either
+      // — always starts closed, same split-persistence treatment (ADR 0033).
+      setLegendPanelOpen(false)
       setDetailsDrafts({})
       setContextMenu(null)
       setIconPicker(null)
@@ -1990,7 +2035,20 @@ function CanvasInner(): React.JSX.Element {
                 fitView
               >
                 <Background />
-                <Controls />
+                <Controls>
+                  <ControlButton
+                    title="Show legend"
+                    aria-label="Show legend"
+                    onClick={(event) => toggleLegendPanel(event.currentTarget.getBoundingClientRect())}
+                  >
+                    <svg viewBox="0 0 24 24" width="16" height="16">
+                      <circle cx="5" cy="7" r="2.5" fill="currentColor" />
+                      <line x1="10" y1="7" x2="20" y2="7" stroke="currentColor" strokeWidth="2" />
+                      <circle cx="5" cy="17" r="2.5" fill="currentColor" />
+                      <line x1="10" y1="17" x2="20" y2="17" stroke="currentColor" strokeWidth="2" />
+                    </svg>
+                  </ControlButton>
+                </Controls>
                 <MiniMap />
               </ReactFlow>
               <AlignmentGuides guides={alignmentGuides} />
@@ -2083,6 +2141,17 @@ function CanvasInner(): React.JSX.Element {
                 setLinePicker(null)
               }}
               onClose={() => setLinePicker(null)}
+            />
+          )}
+          {legendPanelOpen && (
+            <LegendPanel
+              diagramPath={currentPath}
+              legend={legend}
+              anchorRect={legendPanelAnchor}
+              onAdd={addLegendEntry}
+              onUpdate={updateLegendEntry}
+              onRemove={removeLegendEntry}
+              onClose={() => setLegendPanelOpen(false)}
             />
           )}
         </div>
