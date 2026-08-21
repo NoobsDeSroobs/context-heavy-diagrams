@@ -13,6 +13,7 @@ import HighlightChips from '../components/HighlightChips'
 import { useDiagramContext } from '../DiagramContext'
 import { HIGHLIGHT_BORDER_WIDTH } from '../highlights'
 import { withOpacity } from '../styles/colorOpacity'
+import { themeAdaptiveColor } from '../styles/themeAdaptiveColor'
 import { markerUrl } from './markerIds'
 
 // solid has no dasharray at all (undefined, not '0'), matching a plain
@@ -126,7 +127,7 @@ function LabeledEdge({
   data
 }: EdgeProps): React.JSX.Element {
   const { updateEdgeData } = useReactFlow()
-  const { matchHighlights, edgeStraightSegmentLength } = useDiagramContext()
+  const { matchHighlights, edgeStraightSegmentLength, theme } = useDiagramContext()
   const edgeStyle = data?.style as EdgeStyle | undefined
   const highlightMatches = matchHighlights(data?.metadata as Record<string, MetadataEntry> | undefined)
   const edgePath = useMemo(
@@ -153,7 +154,9 @@ function LabeledEdge({
     highlightMatches.length === 1 ? HIGHLIGHT_BORDER_WIDTH : (edgeStyle?.strokeWidth ?? DEFAULT_STROKE_WIDTH)
   const computedStyle: CSSProperties = {
     ...style,
-    ...(edgeStyle?.stroke ? { stroke: withOpacity(edgeStyle.stroke, edgeStyle.strokeOpacity) } : {}),
+    ...(edgeStyle?.stroke
+      ? { stroke: withOpacity(themeAdaptiveColor(edgeStyle.stroke, theme), edgeStyle.strokeOpacity) }
+      : {}),
     strokeWidth: selected ? baseStrokeWidth + SELECTED_STROKE_WIDTH_DELTA : baseStrokeWidth,
     ...(edgeStyle?.lineStyle ? { strokeDasharray: DASH_ARRAY[edgeStyle.lineStyle] } : {}),
     // A single matching highlight overrides the stroke color, same
@@ -168,7 +171,9 @@ function LabeledEdge({
 
   const labelStyle: CSSProperties = {
     ...(edgeStyle?.fontSize != null ? { fontSize: edgeStyle.fontSize } : {}),
-    ...(edgeStyle?.fontColor ? { color: withOpacity(edgeStyle.fontColor, edgeStyle.fontOpacity) } : {}),
+    ...(edgeStyle?.fontColor
+      ? { color: withOpacity(themeAdaptiveColor(edgeStyle.fontColor, theme), edgeStyle.fontOpacity) }
+      : {}),
     ...(edgeStyle?.fontWeight ? { fontWeight: edgeStyle.fontWeight } : {}),
     ...(edgeStyle?.fontFamily ? { fontFamily: edgeStyle.fontFamily } : {})
   }

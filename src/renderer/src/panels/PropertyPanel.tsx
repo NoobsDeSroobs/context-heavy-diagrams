@@ -1,5 +1,7 @@
 import type { Edge, Node } from '@xyflow/react'
 import type { EdgeStyle, MarkerKind, MetadataEntry, NodeStyle, RequiredTagDefinition } from '@shared/diagram'
+import { useDiagramContext } from '../DiagramContext'
+import { themeAdaptiveColor } from '../styles/themeAdaptiveColor'
 import { CollapsibleSection, ColorField, NumberField, SliderField, SelectField } from './fields'
 import { computeFieldValue } from './fieldValue'
 import MetadataSection from './MetadataSection'
@@ -88,6 +90,7 @@ function NodeStyleFields({
   endContinuousEdit: () => void
   pushSnapshot: () => void
 }): React.JSX.Element {
+  const { theme } = useDiagramContext()
   const fill = computeFieldValue(nodes, (n) => nodeStyleOf(n).fill)
   const fillOpacity = computeFieldValue(nodes, (n) => nodeStyleOf(n).fillOpacity)
   const stroke = computeFieldValue(nodes, (n) => nodeStyleOf(n).stroke)
@@ -110,9 +113,9 @@ function NodeStyleFields({
       <CollapsibleSection title="Fill">
         <ColorField
           label="Fill"
-          value={fill.value}
+          value={themeAdaptiveColor(fill.value, theme)}
           mixed={fill.mixed}
-          onChange={(v) => updateStyle({ fill: v })}
+          onChange={(v) => updateStyle({ fill: themeAdaptiveColor(v, theme) })}
           onSessionStart={beginContinuousEdit}
           onSessionEnd={endContinuousEdit}
         />
@@ -128,9 +131,9 @@ function NodeStyleFields({
       <CollapsibleSection title="Border">
         <ColorField
           label="Color"
-          value={stroke.value}
+          value={themeAdaptiveColor(stroke.value, theme)}
           mixed={stroke.mixed}
-          onChange={(v) => updateStyle({ stroke: v })}
+          onChange={(v) => updateStyle({ stroke: themeAdaptiveColor(v, theme) })}
           onSessionStart={beginContinuousEdit}
           onSessionEnd={endContinuousEdit}
         />
@@ -172,9 +175,9 @@ function NodeStyleFields({
         />
         <ColorField
           label="Color"
-          value={fontColor.value}
+          value={themeAdaptiveColor(fontColor.value, theme)}
           mixed={fontColor.mixed}
-          onChange={(v) => updateStyle({ fontColor: v })}
+          onChange={(v) => updateStyle({ fontColor: themeAdaptiveColor(v, theme) })}
           onSessionStart={beginContinuousEdit}
           onSessionEnd={endContinuousEdit}
         />
@@ -273,6 +276,7 @@ function EdgeFields({
   endContinuousEdit: () => void
   pushSnapshot: () => void
 }): React.JSX.Element {
+  const { theme } = useDiagramContext()
   const startMarker = computeFieldValue(edges, (e) => edgeStyleOf(e).startMarker)
   const endMarker = computeFieldValue(edges, (e) => edgeStyleOf(e).endMarker)
   const stroke = computeFieldValue(edges, (e) => edgeStyleOf(e).stroke)
@@ -301,9 +305,9 @@ function EdgeFields({
       <CollapsibleSection title="Line">
         <ColorField
           label="Color"
-          value={stroke.value}
+          value={themeAdaptiveColor(stroke.value, theme)}
           mixed={stroke.mixed}
-          onChange={(v) => updateStyle({ stroke: v })}
+          onChange={(v) => updateStyle({ stroke: themeAdaptiveColor(v, theme) })}
           onSessionStart={beginContinuousEdit}
           onSessionEnd={endContinuousEdit}
         />
@@ -376,9 +380,9 @@ function EdgeFields({
         />
         <ColorField
           label="Color"
-          value={fontColor.value}
+          value={themeAdaptiveColor(fontColor.value, theme)}
           mixed={fontColor.mixed}
-          onChange={(v) => updateStyle({ fontColor: v })}
+          onChange={(v) => updateStyle({ fontColor: themeAdaptiveColor(v, theme) })}
           onSessionStart={beginContinuousEdit}
           onSessionEnd={endContinuousEdit}
         />

@@ -39,7 +39,8 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
     openDetailsPanel,
     handleLinkClick,
     pushSnapshot,
-    matchHighlights
+    matchHighlights,
+    theme
   } = useDiagramContext()
   const { updateNodeData } = useReactFlow()
 
@@ -123,7 +124,7 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
   return (
     <div
       className="shape-node"
-      style={{ ...nodeContainerCss(style), ...highlightCss }}
+      style={{ ...nodeContainerCss(style, theme), ...highlightCss }}
       onContextMenu={onContextMenu}
       onClick={onClick}
       title={tooltip}
@@ -146,7 +147,7 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
       <EditableLabel
         className="shape-node-label"
         inputClassName="shape-node-label-input"
-        style={nodeLabelCss(style)}
+        style={nodeLabelCss(style, theme)}
         value={String(data?.label ?? '')}
         onCommit={(label) => {
           pushSnapshot()

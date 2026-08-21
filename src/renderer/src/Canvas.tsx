@@ -61,6 +61,7 @@ import { SNAP_THRESHOLD_PX, boundsFrom, computeSnap } from './alignment'
 import type { TransformPatch } from './panels/PropertyPanel'
 import { useTheme } from './theme'
 import { useSettings } from './settings'
+import { themeAdaptiveColor } from './styles/themeAdaptiveColor'
 
 // Defined at module scope so React Flow gets a stable reference — recreating
 // these objects every render triggers a React Flow warning and remounts.
@@ -1954,7 +1955,8 @@ function CanvasInner(): React.JSX.Element {
         pushSnapshot,
         attachContainedNodes,
         matchHighlights,
-        edgeStraightSegmentLength: settings.edgeStraightSegmentLength
+        edgeStraightSegmentLength: settings.edgeStraightSegmentLength,
+        theme
       }}
     >
       {/* Outer app shell: [canvas view [diagram dock]] [utility dock], nested
@@ -2105,7 +2107,10 @@ function CanvasInner(): React.JSX.Element {
             <ColorPickerPopup
               title={colorPicker.kind === 'fill' ? 'Fill' : 'Border'}
               anchorRect={colorPicker.anchorRect}
-              color={colorPicker.kind === 'fill' ? colorPickerStyle.fill : colorPickerStyle.stroke}
+              color={themeAdaptiveColor(
+                colorPicker.kind === 'fill' ? colorPickerStyle.fill : colorPickerStyle.stroke,
+                theme
+              )}
               opacity={
                 colorPicker.kind === 'fill' ? colorPickerStyle.fillOpacity : colorPickerStyle.strokeOpacity
               }
@@ -2113,7 +2118,9 @@ function CanvasInner(): React.JSX.Element {
               onChangeColor={(value) =>
                 updateNodeStyle(
                   [colorPicker.nodeId],
-                  colorPicker.kind === 'fill' ? { fill: value } : { stroke: value }
+                  colorPicker.kind === 'fill'
+                    ? { fill: themeAdaptiveColor(value, theme) }
+                    : { stroke: themeAdaptiveColor(value, theme) }
                 )
               }
               onChangeOpacity={(value) =>

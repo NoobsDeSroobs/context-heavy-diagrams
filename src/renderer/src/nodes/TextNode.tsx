@@ -24,7 +24,8 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
     handleLinkClick,
     beginContinuousEdit,
     endContinuousEdit,
-    pushSnapshot
+    pushSnapshot,
+    theme
   } = useDiagramContext()
   const rotation = typeof data?.rotation === 'number' ? (data.rotation as number) : 0
   const nodeRef = useRef<HTMLDivElement>(null)
@@ -116,7 +117,7 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
     <div
       ref={nodeRef}
       className={`text-node${rotating ? ' rotating' : ''}`}
-      style={{ transform: `rotate(${rotation}deg)`, ...nodeContainerCss(style) }}
+      style={{ transform: `rotate(${rotation}deg)`, ...nodeContainerCss(style, theme) }}
       onContextMenu={onContextMenu}
       onClick={onClick}
       title={tooltip}
@@ -132,7 +133,7 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
       <EditableLabel
         className="text-node-label"
         inputClassName="text-node-label-input"
-        style={nodeLabelCss(style)}
+        style={nodeLabelCss(style, theme)}
         value={String(data?.label ?? '')}
         onCommit={(label) => {
           pushSnapshot()

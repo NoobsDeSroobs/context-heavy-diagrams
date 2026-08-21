@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react'
 import type { HighlightDefinition, MetadataEntry } from '@shared/diagram'
 import type { ContextMenuItem } from './components/ContextMenu'
+import type { Theme } from './theme'
 
 export interface DiagramContextValue {
   // Current file path, or null for an unsaved diagram — nodes need this to
@@ -50,6 +51,10 @@ export interface DiagramContextValue {
   // diagram content — same "thread it through context so edges don't need
   // Canvas's own state directly" reasoning as matchHighlights above.
   edgeStraightSegmentLength: number
+  // Current resolved theme — needed by every render/edit site that touches
+  // an explicit fill/stroke/fontColor, for the theme-adaptive Value flip
+  // (epic 0040/ADR 0034). Same threading reasoning as the two fields above.
+  theme: Theme
 }
 
 const DiagramContext = createContext<DiagramContextValue | null>(null)
