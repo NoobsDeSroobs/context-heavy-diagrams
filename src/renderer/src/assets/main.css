@@ -364,6 +364,33 @@ body {
   opacity: 1;
 }
 
+/* Line node's own point handles (epic 0064/ADR 0050) — plain positioned
+   divs, not React Flow Handles (those are for connections; these just
+   reposition a point), so they get their own hover-reveal rule matching
+   the one above. */
+.line-node-point {
+  border-radius: 50%;
+  background: var(--color-background-soft);
+  border: 1.5px solid var(--ev-c-gray-1);
+  opacity: 0;
+  transition: opacity 0.1s ease;
+  cursor: grab;
+  /* Canvas.tsx sets the line node's own wrapper to pointer-events: none
+     (see its zIndexedNodes comment) so empty space inside the bounding box
+     — e.g. the inside of a U-bend — doesn't intercept clicks/drags. This
+     div is inherited-into that 'none' like everything else in the node
+     unless reset explicitly here. */
+  pointer-events: auto;
+}
+
+.line-node:hover .line-node-point {
+  opacity: 1;
+}
+
+.line-node-point:active {
+  cursor: grabbing;
+}
+
 .text-node {
   width: 100%;
   height: 100%;
@@ -538,6 +565,12 @@ body {
 
 .context-menu-item:hover {
   background: var(--ev-button-alt-hover-bg);
+}
+
+.context-menu-separator {
+  height: 1px;
+  margin: 4px 2px;
+  background: var(--ev-c-gray-2);
 }
 
 .icon-picker {
@@ -840,6 +873,14 @@ body {
   border: none;
   border-bottom: 2px solid currentColor;
   margin-top: 7px;
+}
+
+.item-palette-icon-line {
+  height: 2px;
+  border: none;
+  border-bottom: 2px solid currentColor;
+  margin-top: 7px;
+  transform: rotate(-20deg);
 }
 
 .property-panel {
@@ -1455,6 +1496,13 @@ body {
 
 .required-tag-value-row-new .required-tag-value-input {
   color: var(--ev-c-text-3);
+}
+
+/* Gravity presets panel (epic 0064/ADR 0050) — reuses .required-tag-value-*
+   row/list shape above, just a narrower second input for the numeric
+   value next to the label. */
+.gravity-preset-value-input {
+  flex: 0 0 64px;
 }
 
 .required-tag-value-move,

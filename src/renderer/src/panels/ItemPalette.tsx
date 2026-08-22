@@ -6,11 +6,13 @@
 export default function ItemPalette({
   onAddShape,
   onAddText,
-  onAddContainer
+  onAddContainer,
+  onAddLine
 }: {
   onAddShape: () => void
   onAddText: () => void
   onAddContainer: () => void
+  onAddLine: () => void
 }): React.JSX.Element {
   return (
     <div className="item-palette">
@@ -26,6 +28,10 @@ export default function ItemPalette({
       <button type="button" className="item-palette-button" onClick={onAddText}>
         <span className="item-palette-icon item-palette-icon-text" />
         Text
+      </button>
+      <button type="button" className="item-palette-button" onClick={onAddLine}>
+        <span className="item-palette-icon item-palette-icon-line" />
+        Line
       </button>
     </div>
   )

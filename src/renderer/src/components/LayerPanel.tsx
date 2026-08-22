@@ -15,10 +15,11 @@ interface LayerPanelProps {
   onClose: () => void
 }
 
-// 'shape' | 'container' | 'text' | 'anchor' (never listed here, no label)
-// — anything unrecognized falls back to its first letter uppercased, same
-// lenient spirit as docs/file-format.md's own node `type` handling.
-const TYPE_BADGE: Record<string, string> = { shape: 'S', container: 'C', text: 'T' }
+// 'shape' | 'container' | 'text' | 'line' | 'anchor' (never listed here, no
+// label) — anything unrecognized falls back to its first letter
+// uppercased, same lenient spirit as docs/file-format.md's own node `type`
+// handling.
+const TYPE_BADGE: Record<string, string> = { shape: 'S', container: 'C', text: 'T', line: 'L' }
 
 // Same UtilityDock shell as Highlights/Required tags/Diagnostics/Settings —
 // see ADR 0035, unlike epic 0037's legend panel this one is explicitly a

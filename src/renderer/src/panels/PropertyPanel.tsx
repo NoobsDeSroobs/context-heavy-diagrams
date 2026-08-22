@@ -467,6 +467,117 @@ function EdgeFields({
   )
 }
 
+// 'line' nodes (epic 0064/ADR 0050) — same Start/Line/End shape as
+// EdgeFields above, reading/writing NodeStyle instead of EdgeStyle (they
+// share the same lineStyle/startMarker/endMarker fields), plus Locked
+// since a line has a real position/bounding box unlike an edge. No Fill/
+// Font/Transform — a line has no fill and no label in this pass, and its
+// shape is edited by dragging its own points on the canvas, not numeric
+// fields here.
+function LineStyleFields({
+  nodes,
+  updateStyle,
+  updateLocked,
+  beginContinuousEdit,
+  endContinuousEdit,
+  pushSnapshot
+}: {
+  nodes: Node[]
+  updateStyle: (patch: Partial<NodeStyle>) => void
+  updateLocked: (locked: boolean) => void
+  beginContinuousEdit: () => void
+  endContinuousEdit: () => void
+  pushSnapshot: () => void
+}): React.JSX.Element {
+  const { theme, paletteColors } = useDiagramContext()
+  const locked = computeFieldValue(nodes, (n) => n.data?.locked === true)
+  const startMarker = computeFieldValue(nodes, (n) => nodeStyleOf(n).startMarker)
+  const endMarker = computeFieldValue(nodes, (n) => nodeStyleOf(n).endMarker)
+  const stroke = computeFieldValue(nodes, (n) => nodeStyleOf(n).stroke)
+  const strokeOpacity = computeFieldValue(nodes, (n) => nodeStyleOf(n).strokeOpacity)
+  const strokeWidth = computeFieldValue(nodes, (n) => nodeStyleOf(n).strokeWidth)
+  const lineStyle = computeFieldValue(nodes, (n) => nodeStyleOf(n).lineStyle)
+
+  return (
+    <>
+      <FieldRow label="Locked">
+        <input
+          type="checkbox"
+          checked={locked.value ?? false}
+          ref={(el) => {
+            if (el) el.indeterminate = locked.mixed
+          }}
+          onChange={(e) => {
+            pushSnapshot()
+            updateLocked(e.target.checked)
+          }}
+          title="Blocks moving/editing the line's own points via the canvas — this panel stays allowed"
+        />
+      </FieldRow>
+      <CollapsibleSection title="Start">
+        <SelectField
+          label="Marker"
+          value={startMarker.value}
+          mixed={startMarker.mixed}
+          options={MARKER_OPTIONS}
+          onChange={(v) => updateStyle({ startMarker: v })}
+          pushSnapshot={pushSnapshot}
+        />
+      </CollapsibleSection>
+      <CollapsibleSection title="Line">
+        <ColorField
+          label="Color"
+          value={themeAdaptiveColor(stroke.value, theme)}
+          mixed={stroke.mixed}
+          onChange={(v) => updateStyle({ stroke: themeAdaptiveColor(v, theme) })}
+          onSessionStart={beginContinuousEdit}
+          onSessionEnd={endContinuousEdit}
+          paletteColors={paletteColors}
+        />
+        <SliderField
+          label="Opacity"
+          value={strokeOpacity.value}
+          mixed={strokeOpacity.mixed}
+          onChange={(v) => updateStyle({ strokeOpacity: v })}
+          onSessionStart={beginContinuousEdit}
+          onSessionEnd={endContinuousEdit}
+        />
+        <NumberField
+          label="Width"
+          value={strokeWidth.value}
+          mixed={strokeWidth.mixed}
+          min={0}
+          onChange={(v) => updateStyle({ strokeWidth: v })}
+          onSessionStart={beginContinuousEdit}
+          onSessionEnd={endContinuousEdit}
+        />
+        <SelectField
+          label="Style"
+          value={lineStyle.value}
+          mixed={lineStyle.mixed}
+          options={[
+            { value: 'solid', label: 'Solid' },
+            { value: 'dashed', label: 'Dashed' },
+            { value: 'dotted', label: 'Dotted' }
+          ]}
+          onChange={(v) => updateStyle({ lineStyle: v })}
+          pushSnapshot={pushSnapshot}
+        />
+      </CollapsibleSection>
+      <CollapsibleSection title="End">
+        <SelectField
+          label="Marker"
+          value={endMarker.value}
+          mixed={endMarker.mixed}
+          options={MARKER_OPTIONS}
+          onChange={(v) => updateStyle({ endMarker: v })}
+          pushSnapshot={pushSnapshot}
+        />
+      </CollapsibleSection>
+    </>
+  )
+}
+
 const CONNECTION_POINT_SIDES: ConnectionPointSide[] = ['top', 'right', 'bottom', 'left']
 const CONNECTION_POINT_SIDE_LABELS: Record<ConnectionPointSide, string> = {
   top: 'Top',
@@ -530,7 +641,7 @@ function ConnectionPointFields({
 // transform only (deliberately still allows a fill for consistency's sake —
 // see ADR 0014 — even though it's rare in practice). Rotation is text-only
 // (ADR 0004/0012 — shapes/containers are never rotated).
-const TYPE_LABELS: Record<string, string> = { shape: 'Shapes', container: 'Containers', text: 'Text' }
+const TYPE_LABELS: Record<string, string> = { shape: 'Shapes', container: 'Containers', text: 'Text', line: 'Lines' }
 const MIN_SIZE: Record<string, { width: number; height: number }> = {
   shape: { width: 60, height: 40 },
   container: { width: 160, height: 120 },
@@ -576,6 +687,19 @@ export default function PropertyPanel({
 
   const renderNodeGroup = (type: string, nodes: Node[]): React.JSX.Element => {
     const ids = nodes.map((n) => n.id)
+    if (type === 'line') {
+      return (
+        <LineStyleFields
+          key={type}
+          nodes={nodes}
+          updateStyle={(patch) => onUpdateNodeStyle(ids, patch)}
+          updateLocked={(locked) => onUpdateLocked(ids, locked)}
+          beginContinuousEdit={beginContinuousEdit}
+          endContinuousEdit={endContinuousEdit}
+          pushSnapshot={pushSnapshot}
+        />
+      )
+    }
     const min = MIN_SIZE[type] ?? MIN_SIZE.shape
     const canSetDefault = nodes.length === 1 && (type === 'shape' || type === 'container' || type === 'text')
     return (

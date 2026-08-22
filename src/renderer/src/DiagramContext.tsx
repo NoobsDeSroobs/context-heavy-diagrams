@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react'
-import type { HighlightDefinition, MetadataEntry } from '@shared/diagram'
+import type { GravityPreset, HighlightDefinition, MetadataEntry } from '@shared/diagram'
 import type { ContextMenuItem } from './components/ContextMenu'
 import type { Theme } from './theme'
 
@@ -78,6 +78,11 @@ export interface DiagramContextValue {
   // prop-drill through every intermediate component.
   paletteColors: { label: string; value: string }[]
   paletteFonts: string[]
+  // Diagram-level catalog (epic 0064/ADR 0050), already resolved to this
+  // app's built-in four if the diagram hasn't defined its own — see
+  // lineGravityPresets.ts's effectiveGravityPresets. LineNode's point
+  // context menu reads this directly rather than a hardcoded list.
+  gravityPresets: GravityPreset[]
 }
 
 const DiagramContext = createContext<DiagramContextValue | null>(null)

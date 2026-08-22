@@ -29,11 +29,13 @@ import {
   type ConnectionPointSide,
   type DiagramFile,
   type EdgeStyle,
+  type GravityPreset,
   type HighlightDefinition,
   type IconRef,
   type IconSlot,
   type JsonValue,
   type LegendEntry,
+  type LinePoint,
   type MetadataEntry,
   type NodeStyle,
   type RequiredTagDefinition
@@ -42,6 +44,9 @@ import ShapeNode, { SHAPE_MIN_WIDTH, SHAPE_MIN_HEIGHT } from './nodes/ShapeNode'
 import TextNode, { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from './nodes/TextNode'
 import ContainerNode, { CONTAINER_MIN_WIDTH, CONTAINER_MIN_HEIGHT } from './nodes/ContainerNode'
 import AnchorNode, { ANCHOR_SIZE } from './nodes/AnchorNode'
+import LineNode, { LINE_BOUNDS_PADDING } from './nodes/LineNode'
+import GravityPresetsPanel from './components/GravityPresetsPanel'
+import { effectiveGravityPresets } from './lineGravityPresets'
 import LabeledEdge from './edges/LabeledEdge'
 import { highlightId, matchingHighlights, reconcileHighlightGroup } from './highlights'
 import EdgeMarkerDefs from './edges/edgeMarkers'
@@ -74,7 +79,7 @@ import { themeAdaptiveColor } from './styles/themeAdaptiveColor'
 
 // Defined at module scope so React Flow gets a stable reference — recreating
 // these objects every render triggers a React Flow warning and remounts.
-const nodeTypes = { shape: ShapeNode, text: TextNode, container: ContainerNode, anchor: AnchorNode }
+const nodeTypes = { shape: ShapeNode, text: TextNode, container: ContainerNode, anchor: AnchorNode, line: LineNode }
 const edgeTypes = { labeled: LabeledEdge }
 
 // A sequential per-session counter (shape-1, shape-2, ...) collided with
@@ -186,7 +191,7 @@ function applyZIndexBackfill(nodes: Node[]): Node[] {
 // tier floor at all, so a fresh diagram's first shape/container landed at
 // 10 or 20 instead of its intended tier — caught by the user directly, see
 // docs/known-issues.md.
-function nextZIndex(nodes: Node[], type: 'shape' | 'text' | 'container'): number {
+function nextZIndex(nodes: Node[], type: 'shape' | 'text' | 'container' | 'line'): number {
   const base = type === 'container' ? CONTAINER_BASE : type === 'text' ? TEXT_BASE : SHAPE_BASE
   const scoped = nodes.filter((n) => n.type === type)
   return nextZIndexAbove(
@@ -246,7 +251,8 @@ function toDiagramFile(
   metadata: Record<string, JsonValue>,
   requiredTags: RequiredTagDefinition[],
   highlights: HighlightDefinition[],
-  legend: LegendEntry[]
+  legend: LegendEntry[],
+  gravityPresets: GravityPreset[]
 ): DiagramFile {
   return {
     version: 1,
@@ -254,6 +260,7 @@ function toDiagramFile(
     metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
     highlights: highlights.length > 0 ? highlights : undefined,
     legend: legend.length > 0 ? legend : undefined,
+    gravityPresets: gravityPresets.length > 0 ? gravityPresets : undefined,
     requiredTags: requiredTags.length > 0 ? requiredTags : undefined,
     nodes: nodes.map((n) => ({
       id: n.id,
@@ -276,7 +283,8 @@ function toDiagramFile(
         icons: n.data?.icons as Partial<Record<IconSlot, IconRef>> | undefined,
         details: typeof n.data?.details === 'string' ? (n.data.details as string) : undefined,
         linkedDiagram:
-          typeof n.data?.linkedDiagram === 'string' ? (n.data.linkedDiagram as string) : undefined
+          typeof n.data?.linkedDiagram === 'string' ? (n.data.linkedDiagram as string) : undefined,
+        points: Array.isArray(n.data?.points) ? (n.data.points as LinePoint[]) : undefined
       }
     })),
     edges: edges.map((e) => ({
@@ -300,10 +308,12 @@ function fromDiagramFile(diagram: DiagramFile): {
   requiredTags: RequiredTagDefinition[]
   highlights: HighlightDefinition[]
   legend: LegendEntry[]
+  gravityPresets: GravityPreset[]
 } {
   return {
     highlights: diagram.highlights ?? [],
     legend: diagram.legend ?? [],
+    gravityPresets: diagram.gravityPresets ?? [],
     // sortNodesForHierarchy defensively re-orders in case an external
     // writer didn't honor the parent-before-child requirement — see
     // docs/file-format.md's parentId entry. applyZIndexBackfill runs on
@@ -330,6 +340,7 @@ function fromDiagramFile(diagram: DiagramFile): {
             ...(n.data.icons ? { icons: n.data.icons } : {}),
             ...(n.data.details ? { details: n.data.details } : {}),
             ...(n.data.linkedDiagram ? { linkedDiagram: n.data.linkedDiagram } : {}),
+            ...(n.data.points && n.data.points.length > 0 ? { points: n.data.points } : {}),
             ...(n.style ? { style: n.style } : {}),
             ...(n.metadata && nodeMetadataEligible(n.type) ? { metadata: n.metadata } : {})
           }
@@ -493,6 +504,12 @@ function CanvasInner(): React.JSX.Element {
   // session-local instead.
   const [legend, setLegend] = useState<LegendEntry[]>([])
   const [legendPanelOpen, setLegendPanelOpen] = useState(false)
+  // Line bend preset catalog (epic 0064/ADR 0050) — same file-scoped,
+  // persisted treatment as highlights/legend above. Raw/possibly-empty;
+  // effectiveGravityPresets resolves "empty" to this app's own built-in
+  // four wherever it's actually consumed (DiagramContext's own value below).
+  const [gravityPresets, setGravityPresets] = useState<GravityPreset[]>([])
+  const [gravityPresetsPanelOpen, setGravityPresetsPanelOpen] = useState(false)
   // Anchors the floating panel next to whichever <ControlButton> opened it —
   // same convention as iconPicker/colorPicker/linePicker's own anchorRect.
   const [legendPanelAnchor, setLegendPanelAnchor] = useState<DOMRect | null>(null)
@@ -828,6 +845,7 @@ function CanvasInner(): React.JSX.Element {
     setSettingsPanelOpen(false)
     setLayerPanelOpen(false)
     setStylePalettePanelOpen(false)
+    setGravityPresetsPanelOpen(false)
     setDetailsPanelNodeId(nodeId)
   }, [])
 
@@ -837,6 +855,7 @@ function CanvasInner(): React.JSX.Element {
     setSettingsPanelOpen(false)
     setLayerPanelOpen(false)
     setStylePalettePanelOpen(false)
+    setGravityPresetsPanelOpen(false)
     setRequiredTagsPanelOpen((open) => !open)
   }, [])
 
@@ -846,6 +865,7 @@ function CanvasInner(): React.JSX.Element {
     setSettingsPanelOpen(false)
     setLayerPanelOpen(false)
     setStylePalettePanelOpen(false)
+    setGravityPresetsPanelOpen(false)
     setDiagnosticsPanelOpen((open) => !open)
   }, [])
 
@@ -855,6 +875,7 @@ function CanvasInner(): React.JSX.Element {
     setDiagnosticsPanelOpen(false)
     setLayerPanelOpen(false)
     setStylePalettePanelOpen(false)
+    setGravityPresetsPanelOpen(false)
     setSettingsPanelOpen((open) => !open)
   }, [])
 
@@ -864,7 +885,18 @@ function CanvasInner(): React.JSX.Element {
     setDiagnosticsPanelOpen(false)
     setSettingsPanelOpen(false)
     setLayerPanelOpen(false)
+    setGravityPresetsPanelOpen(false)
     setStylePalettePanelOpen((open) => !open)
+  }, [])
+
+  const toggleGravityPresetsPanel = useCallback(() => {
+    setDetailsPanelNodeId(null)
+    setRequiredTagsPanelOpen(false)
+    setDiagnosticsPanelOpen(false)
+    setSettingsPanelOpen(false)
+    setLayerPanelOpen(false)
+    setStylePalettePanelOpen(false)
+    setGravityPresetsPanelOpen((open) => !open)
   }, [])
 
   // Anchors the floating panel to whichever element opened it — same
@@ -881,9 +913,18 @@ function CanvasInner(): React.JSX.Element {
     setDiagnosticsPanelOpen(false)
     setSettingsPanelOpen(false)
     setStylePalettePanelOpen(false)
+    setGravityPresetsPanelOpen(false)
     setEntityHighlightNodeId(null)
     setLayerPanelOpen((open) => !open)
   }, [])
+
+  const updateGravityPresets = useCallback(
+    (presets: GravityPreset[]) => {
+      setGravityPresets(presets)
+      markDirty()
+    },
+    [markDirty]
+  )
 
   const updateRequiredTags = useCallback(
     (tags: RequiredTagDefinition[]) => {
@@ -1406,6 +1447,40 @@ function CanvasInner(): React.JSX.Element {
     ])
   }, [setNodes, pushSnapshot, spawnPosition, requiredTags, settings.defaultStyles.container])
 
+  // A default 2-point horizontal line — see epic 0064/ADR 0050. Points are
+  // node-local (relative to position), padded the same way normalizeLineBounds
+  // in LineNode.tsx keeps them after any edit, so a freshly spawned line
+  // and a freshly edited one look consistent.
+  const addLineNode = useCallback(() => {
+    pushSnapshot()
+    const id = newNodeId('line')
+    const lineLength = 160
+    const width = lineLength + LINE_BOUNDS_PADDING * 2
+    const height = LINE_BOUNDS_PADDING * 2
+    setNodes((nds) => [
+      ...nds,
+      {
+        id,
+        type: 'line',
+        position: spawnPosition(width, height, nds.length),
+        width,
+        height,
+        data: {
+          // Matches Shape/Container/Text's own default-label-equals-type-
+          // name convention (there's no on-canvas label editing for a line
+          // yet, unlike those three, but the Layers panel still needs
+          // something better than "(unlabeled)" to show).
+          label: 'Line',
+          zIndex: nextZIndex(nds, 'line'),
+          points: [
+            { x: LINE_BOUNDS_PADDING, y: LINE_BOUNDS_PADDING },
+            { x: LINE_BOUNDS_PADDING + lineLength, y: LINE_BOUNDS_PADDING }
+          ]
+        }
+      }
+    ])
+  }, [setNodes, pushSnapshot, spawnPosition])
+
   // Alignment guides + snap-to-shape while dragging — see epic 0011.
   // Shared by onNodeDrag (live, every tick) and onNodeDragStop (once more
   // on release — see its own comment for why that second call is
@@ -1845,14 +1920,15 @@ function CanvasInner(): React.JSX.Element {
         diagramMetadata,
         requiredTags,
         highlights,
-        legend
+        legend,
+        gravityPresets
       )
       await window.api.saveDiagram(path, diagram, sessionIdRef.current)
       setNodes(savedNodes)
       setIsDirty(false)
       return savedNodes
     },
-    [edges, rfInstance, flushDetailsDrafts, setNodes, diagramMetadata, requiredTags, highlights, legend]
+    [edges, rfInstance, flushDetailsDrafts, setNodes, diagramMetadata, requiredTags, highlights, legend, gravityPresets]
   )
 
   // Brief "Saved" confirmation next to the toolbar's Save button — the
@@ -1908,7 +1984,8 @@ function CanvasInner(): React.JSX.Element {
         metadata: openedMetadata,
         requiredTags: openedRequiredTags,
         highlights: openedHighlights,
-        legend: openedLegend
+        legend: openedLegend,
+        gravityPresets: openedGravityPresets
       } = fromDiagramFile(diagram)
       // A different diagram entirely — old undo history doesn't apply to
       // it (and, worse, undoing across a load boundary would try to
@@ -1939,6 +2016,7 @@ function CanvasInner(): React.JSX.Element {
       // Shown/hidden state is deliberately never loaded from the file either
       // — always starts closed, same split-persistence treatment (ADR 0033).
       setLegendPanelOpen(false)
+      setGravityPresets(openedGravityPresets)
       setDetailsDrafts({})
       setContextMenu(null)
       setIconPicker(null)
@@ -1949,6 +2027,7 @@ function CanvasInner(): React.JSX.Element {
       setDiagnosticsPanelOpen(false)
       setHighlightsPanelOpen(false)
       setSettingsPanelOpen(false)
+      setGravityPresetsPanelOpen(false)
       // Defensive, per ADR 0022 — reconcile against hand-edited drift on
       // every load, not just when the template is edited from within the app.
       runSync(openedRequiredTags)
@@ -2020,6 +2099,7 @@ function CanvasInner(): React.JSX.Element {
     requiredTags,
     highlights,
     legend,
+    gravityPresets,
     detailsDrafts
   })
   useEffect(() => {
@@ -2032,6 +2112,7 @@ function CanvasInner(): React.JSX.Element {
       requiredTags,
       highlights,
       legend,
+      gravityPresets,
       detailsDrafts
     }
   })
@@ -2046,7 +2127,8 @@ function CanvasInner(): React.JSX.Element {
         s.diagramMetadata,
         s.requiredTags,
         s.highlights,
-        s.legend
+        s.legend,
+        s.gravityPresets
       )
       window.api.writeRecoverySnapshot(s.currentPath, sessionIdRef.current, diagram, s.detailsDrafts)
     }, 60_000)
@@ -2429,6 +2511,8 @@ function CanvasInner(): React.JSX.Element {
           setSettingsPanelOpen(false)
         } else if (stylePalettePanelOpen) {
           setStylePalettePanelOpen(false)
+        } else if (gravityPresetsPanelOpen) {
+          setGravityPresetsPanelOpen(false)
         } else if (iconPicker) {
           setIconPicker(null)
         } else if (colorPicker) {
@@ -2472,6 +2556,7 @@ function CanvasInner(): React.JSX.Element {
     highlightsPanelOpen,
     settingsPanelOpen,
     stylePalettePanelOpen,
+    gravityPresetsPanelOpen,
     iconPicker,
     colorPicker,
     linePicker,
@@ -2503,7 +2588,18 @@ function CanvasInner(): React.JSX.Element {
     ...n,
     zIndex: (n.data?.zIndex as number | undefined) ?? 0,
     draggable: n.data?.locked !== true,
-    deletable: n.data?.locked !== true
+    deletable: n.data?.locked !== true,
+    // A 'line' node's own rectangular bounding box is frequently much
+    // larger than its actual (possibly concave, e.g. a U-bend) curve — see
+    // ADR 0050's addendum. React Flow applies this style straight onto its
+    // own node wrapper, so pointerEvents: 'none' here makes the *whole box*
+    // click/drag-through by default; LineNode.tsx's invisible hit-stroke
+    // path and its own point handles each explicitly re-enable pointer
+    // events (CSS pointer-events is inherited but overridable per
+    // descendant), so only the curve itself and its points stay
+    // interactive — matching how an edge only responds near its own path,
+    // not its own bounding rectangle.
+    ...(n.type === 'line' ? { style: { ...n.style, pointerEvents: 'none' as const } } : {})
   }))
   const nodeZIndexById = new Map(zIndexedNodes.map((n) => [n.id, n.zIndex as number]))
 
@@ -2598,6 +2694,7 @@ function CanvasInner(): React.JSX.Element {
         },
         { label: 'Layers', onSelect: toggleLayerPanel },
         { label: 'Style Palette', onSelect: toggleStylePalettePanel },
+        { label: 'Line bend presets', onSelect: toggleGravityPresetsPanel },
         { label: 'Settings', onSelect: toggleSettingsPanel }
       ]
     },
@@ -2627,7 +2724,8 @@ function CanvasInner(): React.JSX.Element {
         theme,
         entityHighlightNodeId,
         paletteColors: settings.stylePalette.colors,
-        paletteFonts: settings.stylePalette.fonts
+        paletteFonts: settings.stylePalette.fonts,
+        gravityPresets: effectiveGravityPresets(gravityPresets)
       }}
     >
       {/* Outer app shell: [canvas view [diagram dock]] [utility dock], nested
@@ -2761,6 +2859,7 @@ function CanvasInner(): React.JSX.Element {
               onAddShape={addShapeNode}
               onAddText={addTextNode}
               onAddContainer={addContainerNode}
+              onAddLine={addLineNode}
               onUpdateNodeStyle={updateNodeStyle}
               onUpdateEdgeStyle={updateEdgeStyle}
               onUpdateTransform={updateTransform}
@@ -2957,6 +3056,13 @@ function CanvasInner(): React.JSX.Element {
                   : updateSettings({ defaultStyles: { ...settings.defaultStyles, [type]: undefined } })
               }
               onClose={() => setStylePalettePanelOpen(false)}
+            />
+          )}
+          {gravityPresetsPanelOpen && (
+            <GravityPresetsPanel
+              presets={gravityPresets}
+              onChange={updateGravityPresets}
+              onClose={() => setGravityPresetsPanelOpen(false)}
             />
           )}
         </UtilityDock>

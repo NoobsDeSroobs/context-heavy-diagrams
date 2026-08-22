@@ -22,6 +22,12 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
   "legend": [
     { "id": "legend-1", "kind": "line", "label": "Sensitive data transfer", "color": "#e6194b", "lineStyle": "solid", "startMarker": "none", "endMarker": "arrowClosed" }
   ],
+  "gravityPresets": [
+    { "id": "sharp", "label": "Sharp", "value": 0 },
+    { "id": "acute", "label": "Acute", "value": 0.2 },
+    { "id": "smooth", "label": "Smooth", "value": 0.5 },
+    { "id": "curvy", "label": "Curvy", "value": 1 }
+  ],
   "nodes": [ /* Node objects */ ],
   "edges": [ /* Edge objects */ ]
 }
@@ -35,6 +41,7 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
 | `requiredTags` | array of RequiredTagDefinition | The diagram's own template for what every Shape/Container/Edge must carry — see [Required tags](#required-tags) below. Absent means no required tags. |
 | `highlights` | array of HighlightDefinition | Saved catalog of tag-based visual highlights — see [Highlights](#highlights) below. Absent means no highlights defined. Note there is no on/off state stored here: this app treats "which highlights are currently enabled" as local, in-memory, per-session state, never written to the file — a reader that only cares about reading the file back doesn't need to reconstruct or care about that. |
 | `legend` | array of LegendEntry | Saved catalog of manually-authored legend entries explaining the diagram's own visual conventions — see [Legend](#legend) below. Absent means no legend defined. Like `highlights`, whether the legend panel is currently shown is local, in-memory, per-session state, never written to the file. |
+| `gravityPresets` | array of GravityPreset | Named bend values offered on a `"line"` node point's right-click menu — see [Gravity presets](#gravity-presets) below. Absent/empty means "use this app's own built-in four" (shown in the example above) — a diagram only needs to define its own once it actually diverges from them. |
 | `nodes` | array of Node | See below. |
 | `edges` | array of Edge | See below. |
 
@@ -66,7 +73,7 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
 | Field | Type | Required | Meaning |
 |---|---|---|---|
 | `id` | string | yes | Unique within the file. Referenced by `source`/`target` on edges. |
-| `type` | string | no | `"shape"` (a box: resizable, has connection points and icon slots, never rotated), `"text"` (a text-only annotation: resizable, rotatable, never has connection points or icons), `"container"` (a grouping box: resizable, has connection points, never rotated, can be referenced as another node's `parentId`), or `"anchor"` (a small unstyled placeholder with connection points but no label/icons — the result of dragging an edge into empty space without picking a shape type; see epic 0014). Absent/unrecognized types should be treated as `"shape"` by a lenient reader. |
+| `type` | string | no | `"shape"` (a box: resizable, has connection points and icon slots, never rotated), `"text"` (a text-only annotation: resizable, rotatable, never has connection points or icons), `"container"` (a grouping box: resizable, has connection points, never rotated, can be referenced as another node's `parentId`), `"anchor"` (a small unstyled placeholder with connection points but no label/icons — the result of dragging an edge into empty space without picking a shape type; see epic 0014), or `"line"` (a freeform curved line — see `data.points` below and epic 0064/ADR 0050; never connectable, never rotated, `position`/`size` are the bounding box of its own points). Absent/unrecognized types should be treated as `"shape"` by a lenient reader. |
 | `position` | `{x, y}` | yes | Top-left corner, in canvas units. Relative to the canvas origin normally, but relative to the parent container's own top-left corner when `parentId` is set (not the canvas). |
 | `size` | `{width, height}` | no | Absent means "let the renderer size it to content" — a reader isn't required to have an opinion on default size. |
 | `rotation` | number | no | Degrees. Only meaningful for `"text"` nodes — `"shape"` and `"container"` nodes are never rotated by this app, so a reader can safely ignore rotation on anything else, though there's no harm in a writer omitting it for them either. |
@@ -80,6 +87,26 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
 | `data.icons` | object | no | Only meaningful on `"shape"`/`"container"` nodes. Up to four keys — `topLeft`, `topRight`, `bottomLeft`, `bottomRight` — each an icon reference (see below). |
 | `data.details` | string | no | Relative path to a Markdown file with free-form notes about this node (purpose, integration type, inputs/outputs, whatever's useful) — rendered in-app as a side panel, never a second canvas object. Same relative-path-from-the-diagram's-own-directory convention as custom icon paths. Absent means the node has no details yet. |
 | `data.linkedDiagram` | string | no | Relative path (from this diagram file's own directory) to another `.chd` file — a drill-down link. Resolved and opened on demand (e.g. Ctrl/Cmd+click in this app), never eagerly. Absent means the node has no link. See the Linking section below for the missing-target and directionality rules. |
+| `data.points` | array of LinePoint | `"line"` only | The line's own shape — see [Line points](#line-points) below. Absent/empty on a `"line"` node means nothing has been drawn yet (this app never actually produces that — a freshly created line always has 2 points). Meaningless on every other node type. |
+
+### Line points
+
+```json
+[
+  { "x": 0, "y": 0 },
+  { "x": 90, "y": -40, "gravity": 0 },
+  { "x": 180, "y": 0 }
+]
+```
+
+`data.points` on a `"line"` node (epic 0064/ADR 0050) — an ordered list of points the curve is built from, in node-local coordinates (relative to the node's own `position`, same convention as a container child's `position` being relative to its parent). **Order is the only thing that identifies a point** — there is no separate id, and no other part of the format references an individual point.
+
+| Field | Type | Required | Meaning |
+|---|---|---|---|
+| `x` / `y` | number | yes | Node-local coordinates. |
+| `gravity` | number | no | Per-point Catmull-Rom tension, controlling how much the curve bends at this point. Absent means `0.5` (a smooth pass-through curve — the standard uniform-tension Catmull-Rom default). `0` gives a sharp corner (the curve passes straight through, no bend); higher values bend/bulge more. Only meaningful with 3+ points — a 2-point line always renders as a straight line between them regardless of gravity. |
+
+A reader building the actual curve: for each point `Pi`, compute a tangent — `(P[i+1] - P[i-1]) * gravity_i` for an interior point, `(P[i+1] - P[i]) * gravity_i` for the first point, `(P[i] - P[i-1]) * gravity_i` for the last — then render one cubic bezier per consecutive pair `(Pi, P[i+1])` with control points `Pi + Ti/3` and `P[i+1] - T[i+1]/3`. A reader that doesn't want to implement curve fitting can still render a reasonable approximation by connecting the points with straight segments (a polyline) — every point is still passed through exactly, only the smoothing between them is lost.
 
 ### Icon reference
 
@@ -116,6 +143,8 @@ Every field is optional; an absent field means "use the current hardcoded look,"
 | `fontOpacity` | number, 0-100 | Label text opacity. Same percentage convention as `fillOpacity`. |
 | `fontWeight` | `"normal"` \| `"bold"` | Label font weight. |
 | `fontFamily` | string (CSS `font-family` value) | Label font. A raw CSS value, not an enum — this app's own picker currently only offers generic families (`"sans-serif"`, `"serif"`, `"monospace"`, `"cursive"`) since a specific named font isn't reliably available across this app's supported platforms (Windows/Linux), but a reader should treat it as an arbitrary CSS font-family string (a specific font name is valid here too, just not yet offered by this app's own UI). |
+| `lineStyle` | `"solid"` \| `"dashed"` \| `"dotted"` | `"line"` nodes only (epic 0064/ADR 0050). Same vocabulary as an Edge's own `style.lineStyle` below. |
+| `startMarker` / `endMarker` | marker kind | `"line"` nodes only. Same vocabulary as an Edge's own `style.startMarker`/`style.endMarker` below. |
 
 ## Edge
 
@@ -245,6 +274,25 @@ A saved catalog of legend entries — `legend` on the top-level object — each 
 
 **Shown/hidden state is deliberately not part of this file**, same treatment as highlight enablement above — the catalog is shared, whether the legend panel is currently open is local, in-memory, per-session UI state, always starting closed.
 
+## Gravity presets
+
+Named bend values — `gravityPresets` on the top-level object — offered on a `"line"` node point's right-click menu (epic 0064/ADR 0050). This exists as a diagram-level catalog, not a hardcoded app setting, because a specific diagram's layout may need its own bend values, and reliably reproducing that diagram (for any reader, not just this app) means those named options need to live in the file itself.
+
+```json
+[
+  { "id": "sharp", "label": "Sharp", "value": 0 },
+  { "id": "acute", "label": "Acute", "value": 0.2 }
+]
+```
+
+| Field | Type | Required | Meaning |
+|---|---|---|---|
+| `id` | string | yes | Unique within the file. No other significance. |
+| `label` | string | yes | Shown on the point's right-click menu. |
+| `value` | number | yes | The `gravity` a point is set to when this preset is chosen — see [Line points](#line-points) above for what the number itself means. |
+
+**This catalog only affects what a human authoring a line is offered — it doesn't affect how an already-built line renders.** Every point's own `gravity` is already a concrete number (see [Line points](#line-points)), so a reader building the curve never needs to consult this catalog at all; it's purely an authoring convenience, closer in spirit to [Legend](#legend) than to anything that changes rendering. Absent/empty means this app's own built-in four (shown in the example above) — see [Top-level structure](#top-level-structure)'s own example for the exact values.
+
 ## Determinism
 
 Files are written with a fixed key order (matching the tables above) and 2-space indentation, plus a trailing newline. This is deliberate: two saves of an unchanged diagram produce byte-identical output, so git diffs only show real changes. A compatible writer should aim for the same property if it wants clean diffs, though it isn't required for a file to be readable.
@@ -259,7 +307,7 @@ The `.chd` file itself is always plain, deterministic JSON — kept git-friendly
 
 ## Versioning
 
-`version` is currently always `1`. Fields have been added over time (`size`, `rotation`, `connectionPoints`, `parentId`, `style` on both Node and Edge, edge `type`/`label`, `data.icons`, `data.details`, `data.linkedDiagram`, top-level `metadata`/`requiredTags`/`highlights`/`legend`, `metadata` on both Node and Edge, Edge style's `labelPosition`, Node's `zIndex`, and Node's `locked`) but always additively — a reader from an earlier point in this project's history can still open a newer file and just won't recognize the newer fields. The same holds in reverse: this app's own current code must still open a file from *before* one of these fields existed, without failing or requiring migration — see [ADR 0029](decisions/0029-backward-compatible-loading-is-a-standing-rule.md), which makes this a standing rule for every future field, not just an incidental property of the fields added so far. A breaking change to the meaning of an existing field would bump `version`; nothing has required that yet.
+`version` is currently always `1`. Fields have been added over time (`size`, `rotation`, `connectionPoints`, `parentId`, `style` on both Node and Edge, edge `type`/`label`, `data.icons`, `data.details`, `data.linkedDiagram`, top-level `metadata`/`requiredTags`/`highlights`/`legend`, `metadata` on both Node and Edge, Edge style's `labelPosition`, Node's `zIndex`, Node's `locked`, the `"line"` node `type` with its `data.points`, Node style's `lineStyle`/`startMarker`/`endMarker`, and top-level `gravityPresets`) but always additively — a reader from an earlier point in this project's history can still open a newer file and just won't recognize the newer fields. The same holds in reverse: this app's own current code must still open a file from *before* one of these fields existed, without failing or requiring migration — see [ADR 0029](decisions/0029-backward-compatible-loading-is-a-standing-rule.md), which makes this a standing rule for every future field, not just an incidental property of the fields added so far. A breaking change to the meaning of an existing field would bump `version`; nothing has required that yet.
 
 ## Example
 

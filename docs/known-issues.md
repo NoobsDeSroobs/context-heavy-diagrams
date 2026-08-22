@@ -277,3 +277,17 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 **Resolution:** set the custom property directly instead: `style={{ '--xy-background-color': value } as React.CSSProperties}` (the cast is needed since custom properties aren't part of the standard `CSSProperties` type). Custom properties inherit down the DOM tree, so setting it on the outer `.react-flow` element correctly reaches the child `<Background>` SVG that actually paints. **General lesson for anything touching React Flow's visual defaults**: check whether the library exposes a CSS custom property before assuming a plain style/CSS property will reach the actual paint layer — several of React Flow's own defaults (edge stroke, node background, handle color, etc.) follow this same `var(--xy-*-props, var(--xy-*, var(--xy-*-default)))` fallback chain, not a plain property.
 
 **References:** [epic 0030](planning/epics/0030-custom-style-palettes-and-defaults.md), [ADR 0048](decisions/0048-style-palette-and-defaults.md), `src/renderer/src/Canvas.tsx`, `node_modules/@xyflow/react/dist/style.css`
+
+---
+
+## A concave line's bounding box was clickable everywhere inside it, not just on the curve
+**Status:** Solved
+**Found:** 2026-08-22, epic 0064, live testing by the user immediately after the freeform line's first pass shipped
+
+**Symptom:** a line bent into a U-shape (or any concave curve) could be selected — and dragged as a whole — by clicking anywhere inside its own empty interior, not just on the stroke. Reported as "it will end up blocking too much," with the user's own comparison: an edge only responds to a click fairly close to or on top of its path, a line didn't.
+
+**Root cause:** React Flow's default node hit-testing is the node's *rectangular* `position`/`size` box — fine for Shape/Container/Text, which are always filled boxes anyway, but a line (epic 0064/ADR 0050 modeled it as a `DiagramNode`, specifically to reuse that box-based selection/drag/lock machinery) can be sparse and concave, so its tightest bounding rectangle routinely includes large stretches of genuinely empty space. `LineNode.tsx` already had a purpose-built wide invisible hit-stroke (for right-click "add point"), but nothing stopped React Flow's own wrapper `<div>` from independently claiming every click inside the whole box first.
+
+**Resolution:** React Flow applies a node's `style` field (a real, normally-unused-in-this-codebase `Node` field, distinct from this app's own `data.style` convention) directly onto its own wrapper element — so setting `pointerEvents: 'none'` there (`Canvas.tsx`'s `zIndexedNodes`, `line`-typed nodes only) makes the *whole box* click/drag-through by default. `pointer-events` is inherited but overridable per descendant, so `LineNode.tsx`'s existing invisible hit-stroke path (`pointerEvents: 'stroke'`) and its point handles (`pointer-events: auto` in CSS) each explicitly opt back in — only the curve itself, within the hit-stroke's tolerance, and its points stay interactive. **General lesson for any future node type whose visual shape doesn't fill its own rectangular bounding box**: React Flow's default click/drag hit-testing is the box, not the rendered content — the `Node.style` field is the documented escape hatch, not `data.style` or anything rendered inside the component.
+
+**References:** [epic 0064](planning/epics/0064-simple-curved-freeform-line.md), [ADR 0050](decisions/0050-freeform-line-as-node-type.md), `src/renderer/src/Canvas.tsx`, `src/renderer/src/nodes/LineNode.tsx`

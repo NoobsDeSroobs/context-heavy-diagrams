@@ -13,6 +13,7 @@ export default function DiagramDock({
   onAddShape,
   onAddText,
   onAddContainer,
+  onAddLine,
   onUpdateNodeStyle,
   onUpdateEdgeStyle,
   onUpdateTransform,
@@ -32,6 +33,7 @@ export default function DiagramDock({
   onAddShape: () => void
   onAddText: () => void
   onAddContainer: () => void
+  onAddLine: () => void
   onUpdateNodeStyle: (nodeIds: string[], patch: Partial<NodeStyle>) => void
   onUpdateEdgeStyle: (edgeIds: string[], patch: Partial<EdgeStyle>) => void
   onUpdateTransform: (nodeIds: string[], patch: TransformPatch) => void
@@ -69,7 +71,7 @@ export default function DiagramDock({
           onSetDefaultStyle={onSetDefaultStyle}
         />
       ) : (
-        <ItemPalette onAddShape={onAddShape} onAddText={onAddText} onAddContainer={onAddContainer} />
+        <ItemPalette onAddShape={onAddShape} onAddText={onAddText} onAddContainer={onAddContainer} onAddLine={onAddLine} />
       )}
     </div>
   )

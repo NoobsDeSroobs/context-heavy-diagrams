@@ -57,6 +57,12 @@ export interface NodeStyle extends FontStyle {
   strokeOpacity?: number
   strokeWidth?: number
   textAlign?: 'start' | 'center' | 'end'
+  // 'line' nodes only (epic 0064/ADR 0050) — same fields/vocabulary as
+  // EdgeStyle's, added here rather than making DiagramNode.style a union,
+  // same precedent as LegendEntry's own 'line' kind.
+  lineStyle?: LineStyleKind
+  startMarker?: MarkerKind
+  endMarker?: MarkerKind
 }
 
 // Tag/metadata schema — see ADR 0022 (supersedes ADR 0009). One
@@ -154,8 +160,10 @@ export interface DiagramNode {
   id: string
   // 'shape' (resizable, connectable, never rotated) | 'text' (resizable,
   // rotatable, never connectable) | 'container' (resizable, connectable,
-  // never rotated, can parent other nodes) — see ADR 0004, ADR 0012. Kept
-  // as a plain string, not a union, since more types may arrive later.
+  // never rotated, can parent other nodes) | 'line' (a freeform curved
+  // line, see ADR 0050 — position/size are the bounding box of data.points,
+  // never connectable, never rotated) — see ADR 0004, ADR 0012. Kept as a
+  // plain string, not a union, since more types may arrive later.
   type?: string
   position: { x: number; y: number }
   size?: { width: number; height: number }
@@ -184,14 +192,46 @@ export interface DiagramNode {
   locked?: boolean
   style?: NodeStyle
   // Only 'shape'/'container' meaningfully have this — see epic 0034/ADR
-  // 0022. 'text' and 'anchor' nodes never get seeded or edited here.
+  // 0022. 'text', 'anchor', and 'line' nodes never get seeded or edited here.
   metadata?: Record<string, MetadataEntry>
   data: {
     label: string
     icons?: Partial<Record<IconSlot, IconRef>>
     details?: string
     linkedDiagram?: string
+    // 'line' nodes only — see LinePoint/ADR 0050. Node-local coordinates
+    // (relative to `position`, like a container child's own position),
+    // ordered — array position is the only thing that identifies a point,
+    // there is no separate id.
+    points?: LinePoint[]
   }
+}
+
+// A freeform line's own bend points (epic 0064/ADR 0050) — see NodeStyle
+// for the line's stroke/dash/marker styling, kept separate from geometry.
+export interface LinePoint {
+  x: number
+  y: number
+  // Per-point Catmull-Rom tension, see bendablePath.ts for the actual
+  // curve math. Absent means 0.5 (a smooth pass-through curve — the
+  // standard uniform-tension Catmull-Rom default). 0 gives a sharp corner
+  // (zero tangent); higher values bend/bulge more.
+  gravity?: number
+}
+
+// Named gravity values offered on a line point's right-click menu — a
+// diagram-level catalog (like `highlights`/`legend`), not a hardcoded app
+// constant, because a specific diagram's layout may call for its own bend
+// values, and any reader reproducing the diagram needs those same named
+// options available, not just this app's own built-in defaults. Absent/
+// empty on `DiagramFile.gravityPresets` means "use this app's own built-in
+// four" (see lineGravityPresets.ts) — a fresh diagram doesn't need to spell
+// those out explicitly, same "absent means default" convention as
+// everywhere else in this schema.
+export interface GravityPreset {
+  id: string
+  label: string
+  value: number
 }
 
 export interface DiagramEdge {
@@ -219,6 +259,9 @@ export interface DiagramFile {
   // no separate "enabled" concept per entry; the whole panel's shown/hidden
   // state is what's session-local (never stored here), not per-entry.
   legend?: LegendEntry[]
+  // See GravityPreset above — absent/empty means "use this app's own
+  // built-in four."
+  gravityPresets?: GravityPreset[]
   nodes: DiagramNode[]
   edges: DiagramEdge[]
 }
