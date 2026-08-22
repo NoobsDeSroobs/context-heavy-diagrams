@@ -9,7 +9,7 @@ export interface RequiredTagsWalkResult {
 
 export interface DiagramApi {
   openDiagramAtPath(path: string): Promise<DiagramFile>
-  saveDiagram(path: string, diagram: DiagramFile): Promise<void>
+  saveDiagram(path: string, diagram: DiagramFile, sessionId: string): Promise<void>
   pickSavePath(): Promise<string | null>
   pickAndCopyCustomIcon(diagramPath: string): Promise<string | null>
   listCustomIcons(diagramPath: string): Promise<string[]>
@@ -24,6 +24,7 @@ export interface DiagramApi {
     diagramPath: string,
     relativePath: string
   ): Promise<{ found: true } | { found: false; resolvedPath: string }>
+  clearWindowPath(): Promise<void>
   previewRequiredTagsChildren(
     diagramPath: string,
     directChildRelativePaths: string[]
@@ -33,6 +34,23 @@ export interface DiagramApi {
     requiredTags: RequiredTagDefinition[],
     directChildRelativePaths: string[]
   ): Promise<RequiredTagsWalkResult>
+  writeRecoverySnapshot(
+    path: string | null,
+    sessionId: string,
+    diagram: DiagramFile,
+    detailsDrafts: Record<string, string>
+  ): Promise<void>
+  deleteRecoverySnapshot(path: string | null, sessionId: string): Promise<void>
+  checkRecoveryForPath(
+    path: string
+  ): Promise<{ diagram: DiagramFile; detailsDrafts: Record<string, string> } | null>
+  onRecoveredOrphan(
+    callback: (snapshot: { diagram: DiagramFile; detailsDrafts: Record<string, string> }) => void
+  ): () => void
+  onCloseRequested(callback: () => void): () => void
+  requestCloseDecision(): Promise<'save' | 'discard' | 'cancel'>
+  closeApproved(path: string | null, sessionId: string): Promise<void>
+  mirrorScanOnStartupSetting(value: boolean): Promise<void>
 }
 
 declare global {

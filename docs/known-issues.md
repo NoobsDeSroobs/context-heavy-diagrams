@@ -144,3 +144,45 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 **Resolution:** switched same-day to mirroring Oklab's Lightness channel instead (`flip(L) = 1 - L`, chroma/hue held fixed) — Oklab's L is designed to track actual perceived brightness across every hue, which is what a legibility-preserving mirror actually needs.
 
 **References:** [ADR 0034](decisions/0034-theme-adaptive-color-value-flip.md), `src/renderer/src/styles/themeAdaptiveColor.ts`
+
+---
+
+## File → Close leaves a stale "this window shows path X" registration
+**Status:** Solved
+**Found:** 2026-08-22, epic 0020, live testing by the user
+
+**Symptom:** open a file, File → Close it (resets to blank), then try to open that same file again — nothing visibly happens.
+
+**Root cause:** `windows.ts` tracks which `BrowserWindow` shows which path (`windowsByPath`) so opening an already-open file focuses the existing window instead of duplicating it. That registration is normally kept in sync by `loadPathIntoWindow`, called on every real page navigation (initial open, File → Open reuse, link navigation). File → Close (epic 0049) deliberately resets the window's content *in place* — `loadDiagramIntoCanvas(null, ...)` in the renderer, no page navigation at all — so `windowsByPath` never learned the window stopped showing that path. Reopening the same file found the (stale) registration, and just focused the now-blank window instead of loading anything into it.
+
+**Resolution:** new `windows:clearPath` IPC call, invoked from `handleClose` right after the in-place reset, which removes this window's entry from `windowsByPath` (reusing the existing `unregisterWindow` matches-by-window-reference helper, already used on real window close).
+
+**References:** [epic 0020](planning/epics/0020-autosave-and-crash-recovery.md), [ADR 0039](decisions/0039-top-menu-bar.md) (File → Close's original design), `src/main/windows.ts`, `src/renderer/src/Canvas.tsx`
+
+---
+
+## React Flow's post-load auto-measurement was misclassified as a real edit
+**Status:** Solved
+**Found:** 2026-08-22, epic 0020, live testing by the user
+
+**Symptom:** File → Close and File → Reload's confirm prompt ("changes since the last save will be lost") appeared every time, identically, whether or not the user had actually made any edits since opening the file.
+
+**Root cause:** `onNodesChange`'s existing change-classifier (predates epic 0020) treats a `dimensions` NodeChange with `resizing === undefined` as a discrete, snapshot-worthy edit — meant to catch a scripted/programmatic resize. React Flow's own `ResizeObserver`-driven post-mount measurement of every freshly-loaded node fires that exact same shape of change (a `dimensions` change with `resizing` left undefined, since it isn't part of any user drag gesture). Before this epic, that misclassification was invisible — it just added a harmless extra no-op entry to the undo stack. Once `pushSnapshot()` also started marking the diagram dirty (this epic's whole point), every load falsely dirtied the diagram immediately, defeating the new dirty-aware prompts entirely.
+
+**Resolution:** a short (500ms) grace window after any `loadDiagramIntoCanvas`, tracked via a ref, during which a `dimensions`-with-`resizing`-undefined change no longer counts as discrete. Every other discrete-change condition (remove/add/replace, a real position change) is untouched — deliberately the narrowest fix that addresses the specific ambiguous case rather than broadening the suppression window to cover more change types than necessary.
+
+**References:** [epic 0020](planning/epics/0020-autosave-and-crash-recovery.md), [ADR 0040](decisions/0040-dirty-tracking-and-autosave-design.md), `src/renderer/src/Canvas.tsx`'s `onNodesChange`/`loadDiagramIntoCanvas`
+
+---
+
+## Unparented native dialog can open behind the app window
+**Status:** Solved
+**Found:** 2026-08-22, epic 0020, live testing by the user
+
+**Symptom:** the startup orphan-recovery dialog (Recover/Discard for a diagram that crashed before ever being saved) opened *behind* the main Electron window instead of on top of it.
+
+**Root cause:** `dialog.showMessageBox()` was called with no owning `BrowserWindow` — at the point the startup scan runs, no window created specifically *for* the recovered content exists yet (that window is only created if the user chooses Recover). An unparented native dialog has no guaranteed z-order relative to the app's own windows, and lost the race against the initial blank window claiming focus after its own `ready-to-show`.
+
+**Resolution:** the app's already-created initial window (from `createWindow()`, called just before the scan starts) is passed as the dialog's owner, giving it a defined z-order/parent relationship instead of none.
+
+**References:** [epic 0020](planning/epics/0020-autosave-and-crash-recovery.md), [ADR 0040](decisions/0040-dirty-tracking-and-autosave-design.md), `src/main/recovery.ts`'s `runStartupOrphanScan`, `src/main/index.ts`

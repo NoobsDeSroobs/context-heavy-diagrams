@@ -2,6 +2,7 @@ import { BrowserWindow, dialog, ipcMain } from 'electron'
 import { readFile, writeFile } from 'fs/promises'
 import { parseDiagram, serializeDiagram, type DiagramFile } from '@shared/diagram'
 import { registerWindowPath } from './windows'
+import { deleteRecoverySnapshot } from './recovery'
 
 // Diagram files are a single file (.chd, plain JSON underneath) — see
 // docs/decisions/0005-diagram-identity-and-linking.md. Nothing about
@@ -31,12 +32,23 @@ export function registerDiagramHandlers(): void {
   // attempt to open the same file elsewhere focuses this window instead
   // of opening a duplicate (ADR 0023) — covers both Save and the first
   // Save As, the only two points a window's path becomes known if it
-  // wasn't opened with one already (e.g. File -> New).
-  ipcMain.handle('diagram:save', async (event, path: string, diagram: DiagramFile) => {
-    await writeFile(path, serializeDiagram(diagram), 'utf-8')
-    const win = BrowserWindow.fromWebContents(event.sender)
-    if (win) registerWindowPath(win, path)
-  })
+  // wasn't opened with one already (e.g. File -> New). sessionId is the
+  // window's pre-save recovery identity (epic 0020/ADR 0040) — a
+  // successful save makes any recovery snapshot under either key (the old
+  // session id, or this same path from a previous save) redundant.
+  ipcMain.handle(
+    'diagram:save',
+    async (event, path: string, diagram: DiagramFile, sessionId: string) => {
+      await writeFile(path, serializeDiagram(diagram), 'utf-8')
+      const win = BrowserWindow.fromWebContents(event.sender)
+      if (win) registerWindowPath(win, path)
+      // Two keys, not one: this path's own (repeat saves reuse it) and the
+      // window's pre-save session-id key (only relevant the first time a
+      // previously-unsaved window is saved, harmless no-op otherwise).
+      await deleteRecoverySnapshot(path, sessionId)
+      await deleteRecoverySnapshot(null, sessionId)
+    }
+  )
 
   // No dialog — used by a window's own initial-load mount effect (path
   // passed via ?path= query string, ADR 0023).

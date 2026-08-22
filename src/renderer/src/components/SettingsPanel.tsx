@@ -1,5 +1,5 @@
 import type { AppSettings } from '../settings'
-import { NumberField } from '../panels/fields'
+import { FieldRow, NumberField } from '../panels/fields'
 
 interface SettingsPanelProps {
   settings: AppSettings
@@ -50,6 +50,14 @@ export default function SettingsPanel({ settings, onChange, onClose }: SettingsP
           onSessionStart={() => {}}
           onSessionEnd={() => {}}
         />
+        <FieldRow label="Scan for unsaved diagrams on startup">
+          <input
+            type="checkbox"
+            checked={settings.scanForUnsavedRecoveryOnStartup}
+            onChange={(e) => onChange({ scanForUnsavedRecoveryOnStartup: e.target.checked })}
+            title="Look for crash-recovery snapshots from diagrams that were never saved, every time the app starts"
+          />
+        </FieldRow>
       </div>
     </div>
   )

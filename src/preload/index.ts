@@ -14,8 +14,8 @@ interface RequiredTagsWalkResult {
 // path, flush any pending detail-panel drafts using it, *then* write the
 // final diagram content, all before the file actually lands on disk.
 const api = {
-  saveDiagram(path: string, diagram: DiagramFile): Promise<void> {
-    return ipcRenderer.invoke('diagram:save', path, diagram)
+  saveDiagram(path: string, diagram: DiagramFile, sessionId: string): Promise<void> {
+    return ipcRenderer.invoke('diagram:save', path, diagram, sessionId)
   },
 
   pickSavePath(): Promise<string | null> {
@@ -88,6 +88,14 @@ const api = {
     return ipcRenderer.invoke('windows:openLinked', diagramPath, relativePath)
   },
 
+  // File -> Close resets this window's content in-place, not via a page
+  // navigation — clears main's stale "this window shows path X"
+  // registration so reopening that same file afterward actually reloads
+  // it instead of just focusing the (now blank) window.
+  clearWindowPath(): Promise<void> {
+    return ipcRenderer.invoke('windows:clearPath')
+  },
+
   // Propagating a required-tags template down the link tree — see epic
   // 0035 / ADR 0024. directChildRelativePaths comes from the caller's own
   // live node state (may include unsaved link edits); every deeper level
@@ -110,6 +118,68 @@ const api = {
       requiredTags,
       directChildRelativePaths
     )
+  },
+
+  // Crash recovery — see epic 0020 / ADR 0040. path is null for a diagram
+  // that hasn't been saved yet, in which case sessionId is what actually
+  // keys the recovery snapshot (see recovery.ts's keyFor). detailsDrafts
+  // rides alongside diagram, not inside it — see recovery.ts's own comment
+  // on RecoveryEnvelope for why.
+  writeRecoverySnapshot(
+    path: string | null,
+    sessionId: string,
+    diagram: DiagramFile,
+    detailsDrafts: Record<string, string>
+  ): Promise<void> {
+    return ipcRenderer.invoke('recovery:write', path, sessionId, diagram, detailsDrafts)
+  },
+
+  deleteRecoverySnapshot(path: string | null, sessionId: string): Promise<void> {
+    return ipcRenderer.invoke('recovery:delete', path, sessionId)
+  },
+
+  checkRecoveryForPath(
+    path: string
+  ): Promise<{ diagram: DiagramFile; detailsDrafts: Record<string, string> } | null> {
+    return ipcRenderer.invoke('recovery:checkForPath', path)
+  },
+
+  // Startup orphan scan (main-driven) tells a freshly created window to
+  // load a recovered diagram instead of starting blank — subscribed once
+  // per window, unsubscribed on unmount.
+  onRecoveredOrphan(
+    callback: (snapshot: { diagram: DiagramFile; detailsDrafts: Record<string, string> }) => void
+  ): () => void {
+    const listener = (
+      _event: unknown,
+      snapshot: { diagram: DiagramFile; detailsDrafts: Record<string, string> }
+    ): void => callback(snapshot)
+    ipcRenderer.on('recovery:loadOrphan', listener)
+    return () => ipcRenderer.off('recovery:loadOrphan', listener)
+  },
+
+  // Real OS close (close button, Alt+F4) — main asks the renderer whether
+  // it's safe to close; this event fires that request. requestCloseDecision
+  // shows the native Save/Discard/Cancel dialog and returns the choice;
+  // closeApproved tells main it's now safe to actually close the window.
+  onCloseRequested(callback: () => void): () => void {
+    const listener = (): void => callback()
+    ipcRenderer.on('window:closeRequested', listener)
+    return () => ipcRenderer.off('window:closeRequested', listener)
+  },
+
+  requestCloseDecision(): Promise<'save' | 'discard' | 'cancel'> {
+    return ipcRenderer.invoke('windows:requestCloseDecision')
+  },
+
+  closeApproved(path: string | null, sessionId: string): Promise<void> {
+    return ipcRenderer.invoke('windows:closeApproved', path, sessionId)
+  },
+
+  // Mirrors just this one AppSettings boolean to a main-readable file —
+  // see settingsMirror.ts for why it can't just be read from localStorage.
+  mirrorScanOnStartupSetting(value: boolean): Promise<void> {
+    return ipcRenderer.invoke('settings:mirrorScanOnStartup', value)
   }
 }
 

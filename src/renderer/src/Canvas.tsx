@@ -428,6 +428,27 @@ function CanvasInner(): React.JSX.Element {
   const [nodes, setNodes, onNodesChangeBase] = useNodesState<Node>([])
   const [edges, setEdges, onEdgesChangeBase] = useEdgesState<Edge>([])
   const [currentPath, setCurrentPath] = useState<string | null>(null)
+  // This window's crash-recovery identity before it's ever been saved —
+  // see epic 0020/ADR 0040. Assigned by main at window creation, carried
+  // via ?session= the same way ?path= already is; stable for the whole
+  // renderer lifetime (unlike currentPath, never reassigned — once a
+  // window has a path, recovery keys off that instead, but the session id
+  // itself doesn't need to change to make that happen).
+  const sessionIdRef = useRef(
+    new URLSearchParams(window.location.search).get('session') ?? crypto.randomUUID()
+  )
+  // Unsaved-changes tracking (epic 0020/ADR 0040) — set directly at every
+  // site that mutates something toDiagramFile() actually serializes, not
+  // derived from the undo/redo stack (which only covers nodes/edges, not
+  // requiredTags/highlights/legend/detailsDrafts — see the ADR for why
+  // that coupling was rejected). Session-only state (enabledHighlightIds,
+  // every panel-open boolean, etc.) never touches this.
+  const [isDirty, setIsDirty] = useState(false)
+  const markDirty = useCallback(() => setIsDirty(true), [])
+  // See loadDiagramIntoCanvas's own comment on why this exists — a short
+  // grace window after any load during which React Flow's own automatic
+  // post-mount dimension measurement doesn't count as a discrete edit.
+  const suppressAutoMeasureUntilRef = useRef(0)
   // Brief post-save confirmation next to the toolbar's Save button — see
   // flashSaved below. Purely transient UI state, not persisted, not reset
   // on load (nothing to reset — it's already false by the time any load
@@ -597,7 +618,8 @@ function CanvasInner(): React.JSX.Element {
       return next.length > MAX_HISTORY ? next.slice(next.length - MAX_HISTORY) : next
     })
     setFuture([])
-  }, [nodes, edges])
+    markDirty()
+  }, [nodes, edges, markDirty])
 
   // Push once at the start of a continuous gesture (guarded so a mid-drag
   // call is a no-op, not a fresh snapshot), never at the end.
@@ -651,13 +673,14 @@ function CanvasInner(): React.JSX.Element {
             (change.type === 'position' && change.dragging === false) ||
             (change.type === 'dimensions' && change.resizing === false)
         )
+        const withinLoadGrace = Date.now() < suppressAutoMeasureUntilRef.current
         const discrete = meaningful.some(
           (change) =>
             change.type === 'remove' ||
             change.type === 'add' ||
             change.type === 'replace' ||
             (change.type === 'position' && change.dragging === undefined) ||
-            (change.type === 'dimensions' && change.resizing === undefined)
+            (change.type === 'dimensions' && change.resizing === undefined && !withinLoadGrace)
         )
         if (starting) beginContinuousEdit()
         else if (discrete) pushSnapshot()
@@ -824,8 +847,9 @@ function CanvasInner(): React.JSX.Element {
     (tags: RequiredTagDefinition[]) => {
       setRequiredTags(tags)
       runSync(tags)
+      markDirty()
     },
-    [runSync]
+    [runSync, markDirty]
   )
 
   // Add: enforces key+value uniqueness in the catalog (two highlights for
@@ -834,27 +858,39 @@ function CanvasInner(): React.JSX.Element {
   // duplicate rather than erroring — the picker only ever offers tags
   // already in use, so a duplicate attempt means the same tag was already
   // added, not a real error condition worth interrupting the user for.
-  const addHighlight = useCallback((key: string, value: JsonValue, color: string) => {
-    setHighlights((prev) =>
-      prev.some((h) => h.key === key && JSON.stringify(h.value) === JSON.stringify(value))
-        ? prev
-        : [...prev, { key, value, color }]
-    )
-  }, [])
+  const addHighlight = useCallback(
+    (key: string, value: JsonValue, color: string) => {
+      setHighlights((prev) =>
+        prev.some((h) => h.key === key && JSON.stringify(h.value) === JSON.stringify(value))
+          ? prev
+          : [...prev, { key, value, color }]
+      )
+      markDirty()
+    },
+    [markDirty]
+  )
 
-  const updateHighlightColor = useCallback((id: string, color: string) => {
-    setHighlights((prev) => prev.map((h) => (highlightId(h) === id ? { ...h, color } : h)))
-  }, [])
+  const updateHighlightColor = useCallback(
+    (id: string, color: string) => {
+      setHighlights((prev) => prev.map((h) => (highlightId(h) === id ? { ...h, color } : h)))
+      markDirty()
+    },
+    [markDirty]
+  )
 
-  const removeHighlight = useCallback((id: string) => {
-    setHighlights((prev) => prev.filter((h) => highlightId(h) !== id))
-    setEnabledHighlightIds((prev) => {
-      if (!prev.has(id)) return prev
-      const next = new Set(prev)
-      next.delete(id)
-      return next
-    })
-  }, [])
+  const removeHighlight = useCallback(
+    (id: string) => {
+      setHighlights((prev) => prev.filter((h) => highlightId(h) !== id))
+      setEnabledHighlightIds((prev) => {
+        if (!prev.has(id)) return prev
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
+      markDirty()
+    },
+    [markDirty]
+  )
 
   const toggleHighlightEnabled = useCallback((id: string) => {
     setEnabledHighlightIds((prev) => {
@@ -883,17 +919,29 @@ function CanvasInner(): React.JSX.Element {
   // can legitimately look identical, e.g. two red dots explaining two
   // different unrelated conventions) and no undo/redo integration, same
   // treatment as the highlight catalog above.
-  const addLegendEntry = useCallback((entry: Omit<LegendEntry, 'id'>) => {
-    setLegend((prev) => [...prev, { ...entry, id: newNodeId('legend') }])
-  }, [])
+  const addLegendEntry = useCallback(
+    (entry: Omit<LegendEntry, 'id'>) => {
+      setLegend((prev) => [...prev, { ...entry, id: newNodeId('legend') }])
+      markDirty()
+    },
+    [markDirty]
+  )
 
-  const updateLegendEntry = useCallback((id: string, patch: Partial<Omit<LegendEntry, 'id'>>) => {
-    setLegend((prev) => prev.map((entry) => (entry.id === id ? { ...entry, ...patch } : entry)))
-  }, [])
+  const updateLegendEntry = useCallback(
+    (id: string, patch: Partial<Omit<LegendEntry, 'id'>>) => {
+      setLegend((prev) => prev.map((entry) => (entry.id === id ? { ...entry, ...patch } : entry)))
+      markDirty()
+    },
+    [markDirty]
+  )
 
-  const removeLegendEntry = useCallback((id: string) => {
-    setLegend((prev) => prev.filter((entry) => entry.id !== id))
-  }, [])
+  const removeLegendEntry = useCallback(
+    (id: string) => {
+      setLegend((prev) => prev.filter((entry) => entry.id !== id))
+      markDirty()
+    },
+    [markDirty]
+  )
 
   // Anchors the floating panel to whichever element opened it — same
   // convention as iconPicker/colorPicker/linePicker's own anchorRect.
@@ -937,8 +985,9 @@ function CanvasInner(): React.JSX.Element {
         const filtered = new Set([...prev].filter((id) => nextIds.has(id)))
         return filtered.size === prev.size ? prev : filtered
       })
+      markDirty()
     },
-    [highlights, usedTags]
+    [highlights, usedTags, markDirty]
   )
 
   const matchHighlights = useCallback(
@@ -1667,8 +1716,9 @@ function CanvasInner(): React.JSX.Element {
         highlights,
         legend
       )
-      await window.api.saveDiagram(path, diagram)
+      await window.api.saveDiagram(path, diagram, sessionIdRef.current)
       setNodes(savedNodes)
+      setIsDirty(false)
       return savedNodes
     },
     [edges, rfInstance, flushDetailsDrafts, setNodes, diagramMetadata, requiredTags, highlights, legend]
@@ -1734,6 +1784,16 @@ function CanvasInner(): React.JSX.Element {
       // restore a previous diagram's nodes into the wrong file context).
       setPast([])
       setFuture([])
+      setIsDirty(false)
+      // React Flow measures every freshly-mounted node's real DOM size via
+      // ResizeObserver and reports it back as a 'dimensions' NodeChange
+      // with resizing left undefined — indistinguishable, by shape alone,
+      // from onNodesChange's own "discrete edit" classification below for
+      // a scripted dimension change. Harmless before epic 0020 (just an
+      // extra no-op undo entry), but now that pushSnapshot also marks the
+      // diagram dirty, that same auto-measurement pass falsely dirtied
+      // every single load. Suppressed for a short window after any load.
+      suppressAutoMeasureUntilRef.current = Date.now() + 500
       setNodes(openedNodes)
       setEdges(openedEdges)
       rfInstance.setViewport(diagram.viewport)
@@ -1781,11 +1841,126 @@ function CanvasInner(): React.JSX.Element {
     if (!path) return
     window.api
       .openDiagramAtPath(path)
-      .then((diagram) => loadDiagramIntoCanvas(path, diagram))
+      .then(async (diagram) => {
+        loadDiagramIntoCanvas(path, diagram)
+        // Crash recovery (epic 0020/ADR 0040) — a snapshot newer than the
+        // real file means the last session ended without saving (crash or
+        // force-quit). Prompted, not silently preferred, so a stale
+        // recovery snapshot can never clobber a real out-of-app edit.
+        const recovered = await window.api.checkRecoveryForPath(path)
+        if (!recovered) return
+        if (confirm('Unsaved changes from an unexpected close were found for this diagram. Recover them?')) {
+          loadDiagramIntoCanvas(path, recovered.diagram)
+          setDetailsDrafts(recovered.detailsDrafts)
+          markDirty()
+        } else {
+          window.api.deleteRecoverySnapshot(path, sessionIdRef.current)
+        }
+      })
       .catch((error) => {
         alert(`Couldn't open ${path}: ${error instanceof Error ? error.message : String(error)}`)
       })
-  }, [loadDiagramIntoCanvas])
+  }, [loadDiagramIntoCanvas, markDirty])
+
+  // A window created by the startup orphan scan (recovery.ts) — a diagram
+  // that crashed before ever being saved, so there's no path for the
+  // effect above to key a lookup against. Main pushes the content directly
+  // once this fresh window's finished loading. Loaded as unsaved (no
+  // path, marked dirty) rather than treated as already-saved content.
+  useEffect(() => {
+    return window.api.onRecoveredOrphan((snapshot) => {
+      loadDiagramIntoCanvas(null, snapshot.diagram)
+      setDetailsDrafts(snapshot.detailsDrafts)
+      markDirty()
+    })
+  }, [loadDiagramIntoCanvas, markDirty])
+
+  // Periodic autosave (epic 0020/ADR 0040) — only writes while isDirty, no
+  // point re-snapshotting unchanged state. Refs, not effect deps, carry the
+  // latest values into the interval callback: re-creating the interval on
+  // every nodes/edges change (which is most renders) would mean it almost
+  // never actually reaches its own timeout.
+  const autosaveStateRef = useRef({
+    isDirty,
+    currentPath,
+    nodes,
+    edges,
+    diagramMetadata,
+    requiredTags,
+    highlights,
+    legend,
+    detailsDrafts
+  })
+  useEffect(() => {
+    autosaveStateRef.current = {
+      isDirty,
+      currentPath,
+      nodes,
+      edges,
+      diagramMetadata,
+      requiredTags,
+      highlights,
+      legend,
+      detailsDrafts
+    }
+  })
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const s = autosaveStateRef.current
+      if (!s.isDirty) return
+      const diagram = toDiagramFile(
+        s.nodes,
+        s.edges,
+        rfInstance.getViewport(),
+        s.diagramMetadata,
+        s.requiredTags,
+        s.highlights,
+        s.legend
+      )
+      window.api.writeRecoverySnapshot(s.currentPath, sessionIdRef.current, diagram, s.detailsDrafts)
+    }, 60_000)
+    return () => clearInterval(interval)
+  }, [rfInstance])
+
+  // Real OS window close (close button, Alt+F4) — main intercepts it and
+  // asks the renderer whether it's safe to proceed (epic 0020/ADR 0040).
+  // A clean window approves immediately; a dirty one drives the native
+  // Save/Discard/Cancel dialog, reusing this window's own existing save
+  // flow (performSave) rather than duplicating "how to actually save" in
+  // main. Refs for the same reason as the autosave timer above — this
+  // subscribes once, not on every isDirty/currentPath change.
+  const closeCheckStateRef = useRef({ isDirty, currentPath, nodes })
+  useEffect(() => {
+    closeCheckStateRef.current = { isDirty, currentPath, nodes }
+  })
+  useEffect(() => {
+    return window.api.onCloseRequested(async () => {
+      const { isDirty: dirtyNow, currentPath: pathNow, nodes: nodesNow } = closeCheckStateRef.current
+      if (!dirtyNow) {
+        window.api.closeApproved(pathNow, sessionIdRef.current)
+        return
+      }
+      const decision = await window.api.requestCloseDecision()
+      if (decision === 'cancel') return
+      if (decision === 'discard') {
+        window.api.closeApproved(pathNow, sessionIdRef.current)
+        return
+      }
+      // 'save' — reuses the same path/dialog logic as the Save menu item.
+      let path = pathNow
+      if (!path) {
+        path = await window.api.pickSavePath()
+        if (!path) return
+      }
+      try {
+        await persistDiagram(path, nodesNow)
+        setCurrentPath(path)
+        window.api.closeApproved(path, sessionIdRef.current)
+      } catch (error) {
+        alert(`Save failed: ${error instanceof Error ? error.message : String(error)}`)
+      }
+    })
+  }, [persistDiagram])
 
   // Opens (or focuses, if already open elsewhere) a new window — except
   // when this window's own diagram is currently empty, in which case that
@@ -1814,33 +1989,35 @@ function CanvasInner(): React.JSX.Element {
   // one *in this same window*, reusing loadDiagramIntoCanvas — the same
   // full-state reset every other load path already goes through — rather
   // than duplicating a scattered set of individual setState(initial) calls.
-  // Same lightweight confirm() guard as handleReload below (there's no
-  // dirty-tracking yet, epic 0020's own scope, so neither can tell whether
-  // there's really anything to lose) — skipped when the canvas is already
-  // empty, same "nothing to lose" reasoning handleOpen's window-reuse
-  // check already uses.
+  // Now that isDirty exists (epic 0020), the confirm() guard is skipped
+  // whenever there's genuinely nothing to lose, not just when the canvas
+  // happens to be empty (a diagram can be dirty while empty too — add a
+  // shape, delete it again — so this is a real behavior change from before).
   const handleClose = useCallback(() => {
-    const isEmpty = nodes.length === 0 && edges.length === 0
-    if (!isEmpty && !confirm('Close this diagram? Any changes since the last save will be lost.')) return
+    if (isDirty && !confirm('Close this diagram? Any changes since the last save will be lost.')) return
     loadDiagramIntoCanvas(null, { version: 1, viewport: { x: 0, y: 0, zoom: 1 }, nodes: [], edges: [] })
-  }, [nodes, edges, loadDiagramIntoCanvas])
+    // This is an in-place reset, not a page navigation — main's window
+    // registry (windows.ts) otherwise never learns this window stopped
+    // showing its old path, and a later attempt to open that same file
+    // would just focus this (now blank) window instead of reloading it.
+    window.api.clearWindowPath()
+  }, [isDirty, loadDiagramIntoCanvas])
 
   // Re-reads this window's own file from disk and reloads it in place,
   // reusing the same loadDiagramIntoCanvas the initial mount effect uses
   // — for picking up changes made outside the app (hand-edited, or
-  // written by other tooling) without quitting and relaunching. There's
-  // no dirty-tracking in this app yet (epic 0020), so this can't tell
-  // whether there are actually unsaved changes to lose — always confirms.
+  // written by other tooling) without quitting and relaunching. Now
+  // dirty-aware (epic 0020) — a clean window reloads without prompting.
   const handleReload = useCallback(async () => {
     if (!currentPath) return
-    if (!confirm('Reload from disk? Any changes since the last save will be lost.')) return
+    if (isDirty && !confirm('Reload from disk? Any changes since the last save will be lost.')) return
     try {
       const diagram = await window.api.openDiagramAtPath(currentPath)
       loadDiagramIntoCanvas(currentPath, diagram)
     } catch (error) {
       alert(`Couldn't reload: ${error instanceof Error ? error.message : String(error)}`)
     }
-  }, [currentPath, loadDiagramIntoCanvas])
+  }, [currentPath, isDirty, loadDiagramIntoCanvas])
 
   // Opens (or focuses, if already open elsewhere) a linked diagram in its
   // own window — used by both link-navigation flows below. Never mutates
@@ -2392,9 +2569,10 @@ function CanvasInner(): React.JSX.Element {
           {detailsPanelNodeId && (
             <DetailsPanel
               content={detailsDrafts[detailsPanelNodeId] ?? ''}
-              onChange={(content) =>
+              onChange={(content) => {
                 setDetailsDrafts((prev) => ({ ...prev, [detailsPanelNodeId]: content }))
-              }
+                markDirty()
+              }}
               onClose={() => setDetailsPanelNodeId(null)}
             />
           )}

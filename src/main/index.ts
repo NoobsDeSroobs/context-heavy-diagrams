@@ -6,6 +6,8 @@ import { registerDetailsHandlers } from './details'
 import { registerLinkHandlers } from './links'
 import { createWindow, registerWindowHandlers } from './windows'
 import { registerRequiredTagsHandlers } from './requiredTags'
+import { registerRecoveryHandlers, runStartupOrphanScan } from './recovery'
+import { readScanOnStartupSetting, registerSettingsMirrorHandlers } from './settingsMirror'
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -30,8 +32,22 @@ app.whenReady().then(() => {
   registerLinkHandlers()
   registerWindowHandlers()
   registerRequiredTagsHandlers()
+  registerRecoveryHandlers()
+  registerSettingsMirrorHandlers()
 
-  createWindow()
+  const initialWindow = createWindow()
+
+  // Not awaited — a diagram that crashed before ever being saved once has
+  // no path to key a per-window recovery check against (that path runs
+  // per-window on open instead, see diagram open flow), so this is the
+  // only place it can be found. Gated on the mirrored setting since the
+  // scan is a real startup cost some users may want to skip (epic 0020/
+  // ADR 0040). Runs after createWindow() so the first window shows up
+  // without waiting on this. initialWindow parents the recovery dialog(s)
+  // so they get a defined z-order — see runStartupOrphanScan's own comment.
+  readScanOnStartupSetting().then((enabled) => {
+    if (enabled) runStartupOrphanScan(initialWindow, createWindow)
+  })
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the

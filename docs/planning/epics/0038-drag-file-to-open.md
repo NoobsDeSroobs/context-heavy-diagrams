@@ -1,7 +1,14 @@
 # 0038: Drag file into window to open
 
 ## Status
-Not Started — not yet scoped. Raised by the user (2026-08-20). Deliberately not designed here, just captured so it isn't lost, same as epics 0024/0026/0030/0037.
+On hold, blocked by [epic 0020](0020-autosave-and-crash-recovery.md) (2026-08-22). Raised by the user (2026-08-20). Design conversation started 2026-08-22 and got as far as resolving most of the open questions below before hitting a real blocker: dropping onto a non-empty window needs to distinguish "saved, no changes" from "genuinely unsaved" to prompt correctly, and this app has no dirty-tracking at all yet — that's epic 0020's own scope. Rather than build a throwaway one-off dirty check here, epic 0020 was pulled forward as a prerequisite (see its doc and [ADR 0040](../../decisions/0040-dirty-tracking-and-autosave-design.md)). Resume this epic once 0020 lands.
+
+## Resolved during the 2026-08-22 design conversation (not yet built)
+- **Drop onto an empty window**: open directly, no prompt — same "nothing to lose" reasoning as `handleOpen`'s window-reuse check.
+- **Drop onto a non-empty window**: depends on dirty state (blocked on epic 0020) — saved/clean prompts Open Here vs. Open in New Window; genuinely unsaved prompts New Window / Open Here (discard) / Cancel.
+- **A file already open in another window**: focus that window instead, regardless of the drop target's own state — same precedent `openOrFocusWindow` already uses for File → Open.
+- **Multiple files dropped at once**: one window per file. Only the actual drop-target window's state (per the point above) is ever in question — every additional file just opens its own new window unconditionally, since there's no second window to reuse or prompt about.
+- **Non-`.chd` files dropped**: reject upfront by extension, matching the file dialog's own filter — no attempt to read and fail gracefully.
 
 ## Goal
 Drop a `.chd` file onto an open app window to open it, as an alternative to the existing File → Open dialog.
@@ -11,12 +18,9 @@ Drop a `.chd` file onto an open app window to open it, as an alternative to the 
 - File → Open already has a "reuse the current window instead of opening a new one, but only if that window is completely empty" rule (epic 0024's post-merge amendment) — the natural precedent for what dropping a file onto a window should do.
 - Opening goes through `window.api.openInNewWindow()` / `openOrFocusWindow(path)` in the main process (`windows.ts`) — a drop handler would presumably route into the same path rather than duplicating open logic.
 
-## Real open questions (deliberately not resolved here)
-- **Drop onto an empty window vs. one with a diagram already open** — mirror the File → Open rule above (reuse if empty, new window otherwise), or always open a new window regardless? Also: does dropping onto a window that already has *unsaved changes* need a warning, or does the multi-window model sidestep that since the drop target and the existing diagram are unrelated files?
-- **Dropping multiple files at once** — open one window per file, or only honor the first?
-- **Non-`.chd` files dropped** — reject with an error, or attempt to read anyway and fail gracefully the same way a corrupt `.chd` would?
-- **Electron mechanics** — recent Electron versions removed the renderer's direct `File.path` access for security; getting a real filesystem path from a dropped `File` object now needs `webUtils.getPathForFile` in the preload/main process. Worth confirming which Electron version this project is on and whether that API is available.
-- **Drop target scope** — anywhere on the window, or only a specific zone (e.g. not while a text field has focus, so it doesn't interfere with normal text drag-and-drop)?
+## Real open questions still remaining
+- **Electron mechanics** — confirmed the project is on Electron 43.4.0 (2026-08-22 check), well past `webUtils.getPathForFile`'s introduction (Electron 32), so that API is available for getting a real filesystem path from a dropped `File` object. Not yet actually wired up.
+- **Drop target scope** — anywhere on the window, or only a specific zone (e.g. not while a text field has focus, so it doesn't interfere with normal text drag-and-drop)? Leaning "whole window, no special-casing" since file drops and in-page text drags are different browser mechanisms that don't typically conflict — not confirmed with the user, low-stakes enough to decide during implementation rather than needing a design conversation.
 
 ## Notes
-Not scheduled into the current batch (see [PROGRESS.md](../../../PROGRESS.md)) — flagged here so it's on the backlog and not lost, not because it's next up.
+Not scheduled into the current batch (see [PROGRESS.md](../../../PROGRESS.md)) — on hold behind epic 0020, not dropped.

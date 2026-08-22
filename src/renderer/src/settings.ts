@@ -16,11 +16,19 @@ export interface AppSettings {
   // field (epic 0039) — the total shown to the user, including the
   // always-present default point for that side.
   maxConnectionPointsPerSide: number
+  // Whether app startup scans for crash-recovery snapshots from diagrams
+  // that were never saved (epic 0020/ADR 0040) — a real cost (disk scan
+  // before the first window can usefully act on it) some users may want
+  // to skip. Mirrored to a small main-process-readable file on every
+  // change, since main needs this before any renderer/localStorage
+  // exists — see useSettings below and settingsMirror.ts.
+  scanForUnsavedRecoveryOnStartup: boolean
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
   edgeStraightSegmentLength: 8,
-  maxConnectionPointsPerSide: 12
+  maxConnectionPointsPerSide: 12,
+  scanForUnsavedRecoveryOnStartup: true
 }
 
 const STORAGE_KEY = 'settings'
@@ -51,6 +59,13 @@ export function useSettings(): { settings: AppSettings; updateSettings: (patch: 
     window.addEventListener('storage', onStorage)
     return () => window.removeEventListener('storage', onStorage)
   }, [])
+
+  // Keeps main's mirrored copy in sync on mount too, not just on change —
+  // covers a fresh install (mirror file doesn't exist yet) and any future
+  // drift between the two stores.
+  useEffect(() => {
+    window.api.mirrorScanOnStartupSetting(settings.scanForUnsavedRecoveryOnStartup)
+  }, [settings.scanForUnsavedRecoveryOnStartup])
 
   const updateSettings = useCallback((patch: Partial<AppSettings>) => {
     setSettings((current) => {
