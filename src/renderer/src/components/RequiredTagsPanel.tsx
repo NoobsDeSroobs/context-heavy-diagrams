@@ -193,6 +193,8 @@ export default function RequiredTagsPanel({
         <p className="required-tags-panel-hint">
           Allowed values (editable tags only) are comma-separated, e.g. <code>dev, staging, prod</code> — leave blank
           to allow any value. When set, that tag shows as a dropdown instead of free text wherever it&rsquo;s edited.
+          Every editable tag also always has an implicit &ldquo;None&rdquo; value available, for elements this tag
+          just doesn&rsquo;t apply to — no need to add it to the list above.
         </p>
         {requiredTags.length === 0 && <p className="required-tags-panel-hint">No required tags yet.</p>}
         {requiredTags.map((tag, index) => (

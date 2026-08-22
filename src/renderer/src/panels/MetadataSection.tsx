@@ -14,6 +14,13 @@ function stringifyValue(value: JsonValue): string {
   return typeof value === 'string' ? value : JSON.stringify(value)
 }
 
+// Display only — the actual stored/edited value stays real JSON null
+// either way (stringifyValue(null) === "null", still what the <select>
+// below binds/parses through). Epic 0058/ADR 0046.
+function displayValue(value: JsonValue): string {
+  return value === null ? 'None' : stringifyValue(value)
+}
+
 // Best-effort: valid JSON (number/boolean/null/array/object) is stored as
 // that; anything else falls back to a plain string, so typing e.g. "prod"
 // doesn't need to be quoted to stay a string. Matches ADR 0022's "nested
@@ -110,13 +117,19 @@ export default function MetadataSection({
               {key}
             </span>
             {entry.lock === 'lockedStatic' ? (
-              <span className="metadata-value metadata-value-static">{stringifyValue(entry.value)}</span>
+              <span className="metadata-value metadata-value-static">{displayValue(entry.value)}</span>
             ) : allowedValues ? (
               <select
                 className="metadata-value-select"
                 value={stringifyValue(entry.value)}
                 onChange={(event) => commitValue(key, event.target.value)}
               >
+                {/* Always available without being added to allowedValues
+                    itself — epic 0058/ADR 0046. value="null" round-trips
+                    through commitValue's existing parseValue (JSON.parse)
+                    straight back to real null, no special-casing needed
+                    there. */}
+                <option value="null">None</option>
                 {allowedValues.map((option) => (
                   <option key={option} value={option}>
                     {option}
@@ -127,7 +140,7 @@ export default function MetadataSection({
               <EditableLabel
                 className="metadata-value"
                 inputClassName="metadata-value-input"
-                value={stringifyValue(entry.value)}
+                value={displayValue(entry.value)}
                 onCommit={(v) => commitValue(key, v)}
               />
             )}

@@ -23,8 +23,12 @@ const PANEL_WIDTH = 300
 
 // Same stringify-for-display convention as MetadataSection/RequiredTagsPanel
 // (small independent copy, not a shared import — this codebase's existing
-// pattern for this exact one-liner).
+// pattern for this exact one-liner). null renders as "None" — the implicit
+// "not applicable" value every required tag carries (epic 0058/ADR 0046) —
+// rather than the raw JSON token; purely a display choice, the value
+// passed around everywhere else here stays real null.
 function stringifyValue(value: JsonValue): string {
+  if (value === null) return 'None'
   return typeof value === 'string' ? value : JSON.stringify(value)
 }
 

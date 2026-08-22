@@ -366,7 +366,14 @@ function seedMetadata(requiredTags: RequiredTagDefinition[]): Record<string, Met
 }
 
 function isValidForTag(value: JsonValue, def: RequiredTagDefinition): boolean {
-  // No allowedValues means nothing to be invalid against — see ADR 0022.
+  // null is always valid, regardless of allowedValues — the implicit
+  // "None" value every required tag carries (epic 0058/ADR 0046), without
+  // needing to be added to allowedValues itself. Without this, a
+  // deliberately-None element would get silently reset back to a real
+  // defaultValue on the very next sync pass — exactly backwards from the
+  // point of a "not applicable" value.
+  if (value === null) return true
+  // No allowedValues means nothing else to be invalid against — see ADR 0022.
   if (!def.allowedValues) return true
   return typeof value === 'string' && def.allowedValues.includes(value)
 }
