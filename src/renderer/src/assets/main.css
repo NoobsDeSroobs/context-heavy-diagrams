@@ -1890,3 +1890,78 @@ body {
   color: var(--color-text);
   line-height: 1.4;
 }
+
+/* About dialog (epic 0057) — a centered overlay, not a UtilityDock panel;
+   see AboutDialog.tsx's own comment for why. z-index above the context
+   menu/icon picker's 30-50 range since it's meant to block everything
+   behind it while open. */
+.about-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.about-dialog {
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  display: flex;
+  flex-direction: column;
+  background: var(--color-background-soft);
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.about-dialog-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 8px 8px 12px;
+  border-bottom: 1px solid var(--ev-c-gray-2);
+}
+
+.about-dialog-title {
+  font-size: 13px;
+  font-weight: 600;
+  flex: 1;
+}
+
+.about-dialog-toolbar button {
+  cursor: pointer;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 4px 8px;
+}
+
+.about-dialog-toolbar button:hover {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.about-dialog-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+.about-dialog-body p {
+  margin: 0;
+}
+
+.about-dialog-version {
+  font-weight: 600;
+}
+
+.about-dialog-credits {
+  color: var(--ev-c-text-3);
+  font-size: 12px;
+}

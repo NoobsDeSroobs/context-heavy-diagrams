@@ -219,6 +219,13 @@ const api = {
   // see settingsMirror.ts for why it can't just be read from localStorage.
   mirrorScanOnStartupSetting(value: boolean): Promise<void> {
     return ipcRenderer.invoke('settings:mirrorScanOnStartup', value)
+  },
+
+  // About screen (epic 0057) — package.json's version via Electron's own
+  // app.getVersion(), see ADR 0044. Not cached here; called once per About
+  // open, cheap enough not to bother.
+  getAppVersion(): Promise<string> {
+    return ipcRenderer.invoke('app:getVersion')
   }
 }
 

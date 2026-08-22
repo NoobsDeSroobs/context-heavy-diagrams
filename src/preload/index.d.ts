@@ -61,6 +61,7 @@ export interface DiagramApi {
   requestCloseDecision(): Promise<'save' | 'discard' | 'cancel'>
   closeApproved(path: string | null, sessionId: string): Promise<void>
   mirrorScanOnStartupSetting(value: boolean): Promise<void>
+  getAppVersion(): Promise<string>
 }
 
 declare global {

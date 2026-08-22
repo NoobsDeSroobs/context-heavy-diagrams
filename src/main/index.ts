@@ -8,6 +8,7 @@ import { createWindow, registerWindowHandlers } from './windows'
 import { registerRequiredTagsHandlers } from './requiredTags'
 import { registerRecoveryHandlers, runStartupOrphanScan } from './recovery'
 import { readScanOnStartupSetting, registerSettingsMirrorHandlers } from './settingsMirror'
+import { registerAppInfoHandlers } from './appInfo'
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -34,6 +35,7 @@ app.whenReady().then(() => {
   registerRequiredTagsHandlers()
   registerRecoveryHandlers()
   registerSettingsMirrorHandlers()
+  registerAppInfoHandlers()
 
   const initialWindow = createWindow()
 

@@ -1,24 +1,29 @@
 # 0057: About/Help menu and app versioning scheme
 
 ## Status
-Not Started — not yet scoped. Raised by the user (2026-08-22). Deliberately not designed here, just captured so it isn't lost, same as epics 0024/0026/0030/0037/0038/0048/0055/0056 before their own design passes. **Explicitly told to log this and ignore it for now.**
+Done (2026-08-22)
 
 ## Goal
 Two coupled pieces:
 1. A real versioning scheme for the *app itself* (not to be confused with the `.chd` file format's own `version` field, currently always `1` — see `docs/file-format.md`. Two entirely separate concepts that happen to share a name; keep them distinct when this gets scoped).
 2. A Help/About menu entry (the current top menu bar, epic 0049/ADR 0039, is File/Edit/View only — no Help or About exists anywhere in the app today) showing the version and whatever else an About screen conventionally carries.
 
-## Relevant existing behavior
-- `package.json`'s `"version": "1.0.0"` already exists — inherited from the original electron-scaffold template, never deliberately set or bumped since. Nothing reads it or displays it anywhere in the app today.
-- Menu bar is a custom in-renderer component (`MenuBar.tsx`, generic `{ menus: MenuBarMenu[] }`), not a native Electron menu — adding a Help menu is straightforward from a mechanics standpoint, same pattern as File/Edit/View.
-- No branding assets exist yet — an About screen showing a logo/icon would be blocked on [epic 0027](0027-app-branding-and-licensing.md) for that specific piece, though version/license/credits text doesn't need to wait on it.
+## Decisions made
+- **Versioning scheme**: semver in `package.json`'s existing `version` field, reset from the inherited placeholder `1.0.0` down to `0.1.0` (pre-1.0, "initial development" per semver convention — accurate, since the app has never been publicly distributed). Bumped manually per user-facing PR merge to `master`; `1.0.0` reserved for epic 0053 (installable distribution) actually landing, not for feature completeness. Full reasoning in [ADR 0044](../../decisions/0044-app-versioning-scheme.md).
+- **About screen shape**: a centered modal overlay (`AboutDialog.tsx`), not one of the fixed right-dock panels (ADR 0013) — an About screen is a one-off glance-and-dismiss popup, not an ongoing inspection tool. Shows: version (read live via `app.getVersion()` over a new `app:getVersion` IPC call, not duplicated as a separate constant), license (GPL-3.0-or-later), a short description, and credits for the main runtime dependencies (Electron, React, React Flow, Tabler Icons, react-markdown) plus a link to the repo. No logo — still blocked on epic 0027 (branding).
+- **Help menu scope**: just "About" for v1 — no keyboard-shortcuts reference or docs link added, to avoid scope creep on a small epic; either can be added to the same menu later without any redesign.
 
-## Real open questions (deliberately not resolved here)
-- What versioning scheme — semver tied to git tags/releases? Something simpler? Does it bump per epic, per merge to `master`, or only at actual distribution points (ties into [epic 0053](0053-installable-distribution.md))?
-- What does "About" actually show — version number, license (GPL-3.0-or-later, already decided per [ADR 0011](../../decisions/0011-software-license-choice.md)), credits/attribution (Tabler Icons, React Flow, Electron, etc.), a link to the repo?
-- Does "Help" mean anything beyond "About" — a link to docs, keyboard shortcuts reference, or is it just the one entry?
+## Tasks
+- [x] `package.json` version → `0.1.0`, ADR 0044 written.
+- [x] `app:getVersion` IPC handler (`src/main/appInfo.ts`), registered in `src/main/index.ts`.
+- [x] `getAppVersion()` on the preload `api` (`src/preload/index.ts` + `index.d.ts`).
+- [x] `AboutDialog.tsx` — centered overlay, click-outside/Escape-to-close (same pattern as `MenuBar.tsx`/`ContextMenu.tsx`), styled in `main.css`.
+- [x] "Help" menu added to `Canvas.tsx`'s `MenuBar` menus, single "About" item.
+- [x] `npm run typecheck` clean; `npm run lint` shows zero new errors (only the 4 pre-existing ones tracked by epic 0028, untouched by this change).
 
 ## Notes
-Also raised in the same message, not part of this epic's own scope: a **post-v1 brainstorming pass** — once the app is considered fully "v1 done," revisit the whole backlog and ideas list fresh rather than just continuing to work through what's already logged. Not an epic with content of its own yet (nothing's been brainstormed) — just a milestone marker. See [PROGRESS.md](../../../PROGRESS.md) for where that's tracked.
+The repo's actual remote is `https://github.com/NoobsDeSroobs/context-heavy-diagram-tool` — used as the About dialog's repo link. Worth flagging: some earlier `PROGRESS.md` entries link PRs under `github.com/anthropics/...`, which doesn't match the real remote — a pre-existing inaccuracy in those historical log entries, not something this epic touches or fixes.
 
-Not scheduled into any current batch — flagged here so it isn't lost, not because it's next up.
+External links (the repo URL) open via the existing `shell.openExternal` `setWindowOpenHandler` in `src/main/windows.ts` — already wired for any `target="_blank"` link app-wide, no new handling needed.
+
+Not independently verified in the running app (Electron's `window.api` only exists inside a real `BrowserWindow`, not the Browser pane — same limitation noted in epic 0022's Notes) — worth a quick look by the user: Help → About opens, shows `0.1.0`, closes on Escape/click-outside/✕, and the repo link opens in the default browser.

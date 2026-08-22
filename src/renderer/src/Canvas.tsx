@@ -60,6 +60,7 @@ import LayerPanel from './components/LayerPanel'
 import { CONTAINER_BASE, SHAPE_BASE, TEXT_BASE, backfillZIndex, nextZIndexAbove, reorderZIndex } from './layers/zIndexOrdering'
 import { reassignConnectionPointHandles, setSideCustomPointCount } from './nodes/connectionPoints'
 import SettingsPanel from './components/SettingsPanel'
+import AboutDialog from './components/AboutDialog'
 import DiagramDock from './panels/DiagramDock'
 import UtilityDock from './panels/UtilityDock'
 import AlignmentGuides from './components/AlignmentGuides'
@@ -498,6 +499,7 @@ function CanvasInner(): React.JSX.Element {
   // it used to be.
   const [highlightsPanelAnchor, setHighlightsPanelAnchor] = useState<DOMRect | null>(null)
   const [settingsPanelOpen, setSettingsPanelOpen] = useState(false)
+  const [aboutDialogOpen, setAboutDialogOpen] = useState(false)
   // Global app preference, not diagram content — see settings.ts/ADR 0032.
   // Deliberately not reset by loadDiagramIntoCanvas below; only the panel's
   // open/closed UI state is.
@@ -2455,6 +2457,10 @@ function CanvasInner(): React.JSX.Element {
         { label: 'Layers', onSelect: toggleLayerPanel },
         { label: 'Settings', onSelect: toggleSettingsPanel }
       ]
+    },
+    {
+      label: 'Help',
+      items: [{ label: 'About', onSelect: () => setAboutDialogOpen(true) }]
     }
   ]
 
@@ -2734,6 +2740,7 @@ function CanvasInner(): React.JSX.Element {
             />
           )}
         </UtilityDock>
+        {aboutDialogOpen && <AboutDialog onClose={() => setAboutDialogOpen(false)} />}
       </div>
     </DiagramContext.Provider>
   )
