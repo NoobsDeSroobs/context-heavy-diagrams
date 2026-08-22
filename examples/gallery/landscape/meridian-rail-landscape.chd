@@ -1,8 +1,8 @@
 {
   "version": 1,
   "viewport": {
-    "x": -590.5,
-    "y": 286.7689170092018,
+    "x": -480.5,
+    "y": 363.7689170092018,
     "zoom": 0.5
   },
   "metadata": {
@@ -1520,8 +1520,8 @@
       "id": "service-3-0",
       "type": "shape",
       "position": {
-        "x": 3809.3464236524605,
-        "y": -158.5859489727663
+        "x": 3627.3464236524605,
+        "y": -220.5
       },
       "size": {
         "width": 170,
@@ -1561,8 +1561,8 @@
       "id": "service-3-1",
       "type": "shape",
       "position": {
-        "x": 3385.485412367439,
-        "y": -88.95852389978936
+        "x": 3259.496742060749,
+        "y": -133.9140510272337
       },
       "size": {
         "width": 170,
@@ -1602,8 +1602,8 @@
       "id": "service-3-2",
       "type": "shape",
       "position": {
-        "x": 3671.573648137678,
-        "y": -72
+        "x": 3489.573648137678,
+        "y": -133.9140510272337
       },
       "size": {
         "width": 170,
@@ -1660,8 +1660,8 @@
       "id": "service-3-3",
       "type": "shape",
       "position": {
-        "x": 3599.496742060749,
-        "y": -239.73955253852017
+        "x": 3259.496742060749,
+        "y": -284.5
       },
       "size": {
         "width": 170,
@@ -1718,8 +1718,8 @@
       "id": "service-3-4",
       "type": "shape",
       "position": {
-        "x": 3695.343085916192,
-        "y": 104
+        "x": 3513.343085916192,
+        "y": 42.08594897276629
       },
       "size": {
         "width": 170,
@@ -1759,8 +1759,8 @@
       "id": "service-3-5",
       "type": "shape",
       "position": {
-        "x": 3252.894538434062,
-        "y": 104
+        "x": 3156.894538434062,
+        "y": 26.08594897276629
       },
       "size": {
         "width": 170,
@@ -1812,8 +1812,8 @@
       "id": "service-3-6",
       "type": "shape",
       "position": {
-        "x": 3440,
-        "y": 128
+        "x": 3049.4180987383743,
+        "y": -133.9140510272337
       },
       "size": {
         "width": 170,
@@ -2053,7 +2053,7 @@
       "id": "service-4-3",
       "type": "shape",
       "position": {
-        "x": 4786.542353210262,
+        "x": 4825,
         "y": 192
       },
       "size": {
@@ -2061,6 +2061,18 @@
         "height": 64
       },
       "zIndex": 100320,
+      "connectionPoints": [
+        {
+          "id": "top",
+          "side": "top",
+          "offset": 0.3333333333333333
+        },
+        {
+          "id": "cp-1",
+          "side": "top",
+          "offset": 0.6666666666666666
+        }
+      ],
       "style": {
         "fontSize": 11
       },
@@ -2217,8 +2229,8 @@
       "id": "domain-label-5",
       "type": "text",
       "position": {
-        "x": 1585.9136584370717,
-        "y": 1482
+        "x": 1462.6761502526258,
+        "y": 1476
       },
       "size": {
         "width": 860,
@@ -2240,8 +2252,8 @@
       "id": "service-5-0",
       "type": "shape",
       "position": {
-        "x": 1955,
-        "y": 1590
+        "x": 1831.762491815554,
+        "y": 1584
       },
       "size": {
         "width": 170,
@@ -2348,8 +2360,8 @@
       "id": "service-5-1",
       "type": "shape",
       "position": {
-        "x": 2215,
-        "y": 1818.4251726453526
+        "x": 2091.7624918155543,
+        "y": 1812.4251726453526
       },
       "size": {
         "width": 170,
@@ -2401,8 +2413,8 @@
       "id": "service-5-2",
       "type": "shape",
       "position": {
-        "x": 1785,
-        "y": 1764.8981135781778
+        "x": 1661.762491815554,
+        "y": 1758.8981135781778
       },
       "size": {
         "width": 170,
@@ -2442,8 +2454,8 @@
       "id": "service-5-3",
       "type": "shape",
       "position": {
-        "x": 1982.501659679664,
-        "y": 1850.4251726453526
+        "x": 1859.2641514952181,
+        "y": 1844.4251726453526
       },
       "size": {
         "width": 170,
@@ -2483,8 +2495,8 @@
       "id": "service-5-4",
       "type": "shape",
       "position": {
-        "x": 1737.1628285972397,
-        "y": 1590
+        "x": 1613.9253204127938,
+        "y": 1584
       },
       "size": {
         "width": 170,
@@ -2524,8 +2536,8 @@
       "id": "service-5-5",
       "type": "shape",
       "position": {
-        "x": 2116.1272233755344,
-        "y": 1956.5802288131454
+        "x": 1992.8897151910885,
+        "y": 1950.5802288131454
       },
       "size": {
         "width": 170,
@@ -2565,8 +2577,8 @@
       "id": "service-5-6",
       "type": "shape",
       "position": {
-        "x": 1845.9136584370717,
-        "y": 1966.5870528542127
+        "x": 1722.6761502526258,
+        "y": 1960.5870528542127
       },
       "size": {
         "width": 170,
@@ -2944,8 +2956,8 @@
       "id": "service-6-6",
       "type": "shape",
       "position": {
-        "x": 740,
-        "y": 930.5802288131454
+        "x": 1190,
+        "y": 994.5802288131454
       },
       "size": {
         "width": 170,
@@ -5260,83 +5272,11 @@
       }
     },
     {
-      "id": "xy-edge__service-3-6-service-3-3cp-30",
-      "type": "labeled",
-      "source": "service-3-6",
-      "target": "service-3-3",
-      "targetHandle": "cp-30",
-      "style": {
-        "stroke": "#4a5568",
-        "strokeWidth": 1.5,
-        "lineStyle": "solid",
-        "startMarker": "none",
-        "endMarker": "arrowClosed"
-      },
-      "metadata": {
-        "businessDomain": {
-          "value": null,
-          "lock": "lockedEditable"
-        },
-        "gdpr": {
-          "value": "Pseudonymized",
-          "lock": "lockedEditable"
-        },
-        "nis2": {
-          "value": "Out of scope",
-          "lock": "lockedEditable"
-        },
-        "owningTeam": {
-          "value": null,
-          "lock": "lockedEditable"
-        },
-        "serviceState": {
-          "value": null,
-          "lock": "lockedEditable"
-        }
-      }
-    },
-    {
       "id": "xy-edge__service-3-0-service-3-3right",
       "type": "labeled",
       "source": "service-3-0",
       "target": "service-3-3",
       "targetHandle": "right",
-      "style": {
-        "stroke": "#4a5568",
-        "strokeWidth": 1.5,
-        "lineStyle": "solid",
-        "startMarker": "none",
-        "endMarker": "arrowClosed"
-      },
-      "metadata": {
-        "businessDomain": {
-          "value": null,
-          "lock": "lockedEditable"
-        },
-        "gdpr": {
-          "value": "No PII",
-          "lock": "lockedEditable"
-        },
-        "nis2": {
-          "value": "Out of scope",
-          "lock": "lockedEditable"
-        },
-        "owningTeam": {
-          "value": null,
-          "lock": "lockedEditable"
-        },
-        "serviceState": {
-          "value": null,
-          "lock": "lockedEditable"
-        }
-      }
-    },
-    {
-      "id": "xy-edge__service-3-1-service-3-3cp-31",
-      "type": "labeled",
-      "source": "service-3-1",
-      "target": "service-3-3",
-      "targetHandle": "cp-31",
       "style": {
         "stroke": "#4a5568",
         "strokeWidth": 1.5,
@@ -6166,43 +6106,6 @@
       }
     },
     {
-      "id": "xy-edge__service-4-3left-service-0-0cp-25",
-      "type": "labeled",
-      "source": "service-4-3",
-      "target": "service-0-0",
-      "sourceHandle": "left",
-      "targetHandle": "cp-25",
-      "style": {
-        "stroke": "#4a5568",
-        "strokeWidth": 1.5,
-        "lineStyle": "solid",
-        "startMarker": "none",
-        "endMarker": "arrowClosed"
-      },
-      "metadata": {
-        "businessDomain": {
-          "value": null,
-          "lock": "lockedEditable"
-        },
-        "gdpr": {
-          "value": "PII",
-          "lock": "lockedEditable"
-        },
-        "nis2": {
-          "value": "Out of scope",
-          "lock": "lockedEditable"
-        },
-        "owningTeam": {
-          "value": null,
-          "lock": "lockedEditable"
-        },
-        "serviceState": {
-          "value": null,
-          "lock": "lockedEditable"
-        }
-      }
-    },
-    {
       "id": "xy-edge__service-9-3-service-0-0right",
       "type": "labeled",
       "source": "service-9-3",
@@ -6609,42 +6512,6 @@
       }
     },
     {
-      "id": "xy-edge__service-6-6-service-5-0top",
-      "type": "labeled",
-      "source": "service-6-6",
-      "target": "service-5-0",
-      "targetHandle": "top",
-      "style": {
-        "stroke": "#4a5568",
-        "strokeWidth": 1.5,
-        "lineStyle": "solid",
-        "startMarker": "none",
-        "endMarker": "arrowClosed"
-      },
-      "metadata": {
-        "businessDomain": {
-          "value": null,
-          "lock": "lockedEditable"
-        },
-        "gdpr": {
-          "value": "No PII",
-          "lock": "lockedEditable"
-        },
-        "nis2": {
-          "value": "Out of scope",
-          "lock": "lockedEditable"
-        },
-        "owningTeam": {
-          "value": null,
-          "lock": "lockedEditable"
-        },
-        "serviceState": {
-          "value": null,
-          "lock": "lockedEditable"
-        }
-      }
-    },
-    {
       "id": "xy-edge__service-5-0cp-4-service-8-0left",
       "type": "labeled",
       "source": "service-5-0",
@@ -6726,7 +6593,9 @@
       "sourceHandle": "left",
       "targetHandle": "right",
       "style": {
-        "endMarker": "none"
+        "endMarker": "none",
+        "stroke": "#4a5568",
+        "strokeWidth": 1.5
       },
       "metadata": {
         "businessDomain": {
@@ -7137,6 +7006,152 @@
         },
         "gdpr": {
           "value": "No PII",
+          "lock": "lockedEditable"
+        },
+        "nis2": {
+          "value": "Out of scope",
+          "lock": "lockedEditable"
+        },
+        "owningTeam": {
+          "value": null,
+          "lock": "lockedEditable"
+        },
+        "serviceState": {
+          "value": null,
+          "lock": "lockedEditable"
+        }
+      }
+    },
+    {
+      "id": "xy-edge__service-3-1-service-3-3cp-30",
+      "type": "labeled",
+      "source": "service-3-1",
+      "target": "service-3-3",
+      "targetHandle": "cp-30",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 1.5,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowClosed"
+      },
+      "metadata": {
+        "businessDomain": {
+          "value": null,
+          "lock": "lockedEditable"
+        },
+        "gdpr": {
+          "value": "No PII",
+          "lock": "lockedEditable"
+        },
+        "nis2": {
+          "value": "Out of scope",
+          "lock": "lockedEditable"
+        },
+        "owningTeam": {
+          "value": null,
+          "lock": "lockedEditable"
+        },
+        "serviceState": {
+          "value": null,
+          "lock": "lockedEditable"
+        }
+      }
+    },
+    {
+      "id": "xy-edge__service-3-6-service-3-3cp-31",
+      "type": "labeled",
+      "source": "service-3-6",
+      "target": "service-3-3",
+      "targetHandle": "cp-31",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 1.5,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowClosed"
+      },
+      "metadata": {
+        "businessDomain": {
+          "value": null,
+          "lock": "lockedEditable"
+        },
+        "gdpr": {
+          "value": "Pseudonymized",
+          "lock": "lockedEditable"
+        },
+        "nis2": {
+          "value": "Out of scope",
+          "lock": "lockedEditable"
+        },
+        "owningTeam": {
+          "value": null,
+          "lock": "lockedEditable"
+        },
+        "serviceState": {
+          "value": null,
+          "lock": "lockedEditable"
+        }
+      }
+    },
+    {
+      "id": "xy-edge__service-6-6right-service-5-0top",
+      "type": "labeled",
+      "source": "service-6-6",
+      "target": "service-5-0",
+      "sourceHandle": "right",
+      "targetHandle": "top",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 1.5,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowClosed"
+      },
+      "metadata": {
+        "businessDomain": {
+          "value": null,
+          "lock": "lockedEditable"
+        },
+        "gdpr": {
+          "value": "No PII",
+          "lock": "lockedEditable"
+        },
+        "nis2": {
+          "value": "Out of scope",
+          "lock": "lockedEditable"
+        },
+        "owningTeam": {
+          "value": null,
+          "lock": "lockedEditable"
+        },
+        "serviceState": {
+          "value": null,
+          "lock": "lockedEditable"
+        }
+      }
+    },
+    {
+      "id": "xy-edge__service-4-3cp-1-service-0-0cp-25",
+      "type": "labeled",
+      "source": "service-4-3",
+      "target": "service-0-0",
+      "sourceHandle": "cp-1",
+      "targetHandle": "cp-25",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 1.5,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowClosed"
+      },
+      "metadata": {
+        "businessDomain": {
+          "value": null,
+          "lock": "lockedEditable"
+        },
+        "gdpr": {
+          "value": "PII",
           "lock": "lockedEditable"
         },
         "nis2": {

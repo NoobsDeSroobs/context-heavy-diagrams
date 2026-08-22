@@ -226,6 +226,17 @@ const api = {
   // open, cheap enough not to bother.
   getAppVersion(): Promise<string> {
     return ipcRenderer.invoke('app:getVersion')
+  },
+
+  // Style palette export/import (epic 0030/ADR 0048) — returns false/null
+  // on cancel, same "no error, just nothing happened" convention as
+  // diagram:pickSavePath.
+  exportStylePalette(json: string): Promise<boolean> {
+    return ipcRenderer.invoke('stylePalette:exportToFile', json)
+  },
+
+  importStylePalette(): Promise<string | null> {
+    return ipcRenderer.invoke('stylePalette:importFromFile')
   }
 }
 

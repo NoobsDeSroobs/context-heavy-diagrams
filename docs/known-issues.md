@@ -263,3 +263,17 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 **Resolution:** replaced the native `confirm()` in `AllowedValuesEditor` with an in-panel confirmation — the row being removed/renamed is swapped for a small inline message + Confirm/Cancel buttons (`.required-tag-value-confirm`), no native dialog involved at all. Not a fix for the underlying Electron quirk itself (still not understood), just an avoidance — **any future feature that shows a native `confirm()`/`alert()` and then expects the user to keep interacting with `<select>` elements in the same view should watch for this same symptom**, and prefer an in-app confirmation the way this one now does.
 
 **References:** [epic 0055](planning/epics/0055-required-tags-allowed-values-list-editor.md), [ADR 0047](decisions/0047-allowed-values-list-editor.md), `src/renderer/src/components/RequiredTagsPanel.tsx`
+
+---
+
+## Setting `style={{ backgroundColor }}` on `<ReactFlow>` does nothing
+**Status:** Solved
+**Found:** 2026-08-22, epic 0030, live testing by the user immediately after the canvas-background-color feature shipped
+
+**Symptom:** picking a canvas background color in the new Style Palette panel had no visible effect at all — the canvas kept showing React Flow's own default light/dark background regardless of what was picked.
+
+**Root cause:** `<ReactFlow>`'s `style` prop does land on the actual `.react-flow` root element (confirmed by reading `node_modules/@xyflow/react/dist/esm/index.mjs` — `style: { ...style, ...wrapperStyle }` on the same div that carries the `react-flow` className), so a plain `backgroundColor` *does* change that element's own paint. But it's never visible: `<Background>` renders a separate, absolutely-positioned SVG on top (`.react-flow__background`, covering the whole pane) whose own CSS rule is `background-color: var(--xy-background-color-props, var(--xy-background-color, var(--xy-background-color-default)))` (`node_modules/@xyflow/react/dist/style.css`) — it reads a **CSS custom property**, not the literal `background-color`, and that custom property isn't set by passing a plain `backgroundColor` in the style object at all.
+
+**Resolution:** set the custom property directly instead: `style={{ '--xy-background-color': value } as React.CSSProperties}` (the cast is needed since custom properties aren't part of the standard `CSSProperties` type). Custom properties inherit down the DOM tree, so setting it on the outer `.react-flow` element correctly reaches the child `<Background>` SVG that actually paints. **General lesson for anything touching React Flow's visual defaults**: check whether the library exposes a CSS custom property before assuming a plain style/CSS property will reach the actual paint layer — several of React Flow's own defaults (edge stroke, node background, handle color, etc.) follow this same `var(--xy-*-props, var(--xy-*, var(--xy-*-default)))` fallback chain, not a plain property.
+
+**References:** [epic 0030](planning/epics/0030-custom-style-palettes-and-defaults.md), [ADR 0048](decisions/0048-style-palette-and-defaults.md), `src/renderer/src/Canvas.tsx`, `node_modules/@xyflow/react/dist/style.css`

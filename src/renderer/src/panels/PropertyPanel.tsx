@@ -35,6 +35,12 @@ interface PropertyPanelProps {
   onUpdateEdgeMetadata: (edgeId: string, metadata: Record<string, MetadataEntry> | undefined) => void
   onSetConnectionPointCount: (nodeId: string, side: ConnectionPointSide, totalCount: number) => void
   maxConnectionPointsPerSide: number
+  // Copies one selected node's current style into settings.defaultStyles
+  // for its type (epic 0030/ADR 0048) — only offered for shape/container/
+  // text, only when exactly one node of that type is selected (a style is
+  // only well-defined for a single node, not a multi-selection). Edges
+  // already have their own equivalent via the toolbar swatch (epic 0061).
+  onSetDefaultStyle: (type: 'shape' | 'container' | 'text', style: NodeStyle) => void
   requiredTags: RequiredTagDefinition[]
   beginContinuousEdit: () => void
   endContinuousEdit: () => void
@@ -92,7 +98,8 @@ function NodeStyleFields({
   updateLocked,
   beginContinuousEdit,
   endContinuousEdit,
-  pushSnapshot
+  pushSnapshot,
+  onSetDefault
 }: {
   nodes: Node[]
   minWidth: number
@@ -104,8 +111,12 @@ function NodeStyleFields({
   beginContinuousEdit: () => void
   endContinuousEdit: () => void
   pushSnapshot: () => void
+  // Only set when exactly one node is selected — see PropertyPanelProps'
+  // own comment on onSetDefaultStyle.
+  onSetDefault?: () => void
 }): React.JSX.Element {
-  const { theme } = useDiagramContext()
+  const { theme, paletteColors, paletteFonts } = useDiagramContext()
+  const fontFamilyOptions = [...FONT_FAMILY_OPTIONS, ...paletteFonts.map((f) => ({ value: f, label: f }))]
   const fill = computeFieldValue(nodes, (n) => nodeStyleOf(n).fill)
   const fillOpacity = computeFieldValue(nodes, (n) => nodeStyleOf(n).fillOpacity)
   const stroke = computeFieldValue(nodes, (n) => nodeStyleOf(n).stroke)
@@ -140,6 +151,16 @@ function NodeStyleFields({
           title="Blocks drag/resize/rotate and accidental delete via the canvas — every other edit (this panel, tags, connection points) stays allowed"
         />
       </FieldRow>
+      {onSetDefault && (
+        <button
+          type="button"
+          className="property-set-default"
+          onClick={onSetDefault}
+          title="Newly created elements of this type will start with this exact style"
+        >
+          Set as default style
+        </button>
+      )}
       <CollapsibleSection title="Fill">
         <ColorField
           label="Fill"
@@ -148,6 +169,7 @@ function NodeStyleFields({
           onChange={(v) => updateStyle({ fill: themeAdaptiveColor(v, theme) })}
           onSessionStart={beginContinuousEdit}
           onSessionEnd={endContinuousEdit}
+          paletteColors={paletteColors}
         />
         <SliderField
           label="Opacity"
@@ -166,6 +188,7 @@ function NodeStyleFields({
           onChange={(v) => updateStyle({ stroke: themeAdaptiveColor(v, theme) })}
           onSessionStart={beginContinuousEdit}
           onSessionEnd={endContinuousEdit}
+          paletteColors={paletteColors}
         />
         <SliderField
           label="Opacity"
@@ -190,7 +213,7 @@ function NodeStyleFields({
           label="Family"
           value={fontFamily.value ?? ''}
           mixed={fontFamily.mixed}
-          options={FONT_FAMILY_OPTIONS}
+          options={fontFamilyOptions}
           onChange={(v) => updateStyle({ fontFamily: v === '' ? undefined : v })}
           pushSnapshot={pushSnapshot}
         />
@@ -210,6 +233,7 @@ function NodeStyleFields({
           onChange={(v) => updateStyle({ fontColor: themeAdaptiveColor(v, theme) })}
           onSessionStart={beginContinuousEdit}
           onSessionEnd={endContinuousEdit}
+          paletteColors={paletteColors}
         />
         <SliderField
           label="Opacity"
@@ -306,7 +330,8 @@ function EdgeFields({
   endContinuousEdit: () => void
   pushSnapshot: () => void
 }): React.JSX.Element {
-  const { theme } = useDiagramContext()
+  const { theme, paletteColors, paletteFonts } = useDiagramContext()
+  const fontFamilyOptions = [...FONT_FAMILY_OPTIONS, ...paletteFonts.map((f) => ({ value: f, label: f }))]
   const startMarker = computeFieldValue(edges, (e) => edgeStyleOf(e).startMarker)
   const endMarker = computeFieldValue(edges, (e) => edgeStyleOf(e).endMarker)
   const stroke = computeFieldValue(edges, (e) => edgeStyleOf(e).stroke)
@@ -340,6 +365,7 @@ function EdgeFields({
           onChange={(v) => updateStyle({ stroke: themeAdaptiveColor(v, theme) })}
           onSessionStart={beginContinuousEdit}
           onSessionEnd={endContinuousEdit}
+          paletteColors={paletteColors}
         />
         <SliderField
           label="Opacity"
@@ -395,7 +421,7 @@ function EdgeFields({
           label="Family"
           value={fontFamily.value ?? ''}
           mixed={fontFamily.mixed}
-          options={FONT_FAMILY_OPTIONS}
+          options={fontFamilyOptions}
           onChange={(v) => updateStyle({ fontFamily: v === '' ? undefined : v })}
           pushSnapshot={pushSnapshot}
         />
@@ -415,6 +441,7 @@ function EdgeFields({
           onChange={(v) => updateStyle({ fontColor: themeAdaptiveColor(v, theme) })}
           onSessionStart={beginContinuousEdit}
           onSessionEnd={endContinuousEdit}
+          paletteColors={paletteColors}
         />
         <SliderField
           label="Opacity"
@@ -524,7 +551,8 @@ export default function PropertyPanel({
   requiredTags,
   beginContinuousEdit,
   endContinuousEdit,
-  pushSnapshot
+  pushSnapshot,
+  onSetDefaultStyle
 }: PropertyPanelProps): React.JSX.Element {
   const byType = new Map<string, Node[]>()
   for (const n of selectedNodes) {
@@ -549,6 +577,7 @@ export default function PropertyPanel({
   const renderNodeGroup = (type: string, nodes: Node[]): React.JSX.Element => {
     const ids = nodes.map((n) => n.id)
     const min = MIN_SIZE[type] ?? MIN_SIZE.shape
+    const canSetDefault = nodes.length === 1 && (type === 'shape' || type === 'container' || type === 'text')
     return (
       <NodeStyleFields
         key={type}
@@ -559,6 +588,11 @@ export default function PropertyPanel({
         updateStyle={(patch) => onUpdateNodeStyle(ids, patch)}
         updateTransform={(patch) => onUpdateTransform(ids, patch)}
         updateLocked={(locked) => onUpdateLocked(ids, locked)}
+        onSetDefault={
+          canSetDefault
+            ? () => onSetDefaultStyle(type as 'shape' | 'container' | 'text', nodeStyleOf(nodes[0]))
+            : undefined
+        }
         beginContinuousEdit={beginContinuousEdit}
         endContinuousEdit={endContinuousEdit}
         pushSnapshot={pushSnapshot}

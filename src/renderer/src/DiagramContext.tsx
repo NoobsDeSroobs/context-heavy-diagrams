@@ -72,6 +72,12 @@ export interface DiagramContextValue {
   // metadata value) despite the shared English word. Deliberately not
   // real selection — see the ADR for why. Session-only, null means none.
   entityHighlightNodeId: string | null
+  // User/org style palette (settings.ts, epic 0030/ADR 0048) — threaded
+  // the same way as the global settings above, so PropertyPanel's
+  // NodeStyleFields/EdgeFields can read it without Canvas.tsx having to
+  // prop-drill through every intermediate component.
+  paletteColors: { label: string; value: string }[]
+  paletteFonts: string[]
 }
 
 const DiagramContext = createContext<DiagramContextValue | null>(null)

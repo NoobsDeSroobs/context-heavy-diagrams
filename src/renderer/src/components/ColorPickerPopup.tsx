@@ -1,4 +1,5 @@
 import { ColorField, NumberField, SliderField } from '../panels/fields'
+import { useDiagramContext } from '../DiagramContext'
 
 interface ColorPickerPopupProps {
   title: string
@@ -34,6 +35,7 @@ export default function ColorPickerPopup({
   onSessionEnd,
   onClose
 }: ColorPickerPopupProps): React.JSX.Element {
+  const { paletteColors } = useDiagramContext()
   const left = Math.min(anchorRect.right + 8, window.innerWidth - PICKER_WIDTH - 8)
   const top = Math.min(anchorRect.top, window.innerHeight - 200)
 
@@ -47,6 +49,7 @@ export default function ColorPickerPopup({
         onChange={onChangeColor}
         onSessionStart={onSessionStart}
         onSessionEnd={onSessionEnd}
+        paletteColors={paletteColors}
       />
       <SliderField
         label="Opacity"

@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { EdgeStyle } from '@shared/diagram'
+import type { EdgeStyle, NodeStyle } from '@shared/diagram'
+
+export interface PaletteColor {
+  label: string
+  value: string
+}
 
 // Global, app-wide preferences — not diagram content, not window-local UI
 // state. Deliberately one extensible object under one storage key, not one
@@ -40,6 +45,28 @@ export interface AppSettings {
   // <ReactFlow>'s own defaultEdgeOptions fall back to) — an unset field
   // here doesn't get a hardcoded second default of its own.
   defaultEdgeStyle: EdgeStyle
+  // User/org-owned reusable colors and fonts — epic 0030/ADR 0048.
+  // Surfaced as quick-pick options inside ColorField (Fill/Border/Font
+  // color, panel and context-menu popups both, since both already reuse
+  // that one component) and the Font Family dropdown. One active palette,
+  // not several merged ones — importing a file replaces this outright
+  // (confirmed in-panel first, see StylePalettePanel — not window.confirm(),
+  // see docs/known-issues.md's entry on why).
+  stylePalette: { colors: PaletteColor[]; fonts: string[] }
+  // Default style stamped onto a freshly created Shape/Container/Text —
+  // epic 0030/ADR 0048. Set explicitly (StylePalettePanel's "Set as
+  // default" button, copying a selected element's current style), never
+  // inferred from "whatever was last used." Edges already have this via
+  // defaultEdgeStyle above (epic 0061) — deliberately not duplicated here.
+  // Absent per type means today's existing look (Container keeps its own
+  // hardcoded faint-fill fallback; Shape/Text keep ADR 0014's "no style at
+  // all").
+  defaultStyles: { shape?: NodeStyle; container?: NodeStyle; text?: NodeStyle }
+  // Overrides React Flow's own light/dark default canvas background —
+  // epic 0030/ADR 0048. Global, not per-diagram (matches the rest of the
+  // style palette). Absent means today's existing theme-based background,
+  // unchanged.
+  canvasBackgroundColor?: string
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -50,7 +77,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
   // range diagram content tends to use, so it reads unambiguously as "this
   // is a UI selection indicator," not part of the diagram itself.
   selectedEdgeHighlightColor: '#ff00aa',
-  defaultEdgeStyle: {}
+  defaultEdgeStyle: {},
+  stylePalette: { colors: [], fonts: [] },
+  defaultStyles: {}
 }
 
 const STORAGE_KEY = 'settings'

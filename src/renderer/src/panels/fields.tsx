@@ -85,7 +85,8 @@ export function ColorField({
   mixed,
   onChange,
   onSessionStart,
-  onSessionEnd
+  onSessionEnd,
+  paletteColors
 }: {
   label: string
   value: string | undefined
@@ -93,6 +94,11 @@ export function ColorField({
   onChange: (value: string | undefined) => void
   onSessionStart: () => void
   onSessionEnd: () => void
+  // User/org palette swatches (epic 0030/ADR 0048) — optional, purely a
+  // quick-pick row; a click is a single discrete commit (session start+end
+  // together), same treatment as the clear button below, not a drag
+  // gesture like the native color input.
+  paletteColors?: { label: string; value: string }[]
 }): React.JSX.Element {
   const swatchValue = value && HEX_RE.test(value) ? value : '#808080'
   const [draft, setDraft, onDraftFocus, onDraftBlur] = useDraft(value ?? '', mixed)
@@ -142,6 +148,25 @@ export function ColorField({
           </button>
         )}
       </div>
+      {paletteColors && paletteColors.length > 0 && (
+        <div className="property-palette-swatches">
+          {paletteColors.map((c) => (
+            <button
+              key={c.label + c.value}
+              type="button"
+              className="property-palette-swatch"
+              style={{ backgroundColor: c.value }}
+              title={c.label}
+              aria-label={c.label}
+              onClick={() => {
+                onSessionStart()
+                onChange(c.value)
+                onSessionEnd()
+              }}
+            />
+          ))}
+        </div>
+      )}
     </FieldRow>
   )
 }

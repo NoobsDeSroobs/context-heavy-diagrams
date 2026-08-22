@@ -62,6 +62,8 @@ export interface DiagramApi {
   closeApproved(path: string | null, sessionId: string): Promise<void>
   mirrorScanOnStartupSetting(value: boolean): Promise<void>
   getAppVersion(): Promise<string>
+  exportStylePalette(json: string): Promise<boolean>
+  importStylePalette(): Promise<string | null>
 }
 
 declare global {

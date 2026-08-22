@@ -61,6 +61,7 @@ import { CONTAINER_BASE, SHAPE_BASE, TEXT_BASE, backfillZIndex, nextZIndexAbove,
 import { reassignConnectionPointHandles, setSideCustomPointCount } from './nodes/connectionPoints'
 import SettingsPanel from './components/SettingsPanel'
 import AboutDialog from './components/AboutDialog'
+import StylePalettePanel from './components/StylePalettePanel'
 import DiagramDock from './panels/DiagramDock'
 import UtilityDock from './panels/UtilityDock'
 import AlignmentGuides from './components/AlignmentGuides'
@@ -515,6 +516,7 @@ function CanvasInner(): React.JSX.Element {
   // it used to be.
   const [highlightsPanelAnchor, setHighlightsPanelAnchor] = useState<DOMRect | null>(null)
   const [settingsPanelOpen, setSettingsPanelOpen] = useState(false)
+  const [stylePalettePanelOpen, setStylePalettePanelOpen] = useState(false)
   const [aboutDialogOpen, setAboutDialogOpen] = useState(false)
   // Toolbar's own "current pen style" swatch (epic 0061/ADR 0045) — reuses
   // StylePicker (ADR 0010) unchanged, same anchorRect convention as
@@ -824,6 +826,7 @@ function CanvasInner(): React.JSX.Element {
     setDiagnosticsPanelOpen(false)
     setSettingsPanelOpen(false)
     setLayerPanelOpen(false)
+    setStylePalettePanelOpen(false)
     setDetailsPanelNodeId(nodeId)
   }, [])
 
@@ -832,6 +835,7 @@ function CanvasInner(): React.JSX.Element {
     setDiagnosticsPanelOpen(false)
     setSettingsPanelOpen(false)
     setLayerPanelOpen(false)
+    setStylePalettePanelOpen(false)
     setRequiredTagsPanelOpen((open) => !open)
   }, [])
 
@@ -840,6 +844,7 @@ function CanvasInner(): React.JSX.Element {
     setRequiredTagsPanelOpen(false)
     setSettingsPanelOpen(false)
     setLayerPanelOpen(false)
+    setStylePalettePanelOpen(false)
     setDiagnosticsPanelOpen((open) => !open)
   }, [])
 
@@ -848,7 +853,17 @@ function CanvasInner(): React.JSX.Element {
     setRequiredTagsPanelOpen(false)
     setDiagnosticsPanelOpen(false)
     setLayerPanelOpen(false)
+    setStylePalettePanelOpen(false)
     setSettingsPanelOpen((open) => !open)
+  }, [])
+
+  const toggleStylePalettePanel = useCallback(() => {
+    setDetailsPanelNodeId(null)
+    setRequiredTagsPanelOpen(false)
+    setDiagnosticsPanelOpen(false)
+    setSettingsPanelOpen(false)
+    setLayerPanelOpen(false)
+    setStylePalettePanelOpen((open) => !open)
   }, [])
 
   // Anchors the floating panel to whichever element opened it — same
@@ -864,6 +879,7 @@ function CanvasInner(): React.JSX.Element {
     setRequiredTagsPanelOpen(false)
     setDiagnosticsPanelOpen(false)
     setSettingsPanelOpen(false)
+    setStylePalettePanelOpen(false)
     setEntityHighlightNodeId(null)
     setLayerPanelOpen((open) => !open)
   }, [])
@@ -1326,10 +1342,15 @@ function CanvasInner(): React.JSX.Element {
         position: spawnPosition(width, height, nds.length),
         width,
         height,
-        data: { label: 'Shape', zIndex: nextZIndex(nds, 'shape'), metadata: seedMetadata(requiredTags) }
+        data: {
+          label: 'Shape',
+          zIndex: nextZIndex(nds, 'shape'),
+          metadata: seedMetadata(requiredTags),
+          style: settings.defaultStyles.shape
+        }
       }
     ])
-  }, [setNodes, pushSnapshot, spawnPosition, requiredTags])
+  }, [setNodes, pushSnapshot, spawnPosition, requiredTags, settings.defaultStyles.shape])
 
   const addTextNode = useCallback(() => {
     pushSnapshot()
@@ -1344,10 +1365,15 @@ function CanvasInner(): React.JSX.Element {
         position: spawnPosition(width, height, nds.length),
         width,
         height,
-        data: { label: 'Text', rotation: 0, zIndex: nextZIndex(nds, 'text') }
+        data: {
+          label: 'Text',
+          rotation: 0,
+          zIndex: nextZIndex(nds, 'text'),
+          style: settings.defaultStyles.text
+        }
       }
     ])
-  }, [setNodes, pushSnapshot, spawnPosition])
+  }, [setNodes, pushSnapshot, spawnPosition, settings.defaultStyles.text])
 
   const addContainerNode = useCallback(() => {
     pushSnapshot()
@@ -1365,16 +1391,19 @@ function CanvasInner(): React.JSX.Element {
         // A visible-but-faint default fill (the same neutral tone as the
         // dashed border) rather than fully transparent — a freshly-added
         // container should read as "a container" at a glance, not require
-        // opening the property panel first to see anything at all.
+        // opening the property panel first to see anything at all. Only
+        // the fallback when the user hasn't set a real default (epic
+        // 0030/ADR 0048) — once they have, their own choice wins outright
+        // rather than merging with this hardcoded one.
         data: {
           label: 'Container',
           zIndex: nextZIndex(nds, 'container'),
-          style: { fill: 'var(--ev-c-gray-1)', fillOpacity: 20 },
+          style: settings.defaultStyles.container ?? { fill: 'var(--ev-c-gray-1)', fillOpacity: 20 },
           metadata: seedMetadata(requiredTags)
         }
       }
     ])
-  }, [setNodes, pushSnapshot, spawnPosition, requiredTags])
+  }, [setNodes, pushSnapshot, spawnPosition, requiredTags, settings.defaultStyles.container])
 
   // Alignment guides + snap-to-shape while dragging — see epic 0011.
   // Shared by onNodeDrag (live, every tick) and onNodeDragStop (once more
@@ -2326,6 +2355,8 @@ function CanvasInner(): React.JSX.Element {
           setHighlightsPanelOpen(false)
         } else if (settingsPanelOpen) {
           setSettingsPanelOpen(false)
+        } else if (stylePalettePanelOpen) {
+          setStylePalettePanelOpen(false)
         } else if (iconPicker) {
           setIconPicker(null)
         } else if (colorPicker) {
@@ -2365,6 +2396,7 @@ function CanvasInner(): React.JSX.Element {
     diagnosticsPanelOpen,
     highlightsPanelOpen,
     settingsPanelOpen,
+    stylePalettePanelOpen,
     iconPicker,
     colorPicker,
     linePicker,
@@ -2483,6 +2515,7 @@ function CanvasInner(): React.JSX.Element {
           onSelect: toggleDiagnosticsPanel
         },
         { label: 'Layers', onSelect: toggleLayerPanel },
+        { label: 'Style Palette', onSelect: toggleStylePalettePanel },
         { label: 'Settings', onSelect: toggleSettingsPanel }
       ]
     },
@@ -2510,7 +2543,9 @@ function CanvasInner(): React.JSX.Element {
         maxConnectionPointsPerSide: settings.maxConnectionPointsPerSide,
         selectedEdgeHighlightColor: settings.selectedEdgeHighlightColor,
         theme,
-        entityHighlightNodeId
+        entityHighlightNodeId,
+        paletteColors: settings.stylePalette.colors,
+        paletteFonts: settings.stylePalette.fonts
       }}
     >
       {/* Outer app shell: [canvas view [diagram dock]] [utility dock], nested
@@ -2593,6 +2628,18 @@ function CanvasInner(): React.JSX.Element {
                 deleteKeyCode={['Delete', 'Backspace']}
                 multiSelectionKeyCode="Shift" // frees Ctrl/Cmd+click for linked-diagram navigation — epic 0009
                 colorMode={theme}
+                // Overrides React Flow's own light/dark default background
+                // — epic 0030/ADR 0048. Setting plain `backgroundColor`
+                // here does nothing visible: the actual paint comes from
+                // <Background>'s own absolutely-positioned SVG
+                // (.react-flow__background), which reads the CSS custom
+                // property --xy-background-color, not the literal
+                // background-color, on whichever ancestor defines it — see
+                // node_modules/@xyflow/react/dist/style.css. undefined
+                // here is a no-op (React drops it from the style object),
+                // so this falls back to the theme default exactly like
+                // today whenever the user hasn't set one.
+                style={{ '--xy-background-color': settings.canvasBackgroundColor } as React.CSSProperties}
                 fitView
               >
                 <Background />
@@ -2644,6 +2691,9 @@ function CanvasInner(): React.JSX.Element {
               beginContinuousEdit={beginContinuousEdit}
               endContinuousEdit={endContinuousEdit}
               pushSnapshot={pushSnapshot}
+              onSetDefaultStyle={(type, style) =>
+                updateSettings({ defaultStyles: { ...settings.defaultStyles, [type]: style } })
+              }
             />
           </div>
           {contextMenu && (
@@ -2809,6 +2859,22 @@ function CanvasInner(): React.JSX.Element {
               settings={settings}
               onChange={updateSettings}
               onClose={() => setSettingsPanelOpen(false)}
+            />
+          )}
+          {stylePalettePanelOpen && (
+            <StylePalettePanel
+              palette={settings.stylePalette}
+              defaultStyles={settings.defaultStyles}
+              defaultEdgeStyle={settings.defaultEdgeStyle}
+              canvasBackgroundColor={settings.canvasBackgroundColor}
+              onChangePalette={(stylePalette) => updateSettings({ stylePalette })}
+              onChangeCanvasBackgroundColor={(canvasBackgroundColor) => updateSettings({ canvasBackgroundColor })}
+              onClearDefault={(type) =>
+                type === 'edge'
+                  ? updateSettings({ defaultEdgeStyle: {} })
+                  : updateSettings({ defaultStyles: { ...settings.defaultStyles, [type]: undefined } })
+              }
+              onClose={() => setStylePalettePanelOpen(false)}
             />
           )}
         </UtilityDock>

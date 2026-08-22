@@ -858,6 +858,25 @@ body {
   border-bottom: 1px solid var(--ev-c-gray-2);
 }
 
+/* "Set as default style" (epic 0030/ADR 0048) — a plain button, not a
+   CollapsibleSection row, since it's a one-shot action rather than a
+   field. */
+.property-set-default {
+  cursor: pointer;
+  align-self: flex-start;
+  margin: 4px 0;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.property-set-default:hover {
+  background: var(--ev-button-alt-hover-bg);
+}
+
 .property-section-header {
   cursor: pointer;
   width: 100%;
@@ -898,9 +917,30 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 8px;
   font-size: 12px;
   color: var(--ev-c-text-2);
+}
+
+/* Palette quick-pick row (epic 0030/ADR 0048) — drops to its own full-
+   width line below the label+color-input row via flex-wrap above, rather
+   than squeezing into the same row. */
+.property-palette-swatches {
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.property-palette-swatch {
+  cursor: pointer;
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 3px;
 }
 
 .property-field-label {
@@ -1481,6 +1521,75 @@ body {
 
 .required-tag-value-confirm-actions button:hover {
   background: var(--ev-button-alt-hover-bg);
+}
+
+/* Style Palette panel (epic 0030/ADR 0048) — reuses .required-tag-value-*
+   row/list/confirm classes above for its colors/fonts editors and import
+   confirmation, same list-editor shape as the required-tags panel. */
+.style-palette-color-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.style-palette-color-label {
+  font: inherit;
+  font-size: 12px;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  padding: 3px 5px;
+  min-width: 0;
+  flex: 1;
+}
+
+.style-palette-font-preview {
+  flex: 1;
+  font-size: 13px;
+  color: var(--color-text);
+  padding: 3px 5px;
+}
+
+.style-palette-defaults-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.style-palette-defaults-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--color-text);
+}
+
+.style-palette-defaults-row span:first-child {
+  flex: 1;
+}
+
+.style-palette-defaults-status {
+  color: var(--ev-c-text-3);
+}
+
+.style-palette-defaults-row button {
+  cursor: pointer;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
+.style-palette-defaults-row button:hover:not(:disabled) {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.style-palette-defaults-row button:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 /* Highlights panel — see epic 0026/ADR 0025. */

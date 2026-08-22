@@ -24,7 +24,8 @@ export default function DiagramDock({
   requiredTags,
   beginContinuousEdit,
   endContinuousEdit,
-  pushSnapshot
+  pushSnapshot,
+  onSetDefaultStyle
 }: {
   selectedNodes: Node[]
   selectedEdges: Edge[]
@@ -43,6 +44,7 @@ export default function DiagramDock({
   beginContinuousEdit: () => void
   endContinuousEdit: () => void
   pushSnapshot: () => void
+  onSetDefaultStyle: (type: 'shape' | 'container' | 'text', style: NodeStyle) => void
 }): React.JSX.Element {
   const hasSelection = selectedNodes.length > 0 || selectedEdges.length > 0
 
@@ -64,6 +66,7 @@ export default function DiagramDock({
           beginContinuousEdit={beginContinuousEdit}
           endContinuousEdit={endContinuousEdit}
           pushSnapshot={pushSnapshot}
+          onSetDefaultStyle={onSetDefaultStyle}
         />
       ) : (
         <ItemPalette onAddShape={onAddShape} onAddText={onAddText} onAddContainer={onAddContainer} />
