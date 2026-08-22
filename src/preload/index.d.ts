@@ -64,6 +64,8 @@ export interface DiagramApi {
   getAppVersion(): Promise<string>
   exportStylePalette(json: string): Promise<boolean>
   importStylePalette(): Promise<string | null>
+  copyToClipboard(text: string): void
+  readClipboardText(): string
 }
 
 declare global {

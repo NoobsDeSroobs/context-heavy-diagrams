@@ -66,6 +66,7 @@ import DiagramDock from './panels/DiagramDock'
 import UtilityDock from './panels/UtilityDock'
 import AlignmentGuides from './components/AlignmentGuides'
 import { SNAP_THRESHOLD_PX, boundsFrom, computeSnap } from './alignment'
+import { buildClipboardPayload, parseClipboardPayload, remapForPaste } from './clipboard'
 import type { TransformPatch } from './panels/PropertyPanel'
 import { useTheme } from './theme'
 import { useSettings } from './settings'
@@ -1616,6 +1617,59 @@ function CanvasInner(): React.JSX.Element {
     })
   }, [nodes, setNodes, pushSnapshot])
 
+  // Repeated Ctrl+V of the *same* copied content cascades diagonally
+  // (+20px per repeat) so pastes don't stack exactly on top of each other
+  // — standard clipboard-paste convention. Resets whenever the clipboard
+  // text actually changes (a new copy, or something copied elsewhere).
+  const lastPasteRef = useRef<{ text: string; count: number } | null>(null)
+
+  // Real clipboard copy/paste — epic 0025/ADR 0049. Copy is a pure read (no
+  // undo snapshot needed, diagram state doesn't change); paste/cut do.
+  const copySelection = useCallback(() => {
+    const selected = nodes.filter((n) => n.selected)
+    if (selected.length === 0) return
+    const payload = buildClipboardPayload(selected, edges)
+    window.api.copyToClipboard(JSON.stringify(payload))
+    // A fresh copy starts a new paste-cascade sequence.
+    lastPasteRef.current = null
+  }, [nodes, edges])
+
+  const pasteFromClipboard = useCallback(() => {
+    const text = window.api.readClipboardText()
+    const payload = parseClipboardPayload(text)
+    if (!payload || payload.nodes.length === 0) return
+    const cascade = lastPasteRef.current?.text === text ? lastPasteRef.current.count + 1 : 0
+    lastPasteRef.current = { text, count: cascade }
+
+    // Viewport center, not the copied position — pasting into a different
+    // window/diagram entirely (this app is one real window per diagram,
+    // ADR 0023) makes "wherever it was copied from" meaningless, and even
+    // same-window the view may have panned/zoomed since the copy. See
+    // remapForPaste's own comment.
+    const screenCenter = { x: window.innerWidth / 2, y: window.innerHeight / 2 }
+    const center = rfInstance.screenToFlowPosition(screenCenter)
+    const offset = cascade * 20
+    const { nodes: pastedNodes, edges: pastedEdges } = remapForPaste(payload, newNodeId, {
+      x: center.x + offset,
+      y: center.y + offset
+    })
+
+    pushSnapshot()
+    setNodes((nds) => [...nds.map((n) => (n.selected ? { ...n, selected: false } : n)), ...pastedNodes])
+    setEdges((eds) => [...eds.map((e) => (e.selected ? { ...e, selected: false } : e)), ...pastedEdges])
+  }, [rfInstance, pushSnapshot, setNodes, setEdges])
+
+  const cutSelection = useCallback(() => {
+    const selectedNodes = nodes.filter((n) => n.selected)
+    if (selectedNodes.length === 0) return
+    copySelection()
+    // deleteElements, not a hand-rolled filter — reuses the exact same
+    // cascade React Flow's own Delete-key handling uses (container
+    // children promotion, ADR 0012, is wired into onNodesChange, which
+    // this goes through same as any other removal).
+    rfInstance.deleteElements({ nodes: selectedNodes, edges: edges.filter((e) => e.selected) })
+  }, [nodes, edges, copySelection, rfInstance])
+
   // Property panel writes (epic 0003) — bypass onNodesChange/onEdgesChange
   // entirely (direct setNodes/setEdges), same as IconPicker's onPick already
   // does. Undo grouping is the caller's job: PropertyPanel brackets each
@@ -2331,6 +2385,24 @@ function CanvasInner(): React.JSX.Element {
         duplicateSelected()
         return
       }
+      // Ctrl+C/V/X — same native-text-field deference as Ctrl+A/D above,
+      // so typing/pasting text in a label field still uses the browser's
+      // own clipboard handling, not this diagram-element one.
+      if (mod && event.key.toLowerCase() === 'c' && !isEditingText) {
+        event.preventDefault()
+        copySelection()
+        return
+      }
+      if (mod && event.key.toLowerCase() === 'v' && !isEditingText) {
+        event.preventDefault()
+        pasteFromClipboard()
+        return
+      }
+      if (mod && event.key.toLowerCase() === 'x' && !isEditingText) {
+        event.preventDefault()
+        cutSelection()
+        return
+      }
       // Same reasoning as Ctrl+A/D — defer to native text-field undo while
       // typing. Figma-style redo binding (Ctrl+Shift+Z), not Ctrl+Y.
       if (mod && event.key.toLowerCase() === 'z' && !isEditingText) {
@@ -2387,6 +2459,9 @@ function CanvasInner(): React.JSX.Element {
     handleClose,
     selectAll,
     duplicateSelected,
+    copySelection,
+    pasteFromClipboard,
+    cutSelection,
     deselectAll,
     undo,
     redo,
@@ -2487,6 +2562,7 @@ function CanvasInner(): React.JSX.Element {
   // (fix/highlights-free-tags-and-toggle). Every item reuses an existing
   // handler unchanged — this menu is purely a new way to reach them, not a
   // new set of actions.
+  const hasSelectedNodes = nodes.some((n) => n.selected)
   const menus: MenuBarMenu[] = [
     {
       label: 'File',
@@ -2503,7 +2579,13 @@ function CanvasInner(): React.JSX.Element {
       label: 'Edit',
       items: [
         { label: 'Undo', accelerator: 'Ctrl+Z', disabled: past.length === 0, onSelect: undo },
-        { label: 'Redo', accelerator: 'Ctrl+Shift+Z', disabled: future.length === 0, onSelect: redo }
+        { label: 'Redo', accelerator: 'Ctrl+Shift+Z', disabled: future.length === 0, onSelect: redo },
+        { label: 'Cut', accelerator: 'Ctrl+X', disabled: !hasSelectedNodes, onSelect: cutSelection },
+        { label: 'Copy', accelerator: 'Ctrl+C', disabled: !hasSelectedNodes, onSelect: copySelection },
+        // Not disabled on an empty/invalid clipboard — same silent no-op
+        // as the keyboard shortcut, avoids a synchronous clipboard read on
+        // every render just to compute this menu's enabled state.
+        { label: 'Paste', accelerator: 'Ctrl+V', onSelect: pasteFromClipboard }
       ]
     },
     {

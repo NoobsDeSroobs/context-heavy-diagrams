@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer, webUtils } from 'electron'
+import { clipboard, contextBridge, ipcRenderer, webUtils } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import type { DiagramFile, RequiredTagDefinition } from '@shared/diagram'
 
@@ -237,6 +237,18 @@ const api = {
 
   importStylePalette(): Promise<string | null> {
     return ipcRenderer.invoke('stylePalette:importFromFile')
+  },
+
+  // Copy/paste (epic 0025/ADR 0049) — the real OS clipboard, not IPC to
+  // main: `clipboard` is available directly here since this window's
+  // preload runs unsandboxed (`sandbox: false`, main/windows.ts), so
+  // there's no round-trip needed for a synchronous, already-local API.
+  copyToClipboard(text: string): void {
+    clipboard.writeText(text)
+  },
+
+  readClipboardText(): string {
+    return clipboard.readText()
   }
 }
 
