@@ -3,6 +3,7 @@ import { NodeResizer, useReactFlow, type NodeProps } from '@xyflow/react'
 import type { ConnectionPoint, MetadataEntry, NodeStyle } from '@shared/diagram'
 import EditableLabel from '../components/EditableLabel'
 import HighlightChips from '../components/HighlightChips'
+import LockBadge from '../components/LockBadge'
 import { useDiagramContext } from '../DiagramContext'
 import { HIGHLIGHT_BORDER_WIDTH } from '../highlights'
 import { nodeContainerCss, nodeLabelCss } from '../styles/nodeStyleCss'
@@ -33,6 +34,7 @@ function ContainerNode({ id, data, selected }: NodeProps): React.JSX.Element {
     entityHighlightNodeId
   } = useDiagramContext()
   const { updateNodeData } = useReactFlow()
+  const locked = data?.locked === true
   const customPoints = (data?.connectionPoints ?? []) as ConnectionPoint[]
   const style = data?.style as NodeStyle | undefined
   const { addConnectionPointItem, onPointContextMenu } = useConnectionPointMenu(id, customPoints)
@@ -65,11 +67,12 @@ function ContainerNode({ id, data, selected }: NodeProps): React.JSX.Element {
       onContextMenu={onContextMenu}
     >
       <NodeResizer
-        isVisible={selected}
+        isVisible={selected && !locked}
         minWidth={CONTAINER_MIN_WIDTH}
         minHeight={CONTAINER_MIN_HEIGHT}
       />
       <ConnectionHandles storedPoints={customPoints} onPointContextMenu={onPointContextMenu} />
+      {locked && <LockBadge />}
       {highlightMatches.length >= 2 && (
         <div className="highlight-chips-anchor">
           <HighlightChips highlights={highlightMatches} />

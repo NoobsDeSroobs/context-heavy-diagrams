@@ -176,6 +176,12 @@ export interface DiagramNode {
   // `position` is relative to the parent's origin, not the canvas's. See
   // ADR 0012. Absent means top-level (no container).
   parentId?: string
+  // Blocks drag/resize/rotate and accidental delete via this app's own UI
+  // — not a read-only mode, every other edit (style, tags, label,
+  // connection points, details) stays allowed. Not meaningful on 'anchor'
+  // (transient, never persists as a real element) or edges (no position
+  // of their own to accidentally relocate). Absent means unlocked.
+  locked?: boolean
   style?: NodeStyle
   // Only 'shape'/'container' meaningfully have this — see epic 0034/ADR
   // 0022. 'text' and 'anchor' nodes never get seeded or edited here.

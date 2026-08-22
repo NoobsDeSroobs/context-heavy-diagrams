@@ -12,6 +12,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 ## Open items at a glance
 - [Theme flip reads as "negative image" on toggle](#theme-flip-reads-as-negative-image-on-toggle) — Open, not urgent.
 - [Enabling a highlight makes a container look like it shrinks](#enabling-a-highlight-makes-a-container-look-like-it-shrinks) — Open, not investigated.
+- [A dragged edge endpoint snapped to the wrong side's point after a count change](#a-dragged-edge-endpoint-snapped-to-the-wrong-sides-point-after-a-count-change) — Open, not reproduced.
 
 ---
 
@@ -89,6 +90,23 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 
 ---
 
+## A dragged edge endpoint snapped to the wrong side's point after a count change
+**Status:** Open, not reproduced
+**Found:** 2026-08-22, live testing by the user on the Meridian Rail landscape
+
+**Symptom:** changed a shape's LEFT side from 1 to 2 connection points (property panel count field), then tried dragging an edge's endpoint onto the new left-side point — it snapped onto the *last point on the BOTTOM side* instead. The user's own hypothesis, worth taking seriously: an off-by-one across sides, since bottom immediately precedes left in this app's canonical clockwise order. Not reproduced on a repeat attempt.
+
+**Investigation so far, no fix attempted (matches the user's own "log it, don't chase it blind" framing given it's unreproducible):**
+- The side-ordering hunch checks out structurally: `SIDES = ['top', 'right', 'bottom', 'left']` in `connectionPoints.ts` — bottom really is index 2, left index 3, immediately adjacent.
+- Traced the actual data path for a 1→2 count change (`setSideCustomPointCount` → `Canvas.tsx`'s `setConnectionPointCount`) by hand and it produces correct, distinctly-ID'd points on the *right* side (`left` keeps its original id at the new offset, a fresh `cp-N` id gets the other) — no off-by-one visible in the data itself for this specific case.
+- Given it didn't reproduce on a second attempt, a **timing race is a more likely culprit than a logic bug**: `setConnectionPointCount` calls `updateNodeInternals(nodeId)` synchronously, in the same callback as the `setNodes(...)` call that adds the new handle to the node's data — before React necessarily commits the re-render that actually mounts the new `<Handle>` DOM element. If `updateNodeInternals` measures handle bounds before the new one exists in the DOM, React Flow's own hit-testing would have to fall back to whatever's currently registered, and picking the geometrically-nearest *stale* handle instead of the new one is a plausible way to land on an unrelated side. This would be the same underlying bug class as "[React Flow requires updateNodeInternals() after dynamically adding a handle](#react-flow-requires-updatenodeinternals-after-dynamically-adding-a-handle)" above, but a timing variant (the call exists, but may run too early) rather than a missing call.
+
+**If revisited**: try wrapping the `updateNodeInternals` call in a `requestAnimationFrame` or a `useEffect` keyed on the node's point count, so it runs after React has actually committed the new handle, and see if that's enough to close the race. Reproducing it at all first (maybe by changing a count and immediately, rapidly starting a drag, rather than pausing between the two) would help confirm the timing theory before touching anything.
+
+**References:** [epic 0039](planning/epics/0039-connection-point-counts.md), [epic 0022](planning/epics/0022-example-diagram-gallery.md) (where it was found), `src/renderer/src/nodes/connectionPoints.ts`, `src/renderer/src/Canvas.tsx`'s `setConnectionPointCount`
+
+---
+
 ## Layer panel drag-and-drop: ambiguous drop target, then a dead zone
 **Status:** Solved
 **Found:** 2026-08-21, epic 0043, live testing by the user
@@ -104,18 +122,20 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 ---
 
 ## Edge reconnect-handle "ownership" at a shared connection point isn't decided by z-index
-**Status:** Solved (with a documented fallback if it resurfaces)
-**Found:** 2026-08-21, epic 0046
+**Status:** Solved — see the 2026-08-22 revision below; the original epic 0046 fix (DOM order) turned out not to be the real mechanism at all
+**Found:** 2026-08-21, epic 0046; recurred and properly root-caused 2026-08-22, epic 0022 (Meridian Rail landscape testing)
 
-**Symptom:** with several edges converging on the same connection point, the reconnect-drag handle (the small circle used to move an edge's endpoint) always belonged to the *last-created* edge, regardless of which edge was actually selected — a user couldn't reliably grab a specific edge at a busy convergence point.
+**Symptom:** with several edges converging on the same connection point, the reconnect-drag handle (the small circle used to move an edge's endpoint) belonged to the wrong edge, regardless of which edge was actually selected — a user couldn't reliably grab a specific edge at a busy convergence point.
 
-**Root cause investigation — the obvious theory was wrong.** React Flow's `elevateEdgesOnSelect` (on by default, never overridden here) should already bump a selected edge's z-index by 1000, which should win any hit-test "for free." It didn't, and reading the React Flow source didn't turn up why. The user tested directly on a real shape with three converging edges and found the *actual* mechanism was DOM/creation order, not z-index at all — React Flow's own reconnect-handle hit test appears to prefer whichever edge is later in paint order, independent of the z-index elevation.
+**Original (2026-08-21) investigation — later found incomplete.** The working theory at the time was that React Flow's `elevateEdgesOnSelect` (assumed on by default) should already bump a selected edge's z-index by 1000, winning any hit-test "for free," but didn't. Live testing on a shape with three converging edges seemed to show DOM/creation order was the actual deciding mechanism instead, so the fix built then (`Canvas.tsx`'s `orderedEdges`, moving selected edges last in the array passed to `<ReactFlow edges={...}>`) targeted that. It happened to resolve that one test case, but not because the theory was right.
 
-**Resolution:** rather than keep chasing why the library's own z-index elevation doesn't win, the fix targets what the user's test actually implicated — `Canvas.tsx` now computes `orderedEdges`, a derived array with selected edges stably moved to the end before being passed to `<ReactFlow edges={...}>`, so DOM/paint order (not any z-index concept) decides the tie. The real `edges` state (save order, undo history) is untouched — this is rendering-only, same pattern as the unrelated `zIndexedNodes` computation already used for container/shape stacking.
+**2026-08-22: recurred, and actually root-caused this time**, live-debugged with temporary `console.log` instrumentation in `onReconnectStart`/`onReconnect` (same technique as the menu-bar hover-switch bug above) rather than re-guessing. The logged data showed a *selected* edge (`edge-16`) losing a reconnect-handle grab to a completely different, unselected edge — which `orderedEdges` should have prevented if DOM order were really the mechanism. Reading React Flow's actual source (`node_modules/@xyflow/react`, `node_modules/@xyflow/system`) settled it: **each edge renders inside its own separate `<svg style={{ zIndex }}>` wrapper** — a real, independent CSS z-index per edge, not shared DOM/paint order at all. That z-index comes from `getElevatedEdgeZIndex`, which only adds a selection bump when `elevateEdgesOnSelect` is true — and it **defaults to `false`** in this installed React Flow version, and was never explicitly turned on in this codebase. So the 2026-08-21 theory had it backwards: selection had *zero* effect on any edge's real z-index the whole time. What actually governed it was `zIndexedEdges`' own pre-existing computation (`Canvas.tsx`, epic 0043/ADR 0035) — the midpoint of the edge's two endpoint nodes' z-index — entirely unrelated to which edge a user had clicked.
 
-**If this doesn't fully hold up in some other convergence scenario**: the documented fallback (not built, kept in reserve) is intercepting the pointer event directly — capture-phase listener on pointerdown, `elementsFromPoint` to find every element under the cursor, prefer the currently-selected edge if it's among them, `stopImmediatePropagation` and re-dispatch onto the correct DOM node. More complex (real event interception) but sidesteps needing to understand React Flow's own hit-test priority at all.
+**Actual resolution**: `zIndexedEdges` now adds a large explicit boost (`SELECTED_EDGE_Z_BOOST = 1_000_000`) on top of the midpoint z-index when `e.selected` is true, so a selected edge's real CSS z-index reliably wins regardless of its endpoints' own z-index. `orderedEdges` (the original DOM-reordering fix) is kept as a harmless tie-breaker for edges that land on the exact same computed z-index, but is no longer what does the actual work.
 
-**References:** [epic 0046](planning/epics/0046-edge-selection-highlight-and-priority.md), `src/renderer/src/Canvas.tsx`
+**Lesson**: the original fix "worked" in its one test case by coincidence — always verify a fix against the actual mechanism (here, reading the library's own source once real data contradicted the working theory), not just against the one scenario that happened to pass.
+
+**References:** [epic 0046](planning/epics/0046-edge-selection-highlight-and-priority.md), [epic 0022](planning/epics/0022-example-diagram-gallery.md), `src/renderer/src/Canvas.tsx`'s `zIndexedEdges`, `node_modules/@xyflow/react`'s `EdgeWrapper`/`getElevatedEdgeZIndex`
 
 ---
 
@@ -214,3 +234,17 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 **Resolution:** redesigned both branches. Every button now names its own consequence ("Save changes, Open Here" / "Discard changes, Open Here" / "New Window" / "Cancel" for dirty — wording refined once more the same day per the user's request, so both options read as parallel phrases sharing the same "changes" wording; "Open Here" / "New Window" / "Cancel" for clean, where "Open Here" is now genuinely safe since there's nothing to lose). Both branches have a real Cancel. The dialog message states the window's dirty state outright rather than leaving it to be inferred. The new Save option reuses `performSaveNow`, a helper extracted from the close-prompt's own save logic — not a duplicate implementation — round-tripping through the renderer via a new `window:performSaveThenOpenDropped` event since main can't perform a save itself (path-picking and detail-draft flushing live in `Canvas.tsx`).
 
 **References:** [epic 0038](planning/epics/0038-drag-file-to-open.md), [epic 0020](planning/epics/0020-autosave-and-crash-recovery.md) (the close-prompt this was brought into consistency with), `src/main/windows.ts`'s `openDroppedFileForWindow`, `src/renderer/src/Canvas.tsx`'s `performSaveNow`
+
+---
+
+## Highlights panel couldn't grow past a flat 320px cap
+**Status:** Solved
+**Found:** 2026-08-22, epic 0022, live testing by the user reviewing the new Meridian Rail landscape gallery entry (37 highlights across 5 groups)
+
+**Symptom:** the highlights panel needed to grow taller and scroll once a diagram had enough highlights to matter, and didn't seem to.
+
+**Root cause:** `.highlights-panel` (`main.css`) had a flat `max-height: 320px`, unrelated to how much room was actually available on screen. The scrolling CSS itself (`.highlights-panel-body`'s `flex: 1; min-height: 0; overflow-y: auto`) was already correct — it just almost never got exercised before, since no diagram had come close to 320px of highlight content until this one.
+
+**Resolution:** `HighlightsPanel.tsx` now computes `maxHeight` inline from the actual space available above the panel's anchor (`window.innerHeight - bottom - 16`, where `bottom` is the same anchor-relative offset already used to position the panel), rather than using a fixed guess. The now-redundant static `max-height: 320px` was removed from `main.css` (inline style always wins over it anyway).
+
+**References:** [epic 0022](planning/epics/0022-example-diagram-gallery.md), `src/renderer/src/components/HighlightsPanel.tsx`, `src/renderer/src/assets/main.css`

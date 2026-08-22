@@ -127,7 +127,7 @@ function LabeledEdge({
   data
 }: EdgeProps): React.JSX.Element {
   const { updateEdgeData } = useReactFlow()
-  const { matchHighlights, edgeStraightSegmentLength, theme } = useDiagramContext()
+  const { matchHighlights, edgeStraightSegmentLength, theme, selectedEdgeHighlightColor } = useDiagramContext()
   const edgeStyle = data?.style as EdgeStyle | undefined
   const highlightMatches = matchHighlights(data?.metadata as Record<string, MetadataEntry> | undefined)
   const edgePath = useMemo(
@@ -163,7 +163,14 @@ function LabeledEdge({
     // treatment as ShapeNode/ContainerNode's border override — epic
     // 0026/ADR 0025. Width is handled by baseStrokeWidth above instead of
     // here, so it can still be added to when also selected.
-    ...(highlightMatches.length === 1 ? { stroke: highlightMatches[0].color } : {})
+    ...(highlightMatches.length === 1 ? { stroke: highlightMatches[0].color } : {}),
+    // Selection wins over both the edge's own explicit color and any
+    // highlight-match color — the whole point is staying findable in a
+    // busy diagram regardless of the edge's own look. Raised after live-
+    // testing the edge z-index fix (docs/known-issues.md) made it obvious
+    // how easy a selected edge still was to lose track of visually, even
+    // once its handle-priority worked correctly.
+    ...(selected ? { stroke: selectedEdgeHighlightColor } : {})
   }
   const computedMarkerEnd = edgeStyle?.endMarker !== undefined ? markerUrl(edgeStyle.endMarker) : markerEnd
   const computedMarkerStart =

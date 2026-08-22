@@ -2,6 +2,7 @@ import { memo, useCallback, useRef, useState } from 'react'
 import { NodeResizer, useReactFlow, type NodeProps } from '@xyflow/react'
 import type { NodeStyle } from '@shared/diagram'
 import EditableLabel from '../components/EditableLabel'
+import LockBadge from '../components/LockBadge'
 import { useDiagramContext } from '../DiagramContext'
 import { useDetailsTooltip } from '../hooks/useDetailsTooltip'
 import { nodeContainerCss, nodeLabelCss } from '../styles/nodeStyleCss'
@@ -29,6 +30,7 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
     entityHighlightNodeId
   } = useDiagramContext()
   const rotation = typeof data?.rotation === 'number' ? (data.rotation as number) : 0
+  const locked = data?.locked === true
   const nodeRef = useRef<HTMLDivElement>(null)
   const [rotating, setRotating] = useState(false)
   const detailsPath = typeof data?.details === 'string' ? data.details : undefined
@@ -123,14 +125,15 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
       onClick={onClick}
       title={tooltip}
     >
-      <NodeResizer isVisible={selected} minWidth={TEXT_MIN_WIDTH} minHeight={TEXT_MIN_HEIGHT} />
-      {selected && (
+      <NodeResizer isVisible={selected && !locked} minWidth={TEXT_MIN_WIDTH} minHeight={TEXT_MIN_HEIGHT} />
+      {selected && !locked && (
         <div
           className="text-node-rotate-handle nodrag nopan"
           onMouseDown={onRotateStart}
           title="Drag to rotate"
         />
       )}
+      {locked && <LockBadge />}
       <EditableLabel
         className="text-node-label"
         inputClassName="text-node-label-input"

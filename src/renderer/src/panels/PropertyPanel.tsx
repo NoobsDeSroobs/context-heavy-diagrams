@@ -12,7 +12,7 @@ import type {
 import { useDiagramContext } from '../DiagramContext'
 import { themeAdaptiveColor } from '../styles/themeAdaptiveColor'
 import { connectionPointCountForSide } from '../nodes/connectionPoints'
-import { CollapsibleSection, ColorField, NumberField, SliderField, SelectField } from './fields'
+import { CollapsibleSection, ColorField, FieldRow, NumberField, SliderField, SelectField } from './fields'
 import { computeFieldValue } from './fieldValue'
 import MetadataSection from './MetadataSection'
 
@@ -30,6 +30,7 @@ interface PropertyPanelProps {
   onUpdateNodeStyle: (nodeIds: string[], patch: Partial<NodeStyle>) => void
   onUpdateEdgeStyle: (edgeIds: string[], patch: Partial<EdgeStyle>) => void
   onUpdateTransform: (nodeIds: string[], patch: TransformPatch) => void
+  onUpdateLocked: (nodeIds: string[], locked: boolean) => void
   onUpdateNodeMetadata: (nodeId: string, metadata: Record<string, MetadataEntry> | undefined) => void
   onUpdateEdgeMetadata: (edgeId: string, metadata: Record<string, MetadataEntry> | undefined) => void
   onSetConnectionPointCount: (nodeId: string, side: ConnectionPointSide, totalCount: number) => void
@@ -88,6 +89,7 @@ function NodeStyleFields({
   includeRotation,
   updateStyle,
   updateTransform,
+  updateLocked,
   beginContinuousEdit,
   endContinuousEdit,
   pushSnapshot
@@ -98,6 +100,7 @@ function NodeStyleFields({
   includeRotation: boolean
   updateStyle: (patch: Partial<NodeStyle>) => void
   updateTransform: (patch: TransformPatch) => void
+  updateLocked: (locked: boolean) => void
   beginContinuousEdit: () => void
   endContinuousEdit: () => void
   pushSnapshot: () => void
@@ -119,9 +122,24 @@ function NodeStyleFields({
   const width = computeFieldValue(nodes, (n) => n.width ?? undefined)
   const height = computeFieldValue(nodes, (n) => n.height ?? undefined)
   const rotation = computeFieldValue(nodes, (n) => (typeof n.data?.rotation === 'number' ? (n.data.rotation as number) : 0))
+  const locked = computeFieldValue(nodes, (n) => n.data?.locked === true)
 
   return (
     <>
+      <FieldRow label="Locked">
+        <input
+          type="checkbox"
+          checked={locked.value ?? false}
+          ref={(el) => {
+            if (el) el.indeterminate = locked.mixed
+          }}
+          onChange={(e) => {
+            pushSnapshot()
+            updateLocked(e.target.checked)
+          }}
+          title="Blocks drag/resize/rotate and accidental delete via the canvas — every other edit (this panel, tags, connection points) stays allowed"
+        />
+      </FieldRow>
       <CollapsibleSection title="Fill">
         <ColorField
           label="Fill"
@@ -498,6 +516,7 @@ export default function PropertyPanel({
   onUpdateNodeStyle,
   onUpdateEdgeStyle,
   onUpdateTransform,
+  onUpdateLocked,
   onUpdateNodeMetadata,
   onUpdateEdgeMetadata,
   onSetConnectionPointCount,
@@ -539,6 +558,7 @@ export default function PropertyPanel({
         includeRotation={type === 'text'}
         updateStyle={(patch) => onUpdateNodeStyle(ids, patch)}
         updateTransform={(patch) => onUpdateTransform(ids, patch)}
+        updateLocked={(locked) => onUpdateLocked(ids, locked)}
         beginContinuousEdit={beginContinuousEdit}
         endContinuousEdit={endContinuousEdit}
         pushSnapshot={pushSnapshot}

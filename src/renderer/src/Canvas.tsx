@@ -254,6 +254,7 @@ function toDiagramFile(
         ? (n.data.connectionPoints as ConnectionPoint[])
         : undefined,
       parentId: n.parentId,
+      locked: n.data?.locked === true ? true : undefined,
       style: n.data?.style as NodeStyle | undefined,
       metadata: nodeMetadataEligible(n.type)
         ? (n.data?.metadata as Record<string, MetadataEntry> | undefined)
@@ -310,6 +311,7 @@ function fromDiagramFile(diagram: DiagramFile): {
             label: n.data.label,
             ...(n.rotation != null ? { rotation: n.rotation } : {}),
             ...(n.zIndex != null ? { zIndex: n.zIndex } : {}),
+            ...(n.locked ? { locked: true } : {}),
             ...(n.connectionPoints && n.connectionPoints.length > 0
               ? { connectionPoints: n.connectionPoints }
               : {}),
@@ -1679,6 +1681,22 @@ function CanvasInner(): React.JSX.Element {
     [setNodes]
   )
 
+  // Locked (epic — blocks drag/resize/rotate and accidental delete via the
+  // canvas, see docs/file-format.md's `locked` field). `false` is written
+  // as `undefined`, not stored explicitly — matches every other "absent
+  // means off" optional node field (rotation, connectionPoints, etc.),
+  // keeps an unlocked node's data free of a lingering `locked: false`.
+  const updateLocked = useCallback(
+    (nodeIds: string[], locked: boolean) => {
+      setNodes((nds) =>
+        nds.map((n) =>
+          nodeIds.includes(n.id) ? { ...n, data: { ...n.data, locked: locked ? true : undefined } } : n
+        )
+      )
+    },
+    [setNodes]
+  )
+
   // Writes any dirty detail drafts to disk and returns nodes with
   // data.details updated to point at them — must happen before the main
   // diagram.chd write so that write reflects the new references.
@@ -2338,29 +2356,51 @@ function CanvasInner(): React.JSX.Element {
   // the layer panel and it genuinely renders above it from then on. React
   // Flow still adds its own selection elevation on top of whatever's set
   // here (elevateNodesOnSelect, on by default).
-  const zIndexedNodes = nodes.map((n) => ({ ...n, zIndex: (n.data?.zIndex as number | undefined) ?? 0 }))
+  // Locked (data.locked, see docs/file-format.md) maps onto React Flow's
+  // own native draggable/deletable per-node overrides here, same "convert
+  // at the point nodes are actually handed to <ReactFlow>" pattern as
+  // zIndex above — selectable is deliberately left alone (still true),
+  // since the whole point was blocking accidental drags/deletes while
+  // keeping selection/highlighting working normally.
+  const zIndexedNodes = nodes.map((n) => ({
+    ...n,
+    zIndex: (n.data?.zIndex as number | undefined) ?? 0,
+    draggable: n.data?.locked !== true,
+    deletable: n.data?.locked !== true
+  }))
   const nodeZIndexById = new Map(zIndexedNodes.map((n) => [n.id, n.zIndex as number]))
 
-  // Selected edges render last, so they win any overlapping-click tie at a
-  // shared connection point (grabbing a reconnect handle where several
-  // edges converge) — epic 0046. React Flow's own z-index elevation on
-  // select (elevateEdgesOnSelect, @xyflow/system's getElevatedEdgeZIndex)
-  // didn't reliably win that tie for the reconnect-handle hit area in
-  // testing, so this fixes actual paint/hit-test order directly (DOM
-  // order, not z-index) instead of relying on it. Derived purely from
-  // `selected` at render time, never persisted — same reasoning as
-  // zIndexedNodes above, a rendering concern, not diagram content order
-  // (the canonical `edges` state, used for save/undo, is untouched).
+  // Stable DOM-order tie-breaker for edges of otherwise-equal zIndex below
+  // — kept from epic 0046, though live debugging (2026-08-22, see
+  // docs/known-issues.md) found DOM order was never actually the real
+  // mechanism deciding reconnect-handle hit-testing; see SELECTED_EDGE_Z_BOOST
+  // just below for the fix that actually addresses it.
   const orderedEdges = [...edges.filter((e) => !e.selected), ...edges.filter((e) => e.selected)]
 
   // An edge has no zIndex of its own to control — epic 0043/ADR 0035
   // deliberately scoped this feature to Shape/Container/Text only. Instead
   // it always sits at the midpoint of its two endpoints' current stacking,
   // computed fresh here alongside orderedEdges above, never persisted.
+  //
+  // Selected edges get pushed well above that midpoint range — traced
+  // 2026-08-22 (docs/known-issues.md) after a real, reproduced bug: React
+  // Flow renders each edge inside its own `<svg style={{ zIndex }}>`
+  // wrapper (a real CSS z-index per edge, not shared DOM/paint order at
+  // all), and that zIndex comes from this exact midpoint computation
+  // combined with `elevateEdgesOnSelect` (a React Flow option that
+  // defaults to false and was never enabled here) — so selection had
+  // *zero* effect on which edge's z-index won at a shared connection
+  // point; two converging edges resolved purely by which pair of
+  // endpoints happened to average a higher zIndex, unrelated to which one
+  // was actually selected. Epic 0046's original `orderedEdges`-only fix
+  // (DOM order) coincidentally looked like it worked in that one test
+  // scenario but was never actually the operative mechanism.
+  const SELECTED_EDGE_Z_BOOST = 1_000_000
   const zIndexedEdges = orderedEdges.map((e) => {
     const sourceZ = nodeZIndexById.get(e.source) ?? 0
     const targetZ = nodeZIndexById.get(e.target) ?? 0
-    return { ...e, zIndex: (sourceZ + targetZ) / 2 }
+    const baseZ = (sourceZ + targetZ) / 2
+    return { ...e, zIndex: e.selected ? baseZ + SELECTED_EDGE_Z_BOOST : baseZ }
   })
 
   // Plain-data projection for LayerPanel — keeps that component decoupled
@@ -2434,6 +2474,7 @@ function CanvasInner(): React.JSX.Element {
         matchHighlights,
         edgeStraightSegmentLength: settings.edgeStraightSegmentLength,
         maxConnectionPointsPerSide: settings.maxConnectionPointsPerSide,
+        selectedEdgeHighlightColor: settings.selectedEdgeHighlightColor,
         theme,
         entityHighlightNodeId
       }}
@@ -2531,6 +2572,7 @@ function CanvasInner(): React.JSX.Element {
               onUpdateNodeStyle={updateNodeStyle}
               onUpdateEdgeStyle={updateEdgeStyle}
               onUpdateTransform={updateTransform}
+              onUpdateLocked={updateLocked}
               onUpdateNodeMetadata={updateNodeMetadata}
               onUpdateEdgeMetadata={updateEdgeMetadata}
               onSetConnectionPointCount={setConnectionPointCount}

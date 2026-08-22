@@ -58,6 +58,20 @@ export default function SettingsPanel({ settings, onChange, onClose }: SettingsP
             title="Look for crash-recovery snapshots from diagrams that were never saved, every time the app starts"
           />
         </FieldRow>
+        <FieldRow label="Selected edge color">
+          {/* Plain swatch, not the property panel's ColorField — that one
+              supports an "unset" state (its × clear button) which doesn't
+              apply here; this setting always has a concrete color, same
+              always-required-value treatment as HighlightsPanel's own
+              row swatches. */}
+          <input
+            type="color"
+            className="property-color-swatch"
+            value={settings.selectedEdgeHighlightColor}
+            onChange={(e) => onChange({ selectedEdgeHighlightColor: e.target.value })}
+            title="Color a selected edge's line swaps to, so it stays easy to track in a busy diagram"
+          />
+        </FieldRow>
       </div>
     </div>
   )

@@ -23,12 +23,24 @@ export interface AppSettings {
   // change, since main needs this before any renderer/localStorage
   // exists — see useSettings below and settingsMirror.ts.
   scanForUnsavedRecoveryOnStartup: boolean
+  // A selected edge's stroke swaps to this color entirely (overriding its
+  // own explicit style and any highlight-match color), so it stays
+  // findable at a glance in a busy diagram — raised after live-testing the
+  // edge z-index fix (docs/known-issues.md) surfaced how hard a selected
+  // edge could be to visually track at a dense connection point.
+  // Edges only, not nodes — nodes already get a normal selection outline
+  // from React Flow itself.
+  selectedEdgeHighlightColor: string
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
   edgeStraightSegmentLength: 8,
   maxConnectionPointsPerSide: 12,
-  scanForUnsavedRecoveryOnStartup: true
+  scanForUnsavedRecoveryOnStartup: true,
+  // Vivid magenta — deliberately outside the typical blue/green/red/orange
+  // range diagram content tends to use, so it reads unambiguously as "this
+  // is a UI selection indicator," not part of the diagram itself.
+  selectedEdgeHighlightColor: '#ff00aa'
 }
 
 const STORAGE_KEY = 'settings'

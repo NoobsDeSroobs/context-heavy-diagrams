@@ -16,6 +16,7 @@ export default function DiagramDock({
   onUpdateNodeStyle,
   onUpdateEdgeStyle,
   onUpdateTransform,
+  onUpdateLocked,
   onUpdateNodeMetadata,
   onUpdateEdgeMetadata,
   onSetConnectionPointCount,
@@ -33,6 +34,7 @@ export default function DiagramDock({
   onUpdateNodeStyle: (nodeIds: string[], patch: Partial<NodeStyle>) => void
   onUpdateEdgeStyle: (edgeIds: string[], patch: Partial<EdgeStyle>) => void
   onUpdateTransform: (nodeIds: string[], patch: TransformPatch) => void
+  onUpdateLocked: (nodeIds: string[], locked: boolean) => void
   onUpdateNodeMetadata: (nodeId: string, metadata: Record<string, MetadataEntry> | undefined) => void
   onUpdateEdgeMetadata: (edgeId: string, metadata: Record<string, MetadataEntry> | undefined) => void
   onSetConnectionPointCount: (nodeId: string, side: ConnectionPointSide, totalCount: number) => void
@@ -53,6 +55,7 @@ export default function DiagramDock({
           onUpdateNodeStyle={onUpdateNodeStyle}
           onUpdateEdgeStyle={onUpdateEdgeStyle}
           onUpdateTransform={onUpdateTransform}
+          onUpdateLocked={onUpdateLocked}
           onUpdateNodeMetadata={onUpdateNodeMetadata}
           onUpdateEdgeMetadata={onUpdateEdgeMetadata}
           onSetConnectionPointCount={onSetConnectionPointCount}

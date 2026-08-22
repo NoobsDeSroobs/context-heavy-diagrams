@@ -247,6 +247,29 @@ body {
   color: var(--color-text);
 }
 
+/* Locked indicator (epic — see docs/file-format.md's `locked` field) —
+   centered horizontally, straddling the node's own top edge (half above,
+   half below), per the user's own placement spec. Shared by ShapeNode/
+   ContainerNode/TextNode via LockBadge.tsx; a small round backing so the
+   grey glyph stays legible regardless of the node's own fill color. */
+.node-lock-badge {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-background-soft);
+  border: 1px solid var(--ev-c-gray-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ev-c-text-3);
+  pointer-events: none;
+  z-index: 1;
+}
+
 .shape-node-icon-top-left {
   top: 2px;
   left: 2px;
@@ -1582,7 +1605,8 @@ body {
   z-index: 30;
   display: flex;
   flex-direction: column;
-  max-height: 320px;
+  /* max-height is computed inline (HighlightsPanel.tsx) from actual
+     available space above the anchor, not a fixed value here. */
   background: var(--color-background-soft);
   border: 1px solid var(--ev-c-gray-2);
   border-radius: 6px;

@@ -4,6 +4,7 @@ import type { ConnectionPoint, IconRef, IconSlot, MetadataEntry, NodeStyle } fro
 import EditableLabel from '../components/EditableLabel'
 import HighlightChips from '../components/HighlightChips'
 import IconSlotView from '../components/IconSlotView'
+import LockBadge from '../components/LockBadge'
 import { useDiagramContext } from '../DiagramContext'
 import { useDetailsTooltip } from '../hooks/useDetailsTooltip'
 import { HIGHLIGHT_BORDER_WIDTH } from '../highlights'
@@ -45,6 +46,7 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
   } = useDiagramContext()
   const { updateNodeData } = useReactFlow()
 
+  const locked = data?.locked === true
   const icons = (data?.icons ?? {}) as Partial<Record<IconSlot, IconRef>>
   const detailsPath = typeof data?.details === 'string' ? data.details : undefined
   const linkedPath = typeof data?.linkedDiagram === 'string' ? data.linkedDiagram : undefined
@@ -130,8 +132,9 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
       onClick={onClick}
       title={tooltip}
     >
-      <NodeResizer isVisible={selected} minWidth={SHAPE_MIN_WIDTH} minHeight={SHAPE_MIN_HEIGHT} />
+      <NodeResizer isVisible={selected && !locked} minWidth={SHAPE_MIN_WIDTH} minHeight={SHAPE_MIN_HEIGHT} />
       <ConnectionHandles storedPoints={customPoints} onPointContextMenu={onPointContextMenu} />
+      {locked && <LockBadge />}
       {highlightMatches.length >= 2 && (
         <div className="highlight-chips-anchor">
           <HighlightChips highlights={highlightMatches} />

@@ -139,6 +139,14 @@ export default function HighlightsPanel({
   const rect = anchorRect ?? new DOMRect(0, 0, 0, 0)
   const left = Math.min(rect.right + 8, window.innerWidth - PANEL_WIDTH - 8)
   const bottom = Math.max(window.innerHeight - rect.bottom, 8)
+  // Was a flat 320px cap (main.css), too small once a diagram has enough
+  // highlight groups/entries to matter (36 across 5 groups, for example) —
+  // grow to whatever room actually exists above the anchor instead, so it's
+  // only ever as tall as the window allows, never a fixed guess. The CSS's
+  // own overflow-y: auto on .highlights-panel-body already handles
+  // scrolling correctly beyond that; it just rarely got exercised before
+  // since 320px was hit so rarely.
+  const maxHeight = Math.max(window.innerHeight - bottom - 16, 200)
 
   const catalogIds = new Set(highlights.map(highlightId))
   const availableTags = usedTags.filter((t) => !catalogIds.has(highlightId(t)))
@@ -169,7 +177,7 @@ export default function HighlightsPanel({
   const groups = groupByKey(highlights)
 
   return (
-    <div className="highlights-panel nodrag nopan" style={{ left, bottom, width: PANEL_WIDTH }}>
+    <div className="highlights-panel nodrag nopan" style={{ left, bottom, width: PANEL_WIDTH, maxHeight }}>
       <div className="highlights-panel-toolbar">
         <span className="highlights-panel-title">Highlights</span>
         <div className="details-panel-spacer" />
