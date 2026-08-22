@@ -13,6 +13,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 - [Theme flip reads as "negative image" on toggle](#theme-flip-reads-as-negative-image-on-toggle) — Open, not urgent.
 - [Enabling a highlight makes a container look like it shrinks](#enabling-a-highlight-makes-a-container-look-like-it-shrinks) — Open, not investigated.
 - [A dragged edge endpoint snapped to the wrong side's point after a count change](#a-dragged-edge-endpoint-snapped-to-the-wrong-sides-point-after-a-count-change) — Open, not reproduced.
+- [A native confirm() dialog left <select> elements unresponsive afterward](#a-native-confirm-dialog-left-select-elements-unresponsive-afterward) — Worked around, class of bug could recur.
 
 ---
 
@@ -248,3 +249,17 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 **Resolution:** `HighlightsPanel.tsx` now computes `maxHeight` inline from the actual space available above the panel's anchor (`window.innerHeight - bottom - 16`, where `bottom` is the same anchor-relative offset already used to position the panel), rather than using a fixed guess. The now-redundant static `max-height: 320px` was removed from `main.css` (inline style always wins over it anyway).
 
 **References:** [epic 0022](planning/epics/0022-example-diagram-gallery.md), `src/renderer/src/components/HighlightsPanel.tsx`, `src/renderer/src/assets/main.css`
+
+---
+
+## A native confirm() dialog left `<select>` elements unresponsive afterward
+**Status:** Worked around
+**Found:** 2026-08-22, epic 0055, live testing by the user on the Meridian Rail landscape's `owningTeam` tag
+
+**Symptom:** after `AllowedValuesEditor`'s in-use warning (`window.confirm(...)`, added by epic 0055's allowed-values list editor) appeared and was dismissed — confirmed *or* cancelled, either way — every `<select>` dropdown in the Required Tags panel stopped opening on click. No console error. Reported first as "the dropdowns just don't work anymore" before the user pinned it down to this specific trigger (removing the `owningTeam` tag's `"None"` allowed value while it was also that tag's current default, a real value on the Meridian Rail landscape from epic 0022's 13th round).
+
+**Root cause:** not fully understood at the Electron/Chromium level — no exception, no error, purely a focus/interaction state left broken by the native dialog closing. Matches a known general class of native-dialog-vs-focus quirk in Electron (see "[Unparented native dialog can open behind the app window](#unparented-native-dialog-can-open-behind-the-app-window)" above for a different symptom in the same general family: native dialogs not integrating cleanly with this app's window/focus model). This app already uses `confirm()`/`alert()` successfully elsewhere (Close, Reload, copy-to-children) — none of those are immediately followed by trying to open a native `<select>` in the same still-open panel, which may be exactly what this specific interaction needed to actually surface the quirk.
+
+**Resolution:** replaced the native `confirm()` in `AllowedValuesEditor` with an in-panel confirmation — the row being removed/renamed is swapped for a small inline message + Confirm/Cancel buttons (`.required-tag-value-confirm`), no native dialog involved at all. Not a fix for the underlying Electron quirk itself (still not understood), just an avoidance — **any future feature that shows a native `confirm()`/`alert()` and then expects the user to keep interacting with `<select>` elements in the same view should watch for this same symptom**, and prefer an in-app confirmation the way this one now does.
+
+**References:** [epic 0055](planning/epics/0055-required-tags-allowed-values-list-editor.md), [ADR 0047](decisions/0047-allowed-values-list-editor.md), `src/renderer/src/components/RequiredTagsPanel.tsx`

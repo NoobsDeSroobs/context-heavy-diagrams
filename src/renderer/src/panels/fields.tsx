@@ -11,12 +11,16 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 
 export function CollapsibleSection({
   title,
-  children
+  children,
+  defaultOpen = true
 }: {
   title: string
   children: ReactNode
+  // Required-tags panel's allowed-values list (epic 0055) wants collapsed
+  // by default — every other caller keeps today's always-open behavior.
+  defaultOpen?: boolean
 }): React.JSX.Element {
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(defaultOpen)
   return (
     <div className="property-section">
       <button

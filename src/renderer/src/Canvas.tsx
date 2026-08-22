@@ -2779,6 +2779,7 @@ function CanvasInner(): React.JSX.Element {
           {requiredTagsPanelOpen && (
             <RequiredTagsPanel
               requiredTags={requiredTags}
+              usedTags={usedTags}
               onChange={updateRequiredTags}
               onClose={() => setRequiredTagsPanelOpen(false)}
               onCopyToChildren={copyRequiredTagsToChildren}

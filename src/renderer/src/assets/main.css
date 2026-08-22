@@ -1335,6 +1335,16 @@ body {
   outline-offset: 2px;
 }
 
+/* One key/lock/default row plus its collapsible allowed-values list below
+   — see .required-tag-values-list. A visible bottom border between
+   entries since each now has real vertical extent once expanded, not
+   just one flat row like before epic 0055. */
+.required-tag-entry {
+  border-bottom: 1px solid var(--ev-c-gray-2);
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+}
+
 .required-tag-row {
   display: flex;
   align-items: center;
@@ -1343,8 +1353,7 @@ body {
 
 .required-tag-key,
 .required-tag-lock,
-.required-tag-default,
-.required-tag-allowed {
+.required-tag-default {
   font: inherit;
   font-size: 12px;
   color: var(--color-text);
@@ -1363,8 +1372,7 @@ body {
   flex: 1 1 30%;
 }
 
-.required-tag-default,
-.required-tag-allowed {
+.required-tag-default {
   flex: 1 1 20%;
 }
 
@@ -1377,6 +1385,102 @@ body {
   font-size: 14px;
   line-height: 1;
   padding: 2px 4px;
+}
+
+/* Allowed-values list editor (epic 0055/ADR 0047) — nested inside the
+   entry's own CollapsibleSection, collapsed by default. */
+.required-tag-values-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.required-tag-value-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.required-tag-value-input {
+  font: inherit;
+  font-size: 12px;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  padding: 3px 5px;
+  min-width: 0;
+  flex: 1;
+}
+
+.required-tag-value-row-new .required-tag-value-input {
+  color: var(--ev-c-text-3);
+}
+
+.required-tag-value-move,
+.required-tag-value-remove {
+  cursor: pointer;
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: var(--ev-c-text-3);
+  font-size: 11px;
+  line-height: 1;
+  padding: 2px 4px;
+}
+
+.required-tag-value-remove {
+  font-size: 14px;
+}
+
+.required-tag-value-move:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.required-tag-value-move:hover:not(:disabled),
+.required-tag-value-remove:hover {
+  color: var(--color-text);
+}
+
+/* In-panel confirmation for removing/renaming an in-use value — replaces
+   a row in place rather than a native dialog (see AllowedValuesEditor's
+   own comment for why: window.confirm() left this panel's <select>
+   elements unresponsive afterward, a real bug found live). */
+.required-tag-value-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  background: var(--color-background-mute);
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 4px;
+}
+
+.required-tag-value-confirm p {
+  margin: 0;
+  font-size: 11px;
+  color: var(--color-text);
+  line-height: 1.4;
+}
+
+.required-tag-value-confirm-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.required-tag-value-confirm-actions button {
+  cursor: pointer;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
+.required-tag-value-confirm-actions button:hover {
+  background: var(--ev-button-alt-hover-bg);
 }
 
 /* Highlights panel — see epic 0026/ADR 0025. */

@@ -1,0 +1,33 @@
+# 0047: Required tags — allowed-values list editor and default-value dropdown
+
+## Status
+Accepted
+
+## Context
+[Epic 0055](../planning/epics/0055-required-tags-allowed-values-list-editor.md): the required-tags panel's allowed-values field was one cramped comma-separated text input — "hard to use... when it is squeezed into the corner like that." Two coupled asks: a real list editor, and (once allowed values are a real list) the default-value field becoming a dropdown sourced from that list instead of independent free text.
+
+Raised explicitly by the user as the first epic in this batch needing real backward-compatibility thought. Traced through the actual code before designing anything: **the on-disk schema doesn't change at all.** `allowedValues` was always a plain `string[]` in `.chd` files (`docs/file-format.md`) — the comma-separated text was only ever the *editing* UI (`join(', ')` in, split-on-comma out). Old files load into the new list editor with no migration needed.
+
+The real compatibility question turned out to be narrower and specific to the *second* half of the epic: `defaultValue` has never been validated against `allowedValues` — nothing stopped an existing file from having a `defaultValue` that isn't in its own `allowedValues` list (they were edited independently, by two unrelated free-text fields). Making the default-value field a *strict* dropdown of allowed values raises the question of what happens to that already-possible mismatch on load.
+
+## Decision
+- **No schema change.** `RequiredTagDefinition.allowedValues` stays `string[]`.
+- **Orphaned `defaultValue` is shown, not discarded or silently reset.** The default-value dropdown always includes the current value as a real, selectable option (labeled "... (not in list)") when it doesn't match `allowedValues` or the implicit None — confirmed directly with the user before building. Matches this app's existing "don't destroy data on load" posture (ADR 0022's demote-not-delete precedent for metadata keys, ADR 0029's standing backward-compatibility rule).
+- **List editor**: one row per value (rename via the same blur-commit draft pattern every other field in this panel already uses — *not* per-keystroke, which would mean one full `requiredTags` sync per character typed, the exact bug class this panel's other fields already learned to avoid), reorder via up/down buttons (not drag-and-drop — simpler, lower-risk than replicating `LayerPanel`'s custom drag-and-drop geometry for what's a short values list), remove via a button. Nested in a `CollapsibleSection` (now takes an optional `defaultOpen` prop, default `true` preserving every other caller), collapsed by default per the epic's own ask, titled with a live count so the size is visible without expanding.
+- **Buttonless add, via a trailing always-blank row** — the user's own stated preference. Typing into it and blurring/pressing Enter appends the value and the row goes blank again. Committed on blur/Enter, not per-keystroke, for the same reason renames are — "buttonless" here means no separate Add button click needed between values, not literally zero debounce.
+- **Rename/remove of an in-use value prompts for confirmation** — a value currently held by at least one element (checked against `usedTags`, the same live scan `HighlightsPanel` already uses) that gets renamed or removed will make that element invalid, resetting it to the tag's default on the next sync — worth confirming before doing it via a one-click row action, unlike today's old blur-commit-a-whole-string field which was slower/harder to trigger by accident. **In-panel confirmation (a row swapped for an inline message + Confirm/Cancel), not `window.confirm()`** — the first version used the native dialog (matching Close/Reload/copy-to-children's existing pattern), but live testing found it left this panel's `<select>` elements unresponsive afterward regardless of confirm or cancel, a real Electron/Chromium quirk — see [docs/known-issues.md](../known-issues.md).
+- **Rename does not cascade** to existing element metadata or highlight definitions — explicitly considered and rejected (see Alternatives). It's treated as remove-old-add-new from a validity standpoint, sharing the same in-use confirmation as an outright removal.
+- **Duplicate values are silently rejected** (add and rename both), matching `addHighlight`'s existing "no-op on duplicate, not worth interrupting for" precedent.
+- **`docs/file-format.md` updated**: `defaultValue`'s row now explicitly states it's never validated against `allowedValues`, since that's now a real, user-visible, deliberately-preserved case rather than just an unstated gap.
+
+## Alternatives considered
+- **Cascading rename** (rewrite every node/edge's metadata and every highlight definition referencing the old value). Rejected for v1 — much larger blast radius (touches `highlights.ts` and every element's stored metadata programmatically, a new class of bulk-mutation this app doesn't otherwise do outside the existing sync/reconcile passes), no concrete request for it, and the existing highlight "resync group" control (epic 0036/ADR 0026) already cleans up a highlight whose value nothing carries anymore — so the cleanup path already exists, just manual rather than automatic.
+- **Silently resetting an orphaned `defaultValue`** to `null`/the first allowed value on load. Rejected — exactly the kind of silent data loss ADR 0029's standing rule exists to prevent; the user agreed the visible-orphan approach was right before this was built.
+- **Drag-and-drop reordering.** Rejected for v1 — up/down buttons are simpler and lower-risk for what's typically a short list; `LayerPanel`'s existing drag machinery is a real precedent to reuse if this ever needs it, not something to duplicate speculatively.
+- **Disabling the default-value field entirely when `allowedValues` is empty.** Rejected — free text (today's existing behavior) stays available when there's no list to constrain against; nothing to gain from disabling it.
+
+## Consequences
+- `RequiredTagsPanel.tsx`: new `AllowedValuesEditor`/`ValueRow` components, `usedTags` threaded in as a new prop (Canvas.tsx already computes it for `HighlightsPanel`), default-value field is conditionally a dropdown (`allowedValues.length > 0`) or free text (unchanged), same split MetadataSection.tsx's per-element field already uses.
+- `panels/fields.tsx`'s `CollapsibleSection` gains an optional `defaultOpen` prop.
+- `docs/file-format.md`'s `defaultValue` row documents the no-validation-against-allowedValues rule explicitly.
+- No `.chd` schema change, no migration needed for existing files.
