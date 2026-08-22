@@ -25,6 +25,16 @@ export interface DiagramApi {
     relativePath: string
   ): Promise<{ found: true } | { found: false; resolvedPath: string }>
   clearWindowPath(): Promise<void>
+  getPathForFile(file: File): string
+  handleDroppedFiles(
+    paths: string[],
+    callingWindowEmpty: boolean,
+    callingWindowDirty: boolean,
+    callingWindowPath: string | null,
+    callingWindowSessionId: string
+  ): Promise<void>
+  onPerformSaveThenOpenDropped(callback: (path: string) => void): () => void
+  confirmSavedThenOpen(path: string): Promise<void>
   previewRequiredTagsChildren(
     diagramPath: string,
     directChildRelativePaths: string[]

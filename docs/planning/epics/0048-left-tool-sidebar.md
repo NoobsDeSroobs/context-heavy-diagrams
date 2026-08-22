@@ -1,7 +1,7 @@
 # 0048: Left-side tool sidebar
 
 ## Status
-Not Started — not yet scoped. Raised by the user (2026-08-20) while reviewing the gallery diagrams. Deliberately not designed here, just captured so it isn't lost, same as epics 0024/0026/0030/0037-0047. Explicitly told not to build yet.
+Cancelled (2026-08-22). Raised by the user (2026-08-20) while reviewing the gallery diagrams. On reconsidering it while deciding what to pick up after epic 0020, the user concluded the existing floating-popup pattern Highlights and Legend already use (see epic 0049/ADR 0039's Notes on `fix/highlights-free-tags-and-toggle`) is a perfectly good permanent home for both, not just the interim placeholder it was originally meant to be — so there's no real problem left for a dedicated sidebar to solve. See [ADR 0041](../../decisions/0041-cancel-left-sidebar-reuse-popup-pattern.md) for the full reasoning; it supersedes this epic and the left-sidebar half of [ADR 0039](../../decisions/0039-top-menu-bar.md) (whose top-menu-bar half, epic 0049, is unaffected).
 
 ## Goal
 A dedicated left-side sidebar for canvas-level tools — extending what's already there (zoom, fit-to-screen, lock-edits) with more, e.g. a toggle for the legend view (epic 0037) once that exists, "and things."
@@ -16,4 +16,4 @@ A dedicated left-side sidebar for canvas-level tools — extending what's alread
 - **Relationship to epic 0037** (diagram legend) — that epic's own open questions include "where does it render when toggled on" and the toggle mechanism; this sidebar is a plausible answer to both, worth resolving together rather than epic 0037 inventing its own toggle location independently.
 
 ## Notes
-Not scheduled into the current batch (see [PROGRESS.md](../../../PROGRESS.md)) — flagged here so it's on the backlog and not lost, not because it's next up.
+Cancelled rather than built — see Status and [ADR 0041](../../decisions/0041-cancel-left-sidebar-reuse-popup-pattern.md). Left in place (not deleted) as a record of the idea and why it didn't end up needed, same as this project keeps every epic doc regardless of outcome.

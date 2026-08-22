@@ -1933,6 +1933,34 @@ function CanvasInner(): React.JSX.Element {
   useEffect(() => {
     closeCheckStateRef.current = { isDirty, currentPath, nodes }
   })
+
+  // Shared by the close-prompt's Save option and the drop-prompt's "Save &
+  // Open Here" option — both need "pick a path if there isn't one yet,
+  // then persist" outside of an interactive Save/Save As click, so this
+  // takes its inputs as plain arguments rather than closing over
+  // possibly-stale `currentPath`/`nodes` the way a normal useCallback
+  // would (both callers already track their own fresh values via refs, for
+  // the same reason persistDiagram itself takes nodesToSave as a param).
+  // Returns the path actually saved to, or null if cancelled/failed.
+  const performSaveNow = useCallback(
+    async (nodesToSave: Node[], currentPathNow: string | null): Promise<string | null> => {
+      let path = currentPathNow
+      if (!path) {
+        path = await window.api.pickSavePath()
+        if (!path) return null
+      }
+      try {
+        await persistDiagram(path, nodesToSave)
+        setCurrentPath(path)
+        return path
+      } catch (error) {
+        alert(`Save failed: ${error instanceof Error ? error.message : String(error)}`)
+        return null
+      }
+    },
+    [persistDiagram]
+  )
+
   useEffect(() => {
     return window.api.onCloseRequested(async () => {
       const { isDirty: dirtyNow, currentPath: pathNow, nodes: nodesNow } = closeCheckStateRef.current
@@ -1946,21 +1974,74 @@ function CanvasInner(): React.JSX.Element {
         window.api.closeApproved(pathNow, sessionIdRef.current)
         return
       }
-      // 'save' — reuses the same path/dialog logic as the Save menu item.
-      let path = pathNow
-      if (!path) {
-        path = await window.api.pickSavePath()
-        if (!path) return
-      }
-      try {
-        await persistDiagram(path, nodesNow)
-        setCurrentPath(path)
-        window.api.closeApproved(path, sessionIdRef.current)
-      } catch (error) {
-        alert(`Save failed: ${error instanceof Error ? error.message : String(error)}`)
-      }
+      const savedPath = await performSaveNow(nodesNow, pathNow)
+      if (savedPath) window.api.closeApproved(savedPath, sessionIdRef.current)
     })
-  }, [persistDiagram])
+  }, [performSaveNow])
+
+  // "Save changes, Open Here" (drop onto a dirty window, epic 0038 revision) —
+  // main shows the dialog and asks back here since it can't perform the
+  // save itself; once done, confirmSavedThenOpen tells main it's safe to
+  // navigate this window to the dropped path. A cancelled/failed save
+  // just leaves this window as-is, same as the close-prompt's own Cancel.
+  useEffect(() => {
+    return window.api.onPerformSaveThenOpenDropped(async (path) => {
+      const { nodes: nodesNow, currentPath: pathNow } = closeCheckStateRef.current
+      const savedPath = await performSaveNow(nodesNow, pathNow)
+      if (savedPath) window.api.confirmSavedThenOpen(path)
+    })
+  }, [performSaveNow])
+
+  // Drag-and-drop a .chd onto this window (epic 0038) — attached to the
+  // whole window, not a specific drop zone: React Flow's own node dragging
+  // uses pointer events, not the HTML5 Drag-and-Drop API, so the two never
+  // compete for the same gesture. Refs, not effect deps, for the same
+  // reason as the autosave/close-check state above — this subscribes once.
+  const dropStateRef = useRef({ isDirty, currentPath, nodes, edges })
+  useEffect(() => {
+    dropStateRef.current = { isDirty, currentPath, nodes, edges }
+  })
+  useEffect(() => {
+    // Both dragenter and dragover need preventDefault — Chromium only
+    // treats a drop target as valid once both agree, even though in
+    // practice dragover alone is enough in most builds.
+    const onDragEnter = (event: DragEvent): void => {
+      event.preventDefault()
+    }
+    const onDragOver = (event: DragEvent): void => {
+      event.preventDefault()
+    }
+    const onDrop = (event: DragEvent): void => {
+      event.preventDefault()
+      const files = event.dataTransfer?.files
+      if (!files || files.length === 0) return
+      // Rejected upfront by extension, matching the file dialog's own
+      // filter — no attempt to read a non-.chd file and fail gracefully.
+      const paths = Array.from(files)
+        .map((file) => window.api.getPathForFile(file))
+        .filter((path) => path.toLowerCase().endsWith('.chd'))
+      if (paths.length === 0) {
+        alert('Only .chd diagram files can be opened this way.')
+        return
+      }
+      const s = dropStateRef.current
+      window.api.handleDroppedFiles(
+        paths,
+        s.nodes.length === 0 && s.edges.length === 0,
+        s.isDirty,
+        s.currentPath,
+        sessionIdRef.current
+      )
+    }
+    window.addEventListener('dragenter', onDragEnter)
+    window.addEventListener('dragover', onDragOver)
+    window.addEventListener('drop', onDrop)
+    return () => {
+      window.removeEventListener('dragenter', onDragEnter)
+      window.removeEventListener('dragover', onDragOver)
+      window.removeEventListener('drop', onDrop)
+    }
+  }, [])
 
   // Opens (or focuses, if already open elsewhere) a new window — except
   // when this window's own diagram is currently empty, in which case that

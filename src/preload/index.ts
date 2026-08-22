@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer, webUtils } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import type { DiagramFile, RequiredTagDefinition } from '@shared/diagram'
 
@@ -94,6 +94,45 @@ const api = {
   // it instead of just focusing the (now blank) window.
   clearWindowPath(): Promise<void> {
     return ipcRenderer.invoke('windows:clearPath')
+  },
+
+  // Drag-and-drop (epic 0038) — recent Electron versions removed the
+  // renderer's direct File.path access for security; webUtils is the
+  // preload-context-only replacement. Synchronous, not IPC — no main
+  // round-trip needed just to resolve a path.
+  getPathForFile(file: File): string {
+    return webUtils.getPathForFile(file)
+  },
+
+  handleDroppedFiles(
+    paths: string[],
+    callingWindowEmpty: boolean,
+    callingWindowDirty: boolean,
+    callingWindowPath: string | null,
+    callingWindowSessionId: string
+  ): Promise<void> {
+    return ipcRenderer.invoke(
+      'windows:handleDroppedFiles',
+      paths,
+      callingWindowEmpty,
+      callingWindowDirty,
+      callingWindowPath,
+      callingWindowSessionId
+    )
+  },
+
+  // "Save changes, Open Here" (drop onto a dirty window) — main shows the dialog
+  // but can't perform the save itself, so it asks back via this event;
+  // once the renderer's own save flow finishes, confirmSavedThenOpen
+  // tells main it's now safe to navigate this window to the dropped path.
+  onPerformSaveThenOpenDropped(callback: (path: string) => void): () => void {
+    const listener = (_event: unknown, path: string): void => callback(path)
+    ipcRenderer.on('window:performSaveThenOpenDropped', listener)
+    return () => ipcRenderer.off('window:performSaveThenOpenDropped', listener)
+  },
+
+  confirmSavedThenOpen(path: string): Promise<void> {
+    return ipcRenderer.invoke('windows:confirmSavedThenOpen', path)
   },
 
   // Propagating a required-tags template down the link tree — see epic

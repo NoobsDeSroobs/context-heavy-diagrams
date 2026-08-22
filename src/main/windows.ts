@@ -1,6 +1,6 @@
 import { BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { access } from 'fs/promises'
-import { dirname, isAbsolute, join } from 'path'
+import { basename, dirname, isAbsolute, join } from 'path'
 import { is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { deleteRecoverySnapshot, newSessionId } from './recovery'
@@ -18,16 +18,28 @@ function normalizePath(path: string): string {
   return process.platform === 'win32' ? path.toLowerCase() : path
 }
 
-// Exported for diagram.ts's save handler — a window's path is only known
-// once it's saved for the first time (or opened with one already known).
-export function registerWindowPath(win: BrowserWindow, path: string): void {
-  windowsByPath.set(normalizePath(path), win)
-}
-
 function unregisterWindow(win: BrowserWindow): void {
   for (const [key, existing] of windowsByPath) {
     if (existing === win) windowsByPath.delete(key)
   }
+}
+
+// Exported for diagram.ts's save handler — a window's path is only known
+// once it's saved for the first time (or opened with one already known).
+// Clears this window's own previous entry first — a window can only ever
+// legitimately show one path at a time, but the underlying Map is keyed
+// by path, not by window, so nothing enforced that on its own. Before
+// epic 0038, a window's path only ever changed once in its lifetime (at
+// creation, or via File -> Open's reuse-if-empty, itself only usable
+// once), so the gap never showed up. Epic 0038 navigates the same
+// (non-empty) window to a new path repeatedly across several drops,
+// which exposed it: dropping file2 "Open Here" onto a window already
+// showing file1 left BOTH `file1 -> win` and `file2 -> win` in the map,
+// so dropping file1 again just found the stale entry and focused the
+// (already-focused) window instead of loading it — live-testing catch.
+export function registerWindowPath(win: BrowserWindow, path: string): void {
+  unregisterWindow(win)
+  windowsByPath.set(normalizePath(path), win)
 }
 
 function findWindowForPath(path: string): BrowserWindow | undefined {
@@ -141,6 +153,76 @@ function openOrFocusWindow(path: string, reuseWindow?: BrowserWindow): void {
   createWindow(path)
 }
 
+// Drop-onto-a-window (epic 0038/ADR 0040's own design pass, 2026-08-22,
+// revised same-day after live testing — see docs/known-issues.md) — only
+// the drop *target* window's own state is ever in question, so this only
+// applies to the first of possibly several dropped files; every other
+// file just goes through the ordinary openOrFocusWindow above.
+//
+// Empty: reuse directly, same "nothing to lose" reasoning as File -> Open.
+// Non-empty: every button label states its own consequence explicitly
+// (no bare "Open Here" — the first live-testing pass found that
+// misleading), every branch has a real Cancel, and the message states the
+// window's dirty state outright rather than leaving it for the user to
+// infer from which button set happened to show up. Dirty adds a genuine
+// Save option, matching the close-prompt's own Save/Discard/Cancel shape
+// (the first pass only had discard, an asymmetry the user flagged) —
+// "Save changes, Open Here" hands off to the renderer's own save flow via
+// window:performSaveThenOpenDropped, since main can't perform a save
+// itself (path-picking, detail-draft flushing all live in Canvas.tsx).
+// "Discard changes, Open Here" cleans up any pending recovery snapshot
+// for the old identity first (mirrors the close-prompt's own Discard), so
+// a stale orphan doesn't linger for a future startup scan to offer back.
+async function openDroppedFileForWindow(
+  path: string,
+  callingWindow: BrowserWindow,
+  callingWindowEmpty: boolean,
+  callingWindowDirty: boolean,
+  callingWindowPath: string | null,
+  callingWindowSessionId: string
+): Promise<void> {
+  const existing = findWindowForPath(path)
+  if (existing) {
+    if (existing.isMinimized()) existing.restore()
+    existing.focus()
+    return
+  }
+  if (callingWindowEmpty) {
+    loadPathIntoWindow(callingWindow, path)
+    return
+  }
+  const name = basename(path)
+  if (!callingWindowDirty) {
+    const result = await dialog.showMessageBox(callingWindow, {
+      type: 'question',
+      buttons: ['Open Here', 'New Window', 'Cancel'],
+      defaultId: 0,
+      cancelId: 2,
+      title: 'Open dropped file',
+      message: `This window's diagram has no unsaved changes. Open "${name}" here, or in a new window?`
+    })
+    if (result.response === 0) loadPathIntoWindow(callingWindow, path)
+    else if (result.response === 1) createWindow(path)
+    return
+  }
+  const result = await dialog.showMessageBox(callingWindow, {
+    type: 'question',
+    buttons: ['Save changes, Open Here', 'Discard changes, Open Here', 'New Window', 'Cancel'],
+    defaultId: 0,
+    cancelId: 3,
+    title: 'Unsaved changes',
+    message: `This window has unsaved changes. Open "${name}" here after saving or discarding, or open it in a new window instead?`
+  })
+  if (result.response === 0) {
+    callingWindow.webContents.send('window:performSaveThenOpenDropped', path)
+  } else if (result.response === 1) {
+    await deleteRecoverySnapshot(callingWindowPath, callingWindowSessionId)
+    loadPathIntoWindow(callingWindow, path)
+  } else if (result.response === 2) {
+    createWindow(path)
+  }
+}
+
 export function registerWindowHandlers(): void {
   ipcMain.handle('windows:openNew', () => {
     createWindow()
@@ -180,6 +262,48 @@ export function registerWindowHandlers(): void {
       return { found: true as const }
     }
   )
+
+  // Drag-and-drop a .chd onto a window (epic 0038) — paths are already
+  // filtered to .chd and resolved to real filesystem paths by the
+  // renderer (webUtils.getPathForFile, only available in preload/
+  // renderer context). Only the first path competes for this window;
+  // every other dropped file always opens its own new window (or
+  // focuses an existing one), same as the rest of this file's reuse
+  // rules never applying to more than one window at a time.
+  ipcMain.handle(
+    'windows:handleDroppedFiles',
+    async (
+      event,
+      paths: string[],
+      callingWindowEmpty: boolean,
+      callingWindowDirty: boolean,
+      callingWindowPath: string | null,
+      callingWindowSessionId: string
+    ) => {
+      const callingWindow = BrowserWindow.fromWebContents(event.sender)
+      if (!callingWindow || paths.length === 0) return
+      const [first, ...rest] = paths
+      await openDroppedFileForWindow(
+        first,
+        callingWindow,
+        callingWindowEmpty,
+        callingWindowDirty,
+        callingWindowPath,
+        callingWindowSessionId
+      )
+      for (const path of rest) openOrFocusWindow(path)
+    }
+  )
+
+  // Completes the "Save changes, Open Here" branch above once the renderer's own
+  // save flow has actually finished (window:performSaveThenOpenDropped ->
+  // this) — main can't perform the save itself, but once it's done, the
+  // actual navigation is exactly the same loadPathIntoWindow every other
+  // branch already uses.
+  ipcMain.handle('windows:confirmSavedThenOpen', (event, path: string) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    if (win) loadPathIntoWindow(win, path)
+  })
 
   // File -> Close (epic 0049) resets this window's content back to blank
   // in-place, without a page navigation — so it never goes through

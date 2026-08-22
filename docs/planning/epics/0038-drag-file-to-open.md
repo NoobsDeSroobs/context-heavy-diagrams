@@ -1,14 +1,21 @@
 # 0038: Drag file into window to open
 
 ## Status
-On hold, blocked by [epic 0020](0020-autosave-and-crash-recovery.md) (2026-08-22). Raised by the user (2026-08-20). Design conversation started 2026-08-22 and got as far as resolving most of the open questions below before hitting a real blocker: dropping onto a non-empty window needs to distinguish "saved, no changes" from "genuinely unsaved" to prompt correctly, and this app has no dirty-tracking at all yet — that's epic 0020's own scope. Rather than build a throwaway one-off dirty check here, epic 0020 was pulled forward as a prerequisite (see its doc and [ADR 0040](../../decisions/0040-dirty-tracking-and-autosave-design.md)). Resume this epic once 0020 lands.
+Implemented (2026-08-22) on `epic/0038-drag-file-to-open`, not yet live-tested or merged. Raised by the user (2026-08-20), resumed once epic 0020's dirty-tracking landed. See [ADR 0040](../../decisions/0040-dirty-tracking-and-autosave-design.md) for why 0020 had to come first.
 
-## Resolved during the 2026-08-22 design conversation (not yet built)
+## Resolved during design, now built
 - **Drop onto an empty window**: open directly, no prompt — same "nothing to lose" reasoning as `handleOpen`'s window-reuse check.
-- **Drop onto a non-empty window**: depends on dirty state (blocked on epic 0020) — saved/clean prompts Open Here vs. Open in New Window; genuinely unsaved prompts New Window / Open Here (discard) / Cancel.
+- **Drop onto a non-empty window** — revised same-day after the first live-testing pass, see Notes: clean (saved, no changes) prompts **Open Here / New Window / Cancel**; dirty prompts **Save changes, Open Here / Discard changes, Open Here / New Window / Cancel**. Every button names its own consequence explicitly (the first pass's bare "Open Here" for a discard was found misleading), both branches have a real Cancel (the first pass's clean branch didn't), and the message states the window's dirty state outright. Save reuses the exact same save flow as the close-prompt's own Save option (`performSaveNow`, shared between both), not a duplicate. Discarding cleans up any pending recovery snapshot for the old identity first, mirroring the close-prompt's own Discard behavior (epic 0020).
 - **A file already open in another window**: focus that window instead, regardless of the drop target's own state — same precedent `openOrFocusWindow` already uses for File → Open.
-- **Multiple files dropped at once**: one window per file. Only the actual drop-target window's state (per the point above) is ever in question — every additional file just opens its own new window unconditionally, since there's no second window to reuse or prompt about.
-- **Non-`.chd` files dropped**: reject upfront by extension, matching the file dialog's own filter — no attempt to read and fail gracefully.
+- **Multiple files dropped at once**: one window per file. Only the actual drop-target window's state (per the point above) is ever in question — every additional file just opens its own new window (or focuses an existing one) unconditionally.
+- **Non-`.chd` files dropped**: rejected upfront by extension before anything reaches main — an alert if *every* dropped file gets rejected (nothing to open at all), silent filtering if some valid files remain in a mixed drop.
+- **Electron mechanics**: `webUtils.getPathForFile(file)`, called from the preload script (synchronous, no IPC round-trip needed just to resolve a path) — confirmed available on this project's Electron 43.4.0.
+- **Drop target scope**: whole window (`window.addEventListener` on `dragenter`/`dragover`/`drop`), no special-casing — React Flow's own node dragging uses pointer events, not the HTML5 Drag-and-Drop API, so the two mechanisms never compete for the same gesture.
+
+## Implementation notes
+- `src/main/windows.ts`: new `openDroppedFileForWindow` (the drop-target's own empty/clean/dirty decision tree) and `windows:handleDroppedFiles` IPC handler (first path through that decision tree, every other path through the existing `openOrFocusWindow`). Dirty branch's Save option round-trips to the renderer via `window:performSaveThenOpenDropped` / `windows:confirmSavedThenOpen`, since main can't perform a save itself.
+- Preload exposes `getPathForFile` (sync) and `handleDroppedFiles` (async, mirrors the renderer's own `isDirty`/`currentPath`/`sessionId`/empty-check state to main, the same pattern epic 0020's close-choreography already established), plus the save-round-trip pair above.
+- `Canvas.tsx`: a window-level `dragenter`/`dragover`/`drop` listener effect, refs for the latest dirty/path/nodes/edges state (subscribes once, same pattern as the autosave timer and close-check listener). `performSaveNow` extracted as a shared helper — both the close-prompt's Save option and the drop-prompt's Save & Open Here option call it, rather than duplicating "pick a path if none yet, then persist."
 
 ## Goal
 Drop a `.chd` file onto an open app window to open it, as an alternative to the existing File → Open dialog.
@@ -18,9 +25,5 @@ Drop a `.chd` file onto an open app window to open it, as an alternative to the 
 - File → Open already has a "reuse the current window instead of opening a new one, but only if that window is completely empty" rule (epic 0024's post-merge amendment) — the natural precedent for what dropping a file onto a window should do.
 - Opening goes through `window.api.openInNewWindow()` / `openOrFocusWindow(path)` in the main process (`windows.ts`) — a drop handler would presumably route into the same path rather than duplicating open logic.
 
-## Real open questions still remaining
-- **Electron mechanics** — confirmed the project is on Electron 43.4.0 (2026-08-22 check), well past `webUtils.getPathForFile`'s introduction (Electron 32), so that API is available for getting a real filesystem path from a dropped `File` object. Not yet actually wired up.
-- **Drop target scope** — anywhere on the window, or only a specific zone (e.g. not while a text field has focus, so it doesn't interfere with normal text drag-and-drop)? Leaning "whole window, no special-casing" since file drops and in-page text drags are different browser mechanisms that don't typically conflict — not confirmed with the user, low-stakes enough to decide during implementation rather than needing a design conversation.
-
 ## Notes
-Not scheduled into the current batch (see [PROGRESS.md](../../../PROGRESS.md)) — on hold behind epic 0020, not dropped.
+Typecheck and lint clean; confirmed the app boots without a startup exception via a throwaway `npm run dev` run. **Not yet exercised interactively** — real drag-and-drop from Windows Explorer, the native dialog choices, and the recovery-cleanup-on-discard path all need the user's own hands-on testing; the Browser pane's automation can't drive OS-level file drag gestures or Electron's native dialogs.

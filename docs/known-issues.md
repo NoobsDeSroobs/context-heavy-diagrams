@@ -186,3 +186,31 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 **Resolution:** the app's already-created initial window (from `createWindow()`, called just before the scan starts) is passed as the dialog's owner, giving it a defined z-order/parent relationship instead of none.
 
 **References:** [epic 0020](planning/epics/0020-autosave-and-crash-recovery.md), [ADR 0040](decisions/0040-dirty-tracking-and-autosave-design.md), `src/main/recovery.ts`'s `runStartupOrphanScan`, `src/main/index.ts`
+
+---
+
+## `registerWindowPath` never cleared a window's own previous entry
+**Status:** Solved
+**Found:** 2026-08-22, epic 0038, live testing by the user
+
+**Symptom:** drop file1 onto a window (opens correctly), drop file2 onto the same window and choose "Open Here" (opens correctly), then drop file1 again — silently ignored.
+
+**Root cause:** `windowsByPath` is keyed by path, not by window, and `registerWindowPath` only ever *added* a new entry — it never removed whatever entry previously pointed at the same window. Before epic 0038, a single window's path only ever changed once in its lifetime (at creation, or via File → Open's reuse-if-empty, itself only usable once on a window that then stops being empty), so this gap never got exercised. Epic 0038 navigates the same non-empty window to a new path repeatedly across several drops — after dropping file2 "Open Here" onto a window already showing file1, the map held *both* `file1 → win` and `file2 → win`. Dropping file1 again found the stale entry and just focused the (already-focused) window instead of loading it. The same underlying class of bug as "[File → Close leaves a stale window-path registration](#file--close-leaves-a-stale-this-window-shows-path-x-registration)" above, but a different code path: that one was a registration never *created* by an in-place reset; this one was a registration never *replaced* by a real navigation.
+
+**Resolution:** `registerWindowPath` now calls the existing `unregisterWindow` (matches-by-window-reference) on its own target window before adding the new entry — a window can only ever be associated with one path key at a time, enforced at the one place entries get added rather than requiring every caller to remember to clear the old one first.
+
+**References:** [epic 0038](planning/epics/0038-drag-file-to-open.md), `src/main/windows.ts`
+
+---
+
+## Drop-onto-a-dirty-window prompt was misleading and inconsistent with the close-prompt
+**Status:** Solved
+**Found:** 2026-08-22, epic 0038, live testing by the user (same session as the bug above)
+
+**Symptom:** the user reported "Open Here" opened a dropped file with no save prompt at all, and that there was no Cancel option — while testing what they believed was a drop onto a *dirty* window. Diagnosis: the button label "Open Here" was identical between the clean (2-button) and dirty (3-button) branches, and the clean branch had no Cancel button at all (dismissing it mapped to "New Window" instead) — so there was no way to tell from the dialog itself which branch had actually fired, or to safely back out of either.
+
+**Root cause:** not a logic bug — both branches were working exactly as originally designed (back when epic 0038 was first scoped, before its dirty-tracking blocker). But that original design had two real gaps: button labels didn't state their own consequence ("Open Here" meant "discard and open" in the dirty branch, with nothing in the label saying so), and the dirty branch's discard-only shape was inconsistent with the close-prompt (epic 0020), which does offer a genuine Save option for the same kind of "unsaved changes" situation.
+
+**Resolution:** redesigned both branches. Every button now names its own consequence ("Save changes, Open Here" / "Discard changes, Open Here" / "New Window" / "Cancel" for dirty — wording refined once more the same day per the user's request, so both options read as parallel phrases sharing the same "changes" wording; "Open Here" / "New Window" / "Cancel" for clean, where "Open Here" is now genuinely safe since there's nothing to lose). Both branches have a real Cancel. The dialog message states the window's dirty state outright rather than leaving it to be inferred. The new Save option reuses `performSaveNow`, a helper extracted from the close-prompt's own save logic — not a duplicate implementation — round-tripping through the renderer via a new `window:performSaveThenOpenDropped` event since main can't perform a save itself (path-picking and detail-draft flushing live in `Canvas.tsx`).
+
+**References:** [epic 0038](planning/epics/0038-drag-file-to-open.md), [epic 0020](planning/epics/0020-autosave-and-crash-recovery.md) (the close-prompt this was brought into consistency with), `src/main/windows.ts`'s `openDroppedFileForWindow`, `src/renderer/src/Canvas.tsx`'s `performSaveNow`
