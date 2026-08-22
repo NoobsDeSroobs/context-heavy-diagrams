@@ -220,6 +220,15 @@ interface HistorySnapshot {
 }
 const MAX_HISTORY = 50
 
+// Toolbar default-edge-style swatch preview only — deliberately a scaled-
+// down echo of LabeledEdge.tsx's own DASH_ARRAY, not a shared import; the
+// swatch is a small honest preview, not a real edge render.
+const DEFAULT_EDGE_SWATCH_DASH: Record<'solid' | 'dashed' | 'dotted', string | undefined> = {
+  solid: undefined,
+  dashed: '4 3',
+  dotted: '1.5 2'
+}
+
 // Only shape/container nodes and edges meaningfully carry metadata — see
 // ADR 0022. Kept as a helper since both toDiagramFile and the metadata-only
 // node type guard elsewhere need the same "does this node type qualify"
@@ -500,6 +509,11 @@ function CanvasInner(): React.JSX.Element {
   const [highlightsPanelAnchor, setHighlightsPanelAnchor] = useState<DOMRect | null>(null)
   const [settingsPanelOpen, setSettingsPanelOpen] = useState(false)
   const [aboutDialogOpen, setAboutDialogOpen] = useState(false)
+  // Toolbar's own "current pen style" swatch (epic 0061/ADR 0045) — reuses
+  // StylePicker (ADR 0010) unchanged, same anchorRect convention as
+  // linePicker above, just targeting settings.defaultEdgeStyle instead of
+  // one edge's data.style.
+  const [defaultEdgeStylePicker, setDefaultEdgeStylePicker] = useState<DOMRect | null>(null)
   // Global app preference, not diagram content — see settings.ts/ADR 0032.
   // Deliberately not reset by loadDiagramIntoCanvas below; only the panel's
   // open/closed UI state is.
@@ -1084,10 +1098,17 @@ function CanvasInner(): React.JSX.Element {
     (connection: Connection) => {
       pushSnapshot()
       setEdges((eds) =>
-        addEdge({ ...connection, type: 'labeled', data: { metadata: seedMetadata(requiredTags) } }, eds)
+        addEdge(
+          {
+            ...connection,
+            type: 'labeled',
+            data: { metadata: seedMetadata(requiredTags), style: settings.defaultEdgeStyle }
+          },
+          eds
+        )
       )
     },
-    [setEdges, pushSnapshot, requiredTags]
+    [setEdges, pushSnapshot, requiredTags, settings.defaultEdgeStyle]
   )
 
   // Grabbing an existing edge's own endpoint and redropping it elsewhere —
@@ -1219,14 +1240,14 @@ function CanvasInner(): React.JSX.Element {
               target: anchorId,
               targetHandle: 'left',
               type: 'labeled',
-              data: { metadata: seedMetadata(requiredTags) }
+              data: { metadata: seedMetadata(requiredTags), style: settings.defaultEdgeStyle }
             },
             eds
           )
         )
       )
     },
-    [spawnAnchorAt, setEdges, requiredTags]
+    [spawnAnchorAt, setEdges, requiredTags, settings.defaultEdgeStyle]
   )
 
   // Grabbing an existing edge's own endpoint and dropping it on empty
@@ -2496,7 +2517,36 @@ function CanvasInner(): React.JSX.Element {
                 ✓ Saved
               </span>
             )}
-            {currentPath && <span className="toolbar-path">{currentPath}</span>}
+            {currentPath && (
+              <span className="toolbar-path" title={currentPath}>
+                {currentPath.split(/[\\/]/).pop()}
+              </span>
+            )}
+            <button
+              type="button"
+              className="toolbar-edge-style-swatch"
+              title="Default style for newly drawn edges"
+              aria-label="Default style for newly drawn edges"
+              onClick={(event) => setDefaultEdgeStylePicker(event.currentTarget.getBoundingClientRect())}
+            >
+              <svg width="28" height="16" viewBox="0 0 28 16">
+                <line
+                  x1="2"
+                  y1="8"
+                  x2={settings.defaultEdgeStyle.endMarker === 'none' ? 26 : 20}
+                  y2="8"
+                  stroke={settings.defaultEdgeStyle.stroke ?? 'currentColor'}
+                  strokeWidth={settings.defaultEdgeStyle.strokeWidth ?? 2}
+                  strokeDasharray={DEFAULT_EDGE_SWATCH_DASH[settings.defaultEdgeStyle.lineStyle ?? 'solid']}
+                />
+                {settings.defaultEdgeStyle.endMarker !== 'none' && (
+                  <polygon
+                    points="20,3 26,8 20,13"
+                    fill={settings.defaultEdgeStyle.stroke ?? 'currentColor'}
+                  />
+                )}
+              </svg>
+            </button>
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
@@ -2665,6 +2715,20 @@ function CanvasInner(): React.JSX.Element {
                 setLinePicker(null)
               }}
               onClose={() => setLinePicker(null)}
+            />
+          )}
+          {defaultEdgeStylePicker && (
+            <StylePicker
+              anchorRect={defaultEdgeStylePicker}
+              onPick={(patch) => {
+                // Whole-object replace, not merged into the existing
+                // default — picking a preset here means "this preset is
+                // now the default," same as picking one for a single edge
+                // replaces that edge's look rather than layering on top.
+                updateSettings({ defaultEdgeStyle: patch })
+                setDefaultEdgeStylePicker(null)
+              }}
+              onClose={() => setDefaultEdgeStylePicker(null)}
             />
           )}
           {legendPanelOpen && (

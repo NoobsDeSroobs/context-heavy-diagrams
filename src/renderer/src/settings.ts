@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import type { EdgeStyle } from '@shared/diagram'
 
 // Global, app-wide preferences — not diagram content, not window-local UI
 // state. Deliberately one extensible object under one storage key, not one
@@ -31,6 +32,14 @@ export interface AppSettings {
   // Edges only, not nodes — nodes already get a normal selection outline
   // from React Flow itself.
   selectedEdgeHighlightColor: string
+  // Raw style fields stamped onto every newly created edge's data.style
+  // (Canvas.tsx's onConnect/onConnectEnd) — epic 0061/ADR 0045. Same
+  // EdgeStyle shape StylePicker's presets already produce (ADR 0010), so
+  // the toolbar control reuses that exact picker rather than a new one.
+  // Empty object means "today's existing look" (whatever LabeledEdge and
+  // <ReactFlow>'s own defaultEdgeOptions fall back to) — an unset field
+  // here doesn't get a hardcoded second default of its own.
+  defaultEdgeStyle: EdgeStyle
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -40,7 +49,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   // Vivid magenta — deliberately outside the typical blue/green/red/orange
   // range diagram content tends to use, so it reads unambiguously as "this
   // is a UI selection indicator," not part of the diagram itself.
-  selectedEdgeHighlightColor: '#ff00aa'
+  selectedEdgeHighlightColor: '#ff00aa',
+  defaultEdgeStyle: {}
 }
 
 const STORAGE_KEY = 'settings'

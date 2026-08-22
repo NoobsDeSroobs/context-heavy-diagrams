@@ -201,6 +201,25 @@ body {
   font-family: 'Menlo', 'Lucida Console', monospace;
 }
 
+/* Default-edge-style "current pen style" indicator (epic 0061/ADR 0045) —
+   a persistently visible preview, not a setting you have to open a dialog
+   to even see the current value of. */
+.toolbar-edge-style-swatch {
+  cursor: pointer;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--color-text);
+  border-radius: 4px;
+  padding: 2px 5px;
+  display: flex;
+  align-items: center;
+  margin-left: 6px;
+}
+
+.toolbar-edge-style-swatch:hover {
+  background: var(--ev-button-alt-hover-bg);
+}
+
 /* Brief post-save confirmation — appears next to Save/Save As, fades in
    rather than popping, and is removed from the DOM (by its parent's
    conditional render) after ~2s rather than just fading to invisible. */

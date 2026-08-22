@@ -46,8 +46,8 @@ export default function AboutDialog({ onClose }: AboutDialogProps): React.JSX.El
         <div className="about-dialog-body">
           <p className="about-dialog-version">Version {version ?? '…'}</p>
           <p>
-            Offline, local diagramming for IT architecture work — no cloud, no account, plain files
-            on disk.
+            Offline, local, context-heavy diagramming for IT architecture work — no cloud, no
+            account, no data collection. Everything is stored as git-friendly plain files on disk.
           </p>
           <p>
             License: GPL-3.0-or-later.{' '}
