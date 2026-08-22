@@ -120,6 +120,80 @@ body {
   background: var(--ev-button-alt-hover-bg);
 }
 
+/* Top menu bar (epic 0049) — flat File/Edit/View labels, not the toolbar's
+   own pill-button look, so this reads as a menu bar rather than another
+   row of toolbar buttons. Scoped under .toolbar so these beat `.toolbar
+   button`'s higher-specificity 1-class-plus-tag selector rather than
+   losing to it by cascade order. */
+.menu-bar {
+  display: flex;
+  gap: 2px;
+}
+
+.menu-bar-item {
+  position: relative;
+}
+
+.toolbar .menu-bar-label {
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-text);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+.toolbar .menu-bar-label:hover,
+.toolbar .menu-bar-label.open {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.menu-bar-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-background-soft);
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 6px;
+  padding: 4px;
+  margin-top: 4px;
+  min-width: 200px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.toolbar .menu-bar-dropdown-item {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+.toolbar .menu-bar-dropdown-item:hover:not(:disabled) {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.toolbar .menu-bar-dropdown-item:disabled {
+  color: var(--ev-c-text-3);
+  cursor: default;
+}
+
+.menu-bar-accelerator {
+  font-size: 11px;
+  color: var(--ev-c-text-3);
+}
+
 .toolbar-path {
   font-size: 12px;
   color: var(--ev-c-text-3);

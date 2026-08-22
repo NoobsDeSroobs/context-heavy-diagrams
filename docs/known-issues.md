@@ -11,6 +11,37 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 ## Open items at a glance
 - [Theme flip reads as "negative image" on toggle](#theme-flip-reads-as-negative-image-on-toggle) — Open, not urgent.
+- [Enabling a highlight makes a container look like it shrinks](#enabling-a-highlight-makes-a-container-look-like-it-shrinks) — Open, not investigated.
+
+---
+
+## A menu bar's hover-switch races its own click handler
+**Status:** Solved
+**Found:** 2026-08-22, epic 0049, while building the custom top menu bar
+
+**Symptom:** clicking a different top-level menu label (e.g. "View") while a sibling menu ("File") was already open closed the whole menu bar instead of switching to the clicked one. Only reproduced with a real click landing on a different label than whatever was already open — a bare click from a fully-closed state, or a repeat click on the same already-open label, both worked fine on their own.
+
+**Root cause:** the menu bar supports the conventional "hover a sibling to switch while one is open" behavior via `onMouseEnter`. A mouse click gesture always fires `mouseenter` on the target element *before* `click` (the cursor has to arrive before it can press) — so by the time the click handler ran, `onMouseEnter` had already switched `openIndex` to the clicked menu. The click handler's own toggle logic (`current === index ? close : open`) then saw "you clicked the menu that's already open" and closed it, even though that "already open" state was only a few milliseconds old and produced by the same physical gesture, not a genuinely separate prior interaction.
+
+**Resolution:** a ref (`hoverSwitchedToRef`) records the index `onMouseEnter` just switched *to*, but only when it represents a genuine switch (arriving from a different index — re-entering the same already-open menu, or hovering while nothing is open, don't touch it). The click handler checks this first: if the click is landing on the menu hover just switched to as part of the same gesture, it keeps the menu open instead of toggling it closed.
+
+**Investigation note:** this was hard to pin down via the Browser pane's automated clicks — repeated attempts at the identical test sequence gave inconsistent results (sometimes the switch worked, sometimes it didn't), most likely because the automation tool's cursor-positioning between separate tool calls doesn't reliably match real continuous mouse movement (whether `mouseenter` fires at all, and exactly when, depended on exactly how the pointer "arrived"). Ground truth came from temporarily instrumenting the component with `console.log` on every `mouseenter`/`click` and reading the actual event sequence back via the console, not from trusting the automation's click results directly — worth reaching for that technique earlier next time a hover-timing-sensitive interaction needs debugging in this environment.
+
+**References:** [epic 0049](planning/epics/0049-top-menu-bar.md), [ADR 0039](decisions/0039-top-menu-bar.md), `src/renderer/src/components/MenuBar.tsx`
+
+---
+
+## Enabling a highlight makes a container look like it shrinks
+**Status:** Open, not investigated
+**Found:** 2026-08-22, live use by the user, while testing epic 0026's highlight feature during epic 0049 design work
+
+**Symptom:** enabling a highlight that matches a container makes the container appear slightly smaller — the user confirmed its actual transform (position/size data) is unchanged, so this is a rendering/visual effect only, not a real resize.
+
+**Root cause:** not investigated yet. Plausible, unconfirmed hypothesis worth checking first: a single-match highlight overrides border width to `HIGHLIGHT_BORDER_WIDTH` (3px, `highlights.ts`) on top of a container's own default `1.5px dashed` border (`main.css`'s `.container-node`) — both node types are `box-sizing: border-box`, so the outer box shouldn't actually move, but a border doubling in width is a well-known perceptual effect (more visual "weight" at the edge reads as a smaller interior) and might be compounded by the dashed pattern's spacing changing at the new width. Unconfirmed — could also be a real (if small) box-sizing or dashed-border-rendering quirk specific to containers vs. shapes, not just perception.
+
+**Current state:** flagged by the user explicitly as not urgent — logged so it isn't lost, not because a fix is wanted now. If revisited, start by checking whether `.container-node`'s rendered bounding box (`getBoundingClientRect`) actually changes at all when a highlight is enabled, which would immediately confirm or rule out the perceptual-only hypothesis above.
+
+**References:** `src/renderer/src/highlights.ts`, `src/renderer/src/assets/main.css`'s `.container-node`, `src/renderer/src/nodes/ContainerNode.tsx`
 
 ---
 

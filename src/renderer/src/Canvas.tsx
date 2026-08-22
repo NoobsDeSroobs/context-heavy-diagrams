@@ -55,6 +55,7 @@ import RequiredTagsPanel from './components/RequiredTagsPanel'
 import DiagnosticsPanel from './components/DiagnosticsPanel'
 import HighlightsPanel from './components/HighlightsPanel'
 import LegendPanel from './components/LegendPanel'
+import MenuBar, { type MenuBarMenu } from './components/MenuBar'
 import LayerPanel from './components/LayerPanel'
 import { CONTAINER_BASE, SHAPE_BASE, TEXT_BASE, backfillZIndex, nextZIndexAbove, reorderZIndex } from './layers/zIndexOrdering'
 import { reassignConnectionPointHandles, setSideCustomPointCount } from './nodes/connectionPoints'
@@ -1807,6 +1808,23 @@ function CanvasInner(): React.JSX.Element {
     window.api.newWindow()
   }, [])
 
+  // File -> Close (epic 0049) — NOT closing the OS window (this app's own
+  // convention, confirmed with the user: a window is a diagram, not
+  // necessarily disposable). Discards the current diagram back to a blank
+  // one *in this same window*, reusing loadDiagramIntoCanvas — the same
+  // full-state reset every other load path already goes through — rather
+  // than duplicating a scattered set of individual setState(initial) calls.
+  // Same lightweight confirm() guard as handleReload below (there's no
+  // dirty-tracking yet, epic 0020's own scope, so neither can tell whether
+  // there's really anything to lose) — skipped when the canvas is already
+  // empty, same "nothing to lose" reasoning handleOpen's window-reuse
+  // check already uses.
+  const handleClose = useCallback(() => {
+    const isEmpty = nodes.length === 0 && edges.length === 0
+    if (!isEmpty && !confirm('Close this diagram? Any changes since the last save will be lost.')) return
+    loadDiagramIntoCanvas(null, { version: 1, viewport: { x: 0, y: 0, zoom: 1 }, nodes: [], edges: [] })
+  }, [nodes, edges, loadDiagramIntoCanvas])
+
   // Re-reads this window's own file from disk and reloads it in place,
   // reusing the same loadDiagramIntoCanvas the initial mount effect uses
   // — for picking up changes made outside the app (hand-edited, or
@@ -1956,6 +1974,15 @@ function CanvasInner(): React.JSX.Element {
         handleNew()
         return
       }
+      // Universal desktop-app convention, added alongside epic 0049's File
+      // -> Close menu item — no shortcut existed for this action before.
+      // See handleClose's own comment for what "Close" actually does here
+      // (discard back to blank, not close the OS window).
+      if (mod && event.key.toLowerCase() === 'w') {
+        event.preventDefault()
+        handleClose()
+        return
+      }
       // Ctrl+A/D are text-editing conventions (select-all-text, and in some
       // apps duplicate-line) — defer to native behavior while a text field
       // has focus rather than hijacking them for canvas actions.
@@ -2020,6 +2047,7 @@ function CanvasInner(): React.JSX.Element {
     handleSaveAs,
     handleOpen,
     handleNew,
+    handleClose,
     selectAll,
     duplicateSelected,
     deselectAll,
@@ -2091,6 +2119,47 @@ function CanvasInner(): React.JSX.Element {
     }))
     .sort((a, b) => b.zIndex - a.zIndex)
 
+  // Top menu bar (epic 0049) — File/Edit/View, an explicit information-
+  // architecture split worked out with the user alongside epic 0048 (left
+  // sidebar, not yet built): file-level actions here, per-diagram
+  // inspection panels also here for now (View), Highlights already moved
+  // to its own floating popup next to Legend regardless of this epic
+  // (fix/highlights-free-tags-and-toggle). Every item reuses an existing
+  // handler unchanged — this menu is purely a new way to reach them, not a
+  // new set of actions.
+  const menus: MenuBarMenu[] = [
+    {
+      label: 'File',
+      items: [
+        { label: 'New', accelerator: 'Ctrl+N', onSelect: handleNew },
+        { label: 'Open…', accelerator: 'Ctrl+O', onSelect: handleOpen },
+        { label: 'Save', accelerator: 'Ctrl+S', onSelect: handleSave },
+        { label: 'Save As…', accelerator: 'Ctrl+Shift+S', onSelect: handleSaveAs },
+        { label: 'Reload', disabled: !currentPath, onSelect: handleReload },
+        { label: 'Close', accelerator: 'Ctrl+W', onSelect: handleClose }
+      ]
+    },
+    {
+      label: 'Edit',
+      items: [
+        { label: 'Undo', accelerator: 'Ctrl+Z', disabled: past.length === 0, onSelect: undo },
+        { label: 'Redo', accelerator: 'Ctrl+Shift+Z', disabled: future.length === 0, onSelect: redo }
+      ]
+    },
+    {
+      label: 'View',
+      items: [
+        { label: 'Required tags', onSelect: toggleRequiredTagsPanel },
+        {
+          label: `Diagnostics${diagnostics.length > 0 ? ` (${diagnostics.length})` : ''}`,
+          onSelect: toggleDiagnosticsPanel
+        },
+        { label: 'Layers', onSelect: toggleLayerPanel },
+        { label: 'Settings', onSelect: toggleSettingsPanel }
+      ]
+    }
+  ]
+
   return (
     <DiagramContext.Provider
       value={{
@@ -2116,34 +2185,12 @@ function CanvasInner(): React.JSX.Element {
       <div className="app-shell">
         <div className="canvas-view">
           <div className="toolbar">
-            <button onClick={handleNew}>New</button>
-            <button onClick={handleOpen}>Open…</button>
-            <button onClick={handleSave}>Save</button>
-            <button onClick={handleSaveAs}>Save As…</button>
-            <button
-              onClick={handleReload}
-              disabled={!currentPath}
-              title="Re-read this file from disk, discarding unsaved changes"
-            >
-              Reload
-            </button>
+            <MenuBar menus={menus} />
             {showSavedFlash && (
               <span className="toolbar-saved-flash" role="status">
                 ✓ Saved
               </span>
             )}
-            <button onClick={undo} disabled={past.length === 0} title="Undo (Ctrl+Z)">
-              Undo
-            </button>
-            <button onClick={redo} disabled={future.length === 0} title="Redo (Ctrl+Shift+Z)">
-              Redo
-            </button>
-            <button onClick={toggleRequiredTagsPanel}>Required tags…</button>
-            <button onClick={toggleDiagnosticsPanel}>
-              Diagnostics{diagnostics.length > 0 ? ` (${diagnostics.length})` : ''}
-            </button>
-            <button onClick={toggleLayerPanel}>Layers…</button>
-            <button onClick={toggleSettingsPanel}>Settings…</button>
             {currentPath && <span className="toolbar-path">{currentPath}</span>}
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
