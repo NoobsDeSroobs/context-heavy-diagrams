@@ -1,5 +1,5 @@
-appId: com.electron.app
-productName: electron-scaffold
+appId: com.contextheavydiagramtool.app
+productName: Context-Heavy Diagram Tool (Preview)
 directories:
   buildResources: build
 files:
@@ -12,7 +12,7 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: electron-scaffold
+  executableName: context-heavy-diagram-tool
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
@@ -33,7 +33,7 @@ linux:
     - AppImage
     - snap
     - deb
-  maintainer: electronjs.org
+  maintainer: Context-Heavy Diagram Tool (Preview)
   category: Utility
 appImage:
   artifactName: ${name}-${version}.${ext}

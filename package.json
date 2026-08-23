@@ -1,7 +1,7 @@
 {
-  "name": "electron-scaffold",
+  "name": "context-heavy-diagram-tool",
   "version": "0.1.0",
-  "description": "An Electron application with React and TypeScript",
+  "description": "A context-heavy, boxes-and-arrows-free diagramming tool for IT architecture and information distillation. Early preview build.",
   "main": "./out/main/index.js",
   "license": "GPL-3.0-or-later",
   "author": "example.com",
@@ -18,8 +18,8 @@
     "postinstall": "install-electron && electron-builder install-app-deps",
     "build:unpack": "npm run build && electron-builder --dir",
     "build:win": "npm run build && electron-builder --win",
-    "build:mac": "electron-vite build && electron-builder --mac",
-    "build:linux": "electron-vite build && electron-builder --linux"
+    "build:mac": "npm run build && electron-builder --mac",
+    "build:linux": "npm run build && electron-builder --linux"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",

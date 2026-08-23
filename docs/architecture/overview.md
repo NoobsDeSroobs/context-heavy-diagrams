@@ -47,6 +47,10 @@ Electron runs two JS contexts:
 
 **Shared** (`src/shared/diagram.ts`) — the `.chd` file format's TypeScript types plus `serializeDiagram`/`parseDiagram`, imported by both main (to validate/write) and renderer (to build/read). See [docs/file-format.md](../file-format.md) for the format itself, kept as a standalone spec.
 
+## Building a distributable
+
+`npm run dev` for development. For a real installable Windows build (unsigned, Phase 1 placeholder branding — see [epic 0053](../planning/epics/0053-installable-distribution.md)), see [docs/architecture/packaging.md](packaging.md).
+
 ## Current status
 
 See [PROGRESS.md](../../PROGRESS.md) and [docs/planning/](../planning/) for what's built and what's next.
