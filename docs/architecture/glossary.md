@@ -27,3 +27,12 @@ Some values sit at the boundary between Configuration and Settings — they're *
 3. **Built-in default** — a hardcoded constant in the app itself, used when neither of the above exists (a fresh install, or a diagram authored with no override and opened by someone who's never touched their own Settings for it).
 
 This is deliberately *not* applied everywhere — see [ADR 0052](../decisions/0052-settings-ownership-tiers.md) for which values get it and why (max connection points per side, gravity presets) versus which stay Settings-only with no diagram tier at all (the style palette — see that ADR for why a diagram-local copy would be redundant with what Properties already stores).
+
+## Shape vs. Container
+
+Easy to conflate since either can be styled identically, but they mean different things regardless of how they look:
+
+- **Shape** represents a standalone entity in whatever the diagram is modeling — a service, a system, a team, a component, anything the diagram's own domain treats as "a thing." The name itself is a historical holdover from its default plain-box rendering; it doesn't mean "a geometric shape," it means "an entity." A Shape styled to look identical to a Container is still a Shape — the meaning lives in the node's *type*, not its appearance.
+- **Container** represents grouping/boundary — a scope that holds other elements, never a standalone entity of its own. A Container never means "a thing"; it always means "a collection of things."
+
+"Shape" is under consideration for a rename to something that reads as a semantic category rather than a visual one (e.g. "Concept") — see [epic 0076](../planning/epics/0076-rename-shape-to-concept.md). Deliberately not decided yet, including the actual replacement name; this entry documents the *meaning*, independent of whatever the type ends up being called.
