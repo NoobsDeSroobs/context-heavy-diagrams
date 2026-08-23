@@ -10,6 +10,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 - **Open** — known, not blocking, deliberately not fixed yet. Has a documented direction to revisit if it becomes a real complaint.
 
 ## Open items at a glance
+- [`serializeDiagram` silently dropped `locked`, `gravityPresets`, and a line's `points` on every save](#serializediagram-silently-dropped-locked-gravitypresets-and-a-lines-points-on-every-save) — Solved.
 - [Theme flip reads as "negative image" on toggle](#theme-flip-reads-as-negative-image-on-toggle) — Open, not urgent.
 - [Enabling a highlight makes a container look like it shrinks](#enabling-a-highlight-makes-a-container-look-like-it-shrinks) — Open, not investigated.
 - [A dragged edge endpoint snapped to the wrong side's point after a count change](#a-dragged-edge-endpoint-snapped-to-the-wrong-sides-point-after-a-count-change) — Open, not reproduced.
@@ -17,6 +18,22 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 - [`npm run lint` reports ~10,000 CRLF warnings repo-wide](#npm-run-lint-reports-10000-crlf-warnings-repo-wide) — Open, not this machine's normal experience, cause not confirmed.
 - [Exported PNGs had no visible arrowheads on any edge](#exported-pngs-had-no-visible-arrowheads-on-any-edge) — Solved.
 - ["Use canvas color" PNG export always exported plain white](#use-canvas-color-png-export-always-exported-plain-white) — Solved.
+
+---
+
+## `serializeDiagram` silently dropped `locked`, `gravityPresets`, and a line's `points` on every save
+**Status:** Solved
+**Found:** 2026-08-23, while reading `src/shared/diagram.ts` in preparation for epic 0032's edge/line unification (unrelated task — noticed by chance while re-reading the save path to see what shape it currently writes)
+
+**Symptom:** none reported by the user before this was found by code inspection — the actual user-visible symptom, confirmed by tracing the code rather than reproduced live, would be: lock a shape, save, reopen the file — the shape comes back unlocked. Set custom gravity presets (`GravityPresetsPanel`), save, reopen — back to this app's built-in four. Draw a freeform line (epic 0064) with any bend points, save, reopen — the line comes back with `data.points` missing entirely, i.e. invisible (`LineNode` renders nothing for an empty point list).
+
+**Root cause:** `src/main/diagram.ts`'s `diagram:save` IPC handler — the one real `.chd` write path (confirmed: `links.ts`/`requiredTags.ts` are the only other callers of `serializeDiagram`, and `recovery.ts`'s crash-recovery envelopes are a separate, unrelated JSON format) — calls `serializeDiagram`, which rebuilds a fresh, deliberately-key-ordered object from the in-memory `DiagramFile` rather than passing it through directly (see that function's own comment: fixed key order makes `JSON.stringify` output deterministic for git diffs). That rebuild is a manual field-by-field picklist, and three fields added by later epics were never added to it: `DiagramFile.gravityPresets` (epic 0064) and, per node, `locked` (epic 0043) and `data.points` (epic 0064). `parseDiagram`/`fromDiagramFile` (the read side) never had an equivalent gap — `toDiagramFile` (`Canvas.tsx`, the in-memory → `DiagramFile` step that runs *before* `serializeDiagram`) already builds these fields correctly; `serializeDiagram`'s own re-pick on top of that correct object is what silently discards them again on the way to disk.
+
+**Why epic 0064's own live-testing didn't catch this:** both live-testing passes (see epic 0064's Notes) covered hit-testing and the Layers panel within a single running session — a save/reload round-trip specifically wasn't part of either pass.
+
+**Resolution:** added the three missing fields to `serializeDiagram`'s picklist, same "omit only when empty" convention already used for every sibling field in that function (`gravityPresets: ... .length > 0 ? ... : undefined`, `locked: n.locked`, `data.points: ... .length > 0 ? ... : undefined`).
+
+**References:** `src/shared/diagram.ts`'s `serializeDiagram`, `src/main/diagram.ts`'s `diagram:save` handler.
 
 ---
 

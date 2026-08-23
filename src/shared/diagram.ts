@@ -313,6 +313,8 @@ export function serializeDiagram(diagram: DiagramFile): string {
     requiredTags: diagram.requiredTags && diagram.requiredTags.length > 0 ? diagram.requiredTags : undefined,
     highlights: diagram.highlights && diagram.highlights.length > 0 ? diagram.highlights : undefined,
     legend: diagram.legend && diagram.legend.length > 0 ? diagram.legend : undefined,
+    gravityPresets:
+      diagram.gravityPresets && diagram.gravityPresets.length > 0 ? diagram.gravityPresets : undefined,
     nodes: diagram.nodes.map((n) => ({
       id: n.id,
       type: n.type,
@@ -323,13 +325,15 @@ export function serializeDiagram(diagram: DiagramFile): string {
       connectionPoints:
         n.connectionPoints && n.connectionPoints.length > 0 ? n.connectionPoints : undefined,
       parentId: n.parentId,
+      locked: n.locked,
       style: n.style,
       metadata: sortedMetadata(n.metadata),
       data: {
         label: n.data.label,
         icons: n.data.icons && Object.keys(n.data.icons).length > 0 ? n.data.icons : undefined,
         details: n.data.details,
-        linkedDiagram: n.data.linkedDiagram
+        linkedDiagram: n.data.linkedDiagram,
+        points: n.data.points && n.data.points.length > 0 ? n.data.points : undefined
       }
     })),
     edges: diagram.edges.map((e) => ({
