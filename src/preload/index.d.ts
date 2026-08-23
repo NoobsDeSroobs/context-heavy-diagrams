@@ -1,5 +1,6 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
 import type { DiagramFile, RequiredTagDefinition } from '@shared/diagram'
+import type { AppSettings } from '@shared/settings'
 
 export interface RequiredTagsWalkResult {
   reached: string[]
@@ -60,7 +61,9 @@ export interface DiagramApi {
   onCloseRequested(callback: () => void): () => void
   requestCloseDecision(): Promise<'save' | 'discard' | 'cancel'>
   closeApproved(path: string | null, sessionId: string): Promise<void>
-  mirrorScanOnStartupSetting(value: boolean): Promise<void>
+  readAppSettings(): Promise<AppSettings | null>
+  writeAppSettings(settings: AppSettings): Promise<void>
+  onAppSettingsChanged(callback: (settings: AppSettings) => void): () => void
   getAppVersion(): Promise<string>
   exportStylePalette(json: string): Promise<boolean>
   importStylePalette(): Promise<string | null>

@@ -62,7 +62,12 @@ export async function writeRecoverySnapshot(
   detailsDrafts: Record<string, string>
 ): Promise<void> {
   await ensureRecoveryDir()
-  const envelope: RecoveryEnvelope = { originalPath: path, savedAt: Date.now(), diagram, detailsDrafts }
+  const envelope: RecoveryEnvelope = {
+    originalPath: path,
+    savedAt: Date.now(),
+    diagram,
+    detailsDrafts
+  }
   await writeFile(fileFor(keyFor(path, sessionId)), JSON.stringify(envelope), 'utf-8')
 }
 
@@ -74,7 +79,10 @@ async function readEnvelope(file: string): Promise<RecoveryEnvelope | null> {
   }
 }
 
-export async function deleteRecoverySnapshot(path: string | null, sessionId: string): Promise<void> {
+export async function deleteRecoverySnapshot(
+  path: string | null,
+  sessionId: string
+): Promise<void> {
   try {
     await rm(fileFor(keyFor(path, sessionId)))
   } catch {
@@ -134,8 +142,8 @@ async function discardOrphan(key: string): Promise<void> {
   }
 }
 
-// Run once at app startup (gated by the caller on the settings mirror
-// file — see settingsMirror.ts). Sequential native dialogs, one per
+// Run once at app startup (gated by the caller on the real settings file
+// — see appSettings.ts). Sequential native dialogs, one per
 // orphan: rare in practice (only diagrams that crashed before ever being
 // saved once), so no need for a fancier batch UI. Each recovered orphan
 // opens its own new window with the snapshot's content, still unsaved

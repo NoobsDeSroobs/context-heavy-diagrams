@@ -1,5 +1,7 @@
 # Architecture overview
 
+See [docs/architecture/glossary.md](glossary.md) for this project's precise terms for Properties/Configuration/Settings/Views — worth reading before touching anything that sounds like "settings," since this app draws a real distinction between those.
+
 ## Purpose
 
 A local, offline desktop diagramming tool for IT architecture work — filling the gap between restrictive commercial tools and generic box-and-arrow editors like Draw.io. That includes enterprise-architecture-adjacent work (business capability maps, motivation/goals views, application portfolios), not just software/technical diagrams — the goal is to take an architect most of the way there before they need a dedicated EA suite, through flexible generic primitives rather than a formal enforced metamodel (see [ADR 0008](../decisions/0008-tool-scope-includes-ea-adjacent-diagrams.md)). Local-only: no server, no hosting, no real-time collaboration. See [docs/project-brief.md](../project-brief.md) for the full requirements this was commissioned against.

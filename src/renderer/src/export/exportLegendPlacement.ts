@@ -1,4 +1,11 @@
-export type LegendCorner = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
+// Canonical definition moved to @shared/settings (epic 0054/ADR 0053) —
+// main also needs the full AppSettings shape now, and this is one of its
+// fields. Re-exported here (a bare `export type { X } from '...'` doesn't
+// also bind X locally, hence the separate `import type` below) so nothing
+// importing it from this module (ExportPngDialog.tsx, exportPng.ts) needed
+// to change.
+import type { LegendCorner } from '@shared/settings'
+export type { LegendCorner }
 
 export interface Rect {
   x: number

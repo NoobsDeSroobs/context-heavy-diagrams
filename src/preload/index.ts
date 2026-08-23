@@ -1,6 +1,7 @@
 import { clipboard, contextBridge, ipcRenderer, webUtils } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import type { DiagramFile, RequiredTagDefinition } from '@shared/diagram'
+import type { AppSettings } from '@shared/settings'
 
 interface RequiredTagsWalkResult {
   reached: string[]
@@ -215,10 +216,25 @@ const api = {
     return ipcRenderer.invoke('windows:closeApproved', path, sessionId)
   },
 
-  // Mirrors just this one AppSettings boolean to a main-readable file —
-  // see settingsMirror.ts for why it can't just be read from localStorage.
-  mirrorScanOnStartupSetting(value: boolean): Promise<void> {
-    return ipcRenderer.invoke('settings:mirrorScanOnStartup', value)
+  // Real per-OS settings file (epic 0054/ADR 0053), replacing localStorage
+  // — see appSettings.ts. readAppSettings returns null when the file
+  // doesn't exist yet (fresh install, or upgrading from a pre-0054 build);
+  // the renderer's useSettings falls back to its own already-present
+  // localStorage in that case, one-time migration, before defaults.
+  readAppSettings(): Promise<AppSettings | null> {
+    return ipcRenderer.invoke('settings:read')
+  },
+
+  writeAppSettings(settings: AppSettings): Promise<void> {
+    return ipcRenderer.invoke('settings:write', settings)
+  },
+
+  // Cross-window live sync — the replacement for the `storage` event a
+  // shared localStorage key gave for free.
+  onAppSettingsChanged(callback: (settings: AppSettings) => void): () => void {
+    const listener = (_event: unknown, settings: AppSettings): void => callback(settings)
+    ipcRenderer.on('settings:changed', listener)
+    return () => ipcRenderer.off('settings:changed', listener)
   },
 
   // About screen (epic 0057) — package.json's version via Electron's own

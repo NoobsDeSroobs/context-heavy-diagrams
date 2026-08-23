@@ -7,7 +7,8 @@ import { registerLinkHandlers } from './links'
 import { createWindow, registerWindowHandlers } from './windows'
 import { registerRequiredTagsHandlers } from './requiredTags'
 import { registerRecoveryHandlers, runStartupOrphanScan } from './recovery'
-import { readScanOnStartupSetting, registerSettingsMirrorHandlers } from './settingsMirror'
+import { readAppSettings, registerAppSettingsHandlers } from './appSettings'
+import { DEFAULT_SETTINGS } from '@shared/settings'
 import { registerAppInfoHandlers } from './appInfo'
 import { registerStylePaletteHandlers } from './stylePalette'
 import { registerExportHandlers } from './export'
@@ -36,7 +37,7 @@ app.whenReady().then(() => {
   registerWindowHandlers()
   registerRequiredTagsHandlers()
   registerRecoveryHandlers()
-  registerSettingsMirrorHandlers()
+  registerAppSettingsHandlers()
   registerAppInfoHandlers()
   registerStylePaletteHandlers()
   registerExportHandlers()
@@ -46,13 +47,19 @@ app.whenReady().then(() => {
   // Not awaited — a diagram that crashed before ever being saved once has
   // no path to key a per-window recovery check against (that path runs
   // per-window on open instead, see diagram open flow), so this is the
-  // only place it can be found. Gated on the mirrored setting since the
-  // scan is a real startup cost some users may want to skip (epic 0020/
-  // ADR 0040). Runs after createWindow() so the first window shows up
-  // without waiting on this. initialWindow parents the recovery dialog(s)
-  // so they get a defined z-order — see runStartupOrphanScan's own comment.
-  readScanOnStartupSetting().then((enabled) => {
-    if (enabled) runStartupOrphanScan(initialWindow, createWindow)
+  // only place it can be found. Gated on the setting since the scan is a
+  // real startup cost some users may want to skip (epic 0020/ADR 0040).
+  // Runs after createWindow() so the first window shows up without
+  // waiting on this. initialWindow parents the recovery dialog(s) so they
+  // get a defined z-order — see runStartupOrphanScan's own comment.
+  // readAppSettings() returning null (settings.json doesn't exist yet —
+  // epic 0054/ADR 0053) can't wait on the renderer's own localStorage
+  // migration at this point in startup; DEFAULT_SETTINGS' own true here
+  // matches what the file this replaced already defaulted to on a miss.
+  readAppSettings().then((settings) => {
+    if ((settings ?? DEFAULT_SETTINGS).scanForUnsavedRecoveryOnStartup) {
+      runStartupOrphanScan(initialWindow, createWindow)
+    }
   })
 
   app.on('activate', function () {
