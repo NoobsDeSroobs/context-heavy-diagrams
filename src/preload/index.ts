@@ -239,6 +239,13 @@ const api = {
     return ipcRenderer.invoke('stylePalette:importFromFile')
   },
 
+  // PNG export (epic 0010/ADR 0051) — dataUrl is a data:image/png;base64,...
+  // string from html-to-image's toPng(), same false-on-cancel convention
+  // as exportStylePalette.
+  exportPngToFile(dataUrl: string, suggestedFilename: string): Promise<boolean> {
+    return ipcRenderer.invoke('export:pngToFile', dataUrl, suggestedFilename)
+  },
+
   // Copy/paste (epic 0025/ADR 0049) — the real OS clipboard, not IPC to
   // main: `clipboard` is available directly here since this window's
   // preload runs unsandboxed (`sandbox: false`, main/windows.ts), so

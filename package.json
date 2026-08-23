@@ -27,6 +27,7 @@
     "@tabler/icons": "^3.46.0",
     "@xyflow/react": "^12.11.3",
     "electron-updater": "^6.3.9",
+    "html-to-image": "^1.11.13",
     "react-markdown": "^10.1.0"
   },
   "devDependencies": {

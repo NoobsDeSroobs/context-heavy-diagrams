@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -66,6 +67,7 @@ import { CONTAINER_BASE, SHAPE_BASE, TEXT_BASE, backfillZIndex, nextZIndexAbove,
 import { reassignConnectionPointHandles, setSideCustomPointCount } from './nodes/connectionPoints'
 import SettingsPanel from './components/SettingsPanel'
 import AboutDialog from './components/AboutDialog'
+import ExportPngDialog, { type PngExportChoice } from './components/ExportPngDialog'
 import StylePalettePanel from './components/StylePalettePanel'
 import DiagramDock from './panels/DiagramDock'
 import UtilityDock from './panels/UtilityDock'
@@ -75,6 +77,8 @@ import { buildClipboardPayload, parseClipboardPayload, remapForPaste } from './c
 import type { TransformPatch } from './panels/PropertyPanel'
 import { useTheme } from './theme'
 import { useSettings } from './settings'
+import { captureDiagramPng, resolveEffectiveBackgroundColor, rgbStringToHex } from './export/exportPng'
+import { buildExportLegendItems } from './export/exportLegendItems'
 import { themeAdaptiveColor } from './styles/themeAdaptiveColor'
 
 // Defined at module scope so React Flow gets a stable reference — recreating
@@ -536,6 +540,8 @@ function CanvasInner(): React.JSX.Element {
   const [settingsPanelOpen, setSettingsPanelOpen] = useState(false)
   const [stylePalettePanelOpen, setStylePalettePanelOpen] = useState(false)
   const [aboutDialogOpen, setAboutDialogOpen] = useState(false)
+  const [exportPngDialogOpen, setExportPngDialogOpen] = useState(false)
+  const [exportPngEffectiveColorHex, setExportPngEffectiveColorHex] = useState('#ffffff')
   // Toolbar's own "current pen style" swatch (epic 0061/ADR 0045) — reuses
   // StylePicker (ADR 0010) unchanged, same anchorRect convention as
   // linePicker above, just targeting settings.defaultEdgeStyle instead of
@@ -576,6 +582,11 @@ function CanvasInner(): React.JSX.Element {
   const [detailsDrafts, setDetailsDrafts] = useState<Record<string, string>>({})
   const rfInstance = useReactFlow()
   const updateNodeInternals = useUpdateNodeInternals()
+  // Scopes the PNG export (epic 0010) capture to this window's own
+  // .react-flow__viewport rather than a bare document-wide query — no
+  // functional difference today (one ReactFlow per window), just avoids
+  // relying on that staying true.
+  const flowWrapperRef = useRef<HTMLDivElement>(null)
 
   // Undo/redo history — see epic 0006. Explicit calls at each real mutation
   // site (pushSnapshot before mutating), not a useEffect reacting to
@@ -1970,6 +1981,73 @@ function CanvasInner(): React.JSX.Element {
   const handleSave = useCallback(() => performSave(false), [performSave])
   const handleSaveAs = useCallback(() => performSave(true), [performSave])
 
+  // PNG export (epic 0010/ADR 0051). Selection outlines and resize/
+  // connection-point handles render conditionally inside each node's own
+  // DOM based on node.selected — deselecting everything first (flushSync
+  // so the DOM actually updates before html-to-image reads it, since a
+  // plain setNodes/setEdges wouldn't commit until after this function
+  // returns) keeps them out of the exported image without this function
+  // needing to know how each node type draws its own selected state.
+  // Restored afterward either way, including on failure. choice comes from
+  // ExportPngDialog, not settings directly — the dialog is the actual
+  // place these get edited; settings.pngExport* only remembers the last
+  // choice so the dialog reopens prefilled.
+  const handleExportPng = useCallback(
+    async (choice: PngExportChoice) => {
+      const viewportEl = flowWrapperRef.current?.querySelector<HTMLElement>('.react-flow__viewport')
+      if (!viewportEl) return
+      const previouslySelectedNodeIds = nodes.filter((n) => n.selected).map((n) => n.id)
+      const previouslySelectedEdgeIds = edges.filter((e) => e.selected).map((e) => e.id)
+      try {
+        flushSync(() => {
+          setNodes((current) => current.map((n) => (n.selected ? { ...n, selected: false } : n)))
+          setEdges((current) => current.map((e) => (e.selected ? { ...e, selected: false } : e)))
+        })
+        const legendItems = buildExportLegendItems(legend, highlights, enabledHighlightIds)
+        const dataUrl = await captureDiagramPng(
+          nodes,
+          edges.map((e) => ({ source: e.source, target: e.target })),
+          viewportEl,
+          {
+            paddingPx: choice.paddingPx,
+            transparentBackground: choice.transparentBackground,
+            backgroundColorOverride: choice.backgroundColorOverride,
+            legend:
+              legendItems.length > 0
+                ? { items: legendItems, corner: choice.legendCorner, diagramPath: currentPath }
+                : undefined
+          }
+        )
+        const suggestedFilename = currentPath
+          ? currentPath.split(/[\\/]/).pop()!.replace(/\.chd$/, '.png')
+          : 'diagram.png'
+        await window.api.exportPngToFile(dataUrl, suggestedFilename)
+      } catch (error) {
+        alert(`PNG export failed: ${error instanceof Error ? error.message : String(error)}`)
+      } finally {
+        setNodes((current) =>
+          current.map((n) => (previouslySelectedNodeIds.includes(n.id) ? { ...n, selected: true } : n))
+        )
+        setEdges((current) =>
+          current.map((e) => (previouslySelectedEdgeIds.includes(e.id) ? { ...e, selected: true } : e))
+        )
+      }
+    },
+    [nodes, edges, setNodes, setEdges, currentPath, legend, highlights, enabledHighlightIds]
+  )
+
+  // Refs can't be read during render (React lint rule, and genuinely
+  // unsafe under concurrent rendering) — so ExportPngDialog's color-swatch
+  // preview is computed here, once, right as the dialog opens, rather than
+  // inline in JSX on every render.
+  useEffect(() => {
+    if (!exportPngDialogOpen) return
+    const viewportEl = flowWrapperRef.current?.querySelector<HTMLElement>('.react-flow__viewport')
+    setExportPngEffectiveColorHex(
+      viewportEl ? rgbStringToHex(resolveEffectiveBackgroundColor(viewportEl)) : '#ffffff'
+    )
+  }, [exportPngDialogOpen])
+
   // The one place that applies a loaded DiagramFile to all canvas state —
   // called by this window's own initial-load mount effect below (a window
   // never loads a *different* diagram into itself after that; File Open
@@ -2667,6 +2745,11 @@ function CanvasInner(): React.JSX.Element {
         { label: 'Open…', accelerator: 'Ctrl+O', onSelect: handleOpen },
         { label: 'Save', accelerator: 'Ctrl+S', onSelect: handleSave },
         { label: 'Save As…', accelerator: 'Ctrl+Shift+S', onSelect: handleSaveAs },
+        {
+          label: 'Export as PNG…',
+          disabled: nodes.length === 0,
+          onSelect: () => setExportPngDialogOpen(true)
+        },
         { label: 'Reload', disabled: !currentPath, onSelect: handleReload },
         { label: 'Close', accelerator: 'Ctrl+W', onSelect: handleClose }
       ]
@@ -2778,7 +2861,7 @@ function CanvasInner(): React.JSX.Element {
             </button>
           </div>
           <div className="canvas-view-body">
-            <div className="canvas-view-flow">
+            <div className="canvas-view-flow" ref={flowWrapperRef}>
               <EdgeMarkerDefs />
               <ReactFlow
                 nodes={zIndexedNodes}
@@ -3067,6 +3150,29 @@ function CanvasInner(): React.JSX.Element {
           )}
         </UtilityDock>
         {aboutDialogOpen && <AboutDialog onClose={() => setAboutDialogOpen(false)} />}
+        {exportPngDialogOpen && (
+          <ExportPngDialog
+            initial={{
+              paddingPx: settings.pngExportPaddingPx,
+              transparentBackground: settings.pngExportTransparentBackground,
+              backgroundColorOverride: settings.pngExportBackgroundColorOverride,
+              legendCorner: settings.pngExportLegendCorner
+            }}
+            effectiveCanvasColorHex={exportPngEffectiveColorHex}
+            hasLegendContent={legend.length > 0 || enabledHighlightIds.size > 0}
+            onClose={() => setExportPngDialogOpen(false)}
+            onConfirm={(choice: PngExportChoice) => {
+              setExportPngDialogOpen(false)
+              updateSettings({
+                pngExportPaddingPx: choice.paddingPx,
+                pngExportTransparentBackground: choice.transparentBackground,
+                pngExportBackgroundColorOverride: choice.backgroundColorOverride,
+                pngExportLegendCorner: choice.legendCorner
+              })
+              handleExportPng(choice)
+            }}
+          />
+        )}
       </div>
     </DiagramContext.Provider>
   )

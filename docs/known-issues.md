@@ -14,6 +14,9 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 - [Enabling a highlight makes a container look like it shrinks](#enabling-a-highlight-makes-a-container-look-like-it-shrinks) — Open, not investigated.
 - [A dragged edge endpoint snapped to the wrong side's point after a count change](#a-dragged-edge-endpoint-snapped-to-the-wrong-sides-point-after-a-count-change) — Open, not reproduced.
 - [A native confirm() dialog left <select> elements unresponsive afterward](#a-native-confirm-dialog-left-select-elements-unresponsive-afterward) — Worked around, class of bug could recur.
+- [`npm run lint` reports ~10,000 CRLF warnings repo-wide](#npm-run-lint-reports-10000-crlf-warnings-repo-wide) — Open, not this machine's normal experience, cause not confirmed.
+- [Exported PNGs had no visible arrowheads on any edge](#exported-pngs-had-no-visible-arrowheads-on-any-edge) — Solved.
+- ["Use canvas color" PNG export always exported plain white](#use-canvas-color-png-export-always-exported-plain-white) — Solved.
 
 ---
 
@@ -291,3 +294,45 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 **Resolution:** React Flow applies a node's `style` field (a real, normally-unused-in-this-codebase `Node` field, distinct from this app's own `data.style` convention) directly onto its own wrapper element — so setting `pointerEvents: 'none'` there (`Canvas.tsx`'s `zIndexedNodes`, `line`-typed nodes only) makes the *whole box* click/drag-through by default. `pointer-events` is inherited but overridable per descendant, so `LineNode.tsx`'s existing invisible hit-stroke path (`pointerEvents: 'stroke'`) and its point handles (`pointer-events: auto` in CSS) each explicitly opt back in — only the curve itself, within the hit-stroke's tolerance, and its points stay interactive. **General lesson for any future node type whose visual shape doesn't fill its own rectangular bounding box**: React Flow's default click/drag hit-testing is the box, not the rendered content — the `Node.style` field is the documented escape hatch, not `data.style` or anything rendered inside the component.
 
 **References:** [epic 0064](planning/epics/0064-simple-curved-freeform-line.md), [ADR 0050](decisions/0050-freeform-line-as-node-type.md), `src/renderer/src/Canvas.tsx`, `src/renderer/src/nodes/LineNode.tsx`
+
+---
+
+## `npm run lint` reports ~10,000 CRLF warnings repo-wide
+**Status:** Open, not this machine's normal experience, cause not confirmed
+**Found:** 2026-08-23, epic 0010, running `npm run lint` after adding the PNG export feature
+
+**Symptom:** a routine `npm run lint` run reported ~10,200 `prettier/prettier` "Delete `␍`" warnings spread across dozens of pre-existing files never touched this session (confirmed via `git status` — only this session's own 10 changed/new files showed up there), alongside the same 4 real errors [epic 0028](planning/epics/0028-remaining-lint-cleanup.md) already tracks as this project's pre-existing baseline. `file` on an untouched file (`AboutDialog.tsx`) confirmed it has actual CRLF line terminators on disk; `git config --get core.autocrlf` returned `true` and there's no `.gitattributes` pinning line endings, so a normal Windows checkout on this machine legitimately produces CRLF files while ESLint's Prettier config expects LF.
+
+**Not yet explained:** why this hadn't surfaced before now, given PROGRESS.md's repeated "same pre-existing lint-error count as master, no new ones" checks presumably ran on this same Windows machine. `.eslintcache` (gitignored) was rewritten by this run — plausible this run was the first with a cold/invalidated cache and prior checks were unknowingly reading a stale cache that skipped re-reporting already-warned, unchanged files. Not confirmed; worth checking on the next fresh clone or `rm .eslintcache` run whether it reproduces from a clean state.
+
+**Not fixed here** — deliberately out of scope for epic 0010's small PNG-export change; this is really [epic 0028](planning/epics/0028-remaining-lint-cleanup.md)'s territory (either pin `.gitattributes`/`core.autocrlf` for this repo, or set ESLint/Prettier's `endOfLine` to `auto`), and a repo-wide line-ending rewrite is exactly the kind of drastic, unrelated change CLAUDE.md says to pause and ask about rather than fold into an unrelated epic.
+
+**References:** [epic 0028](planning/epics/0028-remaining-lint-cleanup.md), [epic 0010](planning/epics/0010-export.md)
+
+---
+
+## Exported PNGs had no visible arrowheads on any edge
+**Status:** Solved
+**Found:** 2026-08-23, epic 0010, live testing by the user immediately after PNG export's first pass shipped
+
+**Symptom:** every edge exported to PNG with no arrowhead at all — reported as arrows "not visible," confirmed not just a size/contrast issue since making the marker much thicker and a different color still didn't make it appear.
+
+**Root cause:** `EdgeMarkerDefs` (`src/renderer/src/edges/edgeMarkers.tsx`) renders every `<marker>` definition inside a separate, zero-size `<svg>` that's a *sibling* of `<ReactFlow>` in the DOM — deliberately, per that file's own existing comment, so marker ids stay resolvable from any edge in the document regardless of which `<svg>` the edge itself renders inside. PNG export (`captureDiagramPng`, `src/renderer/src/export/exportPng.ts`) only clones `.react-flow__viewport` — the subtree containing nodes/edges — to keep Background/Controls/MiniMap chrome out of the exported image (see [ADR 0051](decisions/0051-png-export.md)). That subtree never included the marker defs at all, so every edge's `marker-end="url(#...)"` attribute referenced an id that simply didn't exist in the captured content — not a rendering glitch, the referenced element was never there.
+
+**Resolution:** give the marker-defs `<svg>` a stable `data-export-role="edge-marker-defs"` attribute, then in `captureDiagramPng`, clone that element (`cloneNode(true)`, not moving the live node — moving it could confuse React's own reconciliation for an element it still manages) and temporarily insert the clone as the viewport's first child for the duration of the `toPng()` call, removing it in a `finally` immediately after. **General lesson**: this app renders more than one kind of "global, id-referenced, zero-visual-footprint" definition outside the node/edge tree (this marker-defs pattern specifically) — anything that captures/serializes only a subtree of the canvas (export, and potentially any future feature doing the same) needs to check whether it's implicitly relying on DOM state that lives outside that subtree.
+
+**References:** [epic 0010](planning/epics/0010-export.md), [ADR 0051](decisions/0051-png-export.md), `src/renderer/src/edges/edgeMarkers.tsx`, `src/renderer/src/export/exportPng.ts`
+
+---
+
+## "Use canvas color" PNG export always exported plain white
+**Status:** Solved
+**Found:** 2026-08-23, epic 0010, live testing by the user right after the previous two PNG export fixes landed
+
+**Symptom:** exporting with "Use canvas color" (no background override, no transparency) produced a plain white background, regardless of the diagram's actual on-screen canvas color — reported directly as "ended up as just white, not the actually active canvas colours."
+
+**Root cause:** the first fix read `getComputedStyle(viewportEl).getPropertyValue('--xy-background-color')` directly, expecting it to already hold the resolved color. But `.react-flow`'s own CSS (`node_modules/@xyflow/react/dist/style.css`) only ever *uses* that custom property inside a `var()` fallback chain — `background-color: var(--xy-background-color, var(--xy-background-color-default))` — it never assigns the literal `--xy-background-color` property a value unless a custom `canvasBackgroundColor` is set. Reading the property name directly, rather than reading through a `var()` reference, returns an empty string in the common no-override case, silently hitting this function's own hardcoded `'#ffffff'` fallback every time. Compounding it: even the *correctly* resolved `.react-flow` background in light mode with no override is `--xy-background-color-default: transparent` — the real color the user sees painted behind the canvas in that case comes from this app's own `body { background: var(--color-background) }` (`assets/base.css`), several DOM ancestors above `.react-flow` itself, not from React Flow's own background mechanism at all.
+
+**Resolution:** `resolveEffectiveBackgroundColor()` walks up from the viewport element through `.parentElement`, reading each ancestor's real, already-resolved `getComputedStyle(...).backgroundColor` (the actual CSS property, not a custom-property name) until it finds one that isn't `transparent`/`rgba(0, 0, 0, 0)` — the same compositing a browser (and a viewer's eyes) already does to decide what color is "really" behind an element, regardless of which specific ancestor happens to own it or how many `var()` fallback levels are involved. **General lesson**: a custom CSS property (`--foo`) and the standard property that consumes it via `var(--foo, fallback)` are not interchangeable to read back — querying the custom property directly skips the entire fallback chain and returns empty unless something explicitly assigned it a value.
+
+**References:** [epic 0010](planning/epics/0010-export.md), [ADR 0051](decisions/0051-png-export.md), `src/renderer/src/export/exportPng.ts`

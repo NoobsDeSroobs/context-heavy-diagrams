@@ -64,6 +64,7 @@ export interface DiagramApi {
   getAppVersion(): Promise<string>
   exportStylePalette(json: string): Promise<boolean>
   importStylePalette(): Promise<string | null>
+  exportPngToFile(dataUrl: string, suggestedFilename: string): Promise<boolean>
   copyToClipboard(text: string): void
   readClipboardText(): string
 }

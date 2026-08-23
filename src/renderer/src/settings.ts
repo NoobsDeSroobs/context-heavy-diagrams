@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { EdgeStyle, NodeStyle } from '@shared/diagram'
+import type { LegendCorner } from './export/exportLegendPlacement'
 
 export interface PaletteColor {
   label: string
@@ -67,6 +68,23 @@ export interface AppSettings {
   // style palette). Absent means today's existing theme-based background,
   // unchanged.
   canvasBackgroundColor?: string
+  // PNG export (epic 0010/ADR 0051, revised after live testing) — the
+  // *last used* values from the Export as PNG… dialog (ExportPngDialog),
+  // remembered here purely so the dialog reopens prefilled next time
+  // rather than resetting to defaults on every export. The dialog itself,
+  // not this settings object, is the actual place these get edited.
+  // paddingPx: exported-image pixels around the diagram's own content
+  // bounds. transparentBackground: omit the canvas background entirely
+  // instead of filling it. backgroundColorOverride: an explicit fill color
+  // distinct from canvasBackgroundColor above (the on-screen editor
+  // background) — absent means "use whatever's on screen right now."
+  pngExportPaddingPx: number
+  pngExportTransparentBackground: boolean
+  pngExportBackgroundColorOverride?: string
+  // Which corner the auto-placed legend (diagram Legend entries + enabled
+  // highlights) goes in — see exportLegendPlacement.ts. Same "remembers
+  // the dialog's last choice" treatment as the three fields above.
+  pngExportLegendCorner: LegendCorner
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -79,7 +97,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
   selectedEdgeHighlightColor: '#ff00aa',
   defaultEdgeStyle: {},
   stylePalette: { colors: [], fonts: [] },
-  defaultStyles: {}
+  defaultStyles: {},
+  pngExportPaddingPx: 40,
+  pngExportTransparentBackground: false,
+  pngExportLegendCorner: 'bottom-left'
 }
 
 const STORAGE_KEY = 'settings'

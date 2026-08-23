@@ -28,9 +28,21 @@ const FILLED = { fill: 'context-stroke', stroke: 'none' }
 // only exists so <marker> ids are resolvable from any edge's marker-end/
 // marker-start attribute (SVG marker id references resolve document-wide,
 // not just within the same <svg>).
+//
+// data-export-role: this <svg> is a sibling of <ReactFlow>, not a
+// descendant of .react-flow__viewport — PNG export (exportPng.ts) only
+// clones that viewport subtree, so without these defs actually present
+// inside the cloned content, every edge's marker-end="url(#...)" reference
+// dangles and arrowheads silently don't render in the exported image
+// (found live, epic 0010, 2026-08-23). exportPng.ts finds this element by
+// this attribute and temporarily clones it into the capture.
 export default function EdgeMarkerDefs(): React.JSX.Element {
   return (
-    <svg style={{ position: 'absolute', width: 0, height: 0 }} aria-hidden="true">
+    <svg
+      style={{ position: 'absolute', width: 0, height: 0 }}
+      aria-hidden="true"
+      data-export-role="edge-marker-defs"
+    >
       <defs>
         <marker id={MARKER_ID.arrowOpen} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
           <path d="M1,1 L8,5 L1,9" {...STROKE} />
