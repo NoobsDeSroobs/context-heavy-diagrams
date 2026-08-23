@@ -5,19 +5,26 @@ interface DiagnosticsPanelProps {
 }
 
 // Fixed right-side dock, same shell/toggle model as DetailsPanel/
-// RequiredTagsPanel — see ADR 0013. First use is required-tags backfill
-// notices (epic 0034/ADR 0022), but the list is generic text so future
-// diagram-health checks can reuse it without a shape change.
+// RequiredTagsPanel — see ADR 0013. First use was required-tags backfill
+// notices (epic 0034/ADR 0022); the list was deliberately kept as generic
+// text so a future, unrelated diagram-health check could reuse it without
+// a shape change — epic 0060 (legend-empty advisory) is the first of
+// those, combined with the required-tags notices at Canvas.tsx's own
+// display layer (`displayedDiagnostics`), not inside this state at all.
 //
-// Session-only: `entries` is Canvas's `diagnostics` state, replaced (not
-// appended to) on every sync pass, not written into the .chd file — it
-// shows the current state as of the last sync, not a growing history log.
-// `onRecheck` currently just re-runs that same required-tags sync — the
+// Session-only: `entries` is recomputed fresh by the caller on every
+// render (the legend check) plus Canvas's own `diagnostics` state
+// (replaced, not appended to, on every required-tags sync pass) — neither
+// half is written into the .chd file, and neither is a growing history
+// log. `onRecheck` currently just re-runs the required-tags sync — the
 // button itself is deliberately generic ("Recheck," not "Resync required
-// tags") so a future second compliance check can wire into the same
-// button without a rename; the check(s) it actually runs are Canvas's
-// call, not this panel's.
-export default function DiagnosticsPanel({ entries, onRecheck, onClose }: DiagnosticsPanelProps): React.JSX.Element {
+// tags") so it keeps making sense as more checks get folded in; the
+// check(s) it actually runs are Canvas's call, not this panel's.
+export default function DiagnosticsPanel({
+  entries,
+  onRecheck,
+  onClose
+}: DiagnosticsPanelProps): React.JSX.Element {
   return (
     <div className="diagnostics-panel">
       <div className="diagnostics-panel-toolbar">
@@ -32,7 +39,7 @@ export default function DiagnosticsPanel({ entries, onRecheck, onClose }: Diagno
       </div>
       <div className="diagnostics-panel-body">
         {entries.length === 0 ? (
-          <p className="diagnostics-panel-empty">No notices — metadata is in sync with the required-tags template.</p>
+          <p className="diagnostics-panel-empty">No notices.</p>
         ) : (
           <ul className="diagnostics-panel-list">
             {entries.map((message, index) => (

@@ -2737,6 +2737,21 @@ function CanvasInner(): React.JSX.Element {
   // handler unchanged — this menu is purely a new way to reach them, not a
   // new set of actions.
   const hasSelectedNodes = nodes.some((n) => n.selected)
+
+  // Standing advisories, recomputed fresh every render — distinct from
+  // `diagnostics` state itself (required-tags backfill notices, only
+  // updated at actual sync points; see DiagnosticsPanel's own comment on
+  // why `entries` is deliberately generic text, anticipating exactly this
+  // kind of second, unrelated check). Combined here purely for display —
+  // `diagnostics` itself keeps its narrower, sync-point-driven meaning.
+  const legendEmptyAdvisory =
+    legend.length === 0 && edges.length > 0
+      ? [
+          'Legend is empty — consider adding at least a definition for the arrows/edges used in this diagram.'
+        ]
+      : []
+  const displayedDiagnostics = [...diagnostics, ...legendEmptyAdvisory]
+
   const menus: MenuBarMenu[] = [
     {
       label: 'File',
@@ -2772,7 +2787,7 @@ function CanvasInner(): React.JSX.Element {
       items: [
         { label: 'Required tags', onSelect: toggleRequiredTagsPanel },
         {
-          label: `Diagnostics${diagnostics.length > 0 ? ` (${diagnostics.length})` : ''}`,
+          label: `Diagnostics${displayedDiagnostics.length > 0 ? ` (${displayedDiagnostics.length})` : ''}`,
           onSelect: toggleDiagnosticsPanel
         },
         { label: 'Layers', onSelect: toggleLayerPanel },
@@ -3101,7 +3116,7 @@ function CanvasInner(): React.JSX.Element {
           )}
           {diagnosticsPanelOpen && (
             <DiagnosticsPanel
-              entries={diagnostics}
+              entries={displayedDiagnostics}
               onRecheck={() => runSync(requiredTags)}
               onClose={() => setDiagnosticsPanelOpen(false)}
             />
