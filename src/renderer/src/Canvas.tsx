@@ -63,7 +63,14 @@ import HighlightsPanel from './components/HighlightsPanel'
 import LegendPanel from './components/LegendPanel'
 import MenuBar, { type MenuBarMenu } from './components/MenuBar'
 import LayerPanel from './components/LayerPanel'
-import { CONTAINER_BASE, SHAPE_BASE, TEXT_BASE, backfillZIndex, nextZIndexAbove, reorderZIndex } from './layers/zIndexOrdering'
+import {
+  CONTAINER_BASE,
+  SHAPE_BASE,
+  TEXT_BASE,
+  backfillZIndex,
+  nextZIndexAbove,
+  reorderZIndex
+} from './layers/zIndexOrdering'
 import { reassignConnectionPointHandles, setSideCustomPointCount } from './nodes/connectionPoints'
 import SettingsPanel from './components/SettingsPanel'
 import AboutDialog from './components/AboutDialog'
@@ -77,13 +84,24 @@ import { buildClipboardPayload, parseClipboardPayload, remapForPaste } from './c
 import type { TransformPatch } from './panels/PropertyPanel'
 import { useTheme } from './theme'
 import { useSettings } from './settings'
-import { captureDiagramPng, resolveEffectiveBackgroundColor, rgbStringToHex } from './export/exportPng'
+import {
+  captureDiagramPng,
+  resolveEffectiveBackgroundColor,
+  rgbStringToHex
+} from './export/exportPng'
 import { buildExportLegendItems } from './export/exportLegendItems'
+import ThreatMatrixView from './security/ThreatMatrixView'
 import { themeAdaptiveColor } from './styles/themeAdaptiveColor'
 
 // Defined at module scope so React Flow gets a stable reference — recreating
 // these objects every render triggers a React Flow warning and remounts.
-const nodeTypes = { shape: ShapeNode, text: TextNode, container: ContainerNode, anchor: AnchorNode, line: LineNode }
+const nodeTypes = {
+  shape: ShapeNode,
+  text: TextNode,
+  container: ContainerNode,
+  anchor: AnchorNode,
+  line: LineNode
+}
 const edgeTypes = { labeled: LabeledEdge }
 
 // A sequential per-session counter (shape-1, shape-2, ...) collided with
@@ -112,7 +130,10 @@ function newNodeId(prefix: string): string {
 // isValid, so a drop that's merely invalid (released over another node's
 // body without hitting a handle, or over toolbar/panel UI) doesn't spawn an
 // anchor either — only a genuine empty-canvas release does.
-function isVoidDrop(event: MouseEvent | TouchEvent, connectionState: FinalConnectionState): boolean {
+function isVoidDrop(
+  event: MouseEvent | TouchEvent,
+  connectionState: FinalConnectionState
+): boolean {
   if (connectionState.isValid) return false
   const target = event.target
   return target instanceof Element && target.classList.contains('react-flow__pane')
@@ -176,11 +197,17 @@ function sortNodesForHierarchy(nodes: Node[]): Node[] {
 // backfilled array is returned as-is (same node references, no new objects)
 // so this is a safe no-op to call on every load.
 function applyZIndexBackfill(nodes: Node[]): Node[] {
-  const extracted = nodes.map((n) => ({ id: n.id, type: n.type, zIndex: n.data?.zIndex as number | undefined }))
+  const extracted = nodes.map((n) => ({
+    id: n.id,
+    type: n.type,
+    zIndex: n.data?.zIndex as number | undefined
+  }))
   const backfilled = backfillZIndex(extracted)
   if (backfilled === extracted) return nodes
   return nodes.map((n, i) =>
-    backfilled[i].zIndex === n.data?.zIndex ? n : { ...n, data: { ...n.data, zIndex: backfilled[i].zIndex } }
+    backfilled[i].zIndex === n.data?.zIndex
+      ? n
+      : { ...n, data: { ...n.data, zIndex: backfilled[i].zIndex } }
   )
 }
 
@@ -373,7 +400,9 @@ function fromDiagramFile(diagram: DiagramFile): {
 // entry, seeded at its own defaultValue/lock. No diagnostics involved (a
 // new element has nothing to "reset"); that only applies to syncElementMetadata
 // below, which reconciles *existing* elements against a changed template.
-function seedMetadata(requiredTags: RequiredTagDefinition[]): Record<string, MetadataEntry> | undefined {
+function seedMetadata(
+  requiredTags: RequiredTagDefinition[]
+): Record<string, MetadataEntry> | undefined {
   if (requiredTags.length === 0) return undefined
   const result: Record<string, MetadataEntry> = {}
   for (const def of requiredTags) {
@@ -443,7 +472,9 @@ function syncElementMetadata(
       let n = 2
       while (affixed in next) affixed = `${def.key} (demoted ${n++})`
       next[affixed] = existing
-      diagnostics.push(`${elementLabel}.${def.key} is now required; previous free value moved to "${affixed}".`)
+      diagnostics.push(
+        `${elementLabel}.${def.key} is now required; previous free value moved to "${affixed}".`
+      )
     }
     next[def.key] = templateEntry
   }
@@ -539,6 +570,14 @@ function CanvasInner(): React.JSX.Element {
   const [highlightsPanelAnchor, setHighlightsPanelAnchor] = useState<DOMRect | null>(null)
   const [settingsPanelOpen, setSettingsPanelOpen] = useState(false)
   const [stylePalettePanelOpen, setStylePalettePanelOpen] = useState(false)
+  // Persona switch (epic 0060, first step) — akin to FreeCAD's workbench
+  // switcher/Affinity's persona tabs: swaps the entire main view, not a
+  // split or overlay. Render-only prototype for now (ThreatMatrixView),
+  // purely to validate whether a mode swap like this feels right at all —
+  // no data flows between personas yet, and diagram state (nodes/edges,
+  // panels, etc.) is untouched underneath while 'matrix' is shown, same
+  // as switching tabs never destroys the other tab's content.
+  const [persona, setPersona] = useState<'diagram' | 'matrix'>('diagram')
   const [aboutDialogOpen, setAboutDialogOpen] = useState(false)
   const [exportPngDialogOpen, setExportPngDialogOpen] = useState(false)
   const [exportPngEffectiveColorHex, setExportPngEffectiveColorHex] = useState('#ffffff')
@@ -556,9 +595,7 @@ function CanvasInner(): React.JSX.Element {
     y: number
     items: ContextMenuItem[]
   } | null>(null)
-  const [iconPicker, setIconPicker] = useState<{ nodeId: string; anchorRect: DOMRect } | null>(
-    null
-  )
+  const [iconPicker, setIconPicker] = useState<{ nodeId: string; anchorRect: DOMRect } | null>(null)
   // "Fill…"/"Border…" (nodes) and "Line style…" (edges) context-menu
   // popups — see ADR 0010. Two separate pieces of state since they target
   // different element kinds and render different popup components.
@@ -567,15 +604,11 @@ function CanvasInner(): React.JSX.Element {
     kind: 'fill' | 'border'
     anchorRect: DOMRect
   } | null>(null)
-  const [linePicker, setLinePicker] = useState<{ edgeId: string; anchorRect: DOMRect } | null>(
-    null
-  )
+  const [linePicker, setLinePicker] = useState<{ edgeId: string; anchorRect: DOMRect } | null>(null)
   // Drag-time alignment guides (epic 0011) — flow-space positions of the
   // guide line(s) currently matched, or null when nothing's being dragged/
   // nothing's in snap range. Set from onNodeDrag, cleared on drag stop.
-  const [alignmentGuides, setAlignmentGuides] = useState<{ x: number[]; y: number[] } | null>(
-    null
-  )
+  const [alignmentGuides, setAlignmentGuides] = useState<{ x: number[]; y: number[] } | null>(null)
   const [detailsPanelNodeId, setDetailsPanelNodeId] = useState<string | null>(null)
   // Editing a node's details doesn't write to disk immediately — it's just
   // draft state here, flushed as part of the main save flow. See epic 0008.
@@ -781,7 +814,8 @@ function CanvasInner(): React.JSX.Element {
         )
         setEdges((eds) =>
           eds.filter(
-            (e) => !containerRemovalIds.includes(e.source) && !containerRemovalIds.includes(e.target)
+            (e) =>
+              !containerRemovalIds.includes(e.source) && !containerRemovalIds.includes(e.target)
           )
         )
       }
@@ -1112,7 +1146,9 @@ function CanvasInner(): React.JSX.Element {
     const preview = await window.api
       .previewRequiredTagsChildren(currentPath, directChildRelativePaths)
       .catch((error: unknown) => {
-        alert(`Couldn't scan linked diagrams: ${error instanceof Error ? error.message : String(error)}`)
+        alert(
+          `Couldn't scan linked diagrams: ${error instanceof Error ? error.message : String(error)}`
+        )
         return null
       })
     if (!preview) return
@@ -1132,7 +1168,9 @@ function CanvasInner(): React.JSX.Element {
     const result = await window.api
       .copyRequiredTagsToChildren(currentPath, requiredTags, directChildRelativePaths)
       .catch((error: unknown) => {
-        alert(`Couldn't copy required tags: ${error instanceof Error ? error.message : String(error)}`)
+        alert(
+          `Couldn't copy required tags: ${error instanceof Error ? error.message : String(error)}`
+        )
         return null
       })
     if (!result) return
@@ -1148,9 +1186,7 @@ function CanvasInner(): React.JSX.Element {
   }, [currentPath, nodes, requiredTags])
 
   const iconPickerNode = iconPicker ? nodes.find((n) => n.id === iconPicker.nodeId) : undefined
-  const iconPickerIcons = (iconPickerNode?.data?.icons ?? {}) as Partial<
-    Record<IconSlot, IconRef>
-  >
+  const iconPickerIcons = (iconPickerNode?.data?.icons ?? {}) as Partial<Record<IconSlot, IconRef>>
 
   const colorPickerNode = colorPicker ? nodes.find((n) => n.id === colorPicker.nodeId) : undefined
   const colorPickerStyle = (colorPickerNode?.data?.style as NodeStyle | undefined) ?? {}
@@ -1210,7 +1246,9 @@ function CanvasInner(): React.JSX.Element {
       connectStartRef.current = null
       return
     }
-    connectStartRef.current = params.nodeId ? { nodeId: params.nodeId, handleId: params.handleId } : null
+    connectStartRef.current = params.nodeId
+      ? { nodeId: params.nodeId, handleId: params.handleId }
+      : null
   }, [])
 
   const onReconnectStart = useCallback(() => {
@@ -1451,7 +1489,10 @@ function CanvasInner(): React.JSX.Element {
         data: {
           label: 'Container',
           zIndex: nextZIndex(nds, 'container'),
-          style: settings.defaultStyles.container ?? { fill: 'var(--ev-c-gray-1)', fillOpacity: 20 },
+          style: settings.defaultStyles.container ?? {
+            fill: 'var(--ev-c-gray-1)',
+            fillOpacity: 20
+          },
           metadata: seedMetadata(requiredTags)
         }
       }
@@ -1504,7 +1545,10 @@ function CanvasInner(): React.JSX.Element {
   // contents) and would produce distracting guide lines, so they're
   // excluded from the comparison set.
   const computeGroupSnap = useCallback(
-    (draggedNode: Node, nodesToMove: Node[]): { dx: number; dy: number; guideX: number[]; guideY: number[] } => {
+    (
+      draggedNode: Node,
+      nodesToMove: Node[]
+    ): { dx: number; dy: number; guideX: number[]; guideY: number[] } => {
       const movedIds = new Set(nodesToMove.map((n) => n.id))
       const byId = new Map(nodes.map((n) => [n.id, n]))
       nodesToMove.forEach((n) => byId.set(n.id, n))
@@ -1598,7 +1642,10 @@ function CanvasInner(): React.JSX.Element {
       const { dx, dy } = computeGroupSnap(draggedNode, rawNodesToProcess)
       const nodesToProcess =
         dx !== 0 || dy !== 0
-          ? rawNodesToProcess.map((n) => ({ ...n, position: { x: n.position.x + dx, y: n.position.y + dy } }))
+          ? rawNodesToProcess.map((n) => ({
+              ...n,
+              position: { x: n.position.x + dx, y: n.position.y + dy }
+            }))
           : rawNodesToProcess
 
       setNodes((nds) => {
@@ -1620,7 +1667,10 @@ function CanvasInner(): React.JSX.Element {
         for (const dragged of nodesToProcess) {
           const target = rfInstance
             .getIntersectingNodes(dragged, false)
-            .find((n) => n.type === 'container' && n.id !== dragged.id && !isDescendantOf(n.id, dragged.id))
+            .find(
+              (n) =>
+                n.type === 'container' && n.id !== dragged.id && !isDescendantOf(n.id, dragged.id)
+            )
           const newParentId = target?.id
           const current = byId.get(dragged.id)
           if (!current || newParentId === current.parentId) continue
@@ -1741,8 +1791,14 @@ function CanvasInner(): React.JSX.Element {
     })
 
     pushSnapshot()
-    setNodes((nds) => [...nds.map((n) => (n.selected ? { ...n, selected: false } : n)), ...pastedNodes])
-    setEdges((eds) => [...eds.map((e) => (e.selected ? { ...e, selected: false } : e)), ...pastedEdges])
+    setNodes((nds) => [
+      ...nds.map((n) => (n.selected ? { ...n, selected: false } : n)),
+      ...pastedNodes
+    ])
+    setEdges((eds) => [
+      ...eds.map((e) => (e.selected ? { ...e, selected: false } : e)),
+      ...pastedEdges
+    ])
   }, [rfInstance, pushSnapshot, setNodes, setEdges])
 
   const cutSelection = useCallback(() => {
@@ -1767,7 +1823,13 @@ function CanvasInner(): React.JSX.Element {
       setNodes((nds) =>
         nds.map((n) =>
           nodeIds.includes(n.id)
-            ? { ...n, data: { ...n.data, style: { ...(n.data?.style as NodeStyle | undefined), ...patch } } }
+            ? {
+                ...n,
+                data: {
+                  ...n.data,
+                  style: { ...(n.data?.style as NodeStyle | undefined), ...patch }
+                }
+              }
             : n
         )
       )
@@ -1780,7 +1842,13 @@ function CanvasInner(): React.JSX.Element {
       setEdges((eds) =>
         eds.map((e) =>
           edgeIds.includes(e.id)
-            ? { ...e, data: { ...e.data, style: { ...(e.data?.style as EdgeStyle | undefined), ...patch } } }
+            ? {
+                ...e,
+                data: {
+                  ...e.data,
+                  style: { ...(e.data?.style as EdgeStyle | undefined), ...patch }
+                }
+              }
             : e
         )
       )
@@ -1800,7 +1868,11 @@ function CanvasInner(): React.JSX.Element {
       pushSnapshot()
       setNodes((nds) => {
         const orderedDescending = [...nds]
-          .map((n) => ({ id: n.id, type: n.type, zIndex: (n.data?.zIndex as number | undefined) ?? 0 }))
+          .map((n) => ({
+            id: n.id,
+            type: n.type,
+            zIndex: (n.data?.zIndex as number | undefined) ?? 0
+          }))
           .sort((a, b) => b.zIndex - a.zIndex)
         const updates = reorderZIndex(orderedDescending, movedId, newIndex)
         const updateMap = new Map(updates.map((u) => [u.id, u.zIndex]))
@@ -1817,14 +1889,18 @@ function CanvasInner(): React.JSX.Element {
   // own job (it calls pushSnapshot before each commit), not duplicated here.
   const updateNodeMetadata = useCallback(
     (nodeId: string, metadata: Record<string, MetadataEntry> | undefined) => {
-      setNodes((nds) => nds.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, metadata } } : n)))
+      setNodes((nds) =>
+        nds.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, metadata } } : n))
+      )
     },
     [setNodes]
   )
 
   const updateEdgeMetadata = useCallback(
     (edgeId: string, metadata: Record<string, MetadataEntry> | undefined) => {
-      setEdges((eds) => eds.map((e) => (e.id === edgeId ? { ...e, data: { ...e.data, metadata } } : e)))
+      setEdges((eds) =>
+        eds.map((e) => (e.id === edgeId ? { ...e, data: { ...e.data, metadata } } : e))
+      )
     },
     [setEdges]
   )
@@ -1841,10 +1917,16 @@ function CanvasInner(): React.JSX.Element {
       const node = nodes.find((n) => n.id === nodeId)
       if (!node) return
       const customPoints = (node.data?.connectionPoints as ConnectionPoint[] | undefined) ?? []
-      const { points, handleReassignments } = setSideCustomPointCount(customPoints, side, totalCount)
+      const { points, handleReassignments } = setSideCustomPointCount(
+        customPoints,
+        side,
+        totalCount
+      )
       pushSnapshot()
       setNodes((nds) =>
-        nds.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, connectionPoints: points } } : n))
+        nds.map((n) =>
+          n.id === nodeId ? { ...n, data: { ...n.data, connectionPoints: points } } : n
+        )
       )
       setEdges((eds) => reassignConnectionPointHandles(eds, nodeId, handleReassignments))
       updateNodeInternals(nodeId)
@@ -1889,7 +1971,9 @@ function CanvasInner(): React.JSX.Element {
     (nodeIds: string[], locked: boolean) => {
       setNodes((nds) =>
         nds.map((n) =>
-          nodeIds.includes(n.id) ? { ...n, data: { ...n.data, locked: locked ? true : undefined } } : n
+          nodeIds.includes(n.id)
+            ? { ...n, data: { ...n.data, locked: locked ? true : undefined } }
+            : n
         )
       )
     },
@@ -1939,7 +2023,17 @@ function CanvasInner(): React.JSX.Element {
       setIsDirty(false)
       return savedNodes
     },
-    [edges, rfInstance, flushDetailsDrafts, setNodes, diagramMetadata, requiredTags, highlights, legend, gravityPresets]
+    [
+      edges,
+      rfInstance,
+      flushDetailsDrafts,
+      setNodes,
+      diagramMetadata,
+      requiredTags,
+      highlights,
+      legend,
+      gravityPresets
+    ]
   )
 
   // Brief "Saved" confirmation next to the toolbar's Save button — the
@@ -2019,17 +2113,24 @@ function CanvasInner(): React.JSX.Element {
           }
         )
         const suggestedFilename = currentPath
-          ? currentPath.split(/[\\/]/).pop()!.replace(/\.chd$/, '.png')
+          ? currentPath
+              .split(/[\\/]/)
+              .pop()!
+              .replace(/\.chd$/, '.png')
           : 'diagram.png'
         await window.api.exportPngToFile(dataUrl, suggestedFilename)
       } catch (error) {
         alert(`PNG export failed: ${error instanceof Error ? error.message : String(error)}`)
       } finally {
         setNodes((current) =>
-          current.map((n) => (previouslySelectedNodeIds.includes(n.id) ? { ...n, selected: true } : n))
+          current.map((n) =>
+            previouslySelectedNodeIds.includes(n.id) ? { ...n, selected: true } : n
+          )
         )
         setEdges((current) =>
-          current.map((e) => (previouslySelectedEdgeIds.includes(e.id) ? { ...e, selected: true } : e))
+          current.map((e) =>
+            previouslySelectedEdgeIds.includes(e.id) ? { ...e, selected: true } : e
+          )
         )
       }
     },
@@ -2137,7 +2238,11 @@ function CanvasInner(): React.JSX.Element {
         // recovery snapshot can never clobber a real out-of-app edit.
         const recovered = await window.api.checkRecoveryForPath(path)
         if (!recovered) return
-        if (confirm('Unsaved changes from an unexpected close were found for this diagram. Recover them?')) {
+        if (
+          confirm(
+            'Unsaved changes from an unexpected close were found for this diagram. Recover them?'
+          )
+        ) {
           loadDiagramIntoCanvas(path, recovered.diagram)
           setDetailsDrafts(recovered.detailsDrafts)
           markDirty()
@@ -2208,7 +2313,12 @@ function CanvasInner(): React.JSX.Element {
         s.legend,
         s.gravityPresets
       )
-      window.api.writeRecoverySnapshot(s.currentPath, sessionIdRef.current, diagram, s.detailsDrafts)
+      window.api.writeRecoverySnapshot(
+        s.currentPath,
+        sessionIdRef.current,
+        diagram,
+        s.detailsDrafts
+      )
     }, 60_000)
     return () => clearInterval(interval)
   }, [rfInstance])
@@ -2254,7 +2364,11 @@ function CanvasInner(): React.JSX.Element {
 
   useEffect(() => {
     return window.api.onCloseRequested(async () => {
-      const { isDirty: dirtyNow, currentPath: pathNow, nodes: nodesNow } = closeCheckStateRef.current
+      const {
+        isDirty: dirtyNow,
+        currentPath: pathNow,
+        nodes: nodesNow
+      } = closeCheckStateRef.current
       if (!dirtyNow) {
         window.api.closeApproved(pathNow, sessionIdRef.current)
         return
@@ -2366,8 +2480,14 @@ function CanvasInner(): React.JSX.Element {
   // happens to be empty (a diagram can be dirty while empty too — add a
   // shape, delete it again — so this is a real behavior change from before).
   const handleClose = useCallback(() => {
-    if (isDirty && !confirm('Close this diagram? Any changes since the last save will be lost.')) return
-    loadDiagramIntoCanvas(null, { version: 1, viewport: { x: 0, y: 0, zoom: 1 }, nodes: [], edges: [] })
+    if (isDirty && !confirm('Close this diagram? Any changes since the last save will be lost.'))
+      return
+    loadDiagramIntoCanvas(null, {
+      version: 1,
+      viewport: { x: 0, y: 0, zoom: 1 },
+      nodes: [],
+      edges: []
+    })
     // This is an in-place reset, not a page navigation — main's window
     // registry (windows.ts) otherwise never learns this window stopped
     // showing its old path, and a later attempt to open that same file
@@ -2382,7 +2502,8 @@ function CanvasInner(): React.JSX.Element {
   // dirty-aware (epic 0020) — a clean window reloads without prompting.
   const handleReload = useCallback(async () => {
     if (!currentPath) return
-    if (isDirty && !confirm('Reload from disk? Any changes since the last save will be lost.')) return
+    if (isDirty && !confirm('Reload from disk? Any changes since the last save will be lost.'))
+      return
     try {
       const diagram = await window.api.openDiagramAtPath(currentPath)
       loadDiagramIntoCanvas(currentPath, diagram)
@@ -2477,7 +2598,9 @@ function CanvasInner(): React.JSX.Element {
       }
       const node = nodes.find((n) => n.id === nodeId)
       const linkedPath =
-        typeof node?.data?.linkedDiagram === 'string' ? (node.data.linkedDiagram as string) : undefined
+        typeof node?.data?.linkedDiagram === 'string'
+          ? (node.data.linkedDiagram as string)
+          : undefined
       if (linkedPath) {
         navigateExistingLink(currentPath, linkedPath)
         return
@@ -2547,8 +2670,16 @@ function CanvasInner(): React.JSX.Element {
       }
       // Ctrl+C/V/X — same native-text-field deference as Ctrl+A/D above,
       // so typing/pasting text in a label field still uses the browser's
-      // own clipboard handling, not this diagram-element one.
+      // own clipboard handling, not this diagram-element one. Ctrl+C
+      // additionally defers whenever there's a live text selection
+      // (window.getSelection()) even outside a text field — found live,
+      // epic 0060's threat matrix prototype: its plain service/threat
+      // names and scale descriptions aren't inputs, so isEditingText
+      // alone didn't catch them, and copySelection()'s own
+      // preventDefault() silently blocked copying that text at all.
       if (mod && event.key.toLowerCase() === 'c' && !isEditingText) {
+        const hasTextSelection = (window.getSelection()?.toString().length ?? 0) > 0
+        if (hasTextSelection) return
         event.preventDefault()
         copySelection()
         return
@@ -2773,9 +2904,24 @@ function CanvasInner(): React.JSX.Element {
       label: 'Edit',
       items: [
         { label: 'Undo', accelerator: 'Ctrl+Z', disabled: past.length === 0, onSelect: undo },
-        { label: 'Redo', accelerator: 'Ctrl+Shift+Z', disabled: future.length === 0, onSelect: redo },
-        { label: 'Cut', accelerator: 'Ctrl+X', disabled: !hasSelectedNodes, onSelect: cutSelection },
-        { label: 'Copy', accelerator: 'Ctrl+C', disabled: !hasSelectedNodes, onSelect: copySelection },
+        {
+          label: 'Redo',
+          accelerator: 'Ctrl+Shift+Z',
+          disabled: future.length === 0,
+          onSelect: redo
+        },
+        {
+          label: 'Cut',
+          accelerator: 'Ctrl+X',
+          disabled: !hasSelectedNodes,
+          onSelect: cutSelection
+        },
+        {
+          label: 'Copy',
+          accelerator: 'Ctrl+C',
+          disabled: !hasSelectedNodes,
+          onSelect: copySelection
+        },
         // Not disabled on an empty/invalid clipboard — same silent no-op
         // as the keyboard shortcut, avoids a synchronous clipboard read on
         // every render just to compute this menu's enabled state.
@@ -2831,6 +2977,16 @@ function CanvasInner(): React.JSX.Element {
       <div className="app-shell">
         <div className="canvas-view">
           <div className="toolbar">
+            <select
+              className="toolbar-persona-select"
+              value={persona}
+              onChange={(event) => setPersona(event.target.value as 'diagram' | 'matrix')}
+              title="Switch view"
+              aria-label="Switch view"
+            >
+              <option value="diagram">Diagram</option>
+              <option value="matrix">Security Matrix (prototype)</option>
+            </select>
             <MenuBar menus={menus} />
             {showSavedFlash && (
               <span className="toolbar-saved-flash" role="status">
@@ -2847,7 +3003,9 @@ function CanvasInner(): React.JSX.Element {
               className="toolbar-edge-style-swatch"
               title="Default style for newly drawn edges"
               aria-label="Default style for newly drawn edges"
-              onClick={(event) => setDefaultEdgeStylePicker(event.currentTarget.getBoundingClientRect())}
+              onClick={(event) =>
+                setDefaultEdgeStylePicker(event.currentTarget.getBoundingClientRect())
+              }
             >
               <svg width="28" height="16" viewBox="0 0 28 16">
                 <line
@@ -2857,7 +3015,9 @@ function CanvasInner(): React.JSX.Element {
                   y2="8"
                   stroke={settings.defaultEdgeStyle.stroke ?? 'currentColor'}
                   strokeWidth={settings.defaultEdgeStyle.strokeWidth ?? 2}
-                  strokeDasharray={DEFAULT_EDGE_SWATCH_DASH[settings.defaultEdgeStyle.lineStyle ?? 'solid']}
+                  strokeDasharray={
+                    DEFAULT_EDGE_SWATCH_DASH[settings.defaultEdgeStyle.lineStyle ?? 'solid']
+                  }
                 />
                 {settings.defaultEdgeStyle.endMarker !== 'none' && (
                   <polygon
@@ -2875,106 +3035,128 @@ function CanvasInner(): React.JSX.Element {
               {theme === 'dark' ? '☀️' : '🌙'}
             </button>
           </div>
-          <div className="canvas-view-body">
-            <div className="canvas-view-flow" ref={flowWrapperRef}>
-              <EdgeMarkerDefs />
-              <ReactFlow
-                nodes={zIndexedNodes}
-                edges={zIndexedEdges}
-                nodeTypes={nodeTypes}
-                edgeTypes={edgeTypes}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                onNodeDrag={onNodeDrag}
-                onNodeDragStop={onNodeDragStop}
-                onConnect={onConnect}
-                onConnectStart={onConnectStart}
-                onConnectEnd={onConnectEnd}
-                onReconnect={onReconnect}
-                onReconnectStart={onReconnectStart}
-                onReconnectEnd={onReconnectEnd}
-                edgesReconnectable
-                // A little smaller than React Flow's own default (10) — and
-                // kept equal to main.css's `.react-flow__edgeupdater` `r`
-                // value, epic 0046, so the visible dot on a selected edge
-                // matches the actual grabbable area exactly rather than
-                // over- or under-promising it.
-                reconnectRadius={8}
-                onEdgeContextMenu={onEdgeContextMenu}
-                connectionMode={ConnectionMode.Loose}
-                defaultEdgeOptions={{ type: 'labeled', markerEnd: { type: MarkerType.ArrowClosed } }}
-                deleteKeyCode={['Delete', 'Backspace']}
-                multiSelectionKeyCode="Shift" // frees Ctrl/Cmd+click for linked-diagram navigation — epic 0009
-                colorMode={theme}
-                // Overrides React Flow's own light/dark default background
-                // — epic 0030/ADR 0048. Setting plain `backgroundColor`
-                // here does nothing visible: the actual paint comes from
-                // <Background>'s own absolutely-positioned SVG
-                // (.react-flow__background), which reads the CSS custom
-                // property --xy-background-color, not the literal
-                // background-color, on whichever ancestor defines it — see
-                // node_modules/@xyflow/react/dist/style.css. undefined
-                // here is a no-op (React drops it from the style object),
-                // so this falls back to the theme default exactly like
-                // today whenever the user hasn't set one.
-                style={{ '--xy-background-color': settings.canvasBackgroundColor } as React.CSSProperties}
-                fitView
-              >
-                <Background />
-                <Controls>
-                  <ControlButton
-                    title="Show legend"
-                    aria-label="Show legend"
-                    onClick={(event) => toggleLegendPanel(event.currentTarget.getBoundingClientRect())}
-                  >
-                    <svg viewBox="0 0 24 24" width="16" height="16">
-                      <circle cx="5" cy="7" r="2.5" fill="currentColor" />
-                      <line x1="10" y1="7" x2="20" y2="7" stroke="currentColor" strokeWidth="2" />
-                      <circle cx="5" cy="17" r="2.5" fill="currentColor" />
-                      <line x1="10" y1="17" x2="20" y2="17" stroke="currentColor" strokeWidth="2" />
-                    </svg>
-                  </ControlButton>
-                  <ControlButton
-                    title={`Highlights${highlights.length > 0 ? ` (${highlights.length})` : ''}`}
-                    aria-label="Show highlights"
-                    onClick={(event) => toggleHighlightsPanel(event.currentTarget.getBoundingClientRect())}
-                  >
-                    <svg viewBox="0 0 24 24" width="16" height="16">
-                      <path
-                        d="M12 3 L14.5 9.5 L21 12 L14.5 14.5 L12 21 L9.5 14.5 L3 12 L9.5 9.5 Z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                  </ControlButton>
-                </Controls>
-                <MiniMap />
-              </ReactFlow>
-              <AlignmentGuides guides={alignmentGuides} />
+          {persona === 'matrix' ? (
+            <ThreatMatrixView />
+          ) : (
+            <div className="canvas-view-body">
+              <div className="canvas-view-flow" ref={flowWrapperRef}>
+                <EdgeMarkerDefs />
+                <ReactFlow
+                  nodes={zIndexedNodes}
+                  edges={zIndexedEdges}
+                  nodeTypes={nodeTypes}
+                  edgeTypes={edgeTypes}
+                  onNodesChange={onNodesChange}
+                  onEdgesChange={onEdgesChange}
+                  onNodeDrag={onNodeDrag}
+                  onNodeDragStop={onNodeDragStop}
+                  onConnect={onConnect}
+                  onConnectStart={onConnectStart}
+                  onConnectEnd={onConnectEnd}
+                  onReconnect={onReconnect}
+                  onReconnectStart={onReconnectStart}
+                  onReconnectEnd={onReconnectEnd}
+                  edgesReconnectable
+                  // A little smaller than React Flow's own default (10) — and
+                  // kept equal to main.css's `.react-flow__edgeupdater` `r`
+                  // value, epic 0046, so the visible dot on a selected edge
+                  // matches the actual grabbable area exactly rather than
+                  // over- or under-promising it.
+                  reconnectRadius={8}
+                  onEdgeContextMenu={onEdgeContextMenu}
+                  connectionMode={ConnectionMode.Loose}
+                  defaultEdgeOptions={{
+                    type: 'labeled',
+                    markerEnd: { type: MarkerType.ArrowClosed }
+                  }}
+                  deleteKeyCode={['Delete', 'Backspace']}
+                  multiSelectionKeyCode="Shift" // frees Ctrl/Cmd+click for linked-diagram navigation — epic 0009
+                  colorMode={theme}
+                  // Overrides React Flow's own light/dark default background
+                  // — epic 0030/ADR 0048. Setting plain `backgroundColor`
+                  // here does nothing visible: the actual paint comes from
+                  // <Background>'s own absolutely-positioned SVG
+                  // (.react-flow__background), which reads the CSS custom
+                  // property --xy-background-color, not the literal
+                  // background-color, on whichever ancestor defines it — see
+                  // node_modules/@xyflow/react/dist/style.css. undefined
+                  // here is a no-op (React drops it from the style object),
+                  // so this falls back to the theme default exactly like
+                  // today whenever the user hasn't set one.
+                  style={
+                    {
+                      '--xy-background-color': settings.canvasBackgroundColor
+                    } as React.CSSProperties
+                  }
+                  fitView
+                >
+                  <Background />
+                  <Controls>
+                    <ControlButton
+                      title="Show legend"
+                      aria-label="Show legend"
+                      onClick={(event) =>
+                        toggleLegendPanel(event.currentTarget.getBoundingClientRect())
+                      }
+                    >
+                      <svg viewBox="0 0 24 24" width="16" height="16">
+                        <circle cx="5" cy="7" r="2.5" fill="currentColor" />
+                        <line x1="10" y1="7" x2="20" y2="7" stroke="currentColor" strokeWidth="2" />
+                        <circle cx="5" cy="17" r="2.5" fill="currentColor" />
+                        <line
+                          x1="10"
+                          y1="17"
+                          x2="20"
+                          y2="17"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        />
+                      </svg>
+                    </ControlButton>
+                    <ControlButton
+                      title={`Highlights${highlights.length > 0 ? ` (${highlights.length})` : ''}`}
+                      aria-label="Show highlights"
+                      onClick={(event) =>
+                        toggleHighlightsPanel(event.currentTarget.getBoundingClientRect())
+                      }
+                    >
+                      <svg viewBox="0 0 24 24" width="16" height="16">
+                        <path
+                          d="M12 3 L14.5 9.5 L21 12 L14.5 14.5 L12 21 L9.5 14.5 L3 12 L9.5 9.5 Z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </ControlButton>
+                  </Controls>
+                  <MiniMap />
+                </ReactFlow>
+                <AlignmentGuides guides={alignmentGuides} />
+              </div>
+              <DiagramDock
+                selectedNodes={selectedNodes}
+                selectedEdges={selectedEdges}
+                onAddShape={addShapeNode}
+                onAddText={addTextNode}
+                onAddContainer={addContainerNode}
+                onAddLine={addLineNode}
+                onUpdateNodeStyle={updateNodeStyle}
+                onUpdateEdgeStyle={updateEdgeStyle}
+                onUpdateTransform={updateTransform}
+                onUpdateLocked={updateLocked}
+                onUpdateNodeMetadata={updateNodeMetadata}
+                onUpdateEdgeMetadata={updateEdgeMetadata}
+                onSetConnectionPointCount={setConnectionPointCount}
+                maxConnectionPointsPerSide={settings.maxConnectionPointsPerSide}
+                requiredTags={requiredTags}
+                beginContinuousEdit={beginContinuousEdit}
+                endContinuousEdit={endContinuousEdit}
+                pushSnapshot={pushSnapshot}
+                onSetDefaultStyle={(type, style) =>
+                  updateSettings({ defaultStyles: { ...settings.defaultStyles, [type]: style } })
+                }
+              />
             </div>
-            <DiagramDock
-              selectedNodes={selectedNodes}
-              selectedEdges={selectedEdges}
-              onAddShape={addShapeNode}
-              onAddText={addTextNode}
-              onAddContainer={addContainerNode}
-              onAddLine={addLineNode}
-              onUpdateNodeStyle={updateNodeStyle}
-              onUpdateEdgeStyle={updateEdgeStyle}
-              onUpdateTransform={updateTransform}
-              onUpdateLocked={updateLocked}
-              onUpdateNodeMetadata={updateNodeMetadata}
-              onUpdateEdgeMetadata={updateEdgeMetadata}
-              onSetConnectionPointCount={setConnectionPointCount}
-              maxConnectionPointsPerSide={settings.maxConnectionPointsPerSide}
-              requiredTags={requiredTags}
-              beginContinuousEdit={beginContinuousEdit}
-              endContinuousEdit={endContinuousEdit}
-              pushSnapshot={pushSnapshot}
-              onSetDefaultStyle={(type, style) =>
-                updateSettings({ defaultStyles: { ...settings.defaultStyles, [type]: style } })
-              }
-            />
-          </div>
+          )}
           {contextMenu && (
             <ContextMenu
               x={contextMenu.x}
@@ -3015,7 +3197,9 @@ function CanvasInner(): React.JSX.Element {
                 theme
               )}
               opacity={
-                colorPicker.kind === 'fill' ? colorPickerStyle.fillOpacity : colorPickerStyle.strokeOpacity
+                colorPicker.kind === 'fill'
+                  ? colorPickerStyle.fillOpacity
+                  : colorPickerStyle.strokeOpacity
               }
               width={colorPicker.kind === 'border' ? colorPickerStyle.strokeWidth : undefined}
               onChangeColor={(value) =>
@@ -3147,11 +3331,15 @@ function CanvasInner(): React.JSX.Element {
               defaultEdgeStyle={settings.defaultEdgeStyle}
               canvasBackgroundColor={settings.canvasBackgroundColor}
               onChangePalette={(stylePalette) => updateSettings({ stylePalette })}
-              onChangeCanvasBackgroundColor={(canvasBackgroundColor) => updateSettings({ canvasBackgroundColor })}
+              onChangeCanvasBackgroundColor={(canvasBackgroundColor) =>
+                updateSettings({ canvasBackgroundColor })
+              }
               onClearDefault={(type) =>
                 type === 'edge'
                   ? updateSettings({ defaultEdgeStyle: {} })
-                  : updateSettings({ defaultStyles: { ...settings.defaultStyles, [type]: undefined } })
+                  : updateSettings({
+                      defaultStyles: { ...settings.defaultStyles, [type]: undefined }
+                    })
               }
               onClose={() => setStylePalettePanelOpen(false)}
             />
