@@ -1,13 +1,20 @@
 import { useState } from 'react'
 import type { EdgeStyle, NodeStyle } from '@shared/diagram'
 import type { PaletteColor } from '../settings'
+import type { Theme } from '../theme'
 import { CollapsibleSection, ColorField } from '../panels/fields'
+import { themeAdaptiveColor } from '../styles/themeAdaptiveColor'
 
 interface StylePalettePanelProps {
   palette: { colors: PaletteColor[]; fonts: string[] }
   defaultStyles: { shape?: NodeStyle; container?: NodeStyle; text?: NodeStyle }
   defaultEdgeStyle: EdgeStyle
   canvasBackgroundColor: string | undefined
+  // Needed to flip the canvas background swatch the same way every other
+  // explicit color in this app does (ADR 0034/epic 0040) — this stored
+  // value is always a dark-theme baseline, same convention as fill/stroke/
+  // fontColor, regardless of which theme is active when it's picked.
+  theme: Theme
   onChangePalette: (palette: { colors: PaletteColor[]; fonts: string[] }) => void
   onChangeCanvasBackgroundColor: (value: string | undefined) => void
   onClearDefault: (type: 'shape' | 'container' | 'text' | 'edge') => void
@@ -149,6 +156,7 @@ export default function StylePalettePanel({
   defaultStyles,
   defaultEdgeStyle,
   canvasBackgroundColor,
+  theme,
   onChangePalette,
   onChangeCanvasBackgroundColor,
   onClearDefault,
@@ -250,9 +258,9 @@ export default function StylePalettePanel({
           </p>
           <ColorField
             label="Background"
-            value={canvasBackgroundColor}
+            value={themeAdaptiveColor(canvasBackgroundColor, theme)}
             mixed={false}
-            onChange={onChangeCanvasBackgroundColor}
+            onChange={(v) => onChangeCanvasBackgroundColor(themeAdaptiveColor(v, theme))}
             onSessionStart={() => {}}
             onSessionEnd={() => {}}
           />

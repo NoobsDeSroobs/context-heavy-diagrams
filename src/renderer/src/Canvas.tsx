@@ -3116,7 +3116,12 @@ function CanvasInner(): React.JSX.Element {
                   // today whenever the user hasn't set one.
                   style={
                     {
-                      '--xy-background-color': settings.canvasBackgroundColor,
+                      // Theme-adaptive (ADR 0034/epic 0040) like every other
+                      // explicit color in this app — a background picked
+                      // while looking at one theme shouldn't stay bit-for-
+                      // bit identical (and potentially illegible) after
+                      // switching to the other.
+                      '--xy-background-color': themeAdaptiveColor(settings.canvasBackgroundColor, theme),
                       // Read directly by LabeledEdge's stroke when selected
                       // (epic 0067) — kept off DiagramContext deliberately:
                       // this value only ever matters to whichever edge is
@@ -3370,6 +3375,7 @@ function CanvasInner(): React.JSX.Element {
               defaultStyles={settings.defaultStyles}
               defaultEdgeStyle={settings.defaultEdgeStyle}
               canvasBackgroundColor={settings.canvasBackgroundColor}
+              theme={theme}
               onChangePalette={(stylePalette) => updateSettings({ stylePalette })}
               onChangeCanvasBackgroundColor={(canvasBackgroundColor) =>
                 updateSettings({ canvasBackgroundColor })
