@@ -1,5 +1,14 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { DEFAULT_SETTINGS, type AppSettings } from '@shared/settings'
+
+// A rapid-fire source (a native color-input drag firing many onChange
+// events per second — see epic 0067) shouldn't mean that many IPC round-
+// trips and disk writes; only the in-memory value needs to keep pace with
+// every tick. This is purely about *persistence* timing, not visual
+// responsiveness — updateSettings below still calls setSettings on every
+// call, so the live UI (and anything reading it, e.g. a CSS var) updates
+// immediately regardless of this delay.
+const WRITE_DEBOUNCE_MS = 300
 
 export type { AppSettings, PaletteColor, LegendCorner } from '@shared/settings'
 export { DEFAULT_SETTINGS }
@@ -30,6 +39,22 @@ export function useSettings(): {
   updateSettings: (patch: Partial<AppSettings>) => void
 } {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS)
+  const writeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingWriteRef = useRef<AppSettings | null>(null)
+
+  // Flush a still-pending debounced write on unmount (e.g. window close)
+  // rather than silently dropping the last few ticks of an in-progress
+  // drag — settings are low-stakes (unlike diagram content) but there's no
+  // reason to lose them for free.
+  useEffect(
+    () => () => {
+      if (writeTimeoutRef.current && pendingWriteRef.current) {
+        clearTimeout(writeTimeoutRef.current)
+        window.api.writeAppSettings(pendingWriteRef.current)
+      }
+    },
+    []
+  )
 
   useEffect(() => {
     window.api.readAppSettings().then((fileSettings) => {
@@ -55,7 +80,13 @@ export function useSettings(): {
   const updateSettings = useCallback((patch: Partial<AppSettings>) => {
     setSettings((current) => {
       const next = { ...current, ...patch }
-      window.api.writeAppSettings(next)
+      pendingWriteRef.current = next
+      if (writeTimeoutRef.current) clearTimeout(writeTimeoutRef.current)
+      writeTimeoutRef.current = setTimeout(() => {
+        writeTimeoutRef.current = null
+        pendingWriteRef.current = null
+        window.api.writeAppSettings(next)
+      }, WRITE_DEBOUNCE_MS)
       return next
     })
   }, [])

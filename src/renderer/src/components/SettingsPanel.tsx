@@ -1,5 +1,6 @@
 import type { AppSettings } from '../settings'
 import { FieldRow, NumberField } from '../panels/fields'
+import { useRafThrottledCallback } from '../hooks/useRafThrottledCallback'
 
 interface SettingsPanelProps {
   settings: AppSettings
@@ -19,6 +20,10 @@ interface SettingsPanelProps {
 // are property-panel concepts (multi-selection, undo grouping) that don't
 // apply to a single global value, so they're passed as always-false/no-op.
 export default function SettingsPanel({ settings, onChange, onClose }: SettingsPanelProps): React.JSX.Element {
+  // Same rAF-coalescing as ColorField (panels/fields.tsx) — epic 0067. This
+  // input doesn't go through that shared component (see the comment below),
+  // so it needs its own throttle rather than inheriting one.
+  const throttledOnChange = useRafThrottledCallback(onChange)
   return (
     <div className="settings-panel">
       <div className="settings-panel-toolbar">
@@ -68,7 +73,7 @@ export default function SettingsPanel({ settings, onChange, onClose }: SettingsP
             type="color"
             className="property-color-swatch"
             value={settings.selectedEdgeHighlightColor}
-            onChange={(e) => onChange({ selectedEdgeHighlightColor: e.target.value })}
+            onChange={(e) => throttledOnChange({ selectedEdgeHighlightColor: e.target.value })}
             title="Color a selected edge's line swaps to, so it stays easy to track in a busy diagram"
           />
         </FieldRow>

@@ -127,7 +127,7 @@ function LabeledEdge({
   data
 }: EdgeProps): React.JSX.Element {
   const { updateEdgeData } = useReactFlow()
-  const { matchHighlights, edgeStraightSegmentLength, theme, selectedEdgeHighlightColor } = useDiagramContext()
+  const { matchHighlights, edgeStraightSegmentLength, theme } = useDiagramContext()
   const edgeStyle = data?.style as EdgeStyle | undefined
   const highlightMatches = matchHighlights(data?.metadata as Record<string, MetadataEntry> | undefined)
   const edgePath = useMemo(
@@ -170,7 +170,14 @@ function LabeledEdge({
     // testing the edge z-index fix (docs/known-issues.md) made it obvious
     // how easy a selected edge still was to lose track of visually, even
     // once its handle-priority worked correctly.
-    ...(selected ? { stroke: selectedEdgeHighlightColor } : {})
+    //
+    // A CSS var (set once on the <ReactFlow> wrapper in Canvas.tsx), not a
+    // DiagramContext field — epic 0067: this value only ever matters to
+    // whichever edge is currently selected, so reading it via Context would
+    // re-render every edge whenever it changes, selected or not. The
+    // browser resolves the var directly; no re-render needed even for the
+    // selected edge itself.
+    ...(selected ? { stroke: 'var(--selected-edge-highlight-color)' } : {})
   }
   const computedMarkerEnd = edgeStyle?.endMarker !== undefined ? markerUrl(edgeStyle.endMarker) : markerEnd
   const computedMarkerStart =

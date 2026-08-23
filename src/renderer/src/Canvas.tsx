@@ -51,7 +51,7 @@ import { effectiveGravityPresets } from './lineGravityPresets'
 import LabeledEdge from './edges/LabeledEdge'
 import { highlightId, matchingHighlights, reconcileHighlightGroup } from './highlights'
 import EdgeMarkerDefs from './edges/edgeMarkers'
-import DiagramContext from './DiagramContext'
+import DiagramContext, { type DiagramContextValue } from './DiagramContext'
 import ContextMenu, { type ContextMenuItem } from './components/ContextMenu'
 import IconPicker from './components/IconPicker'
 import ColorPickerPopup from './components/ColorPickerPopup'
@@ -2948,30 +2948,61 @@ function CanvasInner(): React.JSX.Element {
     }
   ]
 
+  // Memoized so a high-frequency state change elsewhere in CanvasInner (e.g.
+  // dragging a native color-input handle, which can fire dozens of onChange
+  // events per second) doesn't force every node/edge to re-render just
+  // because this object got a new identity — every consumer subscribes via
+  // useContext, which bypasses their own React.memo wrapper entirely (that
+  // only guards against prop changes from a parent, not a Context
+  // subscription). See epic 0067/ADR 0056. Every function here is already
+  // useCallback-stable; effectiveGravityPresets() returns its input
+  // reference unchanged when non-empty, so this only recomputes when one of
+  // these values has genuinely, referentially changed.
+  const diagramContextValue: DiagramContextValue = useMemo(
+    () => ({
+      diagramPath: currentPath,
+      openContextMenu,
+      openIconPicker,
+      openColorPicker,
+      openDetailsPanel,
+      handleLinkClick,
+      beginContinuousEdit,
+      endContinuousEdit,
+      pushSnapshot,
+      attachContainedNodes,
+      matchHighlights,
+      edgeStraightSegmentLength: settings.edgeStraightSegmentLength,
+      maxConnectionPointsPerSide: settings.maxConnectionPointsPerSide,
+      theme,
+      entityHighlightNodeId,
+      paletteColors: settings.stylePalette.colors,
+      paletteFonts: settings.stylePalette.fonts,
+      gravityPresets: effectiveGravityPresets(gravityPresets)
+    }),
+    [
+      currentPath,
+      openContextMenu,
+      openIconPicker,
+      openColorPicker,
+      openDetailsPanel,
+      handleLinkClick,
+      beginContinuousEdit,
+      endContinuousEdit,
+      pushSnapshot,
+      attachContainedNodes,
+      matchHighlights,
+      settings.edgeStraightSegmentLength,
+      settings.maxConnectionPointsPerSide,
+      theme,
+      entityHighlightNodeId,
+      settings.stylePalette.colors,
+      settings.stylePalette.fonts,
+      gravityPresets
+    ]
+  )
+
   return (
-    <DiagramContext.Provider
-      value={{
-        diagramPath: currentPath,
-        openContextMenu,
-        openIconPicker,
-        openColorPicker,
-        openDetailsPanel,
-        handleLinkClick,
-        beginContinuousEdit,
-        endContinuousEdit,
-        pushSnapshot,
-        attachContainedNodes,
-        matchHighlights,
-        edgeStraightSegmentLength: settings.edgeStraightSegmentLength,
-        maxConnectionPointsPerSide: settings.maxConnectionPointsPerSide,
-        selectedEdgeHighlightColor: settings.selectedEdgeHighlightColor,
-        theme,
-        entityHighlightNodeId,
-        paletteColors: settings.stylePalette.colors,
-        paletteFonts: settings.stylePalette.fonts,
-        gravityPresets: effectiveGravityPresets(gravityPresets)
-      }}
-    >
+    <DiagramContext.Provider value={diagramContextValue}>
       {/* Outer app shell: [canvas view [diagram dock]] [utility dock], nested
           not flat — see ADR 0013. */}
       <div className="app-shell">
@@ -3085,7 +3116,16 @@ function CanvasInner(): React.JSX.Element {
                   // today whenever the user hasn't set one.
                   style={
                     {
-                      '--xy-background-color': settings.canvasBackgroundColor
+                      '--xy-background-color': settings.canvasBackgroundColor,
+                      // Read directly by LabeledEdge's stroke when selected
+                      // (epic 0067) — kept off DiagramContext deliberately:
+                      // this value only ever matters to whichever edge is
+                      // currently selected (usually zero or one of many), so
+                      // threading it through Context would re-render every
+                      // edge on every change regardless of selection. A CSS
+                      // var updates the browser's paint directly, with no
+                      // React re-render of any edge at all, selected or not.
+                      '--selected-edge-highlight-color': settings.selectedEdgeHighlightColor
                     } as React.CSSProperties
                   }
                   fitView

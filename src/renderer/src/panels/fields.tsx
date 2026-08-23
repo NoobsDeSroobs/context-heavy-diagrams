@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useRafThrottledCallback } from '../hooks/useRafThrottledCallback'
 
 // Shared, dumb field primitives for the property panel — no knowledge of
 // NodeStyle/EdgeStyle or the diagram model, just generic value-in/onChange-out
@@ -102,6 +103,11 @@ export function ColorField({
 }): React.JSX.Element {
   const swatchValue = value && HEX_RE.test(value) ? value : '#808080'
   const [draft, setDraft, onDraftFocus, onDraftBlur] = useDraft(value ?? '', mixed)
+  // A native color-input drag can fire dozens of onChange events per
+  // second — epic 0067. Coalescing to one commit per animation frame keeps
+  // the swatch fully live (60fps reads as continuous) without forcing a
+  // state update, and everything downstream of it, on every single tick.
+  const throttledOnChange = useRafThrottledCallback(onChange)
   return (
     <FieldRow label={label}>
       <div className="property-color-field">
@@ -110,7 +116,7 @@ export function ColorField({
           className={mixed ? 'property-color-swatch mixed' : 'property-color-swatch'}
           value={swatchValue}
           onFocus={onSessionStart}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={(event) => throttledOnChange(event.target.value)}
           onBlur={onSessionEnd}
           title={mixed ? 'Mixed' : (value ?? 'Unset')}
         />

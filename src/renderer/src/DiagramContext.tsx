@@ -57,11 +57,6 @@ export interface DiagramContextValue {
   // threaded down to the node components, same reasoning as
   // edgeStraightSegmentLength above.
   maxConnectionPointsPerSide: number
-  // Global setting (settings.ts/SettingsPanel) — a selected edge's stroke
-  // swaps to this color entirely while selected, same threading reasoning
-  // as the two fields above. Edges only; nodes keep React Flow's own
-  // default selection outline.
-  selectedEdgeHighlightColor: string
   // Current resolved theme — needed by every render/edit site that touches
   // an explicit fill/stroke/fontColor, for the theme-adaptive Value flip
   // (epic 0040/ADR 0034). Same threading reasoning as the two fields above.
