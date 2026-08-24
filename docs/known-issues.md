@@ -10,6 +10,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 - **Open** — known, not blocking, deliberately not fixed yet. Has a documented direction to revisit if it becomes a real complaint.
 
 ## Open items at a glance
+- [Hovering a single edge on a large diagram re-renders every node and edge several times over](#hovering-a-single-edge-on-a-large-diagram-re-renders-every-node-and-edge-several-times-over) — Open, two contributing causes fixed, dominant cause not yet found.
 - [A large diagram's edges, selection box, and new-connection dragging all silently failed until node measurement happened to catch up](#a-large-diagrams-edges-selection-box-and-new-connection-dragging-all-silently-failed-until-node-measurement-happened-to-catch-up) — Solved.
 - [`.react-flow__edgelabel-renderer`'s z-index ceiling went stale, silently breaking edge labels and (new) bend points](#react-flowedgelabel-rendereres-z-index-ceiling-went-stale-silently-breaking-edge-labels-and-new-bend-points) — Solved.
 - [`serializeDiagram` silently dropped `locked`, `gravityPresets`, and a line's `points` on every save](#serializediagram-silently-dropped-locked-gravitypresets-and-a-lines-points-on-every-save) — Solved.
@@ -20,6 +21,24 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 - [`npm run lint` reports ~10,000 CRLF warnings repo-wide](#npm-run-lint-reports-10000-crlf-warnings-repo-wide) — Open, not this machine's normal experience, cause not confirmed.
 - [Exported PNGs had no visible arrowheads on any edge](#exported-pngs-had-no-visible-arrowheads-on-any-edge) — Solved.
 - ["Use canvas color" PNG export always exported plain white](#use-canvas-color-png-export-always-exported-plain-white) — Solved.
+
+---
+
+## Hovering a single edge on a large diagram re-renders every node and edge several times over
+**Status:** Open — two contributing causes found and fixed; the dominant cause is still unidentified
+**Found:** 2026-08-24, live use by the user on the Meridian Rail landscape (82 nodes, 84 edges), while live-testing the fix for the entry below
+
+**Symptom:** on this large diagram, drag-to-select noticeably stutters (~300ms) every time the selection boundary crosses in or out of an item. Isolated further via live `console.count` instrumentation in `ShapeNode`/`LabeledEdge` (same technique as the epic 0067/ADR 0056 investigation): merely **hovering one edge and moving off** — no click, no selection, from a fully-settled diagram — produced ~340 `LabeledEdge` renders and ~280 `ShapeNode` renders (roughly 4 and 3.4 per element, for what should be a change affecting exactly one edge). Reproduced identically across multiple clean restarts (all `electron.exe`/`node.exe` processes killed each time), ruling out stale HMR/caching.
+
+**Two real, confirmed contributing causes found and fixed** (`src/renderer/src/Canvas.tsx`), but fixing both changed the render counts by roughly 0% — something else, not yet identified, dominates:
+1. `zIndexedNodes`/`zIndexedEdges` were rebuilt as fresh wrapper objects for *every* node/edge on *every* render, regardless of whether that item had actually changed — this also directly caused the separate bug in the entry below (React Flow's `adoptUserNodes` only reuses a node's cached measurement when the *exact same* object is passed back). Replaced with an effect that materializes the derived fields (`zIndex`/`draggable`/`deletable`/edge `hovered`) directly onto `nodes`/`edges` state, only replacing the specific items that changed — see `deriveNodeFields`/`deriveEdgeFields` (module scope) and their call sites. Written as a "read during render, write only from an effect" pattern specifically because this repo's react-compiler ESLint rule (enforced as an error) disallows reading *or* writing a ref's `.current` during render, which ruled out the more obvious manual-cache approach tried first.
+2. `onEdgeMouseEnter`/`onEdgeMouseLeave`/`defaultEdgeOptions` were passed to `<ReactFlow>` as inline arrow functions/object literals, recreated on every render. `defaultEdgeOptions` in particular is read by React Flow's own `EdgeWrapper` via a *separate, unguarded* `useStore(s => s.defaultEdgeOptions)` call with no equality check — a fresh reference there forces every edge to re-render regardless of whether `nodes`/`edges` themselves changed. Fixed: `onEdgeMouseEnter`/`onEdgeMouseLeave` are now `useCallback`-stable, `defaultEdgeOptions` is a static module-level constant (it never depended on any state).
+
+**Not yet found:** after both fixes, a clean-restart retest produced render counts within noise of the original (340/280 → still ~338-340/~280). Whatever is forcing *every* node and edge to re-render from a single edge's hover state is still active. `NodeWrapper` (`@xyflow/react`) has only one `useStore` call, correctly using `shallow` comparison, unlike `EdgeWrapper`'s extra unguarded one — so nodes re-rendering in lockstep with edges, from a change that only touches `hoveredEdgeId`/one edge's data, doesn't fit either mechanism found so far. `DiagramContext`'s value is confirmed properly memoized (no selection/hover-related dependencies) via ADR 0056's existing fix, so it's very likely not the shared cause either. Ruled out as *not* the cause: React Flow's own reference-preserving `applyChanges`/`adoptUserNodes` (confirmed correct by reading `@xyflow/system`'s source), stale caching/HMR (reproduced fresh every time), and `DiagramContext` re-render cascade (already fixed in epic 0067, deps checked again here).
+
+**If revisited:** the user made the call to stop here rather than continue via `console.count` instrumentation, given several rounds already produced fixes that didn't move the actual numbers — diminishing returns on this technique for this specific problem. The recommended next step is the **React DevTools Profiler**, attached to the Electron renderer, which can show *why* a given render happened (props/state/context/parent) instead of just *that* it happened — a fundamentally more precise tool for this class of problem than counting renders from the outside.
+
+**References:** `src/renderer/src/Canvas.tsx` (`deriveNodeFields`, `deriveEdgeFields`, `DEFAULT_EDGE_OPTIONS`, the two materializing `useEffect`s), `node_modules/@xyflow/react`'s `NodeWrapper`/`EdgeWrapper`, [ADR 0056](decisions/0056-diagram-context-rerender-performance.md) (the prior, related re-render investigation), `examples/gallery/landscape/meridian-rail-landscape.chd`
 
 ---
 

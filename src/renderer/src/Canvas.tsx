@@ -109,6 +109,73 @@ const nodeTypes = {
 }
 const edgeTypes = { labeled: LabeledEdge }
 
+// Static — module scope so React Flow gets a stable reference, same reason
+// as nodeTypes/edgeTypes above. EdgeWrapper (@xyflow/react) reads this via
+// its own separate, unguarded useStore(s => s.defaultEdgeOptions) call —
+// no shallow/custom equality — so a fresh object literal here on every
+// render (this was previously written inline on <ReactFlow>) forces *every*
+// edge to re-render on *every* render of this component, regardless of
+// whether any edge or node data actually changed.
+const DEFAULT_EDGE_OPTIONS = {
+  type: 'labeled',
+  markerEnd: { type: MarkerType.ArrowClosed }
+}
+
+// A 'line' node's own rectangular bounding box is frequently much larger
+// than its actual (possibly concave, e.g. a U-bend) curve — see ADR 0050's
+// addendum. React Flow applies `style` straight onto its own node wrapper,
+// so pointerEvents: 'none' here makes the *whole box* click/drag-through by
+// default; LineNode.tsx's invisible hit-stroke path and its own point
+// handles each explicitly re-enable pointer events (CSS pointer-events is
+// inherited but overridable per descendant), so only the curve itself and
+// its points stay interactive — matching how an edge only responds near
+// its own path, not its own bounding rectangle.
+function needsLineStyleFix(n: Node): boolean {
+  return n.type === 'line' && (n.style as React.CSSProperties | undefined)?.pointerEvents !== 'none'
+}
+
+// Locked (data.locked, see docs/file-format.md) maps onto React Flow's own
+// native draggable/deletable per-node overrides; zIndex (epic 0043/ADR
+// 0035) likewise onto React Flow's own field — selectable is deliberately
+// left alone (still true), since the whole point of `locked` was blocking
+// accidental drags/deletes while keeping selection/highlighting working
+// normally.
+//
+// Pure — returns `n` itself, unchanged, when every derived field already
+// matches (the common case), or a new object only when something actually
+// needs to change. That "return the same reference when nothing changed"
+// property is what CanvasInner's own materializing effect (see its call
+// site) relies on to keep an unrelated node's object identity stable
+// across renders — see that effect's own comment for why that stability
+// specifically matters on a large diagram.
+function deriveNodeFields(n: Node): Node {
+  const zIndex = (n.data?.zIndex as number | undefined) ?? 0
+  const draggable = n.data?.locked !== true
+  const deletable = n.data?.locked !== true
+  if (n.zIndex === zIndex && n.draggable === draggable && n.deletable === deletable && !needsLineStyleFix(n)) {
+    return n
+  }
+  return {
+    ...n,
+    zIndex,
+    draggable,
+    deletable,
+    ...(needsLineStyleFix(n) ? { style: { ...n.style, pointerEvents: 'none' as const } } : {})
+  }
+}
+
+// An edge's own zIndex/hovered flag (see zIndexOrdering's SELECTED_EDGE_Z_BOOST
+// comment, and the hover-reveal comment on Canvas's hoveredEdgeId state, for
+// what each means) aren't derivable from the edge alone — z depends on its
+// endpoints' current zIndex, hovered on which edge the pointer is over right
+// now — so unlike deriveNodeFields this takes the already-resolved values as
+// plain params rather than recomputing them itself. Same "return `e` itself
+// when nothing changed" contract otherwise.
+function deriveEdgeFields(e: Edge, zIndex: number, hovered: boolean): Edge {
+  if (e.zIndex === zIndex && e.data?.hovered === hovered) return e
+  return { ...e, zIndex, data: { ...e.data, hovered } }
+}
+
 // A sequential per-session counter (shape-1, shape-2, ...) collided with
 // ids already used in a *loaded* file, since a fresh session always starts
 // back at 1 — opening a diagram that already had "shape-1" and adding
@@ -622,6 +689,15 @@ function CanvasInner(): React.JSX.Element {
   // with no CSS containment relationship — this state is what bridges them
   // instead, via React Flow's own onEdgeMouseEnter/Leave.
   const [hoveredEdgeId, setHoveredEdgeId] = useState<string | null>(null)
+  // useCallback-stable, not inline — <ReactFlow>'s onEdgeMouseEnter/Leave
+  // props flow all the way down into every individual EdgeWrapper's own
+  // props (@xyflow/react), which is memo()-wrapped; an inline arrow
+  // function here gets a new reference every render, which fails that
+  // memo's shallow prop comparison and forces *every* edge to re-render on
+  // *every* render of this component, regardless of whether that edge (or
+  // even the edges array at all) actually changed.
+  const onEdgeMouseEnter = useCallback((_: unknown, edge: Edge) => setHoveredEdgeId(edge.id), [])
+  const onEdgeMouseLeave = useCallback(() => setHoveredEdgeId(null), [])
   // Non-blocking notices from the most recent syncElementMetadata pass —
   // deliberately *replaced*, not appended, on every sync: this reflects
   // current state (what the last backfill run had to correct), not a
@@ -2917,37 +2993,63 @@ function CanvasInner(): React.JSX.Element {
   // the layer panel and it genuinely renders above it from then on. React
   // Flow still adds its own selection elevation on top of whatever's set
   // here (elevateNodesOnSelect, on by default).
-  // Locked (data.locked, see docs/file-format.md) maps onto React Flow's
-  // own native draggable/deletable per-node overrides here, same "convert
-  // at the point nodes are actually handed to <ReactFlow>" pattern as
-  // zIndex above — selectable is deliberately left alone (still true),
-  // since the whole point was blocking accidental drags/deletes while
-  // keeping selection/highlighting working normally.
-  const zIndexedNodes = nodes.map((n) => ({
-    ...n,
-    zIndex: (n.data?.zIndex as number | undefined) ?? 0,
-    draggable: n.data?.locked !== true,
-    deletable: n.data?.locked !== true,
-    // A 'line' node's own rectangular bounding box is frequently much
-    // larger than its actual (possibly concave, e.g. a U-bend) curve — see
-    // ADR 0050's addendum. React Flow applies this style straight onto its
-    // own node wrapper, so pointerEvents: 'none' here makes the *whole box*
-    // click/drag-through by default; LineNode.tsx's invisible hit-stroke
-    // path and its own point handles each explicitly re-enable pointer
-    // events (CSS pointer-events is inherited but overridable per
-    // descendant), so only the curve itself and its points stay
-    // interactive — matching how an edge only responds near its own path,
-    // not its own bounding rectangle.
-    ...(n.type === 'line' ? { style: { ...n.style, pointerEvents: 'none' as const } } : {})
-  }))
-  const nodeZIndexById = new Map(zIndexedNodes.map((n) => [n.id, n.zIndex as number]))
+  //
+  // zIndex/draggable/deletable/line-pointerEvents (deriveNodeFields, module
+  // scope above) are derived from each node's own `data`/`type` — but kept
+  // in sync via this effect rather than recomputed into a fresh wrapper
+  // array on every render. React Flow's own adoptUserNodes (@xyflow/system)
+  // only reuses a node's already-measured internal state (handle bounds,
+  // measured size) when the *exact same* node object is passed to
+  // <ReactFlow nodes={...}> again; a fresh wrapper object every render, for
+  // every node regardless of whether that node actually changed, makes
+  // React Flow treat the *entire diagram* as freshly unmeasured every
+  // render. On a large diagram (found on the 82-node Meridian Rail
+  // landscape, alongside the edges-don't-render bug in known-issues.md)
+  // that showed up as a visible ~300ms stutter on every drag-to-select
+  // boundary crossing: one node's selection toggling produced a new `nodes`
+  // array, which — with a render-time wrapper — rebuilt every *other*
+  // unrelated node's object too, discarding its measured state.
+  //
+  // deriveNodeFields returns a node's own reference unchanged when nothing
+  // needs to change, so the effect's setNodes call below only replaces the
+  // specific nodes whose derived fields actually drifted (and bails out of
+  // the state update entirely — same array reference — when nothing did),
+  // rather than touching every node on every run. A ref-based cache read
+  // during render would do the same job, but this repo's react-compiler
+  // lint rule (enforced as an error, not just style) disallows reading or
+  // writing a ref's `.current` during render at all — this effect-based
+  // "materialize the derived fields onto state itself, self-correcting"
+  // approach needs no ref, at the cost of one extra render pass whenever a
+  // node's derived fields genuinely change (locking it, moving it between
+  // z-index tiers) rather than applying within the same render.
+  useEffect(() => {
+    setNodes((prev) => {
+      let changed = false
+      const next = prev.map((n) => {
+        const derived = deriveNodeFields(n)
+        if (derived !== n) changed = true
+        return derived
+      })
+      return changed ? next : prev
+    })
+  }, [nodes, setNodes])
+  const nodeZIndexById = new Map(nodes.map((n) => [n.id, (n.zIndex as number | undefined) ?? 0]))
 
   // Stable DOM-order tie-breaker for edges of otherwise-equal zIndex below
   // — kept from epic 0046, though live debugging (2026-08-22, see
   // docs/known-issues.md) found DOM order was never actually the real
   // mechanism deciding reconnect-handle hit-testing; see SELECTED_EDGE_Z_BOOST
   // just below for the fix that actually addresses it.
-  const orderedEdges = [...edges.filter((e) => !e.selected), ...edges.filter((e) => e.selected)]
+  //
+  // Memoized on `edges` alone — plain `.filter()`/spread built a brand new
+  // array every render regardless of whether `edges` itself had changed,
+  // which fed a fresh array into <ReactFlow edges={...}> on every render of
+  // this component (selection-drag or not) and made it re-sync its whole
+  // internal edge store needlessly every time.
+  const orderedEdges = useMemo(
+    () => [...edges.filter((e) => !e.selected), ...edges.filter((e) => e.selected)],
+    [edges]
+  )
 
   // An edge has no zIndex of its own to control — epic 0043/ADR 0035
   // deliberately scoped this feature to Shape/Container/Text only. Instead
@@ -2968,16 +3070,30 @@ function CanvasInner(): React.JSX.Element {
   // (DOM order) coincidentally looked like it worked in that one test
   // scenario but was never actually the operative mechanism.
   const SELECTED_EDGE_Z_BOOST = 1_000_000
-  const zIndexedEdges = orderedEdges.map((e) => {
-    const sourceZ = nodeZIndexById.get(e.source) ?? 0
-    const targetZ = nodeZIndexById.get(e.target) ?? 0
-    const baseZ = (sourceZ + targetZ) / 2
-    return {
-      ...e,
-      zIndex: e.selected ? baseZ + SELECTED_EDGE_Z_BOOST : baseZ,
-      data: { ...e.data, hovered: e.id === hoveredEdgeId }
-    }
-  })
+  // Same "materialize onto state, don't rebuild a wrapper every render"
+  // reasoning as the node-fields effect above — an edge's own zIndex/hovered
+  // aren't purely a function of the edge itself (they depend on its
+  // endpoints' zIndex and on `hoveredEdgeId`), so this recomputes them from
+  // current `nodeZIndexById`/`hoveredEdgeId` on every run rather than using
+  // a pure per-edge derive function, but still only replaces (deriveEdgeFields,
+  // module scope above) the specific edges whose resolved values actually
+  // changed, keeping every other edge's object — and therefore its
+  // LabeledEdge instance's React.memo bailout — stable.
+  useEffect(() => {
+    setEdges((prev) => {
+      let changed = false
+      const next = prev.map((e) => {
+        const sourceZ = nodeZIndexById.get(e.source) ?? 0
+        const targetZ = nodeZIndexById.get(e.target) ?? 0
+        const baseZ = (sourceZ + targetZ) / 2
+        const z = e.selected ? baseZ + SELECTED_EDGE_Z_BOOST : baseZ
+        const derived = deriveEdgeFields(e, z, e.id === hoveredEdgeId)
+        if (derived !== e) changed = true
+        return derived
+      })
+      return changed ? next : prev
+    })
+  }, [edges, nodeZIndexById, hoveredEdgeId, setEdges])
 
   // Plain-data projection for LayerPanel — keeps that component decoupled
   // from React Flow's own Node type, same reasoning as passing plain
@@ -3207,8 +3323,8 @@ function CanvasInner(): React.JSX.Element {
               <div className="canvas-view-flow" ref={flowWrapperRef}>
                 <EdgeMarkerDefs />
                 <ReactFlow
-                  nodes={zIndexedNodes}
-                  edges={zIndexedEdges}
+                  nodes={nodes}
+                  edges={orderedEdges}
                   nodeTypes={nodeTypes}
                   edgeTypes={edgeTypes}
                   onNodesChange={onNodesChange}
@@ -3229,13 +3345,10 @@ function CanvasInner(): React.JSX.Element {
                   // over- or under-promising it.
                   reconnectRadius={8}
                   onEdgeContextMenu={onEdgeContextMenu}
-                  onEdgeMouseEnter={(_, edge) => setHoveredEdgeId(edge.id)}
-                  onEdgeMouseLeave={() => setHoveredEdgeId(null)}
+                  onEdgeMouseEnter={onEdgeMouseEnter}
+                  onEdgeMouseLeave={onEdgeMouseLeave}
                   connectionMode={ConnectionMode.Loose}
-                  defaultEdgeOptions={{
-                    type: 'labeled',
-                    markerEnd: { type: MarkerType.ArrowClosed }
-                  }}
+                  defaultEdgeOptions={DEFAULT_EDGE_OPTIONS}
                   deleteKeyCode={['Delete', 'Backspace']}
                   multiSelectionKeyCode="Shift" // frees Ctrl/Cmd+click for linked-diagram navigation — epic 0009
                   colorMode={theme}
