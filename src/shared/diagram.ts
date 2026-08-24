@@ -154,6 +154,16 @@ export interface EdgeStyle extends FontStyle {
   // move, unlike a fixed pixel offset. Absent means 0.5 (today's only
   // behavior, the path midpoint) — see epic 0045.
   labelPosition?: number
+  // How the path is routed between the two endpoints — epic 0032.
+  // 'straight'/'step'/'smoothstep' are React Flow's own built-in path
+  // shapes; 'catmullRom' reuses the freeform-line curve math (epic 0064/
+  // ADR 0050, bendablePath.ts) with DiagramEdge.points as manual bend
+  // points. Absent means today's only behavior, a plain bezier
+  // (React Flow's default, plus the edgeStraightSegmentLength lead-in/out
+  // setting) — kept as the omitted default rather than an explicit
+  // `'bezier'` value, same "absent means current hardcoded look"
+  // convention as every other style field.
+  routingStyle?: 'straight' | 'step' | 'smoothstep' | 'catmullRom'
 }
 
 export interface DiagramNode {
@@ -245,6 +255,15 @@ export interface DiagramEdge {
   label?: string
   style?: EdgeStyle
   metadata?: Record<string, MetadataEntry>
+  // Manual bend points, absolute canvas coordinates — only meaningful when
+  // style.routingStyle is 'catmullRom' (epic 0032); ignored (but preserved,
+  // not stripped) otherwise, e.g. if the user switches routing style away
+  // and back. Reuses LinePoint/bendablePath.ts verbatim from epic 0064 —
+  // the same curve math a 'line' node's own points already use. Absent/
+  // empty means a plain, unbent catmull-rom curve between the two
+  // endpoints (still meaningfully different from bezier: perpendicular
+  // leave-direction from each shape's side, no S-curve heuristic).
+  points?: LinePoint[]
 }
 
 export interface DiagramFile {
@@ -345,7 +364,8 @@ export function serializeDiagram(diagram: DiagramFile): string {
       targetHandle: e.targetHandle,
       label: e.label,
       style: e.style,
-      metadata: sortedMetadata(e.metadata)
+      metadata: sortedMetadata(e.metadata),
+      points: e.points && e.points.length > 0 ? e.points : undefined
     }))
   }
   return JSON.stringify(ordered, null, 2) + '\n'

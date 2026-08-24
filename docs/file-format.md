@@ -41,7 +41,7 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
 | `requiredTags` | array of RequiredTagDefinition | The diagram's own template for what every Shape/Container/Edge must carry — see [Required tags](#required-tags) below. Absent means no required tags. |
 | `highlights` | array of HighlightDefinition | Saved catalog of tag-based visual highlights — see [Highlights](#highlights) below. Absent means no highlights defined. Note there is no on/off state stored here: this app treats "which highlights are currently enabled" as local, in-memory, per-session state, never written to the file — a reader that only cares about reading the file back doesn't need to reconstruct or care about that. |
 | `legend` | array of LegendEntry | Saved catalog of manually-authored legend entries explaining the diagram's own visual conventions — see [Legend](#legend) below. Absent means no legend defined. Like `highlights`, whether the legend panel is currently shown is local, in-memory, per-session state, never written to the file. |
-| `gravityPresets` | array of GravityPreset | Named bend values offered on a `"line"` node point's right-click menu — see [Gravity presets](#gravity-presets) below. Absent/empty means "use this app's own built-in four" (shown in the example above) — a diagram only needs to define its own once it actually diverges from them. |
+| `gravityPresets` | array of GravityPreset | Named bend values offered on a `"line"` node point's or a catmull-rom-routed Edge point's right-click menu (epic 0032 reuses the same catalog) — see [Gravity presets](#gravity-presets) below. Absent/empty means "use this app's own built-in four" (shown in the example above) — a diagram only needs to define its own once it actually diverges from them. |
 | `nodes` | array of Node | See below. |
 | `edges` | array of Edge | See below. |
 
@@ -171,11 +171,12 @@ Every field is optional; an absent field means "use the current hardcoded look,"
 | `label` | string | no | Text shown on the edge, e.g. describing the relationship. |
 | `style` | object | no | Visual overrides — see Edge style below. Absent means "use the current hardcoded look." |
 | `metadata` | object | no | Same shape and rules as a node's `metadata` — see [Metadata](#metadata) below. Absent means none set. |
+| `points` | array of LinePoint | no | Manual bend points — see [Edge points](#edge-points) below. Only meaningful when `style.routingStyle` is `"catmullRom"`; a reader can ignore this field for any other routing style (including absent/bezier). Absent/empty means a plain, unbent curve between the two endpoints. |
 
 ### Edge style
 
 ```json
-{ "stroke": "#1a365d", "strokeOpacity": 100, "strokeWidth": 2, "lineStyle": "dashed", "startMarker": "none", "endMarker": "arrowOpen", "labelPosition": 0.5, "fontSize": 12, "fontColor": "#f7fafc", "fontOpacity": 100, "fontWeight": "normal", "fontFamily": "sans-serif" }
+{ "stroke": "#1a365d", "strokeOpacity": 100, "strokeWidth": 2, "lineStyle": "dashed", "startMarker": "none", "endMarker": "arrowOpen", "labelPosition": 0.5, "routingStyle": "catmullRom", "fontSize": 12, "fontColor": "#f7fafc", "fontOpacity": 100, "fontWeight": "normal", "fontFamily": "sans-serif" }
 ```
 
 Every field is optional, same absent-means-default rule as node style.
@@ -188,11 +189,27 @@ Every field is optional, same absent-means-default rule as node style.
 | `lineStyle` | `"solid"` \| `"dashed"` \| `"dotted"` | Line dash pattern. |
 | `startMarker` / `endMarker` | marker kind | Arrowhead/terminator drawn at the source/target end. One of `"none"`, `"arrowOpen"`, `"arrowClosed"`, `"circle"`, `"circleFilled"`, `"diamond"`, `"diamondFilled"`, `"crowsFootOne"`, `"crowsFootMany"`, `"crowsFootOneOrMany"`, `"crowsFootZeroOrOne"`, `"crowsFootZeroOrMany"`. These are deliberately shape-described, not tied to any one notation system (UML/ERD/BPMN) — a reader shouldn't infer semantic meaning from the name beyond what's actually drawn. |
 | `labelPosition` | number, 0-1 | Where along the rendered path the label sits, as a fraction of arc length (`0` = source end, `1` = target end) — same fraction-not-pixels convention as a node's `connectionPoints[].offset`, so it stays meaningful if the edge's endpoints move. Absent means `0.5` (the midpoint). |
+| `routingStyle` | `"straight"` \| `"step"` \| `"smoothstep"` \| `"catmullRom"` | How the path is routed between the two endpoints — epic 0032. `"straight"`/`"step"`/`"smoothstep"` are standard node-diagram routing shapes (a direct line; right-angled; right-angled with rounded corners). `"catmullRom"` is a smooth curve built from the two endpoints plus this edge's own `points` (see [Edge points](#edge-points) below), each leaving its shape perpendicular to whichever side it's attached to. Absent means a plain bezier curve, this format's original and only behavior before this field existed — a reader that doesn't recognize this field, or an unrecognized value, should fall back to that. |
 | `fontSize` | number | Label font size in pixels. |
 | `fontColor` | string (CSS color) | Label text color. |
 | `fontOpacity` | number, 0-100 | Label text opacity — see the same field on Node style above. |
 | `fontWeight` | `"normal"` \| `"bold"` | Label font weight. |
 | `fontFamily` | string (CSS `font-family` value) | Label font — see the same field on Node style above. |
+
+### Edge points
+
+```json
+[
+  { "x": 340, "y": 120, "gravity": 0.2 }
+]
+```
+
+`points` on an Edge (epic 0032) — an ordered list of manual bend points the curve routes through, in **absolute canvas coordinates** (the same coordinate space as a top-level node's own `position`, unlike a `"line"` node's own points, which are node-local). Only meaningful when the edge's `style.routingStyle` is `"catmullRom"`. **Order is the only thing that identifies a point** — there is no separate id, and no other part of the format references an individual point. Same shape and curve-fitting formula as a `"line"` node's own points — see [Line points](#line-points) below — except the two *endpoints* of the curve here are the edge's real `source`/`target` (each leaving its shape's side perpendicular, not just "using its neighbor" the way a line's own endpoint does), with this array supplying only the *interior* points between them.
+
+| Field | Type | Required | Meaning |
+|---|---|---|---|
+| `x` / `y` | number | yes | Absolute canvas coordinates. |
+| `gravity` | number | no | Per-point Catmull-Rom tension — see [Line points](#line-points) below for the exact meaning and the curve-fitting formula, identical here. |
 
 ## Metadata
 
@@ -276,7 +293,7 @@ A saved catalog of legend entries — `legend` on the top-level object — each 
 
 ## Gravity presets
 
-Named bend values — `gravityPresets` on the top-level object — offered on a `"line"` node point's right-click menu (epic 0064/ADR 0050). This exists as a diagram-level catalog, not a hardcoded app setting, because a specific diagram's layout may need its own bend values, and reliably reproducing that diagram (for any reader, not just this app) means those named options need to live in the file itself.
+Named bend values — `gravityPresets` on the top-level object — offered on a `"line"` node point's right-click menu (epic 0064/ADR 0050), and, since epic 0032, on a catmull-rom-routed Edge point's right-click menu too (same catalog, same menu, no separate one). This exists as a diagram-level catalog, not a hardcoded app setting, because a specific diagram's layout may need its own bend values, and reliably reproducing that diagram (for any reader, not just this app) means those named options need to live in the file itself.
 
 ```json
 [
@@ -307,7 +324,7 @@ The `.chd` file itself is always plain, deterministic JSON — kept git-friendly
 
 ## Versioning
 
-`version` is currently always `1`. Fields have been added over time (`size`, `rotation`, `connectionPoints`, `parentId`, `style` on both Node and Edge, edge `type`/`label`, `data.icons`, `data.details`, `data.linkedDiagram`, top-level `metadata`/`requiredTags`/`highlights`/`legend`, `metadata` on both Node and Edge, Edge style's `labelPosition`, Node's `zIndex`, Node's `locked`, the `"line"` node `type` with its `data.points`, Node style's `lineStyle`/`startMarker`/`endMarker`, and top-level `gravityPresets`) but always additively — a reader from an earlier point in this project's history can still open a newer file and just won't recognize the newer fields. The same holds in reverse: this app's own current code must still open a file from *before* one of these fields existed, without failing or requiring migration — see [ADR 0029](decisions/0029-backward-compatible-loading-is-a-standing-rule.md), which makes this a standing rule for every future field, not just an incidental property of the fields added so far. A breaking change to the meaning of an existing field would bump `version`; nothing has required that yet.
+`version` is currently always `1`. Fields have been added over time (`size`, `rotation`, `connectionPoints`, `parentId`, `style` on both Node and Edge, edge `type`/`label`, `data.icons`, `data.details`, `data.linkedDiagram`, top-level `metadata`/`requiredTags`/`highlights`/`legend`, `metadata` on both Node and Edge, Edge style's `labelPosition`, Node's `zIndex`, Node's `locked`, the `"line"` node `type` with its `data.points`, Node style's `lineStyle`/`startMarker`/`endMarker`, top-level `gravityPresets`, and Edge style's `routingStyle` with its own `points`) but always additively — a reader from an earlier point in this project's history can still open a newer file and just won't recognize the newer fields. The same holds in reverse: this app's own current code must still open a file from *before* one of these fields existed, without failing or requiring migration — see [ADR 0029](decisions/0029-backward-compatible-loading-is-a-standing-rule.md), which makes this a standing rule for every future field, not just an incidental property of the fields added so far. A breaking change to the meaning of an existing field would bump `version`; nothing has required that yet.
 
 ## Example
 

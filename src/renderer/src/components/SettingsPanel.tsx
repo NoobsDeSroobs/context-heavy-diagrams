@@ -1,6 +1,19 @@
+import type { EdgeStyle } from '@shared/diagram'
 import type { AppSettings } from '../settings'
-import { FieldRow, NumberField } from '../panels/fields'
+import { FieldRow, NumberField, SelectField } from '../panels/fields'
 import { useRafThrottledCallback } from '../hooks/useRafThrottledCallback'
+
+// '' means the field is absent (bezier, today's only historical behavior)
+// — see PropertyPanel.tsx's identical ROUTING_STYLE_OPTIONS/own comment on
+// why this is a local copy rather than a shared one (react-refresh/only-
+// export-components). Epic 0032.
+const ROUTING_STYLE_OPTIONS: { value: Exclude<EdgeStyle['routingStyle'], undefined> | ''; label: string }[] = [
+  { value: '', label: 'Bezier (default)' },
+  { value: 'straight', label: 'Straight' },
+  { value: 'step', label: 'Step' },
+  { value: 'smoothstep', label: 'Smoothstep' },
+  { value: 'catmullRom', label: 'Catmull-Rom (gravity)' }
+]
 
 interface SettingsPanelProps {
   settings: AppSettings
@@ -54,6 +67,18 @@ export default function SettingsPanel({ settings, onChange, onClose }: SettingsP
           onChange={(v) => onChange({ maxConnectionPointsPerSide: v ?? 1 })}
           onSessionStart={() => {}}
           onSessionEnd={() => {}}
+        />
+        <SelectField
+          label="Default edge routing"
+          value={settings.defaultEdgeStyle.routingStyle ?? ''}
+          mixed={false}
+          options={ROUTING_STYLE_OPTIONS}
+          onChange={(v) =>
+            onChange({
+              defaultEdgeStyle: { ...settings.defaultEdgeStyle, routingStyle: v === '' ? undefined : v }
+            })
+          }
+          pushSnapshot={() => {}}
         />
         <FieldRow label="Scan for unsaved diagrams on startup">
           <input

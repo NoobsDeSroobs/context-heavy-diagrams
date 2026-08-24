@@ -62,6 +62,23 @@ const MARKER_OPTIONS: { value: MarkerKind; label: string }[] = [
   { value: 'crowsFootZeroOrMany', label: "Crow's foot — zero or many" }
 ]
 
+// '' means the field is absent — a real style.routingStyle value, not a
+// placeholder — see fontFamily's own identical '' === "no override"
+// pattern below. 'straight'/'step'/'smoothstep' are React Flow's own
+// built-in path shapes; 'catmullRom' reuses the freeform-line curve math
+// (epic 0064/ADR 0050, bendablePath.ts) with this edge's own manual bend
+// points — epic 0032. A local copy, not shared with SettingsPanel.tsx's
+// identical default-routing-style picker: this file already can't export
+// a second named value alongside its default component export
+// (react-refresh/only-export-components).
+const ROUTING_STYLE_OPTIONS: { value: Exclude<EdgeStyle['routingStyle'], undefined> | ''; label: string }[] = [
+  { value: '', label: 'Bezier (default)' },
+  { value: 'straight', label: 'Straight' },
+  { value: 'step', label: 'Step' },
+  { value: 'smoothstep', label: 'Smoothstep' },
+  { value: 'catmullRom', label: 'Catmull-Rom (gravity)' }
+]
+
 // Generic CSS families only, for now — a specific named font isn't
 // reliably available on both of this app's target platforms (Windows/
 // Linux). '' is a real option meaning "no override" (not a placeholder —
@@ -338,6 +355,7 @@ function EdgeFields({
   const strokeOpacity = computeFieldValue(edges, (e) => edgeStyleOf(e).strokeOpacity)
   const strokeWidth = computeFieldValue(edges, (e) => edgeStyleOf(e).strokeWidth)
   const lineStyle = computeFieldValue(edges, (e) => edgeStyleOf(e).lineStyle)
+  const routingStyle = computeFieldValue(edges, (e) => edgeStyleOf(e).routingStyle)
   const fontSize = computeFieldValue(edges, (e) => edgeStyleOf(e).fontSize)
   const fontColor = computeFieldValue(edges, (e) => edgeStyleOf(e).fontColor)
   const fontOpacity = computeFieldValue(edges, (e) => edgeStyleOf(e).fontOpacity)
@@ -358,6 +376,14 @@ function EdgeFields({
         />
       </CollapsibleSection>
       <CollapsibleSection title="Line">
+        <SelectField
+          label="Routing"
+          value={routingStyle.value ?? ''}
+          mixed={routingStyle.mixed}
+          options={ROUTING_STYLE_OPTIONS}
+          onChange={(v) => updateStyle({ routingStyle: v === '' ? undefined : v })}
+          pushSnapshot={pushSnapshot}
+        />
         <ColorField
           label="Color"
           value={themeAdaptiveColor(stroke.value, theme)}

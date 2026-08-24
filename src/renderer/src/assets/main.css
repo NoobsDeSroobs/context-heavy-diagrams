@@ -404,6 +404,38 @@ body {
   cursor: grabbing;
 }
 
+/* An edge's own manual bend points, catmull-rom routing only (epic 0032) —
+   plain positioned divs portalled via EdgeLabelRenderer (not React Flow
+   Handles; those are for connections, these just reposition a point).
+   Hover-revealed like .line-node-point above, but the actual hover state
+   is tracked in Canvas.tsx (React Flow's onEdgeMouseEnter/Leave) and
+   passed down as data.hovered — an edge's SVG path and its portalled
+   point divs are separate DOM subtrees with no CSS containment
+   relationship a plain :hover selector could hook a reveal onto, unlike
+   that node's own self-contained DOM. LabeledEdge.tsx also keeps them
+   visible while selected or a point is actively being dragged, so a fast
+   drag that strays off the path mid-gesture doesn't hide the very point
+   being dragged. `.edge-bend-point-hidden` is opacity 0, not display:
+   none, so a drag already in progress (pointer capture held) keeps
+   receiving move events even if hover state flips off mid-gesture. */
+.edge-bend-point {
+  border-radius: 50%;
+  background: var(--color-background-soft);
+  border: 1.5px solid var(--ev-c-gray-1);
+  opacity: 1;
+  transition: opacity 0.1s ease;
+  cursor: grab;
+  pointer-events: auto;
+}
+
+.edge-bend-point-hidden {
+  opacity: 0;
+}
+
+.edge-bend-point:active {
+  cursor: grabbing;
+}
+
 .text-node {
   width: 100%;
   height: 100%;
@@ -457,19 +489,23 @@ body {
   padding: 0;
 }
 
-/* React Flow gives every non-container node an inline z-index of 2000
-   unconditionally (Canvas.tsx's zIndexedNodes), and separately elevates a
-   selected edge, or any edge touching a contained/selected node, by another
-   1000+ on top of that node's z (@xyflow/system's getElevatedEdgeZIndex).
-   The edge-label-renderer div that portals every edge label (LabeledEdge's
-   EdgeLabelRenderer) gets no z-index of its own (auto, ~0) — so without this
-   override, a label paints behind any node it overlaps, and behind its own
-   edge line whenever that edge or either endpoint is selected or contained.
-   That's the root cause of epic 0042. 5000 stays comfortably above today's
-   ceiling (2000 node + up to ~2000 more from elevation); revisit this value
-   if epic 0043's layer/z-height control changes what Canvas.tsx assigns. */
+/* The edge-label-renderer div that portals every edge label (and, since
+   epic 0032, every catmull-rom edge's own bend-point handles) gets no
+   z-index of its own from React Flow (auto, ~0) — so without this
+   override, a label or bend point paints (and hit-tests) behind any node
+   or edge it overlaps whenever that node/edge's own z-index is positive.
+   That's the root cause of epic 0042.
+   This value is a manual ceiling, not derived from the real one — it went
+   stale once before (originally 5000, sized for epic 0042's ~4000 ceiling
+   at the time) and nothing re-checks it automatically, so if this still
+   doesn't work, that's the first thing to re-verify. Canvas.tsx's own
+   zIndexedNodes/zIndexedEdges is the actual source of truth: as of epic
+   0032, the real ceiling is TEXT_BASE (zIndexOrdering.ts, 200 000) +
+   SELECTED_EDGE_Z_BOOST (Canvas.tsx, 1 000 000) = 1 200 000 for a selected
+   edge touching a text node. 2 000 000 stays comfortably above that with
+   real headroom, not just exactly enough. */
 .react-flow__edgelabel-renderer {
-  z-index: 5000;
+  z-index: 2000000;
 }
 
 /* Reconnect grab points (React Flow's own <circle>s, one per end) render

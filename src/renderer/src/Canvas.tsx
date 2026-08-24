@@ -71,7 +71,12 @@ import {
   nextZIndexAbove,
   reorderZIndex
 } from './layers/zIndexOrdering'
-import { reassignConnectionPointHandles, setSideCustomPointCount } from './nodes/connectionPoints'
+import {
+  effectiveConnectionPoints,
+  reassignConnectionPointHandles,
+  setSideCustomPointCount
+} from './nodes/connectionPoints'
+import { nearestSegmentIndex, type PathPoint } from './geometry/bendablePath'
 import SettingsPanel from './components/SettingsPanel'
 import AboutDialog from './components/AboutDialog'
 import ExportPngDialog, { type PngExportChoice } from './components/ExportPngDialog'
@@ -171,6 +176,54 @@ function subtractPosition(
   b: { x: number; y: number }
 ): { x: number; y: number } {
   return { x: a.x - b.x, y: a.y - b.y }
+}
+
+// Outward from a bound endpoint's own side — matches LabeledEdge.tsx's own
+// identically-named table one-for-one (small local copy, not shared —
+// that file's own comment on OUTWARD_DIRECTION explains why), keyed here
+// by this schema's ConnectionPointSide strings instead of React Flow's
+// Position enum, since this is only ever used against the app's own
+// connectionPoints data, not React Flow's resolved edge props.
+const SIDE_OUTWARD_DIRECTION: Record<ConnectionPointSide, { x: number; y: number }> = {
+  top: { x: 0, y: -1 },
+  right: { x: 1, y: 0 },
+  bottom: { x: 0, y: 1 },
+  left: { x: -1, y: 0 }
+}
+
+// An edge endpoint's resolved absolute position and outward direction —
+// used only by "Add point here" below to find the nearest segment on the
+// same curve the edge actually renders with (epic 0032). React Flow
+// resolves this internally for rendering, but doesn't expose it as a
+// plain computable function, so it's derived directly from the same
+// side+offset data ConnectionHandles itself renders from
+// (connectionPoints.ts).
+function resolveEndpointPosition(
+  nodeId: string,
+  handleId: string | null | undefined,
+  nodeById: Map<string, Node>
+): PathPoint {
+  const node = nodeById.get(nodeId)
+  if (!node) return { x: 0, y: 0 }
+  const abs = absolutePosition(node, nodeById)
+  const width = node.width ?? 0
+  const height = node.height ?? 0
+  const customPoints = (node.data?.connectionPoints as ConnectionPoint[] | undefined) ?? []
+  const point = handleId ? effectiveConnectionPoints(customPoints).find((p) => p.id === handleId) : undefined
+  const side = point?.side ?? 'left'
+  const offset = point?.offset ?? 0.5
+  const direction = SIDE_OUTWARD_DIRECTION[side]
+  switch (side) {
+    case 'top':
+      return { x: abs.x + offset * width, y: abs.y, direction }
+    case 'bottom':
+      return { x: abs.x + offset * width, y: abs.y + height, direction }
+    case 'right':
+      return { x: abs.x + width, y: abs.y + offset * height, direction }
+    case 'left':
+    default:
+      return { x: abs.x, y: abs.y + offset * height, direction }
+  }
 }
 
 function sortNodesForHierarchy(nodes: Node[]): Node[] {
@@ -327,7 +380,10 @@ function toDiagramFile(
       targetHandle: e.targetHandle ?? undefined,
       label: typeof e.data?.label === 'string' && e.data.label ? e.data.label : undefined,
       style: e.data?.style as EdgeStyle | undefined,
-      metadata: e.data?.metadata as Record<string, MetadataEntry> | undefined
+      metadata: e.data?.metadata as Record<string, MetadataEntry> | undefined,
+      points: Array.isArray(e.data?.points) && (e.data.points as LinePoint[]).length > 0
+        ? (e.data.points as LinePoint[])
+        : undefined
     }))
   }
 }
@@ -388,7 +444,8 @@ function fromDiagramFile(diagram: DiagramFile): {
       data: {
         label: e.label ?? '',
         ...(e.style ? { style: e.style } : {}),
-        ...(e.metadata ? { metadata: e.metadata } : {})
+        ...(e.metadata ? { metadata: e.metadata } : {}),
+        ...(e.points && e.points.length > 0 ? { points: e.points } : {})
       }
     })),
     metadata: diagram.metadata ?? {},
@@ -555,6 +612,16 @@ function CanvasInner(): React.JSX.Element {
   // Which node the panel currently points at — an "entity highlight," see
   // DiagramContext's own comment on this field. Session-only, reset on load.
   const [entityHighlightNodeId, setEntityHighlightNodeId] = useState<string | null>(null)
+  // Which edge the pointer is currently over — epic 0032. A catmull-rom
+  // edge's own bend-point handles only render while their edge is hovered
+  // (or selected, or a point is actively being dragged — see
+  // LabeledEdge.tsx), matching how a 'line' node's own points are hover-
+  // revealed. Unlike that node (path and points in one self-contained DOM
+  // tree, a plain CSS :hover selector links them), an edge's SVG path and
+  // its EdgeLabelRenderer-portalled point divs are separate DOM subtrees
+  // with no CSS containment relationship — this state is what bridges them
+  // instead, via React Flow's own onEdgeMouseEnter/Leave.
+  const [hoveredEdgeId, setHoveredEdgeId] = useState<string | null>(null)
   // Non-blocking notices from the most recent syncElementMetadata pass —
   // deliberately *replaced*, not appended, on every sync: this reflects
   // current state (what the last backfill run had to correct), not a
@@ -863,6 +930,7 @@ function CanvasInner(): React.JSX.Element {
   const onEdgeContextMenu = useCallback(
     (event: React.MouseEvent, edge: Edge) => {
       event.preventDefault()
+      const clickPoint = rfInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY })
       openContextMenu(event.clientX, event.clientY, [
         {
           label: 'Line style…',
@@ -871,10 +939,57 @@ function CanvasInner(): React.JSX.Element {
               edgeId: edge.id,
               anchorRect: new DOMRect(event.clientX, event.clientY, 0, 0)
             })
+        },
+        {
+          label: 'Add point here',
+          separatorBefore: true,
+          onSelect: () => {
+            const points = (edge.data?.points as LinePoint[] | undefined) ?? []
+            const routingStyle = (edge.data?.style as EdgeStyle | undefined)?.routingStyle
+            // Not already catmull-rom-routed (or routed but with no points
+            // yet, same thing): only one segment exists (source straight
+            // to target), so the new point is trivially the only entry —
+            // no nearest-segment lookup needed. Right-clicking any edge to
+            // add a point is what actually opts it into catmull-rom
+            // routing in the first place (epic 0032) — no prior trip to
+            // the property panel required.
+            let newPoints: LinePoint[]
+            if (routingStyle !== 'catmullRom' || points.length === 0) {
+              newPoints = [{ x: clickPoint.x, y: clickPoint.y }]
+            } else {
+              const nodeById = new Map(nodes.map((n) => [n.id, n]))
+              const pathPoints: PathPoint[] = [
+                resolveEndpointPosition(edge.source, edge.sourceHandle, nodeById),
+                ...points,
+                resolveEndpointPosition(edge.target, edge.targetHandle, nodeById)
+              ]
+              const segmentIndex = nearestSegmentIndex(pathPoints, clickPoint)
+              newPoints = [...points]
+              // No explicit gravity — falls back to bendablePath's own
+              // default (0.5), same "absent means the standard value"
+              // convention as the rest of this schema.
+              newPoints.splice(segmentIndex, 0, { x: clickPoint.x, y: clickPoint.y })
+            }
+            pushSnapshot()
+            setEdges((eds) =>
+              eds.map((e) =>
+                e.id === edge.id
+                  ? {
+                      ...e,
+                      data: {
+                        ...e.data,
+                        points: newPoints,
+                        style: { ...(e.data?.style as EdgeStyle | undefined), routingStyle: 'catmullRom' }
+                      }
+                    }
+                  : e
+              )
+            )
+          }
         }
       ])
     },
-    [openContextMenu]
+    [openContextMenu, rfInstance, nodes, pushSnapshot, setEdges]
   )
 
   // The utility dock shows one surface at a time (see ADR 0013) — opening
@@ -2183,6 +2298,21 @@ function CanvasInner(): React.JSX.Element {
       suppressAutoMeasureUntilRef.current = Date.now() + 500
       setNodes(openedNodes)
       setEdges(openedEdges)
+      // On a large diagram, React Flow's own passive ResizeObserver-driven
+      // measurement of every node's handle bounds can take an unpredictable
+      // number of render passes to fully settle (found live-testing the
+      // Meridian Rail landscape, 82 nodes/84 edges: edges silently failed
+      // to render — no error, since @xyflow/react's EdgeWrapper just
+      // returns null for any edge whose endpoints aren't "initialized" yet
+      // — sometimes never catching up on its own). updateNodeInternals
+      // measures a node's handle bounds synchronously via direct DOM reads
+      // (see @xyflow/system's updateNodeInternals) rather than waiting on
+      // that passive observer, so forcing it for every just-loaded node
+      // makes every edge resolve immediately and deterministically instead
+      // of racing. Deferred one frame (rAF) since the node elements this
+      // targets by data-id don't exist in the DOM until after this render
+      // commits.
+      requestAnimationFrame(() => updateNodeInternals(openedNodes.map((n) => n.id)))
       rfInstance.setViewport(diagram.viewport)
       setCurrentPath(path)
       setDiagramMetadata(openedMetadata)
@@ -2211,7 +2341,7 @@ function CanvasInner(): React.JSX.Element {
       // every load, not just when the template is edited from within the app.
       runSync(openedRequiredTags)
     },
-    [rfInstance, setNodes, setEdges, runSync]
+    [rfInstance, setNodes, setEdges, runSync, updateNodeInternals]
   )
 
   // A window opened with an initial diagram (File -> Open, or either
@@ -2842,7 +2972,11 @@ function CanvasInner(): React.JSX.Element {
     const sourceZ = nodeZIndexById.get(e.source) ?? 0
     const targetZ = nodeZIndexById.get(e.target) ?? 0
     const baseZ = (sourceZ + targetZ) / 2
-    return { ...e, zIndex: e.selected ? baseZ + SELECTED_EDGE_Z_BOOST : baseZ }
+    return {
+      ...e,
+      zIndex: e.selected ? baseZ + SELECTED_EDGE_Z_BOOST : baseZ,
+      data: { ...e.data, hovered: e.id === hoveredEdgeId }
+    }
   })
 
   // Plain-data projection for LayerPanel — keeps that component decoupled
@@ -3095,6 +3229,8 @@ function CanvasInner(): React.JSX.Element {
                   // over- or under-promising it.
                   reconnectRadius={8}
                   onEdgeContextMenu={onEdgeContextMenu}
+                  onEdgeMouseEnter={(_, edge) => setHoveredEdgeId(edge.id)}
+                  onEdgeMouseLeave={() => setHoveredEdgeId(null)}
                   connectionMode={ConnectionMode.Loose}
                   defaultEdgeOptions={{
                     type: 'labeled',

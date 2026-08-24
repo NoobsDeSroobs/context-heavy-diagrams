@@ -10,6 +10,8 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 - **Open** — known, not blocking, deliberately not fixed yet. Has a documented direction to revisit if it becomes a real complaint.
 
 ## Open items at a glance
+- [A large diagram's edges, selection box, and new-connection dragging all silently failed until node measurement happened to catch up](#a-large-diagrams-edges-selection-box-and-new-connection-dragging-all-silently-failed-until-node-measurement-happened-to-catch-up) — Solved.
+- [`.react-flow__edgelabel-renderer`'s z-index ceiling went stale, silently breaking edge labels and (new) bend points](#react-flowedgelabel-rendereres-z-index-ceiling-went-stale-silently-breaking-edge-labels-and-new-bend-points) — Solved.
 - [`serializeDiagram` silently dropped `locked`, `gravityPresets`, and a line's `points` on every save](#serializediagram-silently-dropped-locked-gravitypresets-and-a-lines-points-on-every-save) — Solved.
 - [Theme flip reads as "negative image" on toggle](#theme-flip-reads-as-negative-image-on-toggle) — Open, not urgent.
 - [Enabling a highlight makes a container look like it shrinks](#enabling-a-highlight-makes-a-container-look-like-it-shrinks) — Open, not investigated.
@@ -18,6 +20,34 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 - [`npm run lint` reports ~10,000 CRLF warnings repo-wide](#npm-run-lint-reports-10000-crlf-warnings-repo-wide) — Open, not this machine's normal experience, cause not confirmed.
 - [Exported PNGs had no visible arrowheads on any edge](#exported-pngs-had-no-visible-arrowheads-on-any-edge) — Solved.
 - ["Use canvas color" PNG export always exported plain white](#use-canvas-color-png-export-always-exported-plain-white) — Solved.
+
+---
+
+## A large diagram's edges, selection box, and new-connection dragging all silently failed until node measurement happened to catch up
+**Status:** Solved
+**Found:** 2026-08-24, live use by the user opening the Meridian Rail landscape (82 nodes, 84 edges — the largest diagram in the gallery) on both `epic/0032-edge-routing-and-waypoints` and `master`
+
+**Symptom:** opening this one file — and only this file — showed zero edges: no arrows, nothing selectable, no highlighting, right from the first paint. Separately, drag-to-select selected every element regardless of how small the drag box was or where it was drawn, and dragging a new connection between two existing shapes didn't work either. A brand-new blank diagram worked perfectly for all three. Console was clean throughout — no errors, no warnings. Reproduced after a fully clean restart (all `electron.exe`/`node.exe` processes killed, `node_modules/.vite` deleted), on both branches, ruling out every caching theory tried first (Vite dev-server cache, a stale Electron process, a stale crash-recovery snapshot — the recovery folder was confirmed empty).
+
+**Root cause:** confirmed by temporarily instrumenting `loadDiagramIntoCanvas`, the `zIndexedEdges` computation, and `LabeledEdge`'s render (same live `console.log`/`console.count` technique as this log's other hard bugs) rather than guessing. `edges` state genuinely held all 84 edges immediately after load, and 84 were being passed to `<ReactFlow edges={...}>` — but `LabeledEdge` was only ever invoked for roughly half of them. Reading `@xyflow/react`'s own source (`EdgeWrapper`) found the mechanism: it silently returns `null` — no warning, no error — for any edge whose source or target node isn't yet "initialized," which specifically means `node.internals.handleBounds` and `node.measured.width/height` aren't populated yet in React Flow's own internal store. That measurement is normally driven passively by a `ResizeObserver` per node after mount, converging over an unpredictable number of render passes — usually fast enough to be invisible, but at this diagram's scale (82 nodes, several with 10+ connection-point handles) it sometimes never fully caught up on its own. The same missing/incomplete `nodeLookup` data plausibly explains the other two symptoms too (rubber-band selection and new-connection dragging both depend on the same internal node/handle bounds) — not separately root-caused, but a single underlying cause was sufficient to explain all three, and fixing it resolved all three together.
+
+**Resolution:** `loadDiagramIntoCanvas` now calls React Flow's `updateNodeInternals` for every just-loaded node, deferred one animation frame (so the nodes' DOM elements — found by `data-id`, which `updateNodeInternals` queries for directly — actually exist by the time it runs). Unlike the passive `ResizeObserver` path, `updateNodeInternals` measures a node's handle bounds and dimensions synchronously via direct `getBoundingClientRect()` reads (confirmed by reading `@xyflow/system`'s own implementation), so every node's internal state is populated in one deterministic pass right after load instead of racing. Live-confirmed by the user: edges render immediately with no wait, drag-to-select behaves correctly, and new connections can be dragged, all on the first open of the same large file.
+
+**References:** `src/renderer/src/Canvas.tsx`'s `loadDiagramIntoCanvas`, `node_modules/@xyflow/react`'s `EdgeWrapper`/`isNodeInitialized`, `node_modules/@xyflow/system`'s `updateNodeInternals`, `examples/gallery/landscape/meridian-rail-landscape.chd`
+
+---
+
+## `.react-flow__edgelabel-renderer`'s z-index ceiling went stale, silently breaking edge labels and (new) bend points
+**Status:** Solved
+**Found:** 2026-08-24, live use by the user testing epic 0032's new catmull-rom edge bend points
+
+**Symptom:** a newly-added bend point on a catmull-rom-routed edge rendered correctly (right position, curve bent correctly) but couldn't be interacted with at all — no drag, no right-click menu, no hover response. Separately, and apparently unrelated at first: the user also reported having "lost the ability to add a label to an edge" — an existing, long-shipped feature (epic 0012), not something epic 0032 touched.
+
+**Root cause:** both symptoms were the same bug. `main.css`'s `.react-flow__edgelabel-renderer` rule (the shared portal React Flow's `<EdgeLabelRenderer>` renders every edge's label — and, as of epic 0032, every catmull-rom edge's bend-point handles — into) sets an explicit `z-index` specifically so it always paints and hit-tests above the edges/nodes it visually overlaps; without it, epic 0042 found labels painting behind their own selected edge. That value was `5000`, sized in epic 0042 against a documented ceiling of ~4000 ("2000 node z-index + up to ~2000 more from selection elevation"). Two later epics silently invalidated that ceiling without anyone revisiting this comment: epic 0043/ADR 0035's real z-index tiers (`zIndexOrdering.ts`) go up to `TEXT_BASE = 200_000`, and epic 0046's `SELECTED_EDGE_Z_BOOST` (`Canvas.tsx`) adds `1_000_000` on top for a selected edge — a real ceiling of 1,200,000+, roughly 240× higher than the CSS assumed. Any edge in that range (in practice: any *selected* edge, which is exactly the state a user is in right after clicking one to add a point or edit its label) painted and hit-tested above the shared portal, silently swallowing every click meant for a label or bend point. Confirmed by reading `@xyflow/react`'s own bundled source (`EdgeLabelRenderer` portals to a plain, unstyled `<div className="react-flow__edgelabel-renderer">` with no z-index of its own) and cross-referencing the actual current constants, not by guessing.
+
+**Resolution:** raised the CSS z-index to `2_000_000` — comfortably above the real current ceiling, with real headroom rather than an exact-fit value (the same mistake that let this go stale once already). The rule's own comment now names the actual source constants (`TEXT_BASE`, `SELECTED_EDGE_Z_BOOST`) instead of a plain number, and flags itself as a manually-maintained ceiling nothing re-checks automatically — the first thing to re-verify if this class of bug ever resurfaces.
+
+**References:** `src/renderer/src/assets/main.css`'s `.react-flow__edgelabel-renderer`, `src/renderer/src/layers/zIndexOrdering.ts`, `src/renderer/src/Canvas.tsx`'s `SELECTED_EDGE_Z_BOOST`, [epic 0032](planning/epics/0032-edge-routing-and-waypoints.md), [ADR 0030](decisions/0030-edge-label-z-index-override.md) (the original epic 0042 fix this value came from).
 
 ---
 

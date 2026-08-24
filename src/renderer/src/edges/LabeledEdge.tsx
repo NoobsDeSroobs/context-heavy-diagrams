@@ -1,13 +1,16 @@
-import { memo, useMemo, type CSSProperties } from 'react'
+import { memo, useCallback, useMemo, useState, type CSSProperties, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from 'react'
 import {
   BaseEdge,
   EdgeLabelRenderer,
   getBezierPath,
+  getSmoothStepPath,
+  getStraightPath,
   useReactFlow,
   Position,
   type EdgeProps
 } from '@xyflow/react'
-import type { EdgeStyle, MetadataEntry } from '@shared/diagram'
+import type { EdgeStyle, LinePoint, MetadataEntry } from '@shared/diagram'
+import { buildConnectorPath, type PathPoint } from '../geometry/bendablePath'
 import EditableLabel from '../components/EditableLabel'
 import HighlightChips from '../components/HighlightChips'
 import { useDiagramContext } from '../DiagramContext'
@@ -35,6 +38,7 @@ const DEFAULT_STROKE_WIDTH = 1
 // highlighted *and* selected edge just gets both effects layered. Epic
 // 0046.
 const SELECTED_STROKE_WIDTH_DELTA = 2
+const BEND_POINT_HANDLE_SIZE = 10
 
 // Point at an arbitrary fraction of the path's arc length — epic 0045,
 // also used for the plain midpoint (ratio 0.5) since epic 0047, so a label
@@ -51,27 +55,32 @@ function pointAtRatio(pathD: string, ratio: number): { x: number; y: number } {
 }
 
 // Outward from the node at each side — the direction an edge already
-// travels leaving/entering a handle, used below to place the straight
-// lead-in's other end.
-const OUTWARD_DIRECTION: Record<Position, { dx: number; dy: number }> = {
-  [Position.Top]: { dx: 0, dy: -1 },
-  [Position.Right]: { dx: 1, dy: 0 },
-  [Position.Bottom]: { dx: 0, dy: 1 },
-  [Position.Left]: { dx: -1, dy: 0 }
+// travels leaving/entering a handle. Used both to place the bezier
+// routing's straight lead-in/out (below) and as every point's fixed
+// tangent direction under catmull-rom routing (epic 0032; see
+// bendablePath.ts's PathPoint).
+const OUTWARD_DIRECTION: Record<Position, { x: number; y: number }> = {
+  [Position.Top]: { x: 0, y: -1 },
+  [Position.Right]: { x: 1, y: 0 },
+  [Position.Bottom]: { x: 0, y: 1 },
+  [Position.Left]: { x: -1, y: 0 }
 }
 
 // Straight lead-in/out before curving — the global edgeStraightSegmentLength
-// setting (settings.ts/SettingsPanel, ADR 0032), epic 0047. getBezierPath
-// has no concept of this, so the curve itself is instead run between two
-// points offset straight outward from the real endpoints, and a straight
-// `L` segment splices each real endpoint onto that curve's own path
-// string. Relies on getBezierPath's returned path always starting
-// "M<x>,<y> C..." (its actual, stable implementation, not just documented
-// behavior) — the same assumption pointAtRatio above already makes by
-// treating the returned string as valid path data either way. Clamped to
-// half the straight-line distance between the real endpoints so two short
-// segments can never overlap or fold a short edge's path back on itself.
-function buildEdgePath(
+// setting (settings.ts/SettingsPanel, ADR 0032), epic 0047. Only meaningful
+// for the two "curvy" routing styles (bezier, catmull-rom); straight/step/
+// smoothstep already leave each side perpendicular by construction, with no
+// ambiguity to disambiguate. getBezierPath has no concept of a lead-in
+// itself, so the curve is instead run between two points offset straight
+// outward from the real endpoints, and a straight `L` segment splices each
+// real endpoint onto that curve's own path string. Relies on getBezierPath's
+// returned path always starting "M<x>,<y> C..." (its actual, stable
+// implementation, not just documented behavior) — the same assumption
+// pointAtRatio above already makes by treating the returned string as valid
+// path data either way. Clamped to half the straight-line distance between
+// the real endpoints so two short segments can never overlap or fold a
+// short edge's path back on itself.
+function buildBezierPath(
   sourceX: number,
   sourceY: number,
   sourcePosition: Position,
@@ -87,10 +96,10 @@ function buildEdgePath(
   const length = Math.min(straightSegmentLength, distance / 2)
   const sourceDir = OUTWARD_DIRECTION[sourcePosition]
   const targetDir = OUTWARD_DIRECTION[targetPosition]
-  const offsetSourceX = sourceX + sourceDir.dx * length
-  const offsetSourceY = sourceY + sourceDir.dy * length
-  const offsetTargetX = targetX + targetDir.dx * length
-  const offsetTargetY = targetY + targetDir.dy * length
+  const offsetSourceX = sourceX + sourceDir.x * length
+  const offsetSourceY = sourceY + sourceDir.y * length
+  const offsetTargetX = targetX + targetDir.x * length
+  const offsetTargetY = targetY + targetDir.y * length
   const [curve] = getBezierPath({
     sourceX: offsetSourceX,
     sourceY: offsetSourceY,
@@ -126,15 +135,47 @@ function LabeledEdge({
   selected,
   data
 }: EdgeProps): React.JSX.Element {
-  const { updateEdgeData } = useReactFlow()
-  const { matchHighlights, edgeStraightSegmentLength, theme } = useDiagramContext()
+  const { updateEdgeData, screenToFlowPosition } = useReactFlow()
+  const { matchHighlights, edgeStraightSegmentLength, theme, pushSnapshot, openContextMenu, gravityPresets } =
+    useDiagramContext()
   const edgeStyle = data?.style as EdgeStyle | undefined
+  const routingStyle = edgeStyle?.routingStyle
   const highlightMatches = matchHighlights(data?.metadata as Record<string, MetadataEntry> | undefined)
-  const edgePath = useMemo(
-    () =>
-      buildEdgePath(sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition, edgeStraightSegmentLength),
-    [sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition, edgeStraightSegmentLength]
-  )
+  // Bend-point visibility: hovered (Canvas.tsx's onEdgeMouseEnter/Leave,
+  // see data.hovered's own comment there) or selected or a point is
+  // actively being dragged right now — the last case so a fast drag that
+  // strays off the path mid-gesture doesn't hide the very point being
+  // dragged.
+  const [draggingPointIndex, setDraggingPointIndex] = useState<number | null>(null)
+  const bendPointsVisible = Boolean(data?.hovered) || selected || draggingPointIndex !== null
+  const bendPoints = (data?.points as LinePoint[] | undefined) ?? []
+
+  // Routing (epic 0032): 'straight'/'step'/'smoothstep' are React Flow's
+  // own built-in path shapes, wired straight through with no math of our
+  // own. 'catmullRom' reuses bendablePath.ts (originally epic 0064's
+  // freeform-line curve, ADR 0050) with this edge's own manual bend points.
+  // Absent means today's only historical behavior, a plain bezier.
+  const edgePath = useMemo(() => {
+    switch (routingStyle) {
+      case 'straight':
+        return getStraightPath({ sourceX, sourceY, targetX, targetY })[0]
+      case 'step':
+        return getSmoothStepPath({ sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition, borderRadius: 0 })[0]
+      case 'smoothstep':
+        return getSmoothStepPath({ sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition })[0]
+      case 'catmullRom': {
+        const pathPoints: PathPoint[] = [
+          { x: sourceX, y: sourceY, direction: OUTWARD_DIRECTION[sourcePosition] },
+          ...bendPoints,
+          { x: targetX, y: targetY, direction: OUTWARD_DIRECTION[targetPosition] }
+        ]
+        return buildConnectorPath(pathPoints, edgeStraightSegmentLength)
+      }
+      default:
+        return buildBezierPath(sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition, edgeStraightSegmentLength)
+    }
+  }, [routingStyle, sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition, bendPoints, edgeStraightSegmentLength])
+
   const labelRatio = edgeStyle?.labelPosition
   const { x: labelX, y: labelY } = useMemo(
     () => pointAtRatio(edgePath, labelRatio ?? 0.5),
@@ -192,6 +233,59 @@ function LabeledEdge({
     ...(edgeStyle?.fontFamily ? { fontFamily: edgeStyle.fontFamily } : {})
   }
 
+  // Manual bend points — only meaningful under catmull-rom routing (a
+  // straight/step/smoothstep path is fully determined by React Flow's own
+  // algorithm, no interior points to place). Dragging repositions
+  // data.points[index] directly, in the same absolute canvas coordinates
+  // the schema already stores them in.
+  const onBendPointPointerDown = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>, index: number) => {
+      event.stopPropagation()
+      pushSnapshot()
+      setDraggingPointIndex(index)
+      const target = event.currentTarget
+      target.setPointerCapture(event.pointerId)
+      const onMove = (moveEvent: PointerEvent): void => {
+        const flowPoint = screenToFlowPosition({ x: moveEvent.clientX, y: moveEvent.clientY })
+        updateEdgeData(id, {
+          points: bendPoints.map((p, i) => (i === index ? { ...p, x: flowPoint.x, y: flowPoint.y } : p))
+        })
+      }
+      const onUp = (): void => {
+        target.releasePointerCapture(event.pointerId)
+        window.removeEventListener('pointermove', onMove)
+        window.removeEventListener('pointerup', onUp)
+        setDraggingPointIndex(null)
+      }
+      window.addEventListener('pointermove', onMove)
+      window.addEventListener('pointerup', onUp)
+    },
+    [pushSnapshot, screenToFlowPosition, updateEdgeData, id, bendPoints]
+  )
+
+  const onBendPointContextMenu = useCallback(
+    (event: ReactMouseEvent<HTMLDivElement>, index: number) => {
+      event.preventDefault()
+      event.stopPropagation()
+      const setGravity = (gravity: number): void => {
+        pushSnapshot()
+        updateEdgeData(id, { points: bendPoints.map((p, i) => (i === index ? { ...p, gravity } : p)) })
+      }
+      openContextMenu(event.clientX, event.clientY, [
+        ...gravityPresets.map((preset) => ({ label: preset.label, onSelect: () => setGravity(preset.value) })),
+        {
+          label: 'Remove point',
+          separatorBefore: true,
+          onSelect: () => {
+            pushSnapshot()
+            updateEdgeData(id, { points: bendPoints.filter((_, i) => i !== index) })
+          }
+        }
+      ])
+    },
+    [pushSnapshot, openContextMenu, gravityPresets, updateEdgeData, id, bendPoints]
+  )
+
   return (
     <>
       <BaseEdge
@@ -234,6 +328,21 @@ function LabeledEdge({
             <HighlightChips highlights={highlightMatches} />
           </div>
         )}
+        {routingStyle === 'catmullRom' &&
+          bendPoints.map((point, index) => (
+            <div
+              key={index}
+              className={`edge-bend-point nodrag nopan${bendPointsVisible ? '' : ' edge-bend-point-hidden'}`}
+              style={{
+                position: 'absolute',
+                width: BEND_POINT_HANDLE_SIZE,
+                height: BEND_POINT_HANDLE_SIZE,
+                transform: `translate(-50%, -50%) translate(${point.x}px, ${point.y}px)`
+              }}
+              onPointerDown={(event) => onBendPointPointerDown(event, index)}
+              onContextMenu={(event) => onBendPointContextMenu(event, index)}
+            />
+          ))}
       </EdgeLabelRenderer>
     </>
   )
