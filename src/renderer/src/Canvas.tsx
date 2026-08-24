@@ -78,6 +78,7 @@ import {
 } from './nodes/connectionPoints'
 import { nearestSegmentIndex, type PathPoint } from './geometry/bendablePath'
 import SettingsPanel from './components/SettingsPanel'
+import AlignDistributePanel from './components/AlignDistributePanel'
 import AboutDialog from './components/AboutDialog'
 import ExportPngDialog, { type PngExportChoice } from './components/ExportPngDialog'
 import StylePalettePanel from './components/StylePalettePanel'
@@ -713,6 +714,7 @@ function CanvasInner(): React.JSX.Element {
   const [highlightsPanelAnchor, setHighlightsPanelAnchor] = useState<DOMRect | null>(null)
   const [settingsPanelOpen, setSettingsPanelOpen] = useState(false)
   const [stylePalettePanelOpen, setStylePalettePanelOpen] = useState(false)
+  const [alignDistributePanelOpen, setAlignDistributePanelOpen] = useState(false)
   // Persona switch (epic 0060, first step) — akin to FreeCAD's workbench
   // switcher/Affinity's persona tabs: swaps the entire main view, not a
   // split or overlay. Render-only prototype for now (ThreatMatrixView),
@@ -1082,6 +1084,7 @@ function CanvasInner(): React.JSX.Element {
     setLayerPanelOpen(false)
     setStylePalettePanelOpen(false)
     setGravityPresetsPanelOpen(false)
+    setAlignDistributePanelOpen(false)
     setDetailsPanelNodeId(nodeId)
   }, [])
 
@@ -1092,6 +1095,7 @@ function CanvasInner(): React.JSX.Element {
     setLayerPanelOpen(false)
     setStylePalettePanelOpen(false)
     setGravityPresetsPanelOpen(false)
+    setAlignDistributePanelOpen(false)
     setRequiredTagsPanelOpen((open) => !open)
   }, [])
 
@@ -1102,6 +1106,7 @@ function CanvasInner(): React.JSX.Element {
     setLayerPanelOpen(false)
     setStylePalettePanelOpen(false)
     setGravityPresetsPanelOpen(false)
+    setAlignDistributePanelOpen(false)
     setDiagnosticsPanelOpen((open) => !open)
   }, [])
 
@@ -1112,6 +1117,7 @@ function CanvasInner(): React.JSX.Element {
     setLayerPanelOpen(false)
     setStylePalettePanelOpen(false)
     setGravityPresetsPanelOpen(false)
+    setAlignDistributePanelOpen(false)
     setSettingsPanelOpen((open) => !open)
   }, [])
 
@@ -1122,6 +1128,7 @@ function CanvasInner(): React.JSX.Element {
     setSettingsPanelOpen(false)
     setLayerPanelOpen(false)
     setGravityPresetsPanelOpen(false)
+    setAlignDistributePanelOpen(false)
     setStylePalettePanelOpen((open) => !open)
   }, [])
 
@@ -1132,7 +1139,19 @@ function CanvasInner(): React.JSX.Element {
     setSettingsPanelOpen(false)
     setLayerPanelOpen(false)
     setStylePalettePanelOpen(false)
+    setAlignDistributePanelOpen(false)
     setGravityPresetsPanelOpen((open) => !open)
+  }, [])
+
+  const toggleAlignDistributePanel = useCallback(() => {
+    setDetailsPanelNodeId(null)
+    setRequiredTagsPanelOpen(false)
+    setDiagnosticsPanelOpen(false)
+    setSettingsPanelOpen(false)
+    setLayerPanelOpen(false)
+    setStylePalettePanelOpen(false)
+    setGravityPresetsPanelOpen(false)
+    setAlignDistributePanelOpen((open) => !open)
   }, [])
 
   // Anchors the floating panel to whichever element opened it — same
@@ -1150,6 +1169,7 @@ function CanvasInner(): React.JSX.Element {
     setSettingsPanelOpen(false)
     setStylePalettePanelOpen(false)
     setGravityPresetsPanelOpen(false)
+    setAlignDistributePanelOpen(false)
     setEntityHighlightNodeId(null)
     setLayerPanelOpen((open) => !open)
   }, [])
@@ -1944,6 +1964,62 @@ function CanvasInner(): React.JSX.Element {
     })
   }, [nodes, setNodes, pushSnapshot])
 
+  // Under Edit, via AlignDistributePanel — "Align Vertically" stacks the
+  // selection top-to-bottom (all sharing the leftmost element's left edge,
+  // `gapPx` of clear space between each element's bottom and the next
+  // one's top); "Align Horizontally" is the same arranged left-to-right.
+  // Order along the moving axis follows each element's own current
+  // position (not selection order), so re-running it is idempotent.
+  //
+  // Computed in each node's absolute canvas position (absolutePosition),
+  // not its raw — possibly parent-relative — position field, so a
+  // selection spanning nodes inside different containers still measures
+  // real on-screen gaps; the result is converted back to parent-relative
+  // before writing, same pattern already used for reparenting (see
+  // setContainerForNodes above). `n.width`/`n.height` are React Flow's own
+  // measured size (matches the drag-time alignment guides' use of the same
+  // fields, alignment.ts) — set once a node has actually rendered, which
+  // is always true for anything selectable on screen.
+  const alignSelected = useCallback(
+    (axis: 'vertical' | 'horizontal', gapPx: number) => {
+      const selected = nodes.filter((n) => n.selected)
+      if (selected.length < 2) return
+      pushSnapshot()
+      setNodes((nds) => {
+        const byId = new Map(nds.map((n) => [n.id, n]))
+        const targets = nds.filter((n) => n.selected)
+        const withAbs = targets.map((n) => ({
+          node: n,
+          abs: absolutePosition(n, byId),
+          width: n.width ?? 0,
+          height: n.height ?? 0
+        }))
+        const primaryAxis = axis === 'vertical' ? 'y' : 'x'
+        const crossAxis = axis === 'vertical' ? 'x' : 'y'
+        const primarySize = axis === 'vertical' ? 'height' : 'width'
+        withAbs.sort((a, b) => a.abs[primaryAxis] - b.abs[primaryAxis])
+        const crossValue = Math.min(...withAbs.map((w) => w.abs[crossAxis]))
+        let cursor = withAbs[0].abs[primaryAxis]
+        const nextAbs = new Map<string, { x: number; y: number }>()
+        for (const w of withAbs) {
+          nextAbs.set(
+            w.node.id,
+            axis === 'vertical' ? { x: crossValue, y: cursor } : { x: cursor, y: crossValue }
+          )
+          cursor += w[primarySize] + gapPx
+        }
+        return nds.map((n) => {
+          const abs = nextAbs.get(n.id)
+          if (!abs) return n
+          const parent = n.parentId ? byId.get(n.parentId) : undefined
+          const position = parent ? subtractPosition(abs, absolutePosition(parent, byId)) : abs
+          return { ...n, position }
+        })
+      })
+    },
+    [nodes, setNodes, pushSnapshot]
+  )
+
   // Repeated Ctrl+V of the *same* copied content cascades diagonally
   // (+20px per repeat) so pastes don't stack exactly on top of each other
   // — standard clipboard-paste convention. Resets whenever the clipboard
@@ -2413,6 +2489,7 @@ function CanvasInner(): React.JSX.Element {
       setHighlightsPanelOpen(false)
       setSettingsPanelOpen(false)
       setGravityPresetsPanelOpen(false)
+      setAlignDistributePanelOpen(false)
       // Defensive, per ADR 0022 — reconcile against hand-edited drift on
       // every load, not just when the template is edited from within the app.
       runSync(openedRequiredTags)
@@ -2928,6 +3005,8 @@ function CanvasInner(): React.JSX.Element {
           setStylePalettePanelOpen(false)
         } else if (gravityPresetsPanelOpen) {
           setGravityPresetsPanelOpen(false)
+        } else if (alignDistributePanelOpen) {
+          setAlignDistributePanelOpen(false)
         } else if (iconPicker) {
           setIconPicker(null)
         } else if (colorPicker) {
@@ -2972,6 +3051,7 @@ function CanvasInner(): React.JSX.Element {
     settingsPanelOpen,
     stylePalettePanelOpen,
     gravityPresetsPanelOpen,
+    alignDistributePanelOpen,
     iconPicker,
     colorPicker,
     linePicker,
@@ -3175,7 +3255,12 @@ function CanvasInner(): React.JSX.Element {
         // Not disabled on an empty/invalid clipboard — same silent no-op
         // as the keyboard shortcut, avoids a synchronous clipboard read on
         // every render just to compute this menu's enabled state.
-        { label: 'Paste', accelerator: 'Ctrl+V', onSelect: pasteFromClipboard }
+        { label: 'Paste', accelerator: 'Ctrl+V', onSelect: pasteFromClipboard },
+        {
+          label: 'Align / Distribute…',
+          disabled: selectedNodes.length < 2,
+          onSelect: toggleAlignDistributePanel
+        }
       ]
     },
     {
@@ -3616,6 +3701,13 @@ function CanvasInner(): React.JSX.Element {
               settings={settings}
               onChange={updateSettings}
               onClose={() => setSettingsPanelOpen(false)}
+            />
+          )}
+          {alignDistributePanelOpen && (
+            <AlignDistributePanel
+              disabled={selectedNodes.length < 2}
+              onAlign={alignSelected}
+              onClose={() => setAlignDistributePanelOpen(false)}
             />
           )}
           {stylePalettePanelOpen && (
