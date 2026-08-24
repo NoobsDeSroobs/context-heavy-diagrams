@@ -10,6 +10,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 - **Open** — known, not blocking, deliberately not fixed yet. Has a documented direction to revisit if it becomes a real complaint.
 
 ## Open items at a glance
+- [Dragging a new edge from a node inside a locked container can snap to the container itself](#dragging-a-new-edge-from-a-node-inside-a-locked-container-can-snap-to-the-container-itself) — Open, not investigated.
 - [Hovering a single edge on a large diagram re-renders every node and edge several times over](#hovering-a-single-edge-on-a-large-diagram-re-renders-every-node-and-edge-several-times-over) — Open, two contributing causes fixed, dominant cause not yet found.
 - [A large diagram's edges, selection box, and new-connection dragging all silently failed until node measurement happened to catch up](#a-large-diagrams-edges-selection-box-and-new-connection-dragging-all-silently-failed-until-node-measurement-happened-to-catch-up) — Solved.
 - [`.react-flow__edgelabel-renderer`'s z-index ceiling went stale, silently breaking edge labels and (new) bend points](#react-flowedgelabel-rendereres-z-index-ceiling-went-stale-silently-breaking-edge-labels-and-new-bend-points) — Solved.
@@ -21,6 +22,20 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 - [`npm run lint` reports ~10,000 CRLF warnings repo-wide](#npm-run-lint-reports-10000-crlf-warnings-repo-wide) — Open, not this machine's normal experience, cause not confirmed.
 - [Exported PNGs had no visible arrowheads on any edge](#exported-pngs-had-no-visible-arrowheads-on-any-edge) — Solved.
 - ["Use canvas color" PNG export always exported plain white](#use-canvas-color-png-export-always-exported-plain-white) — Solved.
+
+---
+
+## Dragging a new edge from a node inside a locked container can snap to the container itself
+**Status:** Open, not investigated
+**Found:** 2026-08-24, live use by the user, reported to be logged rather than fixed immediately
+
+**Symptom:** dragging a new connection from a shape that sits inside a container, near the container's own edge, snaps/connects to the *container* rather than passing through it — even when that container is locked. Dropping the connection there then pops up the "what do you want to create" prompt (the void-drop AnchorNode flow, `spawnAnchorAt`/`resolveAnchorNode`, epic 0014) rather than behaving as a normal connection or a clean drop onto empty canvas. The user's expectation: a locked container should be completely transparent to this interaction, "as if it was not there."
+
+**Not yet investigated**, but a likely starting point: `locked` (`data.locked`, `deriveNodeFields` in `Canvas.tsx`) only ever maps onto React Flow's `draggable`/`deletable` node overrides — `selectable` and, implicitly, connectability are deliberately left untouched (see that function's own comment: "the whole point was blocking accidental drags/deletes while keeping selection/highlighting working normally"). That was a deliberate choice for *selection*, but connection-drag snapping was never considered against it — a locked container's own connection-point handles are plausibly just as live as an unlocked one's, which would fully explain this symptom without needing anything container-specific or z-index-related.
+
+**If revisited**: check whether the same snap happens near an *unlocked* container too (isolates whether this is really about `locked` specifically, or a more general "a container's own handles are too eager to claim a nearby connection drag" issue that locked state happens to make more noticeable). If it's confirmed to be about `locked` specifically, the fix is likely making connection validation (`isValidConnection` or equivalent) reject a locked node the same way dragging/deleting it already does.
+
+**References:** `src/renderer/src/Canvas.tsx`'s `deriveNodeFields`, `spawnAnchorAt`/`resolveAnchorNode` (epic 0014's void-drop flow), `src/renderer/src/nodes/ContainerNode.tsx`
 
 ---
 

@@ -88,6 +88,14 @@ export default function SettingsPanel({ settings, onChange, onClose }: SettingsP
             title="Look for crash-recovery snapshots from diagrams that were never saved, every time the app starts"
           />
         </FieldRow>
+        <FieldRow label="Drag-select requires full enclosure">
+          <input
+            type="checkbox"
+            checked={settings.dragSelectRequiresFullEnclosure}
+            onChange={(e) => onChange({ dragSelectRequiresFullEnclosure: e.target.checked })}
+            title="On: an element must be entirely inside the drag box to be selected. Off: touching the box is enough."
+          />
+        </FieldRow>
         <FieldRow label="Selected edge color">
           {/* Plain swatch, not the property panel's ColorField — that one
               supports an "unset" state (its × clear button) which doesn't

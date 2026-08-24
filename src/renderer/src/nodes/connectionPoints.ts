@@ -63,11 +63,23 @@ export function connectionPointCountForSide(storedPoints: ConnectionPoint[], sid
   return effectivePointsForSide(storedPoints, side).length
 }
 
+// A plain {left, top, width, height} is all nearestConnectionPoint actually
+// needs — a real DOMRect satisfies this too, so widening from DOMRect to
+// this narrower shape doesn't break any existing caller, and lets
+// nearestConnectionPointId below build one straight from a node's absolute
+// canvas position without needing a real DOM measurement.
+export interface RectLike {
+  left: number
+  top: number
+  width: number
+  height: number
+}
+
 // Right-click position -> nearest side + offset along it, both relative to
 // the node's own current on-screen rect. Simple nearest-edge distance
 // comparison, not anything fancier.
 export function nearestConnectionPoint(
-  rect: DOMRect,
+  rect: RectLike,
   clientX: number,
   clientY: number
 ): { side: ConnectionPointSide; offset: number } {
@@ -84,6 +96,51 @@ export function nearestConnectionPoint(
   )
   const raw = side === 'top' || side === 'bottom' ? localX / rect.width : localY / rect.height
   return { side, offset: Math.min(1, Math.max(0, raw)) }
+}
+
+// Nearest *existing, connectable* point (a real point, not just a side +
+// ideal offset) to an arbitrary point in the same coordinate space as
+// `rect`, plus that point's own absolute {x, y} in that same space — used
+// by the multi-connection-line feature for both the live drag visual
+// (nearest point facing the current pointer, needs real coordinates to
+// draw a line to) and the actual edges created on drop (nearest point
+// facing the real target node's center, needs just the id). Single
+// resolver for both so they can never disagree about which point counts as
+// "nearest" — nearestConnectionPoint alone only resolves a side and an
+// ideal offset along it; this picks whichever of that side's real points
+// (synthesized default or customized) sits closest to that ideal offset.
+export function nearestConnectionPointWithCoordinates(
+  storedPoints: ConnectionPoint[],
+  rect: RectLike,
+  pointX: number,
+  pointY: number
+): { point: ConnectionPoint; x: number; y: number } {
+  const { side, offset } = nearestConnectionPoint(rect, pointX, pointY)
+  const onSide = effectivePointsForSide(storedPoints, side)
+  const point = onSide.reduce((best, candidate) =>
+    Math.abs(candidate.offset - offset) < Math.abs(best.offset - offset) ? candidate : best
+  )
+  switch (side) {
+    case 'top':
+      return { point, x: rect.left + rect.width * point.offset, y: rect.top }
+    case 'bottom':
+      return { point, x: rect.left + rect.width * point.offset, y: rect.top + rect.height }
+    case 'left':
+      return { point, x: rect.left, y: rect.top + rect.height * point.offset }
+    case 'right':
+      return { point, x: rect.left + rect.width, y: rect.top + rect.height * point.offset }
+  }
+}
+
+// Just the id — the common case (multi-connection onConnect only needs to
+// know *which* handle to attach to, not where it sits on screen).
+export function nearestConnectionPointId(
+  storedPoints: ConnectionPoint[],
+  rect: RectLike,
+  pointX: number,
+  pointY: number
+): string {
+  return nearestConnectionPointWithCoordinates(storedPoints, rect, pointX, pointY).point.id
 }
 
 // Clockwise-around-the-box order per side, used by the count-based

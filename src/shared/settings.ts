@@ -89,6 +89,15 @@ export interface AppSettings {
   // highlights) goes in — see exportLegendPlacement.ts. Same "remembers
   // the dialog's last choice" treatment as the three fields above.
   pngExportLegendCorner: LegendCorner
+  // React Flow's own selectionMode prop (SelectionMode.Full/.Partial),
+  // exposed as a Setting rather than hardcoded — raised after the user
+  // started relying on drag-to-select more heavily alongside epic 0084's
+  // multi-connection-line. true (Full, today's only prior behavior):
+  // an element must be entirely inside the drag box to be selected.
+  // false (Partial): touching the box's edge is enough — usually the more
+  // useful mode once you're deliberately drag-selecting a cluster rather
+  // than a precise sub-area.
+  dragSelectRequiresFullEnclosure: boolean
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -104,5 +113,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   defaultStyles: {},
   pngExportPaddingPx: 40,
   pngExportTransparentBackground: false,
-  pngExportLegendCorner: 'bottom-left'
+  pngExportLegendCorner: 'bottom-left',
+  dragSelectRequiresFullEnclosure: true
 }

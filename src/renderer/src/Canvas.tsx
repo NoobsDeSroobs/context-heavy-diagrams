@@ -9,6 +9,7 @@ import {
   MiniMap,
   MarkerType,
   ConnectionMode,
+  SelectionMode,
   addEdge,
   reconnectEdge,
   useNodesState,
@@ -73,10 +74,13 @@ import {
 } from './layers/zIndexOrdering'
 import {
   effectiveConnectionPoints,
+  nearestConnectionPointId,
   reassignConnectionPointHandles,
   setSideCustomPointCount
 } from './nodes/connectionPoints'
 import { nearestSegmentIndex, type PathPoint } from './geometry/bendablePath'
+import { absolutePosition, subtractPosition } from './geometry/nodePosition'
+import MultiConnectionLine from './edges/MultiConnectionLine'
 import SettingsPanel from './components/SettingsPanel'
 import AlignDistributePanel from './components/AlignDistributePanel'
 import AboutDialog from './components/AboutDialog'
@@ -217,34 +221,6 @@ function pointFromEvent(event: MouseEvent | TouchEvent): { clientX: number; clie
   return 'changedTouches' in event ? event.changedTouches[0] : event
 }
 
-// Containers (epic 0004, ADR 0012) — a child node's `position` is relative
-// to its immediate parent's own position, cascading up through any nesting
-// depth. These helpers convert between that relative space and true
-// absolute canvas coordinates, and keep the invariant React Flow requires:
-// a parent node must appear earlier in the `nodes` array than its children.
-
-function absolutePosition(node: Node, byId: Map<string, Node>): { x: number; y: number } {
-  let x = node.position.x
-  let y = node.position.y
-  let parentId = node.parentId
-  const seen = new Set<string>([node.id])
-  while (parentId && !seen.has(parentId)) {
-    const parent = byId.get(parentId)
-    if (!parent) break
-    x += parent.position.x
-    y += parent.position.y
-    seen.add(parentId)
-    parentId = parent.parentId
-  }
-  return { x, y }
-}
-
-function subtractPosition(
-  a: { x: number; y: number },
-  b: { x: number; y: number }
-): { x: number; y: number } {
-  return { x: a.x - b.x, y: a.y - b.y }
-}
 
 // Outward from a bound endpoint's own side — matches LabeledEdge.tsx's own
 // identically-named table one-for-one (small local copy, not shared —
@@ -394,6 +370,16 @@ const DEFAULT_EDGE_SWATCH_DASH: Record<'solid' | 'dashed' | 'dotted', string | u
 // check.
 function nodeMetadataEligible(type: string | undefined): boolean {
   return type === 'shape' || type === 'container'
+}
+
+// Only these three types render ConnectionHandles (see ShapeNode/
+// ContainerNode/AnchorNode) — 'text' and 'line' have no handles at all, so
+// a selected one of either can never legitimately be an edge endpoint.
+// Used by multi-connection onConnect below to skip a selected node that
+// happens not to be connectable, rather than trying to resolve a
+// connection point that doesn't exist on it.
+function isConnectableNodeType(type: string | undefined): boolean {
+  return type === 'shape' || type === 'container' || type === 'anchor'
 }
 
 function toDiagramFile(
@@ -1019,6 +1005,57 @@ function CanvasInner(): React.JSX.Element {
             })
         },
         {
+          label: 'Reverse direction',
+          onSelect: () => {
+            pushSnapshot()
+            setEdges((eds) =>
+              eds.map((e) => {
+                if (e.id !== edge.id) return e
+                const points = (e.data?.points as LinePoint[] | undefined) ?? []
+                const style = e.data?.style as EdgeStyle | undefined
+                return {
+                  ...e,
+                  source: e.target,
+                  target: e.source,
+                  sourceHandle: e.targetHandle,
+                  targetHandle: e.sourceHandle,
+                  data: {
+                    ...e.data,
+                    // Reversed, not just swapped-and-left-in-order — a
+                    // catmull-rom edge's curve is defined by walking
+                    // [source, ...points, target] in that order, so
+                    // keeping the same point order after swapping the
+                    // endpoints would trace a *different* shape (or, for
+                    // an asymmetric gravity/point layout, a visibly wrong
+                    // one), not the same curve with the arrow moved.
+                    points: points.length > 0 ? [...points].reverse() : points,
+                    style: style && {
+                      ...style,
+                      // Swapped together, not independently — even when
+                      // neither was ever explicitly customized (both
+                      // undefined), this keeps whichever *physical* marker
+                      // choice each end had traveling with that end,
+                      // rather than silently staying "at target" for a
+                      // target that's now a different node.
+                      startMarker: style.endMarker,
+                      endMarker: style.startMarker,
+                      // A custom label position is a ratio measured from
+                      // source (LabeledEdge.tsx's pointAtRatio) — flipping
+                      // it keeps the label sitting in the same physical
+                      // spot on the curve now that source/target swapped,
+                      // instead of jumping to the mirrored point. 0.5 (the
+                      // default, unset) flips to itself, so this is a
+                      // no-op for the common case of never having touched it.
+                      labelPosition:
+                        style.labelPosition !== undefined ? 1 - style.labelPosition : undefined
+                    }
+                  }
+                }
+              })
+            )
+          }
+        },
+        {
           label: 'Add point here',
           separatorBefore: true,
           onSelect: () => {
@@ -1417,21 +1454,71 @@ function CanvasInner(): React.JSX.Element {
     }
   }, [detailsPanelNodeId, detailsDrafts, nodes, currentPath])
 
+  // Multi-connection-line (xyflow's own documented pattern for this,
+  // reactflow.dev/examples/edges/multi-connection-line, adapted to this
+  // app's own explicit-connection-point-id model rather than xyflow's
+  // plain "leave sourceHandle unset" version): if other connectable nodes
+  // are selected when a drag completes, every one of them gets its own
+  // edge to the same target, not just the node actually dragged from.
+  // Dragging from a node that *isn't* selected still only ever wires that
+  // one node — this only activates via a real prior selection, never as an
+  // accidental side effect of an ordinary single drag.
+  //
+  // The dragged node's own edge keeps the exact handle the user actually
+  // dropped onto (connection.sourceHandle) — every *other* selected node
+  // has no such explicit choice, so its handle is resolved to whichever of
+  // its own connection points sits nearest the target's center
+  // (nearestConnectionPointId, connectionPoints.ts — the same nearest-side
+  // math already used for right-click "add connection point here"), so
+  // each additional edge still looks deliberate regardless of how that
+  // node happens to be positioned relative to the target.
   const onConnect = useCallback(
     (connection: Connection) => {
       pushSnapshot()
-      setEdges((eds) =>
-        addEdge(
-          {
-            ...connection,
-            type: 'labeled',
-            data: { metadata: seedMetadata(requiredTags), style: settings.defaultEdgeStyle }
-          },
-          eds
-        )
-      )
+      setEdges((eds) => {
+        const byId = new Map(nodes.map((n) => [n.id, n]))
+        const targetNode = byId.get(connection.target)
+        const targetCenter = targetNode
+          ? (() => {
+              const abs = absolutePosition(targetNode, byId)
+              return { x: abs.x + (targetNode.width ?? 0) / 2, y: abs.y + (targetNode.height ?? 0) / 2 }
+            })()
+          : null
+        const sourceIds = nodes
+          .filter((n) => n.id === connection.source || (n.selected && isConnectableNodeType(n.type)))
+          .map((n) => n.id)
+        return sourceIds.reduce((acc, sourceId) => {
+          const sourceNode = byId.get(sourceId)
+          const sourceAbs = sourceNode ? absolutePosition(sourceNode, byId) : null
+          const sourceHandle =
+            sourceId === connection.source || !sourceNode || !targetCenter || !sourceAbs
+              ? connection.sourceHandle
+              : nearestConnectionPointId(
+                  (sourceNode.data?.connectionPoints as ConnectionPoint[] | undefined) ?? [],
+                  {
+                    left: sourceAbs.x,
+                    top: sourceAbs.y,
+                    width: sourceNode.width ?? 0,
+                    height: sourceNode.height ?? 0
+                  },
+                  targetCenter.x,
+                  targetCenter.y
+                )
+          return addEdge(
+            {
+              source: sourceId,
+              target: connection.target,
+              sourceHandle,
+              targetHandle: connection.targetHandle,
+              type: 'labeled',
+              data: { metadata: seedMetadata(requiredTags), style: settings.defaultEdgeStyle }
+            },
+            acc
+          )
+        }, eds)
+      })
     },
-    [setEdges, pushSnapshot, requiredTags, settings.defaultEdgeStyle]
+    [nodes, setEdges, pushSnapshot, requiredTags, settings.defaultEdgeStyle]
   )
 
   // Grabbing an existing edge's own endpoint and redropping it elsewhere —
@@ -3434,6 +3521,10 @@ function CanvasInner(): React.JSX.Element {
                   onEdgeMouseLeave={onEdgeMouseLeave}
                   connectionMode={ConnectionMode.Loose}
                   defaultEdgeOptions={DEFAULT_EDGE_OPTIONS}
+                  connectionLineComponent={MultiConnectionLine}
+                  selectionMode={
+                    settings.dragSelectRequiresFullEnclosure ? SelectionMode.Full : SelectionMode.Partial
+                  }
                   deleteKeyCode={['Delete', 'Backspace']}
                   multiSelectionKeyCode="Shift" // frees Ctrl/Cmd+click for linked-diagram navigation — epic 0009
                   colorMode={theme}
