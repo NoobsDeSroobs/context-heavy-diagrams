@@ -1,19 +1,32 @@
-# 0063: Dim/focus mode — de-emphasize non-matching elements
+# 0063: "Isolate" — de-emphasize elements outside a working set
 
 ## Status
-Not Started — not yet scoped. Raised by the user (2026-08-22) alongside [epic 0062](0062-search-and-highlight-matches.md), same motivation (navigating the 70-node Meridian Rail landscape). **Explicitly told to log this for later, not build it now.**
+Not Started — scoped via a real design conversation (2026-08-25), but **explicitly deferred until [epic 0062](0062-search-and-highlight-matches.md) (search) ships**, per the user's own reconsideration mid-conversation: the version of this worth building depends on search existing first, not a manual-selection-only v1.
 
-## Goal
-A toggleable mode where elements *not* currently matched (by an active highlight and/or a search query, see epic 0062) are visually de-emphasized — most likely reduced opacity — rather than the current behavior, where matches only ever get color added on top with no corresponding change to everything else. The point is subtracting visual noise at scale, not just adding emphasis.
+## Goal (revised — this is a different shape than the epic's original framing)
+Originally framed as a "dim mode" tied to the highlight system. After a real design conversation, reframed as **"Isolate"**: a general-purpose, session-only mechanism — de-emphasize (most likely reduced opacity) every element *outside* a given working set, whatever produced that set. Deliberately **decoupled from the highlight system**, not built on top of it or living inside it:
 
-The user explicitly wants this as **a setting**, not a permanent behavior change — exact home in the UI not decided (candidates: the existing global Settings panel, epic 0047/ADR 0032's precedent; a toggle inside the Highlights popup itself; something new). Flagged as undecided, not to be assumed.
+- **Highlighting stays purely about color.** Unchanged by this epic.
+- **Isolate is a separate primitive**: hand it a set of element ids, everything not in that set dims. It doesn't know or care where the set came from.
+- **The intended real trigger is [epic 0062](0062-search-and-highlight-matches.md)'s search** — free text, or matching on a specific tag (usually one), living next to the highlight feature in the UI. This is *why* it's deferred: the user's own stated real use case is running Isolate and a highlight simultaneously, on two *independent* dimensions — e.g. highlight (color) everything matching a GDPR tag, while Isolate (dim everything else) scopes the view down to one owning team, so the same diagram can be re-scoped live to whichever team's in the room without losing the GDPR emphasis. That only becomes real once search's tag-matching exists to drive it.
+- **A manual-selection-only trigger** ("select some elements, Isolate them") was discussed and initially favored as a buildable-today v1, but the user reconsidered — see Notes — and asked to defer the whole thing until search lands, rather than ship a manual-only version now.
 
-## Real open questions (deliberately not resolved here)
-- **What counts as "matching" for dim purposes** — the currently toggled-on highlight set (epics 0026/0036), a live search result (epic 0062), or both uniformly? If both, does enabling one while the other is inactive still dim correctly (i.e. does "matching set" need a single unified definition both features write into)?
-- **Does dimming apply to edges as well as nodes?** Today's highlight system's node/edge treatment should be checked before assuming symmetry.
-- **Interacts with existing highlight coloring** — does dim mode replace the current color-on-match treatment, or layer on top of it (dim non-matches AND keep coloring matches)?
-- **Per-highlight-group or global** — one dim toggle for the whole diagram, or could different highlight groups reasonably want different dim behavior?
-- **Where the setting lives** — see Goal above; also worth checking whether it should default on or off, and whether it persists per-diagram or per-app-user (compare `settings.ts`'s existing global settings vs. anything diagram-local).
+## Naming
+**"Isolate"** — chosen by the user from a shortlist (Focus / Accentuate / Isolate) during the design conversation. Use this term in any future UI copy/menu labels for this feature.
+
+## Real open questions, still not resolved (deliberately — wait for epic 0062 first)
+- Exact UI: where "next to the highlight feature" actually means (same popup? a sibling panel? a shared search bar that also feeds highlighting?) — depends on how epic 0062 itself ends up shaped.
+- Whether Isolate ever gets a manual-selection trigger *in addition to* the search-driven one, once search exists, or stays search-only.
+- Rendering treatment: reduced opacity was assumed throughout this conversation but never explicitly pinned down as final.
+- Whether edges get the same treatment as nodes (very likely yes, structurally trivial — the existing `matchingHighlights()`/highlight-rendering machinery already treats both uniformly, and there's no reason Isolate's own filtering would need to differ).
 
 ## Notes
-Not scheduled into any current batch — flagged here so it isn't lost, not because it's next up. Closely related to epic 0062 (search) and the existing highlight system (epics 0026/0036) — whoever scopes this should read both first, since "what's the active matching set" is a shared concept across all three.
+Original scoping conversation (2026-08-22) intentionally left this unscoped, flagging real open questions rather than guessing. Picked up 2026-08-25 for a real design pass. Four questions were asked and answered:
+1. **Layering vs. replacing existing highlight color** — the user's answer reframed the whole premise: highlighting and dimming should be two *separate* mechanisms, not one mode with two behaviors. This is what led to the "Isolate" reframing above.
+2. **Whether the toggle should live in/depend on the Highlights popup** — the user pushed back on this coupling ("doing the same job twice"), reinforcing point 1.
+3. **Per-group vs. global scope** — answered somewhat provisionally in favor of something living near the highlights panel, but superseded once the search-driven framing emerged.
+4. **Persistence tier** — settled: session-only, no persistence at all (not a Setting, not diagram content) — ephemeral UI state, same tier as `selected`.
+
+A follow-up round then asked what should trigger Isolate for a buildable-today v1 (search doesn't exist yet) and what to call it. Naming settled on "Isolate." The trigger question is where the deferral came from: **the user's own words, reconsidering mid-conversation — "I think we should defer til after this is implemented now that I think about it,"** referring to search (epic 0062). Their fuller reasoning: "the true power comes once we have a 'search' feature... free text search, or define a series of tags to match on... enables me to turn on highlighting of one dimension... while accentuating another... I think we should defer."
+
+**Practical consequence: build [epic 0062](0062-search-and-highlight-matches.md) (search) first.** This epic stays logged and scoped, but not started, until that lands.

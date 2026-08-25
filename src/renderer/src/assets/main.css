@@ -644,6 +644,17 @@ body {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  /* Reserves the scrollbar's own width as a permanent gutter, so it never
+     paints on top of the grid's rightmost column (epic 0086) — this app's
+     Electron/Chromium target supports it, so no need to hardcode a guessed
+     scrollbar width instead. */
+  scrollbar-gutter: stable;
+  /* Explicit, not left to default: setting only overflow-y auto-computes
+     overflow-x to auto too (CSS Overflow spec), which is exactly what was
+     producing the unwanted horizontal scrollbar — now that
+     .icon-picker-grid button's min-width: 0 lets the grid actually fit,
+     there's nothing left that should ever need horizontal scrolling here. */
+  overflow-x: hidden;
 }
 
 .corner-picker {
@@ -730,6 +741,14 @@ body {
   border-radius: 4px;
   padding: 3px;
   color: var(--color-text);
+  /* The real cause of the scrollbar overlap/overflow (epic 0086): a grid
+     item's default min-width is auto, which factors in its content's own
+     intrinsic size — each button holds a raw <svg> with its own baked-in
+     size, so the 6 columns refused to shrink below that regardless of the
+     width:100% on the svg/img below, forcing horizontal overflow inside
+     this app's fixed 220px-wide picker. min-width: 0 lets a column
+     actually shrink to fit. */
+  min-width: 0;
 }
 
 .icon-picker-grid button:hover {

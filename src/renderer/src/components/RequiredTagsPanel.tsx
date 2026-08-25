@@ -128,7 +128,8 @@ function AllowedValuesEditor({
   const [newDraft, setNewDraft] = useState('')
   const [pending, setPending] = useState<PendingChange | null>(null)
 
-  const isInUse = (value: string): boolean => usedTags.some((t) => t.key === tagKey && t.value === value)
+  const isInUse = (value: string): boolean =>
+    usedTags.some((t) => t.key === tagKey && t.value === value)
 
   const applyChange = (index: number, replacement: string | null): void => {
     if (replacement === null) {
@@ -187,8 +188,10 @@ function AllowedValuesEditor({
           <div key={index} className="required-tag-value-confirm">
             <p>
               &ldquo;{value}&rdquo; is used by at least one element for &ldquo;{tagKey}&rdquo;.{' '}
-              {pending.replacement === null ? 'Removing it' : `Renaming it to "${pending.replacement}"`} will
-              reset those elements to this tag&rsquo;s default value on the next sync.
+              {pending.replacement === null
+                ? 'Removing it'
+                : `Renaming it to "${pending.replacement}"`}{' '}
+              will reset those elements to this tag&rsquo;s default value on the next sync.
             </p>
             <div className="required-tag-value-confirm-actions">
               <button
@@ -213,7 +216,9 @@ function AllowedValuesEditor({
             isLast={index === values.length - 1}
             onMoveUp={() => moveValue(index, -1)}
             onMoveDown={() => moveValue(index, 1)}
-            onCommit={(next) => commitRemovalOrRename(index, next.trim() === '' ? null : next.trim())}
+            onCommit={(next) =>
+              commitRemovalOrRename(index, next.trim() === '' ? null : next.trim())
+            }
             onRemove={() => commitRemovalOrRename(index, null)}
           />
         )
@@ -364,14 +369,24 @@ function RequiredTagRow({
             onKeyDown={commitOnEnter}
           />
         )}
-        <button type="button" className="required-tag-remove" title="Remove" aria-label="Remove" onClick={onRemove}>
+        <button
+          type="button"
+          className="required-tag-remove"
+          title="Remove"
+          aria-label="Remove"
+          onClick={onRemove}
+        >
           ×
         </button>
       </div>
-      <CollapsibleSection title={`Allowed values (${allowedValues.length})`} defaultOpen={false}>
+      <CollapsibleSection
+        title={`Allowed values (${allowedValues.length})`}
+        sectionKey={`allowedValues-${tag.key}`}
+        defaultOpen={false}
+      >
         <p className="required-tags-panel-hint">
-          Leave empty to allow any value. &ldquo;None&rdquo; is always available for editable tags without needing
-          to be listed here — see the panel&rsquo;s own hint above.
+          Leave empty to allow any value. &ldquo;None&rdquo; is always available for editable tags
+          without needing to be listed here — see the panel&rsquo;s own hint above.
         </p>
         <AllowedValuesEditor
           tagKey={tag.key}
@@ -430,17 +445,20 @@ export default function RequiredTagsPanel({
       </div>
       <div className="required-tags-panel-body">
         <p className="required-tags-panel-hint">
-          Every Shape, Container, and Edge in this diagram always carries these keys. &ldquo;Locked, editable&rdquo;
-          leaves the value for a human to fill in; &ldquo;locked, fixed&rdquo; always shows the template&rsquo;s own
-          value.
+          Every Shape, Container, and Edge in this diagram always carries these keys. &ldquo;Locked,
+          editable&rdquo; leaves the value for a human to fill in; &ldquo;locked, fixed&rdquo;
+          always shows the template&rsquo;s own value.
         </p>
         <p className="required-tags-panel-hint">
-          Allowed values (editable tags only) restrict a tag to a fixed list — expand &ldquo;Allowed values&rdquo;
-          below each tag to edit it. When set, that tag shows as a dropdown instead of free text wherever it&rsquo;s
-          edited. Every editable tag also always has an implicit &ldquo;None&rdquo; value available, for elements
-          this tag just doesn&rsquo;t apply to — no need to add it to the list.
+          Allowed values (editable tags only) restrict a tag to a fixed list — expand &ldquo;Allowed
+          values&rdquo; below each tag to edit it. When set, that tag shows as a dropdown instead of
+          free text wherever it&rsquo;s edited. Every editable tag also always has an implicit
+          &ldquo;None&rdquo; value available, for elements this tag just doesn&rsquo;t apply to — no
+          need to add it to the list.
         </p>
-        {requiredTags.length === 0 && <p className="required-tags-panel-hint">No required tags yet.</p>}
+        {requiredTags.length === 0 && (
+          <p className="required-tags-panel-hint">No required tags yet.</p>
+        )}
         {requiredTags.map((tag, index) => (
           <RequiredTagRow
             key={index}

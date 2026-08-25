@@ -62,7 +62,13 @@ function ColorRow({
           if (event.key === 'Enter') event.currentTarget.blur()
         }}
       />
-      <button type="button" className="required-tag-value-remove" title="Remove" aria-label="Remove" onClick={onRemove}>
+      <button
+        type="button"
+        className="required-tag-value-remove"
+        title="Remove"
+        aria-label="Remove"
+        onClick={onRemove}
+      >
         ×
       </button>
     </div>
@@ -83,8 +89,12 @@ function ColorsEditor({
         <ColorRow
           key={index}
           color={c}
-          onCommitLabel={(label) => onChange(colors.map((entry, i) => (i === index ? { ...entry, label } : entry)))}
-          onChangeValue={(value) => onChange(colors.map((entry, i) => (i === index ? { ...entry, value } : entry)))}
+          onCommitLabel={(label) =>
+            onChange(colors.map((entry, i) => (i === index ? { ...entry, label } : entry)))
+          }
+          onChangeValue={(value) =>
+            onChange(colors.map((entry, i) => (i === index ? { ...entry, value } : entry)))
+          }
           onRemove={() => onChange(colors.filter((_, i) => i !== index))}
         />
       ))}
@@ -108,7 +118,13 @@ function ColorsEditor({
   )
 }
 
-function FontsEditor({ fonts, onChange }: { fonts: string[]; onChange: (fonts: string[]) => void }): React.JSX.Element {
+function FontsEditor({
+  fonts,
+  onChange
+}: {
+  fonts: string[]
+  onChange: (fonts: string[]) => void
+}): React.JSX.Element {
   const [newFont, setNewFont] = useState('')
   return (
     <div className="required-tag-values-list">
@@ -167,7 +183,10 @@ export default function StylePalettePanel({
   // (see docs/known-issues.md — a native dialog left a different panel's
   // <select> elements unresponsive afterward; avoided here on the same
   // precedent even though this panel has no <select> of its own today).
-  const [pendingImport, setPendingImport] = useState<{ colors: PaletteColor[]; fonts: string[] } | null>(null)
+  const [pendingImport, setPendingImport] = useState<{
+    colors: PaletteColor[]
+    fonts: string[]
+  } | null>(null)
 
   const handleExport = async (): Promise<void> => {
     const json = JSON.stringify(palette, null, 2)
@@ -189,7 +208,10 @@ export default function StylePalettePanel({
       alert('Not a valid style palette file (missing colors/fonts arrays).')
       return
     }
-    const imported = { colors: candidate.colors as PaletteColor[], fonts: candidate.fonts as string[] }
+    const imported = {
+      colors: candidate.colors as PaletteColor[],
+      fonts: candidate.fonts as string[]
+    }
     if (palette.colors.length === 0 && palette.fonts.length === 0) {
       onChangePalette(imported)
       return
@@ -197,7 +219,10 @@ export default function StylePalettePanel({
     setPendingImport(imported)
   }
 
-  const defaultRows: { type: 'shape' | 'container' | 'text' | 'edge'; style: NodeStyle | EdgeStyle | undefined }[] = [
+  const defaultRows: {
+    type: 'shape' | 'container' | 'text' | 'edge'
+    style: NodeStyle | EdgeStyle | undefined
+  }[] = [
     { type: 'shape', style: defaultStyles.shape },
     { type: 'container', style: defaultStyles.container },
     { type: 'text', style: defaultStyles.text },
@@ -209,7 +234,11 @@ export default function StylePalettePanel({
       <div className="required-tags-panel-toolbar">
         <span className="required-tags-panel-title">Style Palette</span>
         <div className="details-panel-spacer" />
-        <button type="button" onClick={handleExport} disabled={palette.colors.length === 0 && palette.fonts.length === 0}>
+        <button
+          type="button"
+          onClick={handleExport}
+          disabled={palette.colors.length === 0 && palette.fonts.length === 0}
+        >
           Export…
         </button>
         <button type="button" onClick={handleImport}>
@@ -223,8 +252,9 @@ export default function StylePalettePanel({
         {pendingImport && (
           <div className="required-tag-value-confirm">
             <p>
-              Replace the current palette ({palette.colors.length} colors, {palette.fonts.length} fonts) with the
-              imported one ({pendingImport.colors.length} colors, {pendingImport.fonts.length} fonts)?
+              Replace the current palette ({palette.colors.length} colors, {palette.fonts.length}{' '}
+              fonts) with the imported one ({pendingImport.colors.length} colors,{' '}
+              {pendingImport.fonts.length} fonts)?
             </p>
             <div className="required-tag-value-confirm-actions">
               <button
@@ -243,18 +273,26 @@ export default function StylePalettePanel({
           </div>
         )}
         <p className="required-tags-panel-hint">
-          Reusable colors and fonts, surfaced as quick-pick options in every color field and the Font Family
-          dropdown. Export to a file to share with a team; anyone imports it to get the same set locally.
+          Reusable colors and fonts, surfaced as quick-pick options in every color field and the
+          Font Family dropdown. Export to a file to share with a team; anyone imports it to get the
+          same set locally.
         </p>
-        <CollapsibleSection title={`Colors (${palette.colors.length})`}>
-          <ColorsEditor colors={palette.colors} onChange={(colors) => onChangePalette({ ...palette, colors })} />
+        <CollapsibleSection title={`Colors (${palette.colors.length})`} sectionKey="Colors">
+          <ColorsEditor
+            colors={palette.colors}
+            onChange={(colors) => onChangePalette({ ...palette, colors })}
+          />
         </CollapsibleSection>
-        <CollapsibleSection title={`Fonts (${palette.fonts.length})`}>
-          <FontsEditor fonts={palette.fonts} onChange={(fonts) => onChangePalette({ ...palette, fonts })} />
+        <CollapsibleSection title={`Fonts (${palette.fonts.length})`} sectionKey="Fonts">
+          <FontsEditor
+            fonts={palette.fonts}
+            onChange={(fonts) => onChangePalette({ ...palette, fonts })}
+          />
         </CollapsibleSection>
         <CollapsibleSection title="Canvas background">
           <p className="required-tags-panel-hint">
-            Overrides the light/dark theme&rsquo;s default canvas color. Clear to go back to following the theme.
+            Overrides the light/dark theme&rsquo;s default canvas color. Clear to go back to
+            following the theme.
           </p>
           <ColorField
             label="Background"
@@ -267,9 +305,9 @@ export default function StylePalettePanel({
         </CollapsibleSection>
         <CollapsibleSection title="Defaults for new elements">
           <p className="required-tags-panel-hint">
-            Style a shape/container/text exactly how you want using the property panel, then use its &ldquo;Set as
-            default style&rdquo; button — new elements of that type will start with it. Edges: use the toolbar
-            swatch next to the file name.
+            Style a shape/container/text exactly how you want using the property panel, then use its
+            &ldquo;Set as default style&rdquo; button — new elements of that type will start with
+            it. Edges: use the toolbar swatch next to the file name.
           </p>
           <div className="style-palette-defaults-list">
             {defaultRows.map(({ type, style }) => (

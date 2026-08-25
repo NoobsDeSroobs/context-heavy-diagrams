@@ -12,7 +12,14 @@ import type {
 import { useDiagramContext } from '../DiagramContext'
 import { themeAdaptiveColor } from '../styles/themeAdaptiveColor'
 import { connectionPointCountForSide } from '../nodes/connectionPoints'
-import { CollapsibleSection, ColorField, FieldRow, NumberField, SliderField, SelectField } from './fields'
+import {
+  CollapsibleSection,
+  ColorField,
+  FieldRow,
+  NumberField,
+  SliderField,
+  SelectField
+} from './fields'
 import { computeFieldValue } from './fieldValue'
 import MetadataSection from './MetadataSection'
 
@@ -31,8 +38,14 @@ interface PropertyPanelProps {
   onUpdateEdgeStyle: (edgeIds: string[], patch: Partial<EdgeStyle>) => void
   onUpdateTransform: (nodeIds: string[], patch: TransformPatch) => void
   onUpdateLocked: (nodeIds: string[], locked: boolean) => void
-  onUpdateNodeMetadata: (nodeId: string, metadata: Record<string, MetadataEntry> | undefined) => void
-  onUpdateEdgeMetadata: (edgeId: string, metadata: Record<string, MetadataEntry> | undefined) => void
+  onUpdateNodeMetadata: (
+    nodeId: string,
+    metadata: Record<string, MetadataEntry> | undefined
+  ) => void
+  onUpdateEdgeMetadata: (
+    edgeId: string,
+    metadata: Record<string, MetadataEntry> | undefined
+  ) => void
   onSetConnectionPointCount: (nodeId: string, side: ConnectionPointSide, totalCount: number) => void
   maxConnectionPointsPerSide: number
   // Copies one selected node's current style into settings.defaultStyles
@@ -71,7 +84,10 @@ const MARKER_OPTIONS: { value: MarkerKind; label: string }[] = [
 // identical default-routing-style picker: this file already can't export
 // a second named value alongside its default component export
 // (react-refresh/only-export-components).
-const ROUTING_STYLE_OPTIONS: { value: Exclude<EdgeStyle['routingStyle'], undefined> | ''; label: string }[] = [
+const ROUTING_STYLE_OPTIONS: {
+  value: Exclude<EdgeStyle['routingStyle'], undefined> | ''
+  label: string
+}[] = [
   { value: '', label: 'Bezier (default)' },
   { value: 'straight', label: 'Straight' },
   { value: 'step', label: 'Step' },
@@ -133,7 +149,10 @@ function NodeStyleFields({
   onSetDefault?: () => void
 }): React.JSX.Element {
   const { theme, paletteColors, paletteFonts } = useDiagramContext()
-  const fontFamilyOptions = [...FONT_FAMILY_OPTIONS, ...paletteFonts.map((f) => ({ value: f, label: f }))]
+  const fontFamilyOptions = [
+    ...FONT_FAMILY_OPTIONS,
+    ...paletteFonts.map((f) => ({ value: f, label: f }))
+  ]
   const fill = computeFieldValue(nodes, (n) => nodeStyleOf(n).fill)
   const fillOpacity = computeFieldValue(nodes, (n) => nodeStyleOf(n).fillOpacity)
   const stroke = computeFieldValue(nodes, (n) => nodeStyleOf(n).stroke)
@@ -149,7 +168,9 @@ function NodeStyleFields({
   const y = computeFieldValue(nodes, (n) => n.position.y)
   const width = computeFieldValue(nodes, (n) => n.width ?? undefined)
   const height = computeFieldValue(nodes, (n) => n.height ?? undefined)
-  const rotation = computeFieldValue(nodes, (n) => (typeof n.data?.rotation === 'number' ? (n.data.rotation as number) : 0))
+  const rotation = computeFieldValue(nodes, (n) =>
+    typeof n.data?.rotation === 'number' ? (n.data.rotation as number) : 0
+  )
   const locked = computeFieldValue(nodes, (n) => n.data?.locked === true)
 
   return (
@@ -348,7 +369,10 @@ function EdgeFields({
   pushSnapshot: () => void
 }): React.JSX.Element {
   const { theme, paletteColors, paletteFonts } = useDiagramContext()
-  const fontFamilyOptions = [...FONT_FAMILY_OPTIONS, ...paletteFonts.map((f) => ({ value: f, label: f }))]
+  const fontFamilyOptions = [
+    ...FONT_FAMILY_OPTIONS,
+    ...paletteFonts.map((f) => ({ value: f, label: f }))
+  ]
   const startMarker = computeFieldValue(edges, (e) => edgeStyleOf(e).startMarker)
   const endMarker = computeFieldValue(edges, (e) => edgeStyleOf(e).endMarker)
   const stroke = computeFieldValue(edges, (e) => edgeStyleOf(e).stroke)
@@ -667,7 +691,12 @@ function ConnectionPointFields({
 // transform only (deliberately still allows a fill for consistency's sake —
 // see ADR 0014 — even though it's rare in practice). Rotation is text-only
 // (ADR 0004/0012 — shapes/containers are never rotated).
-const TYPE_LABELS: Record<string, string> = { shape: 'Shapes', container: 'Containers', text: 'Text', line: 'Lines' }
+const TYPE_LABELS: Record<string, string> = {
+  shape: 'Shapes',
+  container: 'Containers',
+  text: 'Text',
+  line: 'Lines'
+}
 const MIN_SIZE: Record<string, { width: number; height: number }> = {
   shape: { width: 60, height: 40 },
   container: { width: 160, height: 120 },
@@ -704,7 +733,8 @@ export default function PropertyPanel({
   // Text/Anchor never do (ADR 0022).
   const metadataTarget: { kind: 'node'; node: Node } | { kind: 'edge'; edge: Edge } | undefined =
     selectedNodes.length + selectedEdges.length === 1
-      ? selectedNodes.length === 1 && (selectedNodes[0].type === 'shape' || selectedNodes[0].type === 'container')
+      ? selectedNodes.length === 1 &&
+        (selectedNodes[0].type === 'shape' || selectedNodes[0].type === 'container')
         ? { kind: 'node', node: selectedNodes[0] }
         : selectedEdges.length === 1
           ? { kind: 'edge', edge: selectedEdges[0] }
@@ -727,7 +757,8 @@ export default function PropertyPanel({
       )
     }
     const min = MIN_SIZE[type] ?? MIN_SIZE.shape
-    const canSetDefault = nodes.length === 1 && (type === 'shape' || type === 'container' || type === 'text')
+    const canSetDefault =
+      nodes.length === 1 && (type === 'shape' || type === 'container' || type === 'text')
     return (
       <NodeStyleFields
         key={type}
@@ -777,7 +808,9 @@ export default function PropertyPanel({
           <ConnectionPointFields
             node={metadataTarget.node}
             maxPerSide={maxConnectionPointsPerSide}
-            onSetCount={(side, count) => onSetConnectionPointCount(metadataTarget.node.id, side, count)}
+            onSetCount={(side, count) =>
+              onSetConnectionPointCount(metadataTarget.node.id, side, count)
+            }
           />
         )}
         {metadataTarget && (
@@ -803,12 +836,18 @@ export default function PropertyPanel({
   return (
     <div className="property-panel">
       {nodeGroups.map(([type, nodes]) => (
-        <CollapsibleSection key={type} title={`${TYPE_LABELS[type] ?? type} (${nodes.length})`}>
+        <CollapsibleSection
+          key={type}
+          title={`${TYPE_LABELS[type] ?? type} (${nodes.length})`}
+          sectionKey={`group-${type}`}
+        >
           {renderNodeGroup(type, nodes)}
         </CollapsibleSection>
       ))}
       {selectedEdges.length > 0 && (
-        <CollapsibleSection title={`Edges (${selectedEdges.length})`}>{renderEdgeGroup()}</CollapsibleSection>
+        <CollapsibleSection title={`Edges (${selectedEdges.length})`} sectionKey="group-edges">
+          {renderEdgeGroup()}
+        </CollapsibleSection>
       )}
     </div>
   )

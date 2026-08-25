@@ -54,6 +54,14 @@ export default function IconPicker({
   // every query change.
   const results = useMemo(() => searchBuiltinIconIds(query).slice(0, MAX_RESULTS), [query])
 
+  // Same substring-on-lowercased-query convention as searchBuiltinIconIds
+  // — was previously missing entirely, so the search box silently only
+  // ever filtered built-in icons, never this diagram's own uploaded ones.
+  const filteredCustomIcons = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return q ? customIcons.filter((path) => path.toLowerCase().includes(q)) : customIcons
+  }, [customIcons, query])
+
   useEffect(() => {
     let cancelled = false
     for (const id of results) {
@@ -134,11 +142,11 @@ export default function IconPicker({
             />
           ))}
         </div>
-        {customIcons.length > 0 && (
+        {filteredCustomIcons.length > 0 && (
           <>
             <div className="icon-picker-label">This diagram&apos;s custom icons</div>
             <div className="icon-picker-grid">
-              {customIcons.map((path) => (
+              {filteredCustomIcons.map((path) => (
                 <button
                   key={path}
                   type="button"

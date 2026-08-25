@@ -10,24 +10,46 @@ import { useRafThrottledCallback } from '../hooks/useRafThrottledCallback'
 // split into their own file so this one only exports components (Fast
 // Refresh requirement).
 
+// Remembered open/closed state, per section, for the lifetime of the app
+// session (epic 0086) — module-level rather than component state, so
+// closing "Transform" on one shape stays closed when a different shape/
+// edge/container is selected next, instead of resetting on every remount
+// (a selection change always remounts the whole property panel). Session-
+// only on purpose, no persistence to disk — this is view state, not
+// diagram content or a user Setting.
+const sectionOpenState = new Map<string, boolean>()
+
 export function CollapsibleSection({
   title,
   children,
-  defaultOpen = true
+  defaultOpen = true,
+  sectionKey
 }: {
   title: string
   children: ReactNode
   // Required-tags panel's allowed-values list (epic 0055) wants collapsed
   // by default — every other caller keeps today's always-open behavior.
   defaultOpen?: boolean
+  // Only needed when `title` is dynamic (carries a live count, e.g.
+  // "Colors (3)") — remembered state has to key off something stable, or
+  // every count change would look like a brand-new, never-seen section.
+  // Defaults to `title` for the common case where the two are the same.
+  sectionKey?: string
 }): React.JSX.Element {
-  const [open, setOpen] = useState(defaultOpen)
+  const key = sectionKey ?? title
+  const [open, setOpen] = useState(() => sectionOpenState.get(key) ?? defaultOpen)
   return (
     <div className="property-section">
       <button
         type="button"
         className="property-section-header"
-        onClick={() => setOpen((o) => !o)}
+        onClick={() =>
+          setOpen((o) => {
+            const next = !o
+            sectionOpenState.set(key, next)
+            return next
+          })
+        }
         aria-expanded={open}
       >
         <span className={`property-section-caret${open ? ' open' : ''}`}>▸</span>
@@ -38,7 +60,13 @@ export function CollapsibleSection({
   )
 }
 
-export function FieldRow({ label, children }: { label: string; children: ReactNode }): React.JSX.Element {
+export function FieldRow({
+  label,
+  children
+}: {
+  label: string
+  children: ReactNode
+}): React.JSX.Element {
   return (
     <label className="property-field">
       <span className="property-field-label">{label}</span>
@@ -64,7 +92,10 @@ const HEX_RE = /^#[0-9a-fA-F]{6}$/
 // (e.g. typing "120" into a width field) effectively impossible to observe
 // correctly since intermediate keystrokes could be clobbered by the same
 // tick's re-derived value.
-function useDraft(value: string, mixed: boolean): [string, (v: string) => void, () => void, () => void] {
+function useDraft(
+  value: string,
+  mixed: boolean
+): [string, (v: string) => void, () => void, () => void] {
   const [draft, setDraft] = useState(value)
   const focusedRef = useRef(false)
   useEffect(() => {
@@ -196,7 +227,10 @@ export function NumberField({
   onSessionStart: () => void
   onSessionEnd: () => void
 }): React.JSX.Element {
-  const [draft, setDraft, onDraftFocus, onDraftBlur] = useDraft(value != null ? String(value) : '', mixed)
+  const [draft, setDraft, onDraftFocus, onDraftBlur] = useDraft(
+    value != null ? String(value) : '',
+    mixed
+  )
   return (
     <FieldRow label={label}>
       <input
