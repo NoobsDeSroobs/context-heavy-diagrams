@@ -16,7 +16,13 @@ export interface DiagramApi {
   listCustomIcons(diagramPath: string): Promise<string[]>
   readIconAsDataUrl(diagramPath: string, relativePath: string): Promise<string>
   readDetails(diagramPath: string, relativePath: string): Promise<string>
-  writeDetails(diagramPath: string, nodeId: string, content: string): Promise<string>
+  writeDetails(diagramPath: string, nodeId: string, label: string, content: string): Promise<string>
+  syncDetailFileName(
+    diagramPath: string,
+    nodeId: string,
+    label: string,
+    currentRelativePath: string
+  ): Promise<string>
   createLinkedDiagram(diagramPath: string, label: string): Promise<string>
   pickExistingLinkedDiagram(diagramPath: string): Promise<string | null>
   newWindow(): Promise<void>

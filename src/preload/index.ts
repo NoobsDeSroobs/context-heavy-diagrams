@@ -37,16 +37,32 @@ const api = {
     return ipcRenderer.invoke('icons:readAsDataUrl', diagramPath, relativePath)
   },
 
-  // Detail files — see epic 0008. readDetails takes an already-known
-  // relative path; writeDetails takes a node id and computes the
-  // conventional path itself, returning it so the caller can store it on
-  // data.details the first time.
+  // Detail files — see epic 0008, and epic 0087 for the label+uuid naming
+  // convention. readDetails takes an already-known relative path;
+  // writeDetails takes a node id/label and computes the conventional path
+  // itself, returning it so the caller can store it on data.details.
+  // syncDetailFileName renames an already-existing file if the element's
+  // label has since changed (also migrates pre-0087 filenames).
   readDetails(diagramPath: string, relativePath: string): Promise<string> {
     return ipcRenderer.invoke('details:read', diagramPath, relativePath)
   },
 
-  writeDetails(diagramPath: string, nodeId: string, content: string): Promise<string> {
-    return ipcRenderer.invoke('details:write', diagramPath, nodeId, content)
+  writeDetails(
+    diagramPath: string,
+    nodeId: string,
+    label: string,
+    content: string
+  ): Promise<string> {
+    return ipcRenderer.invoke('details:write', diagramPath, nodeId, label, content)
+  },
+
+  syncDetailFileName(
+    diagramPath: string,
+    nodeId: string,
+    label: string,
+    currentRelativePath: string
+  ): Promise<string> {
+    return ipcRenderer.invoke('details:syncName', diagramPath, nodeId, label, currentRelativePath)
   },
 
   // No dialog — used by a window's own initial-load mount effect, given

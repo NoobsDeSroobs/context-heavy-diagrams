@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import type { EdgeStyle } from '@shared/diagram'
 import type { AppSettings } from '../settings'
 import { FieldRow, NumberField, SelectField } from '../panels/fields'
@@ -7,7 +8,10 @@ import { useRafThrottledCallback } from '../hooks/useRafThrottledCallback'
 // — see PropertyPanel.tsx's identical ROUTING_STYLE_OPTIONS/own comment on
 // why this is a local copy rather than a shared one (react-refresh/only-
 // export-components). Epic 0032.
-const ROUTING_STYLE_OPTIONS: { value: Exclude<EdgeStyle['routingStyle'], undefined> | ''; label: string }[] = [
+const ROUTING_STYLE_OPTIONS: {
+  value: Exclude<EdgeStyle['routingStyle'], undefined> | ''
+  label: string
+}[] = [
   { value: '', label: 'Bezier (default)' },
   { value: 'straight', label: 'Straight' },
   { value: 'step', label: 'Step' },
@@ -21,6 +25,86 @@ interface SettingsPanelProps {
   onClose: () => void
 }
 
+// Local draft, resynced from `value` only while not focused — same
+// technique as fields.tsx's own useDraft (not reused directly: it isn't
+// exported, and mixing an exported hook into a component-only file would
+// trip react-refresh/only-export-components, see epic 0028). Kept minimal
+// since this is the only place SettingsPanel needs it.
+function useZoomDraft(value: number): [string, (v: string) => void, () => void, () => void] {
+  const [draft, setDraft] = useState(String(value))
+  const focusedRef = useRef(false)
+  useEffect(() => {
+    if (!focusedRef.current) setDraft(String(value))
+  }, [value])
+  return [
+    draft,
+    setDraft,
+    () => {
+      focusedRef.current = true
+    },
+    () => {
+      focusedRef.current = false
+      setDraft(String(value))
+    }
+  ]
+}
+
+// One compact row, not two full-width NumberField rows — the user's own
+// spec: "Zoom limit: in [0.1] out[2.0]". min/max HTML attributes on each
+// box keep the two ends from crossing each other in the UI, but don't
+// stop a genuinely bad pair (min > max) from being saved — React Flow's
+// own runtime behavior at that point is untested/unspecified, not
+// something this field tries to prevent.
+function ZoomLimitField({
+  minZoom,
+  maxZoom,
+  onChange
+}: {
+  minZoom: number
+  maxZoom: number
+  onChange: (patch: { minZoom?: number; maxZoom?: number }) => void
+}): React.JSX.Element {
+  const [minDraft, setMinDraft, onMinFocus, onMinBlur] = useZoomDraft(minZoom)
+  const [maxDraft, setMaxDraft, onMaxFocus, onMaxBlur] = useZoomDraft(maxZoom)
+  return (
+    <FieldRow label="Zoom limit">
+      <div className="settings-zoom-limit">
+        <span className="settings-zoom-limit-label">in</span>
+        <input
+          type="number"
+          className="property-number-field settings-zoom-limit-input"
+          step={0.05}
+          min={0.01}
+          max={1}
+          value={minDraft}
+          onFocus={onMinFocus}
+          onChange={(e) => {
+            setMinDraft(e.target.value)
+            if (e.target.value !== '') onChange({ minZoom: Number(e.target.value) })
+          }}
+          onBlur={onMinBlur}
+          title="Minimum zoom (most zoomed out)"
+        />
+        <span className="settings-zoom-limit-label">out</span>
+        <input
+          type="number"
+          className="property-number-field settings-zoom-limit-input"
+          step={0.5}
+          min={1}
+          value={maxDraft}
+          onFocus={onMaxFocus}
+          onChange={(e) => {
+            setMaxDraft(e.target.value)
+            if (e.target.value !== '') onChange({ maxZoom: Number(e.target.value) })
+          }}
+          onBlur={onMaxBlur}
+          title="Maximum zoom (most zoomed in)"
+        />
+      </div>
+    </FieldRow>
+  )
+}
+
 // Same fixed right-side dock shell as DetailsPanel/RequiredTagsPanel/
 // DiagnosticsPanel/HighlightsPanel — see ADR 0013. Global, app-wide
 // preferences (settings.ts), not diagram content: nothing here goes
@@ -32,7 +116,11 @@ interface SettingsPanelProps {
 // "draft until blur" number input either way. `mixed`/session callbacks
 // are property-panel concepts (multi-selection, undo grouping) that don't
 // apply to a single global value, so they're passed as always-false/no-op.
-export default function SettingsPanel({ settings, onChange, onClose }: SettingsPanelProps): React.JSX.Element {
+export default function SettingsPanel({
+  settings,
+  onChange,
+  onClose
+}: SettingsPanelProps): React.JSX.Element {
   // Same rAF-coalescing as ColorField (panels/fields.tsx) — epic 0067. This
   // input doesn't go through that shared component (see the comment below),
   // so it needs its own throttle rather than inheriting one.
@@ -75,7 +163,10 @@ export default function SettingsPanel({ settings, onChange, onClose }: SettingsP
           options={ROUTING_STYLE_OPTIONS}
           onChange={(v) =>
             onChange({
-              defaultEdgeStyle: { ...settings.defaultEdgeStyle, routingStyle: v === '' ? undefined : v }
+              defaultEdgeStyle: {
+                ...settings.defaultEdgeStyle,
+                routingStyle: v === '' ? undefined : v
+              }
             })
           }
           pushSnapshot={() => {}}
@@ -88,6 +179,7 @@ export default function SettingsPanel({ settings, onChange, onClose }: SettingsP
             title="Look for crash-recovery snapshots from diagrams that were never saved, every time the app starts"
           />
         </FieldRow>
+        <ZoomLimitField minZoom={settings.minZoom} maxZoom={settings.maxZoom} onChange={onChange} />
         <FieldRow label="Drag-select requires full enclosure">
           <input
             type="checkbox"

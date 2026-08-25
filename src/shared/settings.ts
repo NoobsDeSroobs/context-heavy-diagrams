@@ -98,6 +98,13 @@ export interface AppSettings {
   // useful mode once you're deliberately drag-selecting a cluster rather
   // than a precise sub-area.
   dragSelectRequiresFullEnclosure: boolean
+  // React Flow's own minZoom/maxZoom props, exposed as a Setting rather
+  // than hardcoded — previously never set at all (silently inheriting
+  // React Flow's own 0.5/2 library defaults) until a large diagram made
+  // "zoom out further" a real ask. Global, not per-diagram, same as every
+  // other canvas-behavior Setting here.
+  minZoom: number
+  maxZoom: number
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -114,5 +121,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   pngExportPaddingPx: 40,
   pngExportTransparentBackground: false,
   pngExportLegendCorner: 'bottom-left',
-  dragSelectRequiresFullEnclosure: true
+  dragSelectRequiresFullEnclosure: true,
+  minZoom: 0.1,
+  maxZoom: 2
 }

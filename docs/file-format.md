@@ -64,7 +64,7 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
   "data": {
     "label": "Web App",
     "icons": { "topRight": { "source": "builtin", "id": "server" } },
-    "details": "web-app/details/shape-1.md",
+    "details": "web-app/details/Web App-1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d.md",
     "linkedDiagram": "web-app/Database.chd"
   }
 }
@@ -85,7 +85,7 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
 | `metadata` | object | no | Only meaningful on `"shape"`/`"container"` nodes — `"text"` and `"anchor"` never carry this. Key/value entries, each either free (human-added) or diagram-required — see [Metadata](#metadata) below. Absent means none set. |
 | `data.label` | string | yes | Display text. May be empty. |
 | `data.icons` | object | no | Only meaningful on `"shape"`/`"container"` nodes. Up to four keys — `topLeft`, `topRight`, `bottomLeft`, `bottomRight` — each an icon reference (see below). |
-| `data.details` | string | no | Relative path to a Markdown file with free-form notes about this node (purpose, integration type, inputs/outputs, whatever's useful) — rendered in-app as a side panel, never a second canvas object. Same relative-path-from-the-diagram's-own-directory convention as custom icon paths. Absent means the node has no details yet. |
+| `data.details` | string | no | Relative path to a Markdown file with free-form notes about this node (purpose, integration type, inputs/outputs, whatever's useful) — rendered in-app as a side panel, never a second canvas object. Same relative-path-from-the-diagram's-own-directory convention as custom icon paths. Absent means the node has no details yet. This app names the file after the node's own `data.label` plus its `id`'s UUID suffix (e.g. `Web App-1a2b3c4d-....md`), for human recognizability in a file listing, and keeps it in sync on relabel — but a reader should treat the whole value as an opaque relative path and never try to parse or reconstruct it; only the path's target content matters. |
 | `data.linkedDiagram` | string | no | Relative path (from this diagram file's own directory) to another `.chd` file — a drill-down link. Resolved and opened on demand (e.g. Ctrl/Cmd+click in this app), never eagerly. Absent means the node has no link. See the Linking section below for the missing-target and directionality rules. |
 | `data.points` | array of LinePoint | `"line"` only | The line's own shape — see [Line points](#line-points) below. Absent/empty on a `"line"` node means nothing has been drawn yet (this app never actually produces that — a freshly created line always has 2 points). Meaningless on every other node type. |
 

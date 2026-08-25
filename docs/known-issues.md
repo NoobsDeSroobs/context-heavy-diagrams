@@ -22,6 +22,8 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 - [`npm run lint` reports ~10,000 CRLF warnings repo-wide](#npm-run-lint-reports-10000-crlf-warnings-repo-wide) — Open, not this machine's normal experience, cause not confirmed.
 - [Exported PNGs had no visible arrowheads on any edge](#exported-pngs-had-no-visible-arrowheads-on-any-edge) — Solved.
 - ["Use canvas color" PNG export always exported plain white](#use-canvas-color-png-export-always-exported-plain-white) — Solved.
+- [Adding a new required tag immediately stamps its placeholder key onto every element, then demotes it to a stray free tag on rename](#adding-a-new-required-tag-immediately-stamps-its-placeholder-key-onto-every-element-then-demotes-it-to-a-stray-free-tag-on-rename) — Open, root cause understood, not fixed.
+- [Pasting a copied child-of-a-container node can land it far off screen](#pasting-a-copied-child-of-a-container-node-can-land-it-far-off-screen) — Open, root cause suspected from code reading, not confirmed live.
 
 ---
 
@@ -417,3 +419,36 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 **Resolution:** `resolveEffectiveBackgroundColor()` walks up from the viewport element through `.parentElement`, reading each ancestor's real, already-resolved `getComputedStyle(...).backgroundColor` (the actual CSS property, not a custom-property name) until it finds one that isn't `transparent`/`rgba(0, 0, 0, 0)` — the same compositing a browser (and a viewer's eyes) already does to decide what color is "really" behind an element, regardless of which specific ancestor happens to own it or how many `var()` fallback levels are involved. **General lesson**: a custom CSS property (`--foo`) and the standard property that consumes it via `var(--foo, fallback)` are not interchangeable to read back — querying the custom property directly skips the entire fallback chain and returns empty unless something explicitly assigned it a value.
 
 **References:** [epic 0010](planning/epics/0010-export.md), [ADR 0051](decisions/0051-png-export.md), `src/renderer/src/export/exportPng.ts`
+
+---
+
+## Adding a new required tag immediately stamps its placeholder key onto every element, then demotes it to a stray free tag on rename
+**Status:** Open, root cause understood from code reading, not fixed
+**Found:** 2026-08-24, reported by the user from live use, logged rather than fixed immediately
+
+**Symptom:** click "Add required tag" in the Required Tags panel, then rename the new tag's key to something real (e.g. "sensitivity") — every Shape/Container/Edge in the diagram ends up with a stray, no-longer-required free tag named `key` (or `key (demoted)` if `key` was already taken) sitting alongside the real, correctly-named required tag. The user's framing: a new tag "starts out with the name key, and gets added on change."
+
+**Root cause (read from code, not yet live-debugged):** `RequiredTagsPanel.tsx`'s `addTag()` calls `onChange([...requiredTags, { key: 'key', lock: 'lockedEditable' }])` **synchronously and immediately** on click — unlike every other field in this panel, which drafts locally and only commits on blur/Enter (see `useFieldDraft`'s own comment, added specifically to fix a related but distinct bug: per-keystroke commits while typing a key). That immediate `onChange` flows straight to `Canvas.tsx`'s `updateRequiredTags` → `syncElementMetadata`, which runs its full backfill pass against every element right then — seeding literal key `"key"` onto all of them (`Canvas.tsx:590`, `next[def.key] = templateEntry`), before the user has typed anything. When the key field is then blurred with its real name, `useFieldDraft`'s blur-commit correctly does this as one clean rename in the panel's own state, but from `syncElementMetadata`'s point of view it's just "`key` is no longer required" (the renamed tag is a different `key` now) + "a new key is required" — so the sync's demote-not-delete rule (`Canvas.tsx:593-598`, ADR 0022's "don't destroy data") faithfully preserves the orphaned `"key"` entry as a free tag on every element, exactly as it's designed to for a genuine rename-away-from-a-required-key. The mechanism is working as designed; the bug is that a brand-new, not-yet-named tag is treated as "real" and synced onto every element before the user ever chose its name.
+
+**Not yet fixed** — user asked to log this for later rather than fix now. Two directions worth considering when revisited (both roughly matching the user's own suggestion — "maybe ask, or [a] done trigger when making a new tag"):
+1. Don't call `onChange` from `addTag()` at all until the new tag's key is first committed away from the placeholder — e.g. local "pending new tag" state in the panel (similar shape to `AllowedValuesEditor`'s existing always-blank trailing row pattern in the same file), only appended to `requiredTags` once it has a real, user-chosen key.
+2. Keep the immediate add but seed it with a genuinely unique, obviously-placeholder key that can never collide with something the user will actually type (unlikely to fully solve it — the demotion would still happen, just with a differently-named orphan).
+Option 1 seems more consistent with how the rest of this panel already avoids syncing on incomplete input.
+
+**References:** `src/renderer/src/components/RequiredTagsPanel.tsx`'s `addTag`/`useFieldDraft`, `src/renderer/src/Canvas.tsx`'s `syncElementMetadata`/`updateRequiredTags`, [epic 0034](planning/epics/0034-unified-tag-and-metadata-system.md), [ADR 0022](decisions/0022-unified-tag-and-metadata-system.md)
+
+---
+
+## Pasting a copied child-of-a-container node can land it far off screen
+**Status:** Open, root cause suspected from code reading, not confirmed live
+**Found:** 2026-08-24, reported by the user from live use, logged rather than fixed immediately
+
+**Symptom:** pasting a copied element sometimes lands it way outside the visible viewport, instead of centered on-screen the way `remapForPaste`'s own logic (`clipboard.ts`) intends.
+
+**Suspected root cause (read from code, not yet live-debugged):** `position.x`/`position.y` on a node with `parentId` set is **relative to its parent container**, not the canvas — an explicit, deliberate rule from ADR 0012, also documented in `docs/file-format.md`'s `position` field. `remapForPaste` (`src/renderer/src/clipboard.ts`) computes each pasted node's new position as `center + (n.position - centroid)`, where `center` is an absolute canvas/flow coordinate (`rfInstance.screenToFlowPosition` of the screen's center, `Canvas.tsx`'s `pasteFromClipboard`) — correct *only* if `n.position` was itself an absolute coordinate to begin with. For a copied node that's a child of a container, `n.position` is actually parent-relative (typically small numbers, e.g. `{x: 20, y: 20}`), so this computation produces a small, roughly-centroid-relative absolute value — but the pasted node also keeps its **original `parentId`**, unchanged: neither `remapForPaste` nor `buildClipboardPayload` remaps, clears, or even inspects `parentId` at all. React Flow will then render the new node at *the original container's own absolute position* **plus** this newly-computed (already-meant-to-be-absolute) offset — a double displacement that could plausibly land arbitrarily far from both the container and the paste target, matching "way off screen."
+
+**Not yet fixed** — logged per the user's "for later" framing rather than chased down immediately; the above is a plausible mechanism from reading the code, not something reproduced and confirmed step-by-step yet.
+
+**If revisited:** first confirm by copying a node that's actually inside a container (not a top-level shape) and pasting, ideally with the container positioned far from the canvas origin — the theory predicts the further the container sits from `(0,0)`, the further off screen the paste lands. If confirmed, the fix is likely one of: (a) clear `parentId` on paste (pasted content always becomes top-level, simplest but loses containment), or (b) if the node's original parent container was *also* copied and pasted alongside it, remap `parentId` through the same `idMap` already built for node ids and keep the position parent-relative as-is (untouched, no `center` offset applied to it at all — only top-level pasted nodes should get the `center`-based repositioning); if the parent *wasn't* copied along with it, fall back to (a). Either way, `remapForPaste`'s position math needs to branch on whether a given node has a `parentId`, which it currently doesn't.
+
+**References:** `src/renderer/src/clipboard.ts`'s `remapForPaste`/`buildClipboardPayload`, `src/renderer/src/Canvas.tsx`'s `pasteFromClipboard`, [epic 0025](planning/epics/0025-copy-paste.md), [ADR 0049](decisions/0049-clipboard-copy-paste.md), [ADR 0012](decisions/0012-container-node-design.md) (parent-relative `position` for a contained child — also restated in `docs/file-format.md`'s `position` field)

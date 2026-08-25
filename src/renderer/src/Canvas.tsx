@@ -157,7 +157,12 @@ function deriveNodeFields(n: Node): Node {
   const zIndex = (n.data?.zIndex as number | undefined) ?? 0
   const draggable = n.data?.locked !== true
   const deletable = n.data?.locked !== true
-  if (n.zIndex === zIndex && n.draggable === draggable && n.deletable === deletable && !needsLineStyleFix(n)) {
+  if (
+    n.zIndex === zIndex &&
+    n.draggable === draggable &&
+    n.deletable === deletable &&
+    !needsLineStyleFix(n)
+  ) {
     return n
   }
   return {
@@ -221,7 +226,6 @@ function pointFromEvent(event: MouseEvent | TouchEvent): { clientX: number; clie
   return 'changedTouches' in event ? event.changedTouches[0] : event
 }
 
-
 // Outward from a bound endpoint's own side — matches LabeledEdge.tsx's own
 // identically-named table one-for-one (small local copy, not shared —
 // that file's own comment on OUTWARD_DIRECTION explains why), keyed here
@@ -253,7 +257,9 @@ function resolveEndpointPosition(
   const width = node.width ?? 0
   const height = node.height ?? 0
   const customPoints = (node.data?.connectionPoints as ConnectionPoint[] | undefined) ?? []
-  const point = handleId ? effectiveConnectionPoints(customPoints).find((p) => p.id === handleId) : undefined
+  const point = handleId
+    ? effectiveConnectionPoints(customPoints).find((p) => p.id === handleId)
+    : undefined
   const side = point?.side ?? 'left'
   const offset = point?.offset ?? 0.5
   const direction = SIDE_OUTWARD_DIRECTION[side]
@@ -435,9 +441,10 @@ function toDiagramFile(
       label: typeof e.data?.label === 'string' && e.data.label ? e.data.label : undefined,
       style: e.data?.style as EdgeStyle | undefined,
       metadata: e.data?.metadata as Record<string, MetadataEntry> | undefined,
-      points: Array.isArray(e.data?.points) && (e.data.points as LinePoint[]).length > 0
-        ? (e.data.points as LinePoint[])
-        : undefined
+      points:
+        Array.isArray(e.data?.points) && (e.data.points as LinePoint[]).length > 0
+          ? (e.data.points as LinePoint[])
+          : undefined
     }))
   }
 }
@@ -1094,7 +1101,10 @@ function CanvasInner(): React.JSX.Element {
                       data: {
                         ...e.data,
                         points: newPoints,
-                        style: { ...(e.data?.style as EdgeStyle | undefined), routingStyle: 'catmullRom' }
+                        style: {
+                          ...(e.data?.style as EdgeStyle | undefined),
+                          routingStyle: 'catmullRom'
+                        }
                       }
                     }
                   : e
@@ -1481,11 +1491,16 @@ function CanvasInner(): React.JSX.Element {
         const targetCenter = targetNode
           ? (() => {
               const abs = absolutePosition(targetNode, byId)
-              return { x: abs.x + (targetNode.width ?? 0) / 2, y: abs.y + (targetNode.height ?? 0) / 2 }
+              return {
+                x: abs.x + (targetNode.width ?? 0) / 2,
+                y: abs.y + (targetNode.height ?? 0) / 2
+              }
             })()
           : null
         const sourceIds = nodes
-          .filter((n) => n.id === connection.source || (n.selected && isConnectableNodeType(n.type)))
+          .filter(
+            (n) => n.id === connection.source || (n.selected && isConnectableNodeType(n.type))
+          )
           .map((n) => n.id)
         return sourceIds.reduce((acc, sourceId) => {
           const sourceNode = byId.get(sourceId)
@@ -2336,20 +2351,48 @@ function CanvasInner(): React.JSX.Element {
 
   // Writes any dirty detail drafts to disk and returns nodes with
   // data.details updated to point at them — must happen before the main
-  // diagram.chd write so that write reflects the new references.
+  // diagram.chd write so that write reflects the new references. Also
+  // keeps every *other* existing detail file's name in sync with its
+  // element's current label (epic 0087), even for a node whose draft was
+  // never opened this session — this is what makes a relabel eventually
+  // rename its file, and also transparently migrates any pre-0087
+  // `<type>-<uuid>.md` file the first time its diagram is saved again, with
+  // no separate one-off migration step needed.
   const flushDetailsDrafts = useCallback(
     async (diagramPath: string, currentNodes: Node[]): Promise<Node[]> => {
       const entries = Object.entries(detailsDrafts)
-      if (entries.length === 0) return currentNodes
-      const updates: Record<string, string> = {}
+      const draftUpdates: Record<string, string> = {}
       for (const [nodeId, content] of entries) {
-        updates[nodeId] = await window.api.writeDetails(diagramPath, nodeId, content)
+        const node = currentNodes.find((n) => n.id === nodeId)
+        const label = typeof node?.data?.label === 'string' ? node.data.label : ''
+        draftUpdates[nodeId] = await window.api.writeDetails(diagramPath, nodeId, label, content)
       }
-      const updatedNodes = currentNodes.map((n) =>
-        updates[n.id] ? { ...n, data: { ...n.data, details: updates[n.id] } } : n
+      const withDrafts = currentNodes.map((n) =>
+        draftUpdates[n.id] ? { ...n, data: { ...n.data, details: draftUpdates[n.id] } } : n
       )
-      setNodes(updatedNodes)
-      return updatedNodes
+
+      let changed = entries.length > 0
+      const finalNodes = await Promise.all(
+        withDrafts.map(async (n) => {
+          if (draftUpdates[n.id]) return n // just (re)written with the current name
+          const existingPath = typeof n.data?.details === 'string' ? n.data.details : undefined
+          if (!existingPath) return n
+          const label = typeof n.data?.label === 'string' ? n.data.label : ''
+          const newPath = await window.api.syncDetailFileName(
+            diagramPath,
+            n.id,
+            label,
+            existingPath
+          )
+          if (newPath === existingPath) return n
+          changed = true
+          return { ...n, data: { ...n.data, details: newPath } }
+        })
+      )
+
+      if (!changed) return currentNodes
+      setNodes(finalNodes)
+      return finalNodes
     },
     [detailsDrafts, setNodes]
   )
@@ -3516,6 +3559,12 @@ function CanvasInner(): React.JSX.Element {
                   // matches the actual grabbable area exactly rather than
                   // over- or under-promising it.
                   reconnectRadius={8}
+                  // Previously never set at all (silently React Flow's own
+                  // 0.5/2 library defaults) until a large diagram made
+                  // "zoom out further" a real ask — now a real Setting
+                  // (SettingsPanel.tsx) rather than hardcoded. Epic 0086.
+                  minZoom={settings.minZoom}
+                  maxZoom={settings.maxZoom}
                   onEdgeContextMenu={onEdgeContextMenu}
                   onEdgeMouseEnter={onEdgeMouseEnter}
                   onEdgeMouseLeave={onEdgeMouseLeave}
@@ -3523,7 +3572,9 @@ function CanvasInner(): React.JSX.Element {
                   defaultEdgeOptions={DEFAULT_EDGE_OPTIONS}
                   connectionLineComponent={MultiConnectionLine}
                   selectionMode={
-                    settings.dragSelectRequiresFullEnclosure ? SelectionMode.Full : SelectionMode.Partial
+                    settings.dragSelectRequiresFullEnclosure
+                      ? SelectionMode.Full
+                      : SelectionMode.Partial
                   }
                   deleteKeyCode={['Delete', 'Backspace']}
                   multiSelectionKeyCode="Shift" // frees Ctrl/Cmd+click for linked-diagram navigation — epic 0009
@@ -3546,7 +3597,10 @@ function CanvasInner(): React.JSX.Element {
                       // while looking at one theme shouldn't stay bit-for-
                       // bit identical (and potentially illegible) after
                       // switching to the other.
-                      '--xy-background-color': themeAdaptiveColor(settings.canvasBackgroundColor, theme),
+                      '--xy-background-color': themeAdaptiveColor(
+                        settings.canvasBackgroundColor,
+                        theme
+                      ),
                       // Read directly by LabeledEdge's stroke when selected
                       // (epic 0067) — kept off DiagramContext deliberately:
                       // this value only ever matters to whichever edge is

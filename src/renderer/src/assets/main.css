@@ -1377,6 +1377,37 @@ body {
   gap: 8px;
 }
 
+/* Compact "Zoom limit: in [_] out [_]" row (epic 0086) — deliberately not
+   two full-width NumberField rows. */
+.settings-zoom-limit {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.settings-zoom-limit-label {
+  color: var(--ev-c-text-3);
+}
+
+.settings-zoom-limit-input {
+  width: 52px;
+  flex: 0 0 auto;
+  text-align: center;
+  /* No native up/down spinner, same reasoning/technique as
+     .property-range-number above — this box is narrow enough that the
+     spinner's own width visibly crowds the digits, and it invites
+     confusion about whether the field shows the real current value or
+     something the spinner just nudged it to. */
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.settings-zoom-limit-input::-webkit-inner-spin-button,
+.settings-zoom-limit-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .required-tags-panel-hint,
 .layer-panel-hint,
 .settings-panel-hint,
