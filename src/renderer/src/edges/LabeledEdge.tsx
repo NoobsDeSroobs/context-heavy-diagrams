@@ -23,6 +23,7 @@ import EditableLabel from '../components/EditableLabel'
 import HighlightChips from '../components/HighlightChips'
 import { useDiagramContext } from '../DiagramContext'
 import { HIGHLIGHT_BORDER_WIDTH } from '../highlights'
+import { isolateStyle } from '../search'
 import { withOpacity } from '../styles/colorOpacity'
 import { themeAdaptiveColor } from '../styles/themeAdaptiveColor'
 import { markerUrl } from './markerIds'
@@ -151,7 +152,9 @@ function LabeledEdge({
     pushSnapshot,
     openContextMenu,
     gravityPresets,
-    searchMatchIds
+    searchMatchIds,
+    isolateActive,
+    isolateOpacity
   } = useDiagramContext()
   const edgeStyle = data?.style as EdgeStyle | undefined
   const routingStyle = edgeStyle?.routingStyle
@@ -284,7 +287,11 @@ function LabeledEdge({
     // re-render every edge whenever it changes, selected or not. The
     // browser resolves the var directly; no re-render needed even for the
     // selected edge itself.
-    ...(selected ? { stroke: 'var(--selected-edge-highlight-color)' } : {})
+    ...(selected ? { stroke: 'var(--selected-edge-highlight-color)' } : {}),
+    // "Isolate" (epic 0063/ADR 0063) — layered last, same as every other
+    // override here; opacity doesn't conflict with anything above it so
+    // ordering only matters for readability, not correctness.
+    ...isolateStyle(id, isolateActive, searchMatchIds, isolateOpacity)
   }
   const computedMarkerEnd =
     edgeStyle?.endMarker !== undefined ? markerUrl(edgeStyle.endMarker) : markerEnd

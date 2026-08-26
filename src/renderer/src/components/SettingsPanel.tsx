@@ -28,9 +28,11 @@ interface SettingsPanelProps {
 // Local draft, resynced from `value` only while not focused — same
 // technique as fields.tsx's own useDraft (not reused directly: it isn't
 // exported, and mixing an exported hook into a component-only file would
-// trip react-refresh/only-export-components, see epic 0028). Kept minimal
-// since this is the only place SettingsPanel needs it.
-function useZoomDraft(value: number): [string, (v: string) => void, () => void, () => void] {
+// trip react-refresh/only-export-components, see epic 0028). Generic
+// (originally zoom-only) since ZoomLimitField and IsolateOpacityField
+// below both need a fractional `step`, which NumberField's own draft
+// doesn't expose.
+function useNumberDraft(value: number): [string, (v: string) => void, () => void, () => void] {
   const [draft, setDraft] = useState(String(value))
   const focusedRef = useRef(false)
   useEffect(() => {
@@ -64,8 +66,8 @@ function ZoomLimitField({
   maxZoom: number
   onChange: (patch: { minZoom?: number; maxZoom?: number }) => void
 }): React.JSX.Element {
-  const [minDraft, setMinDraft, onMinFocus, onMinBlur] = useZoomDraft(minZoom)
-  const [maxDraft, setMaxDraft, onMaxFocus, onMaxBlur] = useZoomDraft(maxZoom)
+  const [minDraft, setMinDraft, onMinFocus, onMinBlur] = useNumberDraft(minZoom)
+  const [maxDraft, setMaxDraft, onMaxFocus, onMaxBlur] = useNumberDraft(maxZoom)
   return (
     <FieldRow label="Zoom limit">
       <div className="settings-zoom-limit">
@@ -101,6 +103,45 @@ function ZoomLimitField({
           title="Maximum zoom (most zoomed in)"
         />
       </div>
+    </FieldRow>
+  )
+}
+
+// Fractional 0-1 opacity (epic 0063/ADR 0063) — NumberField's own draft
+// has no `step`, same reason ZoomLimitField above doesn't use it either.
+// Same two-class combo ZoomLimitField's own inputs use: .property-number-
+// field for the actual theme-aware background/border/color (its own
+// width: 100% is what this field doesn't want), .settings-zoom-limit-
+// input layered after it to override just the width down to a small
+// fixed box and hide the native spinner. Dropping the first class
+// entirely (an earlier version of this fix did) leaves the input with no
+// background/border rule at all — browser default white, which is
+// exactly wrong in dark theme.
+function IsolateOpacityField({
+  value,
+  onChange
+}: {
+  value: number
+  onChange: (patch: { isolateOpacity: number }) => void
+}): React.JSX.Element {
+  const [draft, setDraft, onFocus, onBlur] = useNumberDraft(value)
+  return (
+    <FieldRow label="Isolate opacity">
+      <input
+        type="number"
+        className="property-number-field settings-zoom-limit-input"
+        step={0.05}
+        min={0}
+        max={1}
+        value={draft}
+        onFocus={onFocus}
+        onChange={(e) => {
+          setDraft(e.target.value)
+          if (e.target.value !== '') onChange({ isolateOpacity: Number(e.target.value) })
+        }}
+        onBlur={onBlur}
+        title="How dim non-matching elements go while Isolate is active (0 = invisible, 1 = no dimming)"
+      />
     </FieldRow>
   )
 }
@@ -180,6 +221,7 @@ export default function SettingsPanel({
           />
         </FieldRow>
         <ZoomLimitField minZoom={settings.minZoom} maxZoom={settings.maxZoom} onChange={onChange} />
+        <IsolateOpacityField value={settings.isolateOpacity} onChange={onChange} />
         <FieldRow label="Drag-select requires full enclosure">
           <input
             type="checkbox"

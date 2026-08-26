@@ -84,6 +84,16 @@ export interface DiagramContextValue {
   // convention as entityHighlightNodeId above: cheap enough for each
   // component to check `.has(id)` itself.
   searchMatchIds: Set<string>
+  // "Isolate" (epic 0063/ADR 0063) — true means every element NOT in
+  // searchMatchIds should render dimmed. Deliberately a single flag, not
+  // its own id set: it's always exactly "everything outside the current
+  // search match set," so each node/edge component just checks
+  // `isolateActive && !searchMatchIds.has(id)` itself.
+  isolateActive: boolean
+  // Global Setting (settings.ts/SettingsPanel, epic 0063/ADR 0063), same
+  // threading convention as edgeStraightSegmentLength/
+  // maxConnectionPointsPerSide above.
+  isolateOpacity: number
 }
 
 const DiagramContext = createContext<DiagramContextValue | null>(null)

@@ -13,6 +13,8 @@ interface SearchOverlayProps {
   currentIndex: number
   onNext: () => void
   onPrev: () => void
+  isolateActive: boolean
+  onToggleIsolate: () => void
   onClose: () => void
 }
 
@@ -33,6 +35,8 @@ export default function SearchOverlay({
   currentIndex,
   onNext,
   onPrev,
+  isolateActive,
+  onToggleIsolate,
   onClose
 }: SearchOverlayProps): React.JSX.Element {
   const inputRef = useRef<HTMLInputElement>(null)
@@ -81,6 +85,20 @@ export default function SearchOverlay({
         disabled={query.trim().length === 0}
       >
         Search
+      </button>
+      <button
+        type="button"
+        className={`search-overlay-isolate${isolateActive ? ' active' : ''}`}
+        aria-pressed={isolateActive}
+        onClick={onToggleIsolate}
+        disabled={!isolateActive && query.trim().length === 0}
+        title={
+          isolateActive
+            ? 'Turn off Isolate'
+            : 'Dim everything except matches for the current query, and frame them all at once'
+        }
+      >
+        Isolate
       </button>
       <label
         className="search-overlay-deep"

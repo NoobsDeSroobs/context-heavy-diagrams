@@ -1,7 +1,10 @@
 # 0063: "Isolate" — de-emphasize elements outside a working set
 
 ## Status
-Not Started — scoped via a real design conversation (2026-08-25), but **explicitly deferred until [epic 0062](0062-search-and-highlight-matches.md) (search) ships**, per the user's own reconsideration mid-conversation: the version of this worth building depends on search existing first, not a manual-selection-only v1.
+Done, implemented (2026-08-26), on `epic/0063-isolate-mode`, pending live test/merge. `typecheck`/`lint` clean (same 4 pre-existing baseline errors, no new warnings in touched/new files). Originally scoped via a real design conversation (2026-08-25) that deliberately left the trigger/UI/rendering questions open until [epic 0062](0062-search-and-highlight-matches.md) (search) shipped — now resolved, see [ADR 0063](../../decisions/0063-isolate-mode.md).
+
+## What shipped
+Search-driven only, per the Decision section of ADR 0063 (no manual-selection trigger). A dedicated **Isolate** button sits next to **Search** in `SearchOverlay` — two independent actions, not one combined toggle, per the user's own pushback on the original single-checkbox assumption, and each can be the first one pressed (see the ADR's Addendum): Isolate runs its own matching against whatever query is typed rather than depending on Search having run first. The two also differ in viewport behavior — Search jumps to one matched element, Isolate frames the bounding box of every match at once. Rendering is reduced opacity, defaulting to 50%, exposed as a new global Setting (`isolateOpacity`) rather than hardcoded. Edges get the same treatment as nodes, as predicted. `search.ts`'s `isolateStyle()` is the one shared per-element computation every node/edge component's inline style calls into.
 
 ## Goal (revised — this is a different shape than the epic's original framing)
 Originally framed as a "dim mode" tied to the highlight system. After a real design conversation, reframed as **"Isolate"**: a general-purpose, session-only mechanism — de-emphasize (most likely reduced opacity) every element *outside* a given working set, whatever produced that set. Deliberately **decoupled from the highlight system**, not built on top of it or living inside it:

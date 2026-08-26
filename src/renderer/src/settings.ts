@@ -59,7 +59,15 @@ export function useSettings(): {
   useEffect(() => {
     window.api.readAppSettings().then((fileSettings) => {
       if (fileSettings) {
-        setSettings(fileSettings)
+        // Standing rule: every field in AppSettings must always resolve to
+        // a real value, never undefined — main's own readAppSettings()
+        // already merges over DEFAULT_SETTINGS (appSettings.ts), but that's
+        // a single point of trust; re-merging here too means a field added
+        // to AppSettings always shows its default immediately, with no
+        // dependency on main having been restarted/rebuilt first (bit us
+        // once already: isolateOpacity rendered as an empty input under
+        // this exact gap).
+        setSettings({ ...DEFAULT_SETTINGS, ...fileSettings })
         return
       }
       // settings.json doesn't exist yet — either a fresh install, or an
@@ -75,7 +83,18 @@ export function useSettings(): {
     })
   }, [])
 
-  useEffect(() => window.api.onAppSettingsChanged(setSettings), [])
+  // Same re-merge as above, for the cross-window broadcast path — a
+  // sibling window relays whatever it last had in its own React state
+  // (main's settings:write handler just forwards it verbatim), so this is
+  // the one place that guarantees a field this window doesn't know about
+  // yet still never becomes undefined here either.
+  useEffect(
+    () =>
+      window.api.onAppSettingsChanged((incoming) =>
+        setSettings({ ...DEFAULT_SETTINGS, ...incoming })
+      ),
+    []
+  )
 
   const updateSettings = useCallback((patch: Partial<AppSettings>) => {
     setSettings((current) => {

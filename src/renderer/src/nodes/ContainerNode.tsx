@@ -6,6 +6,7 @@ import HighlightChips from '../components/HighlightChips'
 import LockBadge from '../components/LockBadge'
 import { useDiagramContext } from '../DiagramContext'
 import { HIGHLIGHT_BORDER_WIDTH } from '../highlights'
+import { isolateStyle } from '../search'
 import { nodeContainerCss, nodeLabelCss } from '../styles/nodeStyleCss'
 import { ConnectionHandles } from './ConnectionHandles'
 import { useConnectionPointMenu } from './connectionPoints'
@@ -32,7 +33,9 @@ function ContainerNode({ id, data, selected }: NodeProps): React.JSX.Element {
     matchHighlights,
     theme,
     entityHighlightNodeId,
-    searchMatchIds
+    searchMatchIds,
+    isolateActive,
+    isolateOpacity
   } = useDiagramContext()
   const { updateNodeData } = useReactFlow()
   const locked = data?.locked === true
@@ -66,7 +69,11 @@ function ContainerNode({ id, data, selected }: NodeProps): React.JSX.Element {
   return (
     <div
       className={`container-node${entityHighlightNodeId === id ? ' entity-highlighted' : ''}${searchMatchIds.has(id) ? ' search-match' : ''}`}
-      style={{ ...nodeContainerCss(style, theme), ...highlightCss }}
+      style={{
+        ...nodeContainerCss(style, theme),
+        ...highlightCss,
+        ...isolateStyle(id, isolateActive, searchMatchIds, isolateOpacity)
+      }}
       onContextMenu={onContextMenu}
     >
       <NodeResizer

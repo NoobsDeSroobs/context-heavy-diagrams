@@ -5,6 +5,7 @@ import EditableLabel from '../components/EditableLabel'
 import LockBadge from '../components/LockBadge'
 import { useDiagramContext } from '../DiagramContext'
 import { useDetailsTooltip } from '../hooks/useDetailsTooltip'
+import { isolateStyle } from '../search'
 import { nodeContainerCss, nodeLabelCss } from '../styles/nodeStyleCss'
 
 export const TEXT_MIN_WIDTH = 40
@@ -28,7 +29,9 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
     pushSnapshot,
     theme,
     entityHighlightNodeId,
-    searchMatchIds
+    searchMatchIds,
+    isolateActive,
+    isolateOpacity
   } = useDiagramContext()
   const rotation = typeof data?.rotation === 'number' ? (data.rotation as number) : 0
   const locked = data?.locked === true
@@ -128,7 +131,11 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
     <div
       ref={nodeRef}
       className={`text-node${rotating ? ' rotating' : ''}${entityHighlightNodeId === id ? ' entity-highlighted' : ''}${searchMatchIds.has(id) ? ' search-match' : ''}`}
-      style={{ transform: `rotate(${rotation}deg)`, ...nodeContainerCss(style, theme) }}
+      style={{
+        transform: `rotate(${rotation}deg)`,
+        ...nodeContainerCss(style, theme),
+        ...isolateStyle(id, isolateActive, searchMatchIds, isolateOpacity)
+      }}
       onContextMenu={onContextMenu}
       onClick={onClick}
       title={tooltip}

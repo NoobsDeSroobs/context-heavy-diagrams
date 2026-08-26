@@ -723,6 +723,13 @@ function CanvasInner(): React.JSX.Element {
   const [searchMatchIds, setSearchMatchIds] = useState<Set<string>>(new Set())
   const [searchMatchOrder, setSearchMatchOrder] = useState<string[]>([])
   const [searchMatchCursor, setSearchMatchCursor] = useState(0)
+  // "Isolate" (epic 0063/ADR 0063) — search-driven only, per the user's
+  // own call: a separate explicit toggle next to Search, not folded into
+  // running a search itself, so turning it on/off doesn't require
+  // re-searching. Always cleared alongside search results (see
+  // clearSearchResults below) since it's meaningless without a live match
+  // set to isolate down to.
+  const [isolateActive, setIsolateActive] = useState(false)
   // Persona switch (epic 0060, first step) — akin to FreeCAD's workbench
   // switcher/Affinity's persona tabs: swaps the entire main view, not a
   // split or overlay. Render-only prototype for now (ThreatMatrixView),
@@ -1423,14 +1430,18 @@ function CanvasInner(): React.JSX.Element {
     [edges, setNodes, setEdges, rfInstance]
   )
 
-  // Submit-to-search, not live-as-you-type — see ADR 0062. Free-text/tag
-  // matching is synchronous over the in-memory nodes/edges; deep search
-  // additionally opens each not-yet-matched node's detail file on disk and
-  // does a plain substring check, no indexing (ADR 0062's deliberate
-  // choice — this is an occasional toggle, not the default path).
-  const runSearch = useCallback(async () => {
+  // Shared by both trigger buttons (epic 0063/ADR 0063 split Search and
+  // Isolate into two independent actions over the same underlying match
+  // computation — only what happens *after* matching differs). Free-
+  // text/tag matching is synchronous over the in-memory nodes/edges; deep
+  // search additionally opens each not-yet-matched node's detail file on
+  // disk and does a plain substring check, no indexing (ADR 0062's
+  // deliberate choice — this is an occasional toggle, not the default
+  // path). Returns the stable next/prev-ordered match list (nodes in
+  // their current array order, then edges), empty for an empty query.
+  const computeAndSetMatches = useCallback(async (): Promise<string[]> => {
     const query = searchQuery.trim()
-    if (!query) return
+    if (!query) return []
     const nodeMatchIds = nodes
       .filter((n) =>
         matchesSearchQuery(query, {
@@ -1468,16 +1479,48 @@ function CanvasInner(): React.JSX.Element {
       setDeepSearchLoading(false)
     }
 
-    // Stable next/prev ordering: nodes in their current array order, then
-    // edges — matches the order they were scanned above.
     const order = [...nodes, ...edges].filter((el) => matchedIds.has(el.id)).map((el) => el.id)
 
     setSearchMatchIds(matchedIds)
     setSearchMatchOrder(order)
     setSearchMatchCursor(0)
     setSearchRun(true)
+    return order
+  }, [searchQuery, nodes, edges, deepSearchEnabled, currentPath])
+
+  const runSearch = useCallback(async () => {
+    const order = await computeAndSetMatches()
     if (order.length > 0) focusSearchMatch(order[0])
-  }, [searchQuery, nodes, edges, deepSearchEnabled, currentPath, focusSearchMatch])
+  }, [computeAndSetMatches, focusSearchMatch])
+
+  // Isolate's own viewport action (epic 0063/ADR 0063) — frames every
+  // match at once rather than jumping to one, the whole point of the
+  // "scope the view down to a working set" framing. rfInstance.fitView
+  // already computes the union bounding box for however many node ids
+  // it's given, so no manual bbox math is needed here — an edge match
+  // just contributes its two endpoint nodes to that set, same reasoning
+  // as focusSearchMatch's single-match case above.
+  const fitAllMatches = useCallback(
+    (order: string[]) => {
+      if (order.length === 0) return
+      const nodeIds = new Set<string>()
+      for (const id of order) {
+        const edge = edges.find((e) => e.id === id)
+        if (edge) {
+          nodeIds.add(edge.source)
+          nodeIds.add(edge.target)
+        } else {
+          nodeIds.add(id)
+        }
+      }
+      rfInstance.fitView({
+        nodes: [...nodeIds].map((id) => ({ id })),
+        duration: 300,
+        padding: 0.5
+      })
+    },
+    [edges, rfInstance]
+  )
 
   const nextSearchMatch = useCallback(() => {
     if (searchMatchOrder.length === 0) return
@@ -1500,7 +1543,30 @@ function CanvasInner(): React.JSX.Element {
     setSearchMatchOrder([])
     setSearchMatchCursor(0)
     setSearchRun(false)
+    // Isolate has no meaning without a live match set — see its own state
+    // comment above.
+    setIsolateActive(false)
   }, [])
+
+  // Isolate is its own independent trigger (epic 0063/ADR 0063 revised
+  // after the user's follow-up: available from the start, not gated on
+  // Search having already run) — when off, it runs the same matching
+  // Search does against whatever query is currently typed, then frames
+  // every match at once (fitAllMatches) instead of jumping to one node.
+  // When already on, a second click just turns it off; the underlying
+  // match set (and Search's own next/prev over it) is left alone —
+  // Isolate is a dimming toggle layered on top of it, not a separate
+  // state universe.
+  const runIsolate = useCallback(async () => {
+    if (isolateActive) {
+      setIsolateActive(false)
+      return
+    }
+    const order = await computeAndSetMatches()
+    if (order.length === 0) return
+    setIsolateActive(true)
+    fitAllMatches(order)
+  }, [isolateActive, computeAndSetMatches, fitAllMatches])
 
   const onSearchQueryChange = useCallback(
     (value: string) => {
@@ -2760,6 +2826,7 @@ function CanvasInner(): React.JSX.Element {
       setSearchMatchOrder([])
       setSearchMatchCursor(0)
       setSearchRun(false)
+      setIsolateActive(false)
       // Defensive, per ADR 0022 — reconcile against hand-edited drift on
       // every load, not just when the template is edited from within the app.
       runSync(openedRequiredTags)
@@ -3597,7 +3664,9 @@ function CanvasInner(): React.JSX.Element {
       paletteColors: settings.stylePalette.colors,
       paletteFonts: settings.stylePalette.fonts,
       gravityPresets: effectiveGravityPresets(gravityPresets),
-      searchMatchIds
+      searchMatchIds,
+      isolateActive,
+      isolateOpacity: settings.isolateOpacity
     }),
     [
       currentPath,
@@ -3618,7 +3687,9 @@ function CanvasInner(): React.JSX.Element {
       settings.stylePalette.colors,
       settings.stylePalette.fonts,
       gravityPresets,
-      searchMatchIds
+      searchMatchIds,
+      isolateActive,
+      settings.isolateOpacity
     ]
   )
 
@@ -3971,6 +4042,8 @@ function CanvasInner(): React.JSX.Element {
               currentIndex={searchMatchCursor}
               onNext={nextSearchMatch}
               onPrev={prevSearchMatch}
+              isolateActive={isolateActive}
+              onToggleIsolate={runIsolate}
               onClose={closeSearchOverlay}
             />
           )}

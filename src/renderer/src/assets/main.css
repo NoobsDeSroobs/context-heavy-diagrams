@@ -2044,6 +2044,37 @@ body {
   width: 220px;
 }
 
+/* Same button-ish look as .toolbar button — every button in the overlay
+   (Search, Isolate, prev/next, close) shares this rather than each
+   picking up bare browser defaults. */
+.search-overlay button {
+  cursor: pointer;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+.search-overlay button:hover:not(:disabled) {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.search-overlay button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Isolate's pressed state (epic 0063/ADR 0063) — same accent color as a
+   search-match outline/glow, since the two are directly related (Isolate
+   dims everything search *didn't* match). */
+.search-overlay-isolate.active {
+  background: var(--search-match-color);
+  border-color: var(--search-match-color);
+  color: var(--ev-c-black);
+}
+
 .search-overlay-deep {
   display: flex;
   align-items: center;

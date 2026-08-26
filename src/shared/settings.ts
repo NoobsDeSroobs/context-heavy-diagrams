@@ -105,6 +105,12 @@ export interface AppSettings {
   // other canvas-behavior Setting here.
   minZoom: number
   maxZoom: number
+  // Opacity applied to every element outside the current search match set
+  // while Isolate is active (epic 0063/ADR 0063) — global, not per-diagram,
+  // same tier as every other canvas-behavior Setting here. 0 would hide
+  // non-matches entirely; deliberately left as a plain opacity rather than
+  // a visibility toggle so de-emphasized structure/context stays visible.
+  isolateOpacity: number
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -123,5 +129,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   pngExportLegendCorner: 'bottom-left',
   dragSelectRequiresFullEnclosure: true,
   minZoom: 0.1,
-  maxZoom: 2
+  maxZoom: 2,
+  isolateOpacity: 0.5
 }
