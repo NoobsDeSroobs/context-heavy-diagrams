@@ -18,3 +18,5 @@ Let the user add a raster/vector image as its own canvas element (paste from cli
 
 ## Notes
 Raised by the user 2026-08-24 alongside two other new ideas (0089, 0091), logged without further design discussion.
+
+Raised again 2026-08-27 ("Adding Images like PNGs to the overview"), alongside [epic 0094](0094-search-by-icon.md) — same idea, no new scope beyond what's already captured above. Two independent mentions three days apart is a mild signal this is worth picking up before some of the older, once-mentioned backlog items, though still not formally reprioritized.

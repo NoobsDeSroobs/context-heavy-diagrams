@@ -89,6 +89,7 @@ import AboutDialog from './components/AboutDialog'
 import ExportPngDialog, { type PngExportChoice } from './components/ExportPngDialog'
 import StylePalettePanel from './components/StylePalettePanel'
 import DiagramDock from './panels/DiagramDock'
+import { PALETTE_ITEM_DRAG_TYPE, type PaletteItemType } from './panels/ItemPalette'
 import UtilityDock from './panels/UtilityDock'
 import AlignmentGuides from './components/AlignmentGuides'
 import { SNAP_THRESHOLD_PX, boundsFrom, computeSnap } from './alignment'
@@ -1932,6 +1933,152 @@ function CanvasInner(): React.JSX.Element {
     [rfInstance]
   )
 
+  // Drag-and-drop counterpart to the four addXNode callbacks below (epic
+  // 0029) — those spawn near the viewport center via spawnPosition above;
+  // this places a node exactly where it was dropped, centered under the
+  // drop point, and reparents it into a container the same way
+  // onNodeDragStop's own intersection check does for an existing node's
+  // drag. It can't reuse rfInstance.getIntersectingNodes for that though —
+  // the new node isn't registered with React Flow yet at drop time — so
+  // this does the equivalent bounds-overlap test manually against the
+  // current containers instead, using drop-point containment (simpler
+  // than full-rectangle overlap, and a closer match to "I dropped it
+  // here" than the drag-existing-node heuristic needs to be). Picks
+  // whichever containing container has the highest zIndex if more than
+  // one contains the point (nested containers), matching what's visually
+  // on top.
+  const addNodeAtPosition = useCallback(
+    (type: PaletteItemType, dropPoint: { x: number; y: number }) => {
+      pushSnapshot()
+      setNodes((nds) => {
+        const byId = new Map(nds.map((n) => [n.id, n]))
+        const parent = nds
+          .filter((n) => n.type === 'container')
+          .map((n) => {
+            const abs = absolutePosition(n, byId)
+            return { node: n, bounds: boundsFrom(abs.x, abs.y, n.width ?? 0, n.height ?? 0) }
+          })
+          .filter(
+            ({ bounds }) =>
+              dropPoint.x >= bounds.left &&
+              dropPoint.x <= bounds.right &&
+              dropPoint.y >= bounds.top &&
+              dropPoint.y <= bounds.bottom
+          )
+          .sort(
+            (a, b) =>
+              ((b.node.data?.zIndex as number | undefined) ?? 0) -
+              ((a.node.data?.zIndex as number | undefined) ?? 0)
+          )[0]?.node
+
+        let width: number
+        let height: number
+        let nodeType: string
+        let data: Record<string, unknown>
+        switch (type) {
+          case 'shape':
+            width = SHAPE_MIN_WIDTH * 2
+            height = SHAPE_MIN_HEIGHT * 2
+            nodeType = 'shape'
+            data = {
+              label: 'Shape',
+              zIndex: nextZIndex(nds, 'shape'),
+              metadata: seedMetadata(requiredTags),
+              style: settings.defaultStyles.shape
+            }
+            break
+          case 'container':
+            width = CONTAINER_MIN_WIDTH * 2
+            height = CONTAINER_MIN_HEIGHT * 1.5
+            nodeType = 'container'
+            data = {
+              label: 'Container',
+              zIndex: nextZIndex(nds, 'container'),
+              style: settings.defaultStyles.container ?? {
+                fill: 'var(--ev-c-gray-1)',
+                fillOpacity: 20
+              },
+              metadata: seedMetadata(requiredTags)
+            }
+            break
+          case 'text':
+            width = TEXT_MIN_WIDTH * 3
+            height = TEXT_MIN_HEIGHT * 2
+            nodeType = 'text'
+            data = {
+              label: 'Text',
+              rotation: 0,
+              zIndex: nextZIndex(nds, 'text'),
+              style: settings.defaultStyles.text
+            }
+            break
+          case 'line': {
+            const lineLength = 160
+            width = lineLength + LINE_BOUNDS_PADDING * 2
+            height = LINE_BOUNDS_PADDING * 2
+            nodeType = 'line'
+            data = {
+              label: 'Line',
+              zIndex: nextZIndex(nds, 'line'),
+              points: [
+                { x: LINE_BOUNDS_PADDING, y: LINE_BOUNDS_PADDING },
+                { x: LINE_BOUNDS_PADDING + lineLength, y: LINE_BOUNDS_PADDING }
+              ]
+            }
+            break
+          }
+        }
+
+        const topLeft = { x: dropPoint.x - width / 2, y: dropPoint.y - height / 2 }
+        const position = parent
+          ? subtractPosition(topLeft, absolutePosition(parent, byId))
+          : topLeft
+        const id = newNodeId(nodeType)
+        const newNode: Node = {
+          id,
+          type: nodeType,
+          position,
+          width,
+          height,
+          parentId: parent?.id,
+          data
+        }
+        return sortNodesForHierarchy([...nds, newNode])
+      })
+    },
+    [
+      pushSnapshot,
+      setNodes,
+      requiredTags,
+      settings.defaultStyles.shape,
+      settings.defaultStyles.container,
+      settings.defaultStyles.text
+    ]
+  )
+
+  // dataTransfer's actual value isn't readable during dragover in most
+  // browsers (only .types is, by design) — checking .types is enough to
+  // both accept the drop and tell a palette drag apart from anything else
+  // that might get dragged over the canvas (a file, browser text, ...).
+  const onCanvasDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    if (!event.dataTransfer.types.includes(PALETTE_ITEM_DRAG_TYPE)) return
+    event.preventDefault()
+    event.dataTransfer.dropEffect = 'copy'
+  }, [])
+
+  const onCanvasDrop = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      const type = event.dataTransfer.getData(PALETTE_ITEM_DRAG_TYPE) as PaletteItemType | ''
+      if (!type) return
+      event.preventDefault()
+      addNodeAtPosition(
+        type,
+        rfInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY })
+      )
+    },
+    [rfInstance, addNodeAtPosition]
+  )
+
   const addShapeNode = useCallback(() => {
     pushSnapshot()
     const id = newNodeId('shape')
@@ -3762,7 +3909,12 @@ function CanvasInner(): React.JSX.Element {
             <ThreatMatrixView />
           ) : (
             <div className="canvas-view-body">
-              <div className="canvas-view-flow" ref={flowWrapperRef}>
+              <div
+                className="canvas-view-flow"
+                ref={flowWrapperRef}
+                onDragOver={onCanvasDragOver}
+                onDrop={onCanvasDrop}
+              >
                 <EdgeMarkerDefs />
                 <ReactFlow
                   nodes={nodes}
