@@ -31,7 +31,8 @@ function ContainerNode({ id, data, selected }: NodeProps): React.JSX.Element {
     attachContainedNodes,
     matchHighlights,
     theme,
-    entityHighlightNodeId
+    entityHighlightNodeId,
+    searchMatchIds
   } = useDiagramContext()
   const { updateNodeData } = useReactFlow()
   const locked = data?.locked === true
@@ -40,7 +41,9 @@ function ContainerNode({ id, data, selected }: NodeProps): React.JSX.Element {
   const { addConnectionPointItem, onPointContextMenu } = useConnectionPointMenu(id, customPoints)
 
   // See ShapeNode's identical treatment / epic 0026's ADR 0025.
-  const highlightMatches = matchHighlights(data?.metadata as Record<string, MetadataEntry> | undefined)
+  const highlightMatches = matchHighlights(
+    data?.metadata as Record<string, MetadataEntry> | undefined
+  )
   const highlightCss: CSSProperties =
     highlightMatches.length === 1
       ? { borderColor: highlightMatches[0].color, borderWidth: HIGHLIGHT_BORDER_WIDTH }
@@ -62,7 +65,7 @@ function ContainerNode({ id, data, selected }: NodeProps): React.JSX.Element {
 
   return (
     <div
-      className={entityHighlightNodeId === id ? 'container-node entity-highlighted' : 'container-node'}
+      className={`container-node${entityHighlightNodeId === id ? ' entity-highlighted' : ''}${searchMatchIds.has(id) ? ' search-match' : ''}`}
       style={{ ...nodeContainerCss(style, theme), ...highlightCss }}
       onContextMenu={onContextMenu}
     >

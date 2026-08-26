@@ -78,6 +78,12 @@ export interface DiagramContextValue {
   // lineGravityPresets.ts's effectiveGravityPresets. LineNode's point
   // context menu reads this directly rather than a hardcoded list.
   gravityPresets: GravityPreset[]
+  // Ids of every node/edge the current search overlay run matched (epic
+  // 0062/ADR 0062) — empty whenever the overlay is closed or hasn't been
+  // run yet. Raw id set, not a per-element lookup function, same
+  // convention as entityHighlightNodeId above: cheap enough for each
+  // component to check `.has(id)` itself.
+  searchMatchIds: Set<string>
 }
 
 const DiagramContext = createContext<DiagramContextValue | null>(null)

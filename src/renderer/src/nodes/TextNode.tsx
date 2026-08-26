@@ -27,7 +27,8 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
     endContinuousEdit,
     pushSnapshot,
     theme,
-    entityHighlightNodeId
+    entityHighlightNodeId,
+    searchMatchIds
   } = useDiagramContext()
   const rotation = typeof data?.rotation === 'number' ? (data.rotation as number) : 0
   const locked = data?.locked === true
@@ -66,7 +67,15 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
         ...linkItems
       ])
     },
-    [id, openContextMenu, openDetailsPanel, linkedPath, handleLinkClick, updateNodeData, pushSnapshot]
+    [
+      id,
+      openContextMenu,
+      openDetailsPanel,
+      linkedPath,
+      handleLinkClick,
+      updateNodeData,
+      pushSnapshot
+    ]
   )
 
   // Ctrl/Cmd+click is distinct from plain click (selection) and right-click
@@ -99,8 +108,7 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
 
       const onMouseMove = (moveEvent: MouseEvent): void => {
         const angle =
-          (Math.atan2(moveEvent.clientY - center.y, moveEvent.clientX - center.x) * 180) /
-            Math.PI +
+          (Math.atan2(moveEvent.clientY - center.y, moveEvent.clientX - center.x) * 180) / Math.PI +
           90
         updateNodeData(id, { rotation: Math.round(angle) })
       }
@@ -119,13 +127,17 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
   return (
     <div
       ref={nodeRef}
-      className={`text-node${rotating ? ' rotating' : ''}${entityHighlightNodeId === id ? ' entity-highlighted' : ''}`}
+      className={`text-node${rotating ? ' rotating' : ''}${entityHighlightNodeId === id ? ' entity-highlighted' : ''}${searchMatchIds.has(id) ? ' search-match' : ''}`}
       style={{ transform: `rotate(${rotation}deg)`, ...nodeContainerCss(style, theme) }}
       onContextMenu={onContextMenu}
       onClick={onClick}
       title={tooltip}
     >
-      <NodeResizer isVisible={selected && !locked} minWidth={TEXT_MIN_WIDTH} minHeight={TEXT_MIN_HEIGHT} />
+      <NodeResizer
+        isVisible={selected && !locked}
+        minWidth={TEXT_MIN_WIDTH}
+        minHeight={TEXT_MIN_HEIGHT}
+      />
       {selected && !locked && (
         <div
           className="text-node-rotate-handle nodrag nopan"

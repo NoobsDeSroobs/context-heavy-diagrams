@@ -6,6 +6,30 @@ See [docs/architecture/glossary.md](glossary.md) for this project's precise term
 
 A local, offline desktop diagramming tool for IT architecture work — filling the gap between restrictive commercial tools and generic box-and-arrow editors like Draw.io. That includes enterprise-architecture-adjacent work (business capability maps, motivation/goals views, application portfolios), not just software/technical diagrams — the goal is to take an architect most of the way there before they need a dedicated EA suite, through flexible generic primitives rather than a formal enforced metamodel (see [ADR 0008](../decisions/0008-tool-scope-includes-ea-adjacent-diagrams.md)). Local-only: no server, no hosting, no real-time collaboration. See [docs/project-brief.md](../project-brief.md) for the full requirements this was commissioned against.
 
+### What existing tools get wrong (guiding pet peeves)
+
+A vague, non-exhaustive list of complaints against tools already on the market, kept as a reframing of the brief's motivation rather than a spec — not every item maps to a shipped or even planned feature, and it isn't meant to be re-litigated item by item against every competitor that comes up. No single existing tool clears the whole list; each trades away two or three items to be good at the others (Visio: rich linked context, but proprietary and not git-friendly; Ardoq: flexible and powerful, but expensive and not git-friendly; D2 (d2lang.com): git-friendly, free/open, custom styling, but no persistent interactive session state — no per-node hidden context, no drill-down linking, no smart interactive features, since it's a text-to-diagram compiler, not an editor; draw.io-style tools: free-ish and flexible, but exactly the "overly constrained / low context / no smart features" complaints below). This combination — not any single feature — is the actual thesis for building a dedicated tool instead of adopting one of these.
+
+- Low context (no room for rich per-element notes/purpose without cluttering the diagram itself)
+- No legend
+- Overly constrained (rigid grammar/metamodel fights the user more than it helps)
+- No flexible smart features baked in
+- Multiple files needed to show the same system from multiple views, with no real linking between them
+- Bloated
+- No smart support for icons
+- Git-unfriendly / can't be diffed or version-controlled easily
+- No way to handle light vs dark mode preferences
+- Autosave and crash recovery missing
+- No minimap
+- No metadata
+- No selective highlighting
+- Requires an online connection
+- Proprietary formats
+- Closed source
+- Copyright/licensing entanglements (e.g. bundled icon sets)
+- Not free
+- No custom styles (colours and fonts)
+
 ## Design principles
 
 - **A node is a single draggable entity.** Detail content and linked-diagram references are data fields on a node, never separate canvas objects that have to be moved together. This is the central principle the whole design serves — see the brief's "Interaction model" section for the failure modes in other tools it's specifically avoiding.
@@ -44,9 +68,10 @@ Electron runs two JS contexts:
 - `DiagramContext.tsx` — the callbacks `Canvas.tsx` exposes downward (open a picker, push an undo snapshot, look up current highlight matches, …) so node/edge components can trigger cross-cutting behavor without prop-drilling.
 - Node components (`nodes/`): `ShapeNode`, `ContainerNode`, `TextNode`, `AnchorNode` (epic 0014's placeholder-until-resolved node for drag-to-empty-space), `LineNode` (epic 0064/ADR 0050's freeform curved line — deliberately its own node type, not a variant of edges). Edge: `edges/LabeledEdge.tsx`.
 - `geometry/bendablePath.ts` — pure, dependency-free point-list-to-SVG-path math (per-point "gravity"/Catmull-Rom tension, converted to piecewise cubic bezier) behind `LineNode`'s curve — kept free of any "node"/"edge" concept specifically so a future bendable-edge type ([epic 0032](../planning/epics/0032-edge-routing-and-waypoints.md)) can reuse it unchanged.
-- `panels/` + `components/` — the UI chrome: `DiagramDock` (item palette / property panel, mutually exclusive per ADR 0013), `UtilityDock` hosting `DetailsPanel`/`RequiredTagsPanel`/`DiagnosticsPanel`/`HighlightsPanel`/`LayerPanel`/`SettingsPanel`/`StylePalettePanel`/`GravityPresetsPanel` (also mutually exclusive, one at a time), plus anchored popups (`IconPicker`, `ColorPickerPopup`, `StylePicker`, `ContextMenu`).
+- `panels/` + `components/` — the UI chrome: `DiagramDock` (item palette / property panel, mutually exclusive per ADR 0013), `UtilityDock` hosting `DetailsPanel`/`RequiredTagsPanel`/`DiagnosticsPanel`/`HighlightsPanel`/`LayerPanel`/`SettingsPanel`/`StylePalettePanel`/`GravityPresetsPanel` (also mutually exclusive, one at a time), plus anchored/floating popups (`IconPicker`, `ColorPickerPopup`, `StylePicker`, `ContextMenu`, `LegendPanel`, `SearchOverlay` — epic 0062, Ctrl+F-triggered, fixed top-right rather than anchored to a button, see ADR 0062).
 - `theme.ts` — the light/dark theme hook (epic 0005/ADR 0027), paired with `assets/base.css`'s CSS-variable theme layer.
 - `highlights.ts` — pure matching/grouping/reconcile logic for tag-based highlights (epics 0026/0036), imported by both `Canvas.tsx` and the node/edge components that render matches.
+- `search.ts` — pure free-text matcher (id/label/tag substring match) behind the search overlay (epic 0062/ADR 0062); same "pure logic, imported by Canvas.tsx and the render layer" shape as `highlights.ts`, deliberately kept separate since the two systems are independent (a search result and a highlight can both be true of the same element at once).
 
 **Shared** (`src/shared/diagram.ts`) — the `.chd` file format's TypeScript types plus `serializeDiagram`/`parseDiagram`, imported by both main (to validate/write) and renderer (to build/read). See [docs/file-format.md](../file-format.md) for the format itself, kept as a standalone spec.
 

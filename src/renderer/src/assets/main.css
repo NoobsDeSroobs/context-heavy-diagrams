@@ -1548,6 +1548,19 @@ body {
   outline-offset: 2px;
 }
 
+/* Search-result indicator (epic 0062/ADR 0062) — a distinct outline from
+   entity-highlighted just above (different width/offset so the two never
+   look identical if both were somehow true at once) and, unlike the
+   property-highlight border override, never touches the element's own
+   border color — the whole point is coexisting with an active highlight
+   rather than fighting it for the same CSS property. */
+.shape-node.search-match,
+.container-node.search-match,
+.text-node.search-match {
+  outline: 3px dashed var(--search-match-color);
+  outline-offset: 4px;
+}
+
 /* One key/lock/default row plus its collapsible allowed-values list below
    — see .required-tag-values-list. A visible bottom border between
    entries since each now has real vertical extent once expanded, not
@@ -2003,6 +2016,51 @@ body {
   font-size: 12px;
   color: var(--ev-c-text-3);
   margin: 0;
+}
+
+/* Search overlay (epic 0062/ADR 0062) — Ctrl+F-triggered, fixed top-right,
+   not anchored to any toolbar button since there isn't one yet in V1
+   (deliberately provisional, see the ADR). Same panel visual language
+   (background/border/shadow) as .legend-panel/.highlights-panel below,
+   laid out as a single row instead of their column-with-body shape since
+   this is one input plus a few controls, not a scrollable list. */
+.search-overlay {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: var(--color-background-soft);
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  cursor: default;
+}
+
+.search-overlay-input {
+  width: 220px;
+}
+
+.search-overlay-deep {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--ev-c-text-2);
+  white-space: nowrap;
+}
+
+.search-overlay-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--ev-c-text-2);
+  white-space: nowrap;
+  min-width: 90px;
 }
 
 /* Highlights panel — moved here from the shared right-side dock shell,

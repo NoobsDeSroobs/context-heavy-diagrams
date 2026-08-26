@@ -61,6 +61,8 @@ import DetailsPanel from './components/DetailsPanel'
 import RequiredTagsPanel from './components/RequiredTagsPanel'
 import DiagnosticsPanel from './components/DiagnosticsPanel'
 import HighlightsPanel from './components/HighlightsPanel'
+import SearchOverlay from './components/SearchOverlay'
+import { matchesSearchQuery } from './search'
 import LegendPanel from './components/LegendPanel'
 import MenuBar, { type MenuBarMenu } from './components/MenuBar'
 import LayerPanel from './components/LayerPanel'
@@ -708,6 +710,19 @@ function CanvasInner(): React.JSX.Element {
   const [settingsPanelOpen, setSettingsPanelOpen] = useState(false)
   const [stylePalettePanelOpen, setStylePalettePanelOpen] = useState(false)
   const [alignDistributePanelOpen, setAlignDistributePanelOpen] = useState(false)
+  // Search overlay (epic 0062/ADR 0062) — Ctrl+F. All session-only, reset
+  // on load like every other panel's open/enabled state above. searchRun
+  // distinguishes "haven't searched yet" from "searched, zero results";
+  // matchOrder is the stable id ordering next/prev cycles through
+  // (recomputed each run — nodes first, then edges, insertion order).
+  const [searchOverlayOpen, setSearchOverlayOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [deepSearchEnabled, setDeepSearchEnabled] = useState(false)
+  const [deepSearchLoading, setDeepSearchLoading] = useState(false)
+  const [searchRun, setSearchRun] = useState(false)
+  const [searchMatchIds, setSearchMatchIds] = useState<Set<string>>(new Set())
+  const [searchMatchOrder, setSearchMatchOrder] = useState<string[]>([])
+  const [searchMatchCursor, setSearchMatchCursor] = useState(0)
   // Persona switch (epic 0060, first step) — akin to FreeCAD's workbench
   // switcher/Affinity's persona tabs: swaps the entire main view, not a
   // split or overlay. Render-only prototype for now (ThreatMatrixView),
@@ -1381,6 +1396,124 @@ function CanvasInner(): React.JSX.Element {
       matchingHighlights(metadata, highlights, enabledHighlightIds),
     [highlights, enabledHighlightIds]
   )
+
+  // Search overlay (epic 0062/ADR 0062). Selects exactly the one matched
+  // element and frames the viewport on it — the "fit-to-node/selection"
+  // piece folded into this epic's scope. An edge has no bounding box of
+  // its own to fit on, so it fits on its two endpoint nodes instead.
+  const focusSearchMatch = useCallback(
+    (id: string) => {
+      setNodes((nds) =>
+        nds.map((n) => (n.selected === (n.id === id) ? n : { ...n, selected: n.id === id }))
+      )
+      setEdges((eds) =>
+        eds.map((e) => (e.selected === (e.id === id) ? e : { ...e, selected: e.id === id }))
+      )
+      const edge = edges.find((e) => e.id === id)
+      if (edge) {
+        rfInstance.fitView({
+          nodes: [{ id: edge.source }, { id: edge.target }],
+          duration: 300,
+          padding: 0.5
+        })
+      } else {
+        rfInstance.fitView({ nodes: [{ id }], duration: 300, padding: 0.5 })
+      }
+    },
+    [edges, setNodes, setEdges, rfInstance]
+  )
+
+  // Submit-to-search, not live-as-you-type — see ADR 0062. Free-text/tag
+  // matching is synchronous over the in-memory nodes/edges; deep search
+  // additionally opens each not-yet-matched node's detail file on disk and
+  // does a plain substring check, no indexing (ADR 0062's deliberate
+  // choice — this is an occasional toggle, not the default path).
+  const runSearch = useCallback(async () => {
+    const query = searchQuery.trim()
+    if (!query) return
+    const nodeMatchIds = nodes
+      .filter((n) =>
+        matchesSearchQuery(query, {
+          id: n.id,
+          label: typeof n.data?.label === 'string' ? n.data.label : undefined,
+          metadata: n.data?.metadata as Record<string, MetadataEntry> | undefined
+        })
+      )
+      .map((n) => n.id)
+    const edgeMatchIds = edges
+      .filter((e) =>
+        matchesSearchQuery(query, {
+          id: e.id,
+          label: typeof e.data?.label === 'string' ? e.data.label : undefined,
+          metadata: e.data?.metadata as Record<string, MetadataEntry> | undefined
+        })
+      )
+      .map((e) => e.id)
+    const matchedIds = new Set([...nodeMatchIds, ...edgeMatchIds])
+
+    if (deepSearchEnabled && currentPath) {
+      const diagramPath = currentPath
+      setDeepSearchLoading(true)
+      const candidates = nodes
+        .filter((n) => !matchedIds.has(n.id))
+        .map((n) => ({ id: n.id, detailsPath: n.data?.details }))
+        .filter((c): c is { id: string; detailsPath: string } => typeof c.detailsPath === 'string')
+      const hits = await Promise.all(
+        candidates.map(async (c) => {
+          const content = await window.api.readDetails(diagramPath, c.detailsPath)
+          return content.toLowerCase().includes(query.toLowerCase()) ? c.id : null
+        })
+      )
+      for (const id of hits) if (id) matchedIds.add(id)
+      setDeepSearchLoading(false)
+    }
+
+    // Stable next/prev ordering: nodes in their current array order, then
+    // edges — matches the order they were scanned above.
+    const order = [...nodes, ...edges].filter((el) => matchedIds.has(el.id)).map((el) => el.id)
+
+    setSearchMatchIds(matchedIds)
+    setSearchMatchOrder(order)
+    setSearchMatchCursor(0)
+    setSearchRun(true)
+    if (order.length > 0) focusSearchMatch(order[0])
+  }, [searchQuery, nodes, edges, deepSearchEnabled, currentPath, focusSearchMatch])
+
+  const nextSearchMatch = useCallback(() => {
+    if (searchMatchOrder.length === 0) return
+    const next = (searchMatchCursor + 1) % searchMatchOrder.length
+    setSearchMatchCursor(next)
+    focusSearchMatch(searchMatchOrder[next])
+  }, [searchMatchOrder, searchMatchCursor, focusSearchMatch])
+
+  const prevSearchMatch = useCallback(() => {
+    if (searchMatchOrder.length === 0) return
+    const prev = (searchMatchCursor - 1 + searchMatchOrder.length) % searchMatchOrder.length
+    setSearchMatchCursor(prev)
+    focusSearchMatch(searchMatchOrder[prev])
+  }, [searchMatchOrder, searchMatchCursor, focusSearchMatch])
+
+  // Shared by the query-changing (stale results shouldn't stay highlighted
+  // once the query no longer matches what's on screen) and close paths.
+  const clearSearchResults = useCallback(() => {
+    setSearchMatchIds(new Set())
+    setSearchMatchOrder([])
+    setSearchMatchCursor(0)
+    setSearchRun(false)
+  }, [])
+
+  const onSearchQueryChange = useCallback(
+    (value: string) => {
+      setSearchQuery(value)
+      clearSearchResults()
+    },
+    [clearSearchResults]
+  )
+
+  const closeSearchOverlay = useCallback(() => {
+    setSearchOverlayOpen(false)
+    clearSearchResults()
+  }, [clearSearchResults])
 
   // Gathers this diagram's own direct linked-node relative paths (deeper
   // levels are discovered from disk during the walk — see ADR 0024),
@@ -2620,6 +2753,13 @@ function CanvasInner(): React.JSX.Element {
       setSettingsPanelOpen(false)
       setGravityPresetsPanelOpen(false)
       setAlignDistributePanelOpen(false)
+      setSearchOverlayOpen(false)
+      setSearchQuery('')
+      setDeepSearchEnabled(false)
+      setSearchMatchIds(new Set())
+      setSearchMatchOrder([])
+      setSearchMatchCursor(0)
+      setSearchRun(false)
       // Defensive, per ADR 0022 — reconcile against hand-edited drift on
       // every load, not just when the template is edited from within the app.
       runSync(openedRequiredTags)
@@ -3068,6 +3208,16 @@ function CanvasInner(): React.JSX.Element {
         handleClose()
         return
       }
+      // Search overlay (epic 0062/ADR 0062) — provisional V1 entry point,
+      // no permanent toolbar button yet (see the ADR). Not gated on
+      // isEditingText: same as Ctrl+S/O/N/W above, opening/closing search
+      // is a reasonable thing to do regardless of what else has focus.
+      if (mod && event.key.toLowerCase() === 'f') {
+        event.preventDefault()
+        if (searchOverlayOpen) closeSearchOverlay()
+        else setSearchOverlayOpen(true)
+        return
+      }
       // Ctrl+A/D are text-editing conventions (select-all-text, and in some
       // apps duplicate-line) — defer to native behavior while a text field
       // has focus rather than hijacking them for canvas actions.
@@ -3123,6 +3273,8 @@ function CanvasInner(): React.JSX.Element {
       if (event.key === 'Escape') {
         if (detailsPanelNodeId) {
           setDetailsPanelNodeId(null)
+        } else if (searchOverlayOpen) {
+          closeSearchOverlay()
         } else if (requiredTagsPanelOpen) {
           setRequiredTagsPanelOpen(false)
         } else if (diagnosticsPanelOpen) {
@@ -3175,6 +3327,8 @@ function CanvasInner(): React.JSX.Element {
     redo,
     rfInstance,
     detailsPanelNodeId,
+    searchOverlayOpen,
+    closeSearchOverlay,
     requiredTagsPanelOpen,
     diagnosticsPanelOpen,
     highlightsPanelOpen,
@@ -3442,7 +3596,8 @@ function CanvasInner(): React.JSX.Element {
       entityHighlightNodeId,
       paletteColors: settings.stylePalette.colors,
       paletteFonts: settings.stylePalette.fonts,
-      gravityPresets: effectiveGravityPresets(gravityPresets)
+      gravityPresets: effectiveGravityPresets(gravityPresets),
+      searchMatchIds
     }),
     [
       currentPath,
@@ -3462,7 +3617,8 @@ function CanvasInner(): React.JSX.Element {
       entityHighlightNodeId,
       settings.stylePalette.colors,
       settings.stylePalette.fonts,
-      gravityPresets
+      gravityPresets,
+      searchMatchIds
     ]
   )
 
@@ -3799,6 +3955,23 @@ function CanvasInner(): React.JSX.Element {
               onToggleGroup={toggleHighlightGroup}
               onAddOrResyncGroup={addOrResyncHighlightGroup}
               onClose={() => setHighlightsPanelOpen(false)}
+            />
+          )}
+          {searchOverlayOpen && (
+            <SearchOverlay
+              query={searchQuery}
+              onQueryChange={onSearchQueryChange}
+              deepSearchEnabled={deepSearchEnabled}
+              onToggleDeepSearch={() => setDeepSearchEnabled((v) => !v)}
+              deepSearchAvailable={currentPath !== null}
+              deepSearchLoading={deepSearchLoading}
+              onSubmit={runSearch}
+              searchRun={searchRun}
+              matchCount={searchMatchOrder.length}
+              currentIndex={searchMatchCursor}
+              onNext={nextSearchMatch}
+              onPrev={prevSearchMatch}
+              onClose={closeSearchOverlay}
             />
           )}
         </div>

@@ -42,7 +42,8 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
     pushSnapshot,
     matchHighlights,
     theme,
-    entityHighlightNodeId
+    entityHighlightNodeId,
+    searchMatchIds
   } = useDiagramContext()
   const { updateNodeData } = useReactFlow()
 
@@ -59,7 +60,9 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
   // overrides the border; two or more render as chips instead. Layered
   // after nodeContainerCss(style) so it takes precedence without touching
   // the actually-stored style.
-  const highlightMatches = matchHighlights(data?.metadata as Record<string, MetadataEntry> | undefined)
+  const highlightMatches = matchHighlights(
+    data?.metadata as Record<string, MetadataEntry> | undefined
+  )
   const highlightCss: CSSProperties =
     highlightMatches.length === 1
       ? { borderColor: highlightMatches[0].color, borderWidth: HIGHLIGHT_BORDER_WIDTH }
@@ -126,13 +129,17 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
 
   return (
     <div
-      className={entityHighlightNodeId === id ? 'shape-node entity-highlighted' : 'shape-node'}
+      className={`shape-node${entityHighlightNodeId === id ? ' entity-highlighted' : ''}${searchMatchIds.has(id) ? ' search-match' : ''}`}
       style={{ ...nodeContainerCss(style, theme), ...highlightCss }}
       onContextMenu={onContextMenu}
       onClick={onClick}
       title={tooltip}
     >
-      <NodeResizer isVisible={selected && !locked} minWidth={SHAPE_MIN_WIDTH} minHeight={SHAPE_MIN_HEIGHT} />
+      <NodeResizer
+        isVisible={selected && !locked}
+        minWidth={SHAPE_MIN_WIDTH}
+        minHeight={SHAPE_MIN_HEIGHT}
+      />
       <ConnectionHandles storedPoints={customPoints} onPointContextMenu={onPointContextMenu} />
       {locked && <LockBadge />}
       {highlightMatches.length >= 2 && (

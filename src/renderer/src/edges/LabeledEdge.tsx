@@ -1,4 +1,12 @@
-import { memo, useCallback, useMemo, useState, type CSSProperties, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from 'react'
+import {
+  memo,
+  useCallback,
+  useMemo,
+  useState,
+  type CSSProperties,
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent
+} from 'react'
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -136,11 +144,20 @@ function LabeledEdge({
   data
 }: EdgeProps): React.JSX.Element {
   const { updateEdgeData, screenToFlowPosition } = useReactFlow()
-  const { matchHighlights, edgeStraightSegmentLength, theme, pushSnapshot, openContextMenu, gravityPresets } =
-    useDiagramContext()
+  const {
+    matchHighlights,
+    edgeStraightSegmentLength,
+    theme,
+    pushSnapshot,
+    openContextMenu,
+    gravityPresets,
+    searchMatchIds
+  } = useDiagramContext()
   const edgeStyle = data?.style as EdgeStyle | undefined
   const routingStyle = edgeStyle?.routingStyle
-  const highlightMatches = matchHighlights(data?.metadata as Record<string, MetadataEntry> | undefined)
+  const highlightMatches = matchHighlights(
+    data?.metadata as Record<string, MetadataEntry> | undefined
+  )
   // Bend-point visibility: hovered (Canvas.tsx's onEdgeMouseEnter/Leave,
   // see data.hovered's own comment there) or selected or a point is
   // actively being dragged right now — the last case so a fast drag that
@@ -160,9 +177,24 @@ function LabeledEdge({
       case 'straight':
         return getStraightPath({ sourceX, sourceY, targetX, targetY })[0]
       case 'step':
-        return getSmoothStepPath({ sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition, borderRadius: 0 })[0]
+        return getSmoothStepPath({
+          sourceX,
+          sourceY,
+          sourcePosition,
+          targetX,
+          targetY,
+          targetPosition,
+          borderRadius: 0
+        })[0]
       case 'smoothstep':
-        return getSmoothStepPath({ sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition })[0]
+        return getSmoothStepPath({
+          sourceX,
+          sourceY,
+          sourcePosition,
+          targetX,
+          targetY,
+          targetPosition
+        })[0]
       case 'catmullRom': {
         const pathPoints: PathPoint[] = [
           { x: sourceX, y: sourceY, direction: OUTWARD_DIRECTION[sourcePosition] },
@@ -172,9 +204,27 @@ function LabeledEdge({
         return buildConnectorPath(pathPoints, edgeStraightSegmentLength)
       }
       default:
-        return buildBezierPath(sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition, edgeStraightSegmentLength)
+        return buildBezierPath(
+          sourceX,
+          sourceY,
+          sourcePosition,
+          targetX,
+          targetY,
+          targetPosition,
+          edgeStraightSegmentLength
+        )
     }
-  }, [routingStyle, sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition, bendPoints, edgeStraightSegmentLength])
+  }, [
+    routingStyle,
+    sourceX,
+    sourceY,
+    sourcePosition,
+    targetX,
+    targetY,
+    targetPosition,
+    bendPoints,
+    edgeStraightSegmentLength
+  ])
 
   const labelRatio = edgeStyle?.labelPosition
   const { x: labelX, y: labelY } = useMemo(
@@ -192,11 +242,15 @@ function LabeledEdge({
   // default) since a selected edge needs a real base to add the selection
   // delta on top of — see SELECTED_STROKE_WIDTH_DELTA above.
   const baseStrokeWidth =
-    highlightMatches.length === 1 ? HIGHLIGHT_BORDER_WIDTH : (edgeStyle?.strokeWidth ?? DEFAULT_STROKE_WIDTH)
+    highlightMatches.length === 1
+      ? HIGHLIGHT_BORDER_WIDTH
+      : (edgeStyle?.strokeWidth ?? DEFAULT_STROKE_WIDTH)
   const computedStyle: CSSProperties = {
     ...style,
     ...(edgeStyle?.stroke
-      ? { stroke: withOpacity(themeAdaptiveColor(edgeStyle.stroke, theme), edgeStyle.strokeOpacity) }
+      ? {
+          stroke: withOpacity(themeAdaptiveColor(edgeStyle.stroke, theme), edgeStyle.strokeOpacity)
+        }
       : {}),
     strokeWidth: selected ? baseStrokeWidth + SELECTED_STROKE_WIDTH_DELTA : baseStrokeWidth,
     ...(edgeStyle?.lineStyle ? { strokeDasharray: DASH_ARRAY[edgeStyle.lineStyle] } : {}),
@@ -205,6 +259,18 @@ function LabeledEdge({
     // 0026/ADR 0025. Width is handled by baseStrokeWidth above instead of
     // here, so it can still be added to when also selected.
     ...(highlightMatches.length === 1 ? { stroke: highlightMatches[0].color } : {}),
+    // Search-result indicator (epic 0062/ADR 0062) — a glow via filter
+    // rather than a stroke/outline override, specifically so it coexists
+    // with whatever highlightMatches already did above instead of fighting
+    // it for the same `stroke` property. Edges have no CSS `outline`
+    // equivalent that follows a path shape (it'd just box the bounding
+    // rect), unlike the node components' plain outline treatment.
+    ...(searchMatchIds.has(id)
+      ? {
+          filter:
+            'drop-shadow(0 0 3px var(--search-match-color)) drop-shadow(0 0 3px var(--search-match-color))'
+        }
+      : {}),
     // Selection wins over both the edge's own explicit color and any
     // highlight-match color — the whole point is staying findable in a
     // busy diagram regardless of the edge's own look. Raised after live-
@@ -220,14 +286,17 @@ function LabeledEdge({
     // selected edge itself.
     ...(selected ? { stroke: 'var(--selected-edge-highlight-color)' } : {})
   }
-  const computedMarkerEnd = edgeStyle?.endMarker !== undefined ? markerUrl(edgeStyle.endMarker) : markerEnd
+  const computedMarkerEnd =
+    edgeStyle?.endMarker !== undefined ? markerUrl(edgeStyle.endMarker) : markerEnd
   const computedMarkerStart =
     edgeStyle?.startMarker !== undefined ? markerUrl(edgeStyle.startMarker) : markerStart
 
   const labelStyle: CSSProperties = {
     ...(edgeStyle?.fontSize != null ? { fontSize: edgeStyle.fontSize } : {}),
     ...(edgeStyle?.fontColor
-      ? { color: withOpacity(themeAdaptiveColor(edgeStyle.fontColor, theme), edgeStyle.fontOpacity) }
+      ? {
+          color: withOpacity(themeAdaptiveColor(edgeStyle.fontColor, theme), edgeStyle.fontOpacity)
+        }
       : {}),
     ...(edgeStyle?.fontWeight ? { fontWeight: edgeStyle.fontWeight } : {}),
     ...(edgeStyle?.fontFamily ? { fontFamily: edgeStyle.fontFamily } : {})
@@ -248,7 +317,9 @@ function LabeledEdge({
       const onMove = (moveEvent: PointerEvent): void => {
         const flowPoint = screenToFlowPosition({ x: moveEvent.clientX, y: moveEvent.clientY })
         updateEdgeData(id, {
-          points: bendPoints.map((p, i) => (i === index ? { ...p, x: flowPoint.x, y: flowPoint.y } : p))
+          points: bendPoints.map((p, i) =>
+            i === index ? { ...p, x: flowPoint.x, y: flowPoint.y } : p
+          )
         })
       }
       const onUp = (): void => {
@@ -269,10 +340,15 @@ function LabeledEdge({
       event.stopPropagation()
       const setGravity = (gravity: number): void => {
         pushSnapshot()
-        updateEdgeData(id, { points: bendPoints.map((p, i) => (i === index ? { ...p, gravity } : p)) })
+        updateEdgeData(id, {
+          points: bendPoints.map((p, i) => (i === index ? { ...p, gravity } : p))
+        })
       }
       openContextMenu(event.clientX, event.clientY, [
-        ...gravityPresets.map((preset) => ({ label: preset.label, onSelect: () => setGravity(preset.value) })),
+        ...gravityPresets.map((preset) => ({
+          label: preset.label,
+          onSelect: () => setGravity(preset.value)
+        })),
         {
           label: 'Remove point',
           separatorBefore: true,

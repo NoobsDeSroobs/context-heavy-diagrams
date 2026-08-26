@@ -81,6 +81,12 @@
 :root {
   --color-text: var(--ev-c-text-1);
 
+  /* Search-result indicator (epic 0062/ADR 0062) — deliberately theme-
+     invariant (unlike the semantic tokens above) and distinct from any
+     highlight color a user might pick, since search results must stay
+     readable alongside whatever highlights are active. */
+  --search-match-color: #f5a623;
+
   --ev-button-alt-border: transparent;
   --ev-button-alt-text: var(--ev-c-text-1);
   --ev-button-alt-bg: var(--ev-c-gray-3);
