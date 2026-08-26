@@ -5,7 +5,7 @@ import EditableLabel from '../components/EditableLabel'
 import HighlightChips from '../components/HighlightChips'
 import IconSlotView from '../components/IconSlotView'
 import LockBadge from '../components/LockBadge'
-import { useDiagramContext } from '../DiagramContext'
+import { useDiagramContext } from '../useDiagramContext'
 import { useDetailsTooltip } from '../hooks/useDetailsTooltip'
 import { HIGHLIGHT_BORDER_WIDTH } from '../highlights'
 import { isolateStyle } from '../search'
@@ -23,6 +23,15 @@ const SLOT_CLASS: Record<IconSlot, string> = {
   bottomRight: 'shape-node-icon shape-node-icon-bottom-right'
 }
 const SLOTS = Object.keys(SLOT_CLASS) as IconSlot[]
+
+// Keys IconSlotView by icon identity, not just slot (epic 0028) — React
+// then remounts a fresh instance whenever the icon actually changes
+// (including cleared), so IconSlotView never needs to manually reset its
+// own svg/dataUrl state mid-fetch to avoid a stale-icon flash.
+function iconSlotKey(slot: IconSlot, icon: IconRef | undefined): string {
+  if (!icon) return `${slot}:none`
+  return icon.source === 'builtin' ? `${slot}:builtin:${icon.id}` : `${slot}:custom:${icon.path}`
+}
 
 // Resizable, connectable, never rotated — see docs/decisions/0004-shape-text-node-split.md
 // for why rotation is deliberately excluded here (it's what TextNode is for).
@@ -46,7 +55,8 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
     entityHighlightNodeId,
     searchMatchIds,
     isolateActive,
-    isolateOpacity
+    isolateOpacity,
+    selectAllOfType
   } = useDiagramContext()
   const { updateNodeData } = useReactFlow()
 
@@ -101,7 +111,12 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
         { label: 'Border…', onSelect: () => openColorPicker(id, 'border', rect) },
         { label: 'See details', onSelect: () => openDetailsPanel(id) },
         ...linkItems,
-        addConnectionPointItem(rect, event.clientX, event.clientY)
+        addConnectionPointItem(rect, event.clientX, event.clientY),
+        {
+          label: 'Select all shapes',
+          separatorBefore: true,
+          onSelect: () => selectAllOfType('shape')
+        }
       ])
     },
     [
@@ -114,7 +129,8 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
       handleLinkClick,
       updateNodeData,
       pushSnapshot,
-      addConnectionPointItem
+      addConnectionPointItem,
+      selectAllOfType
     ]
   )
 
@@ -156,7 +172,7 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
       )}
       {SLOTS.map((slot) => (
         <IconSlotView
-          key={slot}
+          key={iconSlotKey(slot, icons[slot])}
           icon={icons[slot]}
           diagramPath={diagramPath}
           className={SLOT_CLASS[slot]}

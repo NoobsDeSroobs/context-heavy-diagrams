@@ -1,5 +1,5 @@
 import { ColorField, NumberField, SliderField } from '../panels/fields'
-import { useDiagramContext } from '../DiagramContext'
+import { useDiagramContext } from '../useDiagramContext'
 
 interface ColorPickerPopupProps {
   title: string

@@ -4,7 +4,7 @@ import type { ConnectionPoint, MetadataEntry, NodeStyle } from '@shared/diagram'
 import EditableLabel from '../components/EditableLabel'
 import HighlightChips from '../components/HighlightChips'
 import LockBadge from '../components/LockBadge'
-import { useDiagramContext } from '../DiagramContext'
+import { useDiagramContext } from '../useDiagramContext'
 import { HIGHLIGHT_BORDER_WIDTH } from '../highlights'
 import { isolateStyle } from '../search'
 import { nodeContainerCss, nodeLabelCss } from '../styles/nodeStyleCss'
@@ -35,7 +35,8 @@ function ContainerNode({ id, data, selected }: NodeProps): React.JSX.Element {
     entityHighlightNodeId,
     searchMatchIds,
     isolateActive,
-    isolateOpacity
+    isolateOpacity,
+    selectAllOfType
   } = useDiagramContext()
   const { updateNodeData } = useReactFlow()
   const locked = data?.locked === true
@@ -60,10 +61,22 @@ function ContainerNode({ id, data, selected }: NodeProps): React.JSX.Element {
         { label: 'Fill…', onSelect: () => openColorPicker(id, 'fill', rect) },
         { label: 'Border…', onSelect: () => openColorPicker(id, 'border', rect) },
         { label: 'Attach contained shapes', onSelect: () => attachContainedNodes(id) },
-        addConnectionPointItem(rect, event.clientX, event.clientY)
+        addConnectionPointItem(rect, event.clientX, event.clientY),
+        {
+          label: 'Select all containers',
+          separatorBefore: true,
+          onSelect: () => selectAllOfType('container')
+        }
       ])
     },
-    [openContextMenu, openColorPicker, addConnectionPointItem, attachContainedNodes, id]
+    [
+      openContextMenu,
+      openColorPicker,
+      addConnectionPointItem,
+      attachContainedNodes,
+      id,
+      selectAllOfType
+    ]
   )
 
   return (

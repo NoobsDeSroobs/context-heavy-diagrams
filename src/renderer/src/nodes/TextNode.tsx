@@ -3,7 +3,7 @@ import { NodeResizer, useReactFlow, type NodeProps } from '@xyflow/react'
 import type { NodeStyle } from '@shared/diagram'
 import EditableLabel from '../components/EditableLabel'
 import LockBadge from '../components/LockBadge'
-import { useDiagramContext } from '../DiagramContext'
+import { useDiagramContext } from '../useDiagramContext'
 import { useDetailsTooltip } from '../hooks/useDetailsTooltip'
 import { isolateStyle } from '../search'
 import { nodeContainerCss, nodeLabelCss } from '../styles/nodeStyleCss'
@@ -31,7 +31,8 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
     entityHighlightNodeId,
     searchMatchIds,
     isolateActive,
-    isolateOpacity
+    isolateOpacity,
+    selectAllOfType
   } = useDiagramContext()
   const rotation = typeof data?.rotation === 'number' ? (data.rotation as number) : 0
   const locked = data?.locked === true
@@ -67,7 +68,8 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
           ]
       openContextMenu(event.clientX, event.clientY, [
         { label: 'See details', onSelect: () => openDetailsPanel(id) },
-        ...linkItems
+        ...linkItems,
+        { label: 'Select all text', separatorBefore: true, onSelect: () => selectAllOfType('text') }
       ])
     },
     [
@@ -77,7 +79,8 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
       linkedPath,
       handleLinkClick,
       updateNodeData,
-      pushSnapshot
+      pushSnapshot,
+      selectAllOfType
     ]
   )
 

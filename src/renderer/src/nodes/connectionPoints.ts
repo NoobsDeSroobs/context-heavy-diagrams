@@ -1,7 +1,7 @@
 import { useCallback, type MouseEvent } from 'react'
 import { type Edge, Position, useReactFlow, useUpdateNodeInternals } from '@xyflow/react'
 import type { ConnectionPoint, ConnectionPointSide } from '@shared/diagram'
-import { useDiagramContext } from '../DiagramContext'
+import { useDiagramContext } from '../useDiagramContext'
 import type { ContextMenuItem } from '../components/ContextMenu'
 
 // Shared between ShapeNode and ContainerNode — both are connectable,
@@ -45,7 +45,10 @@ let nextConnectionPointId = 1
 // full point set — this synthesized entry included — is written back for
 // real, and it behaves exactly like an ordinary point from then on:
 // movable, reorderable, removable (down to a minimum of one per side).
-function effectivePointsForSide(storedPoints: ConnectionPoint[], side: ConnectionPointSide): ConnectionPoint[] {
+function effectivePointsForSide(
+  storedPoints: ConnectionPoint[],
+  side: ConnectionPointSide
+): ConnectionPoint[] {
   const onSide = storedPoints.filter((p) => p.side === side)
   return onSide.length > 0 ? onSide : [{ id: side, side, offset: 0.5 }]
 }
@@ -59,7 +62,10 @@ export function effectiveConnectionPoints(storedPoints: ConnectionPoint[]): Conn
 // The property panel's count field, and anything else that just needs "how
 // many points does this side have right now" without needing the points
 // themselves.
-export function connectionPointCountForSide(storedPoints: ConnectionPoint[], side: ConnectionPointSide): number {
+export function connectionPointCountForSide(
+  storedPoints: ConnectionPoint[],
+  side: ConnectionPointSide
+): number {
   return effectivePointsForSide(storedPoints, side).length
 }
 
@@ -310,13 +316,19 @@ export function insertConnectionPointAt(
   const ascending = CLOCKWISE_ASCENDING[side]
   let insertIndex = onSide.length
   for (let i = 0; i < onSide.length; i++) {
-    const clickIsBeforeExisting = ascending ? clickOffset < onSide[i].offset : clickOffset > onSide[i].offset
+    const clickIsBeforeExisting = ascending
+      ? clickOffset < onSide[i].offset
+      : clickOffset > onSide[i].offset
     if (clickIsBeforeExisting) {
       insertIndex = i
       break
     }
   }
-  const newPoint: ConnectionPoint = { id: `cp-${nextConnectionPointId++}`, side, offset: clickOffset }
+  const newPoint: ConnectionPoint = {
+    id: `cp-${nextConnectionPointId++}`,
+    side,
+    offset: clickOffset
+  }
   const withInserted = [...onSide.slice(0, insertIndex), newPoint, ...onSide.slice(insertIndex)]
   return [...otherSides, ...respaceClockwise(withInserted, side)]
 }
@@ -340,9 +352,16 @@ export function useConnectionPointMenu(
       label: 'Add connection point here',
       onSelect: () => {
         const { side, offset } = nearestConnectionPoint(rect, clientX, clientY)
-        const points = insertConnectionPointAt(customPoints, side, offset, maxConnectionPointsPerSide)
+        const points = insertConnectionPointAt(
+          customPoints,
+          side,
+          offset,
+          maxConnectionPointsPerSide
+        )
         if (!points) {
-          alert(`This side already has the maximum of ${maxConnectionPointsPerSide} connection points.`)
+          alert(
+            `This side already has the maximum of ${maxConnectionPointsPerSide} connection points.`
+          )
           return
         }
         pushSnapshot()
@@ -355,7 +374,14 @@ export function useConnectionPointMenu(
         updateNodeInternals(id)
       }
     }),
-    [id, customPoints, maxConnectionPointsPerSide, pushSnapshot, updateNodeData, updateNodeInternals]
+    [
+      id,
+      customPoints,
+      maxConnectionPointsPerSide,
+      pushSnapshot,
+      updateNodeData,
+      updateNodeInternals
+    ]
   )
 
   // Right-click on any point (including one that's still only implicit —
@@ -382,7 +408,11 @@ export function useConnectionPointMenu(
             pushSnapshot()
             updateNodeData(id, { connectionPoints: result.points })
             setEdges((eds) =>
-              reassignConnectionPointHandles(eds, id, new Map([[point.id, result.transferTargetHandleId]]))
+              reassignConnectionPointHandles(
+                eds,
+                id,
+                new Map([[point.id, result.transferTargetHandleId]])
+              )
             )
             updateNodeInternals(id)
           }

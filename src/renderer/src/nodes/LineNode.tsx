@@ -1,8 +1,14 @@
-import { memo, useCallback, type CSSProperties, type MouseEvent, type PointerEvent as ReactPointerEvent } from 'react'
+import {
+  memo,
+  useCallback,
+  type CSSProperties,
+  type MouseEvent,
+  type PointerEvent as ReactPointerEvent
+} from 'react'
 import { useReactFlow, type NodeProps, type ReactFlowInstance } from '@xyflow/react'
 import type { LinePoint, LineStyleKind, NodeStyle } from '@shared/diagram'
 import LockBadge from '../components/LockBadge'
-import { useDiagramContext } from '../DiagramContext'
+import { useDiagramContext } from '../useDiagramContext'
 import { withOpacity } from '../styles/colorOpacity'
 import { themeAdaptiveColor } from '../styles/themeAdaptiveColor'
 import { markerUrl } from '../edges/markerIds'
@@ -38,13 +44,26 @@ function normalizeLineBounds(
   node: { position: { x: number; y: number }; data?: Record<string, unknown> },
   points: LinePoint[]
 ): void {
-  const absolute = points.map((p) => ({ x: node.position.x + p.x, y: node.position.y + p.y, gravity: p.gravity }))
+  const absolute = points.map((p) => ({
+    x: node.position.x + p.x,
+    y: node.position.y + p.y,
+    gravity: p.gravity
+  }))
   const { minX, minY, maxX, maxY } = pointsBoundingBox(absolute)
   const newPosition = { x: minX - LINE_BOUNDS_PADDING, y: minY - LINE_BOUNDS_PADDING }
   const width = maxX - minX + LINE_BOUNDS_PADDING * 2
   const height = maxY - minY + LINE_BOUNDS_PADDING * 2
-  const localPoints = absolute.map((p) => ({ x: p.x - newPosition.x, y: p.y - newPosition.y, gravity: p.gravity }))
-  rf.updateNode(id, { position: newPosition, width, height, data: { ...node.data, points: localPoints } })
+  const localPoints = absolute.map((p) => ({
+    x: p.x - newPosition.x,
+    y: p.y - newPosition.y,
+    gravity: p.gravity
+  }))
+  rf.updateNode(id, {
+    position: newPosition,
+    width,
+    height,
+    data: { ...node.data, points: localPoints }
+  })
 }
 
 // A freeform curved line (epic 0064/ADR 0050) — an ordered list of points,
@@ -53,7 +72,14 @@ function normalizeLineBounds(
 // reusing/extending edges — see the ADR for why. Never connectable, never
 // rotated, never carries metadata (same treatment as text/anchor nodes).
 function LineNode({ id, data, selected }: NodeProps): React.JSX.Element {
-  const { openContextMenu, pushSnapshot, theme, gravityPresets, entityHighlightNodeId } = useDiagramContext()
+  const {
+    openContextMenu,
+    pushSnapshot,
+    theme,
+    gravityPresets,
+    entityHighlightNodeId,
+    selectAllOfType
+  } = useDiagramContext()
   const rf = useReactFlow()
   const { getNode, updateNodeData, screenToFlowPosition } = rf
 
@@ -64,7 +90,10 @@ function LineNode({ id, data, selected }: NodeProps): React.JSX.Element {
 
   const baseStrokeWidth = style.strokeWidth ?? DEFAULT_STROKE_WIDTH
   const computedStyle: CSSProperties = {
-    stroke: withOpacity(themeAdaptiveColor(style.stroke ?? DEFAULT_STROKE, theme), style.strokeOpacity),
+    stroke: withOpacity(
+      themeAdaptiveColor(style.stroke ?? DEFAULT_STROKE, theme),
+      style.strokeOpacity
+    ),
     strokeWidth: selected ? baseStrokeWidth + SELECTED_STROKE_WIDTH_DELTA : baseStrokeWidth,
     strokeDasharray: DASH_ARRAY[style.lineStyle ?? 'solid'],
     fill: 'none'
@@ -85,7 +114,9 @@ function LineNode({ id, data, selected }: NodeProps): React.JSX.Element {
         const flowPoint = screenToFlowPosition({ x: moveEvent.clientX, y: moveEvent.clientY })
         updateNodeData(id, {
           points: points.map((p, i) =>
-            i === index ? { ...p, x: flowPoint.x - nodePosition.x, y: flowPoint.y - nodePosition.y } : p
+            i === index
+              ? { ...p, x: flowPoint.x - nodePosition.x, y: flowPoint.y - nodePosition.y }
+              : p
           )
         })
       }
@@ -95,7 +126,12 @@ function LineNode({ id, data, selected }: NodeProps): React.JSX.Element {
         window.removeEventListener('pointerup', onUp)
         const latest = getNode(id)
         if (latest) {
-          normalizeLineBounds(rf, id, latest, (latest.data?.points as LinePoint[] | undefined) ?? points)
+          normalizeLineBounds(
+            rf,
+            id,
+            latest,
+            (latest.data?.points as LinePoint[] | undefined) ?? points
+          )
         }
       }
       window.addEventListener('pointermove', onMove)
@@ -115,7 +151,10 @@ function LineNode({ id, data, selected }: NodeProps): React.JSX.Element {
         updateNodeData(id, { points: points.map((p, i) => (i === index ? { ...p, gravity } : p)) })
       }
       openContextMenu(event.clientX, event.clientY, [
-        ...gravityPresets.map((preset) => ({ label: preset.label, onSelect: () => setGravity(preset.value) })),
+        ...gravityPresets.map((preset) => ({
+          label: preset.label,
+          onSelect: () => setGravity(preset.value)
+        })),
         ...(isEndpoint
           ? []
           : [
@@ -134,10 +173,29 @@ function LineNode({ id, data, selected }: NodeProps): React.JSX.Element {
                   )
                 }
               }
-            ])
+            ]),
+        // Reachable via any point since right-clicking the line's own body
+        // (not a point) skips a menu entirely — it adds a point immediately
+        // instead (onPathContextMenu below). Epic 0082.
+        {
+          label: 'Select all lines',
+          separatorBefore: isEndpoint,
+          onSelect: () => selectAllOfType('line')
+        }
       ])
     },
-    [locked, points, id, openContextMenu, pushSnapshot, updateNodeData, getNode, rf, gravityPresets]
+    [
+      locked,
+      points,
+      id,
+      openContextMenu,
+      pushSnapshot,
+      updateNodeData,
+      getNode,
+      rf,
+      gravityPresets,
+      selectAllOfType
+    ]
   )
 
   const onPathContextMenu = useCallback(
@@ -162,7 +220,10 @@ function LineNode({ id, data, selected }: NodeProps): React.JSX.Element {
   )
 
   return (
-    <div className="line-node" style={{ position: 'relative', width: '100%', height: '100%', overflow: 'visible' }}>
+    <div
+      className="line-node"
+      style={{ position: 'relative', width: '100%', height: '100%', overflow: 'visible' }}
+    >
       <svg
         width="100%"
         height="100%"

@@ -1006,6 +1006,32 @@ function CanvasInner(): React.JSX.Element {
     setContextMenu({ x, y, items })
   }, [])
 
+  // Epic 0082 — replaces the current selection with every element of one
+  // type, rather than shift-clicking each one individually. Exposed via
+  // each type's own right-click context menu (ShapeNode/ContainerNode/
+  // TextNode/LineNode/onEdgeContextMenu below) rather than a top menu-bar
+  // item — MenuBar has no submenu support yet (see epic 0091's own
+  // notes), and a per-type context menu entry is already exactly where
+  // the user's own example ("select all edges") pointed. Whole-type only
+  // for now, no finer filtering (e.g. "edges with this routing style") —
+  // logged as an open question in the epic doc, not resolved here.
+  // Declared here (early) rather than alongside selectAll/deselectAll
+  // further down — onEdgeContextMenu below needs it, and a useCallback's
+  // own deps array is evaluated immediately at render time, unlike the
+  // callback body itself, so a later declaration would be a genuine
+  // temporal-dead-zone error, not just a theoretical one.
+  const selectAllOfType = useCallback(
+    (type: 'shape' | 'container' | 'text' | 'line' | 'edge') => {
+      setNodes((nds) =>
+        nds.map((n) => (n.selected === (n.type === type) ? n : { ...n, selected: n.type === type }))
+      )
+      setEdges((eds) =>
+        eds.map((e) => (e.selected === (type === 'edge') ? e : { ...e, selected: type === 'edge' }))
+      )
+    },
+    [setNodes, setEdges]
+  )
+
   const openIconPicker = useCallback((nodeId: string, anchorRect: DOMRect) => {
     setIconPicker({ nodeId, anchorRect })
   }, [])
@@ -1034,6 +1060,7 @@ function CanvasInner(): React.JSX.Element {
               anchorRect: new DOMRect(event.clientX, event.clientY, 0, 0)
             })
         },
+        { label: 'Select all edges', onSelect: () => selectAllOfType('edge') },
         {
           label: 'Reverse direction',
           onSelect: () => {
@@ -1137,7 +1164,7 @@ function CanvasInner(): React.JSX.Element {
         }
       ])
     },
-    [openContextMenu, rfInstance, nodes, pushSnapshot, setEdges]
+    [openContextMenu, rfInstance, nodes, pushSnapshot, setEdges, selectAllOfType]
   )
 
   // The utility dock shows one surface at a time (see ADR 0013) — opening
@@ -1147,16 +1174,33 @@ function CanvasInner(): React.JSX.Element {
   // <Controls> cluster — it doesn't compete for the same dock slot anymore,
   // same independence Legend already had, so opening/closing it no longer
   // touches these five and vice versa.
-  const openDetailsPanel = useCallback((nodeId: string) => {
-    setRequiredTagsPanelOpen(false)
-    setDiagnosticsPanelOpen(false)
-    setSettingsPanelOpen(false)
-    setLayerPanelOpen(false)
-    setStylePalettePanelOpen(false)
-    setGravityPresetsPanelOpen(false)
-    setAlignDistributePanelOpen(false)
-    setDetailsPanelNodeId(nodeId)
-  }, [])
+  const openDetailsPanel = useCallback(
+    (nodeId: string) => {
+      setRequiredTagsPanelOpen(false)
+      setDiagnosticsPanelOpen(false)
+      setSettingsPanelOpen(false)
+      setLayerPanelOpen(false)
+      setStylePalettePanelOpen(false)
+      setGravityPresetsPanelOpen(false)
+      setAlignDistributePanelOpen(false)
+      setDetailsPanelNodeId(nodeId)
+      // No-existing-file (or nothing saved yet to resolve one against) is
+      // seeded synchronously right here rather than in the effect below
+      // (epic 0028) — nothing asynchronous happens in this branch, so
+      // there's no reason to route it through an effect at all. The
+      // functional-updater guard (not a closure read of detailsDrafts)
+      // keeps this callback's own identity stable regardless of how often
+      // detailsDrafts itself changes (every keystroke while editing) —
+      // matters because this callback is threaded through DiagramContext's
+      // memoized value (epic 0067/ADR 0056).
+      const node = nodes.find((n) => n.id === nodeId)
+      const existingPath = typeof node?.data?.details === 'string' ? node.data.details : undefined
+      if (!existingPath || !currentPath) {
+        setDetailsDrafts((prev) => (nodeId in prev ? prev : { ...prev, [nodeId]: '' }))
+      }
+    },
+    [nodes, currentPath]
+  )
 
   const toggleRequiredTagsPanel = useCallback(() => {
     setDetailsPanelNodeId(null)
@@ -1649,19 +1693,21 @@ function CanvasInner(): React.JSX.Element {
   const colorPickerNode = colorPicker ? nodes.find((n) => n.id === colorPicker.nodeId) : undefined
   const colorPickerStyle = (colorPickerNode?.data?.style as NodeStyle | undefined) ?? {}
 
-  // Seed the draft the first time a node's details panel is opened this
-  // session — from an existing file if it has one, empty otherwise.
+  // Seed the draft from an existing details file the first time a node's
+  // details panel is opened this session — the no-existing-file case is
+  // handled synchronously in openDetailsPanel itself (epic 0028); this
+  // effect only ever does real I/O (reading the file), which is why it's
+  // still an effect rather than folded into that callback too.
   useEffect(() => {
     if (!detailsPanelNodeId || detailsPanelNodeId in detailsDrafts) return
     const node = nodes.find((n) => n.id === detailsPanelNodeId)
     const existingPath = typeof node?.data?.details === 'string' ? node.data.details : undefined
-    if (existingPath && currentPath) {
-      window.api.readDetails(currentPath, existingPath).then((content) => {
-        setDetailsDrafts((prev) => ({ ...prev, [detailsPanelNodeId]: content }))
-      })
-    } else {
-      setDetailsDrafts((prev) => ({ ...prev, [detailsPanelNodeId]: '' }))
-    }
+    if (!existingPath || !currentPath) return
+    window.api.readDetails(currentPath, existingPath).then((content) => {
+      setDetailsDrafts((prev) =>
+        detailsPanelNodeId in prev ? prev : { ...prev, [detailsPanelNodeId]: content }
+      )
+    })
   }, [detailsPanelNodeId, detailsDrafts, nodes, currentPath])
 
   // Multi-connection-line (xyflow's own documented pattern for this,
@@ -3813,7 +3859,8 @@ function CanvasInner(): React.JSX.Element {
       gravityPresets: effectiveGravityPresets(gravityPresets),
       searchMatchIds,
       isolateActive,
-      isolateOpacity: settings.isolateOpacity
+      isolateOpacity: settings.isolateOpacity,
+      selectAllOfType
     }),
     [
       currentPath,
@@ -3836,7 +3883,8 @@ function CanvasInner(): React.JSX.Element {
       gravityPresets,
       searchMatchIds,
       isolateActive,
-      settings.isolateOpacity
+      settings.isolateOpacity,
+      selectAllOfType
     ]
   )
 

@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react'
+import { createContext } from 'react'
 import type { GravityPreset, HighlightDefinition, MetadataEntry } from '@shared/diagram'
 import type { ContextMenuItem } from './components/ContextMenu'
 import type { Theme } from './theme'
@@ -94,14 +94,20 @@ export interface DiagramContextValue {
   // threading convention as edgeStraightSegmentLength/
   // maxConnectionPointsPerSide above.
   isolateOpacity: number
+  // Epic 0082 — replaces the current selection with every element of one
+  // type. Exposed here so each node type's own right-click context menu
+  // can offer "Select all shapes"/"...containers"/etc. without Canvas.tsx
+  // having to build every node's context menu itself.
+  selectAllOfType: (type: 'shape' | 'container' | 'text' | 'line' | 'edge') => void
 }
 
+// The accessor hook lives in its own file (useDiagramContext.ts) — a file
+// mixing this plain Context object with a hook export trips ESLint's
+// react-refresh/only-export-components rule (it can't tell a Context isn't
+// a component), even though "Context + its own accessor hook, same file"
+// is otherwise the idiomatic React pattern (see React's own docs example).
+// See epic 0028 for why this wasn't split earlier: the import-path update
+// touches every node/edge/panel component that reads this context.
 const DiagramContext = createContext<DiagramContextValue | null>(null)
-
-export function useDiagramContext(): DiagramContextValue {
-  const ctx = useContext(DiagramContext)
-  if (!ctx) throw new Error('useDiagramContext must be used within a DiagramContext.Provider')
-  return ctx
-}
 
 export default DiagramContext

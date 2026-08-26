@@ -9,7 +9,7 @@ import type {
   NodeStyle,
   RequiredTagDefinition
 } from '@shared/diagram'
-import { useDiagramContext } from '../DiagramContext'
+import { useDiagramContext } from '../useDiagramContext'
 import { themeAdaptiveColor } from '../styles/themeAdaptiveColor'
 import { connectionPointCountForSide } from '../nodes/connectionPoints'
 import {

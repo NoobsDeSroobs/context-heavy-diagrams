@@ -1,7 +1,17 @@
 # 0028: Remaining lint cleanup (Fast Refresh export rule, effect-reset pattern)
 
 ## Status
-Not Started
+Done (2026-08-27), on `batch/2026-08-27-backlog-cleanup`, pending live test/merge. `lint` reports 0 errors — first time in this project's history. `typecheck` clean.
+
+## What shipped
+Both issues fixed exactly as scoped below:
+- **Issue A**: `useDiagramContext` split out into its own file (`src/renderer/src/useDiagramContext.ts`); `DiagramContext.tsx` now exports only the Context object and its type. 8 import sites updated (`ShapeNode`, `ContainerNode`, `TextNode`, `LineNode`, `LabeledEdge`, `ColorPickerPopup`, `connectionPoints.ts`, `PropertyPanel`).
+- **Issue B**, three different fixes since each site's shape differed enough that a single pattern didn't transfer directly, as anticipated in the Tasks below:
+  - `IconSlotView.tsx`: dropped the manual `setSvg(null)`/`setDataUrl(null)` reset entirely. `ShapeNode.tsx` now keys each `IconSlotView` by icon identity (`iconSlotKey(slot, icon)`, new), not just slot — React remounts a fresh instance whenever the icon actually changes (including cleared), so there's no stale state left to reset by hand.
+  - `useDetailsTooltip.ts`: a hook has no `key` of its own to remount by, so this took a different approach — `state` now stores the key (`` `${diagramPath}:${detailsPath}` ``) its title was last computed for; the hook returns `undefined` during render whenever the current key doesn't match the stored one, rather than resetting inside the effect. No caller changes needed (return type unchanged).
+  - `Canvas.tsx`'s details-draft-seeding effect: the synchronous (no-existing-file) branch moved into `openDetailsPanel` itself — the single call site that ever opens the panel with a real node id — since nothing asynchronous happens in that branch and it never needed to be in an effect at all. The effect that remains only ever does real I/O (reading an existing details file), which is a legitimate use of `useEffect`. The synchronous seed uses a functional-updater guard (not a closure read of `detailsDrafts`) specifically to keep `openDetailsPanel`'s own identity stable regardless of how often `detailsDrafts` changes (every keystroke while editing a draft) — it's threaded through `DiagramContext`'s memoized value, and including a hot-changing dependency there would reintroduce the exact re-render-storm class of bug ADR 0056 fixed.
+
+## Original scoping, still accurate for what shipped
 
 ## Goal
 Fix the last 4 pre-existing ESLint errors left after the easy ones were cleaned up alongside epic 0004 (an unescaped apostrophe, and a genuinely-unnecessary `useState`+`useEffect` in `IconPicker` that's now a plain derived value). These 4 are lower-priority specifically because none of them are actual bugs — they're real code that works correctly today, flagged by lint rules whose fixes require understanding a real React concept first, not just editing until the linter goes quiet. Splitting this into its own epic on purpose, so it gets a real look rather than a rushed pass.
@@ -50,12 +60,12 @@ This effect runs whenever `icon` changes (a node's icon slot gets a different ic
 **Why this one needs care, not a quick pass**: the `key` value has to uniquely and correctly identify "this is a genuinely different icon/tooltip-target/details-target," matching exactly what the current effect's dependency array (`[icon, diagramPath]`, `[diagramPath, detailsPath]`, etc.) already expresses — getting that equivalence subtly wrong would be a real regression (state not resetting when it should, or resetting too often and causing extra flicker/refetching), which is exactly why this got its own epic instead of being folded into epic 0004's other fixes.
 
 ## Tasks
-- [ ] Split `useDiagramContext` out of `DiagramContext.tsx` into its own file; update every import site (`ShapeNode.tsx`, `ContainerNode.tsx`, `TextNode.tsx`, `connectionPoints.ts`, any others — grep for `from '../DiagramContext'` / `from './DiagramContext'` to find them all)
-- [ ] `IconSlotView.tsx`: replace the `setSvg(null)`/`setDataUrl(null)` reset with a `key`-driven remount at its call site(s) inside `ShapeNode`/`ContainerNode`
-- [ ] `useDetailsTooltip.ts`: same pattern — likely needs the *consuming* component (wherever `useDetailsTooltip` is called) to remount on node-id change, or a different structural fix if a hook-level `key` equivalent doesn't cleanly apply (hooks don't take a `key` themselves — this may need the hook's caller to be restructured, worth scoping properly rather than assuming the `IconSlotView` fix transfers directly)
-- [ ] `Canvas.tsx`'s details-draft-seeding effect: same category, but this one seeds a *dictionary* keyed by node id (`detailsDrafts`), not a single piece of display state — the `key`-remount trick doesn't obviously map onto "seed one entry in a larger object," so this one may need its own approach, not a copy of the `IconSlotView` fix
-- [ ] Re-run `npm run lint` and confirm all 4 are gone with no new errors introduced
-- [ ] Manually verify (or ask for manual verification) that icon-switching, tooltip-switching, and details-panel-opening still show correct content with no stale-content flash after the fix — these are exactly the failure modes that would silently regress if the `key` equivalence is wrong
+- [x] Split `useDiagramContext` out of `DiagramContext.tsx` into its own file; update every import site (`ShapeNode.tsx`, `ContainerNode.tsx`, `TextNode.tsx`, `connectionPoints.ts`, any others — grep for `from '../DiagramContext'` / `from './DiagramContext'` to find them all)
+- [x] `IconSlotView.tsx`: replace the `setSvg(null)`/`setDataUrl(null)` reset with a `key`-driven remount at its call site(s) inside `ShapeNode`/`ContainerNode` — landed exactly as scoped, `iconSlotKey()` in `ShapeNode.tsx`
+- [x] `useDetailsTooltip.ts`: **not** a caller-remount in the end — see "What shipped" above. A hook-level `key` equivalent (storing the key its state was computed for, comparing during render) turned out cleaner than restructuring every caller
+- [x] `Canvas.tsx`'s details-draft-seeding effect: **not** a variant of the `IconSlotView` fix — the synchronous branch moved into `openDetailsPanel` (the one call site that ever opens the panel with a real id) instead, since it was never actually async and didn't need an effect at all
+- [x] Re-run `npm run lint` and confirm all 4 are gone with no new errors introduced — 0 errors project-wide
+- [ ] Manually verify (or ask for manual verification) that icon-switching, tooltip-switching, and details-panel-opening still show correct content with no stale-content flash after the fix — these are exactly the failure modes that would silently regress if the `key`/comparison equivalence is wrong. **Still the user's own to do** — this app's renderer can't be checked outside Electron (`window.api` is undefined).
 
 ## Notes
 Split out from epic 0004 (containers) on 2026-08-19, at the user's request, after asking about pre-existing lint errors uncovered while working on that epic. Two of six original errors (an unescaped apostrophe, and `IconPicker.tsx`'s derived-state effect) were fixed immediately as part of epic 0004's branch since they were unambiguous, zero-risk fixes; these remaining 4 needed more explanation and more careful handling, hence their own epic rather than a rushed fix.
