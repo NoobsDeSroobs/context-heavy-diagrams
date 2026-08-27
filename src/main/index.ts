@@ -8,8 +8,8 @@ import { registerLinkHandlers } from './links'
 import { createWindow, registerWindowHandlers } from './windows'
 import { registerRequiredTagsHandlers } from './requiredTags'
 import { registerRecoveryHandlers, runStartupOrphanScan } from './recovery'
-import { readAppSettings, registerAppSettingsHandlers } from './appSettings'
-import { DEFAULT_SETTINGS } from '@shared/settings'
+import { readPreferences, registerPreferencesHandlers } from './appPreferences'
+import { DEFAULT_PREFERENCES } from '@shared/preferences'
 import { registerAppInfoHandlers } from './appInfo'
 import { registerStylePaletteHandlers } from './stylePalette'
 import { registerExportHandlers } from './export'
@@ -39,7 +39,7 @@ app.whenReady().then(() => {
   registerWindowHandlers()
   registerRequiredTagsHandlers()
   registerRecoveryHandlers()
-  registerAppSettingsHandlers()
+  registerPreferencesHandlers()
   registerAppInfoHandlers()
   registerStylePaletteHandlers()
   registerExportHandlers()
@@ -54,12 +54,12 @@ app.whenReady().then(() => {
   // Runs after createWindow() so the first window shows up without
   // waiting on this. initialWindow parents the recovery dialog(s) so they
   // get a defined z-order — see runStartupOrphanScan's own comment.
-  // readAppSettings() returning null (settings.json doesn't exist yet —
+  // readPreferences() returning null (settings.json doesn't exist yet —
   // ADR 0053) can't wait on the renderer's own localStorage
-  // migration at this point in startup; DEFAULT_SETTINGS' own true here
+  // migration at this point in startup; DEFAULT_PREFERENCES' own true here
   // matches what the file this replaced already defaulted to on a miss.
-  readAppSettings().then((settings) => {
-    if ((settings ?? DEFAULT_SETTINGS).scanForUnsavedRecoveryOnStartup) {
+  readPreferences().then((settings) => {
+    if ((settings ?? DEFAULT_PREFERENCES).scanForUnsavedRecoveryOnStartup) {
       runStartupOrphanScan(initialWindow, createWindow)
     }
   })

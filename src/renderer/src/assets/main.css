@@ -1322,7 +1322,7 @@ body {
   cursor: default;
 }
 
-/* Required-tags template editor, diagnostics panel, and settings panel —
+/* Diagram-settings panel, diagnostics panel, and preferences panel —
    same fixed right-side dock shell as .details-panel (toolbar + scrollable
    body), different body content. Highlights panel used to be part of this
    family too; moved to its own floating-popup treatment near .legend-panel
@@ -1330,7 +1330,7 @@ body {
 .required-tags-panel,
 .diagnostics-panel,
 .layer-panel,
-.settings-panel,
+.preferences-panel,
 .align-distribute-panel {
   width: 100%;
   height: 100%;
@@ -1342,7 +1342,7 @@ body {
 .required-tags-panel-toolbar,
 .diagnostics-panel-toolbar,
 .layer-panel-toolbar,
-.settings-panel-toolbar,
+.preferences-panel-toolbar,
 .align-distribute-panel-toolbar {
   display: flex;
   align-items: center;
@@ -1354,7 +1354,7 @@ body {
 .required-tags-panel-title,
 .diagnostics-panel-title,
 .layer-panel-title,
-.settings-panel-title,
+.preferences-panel-title,
 .align-distribute-panel-title {
   font-size: 13px;
   font-weight: 600;
@@ -1363,7 +1363,7 @@ body {
 .required-tags-panel-toolbar button,
 .diagnostics-panel-toolbar button,
 .layer-panel-toolbar button,
-.settings-panel-toolbar button,
+.preferences-panel-toolbar button,
 .align-distribute-panel-toolbar button {
   cursor: pointer;
   border: 1px solid var(--ev-c-gray-2);
@@ -1378,14 +1378,14 @@ body {
 .required-tags-panel-toolbar button:hover,
 .diagnostics-panel-toolbar button:hover,
 .layer-panel-toolbar button:hover,
-.settings-panel-toolbar button:hover,
+.preferences-panel-toolbar button:hover,
 .align-distribute-panel-toolbar button:hover {
   background: var(--ev-button-alt-hover-bg);
 }
 
 .required-tags-panel-body,
 .layer-panel-body,
-.settings-panel-body,
+.preferences-panel-body,
 .align-distribute-panel-body {
   flex: 1;
   min-height: 0;
@@ -1398,17 +1398,17 @@ body {
 
 /* Compact "Zoom limit: in [_] out [_]" row — deliberately not
    two full-width NumberField rows. */
-.settings-zoom-limit {
+.preferences-zoom-limit {
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
-.settings-zoom-limit-label {
+.preferences-zoom-limit-label {
   color: var(--ev-c-text-3);
 }
 
-.settings-zoom-limit-input {
+.preferences-zoom-limit-input {
   width: 52px;
   flex: 0 0 auto;
   text-align: center;
@@ -1421,15 +1421,15 @@ body {
   -moz-appearance: textfield;
 }
 
-.settings-zoom-limit-input::-webkit-inner-spin-button,
-.settings-zoom-limit-input::-webkit-outer-spin-button {
+.preferences-zoom-limit-input::-webkit-inner-spin-button,
+.preferences-zoom-limit-input::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
 
 .required-tags-panel-hint,
 .layer-panel-hint,
-.settings-panel-hint,
+.preferences-panel-hint,
 .align-distribute-panel-hint {
   font-size: 12px;
   color: var(--ev-c-text-3);
@@ -1883,11 +1883,60 @@ body {
   color: var(--ev-c-text-3);
 }
 
-/* Gravity presets panel (ADR 0050) — reuses .required-tag-value-*
+/* Line-bend-presets section (ADR 0050) — reuses .required-tag-value-*
    row/list shape above, just a narrower second input for the numeric
    value next to the label. */
 .gravity-preset-value-input {
   flex: 0 0 64px;
+}
+
+/* DiagramSettingsPanel consolidates the diagram-level (per-diagram)
+   surfaces into one dock panel (ADR 0071): a plain field at the top, then
+   Required tags and Line bend presets as CollapsibleSections. The sections
+   bleed to the panel edges (cancelling .required-tags-panel-body's own 12px
+   inset) so their divider borders read as full-width, matching how the same
+   CollapsibleSection looks in the property panel. */
+.diagram-settings-panel .property-section {
+  margin: 0 -12px;
+}
+
+.diagram-settings-panel .property-section-header {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.diagram-settings-panel .property-section-body {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+/* Each section's own actions (Copy to children / Set as my default / …) —
+   used to live far-right in a per-panel toolbar; now a small button row at
+   the top of the section body, right next to the data they act on. */
+.diagram-settings-section-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.diagram-settings-section-actions button {
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 3px 8px;
+}
+
+.diagram-settings-section-actions button:hover:not(:disabled) {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.diagram-settings-section-actions button:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .required-tag-value-move,
@@ -2250,7 +2299,7 @@ body {
 }
 
 /* Legend panel — see ADR 0033. Deliberately NOT the shared
-   .highlights-panel/.settings-panel UtilityDock shell (that's a fixed-size
+   .highlights-panel/.preferences-panel UtilityDock shell (that's a fixed-size
    right-side dock slot) — this is a small floating box positioned next to
    the canvas's bottom-left <Controls> widget, same `position: fixed`
    family as .icon-picker but anchored from the bottom instead of the top. */

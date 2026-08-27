@@ -13,7 +13,7 @@ Isolate was scoped via a real design conversation on 2026-08-25 that reframed it
 
 **UI: two separate buttons, not one combined toggle.** The original assumption (a single checkbox inside the search overlay, doubling as both "run search" and "apply Isolate") was rejected by the user in favor of a distinct **Isolate** button next to **Search** in `SearchOverlay`. This means running a search and applying Isolate are two independent explicit actions: Isolate can be toggled on/off without re-running the query, and a new search always requires re-arming Isolate (see Consequences) rather than silently continuing to apply a stale match set. The Isolate button is disabled until a search has actually run with at least one match — there's nothing to isolate down to otherwise.
 
-**Rendering: opacity, 50% default, exposed as a Setting (`isolateOpacity`).** The design conversation had assumed reduced opacity throughout but never pinned a number; the user picked 50% but asked for it to be adjustable rather than hardcoded — global, not per-diagram, same tier as `edgeStraightSegmentLength`/zoom limits/etc. in `AppSettings`.
+**Rendering: opacity, 50% default, exposed as a Setting (`isolateOpacity`).** The design conversation had assumed reduced opacity throughout but never pinned a number; the user picked 50% but asked for it to be adjustable rather than hardcoded — global, not per-diagram, same tier as `edgeStraightSegmentLength`/zoom limits/etc. in `AppPreferences`.
 
 **Edges get the same treatment as nodes, exactly as predicted** ("very likely yes, structurally trivial") — `searchMatchIds` already covered both node and edge ids from the search work, so this needed no new plumbing.
 

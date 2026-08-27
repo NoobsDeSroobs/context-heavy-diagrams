@@ -47,8 +47,7 @@ import TextNode, { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from './nodes/TextNode'
 import ContainerNode, { CONTAINER_MIN_WIDTH, CONTAINER_MIN_HEIGHT } from './nodes/ContainerNode'
 import AnchorNode, { ANCHOR_SIZE } from './nodes/AnchorNode'
 import LineNode, { LINE_BOUNDS_PADDING } from './nodes/LineNode'
-import GravityPresetsPanel from './components/GravityPresetsPanel'
-import DiagramConfigPanel from './components/DiagramConfigPanel'
+import DiagramSettingsPanel from './components/DiagramSettingsPanel'
 import { effectiveGravityPresets } from './lineGravityPresets'
 import LabeledEdge from './edges/LabeledEdge'
 import { highlightId, matchingHighlights, reconcileHighlightGroup } from './highlights'
@@ -59,7 +58,6 @@ import IconPicker from './components/IconPicker'
 import ColorPickerPopup from './components/ColorPickerPopup'
 import StylePicker from './components/StylePicker'
 import DetailsPanel from './components/DetailsPanel'
-import RequiredTagsPanel from './components/RequiredTagsPanel'
 import DiagnosticsPanel from './components/DiagnosticsPanel'
 import HighlightsPanel from './components/HighlightsPanel'
 import SearchOverlay from './components/SearchOverlay'
@@ -84,7 +82,7 @@ import {
 import { nearestSegmentIndex, type PathPoint } from './geometry/bendablePath'
 import { absolutePosition, subtractPosition } from './geometry/nodePosition'
 import MultiConnectionLine from './edges/MultiConnectionLine'
-import SettingsPanel from './components/SettingsPanel'
+import PreferencesPanel from './components/PreferencesPanel'
 import AlignDistributePanel from './components/AlignDistributePanel'
 import AboutDialog from './components/AboutDialog'
 import ExportPngDialog, { type PngExportChoice } from './components/ExportPngDialog'
@@ -99,7 +97,7 @@ import { SNAP_THRESHOLD_PX, boundsFrom, computeSnap } from './alignment'
 import { buildClipboardPayload, parseClipboardPayload, remapForPaste } from './clipboard'
 import type { TransformPatch } from './panels/PropertyPanel'
 import { useTheme } from './theme'
-import { effectiveStylePalette, useSettings } from './settings'
+import { effectiveStylePalette, usePreferences } from './preferences'
 import {
   captureDiagramPng,
   resolveEffectiveBackgroundColor,
@@ -301,8 +299,8 @@ function sortNodesForHierarchy(nodes: Node[]): Node[] {
 }
 
 // Adapter between React Flow's Node shape (zIndex lives in data.zIndex) and
-// zIndexOrdering.ts's plain, React-Flow-agnostic ZIndexed shape — see epic
-// 0043/ADR 0035. Only touches nodes that actually needed a value; a fully
+// zIndexOrdering.ts's plain, React-Flow-agnostic ZIndexed shape — see
+// ADR 0035. Only touches nodes that actually needed a value; a fully
 // backfilled array is returned as-is (same node references, no new objects)
 // so this is a safe no-op to call on every load.
 function applyZIndexBackfill(nodes: Node[]): Node[] {
@@ -679,14 +677,13 @@ function CanvasInner(): React.JSX.Element {
   // effectiveGravityPresets resolves "empty" to this app's own built-in
   // four wherever it's actually consumed (DiagramContext's own value below).
   const [gravityPresets, setGravityPresets] = useState<GravityPreset[]>([])
-  const [gravityPresetsPanelOpen, setGravityPresetsPanelOpen] = useState(false)
   // Diagram-level override for max connection points per side (ADR 0067;
   // ADR 0052) — undefined means "not overridden," same file-scoped/reset-
   // on-load treatment as gravityPresets above.
   const [diagramMaxConnectionPointsPerSide, setDiagramMaxConnectionPointsPerSide] = useState<
     number | undefined
   >(undefined)
-  const [diagramConfigPanelOpen, setDiagramConfigPanelOpen] = useState(false)
+  const [diagramSettingsPanelOpen, setDiagramSettingsPanelOpen] = useState(false)
   // Anchors the floating panel next to whichever <ControlButton> opened it —
   // same convention as iconPicker/colorPicker/linePicker's own anchorRect.
   const [legendPanelAnchor, setLegendPanelAnchor] = useState<DOMRect | null>(null)
@@ -727,7 +724,6 @@ function CanvasInner(): React.JSX.Element {
   // current state (what the last backfill run had to correct), not a
   // growing history log. A file with nothing to correct clears the list.
   const [diagnostics, setDiagnostics] = useState<string[]>([])
-  const [requiredTagsPanelOpen, setRequiredTagsPanelOpen] = useState(false)
   const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false)
   const [highlightsPanelOpen, setHighlightsPanelOpen] = useState(false)
   // Floating popup next to Legend's, in the bottom-left <Controls> cluster
@@ -735,7 +731,7 @@ function CanvasInner(): React.JSX.Element {
   // legendPanelAnchor above, no longer the fixed-position UtilityDock shell
   // it used to be.
   const [highlightsPanelAnchor, setHighlightsPanelAnchor] = useState<DOMRect | null>(null)
-  const [settingsPanelOpen, setSettingsPanelOpen] = useState(false)
+  const [preferencesPanelOpen, setPreferencesPanelOpen] = useState(false)
   const [stylePalettePanelOpen, setStylePalettePanelOpen] = useState(false)
   const [alignDistributePanelOpen, setAlignDistributePanelOpen] = useState(false)
   // Search overlay (ADR 0062) — Ctrl+F. All session-only, reset
@@ -771,13 +767,13 @@ function CanvasInner(): React.JSX.Element {
   const [exportPngEffectiveColorHex, setExportPngEffectiveColorHex] = useState('#ffffff')
   // Toolbar's own "current pen style" swatch (ADR 0045) — reuses
   // StylePicker (ADR 0010) unchanged, same anchorRect convention as
-  // linePicker above, just targeting settings.defaultEdgeStyle instead of
+  // linePicker above, just targeting preferences.defaultEdgeStyle instead of
   // one edge's data.style.
   const [defaultEdgeStylePicker, setDefaultEdgeStylePicker] = useState<DOMRect | null>(null)
-  // Global app preference, not diagram content — see settings.ts/ADR 0032.
+  // Global app preference, not diagram content — see preferences.ts/ADR 0032.
   // Deliberately not reset by loadDiagramIntoCanvas below; only the panel's
   // open/closed UI state is.
-  const { settings, updateSettings } = useSettings()
+  const { preferences, updatePreferences } = usePreferences()
   const [contextMenu, setContextMenu] = useState<{
     x: number
     y: number
@@ -1194,22 +1190,23 @@ function CanvasInner(): React.JSX.Element {
   )
 
   // The utility dock shows one surface at a time (see ADR 0013) — opening
-  // any of the five closes the other four, same as clicking a different
-  // tab. Highlights moved out of this family (fix/highlights-free-tags-and-
-  // toggle) into its own floating popup next to Legend's, in the bottom-left
-  // <Controls> cluster — it doesn't compete for the same dock slot anymore,
-  // same independence Legend already had, so opening/closing it no longer
-  // touches these five and vice versa.
+  // any of the family closes every other one, same as clicking a different
+  // tab. Each toggle below therefore has to name every sibling; the
+  // repetition is deliberate and low-risk, not worth a generic
+  // exclusive-panel abstraction. Highlights and Legend are NOT in this
+  // family — both are floating popups anchored near the bottom-left
+  // <Controls> cluster, independent of the dock. Required tags and line
+  // bend presets used to be members too; ADR 0071 folded them into
+  // DiagramSettingsPanel as collapsible sections, so only that one toggle
+  // remains for all three.
   const openDetailsPanel = useCallback(
     (nodeId: string) => {
-      setRequiredTagsPanelOpen(false)
       setDiagnosticsPanelOpen(false)
-      setSettingsPanelOpen(false)
+      setPreferencesPanelOpen(false)
       setLayerPanelOpen(false)
       setStylePalettePanelOpen(false)
-      setGravityPresetsPanelOpen(false)
       setAlignDistributePanelOpen(false)
-      setDiagramConfigPanelOpen(false)
+      setDiagramSettingsPanelOpen(false)
       setReferencesPanelOpen(false)
       setDetailsPanelNodeId(nodeId)
       // No-existing-file (or nothing saved yet to resolve one against) is
@@ -1230,80 +1227,48 @@ function CanvasInner(): React.JSX.Element {
     [nodes, currentPath]
   )
 
-  const toggleRequiredTagsPanel = useCallback(() => {
-    setDetailsPanelNodeId(null)
-    setDiagnosticsPanelOpen(false)
-    setSettingsPanelOpen(false)
-    setLayerPanelOpen(false)
-    setStylePalettePanelOpen(false)
-    setGravityPresetsPanelOpen(false)
-    setAlignDistributePanelOpen(false)
-    setDiagramConfigPanelOpen(false)
-    setReferencesPanelOpen(false)
-    setRequiredTagsPanelOpen((open) => !open)
-  }, [])
 
   const toggleDiagnosticsPanel = useCallback(() => {
     setDetailsPanelNodeId(null)
-    setRequiredTagsPanelOpen(false)
-    setSettingsPanelOpen(false)
+    setPreferencesPanelOpen(false)
     setLayerPanelOpen(false)
     setStylePalettePanelOpen(false)
-    setGravityPresetsPanelOpen(false)
     setAlignDistributePanelOpen(false)
-    setDiagramConfigPanelOpen(false)
+    setDiagramSettingsPanelOpen(false)
     setReferencesPanelOpen(false)
     setDiagnosticsPanelOpen((open) => !open)
   }, [])
 
-  const toggleSettingsPanel = useCallback(() => {
+  const togglePreferencesPanel = useCallback(() => {
     setDetailsPanelNodeId(null)
-    setRequiredTagsPanelOpen(false)
     setDiagnosticsPanelOpen(false)
     setLayerPanelOpen(false)
     setStylePalettePanelOpen(false)
-    setGravityPresetsPanelOpen(false)
     setAlignDistributePanelOpen(false)
-    setDiagramConfigPanelOpen(false)
+    setDiagramSettingsPanelOpen(false)
     setReferencesPanelOpen(false)
-    setSettingsPanelOpen((open) => !open)
+    setPreferencesPanelOpen((open) => !open)
   }, [])
 
   const toggleStylePalettePanel = useCallback(() => {
     setDetailsPanelNodeId(null)
-    setRequiredTagsPanelOpen(false)
     setDiagnosticsPanelOpen(false)
-    setSettingsPanelOpen(false)
+    setPreferencesPanelOpen(false)
     setLayerPanelOpen(false)
-    setGravityPresetsPanelOpen(false)
     setAlignDistributePanelOpen(false)
-    setDiagramConfigPanelOpen(false)
+    setDiagramSettingsPanelOpen(false)
     setReferencesPanelOpen(false)
     setStylePalettePanelOpen((open) => !open)
   }, [])
 
-  const toggleGravityPresetsPanel = useCallback(() => {
-    setDetailsPanelNodeId(null)
-    setRequiredTagsPanelOpen(false)
-    setDiagnosticsPanelOpen(false)
-    setSettingsPanelOpen(false)
-    setLayerPanelOpen(false)
-    setStylePalettePanelOpen(false)
-    setAlignDistributePanelOpen(false)
-    setDiagramConfigPanelOpen(false)
-    setReferencesPanelOpen(false)
-    setGravityPresetsPanelOpen((open) => !open)
-  }, [])
 
   const toggleAlignDistributePanel = useCallback(() => {
     setDetailsPanelNodeId(null)
-    setRequiredTagsPanelOpen(false)
     setDiagnosticsPanelOpen(false)
-    setSettingsPanelOpen(false)
+    setPreferencesPanelOpen(false)
     setLayerPanelOpen(false)
     setStylePalettePanelOpen(false)
-    setGravityPresetsPanelOpen(false)
-    setDiagramConfigPanelOpen(false)
+    setDiagramSettingsPanelOpen(false)
     setReferencesPanelOpen(false)
     setAlignDistributePanelOpen((open) => !open)
   }, [])
@@ -1318,41 +1283,35 @@ function CanvasInner(): React.JSX.Element {
 
   const toggleLayerPanel = useCallback(() => {
     setDetailsPanelNodeId(null)
-    setRequiredTagsPanelOpen(false)
     setDiagnosticsPanelOpen(false)
-    setSettingsPanelOpen(false)
+    setPreferencesPanelOpen(false)
     setStylePalettePanelOpen(false)
-    setGravityPresetsPanelOpen(false)
     setAlignDistributePanelOpen(false)
-    setDiagramConfigPanelOpen(false)
+    setDiagramSettingsPanelOpen(false)
     setEntityHighlightNodeId(null)
     setReferencesPanelOpen(false)
     setLayerPanelOpen((open) => !open)
   }, [])
 
-  const toggleDiagramConfigPanel = useCallback(() => {
+  const toggleDiagramSettingsPanel = useCallback(() => {
     setDetailsPanelNodeId(null)
-    setRequiredTagsPanelOpen(false)
     setDiagnosticsPanelOpen(false)
-    setSettingsPanelOpen(false)
+    setPreferencesPanelOpen(false)
     setLayerPanelOpen(false)
     setStylePalettePanelOpen(false)
-    setGravityPresetsPanelOpen(false)
     setAlignDistributePanelOpen(false)
     setReferencesPanelOpen(false)
-    setDiagramConfigPanelOpen((open) => !open)
+    setDiagramSettingsPanelOpen((open) => !open)
   }, [])
 
   const toggleReferencesPanel = useCallback(() => {
     setDetailsPanelNodeId(null)
-    setRequiredTagsPanelOpen(false)
     setDiagnosticsPanelOpen(false)
-    setSettingsPanelOpen(false)
+    setPreferencesPanelOpen(false)
     setLayerPanelOpen(false)
     setStylePalettePanelOpen(false)
-    setGravityPresetsPanelOpen(false)
     setAlignDistributePanelOpen(false)
-    setDiagramConfigPanelOpen(false)
+    setDiagramSettingsPanelOpen(false)
     setReferencesPanelOpen((open) => !open)
   }, [])
 
@@ -1946,14 +1905,14 @@ function CanvasInner(): React.JSX.Element {
               sourceHandle,
               targetHandle: connection.targetHandle,
               type: 'labeled',
-              data: { metadata: seedMetadata(requiredTags), style: settings.defaultEdgeStyle }
+              data: { metadata: seedMetadata(requiredTags), style: preferences.defaultEdgeStyle }
             },
             acc
           )
         }, eds)
       })
     },
-    [nodes, setEdges, pushSnapshot, requiredTags, settings.defaultEdgeStyle]
+    [nodes, setEdges, pushSnapshot, requiredTags, preferences.defaultEdgeStyle]
   )
 
   // Grabbing an existing edge's own endpoint and redropping it elsewhere —
@@ -2068,8 +2027,8 @@ function CanvasInner(): React.JSX.Element {
   )
 
   // Drag-to-create: releasing a connection drag over empty canvas (rather
-  // than onto a valid handle) spawns a placeholder AnchorNode — see epic
-  // 0014 and isVoidDrop's own comment for why the check is more than just
+  // than onto a valid handle) spawns a placeholder AnchorNode — see
+  // ADR 0015 and isVoidDrop's own comment for why the check is more than just
   // "is event.target the pane."
   const onConnectEnd = useCallback(
     (event: MouseEvent | TouchEvent, connectionState: FinalConnectionState) => {
@@ -2087,14 +2046,14 @@ function CanvasInner(): React.JSX.Element {
               target: anchorId,
               targetHandle: 'left',
               type: 'labeled',
-              data: { metadata: seedMetadata(requiredTags), style: settings.defaultEdgeStyle }
+              data: { metadata: seedMetadata(requiredTags), style: preferences.defaultEdgeStyle }
             },
             eds
           )
         )
       )
     },
-    [spawnAnchorAt, setEdges, requiredTags, settings.defaultEdgeStyle]
+    [spawnAnchorAt, setEdges, requiredTags, preferences.defaultEdgeStyle]
   )
 
   // Grabbing an existing edge's own endpoint and dropping it on empty
@@ -2153,8 +2112,8 @@ function CanvasInner(): React.JSX.Element {
     [rfInstance]
   )
 
-  // Drag-and-drop counterpart to the four addXNode callbacks below (epic
-  // 0029) — those spawn near the viewport center via spawnPosition above;
+  // Drag-and-drop counterpart to the four addXNode callbacks below (see
+  // ADR 0064) — those spawn near the viewport center via spawnPosition above;
   // this places a node exactly where it was dropped, centered under the
   // drop point, and reparents it into a container the same way
   // onNodeDragStop's own intersection check does for an existing node's
@@ -2204,7 +2163,7 @@ function CanvasInner(): React.JSX.Element {
               label: 'Shape',
               zIndex: nextZIndex(nds, 'shape'),
               metadata: seedMetadata(requiredTags),
-              style: settings.defaultStyles.shape
+              style: preferences.defaultStyles.shape
             }
             break
           case 'container':
@@ -2214,7 +2173,7 @@ function CanvasInner(): React.JSX.Element {
             data = {
               label: 'Container',
               zIndex: nextZIndex(nds, 'container'),
-              style: settings.defaultStyles.container ?? {
+              style: preferences.defaultStyles.container ?? {
                 fill: 'var(--ev-c-gray-1)',
                 fillOpacity: 20
               },
@@ -2229,7 +2188,7 @@ function CanvasInner(): React.JSX.Element {
               label: 'Text',
               rotation: 0,
               zIndex: nextZIndex(nds, 'text'),
-              style: settings.defaultStyles.text
+              style: preferences.defaultStyles.text
             }
             break
           case 'line': {
@@ -2270,9 +2229,9 @@ function CanvasInner(): React.JSX.Element {
       pushSnapshot,
       setNodes,
       requiredTags,
-      settings.defaultStyles.shape,
-      settings.defaultStyles.container,
-      settings.defaultStyles.text
+      preferences.defaultStyles.shape,
+      preferences.defaultStyles.container,
+      preferences.defaultStyles.text
     ]
   )
 
@@ -2316,11 +2275,11 @@ function CanvasInner(): React.JSX.Element {
           label: 'Shape',
           zIndex: nextZIndex(nds, 'shape'),
           metadata: seedMetadata(requiredTags),
-          style: settings.defaultStyles.shape
+          style: preferences.defaultStyles.shape
         }
       }
     ])
-  }, [setNodes, pushSnapshot, spawnPosition, requiredTags, settings.defaultStyles.shape])
+  }, [setNodes, pushSnapshot, spawnPosition, requiredTags, preferences.defaultStyles.shape])
 
   const addTextNode = useCallback(() => {
     pushSnapshot()
@@ -2339,11 +2298,11 @@ function CanvasInner(): React.JSX.Element {
           label: 'Text',
           rotation: 0,
           zIndex: nextZIndex(nds, 'text'),
-          style: settings.defaultStyles.text
+          style: preferences.defaultStyles.text
         }
       }
     ])
-  }, [setNodes, pushSnapshot, spawnPosition, settings.defaultStyles.text])
+  }, [setNodes, pushSnapshot, spawnPosition, preferences.defaultStyles.text])
 
   const addContainerNode = useCallback(() => {
     pushSnapshot()
@@ -2362,13 +2321,13 @@ function CanvasInner(): React.JSX.Element {
         // dashed border) rather than fully transparent — a freshly-added
         // container should read as "a container" at a glance, not require
         // opening the property panel first to see anything at all. Only
-        // the fallback when the user hasn't set a real default (epic
-        // 0030/ADR 0048) — once they have, their own choice wins outright
+        // the fallback when the user hasn't set a real default (see
+        // ADR 0048) — once they have, their own choice wins outright
         // rather than merging with this hardcoded one.
         data: {
           label: 'Container',
           zIndex: nextZIndex(nds, 'container'),
-          style: settings.defaultStyles.container ?? {
+          style: preferences.defaultStyles.container ?? {
             fill: 'var(--ev-c-gray-1)',
             fillOpacity: 20
           },
@@ -2376,7 +2335,7 @@ function CanvasInner(): React.JSX.Element {
         }
       }
     ])
-  }, [setNodes, pushSnapshot, spawnPosition, requiredTags, settings.defaultStyles.container])
+  }, [setNodes, pushSnapshot, spawnPosition, requiredTags, preferences.defaultStyles.container])
 
   // A default 2-point horizontal line — see ADR 0050. Points are
   // node-local (relative to position), padded the same way normalizeLineBounds
@@ -3049,7 +3008,7 @@ function CanvasInner(): React.JSX.Element {
   // needing to know how each node type draws its own selected state.
   // Restored afterward either way, including on failure. choice comes from
   // ExportPngDialog, not settings directly — the dialog is the actual
-  // place these get edited; settings.pngExport* only remembers the last
+  // place these get edited; preferences.pngExport* only remembers the last
   // choice so the dialog reopens prefilled.
   const handleExportPng = useCallback(
     async (choice: PngExportChoice) => {
@@ -3184,13 +3143,11 @@ function CanvasInner(): React.JSX.Element {
       setColorPicker(null)
       setLinePicker(null)
       setDetailsPanelNodeId(null)
-      setRequiredTagsPanelOpen(false)
       setDiagnosticsPanelOpen(false)
       setHighlightsPanelOpen(false)
-      setSettingsPanelOpen(false)
-      setGravityPresetsPanelOpen(false)
+      setPreferencesPanelOpen(false)
       setAlignDistributePanelOpen(false)
-      setDiagramConfigPanelOpen(false)
+      setDiagramSettingsPanelOpen(false)
       setReferencesPanelOpen(false)
       setReferenceWindows([])
       setSearchOverlayOpen(false)
@@ -3214,8 +3171,8 @@ function CanvasInner(): React.JSX.Element {
   // path as everything else instead of duplicating file-read logic
   // (ADR 0023). Ref-guarded, not an empty deps array, so this survives
   // React StrictMode's dev-mode double-invoke and doesn't re-fire if
-  // loadDiagramIntoCanvas's identity changes across renders — see epic
-  // 0006/ADR 0018 for why this file is careful about effect double-runs.
+  // loadDiagramIntoCanvas's identity changes across renders — see ADR 0018
+  // for why this file is careful about effect double-runs.
   const initialLoadDone = useRef(false)
   useEffect(() => {
     if (initialLoadDone.current) return
@@ -3719,22 +3676,18 @@ function CanvasInner(): React.JSX.Element {
           setDetailsPanelNodeId(null)
         } else if (searchOverlayOpen) {
           closeSearchOverlay()
-        } else if (requiredTagsPanelOpen) {
-          setRequiredTagsPanelOpen(false)
         } else if (diagnosticsPanelOpen) {
           setDiagnosticsPanelOpen(false)
         } else if (highlightsPanelOpen) {
           setHighlightsPanelOpen(false)
-        } else if (settingsPanelOpen) {
-          setSettingsPanelOpen(false)
+        } else if (preferencesPanelOpen) {
+          setPreferencesPanelOpen(false)
         } else if (stylePalettePanelOpen) {
           setStylePalettePanelOpen(false)
-        } else if (gravityPresetsPanelOpen) {
-          setGravityPresetsPanelOpen(false)
         } else if (alignDistributePanelOpen) {
           setAlignDistributePanelOpen(false)
-        } else if (diagramConfigPanelOpen) {
-          setDiagramConfigPanelOpen(false)
+        } else if (diagramSettingsPanelOpen) {
+          setDiagramSettingsPanelOpen(false)
         } else if (referencesPanelOpen) {
           setReferencesPanelOpen(false)
         } else if (referenceWindows.length > 0) {
@@ -3779,14 +3732,12 @@ function CanvasInner(): React.JSX.Element {
     detailsPanelNodeId,
     searchOverlayOpen,
     closeSearchOverlay,
-    requiredTagsPanelOpen,
     diagnosticsPanelOpen,
     highlightsPanelOpen,
-    settingsPanelOpen,
+    preferencesPanelOpen,
     stylePalettePanelOpen,
-    gravityPresetsPanelOpen,
     alignDistributePanelOpen,
-    diagramConfigPanelOpen,
+    diagramSettingsPanelOpen,
     referencesPanelOpen,
     referenceWindows,
     iconPicker,
@@ -4014,7 +3965,6 @@ function CanvasInner(): React.JSX.Element {
     {
       label: 'View',
       items: [
-        { label: 'Required tags', onSelect: toggleRequiredTagsPanel },
         {
           label: `Diagnostics${displayedDiagnostics.length > 0 ? ` (${displayedDiagnostics.length})` : ''}`,
           onSelect: toggleDiagnosticsPanel
@@ -4025,9 +3975,8 @@ function CanvasInner(): React.JSX.Element {
           onSelect: toggleReferencesPanel
         },
         { label: 'Style Palette', onSelect: toggleStylePalettePanel },
-        { label: 'Line bend presets', onSelect: toggleGravityPresetsPanel },
-        { label: 'Diagram configuration', onSelect: toggleDiagramConfigPanel },
-        { label: 'Settings', onSelect: toggleSettingsPanel }
+        { label: 'Diagram settings', onSelect: toggleDiagramSettingsPanel },
+        { label: 'Preferences', onSelect: togglePreferencesPanel }
       ]
     },
     {
@@ -4040,8 +3989,8 @@ function CanvasInner(): React.JSX.Element {
   // memoized on the two fields it depends on so the Context value below
   // keeps a stable identity between unrelated settings changes.
   const activeStylePalette = useMemo(
-    () => effectiveStylePalette(settings.stylePalettes, settings.activeStylePaletteId),
-    [settings.stylePalettes, settings.activeStylePaletteId]
+    () => effectiveStylePalette(preferences.stylePalettes, preferences.activeStylePaletteId),
+    [preferences.stylePalettes, preferences.activeStylePaletteId]
   )
 
   // Memoized so a high-frequency state change elsewhere in CanvasInner (e.g.
@@ -4071,17 +4020,17 @@ function CanvasInner(): React.JSX.Element {
       pushSnapshot,
       attachContainedNodes,
       matchHighlights,
-      edgeStraightSegmentLength: settings.edgeStraightSegmentLength,
+      edgeStraightSegmentLength: preferences.edgeStraightSegmentLength,
       maxConnectionPointsPerSide:
-        diagramMaxConnectionPointsPerSide ?? settings.maxConnectionPointsPerSide,
+        diagramMaxConnectionPointsPerSide ?? preferences.maxConnectionPointsPerSide,
       theme,
       entityHighlightNodeId,
       paletteColors: activeStylePalette.colors,
       paletteFonts: activeStylePalette.fonts,
-      gravityPresets: effectiveGravityPresets(gravityPresets, settings.gravityPresetsUserDefault),
+      gravityPresets: effectiveGravityPresets(gravityPresets, preferences.gravityPresetsUserDefault),
       searchMatchIds,
       isolateActive,
-      isolateOpacity: settings.isolateOpacity,
+      isolateOpacity: preferences.isolateOpacity,
       selectAllOfType
     }),
     [
@@ -4100,17 +4049,17 @@ function CanvasInner(): React.JSX.Element {
       pushSnapshot,
       attachContainedNodes,
       matchHighlights,
-      settings.edgeStraightSegmentLength,
-      settings.maxConnectionPointsPerSide,
+      preferences.edgeStraightSegmentLength,
+      preferences.maxConnectionPointsPerSide,
       diagramMaxConnectionPointsPerSide,
       theme,
       entityHighlightNodeId,
       activeStylePalette,
       gravityPresets,
-      settings.gravityPresetsUserDefault,
+      preferences.gravityPresetsUserDefault,
       searchMatchIds,
       isolateActive,
-      settings.isolateOpacity,
+      preferences.isolateOpacity,
       selectAllOfType
     ]
   )
@@ -4156,18 +4105,18 @@ function CanvasInner(): React.JSX.Element {
                 <line
                   x1="2"
                   y1="8"
-                  x2={settings.defaultEdgeStyle.endMarker === 'none' ? 26 : 20}
+                  x2={preferences.defaultEdgeStyle.endMarker === 'none' ? 26 : 20}
                   y2="8"
-                  stroke={settings.defaultEdgeStyle.stroke ?? 'currentColor'}
-                  strokeWidth={settings.defaultEdgeStyle.strokeWidth ?? 2}
+                  stroke={preferences.defaultEdgeStyle.stroke ?? 'currentColor'}
+                  strokeWidth={preferences.defaultEdgeStyle.strokeWidth ?? 2}
                   strokeDasharray={
-                    DEFAULT_EDGE_SWATCH_DASH[settings.defaultEdgeStyle.lineStyle ?? 'solid']
+                    DEFAULT_EDGE_SWATCH_DASH[preferences.defaultEdgeStyle.lineStyle ?? 'solid']
                   }
                 />
-                {settings.defaultEdgeStyle.endMarker !== 'none' && (
+                {preferences.defaultEdgeStyle.endMarker !== 'none' && (
                   <polygon
                     points="20,3 26,8 20,13"
-                    fill={settings.defaultEdgeStyle.stroke ?? 'currentColor'}
+                    fill={preferences.defaultEdgeStyle.stroke ?? 'currentColor'}
                   />
                 )}
               </svg>
@@ -4216,9 +4165,9 @@ function CanvasInner(): React.JSX.Element {
                   // Previously never set at all (silently React Flow's own
                   // 0.5/2 library defaults) until a large diagram made
                   // "zoom out further" a real ask — now a real Setting
-                  // (SettingsPanel.tsx) rather than hardcoded.
-                  minZoom={settings.minZoom}
-                  maxZoom={settings.maxZoom}
+                  // (PreferencesPanel.tsx) rather than hardcoded.
+                  minZoom={preferences.minZoom}
+                  maxZoom={preferences.maxZoom}
                   onEdgeContextMenu={onEdgeContextMenu}
                   onEdgeMouseEnter={onEdgeMouseEnter}
                   onEdgeMouseLeave={onEdgeMouseLeave}
@@ -4226,7 +4175,7 @@ function CanvasInner(): React.JSX.Element {
                   defaultEdgeOptions={DEFAULT_EDGE_OPTIONS}
                   connectionLineComponent={MultiConnectionLine}
                   selectionMode={
-                    settings.dragSelectRequiresFullEnclosure
+                    preferences.dragSelectRequiresFullEnclosure
                       ? SelectionMode.Full
                       : SelectionMode.Partial
                   }
@@ -4252,7 +4201,7 @@ function CanvasInner(): React.JSX.Element {
                       // bit identical (and potentially illegible) after
                       // switching to the other.
                       '--xy-background-color': themeAdaptiveColor(
-                        settings.canvasBackgroundColor,
+                        preferences.canvasBackgroundColor,
                         theme
                       ),
                       // Read directly by LabeledEdge's stroke when selected
@@ -4263,7 +4212,7 @@ function CanvasInner(): React.JSX.Element {
                       // edge on every change regardless of selection. A CSS
                       // var updates the browser's paint directly, with no
                       // React re-render of any edge at all, selected or not.
-                      '--selected-edge-highlight-color': settings.selectedEdgeHighlightColor
+                      '--selected-edge-highlight-color': preferences.selectedEdgeHighlightColor
                     } as React.CSSProperties
                   }
                   fitView
@@ -4325,14 +4274,14 @@ function CanvasInner(): React.JSX.Element {
                 onUpdateEdgeMetadata={updateEdgeMetadata}
                 onSetConnectionPointCount={setConnectionPointCount}
                 maxConnectionPointsPerSide={
-                  diagramMaxConnectionPointsPerSide ?? settings.maxConnectionPointsPerSide
+                  diagramMaxConnectionPointsPerSide ?? preferences.maxConnectionPointsPerSide
                 }
                 requiredTags={requiredTags}
                 beginContinuousEdit={beginContinuousEdit}
                 endContinuousEdit={endContinuousEdit}
                 pushSnapshot={pushSnapshot}
                 onSetDefaultStyle={(type, style) =>
-                  updateSettings({ defaultStyles: { ...settings.defaultStyles, [type]: style } })
+                  updatePreferences({ defaultStyles: { ...preferences.defaultStyles, [type]: style } })
                 }
               />
             </div>
@@ -4425,7 +4374,7 @@ function CanvasInner(): React.JSX.Element {
                 // default — picking a preset here means "this preset is
                 // now the default," same as picking one for a single edge
                 // replaces that edge's look rather than layering on top.
-                updateSettings({ defaultEdgeStyle: patch })
+                updatePreferences({ defaultEdgeStyle: patch })
                 setDefaultEdgeStylePicker(null)
               }}
               onClose={() => setDefaultEdgeStylePicker(null)}
@@ -4488,15 +4437,6 @@ function CanvasInner(): React.JSX.Element {
               onClose={() => setDetailsPanelNodeId(null)}
             />
           )}
-          {requiredTagsPanelOpen && (
-            <RequiredTagsPanel
-              requiredTags={requiredTags}
-              usedTags={usedTags}
-              onChange={updateRequiredTags}
-              onClose={() => setRequiredTagsPanelOpen(false)}
-              onCopyToChildren={copyRequiredTagsToChildren}
-            />
-          )}
           {diagnosticsPanelOpen && (
             <DiagnosticsPanel
               entries={displayedDiagnostics}
@@ -4525,11 +4465,11 @@ function CanvasInner(): React.JSX.Element {
               onClose={() => setReferencesPanelOpen(false)}
             />
           )}
-          {settingsPanelOpen && (
-            <SettingsPanel
-              settings={settings}
-              onChange={updateSettings}
-              onClose={() => setSettingsPanelOpen(false)}
+          {preferencesPanelOpen && (
+            <PreferencesPanel
+              preferences={preferences}
+              onChange={updatePreferences}
+              onClose={() => setPreferencesPanelOpen(false)}
             />
           )}
           {alignDistributePanelOpen && (
@@ -4541,44 +4481,47 @@ function CanvasInner(): React.JSX.Element {
           )}
           {stylePalettePanelOpen && (
             <StylePalettePanel
-              palettes={settings.stylePalettes}
-              activePaletteId={settings.activeStylePaletteId}
-              defaultStyles={settings.defaultStyles}
-              defaultEdgeStyle={settings.defaultEdgeStyle}
-              canvasBackgroundColor={settings.canvasBackgroundColor}
+              palettes={preferences.stylePalettes}
+              activePaletteId={preferences.activeStylePaletteId}
+              defaultStyles={preferences.defaultStyles}
+              defaultEdgeStyle={preferences.defaultEdgeStyle}
+              canvasBackgroundColor={preferences.canvasBackgroundColor}
               theme={theme}
               onChangePalettes={(stylePalettes, activeStylePaletteId) =>
-                updateSettings({ stylePalettes, activeStylePaletteId })
+                updatePreferences({ stylePalettes, activeStylePaletteId })
               }
               onChangeCanvasBackgroundColor={(canvasBackgroundColor) =>
-                updateSettings({ canvasBackgroundColor })
+                updatePreferences({ canvasBackgroundColor })
               }
               onClearDefault={(type) =>
                 type === 'edge'
-                  ? updateSettings({ defaultEdgeStyle: {} })
-                  : updateSettings({
-                      defaultStyles: { ...settings.defaultStyles, [type]: undefined }
+                  ? updatePreferences({ defaultEdgeStyle: {} })
+                  : updatePreferences({
+                      defaultStyles: { ...preferences.defaultStyles, [type]: undefined }
                     })
               }
               onClose={() => setStylePalettePanelOpen(false)}
             />
           )}
-          {gravityPresetsPanelOpen && (
-            <GravityPresetsPanel
-              presets={gravityPresets}
-              onChange={updateGravityPresets}
-              userDefault={settings.gravityPresetsUserDefault}
-              onSetUserDefault={(presets) => updateSettings({ gravityPresetsUserDefault: presets })}
-              onClearUserDefault={() => updateSettings({ gravityPresetsUserDefault: undefined })}
-              onClose={() => setGravityPresetsPanelOpen(false)}
-            />
-          )}
-          {diagramConfigPanelOpen && (
-            <DiagramConfigPanel
+          {diagramSettingsPanelOpen && (
+            <DiagramSettingsPanel
               maxConnectionPointsPerSide={diagramMaxConnectionPointsPerSide}
-              settingsDefault={settings.maxConnectionPointsPerSide}
-              onChange={updateDiagramMaxConnectionPointsPerSide}
-              onClose={() => setDiagramConfigPanelOpen(false)}
+              preferencesDefault={preferences.maxConnectionPointsPerSide}
+              onChangeMaxConnectionPoints={updateDiagramMaxConnectionPointsPerSide}
+              requiredTags={requiredTags}
+              usedTags={usedTags}
+              onChangeRequiredTags={updateRequiredTags}
+              onCopyRequiredTagsToChildren={copyRequiredTagsToChildren}
+              gravityPresets={gravityPresets}
+              onChangeGravityPresets={updateGravityPresets}
+              gravityPresetsUserDefault={preferences.gravityPresetsUserDefault}
+              onSetGravityPresetsUserDefault={(presets) =>
+                updatePreferences({ gravityPresetsUserDefault: presets })
+              }
+              onClearGravityPresetsUserDefault={() =>
+                updatePreferences({ gravityPresetsUserDefault: undefined })
+              }
+              onClose={() => setDiagramSettingsPanelOpen(false)}
             />
           )}
         </UtilityDock>
@@ -4608,17 +4551,17 @@ function CanvasInner(): React.JSX.Element {
         {exportPngDialogOpen && (
           <ExportPngDialog
             initial={{
-              paddingPx: settings.pngExportPaddingPx,
-              transparentBackground: settings.pngExportTransparentBackground,
-              backgroundColorOverride: settings.pngExportBackgroundColorOverride,
-              legendCorner: settings.pngExportLegendCorner
+              paddingPx: preferences.pngExportPaddingPx,
+              transparentBackground: preferences.pngExportTransparentBackground,
+              backgroundColorOverride: preferences.pngExportBackgroundColorOverride,
+              legendCorner: preferences.pngExportLegendCorner
             }}
             effectiveCanvasColorHex={exportPngEffectiveColorHex}
             hasLegendContent={legend.length > 0 || enabledHighlightIds.size > 0}
             onClose={() => setExportPngDialogOpen(false)}
             onConfirm={(choice: PngExportChoice) => {
               setExportPngDialogOpen(false)
-              updateSettings({
+              updatePreferences({
                 pngExportPaddingPx: choice.paddingPx,
                 pngExportTransparentBackground: choice.transparentBackground,
                 pngExportBackgroundColorOverride: choice.backgroundColorOverride,

@@ -5,7 +5,7 @@ import { basename, extname } from 'path'
 // Style palette export/import (see ADR 0048) — a real file, same
 // "sharing means handing someone a file" convention as diagram/icon
 // import elsewhere in this app, not a live-sync mechanism. The renderer
-// owns the actual JSON shape (settings.ts); main just picks a path and
+// owns the actual JSON shape (preferences.ts); main just picks a path and
 // moves bytes, same split as diagram.ts.
 const FILTERS = [{ name: 'Style palette', extensions: ['json'] }]
 
@@ -21,8 +21,8 @@ export function registerStylePaletteHandlers(): void {
     return true
   })
 
-  // Returns the file name (sans extension) alongside its contents — epic
-  // 0074 seeds the new palette's name from it, editable afterwards. null
+  // Returns the file name (sans extension) alongside its contents — the
+  // importer seeds the new palette's name from it, editable afterwards. null
   // on cancel, same convention as before.
   ipcMain.handle('stylePalette:importFromFile', async () => {
     const result = await dialog.showOpenDialog({

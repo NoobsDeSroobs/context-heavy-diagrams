@@ -291,7 +291,7 @@ export interface DiagramFile {
   // Per-diagram override for the max connection points allowed on one
   // side of a Shape/Container (see ADR 0067; ADR 0052's Diagram override ->
   // User default -> Built-in default pattern) — absent means fall back to
-  // whoever opens this file's own Settings value (AppSettings.
+  // whoever opens this file's own Settings value (AppPreferences.
   // maxConnectionPointsPerSide). A real constraint on what the diagram
   // can contain, not just a display preference — see the ADR for why this
   // couldn't stay Settings-only. Lowering it below what an existing
@@ -396,8 +396,8 @@ export function serializeDiagram(diagram: DiagramFile): string {
   return JSON.stringify(ordered, null, 2) + '\n'
 }
 
-// Deliberately no metadata/requiredTags-specific validation here (epic
-// 0034) — parseDiagram has never validated the shape of any other optional
+// Deliberately no metadata/requiredTags-specific validation here (see
+// ADR 0022) — parseDiagram has never validated the shape of any other optional
 // field either (icons, style, connectionPoints, ...), so singling out
 // metadata for stricter treatment would be inconsistent rather than more
 // correct. A malformed metadata value just flows through as-is; Canvas's

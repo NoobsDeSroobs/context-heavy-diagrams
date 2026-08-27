@@ -49,7 +49,7 @@ export async function resolveLegendIconMarkup(
 }
 
 // Resolves this app's own theme tokens (panel background/border/text —
-// same ones AboutDialog/SettingsPanel use) to concrete computed colors, so
+// same ones AboutDialog/PreferencesPanel use) to concrete computed colors, so
 // the legend element built below can be fully self-styled with literal
 // values rather than custom-property references. Needed because the
 // element gets measured/rendered in more than one DOM location during

@@ -49,7 +49,7 @@ interface PropertyPanelProps {
   ) => void
   onSetConnectionPointCount: (nodeId: string, side: ConnectionPointSide, totalCount: number) => void
   maxConnectionPointsPerSide: number
-  // Copies one selected node's current style into settings.defaultStyles
+  // Copies one selected node's current style into preferences.defaultStyles
   // for its type (ADR 0048) — only offered for shape/container/text, only
   // when exactly one node of that type is selected (a style is only
   // well-defined for a single node, not a multi-selection). Edges
@@ -81,7 +81,7 @@ const MARKER_OPTIONS: { value: MarkerKind; label: string }[] = [
 // pattern below. 'straight'/'step'/'smoothstep' are React Flow's own
 // built-in path shapes; 'catmullRom' reuses the freeform-line curve math
 // (ADR 0050, bendablePath.ts) with this edge's own manual bend
-// points — see ADR 0057. A local copy, not shared with SettingsPanel.tsx's
+// points — see ADR 0057. A local copy, not shared with PreferencesPanel.tsx's
 // identical default-routing-style picker: this file already can't export
 // a second named value alongside its default component export
 // (react-refresh/only-export-components).

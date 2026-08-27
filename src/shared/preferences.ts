@@ -1,9 +1,12 @@
 import type { EdgeStyle, GravityPreset, NodeStyle } from './diagram'
 
-// Moved here from the renderer (see ADR 0053) — main now needs this
-// exact shape too, to read/write the real per-OS settings file directly
-// (app.getPath('userData')/settings.json) rather than the renderer's own
-// localStorage, which only a renderer can reach.
+// The app-wide Preferences tier — per-installation, every-diagram (see the
+// glossary and ADR 0052's addendum for the "Settings" -> "Preferences"
+// rename). Moved here from the renderer (see ADR 0053) — main needs this
+// exact shape too, to read/write the real per-OS file directly
+// (app.getPath('userData')/settings.json — filename kept for existing
+// installs) rather than the renderer's own localStorage, which only a
+// renderer can reach.
 
 export interface PaletteColor {
   label: string
@@ -22,7 +25,7 @@ export interface NamedStylePalette {
   fonts: string[]
 }
 
-// The older single-palette shape, kept only so normalizeAppSettings can
+// The older single-palette shape, kept only so normalizePreferences can
 // migrate an older settings.json forward. Never written by current code.
 export interface LegacyStylePalette {
   colors: PaletteColor[]
@@ -30,7 +33,7 @@ export interface LegacyStylePalette {
 }
 
 // Fixed id for the palette an older single-palette settings.json is migrated into, and
-// for the one DEFAULT_SETTINGS seeds — deterministic so the migration is
+// for the one DEFAULT_PREFERENCES seeds — deterministic so the migration is
 // idempotent and so every fresh install starts from the same handle.
 export const DEFAULT_STYLE_PALETTE_ID = 'palette-default'
 
@@ -38,12 +41,12 @@ export type LegendCorner = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-ri
 
 // Global, app-wide preferences — not diagram content, not window-local UI
 // state. Deliberately one extensible object under one storage key, not one
-// key per setting (theme.ts's own pattern, predating this): the next
-// global setting just adds a field here and a row in SettingsPanel, no new
+// key per field (theme.ts's own pattern, predating this): the next global
+// preference just adds a field here and a row in PreferencesPanel, no new
 // storage/sync plumbing. See ADR 0032 for why this exists as its own thing
-// rather than being folded into wherever the first setting happened to be
+// rather than being folded into wherever the first one happened to be
 // needed.
-export interface AppSettings {
+export interface AppPreferences {
   // Pixels each edge travels straight out from its endpoint before
   // curving toward the other end — 0 means "no forced straight segment,"
   // today's only behavior. See ADR 0032.
@@ -149,7 +152,7 @@ export interface AppSettings {
   // arbitrary default. Absent means "no dialog opened yet this install,"
   // not a meaningful default of its own — deliberately optional rather
   // than defaulted to e.g. the home directory. Written directly by main
-  // (windows.ts/diagram.ts), never edited through SettingsPanel — this is
+  // (windows.ts/diagram.ts), never edited through PreferencesPanel — this is
   // a silent backend preference, not user-facing UI.
   lastOpenedDirectory?: string
   // User default tier for line gravity/bend presets (see ADR 0066;
@@ -165,7 +168,7 @@ export interface AppSettings {
   gravityPresetsUserDefault?: GravityPreset[]
 }
 
-export const DEFAULT_SETTINGS: AppSettings = {
+export const DEFAULT_PREFERENCES: AppPreferences = {
   edgeStraightSegmentLength: 8,
   maxConnectionPointsPerSide: 12,
   scanForUnsavedRecoveryOnStartup: true,
@@ -186,11 +189,11 @@ export const DEFAULT_SETTINGS: AppSettings = {
   isolateOpacity: 0.5
 }
 
-// Every point that receives a stored/relayed settings blob runs this
+// Every point that receives a stored/relayed preferences blob runs this
 // (main's file read, the renderer's file read, the cross-window broadcast,
 // the legacy-localStorage migration) — the standing rule is that no
-// AppSettings field may ever resolve to undefined, so re-merging over
-// DEFAULT_SETTINGS at each boundary is deliberate, not redundant (a field
+// AppPreferences field may ever resolve to undefined, so re-merging over
+// DEFAULT_PREFERENCES at each boundary is deliberate, not redundant (a field
 // added in newer renderer code must still show its default even if main
 // hasn't been rebuilt yet — this bit us once with isolateOpacity).
 //
@@ -199,11 +202,11 @@ export const DEFAULT_SETTINGS: AppSettings = {
 // `stylePalettes` array. Fold it
 // into the named collection as one "Default" palette. Idempotent — an
 // already-migrated blob has `stylePalettes` set, so the branch is skipped.
-export function normalizeAppSettings(
-  raw: Partial<AppSettings> & { stylePalette?: LegacyStylePalette }
-): AppSettings {
+export function normalizePreferences(
+  raw: Partial<AppPreferences> & { stylePalette?: LegacyStylePalette }
+): AppPreferences {
   const { stylePalette: legacy, ...rest } = raw
-  const merged: AppSettings = { ...DEFAULT_SETTINGS, ...rest }
+  const merged: AppPreferences = { ...DEFAULT_PREFERENCES, ...rest }
   if (legacy && !rest.stylePalettes) {
     merged.stylePalettes = [
       {
@@ -222,7 +225,7 @@ export function normalizeAppSettings(
 // from — whichever palette `activeId` points at, falling back to the first
 // palette if that id is dangling (deleted without the pointer being
 // updated), then to an empty set if there are no palettes at all. Takes
-// the two fields rather than the whole AppSettings (same shape as
+// the two fields rather than the whole AppPreferences (same shape as
 // effectiveGravityPresets, ADR 0066) so a useMemo over it lists exactly
 // what it depends on. Resolved live on every render — nothing snapshotted
 // at load, so switching the active palette applies immediately everywhere.

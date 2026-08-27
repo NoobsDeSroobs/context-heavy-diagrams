@@ -19,6 +19,6 @@ While retesting the edge z-index fix (see [docs/known-issues.md](../known-issues
 - **Off by default, opt-in only.** Rejected — the user explicitly wanted it on immediately, just changeable.
 
 ## Consequences
-- New `AppSettings.selectedEdgeHighlightColor` (`settings.ts`), a plain color swatch row in `SettingsPanel.tsx` (not the property panel's `ColorField`, which supports an "unset" state that doesn't apply to an always-required global setting).
+- New `AppPreferences.selectedEdgeHighlightColor` (`preferences.ts`), a plain color swatch row in `PreferencesPanel.tsx` (not the property panel's `ColorField`, which supports an "unset" state that doesn't apply to an always-required global setting).
 - Threaded through `DiagramContext` the same way `edgeStraightSegmentLength`/`maxConnectionPointsPerSide` already are, read in `LabeledEdge.tsx` and applied as the last entry in `computedStyle`'s spread so it wins over both an explicit edge style color and a highlight-match color.
 - Arrowhead/marker color needed no separate handling — `edgeMarkers.tsx`'s markers already use the CSS `context-stroke` keyword, inheriting whatever color the referencing path resolves to.

@@ -1,10 +1,10 @@
-// Canonical definition moved to @shared/settings (ADR 0053) —
-// main also needs the full AppSettings shape now, and this is one of its
+// Canonical definition moved to @shared/preferences (ADR 0053) —
+// main also needs the full AppPreferences shape now, and this is one of its
 // fields. Re-exported here (a bare `export type { X } from '...'` doesn't
 // also bind X locally, hence the separate `import type` below) so nothing
 // importing it from this module (ExportPngDialog.tsx, exportPng.ts) needed
 // to change.
-import type { LegendCorner } from '@shared/settings'
+import type { LegendCorner } from '@shared/preferences'
 export type { LegendCorner }
 
 export interface Rect {

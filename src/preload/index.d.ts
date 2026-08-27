@@ -1,6 +1,6 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
 import type { DiagramFile, RequiredTagDefinition } from '@shared/diagram'
-import type { AppSettings } from '@shared/settings'
+import type { AppPreferences } from '@shared/preferences'
 
 export interface RequiredTagsWalkResult {
   reached: string[]
@@ -69,9 +69,9 @@ export interface DiagramApi {
   onCloseRequested(callback: () => void): () => void
   requestCloseDecision(): Promise<'save' | 'discard' | 'cancel'>
   closeApproved(path: string | null, sessionId: string): Promise<void>
-  readAppSettings(): Promise<AppSettings | null>
-  writeAppSettings(settings: AppSettings): Promise<void>
-  onAppSettingsChanged(callback: (settings: AppSettings) => void): () => void
+  readPreferences(): Promise<AppPreferences | null>
+  writePreferences(preferences: AppPreferences): Promise<void>
+  onPreferencesChanged(callback: (preferences: AppPreferences) => void): () => void
   getAppVersion(): Promise<string>
   exportStylePalette(json: string): Promise<boolean>
   importStylePalette(): Promise<{ name: string; content: string } | null>

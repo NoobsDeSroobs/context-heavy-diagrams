@@ -56,11 +56,11 @@ export interface DiagramContextValue {
   // state so node/edge components don't need either piece directly, just
   // the element's own metadata to check.
   matchHighlights: (metadata: Record<string, MetadataEntry> | undefined) => HighlightDefinition[]
-  // Global setting (settings.ts/SettingsPanel, ADR 0032), not
+  // Global preference (preferences.ts/PreferencesPanel, ADR 0032), not
   // diagram content — same "thread it through context so edges don't need
   // Canvas's own state directly" reasoning as matchHighlights above.
   edgeStraightSegmentLength: number
-  // Global setting (settings.ts/SettingsPanel, ADR 0036) — the
+  // Global preference (preferences.ts/PreferencesPanel, ADR 0036) — the
   // property panel's count field already clamps to this via its own `max`
   // prop, but manual right-click "add point here" needed the same limit
   // threaded down to the node components, same reasoning as
@@ -76,9 +76,9 @@ export interface DiagramContextValue {
   // metadata value) despite the shared English word. Deliberately not
   // real selection — see the ADR for why. Session-only, null means none.
   entityHighlightNodeId: string | null
-  // The active named style palette's colors/fonts (settings.ts, ADR 0048,
+  // The active named style palette's colors/fonts (preferences.ts, ADR 0048,
   // multi-palette per ADR 0068 — resolved via
-  // effectiveStylePalette). Threaded the same way as the global settings
+  // effectiveStylePalette). Threaded the same way as the global preferences
   // above, so PropertyPanel's NodeStyleFields/EdgeFields can read it
   // without Canvas.tsx having to prop-drill through every intermediate
   // component.
@@ -101,7 +101,7 @@ export interface DiagramContextValue {
   // search match set," so each node/edge component just checks
   // `isolateActive && !searchMatchIds.has(id)` itself.
   isolateActive: boolean
-  // Global Setting (settings.ts/SettingsPanel, ADR 0063), same
+  // Global preference (preferences.ts/PreferencesPanel, ADR 0063), same
   // threading convention as edgeStraightSegmentLength/
   // maxConnectionPointsPerSide above.
   isolateOpacity: number

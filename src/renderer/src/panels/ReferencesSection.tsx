@@ -3,8 +3,8 @@ import ReferenceImage from '../components/ReferenceImage'
 import { useDiagramContext } from '../useDiagramContext'
 import { CollapsibleSection } from './fields'
 
-// Reference-image management for a single selected shape/container (epic
-// 0090/ADR 0069). Viewing happens in the floating windows; this is where
+// Reference-image management for a single selected shape/container (see
+// ADR 0069). Viewing happens in the floating windows; this is where
 // you add and remove. All the actual work lives on Canvas via context.
 export default function ReferencesSection({ node }: { node: Node }): React.JSX.Element {
   const { diagramPath, addReferencesToNode, removeReferenceFromNode, openReferenceWindow } =

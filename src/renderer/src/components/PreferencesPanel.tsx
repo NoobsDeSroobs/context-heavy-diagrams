@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { EdgeStyle } from '@shared/diagram'
-import type { AppSettings } from '../settings'
+import type { AppPreferences } from '../preferences'
 import { FieldRow, NumberField, SelectField } from '../panels/fields'
 import { useRafThrottledCallback } from '../hooks/useRafThrottledCallback'
 
@@ -19,9 +19,9 @@ const ROUTING_STYLE_OPTIONS: {
   { value: 'catmullRom', label: 'Catmull-Rom (gravity)' }
 ]
 
-interface SettingsPanelProps {
-  settings: AppSettings
-  onChange: (patch: Partial<AppSettings>) => void
+interface PreferencesPanelProps {
+  preferences: AppPreferences
+  onChange: (patch: Partial<AppPreferences>) => void
   onClose: () => void
 }
 
@@ -70,11 +70,11 @@ function ZoomLimitField({
   const [maxDraft, setMaxDraft, onMaxFocus, onMaxBlur] = useNumberDraft(maxZoom)
   return (
     <FieldRow label="Zoom limit">
-      <div className="settings-zoom-limit">
-        <span className="settings-zoom-limit-label">in</span>
+      <div className="preferences-zoom-limit">
+        <span className="preferences-zoom-limit-label">in</span>
         <input
           type="number"
-          className="property-number-field settings-zoom-limit-input"
+          className="property-number-field preferences-zoom-limit-input"
           step={0.05}
           min={0.01}
           max={1}
@@ -87,10 +87,10 @@ function ZoomLimitField({
           onBlur={onMinBlur}
           title="Minimum zoom (most zoomed out)"
         />
-        <span className="settings-zoom-limit-label">out</span>
+        <span className="preferences-zoom-limit-label">out</span>
         <input
           type="number"
-          className="property-number-field settings-zoom-limit-input"
+          className="property-number-field preferences-zoom-limit-input"
           step={0.5}
           min={1}
           value={maxDraft}
@@ -111,7 +111,7 @@ function ZoomLimitField({
 // has no `step`, same reason ZoomLimitField above doesn't use it either.
 // Same two-class combo ZoomLimitField's own inputs use: .property-number-
 // field for the actual theme-aware background/border/color (its own
-// width: 100% is what this field doesn't want), .settings-zoom-limit-
+// width: 100% is what this field doesn't want), .preferences-zoom-limit-
 // input layered after it to override just the width down to a small
 // fixed box and hide the native spinner. Dropping the first class
 // entirely (an earlier version of this fix did) leaves the input with no
@@ -129,7 +129,7 @@ function IsolateOpacityField({
     <FieldRow label="Isolate opacity">
       <input
         type="number"
-        className="property-number-field settings-zoom-limit-input"
+        className="property-number-field preferences-zoom-limit-input"
         step={0.05}
         min={0}
         max={1}
@@ -146,42 +146,44 @@ function IsolateOpacityField({
   )
 }
 
-// Same fixed right-side dock shell as DetailsPanel/RequiredTagsPanel/
-// DiagnosticsPanel/HighlightsPanel — see ADR 0013. Global, app-wide
-// preferences (settings.ts), not diagram content: nothing here goes
-// through pushSnapshot/undo, and it isn't reset when a different diagram
-// loads. See ADR 0032 for why this panel exists as its own thing.
+// Same fixed right-side dock shell as DetailsPanel/DiagnosticsPanel — see
+// ADR 0013. Global, app-wide preferences (Preferences tier — the
+// per-installation, every-diagram scope; see the glossary), not diagram
+// content: nothing here goes through pushSnapshot/undo, and it isn't reset
+// when a different diagram loads. See ADR 0032 for why this panel exists
+// as its own thing, ADR 0052's addendum for the "Settings" -> "Preferences"
+// rename.
 //
 // Reuses NumberField from the property panel's field primitives even
 // though nothing here is a style field on a selection — it's the same
 // "draft until blur" number input either way. `mixed`/session callbacks
 // are property-panel concepts (multi-selection, undo grouping) that don't
 // apply to a single global value, so they're passed as always-false/no-op.
-export default function SettingsPanel({
-  settings,
+export default function PreferencesPanel({
+  preferences,
   onChange,
   onClose
-}: SettingsPanelProps): React.JSX.Element {
+}: PreferencesPanelProps): React.JSX.Element {
   // Same rAF-coalescing as ColorField (panels/fields.tsx) — see ADR 0056. This
   // input doesn't go through that shared component (see the comment below),
   // so it needs its own throttle rather than inheriting one.
   const throttledOnChange = useRafThrottledCallback(onChange)
   return (
-    <div className="settings-panel">
-      <div className="settings-panel-toolbar">
-        <span className="settings-panel-title">Settings</span>
+    <div className="preferences-panel">
+      <div className="preferences-panel-toolbar">
+        <span className="preferences-panel-title">Preferences</span>
         <div className="details-panel-spacer" />
         <button type="button" title="Close" aria-label="Close" onClick={onClose}>
           ✕
         </button>
       </div>
-      <div className="settings-panel-body">
-        <p className="settings-panel-hint">
+      <div className="preferences-panel-body">
+        <p className="preferences-panel-hint">
           Applies to every edge in every diagram — not a per-edge or per-diagram override.
         </p>
         <NumberField
           label="Edge straight lead-in (px)"
-          value={settings.edgeStraightSegmentLength}
+          value={preferences.edgeStraightSegmentLength}
           mixed={false}
           min={0}
           onChange={(v) => onChange({ edgeStraightSegmentLength: v ?? 0 })}
@@ -190,7 +192,7 @@ export default function SettingsPanel({
         />
         <NumberField
           label="Max connection points per side"
-          value={settings.maxConnectionPointsPerSide}
+          value={preferences.maxConnectionPointsPerSide}
           mixed={false}
           min={1}
           onChange={(v) => onChange({ maxConnectionPointsPerSide: v ?? 1 })}
@@ -199,13 +201,13 @@ export default function SettingsPanel({
         />
         <SelectField
           label="Default edge routing"
-          value={settings.defaultEdgeStyle.routingStyle ?? ''}
+          value={preferences.defaultEdgeStyle.routingStyle ?? ''}
           mixed={false}
           options={ROUTING_STYLE_OPTIONS}
           onChange={(v) =>
             onChange({
               defaultEdgeStyle: {
-                ...settings.defaultEdgeStyle,
+                ...preferences.defaultEdgeStyle,
                 routingStyle: v === '' ? undefined : v
               }
             })
@@ -215,17 +217,17 @@ export default function SettingsPanel({
         <FieldRow label="Scan for unsaved diagrams on startup">
           <input
             type="checkbox"
-            checked={settings.scanForUnsavedRecoveryOnStartup}
+            checked={preferences.scanForUnsavedRecoveryOnStartup}
             onChange={(e) => onChange({ scanForUnsavedRecoveryOnStartup: e.target.checked })}
             title="Look for crash-recovery snapshots from diagrams that were never saved, every time the app starts"
           />
         </FieldRow>
-        <ZoomLimitField minZoom={settings.minZoom} maxZoom={settings.maxZoom} onChange={onChange} />
-        <IsolateOpacityField value={settings.isolateOpacity} onChange={onChange} />
+        <ZoomLimitField minZoom={preferences.minZoom} maxZoom={preferences.maxZoom} onChange={onChange} />
+        <IsolateOpacityField value={preferences.isolateOpacity} onChange={onChange} />
         <FieldRow label="Drag-select requires full enclosure">
           <input
             type="checkbox"
-            checked={settings.dragSelectRequiresFullEnclosure}
+            checked={preferences.dragSelectRequiresFullEnclosure}
             onChange={(e) => onChange({ dragSelectRequiresFullEnclosure: e.target.checked })}
             title="On: an element must be entirely inside the drag box to be selected. Off: touching the box is enough."
           />
@@ -239,7 +241,7 @@ export default function SettingsPanel({
           <input
             type="color"
             className="property-color-swatch"
-            value={settings.selectedEdgeHighlightColor}
+            value={preferences.selectedEdgeHighlightColor}
             onChange={(e) => throttledOnChange({ selectedEdgeHighlightColor: e.target.value })}
             title="Color a selected edge's line swaps to, so it stays easy to track in a busy diagram"
           />

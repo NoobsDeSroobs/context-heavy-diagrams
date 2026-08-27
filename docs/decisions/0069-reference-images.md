@@ -18,7 +18,7 @@ This single line is what makes the concept coherent — the moment a reference c
 
 **2. Attach point: a shape or container node, via `DiagramNode.data.references?: string[]`.** An ordered list of relative asset paths, same shape and portability rules as `data.details`. No diagram-level reference pool — the shape represents the concept and everything hangs off it. A diagram-wide *view* of all references exists (Decision 5) but there is no diagram-level *storage*.
 
-**3. The list is the only persisted state.** Which viewer panels are open, where they are dragged, how big they are — transient session state, not written to `.chd` or `AppSettings`. This is a View in [ADR 0052](0052-settings-ownership-tiers.md)'s sense (owns no state), same as Layers/Diagnostics.
+**3. The list is the only persisted state.** Which viewer panels are open, where they are dragged, how big they are — transient session state, not written to `.chd` or `AppPreferences`. This is a View in [ADR 0052](0052-settings-ownership-tiers.md)'s sense (owns no state), same as Layers/Diagnostics.
 
 **4. Storage mirrors custom icons ([ADR 0006](0006-icon-storage-model.md)) exactly.** Copy-on-add into `<diagram-base>/assets/references/`, store the relative path, render via `<img src="data:…">` (never inline SVG — the same script-injection guard). New `src/main/references.ts` modelled directly on `icons.ts` (`references:pickAndCopy`, `references:readAsDataUrl`). Adding a reference **requires the diagram to already be saved** — same accepted limitation custom icons have, for the same reason (no sibling folder to copy into otherwise). Removing a reference from the list drops the association only; the file on disk is left, same as details/icons never hard-delete.
 

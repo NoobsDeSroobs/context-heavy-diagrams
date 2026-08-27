@@ -9,7 +9,7 @@ interface AlignDistributePanelProps {
 
 const DEFAULT_GAP_PX = 20
 
-// Same fixed right-side dock shell as SettingsPanel/DiagnosticsPanel/etc —
+// Same fixed right-side dock shell as PreferencesPanel/DiagnosticsPanel/etc —
 // see main.css's shared .align-distribute-panel* rules. Session-only gap
 // value (not a Setting/Configuration in this app's own tiering, ADR 0052)
 // — resets to the default each time the panel reopens, deliberately not

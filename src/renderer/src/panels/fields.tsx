@@ -3,8 +3,8 @@ import { useRafThrottledCallback } from '../hooks/useRafThrottledCallback'
 
 // Shared, dumb field primitives for the property panel — no knowledge of
 // NodeStyle/EdgeStyle or the diagram model, just generic value-in/onChange-out
-// controls plus the "mixed across selection" display convention from epic
-// 0003's design (blank/placeholder rather than defaulting to the first
+// controls plus the "mixed across selection" display convention from the
+// styling panel (blank/placeholder rather than defaulting to the first
 // item's value — see docs/planning/epics/0003-styling-panel.md). See
 // fieldValue.ts for the FieldValue/computeFieldValue helpers this reads —
 // split into their own file so this one only exports components (Fast

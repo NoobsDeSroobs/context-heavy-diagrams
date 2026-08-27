@@ -81,8 +81,8 @@ export function buildBendablePath(points: PathPoint[]): string {
 }
 
 // Straight lead-in/out before curving, at whichever end(s) have a
-// `direction` — the global edgeStraightSegmentLength setting (settings.ts/
-// SettingsPanel, ADR 0032), reused by catmull-rom-routed edges
+// `direction` — the global edgeStraightSegmentLength setting (preferences.ts/
+// PreferencesPanel, ADR 0032), reused by catmull-rom-routed edges
 // (ADR 0057) alongside the bezier routing it originally applied to. Offsets an endpoint outward along its own direction by
 // `length` (clamped to half the distance to its real neighbor in the
 // original list, so a short segment can never overlap or fold back on

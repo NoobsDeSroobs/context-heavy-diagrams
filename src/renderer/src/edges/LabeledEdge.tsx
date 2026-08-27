@@ -74,7 +74,7 @@ const OUTWARD_DIRECTION: Record<Position, { x: number; y: number }> = {
 }
 
 // Straight lead-in/out before curving — the global edgeStraightSegmentLength
-// setting (settings.ts/SettingsPanel, ADR 0032). Only meaningful
+// setting (settings.ts/PreferencesPanel, ADR 0032). Only meaningful
 // for the two "curvy" routing styles (bezier, catmull-rom); straight/step/
 // smoothstep already leave each side perpendicular by construction, with no
 // ambiguity to disambiguate. getBezierPath has no concept of a lead-in
@@ -256,8 +256,8 @@ function LabeledEdge({
     strokeWidth: selected ? baseStrokeWidth + SELECTED_STROKE_WIDTH_DELTA : baseStrokeWidth,
     ...(edgeStyle?.lineStyle ? { strokeDasharray: DASH_ARRAY[edgeStyle.lineStyle] } : {}),
     // A single matching highlight overrides the stroke color, same
-    // treatment as ShapeNode/ContainerNode's border override — epic
-    // 0026/ADR 0025. Width is handled by baseStrokeWidth above instead of
+    // treatment as ShapeNode/ContainerNode's border override — see
+    // ADR 0025. Width is handled by baseStrokeWidth above instead of
     // here, so it can still be added to when also selected.
     ...(highlightMatches.length === 1 ? { stroke: highlightMatches[0].color } : {}),
     // Search-result indicator (ADR 0062) — a glow via filter

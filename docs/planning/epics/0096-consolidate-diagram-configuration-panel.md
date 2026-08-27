@@ -1,7 +1,17 @@
 # 0096: Consolidate diagram-level Configuration panels into DiagramConfigPanel
 
 ## Status
-Not Started — split off epic 0073 on 2026-08-27, not yet scoped in detail.
+Done (2026-08-27), on `epic/0096-consolidate-diagram-configuration-panel`, pending live test/merge. See [ADR 0071](../../decisions/0071-consolidate-diagram-configuration-panel.md).
+
+## What shipped
+- `RequiredTagsPanel` → `RequiredTagsSection`, `GravityPresetsPanel` → `GravityPresetsSection` — body-only, chrome stripped. Both now render as stacked `CollapsibleSection`s inside `DiagramConfigPanel`, below the max-connection-points field.
+- Each former panel's toolbar actions (Copy to children / Set-my-default / Clear-my-default / Reset) moved to a button row at the top of their section body.
+- `Canvas.tsx`: dropped `requiredTagsPanelOpen` + `gravityPresetsPanelOpen` (state, toggles, ~16 mutual-exclusion lines, 2 Escape branches, 2 effect deps); mutual-exclusion family 10 → 8. View menu: 3 items → 1 ("Diagram configuration").
+- Exclusions held as proposed: Highlights/Legend (floating popups by design), Diagnostics/Layers/AlignDistribute (no owned config), Settings/StylePalette (per-app).
+- Naming: the panels were renamed in the same session (the user pushed for it rather than deferring) — "Diagram settings" (`DiagramSettingsPanel`) and "Preferences" (`PreferencesPanel`), glossary + code + UI in sync. See [epic 0100](0100-rename-configuration-to-diagram-settings-and-settings-to-preferences.md) / [ADR 0052](../../decisions/0052-settings-ownership-tiers.md)'s 2026-08-27 addendum.
+- `typecheck` + `lint` clean (0 errors). Not live-tested (Electron-only renderer, per the standing note).
+
+## Original proposed scope (kept for reference)
 
 ## Goal
 [Epic 0073](0073-max-connection-points-diagram-override.md) built a new `DiagramConfigPanel` (`src/renderer/src/components/DiagramConfigPanel.tsx`) as the first home for a *pure* diagram-level Configuration value with no existing panel to live in. While scoping where that panel should live, the user's own instruction was: "New small panel is fine, but then we should also move the other things that makes sense to put there." This epic is that consolidation — folding the existing standalone panels that hold diagram-level Configuration data into `DiagramConfigPanel` as sections, rather than leaving them as separate top-level toggles.

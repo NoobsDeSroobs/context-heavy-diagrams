@@ -20,9 +20,9 @@ The common shortcut for React-based canvas apps is `html-to-image`'s `toSvg()` �
 
 Those render conditionally inside each node's own component based on `node.selected`/`edge.selected` — clearing selection immediately before capture (via `flushSync` so the DOM commits before `html-to-image` reads it) keeps them out of the image without the export code needing to know how each node type draws its selected state. Selection is restored afterward regardless of success/failure.
 
-**4. Padding and transparent-background are global `AppSettings` fields, not a per-export dialog.**
+**4. Padding and transparent-background are global `AppPreferences` fields, not a per-export dialog.**
 
-Same "one settings object, a field per app-wide preference" convention as every other global setting (`edgeStraightSegmentLength`, `canvasBackgroundColor`, etc. — `settings.ts`), editable in the existing `SettingsPanel`. A per-export modal (padding/transparency prompted fresh each time) was considered and rejected: these two values are much more likely to be "set once to match your Confluence habits" than to vary export-to-export, and it avoids building a new modal component for what's otherwise a one-click File-menu action.
+Same "one settings object, a field per app-wide preference" convention as every other global setting (`edgeStraightSegmentLength`, `canvasBackgroundColor`, etc. — `preferences.ts`), editable in the existing `PreferencesPanel`. A per-export modal (padding/transparency prompted fresh each time) was considered and rejected: these two values are much more likely to be "set once to match your Confluence habits" than to vary export-to-export, and it avoids building a new modal component for what's otherwise a one-click File-menu action.
 
 **5. Background color, when not transparent, is read from the already-resolved `--xy-background-color` CSS custom property via `getComputedStyle`, not re-derived from theme/settings logic.**
 
@@ -38,14 +38,14 @@ Whatever's actually painting the canvas right now (a custom `canvasBackgroundCol
 
 ## Consequences
 - New dependency: `html-to-image`.
-- New `AppSettings` fields `pngExportPaddingPx`/`pngExportTransparentBackground`/`pngExportBackgroundColorOverride` — additive, `localStorage`-only, no `.chd` schema impact.
+- New `AppPreferences` fields `pngExportPaddingPx`/`pngExportTransparentBackground`/`pngExportBackgroundColorOverride` — additive, `localStorage`-only, no `.chd` schema impact.
 - True vector SVG export remains unscoped, tracked as the remaining half of the export work; whatever serializer eventually gets built there is unrelated code, not a variant of this PNG path.
 
 ## Addendum (2026-08-23): Decision 4 reversed — a real per-export dialog, not a Settings-panel-only control
 
 Live testing immediately after the first pass shipped surfaced two real problems, both from the user:
 
-1. **No dialog.** The user expected `File → Export as PNG…` to prompt for padding/background right there, not require a detour into the global Settings panel first. The "these rarely change export-to-export" reasoning behind putting them in `SettingsPanel` instead was wrong in practice — reversed the same day. `ExportPngDialog.tsx` is now the actual place these get set, opened directly from the File menu; `SettingsPanel`'s copy of these fields was removed. The underlying `AppSettings` fields stay, but now serve a narrower purpose: remembering the *last used* dialog values so it reopens prefilled rather than reset to defaults every time — not a second, competing place to edit them.
+1. **No dialog.** The user expected `File → Export as PNG…` to prompt for padding/background right there, not require a detour into the global Preferences panel first. The "these rarely change export-to-export" reasoning behind putting them in `PreferencesPanel` instead was wrong in practice — reversed the same day. `ExportPngDialog.tsx` is now the actual place these get set, opened directly from the File menu; `PreferencesPanel`'s copy of these fields was removed. The underlying `AppPreferences` fields stay, but now serve a narrower purpose: remembering the *last used* dialog values so it reopens prefilled rather than reset to defaults every time — not a second, competing place to edit them.
 2. **"Background override" needed a real color, not just a transparency toggle.** Added `pngExportBackgroundColorOverride` (optional) alongside the transparency flag — absent means "use whatever's on screen right now" (the existing `--xy-background-color`-reading behavior), set means an explicit fill color distinct from the diagram's own on-screen `canvasBackgroundColor`.
 
 Also found in the same pass, unrelated to the dialog question: **exported PNGs had no visible arrowheads on any edge.** Root cause: `EdgeMarkerDefs` (`src/renderer/src/edges/edgeMarkers.tsx`) renders its `<marker>` definitions in a separate, zero-size `<svg>` that's a *sibling* of `<ReactFlow>`, not a descendant of `.react-flow__viewport` — deliberately, so marker ids stay resolvable document-wide (see that file's own comment). But `captureDiagramPng` only clones the `.react-flow__viewport` subtree, so those defs were never part of the captured content at all; every edge's `marker-end="url(#...)"` reference dangled, silently rendering no arrowhead. Fixed by cloning the marker-defs `<svg>` (found via a new `data-export-role="edge-marker-defs"` attribute) into the viewport element for the duration of the capture, then removing the clone — cloning rather than moving the live node, to avoid disturbing React's own DOM bookkeeping for an element it still manages. See [known-issues.md](../known-issues.md#exported-pngs-had-no-visible-arrowheads-on-any-edge) for the full writeup.

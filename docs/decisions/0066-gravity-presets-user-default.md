@@ -9,7 +9,7 @@ This adds the middle tier [ADR 0052](0052-settings-ownership-tiers.md) named (Di
 
 ## Decision
 
-**Resolution is computed live, not baked in at load time.** `effectiveGravityPresets(diagramPresets, userDefault)` now takes the Settings value as a second argument and is called fresh every render (`Canvas.tsx`'s `diagramContextValue` useMemo, with `settings.gravityPresetsUserDefault` in its deps). This answers one of the epic's own open questions — whether changing your personal default retroactively affects an already-open diagram — implicitly and for free: yes, for any diagram with no override of its own, since nothing about the resolution is snapshotted at open time. A diagram with its own override is unaffected either way, since that tier always wins regardless.
+**Resolution is computed live, not baked in at load time.** `effectiveGravityPresets(diagramPresets, userDefault)` now takes the Preferences value as a second argument and is called fresh every render (`Canvas.tsx`'s `diagramContextValue` useMemo, with `settings.gravityPresetsUserDefault` in its deps). This answers one of the epic's own open questions — whether changing your personal default retroactively affects an already-open diagram — implicitly and for free: yes, for any diagram with no override of its own, since nothing about the resolution is snapshotted at open time. A diagram with its own override is unaffected either way, since that tier always wins regardless.
 
 **UI: two new, symmetric buttons in `GravityPresetsPanel` — "Set as my default" and "Clear my default"** — alongside the existing "Reset to defaults" (which now reverts to the User default if one exists, or the built-in four otherwise, unchanged in behavior since it always meant "clear the diagram's own override"). "Set as my default" saves whatever's *currently shown* (`rows`, the already-resolved list) to Settings, not the diagram's raw override — so it works identically whether the diagram is customized or just showing an inherited default. The symmetric "Clear my default" was added deliberately rather than leaving only a one-way "set" action, per the project's own standing preference against asymmetric designs that later have to be reversed once the gap is noticed.
 
@@ -20,6 +20,6 @@ This adds the middle tier [ADR 0052](0052-settings-ownership-tiers.md) named (Di
 
 ## Consequences
 
-- `AppSettings.gravityPresetsUserDefault?: GravityPreset[]` — additive, optional, no migration needed (absent means "no personal default," same "absent means default" convention as everything else).
-- No `.chd` schema change — this tier lives entirely in `AppSettings`, not the diagram file.
+- `AppPreferences.gravityPresetsUserDefault?: GravityPreset[]` — additive, optional, no migration needed (absent means "no personal default," same "absent means default" convention as everything else).
+- No `.chd` schema change — this tier lives entirely in `AppPreferences`, not the diagram file.
 - The max-connection-points and named-style-palette follow-ups can reuse this same shape (live resolution, symmetric set/clear) rather than re-deriving it, unless a real reason to diverge shows up.

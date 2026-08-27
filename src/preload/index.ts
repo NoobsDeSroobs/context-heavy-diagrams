@@ -1,7 +1,7 @@
 import { clipboard, contextBridge, ipcRenderer, webUtils } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import type { DiagramFile, RequiredTagDefinition } from '@shared/diagram'
-import type { AppSettings } from '@shared/settings'
+import type { AppPreferences } from '@shared/preferences'
 
 interface RequiredTagsWalkResult {
   reached: string[]
@@ -163,8 +163,8 @@ const api = {
     return ipcRenderer.invoke('windows:confirmSavedThenOpen', path)
   },
 
-  // Propagating a required-tags template down the link tree — see epic
-  // 0035 / ADR 0024. directChildRelativePaths comes from the caller's own
+  // Propagating a required-tags template down the link tree — see
+  // ADR 0024. directChildRelativePaths comes from the caller's own
   // live node state (may include unsaved link edits); every deeper level
   // is discovered by reading each reached diagram's own file.
   previewRequiredTagsChildren(
@@ -243,25 +243,25 @@ const api = {
     return ipcRenderer.invoke('windows:closeApproved', path, sessionId)
   },
 
-  // Real per-OS settings file (see ADR 0053), replacing localStorage
-  // — see appSettings.ts. readAppSettings returns null when the file
+  // Real per-OS preferences file (see ADR 0053), replacing localStorage
+  // — see appPreferences.ts. readPreferences returns null when the file
   // doesn't exist yet (fresh install, or upgrading from a build predating it);
-  // the renderer's useSettings falls back to its own already-present
+  // the renderer's usePreferences falls back to its own already-present
   // localStorage in that case, one-time migration, before defaults.
-  readAppSettings(): Promise<AppSettings | null> {
-    return ipcRenderer.invoke('settings:read')
+  readPreferences(): Promise<AppPreferences | null> {
+    return ipcRenderer.invoke('preferences:read')
   },
 
-  writeAppSettings(settings: AppSettings): Promise<void> {
-    return ipcRenderer.invoke('settings:write', settings)
+  writePreferences(preferences: AppPreferences): Promise<void> {
+    return ipcRenderer.invoke('preferences:write', preferences)
   },
 
   // Cross-window live sync — the replacement for the `storage` event a
   // shared localStorage key gave for free.
-  onAppSettingsChanged(callback: (settings: AppSettings) => void): () => void {
-    const listener = (_event: unknown, settings: AppSettings): void => callback(settings)
-    ipcRenderer.on('settings:changed', listener)
-    return () => ipcRenderer.off('settings:changed', listener)
+  onPreferencesChanged(callback: (preferences: AppPreferences) => void): () => void {
+    const listener = (_event: unknown, preferences: AppPreferences): void => callback(preferences)
+    ipcRenderer.on('preferences:changed', listener)
+    return () => ipcRenderer.off('preferences:changed', listener)
   },
 
   // About screen — package.json's version via Electron's own

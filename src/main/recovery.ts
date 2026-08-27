@@ -142,8 +142,8 @@ async function discardOrphan(key: string): Promise<void> {
   }
 }
 
-// Run once at app startup (gated by the caller on the real settings file
-// — see appSettings.ts). Sequential native dialogs, one per
+// Run once at app startup (gated by the caller on the real preferences file
+// — see appPreferences.ts). Sequential native dialogs, one per
 // orphan: rare in practice (only diagrams that crashed before ever being
 // saved once), so no need for a fancier batch UI. Each recovered orphan
 // opens its own new window with the snapshot's content, still unsaved

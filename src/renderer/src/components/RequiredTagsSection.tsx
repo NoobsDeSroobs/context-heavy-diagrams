@@ -2,14 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import type { JsonValue, MetadataLock, RequiredTagDefinition } from '@shared/diagram'
 import { CollapsibleSection } from '../panels/fields'
 
-interface RequiredTagsPanelProps {
+interface RequiredTagsSectionProps {
   requiredTags: RequiredTagDefinition[]
   // Live scan of every node/edge's current metadata (Canvas.tsx's own
   // `usedTags`, already computed for HighlightsPanel) — reused here to
   // warn before an edit would invalidate an in-use value. See ADR 0047.
   usedTags: { key: string; value: JsonValue }[]
   onChange: (tags: RequiredTagDefinition[]) => void
-  onClose: () => void
   onCopyToChildren: () => void
 }
 
@@ -398,18 +397,20 @@ function RequiredTagRow({
   )
 }
 
-// Diagram-level settings surface, fixed right-side dock alongside
-// DetailsPanel/DiagnosticsPanel — see ADR 0022. Text fields are
-// draft-until-blur (see useFieldDraft above); the lock dropdown, remove,
-// and add are discrete one-shot actions so they commit immediately, same
-// as everywhere else in the app.
-export default function RequiredTagsPanel({
+// One section of DiagramSettingsPanel — see ADR 0022 for the required-tags
+// model, ADR 0071 for why this (and line bend presets) fold into a single
+// diagram-Configuration panel rather than each owning a top-level dock
+// toggle. Body-only: the enclosing CollapsibleSection provides the
+// title/expand chrome, DiagramSettingsPanel provides the outer panel shell
+// and close button. Text fields are draft-until-blur (see useFieldDraft
+// above); the lock dropdown, remove, and add are discrete one-shot actions
+// so they commit immediately, same as everywhere else in the app.
+export default function RequiredTagsSection({
   requiredTags,
   usedTags,
   onChange,
-  onClose,
   onCopyToChildren
-}: RequiredTagsPanelProps): React.JSX.Element {
+}: RequiredTagsSectionProps): React.JSX.Element {
   const updateTag = (index: number, patch: Partial<RequiredTagDefinition>): void => {
     onChange(requiredTags.map((tag, i) => (i === index ? { ...tag, ...patch } : tag)))
   }
@@ -426,10 +427,8 @@ export default function RequiredTagsPanel({
   }
 
   return (
-    <div className="required-tags-panel">
-      <div className="required-tags-panel-toolbar">
-        <span className="required-tags-panel-title">Required tags</span>
-        <div className="details-panel-spacer" />
+    <>
+      <div className="diagram-settings-section-actions">
         <button
           type="button"
           onClick={onCopyToChildren}
@@ -438,39 +437,34 @@ export default function RequiredTagsPanel({
         >
           Copy to children
         </button>
-        <button type="button" title="Close" aria-label="Close" onClick={onClose}>
-          ✕
-        </button>
       </div>
-      <div className="required-tags-panel-body">
-        <p className="required-tags-panel-hint">
-          Every Shape, Container, and Edge in this diagram always carries these keys. &ldquo;Locked,
-          editable&rdquo; leaves the value for a human to fill in; &ldquo;locked, fixed&rdquo;
-          always shows the template&rsquo;s own value.
-        </p>
-        <p className="required-tags-panel-hint">
-          Allowed values (editable tags only) restrict a tag to a fixed list — expand &ldquo;Allowed
-          values&rdquo; below each tag to edit it. When set, that tag shows as a dropdown instead of
-          free text wherever it&rsquo;s edited. Every editable tag also always has an implicit
-          &ldquo;None&rdquo; value available, for elements this tag just doesn&rsquo;t apply to — no
-          need to add it to the list.
-        </p>
-        {requiredTags.length === 0 && (
-          <p className="required-tags-panel-hint">No required tags yet.</p>
-        )}
-        {requiredTags.map((tag, index) => (
-          <RequiredTagRow
-            key={index}
-            tag={tag}
-            usedTags={usedTags}
-            onUpdate={(patch) => updateTag(index, patch)}
-            onRemove={() => removeTag(index)}
-          />
-        ))}
-        <button type="button" className="required-tag-add" onClick={addTag}>
-          Add required tag
-        </button>
-      </div>
-    </div>
+      <p className="required-tags-panel-hint">
+        Every Shape, Container, and Edge in this diagram always carries these keys. &ldquo;Locked,
+        editable&rdquo; leaves the value for a human to fill in; &ldquo;locked, fixed&rdquo; always
+        shows the template&rsquo;s own value.
+      </p>
+      <p className="required-tags-panel-hint">
+        Allowed values (editable tags only) restrict a tag to a fixed list — expand &ldquo;Allowed
+        values&rdquo; below each tag to edit it. When set, that tag shows as a dropdown instead of
+        free text wherever it&rsquo;s edited. Every editable tag also always has an implicit
+        &ldquo;None&rdquo; value available, for elements this tag just doesn&rsquo;t apply to — no
+        need to add it to the list.
+      </p>
+      {requiredTags.length === 0 && (
+        <p className="required-tags-panel-hint">No required tags yet.</p>
+      )}
+      {requiredTags.map((tag, index) => (
+        <RequiredTagRow
+          key={index}
+          tag={tag}
+          usedTags={usedTags}
+          onUpdate={(patch) => updateTag(index, patch)}
+          onRemove={() => removeTag(index)}
+        />
+      ))}
+      <button type="button" className="required-tag-add" onClick={addTag}>
+        Add required tag
+      </button>
+    </>
   )
 }

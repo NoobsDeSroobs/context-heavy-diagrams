@@ -4,7 +4,7 @@ import { basename, dirname, isAbsolute, join } from 'path'
 import { is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { deleteRecoverySnapshot, newSessionId } from './recovery'
-import { readAppSettings } from './appSettings'
+import { readPreferences } from './appPreferences'
 
 const FILTERS = [{ name: 'Diagram', extensions: ['chd'] }]
 
@@ -236,16 +236,16 @@ export function registerWindowHandlers(): void {
   // window sitting around next to the newly-opened one.
   ipcMain.handle('windows:pickAndOpen', async (event, callingWindowEmpty: boolean) => {
     // defaultPath: a directory here, not a specific file — defaults to
-    // wherever the user last opened/saved a diagram, if anywhere (epic
-    // 0091). lastOpenedDirectory itself gets updated by diagram:openPath
+    // wherever the user last opened/saved a diagram, if anywhere.
+    // lastOpenedDirectory itself gets updated by diagram:openPath
     // once this pick actually results in a window loading a file, not
     // here — this handler only ever reads it.
-    const settings = await readAppSettings()
+    const prefs = await readPreferences()
     const result = await dialog.showOpenDialog({
       properties: ['openFile'],
       filters: FILTERS,
       title: 'Open diagram',
-      defaultPath: settings?.lastOpenedDirectory
+      defaultPath: prefs?.lastOpenedDirectory
     })
     if (result.canceled || result.filePaths.length === 0) return
     const callingWindow = callingWindowEmpty ? BrowserWindow.fromWebContents(event.sender) : null
