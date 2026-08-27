@@ -105,7 +105,7 @@ interface ThreatMatrixManagePanelProps {
   onClose: () => void
 }
 
-// Epic 0060, step 4: a dedicated panel for growing/shrinking the matrix,
+// A dedicated panel for growing/shrinking the matrix,
 // replacing the inline "+ Threat"/"+ Service" corner buttons a previous
 // pass put directly in the table (removed from there now that this
 // exists — one place to manage the matrix, not two). Deliberately just

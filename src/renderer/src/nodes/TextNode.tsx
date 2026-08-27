@@ -16,7 +16,7 @@ export const TEXT_MIN_HEIGHT = 24
 //
 // Known v1 limitation: NodeResizer's drag math doesn't account for this
 // node's own rotation, so resizing an already-rotated node can feel
-// slightly off. Accepted for now — see the epic 0002 notes.
+// slightly off. Accepted for now — see ADR 0004's Alternatives.
 function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
   const { updateNodeData } = useReactFlow()
   const {
@@ -85,7 +85,7 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
   )
 
   // Ctrl/Cmd+click is distinct from plain click (selection) and right-click
-  // (context menu, above) — see epic 0009. multiSelectionKeyCode is pinned
+  // (context menu, above) — it navigates a linked diagram. multiSelectionKeyCode is pinned
   // to Shift in Canvas.tsx so this doesn't collide with React Flow's own
   // default Ctrl/Cmd multi-select toggle.
   const onClick = useCallback(
@@ -104,7 +104,7 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
       setRotating(true)
       // Rotation has no dragging/resizing flag the way position/dimension
       // changes do (it's just repeated updateNodeData calls in the
-      // mousemove loop below), so the undo history (epic 0006) needs an
+      // mousemove loop below), so the undo history (ADR 0018) needs an
       // explicit start/end marker to group the whole drag into one step
       // instead of one step per mousemove tick.
       beginContinuousEdit()

@@ -1,7 +1,7 @@
 // Default content of the diagram dock when nothing is selected — click to
 // add a shape/container/text at the viewport center, or drag one onto the
-// canvas to place it exactly where dropped (epic 0029 — click-to-add
-// shipped first in epic 0003, drag-to-add here). These replace the
+// canvas to place it exactly where dropped (drag-to-add, see ADR 0064;
+// click-to-add came first). These replace the
 // toolbar's old Add-shape/Add-container/Add-text buttons rather than
 // duplicating them.
 

@@ -35,7 +35,7 @@ function omitKey<T>(record: Record<string, T>, key: string): Record<string, T> {
   return rest
 }
 
-// Epic 0060, step 4: threats/services can now be removed as well as
+// Threats/services can now be removed as well as
 // added — managed from ThreatMatrixManagePanel rather than inline table
 // controls (moved there entirely; see that file's own comment). Both
 // calculation "settings" (threatMatrixMath.ts) and the add/remove

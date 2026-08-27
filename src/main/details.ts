@@ -40,7 +40,7 @@ const WINDOWS_RESERVED = new Set([
 ])
 
 // Detail filenames are built from the element's own label plus its id's
-// UUID suffix (epic 0086/0087) — not its type prefix ("shape"/"container"),
+// UUID suffix (see ADR 0060) — not its type prefix ("shape"/"container"),
 // which told a reader nothing about which element a file actually belonged
 // to. The UUID keeps two identically- or blank-labeled elements from
 // colliding; the label is what makes the file recognizable at a glance.
@@ -93,11 +93,11 @@ export function registerDetailsHandlers(): void {
   )
 
   // Renames an existing detail file to match the element's current label,
-  // if it's drifted out of sync — covers both a genuine relabel and, the
-  // first time any given diagram is saved after epic 0087, a one-off
-  // migration of pre-existing `<type>-<uuid>.md` files to the new
-  // convention (no separate migration step needed: any name that isn't
-  // what detailFileName would produce today gets brought into line here).
+  // if it's drifted out of sync — covers both a genuine relabel and a
+  // one-off migration of pre-existing `<type>-<uuid>.md` files the first
+  // time any given diagram is saved under the current naming convention
+  // (no separate migration step needed: any name that isn't what
+  // detailFileName would produce today gets brought into line here).
   // A no-op, not an error, if nothing's actually on disk yet at the old
   // path (e.g. a stale/broken reference) — the next real content write
   // will create the correctly-named file regardless.

@@ -50,10 +50,10 @@ interface PropertyPanelProps {
   onSetConnectionPointCount: (nodeId: string, side: ConnectionPointSide, totalCount: number) => void
   maxConnectionPointsPerSide: number
   // Copies one selected node's current style into settings.defaultStyles
-  // for its type (epic 0030/ADR 0048) — only offered for shape/container/
-  // text, only when exactly one node of that type is selected (a style is
-  // only well-defined for a single node, not a multi-selection). Edges
-  // already have their own equivalent via the toolbar swatch (epic 0061).
+  // for its type (ADR 0048) — only offered for shape/container/text, only
+  // when exactly one node of that type is selected (a style is only
+  // well-defined for a single node, not a multi-selection). Edges
+  // already have their own equivalent via the toolbar swatch (ADR 0045).
   onSetDefaultStyle: (type: 'shape' | 'container' | 'text', style: NodeStyle) => void
   requiredTags: RequiredTagDefinition[]
   beginContinuousEdit: () => void
@@ -80,8 +80,8 @@ const MARKER_OPTIONS: { value: MarkerKind; label: string }[] = [
 // placeholder — see fontFamily's own identical '' === "no override"
 // pattern below. 'straight'/'step'/'smoothstep' are React Flow's own
 // built-in path shapes; 'catmullRom' reuses the freeform-line curve math
-// (epic 0064/ADR 0050, bendablePath.ts) with this edge's own manual bend
-// points — epic 0032. A local copy, not shared with SettingsPanel.tsx's
+// (ADR 0050, bendablePath.ts) with this edge's own manual bend
+// points — see ADR 0057. A local copy, not shared with SettingsPanel.tsx's
 // identical default-routing-style picker: this file already can't export
 // a second named value alongside its default component export
 // (react-refresh/only-export-components).
@@ -518,7 +518,7 @@ function EdgeFields({
   )
 }
 
-// 'line' nodes (epic 0064/ADR 0050) — same Start/Line/End shape as
+// 'line' nodes (see ADR 0050) — same Start/Line/End shape as
 // EdgeFields above, reading/writing NodeStyle instead of EdgeStyle (they
 // share the same lineStyle/startMarker/endMarker fields), plus Locked
 // since a line has a real position/bounding box unlike an edge. No Fill/
@@ -637,7 +637,7 @@ const CONNECTION_POINT_SIDE_LABELS: Record<ConnectionPointSide, string> = {
   left: 'Left'
 }
 
-// Single-node-selection only (epic 0039) — unlike the style fields above,
+// Single-node-selection only — unlike the style fields above,
 // a count here reads from and structurally rewrites one specific node's
 // own connectionPoints/edges, which doesn't generalize to "apply this
 // patch to every selected node" the way a color or opacity does.
@@ -799,7 +799,7 @@ export default function PropertyPanel({
 
   // Same-type selection (including a single edge): no extra "Type (N)"
   // wrapper, just the groups directly. Mixed-type selection: stacked,
-  // collapsible per-type sections — see epic 0003's design.
+  // collapsible per-type sections.
   if (groupCount === 1) {
     return (
       <div className="property-panel">

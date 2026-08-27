@@ -24,7 +24,7 @@ interface ExportPngDialogProps {
   onClose: () => void
 }
 
-// Epic 0010/ADR 0051 (revised 2026-08-23 after live feedback: the first
+// See ADR 0051 (revised 2026-08-23 after live feedback: the first
 // pass put padding/transparency in the global Settings panel instead of
 // here, on the theory they'd rarely change export-to-export — wrong in
 // practice, the user expected a dialog). Reuses AboutDialog's centered-

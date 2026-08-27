@@ -1,7 +1,17 @@
 # 0066: Decouple code documentation and ADRs from epic numbering
 
 ## Status
-Not Started — not yet scoped. Raised by the user (2026-08-22): "misc things to do at some point," not urgent.
+Done (2026-08-27), on `epic/0066-decouple-docs-from-epic-numbering`, pending live test/merge. See [ADR 0070](../../decisions/0070-decouple-docs-from-epic-numbering.md).
+
+## Resolution of the open questions
+
+- **Scope**: one big pass now (the epic files' deletion creates dead links all at once, so incremental doesn't work). Covered ADRs + `src/**` comments + `docs/architecture/**` + `docs/file-format.md`. Left `docs/known-issues.md` and `PROGRESS.md` alone.
+- **What replaces the removed context**: `epic NNNN/ADR MMMM` → `ADR MMMM` (ADR cross-refs stay — they're the durable "why"); epic-file links removed entirely and the prose rewritten to state the trigger directly; bare provenance parentheticals deleted; feature-name references replaced with the feature's own name. Light-touch — only rewrite prose that genuinely broke.
+- **ADRs specifically**: Context sections framed around "epic NNNN raised this" were reworded to state the problem directly.
+- **known-issues.md / PROGRESS.md**: out of scope — both are deliberately chronology-organized.
+- **READMEs**: neither `docs/decisions/README.md` nor `docs/planning/README.md` actually mandated the epic-reference pattern, so no convention change was needed. ADR 0002 and ADR 0061 keep epic references as inherent to their subject.
+
+~520 references removed across ~140 files. `typecheck` clean, `lint` 0 errors.
 
 ## Goal
 Remove references to epic numbers from in-code documentation (comments) and from ADRs — both should be able to stand on their own, understandable without needing to cross-reference `docs/planning/epics/NNNN-*.md` for context. The user's own framing: they shouldn't need to reference epics to live/make sense.

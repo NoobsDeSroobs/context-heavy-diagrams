@@ -5,11 +5,11 @@ Decided and implemented (2026-08-27).
 
 ## Context
 
-[Epic 0082](../planning/epics/0082-select-all-of-type.md) left two real questions open: where the trigger lives, and how granular "all of a type" should be. Raised by the user while testing drag-to-select on a large diagram, wanting a fast way to bulk-select every edge (or every shape, etc.) for a style change, instead of shift-clicking each one.
+Select-all-of-type left two real questions open: where the trigger lives, and how granular "all of a type" should be. Raised by the user while testing drag-to-select on a large diagram, wanting a fast way to bulk-select every edge (or every shape, etc.) for a style change, instead of shift-clicking each one.
 
 ## Decision
 
-**Trigger: a "Select all X" item in each type's own right-click context menu**, not a top menu-bar item. `MenuBar` has no submenu support yet (a real gap, already noted independently in [epic 0091](../planning/epics/0091-recent-diagrams-and-last-opened-path.md)'s own doc), which rules out a clean `Edit → Select All → Shapes/Containers/.../Edges` submenu without first building that infrastructure. A per-type context-menu entry needs no new UI surface at all — every node type and edges already have their own right-click menu — and it's exactly where the user's own framing pointed ("select all edges").
+**Trigger: a "Select all X" item in each type's own right-click context menu**, not a top menu-bar item. `MenuBar` has no submenu support yet (a real gap, noted independently elsewhere), which rules out a clean `Edit → Select All → Shapes/Containers/.../Edges` submenu without first building that infrastructure. A per-type context-menu entry needs no new UI surface at all — every node type and edges already have their own right-click menu — and it's exactly where the user's own framing pointed ("select all edges").
 
 **Scope: whole-type only, no finer filtering.** The epic's own open question about narrower scoping (e.g. "all edges with this routing style") is left for later if it turns out to matter — the base case (every shape, every edge, etc.) covers the motivating use case (a bulk style change across everything of one kind).
 
@@ -30,4 +30,4 @@ One implementation wrinkle: `selectAllOfType` had to be declared *before* `onEdg
 ## Consequences
 
 - No `.chd` schema change — this is a pure selection/UI action, no persisted state.
-- If `MenuBar` submenus are ever built (epic 0091's bigger half needs them too), a top-level "Select All" submenu could be added alongside the context-menu entries rather than replacing them — both are cheap to keep.
+- If `MenuBar` submenus are ever built (the Recent Diagrams menu needs them too), a top-level "Select All" submenu could be added alongside the context-menu entries rather than replacing them — both are cheap to keep.

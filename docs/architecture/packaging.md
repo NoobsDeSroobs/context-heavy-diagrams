@@ -1,6 +1,6 @@
 # Building an installer
 
-How to produce a real, double-click-installable build of this app, for each platform this project actually targets. See [epic 0053](../planning/epics/0053-installable-distribution.md) for the full context — this covers **Phase 1 only**: an unsigned installer with placeholder branding, good enough to hand directly to one non-technical person. Phase 2 (real branding, code signing, a real distribution channel, auto-update) isn't built yet, and this doc will grow to cover it once that happens.
+How to produce a real, double-click-installable build of this app, for each platform this project actually targets. This covers **Phase 1 only**: an unsigned installer with placeholder branding, good enough to hand directly to one non-technical person. Phase 2 (real branding, code signing, a real distribution channel, auto-update) isn't built yet, and this doc will grow to cover it once that happens.
 
 **Platforms**: this project's own required target is Linux + Windows (see [docs/project-brief.md](../project-brief.md)) — that's what the author actually uses and verifies. Mac is covered here too, even though nobody on this project currently uses one to test against: plenty of real users are on Mac, and there's no reason building for them should be any harder than it needs to be just because the maintainer's own machines don't include one. Treat the Mac section below the same way as Linux's — documented from `electron-builder.yml`'s existing config, not personally verified — rather than the "out of scope" framing an earlier pass gave it.
 
@@ -22,17 +22,17 @@ Only needed on the machine doing the *build* — whoever receives the finished i
 npm run build:win
 ```
 
-Produces `dist/context-heavy-diagram-tool-<version>-setup.exe` — a self-contained one-click NSIS installer (the Electron runtime, the app, everything needed is bundled inside it). **Built and verified working** (2026-08-23) — see epic 0053's Notes.
+Produces `dist/context-heavy-diagram-tool-<version>-setup.exe` — a self-contained one-click NSIS installer (the Electron runtime, the app, everything needed is bundled inside it). **Built and verified working** (2026-08-23).
 
 **What to actually send**: just that one `.exe` file. Nothing else needs to travel with it.
 
 `dist/` also contains a few other files `electron-builder` produces alongside it — worth knowing what they're for so it's clear none of them are required:
-- `*.exe.blockmap` — block-level checksums used by `electron-updater` to compute delta updates. This app doesn't have auto-update wired up (the dependency is present but unused — see epic 0053's "What already exists"), so this file currently does nothing. Harmless to ignore or delete.
+- `*.exe.blockmap` — block-level checksums used by `electron-updater` to compute delta updates. This app doesn't have auto-update wired up (the dependency is present but unused), so this file currently does nothing. Harmless to ignore or delete.
 - `latest.yml` — an update-feed manifest, same `electron-updater` purpose as the blockmap above. Only matters if/when this gets hosted somewhere for auto-update to check against (a Phase 2 question).
 - `builder-debug.yml` — `electron-builder`'s own build diagnostics. Not part of the app at all.
 - `win-unpacked/` — the raw unpacked app directory the installer was built from. A parallel, portable alternative to installing (`win-unpacked/context-heavy-diagram-tool.exe` runs directly, no install) — not needed if you're sending the installer.
 
-**What the recipient needs to do**: the installer is unsigned (see epic 0053's Phase 1/Phase 2 split for why — real code signing is a Phase 2 concern), so Windows SmartScreen will flag it on first run. Pass this along with the file:
+**What the recipient needs to do**: the installer is unsigned (real code signing is a Phase 2 concern), so Windows SmartScreen will flag it on first run. Pass this along with the file:
 
 1. Double-click the installer.
 2. Windows shows a blue **"Windows protected your PC"** screen.
@@ -46,7 +46,7 @@ Produces `dist/context-heavy-diagram-tool-<version>-setup.exe` — a self-contai
 npm run build:linux
 ```
 
-Configured to produce three target formats (`electron-builder.yml`'s `linux.target`): **AppImage**, **deb**, and **snap**. **Not yet built or verified** — this project's own dev machine is Windows, with no WSL or Docker installed, and `deb`/`snap` packaging in particular depend on Linux-native tooling (`dpkg-deb`, `snapcraft`) that doesn't run on Windows at all; AppImage packaging is more likely to cross-build but hasn't been tried either. Run this on an actual Linux machine (or set up WSL/Docker first) and update this section with what actually happens — this is exactly the "cross-platform verification" gap epic 0053 already lists as a real open question, not a new one.
+Configured to produce three target formats (`electron-builder.yml`'s `linux.target`): **AppImage**, **deb**, and **snap**. **Not yet built or verified** — this project's own dev machine is Windows, with no WSL or Docker installed, and `deb`/`snap` packaging in particular depend on Linux-native tooling (`dpkg-deb`, `snapcraft`) that doesn't run on Windows at all; AppImage packaging is more likely to cross-build but hasn't been tried either. Run this on an actual Linux machine (or set up WSL/Docker first) and update this section with what actually happens — this is exactly the "cross-platform verification" gap the installable-distribution work already lists as a real open question, not a new one.
 
 Expected output, based on `electron-builder.yml`'s config (unverified until an actual build confirms it):
 - `dist/context-heavy-diagram-tool-<version>.AppImage` — a single self-contained executable, no installation step; the recipient marks it executable (`chmod +x`) and runs it directly. Closest Linux equivalent to the Windows installer's simplicity.
@@ -55,7 +55,7 @@ Expected output, based on `electron-builder.yml`'s config (unverified until an a
 
 **What to actually send**: whichever single file matches the recipient's format of choice (AppImage is the safest default — it doesn't care which distro they're on). Same principle as Windows: these are meant to be self-contained; don't assume that's confirmed until a real build has actually been run and checked.
 
-`linux.maintainer` in `electron-builder.yml` is a placeholder (`Context-Heavy Diagram Tool (Preview)`, replacing the scaffold's `electronjs.org`) — Debian packaging convention actually wants a `Name <email>` format, which means this is exactly the kind of real-identity question deliberately deferred alongside `package.json`'s `author`/`homepage` fields (see epic 0053 Phase 1's own placeholder-identity note) — worth a real value before `deb` packaging is taken seriously, not just before it looks polished.
+`linux.maintainer` in `electron-builder.yml` is a placeholder (`Context-Heavy Diagram Tool (Preview)`, replacing the scaffold's `electronjs.org`) — Debian packaging convention actually wants a `Name <email>` format, which means this is exactly the kind of real-identity question deliberately deferred alongside `package.json`'s `author`/`homepage` fields — worth a real value before `deb` packaging is taken seriously, not just before it looks polished.
 
 ## Mac
 
@@ -70,4 +70,4 @@ Two real things worth knowing before that first attempt:
 - **Gatekeeper's version of the SmartScreen warning is stricter, and the click-through is different.** An unsigned, unnotarized Mac app (this one, in Phase 1) isn't just flagged with a "run anyway" button — depending on the macOS version, either right-click (not double-click) the app and choose **"Open"** from the context menu, which offers an "Open anyway" confirmation double-click doesn't; or, on newer macOS versions, go to **System Settings → Privacy & Security**, scroll to the security section, and click **"Open Anyway"** there after the first (blocked) launch attempt. Worth testing exactly which flow applies before handing this to anyone, since guessing wrong makes the app look broken rather than just unsigned.
 - **Apple Silicon vs. Intel.** `electron-builder.yml`'s `mac` section doesn't currently pin an architecture, so a plain `--mac` build likely targets whatever architecture the build machine itself is (or may need an explicit `--x64`/`--arm64`/`--universal` flag to control it — not yet confirmed). A universal binary (both architectures in one DMG) is the friendliest option for reaching both Intel and Apple Silicon users without asking which one they have, at roughly double the file size — worth deciding deliberately once this is actually being built, not defaulting to whatever happens to come out first.
 
-One more thing worth fixing before this is taken seriously, not just before it looks polished: `mac.extendInfo` in `electron-builder.yml` requests camera, microphone, Documents, and Downloads access (`NSCameraUsageDescription` etc.) — inherited scaffold defaults from the electron-vite template, not anything this app actually uses. Requesting camera/microphone permissions for a diagramming tool would look suspicious to exactly the non-technical users this whole epic is for, and is broader access than the app needs regardless of how it looks. Trim this down to whatever this app genuinely touches (Documents/Downloads, for opening/saving `.chd` files, is plausible; camera/microphone almost certainly isn't) before a real Mac build ever goes out.
+One more thing worth fixing before this is taken seriously, not just before it looks polished: `mac.extendInfo` in `electron-builder.yml` requests camera, microphone, Documents, and Downloads access (`NSCameraUsageDescription` etc.) — inherited scaffold defaults from the electron-vite template, not anything this app actually uses. Requesting camera/microphone permissions for a diagramming tool would look suspicious to exactly the non-technical users this whole effort is for, and is broader access than the app needs regardless of how it looks. Trim this down to whatever this app genuinely touches (Documents/Downloads, for opening/saving `.chd` files, is plausible; camera/microphone almost certainly isn't) before a real Mac build ever goes out.

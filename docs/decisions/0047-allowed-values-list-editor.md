@@ -4,7 +4,7 @@
 Accepted
 
 ## Context
-[Epic 0055](../planning/epics/0055-required-tags-allowed-values-list-editor.md): the required-tags panel's allowed-values field was one cramped comma-separated text input — "hard to use... when it is squeezed into the corner like that." Two coupled asks: a real list editor, and (once allowed values are a real list) the default-value field becoming a dropdown sourced from that list instead of independent free text.
+The required-tags panel's allowed-values field was one cramped comma-separated text input — "hard to use... when it is squeezed into the corner like that." Two coupled asks: a real list editor, and (once allowed values are a real list) the default-value field becoming a dropdown sourced from that list instead of independent free text.
 
 Raised explicitly by the user as the first epic in this batch needing real backward-compatibility thought. Traced through the actual code before designing anything: **the on-disk schema doesn't change at all.** `allowedValues` was always a plain `string[]` in `.chd` files (`docs/file-format.md`) — the comma-separated text was only ever the *editing* UI (`join(', ')` in, split-on-comma out). Old files load into the new list editor with no migration needed.
 
@@ -21,7 +21,7 @@ The real compatibility question turned out to be narrower and specific to the *s
 - **`docs/file-format.md` updated**: `defaultValue`'s row now explicitly states it's never validated against `allowedValues`, since that's now a real, user-visible, deliberately-preserved case rather than just an unstated gap.
 
 ## Alternatives considered
-- **Cascading rename** (rewrite every node/edge's metadata and every highlight definition referencing the old value). Rejected for v1 — much larger blast radius (touches `highlights.ts` and every element's stored metadata programmatically, a new class of bulk-mutation this app doesn't otherwise do outside the existing sync/reconcile passes), no concrete request for it, and the existing highlight "resync group" control (epic 0036/ADR 0026) already cleans up a highlight whose value nothing carries anymore — so the cleanup path already exists, just manual rather than automatic.
+- **Cascading rename** (rewrite every node/edge's metadata and every highlight definition referencing the old value). Rejected for v1 — much larger blast radius (touches `highlights.ts` and every element's stored metadata programmatically, a new class of bulk-mutation this app doesn't otherwise do outside the existing sync/reconcile passes), no concrete request for it, and the existing highlight "resync group" control ([ADR 0026](0026-grouped-highlights.md)) already cleans up a highlight whose value nothing carries anymore — so the cleanup path already exists, just manual rather than automatic.
 - **Silently resetting an orphaned `defaultValue`** to `null`/the first allowed value on load. Rejected — exactly the kind of silent data loss ADR 0029's standing rule exists to prevent; the user agreed the visible-orphan approach was right before this was built.
 - **Drag-and-drop reordering.** Rejected for v1 — up/down buttons are simpler and lower-risk for what's typically a short list; `LayerPanel`'s existing drag machinery is a real precedent to reuse if this ever needs it, not something to duplicate speculatively.
 - **Disabling the default-value field entirely when `allowedValues` is empty.** Rejected — free text (today's existing behavior) stays available when there's no list to constrain against; nothing to gain from disabling it.

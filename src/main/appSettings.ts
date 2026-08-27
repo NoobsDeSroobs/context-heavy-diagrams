@@ -3,7 +3,7 @@ import { readFile, writeFile } from 'fs/promises'
 import { join } from 'path'
 import { DEFAULT_SETTINGS, normalizeAppSettings, type AppSettings } from '@shared/settings'
 
-// Real per-OS settings file (epic 0054/ADR 0053) — replaces the renderer's
+// Real per-OS settings file (see ADR 0053) — replaces the renderer's
 // former localStorage-only storage (ADR 0032) with a file under this OS's
 // own conventional per-user app-data location, resolved automatically by
 // Electron's own app.getPath('userData'). Same "one JSON file" shape
@@ -24,7 +24,7 @@ export async function readAppSettings(): Promise<AppSettings | null> {
     const raw = await readFile(settingsFile(), 'utf-8')
     // Normalize, not a bare parse — fills in defaults for fields an older
     // stored blob predates (same "absent means default" reasoning as the
-    // .chd format, ADR 0029) and runs the epic 0074 stylePalette migration.
+    // .chd format, ADR 0029) and runs the stylePalette migration (ADR 0068).
     return normalizeAppSettings(JSON.parse(raw) as Partial<AppSettings>)
   } catch {
     return null

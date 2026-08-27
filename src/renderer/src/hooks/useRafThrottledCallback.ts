@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react'
 
 // Coalesces a high-frequency callback (e.g. a native color-input drag,
-// which can fire dozens of onChange events per second — epic 0067) down to
+// which can fire dozens of onChange events per second — see ADR 0056) down to
 // at most once per animation frame. The display can't show more updates
 // than that anyway, so anything between frames is wasted React work; this
 // still always fires with the latest value by the time the frame lands,

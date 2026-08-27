@@ -4,7 +4,7 @@
 Accepted
 
 ## Context
-Epic [0007](../planning/epics/0007-icon-slots.md) needs per-shape corner icon slots, supporting both a built-in icon set and user-uploaded custom icons (brief requirement #3). The brief's draft schema showed icon references as plain relative paths (`"icons": { "topRight": "assets/aws-icon.svg" }`), implicitly assuming every icon is a per-diagram file. That assumption doesn't hold once built-in icons live centrally rather than per-diagram.
+Per-shape corner icon slots need to support both a built-in icon set and user-uploaded custom icons (brief requirement #3). The brief's draft schema showed icon references as plain relative paths (`"icons": { "topRight": "assets/aws-icon.svg" }`), implicitly assuming every icon is a per-diagram file. That assumption doesn't hold once built-in icons live centrally rather than per-diagram.
 
 ## Decision
 Two icon sources, both represented explicitly (not inferred):
@@ -27,7 +27,7 @@ data: {
   }
 }
 ```
-The `source` discriminator is what makes this extensible — a third kind (`source: 'installed'`, for a downloaded vendor icon pack) can be added later without another schema rewrite. See epic 0019 for why that's not built now.
+The `source` discriminator is what makes this extensible — a third kind (`source: 'installed'`, for a downloaded vendor icon pack) can be added later without another schema rewrite. Installable icon packs are a plausible later addition, deliberately not built now (they depend on licensing outreach to vendors first).
 
 Built-in icon set: [Tabler Icons](https://tabler.io/icons) (MIT-licensed, ~5,800 icons), chosen for permissive licensing and solid generic tech/IT coverage (server, database, cloud, network, router). Not vendor-specific (AWS/Azure/GCP) — see [docs/licensing.md](../licensing.md) for why.
 

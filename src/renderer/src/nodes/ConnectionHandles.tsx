@@ -8,7 +8,7 @@ import { SIDE_POSITION, connectionPointStyle, effectiveConnectionPoints } from '
 // so that file stays component-free — mixing a component export with
 // hook/function exports in one file breaks React Fast Refresh.
 //
-// Epic 0039 originally special-cased 4 always-present, unmovable default
+// This originally special-cased 4 always-present, unmovable default
 // points here (hardcoded, no style override, no context menu) plus
 // whatever was in `storedPoints`. That split turned out to be the root
 // cause of two real bugs the user found — every point a side has is now

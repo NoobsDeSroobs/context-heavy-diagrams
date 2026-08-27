@@ -4,7 +4,7 @@ import { mkdir, readdir, readFile, rm, stat, writeFile } from 'fs/promises'
 import { join } from 'path'
 import type { DiagramFile } from '@shared/diagram'
 
-// Crash-recovery snapshots — see epic 0020 / ADR 0040. Stored centrally
+// Crash-recovery snapshots — see ADR 0040. Stored centrally
 // under userData, never as siblings of the real .chd (would clutter the
 // user's project folder, risk an accidental git commit, and has nowhere
 // sensible to live for a diagram that's never been saved). Each envelope

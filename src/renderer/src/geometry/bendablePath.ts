@@ -24,7 +24,7 @@ export interface PathPoint extends LinePoint {
 // LEAVES (outward from the shape — `direction` as-is). At the *last*
 // point, the tangent is the direction the curve heads as it ARRIVES —
 // INTO the shape, i.e. the negation of "outward." Using the same sign for
-// both (a real bug, found live-testing epic 0032) makes the curve
+// both (a real bug, found live-testing edge routing) makes the curve
 // approach the target's side from the wrong side, connecting as if
 // departing toward whatever it's attached to rather than arriving
 // perpendicular to the shape. Everything else (a line's own points; an
@@ -52,9 +52,9 @@ function tangentAt(points: PathPoint[], i: number): { x: number; y: number } {
 
 // Ordered point list -> SVG path string. Deliberately no notion of "node"
 // or "edge" here beyond PathPoint's own minimal `direction` field — the
-// whole point of splitting this out (epic 0064/ADR 0050) is that the same
+// whole point of splitting this out (ADR 0050) is that the same
 // curve math serves a decorative line's own points and an edge's manual
-// bend points alike (epic 0032's "catmull-rom" routing style) without
+// bend points alike (the "catmull-rom" routing style, ADR 0057) without
 // duplicating it. Each segment between consecutive points becomes one
 // cubic bezier via the standard Hermite-to-Bezier conversion. A straight
 // 2-point line with no `direction` on either end comes out perfectly
@@ -82,9 +82,8 @@ export function buildBendablePath(points: PathPoint[]): string {
 
 // Straight lead-in/out before curving, at whichever end(s) have a
 // `direction` — the global edgeStraightSegmentLength setting (settings.ts/
-// SettingsPanel, ADR 0032), epic 0047, reused by catmull-rom-routed edges
-// (epic 0032's later scope) alongside the bezier routing it originally
-// applied to. Offsets an endpoint outward along its own direction by
+// SettingsPanel, ADR 0032), reused by catmull-rom-routed edges
+// (ADR 0057) alongside the bezier routing it originally applied to. Offsets an endpoint outward along its own direction by
 // `length` (clamped to half the distance to its real neighbor in the
 // original list, so a short segment can never overlap or fold back on
 // itself), builds the underlying curve between those offset points, then

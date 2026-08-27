@@ -1,4 +1,4 @@
-// Pure math for the threat/risk matrix prototype (epic 0060) — no notion
+// Pure math for the threat/risk matrix prototype (see ADR 0055) — no notion
 // of "diagram" or "React" here, same dependency-free-module precedent as
 // bendablePath.ts/alignment.ts, so this survives untouched regardless of
 // how (or whether) the surrounding view ends up wired into the rest of

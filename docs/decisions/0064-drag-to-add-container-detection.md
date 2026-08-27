@@ -5,7 +5,7 @@ Decided and implemented (2026-08-27).
 
 ## Context
 
-[Epic 0029](../planning/epics/0029-drag-to-add-from-item-panel.md) adds a second way to place a Shape/Container/Text/Line onto the canvas — dragging its item-palette button and dropping it — alongside epic 0003's existing click-to-add. Its own Notes already anticipated the interesting part: "deciding how it interacts with a container under the drop point — presumably drops *into* a container the same way `onNodeDragStop`'s intersection check already handles for existing nodes." That existing check (`onNodeDragStop` in `Canvas.tsx`) calls `rfInstance.getIntersectingNodes(dragged, false)` — React Flow's own bounding-box intersection query — but that function only works on a node React Flow already has registered internally. A node being dragged in from the item palette doesn't exist yet at drop time; it's created by this same drop event.
+Drag-to-add adds a second way to place a Shape/Container/Text/Line onto the canvas — dragging its item-palette button and dropping it — alongside the existing click-to-add. The interesting part was anticipated from the start: "deciding how it interacts with a container under the drop point — presumably drops *into* a container the same way `onNodeDragStop`'s intersection check already handles for existing nodes." That existing check (`onNodeDragStop` in `Canvas.tsx`) calls `rfInstance.getIntersectingNodes(dragged, false)` — React Flow's own bounding-box intersection query — but that function only works on a node React Flow already has registered internally. A node being dragged in from the item palette doesn't exist yet at drop time; it's created by this same drop event.
 
 ## Decision
 

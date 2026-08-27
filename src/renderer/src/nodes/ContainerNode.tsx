@@ -45,7 +45,7 @@ function ContainerNode({ id, data, selected }: NodeProps): React.JSX.Element {
   const style = data?.style as NodeStyle | undefined
   const { addConnectionPointItem, onPointContextMenu } = useConnectionPointMenu(id, customPoints)
 
-  // See ShapeNode's identical treatment / epic 0026's ADR 0025.
+  // See ShapeNode's identical treatment / ADR 0025.
   const highlightMatches = matchHighlights(
     data?.metadata as Record<string, MetadataEntry> | undefined
   )

@@ -5,7 +5,7 @@ Decided and implemented (2026-08-27).
 
 ## Context
 
-[Epic 0074](../planning/epics/0074-multiple-named-style-palettes.md), the last of the settings-tier trio from [ADR 0052](0052-settings-ownership-tiers.md). The style palette (epic 0030/[ADR 0048](0048-style-palette-and-defaults.md)) stays Settings-only — no diagram tier — but ADR 0048's "one active palette, not several merged ones; importing replaces it outright" turned out to be too tight: someone maintaining a "Company" set, a "GDPR" set and a "Client" set has to re-import a file every time they switch. The user wants several kept around at once with a quick active-palette switch.
+The last of the settings-tier trio from [ADR 0052](0052-settings-ownership-tiers.md). The style palette ([ADR 0048](0048-style-palette-and-defaults.md)) stays Settings-only — no diagram tier — but ADR 0048's "one active palette, not several merged ones; importing replaces it outright" turned out to be too tight: someone maintaining a "Company" set, a "GDPR" set and a "Client" set has to re-import a file every time they switch. The user wants several kept around at once with a quick active-palette switch.
 
 The four questions ADR 0048 and the epic deliberately left open, resolved with the user before building:
 
@@ -21,7 +21,7 @@ The four questions ADR 0048 and the epic deliberately left open, resolved with t
 
 **5. Both "New" (empty) and "Duplicate" (copies the active palette's colors/fonts).** Symmetric, matches the project's standing preference against one-way designs. Delete is disabled at one palette (a minimum-one constraint avoids an empty-state the editors can't act on); deleting a non-empty palette asks for in-panel confirmation first (never `window.confirm()` — the [known bug](../known-issues.md) where a native dialog left a sibling `<select>` unresponsive).
 
-**6. Migration lives in one shared `normalizeAppSettings()`** called at every point a settings blob is received (main's file read, the renderer's file read, the cross-window broadcast, the legacy-`localStorage` migration) — replacing the four inline `{ ...DEFAULT_SETTINGS, ...parsed }` spreads. A pre-0074 blob has `stylePalette: { colors, fonts }` and no `stylePalettes`; it's folded into one "Default" palette. Idempotent (an already-migrated blob has `stylePalettes` set, so the branch is skipped), so running it at four boundaries is safe. This also formalizes the standing "every `AppSettings` field must re-merge over defaults at every boundary" rule ([the `isolateOpacity` empty-input bug](../known-issues.md)) into a single named function.
+**6. Migration lives in one shared `normalizeAppSettings()`** called at every point a settings blob is received (main's file read, the renderer's file read, the cross-window broadcast, the legacy-`localStorage` migration) — replacing the four inline `{ ...DEFAULT_SETTINGS, ...parsed }` spreads. An older blob has `stylePalette: { colors, fonts }` and no `stylePalettes`; it's folded into one "Default" palette. Idempotent (an already-migrated blob has `stylePalettes` set, so the branch is skipped), so running it at four boundaries is safe. This also formalizes the standing "every `AppSettings` field must re-merge over defaults at every boundary" rule ([the `isolateOpacity` empty-input bug](../known-issues.md)) into a single named function.
 
 ## Alternatives considered
 
@@ -38,4 +38,4 @@ The four questions ADR 0048 and the epic deliberately left open, resolved with t
 - `StylePalettePanel.tsx`: palette picker (select + rename + New/Duplicate/Delete), import-adds-new, export-active, delete-confirm; Colors/Fonts editors operate on the active palette.
 - `Canvas.tsx`: `activeStylePalette` memo feeds `DiagramContext`'s `paletteColors`/`paletteFonts`; panel wired to `updateSettings({ stylePalettes, activeStylePaletteId })`.
 - No `.chd` schema change — the palette has never lived in the diagram file, and the palette *export* file format is unchanged.
-- Epic 0096 (consolidate `RequiredTagsPanel`/`GravityPresetsPanel` into `DiagramConfigPanel`) is unaffected — `StylePalettePanel` is Settings, not diagram Configuration, and isn't part of that consolidation.
+- The panel-consolidation follow-up (folding `RequiredTagsPanel`/`GravityPresetsPanel` into `DiagramConfigPanel`) is unaffected — `StylePalettePanel` is Settings, not diagram Configuration, and isn't part of that consolidation.

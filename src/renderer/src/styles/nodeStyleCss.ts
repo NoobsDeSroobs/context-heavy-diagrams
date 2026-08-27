@@ -17,8 +17,7 @@ import { themeAdaptiveColor } from './themeAdaptiveColor'
 //
 // `fill`/`stroke`/`fontColor` pass through themeAdaptiveColor first — the
 // stored value is always the dark-theme-baseline color, this is where it
-// becomes what actually gets painted for the current theme (epic 0040/ADR
-// 0034).
+// becomes what actually gets painted for the current theme (ADR 0034).
 export function nodeContainerCss(style: NodeStyle | undefined, theme: Theme): CSSProperties {
   if (!style) return {}
   const css: CSSProperties = {}

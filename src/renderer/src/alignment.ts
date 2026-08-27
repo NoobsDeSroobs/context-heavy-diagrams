@@ -1,4 +1,4 @@
-// Drag-time alignment guides + snap-to-shape — see epic 0011. Proximity-
+// Drag-time alignment guides + snap-to-shape — see ADR 0019. Proximity-
 // based, not edge-contact-based: shapes don't need to touch to snap, which
 // is what lets e.g. two shapes with a gap between them still snap into a
 // matching column. Deliberately does NOT include snap-to-grid (no grid

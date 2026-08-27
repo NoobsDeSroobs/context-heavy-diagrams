@@ -11,8 +11,8 @@ interface RequiredTagsWalkResult {
 
 // Custom APIs for renderer. See docs/decisions/0005-diagram-identity-and-linking.md
 // for the single-file model. pickSavePath and saveDiagram are deliberately
-// separate (not one combined "save as" call) — epic 0008 needs to pick the
-// path, flush any pending detail-panel drafts using it, *then* write the
+// separate (not one combined "save as" call) — the save flow needs to pick
+// the path, flush any pending detail-panel drafts using it, *then* write the
 // final diagram content, all before the file actually lands on disk.
 const api = {
   saveDiagram(path: string, diagram: DiagramFile, sessionId: string): Promise<void> {
@@ -37,7 +37,7 @@ const api = {
     return ipcRenderer.invoke('icons:readAsDataUrl', diagramPath, relativePath)
   },
 
-  // Reference images (epic 0090/ADR 0069) — same sibling-folder model as
+  // Reference images (see ADR 0069) — same sibling-folder model as
   // custom icons, into assets/references/. pickAndCopy allows multi-select
   // and returns every copied file's relative path (null on cancel).
   pickAndCopyReferences(diagramPath: string): Promise<string[] | null> {
@@ -48,12 +48,12 @@ const api = {
     return ipcRenderer.invoke('references:readAsDataUrl', diagramPath, relativePath)
   },
 
-  // Detail files — see epic 0008, and epic 0087 for the label+uuid naming
-  // convention. readDetails takes an already-known relative path;
+  // Detail files — see ADR 0060 for the label+uuid naming convention.
+  // readDetails takes an already-known relative path;
   // writeDetails takes a node id/label and computes the conventional path
   // itself, returning it so the caller can store it on data.details.
   // syncDetailFileName renames an already-existing file if the element's
-  // label has since changed (also migrates pre-0087 filenames).
+  // label has since changed (also migrates old `<type>-<uuid>.md` filenames).
   readDetails(diagramPath: string, relativePath: string): Promise<string> {
     return ipcRenderer.invoke('details:read', diagramPath, relativePath)
   },
@@ -82,7 +82,7 @@ const api = {
     return ipcRenderer.invoke('diagram:openPath', path)
   },
 
-  // Linked diagrams — see epic 0009 / docs/decisions/0005-diagram-identity-and-linking.md.
+  // Linked diagrams — see docs/decisions/0005-diagram-identity-and-linking.md.
   // createLinkedDiagram/pickExistingLinkedDiagram both return a relative
   // path (relative to diagramPath's own directory) to store on the node,
   // same convention as custom icon/detail paths.
@@ -124,7 +124,7 @@ const api = {
     return ipcRenderer.invoke('windows:clearPath')
   },
 
-  // Drag-and-drop (epic 0038) — recent Electron versions removed the
+  // Drag-and-drop — recent Electron versions removed the
   // renderer's direct File.path access for security; webUtils is the
   // preload-context-only replacement. Synchronous, not IPC — no main
   // round-trip needed just to resolve a path.
@@ -187,7 +187,7 @@ const api = {
     )
   },
 
-  // Crash recovery — see epic 0020 / ADR 0040. path is null for a diagram
+  // Crash recovery — see ADR 0040. path is null for a diagram
   // that hasn't been saved yet, in which case sessionId is what actually
   // keys the recovery snapshot (see recovery.ts's keyFor). detailsDrafts
   // rides alongside diagram, not inside it — see recovery.ts's own comment
@@ -243,9 +243,9 @@ const api = {
     return ipcRenderer.invoke('windows:closeApproved', path, sessionId)
   },
 
-  // Real per-OS settings file (epic 0054/ADR 0053), replacing localStorage
+  // Real per-OS settings file (see ADR 0053), replacing localStorage
   // — see appSettings.ts. readAppSettings returns null when the file
-  // doesn't exist yet (fresh install, or upgrading from a pre-0054 build);
+  // doesn't exist yet (fresh install, or upgrading from a build predating it);
   // the renderer's useSettings falls back to its own already-present
   // localStorage in that case, one-time migration, before defaults.
   readAppSettings(): Promise<AppSettings | null> {
@@ -264,14 +264,14 @@ const api = {
     return () => ipcRenderer.off('settings:changed', listener)
   },
 
-  // About screen (epic 0057) — package.json's version via Electron's own
+  // About screen — package.json's version via Electron's own
   // app.getVersion(), see ADR 0044. Not cached here; called once per About
   // open, cheap enough not to bother.
   getAppVersion(): Promise<string> {
     return ipcRenderer.invoke('app:getVersion')
   },
 
-  // Style palette export/import (epic 0030/ADR 0048) — returns false/null
+  // Style palette export/import (see ADR 0048) — returns false/null
   // on cancel, same "no error, just nothing happened" convention as
   // diagram:pickSavePath.
   exportStylePalette(json: string): Promise<boolean> {
@@ -282,14 +282,14 @@ const api = {
     return ipcRenderer.invoke('stylePalette:importFromFile')
   },
 
-  // PNG export (epic 0010/ADR 0051) — dataUrl is a data:image/png;base64,...
+  // PNG export (see ADR 0051) — dataUrl is a data:image/png;base64,...
   // string from html-to-image's toPng(), same false-on-cancel convention
   // as exportStylePalette.
   exportPngToFile(dataUrl: string, suggestedFilename: string): Promise<boolean> {
     return ipcRenderer.invoke('export:pngToFile', dataUrl, suggestedFilename)
   },
 
-  // Copy/paste (epic 0025/ADR 0049) — the real OS clipboard, not IPC to
+  // Copy/paste (see ADR 0049) — the real OS clipboard, not IPC to
   // main: `clipboard` is available directly here since this window's
   // preload runs unsandboxed (`sandbox: false`, main/windows.ts), so
   // there's no round-trip needed for a synchronous, already-local API.

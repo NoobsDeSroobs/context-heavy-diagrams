@@ -10,7 +10,7 @@ The user asked for React Flow's own documented "Multi Connection Line" pattern (
 Two real decisions needed settling before building, both asked of the user directly:
 
 1. **Scope** — build only the end result (drag normally, extra edges appear on release), or also the live drag-time visual (a line from every selected shape converging on the cursor while still dragging)? The user's own framing, given the earlier edge/line-unification attempt that was built twice and discarded: build the full visual *if* it isn't disproportionately costly, otherwise take the simpler result-only version — explicitly delegating that cost judgment.
-2. **Handle choice for the non-dragged shapes** — xyflow's own plain example doesn't specify a handle at all for the extra connections (it has no concept of multiple named connection points per side). This app does (epic 0039), so leaving it unspecified isn't a neutral no-op here the way it is in the original example.
+2. **Handle choice for the non-dragged shapes** — xyflow's own plain example doesn't specify a handle at all for the extra connections (it has no concept of multiple named connection points per side). This app does (custom connection points per side), so leaving it unspecified isn't a neutral no-op here the way it is in the original example.
 
 ## Decision
 

@@ -5,7 +5,7 @@ Decided and implemented (2026-08-27).
 
 ## Context
 
-[Epic 0072](../planning/epics/0072-gravity-presets-user-default.md) adds the middle tier [ADR 0052](0052-settings-ownership-tiers.md) named (Diagram override → User default → Built-in default) to gravity/bend presets, which previously only had the outer two. This is the first concrete instance of that pattern actually being built, so the choices here are a reference point for [epic 0073](../planning/epics/0073-max-connection-points-diagram-override.md) and [epic 0074](../planning/epics/0074-multiple-named-style-palettes.md), which follow the same shape.
+This adds the middle tier [ADR 0052](0052-settings-ownership-tiers.md) named (Diagram override → User default → Built-in default) to gravity/bend presets, which previously only had the outer two. This is the first concrete instance of that pattern actually being built, so the choices here are a reference point for [ADR 0067](0067-max-connection-points-diagram-override.md) and [ADR 0068](0068-multiple-named-style-palettes.md), which follow the same shape.
 
 ## Decision
 
@@ -22,4 +22,4 @@ Decided and implemented (2026-08-27).
 
 - `AppSettings.gravityPresetsUserDefault?: GravityPreset[]` — additive, optional, no migration needed (absent means "no personal default," same "absent means default" convention as everything else).
 - No `.chd` schema change — this tier lives entirely in `AppSettings`, not the diagram file.
-- Epics 0073/0074 can reuse this same shape (live resolution, symmetric set/clear) rather than re-deriving it, unless a real reason to diverge shows up.
+- The max-connection-points and named-style-palette follow-ups can reuse this same shape (live resolution, symmetric set/clear) rather than re-deriving it, unless a real reason to diverge shows up.

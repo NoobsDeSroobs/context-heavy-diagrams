@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { DEFAULT_SETTINGS, normalizeAppSettings, type AppSettings } from '@shared/settings'
 
 // A rapid-fire source (a native color-input drag firing many onChange
-// events per second — see epic 0067) shouldn't mean that many IPC round-
+// events per second — see ADR 0056) shouldn't mean that many IPC round-
 // trips and disk writes; only the in-memory value needs to keep pace with
 // every tick. This is purely about *persistence* timing, not visual
 // responsiveness — updateSettings below still calls setSettings on every
@@ -20,7 +20,8 @@ export { DEFAULT_SETTINGS, effectiveStylePalette } from '@shared/settings'
 
 const LEGACY_STORAGE_KEY = 'settings'
 
-// The old localStorage-only store (ADR 0032, pre-epic-0054) — read once,
+// The old localStorage-only store (ADR 0032, before ADR 0053's move to a
+// real per-OS file) — read once,
 // only for migration. Returns null when there's genuinely nothing saved
 // (a fresh install), as distinct from "saved, and happens to equal
 // defaults" — the caller needs that distinction to know whether writing
@@ -36,7 +37,7 @@ function readLegacyLocalStorageSettings(): AppSettings | null {
 }
 
 // One per Electron window, live-synced across all of them via main's
-// settings:changed broadcast — epic 0054/ADR 0053 moved this from
+// settings:changed broadcast — ADR 0053 moved this from
 // localStorage (synced for free via the `storage` event) to a real
 // per-OS file under app.getPath('userData'), which only main can reach.
 export function useSettings(): {
@@ -76,7 +77,7 @@ export function useSettings(): {
         return
       }
       // settings.json doesn't exist yet — either a fresh install, or an
-      // upgrade from a pre-0054 build whose settings only ever lived in
+      // upgrade from a build predating ADR 0053 whose settings only ever lived in
       // this window's own localStorage (the one place main can't reach).
       // One-time migration: adopt it here and persist it to the real
       // file, so it isn't silently lost on upgrade.

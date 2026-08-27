@@ -4,7 +4,7 @@
 Accepted
 
 ## Context
-Epic 0005 (dark/light mode) was one of the original brief's core requirements (item 7) and had never been implemented — the app had only ever rendered in what *looked* like a deliberately-chosen dark theme, but wasn't: the electron-vite scaffold's `base.css` template ships both light (`--ev-c-white*`) and dark (`--ev-c-black*`) raw palette tokens, but the semantic tokens actually used everywhere (`--color-background`, `--color-text`, etc.) were hardcoded straight to the dark ones with no `prefers-color-scheme` handling at all. The user's own words when greenlighting this epic: they hadn't minded the accidentally-dark look, but were specifically worried that *building the real thing* would end up reinforcing dark as a deliberate hardcoded default rather than fixing it.
+Dark/light mode was one of the original brief's core requirements (item 7) and had never been implemented — the app had only ever rendered in what *looked* like a deliberately-chosen dark theme, but wasn't: the electron-vite scaffold's `base.css` template ships both light (`--ev-c-white*`) and dark (`--ev-c-black*`) raw palette tokens, but the semantic tokens actually used everywhere (`--color-background`, `--color-text`, etc.) were hardcoded straight to the dark ones with no `prefers-color-scheme` handling at all. The user's own words when greenlighting this epic: they hadn't minded the accidentally-dark look, but were specifically worried that *building the real thing* would end up reinforcing dark as a deliberate hardcoded default rather than fixing it.
 
 ## Decision
 The resolved theme is never hardcoded in either direction. Three layers, each only active when the one above it doesn't apply:

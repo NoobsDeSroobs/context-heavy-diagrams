@@ -5,11 +5,11 @@ Decided and implemented (2026-08-27).
 
 ## Context
 
-[Epic 0073](../planning/epics/0073-max-connection-points-diagram-override.md) moves `maxConnectionPointsPerSide` from Settings-only to a per-diagram override falling back to the Settings value — the second concrete instance of [ADR 0052](0052-settings-ownership-tiers.md)'s three-tier pattern (after [ADR 0066](0066-gravity-presets-user-default.md)'s gravity presets). Its own doc flagged a real gap: every prior diagram-level Configuration value (`requiredTags`, `highlights`, `legend`, `gravityPresets`) already had its own panel to live in; this is the first one with no natural home.
+This moves `maxConnectionPointsPerSide` from Settings-only to a per-diagram override falling back to the Settings value — the second concrete instance of [ADR 0052](0052-settings-ownership-tiers.md)'s three-tier pattern (after [ADR 0066](0066-gravity-presets-user-default.md)'s gravity presets). A real gap turned up: every prior diagram-level Configuration value (`requiredTags`, `highlights`, `legend`, `gravityPresets`) already had its own panel to live in; this is the first one with no natural home.
 
 ## Decision
 
-**New `DiagramConfigPanel`, in `UtilityDock` alongside the existing panel family** (Details/RequiredTags/Diagnostics/Settings/StylePalette/GravityPresets/AlignDistribute/LayerPanel — mutually exclusive, opening one closes the rest). Scoped to just `maxConnectionPointsPerSide` for now, not a consolidation of the other diagram-level panels into it — see [epic 0096](../planning/epics/0096-consolidate-diagram-configuration-panel.md) for that follow-up and why it's split out rather than attempted here.
+**New `DiagramConfigPanel`, in `UtilityDock` alongside the existing panel family** (Details/RequiredTags/Diagnostics/Settings/StylePalette/GravityPresets/AlignDistribute/LayerPanel — mutually exclusive, opening one closes the rest). Scoped to just `maxConnectionPointsPerSide` for now, not a consolidation of the other diagram-level panels into it — that consolidation is a separate follow-up, split out rather than attempted here.
 
 **Over-limit handling: leave existing elements alone.** Lowering the diagram's max below what an element already has doesn't clamp or remove its extra points — the limit only stops *adding* more. Matches this app's standing "never silently destroy data" convention (ADR 0029), and avoids a worse failure mode: a diagram override is `AppSettings`-adjacent data that different people opening the same file could each have set differently before this feature existed anywhere — auto-clamping on open would make opening the file itself a mutating, potentially destructive action.
 
@@ -17,11 +17,11 @@ Decided and implemented (2026-08-27).
 
 ## Alternatives considered
 
-- **A View-menu item opening a small prompt/dialog for just this one value** — rejected; doesn't scale if more pure diagram-level Configuration values show up (likely, given this is explicitly the second instance of the three-tier pattern and a third, [epic 0074](../planning/epics/0074-multiple-named-style-palettes.md), is already logged).
-- **Folding `RequiredTagsPanel`/`GravityPresetsPanel` into the new panel immediately** — the user's own first instinct ("we should also move the other things that makes sense to put there"). Not attempted here: both existing panels are fully self-contained components with their own toolbar/title/close button, and removing that requires touching all ~8 mutually-exclusive toggle functions' close-lists plus each panel's own internal structure — a real UI-architecture refactor bigger than this epic's actual feature, not a drive-by. Split into epic 0096.
+- **A View-menu item opening a small prompt/dialog for just this one value** — rejected; doesn't scale if more pure diagram-level Configuration values show up (likely, given this is explicitly the second instance of the three-tier pattern and a third — named style palettes — is already logged).
+- **Folding `RequiredTagsPanel`/`GravityPresetsPanel` into the new panel immediately** — the user's own first instinct ("we should also move the other things that makes sense to put there"). Not attempted here: both existing panels are fully self-contained components with their own toolbar/title/close button, and removing that requires touching all ~8 mutually-exclusive toggle functions' close-lists plus each panel's own internal structure — a real UI-architecture refactor bigger than this feature, not a drive-by. Split into its own follow-up.
 - **Clamping over-limit elements on open or on lowering the diagram max** — rejected per the Decision above.
 
 ## Consequences
 
 - `DiagramFile.maxConnectionPointsPerSide?: number` — additive, no `.chd` version bump (ADR 0029), `docs/file-format.md` updated.
-- `DiagramConfigPanel` is deliberately built as a small, single-purpose panel today, but is meant to be the eventual host for other diagram-level Configuration values (epic 0096, and whatever epic 0074 produces) — worth keeping that in mind if its shape needs revisiting once more sections land.
+- `DiagramConfigPanel` is deliberately built as a small, single-purpose panel today, but is meant to be the eventual host for other diagram-level Configuration values (the panel-consolidation follow-up, and whatever the named-style-palettes work produces) — worth keeping that in mind if its shape needs revisiting once more sections land.

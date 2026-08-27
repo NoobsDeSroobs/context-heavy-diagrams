@@ -16,7 +16,7 @@ interface MenuBarProps {
   menus: MenuBarMenu[]
 }
 
-// Custom in-renderer menu bar — epic 0049/ADR 0039. Deliberately not a
+// Custom in-renderer menu bar — see ADR 0039. Deliberately not a
 // native Electron menu (see that ADR for the tradeoff): every item reuses
 // an existing handler as-is, no new main<->renderer IPC needed beyond
 // File -> Close. Click-outside/Escape-to-close and the "close before

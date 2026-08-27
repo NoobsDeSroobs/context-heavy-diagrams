@@ -20,8 +20,7 @@ function systemTheme(): Theme {
 // No explicit choice yet means "null" — deliberately never collapsed
 // into a concrete Theme, so callers can tell "nothing chosen, following
 // the OS" apart from "the OS happens to currently resolve to dark" (see
-// epic 0005/ADR 0027 — the whole point is never defaulting to dark
-// on purpose).
+// ADR 0027 — the whole point is never defaulting to dark on purpose).
 function applyTheme(theme: Theme | null): void {
   if (theme) document.documentElement.setAttribute('data-theme', theme)
   else document.documentElement.removeAttribute('data-theme')

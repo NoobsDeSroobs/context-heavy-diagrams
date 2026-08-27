@@ -17,9 +17,9 @@ interface ContextMenuProps {
   onClose: () => void
 }
 
-// Generic, reusable — this is the first epic that needs a context menu at
-// all (right-click "Add icon"); epics 0008 ("See details") and 0013 (add
-// connection point) extend the same menu rather than building their own.
+// Generic, reusable — introduced for the first context-menu need
+// (right-click "Add icon"); later menu items ("See details", "Add
+// connection point", …) extend the same menu rather than building their own.
 export default function ContextMenu({ x, y, items, onClose }: ContextMenuProps): React.JSX.Element {
   const ref = useRef<HTMLDivElement>(null)
 

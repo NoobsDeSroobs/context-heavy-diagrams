@@ -4,19 +4,19 @@
 Accepted
 
 ## Context
-[Epic 0057](../planning/epics/0057-about-help-menu-and-versioning.md) needs a real versioning scheme before an About screen can show a version number. `package.json`'s `"version": "1.0.0"` was inherited from the original electron-scaffold template and never deliberately set — nothing reads or displays it anywhere today. There's no CI/release pipeline yet ([epic 0053](../planning/epics/0053-installable-distribution.md), not started) and no public distribution has ever happened, so "release" doesn't map onto any existing external event — the only real, already-existing checkpoint in this project's workflow is a PR merge to `master`.
+The About screen needs a real versioning scheme before it can show a version number. `package.json`'s `"version": "1.0.0"` was inherited from the original electron-scaffold template and never deliberately set — nothing reads or displays it anywhere today. There's no CI/release pipeline yet and no public distribution has ever happened, so "release" doesn't map onto any existing external event — the only real, already-existing checkpoint in this project's workflow is a PR merge to `master`.
 
 ## Decision
 - **Semantic versioning (semver), stored in `package.json`'s existing `version` field** — the conventional choice, and `electron.app.getVersion()` reads it automatically, so no separate versioning mechanism is needed.
-- **Reset to `0.1.0`**, not kept at the inherited `1.0.0`. Semver's own convention reserves `0.x.y` for initial development ("anything may change at any time") and `1.0.0` for the first version considered stable/public — accurate here: the app has never been distributed to anyone outside the user, and packaging for that (epic 0053) hasn't happened. `1.0.0` is reserved for that point, not claimed early just because the scaffold template happened to start there.
+- **Reset to `0.1.0`**, not kept at the inherited `1.0.0`. Semver's own convention reserves `0.x.y` for initial development ("anything may change at any time") and `1.0.0` for the first version considered stable/public — accurate here: the app has never been distributed to anyone outside the user, and packaging for that hasn't happened. `1.0.0` is reserved for that point, not claimed early just because the scaffold template happened to start there.
 - **Bumped manually per PR merge to `master`** that changes user-facing behavior — patch for fixes/small polish, minor for a new feature/epic, no fixed cadence beyond that. No automated version-bump tooling; this project has no CI today; a manual bump as part of finishing an epic is a small, low-cost addition to a process the user already drives themselves (merging PRs).
-- **`1.0.0` reserved for the first real public/installable release** — ties naturally to epic 0053 landing, not to feature completeness. "MVP complete" (per `PROGRESS.md`) and "1.0.0" are treated as separate concepts on purpose: the former is a project-status label, the latter is a distribution milestone.
+- **`1.0.0` reserved for the first real public/installable release** — ties naturally to installable distribution landing, not to feature completeness. "MVP complete" (per `PROGRESS.md`) and "1.0.0" are treated as separate concepts on purpose: the former is a project-status label, the latter is a distribution milestone.
 
 ## Alternatives considered
 - **Keep `1.0.0` as-is.** Rejected — it was never deliberately chosen, and semver's own convention for "not yet publicly released" is 0.x, which this app genuinely is.
-- **Automated bumping (e.g. from commit count or git tags).** Rejected as unnecessary complexity — no CI exists to run it, and manual bumps at PR-merge time are cheap enough not to need automation yet. Worth revisiting once epic 0053's packaging pipeline exists.
+- **Automated bumping (e.g. from commit count or git tags).** Rejected as unnecessary complexity — no CI exists to run it, and manual bumps at PR-merge time are cheap enough not to need automation yet. Worth revisiting once a packaging pipeline exists.
 - **Date-based versioning (e.g. `2026.08.22`).** Rejected — semver communicates breaking-vs-additive-vs-fix intent, which is more useful for a tool with an on-disk file format (`.chd`) that needs its own compatibility story than a bare date would be.
 
 ## Consequences
-- `package.json`'s `version` is now `0.1.0`, and is the single source of truth — read via `app.getVersion()` in the main process, exposed to the renderer over IPC (`app:getVersion`) for the About screen (epic 0057) rather than duplicated as a separate constant.
-- Bumping is a manual step in the PR-merge workflow going forward, not enforced by tooling — worth automating once epic 0053 exists.
+- `package.json`'s `version` is now `0.1.0`, and is the single source of truth — read via `app.getVersion()` in the main process, exposed to the renderer over IPC (`app:getVersion`) for the About screen rather than duplicated as a separate constant.
+- Bumping is a manual step in the PR-merge workflow going forward, not enforced by tooling — worth automating once a packaging pipeline exists.

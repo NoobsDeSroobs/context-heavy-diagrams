@@ -4,7 +4,7 @@
 Accepted
 
 ## Context
-Epic [0002](../planning/epics/0002-resize-and-rotate.md) needs resize, rotate, and (folded in after epic 0001 testing) multiple connection points, all via a custom node component. React Flow computes edge-attachment points and resize-drag math against a node's *unrotated* bounding box — it has no built-in concept of rotation. Combining "has connection points" with "is rotatable" on the same node means edges would visually misattach whenever that node is rotated, since the math underneath doesn't rotate with the CSS transform.
+The resize/rotate work needs resize, rotate, and (folded in after early testing of the bare shell) multiple connection points, all via a custom node component. React Flow computes edge-attachment points and resize-drag math against a node's *unrotated* bounding box — it has no built-in concept of rotation. Combining "has connection points" with "is rotatable" on the same node means edges would visually misattach whenever that node is rotated, since the math underneath doesn't rotate with the CSS transform.
 
 ## Decision
 Two node types, not one general-purpose node:
@@ -25,5 +25,5 @@ No `'default'` type kept for backward compatibility with `examples/hello-world/d
 ## Consequences
 - `nodeTypes` on `<ReactFlow>` becomes `{ shape: ShapeNode, text: TextNode }` — no `default` entry.
 - `examples/hello-world/diagram.json` needs regenerating (was `type: "default"`).
-- Containers (epic 0004) will likely want a third node shape eventually, but that's out of scope here — presumed non-rotatable like `ShapeNode` when it's built, for the same structural reason.
-- Alignment guides / snap-to-grid or snap-to-shape (requested during this discussion, not in the original brief) is tracked as its own backlog item — see [epic 0011](../planning/epics/0011-alignment-and-snapping.md) — not bundled into this epic.
+- Containers will likely want a third node shape eventually, but that's out of scope here — presumed non-rotatable like `ShapeNode` when it's built, for the same structural reason.
+- Alignment guides / snap-to-grid or snap-to-shape (requested during this discussion, not in the original brief) is tracked as its own backlog item, not bundled into this work.

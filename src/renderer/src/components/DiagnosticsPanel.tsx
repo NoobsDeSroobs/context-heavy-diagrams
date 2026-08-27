@@ -6,9 +6,9 @@ interface DiagnosticsPanelProps {
 
 // Fixed right-side dock, same shell/toggle model as DetailsPanel/
 // RequiredTagsPanel — see ADR 0013. First use was required-tags backfill
-// notices (epic 0034/ADR 0022); the list was deliberately kept as generic
+// notices (ADR 0022); the list was deliberately kept as generic
 // text so a future, unrelated diagram-health check could reuse it without
-// a shape change — epic 0060 (legend-empty advisory) is the first of
+// a shape change — the legend-empty advisory is the first of
 // those, combined with the required-tags notices at Canvas.tsx's own
 // display layer (`displayedDiagnostics`), not inside this state at all.
 //

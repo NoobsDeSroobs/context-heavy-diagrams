@@ -22,7 +22,7 @@ interface LayerPanelProps {
 const TYPE_BADGE: Record<string, string> = { shape: 'S', container: 'C', text: 'T', line: 'L' }
 
 // Same UtilityDock shell as Highlights/Required tags/Diagnostics/Settings —
-// see ADR 0035, unlike epic 0037's legend panel this one is explicitly a
+// see ADR 0035; unlike the legend panel this one is explicitly a
 // big scrollable list, exactly what that dock already does well. No
 // catalog of its own: `rows` is a live projection of `nodes`' own zIndex,
 // nothing here is separately persisted.
@@ -38,8 +38,8 @@ export default function LayerPanel({
   // Where the dragged row would land, expressed as a slot *between* rows
   // (0 = above the first row, rows.length = below the last) — a visible
   // insertion line, not "drop onto row X," which left which side it'd
-  // land on as a hidden implementation detail. See epic 0043's follow-up
-  // feedback after the first version shipped.
+  // land on as a hidden implementation detail. Follow-up feedback after
+  // the first version shipped.
   const [dropIndex, setDropIndex] = useState<number | null>(null)
 
   // Drag-over/drop listen on the whole list, not per row — a per-row

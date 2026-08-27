@@ -4,7 +4,7 @@
 Accepted
 
 ## Context
-`<ReactFlow defaultEdgeOptions={{ type: 'labeled', markerEnd: {...} }}>` (`Canvas.tsx`) already governs what a freshly drawn edge looks like, but it's hardcoded — not a user-adjustable setting, and not shown anywhere. [Epic 0061](../planning/epics/0061-toolbar-default-edge-style-and-filename-display.md) asked for a real, toolbar-visible control, closer to how drawing tools persistently show a "current pen style" indicator than a setting buried in a dialog.
+`<ReactFlow defaultEdgeOptions={{ type: 'labeled', markerEnd: {...} }}>` (`Canvas.tsx`) already governs what a freshly drawn edge looks like, but it's hardcoded — not a user-adjustable setting, and not shown anywhere. A real, toolbar-visible control was asked for — closer to how drawing tools persistently show a "current pen style" indicator than a setting buried in a dialog.
 
 ## Decision
 - **Represented as a full `EdgeStyle` (the same shape `StylePicker`'s presets already produce, ADR 0010), stored as `AppSettings.defaultEdgeStyle`** — not a narrower "just color" or "just line style" setting. Reusing the exact schema an edge's own `data.style` already uses means no new concept: this setting *is* "the raw style fields a new edge starts with," same relationship ADR 0010 already established between a preset and an edge's stored style.

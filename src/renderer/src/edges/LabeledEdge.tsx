@@ -43,14 +43,13 @@ const DASH_ARRAY: Record<Exclude<EdgeStyle['lineStyle'], undefined>, string | un
 // when nothing overrides it.
 const DEFAULT_STROKE_WIDTH = 1
 // Additive, not a replacement value — composes with the highlight-override
-// width (epic 0026/ADR 0025) instead of competing with it, so a
-// highlighted *and* selected edge just gets both effects layered. Epic
-// 0046.
+// width (ADR 0025) instead of competing with it, so a highlighted *and*
+// selected edge just gets both effects layered.
 const SELECTED_STROKE_WIDTH_DELTA = 2
 const BEND_POINT_HANDLE_SIZE = 10
 
-// Point at an arbitrary fraction of the path's arc length — epic 0045,
-// also used for the plain midpoint (ratio 0.5) since epic 0047, so a label
+// Point at an arbitrary fraction of the path's arc length (ADR 0045),
+// also used for the plain midpoint (ratio 0.5), so a label
 // stays centered on the *whole* rendered path, straight lead-in segments
 // included, not just its curved middle portion. SVG path geometry doesn't
 // depend on DOM attachment or layout, so a throwaway, never-inserted
@@ -66,8 +65,7 @@ function pointAtRatio(pathD: string, ratio: number): { x: number; y: number } {
 // Outward from the node at each side — the direction an edge already
 // travels leaving/entering a handle. Used both to place the bezier
 // routing's straight lead-in/out (below) and as every point's fixed
-// tangent direction under catmull-rom routing (epic 0032; see
-// bendablePath.ts's PathPoint).
+// tangent direction under catmull-rom routing (see bendablePath.ts's PathPoint).
 const OUTWARD_DIRECTION: Record<Position, { x: number; y: number }> = {
   [Position.Top]: { x: 0, y: -1 },
   [Position.Right]: { x: 1, y: 0 },
@@ -76,7 +74,7 @@ const OUTWARD_DIRECTION: Record<Position, { x: number; y: number }> = {
 }
 
 // Straight lead-in/out before curving — the global edgeStraightSegmentLength
-// setting (settings.ts/SettingsPanel, ADR 0032), epic 0047. Only meaningful
+// setting (settings.ts/SettingsPanel, ADR 0032). Only meaningful
 // for the two "curvy" routing styles (bezier, catmull-rom); straight/step/
 // smoothstep already leave each side perpendicular by construction, with no
 // ambiguity to disambiguate. getBezierPath has no concept of a lead-in
@@ -170,10 +168,10 @@ function LabeledEdge({
   const bendPointsVisible = Boolean(data?.hovered) || selected || draggingPointIndex !== null
   const bendPoints = (data?.points as LinePoint[] | undefined) ?? []
 
-  // Routing (epic 0032): 'straight'/'step'/'smoothstep' are React Flow's
+  // Routing (ADR 0057): 'straight'/'step'/'smoothstep' are React Flow's
   // own built-in path shapes, wired straight through with no math of our
-  // own. 'catmullRom' reuses bendablePath.ts (originally epic 0064's
-  // freeform-line curve, ADR 0050) with this edge's own manual bend points.
+  // own. 'catmullRom' reuses bendablePath.ts (originally the freeform-line
+  // curve, ADR 0050) with this edge's own manual bend points.
   // Absent means today's only historical behavior, a plain bezier.
   const edgePath = useMemo(() => {
     switch (routingStyle) {
@@ -262,7 +260,7 @@ function LabeledEdge({
     // 0026/ADR 0025. Width is handled by baseStrokeWidth above instead of
     // here, so it can still be added to when also selected.
     ...(highlightMatches.length === 1 ? { stroke: highlightMatches[0].color } : {}),
-    // Search-result indicator (epic 0062/ADR 0062) — a glow via filter
+    // Search-result indicator (ADR 0062) — a glow via filter
     // rather than a stroke/outline override, specifically so it coexists
     // with whatever highlightMatches already did above instead of fighting
     // it for the same `stroke` property. Edges have no CSS `outline`
@@ -282,13 +280,13 @@ function LabeledEdge({
     // once its handle-priority worked correctly.
     //
     // A CSS var (set once on the <ReactFlow> wrapper in Canvas.tsx), not a
-    // DiagramContext field — epic 0067: this value only ever matters to
+    // DiagramContext field (ADR 0056): this value only ever matters to
     // whichever edge is currently selected, so reading it via Context would
     // re-render every edge whenever it changes, selected or not. The
     // browser resolves the var directly; no re-render needed even for the
     // selected edge itself.
     ...(selected ? { stroke: 'var(--selected-edge-highlight-color)' } : {}),
-    // "Isolate" (epic 0063/ADR 0063) — layered last, same as every other
+    // "Isolate" (ADR 0063) — layered last, same as every other
     // override here; opacity doesn't conflict with anything above it so
     // ordering only matters for readability, not correctness.
     ...isolateStyle(id, isolateActive, searchMatchIds, isolateOpacity)
@@ -399,7 +397,7 @@ function LabeledEdge({
           // Offset above the label point, same anchor coordinates — an
           // edge has no "corner" the way a node does, so this is the
           // closest equivalent to ShapeNode/ContainerNode's chip
-          // placement (epic 0026/ADR 0025).
+          // placement (ADR 0025).
           <div
             className="edge-highlight-chips"
             style={{

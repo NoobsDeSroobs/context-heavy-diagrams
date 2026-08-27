@@ -33,13 +33,13 @@ function useDraft(value: string): [string, (v: string) => void, () => void, () =
 }
 
 // First panel to hold a *pure* diagram-level Configuration value with no
-// existing panel of its own to live in (epic 0073/ADR 0052) — the same
+// existing panel of its own to live in (ADR 0067; ADR 0052) — the same
 // tier RequiredTags/Highlights/Legend/Gravity presets already occupy, but
 // none of those were the right fit for this one field. Deliberately
 // scoped to just this field for now; folding those other panels in here
 // too is a real UI-architecture refactor (each has its own toggle state
 // cross-referencing several others) logged separately, not attempted as
-// a drive-by here — see epic 0073's own Notes.
+// a drive-by here.
 export default function DiagramConfigPanel({
   maxConnectionPointsPerSide,
   settingsDefault,

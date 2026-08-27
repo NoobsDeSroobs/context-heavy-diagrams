@@ -146,8 +146,8 @@ function needsLineStyleFix(n: Node): boolean {
 }
 
 // Locked (data.locked, see docs/file-format.md) maps onto React Flow's own
-// native draggable/deletable per-node overrides; zIndex (epic 0043/ADR
-// 0035) likewise onto React Flow's own field — selectable is deliberately
+// native draggable/deletable per-node overrides; zIndex (ADR 0035)
+// likewise onto React Flow's own field — selectable is deliberately
 // left alone (still true), since the whole point of `locked` was blocking
 // accidental drags/deletes while keeping selection/highlighting working
 // normally.
@@ -247,7 +247,7 @@ const SIDE_OUTWARD_DIRECTION: Record<ConnectionPointSide, { x: number; y: number
 
 // An edge endpoint's resolved absolute position and outward direction —
 // used only by "Add point here" below to find the nearest segment on the
-// same curve the edge actually renders with (epic 0032). React Flow
+// same curve the edge actually renders with (ADR 0057). React Flow
 // resolves this internally for rendering, but doesn't expose it as a
 // plain computable function, so it's derived directly from the same
 // side+offset data ConnectionHandles itself renders from
@@ -321,7 +321,7 @@ function applyZIndexBackfill(nodes: Node[]): Node[] {
 }
 
 // Same data.zIndex extraction as applyZIndexBackfill, for a freshly-created
-// node — see epic 0043/ADR 0035. Always scopes "above everything" to just
+// node — see ADR 0035. Always scopes "above everything" to just
 // that node's own type/tier (CONTAINER_BASE/SHAPE_BASE/TEXT_BASE), so a
 // brand new node lands solidly within its tier — behind existing shapes if
 // it's a container, above existing shapes if it's text, etc. — matching
@@ -359,7 +359,7 @@ function removeContainerReparenting(nodes: Node[], containerId: string): Node[] 
   return sortNodesForHierarchy(updated)
 }
 
-// Undo/redo — see epic 0006. Deliberately just {nodes, edges}, not
+// Undo/redo — see ADR 0018. Deliberately just {nodes, edges}, not
 // viewport: panning/zooming isn't a content edit worth undoing.
 interface HistorySnapshot {
   nodes: Node[]
@@ -481,7 +481,7 @@ function fromDiagramFile(diagram: DiagramFile): {
     // docs/file-format.md's parentId entry. applyZIndexBackfill runs on
     // that *final* order, not the raw file order, so "array position"
     // means the same thing it does for today's actual rendering — see
-    // epic 0043/ADR 0035.
+    // ADR 0035.
     nodes: applyZIndexBackfill(
       sortNodesForHierarchy(
         diagram.nodes.map((n) => ({
@@ -548,7 +548,7 @@ function seedMetadata(
 
 function isValidForTag(value: JsonValue, def: RequiredTagDefinition): boolean {
   // null is always valid, regardless of allowedValues — the implicit
-  // "None" value every required tag carries (epic 0058/ADR 0046), without
+  // "None" value every required tag carries (see ADR 0046), without
   // needing to be added to allowedValues itself. Without this, a
   // deliberately-None element would get silently reset back to a real
   // defaultValue on the very next sync pass — exactly backwards from the
@@ -631,7 +631,7 @@ function CanvasInner(): React.JSX.Element {
   const [edges, setEdges, onEdgesChangeBase] = useEdgesState<Edge>([])
   const [currentPath, setCurrentPath] = useState<string | null>(null)
   // This window's crash-recovery identity before it's ever been saved —
-  // see epic 0020/ADR 0040. Assigned by main at window creation, carried
+  // see ADR 0040. Assigned by main at window creation, carried
   // via ?session= the same way ?path= already is; stable for the whole
   // renderer lifetime (unlike currentPath, never reassigned — once a
   // window has a path, recovery keys off that instead, but the session id
@@ -639,7 +639,7 @@ function CanvasInner(): React.JSX.Element {
   const sessionIdRef = useRef(
     new URLSearchParams(window.location.search).get('session') ?? crypto.randomUUID()
   )
-  // Unsaved-changes tracking (epic 0020/ADR 0040) — set directly at every
+  // Unsaved-changes tracking (see ADR 0040) — set directly at every
   // site that mutates something toDiagramFile() actually serializes, not
   // derived from the undo/redo stack (which only covers nodes/edges, not
   // requiredTags/highlights/legend/detailsDrafts — see the ADR for why
@@ -657,30 +657,30 @@ function CanvasInner(): React.JSX.Element {
   // finishes).
   const [showSavedFlash, setShowSavedFlash] = useState(false)
   const savedFlashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  // Diagram-level metadata/requiredTags (epic 0034/ADR 0022) — analogous to
+  // Diagram-level metadata/requiredTags (ADR 0022) — analogous to
   // currentPath: file-scoped state with no React Flow home of its own,
   // reset on every load, carried into every save via toDiagramFile.
   const [diagramMetadata, setDiagramMetadata] = useState<Record<string, JsonValue>>({})
   const [requiredTags, setRequiredTags] = useState<RequiredTagDefinition[]>([])
-  // Highlight catalog (epic 0026/ADR 0025) — persisted, same file-scoped
+  // Highlight catalog (ADR 0025) — persisted, same file-scoped
   // treatment as diagramMetadata/requiredTags above. Which highlights are
   // currently *enabled* is a separate, deliberately volatile Set below —
   // reset on every load, never included in toDiagramFile's payload.
   const [highlights, setHighlights] = useState<HighlightDefinition[]>([])
   const [enabledHighlightIds, setEnabledHighlightIds] = useState<Set<string>>(new Set())
-  // Legend catalog (epic 0037/ADR 0033) — same file-scoped, persisted
+  // Legend catalog (ADR 0033) — same file-scoped, persisted
   // treatment as highlights above. Unlike highlights, there's no per-entry
   // enabled state; the whole panel's shown/hidden state below is what's
   // session-local instead.
   const [legend, setLegend] = useState<LegendEntry[]>([])
   const [legendPanelOpen, setLegendPanelOpen] = useState(false)
-  // Line bend preset catalog (epic 0064/ADR 0050) — same file-scoped,
+  // Line bend preset catalog (ADR 0050) — same file-scoped,
   // persisted treatment as highlights/legend above. Raw/possibly-empty;
   // effectiveGravityPresets resolves "empty" to this app's own built-in
   // four wherever it's actually consumed (DiagramContext's own value below).
   const [gravityPresets, setGravityPresets] = useState<GravityPreset[]>([])
   const [gravityPresetsPanelOpen, setGravityPresetsPanelOpen] = useState(false)
-  // Diagram-level override for max connection points per side (epic 0073/
+  // Diagram-level override for max connection points per side (ADR 0067;
   // ADR 0052) — undefined means "not overridden," same file-scoped/reset-
   // on-load treatment as gravityPresets above.
   const [diagramMaxConnectionPointsPerSide, setDiagramMaxConnectionPointsPerSide] = useState<
@@ -690,20 +690,20 @@ function CanvasInner(): React.JSX.Element {
   // Anchors the floating panel next to whichever <ControlButton> opened it —
   // same convention as iconPicker/colorPicker/linePicker's own anchorRect.
   const [legendPanelAnchor, setLegendPanelAnchor] = useState<DOMRect | null>(null)
-  // Layer panel (epic 0043/ADR 0035) — same UtilityDock family as
+  // Layer panel (ADR 0035) — same UtilityDock family as
   // Highlights/Required tags/Diagnostics. No catalog of its own: it reads
   // straight off `nodes`' own zIndex, there's nothing separate to persist.
   const [layerPanelOpen, setLayerPanelOpen] = useState(false)
   // Which node the panel currently points at — an "entity highlight," see
   // DiagramContext's own comment on this field. Session-only, reset on load.
   const [entityHighlightNodeId, setEntityHighlightNodeId] = useState<string | null>(null)
-  // Reference images (epic 0090/ADR 0069). `referencesPanelOpen` is the
+  // Reference images (ADR 0069). `referencesPanelOpen` is the
   // diagram-wide inventory View (same UtilityDock family as Layers).
   // `referenceWindows` is the set of open floating viewer windows — pure
   // session state, one entry per (shape, image path), gone on reload.
   const [referencesPanelOpen, setReferencesPanelOpen] = useState(false)
   const [referenceWindows, setReferenceWindows] = useState<{ nodeId: string; path: string }[]>([])
-  // Which edge the pointer is currently over — epic 0032. A catmull-rom
+  // Which edge the pointer is currently over — see ADR 0057. A catmull-rom
   // edge's own bend-point handles only render while their edge is hovered
   // (or selected, or a point is actively being dragged — see
   // LabeledEdge.tsx), matching how a 'line' node's own points are hover-
@@ -738,7 +738,7 @@ function CanvasInner(): React.JSX.Element {
   const [settingsPanelOpen, setSettingsPanelOpen] = useState(false)
   const [stylePalettePanelOpen, setStylePalettePanelOpen] = useState(false)
   const [alignDistributePanelOpen, setAlignDistributePanelOpen] = useState(false)
-  // Search overlay (epic 0062/ADR 0062) — Ctrl+F. All session-only, reset
+  // Search overlay (ADR 0062) — Ctrl+F. All session-only, reset
   // on load like every other panel's open/enabled state above. searchRun
   // distinguishes "haven't searched yet" from "searched, zero results";
   // matchOrder is the stable id ordering next/prev cycles through
@@ -751,14 +751,14 @@ function CanvasInner(): React.JSX.Element {
   const [searchMatchIds, setSearchMatchIds] = useState<Set<string>>(new Set())
   const [searchMatchOrder, setSearchMatchOrder] = useState<string[]>([])
   const [searchMatchCursor, setSearchMatchCursor] = useState(0)
-  // "Isolate" (epic 0063/ADR 0063) — search-driven only, per the user's
+  // "Isolate" (ADR 0063) — search-driven only, per the user's
   // own call: a separate explicit toggle next to Search, not folded into
   // running a search itself, so turning it on/off doesn't require
   // re-searching. Always cleared alongside search results (see
   // clearSearchResults below) since it's meaningless without a live match
   // set to isolate down to.
   const [isolateActive, setIsolateActive] = useState(false)
-  // Persona switch (epic 0060, first step) — akin to FreeCAD's workbench
+  // Persona switch (see ADR 0055) — akin to FreeCAD's workbench
   // switcher/Affinity's persona tabs: swaps the entire main view, not a
   // split or overlay. Render-only prototype for now (ThreatMatrixView),
   // purely to validate whether a mode swap like this feels right at all —
@@ -769,7 +769,7 @@ function CanvasInner(): React.JSX.Element {
   const [aboutDialogOpen, setAboutDialogOpen] = useState(false)
   const [exportPngDialogOpen, setExportPngDialogOpen] = useState(false)
   const [exportPngEffectiveColorHex, setExportPngEffectiveColorHex] = useState('#ffffff')
-  // Toolbar's own "current pen style" swatch (epic 0061/ADR 0045) — reuses
+  // Toolbar's own "current pen style" swatch (ADR 0045) — reuses
   // StylePicker (ADR 0010) unchanged, same anchorRect convention as
   // linePicker above, just targeting settings.defaultEdgeStyle instead of
   // one edge's data.style.
@@ -793,23 +793,23 @@ function CanvasInner(): React.JSX.Element {
     anchorRect: DOMRect
   } | null>(null)
   const [linePicker, setLinePicker] = useState<{ edgeId: string; anchorRect: DOMRect } | null>(null)
-  // Drag-time alignment guides (epic 0011) — flow-space positions of the
+  // Drag-time alignment guides (ADR 0019) — flow-space positions of the
   // guide line(s) currently matched, or null when nothing's being dragged/
   // nothing's in snap range. Set from onNodeDrag, cleared on drag stop.
   const [alignmentGuides, setAlignmentGuides] = useState<{ x: number[]; y: number[] } | null>(null)
   const [detailsPanelNodeId, setDetailsPanelNodeId] = useState<string | null>(null)
   // Editing a node's details doesn't write to disk immediately — it's just
-  // draft state here, flushed as part of the main save flow. See epic 0008.
+  // draft state here, flushed as part of the main save flow.
   const [detailsDrafts, setDetailsDrafts] = useState<Record<string, string>>({})
   const rfInstance = useReactFlow()
   const updateNodeInternals = useUpdateNodeInternals()
-  // Scopes the PNG export (epic 0010) capture to this window's own
+  // Scopes the PNG export (ADR 0051) capture to this window's own
   // .react-flow__viewport rather than a bare document-wide query — no
   // functional difference today (one ReactFlow per window), just avoids
   // relying on that staying true.
   const flowWrapperRef = useRef<HTMLDivElement>(null)
 
-  // Undo/redo history — see epic 0006. Explicit calls at each real mutation
+  // Undo/redo history — see ADR 0018. Explicit calls at each real mutation
   // site (pushSnapshot before mutating), not a useEffect reacting to
   // nodes/edges changing — an earlier version tried the effect approach and
   // it broke under React StrictMode's dev-mode double-invoke: the effect's
@@ -829,7 +829,7 @@ function CanvasInner(): React.JSX.Element {
 
   // Which node/handle a connection drag started from — set in onConnectStart,
   // read (and cleared) in onConnectEnd to spawn a new shape when the drag is
-  // released over empty canvas instead of a valid handle. See epic 0014.
+  // released over empty canvas instead of a valid handle. See ADR 0015.
   const connectStartRef = useRef<{ nodeId: string; handleId: string | null } | null>(null)
 
   // React Flow's own EdgeUpdateAnchors implementation fires BOTH
@@ -838,8 +838,8 @@ function CanvasInner(): React.JSX.Element {
   // @xyflow/react's source: its internal `_onConnectStart` composite calls
   // `onReconnectStart?.(...)` immediately before `onConnectStart?.(...)`,
   // synchronously, every time). Without this flag, a reconnect dropped in
-  // empty space fired both onConnectEnd (epic 0014's logic) *and*
-  // onReconnectEnd (epic 0033's) independently, each spawning its own
+  // empty space fired both onConnectEnd (the drag-to-empty-space logic)
+  // *and* onReconnectEnd (the reconnection logic) independently, each spawning its own
   // anchor+edge — the exact "two edges end up connected to the anchor"
   // bug the user reported. Set in onReconnectStart (which always runs
   // first within that composite), read by onConnectStart to skip arming
@@ -1033,15 +1033,14 @@ function CanvasInner(): React.JSX.Element {
     setContextMenu({ x, y, items })
   }, [])
 
-  // Epic 0082 — replaces the current selection with every element of one
+  // See ADR 0065 — replaces the current selection with every element of one
   // type, rather than shift-clicking each one individually. Exposed via
   // each type's own right-click context menu (ShapeNode/ContainerNode/
   // TextNode/LineNode/onEdgeContextMenu below) rather than a top menu-bar
-  // item — MenuBar has no submenu support yet (see epic 0091's own
-  // notes), and a per-type context menu entry is already exactly where
-  // the user's own example ("select all edges") pointed. Whole-type only
-  // for now, no finer filtering (e.g. "edges with this routing style") —
-  // logged as an open question in the epic doc, not resolved here.
+  // item — MenuBar has no submenu support yet, and a per-type context menu
+  // entry is already exactly where the user's own example ("select all
+  // edges") pointed. Whole-type only for now, no finer filtering (e.g.
+  // "edges with this routing style") — left as an open question, not resolved here.
   // Declared here (early) rather than alongside selectAll/deselectAll
   // further down — onEdgeContextMenu below needs it, and a useCallback's
   // own deps array is evaluated immediately at render time, unlike the
@@ -1150,7 +1149,7 @@ function CanvasInner(): React.JSX.Element {
             // to target), so the new point is trivially the only entry —
             // no nearest-segment lookup needed. Right-clicking any edge to
             // add a point is what actually opts it into catmull-rom
-            // routing in the first place (epic 0032) — no prior trip to
+            // routing in the first place (ADR 0057) — no prior trip to
             // the property panel required.
             let newPoints: LinePoint[]
             if (routingStyle !== 'catmullRom' || points.length === 0) {
@@ -1215,13 +1214,13 @@ function CanvasInner(): React.JSX.Element {
       setDetailsPanelNodeId(nodeId)
       // No-existing-file (or nothing saved yet to resolve one against) is
       // seeded synchronously right here rather than in the effect below
-      // (epic 0028) — nothing asynchronous happens in this branch, so
+      // — nothing asynchronous happens in this branch, so
       // there's no reason to route it through an effect at all. The
       // functional-updater guard (not a closure read of detailsDrafts)
       // keeps this callback's own identity stable regardless of how often
       // detailsDrafts itself changes (every keystroke while editing) —
       // matters because this callback is threaded through DiagramContext's
-      // memoized value (epic 0067/ADR 0056).
+      // memoized value (ADR 0056).
       const node = nodes.find((n) => n.id === nodeId)
       const existingPath = typeof node?.data?.details === 'string' ? node.data.details : undefined
       if (!existingPath || !currentPath) {
@@ -1357,7 +1356,7 @@ function CanvasInner(): React.JSX.Element {
     setReferencesPanelOpen((open) => !open)
   }, [])
 
-  // --- Reference images (epic 0090/ADR 0069) ---
+  // --- Reference images (ADR 0069) ---
   // The floating viewer windows are pure session state; the paths on
   // node.data.references are the only persisted part.
   const openReferenceWindow = useCallback((nodeId: string, path: string) => {
@@ -1428,8 +1427,7 @@ function CanvasInner(): React.JSX.Element {
     (nodeId: string) => {
       // Read live node data off the React Flow instance rather than closing
       // over `nodes` — keeps this callback stable so it doesn't bust the
-      // memoized DiagramContext value on every node change (epic 0067/ADR
-      // 0056).
+      // memoized DiagramContext value on every node change (ADR 0056).
       const node = rfInstance.getNode(nodeId)
       const refs = Array.isArray(node?.data?.references) ? (node.data.references as string[]) : []
       if (refs.length === 0) {
@@ -1531,7 +1529,7 @@ function CanvasInner(): React.JSX.Element {
   }, [])
 
   // Bulk set (not toggle) — used by a group's tri-state "select all"
-  // checkbox, epic 0036/ADR 0026: enabling/disabling every member at
+  // checkbox, ADR 0026: enabling/disabling every member at
   // once needs a uniform target state, not per-id toggling.
   const toggleHighlightGroup = useCallback((ids: string[], enable: boolean) => {
     setEnabledHighlightIds((prev) => {
@@ -1598,7 +1596,7 @@ function CanvasInner(): React.JSX.Element {
   }, [nodes, edges])
 
   // "Add group" and each existing group's resync control both call this
-  // with the same key — epic 0036/ADR 0026. Reconciles against usedTags
+  // with the same key — ADR 0026. Reconciles against usedTags
   // (already a live scan of every node/edge's metadata), not a separate
   // scan: a value with no entry gets a new white one, an entry for a
   // value nothing carries anymore is dropped, everything else untouched.
@@ -1625,9 +1623,9 @@ function CanvasInner(): React.JSX.Element {
     [highlights, enabledHighlightIds]
   )
 
-  // Search overlay (epic 0062/ADR 0062). Selects exactly the one matched
+  // Search overlay (ADR 0062). Selects exactly the one matched
   // element and frames the viewport on it — the "fit-to-node/selection"
-  // piece folded into this epic's scope. An edge has no bounding box of
+  // piece folded into search's scope. An edge has no bounding box of
   // its own to fit on, so it fits on its two endpoint nodes instead.
   const focusSearchMatch = useCallback(
     (id: string) => {
@@ -1651,7 +1649,7 @@ function CanvasInner(): React.JSX.Element {
     [edges, setNodes, setEdges, rfInstance]
   )
 
-  // Shared by both trigger buttons (epic 0063/ADR 0063 split Search and
+  // Shared by both trigger buttons (ADR 0063 split Search and
   // Isolate into two independent actions over the same underlying match
   // computation — only what happens *after* matching differs). Free-
   // text/tag matching is synchronous over the in-memory nodes/edges; deep
@@ -1714,7 +1712,7 @@ function CanvasInner(): React.JSX.Element {
     if (order.length > 0) focusSearchMatch(order[0])
   }, [computeAndSetMatches, focusSearchMatch])
 
-  // Isolate's own viewport action (epic 0063/ADR 0063) — frames every
+  // Isolate's own viewport action (ADR 0063) — frames every
   // match at once rather than jumping to one, the whole point of the
   // "scope the view down to a working set" framing. rfInstance.fitView
   // already computes the union bounding box for however many node ids
@@ -1769,7 +1767,7 @@ function CanvasInner(): React.JSX.Element {
     setIsolateActive(false)
   }, [])
 
-  // Isolate is its own independent trigger (epic 0063/ADR 0063 revised
+  // Isolate is its own independent trigger (ADR 0063, revised
   // after the user's follow-up: available from the start, not gated on
   // Search having already run) — when off, it runs the same matching
   // Search does against whatever query is currently typed, then frames
@@ -1871,7 +1869,7 @@ function CanvasInner(): React.JSX.Element {
 
   // Seed the draft from an existing details file the first time a node's
   // details panel is opened this session — the no-existing-file case is
-  // handled synchronously in openDetailsPanel itself (epic 0028); this
+  // handled synchronously in openDetailsPanel itself; this
   // effect only ever does real I/O (reading the file), which is why it's
   // still an effect rather than folded into that callback too.
   useEffect(() => {
@@ -2008,7 +2006,7 @@ function CanvasInner(): React.JSX.Element {
           const width = type === 'shape' ? SHAPE_MIN_WIDTH * 2 : CONTAINER_MIN_WIDTH * 2
           const height = type === 'shape' ? SHAPE_MIN_HEIGHT * 2 : CONTAINER_MIN_HEIGHT * 1.5
           const metadata = seedMetadata(requiredTags)
-          // An anchor never has a zIndex (epic 0043/ADR 0035) — resolving it
+          // An anchor never has a zIndex (ADR 0035) — resolving it
           // into a real shape/container needs one now, same default as
           // addShapeNode/addContainerNode.
           const zIndex = nextZIndex(nds, type)
@@ -2039,7 +2037,7 @@ function CanvasInner(): React.JSX.Element {
   // confirmed as genuine empty canvas (via isVoidDrop): spawn an AnchorNode
   // there, let the caller wire whichever edge end needs it (the one part
   // that differs between "brand-new edge" and "existing edge's endpoint"),
-  // and offer the same Shape/Container popup epic 0014 already established.
+  // and offer the same Shape/Container popup drag-to-empty-space already established.
   // Dismissing the popup (click elsewhere/Escape, same generic ContextMenu
   // every other popup in this file uses) just leaves the anchor as a small
   // draggable dot — no default type is assumed.
@@ -2380,7 +2378,7 @@ function CanvasInner(): React.JSX.Element {
     ])
   }, [setNodes, pushSnapshot, spawnPosition, requiredTags, settings.defaultStyles.container])
 
-  // A default 2-point horizontal line — see epic 0064/ADR 0050. Points are
+  // A default 2-point horizontal line — see ADR 0050. Points are
   // node-local (relative to position), padded the same way normalizeLineBounds
   // in LineNode.tsx keeps them after any edit, so a freshly spawned line
   // and a freshly edited one look consistent.
@@ -2414,7 +2412,7 @@ function CanvasInner(): React.JSX.Element {
     ])
   }, [setNodes, pushSnapshot, spawnPosition])
 
-  // Alignment guides + snap-to-shape while dragging — see epic 0011.
+  // Alignment guides + snap-to-shape while dragging — see ADR 0019.
   // Shared by onNodeDrag (live, every tick) and onNodeDragStop (once more
   // on release — see its own comment for why that second call is
   // necessary, not redundant). Snap is computed from the lead dragged node
@@ -2612,10 +2610,10 @@ function CanvasInner(): React.JSX.Element {
   }, [setNodes, setEdges])
 
   // No clipboard involved (deliberately simpler than real copy/paste — see
-  // epic 0025), just clones selected nodes in place with a small offset and
+  // ADR 0049), just clones selected nodes in place with a small offset and
   // selects the clones so they're immediately draggable. Edges between
-  // duplicated nodes are not duplicated — same reasoning as epic 0025's
-  // notes: that's real clipboard-shaped complexity this shortcut isn't
+  // duplicated nodes are not duplicated — same reasoning as the clipboard
+  // work: that's real clipboard-shaped complexity this shortcut isn't
   // trying to take on.
   const duplicateSelected = useCallback(() => {
     if (!nodes.some((n) => n.selected)) return
@@ -2696,7 +2694,7 @@ function CanvasInner(): React.JSX.Element {
   // text actually changes (a new copy, or something copied elsewhere).
   const lastPasteRef = useRef<{ text: string; count: number } | null>(null)
 
-  // Real clipboard copy/paste — epic 0025/ADR 0049. Copy is a pure read (no
+  // Real clipboard copy/paste — see ADR 0049. Copy is a pure read (no
   // undo snapshot needed, diagram state doesn't change); paste/cut do.
   const copySelection = useCallback(() => {
     const selected = nodes.filter((n) => n.selected)
@@ -2749,7 +2747,7 @@ function CanvasInner(): React.JSX.Element {
     rfInstance.deleteElements({ nodes: selectedNodes, edges: edges.filter((e) => e.selected) })
   }, [nodes, edges, copySelection, rfInstance])
 
-  // Property panel writes (epic 0003) — bypass onNodesChange/onEdgesChange
+  // Property panel writes — bypass onNodesChange/onEdgesChange
   // entirely (direct setNodes/setEdges), same as IconPicker's onPick already
   // does. Undo grouping is the caller's job: PropertyPanel brackets each
   // field's edit session with beginContinuousEdit/endContinuousEdit (color/
@@ -2793,7 +2791,7 @@ function CanvasInner(): React.JSX.Element {
     [setEdges]
   )
 
-  // Layer panel drag-reorder (epic 0043/ADR 0035) — a discrete action, not
+  // Layer panel drag-reorder (ADR 0035) — a discrete action, not
   // a continuous drag session, so this snapshots itself rather than
   // relying on a caller's beginContinuousEdit/endContinuousEdit pair (same
   // "snapshot right before the one-shot mutation" treatment as the icon
@@ -2821,7 +2819,7 @@ function CanvasInner(): React.JSX.Element {
     [setNodes, pushSnapshot]
   )
 
-  // Metadata section writes (epic 0034) — same bypass-onNodesChange pattern
+  // Metadata section writes (ADR 0022) — same bypass-onNodesChange pattern
   // as updateNodeStyle/updateEdgeStyle above; undo grouping is MetadataSection's
   // own job (it calls pushSnapshot before each commit), not duplicated here.
   const updateNodeMetadata = useCallback(
@@ -2842,7 +2840,7 @@ function CanvasInner(): React.JSX.Element {
     [setEdges]
   )
 
-  // Connection point count field (epic 0039/ADR 0036) — a discrete,
+  // Connection point count field (ADR 0036) — a discrete,
   // structural action rather than a style patch: it can both reposition
   // and delete/create points on the target node, and reassign edges off
   // any point it removes. `totalCount` is the side's whole point count,
@@ -2921,9 +2919,9 @@ function CanvasInner(): React.JSX.Element {
   // data.details updated to point at them — must happen before the main
   // diagram.chd write so that write reflects the new references. Also
   // keeps every *other* existing detail file's name in sync with its
-  // element's current label (epic 0087), even for a node whose draft was
+  // element's current label (ADR 0060), even for a node whose draft was
   // never opened this session — this is what makes a relabel eventually
-  // rename its file, and also transparently migrates any pre-0087
+  // rename its file, and also transparently migrates any old
   // `<type>-<uuid>.md` file the first time its diagram is saved again, with
   // no separate one-off migration step needed.
   const flushDetailsDrafts = useCallback(
@@ -3042,7 +3040,7 @@ function CanvasInner(): React.JSX.Element {
   const handleSave = useCallback(() => performSave(false), [performSave])
   const handleSaveAs = useCallback(() => performSave(true), [performSave])
 
-  // PNG export (epic 0010/ADR 0051). Selection outlines and resize/
+  // PNG export (ADR 0051). Selection outlines and resize/
   // connection-point handles render conditionally inside each node's own
   // DOM based on node.selected — deselecting everything first (flushSync
   // so the DOM actually updates before html-to-image reads it, since a
@@ -3144,8 +3142,8 @@ function CanvasInner(): React.JSX.Element {
       // ResizeObserver and reports it back as a 'dimensions' NodeChange
       // with resizing left undefined — indistinguishable, by shape alone,
       // from onNodesChange's own "discrete edit" classification below for
-      // a scripted dimension change. Harmless before epic 0020 (just an
-      // extra no-op undo entry), but now that pushSnapshot also marks the
+      // a scripted dimension change. Harmless before dirty-tracking existed
+      // (just an extra no-op undo entry), but now that pushSnapshot also marks the
       // diagram dirty, that same auto-measurement pass falsely dirtied
       // every single load. Suppressed for a short window after any load.
       suppressAutoMeasureUntilRef.current = Date.now() + 500
@@ -3228,7 +3226,7 @@ function CanvasInner(): React.JSX.Element {
       .openDiagramAtPath(path)
       .then(async (diagram) => {
         loadDiagramIntoCanvas(path, diagram)
-        // Crash recovery (epic 0020/ADR 0040) — a snapshot newer than the
+        // Crash recovery (ADR 0040) — a snapshot newer than the
         // real file means the last session ended without saving (crash or
         // force-quit). Prompted, not silently preferred, so a stale
         // recovery snapshot can never clobber a real out-of-app edit.
@@ -3264,7 +3262,7 @@ function CanvasInner(): React.JSX.Element {
     })
   }, [loadDiagramIntoCanvas, markDirty])
 
-  // Periodic autosave (epic 0020/ADR 0040) — only writes while isDirty, no
+  // Periodic autosave (ADR 0040) — only writes while isDirty, no
   // point re-snapshotting unchanged state. Refs, not effect deps, carry the
   // latest values into the interval callback: re-creating the interval on
   // every nodes/edges change (which is most renders) would mean it almost
@@ -3323,7 +3321,7 @@ function CanvasInner(): React.JSX.Element {
   }, [rfInstance])
 
   // Real OS window close (close button, Alt+F4) — main intercepts it and
-  // asks the renderer whether it's safe to proceed (epic 0020/ADR 0040).
+  // asks the renderer whether it's safe to proceed (ADR 0040).
   // A clean window approves immediately; a dirty one drives the native
   // Save/Discard/Cancel dialog, reusing this window's own existing save
   // flow (performSave) rather than duplicating "how to actually save" in
@@ -3383,7 +3381,7 @@ function CanvasInner(): React.JSX.Element {
     })
   }, [performSaveNow])
 
-  // "Save changes, Open Here" (drop onto a dirty window, epic 0038 revision) —
+  // "Save changes, Open Here" (drop onto a dirty window) —
   // main shows the dialog and asks back here since it can't perform the
   // save itself; once done, confirmSavedThenOpen tells main it's safe to
   // navigate this window to the dropped path. A cancelled/failed save
@@ -3396,7 +3394,7 @@ function CanvasInner(): React.JSX.Element {
     })
   }, [performSaveNow])
 
-  // Drag-and-drop a .chd onto this window (epic 0038) — attached to the
+  // Drag-and-drop a .chd onto this window — attached to the
   // whole window, not a specific drop zone: React Flow's own node dragging
   // uses pointer events, not the HTML5 Drag-and-Drop API, so the two never
   // compete for the same gesture. Refs, not effect deps, for the same
@@ -3468,13 +3466,13 @@ function CanvasInner(): React.JSX.Element {
     window.api.newWindow()
   }, [])
 
-  // File -> Close (epic 0049) — NOT closing the OS window (this app's own
+  // File -> Close — NOT closing the OS window (this app's own
   // convention, confirmed with the user: a window is a diagram, not
   // necessarily disposable). Discards the current diagram back to a blank
   // one *in this same window*, reusing loadDiagramIntoCanvas — the same
   // full-state reset every other load path already goes through — rather
   // than duplicating a scattered set of individual setState(initial) calls.
-  // Now that isDirty exists (epic 0020), the confirm() guard is skipped
+  // Now that isDirty exists, the confirm() guard is skipped
   // whenever there's genuinely nothing to lose, not just when the canvas
   // happens to be empty (a diagram can be dirty while empty too — add a
   // shape, delete it again — so this is a real behavior change from before).
@@ -3498,7 +3496,7 @@ function CanvasInner(): React.JSX.Element {
   // reusing the same loadDiagramIntoCanvas the initial mount effect uses
   // — for picking up changes made outside the app (hand-edited, or
   // written by other tooling) without quitting and relaunching. Now
-  // dirty-aware (epic 0020) — a clean window reloads without prompting.
+  // dirty-aware — a clean window reloads without prompting.
   const handleReload = useCallback(async () => {
     if (!currentPath) return
     if (isDirty && !confirm('Reload from disk? Any changes since the last save will be lost.'))
@@ -3585,7 +3583,7 @@ function CanvasInner(): React.JSX.Element {
     [nodes, persistDiagram]
   )
 
-  // Ctrl/Cmd+click entry point, exposed via DiagramContext — see epic 0009.
+  // Ctrl/Cmd+click entry point for linked-diagram navigation, exposed via DiagramContext.
   // A node with no link yet shows a chooser (create new / link existing) at
   // the click point using the existing generic ContextMenu; an already-
   // linked node opens straight into a new window (ADR 0023).
@@ -3616,7 +3614,7 @@ function CanvasInner(): React.JSX.Element {
     [currentPath, nodes, navigateExistingLink, openContextMenu, createAndLink, pickAndLink]
   )
 
-  // Global shortcuts — see epic 0018. One handler rather than one useEffect
+  // Global keyboard shortcuts. One handler rather than one useEffect
   // per shortcut, now that there are enough of these to make that
   // unwieldy. Checks both ctrlKey and metaKey throughout (not just on
   // Windows/Linux's Ctrl) — no reason to make this actively worse for Mac
@@ -3645,8 +3643,8 @@ function CanvasInner(): React.JSX.Element {
         handleNew()
         return
       }
-      // Universal desktop-app convention, added alongside epic 0049's File
-      // -> Close menu item — no shortcut existed for this action before.
+      // Universal desktop-app convention, added alongside the File -> Close
+      // menu item — no shortcut existed for this action before.
       // See handleClose's own comment for what "Close" actually does here
       // (discard back to blank, not close the OS window).
       if (mod && event.key.toLowerCase() === 'w') {
@@ -3654,7 +3652,7 @@ function CanvasInner(): React.JSX.Element {
         handleClose()
         return
       }
-      // Search overlay (epic 0062/ADR 0062) — provisional V1 entry point,
+      // Search overlay (ADR 0062) — provisional V1 entry point,
       // no permanent toolbar button yet (see the ADR). Not gated on
       // isEditingText: same as Ctrl+S/O/N/W above, opening/closing search
       // is a reasonable thing to do regardless of what else has focus.
@@ -3681,8 +3679,8 @@ function CanvasInner(): React.JSX.Element {
       // so typing/pasting text in a label field still uses the browser's
       // own clipboard handling, not this diagram-element one. Ctrl+C
       // additionally defers whenever there's a live text selection
-      // (window.getSelection()) even outside a text field — found live,
-      // epic 0060's threat matrix prototype: its plain service/threat
+      // (window.getSelection()) even outside a text field — found live in
+      // the threat matrix prototype: its plain service/threat
       // names and scale descriptions aren't inputs, so isEditingText
       // alone didn't catch them, and copySelection()'s own
       // preventDefault() silently blocked copying that text at all.
@@ -3798,13 +3796,13 @@ function CanvasInner(): React.JSX.Element {
   ])
 
   // Drives the diagram dock's mode (item palette vs. property panel) — see
-  // ADR 0013/epic 0003. Recomputed from `nodes`/`edges` each render rather
+  // ADR 0013. Recomputed from `nodes`/`edges` each render rather
   // than tracked separately; the tree is small enough that this isn't worth
   // memoizing.
   const selectedNodes = nodes.filter((n) => n.selected)
   const selectedEdges = edges.filter((e) => e.selected)
 
-  // Each node's persisted stacking order — see epic 0043/ADR 0035. No
+  // Each node's persisted stacking order — see ADR 0035. No
   // type-based special-casing here: the "containers render behind shapes"
   // look most diagrams start with is purely a consequence of the
   // load-time backfill's starting values (applyZIndexBackfill/nextZIndex),
@@ -3855,7 +3853,7 @@ function CanvasInner(): React.JSX.Element {
   const nodeZIndexById = new Map(nodes.map((n) => [n.id, (n.zIndex as number | undefined) ?? 0]))
 
   // Stable DOM-order tie-breaker for edges of otherwise-equal zIndex below
-  // — kept from epic 0046, though live debugging (2026-08-22, see
+  // — kept from the edge-reconnect-priority work, though live debugging (2026-08-22, see
   // docs/known-issues.md) found DOM order was never actually the real
   // mechanism deciding reconnect-handle hit-testing; see SELECTED_EDGE_Z_BOOST
   // just below for the fix that actually addresses it.
@@ -3870,7 +3868,7 @@ function CanvasInner(): React.JSX.Element {
     [edges]
   )
 
-  // An edge has no zIndex of its own to control — epic 0043/ADR 0035
+  // An edge has no zIndex of its own to control — ADR 0035
   // deliberately scoped this feature to Shape/Container/Text only. Instead
   // it always sits at the midpoint of its two endpoints' current stacking,
   // computed fresh here alongside orderedEdges above, never persisted.
@@ -3885,7 +3883,7 @@ function CanvasInner(): React.JSX.Element {
   // *zero* effect on which edge's z-index won at a shared connection
   // point; two converging edges resolved purely by which pair of
   // endpoints happened to average a higher zIndex, unrelated to which one
-  // was actually selected. Epic 0046's original `orderedEdges`-only fix
+  // was actually selected. The original `orderedEdges`-only fix
   // (DOM order) coincidentally looked like it worked in that one test
   // scenario but was never actually the operative mechanism.
   const SELECTED_EDGE_Z_BOOST = 1_000_000
@@ -3918,7 +3916,7 @@ function CanvasInner(): React.JSX.Element {
   // from React Flow's own Node type, same reasoning as passing plain
   // derived data to other panels elsewhere in this file. Sorted highest
   // z-index first, matching the panel's own top-of-list-is-frontmost
-  // display convention — see epic 0043/ADR 0035.
+  // display convention — see ADR 0035.
   const layerRows = [...nodes]
     .map((n) => ({
       id: n.id,
@@ -3929,8 +3927,7 @@ function CanvasInner(): React.JSX.Element {
     .sort((a, b) => b.zIndex - a.zIndex)
 
   // Flat "shape → one reference path" list backing the References inventory
-  // panel (epic 0090/ADR 0069) — a live projection of node data, owns
-  // nothing.
+  // panel (ADR 0069) — a live projection of node data, owns nothing.
   const referenceRows = nodes.flatMap((n) => {
     const refs = n.data?.references
     if (!Array.isArray(refs)) return []
@@ -3941,12 +3938,11 @@ function CanvasInner(): React.JSX.Element {
     }))
   })
 
-  // Top menu bar (epic 0049) — File/Edit/View, an explicit information-
-  // architecture split worked out with the user alongside epic 0048 (left
-  // sidebar, not yet built): file-level actions here, per-diagram
+  // Top menu bar (ADR 0039) — File/Edit/View, an explicit information-
+  // architecture split worked out with the user alongside a planned (later
+  // cancelled) left sidebar: file-level actions here, per-diagram
   // inspection panels also here for now (View), Highlights already moved
-  // to its own floating popup next to Legend regardless of this epic
-  // (fix/highlights-free-tags-and-toggle). Every item reuses an existing
+  // to its own floating popup next to Legend beforehand. Every item reuses an existing
   // handler unchanged — this menu is purely a new way to reach them, not a
   // new set of actions.
   const hasSelectedNodes = nodes.some((n) => n.selected)
@@ -4040,7 +4036,7 @@ function CanvasInner(): React.JSX.Element {
     }
   ]
 
-  // Whichever named palette is active (epic 0074/ADR 0068), resolved live —
+  // Whichever named palette is active (ADR 0068), resolved live —
   // memoized on the two fields it depends on so the Context value below
   // keeps a stable identity between unrelated settings changes.
   const activeStylePalette = useMemo(
@@ -4054,7 +4050,7 @@ function CanvasInner(): React.JSX.Element {
   // because this object got a new identity — every consumer subscribes via
   // useContext, which bypasses their own React.memo wrapper entirely (that
   // only guards against prop changes from a parent, not a Context
-  // subscription). See epic 0067/ADR 0056. Every function here is already
+  // subscription). See ADR 0056. Every function here is already
   // useCallback-stable; effectiveGravityPresets() returns its input
   // reference unchanged when non-empty, so this only recomputes when one of
   // these values has genuinely, referentially changed.
@@ -4213,14 +4209,14 @@ function CanvasInner(): React.JSX.Element {
                   edgesReconnectable
                   // A little smaller than React Flow's own default (10) — and
                   // kept equal to main.css's `.react-flow__edgeupdater` `r`
-                  // value, epic 0046, so the visible dot on a selected edge
+                  // value, so the visible dot on a selected edge
                   // matches the actual grabbable area exactly rather than
                   // over- or under-promising it.
                   reconnectRadius={8}
                   // Previously never set at all (silently React Flow's own
                   // 0.5/2 library defaults) until a large diagram made
                   // "zoom out further" a real ask — now a real Setting
-                  // (SettingsPanel.tsx) rather than hardcoded. Epic 0086.
+                  // (SettingsPanel.tsx) rather than hardcoded.
                   minZoom={settings.minZoom}
                   maxZoom={settings.maxZoom}
                   onEdgeContextMenu={onEdgeContextMenu}
@@ -4235,10 +4231,10 @@ function CanvasInner(): React.JSX.Element {
                       : SelectionMode.Partial
                   }
                   deleteKeyCode={['Delete', 'Backspace']}
-                  multiSelectionKeyCode="Shift" // frees Ctrl/Cmd+click for linked-diagram navigation — epic 0009
+                  multiSelectionKeyCode="Shift" // frees Ctrl/Cmd+click for linked-diagram navigation
                   colorMode={theme}
                   // Overrides React Flow's own light/dark default background
-                  // — epic 0030/ADR 0048. Setting plain `backgroundColor`
+                  // — ADR 0048. Setting plain `backgroundColor`
                   // here does nothing visible: the actual paint comes from
                   // <Background>'s own absolutely-positioned SVG
                   // (.react-flow__background), which reads the CSS custom
@@ -4250,7 +4246,7 @@ function CanvasInner(): React.JSX.Element {
                   // today whenever the user hasn't set one.
                   style={
                     {
-                      // Theme-adaptive (ADR 0034/epic 0040) like every other
+                      // Theme-adaptive (ADR 0034) like every other
                       // explicit color in this app — a background picked
                       // while looking at one theme shouldn't stay bit-for-
                       // bit identical (and potentially illegible) after
@@ -4260,7 +4256,7 @@ function CanvasInner(): React.JSX.Element {
                         theme
                       ),
                       // Read directly by LabeledEdge's stroke when selected
-                      // (epic 0067) — kept off DiagramContext deliberately:
+                      // (ADR 0056) — kept off DiagramContext deliberately:
                       // this value only ever matters to whichever edge is
                       // currently selected (usually zero or one of many), so
                       // threading it through Context would re-render every

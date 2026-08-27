@@ -5,24 +5,24 @@ Decided and implemented (2026-08-26), revised same day after a live-testing foll
 
 ## Context
 
-[Epic 0063](../planning/epics/0063-dim-non-matching-elements-mode.md) was scoped via a real design conversation on 2026-08-25 that reframed it from a highlight-coupled "dim mode" into "Isolate": a general-purpose, session-only mechanism that dims every element outside a given working set, deliberately decoupled from the highlight system. That conversation left four real questions open on purpose, to be answered once [epic 0062](../planning/epics/0062-search-and-highlight-matches.md) (search) actually shipped and its shape was known: what triggers Isolate, where its control lives in the UI, what rendering treatment to use, and whether edges get the same treatment as nodes.
+Isolate was scoped via a real design conversation on 2026-08-25 that reframed it from a highlight-coupled "dim mode" into "Isolate": a general-purpose, session-only mechanism that dims every element outside a given working set, deliberately decoupled from the highlight system. That conversation left four real questions open on purpose, to be answered once search actually shipped and its shape was known: what triggers Isolate, where its control lives in the UI, what rendering treatment to use, and whether edges get the same treatment as nodes.
 
 ## Decision
 
-**Trigger: search-driven only, no manual-selection trigger.** Matches the epic's own final framing and the user's confirmed choice — adding a manual "select some elements, Isolate them" path back in would reintroduce the complexity the user explicitly deferred away from during epic 0063's original scoping ("I think we should defer til after this is implemented now that I think about it").
+**Trigger: search-driven only, no manual-selection trigger.** Matches the final framing and the user's confirmed choice — adding a manual "select some elements, Isolate them" path back in would reintroduce the complexity the user explicitly deferred away from during the original scoping ("I think we should defer til after this is implemented now that I think about it").
 
 **UI: two separate buttons, not one combined toggle.** The original assumption (a single checkbox inside the search overlay, doubling as both "run search" and "apply Isolate") was rejected by the user in favor of a distinct **Isolate** button next to **Search** in `SearchOverlay`. This means running a search and applying Isolate are two independent explicit actions: Isolate can be toggled on/off without re-running the query, and a new search always requires re-arming Isolate (see Consequences) rather than silently continuing to apply a stale match set. The Isolate button is disabled until a search has actually run with at least one match — there's nothing to isolate down to otherwise.
 
 **Rendering: opacity, 50% default, exposed as a Setting (`isolateOpacity`).** The design conversation had assumed reduced opacity throughout but never pinned a number; the user picked 50% but asked for it to be adjustable rather than hardcoded — global, not per-diagram, same tier as `edgeStraightSegmentLength`/zoom limits/etc. in `AppSettings`.
 
-**Edges get the same treatment as nodes, exactly as the epic's own notes predicted** ("very likely yes, structurally trivial") — `searchMatchIds` already covered both node and edge ids from epic 0062, so this needed no new plumbing.
+**Edges get the same treatment as nodes, exactly as predicted** ("very likely yes, structurally trivial") — `searchMatchIds` already covered both node and edge ids from the search work, so this needed no new plumbing.
 
 ## Implementation
 
 - `search.ts`'s new `isolateStyle(id, isolateActive, searchMatchIds, isolateOpacity)` is the one shared computation every node/edge component calls into its own inline `style` — avoids four near-identical copies of the same three lines. Returns `{}` (no opacity, no transition) whenever Isolate is off entirely, so turning it off snaps back instantly rather than fading; a matched element gets an explicit `opacity: 1` (not an absent property) so it still carries the transition while *other* elements around it fade in/out.
 - `DiagramContext` gained `isolateActive: boolean` and `isolateOpacity: number`, same threading convention as every other global-setting/session-state field already there.
 - `Canvas.tsx`'s `clearSearchResults` (already the shared reset point for a cleared/changed query, and for closing the overlay) now also resets `isolateActive` — Isolate has no meaning once its underlying match set is gone, so it's cleared at exactly the same points searchMatchIds is.
-- `LineNode`/`AnchorNode` are not wired into either `searchMatchIds` matching-display or `isolateStyle` — same pre-existing gap epic 0062 shipped with (only Shape/Container/Text/edges got the `.search-match` treatment), not something this epic expands. A `'line'` node can still technically end up in `searchMatchIds` if its id/label/metadata matches a query, but nothing currently renders that fact.
+- `LineNode`/`AnchorNode` are not wired into either `searchMatchIds` matching-display or `isolateStyle` — same pre-existing gap search shipped with (only Shape/Container/Text/edges got the `.search-match` treatment), not something this work expands. A `'line'` node can still technically end up in `searchMatchIds` if its id/label/metadata matches a query, but nothing currently renders that fact.
 
 ## Alternatives considered
 

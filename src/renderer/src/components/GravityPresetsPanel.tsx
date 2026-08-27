@@ -7,7 +7,7 @@ interface GravityPresetsPanelProps {
   // apart from "explicitly customized," which the resolved list alone can't.
   presets: GravityPreset[]
   onChange: (presets: GravityPreset[]) => void
-  // Settings-tier value (epic 0072/ADR 0052), same raw-vs-resolved
+  // Settings-tier value (ADR 0052, ADR 0066), same raw-vs-resolved
   // distinction as `presets` above — absent/empty means "no personal
   // default set."
   userDefault: GravityPreset[] | undefined

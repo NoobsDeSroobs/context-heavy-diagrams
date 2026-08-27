@@ -17,8 +17,7 @@ export const SIDE_POSITION: Record<ConnectionPointSide, Position> = {
 
 const SIDES: ConnectionPointSide[] = ['top', 'right', 'bottom', 'left']
 
-// Percentage, not pixels, so a point survives resize without recomputing —
-// see epic 0013.
+// Percentage, not pixels, so a point survives resize without recomputing.
 export function connectionPointStyle(
   side: ConnectionPointSide,
   offset: number
@@ -32,10 +31,10 @@ let nextConnectionPointId = 1
 // Every side always has at least one point. A side with no entries at all
 // in the node's own stored `connectionPoints` implicitly has exactly one,
 // centered (offset 0.5), using the side's own name as a fixed, stable id
-// ("top"/"right"/"bottom"/"left") — the same id every pre-epic-0039 file's
-// edges already reference, since that's what this app exposed as its 4
-// always-present, unmovable default handles before this epic. Epic 0039
-// originally kept that as a real, permanently separate, immovable
+// ("top"/"right"/"bottom"/"left") — the same id every file predating
+// custom per-side counts already references from its edges, since that's
+// what this app exposed as its 4 always-present, unmovable default
+// handles back then. That was originally kept as a real, permanently separate, immovable
 // concept — the user found two real bugs traced to exactly that split (an
 // evenly-spaced *custom* layout can never truly include a point that
 // isn't free to move, and the app's own clockwise/transfer math didn't
@@ -150,7 +149,7 @@ export function nearestConnectionPointId(
 }
 
 // Clockwise-around-the-box order per side, used by the count-based
-// generator and by remove-with-transfer below — see epic 0039's ADR. Offset
+// generator and by remove-with-transfer below — see ADR 0036. Offset
 // is defined left-to-right on top/bottom and top-to-bottom on left/right
 // (nearestConnectionPoint above), so walking top -> right -> bottom -> left
 // clockwise means ascending offset on top/right but descending on
@@ -219,7 +218,7 @@ export function reassignConnectionPointHandles(
   })
 }
 
-// Epic 0039's count-per-side generator. `targetTotalCount` is the side's
+// The count-per-side generator (ADR 0036). `targetTotalCount` is the side's
 // whole point count, exactly what the property panel shows and lets the
 // user edit — no more default/custom split to convert between. Starts
 // from the side's *effective* points (synthesizing its implicit single
@@ -388,7 +387,7 @@ export function useConnectionPointMenu(
   // point identity is resolved through the same effective-points view
   // removeCustomPointWithTransfer itself uses) removes it, distinct from
   // the node-wide menu (which adds one) — stopPropagation so the two
-  // don't both fire for the same click. Epic 0039 replaced the original
+  // don't both fire for the same click. ADR 0036 replaced the original
   // block-if-edge-attached guard with edge transfer — removing a wired
   // point no longer requires disconnecting it first; the only remaining
   // refusal is removing a side's last point.

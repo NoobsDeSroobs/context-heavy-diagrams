@@ -4,13 +4,13 @@
 Decided (2026-08-23), Decision 4 reversed the same day after live feedback — see Addendum.
 
 ## Context
-[Epic 0010](../planning/epics/0010-export.md) needs a way to get a diagram out of the app as an image, primarily for uploading views into Confluence. The epic's own original task list named both SVG and PNG. Two real questions had to be settled before writing any code: how faithful the SVG output needs to be, and how the export actually captures the canvas.
+Image export is needed to get a diagram out of the app as a picture, primarily for uploading views into Confluence. The original task list named both SVG and PNG. Two real questions had to be settled before writing any code: how faithful the SVG output needs to be, and how the export actually captures the canvas.
 
 ## Decision
 
 **1. This pass builds PNG only; SVG is deferred, and when it's built later it must be true vector, not a rasterized snapshot wrapped in an `<svg>` tag.**
 
-The common shortcut for React-based canvas apps is `html-to-image`'s `toSvg()` — a DOM snapshot wrapped in an SVG `<foreignObject>`, technically valid SVG but not actually editable shapes/text in Illustrator/Inkscape. The user explicitly wants real vector output eventually (editable elsewhere), which means a genuine serializer walking the diagram model into native SVG elements — a much larger, separate piece of work (effectively a second renderer alongside `ShapeNode`/`ContainerNode`/`LineNode`/`LabeledEdge`, one that has to be kept in sync with all of them going forward). Rather than build the throwaway rasterized version now and redo it later, this pass scopes down to PNG only; [epic 0010](../planning/epics/0010-export.md)'s own task list reflects the split.
+The common shortcut for React-based canvas apps is `html-to-image`'s `toSvg()` — a DOM snapshot wrapped in an SVG `<foreignObject>`, technically valid SVG but not actually editable shapes/text in Illustrator/Inkscape. The user explicitly wants real vector output eventually (editable elsewhere), which means a genuine serializer walking the diagram model into native SVG elements — a much larger, separate piece of work (effectively a second renderer alongside `ShapeNode`/`ContainerNode`/`LineNode`/`LabeledEdge`, one that has to be kept in sync with all of them going forward). Rather than build the throwaway rasterized version now and redo it later, this pass scopes down to PNG only; the export task list reflects the split.
 
 **2. PNG capture: `html-to-image`'s `toPng()` against React Flow's own `.react-flow__viewport` DOM, cropped to content bounds.**
 
@@ -39,7 +39,7 @@ Whatever's actually painting the canvas right now (a custom `canvasBackgroundCol
 ## Consequences
 - New dependency: `html-to-image`.
 - New `AppSettings` fields `pngExportPaddingPx`/`pngExportTransparentBackground`/`pngExportBackgroundColorOverride` — additive, `localStorage`-only, no `.chd` schema impact.
-- True vector SVG export remains unscoped, tracked as the remaining half of [epic 0010](../planning/epics/0010-export.md); whatever serializer eventually gets built there is unrelated code, not a variant of this PNG path.
+- True vector SVG export remains unscoped, tracked as the remaining half of the export work; whatever serializer eventually gets built there is unrelated code, not a variant of this PNG path.
 
 ## Addendum (2026-08-23): Decision 4 reversed — a real per-export dialog, not a Settings-panel-only control
 
@@ -50,7 +50,7 @@ Live testing immediately after the first pass shipped surfaced two real problems
 
 Also found in the same pass, unrelated to the dialog question: **exported PNGs had no visible arrowheads on any edge.** Root cause: `EdgeMarkerDefs` (`src/renderer/src/edges/edgeMarkers.tsx`) renders its `<marker>` definitions in a separate, zero-size `<svg>` that's a *sibling* of `<ReactFlow>`, not a descendant of `.react-flow__viewport` — deliberately, so marker ids stay resolvable document-wide (see that file's own comment). But `captureDiagramPng` only clones the `.react-flow__viewport` subtree, so those defs were never part of the captured content at all; every edge's `marker-end="url(#...)"` reference dangled, silently rendering no arrowhead. Fixed by cloning the marker-defs `<svg>` (found via a new `data-export-role="edge-marker-defs"` attribute) into the viewport element for the duration of the capture, then removing the clone — cloning rather than moving the live node, to avoid disturbing React's own DOM bookkeeping for an element it still manages. See [known-issues.md](../known-issues.md#exported-pngs-had-no-visible-arrowheads-on-any-edge) for the full writeup.
 
-Deferred, not built now: an "export everything vs. export selection only" choice, raised by the user in the same conversation once the base PNG-export case actually worked — logged in [epic 0010](../planning/epics/0010-export.md)'s Notes, not scoped here.
+Deferred, not built now: an "export everything vs. export selection only" choice, raised by the user in the same conversation once the base PNG-export case actually worked — logged for later, not scoped here.
 
 ## Addendum (2026-08-23): "use canvas color" was reading the wrong thing entirely
 

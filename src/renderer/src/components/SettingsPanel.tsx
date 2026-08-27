@@ -7,7 +7,7 @@ import { useRafThrottledCallback } from '../hooks/useRafThrottledCallback'
 // '' means the field is absent (bezier, today's only historical behavior)
 // — see PropertyPanel.tsx's identical ROUTING_STYLE_OPTIONS/own comment on
 // why this is a local copy rather than a shared one (react-refresh/only-
-// export-components). Epic 0032.
+// export-components).
 const ROUTING_STYLE_OPTIONS: {
   value: Exclude<EdgeStyle['routingStyle'], undefined> | ''
   label: string
@@ -28,7 +28,7 @@ interface SettingsPanelProps {
 // Local draft, resynced from `value` only while not focused — same
 // technique as fields.tsx's own useDraft (not reused directly: it isn't
 // exported, and mixing an exported hook into a component-only file would
-// trip react-refresh/only-export-components, see epic 0028). Generic
+// trip react-refresh/only-export-components). Generic
 // (originally zoom-only) since ZoomLimitField and IsolateOpacityField
 // below both need a fractional `step`, which NumberField's own draft
 // doesn't expose.
@@ -107,7 +107,7 @@ function ZoomLimitField({
   )
 }
 
-// Fractional 0-1 opacity (epic 0063/ADR 0063) — NumberField's own draft
+// Fractional 0-1 opacity (see ADR 0063) — NumberField's own draft
 // has no `step`, same reason ZoomLimitField above doesn't use it either.
 // Same two-class combo ZoomLimitField's own inputs use: .property-number-
 // field for the actual theme-aware background/border/color (its own
@@ -162,7 +162,7 @@ export default function SettingsPanel({
   onChange,
   onClose
 }: SettingsPanelProps): React.JSX.Element {
-  // Same rAF-coalescing as ColorField (panels/fields.tsx) — epic 0067. This
+  // Same rAF-coalescing as ColorField (panels/fields.tsx) — see ADR 0056. This
   // input doesn't go through that shared component (see the comment below),
   // so it needs its own throttle rather than inheriting one.
   const throttledOnChange = useRafThrottledCallback(onChange)

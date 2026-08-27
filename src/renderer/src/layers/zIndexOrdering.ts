@@ -1,4 +1,4 @@
-// Pure z-index math for the layer panel — see epic 0043/ADR 0035. No React
+// Pure z-index math for the layer panel — see ADR 0035. No React
 // Flow / Canvas.tsx state here on purpose, just plain data in, plain data
 // out, so the reorder algorithm's three cases (average / cascade-shift /
 // boundary-extrapolate) can be reasoned about and changed in isolation from
@@ -17,8 +17,8 @@ export const LAYER_GAP = 10
 // containers-behind-shapes is a default arrangement, not a rule enforced
 // afterward). Text sits above shapes by the same "annotations should stay
 // readable over the thing they're labeling" reasoning as its default
-// render-on-top-of-shapes expectation — see the epic 0043 correction this
-// was fixed alongside.
+// render-on-top-of-shapes expectation — see the layer-order correction
+// this was fixed alongside.
 export const CONTAINER_BASE = LAYER_GAP
 export const SHAPE_BASE = 100_000
 export const TEXT_BASE = 200_000

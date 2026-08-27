@@ -11,7 +11,7 @@ export const DEFAULT_GRAVITY_PRESETS: GravityPreset[] = [
   { id: 'curvy', label: 'Curvy', value: 1 }
 ]
 
-// Three-tier fallback (epic 0072/ADR 0052): Diagram override -> User
+// Three-tier fallback (ADR 0052, ADR 0066): Diagram override -> User
 // default -> Built-in default. Same "empty means fall through" resolution
 // ConnectionHandles' effectiveConnectionPoints uses for connection points
 // — a diagram only needs to spell its own catalog out once it actually

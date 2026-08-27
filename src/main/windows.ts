@@ -11,7 +11,7 @@ const FILTERS = [{ name: 'Diagram', extensions: ['chd'] }]
 // One BrowserWindow per open diagram (ADR 0023) — this registry lets
 // opening a diagram already open elsewhere focus that window instead of
 // opening a second one on the same file, which would be a silent-overwrite
-// risk with no dirty-tracking yet (epic 0020). Keyed by normalized
+// risk with no dirty-tracking yet (see ADR 0040). Keyed by normalized
 // absolute path.
 const windowsByPath = new Map<string, BrowserWindow>()
 
@@ -30,9 +30,9 @@ function unregisterWindow(win: BrowserWindow): void {
 // Clears this window's own previous entry first — a window can only ever
 // legitimately show one path at a time, but the underlying Map is keyed
 // by path, not by window, so nothing enforced that on its own. Before
-// epic 0038, a window's path only ever changed once in its lifetime (at
+// drag-to-open, a window's path only ever changed once in its lifetime (at
 // creation, or via File -> Open's reuse-if-empty, itself only usable
-// once), so the gap never showed up. Epic 0038 navigates the same
+// once), so the gap never showed up. Drag-to-open navigates the same
 // (non-empty) window to a new path repeatedly across several drops,
 // which exposed it: dropping file2 "Open Here" onto a window already
 // showing file1 left BOTH `file1 -> win` and `file2 -> win` in the map,
@@ -67,8 +67,8 @@ function loadPathIntoWindow(win: BrowserWindow, path: string): void {
   registerWindowPath(win, path)
 }
 
-// A window's own identity for crash-recovery purposes (epic 0020/ADR
-// 0040) before it's ever been saved — generated once here, carried to the
+// A window's own identity for crash-recovery purposes (see ADR 0040)
+// before it's ever been saved — generated once here, carried to the
 // renderer via a ?session= query string alongside (or instead of) ?path=,
 // same mechanism. Once a window has a real path, recovery keys off that
 // instead; this id only matters for a diagram that's never been saved.
@@ -80,7 +80,7 @@ function blankWindowUrl(baseUrl: string, sessionId: string): string {
 // Real OS close (close button, Alt+F4) is intercepted so the renderer gets
 // a chance to check its own dirty state and, if needed, drive a
 // Save/Discard/Cancel prompt before the window actually goes away — see
-// epic 0020/ADR 0040. `closeApproved` distinguishes a close this guard has
+// ADR 0040. `closeApproved` distinguishes a close this guard has
 // already cleared (call win.close() again without re-triggering the
 // prompt) from a fresh OS-initiated one.
 const closeApproved = new WeakSet<BrowserWindow>()
@@ -154,7 +154,7 @@ function openOrFocusWindow(path: string, reuseWindow?: BrowserWindow): void {
   createWindow(path)
 }
 
-// Drop-onto-a-window (epic 0038/ADR 0040's own design pass, 2026-08-22,
+// Drop-onto-a-window (ADR 0040's own design pass, 2026-08-22,
 // revised same-day after live testing — see docs/known-issues.md) — only
 // the drop *target* window's own state is ever in question, so this only
 // applies to the first of possibly several dropped files; every other
@@ -271,7 +271,7 @@ export function registerWindowHandlers(): void {
     }
   )
 
-  // Drag-and-drop a .chd onto a window (epic 0038) — paths are already
+  // Drag-and-drop a .chd onto a window — paths are already
   // filtered to .chd and resolved to real filesystem paths by the
   // renderer (webUtils.getPathForFile, only available in preload/
   // renderer context). Only the first path competes for this window;
@@ -313,7 +313,7 @@ export function registerWindowHandlers(): void {
     if (win) loadPathIntoWindow(win, path)
   })
 
-  // File -> Close (epic 0049) resets this window's content back to blank
+  // File -> Close resets this window's content back to blank
   // in-place, without a page navigation — so it never goes through
   // loadPathIntoWindow/registerWindowPath again the way every other path
   // change does. Without this, the window stayed registered as "showing"
@@ -325,7 +325,7 @@ export function registerWindowHandlers(): void {
     if (win) unregisterWindow(win)
   })
 
-  // Close-prompt choreography (epic 0020/ADR 0040) — the complex "how to
+  // Close-prompt choreography (see ADR 0040) — the complex "how to
   // actually save" logic (flush drafts, pick a path if none yet, etc.)
   // stays entirely in the renderer's existing save flow; main only shows
   // the native 3-button dialog and, once told the close is approved,

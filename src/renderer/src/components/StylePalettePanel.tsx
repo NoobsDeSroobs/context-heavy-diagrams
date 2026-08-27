@@ -12,7 +12,7 @@ interface StylePalettePanelProps {
   defaultEdgeStyle: EdgeStyle
   canvasBackgroundColor: string | undefined
   // Needed to flip the canvas background swatch the same way every other
-  // explicit color in this app does (ADR 0034/epic 0040) — this stored
+  // explicit color in this app does (ADR 0034) — this stored
   // value is always a dark-theme baseline, same convention as fill/stroke/
   // fontColor, regardless of which theme is active when it's picked.
   theme: Theme
@@ -212,8 +212,8 @@ function PaletteNameField({
 }
 
 // Diagram-level? No — global, app-wide preference like SettingsPanel, not
-// diagram content (epic 0030/ADR 0048, reshaped into a named collection by
-// epic 0074/ADR 0068). Same fixed right-side dock shell as RequiredTags/
+// diagram content (ADR 0048, reshaped into a named collection by
+// ADR 0068). Same fixed right-side dock shell as RequiredTags/
 // SettingsPanel/DiagnosticsPanel — see ADR 0013.
 export default function StylePalettePanel({
   palettes,
@@ -270,8 +270,8 @@ export default function StylePalettePanel({
 
   const handleExport = async (): Promise<void> => {
     if (!active) return
-    // File shape stays the bare { colors, fonts } from before epic 0074 —
-    // no id/name — so palettes exported by any version stay interchangeable.
+    // File shape stays the bare { colors, fonts } — no id/name — so
+    // palettes exported by any version stay interchangeable.
     const json = JSON.stringify({ colors: active.colors, fonts: active.fonts }, null, 2)
     await window.api.exportStylePalette(json)
   }
@@ -292,7 +292,7 @@ export default function StylePalettePanel({
       alert('Not a valid style palette file (missing colors/fonts arrays).')
       return
     }
-    // Import adds a new named palette (epic 0074) rather than overwriting —
+    // Import adds a new named palette (ADR 0068) rather than overwriting —
     // that's the whole point of keeping several around. Name seeded from
     // the file name, editable inline afterwards.
     const id = newPaletteId()

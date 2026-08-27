@@ -11,7 +11,7 @@ import { useRafThrottledCallback } from '../hooks/useRafThrottledCallback'
 // Refresh requirement).
 
 // Remembered open/closed state, per section, for the lifetime of the app
-// session (epic 0086) — module-level rather than component state, so
+// session — module-level rather than component state, so
 // closing "Transform" on one shape stays closed when a different shape/
 // edge/container is selected next, instead of resetting on every remount
 // (a selection change always remounts the whole property panel). Session-
@@ -27,8 +27,8 @@ export function CollapsibleSection({
 }: {
   title: string
   children: ReactNode
-  // Required-tags panel's allowed-values list (epic 0055) wants collapsed
-  // by default — every other caller keeps today's always-open behavior.
+  // Required-tags panel's allowed-values list wants collapsed by default —
+  // every other caller keeps today's always-open behavior.
   defaultOpen?: boolean
   // Only needed when `title` is dynamic (carries a live count, e.g.
   // "Colors (3)") — remembered state has to key off something stable, or
@@ -126,7 +126,7 @@ export function ColorField({
   onChange: (value: string | undefined) => void
   onSessionStart: () => void
   onSessionEnd: () => void
-  // User/org palette swatches (epic 0030/ADR 0048) — optional, purely a
+  // User/org palette swatches (ADR 0048) — optional, purely a
   // quick-pick row; a click is a single discrete commit (session start+end
   // together), same treatment as the clear button below, not a drag
   // gesture like the native color input.
@@ -135,7 +135,7 @@ export function ColorField({
   const swatchValue = value && HEX_RE.test(value) ? value : '#808080'
   const [draft, setDraft, onDraftFocus, onDraftBlur] = useDraft(value ?? '', mixed)
   // A native color-input drag can fire dozens of onChange events per
-  // second — epic 0067. Coalescing to one commit per animation frame keeps
+  // second — see ADR 0056. Coalescing to one commit per animation frame keeps
   // the swatch fully live (60fps reads as continuous) without forcing a
   // state update, and everything downstream of it, on every single tick.
   const throttledOnChange = useRafThrottledCallback(onChange)
@@ -263,7 +263,7 @@ export function NumberField({
 // without extra wiring. Originally built for the fillOpacity/strokeOpacity/
 // fontOpacity fields (per-channel opacity, not one whole-element value — see
 // FontStyle.fontOpacity's comment), generalized for any bounded numeric
-// field that reads naturally as a slider — e.g. epic 0045's edge label
+// field that reads naturally as a slider — e.g. an edge label's
 // position. Mixed selections show the slider at `defaultValue` — a range
 // input has no way to represent "blank" the way NumberField's placeholder
 // does.

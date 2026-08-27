@@ -50,12 +50,12 @@ app.whenReady().then(() => {
   // no path to key a per-window recovery check against (that path runs
   // per-window on open instead, see diagram open flow), so this is the
   // only place it can be found. Gated on the setting since the scan is a
-  // real startup cost some users may want to skip (epic 0020/ADR 0040).
+  // real startup cost some users may want to skip (see ADR 0040).
   // Runs after createWindow() so the first window shows up without
   // waiting on this. initialWindow parents the recovery dialog(s) so they
   // get a defined z-order — see runStartupOrphanScan's own comment.
   // readAppSettings() returning null (settings.json doesn't exist yet —
-  // epic 0054/ADR 0053) can't wait on the renderer's own localStorage
+  // ADR 0053) can't wait on the renderer's own localStorage
   // migration at this point in startup; DEFAULT_SETTINGS' own true here
   // matches what the file this replaced already defaulted to on a miss.
   readAppSettings().then((settings) => {

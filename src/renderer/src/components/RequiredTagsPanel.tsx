@@ -6,8 +6,7 @@ interface RequiredTagsPanelProps {
   requiredTags: RequiredTagDefinition[]
   // Live scan of every node/edge's current metadata (Canvas.tsx's own
   // `usedTags`, already computed for HighlightsPanel) — reused here to
-  // warn before an edit would invalidate an in-use value. Epic 0055/
-  // ADR 0047.
+  // warn before an edit would invalidate an in-use value. See ADR 0047.
   usedTags: { key: string; value: JsonValue }[]
   onChange: (tags: RequiredTagDefinition[]) => void
   onClose: () => void
@@ -34,7 +33,7 @@ function parseDefaultValue(raw: string): JsonValue | undefined {
 
 // The default-value dropdown's option value for "None" — same "null"
 // token/round-trip convention MetadataSection's per-element dropdown
-// already established (epic 0058/ADR 0046): JSON.parse("null") already
+// already established (ADR 0046): JSON.parse("null") already
 // yields real null via parseDefaultValue above, no special-casing needed
 // on commit. undefined and explicit null are both "None" here — this app
 // already treats an absent defaultValue as null everywhere else
@@ -106,7 +105,7 @@ function commitOnEnter(event: React.KeyboardEvent<HTMLInputElement>): void {
 // (that would mean one sync per character, the exact bug this panel's
 // other fields already learned to avoid — see useFieldDraft's own
 // comment) but still buttonless: no "Add" click needed between values,
-// matching the user's own stated preference. Epic 0055/ADR 0047.
+// matching the user's own stated preference. See ADR 0047.
 // A pending remove/rename of an in-use value — see AllowedValuesEditor's
 // own comment for why this replaced window.confirm().
 interface PendingChange {
@@ -400,7 +399,7 @@ function RequiredTagRow({
 }
 
 // Diagram-level settings surface, fixed right-side dock alongside
-// DetailsPanel/DiagnosticsPanel — see epic 0034/ADR 0022. Text fields are
+// DetailsPanel/DiagnosticsPanel — see ADR 0022. Text fields are
 // draft-until-blur (see useFieldDraft above); the lock dropdown, remove,
 // and add are discrete one-shot actions so they commit immediately, same
 // as everywhere else in the app.

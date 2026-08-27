@@ -23,8 +23,8 @@ const MAX_RESULTS = 60
 const PICKER_WIDTH = 220
 
 // Deliberately minimal: pick an icon, pick a corner, done. No opacity/other
-// style params — those belong to epic 0003's properties panel once it
-// exists, same reasoning as why text alignment was deferred there.
+// style params — those belong to the properties panel, same reasoning as
+// why text alignment was deferred there.
 //
 // Fixed-positioned from the triggering node's on-screen rect (see
 // DiagramContext) — this must NOT be a descendant of the node itself, or it

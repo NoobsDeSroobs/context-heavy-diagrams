@@ -1,14 +1,13 @@
 // v1 diagram file schema. See docs/decisions/0003-diagram-persistence-v1.md —
-// later epics add fields here (style, details, linkedDiagram) additively,
-// not as a rewrite. `size`/`rotation` added in epic 0002 (see ADR 0004),
-// `icons` added in epic 0007 (see ADR 0006).
+// later work adds fields here (style, details, linkedDiagram) additively,
+// not as a rewrite. `size`/`rotation` (see ADR 0004), `icons` (see ADR 0006).
 
 export type IconRef = { source: 'builtin'; id: string } | { source: 'custom'; path: string }
 
 export type IconSlot = 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight'
 
 // Beyond the 4 default centered points (one per side, always present,
-// never removable, never stored explicitly) — see epic 0013. `offset` is a
+// never removable, never stored explicitly). `offset` is a
 // 0-1 fraction along that side, not a pixel value, so a point survives
 // resize without recomputing anything.
 export type ConnectionPointSide = 'top' | 'right' | 'bottom' | 'left'
@@ -57,7 +56,7 @@ export interface NodeStyle extends FontStyle {
   strokeOpacity?: number
   strokeWidth?: number
   textAlign?: 'start' | 'center' | 'end'
-  // 'line' nodes only (epic 0064/ADR 0050) — same fields/vocabulary as
+  // 'line' nodes only (see ADR 0050) — same fields/vocabulary as
   // EdgeStyle's, added here rather than making DiagramNode.style a union,
   // same precedent as LegendEntry's own 'line' kind.
   lineStyle?: LineStyleKind
@@ -81,7 +80,7 @@ export interface MetadataEntry {
 }
 
 // Diagram-level template: what every applicable element (shape/container/
-// edge, not text/anchor — see epic 0034) must carry. Not stored per
+// edge, not text/anchor — see ADR 0022) must carry. Not stored per
 // element; used to seed new elements and to retroactively backfill
 // existing ones when the template itself changes (see Canvas.tsx's
 // `syncRequiredTags`).
@@ -92,7 +91,7 @@ export interface RequiredTagDefinition {
   lock: MetadataLock
 }
 
-// Highlight catalog — see epic 0026/ADR 0025. Each entry pairs an exact
+// Highlight catalog — see ADR 0025/ADR 0026. Each entry pairs an exact
 // metadata key=value match with a display color. Deliberately no
 // `enabled` field here: whether a given highlight is currently toggled on
 // is session-only state, never persisted (ADR 0025's "split persistence"
@@ -104,7 +103,7 @@ export interface HighlightDefinition {
   color: string
 }
 
-// Legend catalog — see epic 0037/ADR 0033. Each entry explains one visual
+// Legend catalog — see ADR 0033. Each entry explains one visual
 // convention the diagram author deliberately used, in the author's own
 // words — never auto-derived from `highlights` or anything else. `color`
 // only applies to 'line'/'shape' kinds: this app's icons are fixed
@@ -153,12 +152,12 @@ export interface EdgeStyle extends FontStyle {
   // 0-1 fraction along the rendered path, same convention as
   // ConnectionPoint's `offset` — stays meaningful if the edge's endpoints
   // move, unlike a fixed pixel offset. Absent means 0.5 (today's only
-  // behavior, the path midpoint) — see epic 0045.
+  // behavior, the path midpoint) — see ADR 0045.
   labelPosition?: number
-  // How the path is routed between the two endpoints — epic 0032.
+  // How the path is routed between the two endpoints — see ADR 0057.
   // 'straight'/'step'/'smoothstep' are React Flow's own built-in path
-  // shapes; 'catmullRom' reuses the freeform-line curve math (epic 0064/
-  // ADR 0050, bendablePath.ts) with DiagramEdge.points as manual bend
+  // shapes; 'catmullRom' reuses the freeform-line curve math (ADR 0050,
+  // bendablePath.ts) with DiagramEdge.points as manual bend
   // points. Absent means today's only behavior, a plain bezier
   // (React Flow's default, plus the edgeStraightSegmentLength lead-in/out
   // setting) — kept as the omitted default rather than an explicit
@@ -179,7 +178,7 @@ export interface DiagramNode {
   position: { x: number; y: number }
   size?: { width: number; height: number }
   rotation?: number
-  // Stacking order — see epic 0043/ADR 0035. Higher renders on top. No
+  // Stacking order — see ADR 0035. Higher renders on top. No
   // type-based special-casing anywhere that reads this: the "containers
   // render behind shapes" look most diagrams start with is just a
   // consequence of the backfilled starting values (containers seeded low,
@@ -202,8 +201,8 @@ export interface DiagramNode {
   // of their own to accidentally relocate). Absent means unlocked.
   locked?: boolean
   style?: NodeStyle
-  // Only 'shape'/'container' meaningfully have this — see epic 0034/ADR
-  // 0022. 'text', 'anchor', and 'line' nodes never get seeded or edited here.
+  // Only 'shape'/'container' meaningfully have this — see ADR 0022.
+  // 'text', 'anchor', and 'line' nodes never get seeded or edited here.
   metadata?: Record<string, MetadataEntry>
   data: {
     label: string
@@ -215,7 +214,7 @@ export interface DiagramNode {
     // ordered — array position is the only thing that identifies a point,
     // there is no separate id.
     points?: LinePoint[]
-    // Reference images (epic 0090/ADR 0069) — 'shape'/'container' only.
+    // Reference images (see ADR 0069) — 'shape'/'container' only.
     // Ordered list of relative paths (from this diagram file's own dir,
     // same convention as `details`) to files under the sibling
     // assets/references/ folder. Pure working aid: shown only in floating
@@ -225,7 +224,7 @@ export interface DiagramNode {
   }
 }
 
-// A freeform line's own bend points (epic 0064/ADR 0050) — see NodeStyle
+// A freeform line's own bend points (see ADR 0050) — see NodeStyle
 // for the line's stroke/dash/marker styling, kept separate from geometry.
 export interface LinePoint {
   x: number
@@ -254,7 +253,7 @@ export interface GravityPreset {
 
 export interface DiagramEdge {
   id: string
-  // 'labeled' — see epic 0012. Plain string, same reasoning as DiagramNode.type.
+  // 'labeled'. Plain string, same reasoning as DiagramNode.type.
   type?: string
   source: string
   target: string
@@ -264,9 +263,9 @@ export interface DiagramEdge {
   style?: EdgeStyle
   metadata?: Record<string, MetadataEntry>
   // Manual bend points, absolute canvas coordinates — only meaningful when
-  // style.routingStyle is 'catmullRom' (epic 0032); ignored (but preserved,
-  // not stripped) otherwise, e.g. if the user switches routing style away
-  // and back. Reuses LinePoint/bendablePath.ts verbatim from epic 0064 —
+  // style.routingStyle is 'catmullRom' (see ADR 0057); ignored (but
+  // preserved, not stripped) otherwise, e.g. if the user switches routing
+  // style away and back. Reuses LinePoint/bendablePath.ts verbatim —
   // the same curve math a 'line' node's own points already use. Absent/
   // empty means a plain, unbent catmull-rom curve between the two
   // endpoints (still meaningfully different from bezier: perpendicular
@@ -282,7 +281,7 @@ export interface DiagramFile {
   metadata?: Record<string, JsonValue>
   requiredTags?: RequiredTagDefinition[]
   highlights?: HighlightDefinition[]
-  // Legend catalog — see epic 0037/ADR 0033. Unlike `highlights`, there is
+  // Legend catalog — see ADR 0033. Unlike `highlights`, there is
   // no separate "enabled" concept per entry; the whole panel's shown/hidden
   // state is what's session-local (never stored here), not per-entry.
   legend?: LegendEntry[]
@@ -290,7 +289,7 @@ export interface DiagramFile {
   // built-in four."
   gravityPresets?: GravityPreset[]
   // Per-diagram override for the max connection points allowed on one
-  // side of a Shape/Container (epic 0073/ADR 0052's Diagram override ->
+  // side of a Shape/Container (see ADR 0067; ADR 0052's Diagram override ->
   // User default -> Built-in default pattern) — absent means fall back to
   // whoever opens this file's own Settings value (AppSettings.
   // maxConnectionPointsPerSide). A real constraint on what the diagram

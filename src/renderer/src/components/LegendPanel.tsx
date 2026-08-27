@@ -249,7 +249,7 @@ export default function LegendPanel({
                 // Invisible overlay, not a separate visible color box —
                 // clicking anywhere on the swatch itself edits its color,
                 // reclaiming the row width a dedicated color input used to
-                // take (see epic 0037's Notes on the follow-up sizing fix).
+                // take (a follow-up sizing fix).
                 <input
                   type="color"
                   className="legend-swatch-color-overlay"

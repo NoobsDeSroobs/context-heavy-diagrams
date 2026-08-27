@@ -14,7 +14,7 @@ interface HighlightsPanelProps {
   // Bulk set (not toggle) for a group's "select all" checkbox.
   onToggleGroup: (ids: string[], enable: boolean) => void
   // Both creates a brand new group and resyncs an existing one — see
-  // epic 0036/ADR 0026: it's the same reconcile either way.
+  // ADR 0026: it's the same reconcile either way.
   onAddOrResyncGroup: (key: string) => void
   onClose: () => void
 }
@@ -24,7 +24,7 @@ const PANEL_WIDTH = 300
 // Same stringify-for-display convention as MetadataSection/RequiredTagsPanel
 // (small independent copy, not a shared import — this codebase's existing
 // pattern for this exact one-liner). null renders as "None" — the implicit
-// "not applicable" value every required tag carries (epic 0058/ADR 0046) —
+// "not applicable" value every required tag carries (see ADR 0046) —
 // rather than the raw JSON token; purely a display choice, the value
 // passed around everywhere else here stays real null.
 function stringifyValue(value: JsonValue): string {
@@ -114,7 +114,7 @@ function GroupCheckbox({
 }
 
 // Small floating panel next to the canvas's bottom-left <Controls> widget,
-// alongside LegendPanel — see epic 0026/ADR 0025 for the feature itself.
+// alongside LegendPanel — see ADR 0025 for the feature itself.
 // Originally the same fixed-position UtilityDock shell as RequiredTagsPanel/
 // DiagnosticsPanel; moved to this floating-popup treatment
 // (fix/highlights-free-tags-and-toggle) to sit next to the Legend toggle

@@ -46,7 +46,7 @@ body {
   height: 100%;
 }
 
-/* Drag-time alignment guides — see epic 0011. Sits above the canvas,
+/* Drag-time alignment guides — see ADR 0019. Sits above the canvas,
    never intercepts pointer events (it's illustrating a drag, not
    participating in one). */
 .alignment-guides {
@@ -116,7 +116,7 @@ body {
   font-size: 13px;
 }
 
-/* Persona switch (epic 0060) — same button-ish look as the rest of the
+/* Persona switch (see ADR 0055) — same button-ish look as the rest of the
    toolbar, styled directly since a native <select> doesn't pick up the
    `.toolbar button` rule above. */
 .toolbar-persona-select {
@@ -133,7 +133,7 @@ body {
   background: var(--ev-button-alt-hover-bg);
 }
 
-/* Top menu bar (epic 0049) — flat File/Edit/View labels, not the toolbar's
+/* Top menu bar (see ADR 0039) — flat File/Edit/View labels, not the toolbar's
    own pill-button look, so this reads as a menu bar rather than another
    row of toolbar buttons. Scoped under .toolbar so these beat `.toolbar
    button`'s higher-specificity 1-class-plus-tag selector rather than
@@ -214,7 +214,7 @@ body {
   font-family: 'Menlo', 'Lucida Console', monospace;
 }
 
-/* Default-edge-style "current pen style" indicator (epic 0061/ADR 0045) —
+/* Default-edge-style "current pen style" indicator (ADR 0045) —
    a persistently visible preview, not a setting you have to open a dialog
    to even see the current value of. */
 .toolbar-edge-style-swatch {
@@ -356,14 +356,14 @@ body {
 }
 
 /* Connection handles stay hidden until the node itself is hovered, then all
-   of them appear together (not just the nearest one) — requested after
-   epic 0014 testing; handles were previously always visible on every node.
+   of them appear together (not just the nearest one) — requested during
+   drag-to-empty-space testing; handles were previously always visible on every node.
    `:hover` on the wrapper still covers a handle positioned a few px outside
    its own box (React Flow's default handle offset) because CSS `:hover`
    cascades to ancestors of whatever's actually under the cursor, not by
    visual containment — no extra "proximity margin" trick needed. Applies
    everywhere ConnectionHandles is used: ShapeNode, ContainerNode, and the
-   placeholder AnchorNode (epic 0014). */
+   placeholder AnchorNode. */
 .shape-node .react-flow__handle,
 .container-node .react-flow__handle,
 .anchor-node .react-flow__handle {
@@ -377,7 +377,7 @@ body {
   opacity: 1;
 }
 
-/* Line node's own point handles (epic 0064/ADR 0050) — plain positioned
+/* Line node's own point handles (ADR 0050) — plain positioned
    divs, not React Flow Handles (those are for connections; these just
    reposition a point), so they get their own hover-reveal rule matching
    the one above. */
@@ -404,7 +404,7 @@ body {
   cursor: grabbing;
 }
 
-/* An edge's own manual bend points, catmull-rom routing only (epic 0032) —
+/* An edge's own manual bend points, catmull-rom routing only (ADR 0057) —
    plain positioned divs portalled via EdgeLabelRenderer (not React Flow
    Handles; those are for connections, these just reposition a point).
    Hover-revealed like .line-node-point above, but the actual hover state
@@ -489,18 +489,18 @@ body {
   padding: 0;
 }
 
-/* The edge-label-renderer div that portals every edge label (and, since
-   epic 0032, every catmull-rom edge's own bend-point handles) gets no
+/* The edge-label-renderer div that portals every edge label (and every
+   catmull-rom edge's own bend-point handles) gets no
    z-index of its own from React Flow (auto, ~0) — so without this
    override, a label or bend point paints (and hit-tests) behind any node
    or edge it overlaps whenever that node/edge's own z-index is positive.
-   That's the root cause of epic 0042.
+   That's the bug this fixes (see ADR 0030).
    This value is a manual ceiling, not derived from the real one — it went
-   stale once before (originally 5000, sized for epic 0042's ~4000 ceiling
+   stale once before (originally 5000, sized for a ~4000 ceiling
    at the time) and nothing re-checks it automatically, so if this still
    doesn't work, that's the first thing to re-verify. Canvas.tsx's own
-   zIndexedNodes/zIndexedEdges is the actual source of truth: as of epic
-   0032, the real ceiling is TEXT_BASE (zIndexOrdering.ts, 200 000) +
+   zIndexedNodes/zIndexedEdges is the actual source of truth: the real
+   ceiling is TEXT_BASE (zIndexOrdering.ts, 200 000) +
    SELECTED_EDGE_Z_BOOST (Canvas.tsx, 1 000 000) = 1 200 000 for a selected
    edge touching a text node. 2 000 000 stays comfortably above that with
    real headroom, not just exactly enough. */
@@ -511,7 +511,7 @@ body {
 /* Reconnect grab points (React Flow's own <circle>s, one per end) render
    fully transparent by design — an invisible hit target, not a visible
    element. Once the edge is selected, show them as a small solid dot, so
-   it's clear where to grab to reconnect that specific edge — epic 0046.
+   it's clear where to grab to reconnect that specific edge.
    `r` here matches Canvas.tsx's `reconnectRadius` prop exactly, so the
    visible dot is the same size as the actual grabbable area, not smaller
    or larger than what you can really click. `fill`/`stroke: transparent`
@@ -524,7 +524,7 @@ body {
   stroke-width: 1;
 }
 
-/* Epic 0044: React Flow's default resize handles/lines are too small to
+/* See ADR 0038: React Flow's default resize handles/lines are too small to
    reliably grab (5x5px corner dots, a 1px-wide invisible grab corridor
    along each edge). Scoped under .canvas-view-flow so this cleanly beats
    the library's own same-specificity `.react-flow__resize-control...`
@@ -533,7 +533,7 @@ body {
 
    Corner handles: the handle div IS the visible dot AND the entire hit
    target, so a bigger grab area unavoidably means a bigger dot — no way
-   to split the two here. Same tradeoff epic 0046 already worked through
+   to split the two here. Same tradeoff the edge-reconnection work already went through
    for edge reconnect points (tried a smaller-visible/larger-invisible
    split, walked it back after live testing felt like an approximation,
    landed on "the visible size is the real grab size"); same call here,
@@ -645,7 +645,7 @@ body {
   flex-direction: column;
   gap: 6px;
   /* Reserves the scrollbar's own width as a permanent gutter, so it never
-     paints on top of the grid's rightmost column (epic 0086) — this app's
+     paints on top of the grid's rightmost column — this app's
      Electron/Chromium target supports it, so no need to hardcode a guessed
      scrollbar width instead. */
   scrollbar-gutter: stable;
@@ -741,7 +741,7 @@ body {
   border-radius: 4px;
   padding: 3px;
   color: var(--color-text);
-  /* The real cause of the scrollbar overlap/overflow (epic 0086): a grid
+  /* The real cause of the scrollbar overlap/overflow: a grid
      item's default min-width is auto, which factors in its content's own
      intrinsic size — each button holds a raw <svg> with its own baked-in
      size, so the 6 columns refused to shrink below that regardless of the
@@ -966,7 +966,7 @@ body {
   border-bottom: 1px solid var(--ev-c-gray-2);
 }
 
-/* "Set as default style" (epic 0030/ADR 0048) — a plain button, not a
+/* "Set as default style" (ADR 0048) — a plain button, not a
    CollapsibleSection row, since it's a one-shot action rather than a
    field. */
 .property-set-default {
@@ -1031,7 +1031,7 @@ body {
   color: var(--ev-c-text-2);
 }
 
-/* Palette quick-pick row (epic 0030/ADR 0048) — drops to its own full-
+/* Palette quick-pick row (ADR 0048) — drops to its own full-
    width line below the label+color-input row via flex-wrap above, rather
    than squeezing into the same row. */
 .property-palette-swatches {
@@ -1188,7 +1188,7 @@ body {
   border-top-style: dotted;
 }
 
-/* Metadata section (epic 0034/ADR 0022) — a list-view of key/value rows
+/* Metadata section (ADR 0022) — a list-view of key/value rows
    inside the Properties Panel, single-selection only. Reuses .property-*
    spacing conventions from the rest of the panel rather than inventing new
    ones. */
@@ -1396,7 +1396,7 @@ body {
   gap: 8px;
 }
 
-/* Compact "Zoom limit: in [_] out [_]" row (epic 0086) — deliberately not
+/* Compact "Zoom limit: in [_] out [_]" row — deliberately not
    two full-width NumberField rows. */
 .settings-zoom-limit {
   display: flex;
@@ -1472,7 +1472,7 @@ body {
   font-size: 11px;
 }
 
-/* Layer panel — see epic 0043/ADR 0035. */
+/* Layer panel — see ADR 0035. */
 .layer-row {
   cursor: pointer;
   display: flex;
@@ -1497,7 +1497,7 @@ body {
 
 /* A visible insertion line between rows while dragging — replaces an
    earlier "drop onto a row" version that left which side it'd land on as
-   a hidden implementation detail (epic 0043 follow-up feedback). */
+   a hidden implementation detail (layer-panel follow-up feedback). */
 .layer-drop-indicator {
   height: 2px;
   margin: -1px 6px;
@@ -1536,7 +1536,7 @@ body {
   color: var(--ev-c-text-3);
 }
 
-/* Reference images — epic 0090/ADR 0069. */
+/* Reference images — see ADR 0069. */
 
 /* Floating viewer window (ReferenceWindow.tsx). Fixed-position, above the
    canvas and the utility dock's shadow but below modal dialogs (z 100). */
@@ -1777,8 +1777,8 @@ body {
 }
 
 /* Canvas-side counterpart of a .layer-row.pointed click — an "entity
-   highlight" (epic 0043/ADR 0035), a different concept from the *property*
-   highlight system (epic 0026/ADR 0025, .highlight-chips/matchHighlights)
+   highlight" (ADR 0035), a different concept from the *property*
+   highlight system (ADR 0025, .highlight-chips/matchHighlights)
    despite the shared word. A simple outline, deliberately distinct from
    both the selection outline and the property-highlight border override. */
 .shape-node.entity-highlighted,
@@ -1788,7 +1788,7 @@ body {
   outline-offset: 2px;
 }
 
-/* Search-result indicator (epic 0062/ADR 0062) — a distinct outline from
+/* Search-result indicator (ADR 0062) — a distinct outline from
    entity-highlighted just above (different width/offset so the two never
    look identical if both were somehow true at once) and, unlike the
    property-highlight border override, never touches the element's own
@@ -1804,7 +1804,7 @@ body {
 /* One key/lock/default row plus its collapsible allowed-values list below
    — see .required-tag-values-list. A visible bottom border between
    entries since each now has real vertical extent once expanded, not
-   just one flat row like before epic 0055. */
+   just one flat row like before the allowed-values list editor. */
 .required-tag-entry {
   border-bottom: 1px solid var(--ev-c-gray-2);
   margin-bottom: 6px;
@@ -1853,7 +1853,7 @@ body {
   padding: 2px 4px;
 }
 
-/* Allowed-values list editor (epic 0055/ADR 0047) — nested inside the
+/* Allowed-values list editor (ADR 0047) — nested inside the
    entry's own CollapsibleSection, collapsed by default. */
 .required-tag-values-list {
   display: flex;
@@ -1883,7 +1883,7 @@ body {
   color: var(--ev-c-text-3);
 }
 
-/* Gravity presets panel (epic 0064/ADR 0050) — reuses .required-tag-value-*
+/* Gravity presets panel (ADR 0050) — reuses .required-tag-value-*
    row/list shape above, just a narrower second input for the numeric
    value next to the label. */
 .gravity-preset-value-input {
@@ -1956,7 +1956,7 @@ body {
   background: var(--ev-button-alt-hover-bg);
 }
 
-/* Style Palette panel (epic 0030/ADR 0048) — reuses .required-tag-value-*
+/* Style Palette panel (ADR 0048) — reuses .required-tag-value-*
    row/list/confirm classes above for its colors/fonts editors and import
    confirmation, same list-editor shape as the required-tags panel. */
 .style-palette-color-row {
@@ -2025,7 +2025,7 @@ body {
   cursor: default;
 }
 
-/* Active-palette picker — epic 0074/ADR 0068. Sits at the top of the
+/* Active-palette picker — see ADR 0068. Sits at the top of the
    Style Palette panel body, above the Colors/Fonts sections. */
 .style-palette-picker {
   display: flex;
@@ -2078,7 +2078,7 @@ body {
   cursor: default;
 }
 
-/* Highlights panel — see epic 0026/ADR 0025. */
+/* Highlights panel — see ADR 0025. */
 .highlight-row {
   display: flex;
   align-items: center;
@@ -2137,7 +2137,7 @@ body {
   flex: 1;
 }
 
-/* Grouped highlights — see epic 0036/ADR 0026. A key with 2+ entries
+/* Grouped highlights — see ADR 0026. A key with 2+ entries
    renders as one of these instead of a plain .highlight-row. */
 .highlight-group {
   display: flex;
@@ -2249,7 +2249,7 @@ body {
   background: var(--ev-button-alt-hover-bg);
 }
 
-/* Legend panel — see epic 0037/ADR 0033. Deliberately NOT the shared
+/* Legend panel — see ADR 0033. Deliberately NOT the shared
    .highlights-panel/.settings-panel UtilityDock shell (that's a fixed-size
    right-side dock slot) — this is a small floating box positioned next to
    the canvas's bottom-left <Controls> widget, same `position: fixed`
@@ -2311,7 +2311,7 @@ body {
   margin: 0;
 }
 
-/* Search overlay (epic 0062/ADR 0062) — Ctrl+F-triggered, fixed top-right,
+/* Search overlay (ADR 0062) — Ctrl+F-triggered, fixed top-right,
    not anchored to any toolbar button since there isn't one yet in V1
    (deliberately provisional, see the ADR). Same panel visual language
    (background/border/shadow) as .legend-panel/.highlights-panel below,
@@ -2359,7 +2359,7 @@ body {
   cursor: default;
 }
 
-/* Isolate's pressed state (epic 0063/ADR 0063) — same accent color as a
+/* Isolate's pressed state (ADR 0063) — same accent color as a
    search-match outline/glow, since the two are directly related (Isolate
    dims everything search *didn't* match). */
 .search-overlay-isolate.active {
@@ -2685,7 +2685,7 @@ body {
   line-height: 1.4;
 }
 
-/* About dialog (epic 0057) — a centered overlay, not a UtilityDock panel;
+/* About dialog — a centered overlay, not a UtilityDock panel;
    see AboutDialog.tsx's own comment for why. z-index above the context
    menu/icon picker's 30-50 range since it's meant to block everything
    behind it while open. */
@@ -2760,7 +2760,7 @@ body {
   font-size: 12px;
 }
 
-/* Threat/risk matrix (epic 0060) — render-only prototype, replaces the
+/* Threat/risk matrix (see ADR 0055) — render-only prototype, replaces the
    entire canvas-view-body while the "matrix" persona is active (see
    Canvas.tsx). Plain <table>, no canvas/SVG involved.
    .toolbar floats via position: absolute (harmless over the pannable
@@ -2865,7 +2865,7 @@ body {
   background: var(--ev-c-gray-2);
 }
 
-/* Add threat/service (epic 0060, step 3) — a plain, unbordered corner
+/* Add threat/service — a plain, unbordered corner
    cell until clicked, so it doesn't read as part of the actual grid data
    (matching .threat-matrix-corner's own transparent/borderless look). */
 .threat-matrix-add-button {
@@ -2915,7 +2915,7 @@ body {
   opacity: 0.5;
 }
 
-/* Manage-matrix panel (epic 0060, step 4) — reuses LegendPanel's own
+/* Manage-matrix panel — reuses LegendPanel's own
    .legend-panel/-toolbar/-title/-body/-row/-row-label/-row-remove/-hint
    classes for the shell and per-item rows; only the two-group layout
    below is genuinely new. */
@@ -2955,7 +2955,7 @@ body {
   background: var(--ev-button-alt-hover-bg);
 }
 
-/* Reference panel (epic 0060, step 2) — so the meaning of a bare number
+/* Reference panel — so the meaning of a bare number
    isn't left to memory while filling the matrix in. Fixed-width, never
    stretches or wraps the table beside it (.threat-matrix-view's own
    align-items: flex-start already keeps it pinned to its natural
@@ -2994,7 +2994,7 @@ body {
   color: var(--ev-c-text-3);
 }
 
-/* Cell editor popup (epic 0060, step 2) — same anchored-popup idiom as
+/* Cell editor popup — same anchored-popup idiom as
    ColorPickerPopup/StylePicker/ContextMenu (click-outside/Escape closes,
    handled in the component itself). */
 .threat-matrix-cell-editor {

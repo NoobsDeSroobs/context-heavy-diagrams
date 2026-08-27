@@ -4,7 +4,7 @@
 Accepted
 
 ## Context
-Epic 0034 (unified tag and metadata system) gives each diagram its own `requiredTags` template, but nothing propagates one diagram's template to its linked children — a complex view built from many linked sub-diagrams means redefining the same required tags by hand in every single one. Raised directly by the user while testing epic 0024 (multi-window), scoped as its own small epic (0035) rather than folded into either 0024 or 0034, since it's really its own feature with its own real design questions.
+The unified tag and metadata system ([ADR 0022](0022-unified-tag-and-metadata-system.md)) gives each diagram its own `requiredTags` template, but nothing propagates one diagram's template to its linked children — a complex view built from many linked sub-diagrams means redefining the same required tags by hand in every single one. Raised directly by the user while testing the multi-window work, scoped as its own small feature rather than folded into either, since it has its own real design questions.
 
 Three things needed deciding, not just "add a button":
 1. When a child already has its own required tags, does copying overwrite them or merge?

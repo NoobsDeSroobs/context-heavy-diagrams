@@ -1,11 +1,11 @@
 import type { HighlightDefinition, JsonValue, MetadataEntry } from '@shared/diagram'
 
 // A single-match highlight overrides a node's border or an edge's stroke,
-// drawn a bit thicker than the default 1.5px — see epic 0026/ADR 0025.
+// drawn a bit thicker than the default 1.5px — see ADR 0025.
 export const HIGHLIGHT_BORDER_WIDTH = 3
 
 // Every newly-created highlight starts here — both "Add highlight" and
-// "Add group" (epic 0036/ADR 0026) — rather than a rotating palette,
+// "Add group" (ADR 0026) — rather than a rotating palette,
 // specifically so a fresh entry can never accidentally collide with a
 // color that already means something elsewhere. Deliberately neutral;
 // the user recolors deliberately.
@@ -20,7 +20,7 @@ export function highlightId(h: { key: string; value: HighlightDefinition['value'
   return `${h.key}::${JSON.stringify(h.value)}`
 }
 
-// "Add group" (epic 0036/ADR 0026): reconciles the catalog's entries for
+// "Add group" (ADR 0026): reconciles the catalog's entries for
 // one key against the values that key currently, actually carries
 // somewhere in the diagram — adds a white entry for a value not yet
 // covered, and *removes* an existing entry whose value nothing carries

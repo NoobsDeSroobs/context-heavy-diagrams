@@ -24,7 +24,7 @@ const SLOT_CLASS: Record<IconSlot, string> = {
 }
 const SLOTS = Object.keys(SLOT_CLASS) as IconSlot[]
 
-// Keys IconSlotView by icon identity, not just slot (epic 0028) — React
+// Keys IconSlotView by icon identity, not just slot — React
 // then remounts a fresh instance whenever the icon actually changes
 // (including cleared), so IconSlotView never needs to manually reset its
 // own svg/dataUrl state mid-fetch to avoid a stale-icon flash.
@@ -38,7 +38,7 @@ function iconSlotKey(slot: IconSlot, icon: IconRef | undefined): string {
 //
 // Icon slots deliberately render at the true corners with no special
 // handling to dodge NodeResizer's corner handles — same stacking order the
-// shape's own body already has under them, per user direction on epic 0007.
+// shape's own body already has under them, per user direction.
 // The icon *picker* and details panel are NOT rendered here — see
 // DiagramContext for why.
 function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
@@ -70,7 +70,7 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
   const tooltip = useDetailsTooltip(diagramPath, detailsPath)
   const { addConnectionPointItem, onPointContextMenu } = useConnectionPointMenu(id, customPoints)
 
-  // See epic 0026/ADR 0025: exactly one matching enabled highlight
+  // See ADR 0025: exactly one matching enabled highlight
   // overrides the border; two or more render as chips instead. Layered
   // after nodeContainerCss(style) so it takes precedence without touching
   // the actually-stored style.
@@ -138,7 +138,7 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
   )
 
   // Ctrl/Cmd+click is distinct from plain click (selection, handled by React
-  // Flow itself) and right-click (context menu, above) — see epic 0009.
+  // Flow itself) and right-click (context menu, above) — it navigates a linked diagram.
   // multiSelectionKeyCode is pinned to Shift in Canvas.tsx so this doesn't
   // collide with React Flow's own default Ctrl/Cmd multi-select toggle.
   const onClick = useCallback(

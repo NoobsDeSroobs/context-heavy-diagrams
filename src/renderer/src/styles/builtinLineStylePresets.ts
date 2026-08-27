@@ -7,7 +7,7 @@ export interface LineStylePreset {
   style: Partial<EdgeStyle>
 }
 
-// Deliberately minimal, generic entries only — see ADR 0010 and epic 0003's
+// Deliberately minimal, generic entries only — see ADR 0010 and ADR 0014's
 // Notes. The notation-base question (which naming system(s) a *real*
 // catalog should draw from — UML? ERD/crow's-foot? BPMN? something
 // invented for this tool?) is explicitly deferred to a later, evidence-

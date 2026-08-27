@@ -20,7 +20,7 @@ export async function openDiagramAtPath(path: string): Promise<DiagramFile> {
 }
 
 export function registerDiagramHandlers(): void {
-  // defaultPath here is a directory + filename (epic 0091) — defaults to
+  // defaultPath here is a directory + filename — defaults to
   // wherever the user last opened/saved a diagram, if anywhere, rather
   // than the OS/Electron's own arbitrary default. Absent
   // lastOpenedDirectory (nothing saved yet this install) falls back to
@@ -45,7 +45,7 @@ export function registerDiagramHandlers(): void {
   // of opening a duplicate (ADR 0023) — covers both Save and the first
   // Save As, the only two points a window's path becomes known if it
   // wasn't opened with one already (e.g. File -> New). sessionId is the
-  // window's pre-save recovery identity (epic 0020/ADR 0040) — a
+  // window's pre-save recovery identity (see ADR 0040) — a
   // successful save makes any recovery snapshot under either key (the old
   // session id, or this same path from a previous save) redundant.
   ipcMain.handle(
@@ -60,7 +60,7 @@ export function registerDiagramHandlers(): void {
       await deleteRecoverySnapshot(path, sessionId)
       await deleteRecoverySnapshot(null, sessionId)
       // A repeat Save (not just the first Save As) is still real evidence
-      // of "actively working in this directory" — epic 0091.
+      // of "actively working in this directory."
       await updateAppSettings({ lastOpenedDirectory: dirname(path) })
     }
   )
@@ -69,7 +69,7 @@ export function registerDiagramHandlers(): void {
   // passed via ?path= query string, ADR 0023). Every open path (File ->
   // Open, linked-diagram navigation, drag-and-drop) funnels through here
   // eventually, so this is the one place that needs to update
-  // lastOpenedDirectory (epic 0091) to cover all of them, rather than
+  // lastOpenedDirectory to cover all of them, rather than
   // duplicating the update at every dialog/entry point separately.
   ipcMain.handle('diagram:openPath', async (_event, path: string) => {
     await updateAppSettings({ lastOpenedDirectory: dirname(path) })

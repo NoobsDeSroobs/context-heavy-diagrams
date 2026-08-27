@@ -16,7 +16,7 @@ function stringifyValue(value: JsonValue): string {
 
 // Display only — the actual stored/edited value stays real JSON null
 // either way (stringifyValue(null) === "null", still what the <select>
-// below binds/parses through). Epic 0058/ADR 0046.
+// below binds/parses through). See ADR 0046.
 function displayValue(value: JsonValue): string {
   return value === null ? 'None' : stringifyValue(value)
 }
@@ -57,8 +57,8 @@ function groupEntries(entries: MetadataEntryTuple[]): {
   }
 }
 
-// Single-selection only (see epic 0034's "Resuming this epic" note) —
-// every other PropertyPanel field supports a mixed-across-selection
+// Single-selection only — every other PropertyPanel field supports a
+// mixed-across-selection
 // display, but metadata is a variable-length, per-element key set with no
 // obvious "union of keys, mixed per key" UI yet. Only rendered when
 // PropertyPanel has resolved exactly one selected Shape/Container/Edge.
@@ -125,7 +125,7 @@ export default function MetadataSection({
                 onChange={(event) => commitValue(key, event.target.value)}
               >
                 {/* Always available without being added to allowedValues
-                    itself — epic 0058/ADR 0046. value="null" round-trips
+                    itself — see ADR 0046. value="null" round-trips
                     through commitValue's existing parseValue (JSON.parse)
                     straight back to real null, no special-casing needed
                     there. */}

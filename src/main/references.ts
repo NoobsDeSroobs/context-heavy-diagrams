@@ -2,7 +2,7 @@ import { dialog, ipcMain } from 'electron'
 import { copyFile, mkdir, readdir, readFile } from 'fs/promises'
 import { basename, dirname, extname, join, relative } from 'path'
 
-// Reference images (epic 0090/ADR 0069) live in a sibling subfolder,
+// Reference images (see ADR 0069) live in a sibling subfolder,
 // assets/references/, next to the assets/ folder custom icons use (ADR
 // 0006). Same "diagram must be saved first" limitation and same
 // relative-path storage convention. This module is icons.ts with a

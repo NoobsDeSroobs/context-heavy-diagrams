@@ -2,7 +2,7 @@ import { dialog, ipcMain } from 'electron'
 import { readFile, writeFile } from 'fs/promises'
 import { basename, extname } from 'path'
 
-// Style palette export/import (epic 0030/ADR 0048) — a real file, same
+// Style palette export/import (see ADR 0048) — a real file, same
 // "sharing means handing someone a file" convention as diagram/icon
 // import elsewhere in this app, not a live-sync mechanism. The renderer
 // owns the actual JSON shape (settings.ts); main just picks a path and

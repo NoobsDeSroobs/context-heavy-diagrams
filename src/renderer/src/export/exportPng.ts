@@ -26,7 +26,7 @@ export interface PngExportOptions {
 const LEGEND_MARGIN = 16
 
 // A fixed oversample factor for export sharpness — not exposed as a
-// setting (epic 0010 only asked for padding/transparent background), just
+// setting (only padding/transparent background were asked for), just
 // a sensible default so a PNG dropped into Confluence isn't visibly
 // blurrier than the on-screen canvas.
 const PIXEL_RATIO = 2

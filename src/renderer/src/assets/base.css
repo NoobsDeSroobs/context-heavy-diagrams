@@ -1,6 +1,6 @@
 /* Raw palette — theme-invariant building blocks, never used directly in
    component CSS (main.css only ever reaches for the semantic tokens
-   below). See epic 0005/ADR 0027 for the theme system this feeds. */
+   below). See ADR 0027 for the theme system this feeds. */
 :root {
   --ev-c-white: #ffffff;
   --ev-c-white-soft: #f8f8f8;
@@ -46,7 +46,7 @@
 
 /* Before any JS runs (or if it never runs — e.g. JS disabled), the OS
    preference alone decides — never a hardcoded default in either
-   direction, see epic 0005/ADR 0027. Equal specificity to the dark block
+   direction, see ADR 0027. Equal specificity to the dark block
    above (:root + one pseudo-class each); this one wins when both match
    (OS light, no explicit choice) purely by appearing later in the file. */
 @media (prefers-color-scheme: light) {
@@ -81,7 +81,7 @@
 :root {
   --color-text: var(--ev-c-text-1);
 
-  /* Search-result indicator (epic 0062/ADR 0062) — deliberately theme-
+  /* Search-result indicator (ADR 0062) — deliberately theme-
      invariant (unlike the semantic tokens above) and distinct from any
      highlight color a user might pick, since search results must stay
      readable alongside whatever highlights are active. */

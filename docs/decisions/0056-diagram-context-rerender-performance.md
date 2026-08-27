@@ -4,7 +4,7 @@
 Accepted (2026-08-25)
 
 ## Context
-[Epic 0067](../planning/epics/0067-diagram-context-rerender-performance.md) reported a large-diagram frame-rate drop while dragging a native color-input handle (e.g. canvas background color) — confirmed live via render-count instrumentation: a single background-color drag on the ~70-shape/84-edge Meridian Rail landscape triggered over 31,000 `ShapeNode` renders. The working hypothesis (unconfirmed until this epic): `DiagramContext.Provider`'s `value` prop (`Canvas.tsx`) was a plain object literal rebuilt on every render of `CanvasInner`, with no memoization, so every context consumer (`ShapeNode`, `ContainerNode`, `TextNode`, `LabeledEdge`, `LineNode`) re-rendered on every tick of *any* settings change, not just the one field being dragged.
+A large-diagram frame-rate drop was reported while dragging a native color-input handle (e.g. canvas background color) — confirmed live via render-count instrumentation: a single background-color drag on the ~70-shape/84-edge Meridian Rail landscape triggered over 31,000 `ShapeNode` renders. The working hypothesis (unconfirmed until this work): `DiagramContext.Provider`'s `value` prop (`Canvas.tsx`) was a plain object literal rebuilt on every render of `CanvasInner`, with no memoization, so every context consumer (`ShapeNode`, `ContainerNode`, `TextNode`, `LabeledEdge`, `LineNode`) re-rendered on every tick of *any* settings change, not just the one field being dragged.
 
 Fixing the first, most obvious cause (memoizing the context value) surfaced two further, distinct costs that weren't part of the original hypothesis but produced the same symptom for other fields, discovered by live-testing each fix in turn.
 
@@ -22,10 +22,10 @@ Fixing the first, most obvious cause (memoizing the context value) surfaced two 
 
 **Throttling/debouncing the color input as the primary fix, before memoizing the context.** Raised early in this epic's discussion and deliberately deferred: it treats one symptom at one call site, doesn't help every other current or future rapid-input field, and (at a fixed delay rather than animation-frame granularity) costs live-preview smoothness the memoization fix doesn't. Used only once the structural fixes above left a genuine, confirmed-live residual cost.
 
-**Splitting `DiagramContext` into multiple contexts by change frequency** (raised as an open question in the epic doc before this work started). Not needed in the end — moving `selectedEdgeHighlightColor` to a CSS var solved the one field that actually needed this, without adding a second context that every consumer would still need to know about.
+**Splitting `DiagramContext` into multiple contexts by change frequency** (raised as an open question before this work started). Not needed in the end — moving `selectedEdgeHighlightColor` to a CSS var solved the one field that actually needed this, without adding a second context that every consumer would still need to know about.
 
 ## Consequences
 - `DiagramContextValue` no longer includes `selectedEdgeHighlightColor` — a reader of `DiagramContext.tsx` should look at `Canvas.tsx`'s `<ReactFlow style>` prop and `LabeledEdge`'s stroke computation instead.
-- `useRafThrottledCallback` (`hooks/useRafThrottledCallback.ts`) is now available for any other high-frequency input this app adds later (sliders, other continuous drags) — the epic's own notes flagged this as a likely-recurring pattern, not a one-off.
+- `useRafThrottledCallback` (`hooks/useRafThrottledCallback.ts`) is now available for any other high-frequency input this app adds later (sliders, other continuous drags) — a likely-recurring pattern, not a one-off.
 - Settings writes are eventually consistent within 300ms of the last change, not immediate — acceptable for app-level preferences (unlike diagram content, which has no such delay anywhere in this codebase).
 - No `.chd`/file-format impact — this is entirely rendering/settings-persistence plumbing.

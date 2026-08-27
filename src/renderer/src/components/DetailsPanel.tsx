@@ -9,7 +9,7 @@ interface DetailsPanelProps {
 
 type Mode = 'edit' | 'preview'
 
-// Fixed right-side dock, not a modal — see epic 0008. Deliberately minimal
+// Fixed right-side dock, not a modal. Deliberately minimal
 // formatting toolbar (bold/italic/heading/bullet), not a rich editor, per
 // the brief's own framing: most substantial edits happen in an external
 // editor, this is just enough to jot something down without leaving the app.

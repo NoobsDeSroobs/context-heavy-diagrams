@@ -6,7 +6,7 @@ interface AboutDialogProps {
 
 const REPO_URL = 'https://github.com/NoobsDeSroobs/context-heavy-diagram-tool'
 
-// Epic 0057 / ADR 0044. A centered overlay, not one of the fixed right-dock
+// See ADR 0044. A centered overlay, not one of the fixed right-dock
 // panels (ADR 0013) — those are ongoing inspection tools you leave open
 // alongside the canvas; an About screen is a one-off info popup you glance
 // at and dismiss, closer to a native "About" box. Click-outside/Escape-to-

@@ -1,6 +1,6 @@
 import type { RiskCell } from './threatMatrixMath'
 
-// Placeholder content for the epic 0060 prototype — plausible, not real.
+// Placeholder content for the threat-matrix prototype — plausible, not real.
 // Probability/consequence are both a 1-5 scale (a common Likert-style
 // risk-scoring convention), hand-picked per pair to make the rendered
 // matrix look like a real one (varied, not a flat grid of identical

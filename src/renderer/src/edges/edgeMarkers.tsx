@@ -34,7 +34,7 @@ const FILLED = { fill: 'context-stroke', stroke: 'none' }
 // clones that viewport subtree, so without these defs actually present
 // inside the cloned content, every edge's marker-end="url(#...)" reference
 // dangles and arrowheads silently don't render in the exported image
-// (found live, epic 0010, 2026-08-23). exportPng.ts finds this element by
+// (found live-testing PNG export, 2026-08-23). exportPng.ts finds this element by
 // this attribute and temporarily clones it into the capture.
 export default function EdgeMarkerDefs(): React.JSX.Element {
   return (

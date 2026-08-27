@@ -66,7 +66,7 @@ function normalizeLineBounds(
   })
 }
 
-// A freeform curved line (epic 0064/ADR 0050) — an ordered list of points,
+// A freeform curved line (see ADR 0050) — an ordered list of points,
 // each with an optional "gravity" (Catmull-Rom tension) controlling how
 // much the curve bends there. Deliberately its own node type rather than
 // reusing/extending edges — see the ADR for why. Never connectable, never
@@ -176,7 +176,7 @@ function LineNode({ id, data, selected }: NodeProps): React.JSX.Element {
             ]),
         // Reachable via any point since right-clicking the line's own body
         // (not a point) skips a menu entirely — it adds a point immediately
-        // instead (onPathContextMenu below). Epic 0082.
+        // instead (onPathContextMenu below). See ADR 0065.
         {
           label: 'Select all lines',
           separatorBefore: isEndpoint,

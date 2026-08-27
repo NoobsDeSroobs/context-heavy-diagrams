@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 // Native `title` attribute showing the detail file's first non-empty line —
 // deliberately the simplest possible "lightweight tooltip" per the brief
 // (must never open the full panel on hover). Richer, frontmatter-driven
-// tooltips are epic 0021, not this.
+// tooltips would be separate work, not this.
 export function useDetailsTooltip(
   diagramPath: string | null,
   detailsPath: string | undefined
@@ -27,7 +27,7 @@ export function useDetailsTooltip(
     }
   }, [diagramPath, detailsPath, key])
 
-  // epic 0028: replaces the old setTitle(undefined) reset at the top of
+  // Replaces the old setTitle(undefined) reset at the top of
   // the effect (react-hooks/set-state-in-effect) — a hook has no `key`
   // of its own to remount by (unlike IconSlotView's fix, its caller
   // can't easily remount just this hook's state without remounting the

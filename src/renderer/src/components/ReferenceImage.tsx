@@ -9,7 +9,7 @@ interface ReferenceImageProps {
   onNaturalSize?: (width: number, height: number) => void
 }
 
-// Reference images (epic 0090/ADR 0069) always render via <img src="data:…">
+// Reference images (see ADR 0069) always render via <img src="data:…">
 // — never inline SVG, same script-injection guard as custom icons
 // (IconSlotView). Callers key this by `path` so a path change remounts a
 // fresh instance rather than this component resetting its own state

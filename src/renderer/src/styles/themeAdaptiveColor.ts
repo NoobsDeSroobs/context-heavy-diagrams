@@ -104,7 +104,7 @@ function flipLightness(L: number, theme: Theme): number {
 }
 
 // Applies the theme-adaptive lightness flip to an explicit fill/stroke/
-// fontColor — see ADR 0034/epic 0040. `undefined` or a color this app's own
+// fontColor — see ADR 0034. `undefined` or a color this app's own
 // CSS engine can't resolve passes through unchanged (nothing to flip).
 // Overloaded so a definitely-a-string input (the common case, already
 // guarded by callers) doesn't force `| undefined` handling at every call

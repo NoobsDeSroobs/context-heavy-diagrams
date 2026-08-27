@@ -4,7 +4,7 @@
 Accepted
 
 ## Context
-Detail files (epic 0008 — free-form Markdown notes attached to a Shape/Container) were named `<node-id>.md`, e.g. `shape-3f9a1b2c-....md` — the node's own id, which is always `<type-prefix>-<uuid>`. Reported live by the user: with enough elements, it's very hard to tell which file on disk belongs to which element in the diagram, since the filename carries the element's *type* (not useful — you can already see the type from the folder structure/context) and a raw UUID (meaningless to a human), but never the element's actual label, which is the one thing a person would recognize it by.
+Detail files (free-form Markdown notes attached to a Shape/Container) were named `<node-id>.md`, e.g. `shape-3f9a1b2c-....md` — the node's own id, which is always `<type-prefix>-<uuid>`. Reported live by the user: with enough elements, it's very hard to tell which file on disk belongs to which element in the diagram, since the filename carries the element's *type* (not useful — you can already see the type from the folder structure/context) and a raw UUID (meaningless to a human), but never the element's actual label, which is the one thing a person would recognize it by.
 
 ## Decision
 Detail filenames are now built from the element's own label plus its id's UUID suffix — `<label>-<uuid>.md` (e.g. `Web App-1a2b3c4d-....md`) — dropping the type prefix entirely. The UUID is kept (not dropped) specifically to guarantee uniqueness even between two elements with the same or blank label; the label alone is not a safe unique key.
@@ -24,4 +24,4 @@ Labels aren't filesystem-safe by default (a label can contain `/`, `:`, `"`, etc
 - **A separate one-shot migration script/IPC call, run once and then deleted**: considered per the user's own framing of the question, but dropped once it became clear the permanent sync-on-save logic already needed to handle "any name that doesn't match the current label," which is a strict superset of "specifically an old-convention name" — writing a second, narrower migration path alongside it would have been pure duplication with nothing to actually delete later.
 
 ## References
-Epic [0086](../planning/epics/0086-minor-ui-improvements.md) (where this was first logged) / [0087](../planning/epics/0087-detail-file-naming.md) (where it was actually scoped and built), `src/main/details.ts`, `src/renderer/src/Canvas.tsx`'s `flushDetailsDrafts`, [ADR 0006](0006-icon-storage-model.md) (the sibling-folder convention this reuses), [docs/file-format.md](../file-format.md)'s `data.details` field.
+`src/main/details.ts`, `src/renderer/src/Canvas.tsx`'s `flushDetailsDrafts`, [ADR 0006](0006-icon-storage-model.md) (the sibling-folder convention this reuses), [docs/file-format.md](../file-format.md)'s `data.details` field.

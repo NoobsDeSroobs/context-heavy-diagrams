@@ -1,6 +1,6 @@
 import type { EdgeStyle, GravityPreset, NodeStyle } from './diagram'
 
-// Moved here from the renderer (epic 0054/ADR 0053) — main now needs this
+// Moved here from the renderer (see ADR 0053) — main now needs this
 // exact shape too, to read/write the real per-OS settings file directly
 // (app.getPath('userData')/settings.json) rather than the renderer's own
 // localStorage, which only a renderer can reach.
@@ -10,7 +10,7 @@ export interface PaletteColor {
   value: string
 }
 
-// One named set of reusable colors + fonts (epic 0074/ADR 0068). Several
+// One named set of reusable colors + fonts (see ADR 0068). Several
 // are kept around at once ("Company", "GDPR", "Client"); exactly one is
 // active at a time and feeds the color fields / Font Family dropdown. The
 // `id` is the stable handle the active pointer uses, so renaming a palette
@@ -22,14 +22,14 @@ export interface NamedStylePalette {
   fonts: string[]
 }
 
-// The pre-0074 single-palette shape, kept only so normalizeAppSettings can
+// The older single-palette shape, kept only so normalizeAppSettings can
 // migrate an older settings.json forward. Never written by current code.
 export interface LegacyStylePalette {
   colors: PaletteColor[]
   fonts: string[]
 }
 
-// Fixed id for the palette a pre-0074 settings.json is migrated into, and
+// Fixed id for the palette an older single-palette settings.json is migrated into, and
 // for the one DEFAULT_SETTINGS seeds — deterministic so the migration is
 // idempotent and so every fresh install starts from the same handle.
 export const DEFAULT_STYLE_PALETTE_ID = 'palette-default'
@@ -46,17 +46,17 @@ export type LegendCorner = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-ri
 export interface AppSettings {
   // Pixels each edge travels straight out from its endpoint before
   // curving toward the other end — 0 means "no forced straight segment,"
-  // today's only behavior. Epic 0047.
+  // today's only behavior. See ADR 0032.
   edgeStraightSegmentLength: number
   // Upper bound on the property panel's per-side connection point count
-  // field (epic 0039) — the total shown to the user, including the
-  // always-present default point for that side.
+  // field — the total shown to the user, including the always-present
+  // default point for that side.
   maxConnectionPointsPerSide: number
   // Whether app startup scans for crash-recovery snapshots from diagrams
-  // that were never saved (epic 0020/ADR 0040) — a real cost (disk scan
+  // that were never saved (see ADR 0040) — a real cost (disk scan
   // before the first window can usefully act on it) some users may want
-  // to skip. Epic 0054/ADR 0053: main can now read this directly from the
-  // real settings file at startup, no separate mirror file needed anymore.
+  // to skip. Main reads this directly from the real settings file at
+  // startup (ADR 0053), no separate mirror file needed anymore.
   scanForUnsavedRecoveryOnStartup: boolean
   // A selected edge's stroke swaps to this color entirely (overriding its
   // own explicit style and any highlight-match color), so it stays
@@ -67,15 +67,15 @@ export interface AppSettings {
   // from React Flow itself.
   selectedEdgeHighlightColor: string
   // Raw style fields stamped onto every newly created edge's data.style
-  // (Canvas.tsx's onConnect/onConnectEnd) — epic 0061/ADR 0045. Same
+  // (Canvas.tsx's onConnect/onConnectEnd) — see ADR 0045. Same
   // EdgeStyle shape StylePicker's presets already produce (ADR 0010), so
   // the toolbar control reuses that exact picker rather than a new one.
   // Empty object means "today's existing look" (whatever LabeledEdge and
   // <ReactFlow>'s own defaultEdgeOptions fall back to) — an unset field
   // here doesn't get a hardcoded second default of its own.
   defaultEdgeStyle: EdgeStyle
-  // User/org-owned reusable colors and fonts — epic 0030/ADR 0048,
-  // reshaped into a named collection by epic 0074/ADR 0068. Surfaced as
+  // User/org-owned reusable colors and fonts — ADR 0048,
+  // reshaped into a named collection by ADR 0068. Surfaced as
   // quick-pick options inside ColorField (Fill/Border/Font color, panel
   // and context-menu popups both) and the Font Family dropdown — always
   // from whichever palette activeStylePaletteId points at, resolved live
@@ -91,20 +91,20 @@ export interface AppSettings {
   // are none" — see effectiveStylePalette().
   activeStylePaletteId: string | null
   // Default style stamped onto a freshly created Shape/Container/Text —
-  // epic 0030/ADR 0048. Set explicitly (StylePalettePanel's "Set as
-  // default" button, copying a selected element's current style), never
-  // inferred from "whatever was last used." Edges already have this via
-  // defaultEdgeStyle above (epic 0061) — deliberately not duplicated here.
+  // ADR 0048. Set explicitly (StylePalettePanel's "Set as default"
+  // button, copying a selected element's current style), never inferred
+  // from "whatever was last used." Edges already have this via
+  // defaultEdgeStyle above (ADR 0045) — deliberately not duplicated here.
   // Absent per type means today's existing look (Container keeps its own
   // hardcoded faint-fill fallback; Shape/Text keep ADR 0014's "no style at
   // all").
   defaultStyles: { shape?: NodeStyle; container?: NodeStyle; text?: NodeStyle }
   // Overrides React Flow's own light/dark default canvas background —
-  // epic 0030/ADR 0048. Global, not per-diagram (matches the rest of the
+  // ADR 0048. Global, not per-diagram (matches the rest of the
   // style palette). Absent means today's existing theme-based background,
   // unchanged.
   canvasBackgroundColor?: string
-  // PNG export (epic 0010/ADR 0051, revised after live testing) — the
+  // PNG export (ADR 0051, revised after live testing) — the
   // *last used* values from the Export as PNG… dialog (ExportPngDialog),
   // remembered here purely so the dialog reopens prefilled next time
   // rather than resetting to defaults on every export. The dialog itself,
@@ -123,8 +123,8 @@ export interface AppSettings {
   pngExportLegendCorner: LegendCorner
   // React Flow's own selectionMode prop (SelectionMode.Full/.Partial),
   // exposed as a Setting rather than hardcoded — raised after the user
-  // started relying on drag-to-select more heavily alongside epic 0084's
-  // multi-connection-line. true (Full, today's only prior behavior):
+  // started relying on drag-to-select more heavily alongside the
+  // multi-connection-line feature. true (Full, today's only prior behavior):
   // an element must be entirely inside the drag box to be selected.
   // false (Partial): touching the box's edge is enough — usually the more
   // useful mode once you're deliberately drag-selecting a cluster rather
@@ -138,12 +138,12 @@ export interface AppSettings {
   minZoom: number
   maxZoom: number
   // Opacity applied to every element outside the current search match set
-  // while Isolate is active (epic 0063/ADR 0063) — global, not per-diagram,
+  // while Isolate is active (see ADR 0063) — global, not per-diagram,
   // same tier as every other canvas-behavior Setting here. 0 would hide
   // non-matches entirely; deliberately left as a plain opacity rather than
   // a visibility toggle so de-emphasized structure/context stays visible.
   isolateOpacity: number
-  // Directory of the last opened/saved diagram (epic 0091) — passed as
+  // Directory of the last opened/saved diagram — passed as
   // `defaultPath` to File -> Open/Save As's dialogs so they default to
   // wherever the user was last working, instead of the OS/Electron's own
   // arbitrary default. Absent means "no dialog opened yet this install,"
@@ -152,9 +152,9 @@ export interface AppSettings {
   // (windows.ts/diagram.ts), never edited through SettingsPanel — this is
   // a silent backend preference, not user-facing UI.
   lastOpenedDirectory?: string
-  // User default tier for line gravity/bend presets (epic 0072/ADR 0052's
-  // Diagram override -> User default -> Built-in default fallback
-  // pattern) — the middle tier that was missing when that pattern was
+  // User default tier for line gravity/bend presets (see ADR 0066;
+  // ADR 0052's Diagram override -> User default -> Built-in default
+  // fallback pattern) — the middle tier that was missing when that pattern was
   // first named. Absent means "no personal default set," falling all the
   // way through to DEFAULT_GRAVITY_PRESETS (lineGravityPresets.ts), same
   // "absent means default" convention as everything else in this app.
@@ -194,8 +194,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
 // added in newer renderer code must still show its default even if main
 // hasn't been rebuilt yet — this bit us once with isolateOpacity).
 //
-// It also carries the epic 0074 migration: a pre-0074 blob has a single
-// `stylePalette: { colors, fonts }` and no `stylePalettes` array. Fold it
+// It also carries the named-style-palettes migration (ADR 0068): an older
+// blob has a single `stylePalette: { colors, fonts }` and no
+// `stylePalettes` array. Fold it
 // into the named collection as one "Default" palette. Idempotent — an
 // already-migrated blob has `stylePalettes` set, so the branch is skipped.
 export function normalizeAppSettings(

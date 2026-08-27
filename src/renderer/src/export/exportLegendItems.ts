@@ -34,7 +34,7 @@ function stringifyValue(value: JsonValue): string {
 }
 
 // Combines the diagram's own authored Legend entries with one row per
-// currently-*enabled* highlight (epic 0010, raised after live-testing PNG
+// currently-*enabled* highlight (raised after live-testing PNG
 // export — "if I use the GDPR highlights when exporting, the legend
 // should contain green saying No PII, blue saying Pseudonymized...").
 // Highlight enabled/disabled is deliberately session-only, never persisted

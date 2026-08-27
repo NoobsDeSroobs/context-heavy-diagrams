@@ -1,6 +1,6 @@
 import type { Node } from '@xyflow/react'
 
-// Containers (epic 0004, ADR 0012) — a child node's `position` is relative
+// Containers (ADR 0012) — a child node's `position` is relative
 // to its immediate parent's own position, cascading up through any nesting
 // depth. These helpers convert between that relative space and true
 // absolute canvas coordinates, and keep the invariant React Flow requires:

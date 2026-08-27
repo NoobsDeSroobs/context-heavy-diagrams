@@ -1,7 +1,7 @@
 import { dialog, ipcMain } from 'electron'
 import { writeFile } from 'fs/promises'
 
-// PNG export (epic 0010/ADR 0051) — same "renderer produces bytes, main
+// PNG export (see ADR 0051) — same "renderer produces bytes, main
 // picks a path and writes them" split as stylePalette.ts. The renderer
 // hands over a data URL (from html-to-image's toPng) rather than a raw
 // buffer since that's what the browser-side capture API already produces;

@@ -1,7 +1,7 @@
 import type { Edge, Node } from '@xyflow/react'
 
 // Real OS clipboard, not in-app-only state — this app already committed to
-// one real BrowserWindow per diagram (ADR 0023/epic 0024), so an in-app
+// one real BrowserWindow per diagram (ADR 0023), so an in-app
 // React-state clipboard couldn't cross windows at all (separate renderer
 // processes); the system clipboard makes cross-window/cross-diagram paste
 // work for free, and matches what a user already expects from every other
@@ -22,8 +22,7 @@ export interface ClipboardPayload {
 // Edges tag along only when *both* endpoints are also being copied — a
 // dangling edge with a missing endpoint isn't representable once ids get
 // regenerated on paste, and copying "just an edge" alone was never the
-// ask (epic 0025's own framing: "copy/paste for nodes... edges between
-// copied nodes").
+// ask ("copy/paste for nodes... edges between copied nodes").
 export function buildClipboardPayload(selectedNodes: Node[], allEdges: Edge[]): ClipboardPayload {
   const selectedIds = new Set(selectedNodes.map((n) => n.id))
   const edges = allEdges.filter((e) => selectedIds.has(e.source) && selectedIds.has(e.target))

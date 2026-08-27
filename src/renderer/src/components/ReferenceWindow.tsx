@@ -30,7 +30,7 @@ interface Natural {
   h: number
 }
 
-// A single reference image (epic 0090/ADR 0069) as a free-floating,
+// A single reference image (see ADR 0069) as a free-floating,
 // draggable, resizable, closable window over the canvas — the PureRef /
 // design-software model. The body is a fixed viewport with NO scrollbars:
 // zoom with the wheel or the +/− buttons, pan by dragging, double-click to

@@ -13,7 +13,7 @@ interface IconSlotViewProps {
 // inlined: an arbitrary user-supplied SVG could embed a script, and <img>
 // doesn't execute embedded scripts the way dangerouslySetInnerHTML would.
 //
-// No manual "reset before fetching" here (epic 0028) — the caller keys
+// No manual "reset before fetching" here — the caller keys
 // this component by icon identity (ShapeNode.tsx's iconSlotKey), so React
 // unmounts/remounts a fresh instance whenever the icon actually changes,
 // rather than reusing one instance and needing svg/dataUrl cleared by

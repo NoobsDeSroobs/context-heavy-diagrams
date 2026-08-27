@@ -6,7 +6,7 @@ Accepted
 ## Context
 [The project brief](../project-brief.md:12) states "shapes and containers must be resizable and rotatable." [ADR 0004](0004-shape-text-node-split.md) split nodes into `ShapeNode` (resizable, connectable, never rotates) and `TextNode` (resizable, rotatable, never connectable) specifically because React Flow computes edge-attachment (`Handle`) positions against a node's *unrotated* bounding box — rotating a connectable node makes edges visually misattach, a structural bug, not a cosmetic one. That ADR's Consequences section presumed containers would be "non-rotatable like `ShapeNode`... for the same structural reason," quietly overriding the brief's literal wording without it being raised as a real decision at the time.
 
-Implementing containers (epic 0004) is where that presumption actually has to be confirmed or reversed, because a container plausibly needs edges attached to it directly (e.g. an external system connecting to a "VPC" or "security zone" container as a whole, not to one of its children) — unlike `TextNode`, which never needed connectivity in the first place.
+Implementing containers is where that presumption actually has to be confirmed or reversed, because a container plausibly needs edges attached to it directly (e.g. an external system connecting to a "VPC" or "security zone" container as a whole, not to one of its children) — unlike `TextNode`, which never needed connectivity in the first place.
 
 Separately: deleting a container needs a defined behavior for what happens to the nodes inside it. The brief's stated failure mode to avoid is "grouping mechanisms that make it hard to edit individual elements independently afterward" — cascading deletion is the sharper version of that same problem (losing children's data entirely, not just making them hard to edit).
 
@@ -17,7 +17,7 @@ Separately: deleting a container needs a defined behavior for what happens to th
 
 **Nesting containers inside containers is allowed**, not restricted to one level. React Flow's `parentId` model supports arbitrary depth natively — restricting it would mean adding validation code to prevent something the underlying mechanism already handles correctly, more work than just allowing it. Not explicitly requested, but the cheaper default given the primitive in use.
 
-**Schema**: `DiagramNode` gains an optional `parentId?: string`, referencing another node's `id`. Empty/absent means top-level (no container). Maps directly to React Flow's own `Node.parentId`; `extent: 'parent'` (clamping a child's drag/resize to its container's bounds) is derived at runtime from `parentId`'s presence, not stored — same reasoning as connection points' default-4 points not being explicitly stored (ADR/epic 0013).
+**Schema**: `DiagramNode` gains an optional `parentId?: string`, referencing another node's `id`. Empty/absent means top-level (no container). Maps directly to React Flow's own `Node.parentId`; `extent: 'parent'` (clamping a child's drag/resize to its container's bounds) is derived at runtime from `parentId`'s presence, not stored — same reasoning as connection points' default-4 points not being explicitly stored.
 
 ## Alternatives considered
 - **Rotatable, not connectable** (matches `TextNode`'s category instead): rejected — a container that can never have an edge attached to it is a real capability gap for IT architecture diagrams specifically (boundary/zone objects are exactly the kind of thing an edge often needs to terminate at).

@@ -5,7 +5,7 @@ Decided (2026-08-26), implementation starting same session.
 
 ## Context
 
-[Epic 0062](../planning/epics/0062-search-and-highlight-matches.md) was raised 2026-08-22 after navigating the 70-node Meridian Rail landscape with no way to locate an element short of scanning by eye, then deliberately deferred — "log this for later, not build it now." It became blocking once [epic 0063](../planning/epics/0063-dim-non-matching-elements-mode.md) (Isolate mode)'s own design pass (2026-08-25) found Isolate needs precise tag-based match sets to be worth building at all, not just free text. Several real open questions were left unresolved in the epic doc: what fields to match, how matches render, live-vs-submit timing, UI placement, and whether search should reach into linked child diagrams.
+Search was raised 2026-08-22 after navigating the 70-node Meridian Rail landscape with no way to locate an element short of scanning by eye, then deliberately deferred — "log this for later, not build it now." It became blocking once Isolate mode's own design pass (2026-08-25) found Isolate needs precise tag-based match sets to be worth building at all, not just free text. Several real open questions were left unresolved: what fields to match, how matches render, live-vs-submit timing, UI placement, and whether search should reach into linked child diagrams.
 
 ## Decision
 
@@ -17,7 +17,7 @@ Decided (2026-08-26), implementation starting same session.
 
 **Entry point is a `Ctrl+F`-triggered overlay only, no permanent toolbar search box, in V1.** Explicitly provisional — the user asked this be revisited once the app's overall chrome (toolbar, docks, menu bar) is more settled, rather than committing to permanent UI real estate for it now.
 
-**Scope is the current diagram only.** Reaching into linked child diagrams (the "drill-down tree" epic 0009 makes possible) is real but meaningfully harder — it means loading and parsing files that aren't currently open, not just querying in-memory state — so it's split out as its own follow-up, [epic 0093](../planning/epics/0093-drill-down-search-across-linked-diagrams.md), explicitly excluding deep (details) search even there: the user's reasoning is that anything worth finding in V1 should already surface directly in the details panel or diagram itself, and drill-down search is for locating elements in a large or poorly-maintained tree, not for grepping notes across it.
+**Scope is the current diagram only.** Reaching into linked child diagrams (the "drill-down tree" that linked diagrams make possible) is real but meaningfully harder — it means loading and parsing files that aren't currently open, not just querying in-memory state — so it's split out as its own follow-up, explicitly excluding deep (details) search even there: the user's reasoning is that anything worth finding in V1 should already surface directly in the details panel or diagram itself, and drill-down search is for locating elements in a large or poorly-maintained tree, not for grepping notes across it.
 
 **Match rendering reuses `highlights.ts`'s existing border/fill mechanics but as a visually distinct "search result" style**, coexisting with any active user-defined highlights rather than suspending them — so turning on search doesn't make it look like the user's own highlight groups changed.
 
@@ -34,4 +34,4 @@ Decided (2026-08-26), implementation starting same session.
 
 - No `.chd` schema/version changes — search is transient UI/session state, not persisted diagram data, so this ADR is purely about in-app behavior, not the file format.
 - Deep search's per-keystroke-safe design (submit-only, no index) means its performance profile is intentionally decoupled from free-text search's — the two can evolve independently (e.g. free-text going live-as-you-type later without dragging deep search along).
-- `docs/planning/epics/0062-search-and-highlight-matches.md` and the new `docs/planning/epics/0093-drill-down-search-across-linked-diagrams.md` carry the scoped/deferred breakdown; this ADR is the record of *why*, not the task list.
+- The search and drill-down-search planning docs carry the scoped/deferred breakdown; this ADR is the record of *why*, not the task list.

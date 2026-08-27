@@ -4,7 +4,7 @@ export interface ScaleLevel {
   description: string
 }
 
-// Made-up placeholder ranges (epic 0060 prototype, "you can just make up
+// Made-up placeholder ranges (threat-matrix prototype, "you can just make up
 // some ranges for now"). Needs to become configurable eventually — this
 // is deliberately not that yet, just enough to make cell editing and the
 // reference panel meaningful.

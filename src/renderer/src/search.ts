@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react'
 import type { MetadataEntry } from '@shared/diagram'
 
-// Pure free-text matcher behind epic 0062/ADR 0062's V1 search — one
+// Pure free-text matcher behind ADR 0062's V1 search — one
 // combined query checked against id, label, and every tag key/value,
 // deliberately not split into per-field syntax yet (that's the deferred
 // `metadata:*python*`-style scoping the ADR logs for later). Case-
@@ -31,7 +31,7 @@ export function matchesSearchQuery(query: string, element: SearchableElement): b
   return false
 }
 
-// "Isolate" (epic 0063/ADR 0063) — every node/edge component computes its
+// "Isolate" (see ADR 0063) — every node/edge component computes its
 // own dimmed-or-not state the same way, so this is the one shared spot for
 // it rather than four copies of the same three lines. `{}` (no opacity, no
 // transition) whenever Isolate is off at all, so turning it off snaps
