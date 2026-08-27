@@ -15,6 +15,8 @@ export interface DiagramApi {
   pickAndCopyCustomIcon(diagramPath: string): Promise<string | null>
   listCustomIcons(diagramPath: string): Promise<string[]>
   readIconAsDataUrl(diagramPath: string, relativePath: string): Promise<string>
+  pickAndCopyReferences(diagramPath: string): Promise<string[] | null>
+  readReferenceAsDataUrl(diagramPath: string, relativePath: string): Promise<string>
   readDetails(diagramPath: string, relativePath: string): Promise<string>
   writeDetails(diagramPath: string, nodeId: string, label: string, content: string): Promise<string>
   syncDetailFileName(
@@ -72,7 +74,7 @@ export interface DiagramApi {
   onAppSettingsChanged(callback: (settings: AppSettings) => void): () => void
   getAppVersion(): Promise<string>
   exportStylePalette(json: string): Promise<boolean>
-  importStylePalette(): Promise<string | null>
+  importStylePalette(): Promise<{ name: string; content: string } | null>
   exportPngToFile(dataUrl: string, suggestedFilename: string): Promise<boolean>
   copyToClipboard(text: string): void
   readClipboardText(): string

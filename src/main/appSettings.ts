@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import { readFile, writeFile } from 'fs/promises'
 import { join } from 'path'
-import { DEFAULT_SETTINGS, type AppSettings } from '@shared/settings'
+import { DEFAULT_SETTINGS, normalizeAppSettings, type AppSettings } from '@shared/settings'
 
 // Real per-OS settings file (epic 0054/ADR 0053) — replaces the renderer's
 // former localStorage-only storage (ADR 0032) with a file under this OS's
@@ -22,10 +22,10 @@ function settingsFile(): string {
 export async function readAppSettings(): Promise<AppSettings | null> {
   try {
     const raw = await readFile(settingsFile(), 'utf-8')
-    // Spread over the defaults, not a bare parse — an older stored blob
-    // missing a field newer code added should still fill in a sane value,
-    // same "absent means default" reasoning as the .chd format (ADR 0029).
-    return { ...DEFAULT_SETTINGS, ...(JSON.parse(raw) as Partial<AppSettings>) }
+    // Normalize, not a bare parse — fills in defaults for fields an older
+    // stored blob predates (same "absent means default" reasoning as the
+    // .chd format, ADR 0029) and runs the epic 0074 stylePalette migration.
+    return normalizeAppSettings(JSON.parse(raw) as Partial<AppSettings>)
   } catch {
     return null
   }

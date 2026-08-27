@@ -89,6 +89,8 @@ import AlignDistributePanel from './components/AlignDistributePanel'
 import AboutDialog from './components/AboutDialog'
 import ExportPngDialog, { type PngExportChoice } from './components/ExportPngDialog'
 import StylePalettePanel from './components/StylePalettePanel'
+import ReferenceWindow from './components/ReferenceWindow'
+import ReferencesPanel from './components/ReferencesPanel'
 import DiagramDock from './panels/DiagramDock'
 import { PALETTE_ITEM_DRAG_TYPE, type PaletteItemType } from './panels/ItemPalette'
 import UtilityDock from './panels/UtilityDock'
@@ -97,7 +99,7 @@ import { SNAP_THRESHOLD_PX, boundsFrom, computeSnap } from './alignment'
 import { buildClipboardPayload, parseClipboardPayload, remapForPaste } from './clipboard'
 import type { TransformPatch } from './panels/PropertyPanel'
 import { useTheme } from './theme'
-import { useSettings } from './settings'
+import { effectiveStylePalette, useSettings } from './settings'
 import {
   captureDiagramPng,
   resolveEffectiveBackgroundColor,
@@ -434,7 +436,11 @@ function toDiagramFile(
         details: typeof n.data?.details === 'string' ? (n.data.details as string) : undefined,
         linkedDiagram:
           typeof n.data?.linkedDiagram === 'string' ? (n.data.linkedDiagram as string) : undefined,
-        points: Array.isArray(n.data?.points) ? (n.data.points as LinePoint[]) : undefined
+        points: Array.isArray(n.data?.points) ? (n.data.points as LinePoint[]) : undefined,
+        references:
+          Array.isArray(n.data?.references) && (n.data.references as string[]).length > 0
+            ? (n.data.references as string[])
+            : undefined
       }
     })),
     edges: edges.map((e) => ({
@@ -497,6 +503,9 @@ function fromDiagramFile(diagram: DiagramFile): {
             ...(n.data.details ? { details: n.data.details } : {}),
             ...(n.data.linkedDiagram ? { linkedDiagram: n.data.linkedDiagram } : {}),
             ...(n.data.points && n.data.points.length > 0 ? { points: n.data.points } : {}),
+            ...(Array.isArray(n.data.references) && n.data.references.length > 0
+              ? { references: n.data.references }
+              : {}),
             ...(n.style ? { style: n.style } : {}),
             ...(n.metadata && nodeMetadataEligible(n.type) ? { metadata: n.metadata } : {})
           }
@@ -688,6 +697,12 @@ function CanvasInner(): React.JSX.Element {
   // Which node the panel currently points at — an "entity highlight," see
   // DiagramContext's own comment on this field. Session-only, reset on load.
   const [entityHighlightNodeId, setEntityHighlightNodeId] = useState<string | null>(null)
+  // Reference images (epic 0090/ADR 0069). `referencesPanelOpen` is the
+  // diagram-wide inventory View (same UtilityDock family as Layers).
+  // `referenceWindows` is the set of open floating viewer windows — pure
+  // session state, one entry per (shape, image path), gone on reload.
+  const [referencesPanelOpen, setReferencesPanelOpen] = useState(false)
+  const [referenceWindows, setReferenceWindows] = useState<{ nodeId: string; path: string }[]>([])
   // Which edge the pointer is currently over — epic 0032. A catmull-rom
   // edge's own bend-point handles only render while their edge is hovered
   // (or selected, or a point is actively being dragged — see
@@ -1196,6 +1211,7 @@ function CanvasInner(): React.JSX.Element {
       setGravityPresetsPanelOpen(false)
       setAlignDistributePanelOpen(false)
       setDiagramConfigPanelOpen(false)
+      setReferencesPanelOpen(false)
       setDetailsPanelNodeId(nodeId)
       // No-existing-file (or nothing saved yet to resolve one against) is
       // seeded synchronously right here rather than in the effect below
@@ -1224,6 +1240,7 @@ function CanvasInner(): React.JSX.Element {
     setGravityPresetsPanelOpen(false)
     setAlignDistributePanelOpen(false)
     setDiagramConfigPanelOpen(false)
+    setReferencesPanelOpen(false)
     setRequiredTagsPanelOpen((open) => !open)
   }, [])
 
@@ -1236,6 +1253,7 @@ function CanvasInner(): React.JSX.Element {
     setGravityPresetsPanelOpen(false)
     setAlignDistributePanelOpen(false)
     setDiagramConfigPanelOpen(false)
+    setReferencesPanelOpen(false)
     setDiagnosticsPanelOpen((open) => !open)
   }, [])
 
@@ -1248,6 +1266,7 @@ function CanvasInner(): React.JSX.Element {
     setGravityPresetsPanelOpen(false)
     setAlignDistributePanelOpen(false)
     setDiagramConfigPanelOpen(false)
+    setReferencesPanelOpen(false)
     setSettingsPanelOpen((open) => !open)
   }, [])
 
@@ -1260,6 +1279,7 @@ function CanvasInner(): React.JSX.Element {
     setGravityPresetsPanelOpen(false)
     setAlignDistributePanelOpen(false)
     setDiagramConfigPanelOpen(false)
+    setReferencesPanelOpen(false)
     setStylePalettePanelOpen((open) => !open)
   }, [])
 
@@ -1272,6 +1292,7 @@ function CanvasInner(): React.JSX.Element {
     setStylePalettePanelOpen(false)
     setAlignDistributePanelOpen(false)
     setDiagramConfigPanelOpen(false)
+    setReferencesPanelOpen(false)
     setGravityPresetsPanelOpen((open) => !open)
   }, [])
 
@@ -1284,6 +1305,7 @@ function CanvasInner(): React.JSX.Element {
     setStylePalettePanelOpen(false)
     setGravityPresetsPanelOpen(false)
     setDiagramConfigPanelOpen(false)
+    setReferencesPanelOpen(false)
     setAlignDistributePanelOpen((open) => !open)
   }, [])
 
@@ -1305,6 +1327,7 @@ function CanvasInner(): React.JSX.Element {
     setAlignDistributePanelOpen(false)
     setDiagramConfigPanelOpen(false)
     setEntityHighlightNodeId(null)
+    setReferencesPanelOpen(false)
     setLayerPanelOpen((open) => !open)
   }, [])
 
@@ -1317,8 +1340,121 @@ function CanvasInner(): React.JSX.Element {
     setStylePalettePanelOpen(false)
     setGravityPresetsPanelOpen(false)
     setAlignDistributePanelOpen(false)
+    setReferencesPanelOpen(false)
     setDiagramConfigPanelOpen((open) => !open)
   }, [])
+
+  const toggleReferencesPanel = useCallback(() => {
+    setDetailsPanelNodeId(null)
+    setRequiredTagsPanelOpen(false)
+    setDiagnosticsPanelOpen(false)
+    setSettingsPanelOpen(false)
+    setLayerPanelOpen(false)
+    setStylePalettePanelOpen(false)
+    setGravityPresetsPanelOpen(false)
+    setAlignDistributePanelOpen(false)
+    setDiagramConfigPanelOpen(false)
+    setReferencesPanelOpen((open) => !open)
+  }, [])
+
+  // --- Reference images (epic 0090/ADR 0069) ---
+  // The floating viewer windows are pure session state; the paths on
+  // node.data.references are the only persisted part.
+  const openReferenceWindow = useCallback((nodeId: string, path: string) => {
+    setReferenceWindows((prev) =>
+      prev.some((w) => w.nodeId === nodeId && w.path === path) ? prev : [...prev, { nodeId, path }]
+    )
+  }, [])
+
+  const closeReferenceWindow = useCallback((nodeId: string, path: string) => {
+    setReferenceWindows((prev) => prev.filter((w) => !(w.nodeId === nodeId && w.path === path)))
+  }, [])
+
+  const addReferencesToNode = useCallback(
+    async (nodeId: string) => {
+      if (!currentPath) {
+        alert('Save the diagram before adding reference images.')
+        return
+      }
+      let added: string[] | null
+      try {
+        added = await window.api.pickAndCopyReferences(currentPath)
+      } catch (err) {
+        // Surface it rather than failing silently — most often a stale
+        // preload bundle after adding this API (needs a full app restart),
+        // occasionally a real copy/permissions error.
+        alert(`Could not add reference images: ${err instanceof Error ? err.message : String(err)}`)
+        return
+      }
+      if (!added || added.length === 0) return
+      pushSnapshot()
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (n.id !== nodeId) return n
+          const existing = Array.isArray(n.data?.references) ? (n.data.references as string[]) : []
+          return { ...n, data: { ...n.data, references: [...existing, ...added] } }
+        })
+      )
+      setReferenceWindows((prev) => [
+        ...prev,
+        ...added
+          .filter((path) => !prev.some((w) => w.nodeId === nodeId && w.path === path))
+          .map((path) => ({ nodeId, path }))
+      ])
+    },
+    [currentPath, pushSnapshot, setNodes]
+  )
+
+  const removeReferenceFromNode = useCallback(
+    (nodeId: string, path: string) => {
+      pushSnapshot()
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (n.id !== nodeId) return n
+          const existing = Array.isArray(n.data?.references) ? (n.data.references as string[]) : []
+          const next = existing.filter((p) => p !== path)
+          return { ...n, data: { ...n.data, references: next.length > 0 ? next : undefined } }
+        })
+      )
+      setReferenceWindows((prev) => prev.filter((w) => !(w.nodeId === nodeId && w.path === path)))
+    },
+    [pushSnapshot, setNodes]
+  )
+
+  // DiagramContext entry point — shape/container right-click "Reference
+  // images…": open a window for each of the node's references, or jump
+  // straight to the file picker when it has none yet.
+  const openReferencesFor = useCallback(
+    (nodeId: string) => {
+      // Read live node data off the React Flow instance rather than closing
+      // over `nodes` — keeps this callback stable so it doesn't bust the
+      // memoized DiagramContext value on every node change (epic 0067/ADR
+      // 0056).
+      const node = rfInstance.getNode(nodeId)
+      const refs = Array.isArray(node?.data?.references) ? (node.data.references as string[]) : []
+      if (refs.length === 0) {
+        void addReferencesToNode(nodeId)
+        return
+      }
+      setReferenceWindows((prev) => [
+        ...prev,
+        ...refs
+          .filter((path) => !prev.some((w) => w.nodeId === nodeId && w.path === path))
+          .map((path) => ({ nodeId, path }))
+      ])
+    },
+    [rfInstance, addReferencesToNode]
+  )
+
+  const revealReferenceOwner = useCallback(
+    (nodeId: string) => {
+      setNodes((nds) =>
+        nds.map((n) => (n.selected === (n.id === nodeId) ? n : { ...n, selected: n.id === nodeId }))
+      )
+      rfInstance.fitView({ nodes: [{ id: nodeId }], duration: 300, padding: 0.5 })
+    },
+    [setNodes, rfInstance]
+  )
 
   const updateGravityPresets = useCallback(
     (presets: GravityPreset[]) => {
@@ -3057,6 +3193,8 @@ function CanvasInner(): React.JSX.Element {
       setGravityPresetsPanelOpen(false)
       setAlignDistributePanelOpen(false)
       setDiagramConfigPanelOpen(false)
+      setReferencesPanelOpen(false)
+      setReferenceWindows([])
       setSearchOverlayOpen(false)
       setSearchQuery('')
       setDeepSearchEnabled(false)
@@ -3599,6 +3737,10 @@ function CanvasInner(): React.JSX.Element {
           setAlignDistributePanelOpen(false)
         } else if (diagramConfigPanelOpen) {
           setDiagramConfigPanelOpen(false)
+        } else if (referencesPanelOpen) {
+          setReferencesPanelOpen(false)
+        } else if (referenceWindows.length > 0) {
+          setReferenceWindows((prev) => prev.slice(0, -1))
         } else if (iconPicker) {
           setIconPicker(null)
         } else if (colorPicker) {
@@ -3647,6 +3789,8 @@ function CanvasInner(): React.JSX.Element {
     gravityPresetsPanelOpen,
     alignDistributePanelOpen,
     diagramConfigPanelOpen,
+    referencesPanelOpen,
+    referenceWindows,
     iconPicker,
     colorPicker,
     linePicker,
@@ -3784,6 +3928,19 @@ function CanvasInner(): React.JSX.Element {
     }))
     .sort((a, b) => b.zIndex - a.zIndex)
 
+  // Flat "shape → one reference path" list backing the References inventory
+  // panel (epic 0090/ADR 0069) — a live projection of node data, owns
+  // nothing.
+  const referenceRows = nodes.flatMap((n) => {
+    const refs = n.data?.references
+    if (!Array.isArray(refs)) return []
+    return (refs as string[]).map((path) => ({
+      nodeId: n.id,
+      nodeLabel: String(n.data?.label ?? ''),
+      path
+    }))
+  })
+
   // Top menu bar (epic 0049) — File/Edit/View, an explicit information-
   // architecture split worked out with the user alongside epic 0048 (left
   // sidebar, not yet built): file-level actions here, per-diagram
@@ -3867,6 +4024,10 @@ function CanvasInner(): React.JSX.Element {
           onSelect: toggleDiagnosticsPanel
         },
         { label: 'Layers', onSelect: toggleLayerPanel },
+        {
+          label: `References${referenceRows.length > 0 ? ` (${referenceRows.length})` : ''}`,
+          onSelect: toggleReferencesPanel
+        },
         { label: 'Style Palette', onSelect: toggleStylePalettePanel },
         { label: 'Line bend presets', onSelect: toggleGravityPresetsPanel },
         { label: 'Diagram configuration', onSelect: toggleDiagramConfigPanel },
@@ -3878,6 +4039,14 @@ function CanvasInner(): React.JSX.Element {
       items: [{ label: 'About', onSelect: () => setAboutDialogOpen(true) }]
     }
   ]
+
+  // Whichever named palette is active (epic 0074/ADR 0068), resolved live —
+  // memoized on the two fields it depends on so the Context value below
+  // keeps a stable identity between unrelated settings changes.
+  const activeStylePalette = useMemo(
+    () => effectiveStylePalette(settings.stylePalettes, settings.activeStylePaletteId),
+    [settings.stylePalettes, settings.activeStylePaletteId]
+  )
 
   // Memoized so a high-frequency state change elsewhere in CanvasInner (e.g.
   // dragging a native color-input handle, which can fire dozens of onChange
@@ -3896,6 +4065,10 @@ function CanvasInner(): React.JSX.Element {
       openIconPicker,
       openColorPicker,
       openDetailsPanel,
+      openReferencesFor,
+      openReferenceWindow,
+      addReferencesToNode,
+      removeReferenceFromNode,
       handleLinkClick,
       beginContinuousEdit,
       endContinuousEdit,
@@ -3907,8 +4080,8 @@ function CanvasInner(): React.JSX.Element {
         diagramMaxConnectionPointsPerSide ?? settings.maxConnectionPointsPerSide,
       theme,
       entityHighlightNodeId,
-      paletteColors: settings.stylePalette.colors,
-      paletteFonts: settings.stylePalette.fonts,
+      paletteColors: activeStylePalette.colors,
+      paletteFonts: activeStylePalette.fonts,
       gravityPresets: effectiveGravityPresets(gravityPresets, settings.gravityPresetsUserDefault),
       searchMatchIds,
       isolateActive,
@@ -3921,6 +4094,10 @@ function CanvasInner(): React.JSX.Element {
       openIconPicker,
       openColorPicker,
       openDetailsPanel,
+      openReferencesFor,
+      openReferenceWindow,
+      addReferencesToNode,
+      removeReferenceFromNode,
       handleLinkClick,
       beginContinuousEdit,
       endContinuousEdit,
@@ -3932,8 +4109,7 @@ function CanvasInner(): React.JSX.Element {
       diagramMaxConnectionPointsPerSide,
       theme,
       entityHighlightNodeId,
-      settings.stylePalette.colors,
-      settings.stylePalette.fonts,
+      activeStylePalette,
       gravityPresets,
       settings.gravityPresetsUserDefault,
       searchMatchIds,
@@ -4344,6 +4520,15 @@ function CanvasInner(): React.JSX.Element {
               }}
             />
           )}
+          {referencesPanelOpen && (
+            <ReferencesPanel
+              diagramPath={currentPath}
+              rows={referenceRows}
+              onReveal={revealReferenceOwner}
+              onOpen={openReferenceWindow}
+              onClose={() => setReferencesPanelOpen(false)}
+            />
+          )}
           {settingsPanelOpen && (
             <SettingsPanel
               settings={settings}
@@ -4360,12 +4545,15 @@ function CanvasInner(): React.JSX.Element {
           )}
           {stylePalettePanelOpen && (
             <StylePalettePanel
-              palette={settings.stylePalette}
+              palettes={settings.stylePalettes}
+              activePaletteId={settings.activeStylePaletteId}
               defaultStyles={settings.defaultStyles}
               defaultEdgeStyle={settings.defaultEdgeStyle}
               canvasBackgroundColor={settings.canvasBackgroundColor}
               theme={theme}
-              onChangePalette={(stylePalette) => updateSettings({ stylePalette })}
+              onChangePalettes={(stylePalettes, activeStylePaletteId) =>
+                updateSettings({ stylePalettes, activeStylePaletteId })
+              }
               onChangeCanvasBackgroundColor={(canvasBackgroundColor) =>
                 updateSettings({ canvasBackgroundColor })
               }
@@ -4398,6 +4586,28 @@ function CanvasInner(): React.JSX.Element {
             />
           )}
         </UtilityDock>
+        {referenceWindows.map((w, index) => {
+          const owner = nodes.find((n) => n.id === w.nodeId)
+          // A window whose owning shape or reference is gone (deleted,
+          // undone) just stops rendering — no stale windows left behind.
+          const stillAttached =
+            owner &&
+            Array.isArray(owner.data?.references) &&
+            (owner.data.references as string[]).includes(w.path)
+          if (!stillAttached) return null
+          return (
+            <ReferenceWindow
+              key={`${w.nodeId}::${w.path}`}
+              diagramPath={currentPath}
+              nodeId={w.nodeId}
+              path={w.path}
+              ownerLabel={String(owner?.data?.label ?? '')}
+              index={index}
+              onClose={() => closeReferenceWindow(w.nodeId, w.path)}
+              onRemove={() => removeReferenceFromNode(w.nodeId, w.path)}
+            />
+          )
+        })}
         {aboutDialogOpen && <AboutDialog onClose={() => setAboutDialogOpen(false)} />}
         {exportPngDialogOpen && (
           <ExportPngDialog

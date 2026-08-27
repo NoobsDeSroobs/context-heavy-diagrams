@@ -1536,6 +1536,246 @@ body {
   color: var(--ev-c-text-3);
 }
 
+/* Reference images — epic 0090/ADR 0069. */
+
+/* Floating viewer window (ReferenceWindow.tsx). Fixed-position, above the
+   canvas and the utility dock's shadow but below modal dialogs (z 100). */
+.reference-window {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-background-soft);
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 4px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.reference-window-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 4px;
+  background: var(--color-background-mute);
+  cursor: move;
+  user-select: none;
+}
+
+.reference-window-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--color-text);
+}
+
+.reference-window-btn {
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: var(--ev-c-text-2);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  padding: 3px 4px;
+  border-radius: 3px;
+}
+
+.reference-window-btn:hover {
+  background: var(--ev-button-alt-hover-bg);
+  color: var(--color-text);
+}
+
+/* A fixed viewport — deliberately overflow:hidden, never a scrollbar.
+   Navigation is zoom (wheel / buttons) + drag-to-pan only. */
+.reference-window-body {
+  flex: 1;
+  min-height: 40px;
+  position: relative;
+  overflow: hidden;
+  background: var(--color-background);
+  cursor: grab;
+  touch-action: none;
+}
+
+.reference-window-body:active {
+  cursor: grabbing;
+}
+
+/* Size (base fit * zoom) and translate are set inline. */
+.reference-window-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;
+  pointer-events: none;
+  user-select: none;
+}
+
+.reference-window-zoom {
+  font-variant-numeric: tabular-nums;
+  min-width: 38px;
+  text-align: center;
+}
+
+.reference-window-resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 14px;
+  height: 14px;
+  cursor: nwse-resize;
+  background: linear-gradient(
+    135deg,
+    transparent 0 50%,
+    var(--ev-c-gray-2) 50% 60%,
+    transparent 60% 75%,
+    var(--ev-c-gray-2) 75% 85%,
+    transparent 85%
+  );
+}
+
+.reference-image-loading,
+.reference-image-missing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 40px;
+  font-size: 11px;
+  color: var(--ev-c-text-3);
+}
+
+/* Diagram-wide inventory panel (ReferencesPanel.tsx) — reuses .layer-panel
+   shell, its own rows. */
+.reference-inventory-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+}
+
+.reference-inventory-thumb {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 3px;
+  background: var(--color-background);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.reference-inventory-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.reference-inventory-label {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  color: var(--color-text);
+}
+
+.reference-inventory-label:hover .reference-inventory-owner {
+  text-decoration: underline;
+}
+
+.reference-inventory-owner {
+  font-size: 12px;
+}
+
+.reference-inventory-file {
+  font-size: 10px;
+  color: var(--ev-c-text-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* Property-panel References section (ReferencesSection.tsx). */
+.property-references-hint {
+  margin: 0 0 6px;
+  font-size: 11px;
+  color: var(--ev-c-text-3);
+}
+
+.property-references-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.property-references-item {
+  position: relative;
+}
+
+.property-references-thumb {
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 3px;
+  background: var(--color-background);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.property-references-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.property-references-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--color-background-mute);
+  color: var(--ev-c-text-2);
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.property-references-remove:hover {
+  color: var(--color-text);
+}
+
+.property-references-add {
+  font-size: 12px;
+  padding: 3px 8px;
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 3px;
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  cursor: pointer;
+}
+
+.property-references-add:hover {
+  background: var(--ev-button-alt-hover-bg);
+}
+
 /* Canvas-side counterpart of a .layer-row.pointed click — an "entity
    highlight" (epic 0043/ADR 0035), a different concept from the *property*
    highlight system (epic 0026/ADR 0025, .highlight-chips/matchHighlights)
@@ -1781,6 +2021,59 @@ body {
 }
 
 .style-palette-defaults-row button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Active-palette picker — epic 0074/ADR 0068. Sits at the top of the
+   Style Palette panel body, above the Colors/Fonts sections. */
+.style-palette-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.style-palette-select,
+.style-palette-name-input {
+  font: inherit;
+  font-size: 12px;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 3px;
+  padding: 3px 5px;
+}
+
+.style-palette-select {
+  flex: 1 1 120px;
+}
+
+.style-palette-name-input {
+  flex: 1 1 120px;
+}
+
+.style-palette-picker-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.style-palette-picker-actions button {
+  cursor: pointer;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 3px;
+  padding: 3px 8px;
+  font-size: 12px;
+}
+
+.style-palette-picker-actions button:hover:not(:disabled) {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.style-palette-picker-actions button:disabled {
   opacity: 0.4;
   cursor: default;
 }

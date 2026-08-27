@@ -10,6 +10,30 @@ export interface PaletteColor {
   value: string
 }
 
+// One named set of reusable colors + fonts (epic 0074/ADR 0068). Several
+// are kept around at once ("Company", "GDPR", "Client"); exactly one is
+// active at a time and feeds the color fields / Font Family dropdown. The
+// `id` is the stable handle the active pointer uses, so renaming a palette
+// never loses its active status.
+export interface NamedStylePalette {
+  id: string
+  name: string
+  colors: PaletteColor[]
+  fonts: string[]
+}
+
+// The pre-0074 single-palette shape, kept only so normalizeAppSettings can
+// migrate an older settings.json forward. Never written by current code.
+export interface LegacyStylePalette {
+  colors: PaletteColor[]
+  fonts: string[]
+}
+
+// Fixed id for the palette a pre-0074 settings.json is migrated into, and
+// for the one DEFAULT_SETTINGS seeds — deterministic so the migration is
+// idempotent and so every fresh install starts from the same handle.
+export const DEFAULT_STYLE_PALETTE_ID = 'palette-default'
+
 export type LegendCorner = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
 
 // Global, app-wide preferences — not diagram content, not window-local UI
@@ -50,14 +74,22 @@ export interface AppSettings {
   // <ReactFlow>'s own defaultEdgeOptions fall back to) — an unset field
   // here doesn't get a hardcoded second default of its own.
   defaultEdgeStyle: EdgeStyle
-  // User/org-owned reusable colors and fonts — epic 0030/ADR 0048.
-  // Surfaced as quick-pick options inside ColorField (Fill/Border/Font
-  // color, panel and context-menu popups both, since both already reuse
-  // that one component) and the Font Family dropdown. One active palette,
-  // not several merged ones — importing a file replaces this outright
-  // (confirmed in-panel first, see StylePalettePanel — not window.confirm(),
-  // see docs/known-issues.md's entry on why).
-  stylePalette: { colors: PaletteColor[]; fonts: string[] }
+  // User/org-owned reusable colors and fonts — epic 0030/ADR 0048,
+  // reshaped into a named collection by epic 0074/ADR 0068. Surfaced as
+  // quick-pick options inside ColorField (Fill/Border/Font color, panel
+  // and context-menu popups both) and the Font Family dropdown — always
+  // from whichever palette activeStylePaletteId points at, resolved live
+  // via effectiveStylePalette(). Several named palettes are kept around at
+  // once and switched between in StylePalettePanel; importing a file adds
+  // a new one rather than overwriting. Colors/fonts only — canvas
+  // background and per-type default styles below are still single global
+  // values, not per-palette (the feature is "get the colors right while
+  // authoring," not swappable diagram themes).
+  stylePalettes: NamedStylePalette[]
+  // Which entry of stylePalettes is currently active. null (or a dangling
+  // id) means "fall back to the first palette, or an empty set if there
+  // are none" — see effectiveStylePalette().
+  activeStylePaletteId: string | null
   // Default style stamped onto a freshly created Shape/Container/Text —
   // epic 0030/ADR 0048. Set explicitly (StylePalettePanel's "Set as
   // default" button, copying a selected element's current style), never
@@ -142,7 +174,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   // is a UI selection indicator," not part of the diagram itself.
   selectedEdgeHighlightColor: '#ff00aa',
   defaultEdgeStyle: {},
-  stylePalette: { colors: [], fonts: [] },
+  stylePalettes: [{ id: DEFAULT_STYLE_PALETTE_ID, name: 'Default', colors: [], fonts: [] }],
+  activeStylePaletteId: DEFAULT_STYLE_PALETTE_ID,
   defaultStyles: {},
   pngExportPaddingPx: 40,
   pngExportTransparentBackground: false,
@@ -151,4 +184,50 @@ export const DEFAULT_SETTINGS: AppSettings = {
   minZoom: 0.1,
   maxZoom: 2,
   isolateOpacity: 0.5
+}
+
+// Every point that receives a stored/relayed settings blob runs this
+// (main's file read, the renderer's file read, the cross-window broadcast,
+// the legacy-localStorage migration) — the standing rule is that no
+// AppSettings field may ever resolve to undefined, so re-merging over
+// DEFAULT_SETTINGS at each boundary is deliberate, not redundant (a field
+// added in newer renderer code must still show its default even if main
+// hasn't been rebuilt yet — this bit us once with isolateOpacity).
+//
+// It also carries the epic 0074 migration: a pre-0074 blob has a single
+// `stylePalette: { colors, fonts }` and no `stylePalettes` array. Fold it
+// into the named collection as one "Default" palette. Idempotent — an
+// already-migrated blob has `stylePalettes` set, so the branch is skipped.
+export function normalizeAppSettings(
+  raw: Partial<AppSettings> & { stylePalette?: LegacyStylePalette }
+): AppSettings {
+  const { stylePalette: legacy, ...rest } = raw
+  const merged: AppSettings = { ...DEFAULT_SETTINGS, ...rest }
+  if (legacy && !rest.stylePalettes) {
+    merged.stylePalettes = [
+      {
+        id: DEFAULT_STYLE_PALETTE_ID,
+        name: 'Default',
+        colors: legacy.colors ?? [],
+        fonts: legacy.fonts ?? []
+      }
+    ]
+    merged.activeStylePaletteId = DEFAULT_STYLE_PALETTE_ID
+  }
+  return merged
+}
+
+// The colors/fonts every color field and the Font Family dropdown draw
+// from — whichever palette `activeId` points at, falling back to the first
+// palette if that id is dangling (deleted without the pointer being
+// updated), then to an empty set if there are no palettes at all. Takes
+// the two fields rather than the whole AppSettings (same shape as
+// effectiveGravityPresets, ADR 0066) so a useMemo over it lists exactly
+// what it depends on. Resolved live on every render — nothing snapshotted
+// at load, so switching the active palette applies immediately everywhere.
+export function effectiveStylePalette(
+  palettes: NamedStylePalette[],
+  activeId: string | null
+): LegacyStylePalette {
+  return palettes.find((p) => p.id === activeId) ?? palettes[0] ?? { colors: [], fonts: [] }
 }

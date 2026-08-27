@@ -29,6 +29,7 @@ function ContainerNode({ id, data, selected }: NodeProps): React.JSX.Element {
     pushSnapshot,
     openContextMenu,
     openColorPicker,
+    openReferencesFor,
     attachContainedNodes,
     matchHighlights,
     theme,
@@ -61,6 +62,7 @@ function ContainerNode({ id, data, selected }: NodeProps): React.JSX.Element {
         { label: 'Fill…', onSelect: () => openColorPicker(id, 'fill', rect) },
         { label: 'Border…', onSelect: () => openColorPicker(id, 'border', rect) },
         { label: 'Attach contained shapes', onSelect: () => attachContainedNodes(id) },
+        { label: 'Reference images…', onSelect: () => openReferencesFor(id) },
         addConnectionPointItem(rect, event.clientX, event.clientY),
         {
           label: 'Select all containers',
@@ -72,6 +74,7 @@ function ContainerNode({ id, data, selected }: NodeProps): React.JSX.Element {
     [
       openContextMenu,
       openColorPicker,
+      openReferencesFor,
       addConnectionPointItem,
       attachContainedNodes,
       id,

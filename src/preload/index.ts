@@ -37,6 +37,17 @@ const api = {
     return ipcRenderer.invoke('icons:readAsDataUrl', diagramPath, relativePath)
   },
 
+  // Reference images (epic 0090/ADR 0069) — same sibling-folder model as
+  // custom icons, into assets/references/. pickAndCopy allows multi-select
+  // and returns every copied file's relative path (null on cancel).
+  pickAndCopyReferences(diagramPath: string): Promise<string[] | null> {
+    return ipcRenderer.invoke('references:pickAndCopy', diagramPath)
+  },
+
+  readReferenceAsDataUrl(diagramPath: string, relativePath: string): Promise<string> {
+    return ipcRenderer.invoke('references:readAsDataUrl', diagramPath, relativePath)
+  },
+
   // Detail files — see epic 0008, and epic 0087 for the label+uuid naming
   // convention. readDetails takes an already-known relative path;
   // writeDetails takes a node id/label and computes the conventional path
@@ -267,7 +278,7 @@ const api = {
     return ipcRenderer.invoke('stylePalette:exportToFile', json)
   },
 
-  importStylePalette(): Promise<string | null> {
+  importStylePalette(): Promise<{ name: string; content: string } | null> {
     return ipcRenderer.invoke('stylePalette:importFromFile')
   },
 

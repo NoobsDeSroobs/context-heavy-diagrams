@@ -215,6 +215,13 @@ export interface DiagramNode {
     // ordered — array position is the only thing that identifies a point,
     // there is no separate id.
     points?: LinePoint[]
+    // Reference images (epic 0090/ADR 0069) — 'shape'/'container' only.
+    // Ordered list of relative paths (from this diagram file's own dir,
+    // same convention as `details`) to files under the sibling
+    // assets/references/ folder. Pure working aid: shown only in floating
+    // viewer panels the user opens/closes, never rendered on the canvas
+    // and never included in exports. Absent/empty means none.
+    references?: string[]
   }
 }
 

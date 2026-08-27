@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain } from 'electron'
 import { electronApp, optimizer } from '@electron-toolkit/utils'
 import { registerDiagramHandlers } from './diagram'
 import { registerIconHandlers } from './icons'
+import { registerReferenceHandlers } from './references'
 import { registerDetailsHandlers } from './details'
 import { registerLinkHandlers } from './links'
 import { createWindow, registerWindowHandlers } from './windows'
@@ -32,6 +33,7 @@ app.whenReady().then(() => {
 
   registerDiagramHandlers()
   registerIconHandlers()
+  registerReferenceHandlers()
   registerDetailsHandlers()
   registerLinkHandlers()
   registerWindowHandlers()

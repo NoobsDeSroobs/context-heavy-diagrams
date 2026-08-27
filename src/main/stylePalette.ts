@@ -1,5 +1,6 @@
 import { dialog, ipcMain } from 'electron'
 import { readFile, writeFile } from 'fs/promises'
+import { basename, extname } from 'path'
 
 // Style palette export/import (epic 0030/ADR 0048) — a real file, same
 // "sharing means handing someone a file" convention as diagram/icon
@@ -20,6 +21,9 @@ export function registerStylePaletteHandlers(): void {
     return true
   })
 
+  // Returns the file name (sans extension) alongside its contents — epic
+  // 0074 seeds the new palette's name from it, editable afterwards. null
+  // on cancel, same convention as before.
   ipcMain.handle('stylePalette:importFromFile', async () => {
     const result = await dialog.showOpenDialog({
       title: 'Import style palette',
@@ -27,6 +31,10 @@ export function registerStylePaletteHandlers(): void {
       properties: ['openFile']
     })
     if (result.canceled || result.filePaths.length === 0) return null
-    return readFile(result.filePaths[0], 'utf-8')
+    const path = result.filePaths[0]
+    return {
+      name: basename(path, extname(path)),
+      content: await readFile(path, 'utf-8')
+    }
   })
 }

@@ -18,6 +18,15 @@ export interface DiagramContextValue {
   openColorPicker: (nodeId: string, kind: 'fill' | 'border', anchorRect: DOMRect) => void
   // Fixed right-side dock — no anchor needed, it's not attached to the node.
   openDetailsPanel: (nodeId: string) => void
+  // Reference images (epic 0090/ADR 0069). openReferencesFor: shape/
+  // container right-click "Reference images…" — opens a floating viewer
+  // window per attached reference, or the file picker if the node has none
+  // yet. addReferencesToNode / removeReferenceFromNode: the property
+  // panel's own References section. All rendered/owned at Canvas level.
+  openReferencesFor: (nodeId: string) => void
+  openReferenceWindow: (nodeId: string, path: string) => void
+  addReferencesToNode: (nodeId: string) => void
+  removeReferenceFromNode: (nodeId: string, path: string) => void
   // Ctrl/Cmd+click on a node — see epic 0009. Fully decided/implemented in
   // Canvas.tsx (it owns `nodes` and `openContextMenu`); node components just
   // forward the click, they don't decide chooser-vs-navigate themselves.
@@ -67,10 +76,12 @@ export interface DiagramContextValue {
   // metadata value) despite the shared English word. Deliberately not
   // real selection — see the ADR for why. Session-only, null means none.
   entityHighlightNodeId: string | null
-  // User/org style palette (settings.ts, epic 0030/ADR 0048) — threaded
-  // the same way as the global settings above, so PropertyPanel's
-  // NodeStyleFields/EdgeFields can read it without Canvas.tsx having to
-  // prop-drill through every intermediate component.
+  // The active named style palette's colors/fonts (settings.ts, epic
+  // 0030/ADR 0048, multi-palette per epic 0074/ADR 0068 — resolved via
+  // effectiveStylePalette). Threaded the same way as the global settings
+  // above, so PropertyPanel's NodeStyleFields/EdgeFields can read it
+  // without Canvas.tsx having to prop-drill through every intermediate
+  // component.
   paletteColors: { label: string; value: string }[]
   paletteFonts: string[]
   // Diagram-level catalog (epic 0064/ADR 0050), already resolved to this

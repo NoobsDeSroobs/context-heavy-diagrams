@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { DEFAULT_SETTINGS, type AppSettings } from '@shared/settings'
+import { DEFAULT_SETTINGS, normalizeAppSettings, type AppSettings } from '@shared/settings'
 
 // A rapid-fire source (a native color-input drag firing many onChange
 // events per second — see epic 0067) shouldn't mean that many IPC round-
@@ -10,8 +10,13 @@ import { DEFAULT_SETTINGS, type AppSettings } from '@shared/settings'
 // immediately regardless of this delay.
 const WRITE_DEBOUNCE_MS = 300
 
-export type { AppSettings, PaletteColor, LegendCorner } from '@shared/settings'
-export { DEFAULT_SETTINGS }
+export type {
+  AppSettings,
+  PaletteColor,
+  LegendCorner,
+  NamedStylePalette
+} from '@shared/settings'
+export { DEFAULT_SETTINGS, effectiveStylePalette } from '@shared/settings'
 
 const LEGACY_STORAGE_KEY = 'settings'
 
@@ -24,7 +29,7 @@ function readLegacyLocalStorageSettings(): AppSettings | null {
   const raw = localStorage.getItem(LEGACY_STORAGE_KEY)
   if (!raw) return null
   try {
-    return { ...DEFAULT_SETTINGS, ...(JSON.parse(raw) as Partial<AppSettings>) }
+    return normalizeAppSettings(JSON.parse(raw) as Partial<AppSettings>)
   } catch {
     return null
   }
@@ -67,7 +72,7 @@ export function useSettings(): {
         // dependency on main having been restarted/rebuilt first (bit us
         // once already: isolateOpacity rendered as an empty input under
         // this exact gap).
-        setSettings({ ...DEFAULT_SETTINGS, ...fileSettings })
+        setSettings(normalizeAppSettings(fileSettings))
         return
       }
       // settings.json doesn't exist yet — either a fresh install, or an
@@ -90,9 +95,7 @@ export function useSettings(): {
   // yet still never becomes undefined here either.
   useEffect(
     () =>
-      window.api.onAppSettingsChanged((incoming) =>
-        setSettings({ ...DEFAULT_SETTINGS, ...incoming })
-      ),
+      window.api.onAppSettingsChanged((incoming) => setSettings(normalizeAppSettings(incoming))),
     []
   )
 

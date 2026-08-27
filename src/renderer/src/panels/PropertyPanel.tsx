@@ -22,6 +22,7 @@ import {
 } from './fields'
 import { computeFieldValue } from './fieldValue'
 import MetadataSection from './MetadataSection'
+import ReferencesSection from './ReferencesSection'
 
 export interface TransformPatch {
   x?: number
@@ -813,6 +814,7 @@ export default function PropertyPanel({
             }
           />
         )}
+        {metadataTarget?.kind === 'node' && <ReferencesSection node={metadataTarget.node} />}
         {metadataTarget && (
           <MetadataSection
             metadata={

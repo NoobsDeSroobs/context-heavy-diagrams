@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import type { EdgeStyle, NodeStyle } from '@shared/diagram'
-import type { PaletteColor } from '../settings'
+import type { NamedStylePalette, PaletteColor } from '../settings'
 import type { Theme } from '../theme'
 import { CollapsibleSection, ColorField } from '../panels/fields'
 import { themeAdaptiveColor } from '../styles/themeAdaptiveColor'
 
 interface StylePalettePanelProps {
-  palette: { colors: PaletteColor[]; fonts: string[] }
+  palettes: NamedStylePalette[]
+  activePaletteId: string | null
   defaultStyles: { shape?: NodeStyle; container?: NodeStyle; text?: NodeStyle }
   defaultEdgeStyle: EdgeStyle
   canvasBackgroundColor: string | undefined
@@ -15,7 +16,11 @@ interface StylePalettePanelProps {
   // value is always a dark-theme baseline, same convention as fill/stroke/
   // fontColor, regardless of which theme is active when it's picked.
   theme: Theme
-  onChangePalette: (palette: { colors: PaletteColor[]; fonts: string[] }) => void
+  // Every palette-collection mutation (edit colors/fonts of the active one,
+  // rename, create, duplicate, delete, import) goes through this single
+  // callback — Canvas.tsx just does updateSettings({ stylePalettes,
+  // activeStylePaletteId }), all the array work lives here.
+  onChangePalettes: (palettes: NamedStylePalette[], activePaletteId: string | null) => void
   onChangeCanvasBackgroundColor: (value: string | undefined) => void
   onClearDefault: (type: 'shape' | 'container' | 'text' | 'edge') => void
   onClose: () => void
@@ -27,6 +32,19 @@ const TYPE_LABELS: Record<'shape' | 'container' | 'text' | 'edge', string> = {
   container: 'Container',
   text: 'Text',
   edge: 'Edge'
+}
+
+function newPaletteId(): string {
+  return `palette-${crypto.randomUUID()}`
+}
+
+// Keep the palette dropdown unambiguous — a fresh "New palette" or a
+// "<name> copy" that collides with an existing name gets a numeric suffix.
+function uniqueName(base: string, existing: string[]): string {
+  if (!existing.includes(base)) return base
+  let n = 2
+  while (existing.includes(`${base} ${n}`)) n++
+  return `${base} ${n}`
 }
 
 function ColorRow({
@@ -164,41 +182,107 @@ function FontsEditor({
   )
 }
 
-// Diagram-level? No — global, app-wide preference like SettingsPanel, not
-// diagram content (epic 0030/ADR 0048). Same fixed right-side dock shell
-// as RequiredTagsPanel/SettingsPanel/DiagnosticsPanel — see ADR 0013.
-export default function StylePalettePanel({
+// Inline rename field for the active palette — same commit-on-blur/Enter
+// shape as ColorRow's label, keyed by id so switching palettes reseeds it.
+function PaletteNameField({
   palette,
+  onRename
+}: {
+  palette: NamedStylePalette
+  onRename: (name: string) => void
+}): React.JSX.Element {
+  const [draft, setDraft] = useState(palette.name)
+  return (
+    <input
+      key={palette.id}
+      className="style-palette-name-input"
+      value={draft}
+      aria-label="Palette name"
+      onChange={(event) => setDraft(event.target.value)}
+      onBlur={() => {
+        const trimmed = draft.trim()
+        if (trimmed && trimmed !== palette.name) onRename(trimmed)
+        else setDraft(palette.name)
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter') event.currentTarget.blur()
+      }}
+    />
+  )
+}
+
+// Diagram-level? No — global, app-wide preference like SettingsPanel, not
+// diagram content (epic 0030/ADR 0048, reshaped into a named collection by
+// epic 0074/ADR 0068). Same fixed right-side dock shell as RequiredTags/
+// SettingsPanel/DiagnosticsPanel — see ADR 0013.
+export default function StylePalettePanel({
+  palettes,
+  activePaletteId,
   defaultStyles,
   defaultEdgeStyle,
   canvasBackgroundColor,
   theme,
-  onChangePalette,
+  onChangePalettes,
   onChangeCanvasBackgroundColor,
   onClearDefault,
   onClose
 }: StylePalettePanelProps): React.JSX.Element {
-  // Import replaces the whole working copy outright (ADR 0048) — confirmed
-  // in-panel first when there's something to lose, not via window.confirm()
-  // (see docs/known-issues.md — a native dialog left a different panel's
-  // <select> elements unresponsive afterward; avoided here on the same
-  // precedent even though this panel has no <select> of its own today).
-  const [pendingImport, setPendingImport] = useState<{
-    colors: PaletteColor[]
-    fonts: string[]
-  } | null>(null)
+  // Deleting a non-empty palette is the one destructive action here —
+  // confirmed in-panel first (not window.confirm(), which left a sibling
+  // panel's <select> unresponsive once, see docs/known-issues.md).
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+
+  const active = palettes.find((p) => p.id === activePaletteId) ?? palettes[0] ?? null
+  const names = palettes.map((p) => p.name)
+
+  // Any switch of which palette is active abandons a pending delete
+  // confirmation — otherwise the confirm card, which reads `active`, would
+  // silently retarget the palette you just switched to.
+  const selectActive = (id: string): void => {
+    setConfirmingDelete(false)
+    onChangePalettes(palettes, id)
+  }
+
+  const updateActive = (patch: Partial<Pick<NamedStylePalette, 'colors' | 'fonts' | 'name'>>): void => {
+    if (!active) return
+    onChangePalettes(
+      palettes.map((p) => (p.id === active.id ? { ...p, ...patch } : p)),
+      activePaletteId
+    )
+  }
+
+  const createPalette = (mode: 'empty' | 'duplicate'): void => {
+    setConfirmingDelete(false)
+    const id = newPaletteId()
+    const base =
+      mode === 'duplicate' && active
+        ? { name: `${active.name} copy`, colors: [...active.colors], fonts: [...active.fonts] }
+        : { name: 'New palette', colors: [] as PaletteColor[], fonts: [] as string[] }
+    onChangePalettes([...palettes, { id, ...base, name: uniqueName(base.name, names) }], id)
+  }
+
+  const deleteActive = (): void => {
+    if (!active) return
+    const remaining = palettes.filter((p) => p.id !== active.id)
+    onChangePalettes(remaining, remaining[0]?.id ?? null)
+    setConfirmingDelete(false)
+  }
 
   const handleExport = async (): Promise<void> => {
-    const json = JSON.stringify(palette, null, 2)
+    if (!active) return
+    // File shape stays the bare { colors, fonts } from before epic 0074 —
+    // no id/name — so palettes exported by any version stay interchangeable.
+    const json = JSON.stringify({ colors: active.colors, fonts: active.fonts }, null, 2)
     await window.api.exportStylePalette(json)
   }
 
   const handleImport = async (): Promise<void> => {
-    const raw = await window.api.importStylePalette()
-    if (raw === null) return
+    const result = await window.api.importStylePalette()
+    if (result === null) return
+    setConfirmingDelete(false)
     let parsed: unknown
     try {
-      parsed = JSON.parse(raw)
+      parsed = JSON.parse(result.content)
     } catch {
       alert('Not a valid style palette file (not valid JSON).')
       return
@@ -208,15 +292,22 @@ export default function StylePalettePanel({
       alert('Not a valid style palette file (missing colors/fonts arrays).')
       return
     }
-    const imported = {
-      colors: candidate.colors as PaletteColor[],
-      fonts: candidate.fonts as string[]
-    }
-    if (palette.colors.length === 0 && palette.fonts.length === 0) {
-      onChangePalette(imported)
-      return
-    }
-    setPendingImport(imported)
+    // Import adds a new named palette (epic 0074) rather than overwriting —
+    // that's the whole point of keeping several around. Name seeded from
+    // the file name, editable inline afterwards.
+    const id = newPaletteId()
+    onChangePalettes(
+      [
+        ...palettes,
+        {
+          id,
+          name: uniqueName(result.name || 'Imported palette', names),
+          colors: candidate.colors as PaletteColor[],
+          fonts: candidate.fonts as string[]
+        }
+      ],
+      id
+    )
   }
 
   const defaultRows: {
@@ -229,16 +320,14 @@ export default function StylePalettePanel({
     { type: 'edge', style: Object.keys(defaultEdgeStyle).length > 0 ? defaultEdgeStyle : undefined }
   ]
 
+  const activeEmpty = !active || (active.colors.length === 0 && active.fonts.length === 0)
+
   return (
     <div className="required-tags-panel">
       <div className="required-tags-panel-toolbar">
         <span className="required-tags-panel-title">Style Palette</span>
         <div className="details-panel-spacer" />
-        <button
-          type="button"
-          onClick={handleExport}
-          disabled={palette.colors.length === 0 && palette.fonts.length === 0}
-        >
+        <button type="button" onClick={handleExport} disabled={activeEmpty}>
           Export…
         </button>
         <button type="button" onClick={handleImport}>
@@ -249,24 +338,48 @@ export default function StylePalettePanel({
         </button>
       </div>
       <div className="required-tags-panel-body">
-        {pendingImport && (
+        <div className="style-palette-picker">
+          <select
+            className="style-palette-select"
+            aria-label="Active palette"
+            value={active?.id ?? ''}
+            onChange={(event) => selectActive(event.target.value)}
+          >
+            {palettes.length === 0 && <option value="">No palettes</option>}
+            {palettes.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+          {active && <PaletteNameField palette={active} onRename={(name) => updateActive({ name })} />}
+          <div className="style-palette-picker-actions">
+            <button type="button" onClick={() => createPalette('empty')}>
+              New
+            </button>
+            <button type="button" disabled={!active} onClick={() => createPalette('duplicate')}>
+              Duplicate
+            </button>
+            <button
+              type="button"
+              disabled={palettes.length <= 1}
+              onClick={() => (activeEmpty ? deleteActive() : setConfirmingDelete(true))}
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+        {confirmingDelete && active && (
           <div className="required-tag-value-confirm">
             <p>
-              Replace the current palette ({palette.colors.length} colors, {palette.fonts.length}{' '}
-              fonts) with the imported one ({pendingImport.colors.length} colors,{' '}
-              {pendingImport.fonts.length} fonts)?
+              Delete the &ldquo;{active.name}&rdquo; palette ({active.colors.length} colors,{' '}
+              {active.fonts.length} fonts)? This can&rsquo;t be undone.
             </p>
             <div className="required-tag-value-confirm-actions">
-              <button
-                type="button"
-                onClick={() => {
-                  onChangePalette(pendingImport)
-                  setPendingImport(null)
-                }}
-              >
-                Replace
+              <button type="button" onClick={deleteActive}>
+                Delete
               </button>
-              <button type="button" onClick={() => setPendingImport(null)}>
+              <button type="button" onClick={() => setConfirmingDelete(false)}>
                 Cancel
               </button>
             </div>
@@ -274,25 +387,31 @@ export default function StylePalettePanel({
         )}
         <p className="required-tags-panel-hint">
           Reusable colors and fonts, surfaced as quick-pick options in every color field and the
-          Font Family dropdown. Export to a file to share with a team; anyone imports it to get the
-          same set locally.
+          Font Family dropdown. Keep several named palettes around and switch which one is active;
+          export one to a file to share with a team.
         </p>
-        <CollapsibleSection title={`Colors (${palette.colors.length})`} sectionKey="Colors">
-          <ColorsEditor
-            colors={palette.colors}
-            onChange={(colors) => onChangePalette({ ...palette, colors })}
-          />
-        </CollapsibleSection>
-        <CollapsibleSection title={`Fonts (${palette.fonts.length})`} sectionKey="Fonts">
-          <FontsEditor
-            fonts={palette.fonts}
-            onChange={(fonts) => onChangePalette({ ...palette, fonts })}
-          />
-        </CollapsibleSection>
+        {active ? (
+          <>
+            <CollapsibleSection title={`Colors (${active.colors.length})`} sectionKey="Colors">
+              <ColorsEditor
+                colors={active.colors}
+                onChange={(colors) => updateActive({ colors })}
+              />
+            </CollapsibleSection>
+            <CollapsibleSection title={`Fonts (${active.fonts.length})`} sectionKey="Fonts">
+              <FontsEditor fonts={active.fonts} onChange={(fonts) => updateActive({ fonts })} />
+            </CollapsibleSection>
+          </>
+        ) : (
+          <p className="required-tags-panel-hint">
+            No palette yet — create one with &ldquo;New&rdquo; or import one to add colors and
+            fonts.
+          </p>
+        )}
         <CollapsibleSection title="Canvas background">
           <p className="required-tags-panel-hint">
             Overrides the light/dark theme&rsquo;s default canvas color. Clear to go back to
-            following the theme.
+            following the theme. Global, not per-palette.
           </p>
           <ColorField
             label="Background"
@@ -307,7 +426,7 @@ export default function StylePalettePanel({
           <p className="required-tags-panel-hint">
             Style a shape/container/text exactly how you want using the property panel, then use its
             &ldquo;Set as default style&rdquo; button — new elements of that type will start with
-            it. Edges: use the toolbar swatch next to the file name.
+            it. Edges: use the toolbar swatch next to the file name. Global, not per-palette.
           </p>
           <div className="style-palette-defaults-list">
             {defaultRows.map(({ type, style }) => (
