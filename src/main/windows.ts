@@ -4,6 +4,7 @@ import { basename, dirname, isAbsolute, join } from 'path'
 import { is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { deleteRecoverySnapshot, newSessionId } from './recovery'
+import { readAppSettings } from './appSettings'
 
 const FILTERS = [{ name: 'Diagram', extensions: ['chd'] }]
 
@@ -234,10 +235,17 @@ export function registerWindowHandlers(): void {
   // reuses the calling window instead of leaving a genuinely empty
   // window sitting around next to the newly-opened one.
   ipcMain.handle('windows:pickAndOpen', async (event, callingWindowEmpty: boolean) => {
+    // defaultPath: a directory here, not a specific file — defaults to
+    // wherever the user last opened/saved a diagram, if anywhere (epic
+    // 0091). lastOpenedDirectory itself gets updated by diagram:openPath
+    // once this pick actually results in a window loading a file, not
+    // here — this handler only ever reads it.
+    const settings = await readAppSettings()
     const result = await dialog.showOpenDialog({
       properties: ['openFile'],
       filters: FILTERS,
-      title: 'Open diagram'
+      title: 'Open diagram',
+      defaultPath: settings?.lastOpenedDirectory
     })
     if (result.canceled || result.filePaths.length === 0) return
     const callingWindow = callingWindowEmpty ? BrowserWindow.fromWebContents(event.sender) : null
@@ -332,19 +340,18 @@ export function registerWindowHandlers(): void {
       title: 'Unsaved changes',
       message: 'Save changes before closing this window?'
     }
-    const result = win ? await dialog.showMessageBox(win, options) : await dialog.showMessageBox(options)
+    const result = win
+      ? await dialog.showMessageBox(win, options)
+      : await dialog.showMessageBox(options)
     return (['save', 'discard', 'cancel'] as const)[result.response]
   })
 
-  ipcMain.handle(
-    'windows:closeApproved',
-    async (event, path: string | null, sessionId: string) => {
-      const win = BrowserWindow.fromWebContents(event.sender)
-      await deleteRecoverySnapshot(path, sessionId)
-      if (win) {
-        closeApproved.add(win)
-        win.close()
-      }
+  ipcMain.handle('windows:closeApproved', async (event, path: string | null, sessionId: string) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    await deleteRecoverySnapshot(path, sessionId)
+    if (win) {
+      closeApproved.add(win)
+      win.close()
     }
-  )
+  })
 }

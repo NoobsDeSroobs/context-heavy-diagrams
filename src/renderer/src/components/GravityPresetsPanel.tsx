@@ -7,6 +7,12 @@ interface GravityPresetsPanelProps {
   // apart from "explicitly customized," which the resolved list alone can't.
   presets: GravityPreset[]
   onChange: (presets: GravityPreset[]) => void
+  // Settings-tier value (epic 0072/ADR 0052), same raw-vs-resolved
+  // distinction as `presets` above — absent/empty means "no personal
+  // default set."
+  userDefault: GravityPreset[] | undefined
+  onSetUserDefault: (presets: GravityPreset[]) => void
+  onClearUserDefault: () => void
   onClose: () => void
 }
 
@@ -19,10 +25,14 @@ interface GravityPresetsPanelProps {
 export default function GravityPresetsPanel({
   presets,
   onChange,
+  userDefault,
+  onSetUserDefault,
+  onClearUserDefault,
   onClose
 }: GravityPresetsPanelProps): React.JSX.Element {
   const isCustomized = presets.length > 0
-  const rows = effectiveGravityPresets(presets)
+  const hasUserDefault = (userDefault?.length ?? 0) > 0
+  const rows = effectiveGravityPresets(presets, userDefault)
 
   const updateRow = (index: number, patch: Partial<GravityPreset>): void => {
     onChange(rows.map((p, i) => (i === index ? { ...p, ...patch } : p)))
@@ -54,9 +64,24 @@ export default function GravityPresetsPanel({
         <div className="details-panel-spacer" />
         <button
           type="button"
+          onClick={() => onSetUserDefault(rows)}
+          title="Save the list currently shown below as your own default, applied to every diagram that doesn't define its own"
+        >
+          Set as my default
+        </button>
+        <button
+          type="button"
+          onClick={onClearUserDefault}
+          disabled={!hasUserDefault}
+          title="Remove your personal default — diagrams with no override of their own fall back to this app's built-in presets"
+        >
+          Clear my default
+        </button>
+        <button
+          type="button"
           onClick={() => onChange([])}
           disabled={!isCustomized}
-          title="Revert to this app's own built-in presets"
+          title="Revert to your default (or this app's own built-in presets, if you haven't set one)"
         >
           Reset to defaults
         </button>
@@ -66,9 +91,16 @@ export default function GravityPresetsPanel({
       </div>
       <div className="required-tags-panel-body">
         <p className="required-tags-panel-hint">
-          Offered on a line point&rsquo;s right-click menu, controlling how sharply the curve bends there. Saved with
-          this diagram — {isCustomized ? 'currently customized' : "not customized yet, showing this app's built-in defaults"}
+          Offered on a line point&rsquo;s right-click menu, controlling how sharply the curve bends
+          there. Saved with this diagram —{' '}
+          {isCustomized
+            ? 'currently customized'
+            : hasUserDefault
+              ? 'not customized yet, showing your own default'
+              : "not customized yet, showing this app's built-in defaults"}
           . Editing any value below saves this diagram&rsquo;s own copy of the whole list.
+          &ldquo;Set as my default&rdquo; instead saves it to your own Settings, applied to every
+          diagram that doesn&rsquo;t define its own.
         </p>
         <div className="required-tag-values-list">
           {rows.map((preset, index) => (
@@ -118,8 +150,10 @@ export default function GravityPresetsPanel({
         <button type="button" className="required-tag-add" onClick={addRow}>
           Add preset
         </button>
-        {!isCustomized && (
-          <p className="required-tags-panel-hint">{DEFAULT_GRAVITY_PRESETS.length} built-in presets shown above.</p>
+        {!isCustomized && !hasUserDefault && (
+          <p className="required-tags-panel-hint">
+            {DEFAULT_GRAVITY_PRESETS.length} built-in presets shown above.
+          </p>
         )}
       </div>
     </div>

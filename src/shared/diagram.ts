@@ -72,7 +72,8 @@ export interface NodeStyle extends FontStyle {
 // still be filled in/edited by a human. `lockedStatic`: diagram-required,
 // fixed, not editable at all. Never used for a free entry — that's what
 // `lock` being absent already means.
-export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue }
+export type JsonValue =
+  string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue }
 export type MetadataLock = 'lockedEditable' | 'lockedStatic'
 export interface MetadataEntry {
   value: JsonValue
@@ -281,6 +282,17 @@ export interface DiagramFile {
   // See GravityPreset above — absent/empty means "use this app's own
   // built-in four."
   gravityPresets?: GravityPreset[]
+  // Per-diagram override for the max connection points allowed on one
+  // side of a Shape/Container (epic 0073/ADR 0052's Diagram override ->
+  // User default -> Built-in default pattern) — absent means fall back to
+  // whoever opens this file's own Settings value (AppSettings.
+  // maxConnectionPointsPerSide). A real constraint on what the diagram
+  // can contain, not just a display preference — see the ADR for why this
+  // couldn't stay Settings-only. Lowering it below what an existing
+  // element already has never clamps that element; the limit only stops
+  // *adding* more points, same "never silently destroy data" convention
+  // as the rest of this format.
+  maxConnectionPointsPerSide?: number
   nodes: DiagramNode[]
   edges: DiagramEdge[]
 }
@@ -313,7 +325,9 @@ function sortedMetadata(
   const sorted: Record<string, MetadataEntry> = {}
   for (const key of Object.keys(metadata).sort()) {
     const entry = metadata[key]
-    sorted[key] = entry.lock ? { value: sortKeysDeep(entry.value), lock: entry.lock } : { value: sortKeysDeep(entry.value) }
+    sorted[key] = entry.lock
+      ? { value: sortKeysDeep(entry.value), lock: entry.lock }
+      : { value: sortKeysDeep(entry.value) }
   }
   return sorted
 }
@@ -326,14 +340,19 @@ export function serializeDiagram(diagram: DiagramFile): string {
   const ordered: DiagramFile = {
     version: diagram.version,
     viewport: { x: diagram.viewport.x, y: diagram.viewport.y, zoom: diagram.viewport.zoom },
-    metadata: diagram.metadata && Object.keys(diagram.metadata).length > 0
-      ? (sortKeysDeep(diagram.metadata) as Record<string, JsonValue>)
-      : undefined,
-    requiredTags: diagram.requiredTags && diagram.requiredTags.length > 0 ? diagram.requiredTags : undefined,
-    highlights: diagram.highlights && diagram.highlights.length > 0 ? diagram.highlights : undefined,
+    metadata:
+      diagram.metadata && Object.keys(diagram.metadata).length > 0
+        ? (sortKeysDeep(diagram.metadata) as Record<string, JsonValue>)
+        : undefined,
+    requiredTags:
+      diagram.requiredTags && diagram.requiredTags.length > 0 ? diagram.requiredTags : undefined,
+    highlights:
+      diagram.highlights && diagram.highlights.length > 0 ? diagram.highlights : undefined,
     legend: diagram.legend && diagram.legend.length > 0 ? diagram.legend : undefined,
     gravityPresets:
-      diagram.gravityPresets && diagram.gravityPresets.length > 0 ? diagram.gravityPresets : undefined,
+      diagram.gravityPresets && diagram.gravityPresets.length > 0
+        ? diagram.gravityPresets
+        : undefined,
     nodes: diagram.nodes.map((n) => ({
       id: n.id,
       type: n.type,

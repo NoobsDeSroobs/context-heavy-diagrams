@@ -31,6 +31,22 @@ export async function readAppSettings(): Promise<AppSettings | null> {
   }
 }
 
+// Main-side partial update, not an IPC handler — for settings fields main
+// itself needs to write outside of any renderer-initiated save (epic
+// 0091's lastOpenedDirectory: set whenever a dialog picks/loads a path,
+// never something the renderer directly edits). Broadcasts to every
+// window the same way settings:write does, so any open renderer's own
+// AppSettings state stays in sync too — no sender to exclude here since
+// this isn't triggered by a renderer event.
+export async function updateAppSettings(patch: Partial<AppSettings>): Promise<void> {
+  const current = (await readAppSettings()) ?? DEFAULT_SETTINGS
+  const next = { ...current, ...patch }
+  await writeFile(settingsFile(), JSON.stringify(next), 'utf-8')
+  for (const win of BrowserWindow.getAllWindows()) {
+    win.webContents.send('settings:changed', next)
+  }
+}
+
 export function registerAppSettingsHandlers(): void {
   ipcMain.handle('settings:read', async () => readAppSettings())
 

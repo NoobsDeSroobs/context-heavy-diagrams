@@ -1,4 +1,4 @@
-import type { EdgeStyle, NodeStyle } from './diagram'
+import type { EdgeStyle, GravityPreset, NodeStyle } from './diagram'
 
 // Moved here from the renderer (epic 0054/ADR 0053) — main now needs this
 // exact shape too, to read/write the real per-OS settings file directly
@@ -111,6 +111,26 @@ export interface AppSettings {
   // non-matches entirely; deliberately left as a plain opacity rather than
   // a visibility toggle so de-emphasized structure/context stays visible.
   isolateOpacity: number
+  // Directory of the last opened/saved diagram (epic 0091) — passed as
+  // `defaultPath` to File -> Open/Save As's dialogs so they default to
+  // wherever the user was last working, instead of the OS/Electron's own
+  // arbitrary default. Absent means "no dialog opened yet this install,"
+  // not a meaningful default of its own — deliberately optional rather
+  // than defaulted to e.g. the home directory. Written directly by main
+  // (windows.ts/diagram.ts), never edited through SettingsPanel — this is
+  // a silent backend preference, not user-facing UI.
+  lastOpenedDirectory?: string
+  // User default tier for line gravity/bend presets (epic 0072/ADR 0052's
+  // Diagram override -> User default -> Built-in default fallback
+  // pattern) — the middle tier that was missing when that pattern was
+  // first named. Absent means "no personal default set," falling all the
+  // way through to DEFAULT_GRAVITY_PRESETS (lineGravityPresets.ts), same
+  // "absent means default" convention as everything else in this app.
+  // Applies live to any already-open diagram that has no override of its
+  // own — resolved reactively (same as every other Setting here), not
+  // baked in once at load time. A diagram with its own override is
+  // unaffected either way, since that tier always wins outright.
+  gravityPresetsUserDefault?: GravityPreset[]
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {

@@ -48,6 +48,7 @@ import ContainerNode, { CONTAINER_MIN_WIDTH, CONTAINER_MIN_HEIGHT } from './node
 import AnchorNode, { ANCHOR_SIZE } from './nodes/AnchorNode'
 import LineNode, { LINE_BOUNDS_PADDING } from './nodes/LineNode'
 import GravityPresetsPanel from './components/GravityPresetsPanel'
+import DiagramConfigPanel from './components/DiagramConfigPanel'
 import { effectiveGravityPresets } from './lineGravityPresets'
 import LabeledEdge from './edges/LabeledEdge'
 import { highlightId, matchingHighlights, reconcileHighlightGroup } from './highlights'
@@ -399,7 +400,8 @@ function toDiagramFile(
   requiredTags: RequiredTagDefinition[],
   highlights: HighlightDefinition[],
   legend: LegendEntry[],
-  gravityPresets: GravityPreset[]
+  gravityPresets: GravityPreset[],
+  maxConnectionPointsPerSide: number | undefined
 ): DiagramFile {
   return {
     version: 1,
@@ -408,6 +410,7 @@ function toDiagramFile(
     highlights: highlights.length > 0 ? highlights : undefined,
     legend: legend.length > 0 ? legend : undefined,
     gravityPresets: gravityPresets.length > 0 ? gravityPresets : undefined,
+    maxConnectionPointsPerSide,
     requiredTags: requiredTags.length > 0 ? requiredTags : undefined,
     nodes: nodes.map((n) => ({
       id: n.id,
@@ -460,11 +463,13 @@ function fromDiagramFile(diagram: DiagramFile): {
   highlights: HighlightDefinition[]
   legend: LegendEntry[]
   gravityPresets: GravityPreset[]
+  maxConnectionPointsPerSide: number | undefined
 } {
   return {
     highlights: diagram.highlights ?? [],
     legend: diagram.legend ?? [],
     gravityPresets: diagram.gravityPresets ?? [],
+    maxConnectionPointsPerSide: diagram.maxConnectionPointsPerSide,
     // sortNodesForHierarchy defensively re-orders in case an external
     // writer didn't honor the parent-before-child requirement — see
     // docs/file-format.md's parentId entry. applyZIndexBackfill runs on
@@ -666,6 +671,13 @@ function CanvasInner(): React.JSX.Element {
   // four wherever it's actually consumed (DiagramContext's own value below).
   const [gravityPresets, setGravityPresets] = useState<GravityPreset[]>([])
   const [gravityPresetsPanelOpen, setGravityPresetsPanelOpen] = useState(false)
+  // Diagram-level override for max connection points per side (epic 0073/
+  // ADR 0052) — undefined means "not overridden," same file-scoped/reset-
+  // on-load treatment as gravityPresets above.
+  const [diagramMaxConnectionPointsPerSide, setDiagramMaxConnectionPointsPerSide] = useState<
+    number | undefined
+  >(undefined)
+  const [diagramConfigPanelOpen, setDiagramConfigPanelOpen] = useState(false)
   // Anchors the floating panel next to whichever <ControlButton> opened it —
   // same convention as iconPicker/colorPicker/linePicker's own anchorRect.
   const [legendPanelAnchor, setLegendPanelAnchor] = useState<DOMRect | null>(null)
@@ -1183,6 +1195,7 @@ function CanvasInner(): React.JSX.Element {
       setStylePalettePanelOpen(false)
       setGravityPresetsPanelOpen(false)
       setAlignDistributePanelOpen(false)
+      setDiagramConfigPanelOpen(false)
       setDetailsPanelNodeId(nodeId)
       // No-existing-file (or nothing saved yet to resolve one against) is
       // seeded synchronously right here rather than in the effect below
@@ -1210,6 +1223,7 @@ function CanvasInner(): React.JSX.Element {
     setStylePalettePanelOpen(false)
     setGravityPresetsPanelOpen(false)
     setAlignDistributePanelOpen(false)
+    setDiagramConfigPanelOpen(false)
     setRequiredTagsPanelOpen((open) => !open)
   }, [])
 
@@ -1221,6 +1235,7 @@ function CanvasInner(): React.JSX.Element {
     setStylePalettePanelOpen(false)
     setGravityPresetsPanelOpen(false)
     setAlignDistributePanelOpen(false)
+    setDiagramConfigPanelOpen(false)
     setDiagnosticsPanelOpen((open) => !open)
   }, [])
 
@@ -1232,6 +1247,7 @@ function CanvasInner(): React.JSX.Element {
     setStylePalettePanelOpen(false)
     setGravityPresetsPanelOpen(false)
     setAlignDistributePanelOpen(false)
+    setDiagramConfigPanelOpen(false)
     setSettingsPanelOpen((open) => !open)
   }, [])
 
@@ -1243,6 +1259,7 @@ function CanvasInner(): React.JSX.Element {
     setLayerPanelOpen(false)
     setGravityPresetsPanelOpen(false)
     setAlignDistributePanelOpen(false)
+    setDiagramConfigPanelOpen(false)
     setStylePalettePanelOpen((open) => !open)
   }, [])
 
@@ -1254,6 +1271,7 @@ function CanvasInner(): React.JSX.Element {
     setLayerPanelOpen(false)
     setStylePalettePanelOpen(false)
     setAlignDistributePanelOpen(false)
+    setDiagramConfigPanelOpen(false)
     setGravityPresetsPanelOpen((open) => !open)
   }, [])
 
@@ -1265,6 +1283,7 @@ function CanvasInner(): React.JSX.Element {
     setLayerPanelOpen(false)
     setStylePalettePanelOpen(false)
     setGravityPresetsPanelOpen(false)
+    setDiagramConfigPanelOpen(false)
     setAlignDistributePanelOpen((open) => !open)
   }, [])
 
@@ -1284,13 +1303,34 @@ function CanvasInner(): React.JSX.Element {
     setStylePalettePanelOpen(false)
     setGravityPresetsPanelOpen(false)
     setAlignDistributePanelOpen(false)
+    setDiagramConfigPanelOpen(false)
     setEntityHighlightNodeId(null)
     setLayerPanelOpen((open) => !open)
+  }, [])
+
+  const toggleDiagramConfigPanel = useCallback(() => {
+    setDetailsPanelNodeId(null)
+    setRequiredTagsPanelOpen(false)
+    setDiagnosticsPanelOpen(false)
+    setSettingsPanelOpen(false)
+    setLayerPanelOpen(false)
+    setStylePalettePanelOpen(false)
+    setGravityPresetsPanelOpen(false)
+    setAlignDistributePanelOpen(false)
+    setDiagramConfigPanelOpen((open) => !open)
   }, [])
 
   const updateGravityPresets = useCallback(
     (presets: GravityPreset[]) => {
       setGravityPresets(presets)
+      markDirty()
+    },
+    [markDirty]
+  )
+
+  const updateDiagramMaxConnectionPointsPerSide = useCallback(
+    (value: number | undefined) => {
+      setDiagramMaxConnectionPointsPerSide(value)
       markDirty()
     },
     [markDirty]
@@ -2805,7 +2845,8 @@ function CanvasInner(): React.JSX.Element {
         requiredTags,
         highlights,
         legend,
-        gravityPresets
+        gravityPresets,
+        diagramMaxConnectionPointsPerSide
       )
       await window.api.saveDiagram(path, diagram, sessionIdRef.current)
       setNodes(savedNodes)
@@ -2821,7 +2862,8 @@ function CanvasInner(): React.JSX.Element {
       requiredTags,
       highlights,
       legend,
-      gravityPresets
+      gravityPresets,
+      diagramMaxConnectionPointsPerSide
     ]
   )
 
@@ -2953,7 +2995,8 @@ function CanvasInner(): React.JSX.Element {
         requiredTags: openedRequiredTags,
         highlights: openedHighlights,
         legend: openedLegend,
-        gravityPresets: openedGravityPresets
+        gravityPresets: openedGravityPresets,
+        maxConnectionPointsPerSide: openedMaxConnectionPointsPerSide
       } = fromDiagramFile(diagram)
       // A different diagram entirely — old undo history doesn't apply to
       // it (and, worse, undoing across a load boundary would try to
@@ -3000,6 +3043,7 @@ function CanvasInner(): React.JSX.Element {
       // — always starts closed, same split-persistence treatment (ADR 0033).
       setLegendPanelOpen(false)
       setGravityPresets(openedGravityPresets)
+      setDiagramMaxConnectionPointsPerSide(openedMaxConnectionPointsPerSide)
       setDetailsDrafts({})
       setContextMenu(null)
       setIconPicker(null)
@@ -3012,6 +3056,7 @@ function CanvasInner(): React.JSX.Element {
       setSettingsPanelOpen(false)
       setGravityPresetsPanelOpen(false)
       setAlignDistributePanelOpen(false)
+      setDiagramConfigPanelOpen(false)
       setSearchOverlayOpen(false)
       setSearchQuery('')
       setDeepSearchEnabled(false)
@@ -3096,6 +3141,7 @@ function CanvasInner(): React.JSX.Element {
     highlights,
     legend,
     gravityPresets,
+    diagramMaxConnectionPointsPerSide,
     detailsDrafts
   })
   useEffect(() => {
@@ -3109,6 +3155,7 @@ function CanvasInner(): React.JSX.Element {
       highlights,
       legend,
       gravityPresets,
+      diagramMaxConnectionPointsPerSide,
       detailsDrafts
     }
   })
@@ -3124,7 +3171,8 @@ function CanvasInner(): React.JSX.Element {
         s.requiredTags,
         s.highlights,
         s.legend,
-        s.gravityPresets
+        s.gravityPresets,
+        s.diagramMaxConnectionPointsPerSide
       )
       window.api.writeRecoverySnapshot(
         s.currentPath,
@@ -3549,6 +3597,8 @@ function CanvasInner(): React.JSX.Element {
           setGravityPresetsPanelOpen(false)
         } else if (alignDistributePanelOpen) {
           setAlignDistributePanelOpen(false)
+        } else if (diagramConfigPanelOpen) {
+          setDiagramConfigPanelOpen(false)
         } else if (iconPicker) {
           setIconPicker(null)
         } else if (colorPicker) {
@@ -3596,6 +3646,7 @@ function CanvasInner(): React.JSX.Element {
     stylePalettePanelOpen,
     gravityPresetsPanelOpen,
     alignDistributePanelOpen,
+    diagramConfigPanelOpen,
     iconPicker,
     colorPicker,
     linePicker,
@@ -3818,6 +3869,7 @@ function CanvasInner(): React.JSX.Element {
         { label: 'Layers', onSelect: toggleLayerPanel },
         { label: 'Style Palette', onSelect: toggleStylePalettePanel },
         { label: 'Line bend presets', onSelect: toggleGravityPresetsPanel },
+        { label: 'Diagram configuration', onSelect: toggleDiagramConfigPanel },
         { label: 'Settings', onSelect: toggleSettingsPanel }
       ]
     },
@@ -3851,12 +3903,13 @@ function CanvasInner(): React.JSX.Element {
       attachContainedNodes,
       matchHighlights,
       edgeStraightSegmentLength: settings.edgeStraightSegmentLength,
-      maxConnectionPointsPerSide: settings.maxConnectionPointsPerSide,
+      maxConnectionPointsPerSide:
+        diagramMaxConnectionPointsPerSide ?? settings.maxConnectionPointsPerSide,
       theme,
       entityHighlightNodeId,
       paletteColors: settings.stylePalette.colors,
       paletteFonts: settings.stylePalette.fonts,
-      gravityPresets: effectiveGravityPresets(gravityPresets),
+      gravityPresets: effectiveGravityPresets(gravityPresets, settings.gravityPresetsUserDefault),
       searchMatchIds,
       isolateActive,
       isolateOpacity: settings.isolateOpacity,
@@ -3876,11 +3929,13 @@ function CanvasInner(): React.JSX.Element {
       matchHighlights,
       settings.edgeStraightSegmentLength,
       settings.maxConnectionPointsPerSide,
+      diagramMaxConnectionPointsPerSide,
       theme,
       entityHighlightNodeId,
       settings.stylePalette.colors,
       settings.stylePalette.fonts,
       gravityPresets,
+      settings.gravityPresetsUserDefault,
       searchMatchIds,
       isolateActive,
       settings.isolateOpacity,
@@ -4097,7 +4152,9 @@ function CanvasInner(): React.JSX.Element {
                 onUpdateNodeMetadata={updateNodeMetadata}
                 onUpdateEdgeMetadata={updateEdgeMetadata}
                 onSetConnectionPointCount={setConnectionPointCount}
-                maxConnectionPointsPerSide={settings.maxConnectionPointsPerSide}
+                maxConnectionPointsPerSide={
+                  diagramMaxConnectionPointsPerSide ?? settings.maxConnectionPointsPerSide
+                }
                 requiredTags={requiredTags}
                 beginContinuousEdit={beginContinuousEdit}
                 endContinuousEdit={endContinuousEdit}
@@ -4326,7 +4383,18 @@ function CanvasInner(): React.JSX.Element {
             <GravityPresetsPanel
               presets={gravityPresets}
               onChange={updateGravityPresets}
+              userDefault={settings.gravityPresetsUserDefault}
+              onSetUserDefault={(presets) => updateSettings({ gravityPresetsUserDefault: presets })}
+              onClearUserDefault={() => updateSettings({ gravityPresetsUserDefault: undefined })}
               onClose={() => setGravityPresetsPanelOpen(false)}
+            />
+          )}
+          {diagramConfigPanelOpen && (
+            <DiagramConfigPanel
+              maxConnectionPointsPerSide={diagramMaxConnectionPointsPerSide}
+              settingsDefault={settings.maxConnectionPointsPerSide}
+              onChange={updateDiagramMaxConnectionPointsPerSide}
+              onClose={() => setDiagramConfigPanelOpen(false)}
             />
           )}
         </UtilityDock>

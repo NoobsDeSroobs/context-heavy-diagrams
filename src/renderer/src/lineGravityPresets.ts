@@ -11,10 +11,17 @@ export const DEFAULT_GRAVITY_PRESETS: GravityPreset[] = [
   { id: 'curvy', label: 'Curvy', value: 1 }
 ]
 
-// Same "empty means the built-in default set" resolution used for
-// ConnectionHandles' effectiveConnectionPoints — a diagram only needs to
-// spell its own catalog out once it actually diverges from this app's
-// defaults.
-export function effectiveGravityPresets(presets: GravityPreset[]): GravityPreset[] {
-  return presets.length > 0 ? presets : DEFAULT_GRAVITY_PRESETS
+// Three-tier fallback (epic 0072/ADR 0052): Diagram override -> User
+// default -> Built-in default. Same "empty means fall through" resolution
+// ConnectionHandles' effectiveConnectionPoints uses for connection points
+// — a diagram only needs to spell its own catalog out once it actually
+// diverges, and a user only needs a Settings default once they want
+// something other than this app's own built-in four everywhere.
+export function effectiveGravityPresets(
+  diagramPresets: GravityPreset[],
+  userDefault?: GravityPreset[]
+): GravityPreset[] {
+  if (diagramPresets.length > 0) return diagramPresets
+  if (userDefault && userDefault.length > 0) return userDefault
+  return DEFAULT_GRAVITY_PRESETS
 }

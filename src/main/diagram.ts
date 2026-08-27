@@ -1,8 +1,10 @@
 import { BrowserWindow, dialog, ipcMain } from 'electron'
 import { readFile, writeFile } from 'fs/promises'
+import { dirname, join } from 'path'
 import { parseDiagram, serializeDiagram, type DiagramFile } from '@shared/diagram'
 import { registerWindowPath } from './windows'
 import { deleteRecoverySnapshot } from './recovery'
+import { readAppSettings, updateAppSettings } from './appSettings'
 
 // Diagram files are a single file (.chd, plain JSON underneath) — see
 // docs/decisions/0005-diagram-identity-and-linking.md. Nothing about
@@ -18,13 +20,23 @@ export async function openDiagramAtPath(path: string): Promise<DiagramFile> {
 }
 
 export function registerDiagramHandlers(): void {
+  // defaultPath here is a directory + filename (epic 0091) — defaults to
+  // wherever the user last opened/saved a diagram, if anywhere, rather
+  // than the OS/Electron's own arbitrary default. Absent
+  // lastOpenedDirectory (nothing saved yet this install) falls back to
+  // the bare filename, today's only prior behavior.
   ipcMain.handle('diagram:pickSavePath', async () => {
+    const settings = await readAppSettings()
+    const defaultPath = settings?.lastOpenedDirectory
+      ? join(settings.lastOpenedDirectory, 'New Diagram.chd')
+      : 'New Diagram.chd'
     const result = await dialog.showSaveDialog({
       title: 'Save diagram',
-      defaultPath: 'New Diagram.chd',
+      defaultPath,
       filters: FILTERS
     })
     if (result.canceled || !result.filePath) return null
+    await updateAppSettings({ lastOpenedDirectory: dirname(result.filePath) })
     return result.filePath
   })
 
@@ -47,12 +59,20 @@ export function registerDiagramHandlers(): void {
       // previously-unsaved window is saved, harmless no-op otherwise).
       await deleteRecoverySnapshot(path, sessionId)
       await deleteRecoverySnapshot(null, sessionId)
+      // A repeat Save (not just the first Save As) is still real evidence
+      // of "actively working in this directory" — epic 0091.
+      await updateAppSettings({ lastOpenedDirectory: dirname(path) })
     }
   )
 
   // No dialog — used by a window's own initial-load mount effect (path
-  // passed via ?path= query string, ADR 0023).
+  // passed via ?path= query string, ADR 0023). Every open path (File ->
+  // Open, linked-diagram navigation, drag-and-drop) funnels through here
+  // eventually, so this is the one place that needs to update
+  // lastOpenedDirectory (epic 0091) to cover all of them, rather than
+  // duplicating the update at every dialog/entry point separately.
   ipcMain.handle('diagram:openPath', async (_event, path: string) => {
+    await updateAppSettings({ lastOpenedDirectory: dirname(path) })
     return openDiagramAtPath(path)
   })
 }
