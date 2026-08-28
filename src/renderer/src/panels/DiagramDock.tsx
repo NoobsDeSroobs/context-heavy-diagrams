@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { Edge, Node } from '@xyflow/react'
 import type { ConnectionPointSide, EdgeStyle, MetadataEntry, NodeStyle, RequiredTagDefinition } from '@shared/diagram'
 import ItemPalette from './ItemPalette'
@@ -7,7 +8,12 @@ import PropertyPanel, { type TransformPatch } from './PropertyPanel'
 // see ADR 0013. Item palette when nothing is selected, property panel once
 // something is. Each mode gets its own width (set via CSS on the two
 // `*-mode` classes), not one fixed value for the dock as a whole.
-export default function DiagramDock({
+// memo()'d so unrelated CanvasInner renders (panel toggles, search,
+// context menus, pan, edge hover) don't re-render the property panel —
+// see ADR 0073. Relies on every prop being referentially stable, which
+// Canvas.tsx now ensures (memoized selectedNodes/selectedEdges,
+// useCallback handlers, a stable pushSnapshot).
+function DiagramDock({
   selectedNodes,
   selectedEdges,
   onAddShape,
@@ -76,3 +82,5 @@ export default function DiagramDock({
     </div>
   )
 }
+
+export default memo(DiagramDock)

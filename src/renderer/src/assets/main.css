@@ -408,9 +408,9 @@ body {
    plain positioned divs portalled via EdgeLabelRenderer (not React Flow
    Handles; those are for connections, these just reposition a point).
    Hover-revealed like .line-node-point above, but the actual hover state
-   is tracked in Canvas.tsx (React Flow's onEdgeMouseEnter/Leave) and
-   passed down as data.hovered — an edge's SVG path and its portalled
-   point divs are separate DOM subtrees with no CSS containment
+   is per-edge local useState in LabeledEdge.tsx (ADR 0073), set from an
+   invisible hit-path that edge renders itself — an edge's SVG path and its
+   portalled point divs are separate DOM subtrees with no CSS containment
    relationship a plain :hover selector could hook a reveal onto, unlike
    that node's own self-contained DOM. LabeledEdge.tsx also keeps them
    visible while selected or a point is actively being dragged, so a fast

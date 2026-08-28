@@ -47,6 +47,13 @@ const DEFAULT_STROKE_WIDTH = 1
 // selected edge just gets both effects layered.
 const SELECTED_STROKE_WIDTH_DELTA = 2
 const BEND_POINT_HANDLE_SIZE = 10
+// Width of the invisible hover hit-path (ADR 0073) — matches React Flow's
+// own default edge interactionWidth (20) so hovering near the edge behaves
+// the same as clicking near it. Rendered on top of BaseEdge so it, not
+// BaseEdge's own interaction path, is the topmost element under the pointer
+// and its pointerenter/leave actually fire; clicks/right-clicks bubble up
+// to React Flow's own `.react-flow__edge` <g> handler unchanged.
+const HOVER_HIT_WIDTH = 20
 
 // Point at an arbitrary fraction of the path's arc length (ADR 0045),
 // also used for the plain midpoint (ratio 0.5), so a label
@@ -159,13 +166,16 @@ function LabeledEdge({
   const highlightMatches = matchHighlights(
     data?.metadata as Record<string, MetadataEntry> | undefined
   )
-  // Bend-point visibility: hovered (Canvas.tsx's onEdgeMouseEnter/Leave,
-  // see data.hovered's own comment there) or selected or a point is
-  // actively being dragged right now — the last case so a fast drag that
-  // strays off the path mid-gesture doesn't hide the very point being
-  // dragged.
+  // Bend-point visibility: hovered or selected or a point is actively being
+  // dragged right now — the last case so a fast drag that strays off the
+  // path mid-gesture doesn't hide the very point being dragged. Hover is
+  // per-edge local state (ADR 0073), set from the invisible hit-path
+  // rendered below — it used to be a single hoveredEdgeId in Canvas.tsx
+  // materialized onto edge.data, which rewrote the whole edges array on
+  // every hover.
+  const [hovered, setHovered] = useState(false)
   const [draggingPointIndex, setDraggingPointIndex] = useState<number | null>(null)
-  const bendPointsVisible = Boolean(data?.hovered) || selected || draggingPointIndex !== null
+  const bendPointsVisible = hovered || selected || draggingPointIndex !== null
   const bendPoints = (data?.points as LinePoint[] | undefined) ?? []
 
   // Routing (ADR 0057): 'straight'/'step'/'smoothstep' are React Flow's
@@ -375,6 +385,16 @@ function LabeledEdge({
         style={computedStyle}
         markerEnd={computedMarkerEnd}
         markerStart={computedMarkerStart}
+      />
+      {/* Invisible hover surface — see HOVER_HIT_WIDTH. */}
+      <path
+        d={edgePath}
+        fill="none"
+        stroke="transparent"
+        strokeWidth={HOVER_HIT_WIDTH}
+        style={{ pointerEvents: 'stroke' }}
+        onPointerEnter={() => setHovered(true)}
+        onPointerLeave={() => setHovered(false)}
       />
       <EdgeLabelRenderer>
         <div

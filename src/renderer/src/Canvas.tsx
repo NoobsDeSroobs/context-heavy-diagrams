@@ -98,6 +98,7 @@ import { SNAP_THRESHOLD_PX, boundsFrom, computeSnap } from './alignment'
 import { buildClipboardPayload, parseClipboardPayload, remapForPaste } from './clipboard'
 import type { TransformPatch } from './panels/PropertyPanel'
 import { useTheme } from './theme'
+import { useEventCallback } from './hooks/useEventCallback'
 import { effectiveStylePalette, usePreferences } from './preferences'
 import {
   captureDiagramPng,
@@ -179,16 +180,16 @@ function deriveNodeFields(n: Node): Node {
   }
 }
 
-// An edge's own zIndex/hovered flag (see zIndexOrdering's SELECTED_EDGE_Z_BOOST
-// comment, and the hover-reveal comment on Canvas's hoveredEdgeId state, for
-// what each means) aren't derivable from the edge alone — z depends on its
-// endpoints' current zIndex, hovered on which edge the pointer is over right
-// now — so unlike deriveNodeFields this takes the already-resolved values as
-// plain params rather than recomputing them itself. Same "return `e` itself
-// when nothing changed" contract otherwise.
-function deriveEdgeFields(e: Edge, zIndex: number, hovered: boolean): Edge {
-  if (e.zIndex === zIndex && e.data?.hovered === hovered) return e
-  return { ...e, zIndex, data: { ...e.data, hovered } }
+// An edge's own zIndex isn't derivable from the edge alone — it depends on
+// its endpoints' current zIndex (see zIndexOrdering's SELECTED_EDGE_Z_BOOST
+// comment) — so unlike deriveNodeFields this takes the already-resolved
+// value as a plain param rather than recomputing it itself. Same "return
+// `e` itself when nothing changed" contract otherwise. (Hover used to be
+// materialized here too; it's per-edge local state in LabeledEdge now —
+// ADR 0073.)
+function deriveEdgeFields(e: Edge, zIndex: number): Edge {
+  if (e.zIndex === zIndex) return e
+  return { ...e, zIndex }
 }
 
 // A sequential per-session counter (shape-1, shape-2, ...) collided with
@@ -701,25 +702,13 @@ function CanvasInner(): React.JSX.Element {
   // session state, one entry per (shape, image path), gone on reload.
   const [referencesPanelOpen, setReferencesPanelOpen] = useState(false)
   const [referenceWindows, setReferenceWindows] = useState<{ nodeId: string; path: string }[]>([])
-  // Which edge the pointer is currently over — see ADR 0057. A catmull-rom
-  // edge's own bend-point handles only render while their edge is hovered
-  // (or selected, or a point is actively being dragged — see
-  // LabeledEdge.tsx), matching how a 'line' node's own points are hover-
-  // revealed. Unlike that node (path and points in one self-contained DOM
-  // tree, a plain CSS :hover selector links them), an edge's SVG path and
-  // its EdgeLabelRenderer-portalled point divs are separate DOM subtrees
-  // with no CSS containment relationship — this state is what bridges them
-  // instead, via React Flow's own onEdgeMouseEnter/Leave.
-  const [hoveredEdgeId, setHoveredEdgeId] = useState<string | null>(null)
-  // useCallback-stable, not inline — <ReactFlow>'s onEdgeMouseEnter/Leave
-  // props flow all the way down into every individual EdgeWrapper's own
-  // props (@xyflow/react), which is memo()-wrapped; an inline arrow
-  // function here gets a new reference every render, which fails that
-  // memo's shallow prop comparison and forces *every* edge to re-render on
-  // *every* render of this component, regardless of whether that edge (or
-  // even the edges array at all) actually changed.
-  const onEdgeMouseEnter = useCallback((_: unknown, edge: Edge) => setHoveredEdgeId(edge.id), [])
-  const onEdgeMouseLeave = useCallback(() => setHoveredEdgeId(null), [])
+  // Edge hover (a catmull-rom edge's bend-point handles are hover-revealed,
+  // see ADR 0057) is tracked per-edge, locally in LabeledEdge — see ADR
+  // 0073. It used to live here as a single hoveredEdgeId, materialized onto
+  // edge.data.hovered via a setEdges effect, which rebuilt the whole edges
+  // array (and forced React Flow to re-sync its entire edge store) on every
+  // hover. LabeledEdge now owns a local useState flag driven by an
+  // invisible hit-path it renders itself.
   // Non-blocking notices from the most recent syncElementMetadata pass —
   // deliberately *replaced*, not appended, on every sync: this reflects
   // current state (what the last backfill run had to correct), not a
@@ -773,6 +762,12 @@ function CanvasInner(): React.JSX.Element {
   const [aboutDialogOpen, setAboutDialogOpen] = useState(false)
   const [exportPngDialogOpen, setExportPngDialogOpen] = useState(false)
   const [exportPngEffectiveColorHex, setExportPngEffectiveColorHex] = useState('#ffffff')
+  // onlyRenderVisibleElements (ADR 0073) keeps React Flow from mounting
+  // off-screen nodes/edges — a large win on big diagrams, but PNG export
+  // (handleExportPng) clones the .react-flow__viewport DOM subtree, so
+  // every off-screen element would be missing from the capture. Flipped
+  // true for the duration of a capture so the whole diagram is in the DOM.
+  const [isExportingPng, setIsExportingPng] = useState(false)
   // Toolbar's own "current pen style" swatch (ADR 0045) — reuses
   // StylePicker (ADR 0010) unchanged, same anchorRect convention as
   // linePicker above, just targeting preferences.defaultEdgeStyle instead of
@@ -830,6 +825,21 @@ function CanvasInner(): React.JSX.Element {
   // carry their own dragging/resizing flag), once from TextNode's rotation
   // handler (no such flag there — it's just repeated updateNodeData calls).
   const interactionInProgressRef = useRef(false)
+
+  // Latest nodes/edges, mirrored into a ref (updated from an effect) so
+  // callbacks that only need to *read* the current graph — pushSnapshot,
+  // undo/redo, openDetailsPanel — can do so without listing nodes/edges in
+  // their useCallback deps. Those callbacks are threaded through the
+  // memoized DiagramContext value (ADR 0056); when their identity churned
+  // on every node/edge change, so did the context value, re-rendering every
+  // node and edge on every edit/drag/hover and defeating that memoization
+  // (ADR 0073). Reading a ref inside a callback — not during render — is
+  // allowed by the react-hooks lint rules; same pattern as useDetailsTooltip
+  // and openReferencesFor's rfInstance.getNode read.
+  const graphRef = useRef<{ nodes: Node[]; edges: Edge[] }>({ nodes: [], edges: [] })
+  useEffect(() => {
+    graphRef.current = { nodes, edges }
+  }, [nodes, edges])
 
   // Which node/handle a connection drag started from — set in onConnectStart,
   // read (and cleared) in onConnectEnd to spawn a new shape when the drag is
@@ -895,12 +905,12 @@ function CanvasInner(): React.JSX.Element {
 
   const pushSnapshot = useCallback(() => {
     setPast((prev) => {
-      const next = [...prev, { nodes, edges }]
+      const next = [...prev, { ...graphRef.current }]
       return next.length > MAX_HISTORY ? next.slice(next.length - MAX_HISTORY) : next
     })
     setFuture([])
     markDirty()
-  }, [nodes, edges, markDirty])
+  }, [markDirty])
 
   // Push once at the start of a continuous gesture (guarded so a mid-drag
   // call is a no-op, not a fresh snapshot), never at the end.
@@ -918,20 +928,20 @@ function CanvasInner(): React.JSX.Element {
   const undo = useCallback(() => {
     if (past.length === 0) return
     const previous = past[past.length - 1]
-    setFuture((prev) => [...prev, { nodes, edges }])
+    setFuture((prev) => [...prev, { ...graphRef.current }])
     setPast((prev) => prev.slice(0, -1))
     setNodes(previous.nodes)
     setEdges(previous.edges)
-  }, [past, nodes, edges, setNodes, setEdges])
+  }, [past, setNodes, setEdges])
 
   const redo = useCallback(() => {
     if (future.length === 0) return
     const next = future[future.length - 1]
-    setPast((prev) => [...prev, { nodes, edges }])
+    setPast((prev) => [...prev, { ...graphRef.current }])
     setFuture((prev) => prev.slice(0, -1))
     setNodes(next.nodes)
     setEdges(next.edges)
-  }, [future, nodes, edges, setNodes, setEdges])
+  }, [future, setNodes, setEdges])
 
   // Wraps the raw onNodesChange from useNodesState to snapshot at the right
   // granularity: once per discrete change (remove/add/replace, or a
@@ -1226,13 +1236,17 @@ function CanvasInner(): React.JSX.Element {
       // detailsDrafts itself changes (every keystroke while editing) —
       // matters because this callback is threaded through DiagramContext's
       // memoized value (ADR 0056).
-      const node = nodes.find((n) => n.id === nodeId)
+      // Read the node off the React Flow instance, not a closed-over `nodes`
+      // — keeps this callback stable so it doesn't bust the memoized
+      // DiagramContext value on every node change (ADR 0073), same as
+      // openReferencesFor.
+      const node = rfInstance.getNode(nodeId)
       const existingPath = typeof node?.data?.details === 'string' ? node.data.details : undefined
       if (!existingPath || !currentPath) {
         setDetailsDrafts((prev) => (nodeId in prev ? prev : { ...prev, [nodeId]: '' }))
       }
     },
-    [nodes, currentPath]
+    [rfInstance, currentPath]
   )
 
 
@@ -3086,9 +3100,21 @@ function CanvasInner(): React.JSX.Element {
       const previouslySelectedEdgeIds = edges.filter((e) => e.selected).map((e) => e.id)
       try {
         flushSync(() => {
+          // Mount every node/edge (onlyRenderVisibleElements, ADR 0073) so
+          // the .react-flow__viewport clone below isn't missing off-screen
+          // content.
+          setIsExportingPng(true)
           setNodes((current) => current.map((n) => (n.selected ? { ...n, selected: false } : n)))
           setEdges((current) => current.map((e) => (e.selected ? { ...e, selected: false } : e)))
         })
+        // Just-mounted off-screen nodes need their handle bounds measured
+        // before their edges will render (EdgeWrapper returns null for an
+        // edge whose endpoints aren't initialized — see loadDiagramIntoCanvas)
+        // — same synchronous-measure fix, then wait a frame for the commit.
+        updateNodeInternals(nodes.map((n) => n.id))
+        await new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+        )
         const legendItems = buildExportLegendItems(legend, highlights, enabledHighlightIds)
         const dataUrl = await captureDiagramPng(
           nodes,
@@ -3114,6 +3140,7 @@ function CanvasInner(): React.JSX.Element {
       } catch (error) {
         alert(`PNG export failed: ${error instanceof Error ? error.message : String(error)}`)
       } finally {
+        setIsExportingPng(false)
         setNodes((current) =>
           current.map((n) =>
             previouslySelectedNodeIds.includes(n.id) ? { ...n, selected: true } : n
@@ -3126,7 +3153,17 @@ function CanvasInner(): React.JSX.Element {
         )
       }
     },
-    [nodes, edges, setNodes, setEdges, currentPath, legend, highlights, enabledHighlightIds]
+    [
+      nodes,
+      edges,
+      setNodes,
+      setEdges,
+      currentPath,
+      legend,
+      highlights,
+      enabledHighlightIds,
+      updateNodeInternals
+    ]
   )
 
   // Refs can't be read during render (React lint rule, and genuinely
@@ -3614,7 +3651,13 @@ function CanvasInner(): React.JSX.Element {
   // A node with no link yet shows a chooser (create new / link existing) at
   // the click point using the existing generic ContextMenu; an already-
   // linked node opens straight into a new window (ADR 0023).
-  const handleLinkClick = useCallback(
+  // useEventCallback, not useCallback — its body closes over nodes /
+  // currentPath / the link sub-handlers (which in turn depend on the whole
+  // diagram state via persistDiagram), so a useCallback here would get a
+  // new identity on every edit and, through the memoized DiagramContext
+  // value, re-render every node and edge (ADR 0073). It's only ever called
+  // from a Ctrl/Cmd+click, so the always-latest-closure semantics are safe.
+  const handleLinkClick = useEventCallback(
     (nodeId: string, clientX: number, clientY: number) => {
       if (!currentPath) {
         alert('Save the diagram before linking to another diagram.')
@@ -3637,8 +3680,7 @@ function CanvasInner(): React.JSX.Element {
         },
         { label: 'Link to existing diagram…', onSelect: () => pickAndLink(nodeId, currentPath) }
       ])
-    },
-    [currentPath, nodes, navigateExistingLink, openContextMenu, createAndLink, pickAndLink]
+    }
   )
 
   // Global keyboard shortcuts. One handler rather than one useEffect
@@ -3822,11 +3864,11 @@ function CanvasInner(): React.JSX.Element {
   ])
 
   // Drives the diagram dock's mode (item palette vs. property panel) — see
-  // ADR 0013. Recomputed from `nodes`/`edges` each render rather
-  // than tracked separately; the tree is small enough that this isn't worth
-  // memoizing.
-  const selectedNodes = nodes.filter((n) => n.selected)
-  const selectedEdges = edges.filter((e) => e.selected)
+  // ADR 0013. Memoized on nodes/edges (ADR 0073) so unrelated CanvasInner
+  // renders (panel toggles, colour-picker state, search) don't hand
+  // DiagramDock a fresh array and re-render it + PropertyPanel every time.
+  const selectedNodes = useMemo(() => nodes.filter((n) => n.selected), [nodes])
+  const selectedEdges = useMemo(() => edges.filter((e) => e.selected), [edges])
 
   // Each node's persisted stacking order — see ADR 0035. No
   // type-based special-casing here: the "containers render behind shapes"
@@ -3876,7 +3918,14 @@ function CanvasInner(): React.JSX.Element {
       return changed ? next : prev
     })
   }, [nodes, setNodes])
-  const nodeZIndexById = new Map(nodes.map((n) => [n.id, (n.zIndex as number | undefined) ?? 0]))
+  // Memoized on `nodes` — a fresh Map every render put a new reference in
+  // the edge-derive effect's dependency array below, making that effect
+  // (and its setEdges call) run on *every* CanvasInner render regardless of
+  // whether nodes/edges changed (ADR 0073).
+  const nodeZIndexById = useMemo(
+    () => new Map(nodes.map((n) => [n.id, (n.zIndex as number | undefined) ?? 0])),
+    [nodes]
+  )
 
   // Stable DOM-order tie-breaker for edges of otherwise-equal zIndex below
   // — kept from the edge-reconnect-priority work, though live debugging (2026-08-22, see
@@ -3884,15 +3933,18 @@ function CanvasInner(): React.JSX.Element {
   // mechanism deciding reconnect-handle hit-testing; see SELECTED_EDGE_Z_BOOST
   // just below for the fix that actually addresses it.
   //
-  // Memoized on `edges` alone — plain `.filter()`/spread built a brand new
-  // array every render regardless of whether `edges` itself had changed,
-  // which fed a fresh array into <ReactFlow edges={...}> on every render of
-  // this component (selection-drag or not) and made it re-sync its whole
-  // internal edge store needlessly every time.
-  const orderedEdges = useMemo(
-    () => [...edges.filter((e) => !e.selected), ...edges.filter((e) => e.selected)],
-    [edges]
-  )
+  // Returns `edges` itself, by reference, unless at least one edge is
+  // selected — only then is the selected-last reorder built. Keeps the
+  // <ReactFlow edges={...}> reference stable in the common case (nothing
+  // selected), so React Flow stops re-syncing its whole edge store on
+  // unrelated CanvasInner renders (ADR 0073). The reorder is only a
+  // tie-breaker for edges of exactly equal computed zIndex anyway — the
+  // real selected-edge priority is SELECTED_EDGE_Z_BOOST below — so
+  // restricting it to "an edge is selected" loses nothing.
+  const orderedEdges = useMemo(() => {
+    if (!edges.some((e) => e.selected)) return edges
+    return [...edges.filter((e) => !e.selected), ...edges.filter((e) => e.selected)]
+  }, [edges])
 
   // An edge has no zIndex of its own to control — ADR 0035
   // deliberately scoped this feature to Shape/Container/Text only. Instead
@@ -3914,14 +3966,14 @@ function CanvasInner(): React.JSX.Element {
   // scenario but was never actually the operative mechanism.
   const SELECTED_EDGE_Z_BOOST = 1_000_000
   // Same "materialize onto state, don't rebuild a wrapper every render"
-  // reasoning as the node-fields effect above — an edge's own zIndex/hovered
-  // aren't purely a function of the edge itself (they depend on its
-  // endpoints' zIndex and on `hoveredEdgeId`), so this recomputes them from
-  // current `nodeZIndexById`/`hoveredEdgeId` on every run rather than using
-  // a pure per-edge derive function, but still only replaces (deriveEdgeFields,
-  // module scope above) the specific edges whose resolved values actually
-  // changed, keeping every other edge's object — and therefore its
-  // LabeledEdge instance's React.memo bailout — stable.
+  // reasoning as the node-fields effect above — an edge's own zIndex isn't
+  // purely a function of the edge itself (it depends on its endpoints'
+  // zIndex), so this recomputes it from current `nodeZIndexById` on every
+  // run rather than using a pure per-edge derive function, but still only
+  // replaces (deriveEdgeFields, module scope above) the specific edges
+  // whose resolved zIndex actually changed, keeping every other edge's
+  // object — and therefore its LabeledEdge instance's React.memo bailout —
+  // stable.
   useEffect(() => {
     setEdges((prev) => {
       let changed = false
@@ -3930,39 +3982,47 @@ function CanvasInner(): React.JSX.Element {
         const targetZ = nodeZIndexById.get(e.target) ?? 0
         const baseZ = (sourceZ + targetZ) / 2
         const z = e.selected ? baseZ + SELECTED_EDGE_Z_BOOST : baseZ
-        const derived = deriveEdgeFields(e, z, e.id === hoveredEdgeId)
+        const derived = deriveEdgeFields(e, z)
         if (derived !== e) changed = true
         return derived
       })
       return changed ? next : prev
     })
-  }, [edges, nodeZIndexById, hoveredEdgeId, setEdges])
+  }, [edges, nodeZIndexById, setEdges])
 
   // Plain-data projection for LayerPanel — keeps that component decoupled
   // from React Flow's own Node type, same reasoning as passing plain
   // derived data to other panels elsewhere in this file. Sorted highest
   // z-index first, matching the panel's own top-of-list-is-frontmost
   // display convention — see ADR 0035.
-  const layerRows = [...nodes]
-    .map((n) => ({
-      id: n.id,
-      type: n.type ?? 'shape',
-      label: String(n.data?.label ?? ''),
-      zIndex: (n.data?.zIndex as number | undefined) ?? 0
-    }))
-    .sort((a, b) => b.zIndex - a.zIndex)
+  const layerRows = useMemo(
+    () =>
+      [...nodes]
+        .map((n) => ({
+          id: n.id,
+          type: n.type ?? 'shape',
+          label: String(n.data?.label ?? ''),
+          zIndex: (n.data?.zIndex as number | undefined) ?? 0
+        }))
+        .sort((a, b) => b.zIndex - a.zIndex),
+    [nodes]
+  )
 
   // Flat "shape → one reference path" list backing the References inventory
   // panel (ADR 0069) — a live projection of node data, owns nothing.
-  const referenceRows = nodes.flatMap((n) => {
-    const refs = n.data?.references
-    if (!Array.isArray(refs)) return []
-    return (refs as string[]).map((path) => ({
-      nodeId: n.id,
-      nodeLabel: String(n.data?.label ?? ''),
-      path
-    }))
-  })
+  const referenceRows = useMemo(
+    () =>
+      nodes.flatMap((n) => {
+        const refs = n.data?.references
+        if (!Array.isArray(refs)) return []
+        return (refs as string[]).map((path) => ({
+          nodeId: n.id,
+          nodeLabel: String(n.data?.label ?? ''),
+          path
+        }))
+      }),
+    [nodes]
+  )
 
   // Top menu bar (ADR 0039) — File/Edit/View, an explicit information-
   // architecture split worked out with the user alongside a planned (later
@@ -3971,21 +4031,24 @@ function CanvasInner(): React.JSX.Element {
   // to its own floating popup next to Legend beforehand. Every item reuses an existing
   // handler unchanged — this menu is purely a new way to reach them, not a
   // new set of actions.
-  const hasSelectedNodes = nodes.some((n) => n.selected)
+  const hasSelectedNodes = selectedNodes.length > 0
 
-  // Standing advisories, recomputed fresh every render — distinct from
-  // `diagnostics` state itself (required-tags backfill notices, only
-  // updated at actual sync points; see DiagnosticsPanel's own comment on
-  // why `entries` is deliberately generic text, anticipating exactly this
-  // kind of second, unrelated check). Combined here purely for display —
-  // `diagnostics` itself keeps its narrower, sync-point-driven meaning.
-  const legendEmptyAdvisory =
-    legend.length === 0 && edges.length > 0
-      ? [
-          'Legend is empty — consider adding at least a definition for the arrows/edges used in this diagram.'
-        ]
-      : []
-  const displayedDiagnostics = [...diagnostics, ...legendEmptyAdvisory]
+  // Standing advisories — distinct from `diagnostics` state itself
+  // (required-tags backfill notices, only updated at actual sync points;
+  // see DiagnosticsPanel's own comment on why `entries` is deliberately
+  // generic text, anticipating exactly this kind of second, unrelated
+  // check). Combined here purely for display — `diagnostics` itself keeps
+  // its narrower, sync-point-driven meaning. Memoized so DiagnosticsPanel
+  // (and the View-menu label) keep a stable array between unrelated renders.
+  const displayedDiagnostics = useMemo(() => {
+    const legendEmptyAdvisory =
+      legend.length === 0 && edges.length > 0
+        ? [
+            'Legend is empty — consider adding at least a definition for the arrows/edges used in this diagram.'
+          ]
+        : []
+    return [...diagnostics, ...legendEmptyAdvisory]
+  }, [diagnostics, legend.length, edges.length])
 
   const menus: MenuBarMenu[] = [
     {
@@ -4066,6 +4129,14 @@ function CanvasInner(): React.JSX.Element {
   const activeStylePalette = useMemo(
     () => effectiveStylePalette(preferences.stylePalettes, preferences.activeStylePaletteId),
     [preferences.stylePalettes, preferences.activeStylePaletteId]
+  )
+
+  // useCallback (not an inline arrow on <DiagramDock>) so memo(DiagramDock)
+  // can actually bail on unrelated CanvasInner renders (ADR 0073).
+  const setDefaultStyle = useCallback(
+    (type: 'shape' | 'container' | 'text', style: NodeStyle) =>
+      updatePreferences({ defaultStyles: { ...preferences.defaultStyles, [type]: style } }),
+    [updatePreferences, preferences.defaultStyles]
   )
 
   // Memoized so a high-frequency state change elsewhere in CanvasInner (e.g.
@@ -4220,6 +4291,11 @@ function CanvasInner(): React.JSX.Element {
                   edges={orderedEdges}
                   nodeTypes={nodeTypes}
                   edgeTypes={edgeTypes}
+                  // Only mount nodes/edges intersecting the viewport — see
+                  // ADR 0073. Nodes carry width/height (fromDiagramFile) so
+                  // their bounds are known before measurement. Disabled
+                  // during PNG export so the capture sees the whole diagram.
+                  onlyRenderVisibleElements={!isExportingPng}
                   onNodesChange={onNodesChange}
                   onEdgesChange={onEdgesChange}
                   onNodeDrag={onNodeDrag}
@@ -4244,8 +4320,6 @@ function CanvasInner(): React.JSX.Element {
                   minZoom={preferences.minZoom}
                   maxZoom={preferences.maxZoom}
                   onEdgeContextMenu={onEdgeContextMenu}
-                  onEdgeMouseEnter={onEdgeMouseEnter}
-                  onEdgeMouseLeave={onEdgeMouseLeave}
                   connectionMode={ConnectionMode.Loose}
                   defaultEdgeOptions={DEFAULT_EDGE_OPTIONS}
                   connectionLineComponent={MultiConnectionLine}
@@ -4355,9 +4429,7 @@ function CanvasInner(): React.JSX.Element {
                 beginContinuousEdit={beginContinuousEdit}
                 endContinuousEdit={endContinuousEdit}
                 pushSnapshot={pushSnapshot}
-                onSetDefaultStyle={(type, style) =>
-                  updatePreferences({ defaultStyles: { ...preferences.defaultStyles, [type]: style } })
-                }
+                onSetDefaultStyle={setDefaultStyle}
               />
             </div>
           )}

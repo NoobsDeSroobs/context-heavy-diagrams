@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { MARKER_ID } from './markerIds'
 
 // Custom SVG <marker> defs for the full MarkerKind set — see ADR 0014.
@@ -36,7 +37,10 @@ const FILLED = { fill: 'context-stroke', stroke: 'none' }
 // dangles and arrowheads silently don't render in the exported image
 // (found live-testing PNG export, 2026-08-23). exportPng.ts finds this element by
 // this attribute and temporarily clones it into the capture.
-export default function EdgeMarkerDefs(): React.JSX.Element {
+// memo()'d — static markup with no props, but it's a sibling of
+// <ReactFlow> under CanvasInner and would otherwise reconcile on every one
+// of that component's renders (ADR 0073).
+function EdgeMarkerDefs(): React.JSX.Element {
   return (
     <svg
       style={{ position: 'absolute', width: 0, height: 0 }}
@@ -83,3 +87,5 @@ export default function EdgeMarkerDefs(): React.JSX.Element {
     </svg>
   )
 }
+
+export default memo(EdgeMarkerDefs)
