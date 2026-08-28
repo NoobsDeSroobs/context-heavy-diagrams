@@ -55,13 +55,14 @@ import EdgeMarkerDefs from './edges/edgeMarkers'
 import DiagramContext, { type DiagramContextValue } from './DiagramContext'
 import ContextMenu, { type ContextMenuItem } from './components/ContextMenu'
 import IconPicker from './components/IconPicker'
+import IconBrowser from './components/IconBrowser'
 import ColorPickerPopup from './components/ColorPickerPopup'
 import StylePicker from './components/StylePicker'
 import DetailsPanel from './components/DetailsPanel'
 import DiagnosticsPanel from './components/DiagnosticsPanel'
 import HighlightsPanel from './components/HighlightsPanel'
 import SearchOverlay from './components/SearchOverlay'
-import { matchesSearchQuery } from './search'
+import { matchesSearchQuery, nodeHasIcon } from './search'
 import LegendPanel from './components/LegendPanel'
 import MenuBar, { type MenuBarMenu } from './components/MenuBar'
 import LayerPanel from './components/LayerPanel'
@@ -747,6 +748,13 @@ function CanvasInner(): React.JSX.Element {
   const [searchMatchIds, setSearchMatchIds] = useState<Set<string>>(new Set())
   const [searchMatchOrder, setSearchMatchOrder] = useState<string[]>([])
   const [searchMatchCursor, setSearchMatchCursor] = useState(0)
+  // Icon-identity search (ADR 0072) — when set, the query is "every node
+  // carrying this exact icon" and the free-text box is disabled; the two
+  // are deliberately not combined (ADR 0062 defers all criteria-combining
+  // to a future query language). searchIconPicker holds the anchor rect of
+  // the overlay's icon button while its IconBrowser popup is open.
+  const [searchIcon, setSearchIcon] = useState<IconRef | null>(null)
+  const [searchIconPicker, setSearchIconPicker] = useState<DOMRect | null>(null)
   // "Isolate" (ADR 0063) — search-driven only, per the user's
   // own call: a separate explicit toggle next to Search, not folded into
   // running a search itself, so turning it on/off doesn't require
@@ -1608,16 +1616,42 @@ function CanvasInner(): React.JSX.Element {
     [edges, setNodes, setEdges, rfInstance]
   )
 
+  // Shared "commit this match list" step — the text/deep path in
+  // computeAndSetMatches and the icon path in applyIconMatches both end here.
+  const applyMatchOrder = useCallback((matchedIds: Set<string>, order: string[]) => {
+    setSearchMatchIds(matchedIds)
+    setSearchMatchOrder(order)
+    setSearchMatchCursor(0)
+    setSearchRun(true)
+  }, [])
+
+  // Icon search (ADR 0072) is just "which nodes carry this exact icon" —
+  // no edges (edges have no icons), no deep search, no per-field nuance.
+  const applyIconMatches = useCallback(
+    (icon: IconRef): string[] => {
+      const order = nodes
+        .filter((n) =>
+          nodeHasIcon(icon, n.data?.icons as Partial<Record<IconSlot, IconRef>> | undefined)
+        )
+        .map((n) => n.id)
+      applyMatchOrder(new Set(order), order)
+      return order
+    },
+    [nodes, applyMatchOrder]
+  )
+
   // Shared by both trigger buttons (ADR 0063 split Search and
   // Isolate into two independent actions over the same underlying match
-  // computation — only what happens *after* matching differs). Free-
-  // text/tag matching is synchronous over the in-memory nodes/edges; deep
-  // search additionally opens each not-yet-matched node's detail file on
-  // disk and does a plain substring check, no indexing (ADR 0062's
+  // computation — only what happens *after* matching differs). An icon
+  // search (ADR 0072) short-circuits to applyIconMatches; otherwise free-
+  // text/tag matching is synchronous over the in-memory nodes/edges, and
+  // deep search additionally opens each not-yet-matched node's detail file
+  // on disk and does a plain substring check, no indexing (ADR 0062's
   // deliberate choice — this is an occasional toggle, not the default
   // path). Returns the stable next/prev-ordered match list (nodes in
   // their current array order, then edges), empty for an empty query.
   const computeAndSetMatches = useCallback(async (): Promise<string[]> => {
+    if (searchIcon) return applyIconMatches(searchIcon)
     const query = searchQuery.trim()
     if (!query) return []
     const nodeMatchIds = nodes
@@ -1659,12 +1693,18 @@ function CanvasInner(): React.JSX.Element {
 
     const order = [...nodes, ...edges].filter((el) => matchedIds.has(el.id)).map((el) => el.id)
 
-    setSearchMatchIds(matchedIds)
-    setSearchMatchOrder(order)
-    setSearchMatchCursor(0)
-    setSearchRun(true)
+    applyMatchOrder(matchedIds, order)
     return order
-  }, [searchQuery, nodes, edges, deepSearchEnabled, currentPath])
+  }, [
+    searchIcon,
+    applyIconMatches,
+    searchQuery,
+    nodes,
+    edges,
+    deepSearchEnabled,
+    currentPath,
+    applyMatchOrder
+  ])
 
   const runSearch = useCallback(async () => {
     const order = await computeAndSetMatches()
@@ -1724,6 +1764,9 @@ function CanvasInner(): React.JSX.Element {
     // Isolate has no meaning without a live match set — see its own state
     // comment above.
     setIsolateActive(false)
+    // Any query change or close drops icon mode too (ADR 0072) — the icon
+    // and free-text searches never coexist.
+    setSearchIcon(null)
   }, [])
 
   // Isolate is its own independent trigger (ADR 0063, revised
@@ -1756,6 +1799,31 @@ function CanvasInner(): React.JSX.Element {
 
   const closeSearchOverlay = useCallback(() => {
     setSearchOverlayOpen(false)
+    setSearchIconPicker(null)
+    clearSearchResults()
+  }, [clearSearchResults])
+
+  // Auto-run on pick (ADR 0072) — same as IconPicker's own pick-and-close
+  // flow: choosing an icon replaces whatever's in the text box, closes the
+  // popup, and immediately runs the search + frames the first hit.
+  const pickSearchIcon = useCallback(
+    (icon: IconRef) => {
+      setSearchQuery('')
+      setSearchIcon(icon)
+      setSearchIconPicker(null)
+      setIsolateActive(false)
+      const order = applyIconMatches(icon)
+      if (order.length > 0) focusSearchMatch(order[0])
+    },
+    [applyIconMatches, focusSearchMatch]
+  )
+
+  const toggleSearchIconPicker = useCallback((anchorRect: DOMRect) => {
+    setSearchIconPicker((cur) => (cur ? null : anchorRect))
+  }, [])
+
+  const clearSearchIcon = useCallback(() => {
+    setSearchIconPicker(null)
     clearSearchResults()
   }, [clearSearchResults])
 
@@ -3158,6 +3226,8 @@ function CanvasInner(): React.JSX.Element {
       setSearchMatchCursor(0)
       setSearchRun(false)
       setIsolateActive(false)
+      setSearchIcon(null)
+      setSearchIconPicker(null)
       // Defensive, per ADR 0022 — reconcile against hand-edited drift on
       // every load, not just when the template is edited from within the app.
       runSync(openedRequiredTags)
@@ -3672,7 +3742,11 @@ function CanvasInner(): React.JSX.Element {
         return
       }
       if (event.key === 'Escape') {
-        if (detailsPanelNodeId) {
+        if (searchIconPicker) {
+          // The search overlay's icon-browser popup — close just it, one
+          // step before the overlay itself.
+          setSearchIconPicker(null)
+        } else if (detailsPanelNodeId) {
           setDetailsPanelNodeId(null)
         } else if (searchOverlayOpen) {
           closeSearchOverlay()
@@ -3731,6 +3805,7 @@ function CanvasInner(): React.JSX.Element {
     rfInstance,
     detailsPanelNodeId,
     searchOverlayOpen,
+    searchIconPicker,
     closeSearchOverlay,
     diagnosticsPanelOpen,
     highlightsPanelOpen,
@@ -4422,8 +4497,24 @@ function CanvasInner(): React.JSX.Element {
               onPrev={prevSearchMatch}
               isolateActive={isolateActive}
               onToggleIsolate={runIsolate}
+              diagramPath={currentPath}
+              searchIcon={searchIcon}
+              iconPickerOpen={searchIconPicker !== null}
+              onToggleIconPicker={toggleSearchIconPicker}
+              onClearIcon={clearSearchIcon}
               onClose={closeSearchOverlay}
             />
+          )}
+          {searchIconPicker && (
+            <div
+              className="icon-search-popup nodrag nopan"
+              style={{
+                left: Math.max(8, searchIconPicker.right - 220),
+                top: Math.min(searchIconPicker.bottom + 6, window.innerHeight - 320)
+              }}
+            >
+              <IconBrowser diagramPath={currentPath} onPick={pickSearchIcon} />
+            </div>
           )}
         </div>
         <UtilityDock>

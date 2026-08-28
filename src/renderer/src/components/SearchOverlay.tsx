@@ -1,4 +1,7 @@
-import { useEffect, useRef, type KeyboardEvent } from 'react'
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
+import type { IconRef } from '@shared/diagram'
+import { loadBuiltinIconSvg } from '../icons/builtinIcons'
+import { iconRefKey } from '../search'
 
 interface SearchOverlayProps {
   query: string
@@ -15,6 +18,11 @@ interface SearchOverlayProps {
   onPrev: () => void
   isolateActive: boolean
   onToggleIsolate: () => void
+  diagramPath: string | null
+  searchIcon: IconRef | null
+  iconPickerOpen: boolean
+  onToggleIconPicker: (anchorRect: DOMRect) => void
+  onClearIcon: () => void
   onClose: () => void
 }
 
@@ -37,9 +45,19 @@ export default function SearchOverlay({
   onPrev,
   isolateActive,
   onToggleIsolate,
+  diagramPath,
+  searchIcon,
+  iconPickerOpen,
+  onToggleIconPicker,
+  onClearIcon,
   onClose
 }: SearchOverlayProps): React.JSX.Element {
   const inputRef = useRef<HTMLInputElement>(null)
+  const iconButtonRef = useRef<HTMLButtonElement>(null)
+  // Keyed by the icon it was loaded for, so a stale preview from a
+  // previously-picked icon is never shown against the current one while the
+  // new fetch is still in flight.
+  const [iconPreview, setIconPreview] = useState<{ key: string; svg: string } | null>(null)
 
   // Ctrl+F opening the overlay should immediately put focus in the query
   // field — otherwise it opens with nothing focused and the user has to
@@ -47,6 +65,39 @@ export default function SearchOverlay({
   useEffect(() => {
     inputRef.current?.focus()
   }, [])
+
+  // Picking an icon closes the icon-browser popup and leaves focus nowhere
+  // useful. Return it to the query field so Enter / Shift+Enter keep
+  // cycling through matches, exactly as they do for a text search (the
+  // field stays read-only, not disabled, in icon mode precisely so it can
+  // still hold focus and receive these key presses).
+  useEffect(() => {
+    if (searchIcon) inputRef.current?.focus()
+  }, [searchIcon])
+
+  // Load the currently-picked search icon for display in its button. A
+  // built-in icon resolves to raw SVG; a custom one to a data URL. No
+  // synchronous clear when there's no icon — `preview` below just ignores a
+  // stale value whose key no longer matches.
+  useEffect(() => {
+    if (!searchIcon) return
+    const key = iconRefKey(searchIcon)
+    let cancelled = false
+    const set = (svg: string): void => {
+      if (!cancelled) setIconPreview({ key, svg })
+    }
+    if (searchIcon.source === 'builtin') {
+      loadBuiltinIconSvg(searchIcon.id)?.then(set)
+    } else if (diagramPath) {
+      window.api.readIconAsDataUrl(diagramPath, searchIcon.path).then(set)
+    }
+    return () => {
+      cancelled = true
+    }
+  }, [searchIcon, diagramPath])
+
+  const preview =
+    searchIcon && iconPreview && iconPreview.key === iconRefKey(searchIcon) ? iconPreview.svg : null
 
   // Enter submits the first time; once a run has live matches, repeated
   // Enter cycles instead of re-running the same query — same convention as
@@ -66,6 +117,7 @@ export default function SearchOverlay({
   }
 
   const noMatches = searchRun && !deepSearchLoading && matchCount === 0
+  const iconMode = searchIcon !== null
 
   return (
     <div className="search-overlay nodrag nopan">
@@ -73,16 +125,57 @@ export default function SearchOverlay({
         ref={inputRef}
         className="search-overlay-input"
         type="text"
-        placeholder="Search labels, ids, tags…"
-        value={query}
+        placeholder={iconMode ? 'Searching by icon…' : 'Search labels, ids, tags…'}
+        value={iconMode ? '' : query}
+        readOnly={iconMode}
         onChange={(event) => onQueryChange(event.target.value)}
         onKeyDown={onKeyDown}
       />
+      <span className="search-overlay-icon-wrap">
+        <button
+          ref={iconButtonRef}
+          type="button"
+          className={`search-overlay-icon${iconMode || iconPickerOpen ? ' active' : ''}`}
+          aria-pressed={iconMode || iconPickerOpen}
+          title={iconMode ? 'Change search icon' : 'Search by icon'}
+          onClick={() => {
+            if (iconButtonRef.current) {
+              onToggleIconPicker(iconButtonRef.current.getBoundingClientRect())
+            }
+          }}
+        >
+          {preview ? (
+            searchIcon?.source === 'custom' ? (
+              <img src={preview} alt="" />
+            ) : (
+              <span
+                className="search-overlay-icon-glyph"
+                dangerouslySetInnerHTML={{ __html: preview }}
+              />
+            )
+          ) : (
+            <span className="search-overlay-icon-glyph" aria-hidden="true">
+              ◈
+            </span>
+          )}
+        </button>
+        {iconMode && (
+          <button
+            type="button"
+            className="search-overlay-icon-clear"
+            title="Clear icon search"
+            aria-label="Clear icon search"
+            onClick={onClearIcon}
+          >
+            ✕
+          </button>
+        )}
+      </span>
       <button
         type="button"
         className="search-overlay-run"
         onClick={onSubmit}
-        disabled={query.trim().length === 0}
+        disabled={!iconMode && query.trim().length === 0}
       >
         Search
       </button>
@@ -91,7 +184,7 @@ export default function SearchOverlay({
         className={`search-overlay-isolate${isolateActive ? ' active' : ''}`}
         aria-pressed={isolateActive}
         onClick={onToggleIsolate}
-        disabled={!isolateActive && query.trim().length === 0}
+        disabled={!isolateActive && !iconMode && query.trim().length === 0}
         title={
           isolateActive
             ? 'Turn off Isolate'
@@ -103,15 +196,17 @@ export default function SearchOverlay({
       <label
         className="search-overlay-deep"
         title={
-          deepSearchAvailable
-            ? "Also scan each element's detail notes on disk — slower, no live-as-you-type"
-            : 'Save the diagram first — detail files have nowhere to resolve from yet'
+          iconMode
+            ? "Deep search scans detail notes for text — it doesn't apply to an icon search"
+            : deepSearchAvailable
+              ? "Also scan each element's detail notes on disk — slower, no live-as-you-type"
+              : 'Save the diagram first — detail files have nowhere to resolve from yet'
         }
       >
         <input
           type="checkbox"
           checked={deepSearchEnabled}
-          disabled={!deepSearchAvailable}
+          disabled={iconMode || !deepSearchAvailable}
           onChange={onToggleDeepSearch}
         />
         Deep search

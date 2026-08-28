@@ -58,7 +58,11 @@ export function registerIconHandlers(): void {
   ipcMain.handle(
     'icons:readAsDataUrl',
     async (_event, diagramPath: string, relativePath: string) => {
-      const fullPath = join(dirname(diagramPath), relativePath)
+      // Split on either separator so a path stored with '\' (e.g. written
+      // by an older build, or hand-edited on Windows) still resolves when
+      // this runs on Linux, where path.join would otherwise treat '\' as a
+      // literal filename character.
+      const fullPath = join(dirname(diagramPath), ...relativePath.split(/[\\/]/))
       const buffer = await readFile(fullPath)
       return `data:${mimeTypeFor(fullPath)};base64,${buffer.toString('base64')}`
     }

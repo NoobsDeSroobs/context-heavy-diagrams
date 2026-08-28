@@ -69,7 +69,9 @@ export function registerReferenceHandlers(): void {
   ipcMain.handle(
     'references:readAsDataUrl',
     async (_event, diagramPath: string, relativePath: string) => {
-      const fullPath = join(dirname(diagramPath), relativePath)
+      // Split on either separator so a '\'-stored path still resolves on
+      // Linux — same reasoning as icons.ts's readAsDataUrl.
+      const fullPath = join(dirname(diagramPath), ...relativePath.split(/[\\/]/))
       const buffer = await readFile(fullPath)
       return `data:${mimeTypeFor(fullPath)};base64,${buffer.toString('base64')}`
     }

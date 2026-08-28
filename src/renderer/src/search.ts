@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react'
-import type { MetadataEntry } from '@shared/diagram'
+import type { IconRef, IconSlot, MetadataEntry } from '@shared/diagram'
 
 // Pure free-text matcher behind ADR 0062's V1 search — one
 // combined query checked against id, label, and every tag key/value,
@@ -29,6 +29,27 @@ export function matchesSearchQuery(query: string, element: SearchableElement): b
     }
   }
   return false
+}
+
+// Icon-identity search (see ADR 0072) — pick an icon already placed
+// somewhere in the diagram, find every other node carrying that same
+// icon. A built-in icon is fully identified by its id, a custom one by its
+// relative asset path (both plain strings on IconRef), so "same icon" is
+// exact equality on the (source, id|path) pair — no fuzzy name matching.
+// This is deliberately its own one-dimension search, not combined with the
+// free-text query above; ADR 0062 defers all criteria-combining to a
+// future real query language.
+export function iconRefKey(icon: IconRef): string {
+  return icon.source === 'builtin' ? `builtin:${icon.id}` : `custom:${icon.path}`
+}
+
+export function nodeHasIcon(
+  picked: IconRef,
+  icons: Partial<Record<IconSlot, IconRef>> | undefined
+): boolean {
+  if (!icons) return false
+  const key = iconRefKey(picked)
+  return Object.values(icons).some((ref) => ref !== undefined && iconRefKey(ref) === key)
 }
 
 // "Isolate" (see ADR 0063) — every node/edge component computes its

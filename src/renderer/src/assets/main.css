@@ -636,9 +636,28 @@ body {
   cursor: default;
 }
 
-/* Only this part scrolls — corner picker, search, and actions always stay
-   visible. Capped to roughly 3 rows of icons. */
-.icon-picker-scroll {
+/* Shell for the standalone icon search popup (ADR 0072) — the SearchOverlay's
+   "search by icon" button opens this, wrapping the same IconBrowser that
+   IconPicker uses. Same fixed-floating-box treatment as .icon-picker, minus
+   the corner selector and actions row. */
+.icon-search-popup {
+  position: fixed;
+  z-index: 30;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--color-background-soft);
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 6px;
+  padding: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  cursor: default;
+}
+
+/* Only the grid scrolls — the search box (and, in IconPicker, the corner
+   selector and actions row) always stay visible. Capped to ~3 rows. */
+.icon-browser-scroll {
   max-height: 112px;
   overflow-y: auto;
   display: flex;
@@ -652,7 +671,7 @@ body {
   /* Explicit, not left to default: setting only overflow-y auto-computes
      overflow-x to auto too (CSS Overflow spec), which is exactly what was
      producing the unwanted horizontal scrollbar — now that
-     .icon-picker-grid button's min-width: 0 lets the grid actually fit,
+     .icon-browser-grid button's min-width: 0 lets the grid actually fit,
      there's nothing left that should ever need horizontal scrolling here. */
   overflow-x: hidden;
 }
@@ -712,7 +731,7 @@ body {
   right: 0;
 }
 
-.icon-picker-search {
+.icon-browser-search {
   font: inherit;
   color: var(--color-text);
   background: var(--color-background);
@@ -722,18 +741,18 @@ body {
   font-size: 12px;
 }
 
-.icon-picker-label {
+.icon-browser-label {
   font-size: 11px;
   color: var(--ev-c-text-3);
 }
 
-.icon-picker-grid {
+.icon-browser-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 4px;
 }
 
-.icon-picker-grid button {
+.icon-browser-grid button {
   cursor: pointer;
   aspect-ratio: 1;
   border: 1px solid var(--ev-c-gray-2);
@@ -751,12 +770,12 @@ body {
   min-width: 0;
 }
 
-.icon-picker-grid button:hover {
+.icon-browser-grid button:hover {
   background: var(--ev-button-alt-hover-bg);
 }
 
-.icon-picker-grid button svg,
-.icon-picker-grid button img {
+.icon-browser-grid button svg,
+.icon-browser-grid button img {
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -2384,6 +2403,59 @@ body {
 
 .search-overlay-input {
   width: 220px;
+}
+
+/* Read-only in icon mode (ADR 0072) — kept focusable so Enter still
+   cycles matches, but visibly not a text field you can type into. */
+.search-overlay-input:read-only {
+  background: var(--color-background-mute);
+  cursor: default;
+}
+
+/* "Search by icon" button (ADR 0072) — sits between the query field and
+   the Search button. Shows the picked icon once one is chosen, with a
+   small ✕ to drop back to a plain text search. */
+.search-overlay-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.search-overlay button.search-overlay-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 3px;
+}
+
+.search-overlay button.search-overlay-icon.active {
+  background: var(--search-match-color);
+  border-color: var(--search-match-color);
+  color: var(--ev-c-black);
+}
+
+.search-overlay-icon-glyph {
+  display: inline-flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.search-overlay-icon-glyph svg,
+.search-overlay button.search-overlay-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.search-overlay button.search-overlay-icon-clear {
+  padding: 2px 5px;
+  font-size: 11px;
+  line-height: 1;
 }
 
 /* Same button-ish look as .toolbar button — every button in the overlay
