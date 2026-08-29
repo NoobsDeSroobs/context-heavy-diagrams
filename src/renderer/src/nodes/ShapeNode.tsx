@@ -184,6 +184,7 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
       <EditableLabel
         className="shape-node-label"
         inputClassName="shape-node-label-input"
+        multiline
         style={nodeLabelCss(style, theme)}
         value={String(data?.label ?? '')}
         onCommit={(label) => {

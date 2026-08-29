@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron'
 import { access, mkdir, readFile, rename, writeFile } from 'fs/promises'
 import { basename, dirname, extname, join, relative } from 'path'
+import { labelToFileStem } from '@shared/labelFileName'
 
 // Detail files live in a sibling folder named after the diagram file, same
 // convention as custom icons (ADR 0006) — e.g. my-diagram.chd ->
@@ -9,35 +10,6 @@ function detailsDirFor(diagramPath: string): string {
   const diagramBase = basename(diagramPath, extname(diagramPath))
   return join(dirname(diagramPath), diagramBase, 'details')
 }
-
-// Windows reserved device names — disallowed as a filename regardless of
-// extension, case-insensitive. Checked against the sanitized label alone
-// (before the -<uuid> suffix is appended), since that's the part a user's
-// label could actually collide with.
-const WINDOWS_RESERVED = new Set([
-  'con',
-  'prn',
-  'aux',
-  'nul',
-  'com1',
-  'com2',
-  'com3',
-  'com4',
-  'com5',
-  'com6',
-  'com7',
-  'com8',
-  'com9',
-  'lpt1',
-  'lpt2',
-  'lpt3',
-  'lpt4',
-  'lpt5',
-  'lpt6',
-  'lpt7',
-  'lpt8',
-  'lpt9'
-])
 
 // Detail filenames are built from the element's own label plus its id's
 // UUID suffix (see ADR 0060) — not its type prefix ("shape"/"container"),
@@ -48,28 +20,12 @@ const WINDOWS_RESERVED = new Set([
 // newNodeId) — a plain UUID has no hyphen before its first segment, so
 // slicing off everything up to and including the id's first hyphen always
 // isolates the UUID cleanly regardless of how long the prefix word is.
-// Filters out ASCII control characters — a plain regex character class for
-// this (`\x00-\x1f`) trips this project's no-control-regex lint rule, so
-// this filters by code point instead.
-function stripControlChars(value: string): string {
-  return Array.from(value)
-    .filter((ch) => (ch.codePointAt(0) ?? 0) >= 0x20)
-    .join('')
-}
-
+// The label -> stem sanitizing (control chars, forbidden chars, length
+// cap, Windows reserved names, and — ADR 0074 — first line only) is shared
+// with linked-diagram naming: labelToFileStem in @shared/labelFileName.
 function detailFileName(nodeId: string, label: string): string {
   const uuid = nodeId.slice(nodeId.indexOf('-') + 1)
-  const sanitized = stripControlChars(label)
-    .trim()
-    // Characters Windows disallows in filenames.
-    .replace(/[<>:"/\\|?*]/g, '')
-    .replace(/\s+/g, ' ')
-    // Windows also disallows a trailing dot or space.
-    .replace(/[.\s]+$/, '')
-    .slice(0, 60)
-  const slug = sanitized.length > 0 ? sanitized : 'untitled'
-  const base = WINDOWS_RESERVED.has(slug.toLowerCase()) ? `_${slug}` : slug
-  return `${base}-${uuid}.md`
+  return `${labelToFileStem(label, 'untitled')}-${uuid}.md`
 }
 
 export function registerDetailsHandlers(): void {

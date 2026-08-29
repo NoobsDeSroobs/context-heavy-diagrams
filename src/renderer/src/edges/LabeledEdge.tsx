@@ -408,6 +408,7 @@ function LabeledEdge({
           <EditableLabel
             className="edge-label-text"
             inputClassName="edge-label-input"
+            multiline
             style={labelStyle}
             value={String(data?.label ?? '')}
             onCommit={(label) => updateEdgeData(id, { label })}

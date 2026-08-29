@@ -2,6 +2,7 @@ import { dialog, ipcMain } from 'electron'
 import { mkdir, readdir, writeFile } from 'fs/promises'
 import { basename, dirname, extname, join, relative } from 'path'
 import { createEmptyDiagram, serializeDiagram } from '@shared/diagram'
+import { labelToFileStem } from '@shared/labelFileName'
 
 // Linked diagrams colocate in the same sibling folder as assets/details
 // (ADR 0005/0006, see assetsDirFor/detailsDirFor in icons.ts/details.ts) —
@@ -9,14 +10,6 @@ import { createEmptyDiagram, serializeDiagram } from '@shared/diagram'
 function linkedDiagramDirFor(diagramPath: string): string {
   const diagramBase = basename(diagramPath, extname(diagramPath))
   return join(dirname(diagramPath), diagramBase)
-}
-
-function sanitizeFileName(label: string): string {
-  const cleaned = label
-    .replace(/[<>:"/\\|?*]/g, '-')
-    .trim()
-    .replace(/\s+/g, ' ')
-  return cleaned.length > 0 ? cleaned : 'diagram'
 }
 
 async function uniqueDiagramFileName(dir: string, baseName: string): Promise<string> {
@@ -34,7 +27,7 @@ export function registerLinkHandlers(): void {
   ipcMain.handle('links:createNew', async (_event, diagramPath: string, label: string) => {
     const dir = linkedDiagramDirFor(diagramPath)
     await mkdir(dir, { recursive: true })
-    const fileName = await uniqueDiagramFileName(dir, sanitizeFileName(label))
+    const fileName = await uniqueDiagramFileName(dir, labelToFileStem(label, 'diagram'))
     const filePath = join(dir, fileName)
     await writeFile(filePath, serializeDiagram(createEmptyDiagram()), 'utf-8')
     return relative(dirname(diagramPath), filePath).split('\\').join('/')

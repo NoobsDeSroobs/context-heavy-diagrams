@@ -107,6 +107,7 @@ function ContainerNode({ id, data, selected }: NodeProps): React.JSX.Element {
       <EditableLabel
         className="container-node-label"
         inputClassName="container-node-label-input"
+        multiline
         style={nodeLabelCss(style, theme)}
         value={String(data?.label ?? '')}
         onCommit={(label) => {

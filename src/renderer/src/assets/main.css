@@ -489,6 +489,18 @@ body {
   padding: 0;
 }
 
+/* Multi-line editor (EditableLabel multiline, see the multi-line labels
+   ADR). The textarea's height is driven by JS (autosize → scrollHeight),
+   so overflow must be hidden or it fights the measurement; resize handle
+   off since the node/edge is what gets resized. */
+.editable-label-input-multiline {
+  resize: none;
+  overflow: hidden;
+  white-space: pre-wrap;
+  line-height: 1.3;
+  min-height: 1.3em;
+}
+
 /* The edge-label-renderer div that portals every edge label (and every
    catmull-rom edge's own bend-point handles) gets no
    z-index of its own from React Flow (auto, ~0) — so without this
