@@ -1,4 +1,4 @@
-# 0076: Completed epics move to a `completed/` subfolder
+# 0076: Epic subfolders — `completed/` and `later/`
 
 ## Status
 Accepted (2026-08-30). Supersedes the mechanism in
@@ -47,22 +47,38 @@ move too.
 reach that state — same going-forward discipline ADR 0061 established, just a
 `git mv` into a folder instead of a rename.
 
-**The epic-number namespace stays flat across both folders.** Numbers are
-assigned in definition order regardless of location (`epics/0104-…` and
-`completed/0103-…` coexist); there is never an `epics/completed/` renumbering.
+**A sibling `later/` subfolder** (`docs/planning/epics/later/`) holds epics that
+are real but parked far out of the working horizon — "much later" ideas and
+externally-blocked work (e.g. branding, blocked on a commissioned artist;
+draw.io import; swim lanes). Same flat structure, same `git mv` to move an epic
+in or back out. The distinction from plain `epics/`: `epics/` is the *near*
+backlog you actually pick the next epic from; `later/` is the parking lot. A
+judgement call, revisited by the user when they scan the backlog.
+
+**The epic-number namespace stays flat across all three folders.** Numbers are
+assigned in definition order regardless of location (`epics/0104-…`,
+`completed/0103-…`, `later/0089-…` coexist); there is never a per-folder
+renumbering.
 
 ## Retroactive sweep (done in this same change)
 
-Every currently-completed epic moved in one pass, with all inbound links fixed:
-- `git mv` for each (preserves history).
-- Links **from** a moved epic to `../../decisions/…`, `../../../PROGRESS.md`,
-  etc. gain one `../` level; links to a sibling epic that also moved stay
-  relative-in-place; links to an epic that stayed gain `../`.
-- Links **to** a moved epic from `PROGRESS.md`, other epics, ADRs,
-  `docs/known-issues.md`, `docs/architecture/**`, `CLAUDE.md`,
-  `docs/planning/README.md` gain `completed/` (or `epics/completed/`).
-- `docs/planning/README.md` and [ADR 0002](0002-planning-structure.md) updated
-  to describe the two-folder layout.
+Done in two passes on `epic/0092-completed-epics-folder`, all inbound links fixed
+and link-checked (0 broken repo-wide) after each:
+- **Pass 1:** 71 completed epics `git mv`'d into `completed/`.
+- **Pass 2:** epic 0084 `git mv`'d into `completed/` (its code was already on
+  `master` via PR #63; only the epic's status line was stale), and 12 parked
+  epics (0016, 0017, 0027, 0031, 0052, 0056, 0065, 0069, 0070, 0077, 0088,
+  0089) `git mv`'d into `later/`.
+- Link mechanics: `git mv` preserves history; a link **from** a moved file to
+  `../../decisions/…` / `../../../PROGRESS.md` / etc. gains one `../` level; a
+  link to a sibling in the same subfolder stays bare; a link to a file in a
+  different subfolder is rewritten to the right relative path. Links **to** a
+  moved epic from `PROGRESS.md` / other epics / ADRs / `docs/known-issues.md` /
+  `CLAUDE.md` gain the `completed/` or `later/` segment. `docs/architecture/**`
+  had none (epic 0066 already decoupled those); `examples/**` only reference
+  0022 (stayed in `epics/`).
+- `docs/planning/README.md`, [ADR 0002](0002-planning-structure.md) and
+  `CLAUDE.md` updated to describe the three-folder layout.
 
 ## Alternatives considered
 

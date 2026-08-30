@@ -1,4 +1,4 @@
-# 0092: Move completed epics to a `completed/` subfolder
+# 0092: Epic subfolders — sweep completed epics into `completed/`, parked ones into `later/`
 
 ## Status
 Done (2026-08-30), on `epic/0092-completed-epics-folder`, pending merge. This epic
@@ -18,11 +18,17 @@ instead. This epic wrote the ADR for that and did the retroactive move.
   proxy being merged-to-`master`); flat number namespace across both folders;
   new epics born in `epics/`, `git mv`'d on completion. ADR 0061 marked
   Superseded (for its mechanism only).
-- [x] Enumerated all 104 epics. **71 moved** to `completed/` (every `Done`
-  epic whose work is merged to `master`, plus `Retired`/`Superseded`/`Cancelled`
-  — 0021/0023/0048). **33 kept** in `epics/`: all `Not Started`, the `In Progress`
-  ones (0027/0053/0086), the paused gallery (0022), and the one `Done`-but-truly-
-  unmerged epic (0084). 0060 moved (prototype closed, follow-ups are 0079-0081).
+- [x] Enumerated all 104 epics. **72 in `completed/`** — every `Done` epic whose
+  work is merged to `master`, plus `Retired`/`Superseded`/`Cancelled`
+  (0021/0023/0048). (0084 was added in pass 2: its code shipped on `master` via
+  PR #63, only its epic status line was stale. 0060 moved — prototype closed,
+  follow-ups are 0079-0081.)
+- [x] **`later/` subfolder** added (ADR 0076 amendment) for parked-far-out
+  epics — 12 moved there at the user's direction: 0016, 0017, 0027, 0031, 0052,
+  0056, 0065, 0069, 0070, 0077, 0088, 0089.
+- [x] **20 stay in `epics/`** (the near backlog): 0019, 0022, 0051, 0053, 0059,
+  0068, 0071, 0076, 0078, 0079, 0080, 0081, 0086, 0092, 0093, 0095, 0097, 0098,
+  0099, 0104.
 - [x] `git mv` each moved epic into `epics/completed/`.
 - [x] Fixed every inbound link — within moved files (`../../decisions/` →
   `../../../decisions/`, root-file refs one deeper, sibling-epic links to kept

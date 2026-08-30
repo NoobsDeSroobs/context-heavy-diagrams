@@ -8,7 +8,7 @@ Need a way to track planned work (epics) and concrete steps within them (tasks) 
 
 ## Decision
 Plain markdown files under `docs/planning/`:
-- One file per **epic** (`docs/planning/epics/NNNN-title.md`), numbered sequentially. Each has a status, a short goal statement, and a task checklist. A completed epic moves to `docs/planning/epics/completed/` (same filename, same number) — see [ADR 0076](0076-completed-epics-subfolder.md).
+- One file per **epic** (`docs/planning/epics/NNNN-title.md`), numbered sequentially. Each has a status, a short goal statement, and a task checklist. A completed epic moves to `docs/planning/epics/completed/`, a long-parked one to `docs/planning/epics/later/` (same filename, same number either way) — see [ADR 0076](0076-completed-epics-subfolder.md).
 - **Tasks live as checklist items inside their epic's file**, not as separate files. A task gets promoted to its own file only if it grows complex enough to need its own extended notes/discussion (mirrors how ADRs are reserved for genuinely significant decisions, not every small choice).
 
 Epic status values: `Not Started`, `In Progress`, `Done`, `Blocked`.

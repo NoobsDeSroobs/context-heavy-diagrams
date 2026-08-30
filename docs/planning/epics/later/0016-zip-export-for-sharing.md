@@ -11,4 +11,4 @@ Export a diagram (and, if present, its linked children) as a single zipped bundl
 - [ ] Walk the downward link graph from a chosen diagram, collecting every file it (transitively) references
 - [ ] Zip them into one archive, preserving relative paths so the result still opens correctly once unzipped
 - [ ] Decide how deep to follow: everything reachable, or a chosen depth
-- [ ] If [epic 0104](0104-central-custom-icon-library.md) lands first: an option to fold every referenced central custom icon into the zip (in a conventional subfolder) so the recipient gets a self-contained bundle — design the two together.
+- [ ] If [epic 0104](../0104-central-custom-icon-library.md) lands first: an option to fold every referenced central custom icon into the zip (in a conventional subfolder) so the recipient gets a self-contained bundle — design the two together.

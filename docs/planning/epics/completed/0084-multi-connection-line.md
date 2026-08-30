@@ -1,7 +1,13 @@
 # 0084: Multi-connection-line + reverse edge direction
 
 ## Status
-Done (2026-08-24), on `epic/0084-multi-connection-line`, not yet live-tested/merged.
+Done — merged to `master` (its code rode in on PR #63, stacked under
+`epic/0085-drag-select-mode-setting`: `MultiConnectionLine.tsx`,
+`geometry/nodePosition.ts`, the "Reverse direction" edge menu item and the
+`connectionLineComponent` wiring are all on `master`). The two "live-test"
+task boxes below were never individually re-confirmed, but the feature has been
+in `master` and in use since. (Status line corrected 2026-08-30 during the
+completed-epics sweep — it had stale "not yet merged" text.)
 
 ## Goal
 Two separate, small edge-drawing conveniences the user asked for back to back in the same session:
@@ -9,7 +15,7 @@ Two separate, small edge-drawing conveniences the user asked for back to back in
 2. A right-click "Reverse direction" action on any edge, swapping which end has the arrowhead.
 
 ## Tasks
-- [x] Multi-connection-line — design the two open questions (scope, handle choice for non-dragged shapes) with the user — see [ADR 0059](../../decisions/0059-multi-connection-line.md)
+- [x] Multi-connection-line — design the two open questions (scope, handle choice for non-dragged shapes) with the user — see [ADR 0059](../../../decisions/0059-multi-connection-line.md)
 - [x] `onConnect` (`Canvas.tsx`) — wire every selected connectable node to the target, not just the dragged one
 - [x] `MultiConnectionLine.tsx` — live drag-time visual, one line per selected node
 - [x] `nearestConnectionPointWithCoordinates`/widened `RectLike` (`connectionPoints.ts`) — shared nearest-point resolver for both the live visual and the real edges

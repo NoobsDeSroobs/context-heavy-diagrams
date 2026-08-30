@@ -28,7 +28,7 @@ self-contained file with a sibling folder"), now biting at scale.
    custom icons (and which ones — id + original filename + maybe a hash), so an
    opener knows to prompt, and a missing icon degrades gracefully with a name to
    look for rather than a silent blank slot.
-4. **Zip export option** — when [epic 0016](0016-zip-export-for-sharing.md)
+4. **Zip export option** — when [epic 0016](later/0016-zip-export-for-sharing.md)
    builds the shareable bundle, an option to **fold every referenced custom icon
    into the zip** (in a conventional subfolder), so the recipient gets a
    self-contained artifact and the "point at a folder" step resolves

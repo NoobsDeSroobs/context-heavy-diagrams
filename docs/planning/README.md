@@ -6,8 +6,11 @@ See [docs/decisions/0002-planning-structure.md](../decisions/0002-planning-struc
 
 One file per epic, named `NNNN-short-title.md`, numbered sequentially in the order they were defined (not necessarily execution order — check status). New epics are created in `epics/`.
 
-- **`epics/`** — the live backlog: `Not Started`, `In Progress`, `Blocked`, and `Done`-but-not-yet-confirmed epics.
-- **`epics/completed/`** — epics that are `Done` **and** confirmed working (live-tested, or merged to `master` since the user tests before merging), plus `Retired` / `Superseded` / `Cancelled` epics. Moved here with `git mv` on completion — see [ADR 0076](../decisions/0076-completed-epics-subfolder.md) (which supersedes [ADR 0061](../decisions/0061-completed-epic-filename-marker.md)'s `x`-prefix mechanism). The epic keeps its filename and number; only its path changes. The number namespace is flat across both folders.
+- **`epics/`** — the near backlog: `Not Started`, `In Progress`, `Blocked`, and `Done`-but-not-yet-confirmed epics you'd actually pick the next one from.
+- **`epics/completed/`** — epics that are `Done` **and** confirmed working (live-tested, or merged to `master` since the user tests before merging), plus `Retired` / `Superseded` / `Cancelled` epics.
+- **`epics/later/`** — real epics parked far out: "much later" ideas and externally-blocked work.
+
+Move between folders with `git mv` — see [ADR 0076](../decisions/0076-completed-epics-subfolder.md) (supersedes [ADR 0061](../decisions/0061-completed-epic-filename-marker.md)'s `x`-prefix mechanism). An epic keeps its filename and number; only its path changes. The number namespace is flat across all three folders.
 
 ```markdown
 # NNNN: Title

@@ -8,7 +8,7 @@ The user's own framing: BPMN (Business Process Model and Notation) might be a be
 
 ## Relevant existing context
 - [ADR 0014](../../decisions/0014-node-and-edge-style-schema.md) (node/edge style schema) already flagged and deliberately punted on "the exact notation-base question" — markers/styling were built "deliberately approximate, not pixel-correct ERD/UML notation" without settling what notation family this app is actually modeling after.
-- [Epic 0077](0077-swim-lanes.md) (swim lanes, logged the same day) is itself a BPMN concept (pools/lanes) — if this app adopted BPMN as its notation basis, that would likely settle epic 0077's own "do we need a distinct feature" question one way or another, rather than the two being independent.
+- [Epic 0077](later/0077-swim-lanes.md) (swim lanes, logged the same day) is itself a BPMN concept (pools/lanes) — if this app adopted BPMN as its notation basis, that would likely settle epic 0077's own "do we need a distinct feature" question one way or another, rather than the two being independent.
 - The project brief's own scope already spans IT-architecture-adjacent and enterprise-architecture-adjacent work (business capability maps, motivation/goals views — [ADR 0008](../../decisions/0008-tool-scope-includes-ea-adjacent-diagrams.md)), which is closer to BPMN's own territory than a narrowly technical notation would be.
 
 ## Notes

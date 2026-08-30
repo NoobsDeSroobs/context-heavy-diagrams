@@ -11,13 +11,13 @@ See [ADR 0019](../../../decisions/0019-snap-to-shape-not-grid.md) for the full w
 
 Two items from the original task list were genuinely open and resolved with the user before implementing:
 - **No snap-to-grid.** Proximity-based snap-to-shape only — a 5px (screen-pixel) threshold, not requiring edges to touch, so e.g. two shapes with a gap between them can still snap into a matching column/row.
-- **Connection-aware alignment (positioning a node relative to what it's connected to) is deferred** to its own epic — see [epic 0031](../0031-connection-aware-alignment.md). It was flagged in this epic's original task list as a real fork (lightweight snap extension vs. full graph auto-layout) not a small addition, so it's being kept out of this epic entirely rather than guessed at.
+- **Connection-aware alignment (positioning a node relative to what it's connected to) is deferred** to its own epic — see [epic 0031](../later/0031-connection-aware-alignment.md). It was flagged in this epic's original task list as a real fork (lightweight snap extension vs. full graph auto-layout) not a small addition, so it's being kept out of this epic entirely rather than guessed at.
 
 ## Tasks
 - [x] Visual alignment guides (snap lines) when a dragged node's edges/center line up with another node's
 - [x] Snap-to-alignment while dragging (within a 5px threshold)
 - [x] ~~Decide if snap-to-grid is also wanted~~ — decided: no, see Scope above
-- [x] ~~Connection-aware alignment~~ — deferred to [epic 0031](../0031-connection-aware-alignment.md), see Scope above
+- [x] ~~Connection-aware alignment~~ — deferred to [epic 0031](../later/0031-connection-aware-alignment.md), see Scope above
 
 ## Implementation notes (2026-08-19)
 - **Geometry is pure and framework-free**: `src/renderer/src/alignment.ts` exports `boundsFrom` (x/y/width/height → left/right/top/bottom/centerX/centerY) and `computeSnap(dragged, others, threshold)`. Each of the dragged node's three X-values (left/center/right) is checked against each other node's three X-values, independently of the same 3×3 check on Y — a drag can snap horizontally to one shape and vertically to a completely different one at the same time. Only the single closest match per axis actually moves the node; ties at that same closest distance are kept as additional guide lines (e.g. three shapes already sharing a left edge all light up together). Verified correct by hand-tracing several cases (edge-to-edge, center-to-center, exact-zero-distance, multi-way ties) — see this epic's implementation session.
