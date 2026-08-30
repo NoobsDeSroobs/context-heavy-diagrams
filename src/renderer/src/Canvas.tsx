@@ -300,6 +300,67 @@ function sortNodesForHierarchy(nodes: Node[]): Node[] {
   return result
 }
 
+// Load-time repair of a corrupt container hierarchy (ADR 0075). Runs once per
+// load, before the nodes reach React Flow — an in-session edit can't produce
+// either of these states (every parentId write is guarded). Silent, but each
+// class of repair returns a note for the Diagnostics panel. `.chd` unchanged;
+// the file self-heals on the next save.
+//  - dangling parentId (points at a node not in the file): dropped. The
+//    position numbers are kept and reinterpreted as absolute — the real
+//    parent is gone, nothing better is recoverable.
+//  - parent cycle: the link at the cycle's entry node is cut.
+function healHierarchy(nodes: Node[]): { nodes: Node[]; notes: string[] } {
+  const stripParentId = (n: Node): Node => {
+    const copy = { ...n }
+    delete copy.parentId
+    return copy
+  }
+  const ids = new Set(nodes.map((n) => n.id))
+  let danglingCount = 0
+  let healed = nodes.map((n) => {
+    if (n.parentId && !ids.has(n.parentId)) {
+      danglingCount += 1
+      return stripParentId(n)
+    }
+    return n
+  })
+
+  let cycleCount = 0
+  for (;;) {
+    const byId = new Map(healed.map((n) => [n.id, n]))
+    let entry: string | null = null
+    for (const n of healed) {
+      const seen = new Set<string>()
+      let cur: string | undefined = n.id
+      while (cur) {
+        if (seen.has(cur)) {
+          entry = cur
+          break
+        }
+        seen.add(cur)
+        cur = byId.get(cur)?.parentId
+      }
+      if (entry) break
+    }
+    if (!entry) break
+    healed = healed.map((n) => (n.id === entry ? stripParentId(n) : n))
+    cycleCount += 1
+  }
+
+  const notes: string[] = []
+  if (danglingCount > 0) {
+    notes.push(
+      `Removed ${danglingCount} node reference${danglingCount === 1 ? '' : 's'} to a container that isn't in this file.`
+    )
+  }
+  if (cycleCount > 0) {
+    notes.push(
+      `Broke ${cycleCount} circular container nesting relationship${cycleCount === 1 ? '' : 's'}.`
+    )
+  }
+  return { nodes: healed, notes }
+}
+
 // Adapter between React Flow's Node shape (zIndex lives in data.zIndex) and
 // zIndexOrdering.ts's plain, React-Flow-agnostic ZIndexed shape — see
 // ADR 0035. Only touches nodes that actually needed a value; a fully
@@ -470,48 +531,49 @@ function fromDiagramFile(diagram: DiagramFile): {
   legend: LegendEntry[]
   gravityPresets: GravityPreset[]
   maxConnectionPointsPerSide: number | undefined
+  hierarchyNotes: string[]
 } {
+  // healHierarchy repairs a dangling/cyclic parentId before the nodes reach
+  // React Flow (ADR 0075); sortNodesForHierarchy then defensively re-orders in
+  // case an external writer didn't honor the parent-before-child requirement
+  // (see docs/file-format.md's parentId entry). applyZIndexBackfill runs on
+  // that *final* order, not the raw file order, so "array position" means the
+  // same thing it does for today's actual rendering — see ADR 0035.
+  const healed = healHierarchy(
+    diagram.nodes.map((n) => ({
+      id: n.id,
+      type: n.type,
+      position: n.position,
+      width: n.size?.width,
+      height: n.size?.height,
+      ...(n.parentId ? { parentId: n.parentId } : {}),
+      data: {
+        label: n.data.label,
+        ...(n.rotation != null ? { rotation: n.rotation } : {}),
+        ...(n.zIndex != null ? { zIndex: n.zIndex } : {}),
+        ...(n.locked ? { locked: true } : {}),
+        ...(n.connectionPoints && n.connectionPoints.length > 0
+          ? { connectionPoints: n.connectionPoints }
+          : {}),
+        ...(n.data.icons ? { icons: n.data.icons } : {}),
+        ...(n.data.details ? { details: n.data.details } : {}),
+        ...(n.data.linkedDiagram ? { linkedDiagram: n.data.linkedDiagram } : {}),
+        ...(n.data.points && n.data.points.length > 0 ? { points: n.data.points } : {}),
+        ...(Array.isArray(n.data.references) && n.data.references.length > 0
+          ? { references: n.data.references }
+          : {}),
+        ...(n.style ? { style: n.style } : {}),
+        ...(n.metadata && nodeMetadataEligible(n.type) ? { metadata: n.metadata } : {})
+      }
+    }))
+  )
   return {
     highlights: diagram.highlights ?? [],
     legend: diagram.legend ?? [],
     gravityPresets: diagram.gravityPresets ?? [],
     maxConnectionPointsPerSide: diagram.maxConnectionPointsPerSide,
-    // sortNodesForHierarchy defensively re-orders in case an external
-    // writer didn't honor the parent-before-child requirement — see
-    // docs/file-format.md's parentId entry. applyZIndexBackfill runs on
-    // that *final* order, not the raw file order, so "array position"
-    // means the same thing it does for today's actual rendering — see
-    // ADR 0035.
-    nodes: applyZIndexBackfill(
-      sortNodesForHierarchy(
-        diagram.nodes.map((n) => ({
-          id: n.id,
-          type: n.type,
-          position: n.position,
-          width: n.size?.width,
-          height: n.size?.height,
-          ...(n.parentId ? { parentId: n.parentId } : {}),
-          data: {
-            label: n.data.label,
-            ...(n.rotation != null ? { rotation: n.rotation } : {}),
-            ...(n.zIndex != null ? { zIndex: n.zIndex } : {}),
-            ...(n.locked ? { locked: true } : {}),
-            ...(n.connectionPoints && n.connectionPoints.length > 0
-              ? { connectionPoints: n.connectionPoints }
-              : {}),
-            ...(n.data.icons ? { icons: n.data.icons } : {}),
-            ...(n.data.details ? { details: n.data.details } : {}),
-            ...(n.data.linkedDiagram ? { linkedDiagram: n.data.linkedDiagram } : {}),
-            ...(n.data.points && n.data.points.length > 0 ? { points: n.data.points } : {}),
-            ...(Array.isArray(n.data.references) && n.data.references.length > 0
-              ? { references: n.data.references }
-              : {}),
-            ...(n.style ? { style: n.style } : {}),
-            ...(n.metadata && nodeMetadataEligible(n.type) ? { metadata: n.metadata } : {})
-          }
-        }))
-      )
-    ),
+    hierarchyNotes: healed.notes,
+    nodes: applyZIndexBackfill(sortNodesForHierarchy(healed.nodes)),
     edges: diagram.edges.map((e) => ({
       id: e.id,
       type: e.type,
@@ -714,6 +776,11 @@ function CanvasInner(): React.JSX.Element {
   // current state (what the last backfill run had to correct), not a
   // growing history log. A file with nothing to correct clears the list.
   const [diagnostics, setDiagnostics] = useState<string[]>([])
+  // Notices from healHierarchy at load time (ADR 0075) — a dangling or cyclic
+  // parentId that was silently repaired. Session-only, replaced on every load,
+  // kept separate from `diagnostics` so a later required-tags sync doesn't
+  // wipe it; combined for display in `displayedDiagnostics`.
+  const [hierarchyLoadNotes, setHierarchyLoadNotes] = useState<string[]>([])
   const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false)
   const [highlightsPanelOpen, setHighlightsPanelOpen] = useState(false)
   // Floating popup next to Legend's, in the bottom-left <Controls> cluster
@@ -2621,23 +2688,70 @@ function CanvasInner(): React.JSX.Element {
         const byId = new Map(nds.map((n) => [n.id, n]))
         const container = byId.get(containerId)
         if (!container) return nds
+        // The container must not become a child of one of its own ancestors
+        // (a parent cycle → React Flow can't position the nodes → they
+        // collapse to the canvas origin), and a candidate whose bounds
+        // *enclose* the container shouldn't be swallowed by it either — see
+        // ADR 0075. getIntersectingNodes(_, false) matches a node that fully
+        // covers the container as well as one fully inside it.
+        const containerIsDescendantOf = (ofId: string): boolean => {
+          let current: Node | undefined = container
+          while (current?.parentId) {
+            if (current.parentId === ofId) return true
+            current = byId.get(current.parentId)
+          }
+          return false
+        }
+        const containerAbsBox = absolutePosition(container, byId)
+        const encloses = (n: Node): boolean => {
+          const abs = absolutePosition(n, byId)
+          return (
+            abs.x <= containerAbsBox.x &&
+            abs.y <= containerAbsBox.y &&
+            abs.x + (n.width ?? 0) >= containerAbsBox.x + (container.width ?? 0) &&
+            abs.y + (n.height ?? 0) >= containerAbsBox.y + (container.height ?? 0)
+          )
+        }
         const candidateIds = new Set(
           rfInstance
             .getIntersectingNodes(container, false)
-            .filter((n) => n.id !== containerId && !n.parentId)
+            .filter(
+              (n) =>
+                n.id !== containerId &&
+                !n.parentId &&
+                !containerIsDescendantOf(n.id) &&
+                !encloses(n)
+            )
             .map((n) => n.id)
         )
         if (candidateIds.size === 0) return nds
-        const containerAbs = absolutePosition(container, byId)
         const updated = nds.map((n) => {
           if (!candidateIds.has(n.id)) return n
           const abs = absolutePosition(n, byId)
-          return { ...n, parentId: containerId, position: subtractPosition(abs, containerAbs) }
+          return { ...n, parentId: containerId, position: subtractPosition(abs, containerAbsBox) }
         })
         return sortNodesForHierarchy(updated)
       })
     },
     [pushSnapshot, rfInstance, setNodes]
+  )
+
+  // One-click inverse of drag-out / "Attach contained shapes" (ADR 0075):
+  // clears a node's parentId and rebases its position from parent-relative
+  // to absolute so it doesn't jump. Any node type can be a container child.
+  const detachFromParent = useCallback(
+    (nodeId: string) => {
+      pushSnapshot()
+      setNodes((nds) => {
+        const byId = new Map(nds.map((n) => [n.id, n]))
+        const node = byId.get(nodeId)
+        if (!node?.parentId) return nds
+        const detached = { ...node, position: absolutePosition(node, byId) }
+        delete detached.parentId
+        return sortNodesForHierarchy(nds.map((n) => (n.id === nodeId ? detached : n)))
+      })
+    },
+    [pushSnapshot, setNodes]
   )
 
   const selectAll = useCallback(() => {
@@ -2767,10 +2881,15 @@ function CanvasInner(): React.JSX.Element {
     })
 
     pushSnapshot()
-    setNodes((nds) => [
-      ...nds.map((n) => (n.selected ? { ...n, selected: false } : n)),
-      ...pastedNodes
-    ])
+    // sortNodesForHierarchy: a pasted container + its children can arrive in
+    // any order, and React Flow requires a parent earlier in the array than
+    // its children — see remapForPaste (ADR 0075).
+    setNodes((nds) =>
+      sortNodesForHierarchy([
+        ...nds.map((n) => (n.selected ? { ...n, selected: false } : n)),
+        ...pastedNodes
+      ])
+    )
     setEdges((eds) => [
       ...eds.map((e) => (e.selected ? { ...e, selected: false } : e)),
       ...pastedEdges
@@ -3194,7 +3313,8 @@ function CanvasInner(): React.JSX.Element {
         highlights: openedHighlights,
         legend: openedLegend,
         gravityPresets: openedGravityPresets,
-        maxConnectionPointsPerSide: openedMaxConnectionPointsPerSide
+        maxConnectionPointsPerSide: openedMaxConnectionPointsPerSide,
+        hierarchyNotes: openedHierarchyNotes
       } = fromDiagramFile(diagram)
       // A different diagram entirely — old undo history doesn't apply to
       // it (and, worse, undoing across a load boundary would try to
@@ -3242,6 +3362,7 @@ function CanvasInner(): React.JSX.Element {
       setLegendPanelOpen(false)
       setGravityPresets(openedGravityPresets)
       setDiagramMaxConnectionPointsPerSide(openedMaxConnectionPointsPerSide)
+      setHierarchyLoadNotes(openedHierarchyNotes)
       setDetailsDrafts({})
       setContextMenu(null)
       setIconPicker(null)
@@ -3995,6 +4116,55 @@ function CanvasInner(): React.JSX.Element {
   // derived data to other panels elsewhere in this file. Sorted highest
   // z-index first, matching the panel's own top-of-list-is-frontmost
   // display convention — see ADR 0035.
+  // Container-nesting analysis for the Layers panel + Diagnostics (ADR 0075):
+  //  - parentLabelById: the immediate parent's label, for the "in: X" badge
+  //  - invertedZIds: nodes React Flow renders *above* their own parent even
+  //    though this app's raw data.zIndex would put them below — the
+  //    parentZ + 1 rule in @xyflow/system's calculateChildXYZ. The Layers
+  //    panel sorts on raw zIndex (the value drag-to-restack edits), so these
+  //    are the rows whose displayed order disagrees with what's clickable.
+  //  - outgrownAdvisories: a child whose bounds escape its parent's — the
+  //    shape that makes the z-inversion visible and confusing (warn only, no
+  //    auto-fix).
+  const hierarchyAnalysis = useMemo(() => {
+    const byId = new Map(nodes.map((n) => [n.id, n]))
+    const sizeOf = (n: Node): { w: number; h: number } => ({
+      w: n.width ?? n.measured?.width ?? 0,
+      h: n.height ?? n.measured?.height ?? 0
+    })
+    const parentLabelById = new Map<string, string>()
+    const invertedZIds = new Set<string>()
+    const outgrownAdvisories: string[] = []
+    for (const n of nodes) {
+      if (!n.parentId) continue
+      const parent = byId.get(n.parentId)
+      if (!parent) continue
+      const parentLabel = String(parent.data?.label ?? '') || '(unlabeled)'
+      const childLabel = String(n.data?.label ?? '') || '(unlabeled)'
+      parentLabelById.set(n.id, parentLabel)
+
+      const childZ = (n.data?.zIndex as number | undefined) ?? 0
+      const parentZ = (parent.data?.zIndex as number | undefined) ?? 0
+      if (parentZ >= childZ) invertedZIds.add(n.id)
+
+      const childAbs = absolutePosition(n, byId)
+      const parentAbs = absolutePosition(parent, byId)
+      const c = sizeOf(n)
+      const p = sizeOf(parent)
+      const escapes =
+        childAbs.x < parentAbs.x - 0.5 ||
+        childAbs.y < parentAbs.y - 0.5 ||
+        childAbs.x + c.w > parentAbs.x + p.w + 0.5 ||
+        childAbs.y + c.h > parentAbs.y + p.h + 0.5
+      if (escapes && c.w > 0 && c.h > 0 && p.w > 0 && p.h > 0) {
+        outgrownAdvisories.push(
+          `"${childLabel}" is nested inside "${parentLabel}" but extends outside it — React Flow renders a child above its parent, so clicks in the overlapping area select "${childLabel}".`
+        )
+      }
+    }
+    return { parentLabelById, invertedZIds, outgrownAdvisories }
+  }, [nodes])
+
   const layerRows = useMemo(
     () =>
       [...nodes]
@@ -4002,10 +4172,13 @@ function CanvasInner(): React.JSX.Element {
           id: n.id,
           type: n.type ?? 'shape',
           label: String(n.data?.label ?? ''),
-          zIndex: (n.data?.zIndex as number | undefined) ?? 0
+          zIndex: (n.data?.zIndex as number | undefined) ?? 0,
+          parentLabel: hierarchyAnalysis.parentLabelById.get(n.id) ?? null,
+          parentId: n.parentId ?? null,
+          rendersAboveParent: hierarchyAnalysis.invertedZIds.has(n.id)
         }))
         .sort((a, b) => b.zIndex - a.zIndex),
-    [nodes]
+    [nodes, hierarchyAnalysis]
   )
 
   // Flat "shape → one reference path" list backing the References inventory
@@ -4047,8 +4220,13 @@ function CanvasInner(): React.JSX.Element {
             'Legend is empty — consider adding at least a definition for the arrows/edges used in this diagram.'
           ]
         : []
-    return [...diagnostics, ...legendEmptyAdvisory]
-  }, [diagnostics, legend.length, edges.length])
+    return [
+      ...diagnostics,
+      ...hierarchyLoadNotes,
+      ...hierarchyAnalysis.outgrownAdvisories,
+      ...legendEmptyAdvisory
+    ]
+  }, [diagnostics, hierarchyLoadNotes, hierarchyAnalysis, legend.length, edges.length])
 
   const menus: MenuBarMenu[] = [
     {
@@ -4165,6 +4343,7 @@ function CanvasInner(): React.JSX.Element {
       endContinuousEdit,
       pushSnapshot,
       attachContainedNodes,
+      detachFromParent,
       matchHighlights,
       edgeStraightSegmentLength: preferences.edgeStraightSegmentLength,
       maxConnectionPointsPerSide:
@@ -4194,6 +4373,7 @@ function CanvasInner(): React.JSX.Element {
       endContinuousEdit,
       pushSnapshot,
       attachContainedNodes,
+      detachFromParent,
       matchHighlights,
       preferences.edgeStraightSegmentLength,
       preferences.maxConnectionPointsPerSide,

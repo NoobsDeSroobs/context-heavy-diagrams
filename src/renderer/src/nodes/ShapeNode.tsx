@@ -46,9 +46,9 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
     diagramPath,
     openContextMenu,
     openIconPicker,
-    openColorPicker,
     openDetailsPanel,
     openReferencesFor,
+    detachFromParent,
     handleLinkClick,
     pushSnapshot,
     matchHighlights,
@@ -59,7 +59,7 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
     isolateOpacity,
     selectAllOfType
   } = useDiagramContext()
-  const { updateNodeData } = useReactFlow()
+  const { updateNodeData, getNode } = useReactFlow()
 
   const locked = data?.locked === true
   const icons = (data?.icons ?? {}) as Partial<Record<IconSlot, IconRef>>
@@ -106,13 +106,15 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
               onSelect: () => handleLinkClick(id, event.clientX, event.clientY)
             }
           ]
+      const detachItem = getNode(id)?.parentId
+        ? [{ label: 'Detach from parent', onSelect: () => detachFromParent(id) }]
+        : []
       openContextMenu(event.clientX, event.clientY, [
         { label: 'Add icon', onSelect: () => openIconPicker(id, rect) },
-        { label: 'Fill…', onSelect: () => openColorPicker(id, 'fill', rect) },
-        { label: 'Border…', onSelect: () => openColorPicker(id, 'border', rect) },
         { label: 'See details', onSelect: () => openDetailsPanel(id) },
         { label: 'Reference images…', onSelect: () => openReferencesFor(id) },
         ...linkItems,
+        ...detachItem,
         addConnectionPointItem(rect, event.clientX, event.clientY),
         {
           label: 'Select all shapes',
@@ -125,9 +127,10 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
       id,
       openContextMenu,
       openIconPicker,
-      openColorPicker,
       openDetailsPanel,
       openReferencesFor,
+      detachFromParent,
+      getNode,
       linkedPath,
       handleLinkClick,
       updateNodeData,

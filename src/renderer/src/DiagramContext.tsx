@@ -51,6 +51,11 @@ export interface DiagramContextValue {
   // container's bounds — a node already inside some other container is left
   // alone, not silently moved.
   attachContainedNodes: (containerId: string) => void
+  // A node's "Detach from parent" menu item (shown only when it has a
+  // parentId) — clears parentId and rebases the node's position from
+  // parent-relative to absolute so it stays put visually. The one-click
+  // inverse of drag-out / "Attach contained shapes" — see ADR 0075.
+  detachFromParent: (nodeId: string) => void
   // Every currently-enabled highlight matching this element's metadata —
   // see ADR 0025. Bound to Canvas's own highlights/enabled-set
   // state so node/edge components don't need either piece directly, just

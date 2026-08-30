@@ -58,6 +58,14 @@ export function parseClipboardPayload(text: string): ClipboardPayload | null {
 // looked up in combination with their owning node's id, so two different
 // nodes reusing the same point id (e.g. both having a "cp-3") is already
 // normal, not a collision.
+//
+// `parentId` (container nesting, ADR 0012 / ADR 0075): if the node's parent
+// container is also in the payload, the link is remapped through `idMap` and
+// the child's parent-relative `position` is left untouched (still valid
+// relative to the remapped parent). If it isn't — an orphaned child, or a
+// cross-diagram paste — `parentId` is stripped and the node becomes a normal
+// top-level paste. Only top-level nodes get the centroid recenter; a child's
+// position stays relative to its parent.
 export function remapForPaste(
   payload: ClipboardPayload,
   newId: (prefix: string) => string,
@@ -66,22 +74,34 @@ export function remapForPaste(
   const idMap = new Map<string, string>()
   for (const n of payload.nodes) idMap.set(n.id, newId(n.type ?? 'shape'))
 
-  const count = payload.nodes.length || 1
+  const hasParentInPayload = (n: Node): boolean => n.parentId != null && idMap.has(n.parentId)
+
+  // Centroid over top-level-within-payload nodes only — a contained child's
+  // coordinates are parent-relative (small numbers), a different space than a
+  // top-level node's, and averaging the two together skews where the group lands.
+  const topLevel = payload.nodes.filter((n) => !hasParentInPayload(n))
+  const count = topLevel.length || 1
   const centroid = {
-    x: payload.nodes.reduce((sum, n) => sum + n.position.x, 0) / count,
-    y: payload.nodes.reduce((sum, n) => sum + n.position.y, 0) / count
+    x: topLevel.reduce((sum, n) => sum + n.position.x, 0) / count,
+    y: topLevel.reduce((sum, n) => sum + n.position.y, 0) / count
   }
 
-  const nodes = payload.nodes.map((n) => ({
-    ...n,
-    id: idMap.get(n.id)!,
-    position: {
-      x: center.x + (n.position.x - centroid.x),
-      y: center.y + (n.position.y - centroid.y)
-    },
-    selected: true,
-    data: { ...n.data }
-  }))
+  const nodes = payload.nodes.map((n) => {
+    const base = { ...n, id: idMap.get(n.id)!, selected: true, data: { ...n.data } }
+    if (hasParentInPayload(n)) {
+      return { ...base, parentId: idMap.get(n.parentId!)! }
+    }
+    // Top-level (or a child whose parent wasn't copied): drop any dangling
+    // parentId and recenter on the paste point.
+    delete base.parentId
+    return {
+      ...base,
+      position: {
+        x: center.x + (n.position.x - centroid.x),
+        y: center.y + (n.position.y - centroid.y)
+      }
+    }
+  })
 
   const edges = payload.edges.map((e) => ({
     ...e,

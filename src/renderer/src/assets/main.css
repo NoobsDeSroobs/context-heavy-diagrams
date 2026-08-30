@@ -1567,6 +1567,34 @@ body {
   color: var(--ev-c-text-3);
 }
 
+/* "in: <container>" badge on a nested row — ADR 0075. A button (not a span):
+   clicking it points the panel at the parent row. */
+.layer-row-parent {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 1px 5px;
+  border: 1px solid var(--ev-c-divider, var(--color-border));
+  border-radius: 4px;
+  background: transparent;
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--ev-c-text-3);
+  cursor: pointer;
+}
+
+.layer-row-parent:hover {
+  background: var(--ev-button-alt-hover-bg);
+  color: var(--color-text);
+}
+
+.layer-row-parent-warn {
+  color: var(--ev-c-yellow, #c48a00);
+}
+
 /* Reference images — see ADR 0069. */
 
 /* Floating viewer window (ReferenceWindow.tsx). Fixed-position, above the

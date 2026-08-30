@@ -14,3 +14,5 @@ Today the sibling-folder layout for a diagram's attachments is hardcoded: custom
 
 ## Notes
 Deliberately kept out of epic 0090 — it's a settings + migration change touching existing icon behaviour, not part of shipping reference images.
+
+If [epic 0104](0104-central-custom-icon-library.md) (central custom-icon library) lands first, this epic's scope shrinks to reference images + detail files — custom icons would no longer live in a per-diagram subfolder at all. Decide the order before starting either.

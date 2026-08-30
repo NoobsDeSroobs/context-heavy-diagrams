@@ -5,6 +5,13 @@ export interface LayerRow {
   type: string
   label: string
   zIndex: number
+  // Immediate parent container (ADR 0075), or null for a top-level node.
+  parentLabel: string | null
+  parentId: string | null
+  // React Flow renders this node above its own parent even though its raw
+  // zIndex (what this list sorts on, and what drag-to-restack edits) would
+  // put it below — the parentZ + 1 rule. See ADR 0075.
+  rendersAboveParent: boolean
 }
 
 interface LayerPanelProps {
@@ -123,6 +130,24 @@ export default function LayerPanel({
                 {TYPE_BADGE[row.type] ?? row.type.charAt(0).toUpperCase()}
               </span>
               <span className="layer-row-label">{row.label || '(unlabeled)'}</span>
+              {row.parentLabel != null && (
+                <button
+                  type="button"
+                  className="layer-row-parent"
+                  title={
+                    row.rendersAboveParent
+                      ? `Inside "${row.parentLabel}" — but renders above it (a child always draws over its parent). Click to point at the parent.`
+                      : `Inside "${row.parentLabel}". Click to point at the parent.`
+                  }
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    if (row.parentId) onPointAt(row.parentId)
+                  }}
+                >
+                  in: {row.parentLabel}
+                  {row.rendersAboveParent && <span className="layer-row-parent-warn"> ⚠</span>}
+                </button>
+              )}
               <span className="layer-row-zindex">{row.zIndex}</span>
             </div>
           </Fragment>

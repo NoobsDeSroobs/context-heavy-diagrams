@@ -28,9 +28,9 @@ function ContainerNode({ id, data, selected }: NodeProps): React.JSX.Element {
   const {
     pushSnapshot,
     openContextMenu,
-    openColorPicker,
     openReferencesFor,
     attachContainedNodes,
+    detachFromParent,
     matchHighlights,
     theme,
     entityHighlightNodeId,
@@ -39,7 +39,7 @@ function ContainerNode({ id, data, selected }: NodeProps): React.JSX.Element {
     isolateOpacity,
     selectAllOfType
   } = useDiagramContext()
-  const { updateNodeData } = useReactFlow()
+  const { updateNodeData, getNode } = useReactFlow()
   const locked = data?.locked === true
   const customPoints = (data?.connectionPoints ?? []) as ConnectionPoint[]
   const style = data?.style as NodeStyle | undefined
@@ -58,10 +58,12 @@ function ContainerNode({ id, data, selected }: NodeProps): React.JSX.Element {
     (event: MouseEvent<HTMLDivElement>) => {
       event.preventDefault()
       const rect = event.currentTarget.getBoundingClientRect()
+      const detachItem = getNode(id)?.parentId
+        ? [{ label: 'Detach from parent', onSelect: () => detachFromParent(id) }]
+        : []
       openContextMenu(event.clientX, event.clientY, [
-        { label: 'Fill…', onSelect: () => openColorPicker(id, 'fill', rect) },
-        { label: 'Border…', onSelect: () => openColorPicker(id, 'border', rect) },
         { label: 'Attach contained shapes', onSelect: () => attachContainedNodes(id) },
+        ...detachItem,
         { label: 'Reference images…', onSelect: () => openReferencesFor(id) },
         addConnectionPointItem(rect, event.clientX, event.clientY),
         {
@@ -73,10 +75,11 @@ function ContainerNode({ id, data, selected }: NodeProps): React.JSX.Element {
     },
     [
       openContextMenu,
-      openColorPicker,
       openReferencesFor,
       addConnectionPointItem,
       attachContainedNodes,
+      detachFromParent,
+      getNode,
       id,
       selectAllOfType
     ]

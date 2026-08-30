@@ -18,11 +18,12 @@ export const TEXT_MIN_HEIGHT = 24
 // node's own rotation, so resizing an already-rotated node can feel
 // slightly off. Accepted for now — see ADR 0004's Alternatives.
 function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
-  const { updateNodeData } = useReactFlow()
+  const { updateNodeData, getNode } = useReactFlow()
   const {
     diagramPath,
     openContextMenu,
     openDetailsPanel,
+    detachFromParent,
     handleLinkClick,
     beginContinuousEdit,
     endContinuousEdit,
@@ -66,9 +67,13 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
               onSelect: () => handleLinkClick(id, event.clientX, event.clientY)
             }
           ]
+      const detachItem = getNode(id)?.parentId
+        ? [{ label: 'Detach from parent', onSelect: () => detachFromParent(id) }]
+        : []
       openContextMenu(event.clientX, event.clientY, [
         { label: 'See details', onSelect: () => openDetailsPanel(id) },
         ...linkItems,
+        ...detachItem,
         { label: 'Select all text', separatorBefore: true, onSelect: () => selectAllOfType('text') }
       ])
     },
@@ -76,6 +81,8 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
       id,
       openContextMenu,
       openDetailsPanel,
+      detachFromParent,
+      getNode,
       linkedPath,
       handleLinkClick,
       updateNodeData,
