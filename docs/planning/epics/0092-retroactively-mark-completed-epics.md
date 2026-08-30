@@ -1,16 +1,44 @@
-# 0092: Retroactively mark completed epics with the `x` prefix
+# 0092: Move completed epics to a `completed/` subfolder
 
 ## Status
-Not Started — deliberately deferred, logged as a TODO
+Done (2026-08-30), on `epic/0092-completed-epics-folder`, pending merge. This epic
+file stays in `epics/` until the branch merges, then moves to `completed/` itself
+(one final `git mv`).
 
 ## Goal
-[ADR 0061](../../decisions/0061-completed-epic-filename-marker.md) established a `x`-prefix filename convention for epics that are both `Done` and live-tested, applied going forward from 2026-08-25. This epic is the deferred retroactive sweep: apply it to every epic already in that state — the ~30-40 completed epics that predate the convention.
+[ADR 0061](../../decisions/0061-completed-epic-filename-marker.md) established an
+`x`-prefix filename convention for completed epics but it was never rolled out.
+The user decided (2026-08-30) to use a `docs/planning/epics/completed/` subfolder
+instead. This epic wrote the ADR for that and did the retroactive move.
 
 ## Tasks
-- [ ] Enumerate every epic file whose `## Status` reads `Done` and is confirmed live-tested (not just implemented) — per ADR 0061, that's the actual trigger, not merge status, though in practice most/all merged epics should already qualify
-- [ ] Rename each: `NNNN-title.md` → `xNNNN-title.md`
-- [ ] Fix every inbound link across the repo to each renamed file — `PROGRESS.md`, other epics' own `## Notes`/cross-references, ADRs, `docs/known-issues.md`, `docs/architecture/*` — a plain path-string find/replace per renamed file should cover it, but needs a full grep pass to confirm nothing's missed, not just the obvious spots
-- [ ] Spot-check a handful of renamed files' links actually resolve after the pass
+- [x] **[ADR 0076](../../decisions/0076-completed-epics-subfolder.md)** —
+  `completed/` subfolder supersedes ADR 0061's `x` prefix; keeps ADR 0061's
+  definition of "completed" (`Done` **and** confirmed working, the practical
+  proxy being merged-to-`master`); flat number namespace across both folders;
+  new epics born in `epics/`, `git mv`'d on completion. ADR 0061 marked
+  Superseded (for its mechanism only).
+- [x] Enumerated all 104 epics. **71 moved** to `completed/` (every `Done`
+  epic whose work is merged to `master`, plus `Retired`/`Superseded`/`Cancelled`
+  — 0021/0023/0048). **33 kept** in `epics/`: all `Not Started`, the `In Progress`
+  ones (0027/0053/0086), the paused gallery (0022), and the one `Done`-but-truly-
+  unmerged epic (0084). 0060 moved (prototype closed, follow-ups are 0079-0081).
+- [x] `git mv` each moved epic into `epics/completed/`.
+- [x] Fixed every inbound link — within moved files (`../../decisions/` →
+  `../../../decisions/`, root-file refs one deeper, sibling-epic links to kept
+  epics gain `../`), and from `PROGRESS.md` / `docs/known-issues.md` / ADRs /
+  kept epics (gain `completed/`). `docs/architecture/**` had none (epic 0066
+  already decoupled those). `examples/**` only reference 0022 (kept).
+- [x] Updated `docs/planning/README.md`, [ADR 0002](../../decisions/0002-planning-structure.md),
+  `CLAUDE.md`.
+- [x] Link-checker pass over every `*.md` in the repo — 0 broken links from the
+  move. Also fixed 2 pre-existing broken links found in passing
+  (`0057-edge-line-unification.md` → `0057-edge-routing-style.md` in `PROGRESS.md`
+  and epic 0032).
+- [ ] After merge: `git mv` this file into `completed/` too.
 
 ## Notes
-Logged 2026-08-25 per the user's own framing — wants this done eventually, explicitly not now. The user also stated a standing expectation while discussing this: **there should be no old epic sitting around marked `Done` that hasn't actually been properly tested** — i.e. this sweep is expected to be close to "every `Done` epic qualifies," not a case where most of them need to be excluded. Worth a quick actual check when this gets picked up rather than assuming that's true, but it's the stated expectation going in.
+Logged 2026-08-25, re-scoped 2026-08-30 (folder move, not `x` prefix), done same
+day. The orphaned epic 0103 finalization commit (`2dd9265`, never pushed, missed
+its own PR) was cherry-picked onto this branch as the first commit — that's why
+the epic 0103 doc / ADR 0075 / PROGRESS finalization rides along here.

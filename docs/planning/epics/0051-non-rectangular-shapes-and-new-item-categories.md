@@ -1,7 +1,7 @@
 # 0051: Non-rectangular shapes and a large-icon category
 
 ## Status
-Not Started — not yet scoped. Raised by the user as a design idea for later, explicitly not to be designed now. **Split 2026-08-22**: the freeform/bendable-line idea originally item 2 here was pulled out into its own epic, [0064](0064-simple-curved-freeform-line.md), since a simple version of it is actually needed soon (trust-boundary lines for threat-modeling diagrams) while the two items remaining here are not — see that epic for the reasoning. This epic is deliberately smaller now than its original scope; the remainder stays logged, not scheduled.
+Not Started — not yet scoped. Raised by the user as a design idea for later, explicitly not to be designed now. **Split 2026-08-22**: the freeform/bendable-line idea originally item 2 here was pulled out into its own epic, [0064](completed/0064-simple-curved-freeform-line.md), since a simple version of it is actually needed soon (trust-boundary lines for threat-modeling diagrams) while the two items remaining here are not — see that epic for the reasoning. This epic is deliberately smaller now than its original scope; the remainder stays logged, not scheduled.
 
 ## Goal
 Two related extensions to the existing Shape / Container / Text split (item palette, `ItemPalette.tsx`):
@@ -17,4 +17,4 @@ Whatever shape variety looks like, it must keep working with icon annotation the
 - **Shape variety vs. containers** — the user explicitly mentioned "shape, or container" for the variety ask, so a design pass shouldn't assume this is shapes-only.
 
 ## Notes
-Not scheduled into the current batch (see [PROGRESS.md](../../../PROGRESS.md)) — flagged here so it isn't lost, not because it's next up. The user was explicit this is "a design discussion to be had for later," so this file deliberately stops at capturing the idea rather than proposing a design. See [epic 0064](0064-simple-curved-freeform-line.md) for the freeform-line piece that used to live here.
+Not scheduled into the current batch (see [PROGRESS.md](../../../PROGRESS.md)) — flagged here so it isn't lost, not because it's next up. The user was explicit this is "a design discussion to be had for later," so this file deliberately stops at capturing the idea rather than proposing a design. See [epic 0064](completed/0064-simple-curved-freeform-line.md) for the freeform-line piece that used to live here.

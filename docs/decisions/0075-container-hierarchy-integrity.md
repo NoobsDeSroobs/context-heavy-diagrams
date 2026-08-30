@@ -9,7 +9,7 @@ A user's "Project Overview" diagram surfaced three bugs that share one
 root theme — a node's `parentId` (the container-nesting link, ADR 0012) drifting
 out of sync with what the user sees, then failing in an opaque way. All three are
 recorded in [docs/known-issues.md](../known-issues.md); the epic is
-[0103](../planning/epics/0103-container-hierarchy-integrity.md).
+[0103](../planning/epics/completed/0103-container-hierarchy-integrity.md).
 
 1. **Clicking a container selects a larger container that visually encloses it.**
    In the file, the big outer box was a *child* of the small inner one. React
@@ -131,12 +131,17 @@ one-click inverse of drag-out / "Attach contained shapes" (`detachFromParent`
 in `Canvas.tsx`, on `DiagramContext`).
 
 The node context menu was already long, so **"Fill…" and "Border…" were removed**
-from it at the same time (`ShapeNode` / `ContainerNode`). Colour is fully
-editable in the Property panel's style section; the menu popups were a
-convenience duplicate, and structural actions (detach, attach, connection
-points) are a better fit for a right-click menu than styling. The
-`openColorPicker` / `ColorPickerPopup` wiring in `Canvas.tsx` is now
-unreachable — left in place for now (functional, no cost), flagged for removal.
+from it at the same time (`ShapeNode` / `ContainerNode`). **No capability is
+lost** — the Property panel's Fill and Border sections already cover fill /
+stroke colour, opacity and stroke width (and handle multi-select "mixed" state,
+which the popup didn't); the menu popups were a strict subset. Structural
+actions (detach, attach, connection points) are also a better fit for a
+right-click menu than styling. The `openColorPicker` / `colorPicker` state /
+`<ColorPickerPopup>` wiring in `Canvas.tsx` (and the `ColorPickerPopup`
+component + its CSS) are now unreachable — **left in place, tracked for deletion
+in a later cleanup pass** (epic 0103 follow-up list), per the user's call:
+removing ~60 lines across several files right as the PR is finalised isn't worth
+the churn.
 
 ## Alternatives considered
 

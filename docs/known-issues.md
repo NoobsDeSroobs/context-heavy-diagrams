@@ -97,7 +97,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **Resolution:** raised the CSS z-index to `2_000_000` — comfortably above the real current ceiling, with real headroom rather than an exact-fit value (the same mistake that let this go stale once already). The rule's own comment now names the actual source constants (`TEXT_BASE`, `SELECTED_EDGE_Z_BOOST`) instead of a plain number, and flags itself as a manually-maintained ceiling nothing re-checks automatically — the first thing to re-verify if this class of bug ever resurfaces.
 
-**References:** `src/renderer/src/assets/main.css`'s `.react-flow__edgelabel-renderer`, `src/renderer/src/layers/zIndexOrdering.ts`, `src/renderer/src/Canvas.tsx`'s `SELECTED_EDGE_Z_BOOST`, [epic 0032](planning/epics/0032-edge-routing-and-waypoints.md), [ADR 0030](decisions/0030-edge-label-z-index-override.md) (the original epic 0042 fix this value came from).
+**References:** `src/renderer/src/assets/main.css`'s `.react-flow__edgelabel-renderer`, `src/renderer/src/layers/zIndexOrdering.ts`, `src/renderer/src/Canvas.tsx`'s `SELECTED_EDGE_Z_BOOST`, [epic 0032](planning/epics/completed/0032-edge-routing-and-waypoints.md), [ADR 0030](decisions/0030-edge-label-z-index-override.md) (the original epic 0042 fix this value came from).
 
 ---
 
@@ -131,7 +131,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **Investigation note:** this was hard to pin down via the Browser pane's automated clicks — repeated attempts at the identical test sequence gave inconsistent results (sometimes the switch worked, sometimes it didn't), most likely because the automation tool's cursor-positioning between separate tool calls doesn't reliably match real continuous mouse movement (whether `mouseenter` fires at all, and exactly when, depended on exactly how the pointer "arrived"). Ground truth came from temporarily instrumenting the component with `console.log` on every `mouseenter`/`click` and reading the actual event sequence back via the console, not from trusting the automation's click results directly — worth reaching for that technique earlier next time a hover-timing-sensitive interaction needs debugging in this environment.
 
-**References:** [epic 0049](planning/epics/0049-top-menu-bar.md), [ADR 0039](decisions/0039-top-menu-bar.md), `src/renderer/src/components/MenuBar.tsx`
+**References:** [epic 0049](planning/epics/completed/0049-top-menu-bar.md), [ADR 0039](decisions/0039-top-menu-bar.md), `src/renderer/src/components/MenuBar.tsx`
 
 ---
 
@@ -176,7 +176,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **Resolution:** both the add and remove paths in `connectionPoints.ts` call `updateNodeInternals(id)` after mutating a node's connection points. Generalized into the standing pattern for any future dynamically-added handle, not just this one call site — see the pattern repeated (correctly) throughout epic 0039's later work on the same file. **If a future feature adds any other kind of dynamically-created handle to a node, check for this same requirement before assuming "it renders, so it works."**
 
-**References:** [epic 0013](planning/epics/0013-configurable-connection-points.md), `src/renderer/src/nodes/connectionPoints.ts`
+**References:** [epic 0013](planning/epics/completed/0013-configurable-connection-points.md), `src/renderer/src/nodes/connectionPoints.ts`
 
 ---
 
@@ -185,7 +185,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 **Status:** Solved
 **Found:** 2026-08-21/22, epic 0039
 
-The single richest bug chain so far — worth reading in full via [ADR 0036](decisions/0036-connection-point-count-and-transfer.md) (five dated revisions) and [epic 0039](planning/epics/0039-connection-point-counts.md)'s Verification section, but the short version:
+The single richest bug chain so far — worth reading in full via [ADR 0036](decisions/0036-connection-point-count-and-transfer.md) (five dated revisions) and [epic 0039](planning/epics/completed/0039-connection-point-counts.md)'s Verification section, but the short version:
 
 1. **Spacing overlap/clustering**: computing evenly-spaced offsets for only the _custom_ points (ignoring that a side's always-present default point sat at a fixed 0.5) made every even total count overlap a point exactly onto the default, and every odd total visually cluster around it.
 2. **Root cause of #1, and independently, wrong-neighbor edge transfers on reconnect**: the default point was a real, separate, hardcoded concept (4 unconditional `<Handle>` elements, fixed id, fixed offset) living entirely outside the array the app's own clockwise-ordering/transfer logic reasoned about. **General lesson: a "keep this one element fixed to avoid a bigger rework" scoping compromise, applied to something meant to look/behave uniformly with the rest of a set, tends to be a false economy — the exception becomes exactly where bugs hide.** Fixed by unifying the default into the same per-side array as everything else (synthesized on demand only for an untouched side, materialized as an ordinary point the moment the side is touched).
@@ -193,7 +193,7 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 4. **Bottom/left mirrored**: the shared re-spacing helper always zipped ascending offset values onto a clockwise-sorted array by plain index — correct on top/right (clockwise = ascending raw offset there) but backwards on bottom/left (clockwise = descending). Fixed by reversing the offset assignment on those two sides.
 5. **Max-per-side setting bypassed**: the setting was only ever wired into the property panel's number field; the separate manual right-click "add" code path had no knowledge of it at all. **General lesson: when a limit/setting needs enforcing, check every entry point that can trigger the guarded action, not just the one you're focused on** — threaded the setting through `DiagramContext` (shared by every node component) instead of just the one UI surface.
 
-**References:** [ADR 0036](decisions/0036-connection-point-count-and-transfer.md), [epic 0039](planning/epics/0039-connection-point-counts.md), `src/renderer/src/nodes/connectionPoints.ts`
+**References:** [ADR 0036](decisions/0036-connection-point-count-and-transfer.md), [epic 0039](planning/epics/completed/0039-connection-point-counts.md), `src/renderer/src/nodes/connectionPoints.ts`
 
 ---
 
@@ -212,7 +212,7 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 
 **If revisited**: try wrapping the `updateNodeInternals` call in a `requestAnimationFrame` or a `useEffect` keyed on the node's point count, so it runs after React has actually committed the new handle, and see if that's enough to close the race. Reproducing it at all first (maybe by changing a count and immediately, rapidly starting a drag, rather than pausing between the two) would help confirm the timing theory before touching anything.
 
-**References:** [epic 0039](planning/epics/0039-connection-point-counts.md), [epic 0022](planning/epics/0022-example-diagram-gallery.md) (where it was found), `src/renderer/src/nodes/connectionPoints.ts`, `src/renderer/src/Canvas.tsx`'s `setConnectionPointCount`
+**References:** [epic 0039](planning/epics/completed/0039-connection-point-counts.md), [epic 0022](planning/epics/0022-example-diagram-gallery.md) (where it was found), `src/renderer/src/nodes/connectionPoints.ts`, `src/renderer/src/Canvas.tsx`'s `setConnectionPointCount`
 
 ---
 
@@ -227,7 +227,7 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 
 **Resolution:** (1) replaced ambiguous drop-onto-a-row with a visible insertion line computed from cursor position. (2) moved drag-over/drop listening to the whole list container and computed the target slot geometrically from cursor position, rather than relying on which specific child element the pointer happened to be over.
 
-**References:** [epic 0043](planning/epics/0043-layer-order-control.md), [ADR 0035](decisions/0035-layer-order-control.md), `src/renderer/src/components/LayerPanel.tsx`
+**References:** [epic 0043](planning/epics/completed/0043-layer-order-control.md), [ADR 0035](decisions/0035-layer-order-control.md), `src/renderer/src/components/LayerPanel.tsx`
 
 ---
 
@@ -246,7 +246,7 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 
 **Lesson**: the original fix "worked" in its one test case by coincidence — always verify a fix against the actual mechanism (here, reading the library's own source once real data contradicted the working theory), not just against the one scenario that happened to pass.
 
-**References:** [epic 0046](planning/epics/0046-edge-selection-highlight-and-priority.md), [epic 0022](planning/epics/0022-example-diagram-gallery.md), `src/renderer/src/Canvas.tsx`'s `zIndexedEdges`, `node_modules/@xyflow/react`'s `EdgeWrapper`/`getElevatedEdgeZIndex`
+**References:** [epic 0046](planning/epics/completed/0046-edge-selection-highlight-and-priority.md), [epic 0022](planning/epics/0022-example-diagram-gallery.md), `src/renderer/src/Canvas.tsx`'s `zIndexedEdges`, `node_modules/@xyflow/react`'s `EdgeWrapper`/`getElevatedEdgeZIndex`
 
 ---
 
@@ -261,7 +261,7 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 
 **Current state:** flagged by the user as something to get used to, not currently a real complaint — deliberately not fixed. **If it resurfaces as an actual complaint**, the contrast-driven alternative is the documented direction to revisit — see ADR 0034's Alternatives section for the tradeoffs already considered.
 
-**References:** [ADR 0034](decisions/0034-theme-adaptive-color-value-flip.md), [epic 0040](planning/epics/0040-theme-adaptive-color-value-flip.md)
+**References:** [ADR 0034](decisions/0034-theme-adaptive-color-value-flip.md), [epic 0040](planning/epics/completed/0040-theme-adaptive-color-value-flip.md)
 
 ---
 
@@ -291,7 +291,7 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 
 **Resolution:** new `windows:clearPath` IPC call, invoked from `handleClose` right after the in-place reset, which removes this window's entry from `windowsByPath` (reusing the existing `unregisterWindow` matches-by-window-reference helper, already used on real window close).
 
-**References:** [epic 0020](planning/epics/0020-autosave-and-crash-recovery.md), [ADR 0039](decisions/0039-top-menu-bar.md) (File → Close's original design), `src/main/windows.ts`, `src/renderer/src/Canvas.tsx`
+**References:** [epic 0020](planning/epics/completed/0020-autosave-and-crash-recovery.md), [ADR 0039](decisions/0039-top-menu-bar.md) (File → Close's original design), `src/main/windows.ts`, `src/renderer/src/Canvas.tsx`
 
 ---
 
@@ -306,7 +306,7 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 
 **Resolution:** a short (500ms) grace window after any `loadDiagramIntoCanvas`, tracked via a ref, during which a `dimensions`-with-`resizing`-undefined change no longer counts as discrete. Every other discrete-change condition (remove/add/replace, a real position change) is untouched — deliberately the narrowest fix that addresses the specific ambiguous case rather than broadening the suppression window to cover more change types than necessary.
 
-**References:** [epic 0020](planning/epics/0020-autosave-and-crash-recovery.md), [ADR 0040](decisions/0040-dirty-tracking-and-autosave-design.md), `src/renderer/src/Canvas.tsx`'s `onNodesChange`/`loadDiagramIntoCanvas`
+**References:** [epic 0020](planning/epics/completed/0020-autosave-and-crash-recovery.md), [ADR 0040](decisions/0040-dirty-tracking-and-autosave-design.md), `src/renderer/src/Canvas.tsx`'s `onNodesChange`/`loadDiagramIntoCanvas`
 
 ---
 
@@ -321,7 +321,7 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 
 **Resolution:** the app's already-created initial window (from `createWindow()`, called just before the scan starts) is passed as the dialog's owner, giving it a defined z-order/parent relationship instead of none.
 
-**References:** [epic 0020](planning/epics/0020-autosave-and-crash-recovery.md), [ADR 0040](decisions/0040-dirty-tracking-and-autosave-design.md), `src/main/recovery.ts`'s `runStartupOrphanScan`, `src/main/index.ts`
+**References:** [epic 0020](planning/epics/completed/0020-autosave-and-crash-recovery.md), [ADR 0040](decisions/0040-dirty-tracking-and-autosave-design.md), `src/main/recovery.ts`'s `runStartupOrphanScan`, `src/main/index.ts`
 
 ---
 
@@ -336,7 +336,7 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 
 **Resolution:** `registerWindowPath` now calls the existing `unregisterWindow` (matches-by-window-reference) on its own target window before adding the new entry — a window can only ever be associated with one path key at a time, enforced at the one place entries get added rather than requiring every caller to remember to clear the old one first.
 
-**References:** [epic 0038](planning/epics/0038-drag-file-to-open.md), `src/main/windows.ts`
+**References:** [epic 0038](planning/epics/completed/0038-drag-file-to-open.md), `src/main/windows.ts`
 
 ---
 
@@ -351,7 +351,7 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 
 **Resolution:** redesigned both branches. Every button now names its own consequence ("Save changes, Open Here" / "Discard changes, Open Here" / "New Window" / "Cancel" for dirty — wording refined once more the same day per the user's request, so both options read as parallel phrases sharing the same "changes" wording; "Open Here" / "New Window" / "Cancel" for clean, where "Open Here" is now genuinely safe since there's nothing to lose). Both branches have a real Cancel. The dialog message states the window's dirty state outright rather than leaving it to be inferred. The new Save option reuses `performSaveNow`, a helper extracted from the close-prompt's own save logic — not a duplicate implementation — round-tripping through the renderer via a new `window:performSaveThenOpenDropped` event since main can't perform a save itself (path-picking and detail-draft flushing live in `Canvas.tsx`).
 
-**References:** [epic 0038](planning/epics/0038-drag-file-to-open.md), [epic 0020](planning/epics/0020-autosave-and-crash-recovery.md) (the close-prompt this was brought into consistency with), `src/main/windows.ts`'s `openDroppedFileForWindow`, `src/renderer/src/Canvas.tsx`'s `performSaveNow`
+**References:** [epic 0038](planning/epics/completed/0038-drag-file-to-open.md), [epic 0020](planning/epics/completed/0020-autosave-and-crash-recovery.md) (the close-prompt this was brought into consistency with), `src/main/windows.ts`'s `openDroppedFileForWindow`, `src/renderer/src/Canvas.tsx`'s `performSaveNow`
 
 ---
 
@@ -381,7 +381,7 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 
 **Resolution:** replaced the native `confirm()` in `AllowedValuesEditor` with an in-panel confirmation — the row being removed/renamed is swapped for a small inline message + Confirm/Cancel buttons (`.required-tag-value-confirm`), no native dialog involved at all. Not a fix for the underlying Electron quirk itself (still not understood), just an avoidance — **any future feature that shows a native `confirm()`/`alert()` and then expects the user to keep interacting with `<select>` elements in the same view should watch for this same symptom**, and prefer an in-app confirmation the way this one now does.
 
-**References:** [epic 0055](planning/epics/0055-required-tags-allowed-values-list-editor.md), [ADR 0047](decisions/0047-allowed-values-list-editor.md), `src/renderer/src/components/RequiredTagsPanel.tsx`
+**References:** [epic 0055](planning/epics/completed/0055-required-tags-allowed-values-list-editor.md), [ADR 0047](decisions/0047-allowed-values-list-editor.md), `src/renderer/src/components/RequiredTagsPanel.tsx`
 
 ---
 
@@ -396,7 +396,7 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 
 **Resolution:** set the custom property directly instead: `style={{ '--xy-background-color': value } as React.CSSProperties}` (the cast is needed since custom properties aren't part of the standard `CSSProperties` type). Custom properties inherit down the DOM tree, so setting it on the outer `.react-flow` element correctly reaches the child `<Background>` SVG that actually paints. **General lesson for anything touching React Flow's visual defaults**: check whether the library exposes a CSS custom property before assuming a plain style/CSS property will reach the actual paint layer — several of React Flow's own defaults (edge stroke, node background, handle color, etc.) follow this same `var(--xy-*-props, var(--xy-*, var(--xy-*-default)))` fallback chain, not a plain property.
 
-**References:** [epic 0030](planning/epics/0030-custom-style-palettes-and-defaults.md), [ADR 0048](decisions/0048-style-palette-and-defaults.md), `src/renderer/src/Canvas.tsx`, `node_modules/@xyflow/react/dist/style.css`
+**References:** [epic 0030](planning/epics/completed/0030-custom-style-palettes-and-defaults.md), [ADR 0048](decisions/0048-style-palette-and-defaults.md), `src/renderer/src/Canvas.tsx`, `node_modules/@xyflow/react/dist/style.css`
 
 ---
 
@@ -411,7 +411,7 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 
 **Resolution:** React Flow applies a node's `style` field (a real, normally-unused-in-this-codebase `Node` field, distinct from this app's own `data.style` convention) directly onto its own wrapper element — so setting `pointerEvents: 'none'` there (`Canvas.tsx`'s `zIndexedNodes`, `line`-typed nodes only) makes the _whole box_ click/drag-through by default. `pointer-events` is inherited but overridable per descendant, so `LineNode.tsx`'s existing invisible hit-stroke path (`pointerEvents: 'stroke'`) and its point handles (`pointer-events: auto` in CSS) each explicitly opt back in — only the curve itself, within the hit-stroke's tolerance, and its points stay interactive. **General lesson for any future node type whose visual shape doesn't fill its own rectangular bounding box**: React Flow's default click/drag hit-testing is the box, not the rendered content — the `Node.style` field is the documented escape hatch, not `data.style` or anything rendered inside the component.
 
-**References:** [epic 0064](planning/epics/0064-simple-curved-freeform-line.md), [ADR 0050](decisions/0050-freeform-line-as-node-type.md), `src/renderer/src/Canvas.tsx`, `src/renderer/src/nodes/LineNode.tsx`
+**References:** [epic 0064](planning/epics/completed/0064-simple-curved-freeform-line.md), [ADR 0050](decisions/0050-freeform-line-as-node-type.md), `src/renderer/src/Canvas.tsx`, `src/renderer/src/nodes/LineNode.tsx`
 
 ---
 
@@ -420,13 +420,13 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 **Status:** Open, not this machine's normal experience, cause not confirmed
 **Found:** 2026-08-23, epic 0010, running `npm run lint` after adding the PNG export feature
 
-**Symptom:** a routine `npm run lint` run reported ~10,200 `prettier/prettier` "Delete `␍`" warnings spread across dozens of pre-existing files never touched this session (confirmed via `git status` — only this session's own 10 changed/new files showed up there), alongside the same 4 real errors [epic 0028](planning/epics/0028-remaining-lint-cleanup.md) already tracks as this project's pre-existing baseline. `file` on an untouched file (`AboutDialog.tsx`) confirmed it has actual CRLF line terminators on disk; `git config --get core.autocrlf` returned `true` and there's no `.gitattributes` pinning line endings, so a normal Windows checkout on this machine legitimately produces CRLF files while ESLint's Prettier config expects LF.
+**Symptom:** a routine `npm run lint` run reported ~10,200 `prettier/prettier` "Delete `␍`" warnings spread across dozens of pre-existing files never touched this session (confirmed via `git status` — only this session's own 10 changed/new files showed up there), alongside the same 4 real errors [epic 0028](planning/epics/completed/0028-remaining-lint-cleanup.md) already tracks as this project's pre-existing baseline. `file` on an untouched file (`AboutDialog.tsx`) confirmed it has actual CRLF line terminators on disk; `git config --get core.autocrlf` returned `true` and there's no `.gitattributes` pinning line endings, so a normal Windows checkout on this machine legitimately produces CRLF files while ESLint's Prettier config expects LF.
 
 **Not yet explained:** why this hadn't surfaced before now, given PROGRESS.md's repeated "same pre-existing lint-error count as master, no new ones" checks presumably ran on this same Windows machine. `.eslintcache` (gitignored) was rewritten by this run — plausible this run was the first with a cold/invalidated cache and prior checks were unknowingly reading a stale cache that skipped re-reporting already-warned, unchanged files. Not confirmed; worth checking on the next fresh clone or `rm .eslintcache` run whether it reproduces from a clean state.
 
-**Not fixed here** — deliberately out of scope for epic 0010's small PNG-export change; this is really [epic 0028](planning/epics/0028-remaining-lint-cleanup.md)'s territory (either pin `.gitattributes`/`core.autocrlf` for this repo, or set ESLint/Prettier's `endOfLine` to `auto`), and a repo-wide line-ending rewrite is exactly the kind of drastic, unrelated change CLAUDE.md says to pause and ask about rather than fold into an unrelated epic.
+**Not fixed here** — deliberately out of scope for epic 0010's small PNG-export change; this is really [epic 0028](planning/epics/completed/0028-remaining-lint-cleanup.md)'s territory (either pin `.gitattributes`/`core.autocrlf` for this repo, or set ESLint/Prettier's `endOfLine` to `auto`), and a repo-wide line-ending rewrite is exactly the kind of drastic, unrelated change CLAUDE.md says to pause and ask about rather than fold into an unrelated epic.
 
-**References:** [epic 0028](planning/epics/0028-remaining-lint-cleanup.md), [epic 0010](planning/epics/0010-export.md)
+**References:** [epic 0028](planning/epics/completed/0028-remaining-lint-cleanup.md), [epic 0010](planning/epics/completed/0010-export.md)
 
 ---
 
@@ -441,7 +441,7 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 
 **Resolution:** give the marker-defs `<svg>` a stable `data-export-role="edge-marker-defs"` attribute, then in `captureDiagramPng`, clone that element (`cloneNode(true)`, not moving the live node — moving it could confuse React's own reconciliation for an element it still manages) and temporarily insert the clone as the viewport's first child for the duration of the `toPng()` call, removing it in a `finally` immediately after. **General lesson**: this app renders more than one kind of "global, id-referenced, zero-visual-footprint" definition outside the node/edge tree (this marker-defs pattern specifically) — anything that captures/serializes only a subtree of the canvas (export, and potentially any future feature doing the same) needs to check whether it's implicitly relying on DOM state that lives outside that subtree.
 
-**References:** [epic 0010](planning/epics/0010-export.md), [ADR 0051](decisions/0051-png-export.md), `src/renderer/src/edges/edgeMarkers.tsx`, `src/renderer/src/export/exportPng.ts`
+**References:** [epic 0010](planning/epics/completed/0010-export.md), [ADR 0051](decisions/0051-png-export.md), `src/renderer/src/edges/edgeMarkers.tsx`, `src/renderer/src/export/exportPng.ts`
 
 ---
 
@@ -456,7 +456,7 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 
 **Resolution:** `resolveEffectiveBackgroundColor()` walks up from the viewport element through `.parentElement`, reading each ancestor's real, already-resolved `getComputedStyle(...).backgroundColor` (the actual CSS property, not a custom-property name) until it finds one that isn't `transparent`/`rgba(0, 0, 0, 0)` — the same compositing a browser (and a viewer's eyes) already does to decide what color is "really" behind an element, regardless of which specific ancestor happens to own it or how many `var()` fallback levels are involved. **General lesson**: a custom CSS property (`--foo`) and the standard property that consumes it via `var(--foo, fallback)` are not interchangeable to read back — querying the custom property directly skips the entire fallback chain and returns empty unless something explicitly assigned it a value.
 
-**References:** [epic 0010](planning/epics/0010-export.md), [ADR 0051](decisions/0051-png-export.md), `src/renderer/src/export/exportPng.ts`
+**References:** [epic 0010](planning/epics/completed/0010-export.md), [ADR 0051](decisions/0051-png-export.md), `src/renderer/src/export/exportPng.ts`
 
 ---
 
@@ -475,7 +475,7 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 2. Keep the immediate add but seed it with a genuinely unique, obviously-placeholder key that can never collide with something the user will actually type (unlikely to fully solve it — the demotion would still happen, just with a differently-named orphan).
    Option 1 seems more consistent with how the rest of this panel already avoids syncing on incomplete input.
 
-**References:** `src/renderer/src/components/RequiredTagsPanel.tsx`'s `addTag`/`useFieldDraft`, `src/renderer/src/Canvas.tsx`'s `syncElementMetadata`/`updateRequiredTags`, [epic 0034](planning/epics/0034-unified-tag-and-metadata-system.md), [ADR 0022](decisions/0022-unified-tag-and-metadata-system.md)
+**References:** `src/renderer/src/components/RequiredTagsPanel.tsx`'s `addTag`/`useFieldDraft`, `src/renderer/src/Canvas.tsx`'s `syncElementMetadata`/`updateRequiredTags`, [epic 0034](planning/epics/completed/0034-unified-tag-and-metadata-system.md), [ADR 0022](decisions/0022-unified-tag-and-metadata-system.md)
 
 ---
 
@@ -496,7 +496,7 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 
 **If revisited:** first confirm by copying a node that's actually inside a container (not a top-level shape) and pasting, ideally with the container positioned far from the canvas origin — the theory predicts the further the container sits from `(0,0)`, the further off screen the paste lands. If confirmed, the fix is likely one of: (a) clear `parentId` on paste (pasted content always becomes top-level, simplest but loses containment), or (b) if the node's original parent container was _also_ copied and pasted alongside it, remap `parentId` through the same `idMap` already built for node ids and keep the position parent-relative as-is (untouched, no `center` offset applied to it at all — only top-level pasted nodes should get the `center`-based repositioning); if the parent _wasn't_ copied along with it, fall back to (a). Either way, `remapForPaste`'s position math needs to branch on whether a given node has a `parentId`, which it currently doesn't.
 
-**References:** `src/renderer/src/clipboard.ts`'s `remapForPaste`/`buildClipboardPayload`, `src/renderer/src/Canvas.tsx`'s `pasteFromClipboard`, [epic 0025](planning/epics/0025-copy-paste.md), [ADR 0049](decisions/0049-clipboard-copy-paste.md), [ADR 0012](decisions/0012-container-node-design.md) (parent-relative `position` for a contained child — also restated in `docs/file-format.md`'s `position` field), [epic 0103](planning/epics/0103-container-hierarchy-integrity.md)
+**References:** `src/renderer/src/clipboard.ts`'s `remapForPaste`/`buildClipboardPayload`, `src/renderer/src/Canvas.tsx`'s `pasteFromClipboard`, [epic 0025](planning/epics/completed/0025-copy-paste.md), [ADR 0049](decisions/0049-clipboard-copy-paste.md), [ADR 0012](decisions/0012-container-node-design.md) (parent-relative `position` for a contained child — also restated in `docs/file-format.md`'s `position` field), [epic 0103](planning/epics/completed/0103-container-hierarchy-integrity.md)
 
 ---
 
@@ -513,7 +513,7 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 
 **2026-08-30 (ADR 0075):** shipped (1) as a standing Diagnostics advisory (`hierarchyAnalysis` in `Canvas.tsx`) naming both containers. For (2), the user's call was to keep the Layers panel sorted on **raw** `data.zIndex` (that's the value drag-to-restack edits — showing a different order there would be a worse kind of lying) and instead mark the rows where raw and effective order disagree: a nested row shows an `in: <parent>` badge with a ⚠ when React Flow renders it above its parent. (3) — auto/quick-fix un-parenting — was explicitly declined: warn only, the user may have a deliberately-overflowing child. Load-time healing covers only genuinely broken (dangling / cyclic) `parentId`, not a merely-outgrown one. A manual **"Detach from parent"** right-click item (shown on any node with a `parentId`) was added instead, so the user always has a one-click way out once the warning points them at it.
 
-**References:** `node_modules/@xyflow/system`'s `calculateChildXYZ`/`updateChildNode`, `src/renderer/src/layers/zIndexOrdering.ts`, `src/renderer/src/components/LayerPanel.tsx`, [ADR 0035](decisions/0035-layer-order-control.md), [epic 0103](planning/epics/0103-container-hierarchy-integrity.md)
+**References:** `node_modules/@xyflow/system`'s `calculateChildXYZ`/`updateChildNode`, `src/renderer/src/layers/zIndexOrdering.ts`, `src/renderer/src/components/LayerPanel.tsx`, [ADR 0035](decisions/0035-layer-order-control.md), [epic 0103](planning/epics/completed/0103-container-hierarchy-integrity.md)
 
 ---
 
@@ -530,7 +530,7 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 
 **2026-08-30 (ADR 0075):** done exactly as above — `attachContainedNodes`' candidate filter now also rejects a node that is an ancestor of the container (a local `containerIsDescendantOf` walk, same shape as `onNodeDragStop`'s `isDescendantOf`) and any candidate whose absolute bounds enclose the container.
 
-**References:** `src/renderer/src/Canvas.tsx`'s `attachContainedNodes` and `onNodeDragStop`'s `isDescendantOf`, `src/renderer/src/geometry/nodePosition.ts`, `node_modules/@xyflow/react`'s `getIntersectingNodes` (the `partially` branch), [epic 0103](planning/epics/0103-container-hierarchy-integrity.md)
+**References:** `src/renderer/src/Canvas.tsx`'s `attachContainedNodes` and `onNodeDragStop`'s `isDescendantOf`, `src/renderer/src/geometry/nodePosition.ts`, `node_modules/@xyflow/react`'s `getIntersectingNodes` (the `partially` branch), [epic 0103](planning/epics/completed/0103-container-hierarchy-integrity.md)
 
 ---
 
@@ -577,8 +577,8 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 
 **Symptom:** copying elements that are inside a container and pasting them (via Ctrl+C / Ctrl+V — distinct from the in-place Ctrl+D _duplicate_, which is a separate, simpler path) does not keep the container nesting, and the pasted elements land "all over the place" rather than as a coherent group.
 
-**Very likely already addressed, unmerged.** [ADR 0075](decisions/0075-container-hierarchy-integrity.md) / [epic 0103](planning/epics/0103-container-hierarchy-integrity.md) rewrote `remapForPaste` (`clipboard.ts`) precisely for this: before it, the function spread `...n` and never touched `parentId`, so a pasted child kept a stale/dangling parent reference _and_ had this app's centroid-recenter math applied to what was actually a parent-relative coordinate — a double displacement that matches "all over the place." The reworked version remaps `parentId` through `idMap` when the container is in the payload (keeping the child's relative position), strips it otherwise, and computes the paste centroid over top-level nodes only. **First step when revisited: confirm whether this still reproduces on `epic/0103-container-hierarchy-integrity` (or after it merges).**
+**Very likely already addressed, unmerged.** [ADR 0075](decisions/0075-container-hierarchy-integrity.md) / [epic 0103](planning/epics/completed/0103-container-hierarchy-integrity.md) rewrote `remapForPaste` (`clipboard.ts`) precisely for this: before it, the function spread `...n` and never touched `parentId`, so a pasted child kept a stale/dangling parent reference _and_ had this app's centroid-recenter math applied to what was actually a parent-relative coordinate — a double displacement that matches "all over the place." The reworked version remaps `parentId` through `idMap` when the container is in the payload (keeping the child's relative position), strips it otherwise, and computes the paste centroid over top-level nodes only. **First step when revisited: confirm whether this still reproduces on `epic/0103-container-hierarchy-integrity` (or after it merges).**
 
 **One angle epic 0103 does _not_ cover:** `buildClipboardPayload` only copies the nodes that are actually `.selected`. Clicking a container does not auto-select its children in React Flow, so "select a container, copy, paste" copies the container alone and pastes an empty box. If the intended behaviour is "copying a container brings its contents," that's a separate `buildClipboardPayload` change (pull in descendants of any selected container), not a `remapForPaste` one — worth deciding on when this is picked up.
 
-**References:** `src/renderer/src/clipboard.ts`'s `remapForPaste` / `buildClipboardPayload`, `src/renderer/src/Canvas.tsx`'s `pasteFromClipboard`, [ADR 0049](decisions/0049-clipboard-copy-paste.md), [ADR 0075](decisions/0075-container-hierarchy-integrity.md), [epic 0103](planning/epics/0103-container-hierarchy-integrity.md)
+**References:** `src/renderer/src/clipboard.ts`'s `remapForPaste` / `buildClipboardPayload`, `src/renderer/src/Canvas.tsx`'s `pasteFromClipboard`, [ADR 0049](decisions/0049-clipboard-copy-paste.md), [ADR 0075](decisions/0075-container-hierarchy-integrity.md), [epic 0103](planning/epics/completed/0103-container-hierarchy-integrity.md)

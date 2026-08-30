@@ -1,7 +1,11 @@
 # 0061: Completed-epic filename marker
 
 ## Status
-Accepted
+**Superseded by [ADR 0076](0076-completed-epics-subfolder.md)** for the mechanism
+— completed epics now move to a `docs/planning/epics/completed/` subfolder rather
+than getting an `x` filename prefix. The rationale below for *having* a
+completed-marker, and the definition of "completed" (`Done` **and** confirmed
+working, not merely merged), carry forward unchanged.
 
 ## Context
 `docs/planning/epics/` is a flat, growing folder — 90+ files at time of writing, numbered sequentially by when each was *defined*, not by execution order or status (see [ADR 0002](0002-planning-structure.md)). A plain file-explorer view of the folder mixes finished epics in with active/backlog ones with no visual triage possible without opening each file to read its `## Status` header.

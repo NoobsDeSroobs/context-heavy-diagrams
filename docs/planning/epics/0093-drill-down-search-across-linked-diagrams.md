@@ -4,7 +4,7 @@
 Not Started — logged only, not scoped.
 
 ## Goal
-Extend [epic 0062](0062-search-and-highlight-matches.md)'s search to optionally reach into linked child diagrams (epic 0009's linked-diagram navigation), not just the currently-open one — useful when a diagram tree is large or not well-maintained enough for the user to already know where something lives.
+Extend [epic 0062](completed/0062-search-and-highlight-matches.md)'s search to optionally reach into linked child diagrams (epic 0009's linked-diagram navigation), not just the currently-open one — useful when a diagram tree is large or not well-maintained enough for the user to already know where something lives.
 
 ## Scope notes (from the design conversation that spun this off, 2026-08-26)
 - Must be an explicit toggle, off by default — never silently searches beyond the current diagram.

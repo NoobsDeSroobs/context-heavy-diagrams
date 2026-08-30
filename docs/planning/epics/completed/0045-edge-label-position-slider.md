@@ -1,0 +1,20 @@
+# 0045: Edge label position slider
+
+## Status
+Done (2026-08-21).
+
+## Goal
+A control (the user's own suggestion: a slider) to move an edge's label along the edge's path — default at 0.5 (the midpoint, today's only option), adjustable toward either end when the midpoint placement makes the label hard to read (overlapping another edge, sitting on a sharp bend, etc.).
+
+## Relevant existing behavior
+This is a deliberate v1 simplification from [epic 0012](0012-editable-anchored-labels.md) (Done), which shipped edge labels fixed to the path midpoint on purpose: "fixed midpoint only, no drag-along-path for v1 — same reasoning, simplest useful default, add interaction complexity only once it's actually needed." That epic's own notes anticipated this exact follow-up.
+
+## Design (resolved with the user before implementation)
+- **Data model**: `EdgeStyle.labelPosition`, a 0-1 fraction of the path's arc length, same convention as `ConnectionPoint.offset`. Absent means 0.5 — see [docs/file-format.md](../../../file-format.md)'s Edge style table. No serialization changes needed: `style` was already a generic pass-through object at every layer (`parseDiagram`, `fromDiagramFile`, `toDiagramFile` in `Canvas.tsx`), so a new optional field just flows through.
+- **UI surface**: a slider in the property panel's edge section, in what was the "Font" `CollapsibleSection` (renamed "Label", since it's no longer font-only) — [PropertyPanel.tsx](../../../../src/renderer/src/panels/PropertyPanel.tsx)'s `EdgeFields`. Displayed 0-100 (a percent-like scale, consistent with the existing opacity sliders) and converted to/from the underlying 0-1 schema value at the field boundary.
+- **Mechanism**: `getBezierPath` only returns the fixed midpoint (`labelX`/`labelY`), no "point at arbitrary ratio" helper. Rather than reimplement bezier math, `LabeledEdge.tsx`'s new `pointAtRatio()` builds a throwaway, never-inserted SVG `<path>`, sets its `d` to the same path string BaseEdge renders, and reads `getPointAtLength(getTotalLength() * ratio)` — SVG path geometry doesn't depend on DOM attachment or layout, so this works synchronously in a `useMemo`, no ref/effect needed. When `labelPosition` is unset, the code path is untouched — it still uses `getBezierPath`'s own `labelX`/`labelY` directly, so every edge predating this epic renders pixel-identical to before.
+- The user flagged that this groundwork (reading an arbitrary point along the path) is also what a future "extra bezier control points" epic (manual curve shaping between connection points) would build on — noted for whoever picks that up later, not scoped here.
+
+## Implementation notes
+- `SliderField` (`panels/fields.tsx`): generalized from the previous `OpacityField` (renamed, `min`/`max`/`defaultValue` promoted from hardcoded 0/100/100 to props) rather than writing a second near-duplicate slider component — it's the same "linked range + number input, mixed-selection shows a neutral default" shape, just with a different range and default. All 6 existing opacity call sites (`PropertyPanel.tsx` ×5, `ColorPickerPopup.tsx` ×1) updated to the new name with unchanged behavior (verified: adding a shape and dragging its Fill Opacity slider still updates the linked number field correctly in the live dev server). CSS classes renamed to match (`property-opacity-*` → `property-slider-field`/`property-range-slider`/`property-range-number`).
+- Verified in-session: clean typecheck; no console errors; `pointAtRatio`'s geometry independently checked against a known straight-line path (ratio 0/0.25/0.5/1 → exactly the expected points); the renamed `SliderField` regression-checked live against an existing opacity field. **Not verified visually in-session** — actually selecting an edge and confirming the new "Label" section/Position slider render, and that dragging it visibly moves the label, needs a live check in the real app (creating a connected edge requires a drag gesture, which wasn't reliable to automate here — same limitation noted in epic 0042).
