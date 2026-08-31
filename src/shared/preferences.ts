@@ -155,6 +155,20 @@ export interface AppPreferences {
   // (windows.ts/diagram.ts), never edited through PreferencesPanel — this is
   // a silent backend preference, not user-facing UI.
   lastOpenedDirectory?: string
+  // Absolute paths of recently opened/saved diagrams, most-recent-first —
+  // feeds File -> Recent Diagrams (see ADR 0078). Every path that lands in a
+  // window funnels through diagram:openPath, so "opened" here includes File
+  // -> Open, drag-and-drop, and following a linked diagram; a repeat Save
+  // counts too. Deduped, and clamped to `recentDiagramsLimit` at every
+  // normalize boundary. Written directly by main, never edited through
+  // PreferencesPanel (the list itself is not user-facing — only its limit
+  // and the "Clear Recent" action are). Absent means none yet.
+  recentDiagrams?: string[]
+  // How many entries File -> Recent Diagrams keeps. User-facing (unlike the
+  // list). Lowering it trims the stored list at the next normalize; the
+  // dropped entries don't come back if raised again. Absent means the
+  // default (10).
+  recentDiagramsLimit: number
   // User default tier for line gravity/bend presets (see ADR 0066;
   // ADR 0052's Diagram override -> User default -> Built-in default
   // fallback pattern) — the middle tier that was missing when that pattern was
@@ -186,7 +200,24 @@ export const DEFAULT_PREFERENCES: AppPreferences = {
   dragSelectRequiresFullEnclosure: true,
   minZoom: 0.1,
   maxZoom: 2,
-  isolateOpacity: 0.5
+  isolateOpacity: 0.5,
+  recentDiagramsLimit: 10
+}
+
+// Standard desktop convention; also a floor for the user-facing limit input
+// so "0 recents" can't be configured (use Clear Recent to empty it).
+export const MIN_RECENT_DIAGRAMS_LIMIT = 1
+
+// Prepend `path` to the recent list, move it to the top if already present
+// (case-sensitive exact match — these are absolute paths from the OS, not
+// user input), and clamp to `limit`. Pure; main calls this before writing.
+export function withRecentDiagram(
+  list: string[] | undefined,
+  path: string,
+  limit: number
+): string[] {
+  const rest = (list ?? []).filter((p) => p !== path)
+  return [path, ...rest].slice(0, Math.max(1, limit))
 }
 
 // Every point that receives a stored/relayed preferences blob runs this
@@ -207,6 +238,17 @@ export function normalizePreferences(
 ): AppPreferences {
   const { stylePalette: legacy, ...rest } = raw
   const merged: AppPreferences = { ...DEFAULT_PREFERENCES, ...rest }
+  // Recent-diagrams list: dedupe defensively and clamp to the (possibly
+  // just-lowered) limit, so every boundary that receives a prefs blob
+  // enforces both — same "normalize, don't trust the stored shape" stance
+  // as the stylePalette migration below.
+  if (merged.recentDiagrams && merged.recentDiagrams.length > 0) {
+    const deduped = [...new Set(merged.recentDiagrams)]
+    merged.recentDiagrams = deduped.slice(
+      0,
+      Math.max(MIN_RECENT_DIAGRAMS_LIMIT, merged.recentDiagramsLimit)
+    )
+  }
   if (legacy && !rest.stylePalettes) {
     merged.stylePalettes = [
       {

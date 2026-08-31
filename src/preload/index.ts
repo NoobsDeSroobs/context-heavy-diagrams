@@ -116,6 +116,12 @@ const api = {
     return ipcRenderer.invoke('windows:openLinked', diagramPath, relativePath)
   },
 
+  // File -> Recent Diagrams — absolute path, no dialog. found:false means
+  // the file is gone and main has already pruned it from the list.
+  openRecentDiagram(path: string): Promise<{ found: boolean }> {
+    return ipcRenderer.invoke('windows:openRecent', path)
+  },
+
   // File -> Close resets this window's content in-place, not via a page
   // navigation — clears main's stale "this window shows path X"
   // registration so reopening that same file afterward actually reloads

@@ -207,6 +207,38 @@ body {
   color: var(--ev-c-text-3);
 }
 
+/* Submenu flyout (ADR 0078) — one level deep. The anchor is the positioned
+   parent the flyout hangs off; it must fill the row so hovering anywhere on
+   the item keeps the flyout open. */
+.menu-bar-submenu-anchor {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-bar-submenu-anchor > .menu-bar-dropdown-item {
+  width: 100%;
+}
+
+.menu-bar-submenu {
+  top: -5px; /* line the first flyout item up with its parent row */
+  left: 100%;
+  margin-top: 0;
+  margin-left: 2px;
+}
+
+.menu-bar-submenu-caret {
+  font-size: 10px;
+  color: var(--ev-c-text-3);
+  margin-left: auto;
+}
+
+.menu-bar-separator {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--ev-c-gray-2);
+}
+
 .toolbar-path {
   font-size: 12px;
   color: var(--ev-c-text-3);

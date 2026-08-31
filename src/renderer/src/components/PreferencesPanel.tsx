@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { EdgeStyle } from '@shared/diagram'
 import type { AppPreferences } from '../preferences'
+import { MIN_RECENT_DIAGRAMS_LIMIT } from '@shared/preferences'
 import { FieldRow, NumberField, SelectField } from '../panels/fields'
 import { useRafThrottledCallback } from '../hooks/useRafThrottledCallback'
 
@@ -222,7 +223,22 @@ export default function PreferencesPanel({
             title="Look for crash-recovery snapshots from diagrams that were never saved, every time the app starts"
           />
         </FieldRow>
-        <ZoomLimitField minZoom={preferences.minZoom} maxZoom={preferences.maxZoom} onChange={onChange} />
+        <NumberField
+          label="Recent diagrams to remember"
+          value={preferences.recentDiagramsLimit}
+          mixed={false}
+          min={MIN_RECENT_DIAGRAMS_LIMIT}
+          onChange={(v) =>
+            onChange({ recentDiagramsLimit: Math.max(MIN_RECENT_DIAGRAMS_LIMIT, v ?? 10) })
+          }
+          onSessionStart={() => {}}
+          onSessionEnd={() => {}}
+        />
+        <ZoomLimitField
+          minZoom={preferences.minZoom}
+          maxZoom={preferences.maxZoom}
+          onChange={onChange}
+        />
         <IsolateOpacityField value={preferences.isolateOpacity} onChange={onChange} />
         <FieldRow label="Drag-select requires full enclosure">
           <input

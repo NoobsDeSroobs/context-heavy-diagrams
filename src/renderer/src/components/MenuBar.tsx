@@ -3,8 +3,17 @@ import { useEffect, useRef, useState } from 'react'
 export interface MenuBarItem {
   label: string
   accelerator?: string
+  // Native tooltip on hover — e.g. the full absolute path behind a
+  // shortened Recent Diagrams label.
+  title?: string
   disabled?: boolean
-  onSelect: () => void
+  // A thin rule rendered above this item — for grouping within a menu, same
+  // idea as ContextMenu's own `separatorBefore`.
+  separatorBefore?: boolean
+  // One level of nesting only (File -> Recent Diagrams -> …, ADR 0078).
+  // An item with a submenu ignores `onSelect` — it only opens the flyout.
+  submenu?: MenuBarItem[]
+  onSelect?: () => void
 }
 
 export interface MenuBarMenu {
@@ -14,6 +23,71 @@ export interface MenuBarMenu {
 
 interface MenuBarProps {
   menus: MenuBarMenu[]
+}
+
+// One row of a dropdown — a leaf (runs `onSelect` and closes the bar) or a
+// submenu parent (hovering/clicking opens a flyout to its right). `close`
+// tears the whole bar down after a leaf runs, same "close before the action"
+// ordering ContextMenu.tsx documents.
+//
+// Hovering only ever *opens* a flyout (on a submenu parent) — never closes
+// one. Hovering a plain leaf leaves any open flyout alone, so moving the
+// pointer diagonally from a parent toward its flyout can cross sibling
+// leaves without the flyout vanishing (the classic menu-corner problem).
+// A flyout closes only on: another submenu parent hovered, a leaf clicked,
+// a top-level switch, or click-outside/Escape.
+function DropdownItem({
+  item,
+  open,
+  onOpen,
+  close
+}: {
+  item: MenuBarItem
+  open: boolean
+  onOpen: () => void
+  close: () => void
+}): React.JSX.Element {
+  const hasSubmenu = !!item.submenu && item.submenu.length > 0
+  return (
+    <>
+      {item.separatorBefore && <div className="menu-bar-separator" />}
+      <div className="menu-bar-submenu-anchor" onMouseEnter={hasSubmenu ? onOpen : undefined}>
+        <button
+          type="button"
+          className="menu-bar-dropdown-item"
+          title={item.title}
+          disabled={item.disabled}
+          aria-haspopup={hasSubmenu || undefined}
+          aria-expanded={hasSubmenu ? open : undefined}
+          onClick={() => {
+            if (hasSubmenu) {
+              onOpen()
+              return
+            }
+            close()
+            item.onSelect?.()
+          }}
+        >
+          <span>{item.label}</span>
+          {item.accelerator && <span className="menu-bar-accelerator">{item.accelerator}</span>}
+          {hasSubmenu && <span className="menu-bar-submenu-caret">▸</span>}
+        </button>
+        {hasSubmenu && open && (
+          <div className="menu-bar-dropdown menu-bar-submenu">
+            {item.submenu!.map((sub) => (
+              <DropdownItem
+                key={sub.label}
+                item={sub}
+                open={false}
+                onOpen={() => {}}
+                close={close}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  )
 }
 
 // Custom in-renderer menu bar — see ADR 0039. Deliberately not a
@@ -26,6 +100,10 @@ interface MenuBarProps {
 // documented there.
 export default function MenuBar({ menus }: MenuBarProps): React.JSX.Element {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
+  // Which submenu-parent is expanded, one level deep only. Scoped to the
+  // top-level menu it belongs to ({ menu, label }) so switching top-level
+  // menus implicitly drops it — no effect needed to reset it.
+  const [openSubmenu, setOpenSubmenu] = useState<{ menu: number; label: string } | null>(null)
   const ref = useRef<HTMLDivElement>(null)
   // Which index the hover-switch below most recently opened, if any — a
   // click always fires after mouseenter for the same gesture (moving onto
@@ -39,13 +117,18 @@ export default function MenuBar({ menus }: MenuBarProps): React.JSX.Element {
   // from "this menu was already open from an earlier, separate click."
   const hoverSwitchedToRef = useRef<number | null>(null)
 
+  const close = (): void => {
+    setOpenIndex(null)
+    setOpenSubmenu(null)
+  }
+
   useEffect(() => {
     if (openIndex === null) return undefined
     const onPointerDown = (event: PointerEvent): void => {
-      if (ref.current && !ref.current.contains(event.target as Node)) setOpenIndex(null)
+      if (ref.current && !ref.current.contains(event.target as Node)) close()
     }
     const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') setOpenIndex(null)
+      if (event.key === 'Escape') close()
     }
     window.addEventListener('pointerdown', onPointerDown)
     window.addEventListener('keydown', onKeyDown)
@@ -72,6 +155,7 @@ export default function MenuBar({ menus }: MenuBarProps): React.JSX.Element {
                 return
               }
               setOpenIndex((current) => (current === index ? null : index))
+              setOpenSubmenu(null)
             }}
             // Once one top-level menu is open, hovering a sibling switches
             // straight to it — the classic menu-bar convention — but
@@ -95,19 +179,19 @@ export default function MenuBar({ menus }: MenuBarProps): React.JSX.Element {
           {openIndex === index && (
             <div className="menu-bar-dropdown">
               {menu.items.map((item) => (
-                <button
+                <DropdownItem
                   key={item.label}
-                  type="button"
-                  className="menu-bar-dropdown-item"
-                  disabled={item.disabled}
-                  onClick={() => {
-                    setOpenIndex(null)
-                    item.onSelect()
-                  }}
-                >
-                  <span>{item.label}</span>
-                  {item.accelerator && <span className="menu-bar-accelerator">{item.accelerator}</span>}
-                </button>
+                  item={item}
+                  open={openSubmenu?.menu === index && openSubmenu.label === item.label}
+                  onOpen={() =>
+                    setOpenSubmenu(
+                      item.submenu && item.submenu.length > 0
+                        ? { menu: index, label: item.label }
+                        : null
+                    )
+                  }
+                  close={close}
+                />
               ))}
             </div>
           )}

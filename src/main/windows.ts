@@ -4,7 +4,7 @@ import { basename, dirname, isAbsolute, join } from 'path'
 import { is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { deleteRecoverySnapshot, newSessionId } from './recovery'
-import { readPreferences } from './appPreferences'
+import { readPreferences, updatePreferences } from './appPreferences'
 
 const FILTERS = [{ name: 'Diagram', extensions: ['chd'] }]
 
@@ -270,6 +270,28 @@ export function registerWindowHandlers(): void {
       return { found: true as const }
     }
   )
+
+  // File -> Recent Diagrams -> (an entry). Absolute path, no dialog —
+  // opens/focuses a window for it exactly like a followed link. On a path
+  // that no longer exists (moved/deleted since it was last opened), prunes
+  // it from the recent list and returns found:false so the renderer can
+  // show a brief "not found" notice — no stale entries linger, and no
+  // per-menu-open filesystem check is needed.
+  ipcMain.handle('windows:openRecent', async (_event, path: string) => {
+    try {
+      await access(path)
+    } catch {
+      const prefs = await readPreferences()
+      if (prefs?.recentDiagrams?.includes(path)) {
+        await updatePreferences({
+          recentDiagrams: prefs.recentDiagrams.filter((p) => p !== path)
+        })
+      }
+      return { found: false as const }
+    }
+    openOrFocusWindow(path)
+    return { found: true as const }
+  })
 
   // Drag-and-drop a .chd onto a window — paths are already
   // filtered to .chd and resolved to real filesystem paths by the

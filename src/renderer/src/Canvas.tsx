@@ -64,7 +64,7 @@ import HighlightsPanel from './components/HighlightsPanel'
 import SearchOverlay from './components/SearchOverlay'
 import { matchesSearchQuery, nodeHasIcon } from './search'
 import LegendPanel from './components/LegendPanel'
-import MenuBar, { type MenuBarMenu } from './components/MenuBar'
+import MenuBar, { type MenuBarMenu, type MenuBarItem } from './components/MenuBar'
 import LayerPanel from './components/LayerPanel'
 import {
   CONTAINER_BASE,
@@ -3661,6 +3661,23 @@ function CanvasInner(): React.JSX.Element {
     window.api.newWindow()
   }, [])
 
+  // File -> Recent Diagrams -> (an entry). Opens/focuses a window for the
+  // path exactly like following a link; on a file that's since been
+  // moved/deleted, main prunes it from the list and reports found:false —
+  // the list re-renders without it once the preferences broadcast lands.
+  const handleOpenRecent = useCallback(async (path: string) => {
+    try {
+      const result = await window.api.openRecentDiagram(path)
+      if (!result.found) alert(`Diagram not found — it may have been moved or deleted:\n${path}`)
+    } catch (error) {
+      alert(`Couldn't open ${path}: ${error instanceof Error ? error.message : String(error)}`)
+    }
+  }, [])
+
+  const handleClearRecent = useCallback(() => {
+    updatePreferences({ recentDiagrams: [] })
+  }, [updatePreferences])
+
   // File -> Close — NOT closing the OS window (this app's own
   // convention, confirmed with the user: a window is a diagram, not
   // necessarily disposable). Discards the current diagram back to a blank
@@ -4238,12 +4255,40 @@ function CanvasInner(): React.JSX.Element {
     ]
   }, [diagnostics, hierarchyLoadNotes, hierarchyAnalysis, legend.length, edges.length])
 
+  // File -> Recent Diagrams submenu — labelled with the last two path
+  // segments (…/parent/name.chd), enough to tell two same-named diagrams in
+  // different folders apart without the full path. Empty list -> the parent
+  // item is present but disabled, so its absence never reads as a bug.
+  // Sliced here too, not just in normalizePreferences — lowering the limit
+  // in Preferences should shorten the menu immediately, before the next
+  // full preferences reload normalizes the stored list.
+  const recentDiagrams = (preferences.recentDiagrams ?? []).slice(
+    0,
+    Math.max(1, preferences.recentDiagramsLimit)
+  )
+  const recentDiagramsItem: MenuBarItem =
+    recentDiagrams.length === 0
+      ? { label: 'Recent Diagrams', disabled: true }
+      : {
+          label: 'Recent Diagrams',
+          submenu: [
+            ...recentDiagrams.map((path) => ({
+              label: path.split(/[\\/]/).slice(-2).join('/') || path,
+              title: path,
+              disabled: path === currentPath,
+              onSelect: () => handleOpenRecent(path)
+            })),
+            { label: 'Clear Recent', separatorBefore: true, onSelect: handleClearRecent }
+          ]
+        }
+
   const menus: MenuBarMenu[] = [
     {
       label: 'File',
       items: [
         { label: 'New', accelerator: 'Ctrl+N', onSelect: handleNew },
         { label: 'Open…', accelerator: 'Ctrl+O', onSelect: handleOpen },
+        recentDiagramsItem,
         { label: 'Save', accelerator: 'Ctrl+S', onSelect: handleSave },
         { label: 'Save As…', accelerator: 'Ctrl+Shift+S', onSelect: handleSaveAs },
         {

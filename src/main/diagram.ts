@@ -2,9 +2,27 @@ import { BrowserWindow, dialog, ipcMain } from 'electron'
 import { readFile, writeFile } from 'fs/promises'
 import { dirname, join } from 'path'
 import { parseDiagram, serializeDiagram, type DiagramFile } from '@shared/diagram'
+import { DEFAULT_PREFERENCES, withRecentDiagram } from '@shared/preferences'
 import { registerWindowPath } from './windows'
 import { deleteRecoverySnapshot } from './recovery'
 import { readPreferences, updatePreferences } from './appPreferences'
+
+// Shared by diagram:openPath and diagram:save — records `path` in both the
+// last-opened-directory preference and the recent-diagrams list, in a single
+// write+broadcast. Reads current prefs to compute the new list; the TOCTOU
+// window is the same one diagram:pickSavePath already accepts (preference
+// writes are rare and low-stakes).
+async function recordOpenedOrSaved(path: string): Promise<void> {
+  const prefs = await readPreferences()
+  await updatePreferences({
+    lastOpenedDirectory: dirname(path),
+    recentDiagrams: withRecentDiagram(
+      prefs?.recentDiagrams,
+      path,
+      prefs?.recentDiagramsLimit ?? DEFAULT_PREFERENCES.recentDiagramsLimit
+    )
+  })
+}
 
 // Diagram files are a single file (.chd, plain JSON underneath) — see
 // docs/decisions/0005-diagram-identity-and-linking.md. Nothing about
@@ -60,19 +78,20 @@ export function registerDiagramHandlers(): void {
       await deleteRecoverySnapshot(path, sessionId)
       await deleteRecoverySnapshot(null, sessionId)
       // A repeat Save (not just the first Save As) is still real evidence
-      // of "actively working in this directory."
-      await updatePreferences({ lastOpenedDirectory: dirname(path) })
+      // of "actively working in this file" — updates both lastOpenedDirectory
+      // and the recent-diagrams list.
+      await recordOpenedOrSaved(path)
     }
   )
 
   // No dialog — used by a window's own initial-load mount effect (path
   // passed via ?path= query string, ADR 0023). Every open path (File ->
   // Open, linked-diagram navigation, drag-and-drop) funnels through here
-  // eventually, so this is the one place that needs to update
-  // lastOpenedDirectory to cover all of them, rather than
+  // eventually, so this is the one place that updates lastOpenedDirectory
+  // and the recent-diagrams list to cover all of them, rather than
   // duplicating the update at every dialog/entry point separately.
   ipcMain.handle('diagram:openPath', async (_event, path: string) => {
-    await updatePreferences({ lastOpenedDirectory: dirname(path) })
+    await recordOpenedOrSaved(path)
     return openDiagramAtPath(path)
   })
 }
