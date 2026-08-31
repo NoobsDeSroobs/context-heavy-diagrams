@@ -1,10 +1,8 @@
 # 0077: Draggable segments for step / smoothstep edge routing
 
 ## Status
-Accepted (2026-08-30). Implements the last open item of
-[epic 0086](../planning/epics/0086-minor-ui-improvements.md). Builds on
-[ADR 0057](0057-edge-routing-style.md) (routing style as a style field) and
-[ADR 0032](0032-edge-routing-and-waypoints.md) (`DiagramEdge.points`).
+Accepted (2026-08-30). Builds on [ADR 0057](0057-edge-routing-style.md)
+(routing style as a style field; `DiagramEdge.points` for manual bend points).
 
 ## Context
 

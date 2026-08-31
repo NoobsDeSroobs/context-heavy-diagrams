@@ -1,15 +1,55 @@
-# 0078: Consider BPMN as the basis for this app's visual language
+# 0078: BPMN as a basis for this app's visual language
 
 ## Status
-Not Started — not yet scoped, explicitly "a note to think about later." Raised by the user (2026-08-24) alongside the Shape/Container and swim-lane conversations.
 
-## Goal
-The user's own framing: BPMN (Business Process Model and Notation) might be a better foundation for this app's visual/notation language than whatever informal mix it uses today, specifically because it isn't tech-first — it's general enough to cover business-process modeling, not just IT-architecture-flavored diagrams. Nothing scoped beyond that observation.
+Resolved (2026-08-31) — see [ADR 0080](../../decisions/0080-bpmn-as-adopted-vocabulary-not-metamodel.md).
+Discussion held, decision recorded, no code in this epic itself; the work it
+drives lives in [epic 0105](0105-semantic-notation-stencils.md).
 
-## Relevant existing context
-- [ADR 0014](../../decisions/0014-node-and-edge-style-schema.md) (node/edge style schema) already flagged and deliberately punted on "the exact notation-base question" — markers/styling were built "deliberately approximate, not pixel-correct ERD/UML notation" without settling what notation family this app is actually modeling after.
-- [Epic 0077](later/0077-swim-lanes.md) (swim lanes, logged the same day) is itself a BPMN concept (pools/lanes) — if this app adopted BPMN as its notation basis, that would likely settle epic 0077's own "do we need a distinct feature" question one way or another, rather than the two being independent.
-- The project brief's own scope already spans IT-architecture-adjacent and enterprise-architecture-adjacent work (business capability maps, motivation/goals views — [ADR 0008](../../decisions/0008-tool-scope-includes-ea-adjacent-diagrams.md)), which is closer to BPMN's own territory than a narrowly technical notation would be.
+## The question
+
+The user's framing (2026-08-24): BPMN might be a better foundation for this
+app's visual/notation language than the informal mix it uses today — it isn't
+tech-first, and covers business-process modelling, not just IT-architecture
+diagrams.
+
+## The answer (2026-08-31)
+
+**BPMN as an adopted visual _vocabulary_, for recognisability and pickup — not
+a grammar, metamodel, or execution model.** Full reasoning in
+[ADR 0080](../../decisions/0080-bpmn-as-adopted-vocabulary-not-metamodel.md).
+Key points:
+
+- BPMN's value is its known, precise vocabulary; its cost is the rigid
+  metamodel + validation + token semantics that [ADR 0008](../../decisions/0008-tool-scope-includes-ea-adjacent-diagrams.md)
+  explicitly rejects. Take the vocabulary, leave the grammar.
+- **Shapes stay rectangular.** A gateway/decision/event is an ordinary Shape
+  with a distinguishing **icon + label** — the same way every concept type is
+  already conveyed ([ADR 0031](../../decisions/0031-icon-annotation-is-a-standing-requirement.md)).
+  Non-rectangular shape variants for this were considered and **rejected**;
+  [epic 0051](later/0051-non-rectangular-shapes-and-new-item-categories.md)
+  stays an independent parked idea, not on BPMN's path.
+- Sequencing = numbers on edge labels; conditions = text on edge labels. No
+  new machinery.
+- Drill-down, per-element context, lanes: already covered (linked diagrams,
+  Details, Container).
+- Token semantics / BPEL / validation: out of scope — the user doesn't want
+  them.
+- **Process / workflow modelling is confirmed in scope** — ADR 0008 addendum +
+  overview.md Purpose updated.
+
+## What this drives
+
+- **[Epic 0105](0105-semantic-notation-stencils.md)** — a new item-palette
+  category of ready-to-drag semantic symbols (choice, parallelism, events, …),
+  each a rectangular Shape pre-seeded with an icon + default label. Neutral
+  labels + BPMN search keywords; type changed via right-click. Not blocked on
+  anything.
 
 ## Notes
-Purely a note for later, not a design in progress — no comparison against this app's current shape/marker vocabulary has been done, no decision about whether "basis for" means strict BPMN compliance, loose inspiration, or something else entirely.
+
+Originally logged as "a note to think about later, not scoped." The design
+conversation happened 2026-08-31 after the 0086 → 0095 → 0080 menu-bar run.
+First pass of this write-up wrongly had non-rectangular shape variants as a
+driven outcome; the user corrected it — shapes are square, icon + label do the
+work.

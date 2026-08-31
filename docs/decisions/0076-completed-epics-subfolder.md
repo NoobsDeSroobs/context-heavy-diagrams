@@ -13,8 +13,7 @@ bottom of a flat alphabetical listing, and explicitly **rejected a subfolder**
 on the grounds that file-explorer folder-sorting behaviour is inconsistent
 (some always float folders to the top).
 
-That rollout never happened — the retroactive sweep was deferred
-([epic 0092](../planning/epics/0092-retroactively-mark-completed-epics.md)) and
+That rollout never happened — the retroactive sweep was deferred, and
 in practice only one or two epics ever got the `x` prefix. Meanwhile
 `docs/planning/epics/` has grown past 100 files, ~70 of them completed. Revisiting
 it now, the user's call is that a **`completed/` subfolder is the better trade**:
@@ -62,8 +61,8 @@ renumbering.
 
 ## Retroactive sweep (done in this same change)
 
-Done in two passes on `epic/0092-completed-epics-folder`, all inbound links fixed
-and link-checked (0 broken repo-wide) after each:
+Done in two passes, all inbound links fixed and link-checked (0 broken
+repo-wide) after each:
 - **Pass 1:** 71 completed epics `git mv`'d into `completed/`.
 - **Pass 2:** epic 0084 `git mv`'d into `completed/` (its code was already on
   `master` via PR #63; only the epic's status line was stale), and 12 parked
@@ -75,8 +74,8 @@ and link-checked (0 broken repo-wide) after each:
   different subfolder is rewritten to the right relative path. Links **to** a
   moved epic from `PROGRESS.md` / other epics / ADRs / `docs/known-issues.md` /
   `CLAUDE.md` gain the `completed/` or `later/` segment. `docs/architecture/**`
-  had none (epic 0066 already decoupled those); `examples/**` only reference
-  0022 (stayed in `epics/`).
+  had none (the docs-decoupling pass already stripped those); `examples/**`
+  only reference one epic that stayed in `epics/`.
 - `docs/planning/README.md`, [ADR 0002](0002-planning-structure.md) and
   `CLAUDE.md` updated to describe the three-folder layout.
 

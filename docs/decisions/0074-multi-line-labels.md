@@ -58,7 +58,8 @@ guard). Consolidated into one shared `labelToFileStem(label, fallback)`
 forbidden chars to `-` → collapse whitespace → trim → 60-char cap → Windows
 reserved-name guard. Detail-file names for labels containing `< > : " / \ | ? *`
 change slightly (deleted → `-`); the existing `details:syncName` self-migration
-(ADR 0060 / epic 0087) renames them on the next save, no separate migration step.
+([ADR 0060](0060-detail-file-naming-convention.md)) renames them on the next
+save, no separate migration step.
 
 ## Alternatives considered
 

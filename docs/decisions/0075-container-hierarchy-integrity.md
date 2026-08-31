@@ -8,8 +8,7 @@ Accepted (2026-08-30)
 A user's "Project Overview" diagram surfaced three bugs that share one
 root theme — a node's `parentId` (the container-nesting link, ADR 0012) drifting
 out of sync with what the user sees, then failing in an opaque way. All three are
-recorded in [docs/known-issues.md](../known-issues.md); the epic is
-[0103](../planning/epics/completed/0103-container-hierarchy-integrity.md).
+recorded in [docs/known-issues.md](../known-issues.md).
 
 1. **Clicking a container selects a larger container that visually encloses it.**
    In the file, the big outer box was a *child* of the small inner one. React
@@ -139,9 +138,8 @@ actions (detach, attach, connection points) are also a better fit for a
 right-click menu than styling. The `openColorPicker` / `colorPicker` state /
 `<ColorPickerPopup>` wiring in `Canvas.tsx` (and the `ColorPickerPopup`
 component + its CSS) are now unreachable — **left in place, tracked for deletion
-in a later cleanup pass** (epic 0103 follow-up list), per the user's call:
-removing ~60 lines across several files right as the PR is finalised isn't worth
-the churn.
+in a later cleanup pass**, per the user's call: removing ~60 lines across
+several files right as the PR is finalised isn't worth the churn.
 
 ## Alternatives considered
 

@@ -1,10 +1,10 @@
 # 0073: React Flow render performance, round 2
 
 ## Status
-Accepted (2026-08-29). Implemented in epic 0101 and live-confirmed by the user:
-the Meridian Rail landscape "felt smooth as hell" for hover, marquee-select and
-colour drags, with no regressions. The profiler round and the `useDiagramStore`
-split (below) were both left unused — not needed.
+Accepted (2026-08-29). Implemented and live-confirmed by the user: the Meridian
+Rail landscape "felt smooth as hell" for hover, marquee-select and colour drags,
+with no regressions. The profiler round and the `useDiagramStore` split (below)
+were both left unused — not needed.
 
 ## Context
 [ADR 0056](0056-diagram-context-rerender-performance.md) fixed one re-render

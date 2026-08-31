@@ -1,7 +1,7 @@
 # 0072: Search by icon
 
 ## Status
-Decided and implemented (2026-08-28), on `epic/0094-search-by-icon`. Extends [ADR 0062](0062-search-scope-and-matching.md)'s search. Live test in Electron pending.
+Decided and implemented (2026-08-28). Extends [ADR 0062](0062-search-scope-and-matching.md)'s search. Live test in Electron pending.
 
 ## Context
 

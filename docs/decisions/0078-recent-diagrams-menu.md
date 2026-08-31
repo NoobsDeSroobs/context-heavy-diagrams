@@ -2,10 +2,10 @@
 
 ## Status
 
-Accepted (2026-08-31). Implements [epic 0095](../planning/epics/0095-recent-diagrams-menu.md),
-the half of [epic 0091](../planning/epics/completed/0091-recent-diagrams-and-last-opened-path.md)
-that was split out because it needed real infrastructure. Builds on
-[ADR 0039](0039-top-menu-bar.md) (custom in-renderer menu bar) and
+Accepted (2026-08-31). "Recent Diagrams under File" was raised together with
+the last-opened-directory memory; that shipped first, and the submenu half was
+split out because it needed real infrastructure — which this ADR covers. Builds
+on [ADR 0039](0039-top-menu-bar.md) (custom in-renderer menu bar) and
 [ADR 0052](0052-settings-ownership-tiers.md) (preference tiers).
 
 ## Context
@@ -23,8 +23,7 @@ persisted recent-paths list.
 (the latter already existed on `ContextMenu`'s item type). An item with a
 `submenu` renders a `▸` and a right-side flyout; it ignores `onSelect`. One
 level only — the type is technically recursive but the renderer handles a
-single nesting, which is all any planned menu needs (epic 0080's mode-aware
-bar included).
+single nesting, which is all any planned menu needs.
 
 Flyout interaction rule, to dodge the classic menu-corner problem: **hovering
 only ever opens a flyout, never closes one.** Moving the pointer diagonally
@@ -72,8 +71,8 @@ to `[]` via the renderer's own `updatePreferences`.
 
 - **Flat section at the bottom of the File menu** (no submenu infra). Half
   the code, but the File menu would run to ~20 items and it isn't the
-  convention. Rejected by the user in favour of a real submenu — the infra
-  is reusable for epic 0080.
+  convention. Rejected by the user in favour of a real submenu — and the
+  submenu infra is reusable elsewhere (e.g. a mode-aware menu bar).
 - **Explicit opens only** (exclude linked-diagram navigation). Would need a
   flag threaded through `diagram:openPath` to distinguish nav from a
   deliberate open. Rejected by the user as not worth it.

@@ -19,6 +19,17 @@ The example diagram gallery operationalizes this: a running gallery of one examp
 - **Stay strictly technical/software-architecture scoped** (the initially proposed direction): keeps positioning narrow and unambiguous, avoids ever being compared unfavorably against dedicated EA suites on their own turf. Rejected — it artificially caps a tool whose whole differentiator against both Draw.io (too generic) and commercial EA suites (too restrictive) is covering the middle ground, per the project brief's original framing.
 - **Fully replicate a dedicated EA suite's structured approach** (formal ArchiMate-style notation, enforced/validated relationship types, a real metamodel): would make certain EA views more "correct" and internally consistent, but reintroduces exactly the rigidity/restrictiveness this tool exists to be an alternative to (see [project brief](../project-brief.md) and [docs/architecture/overview.md](../architecture/overview.md)). Rejected — out of scope indefinitely, not just deferred; the tool stays notation-agnostic by design.
 
+## Addendum (2026-08-31): process / workflow modelling is in scope too
+
+The BPMN-as-visual-language decision ([ADR 0080](0080-bpmn-as-adopted-vocabulary-not-metamodel.md))
+confirmed that **process and workflow diagrams** belong in the same "as much as
+generic primitives can carry it" scope as the EA-adjacent views above —
+architecture work routinely includes mapping processes to find improvements and
+to identify where a process can be made more IT-friendly. This does **not**
+change the "no formal metamodel" line: BPMN is adopted as a *visual vocabulary*
+(recognisable conventions via icon + label on ordinary Shapes), never as a
+grammar, validator, or execution model. See ADR 0080 for the full reasoning.
+
 ## Consequences
 - No new node types, schema fields, or enforced structure follow from this decision alone — EA-adjacent diagrams stay expressible through the same generic primitives as everything else, which is the point.
 - Several EA-flavored diagram types (business capability heatmaps, application portfolio views) are currently awkward or blocked by not-yet-built features — containers and fill/color styling especially. This decision doesn't pull that work forward by itself, but its priority should now account for how much EA-adjacent capability it unlocks, not just technical-diagram polish.
