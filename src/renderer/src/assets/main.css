@@ -436,6 +436,26 @@ body {
   cursor: grabbing;
 }
 
+/* step/smoothstep routing's draggable segments (ADR 0077) — a short bar at
+   each interior segment's midpoint, portalled via EdgeLabelRenderer like the
+   catmull-rom bend points above. Mounted only while the edge is hovered,
+   selected, or mid-drag (LabeledEdge.tsx). A horizontal segment is dragged
+   vertically and vice versa. */
+.edge-segment-handle {
+  border-radius: 3px;
+  background: var(--color-background-soft);
+  border: 1.5px solid var(--ev-c-gray-1);
+  pointer-events: auto;
+}
+
+.edge-segment-handle-h {
+  cursor: ns-resize;
+}
+
+.edge-segment-handle-v {
+  cursor: ew-resize;
+}
+
 .text-node {
   width: 100%;
   height: 100%;

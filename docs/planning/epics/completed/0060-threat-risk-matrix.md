@@ -15,7 +15,7 @@ A threat/risk matrix: services or components (whichever granularity, hierarchica
 - This is a much more fully-developed version of an entry already sitting in [epic 0022](../0022-example-diagram-gallery.md)'s own backlog: "Risk register / risk heat map — same caveats as the RACI matrix" (a flagged cross-cutting limits-test — this app is a canvas, not a spreadsheet, and grid/tabular content has no row/column primitive to lean on).
 - Hierarchy: services/components nested to whatever granularity is wanted maps naturally onto this app's existing containers (epic 0004) and/or linked-diagram drill-down (epic 0009) — same structural pattern the C4 chain already demonstrates.
 - Per-cell values (probability/consequence) and aggregate scores are conceptually close to this app's tag/metadata system (epic 0034/ADR 0022) and highlight-based visual overlays (epic 0026/0036) — a threat matrix's "color the cell by risk level" instinct is exactly what highlights already do for ordinary diagram elements.
-- The aggregation (row/column edge totals, one grand total) is the same *shape* of idea as [epic 0059](../0059-aggregate-tags-up-to-parent-diagram.md) (rolling values up a hierarchy), just for numeric scores instead of categorical tag values.
+- The aggregation (row/column edge totals, one grand total) is the same *shape* of idea as [epic 0059](../later/0059-aggregate-tags-up-to-parent-diagram.md) (rolling values up a hierarchy), just for numeric scores instead of categorical tag values.
 
 ## Notes
 Not scheduled into any current batch, and not even confirmed to belong in this project's backlog at all — flagged here purely so the idea isn't lost while the user decides (at some later point) whether it's a feature here or a separate tool entirely.

@@ -33,6 +33,6 @@ A simple curved freeform line as a new top-level item category, distinct from ed
 - Continuous/numeric gravity control — discrete presets only (four built-in: Sharp/Acute/Smooth/Curvy), though the catalog itself is now diagram-editable.
 
 ## Notes
-Split out of [epic 0051](../0051-non-rectangular-shapes-and-new-item-categories.md) (2026-08-22). Full design conversation (unification proposal, why it was deferred, the gravity/Catmull-Rom math) happened before any code was written — see [ADR 0050](../../../decisions/0050-freeform-line-as-node-type.md) for the recorded decision and alternatives considered.
+Split out of [epic 0051](../later/0051-non-rectangular-shapes-and-new-item-categories.md) (2026-08-22). Full design conversation (unification proposal, why it was deferred, the gravity/Catmull-Rom math) happened before any code was written — see [ADR 0050](../../../decisions/0050-freeform-line-as-node-type.md) for the recorded decision and alternatives considered.
 
 **2026-08-23: second live-testing pass, Layers panel fixes confirmed, no further issues found** — the user explicitly checked and found nothing else wrong. This is the last item in the current batch (see [PROGRESS.md](../../../../PROGRESS.md)); next up once merged is packaging (epic 0053), which per its own doc is still waiting on branding (epic 0027, not yet started as of this writing) — not resumed as part of this epic.

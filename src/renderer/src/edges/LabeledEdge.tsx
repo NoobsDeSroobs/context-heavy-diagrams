@@ -11,7 +11,6 @@ import {
   BaseEdge,
   EdgeLabelRenderer,
   getBezierPath,
-  getSmoothStepPath,
   getStraightPath,
   useReactFlow,
   Position,
@@ -19,6 +18,14 @@ import {
 } from '@xyflow/react'
 import type { EdgeStyle, LinePoint, MetadataEntry } from '@shared/diagram'
 import { buildConnectorPath, type PathPoint } from '../geometry/bendablePath'
+import {
+  orthogonalRouteVertices,
+  orthogonalPath,
+  orthogonalSegments,
+  moveOrthogonalSegment,
+  SMOOTHSTEP_BORDER_RADIUS,
+  type OrthoSegment
+} from '../geometry/orthogonalPath'
 import EditableLabel from '../components/EditableLabel'
 import HighlightChips from '../components/HighlightChips'
 import { useDiagramContext } from '../useDiagramContext'
@@ -47,6 +54,10 @@ const DEFAULT_STROKE_WIDTH = 1
 // selected edge just gets both effects layered.
 const SELECTED_STROKE_WIDTH_DELTA = 2
 const BEND_POINT_HANDLE_SIZE = 10
+// Draggable segment handle for step/smoothstep routing (ADR 0077) — a short
+// bar laid along the segment, long side across the drag direction.
+const SEGMENT_HANDLE_LONG = 20
+const SEGMENT_HANDLE_SHORT = 6
 // Width of the invisible hover hit-path (ADR 0073) — matches React Flow's
 // own default edge interactionWidth (20) so hovering near the edge behaves
 // the same as clicking near it. Rendered on top of BaseEdge so it, not
@@ -175,8 +186,29 @@ function LabeledEdge({
   // every hover.
   const [hovered, setHovered] = useState(false)
   const [draggingPointIndex, setDraggingPointIndex] = useState<number | null>(null)
+  const [draggingSegmentIndex, setDraggingSegmentIndex] = useState<number | null>(null)
   const bendPointsVisible = hovered || selected || draggingPointIndex !== null
+  const segmentHandlesVisible = hovered || selected || draggingSegmentIndex !== null
   const bendPoints = (data?.points as LinePoint[] | undefined) ?? []
+  const isOrthogonal = routingStyle === 'step' || routingStyle === 'smoothstep'
+
+  // Expanded orthogonal vertex list (source, synthetic corners, waypoints,
+  // target) for step/smoothstep routing — the single source both the rendered
+  // path and the segment drag handles derive from. Null for every other
+  // routing style, so catmull-rom / bezier / straight are wholly untouched.
+  const orthoVertices = useMemo(
+    () =>
+      isOrthogonal
+        ? orthogonalRouteVertices(
+            { x: sourceX, y: sourceY },
+            sourcePosition,
+            bendPoints,
+            { x: targetX, y: targetY },
+            targetPosition
+          )
+        : null,
+    [isOrthogonal, sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition, bendPoints]
+  )
 
   // Routing (ADR 0057): 'straight'/'step'/'smoothstep' are React Flow's
   // own built-in path shapes, wired straight through with no math of our
@@ -188,24 +220,11 @@ function LabeledEdge({
       case 'straight':
         return getStraightPath({ sourceX, sourceY, targetX, targetY })[0]
       case 'step':
-        return getSmoothStepPath({
-          sourceX,
-          sourceY,
-          sourcePosition,
-          targetX,
-          targetY,
-          targetPosition,
-          borderRadius: 0
-        })[0]
+        // orthoVertices is always non-null here (isOrthogonal is true) — the
+        // fallback keeps the type checker happy without widening the memo.
+        return orthoVertices ? orthogonalPath(orthoVertices, 0) : ''
       case 'smoothstep':
-        return getSmoothStepPath({
-          sourceX,
-          sourceY,
-          sourcePosition,
-          targetX,
-          targetY,
-          targetPosition
-        })[0]
+        return orthoVertices ? orthogonalPath(orthoVertices, SMOOTHSTEP_BORDER_RADIUS) : ''
       case 'catmullRom': {
         const pathPoints: PathPoint[] = [
           { x: sourceX, y: sourceY, direction: OUTWARD_DIRECTION[sourcePosition] },
@@ -227,6 +246,7 @@ function LabeledEdge({
     }
   }, [
     routingStyle,
+    orthoVertices,
     sourceX,
     sourceY,
     sourcePosition,
@@ -317,11 +337,10 @@ function LabeledEdge({
     ...(edgeStyle?.fontFamily ? { fontFamily: edgeStyle.fontFamily } : {})
   }
 
-  // Manual bend points — only meaningful under catmull-rom routing (a
-  // straight/step/smoothstep path is fully determined by React Flow's own
-  // algorithm, no interior points to place). Dragging repositions
+  // Manual bend points — catmull-rom routing only. Dragging repositions
   // data.points[index] directly, in the same absolute canvas coordinates
-  // the schema already stores them in.
+  // the schema already stores them in. (step/smoothstep get draggable
+  // *segments* instead — see onSegmentPointerDown below.)
   const onBendPointPointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>, index: number) => {
       event.stopPropagation()
@@ -375,6 +394,47 @@ function LabeledEdge({
       ])
     },
     [pushSnapshot, openContextMenu, gravityPresets, updateEdgeData, id, bendPoints]
+  )
+
+  // Draggable segments for step/smoothstep routing (ADR 0077). Each handle
+  // sits at a segment midpoint; dragging moves that whole segment along its
+  // normal, keeping every corner at 90°. The vertex list is frozen at
+  // pointer-down so the segment index the gesture holds stays valid even as
+  // moveOrthogonalSegment adds/removes waypoints under it; the result is only
+  // simplified (redundant corners dropped) on release.
+  const segmentHandles = useMemo<OrthoSegment[]>(
+    () => (orthoVertices ? orthogonalSegments(orthoVertices) : []),
+    [orthoVertices]
+  )
+
+  const onSegmentPointerDown = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>, segment: OrthoSegment): void => {
+      event.stopPropagation()
+      if (!orthoVertices) return
+      const frozen = orthoVertices
+      pushSnapshot()
+      setDraggingSegmentIndex(segment.index)
+      const el = event.currentTarget
+      el.setPointerCapture(event.pointerId)
+      const apply = (moveEvent: PointerEvent, simplifyResult: boolean): void => {
+        const flowPoint = screenToFlowPosition({ x: moveEvent.clientX, y: moveEvent.clientY })
+        const value = segment.axis === 'h' ? flowPoint.y : flowPoint.x
+        updateEdgeData(id, {
+          points: moveOrthogonalSegment(frozen, segment.index, segment.axis, value, simplifyResult)
+        })
+      }
+      const onMove = (moveEvent: PointerEvent): void => apply(moveEvent, false)
+      const onUp = (upEvent: PointerEvent): void => {
+        apply(upEvent, true)
+        el.releasePointerCapture(event.pointerId)
+        window.removeEventListener('pointermove', onMove)
+        window.removeEventListener('pointerup', onUp)
+        setDraggingSegmentIndex(null)
+      }
+      window.addEventListener('pointermove', onMove)
+      window.addEventListener('pointerup', onUp)
+    },
+    [orthoVertices, pushSnapshot, screenToFlowPosition, updateEdgeData, id]
   )
 
   return (
@@ -443,6 +503,28 @@ function LabeledEdge({
               }}
               onPointerDown={(event) => onBendPointPointerDown(event, index)}
               onContextMenu={(event) => onBendPointContextMenu(event, index)}
+            />
+          ))}
+        {/* Unlike the catmull-rom bend points (always mounted, opacity-hidden),
+            segment handles mount only while visible — an invisible handle
+            still captures pointer events, and a busy diagram of step edges
+            would otherwise scatter click-eating hotspots at every crossbar.
+            `segmentHandlesVisible` stays true for the whole drag gesture
+            (draggingSegmentIndex !== null), so pointer capture is never
+            interrupted by an unmount. */}
+        {isOrthogonal &&
+          segmentHandlesVisible &&
+          segmentHandles.map((segment) => (
+            <div
+              key={segment.index}
+              className={`edge-segment-handle edge-segment-handle-${segment.axis} nodrag nopan`}
+              style={{
+                position: 'absolute',
+                width: segment.axis === 'h' ? SEGMENT_HANDLE_LONG : SEGMENT_HANDLE_SHORT,
+                height: segment.axis === 'h' ? SEGMENT_HANDLE_SHORT : SEGMENT_HANDLE_LONG,
+                transform: `translate(-50%, -50%) translate(${segment.mid.x}px, ${segment.mid.y}px)`
+              }}
+              onPointerDown={(event) => onSegmentPointerDown(event, segment)}
             />
           ))}
       </EdgeLabelRenderer>

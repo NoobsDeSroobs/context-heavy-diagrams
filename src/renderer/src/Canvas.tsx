@@ -81,6 +81,7 @@ import {
   setSideCustomPointCount
 } from './nodes/connectionPoints'
 import { nearestSegmentIndex, type PathPoint } from './geometry/bendablePath'
+import { nearestWaypointGap } from './geometry/orthogonalPath'
 import { absolutePosition, subtractPosition } from './geometry/nodePosition'
 import MultiConnectionLine from './edges/MultiConnectionLine'
 import PreferencesPanel from './components/PreferencesPanel'
@@ -1225,29 +1226,38 @@ function CanvasInner(): React.JSX.Element {
           onSelect: () => {
             const points = (edge.data?.points as LinePoint[] | undefined) ?? []
             const routingStyle = (edge.data?.style as EdgeStyle | undefined)?.routingStyle
-            // Not already catmull-rom-routed (or routed but with no points
-            // yet, same thing): only one segment exists (source straight
-            // to target), so the new point is trivially the only entry —
-            // no nearest-segment lookup needed. Right-clicking any edge to
-            // add a point is what actually opts it into catmull-rom
-            // routing in the first place (ADR 0057) — no prior trip to
-            // the property panel required.
+            const nodeById = new Map(nodes.map((n) => [n.id, n]))
+            const source = resolveEndpointPosition(edge.source, edge.sourceHandle, nodeById)
+            const target = resolveEndpointPosition(edge.target, edge.targetHandle, nodeById)
+            const newPoint: LinePoint = { x: clickPoint.x, y: clickPoint.y }
+
             let newPoints: LinePoint[]
-            if (routingStyle !== 'catmullRom' || points.length === 0) {
-              newPoints = [{ x: clickPoint.x, y: clickPoint.y }]
-            } else {
-              const nodeById = new Map(nodes.map((n) => [n.id, n]))
-              const pathPoints: PathPoint[] = [
-                resolveEndpointPosition(edge.source, edge.sourceHandle, nodeById),
-                ...points,
-                resolveEndpointPosition(edge.target, edge.targetHandle, nodeById)
-              ]
+            let newRoutingStyle: EdgeStyle['routingStyle']
+            if (routingStyle === 'step' || routingStyle === 'smoothstep') {
+              // Keep the right-angled routing; the new waypoint just gets
+              // forced into the orthogonal path (ADR 0077). Insert it in the
+              // gap of [source, ...points, target] it's nearest to.
+              const gap = nearestWaypointGap(source, points, target, clickPoint)
+              newPoints = [...points]
+              newPoints.splice(gap, 0, newPoint)
+              newRoutingStyle = routingStyle
+            } else if (routingStyle === 'catmullRom' && points.length > 0) {
+              const pathPoints: PathPoint[] = [source, ...points, target]
               const segmentIndex = nearestSegmentIndex(pathPoints, clickPoint)
               newPoints = [...points]
               // No explicit gravity — falls back to bendablePath's own
               // default (0.5), same "absent means the standard value"
               // convention as the rest of this schema.
-              newPoints.splice(segmentIndex, 0, { x: clickPoint.x, y: clickPoint.y })
+              newPoints.splice(segmentIndex, 0, newPoint)
+              newRoutingStyle = 'catmullRom'
+            } else {
+              // straight / bezier / absent, or catmull-rom with no points
+              // yet: only one segment exists, so the new point is trivially
+              // the only entry. Adding it is what opts the edge into
+              // catmull-rom routing in the first place (ADR 0057) — no prior
+              // trip to the property panel required.
+              newPoints = [newPoint]
+              newRoutingStyle = 'catmullRom'
             }
             pushSnapshot()
             setEdges((eds) =>
@@ -1260,7 +1270,7 @@ function CanvasInner(): React.JSX.Element {
                         points: newPoints,
                         style: {
                           ...(e.data?.style as EdgeStyle | undefined),
-                          routingStyle: 'catmullRom'
+                          routingStyle: newRoutingStyle
                         }
                       }
                     }

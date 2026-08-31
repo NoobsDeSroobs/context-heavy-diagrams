@@ -262,14 +262,18 @@ export interface DiagramEdge {
   label?: string
   style?: EdgeStyle
   metadata?: Record<string, MetadataEntry>
-  // Manual bend points, absolute canvas coordinates — only meaningful when
-  // style.routingStyle is 'catmullRom' (see ADR 0057); ignored (but
-  // preserved, not stripped) otherwise, e.g. if the user switches routing
-  // style away and back. Reuses LinePoint/bendablePath.ts verbatim —
-  // the same curve math a 'line' node's own points already use. Absent/
-  // empty means a plain, unbent catmull-rom curve between the two
-  // endpoints (still meaningfully different from bezier: perpendicular
-  // leave-direction from each shape's side, no S-curve heuristic).
+  // Manual routing points, absolute canvas coordinates. Meaning depends on
+  // style.routingStyle (see ADR 0057, ADR 0077):
+  //   - 'catmullRom': interior control points of a smooth curve, each
+  //     `gravity` respected (bendablePath.ts).
+  //   - 'step' / 'smoothstep': orthogonal waypoints the right-angled path
+  //     is forced through (orthogonalPath.ts). `gravity` is not used and
+  //     may be absent; the on-disk value is preserved, not stripped, if the
+  //     edge was previously catmull-rom-routed.
+  //   - any other routing style (straight / absent / bezier): ignored, but
+  //     preserved so switching routing away and back is lossless.
+  // Absent/empty means the routing style's own unbent default between the
+  // two endpoints.
   points?: LinePoint[]
 }
 

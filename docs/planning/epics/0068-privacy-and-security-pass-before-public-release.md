@@ -4,7 +4,7 @@
 Not Started — not yet scoped. Raised by the user (2026-08-23) as the repo's own public release approaches, explicitly meant for "when we get closer to the public release," not now.
 
 ## Goal
-A deliberate review of the app's actual privacy/security posture — permissions requested, Electron hardening defaults, network behavior — before the repo (and real installers built from it) go out to people who aren't the author. Distinct from [epic 0027](later/0027-app-branding-and-licensing.md) (branding/licensing) and [epic 0053](0053-installable-distribution.md) (packaging/code signing) — this is about what the app actually *does* and *asks for*, not what it's named or how it's signed.
+A deliberate review of the app's actual privacy/security posture — permissions requested, Electron hardening defaults, network behavior — before the repo (and real installers built from it) go out to people who aren't the author. Distinct from [epic 0027](later/0027-app-branding-and-licensing.md) (branding/licensing) and [epic 0053](later/0053-installable-distribution.md) (packaging/code signing) — this is about what the app actually *does* and *asks for*, not what it's named or how it's signed.
 
 ## Known items, found while working on epic 0053's packaging docs (not a full audit — just what surfaced along the way)
 

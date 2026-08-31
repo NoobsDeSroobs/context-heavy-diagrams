@@ -48,3 +48,12 @@ Logged 2026-08-25, re-scoped 2026-08-30 (folder move, not `x` prefix), done same
 day. The orphaned epic 0103 finalization commit (`2dd9265`, never pushed, missed
 its own PR) was cherry-picked onto this branch as the first commit — that's why
 the epic 0103 doc / ADR 0075 / PROGRESS finalization rides along here.
+
+**Follow-up (2026-08-30, after this epic merged as PR #79):** the user parked
+three more epics — **0051** (non-rectangular shapes), **0053** (installable
+distribution), **0059** (aggregate tags up) — into `later/`. `epics/` near
+backlog is now 17, `later/` is 15. Moves + inbound-link fixes + PROGRESS backlog
+split folded into the `epic/0086-step-segment-dragging` branch (per the
+don't-branch-per-doc-update habit), not a fresh branch. The task-list counts
+above ("20 stay in `epics/`", the 0051/0053/0059 line) reflect this epic's own
+state at merge and are left as-is.
