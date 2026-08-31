@@ -1326,7 +1326,6 @@ function CanvasInner(): React.JSX.Element {
     [rfInstance, currentPath]
   )
 
-
   const toggleDiagnosticsPanel = useCallback(() => {
     setDetailsPanelNodeId(null)
     setPreferencesPanelOpen(false)
@@ -1359,7 +1358,6 @@ function CanvasInner(): React.JSX.Element {
     setReferencesPanelOpen(false)
     setStylePalettePanelOpen((open) => !open)
   }, [])
-
 
   const toggleAlignDistributePanel = useCallback(() => {
     setDetailsPanelNodeId(null)
@@ -1412,6 +1410,24 @@ function CanvasInner(): React.JSX.Element {
     setAlignDistributePanelOpen(false)
     setDiagramSettingsPanelOpen(false)
     setReferencesPanelOpen((open) => !open)
+  }, [])
+
+  // Persona switch (ADR 0079). Switching to the Security Matrix closes the
+  // diagram-only utility-dock panels so a stale Layers/Diagnostics/etc.
+  // surface isn't left floating over a view whose menu no longer offers to
+  // open it. Preferences stays — it's global, valid in both personas.
+  const handlePersonaChange = useCallback((next: 'diagram' | 'matrix') => {
+    setPersona(next)
+    if (next === 'matrix') {
+      setDetailsPanelNodeId(null)
+      setDiagnosticsPanelOpen(false)
+      setLayerPanelOpen(false)
+      setStylePalettePanelOpen(false)
+      setAlignDistributePanelOpen(false)
+      setDiagramSettingsPanelOpen(false)
+      setReferencesPanelOpen(false)
+      setDefaultEdgeStylePicker(null)
+    }
   }, [])
 
   // --- Reference images (ADR 0069) ---
@@ -3805,31 +3821,29 @@ function CanvasInner(): React.JSX.Element {
   // new identity on every edit and, through the memoized DiagramContext
   // value, re-render every node and edge (ADR 0073). It's only ever called
   // from a Ctrl/Cmd+click, so the always-latest-closure semantics are safe.
-  const handleLinkClick = useEventCallback(
-    (nodeId: string, clientX: number, clientY: number) => {
-      if (!currentPath) {
-        alert('Save the diagram before linking to another diagram.')
-        return
-      }
-      const node = nodes.find((n) => n.id === nodeId)
-      const linkedPath =
-        typeof node?.data?.linkedDiagram === 'string'
-          ? (node.data.linkedDiagram as string)
-          : undefined
-      if (linkedPath) {
-        navigateExistingLink(currentPath, linkedPath)
-        return
-      }
-      const label = String(node?.data?.label ?? 'diagram')
-      openContextMenu(clientX, clientY, [
-        {
-          label: 'Create new linked diagram…',
-          onSelect: () => createAndLink(nodeId, currentPath, label)
-        },
-        { label: 'Link to existing diagram…', onSelect: () => pickAndLink(nodeId, currentPath) }
-      ])
+  const handleLinkClick = useEventCallback((nodeId: string, clientX: number, clientY: number) => {
+    if (!currentPath) {
+      alert('Save the diagram before linking to another diagram.')
+      return
     }
-  )
+    const node = nodes.find((n) => n.id === nodeId)
+    const linkedPath =
+      typeof node?.data?.linkedDiagram === 'string'
+        ? (node.data.linkedDiagram as string)
+        : undefined
+    if (linkedPath) {
+      navigateExistingLink(currentPath, linkedPath)
+      return
+    }
+    const label = String(node?.data?.label ?? 'diagram')
+    openContextMenu(clientX, clientY, [
+      {
+        label: 'Create new linked diagram…',
+        onSelect: () => createAndLink(nodeId, currentPath, label)
+      },
+      { label: 'Link to existing diagram…', onSelect: () => pickAndLink(nodeId, currentPath) }
+    ])
+  })
 
   // Global keyboard shortcuts. One handler rather than one useEffect
   // per shortcut, now that there are enough of these to make that
@@ -4282,79 +4296,103 @@ function CanvasInner(): React.JSX.Element {
           ]
         }
 
-  const menus: MenuBarMenu[] = [
-    {
-      label: 'File',
-      items: [
-        { label: 'New', accelerator: 'Ctrl+N', onSelect: handleNew },
-        { label: 'Open…', accelerator: 'Ctrl+O', onSelect: handleOpen },
-        recentDiagramsItem,
-        { label: 'Save', accelerator: 'Ctrl+S', onSelect: handleSave },
-        { label: 'Save As…', accelerator: 'Ctrl+Shift+S', onSelect: handleSaveAs },
-        {
-          label: 'Export as PNG…',
-          disabled: nodes.length === 0,
-          onSelect: () => setExportPngDialogOpen(true)
-        },
-        { label: 'Reload', disabled: !currentPath, onSelect: handleReload },
-        { label: 'Close', accelerator: 'Ctrl+W', onSelect: handleClose }
-      ]
-    },
-    {
-      label: 'Edit',
-      items: [
-        { label: 'Undo', accelerator: 'Ctrl+Z', disabled: past.length === 0, onSelect: undo },
-        {
-          label: 'Redo',
-          accelerator: 'Ctrl+Shift+Z',
-          disabled: future.length === 0,
-          onSelect: redo
-        },
-        {
-          label: 'Cut',
-          accelerator: 'Ctrl+X',
-          disabled: !hasSelectedNodes,
-          onSelect: cutSelection
-        },
-        {
-          label: 'Copy',
-          accelerator: 'Ctrl+C',
-          disabled: !hasSelectedNodes,
-          onSelect: copySelection
-        },
-        // Not disabled on an empty/invalid clipboard — same silent no-op
-        // as the keyboard shortcut, avoids a synchronous clipboard read on
-        // every render just to compute this menu's enabled state.
-        { label: 'Paste', accelerator: 'Ctrl+V', onSelect: pasteFromClipboard },
-        {
-          label: 'Align / Distribute…',
-          disabled: selectedNodes.length < 2,
-          onSelect: toggleAlignDistributePanel
-        }
-      ]
-    },
-    {
-      label: 'View',
-      items: [
-        {
-          label: `Diagnostics${displayedDiagnostics.length > 0 ? ` (${displayedDiagnostics.length})` : ''}`,
-          onSelect: toggleDiagnosticsPanel
-        },
-        { label: 'Layers', onSelect: toggleLayerPanel },
-        {
-          label: `References${referenceRows.length > 0 ? ` (${referenceRows.length})` : ''}`,
-          onSelect: toggleReferencesPanel
-        },
-        { label: 'Style Palette', onSelect: toggleStylePalettePanel },
-        { label: 'Diagram settings', onSelect: toggleDiagramSettingsPanel },
-        { label: 'Preferences', onSelect: togglePreferencesPanel }
-      ]
-    },
-    {
-      label: 'Help',
-      items: [{ label: 'About', onSelect: () => setAboutDialogOpen(true) }]
-    }
-  ]
+  // Mode-aware menu bar (ADR 0079). The Security Matrix persona is still a
+  // render-only prototype with no Canvas-level actions of its own (its
+  // calculation-mode / manage-matrix controls live inside ThreatMatrixView),
+  // so for now "matrix" just hides what doesn't apply: the whole Edit menu,
+  // the diagram-specific View panels, and Export as PNG. File basics
+  // (New/Open/Recent/Save/Save As/Reload/Close), Preferences and About are
+  // shared. Matrix-specific menus get added back as epic 0079 gives the
+  // matrix real, persisted state to act on.
+  const isDiagramPersona = persona === 'diagram'
+  const preferencesItem: MenuBarItem = { label: 'Preferences', onSelect: togglePreferencesPanel }
+
+  const fileMenu: MenuBarMenu = {
+    label: 'File',
+    items: [
+      { label: 'New', accelerator: 'Ctrl+N', onSelect: handleNew },
+      { label: 'Open…', accelerator: 'Ctrl+O', onSelect: handleOpen },
+      recentDiagramsItem,
+      { label: 'Save', accelerator: 'Ctrl+S', onSelect: handleSave },
+      { label: 'Save As…', accelerator: 'Ctrl+Shift+S', onSelect: handleSaveAs },
+      // Diagram-only for now — a "export the matrix as PNG" may make sense
+      // later but isn't built.
+      ...(isDiagramPersona
+        ? [
+            {
+              label: 'Export as PNG…',
+              disabled: nodes.length === 0,
+              onSelect: () => setExportPngDialogOpen(true)
+            }
+          ]
+        : []),
+      { label: 'Reload', disabled: !currentPath, onSelect: handleReload },
+      { label: 'Close', accelerator: 'Ctrl+W', onSelect: handleClose }
+    ]
+  }
+
+  const editMenu: MenuBarMenu = {
+    label: 'Edit',
+    items: [
+      { label: 'Undo', accelerator: 'Ctrl+Z', disabled: past.length === 0, onSelect: undo },
+      {
+        label: 'Redo',
+        accelerator: 'Ctrl+Shift+Z',
+        disabled: future.length === 0,
+        onSelect: redo
+      },
+      {
+        label: 'Cut',
+        accelerator: 'Ctrl+X',
+        disabled: !hasSelectedNodes,
+        onSelect: cutSelection
+      },
+      {
+        label: 'Copy',
+        accelerator: 'Ctrl+C',
+        disabled: !hasSelectedNodes,
+        onSelect: copySelection
+      },
+      // Not disabled on an empty/invalid clipboard — same silent no-op
+      // as the keyboard shortcut, avoids a synchronous clipboard read on
+      // every render just to compute this menu's enabled state.
+      { label: 'Paste', accelerator: 'Ctrl+V', onSelect: pasteFromClipboard },
+      {
+        label: 'Align / Distribute…',
+        disabled: selectedNodes.length < 2,
+        onSelect: toggleAlignDistributePanel
+      }
+    ]
+  }
+
+  const viewMenu: MenuBarMenu = {
+    label: 'View',
+    items: isDiagramPersona
+      ? [
+          {
+            label: `Diagnostics${displayedDiagnostics.length > 0 ? ` (${displayedDiagnostics.length})` : ''}`,
+            onSelect: toggleDiagnosticsPanel
+          },
+          { label: 'Layers', onSelect: toggleLayerPanel },
+          {
+            label: `References${referenceRows.length > 0 ? ` (${referenceRows.length})` : ''}`,
+            onSelect: toggleReferencesPanel
+          },
+          { label: 'Style Palette', onSelect: toggleStylePalettePanel },
+          { label: 'Diagram settings', onSelect: toggleDiagramSettingsPanel },
+          preferencesItem
+        ]
+      : [preferencesItem]
+  }
+
+  const helpMenu: MenuBarMenu = {
+    label: 'Help',
+    items: [{ label: 'About', onSelect: () => setAboutDialogOpen(true) }]
+  }
+
+  const menus: MenuBarMenu[] = isDiagramPersona
+    ? [fileMenu, editMenu, viewMenu, helpMenu]
+    : [fileMenu, viewMenu, helpMenu]
 
   // Whichever named palette is active (ADR 0068), resolved live —
   // memoized on the two fields it depends on so the Context value below
@@ -4407,7 +4445,10 @@ function CanvasInner(): React.JSX.Element {
       entityHighlightNodeId,
       paletteColors: activeStylePalette.colors,
       paletteFonts: activeStylePalette.fonts,
-      gravityPresets: effectiveGravityPresets(gravityPresets, preferences.gravityPresetsUserDefault),
+      gravityPresets: effectiveGravityPresets(
+        gravityPresets,
+        preferences.gravityPresetsUserDefault
+      ),
       searchMatchIds,
       isolateActive,
       isolateOpacity: preferences.isolateOpacity,
@@ -4455,7 +4496,7 @@ function CanvasInner(): React.JSX.Element {
             <select
               className="toolbar-persona-select"
               value={persona}
-              onChange={(event) => setPersona(event.target.value as 'diagram' | 'matrix')}
+              onChange={(event) => handlePersonaChange(event.target.value as 'diagram' | 'matrix')}
               title="Switch view"
               aria-label="Switch view"
             >
@@ -4473,35 +4514,39 @@ function CanvasInner(): React.JSX.Element {
                 {currentPath.split(/[\\/]/).pop()}
               </span>
             )}
-            <button
-              type="button"
-              className="toolbar-edge-style-swatch"
-              title="Default style for newly drawn edges"
-              aria-label="Default style for newly drawn edges"
-              onClick={(event) =>
-                setDefaultEdgeStylePicker(event.currentTarget.getBoundingClientRect())
-              }
-            >
-              <svg width="28" height="16" viewBox="0 0 28 16">
-                <line
-                  x1="2"
-                  y1="8"
-                  x2={preferences.defaultEdgeStyle.endMarker === 'none' ? 26 : 20}
-                  y2="8"
-                  stroke={preferences.defaultEdgeStyle.stroke ?? 'currentColor'}
-                  strokeWidth={preferences.defaultEdgeStyle.strokeWidth ?? 2}
-                  strokeDasharray={
-                    DEFAULT_EDGE_SWATCH_DASH[preferences.defaultEdgeStyle.lineStyle ?? 'solid']
-                  }
-                />
-                {preferences.defaultEdgeStyle.endMarker !== 'none' && (
-                  <polygon
-                    points="20,3 26,8 20,13"
-                    fill={preferences.defaultEdgeStyle.stroke ?? 'currentColor'}
+            {/* Default-edge-style swatch — diagram-only; nothing in the
+                Security Matrix persona draws edges (ADR 0079). */}
+            {isDiagramPersona && (
+              <button
+                type="button"
+                className="toolbar-edge-style-swatch"
+                title="Default style for newly drawn edges"
+                aria-label="Default style for newly drawn edges"
+                onClick={(event) =>
+                  setDefaultEdgeStylePicker(event.currentTarget.getBoundingClientRect())
+                }
+              >
+                <svg width="28" height="16" viewBox="0 0 28 16">
+                  <line
+                    x1="2"
+                    y1="8"
+                    x2={preferences.defaultEdgeStyle.endMarker === 'none' ? 26 : 20}
+                    y2="8"
+                    stroke={preferences.defaultEdgeStyle.stroke ?? 'currentColor'}
+                    strokeWidth={preferences.defaultEdgeStyle.strokeWidth ?? 2}
+                    strokeDasharray={
+                      DEFAULT_EDGE_SWATCH_DASH[preferences.defaultEdgeStyle.lineStyle ?? 'solid']
+                    }
                   />
-                )}
-              </svg>
-            </button>
+                  {preferences.defaultEdgeStyle.endMarker !== 'none' && (
+                    <polygon
+                      points="20,3 26,8 20,13"
+                      fill={preferences.defaultEdgeStyle.stroke ?? 'currentColor'}
+                    />
+                  )}
+                </svg>
+              </button>
+            )}
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
@@ -4748,7 +4793,7 @@ function CanvasInner(): React.JSX.Element {
               onClose={() => setLinePicker(null)}
             />
           )}
-          {defaultEdgeStylePicker && (
+          {isDiagramPersona && defaultEdgeStylePicker && (
             <StylePicker
               anchorRect={defaultEdgeStylePicker}
               onPick={(patch) => {
