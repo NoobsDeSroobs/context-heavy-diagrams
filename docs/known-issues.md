@@ -16,7 +16,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 - [Hovering a single edge on a large diagram re-renders every node and edge several times over](#hovering-a-single-edge-on-a-large-diagram-re-renders-every-node-and-edge-several-times-over) — Solved, ADR 0073 / epic 0101.
 - [A large diagram's edges, selection box, and new-connection dragging all silently failed until node measurement happened to catch up](#a-large-diagrams-edges-selection-box-and-new-connection-dragging-all-silently-failed-until-node-measurement-happened-to-catch-up) — Solved.
 - [`.react-flow__edgelabel-renderer`'s z-index ceiling went stale, silently breaking edge labels and (new) bend points](#react-flowedgelabel-rendereres-z-index-ceiling-went-stale-silently-breaking-edge-labels-and-new-bend-points) — Solved.
-- [`serializeDiagram` silently dropped `locked`, `gravityPresets`, and a line's `points` on every save](#serializediagram-silently-dropped-locked-gravitypresets-and-a-lines-points-on-every-save) — Solved.
+- [`serializeDiagram` silently dropped `locked`, `gravityPresets`, and a line's `points` on every save](#serializediagram-silently-dropped-locked-gravitypresets-and-a-lines-points-on-every-save) — Solved (+ a 4th instance, `maxConnectionPointsPerSide`, found & fixed 2026-08-31).
 - [Theme flip reads as "negative image" on toggle](#theme-flip-reads-as-negative-image-on-toggle) — Open, not urgent.
 - [Enabling a highlight makes a container look like it shrinks](#enabling-a-highlight-makes-a-container-look-like-it-shrinks) — Open, not investigated.
 - [A dragged edge endpoint snapped to the wrong side's point after a count change](#a-dragged-edge-endpoint-snapped-to-the-wrong-sides-point-after-a-count-change) — Open, not reproduced.
@@ -113,6 +113,8 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 **Why epic 0064's own live-testing didn't catch this:** both live-testing passes (see epic 0064's Notes) covered hit-testing and the Layers panel within a single running session — a save/reload round-trip specifically wasn't part of either pass.
 
 **Resolution:** added the three missing fields to `serializeDiagram`'s picklist, same "omit only when empty" convention already used for every sibling field in that function (`gravityPresets: ... .length > 0 ? ... : undefined`, `locked: n.locked`, `data.points: ... .length > 0 ? ... : undefined`).
+
+**2026-08-31 — a fourth instance of the same gap, found the same way:** `DiagramFile.maxConnectionPointsPerSide` (epic 0073's per-diagram override) was also missing from `serializeDiagram`'s picklist, so a diagram-level max-connection-points override never survived a save/reload — it was written into the in-memory `DiagramFile` by `toDiagramFile` and then dropped again on serialize, exactly like the three above. Found while adding `edgeDirectionSets` fields to the same function for epic 0089. Fixed with the same one-liner (`maxConnectionPointsPerSide: diagram.maxConnectionPointsPerSide`), folded into epic 0089's first commit since it's the same lines. This strongly suggests the picklist should be replaced with an explicit-omit approach (spread the object, delete/skip only the keys that need conditional omission) so the next added field can't silently regress — logged as a cleanup thought, not done here.
 
 **References:** `src/shared/diagram.ts`'s `serializeDiagram`, `src/main/diagram.ts`'s `diagram:save` handler.
 

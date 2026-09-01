@@ -251,10 +251,48 @@ export interface GravityPreset {
   value: number
 }
 
+// A diagram-wide "reading" of every edge that differs only in arrow
+// direction — see ADR 0081. "Data flow" vs. "Trigger direction" being the
+// canonical pair. A set never adds or removes edges; every edge exists in
+// every set, only its direction (and which connection point each end uses)
+// changes. Empty `DiagramFile.edgeDirectionSets` means the feature is
+// dormant. A *single* set is meaningful: it names the current reading and
+// contributes a legend row (see `legend` below); per-edge `directionSets`
+// records and the base-orientation rule only kick in at two or more sets.
+export interface EdgeDirectionSet {
+  id: string
+  name: string
+  // How this reading is drawn in the legend (panel + PNG export) while it's
+  // the active set — the label is always the set `name`. Author-asserted,
+  // same as a hand-authored 'line' LegendEntry: it does NOT recolour the
+  // actual edges on canvas. Absent `color` falls back to a default.
+  legend?: EdgeDirectionSetLegend
+}
+
+export interface EdgeDirectionSetLegend {
+  color?: string
+  lineStyle?: LineStyleKind
+  startMarker?: MarkerKind
+  endMarker?: MarkerKind
+}
+
+// One edge's orientation within one set. The two endpoint *nodes* are
+// invariant across sets — only which end is `source`, and the connection
+// point each end lands on, may differ.
+export interface EdgeDirection {
+  source: string
+  target: string
+  sourceHandle?: string
+  targetHandle?: string
+}
+
 export interface DiagramEdge {
   id: string
   // 'labeled'. Plain string, same reasoning as DiagramNode.type.
   type?: string
+  // On disk these always hold the *base* set's orientation
+  // (edgeDirectionSets[0]) regardless of which set is active — see ADR 0081
+  // and `directionSets` below.
   source: string
   target: string
   sourceHandle?: string
@@ -262,6 +300,14 @@ export interface DiagramEdge {
   label?: string
   style?: EdgeStyle
   metadata?: Record<string, MetadataEntry>
+  // Per-set orientation, keyed by EdgeDirectionSet.id — see ADR 0081. Only
+  // present (on disk and in memory) when the diagram has >= 2 direction
+  // sets; contains an entry for every set, the base set's entry matching
+  // this edge's own top-level source/target/handles. Direction-sensitive
+  // style (`points` order, style.startMarker/endMarker, style.labelPosition)
+  // is *not* stored per set — it's single-copy in base orientation and
+  // transformed at set-switch time.
+  directionSets?: Record<string, EdgeDirection>
   // Manual routing points, absolute canvas coordinates. Meaning depends on
   // style.routingStyle (see ADR 0057, ADR 0077):
   //   - 'catmullRom': interior control points of a smooth curve, each
@@ -303,6 +349,17 @@ export interface DiagramFile {
   // *adding* more points, same "never silently destroy data" convention
   // as the rest of this format.
   maxConnectionPointsPerSide?: number
+  // Named readings of the diagram's edges that differ only in arrow
+  // direction — see ADR 0081 and EdgeDirectionSet above. Absent/empty means
+  // the feature is unused. A single set names the current reading and adds a
+  // legend row; per-edge `directionSets` records and the base-orientation
+  // rule only apply at 2+ sets. Order matters: [0] is the "base" set whose
+  // orientation the edges are stored in on disk.
+  edgeDirectionSets?: EdgeDirectionSet[]
+  // Which set of `edgeDirectionSets` is currently displayed. The on-disk
+  // edges are always in the base ([0]) set's orientation regardless; this
+  // only picks which reading to apply on load. Absent means the base set.
+  activeEdgeDirectionSetId?: string
   nodes: DiagramNode[]
   edges: DiagramEdge[]
 }
@@ -328,6 +385,47 @@ function sortKeysDeep<T extends JsonValue>(value: T): T {
   return value
 }
 
+// Fixed key order for an EdgeDirectionSet's legend styling; dropped
+// entirely when it carries nothing.
+function sortedDirectionSetLegend(
+  legend: EdgeDirectionSetLegend | undefined
+): EdgeDirectionSetLegend | undefined {
+  if (!legend) return undefined
+  const { color, lineStyle, startMarker, endMarker } = legend
+  if (
+    color === undefined &&
+    lineStyle === undefined &&
+    startMarker === undefined &&
+    endMarker === undefined
+  ) {
+    return undefined
+  }
+  return { color, lineStyle, startMarker, endMarker }
+}
+
+// Deterministic per-edge directionSets: set ids in sorted order, each
+// EdgeDirection with a fixed key order (undefined handles dropped by
+// JSON.stringify). Only emitted when the diagram actually has >= 2 sets.
+function sortedDirectionSets(
+  directionSets: Record<string, EdgeDirection> | undefined,
+  hasMultipleSets: boolean
+): Record<string, EdgeDirection> | undefined {
+  if (!hasMultipleSets || !directionSets || Object.keys(directionSets).length === 0) {
+    return undefined
+  }
+  const sorted: Record<string, EdgeDirection> = {}
+  for (const key of Object.keys(directionSets).sort()) {
+    const d = directionSets[key]
+    sorted[key] = {
+      source: d.source,
+      target: d.target,
+      sourceHandle: d.sourceHandle,
+      targetHandle: d.targetHandle
+    }
+  }
+  return sorted
+}
+
 function sortedMetadata(
   metadata: Record<string, MetadataEntry> | undefined
 ): Record<string, MetadataEntry> | undefined {
@@ -347,6 +445,14 @@ function sortedMetadata(
 // Optional fields left `undefined` are dropped by JSON.stringify, so nodes
 // without a size/rotation/icons set don't grow noisy keys in the saved file.
 export function serializeDiagram(diagram: DiagramFile): string {
+  // Edge direction sets (ADR 0081): the registry + active pointer are
+  // written from the first set (a single set names the current reading and
+  // adds a legend row). Per-edge `directionSets` records are only written
+  // at 2+ sets — with one set an edge's direction is just its own
+  // source/target/handles.
+  const hasDirectionSets = !!diagram.edgeDirectionSets && diagram.edgeDirectionSets.length >= 1
+  const hasMultipleDirectionSets =
+    !!diagram.edgeDirectionSets && diagram.edgeDirectionSets.length >= 2
   const ordered: DiagramFile = {
     version: diagram.version,
     viewport: { x: diagram.viewport.x, y: diagram.viewport.y, zoom: diagram.viewport.zoom },
@@ -363,6 +469,15 @@ export function serializeDiagram(diagram: DiagramFile): string {
       diagram.gravityPresets && diagram.gravityPresets.length > 0
         ? diagram.gravityPresets
         : undefined,
+    maxConnectionPointsPerSide: diagram.maxConnectionPointsPerSide,
+    edgeDirectionSets: hasDirectionSets
+      ? diagram.edgeDirectionSets!.map((s) => ({
+          id: s.id,
+          name: s.name,
+          legend: sortedDirectionSetLegend(s.legend)
+        }))
+      : undefined,
+    activeEdgeDirectionSetId: hasDirectionSets ? diagram.activeEdgeDirectionSetId : undefined,
     nodes: diagram.nodes.map((n) => ({
       id: n.id,
       type: n.type,
@@ -394,7 +509,8 @@ export function serializeDiagram(diagram: DiagramFile): string {
       label: e.label,
       style: e.style,
       metadata: sortedMetadata(e.metadata),
-      points: e.points && e.points.length > 0 ? e.points : undefined
+      points: e.points && e.points.length > 0 ? e.points : undefined,
+      directionSets: sortedDirectionSets(e.directionSets, hasMultipleDirectionSets)
     }))
   }
   return JSON.stringify(ordered, null, 2) + '\n'

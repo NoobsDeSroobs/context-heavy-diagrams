@@ -70,14 +70,14 @@ One illustrative example per row — fictional/generic content, not about this t
 - [ ] Product/service catalog map — doable now
 - [ ] Organization / stakeholder chart — doable now
 
-**Data architect** (backlog only — no dedicated folder currently; deferred in the 2026-08-20 trim, see Notes)
+**Data architect** (`examples/gallery/data/` — folder un-deferred 2026-09-01 for the star schema entry below, at the user's request)
 - [ ] Conceptual data model — doable now
 - [ ] Logical data model — doable now (distinct from conceptual: adds attributes, still DB-agnostic)
 - [ ] Physical data model / schema diagram (tables, columns, keys) — doable approximately now (a shape per table, columns as multi-line label text, edges for FKs); better once configurable connection points (epic 0013) allow per-attribute connection lines instead of one line per table
 - [ ] Data lineage diagram — doable now
 - [ ] Data flow diagram (system-to-system data movement, broader than the GDPR-specific one below) — doable now
 - [ ] Data governance / ownership map (data domain → owner/steward) — doable now, same shape as the business capability ownership map above
-- [ ] Data warehouse / dimensional model (star or snowflake schema) — doable approximately now, same caveats as the physical data model
+- [x] Data warehouse / dimensional model (star schema) — `data/star-schema-powerbi.chd`, content done (2026-09-01). A Power BI semantic model: 1 fact + 5 conformed dimensions, multi-line column labels, crow's-foot cardinality, and **edge direction sets** ([ADR 0081](../../decisions/0081-flippable-edge-direction-sets.md)) for the Cardinality-vs-Filter-direction duality — this entry doubled as the showcase for that feature. **Awaiting the user opening it in-app.** Snowflake variant still open.
 - [ ] Master data management architecture (golden record flow, source systems, MDM hub) — doable now, a system-landscape variant
 - [ ] Data platform / pipeline architecture (ETL/ELT, batch vs. streaming) — doable now, an integration-landscape variant with directional data-flow edges
 - [ ] Data classification map (public/internal/confidential/restricted) — needs color coding (epic 0003) to be legible at a glance; cross-ref Security architect

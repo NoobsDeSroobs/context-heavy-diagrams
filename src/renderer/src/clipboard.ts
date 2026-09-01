@@ -103,14 +103,22 @@ export function remapForPaste(
     }
   })
 
-  const edges = payload.edges.map((e) => ({
-    ...e,
-    id: newId('edge'),
-    source: idMap.get(e.source)!,
-    target: idMap.get(e.target)!,
-    selected: true,
-    data: { ...e.data }
-  }))
+  const edges = payload.edges.map((e) => {
+    // Drop any per-set direction records (ADR 0081) — their stored
+    // source/target node ids point at the *original* nodes, not the
+    // remapped copies. The pasted edge re-seeds every set from its own
+    // (correctly remapped) live direction at the next save or set switch.
+    const data: Record<string, unknown> = { ...e.data }
+    delete data.directionSets
+    return {
+      ...e,
+      id: newId('edge'),
+      source: idMap.get(e.source)!,
+      target: idMap.get(e.target)!,
+      selected: true,
+      data
+    }
+  })
 
   return { nodes, edges }
 }

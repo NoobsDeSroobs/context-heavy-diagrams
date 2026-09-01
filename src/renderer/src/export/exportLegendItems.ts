@@ -7,6 +7,9 @@ import type {
   MarkerKind
 } from '@shared/diagram'
 import { highlightId } from '../highlights'
+import type { DirectionSetLegendRow } from '../edges/edgeDirectionSets'
+
+export type { DirectionSetLegendRow }
 
 export type ExportLegendSwatch =
   | {
@@ -48,8 +51,24 @@ function stringifyValue(value: JsonValue): string {
 export function buildExportLegendItems(
   legend: LegendEntry[],
   highlights: HighlightDefinition[],
-  enabledHighlightIds: Set<string>
+  enabledHighlightIds: Set<string>,
+  directionSetRow?: DirectionSetLegendRow | null
 ): ExportLegendItem[] {
+  const directionItems: ExportLegendItem[] = directionSetRow
+    ? [
+        {
+          swatch: {
+            kind: 'line',
+            color: directionSetRow.color,
+            lineStyle: directionSetRow.lineStyle,
+            startMarker: directionSetRow.startMarker,
+            endMarker: directionSetRow.endMarker
+          },
+          label: directionSetRow.label
+        }
+      ]
+    : []
+
   const legendItems: ExportLegendItem[] = legend.map((entry) => ({
     swatch:
       entry.kind === 'icon'
@@ -76,5 +95,5 @@ export function buildExportLegendItems(
         : stringifyValue(h.value)
   }))
 
-  return [...legendItems, ...highlightItems]
+  return [...directionItems, ...legendItems, ...highlightItems]
 }

@@ -2,12 +2,18 @@ import { useEffect, useMemo, useState, type MouseEvent } from 'react'
 import type { EdgeStyle, IconRef, LegendEntry, LegendEntryKind } from '@shared/diagram'
 import { loadBuiltinIconSvg, searchBuiltinIconIds } from '../icons/builtinIcons'
 import { markerUrl } from '../edges/markerIds'
+import type { DirectionSetLegendRow } from '../edges/edgeDirectionSets'
 import IconSlotView from './IconSlotView'
 import StylePicker from './StylePicker'
 
 interface LegendPanelProps {
   diagramPath: string | null
   legend: LegendEntry[]
+  // The active edge direction set's legend row (ADR 0081), shown pinned
+  // above the authored entries. Read-only here — its label is the set name
+  // and its swatch is edited in the Edge direction sets section. `null`
+  // when the diagram has no direction set.
+  directionSetRow: DirectionSetLegendRow | null
   anchorRect: DOMRect | null
   onAdd: (entry: Omit<LegendEntry, 'id'>) => void
   onUpdate: (id: string, patch: Partial<Omit<LegendEntry, 'id'>>) => void
@@ -186,6 +192,7 @@ type Draft = Omit<LegendEntry, 'id' | 'label'>
 export default function LegendPanel({
   diagramPath,
   legend,
+  directionSetRow,
   anchorRect,
   onAdd,
   onUpdate,
@@ -238,8 +245,27 @@ export default function LegendPanel({
         </button>
       </div>
       <div className="legend-panel-body">
-        {legend.length === 0 && !draft && !pickingKind && (
+        {legend.length === 0 && !directionSetRow && !draft && !pickingKind && (
           <p className="legend-panel-hint">No legend entries yet.</p>
+        )}
+        {directionSetRow && (
+          <div className="legend-row legend-row-pinned" title="Active edge direction set">
+            <span className="legend-swatch-slot">
+              <LegendSwatch
+                entry={{
+                  id: '__direction-set',
+                  kind: 'line',
+                  label: directionSetRow.label,
+                  color: directionSetRow.color,
+                  lineStyle: directionSetRow.lineStyle,
+                  startMarker: directionSetRow.startMarker,
+                  endMarker: directionSetRow.endMarker
+                }}
+                diagramPath={diagramPath}
+              />
+            </span>
+            <span className="legend-row-label">{directionSetRow.label}</span>
+          </div>
         )}
         {legend.map((entry) => (
           <div key={entry.id} className="legend-row">

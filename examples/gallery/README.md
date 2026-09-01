@@ -15,10 +15,11 @@ Folders are organized **by domain — who'd actually make or use the diagram —
 | [`landscape/`](landscape/README.md) | The base system-landscape diagram + its compliance highlight overlays (GDPR, NIS2) |
 | [`technical/`](technical/README.md) | C4 context/container/component — absorbs what would've been separate integration and infrastructure/cloud folders |
 | [`business/`](business/README.md) | Capability heatmap, customer journey |
+| [`data/`](data/README.md) | Dimensional / semantic models — the Power BI star schema (added 2026-09-01, at the user's request; see below) |
 | [`organisation/`](organisation/README.md) | Motivation/goals view, RACI matrix — people, accountability, process |
 | [`self-documentation/`](self-documentation/README.md) | This tool's own technical + functional views, built with its own features (dogfooding) — unrelated to the Meridian Rail scenario |
 
-Deferred, not dropped: a dedicated data-domain folder, a hello-world tier, and a standalone limits-tests folder (a genuinely useful entry like the RACI matrix above can double as a limits-test without needing its own category). Revisit once the trimmed candidate list above is actually built.
+Deferred, not dropped: a hello-world tier, and a standalone limits-tests folder (a genuinely useful entry like the RACI matrix above can double as a limits-test without needing its own category). Revisit once the trimmed candidate list above is actually built. (The data-domain folder was un-deferred 2026-09-01 for the Power BI star schema entry, which also served as the showcase for edge direction sets / ADR 0081.)
 
 ## Status
 

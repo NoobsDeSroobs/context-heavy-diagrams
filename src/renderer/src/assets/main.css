@@ -2001,6 +2001,49 @@ body {
   flex: 0 0 64px;
 }
 
+/* Edge direction sets section (ADR 0081) — reuses the .required-tag-value-*
+   row shape, with a compact swatch button + colour input ahead of the
+   name so each reading's legend row can be styled here. */
+.edge-direction-set-row {
+  gap: 4px;
+}
+
+.edge-direction-set-swatch {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  padding: 2px 3px;
+  background: var(--color-background);
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.edge-direction-set-swatch:hover {
+  border-color: var(--ev-c-gray-2);
+}
+
+.edge-direction-set-color {
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+}
+
+/* The active direction set's pinned row at the top of the Legend panel —
+   an authored-row shape, faintly set apart since it's not hand-editable
+   here (its label is the set name, its swatch is styled in Diagram
+   settings). */
+.legend-row-pinned {
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+  border-bottom: 1px dashed var(--ev-c-gray-1);
+}
+
 /* DiagramSettingsPanel consolidates the diagram-level (per-diagram)
    surfaces into one dock panel (ADR 0071): a plain field at the top, then
    Required tags and Line bend presets as CollapsibleSections. The sections

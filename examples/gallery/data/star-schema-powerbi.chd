@@ -1,0 +1,176 @@
+{
+  "version": 1,
+  "viewport": { "x": 620, "y": 470, "zoom": 0.62 },
+  "metadata": {
+    "source": "Power BI semantic model (Import mode)",
+    "grain": "one row per ticket line sold",
+    "model": "star schema — 1 fact, 5 conformed dimensions"
+  },
+  "legend": [
+    { "id": "lg-fact", "kind": "shape", "label": "Fact table (grain: one ticket line sold)", "color": "#1d4ed8" },
+    { "id": "lg-dim", "kind": "shape", "label": "Dimension table", "color": "#cbd5e1" }
+  ],
+  "edgeDirectionSets": [
+    {
+      "id": "s-card",
+      "name": "Cardinality (1 to *)",
+      "legend": { "color": "#475569", "lineStyle": "solid", "startMarker": "crowsFootMany", "endMarker": "crowsFootOne" }
+    },
+    {
+      "id": "s-filter",
+      "name": "Filter direction",
+      "legend": { "color": "#7c3aed", "lineStyle": "dashed", "startMarker": "none", "endMarker": "arrowClosed" }
+    }
+  ],
+  "activeEdgeDirectionSetId": "s-card",
+  "nodes": [
+    {
+      "id": "blurb",
+      "type": "text",
+      "position": { "x": -470, "y": -620 },
+      "size": { "width": 1240, "height": 300 },
+      "style": { "fill": "#fefcbf", "fillOpacity": 92, "stroke": "#d69e2e", "fontColor": "#744210", "fontSize": 12, "textAlign": "start", "fontFamily": "sans-serif" },
+      "data": {
+        "label": "EXAMPLE — Power BI star schema: Meridian Rail ticket-sales model\n\nIllustrates: a data architect / BI developer laying out a Power BI semantic model — one fact table, five conformed dimensions. Uses multi-line labels for table columns, crow's-foot markers for cardinality, and EDGE DIRECTION SETS for the two ways a Power BI relationship reads:\n  • \"Cardinality (1 to *)\"  — the FK->PK structure: many fact rows to one dimension row.\n  • \"Filter direction\"      — how filter context propagates at query time: dimension -> fact (single-directional).\nSame five relationships, opposite arrows. Switch between the readings in Diagram settings -> Edge direction sets; the legend row follows the switch.\n\nPersona: a data architect on Meridian Rail's modernization task force, designing the reporting model over the new booking platform.\n\nPart of the Meridian Rail example gallery — epic 0022 (docs/planning/epics/0022-example-diagram-gallery.md)."
+      }
+    },
+    {
+      "id": "fact_ticket_sales",
+      "type": "shape",
+      "position": { "x": 0, "y": 0 },
+      "size": { "width": 300, "height": 262 },
+      "style": { "fill": "#1d4ed8", "stroke": "#1e3a8a", "strokeWidth": 2, "fontColor": "#ffffff", "fontSize": 12, "textAlign": "start", "fontFamily": "monospace" },
+      "connectionPoints": [
+        { "id": "cp-bl", "side": "bottom", "offset": 0.28 },
+        { "id": "cp-br", "side": "bottom", "offset": 0.72 }
+      ],
+      "data": {
+        "label": "Fact Ticket Sales\n─────────────────────\nDateKey  (FK)\nRouteKey  (FK)\nOriginStationKey  (FK)\nPassengerKey  (FK)\nChannelKey  (FK)\n· · · · · · · · · · · · ·\nQuantity\nGrossFare\nDiscountAmount\nNetRevenue",
+        "details": "star-schema-powerbi/details/fact-ticket-sales.md"
+      }
+    },
+    {
+      "id": "dim_date",
+      "type": "shape",
+      "position": { "x": 35, "y": -300 },
+      "size": { "width": 230, "height": 196 },
+      "style": { "fill": "#e2e8f0", "stroke": "#94a3b8", "strokeWidth": 2, "fontColor": "#1e293b", "fontSize": 12, "textAlign": "start", "fontFamily": "monospace" },
+      "data": {
+        "label": "Dim Date\n──────────────\nDateKey  (PK)\nDate\nYear\nQuarter\nMonthName\nDayOfWeek\nIsHoliday"
+      }
+    },
+    {
+      "id": "dim_route",
+      "type": "shape",
+      "position": { "x": 470, "y": -30 },
+      "size": { "width": 250, "height": 182 },
+      "style": { "fill": "#e2e8f0", "stroke": "#94a3b8", "strokeWidth": 2, "fontColor": "#1e293b", "fontSize": 12, "textAlign": "start", "fontFamily": "monospace" },
+      "data": {
+        "label": "Dim Route\n──────────────\nRouteKey  (PK)\nRouteName\nOriginRegion\nDestinationRegion\nDistanceKm\nServiceClass"
+      }
+    },
+    {
+      "id": "dim_station",
+      "type": "shape",
+      "position": { "x": 430, "y": 400 },
+      "size": { "width": 230, "height": 164 },
+      "style": { "fill": "#e2e8f0", "stroke": "#94a3b8", "strokeWidth": 2, "fontColor": "#1e293b", "fontSize": 12, "textAlign": "start", "fontFamily": "monospace" },
+      "data": {
+        "label": "Dim Station\n──────────────\nStationKey  (PK)\nStationName\nCity\nRegion\nFareZone"
+      }
+    },
+    {
+      "id": "dim_passenger",
+      "type": "shape",
+      "position": { "x": -470, "y": 410 },
+      "size": { "width": 250, "height": 182 },
+      "style": { "fill": "#e2e8f0", "stroke": "#94a3b8", "strokeWidth": 2, "fontColor": "#1e293b", "fontSize": 12, "textAlign": "start", "fontFamily": "monospace" },
+      "data": {
+        "label": "Dim Passenger\n──────────────\nPassengerKey  (PK)\nLoyaltyTier\nAgeBand\nHomeRegion\nConsentMarketing",
+        "details": "star-schema-powerbi/details/dim-passenger.md"
+      }
+    },
+    {
+      "id": "dim_channel",
+      "type": "shape",
+      "position": { "x": -480, "y": -20 },
+      "size": { "width": 230, "height": 146 },
+      "style": { "fill": "#e2e8f0", "stroke": "#94a3b8", "strokeWidth": 2, "fontColor": "#1e293b", "fontSize": 12, "textAlign": "start", "fontFamily": "monospace" },
+      "data": {
+        "label": "Dim Channel\n──────────────\nChannelKey  (PK)\nChannelName\nChannelType\nIsAssisted"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "rel_date",
+      "type": "labeled",
+      "source": "fact_ticket_sales",
+      "target": "dim_date",
+      "sourceHandle": "top",
+      "targetHandle": "bottom",
+      "label": "DateKey",
+      "style": { "stroke": "#475569", "strokeWidth": 2, "lineStyle": "solid", "startMarker": "crowsFootMany", "endMarker": "crowsFootOne", "routingStyle": "straight", "fontSize": 11, "fontColor": "#475569" },
+      "directionSets": {
+        "s-card": { "source": "fact_ticket_sales", "target": "dim_date", "sourceHandle": "top", "targetHandle": "bottom" },
+        "s-filter": { "source": "dim_date", "target": "fact_ticket_sales", "sourceHandle": "bottom", "targetHandle": "top" }
+      }
+    },
+    {
+      "id": "rel_route",
+      "type": "labeled",
+      "source": "fact_ticket_sales",
+      "target": "dim_route",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "RouteKey",
+      "style": { "stroke": "#475569", "strokeWidth": 2, "lineStyle": "solid", "startMarker": "crowsFootMany", "endMarker": "crowsFootOne", "routingStyle": "straight", "fontSize": 11, "fontColor": "#475569" },
+      "directionSets": {
+        "s-card": { "source": "fact_ticket_sales", "target": "dim_route", "sourceHandle": "right", "targetHandle": "left" },
+        "s-filter": { "source": "dim_route", "target": "fact_ticket_sales", "sourceHandle": "left", "targetHandle": "right" }
+      }
+    },
+    {
+      "id": "rel_station",
+      "type": "labeled",
+      "source": "fact_ticket_sales",
+      "target": "dim_station",
+      "sourceHandle": "cp-br",
+      "targetHandle": "top",
+      "label": "OriginStationKey",
+      "style": { "stroke": "#475569", "strokeWidth": 2, "lineStyle": "solid", "startMarker": "crowsFootMany", "endMarker": "crowsFootOne", "routingStyle": "straight", "fontSize": 11, "fontColor": "#475569" },
+      "directionSets": {
+        "s-card": { "source": "fact_ticket_sales", "target": "dim_station", "sourceHandle": "cp-br", "targetHandle": "top" },
+        "s-filter": { "source": "dim_station", "target": "fact_ticket_sales", "sourceHandle": "top", "targetHandle": "cp-br" }
+      }
+    },
+    {
+      "id": "rel_passenger",
+      "type": "labeled",
+      "source": "fact_ticket_sales",
+      "target": "dim_passenger",
+      "sourceHandle": "cp-bl",
+      "targetHandle": "top",
+      "label": "PassengerKey",
+      "style": { "stroke": "#475569", "strokeWidth": 2, "lineStyle": "solid", "startMarker": "crowsFootMany", "endMarker": "crowsFootOne", "routingStyle": "straight", "fontSize": 11, "fontColor": "#475569" },
+      "directionSets": {
+        "s-card": { "source": "fact_ticket_sales", "target": "dim_passenger", "sourceHandle": "cp-bl", "targetHandle": "top" },
+        "s-filter": { "source": "dim_passenger", "target": "fact_ticket_sales", "sourceHandle": "top", "targetHandle": "cp-bl" }
+      }
+    },
+    {
+      "id": "rel_channel",
+      "type": "labeled",
+      "source": "fact_ticket_sales",
+      "target": "dim_channel",
+      "sourceHandle": "left",
+      "targetHandle": "right",
+      "label": "ChannelKey",
+      "style": { "stroke": "#475569", "strokeWidth": 2, "lineStyle": "solid", "startMarker": "crowsFootMany", "endMarker": "crowsFootOne", "routingStyle": "straight", "fontSize": 11, "fontColor": "#475569" },
+      "directionSets": {
+        "s-card": { "source": "fact_ticket_sales", "target": "dim_channel", "sourceHandle": "left", "targetHandle": "right" },
+        "s-filter": { "source": "dim_channel", "target": "fact_ticket_sales", "sourceHandle": "right", "targetHandle": "left" }
+      }
+    }
+  ]
+}

@@ -1,8 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
-import type { GravityPreset, JsonValue, RequiredTagDefinition } from '@shared/diagram'
+import type {
+  EdgeDirectionSet,
+  EdgeDirectionSetLegend,
+  GravityPreset,
+  JsonValue,
+  RequiredTagDefinition
+} from '@shared/diagram'
 import { CollapsibleSection } from '../panels/fields'
 import RequiredTagsSection from './RequiredTagsSection'
 import GravityPresetsSection from './GravityPresetsSection'
+import EdgeDirectionSetsSection from './EdgeDirectionSetsSection'
 
 interface DiagramSettingsPanelProps {
   // --- Max connection points per side ---
@@ -23,6 +30,15 @@ interface DiagramSettingsPanelProps {
   gravityPresetsUserDefault: GravityPreset[] | undefined
   onSetGravityPresetsUserDefault: (presets: GravityPreset[]) => void
   onClearGravityPresetsUserDefault: () => void
+  // --- Edge direction sets section (ADR 0081) ---
+  edgeDirectionSets: EdgeDirectionSet[]
+  activeEdgeDirectionSetId: string | undefined
+  onSwitchEdgeDirectionSet: (id: string) => void
+  onCreateEdgeDirectionSet: () => void
+  onDuplicateEdgeDirectionSet: (id: string) => void
+  onRenameEdgeDirectionSet: (id: string, name: string) => void
+  onUpdateEdgeDirectionSetLegend: (id: string, patch: Partial<EdgeDirectionSetLegend>) => void
+  onDeleteEdgeDirectionSet: (id: string) => void
   onClose: () => void
 }
 
@@ -69,6 +85,14 @@ export default function DiagramSettingsPanel({
   gravityPresetsUserDefault,
   onSetGravityPresetsUserDefault,
   onClearGravityPresetsUserDefault,
+  edgeDirectionSets,
+  activeEdgeDirectionSetId,
+  onSwitchEdgeDirectionSet,
+  onCreateEdgeDirectionSet,
+  onDuplicateEdgeDirectionSet,
+  onRenameEdgeDirectionSet,
+  onUpdateEdgeDirectionSetLegend,
+  onDeleteEdgeDirectionSet,
   onClose
 }: DiagramSettingsPanelProps): React.JSX.Element {
   const isOverridden = maxConnectionPointsPerSide !== undefined
@@ -139,6 +163,23 @@ export default function DiagramSettingsPanel({
             userDefault={gravityPresetsUserDefault}
             onSetUserDefault={onSetGravityPresetsUserDefault}
             onClearUserDefault={onClearGravityPresetsUserDefault}
+          />
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          title="Edge direction sets"
+          sectionKey="diagram-settings-edge-direction-sets"
+          defaultOpen={false}
+        >
+          <EdgeDirectionSetsSection
+            sets={edgeDirectionSets}
+            activeId={activeEdgeDirectionSetId}
+            onSwitchActive={onSwitchEdgeDirectionSet}
+            onCreate={onCreateEdgeDirectionSet}
+            onDuplicate={onDuplicateEdgeDirectionSet}
+            onRename={onRenameEdgeDirectionSet}
+            onUpdateLegend={onUpdateEdgeDirectionSetLegend}
+            onDelete={onDeleteEdgeDirectionSet}
           />
         </CollapsibleSection>
       </div>

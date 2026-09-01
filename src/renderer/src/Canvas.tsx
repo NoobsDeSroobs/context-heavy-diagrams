@@ -30,6 +30,9 @@ import {
   type ConnectionPoint,
   type ConnectionPointSide,
   type DiagramFile,
+  type EdgeDirection,
+  type EdgeDirectionSet,
+  type EdgeDirectionSetLegend,
   type EdgeStyle,
   type GravityPreset,
   type HighlightDefinition,
@@ -82,6 +85,17 @@ import {
 } from './nodes/connectionPoints'
 import { nearestSegmentIndex, type PathPoint } from './geometry/bendablePath'
 import { nearestWaypointGap } from './geometry/orthogonalPath'
+import {
+  addDirectionSetFrom,
+  DEFAULT_DIRECTION_SET_LEGEND_COLOR,
+  directionSetLegendRow,
+  ensureDirectionSets,
+  flipEdgeVisuals,
+  refreshActiveDirectionSet,
+  removeDirectionSetKey,
+  stripDirectionSets,
+  switchActiveDirectionSet
+} from './edges/edgeDirectionSets'
 import { absolutePosition, subtractPosition } from './geometry/nodePosition'
 import MultiConnectionLine from './edges/MultiConnectionLine'
 import PreferencesPanel from './components/PreferencesPanel'
@@ -465,8 +479,32 @@ function toDiagramFile(
   highlights: HighlightDefinition[],
   legend: LegendEntry[],
   gravityPresets: GravityPreset[],
-  maxConnectionPointsPerSide: number | undefined
+  maxConnectionPointsPerSide: number | undefined,
+  edgeDirectionSets: EdgeDirectionSet[],
+  activeEdgeDirectionSetId: string | undefined
 ): DiagramFile {
+  // Edge direction sets (ADR 0081): on disk, every edge is stored in the
+  // *base* (first) set's orientation regardless of which set is active, so
+  // switching the displayed reading never churns the edges in git. Refresh
+  // the active set's per-edge records from the live fields, then — if a
+  // non-base set is active — re-express the edges in base orientation for
+  // serialization.
+  let outEdges = edges
+  if (edgeDirectionSets.length >= 2) {
+    const setIds = edgeDirectionSets.map((s) => s.id)
+    const baseId = edgeDirectionSets[0].id
+    const activeId = activeEdgeDirectionSetId ?? baseId
+    outEdges =
+      activeId === baseId
+        ? refreshActiveDirectionSet(edges, setIds, baseId)
+        : switchActiveDirectionSet(
+            edges,
+            setIds,
+            activeId,
+            baseId,
+            new Map(nodes.map((n) => [n.id, n]))
+          )
+  }
   return {
     version: 1,
     viewport,
@@ -475,6 +513,9 @@ function toDiagramFile(
     legend: legend.length > 0 ? legend : undefined,
     gravityPresets: gravityPresets.length > 0 ? gravityPresets : undefined,
     maxConnectionPointsPerSide,
+    // serializeDiagram drops these below 2 sets — pass them through as-is.
+    edgeDirectionSets: edgeDirectionSets.length > 0 ? edgeDirectionSets : undefined,
+    activeEdgeDirectionSetId,
     requiredTags: requiredTags.length > 0 ? requiredTags : undefined,
     nodes: nodes.map((n) => ({
       id: n.id,
@@ -505,7 +546,7 @@ function toDiagramFile(
             : undefined
       }
     })),
-    edges: edges.map((e) => ({
+    edges: outEdges.map((e) => ({
       id: e.id,
       type: e.type,
       source: e.source,
@@ -518,7 +559,8 @@ function toDiagramFile(
       points:
         Array.isArray(e.data?.points) && (e.data.points as LinePoint[]).length > 0
           ? (e.data.points as LinePoint[])
-          : undefined
+          : undefined,
+      directionSets: e.data?.directionSets as Record<string, EdgeDirection> | undefined
     }))
   }
 }
@@ -532,6 +574,8 @@ function fromDiagramFile(diagram: DiagramFile): {
   legend: LegendEntry[]
   gravityPresets: GravityPreset[]
   maxConnectionPointsPerSide: number | undefined
+  edgeDirectionSets: EdgeDirectionSet[]
+  activeEdgeDirectionSetId: string | undefined
   hierarchyNotes: string[]
 } {
   // healHierarchy repairs a dangling/cyclic parentId before the nodes reach
@@ -568,27 +612,63 @@ function fromDiagramFile(diagram: DiagramFile): {
       }
     }))
   )
+  const finalNodes = applyZIndexBackfill(sortNodesForHierarchy(healed.nodes))
+
+  // Edge direction sets (ADR 0081). The file's edges are in base ([0])
+  // orientation with per-set records in `directionSets`. Seed any missing
+  // record from the live (base) fields, then — if a non-base set is the
+  // saved active one — re-express the live edges in that set's orientation.
+  const directionSets = diagram.edgeDirectionSets ?? []
+  let edges: Edge[] = diagram.edges.map((e) => ({
+    id: e.id,
+    type: e.type,
+    source: e.source,
+    target: e.target,
+    sourceHandle: e.sourceHandle,
+    targetHandle: e.targetHandle,
+    data: {
+      label: e.label ?? '',
+      ...(e.style ? { style: e.style } : {}),
+      ...(e.metadata ? { metadata: e.metadata } : {}),
+      ...(e.points && e.points.length > 0 ? { points: e.points } : {}),
+      ...(e.directionSets && Object.keys(e.directionSets).length > 0
+        ? { directionSets: e.directionSets }
+        : {})
+    }
+  }))
+  let activeEdgeDirectionSetId: string | undefined
+  if (directionSets.length >= 1) {
+    const setIds = directionSets.map((s) => s.id)
+    const baseId = setIds[0]
+    activeEdgeDirectionSetId =
+      diagram.activeEdgeDirectionSetId && setIds.includes(diagram.activeEdgeDirectionSetId)
+        ? diagram.activeEdgeDirectionSetId
+        : baseId
+    // Per-edge records + base-orientation only matter at 2+ sets.
+    if (directionSets.length >= 2) {
+      edges = ensureDirectionSets(edges, setIds)
+      if (activeEdgeDirectionSetId !== baseId) {
+        edges = switchActiveDirectionSet(
+          edges,
+          setIds,
+          baseId,
+          activeEdgeDirectionSetId,
+          new Map(finalNodes.map((n) => [n.id, n]))
+        )
+      }
+    }
+  }
+
   return {
     highlights: diagram.highlights ?? [],
     legend: diagram.legend ?? [],
     gravityPresets: diagram.gravityPresets ?? [],
     maxConnectionPointsPerSide: diagram.maxConnectionPointsPerSide,
+    edgeDirectionSets: directionSets.length >= 1 ? directionSets : [],
+    activeEdgeDirectionSetId,
     hierarchyNotes: healed.notes,
-    nodes: applyZIndexBackfill(sortNodesForHierarchy(healed.nodes)),
-    edges: diagram.edges.map((e) => ({
-      id: e.id,
-      type: e.type,
-      source: e.source,
-      target: e.target,
-      sourceHandle: e.sourceHandle,
-      targetHandle: e.targetHandle,
-      data: {
-        label: e.label ?? '',
-        ...(e.style ? { style: e.style } : {}),
-        ...(e.metadata ? { metadata: e.metadata } : {}),
-        ...(e.points && e.points.length > 0 ? { points: e.points } : {})
-      }
-    })),
+    nodes: finalNodes,
+    edges,
     metadata: diagram.metadata ?? {},
     requiredTags: diagram.requiredTags ?? []
   }
@@ -748,6 +828,16 @@ function CanvasInner(): React.JSX.Element {
   const [diagramMaxConnectionPointsPerSide, setDiagramMaxConnectionPointsPerSide] = useState<
     number | undefined
   >(undefined)
+  // Flippable edge direction sets (ADR 0081) — same file-scoped/reset-on-
+  // load treatment as gravityPresets above. `[]` (or a single set) means
+  // the feature is dormant: an edge's direction is just its own
+  // source/target/handles. When >= 2 sets exist, [0] is the "base" set the
+  // edges are stored in on disk, and `activeEdgeDirectionSetId` picks which
+  // reading the live edges currently show.
+  const [edgeDirectionSets, setEdgeDirectionSets] = useState<EdgeDirectionSet[]>([])
+  const [activeEdgeDirectionSetId, setActiveEdgeDirectionSetId] = useState<string | undefined>(
+    undefined
+  )
   const [diagramSettingsPanelOpen, setDiagramSettingsPanelOpen] = useState(false)
   // Anchors the floating panel next to whichever <ControlButton> opened it —
   // same convention as iconPicker/colorPicker/linePicker's own anchorRect.
@@ -1176,45 +1266,22 @@ function CanvasInner(): React.JSX.Element {
             setEdges((eds) =>
               eds.map((e) => {
                 if (e.id !== edge.id) return e
-                const points = (e.data?.points as LinePoint[] | undefined) ?? []
-                const style = e.data?.style as EdgeStyle | undefined
+                // flipEdgeVisuals is the shared direction-only involution
+                // (edges/edgeDirectionSets.ts, ADR 0084/0081): the endpoints
+                // swap, so the direction-sensitive visuals must travel with
+                // their physical end — catmull-rom `points` reverse, start/
+                // end markers swap, a custom `labelPosition` mirrors. When a
+                // direction set is active, its per-edge record is refreshed
+                // from these live fields at the next switch/save, so this
+                // flips only the active reading.
+                const flipped = flipEdgeVisuals(e)
                 return {
                   ...e,
                   source: e.target,
                   target: e.source,
                   sourceHandle: e.targetHandle,
                   targetHandle: e.sourceHandle,
-                  data: {
-                    ...e.data,
-                    // Reversed, not just swapped-and-left-in-order — a
-                    // catmull-rom edge's curve is defined by walking
-                    // [source, ...points, target] in that order, so
-                    // keeping the same point order after swapping the
-                    // endpoints would trace a *different* shape (or, for
-                    // an asymmetric gravity/point layout, a visibly wrong
-                    // one), not the same curve with the arrow moved.
-                    points: points.length > 0 ? [...points].reverse() : points,
-                    style: style && {
-                      ...style,
-                      // Swapped together, not independently — even when
-                      // neither was ever explicitly customized (both
-                      // undefined), this keeps whichever *physical* marker
-                      // choice each end had traveling with that end,
-                      // rather than silently staying "at target" for a
-                      // target that's now a different node.
-                      startMarker: style.endMarker,
-                      endMarker: style.startMarker,
-                      // A custom label position is a ratio measured from
-                      // source (LabeledEdge.tsx's pointAtRatio) — flipping
-                      // it keeps the label sitting in the same physical
-                      // spot on the curve now that source/target swapped,
-                      // instead of jumping to the mirrored point. 0.5 (the
-                      // default, unset) flips to itself, so this is a
-                      // no-op for the common case of never having touched it.
-                      labelPosition:
-                        style.labelPosition !== undefined ? 1 - style.labelPosition : undefined
-                    }
-                  }
+                  data: { ...e.data, points: flipped.points, style: flipped.style }
                 }
               })
             )
@@ -1542,6 +1609,129 @@ function CanvasInner(): React.JSX.Element {
       markDirty()
     },
     [markDirty]
+  )
+
+  // --- Flippable edge direction sets (ADR 0081) ---
+  // A switch re-orients the live edges AND every history snapshot's edges
+  // (so a later undo doesn't restore a stale orientation); it is not itself
+  // an undo step. Set create/duplicate/delete/rename likewise just mutate
+  // state and mark the diagram dirty, no snapshot.
+  const rewriteHistoryEdges = useCallback(
+    (transform: (edges: Edge[]) => Edge[]) => {
+      setPast((p) => p.map((s) => ({ ...s, edges: transform(s.edges) })))
+      setFuture((f) => f.map((s) => ({ ...s, edges: transform(s.edges) })))
+    },
+    []
+  )
+
+  const switchEdgeDirectionSet = useCallback(
+    (toId: string) => {
+      const fromId = activeEdgeDirectionSetId ?? edgeDirectionSets[0]?.id
+      const setIds = edgeDirectionSets.map((s) => s.id)
+      if (!fromId || fromId === toId || !setIds.includes(toId)) return
+      const nodesById = new Map(graphRef.current.nodes.map((n) => [n.id, n]))
+      const transform = (eds: Edge[]): Edge[] =>
+        switchActiveDirectionSet(eds, setIds, fromId, toId, nodesById)
+      setEdges(transform)
+      rewriteHistoryEdges(transform)
+      setActiveEdgeDirectionSetId(toId)
+      markDirty()
+    },
+    [activeEdgeDirectionSetId, edgeDirectionSets, setEdges, rewriteHistoryEdges, markDirty]
+  )
+
+  const addEdgeDirectionSet = useCallback(
+    (copyFromId?: string) => {
+      const existing = edgeDirectionSets
+      const source = copyFromId ? existing.find((s) => s.id === copyFromId) : undefined
+      const used = new Set(existing.map((s) => s.name))
+      let name: string
+      if (existing.length === 0) {
+        name = 'Data flow'
+      } else if (source) {
+        name = `${source.name} copy`
+        for (let n = 2; used.has(name); n++) name = `${source.name} copy ${n}`
+      } else {
+        name = 'Trigger direction'
+        for (let n = 2; used.has(name); n++) name = `Direction ${n}`
+      }
+      const newSet: EdgeDirectionSet = {
+        id: `dirset-${crypto.randomUUID()}`,
+        name,
+        legend: source?.legend
+          ? { ...source.legend }
+          : { color: DEFAULT_DIRECTION_SET_LEGEND_COLOR, endMarker: 'arrowClosed' }
+      }
+      const next = [...existing, newSet]
+      // Per-edge records only exist at 2+ sets — seed the new set (and
+      // materialise the base set's records) only once we cross that line.
+      if (next.length >= 2) {
+        const setIds = next.map((s) => s.id)
+        const fromId = copyFromId ?? activeEdgeDirectionSetId ?? next[0].id
+        const transform = (eds: Edge[]): Edge[] =>
+          addDirectionSetFrom(eds, setIds, newSet.id, fromId)
+        setEdges(transform)
+        rewriteHistoryEdges(transform)
+      }
+      setEdgeDirectionSets(next)
+      if (!activeEdgeDirectionSetId) setActiveEdgeDirectionSetId(next[0].id)
+      markDirty()
+    },
+    [edgeDirectionSets, activeEdgeDirectionSetId, setEdges, rewriteHistoryEdges, markDirty]
+  )
+
+  const renameEdgeDirectionSet = useCallback(
+    (id: string, name: string) => {
+      setEdgeDirectionSets((prev) => prev.map((s) => (s.id === id ? { ...s, name } : s)))
+      markDirty()
+    },
+    [markDirty]
+  )
+
+  const updateEdgeDirectionSetLegend = useCallback(
+    (id: string, patch: Partial<EdgeDirectionSetLegend>) => {
+      setEdgeDirectionSets((prev) =>
+        prev.map((s) => (s.id === id ? { ...s, legend: { ...s.legend, ...patch } } : s))
+      )
+      markDirty()
+    },
+    [markDirty]
+  )
+
+  const deleteEdgeDirectionSet = useCallback(
+    (id: string) => {
+      const sets = edgeDirectionSets
+      if (!sets.some((s) => s.id === id)) return
+      const setIds = sets.map((s) => s.id)
+      const fromActive = activeEdgeDirectionSetId ?? sets[0]?.id
+      const remaining = sets.filter((s) => s.id !== id)
+      const targetActive =
+        remaining.length === 0
+          ? undefined
+          : id === fromActive
+            ? remaining[0].id
+            : fromActive
+      // Per-edge records only exist at 2+ sets. Below that there's nothing
+      // on the edges to touch — just drop the registry entry.
+      if (sets.length >= 2) {
+        const nodesById = new Map(graphRef.current.nodes.map((n) => [n.id, n]))
+        const transform = (eds: Edge[]): Edge[] => {
+          const reoriented =
+            targetActive && fromActive && targetActive !== fromActive
+              ? switchActiveDirectionSet(eds, setIds, fromActive, targetActive, nodesById)
+              : eds
+          return remaining.length <= 1
+            ? stripDirectionSets(reoriented)
+            : removeDirectionSetKey(reoriented, id)
+        }
+        setEdges(transform)
+        rewriteHistoryEdges(transform)
+      }
+      setEdgeDirectionSets(remaining)
+      setActiveEdgeDirectionSetId(targetActive)
+      markDirty()
+    },
+    [edgeDirectionSets, activeEdgeDirectionSetId, setEdges, rewriteHistoryEdges, markDirty]
   )
 
   const updateRequiredTags = useCallback(
@@ -3166,7 +3356,9 @@ function CanvasInner(): React.JSX.Element {
         highlights,
         legend,
         gravityPresets,
-        diagramMaxConnectionPointsPerSide
+        diagramMaxConnectionPointsPerSide,
+        edgeDirectionSets,
+        activeEdgeDirectionSetId
       )
       await window.api.saveDiagram(path, diagram, sessionIdRef.current)
       setNodes(savedNodes)
@@ -3183,7 +3375,9 @@ function CanvasInner(): React.JSX.Element {
       highlights,
       legend,
       gravityPresets,
-      diagramMaxConnectionPointsPerSide
+      diagramMaxConnectionPointsPerSide,
+      edgeDirectionSets,
+      activeEdgeDirectionSetId
     ]
   )
 
@@ -3260,7 +3454,12 @@ function CanvasInner(): React.JSX.Element {
         await new Promise<void>((resolve) =>
           requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
         )
-        const legendItems = buildExportLegendItems(legend, highlights, enabledHighlightIds)
+        const legendItems = buildExportLegendItems(
+          legend,
+          highlights,
+          enabledHighlightIds,
+          directionSetLegendRow(edgeDirectionSets, activeEdgeDirectionSetId)
+        )
         const dataUrl = await captureDiagramPng(
           nodes,
           edges.map((e) => ({ source: e.source, target: e.target })),
@@ -3307,6 +3506,8 @@ function CanvasInner(): React.JSX.Element {
       legend,
       highlights,
       enabledHighlightIds,
+      edgeDirectionSets,
+      activeEdgeDirectionSetId,
       updateNodeInternals
     ]
   )
@@ -3340,6 +3541,8 @@ function CanvasInner(): React.JSX.Element {
         legend: openedLegend,
         gravityPresets: openedGravityPresets,
         maxConnectionPointsPerSide: openedMaxConnectionPointsPerSide,
+        edgeDirectionSets: openedEdgeDirectionSets,
+        activeEdgeDirectionSetId: openedActiveEdgeDirectionSetId,
         hierarchyNotes: openedHierarchyNotes
       } = fromDiagramFile(diagram)
       // A different diagram entirely — old undo history doesn't apply to
@@ -3388,6 +3591,8 @@ function CanvasInner(): React.JSX.Element {
       setLegendPanelOpen(false)
       setGravityPresets(openedGravityPresets)
       setDiagramMaxConnectionPointsPerSide(openedMaxConnectionPointsPerSide)
+      setEdgeDirectionSets(openedEdgeDirectionSets)
+      setActiveEdgeDirectionSetId(openedActiveEdgeDirectionSetId)
       setHierarchyLoadNotes(openedHierarchyNotes)
       setDetailsDrafts({})
       setContextMenu(null)
@@ -3489,6 +3694,8 @@ function CanvasInner(): React.JSX.Element {
     legend,
     gravityPresets,
     diagramMaxConnectionPointsPerSide,
+    edgeDirectionSets,
+    activeEdgeDirectionSetId,
     detailsDrafts
   })
   useEffect(() => {
@@ -3503,6 +3710,8 @@ function CanvasInner(): React.JSX.Element {
       legend,
       gravityPresets,
       diagramMaxConnectionPointsPerSide,
+      edgeDirectionSets,
+      activeEdgeDirectionSetId,
       detailsDrafts
     }
   })
@@ -3519,7 +3728,9 @@ function CanvasInner(): React.JSX.Element {
         s.highlights,
         s.legend,
         s.gravityPresets,
-        s.diagramMaxConnectionPointsPerSide
+        s.diagramMaxConnectionPointsPerSide,
+        s.edgeDirectionSets,
+        s.activeEdgeDirectionSetId
       )
       window.api.writeRecoverySnapshot(
         s.currentPath,
@@ -4307,6 +4518,11 @@ function CanvasInner(): React.JSX.Element {
   const isDiagramPersona = persona === 'diagram'
   const preferencesItem: MenuBarItem = { label: 'Preferences', onSelect: togglePreferencesPanel }
 
+  // The legend row the active edge direction set contributes (ADR 0081) —
+  // shown in the Legend panel and prepended to the PNG export legend
+  // whenever any direction set exists. `null` when the feature is dormant.
+  const directionSetRow = directionSetLegendRow(edgeDirectionSets, activeEdgeDirectionSetId)
+
   const fileMenu: MenuBarMenu = {
     label: 'File',
     items: [
@@ -4811,6 +5027,7 @@ function CanvasInner(): React.JSX.Element {
             <LegendPanel
               diagramPath={currentPath}
               legend={legend}
+              directionSetRow={directionSetRow}
               anchorRect={legendPanelAnchor}
               onAdd={addLegendEntry}
               onUpdate={updateLegendEntry}
@@ -4964,6 +5181,14 @@ function CanvasInner(): React.JSX.Element {
               onClearGravityPresetsUserDefault={() =>
                 updatePreferences({ gravityPresetsUserDefault: undefined })
               }
+              edgeDirectionSets={edgeDirectionSets}
+              activeEdgeDirectionSetId={activeEdgeDirectionSetId}
+              onSwitchEdgeDirectionSet={switchEdgeDirectionSet}
+              onCreateEdgeDirectionSet={() => addEdgeDirectionSet()}
+              onDuplicateEdgeDirectionSet={(id) => addEdgeDirectionSet(id)}
+              onRenameEdgeDirectionSet={renameEdgeDirectionSet}
+              onUpdateEdgeDirectionSetLegend={updateEdgeDirectionSetLegend}
+              onDeleteEdgeDirectionSet={deleteEdgeDirectionSet}
               onClose={() => setDiagramSettingsPanelOpen(false)}
             />
           )}
@@ -5000,7 +5225,9 @@ function CanvasInner(): React.JSX.Element {
               legendCorner: preferences.pngExportLegendCorner
             }}
             effectiveCanvasColorHex={exportPngEffectiveColorHex}
-            hasLegendContent={legend.length > 0 || enabledHighlightIds.size > 0}
+            hasLegendContent={
+              legend.length > 0 || enabledHighlightIds.size > 0 || directionSetRow !== null
+            }
             onClose={() => setExportPngDialogOpen(false)}
             onConfirm={(choice: PngExportChoice) => {
               setExportPngDialogOpen(false)

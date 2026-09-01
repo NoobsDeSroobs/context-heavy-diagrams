@@ -29,6 +29,11 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
     { "id": "curvy", "label": "Curvy", "value": 1 }
   ],
   "maxConnectionPointsPerSide": 12,
+  "edgeDirectionSets": [
+    { "id": "set-1", "name": "Data flow" },
+    { "id": "set-2", "name": "Trigger direction" }
+  ],
+  "activeEdgeDirectionSetId": "set-1",
   "nodes": [ /* Node objects */ ],
   "edges": [ /* Edge objects */ ]
 }
@@ -44,6 +49,8 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
 | `legend` | array of LegendEntry | Saved catalog of manually-authored legend entries explaining the diagram's own visual conventions — see [Legend](#legend) below. Absent means no legend defined. Like `highlights`, whether the legend panel is currently shown is local, in-memory, per-session state, never written to the file. |
 | `gravityPresets` | array of GravityPreset | Named bend values offered on a `"line"` node point's or a catmull-rom-routed Edge point's right-click menu (one shared catalog for both) — see [Gravity presets](#gravity-presets) below. Absent/empty means "use this app's own built-in four" (shown in the example above) — a diagram only needs to define its own once it actually diverges from them. |
 | `maxConnectionPointsPerSide` | number | Per-diagram override for the max connection points allowed on one side of a Shape/Container. Absent means "use whoever opens this file's own app-level preference" — a real constraint on what the diagram can contain, not a display setting, so it lives in the file rather than staying app-only. Lowering it below what an existing element already has never removes that element's points; the limit only stops adding more. |
+| `edgeDirectionSets` | array of EdgeDirectionSet | Named readings of the diagram's edges that differ only in arrow direction — e.g. "Data flow" vs. "Trigger direction". See [Edge direction sets](#edge-direction-sets) below. Absent/empty means the feature is unused. A single set names the current reading and gives it a legend row; two or more can be switched between and add per-edge `directionSets` records. |
+| `activeEdgeDirectionSetId` | string | Which entry of `edgeDirectionSets` is currently displayed. With two or more sets the edges on disk are always written in the *first* set's orientation regardless of this value (see [Edge direction sets](#edge-direction-sets)); this only says which reading to show on open. Absent means the first set. |
 | `nodes` | array of Node | See below. |
 | `edges` | array of Edge | See below. |
 
@@ -175,6 +182,7 @@ Every field is optional; an absent field means "use the current hardcoded look,"
 | `style` | object | no | Visual overrides — see Edge style below. Absent means "use the current hardcoded look." |
 | `metadata` | object | no | Same shape and rules as a node's `metadata` — see [Metadata](#metadata) below. Absent means none set. |
 | `points` | array of LinePoint | no | Manual routing points — see [Edge points](#edge-points) below. Meaningful when `style.routingStyle` is `"catmullRom"` (interior curve control points, `gravity` respected) or `"step"` / `"smoothstep"` (orthogonal waypoints the right-angled path is forced through, `gravity` unused). Ignored for any other routing style (including absent/bezier). Absent/empty means the routing style's own unbent default between the two endpoints. |
+| `directionSets` | object | no | Only present when the top-level `edgeDirectionSets` has two or more entries. Maps each set `id` to an `EdgeDirection` — `{ "source", "target", "sourceHandle"?, "targetHandle"? }` — giving this edge's orientation and connection points *in that reading*. The endpoint *nodes* are the same in every set; only which end is `source` and which connection point each end uses may differ. The entry for the first set always matches the edge's own top-level `source`/`target`/handles. See [Edge direction sets](#edge-direction-sets). |
 
 ### Edge style
 
@@ -319,6 +327,34 @@ Named bend values — `gravityPresets` on the top-level object — offered on a 
 
 **This catalog only affects what a human authoring a line is offered — it doesn't affect how an already-built line renders.** Every point's own `gravity` is already a concrete number (see [Line points](#line-points)), so a reader building the curve never needs to consult this catalog at all; it's purely an authoring convenience, closer in spirit to [Legend](#legend) than to anything that changes rendering. Absent/empty means this app's own built-in four (shown in the example above) — see [Top-level structure](#top-level-structure)'s own example for the exact values.
 
+## Edge direction sets
+
+`edgeDirectionSets` (top-level) lets one diagram carry named *readings* of its edges that differ only in arrow direction — the classic case being a "Data flow" reading and a "Trigger direction" reading, which for a request/response interaction point opposite ways. `activeEdgeDirectionSetId` says which reading to display.
+
+```json
+"edgeDirectionSets": [
+  { "id": "set-1", "name": "Data flow", "legend": { "color": "#1a73e8", "endMarker": "arrowClosed" } },
+  { "id": "set-2", "name": "Trigger direction", "legend": { "color": "#e8710a", "lineStyle": "dashed", "endMarker": "arrowClosed" } }
+],
+"activeEdgeDirectionSetId": "set-2"
+```
+
+| Field | Type | Required | Meaning |
+|---|---|---|---|
+| `id` | string | yes | Unique within the file. Referenced by the keys of each edge's `directionSets`. |
+| `name` | string | yes | Shown in the set picker, and used as the label of the legend row this reading contributes while it is active. Free-form. |
+| `legend` | object | no | How this reading draws as a legend row (in this app's Legend panel and PNG export) while it is the active set: `color` (CSS colour), `lineStyle` (`"solid"`/`"dashed"`/`"dotted"`), `startMarker`, `endMarker` (marker kinds — see [Edge style](#edge-style)). Author-asserted illustration only — it does **not** change how the actual edges are drawn. Absent means a default red arrow. |
+
+**A single set is meaningful.** With one set, there is no switching and no per-edge `directionSets` — the set just names the current reading (its `name` + `legend` become a legend row). Per-edge direction records and the base-orientation rule below apply only once a diagram has **two or more** sets.
+
+**Every edge exists in every set** — a set never adds or removes edges, it only changes their direction. At two or more sets, each edge stores a `directionSets` object (see [Edge](#edge)) mapping every set `id` to an `EdgeDirection`: `{ "source", "target", "sourceHandle"?, "targetHandle"? }`. The two endpoint *nodes* are identical across all sets; only which one is `source` (and which connection point each end lands on) varies.
+
+**Base orientation — what's on disk.** An edge's own top-level `source` / `target` / `sourceHandle` / `targetHandle`, and its direction-sensitive style (`points` order, `startMarker` / `endMarker`, `labelPosition`), are always written in the **first** set's orientation, whatever `activeEdgeDirectionSetId` says. Switching the displayed reading therefore changes only the one `activeEdgeDirectionSetId` line in the file, not every edge — which keeps diffs meaningful. A reader that wants the currently-active reading applies that set's `EdgeDirection` (and mirrors `points` / swaps the two markers / replaces `labelPosition` with `1 - labelPosition` for any edge whose `source` differs from the base) itself.
+
+**Absent / empty `edgeDirectionSets`** means the whole mechanism is dormant: no `directionSets` on any edge, and an edge's direction is simply its own `source`/`target`/handles. A writer emits `edgeDirectionSets` + `activeEdgeDirectionSetId` once there is at least one set, and per-edge `directionSets` only once there are two or more; dropping back below those thresholds removes the corresponding fields again.
+
+This is diagram-level data, not an app preference — reproducing the diagram for any reader means the readings, and which one is shown, have to live in the file.
+
 ## Determinism
 
 Files are written with a fixed key order (matching the tables above) and 2-space indentation, plus a trailing newline. This is deliberate: two saves of an unchanged diagram produce byte-identical output, so git diffs only show real changes. A compatible writer should aim for the same property if it wants clean diffs, though it isn't required for a file to be readable.
@@ -333,7 +369,7 @@ The `.chd` file itself is always plain, deterministic JSON — kept git-friendly
 
 ## Versioning
 
-`version` is currently always `1`. Fields have been added over time (`size`, `rotation`, `connectionPoints`, `parentId`, `style` on both Node and Edge, edge `type`/`label`, `data.icons`, `data.details`, `data.linkedDiagram`, top-level `metadata`/`requiredTags`/`highlights`/`legend`, `metadata` on both Node and Edge, Edge style's `labelPosition`, Node's `zIndex`, Node's `locked`, the `"line"` node `type` with its `data.points`, Node style's `lineStyle`/`startMarker`/`endMarker`, top-level `gravityPresets`, Edge style's `routingStyle` with its own `points`, top-level `maxConnectionPointsPerSide`, and `data.references`) but always additively — a reader from an earlier point in this project's history can still open a newer file and just won't recognize the newer fields. The same holds in reverse: this app's own current code must still open a file from *before* one of these fields existed, without failing or requiring migration — see [ADR 0029](decisions/0029-backward-compatible-loading-is-a-standing-rule.md), which makes this a standing rule for every future field, not just an incidental property of the fields added so far. A breaking change to the meaning of an existing field would bump `version`; nothing has required that yet.
+`version` is currently always `1`. Fields have been added over time (`size`, `rotation`, `connectionPoints`, `parentId`, `style` on both Node and Edge, edge `type`/`label`, `data.icons`, `data.details`, `data.linkedDiagram`, top-level `metadata`/`requiredTags`/`highlights`/`legend`, `metadata` on both Node and Edge, Edge style's `labelPosition`, Node's `zIndex`, Node's `locked`, the `"line"` node `type` with its `data.points`, Node style's `lineStyle`/`startMarker`/`endMarker`, top-level `gravityPresets`, Edge style's `routingStyle` with its own `points`, top-level `maxConnectionPointsPerSide`, `data.references`, and top-level `edgeDirectionSets` / `activeEdgeDirectionSetId` with each edge's `directionSets`) but always additively — a reader from an earlier point in this project's history can still open a newer file and just won't recognize the newer fields. The same holds in reverse: this app's own current code must still open a file from *before* one of these fields existed, without failing or requiring migration — see [ADR 0029](decisions/0029-backward-compatible-loading-is-a-standing-rule.md), which makes this a standing rule for every future field, not just an incidental property of the fields added so far. A breaking change to the meaning of an existing field would bump `version`; nothing has required that yet.
 
 ## Example
 
