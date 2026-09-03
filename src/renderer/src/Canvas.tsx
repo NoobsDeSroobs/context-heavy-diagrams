@@ -30,6 +30,7 @@ import {
   type ConnectionPoint,
   type ConnectionPointSide,
   type DiagramFile,
+  type DiagramSecurity,
   type EdgeDirection,
   type EdgeDirectionSet,
   type EdgeDirectionSetLegend,
@@ -43,7 +44,8 @@ import {
   type LinePoint,
   type MetadataEntry,
   type NodeStyle,
-  type RequiredTagDefinition
+  type RequiredTagDefinition,
+  type RiskCell
 } from '@shared/diagram'
 import ShapeNode, { SHAPE_MIN_WIDTH, SHAPE_MIN_HEIGHT } from './nodes/ShapeNode'
 import TextNode, { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from './nodes/TextNode'
@@ -481,7 +483,8 @@ function toDiagramFile(
   gravityPresets: GravityPreset[],
   maxConnectionPointsPerSide: number | undefined,
   edgeDirectionSets: EdgeDirectionSet[],
-  activeEdgeDirectionSetId: string | undefined
+  activeEdgeDirectionSetId: string | undefined,
+  security: DiagramSecurity
 ): DiagramFile {
   // Edge direction sets (ADR 0081): on disk, every edge is stored in the
   // *base* (first) set's orientation regardless of which set is active, so
@@ -516,6 +519,9 @@ function toDiagramFile(
     // serializeDiagram drops these below 2 sets — pass them through as-is.
     edgeDirectionSets: edgeDirectionSets.length > 0 ? edgeDirectionSets : undefined,
     activeEdgeDirectionSetId,
+    // serializeDiagram drops this when it carries nothing.
+    security:
+      security.threats.length > 0 || security.matrixShapeIds.length > 0 ? security : undefined,
     requiredTags: requiredTags.length > 0 ? requiredTags : undefined,
     nodes: nodes.map((n) => ({
       id: n.id,
@@ -543,6 +549,10 @@ function toDiagramFile(
         references:
           Array.isArray(n.data?.references) && (n.data.references as string[]).length > 0
             ? (n.data.references as string[])
+            : undefined,
+        security:
+          n.type === 'shape' && n.data?.security && typeof n.data.security === 'object'
+            ? (n.data.security as Record<string, RiskCell>)
             : undefined
       }
     })),
@@ -576,6 +586,7 @@ function fromDiagramFile(diagram: DiagramFile): {
   maxConnectionPointsPerSide: number | undefined
   edgeDirectionSets: EdgeDirectionSet[]
   activeEdgeDirectionSetId: string | undefined
+  security: DiagramSecurity
   hierarchyNotes: string[]
 } {
   // healHierarchy repairs a dangling/cyclic parentId before the nodes reach
@@ -606,6 +617,9 @@ function fromDiagramFile(diagram: DiagramFile): {
         ...(n.data.points && n.data.points.length > 0 ? { points: n.data.points } : {}),
         ...(Array.isArray(n.data.references) && n.data.references.length > 0
           ? { references: n.data.references }
+          : {}),
+        ...(n.type === 'shape' && n.data.security && Object.keys(n.data.security).length > 0
+          ? { security: n.data.security }
           : {}),
         ...(n.style ? { style: n.style } : {}),
         ...(n.metadata && nodeMetadataEligible(n.type) ? { metadata: n.metadata } : {})
@@ -659,6 +673,59 @@ function fromDiagramFile(diagram: DiagramFile): {
     }
   }
 
+  // Security model (ADR 0082) — prune references that no longer resolve
+  // (shape deleted from the canvas) and strip orphan per-shape cells
+  // (threat since removed from the catalog, or shape no longer a matrix
+  // member — e.g. resurrected by an undo across a remove). One Diagnostics
+  // note if anything changed. Same self-cleaning stance as recentDiagrams.
+  const securityNotes: string[] = []
+  let security: DiagramSecurity = { threats: [], matrixShapeIds: [] }
+  let securedNodes = finalNodes
+  const src = diagram.security
+  if (src && (src.threats.length > 0 || src.matrixShapeIds.length > 0)) {
+    const shapeIds = new Set(finalNodes.filter((n) => n.type === 'shape').map((n) => n.id))
+    const threatIds = new Set(src.threats.map((t) => t.id))
+    const matrixShapeIds = src.matrixShapeIds.filter((id) => shapeIds.has(id))
+    const matrixSet = new Set(matrixShapeIds)
+    const droppedShapes = src.matrixShapeIds.length - matrixShapeIds.length
+    security = {
+      threats: src.threats,
+      hiddenThreatIds: src.hiddenThreatIds?.filter((id) => threatIds.has(id)),
+      matrixShapeIds,
+      hiddenShapeIds: src.hiddenShapeIds?.filter((id) => matrixSet.has(id)),
+      probabilityScale: src.probabilityScale,
+      consequenceScale: src.consequenceScale,
+      combineMethod: src.combineMethod,
+      aggregateMethod: src.aggregateMethod
+    }
+    let droppedCells = 0
+    securedNodes = finalNodes.map((n) => {
+      const cells = n.data?.security as Record<string, RiskCell> | undefined
+      if (!cells) return n
+      const keep =
+        n.type === 'shape' && matrixSet.has(n.id)
+          ? Object.fromEntries(Object.entries(cells).filter(([tid]) => threatIds.has(tid)))
+          : {}
+      const removed = Object.keys(cells).length - Object.keys(keep).length
+      if (removed === 0) return n
+      droppedCells += removed
+      const nextData = { ...n.data }
+      if (Object.keys(keep).length > 0) nextData.security = keep
+      else delete nextData.security
+      return { ...n, data: nextData }
+    })
+    if (droppedShapes > 0) {
+      securityNotes.push(
+        `Security matrix: ${droppedShapes} shape reference(s) dropped — the shape no longer exists.`
+      )
+    }
+    if (droppedCells > 0) {
+      securityNotes.push(
+        `Security matrix: ${droppedCells} orphan assessment(s) dropped — the threat was removed, or the shape isn't in the matrix.`
+      )
+    }
+  }
+
   return {
     highlights: diagram.highlights ?? [],
     legend: diagram.legend ?? [],
@@ -666,8 +733,9 @@ function fromDiagramFile(diagram: DiagramFile): {
     maxConnectionPointsPerSide: diagram.maxConnectionPointsPerSide,
     edgeDirectionSets: directionSets.length >= 1 ? directionSets : [],
     activeEdgeDirectionSetId,
-    hierarchyNotes: healed.notes,
-    nodes: finalNodes,
+    security,
+    hierarchyNotes: [...healed.notes, ...securityNotes],
+    nodes: securedNodes,
     edges,
     metadata: diagram.metadata ?? {},
     requiredTags: diagram.requiredTags ?? []
@@ -838,6 +906,12 @@ function CanvasInner(): React.JSX.Element {
   const [activeEdgeDirectionSetId, setActiveEdgeDirectionSetId] = useState<string | undefined>(
     undefined
   )
+  // Threat/risk model (ADR 0082) — same file-scoped / reset-on-load
+  // treatment as the catalogs above. Kept as a non-null object with empty
+  // arrays when the Security Matrix has never been used; serialization
+  // drops it when empty. Per-element assessment cells live on
+  // node.data.security, not here.
+  const [security, setSecurity] = useState<DiagramSecurity>({ threats: [], matrixShapeIds: [] })
   const [diagramSettingsPanelOpen, setDiagramSettingsPanelOpen] = useState(false)
   // Anchors the floating panel next to whichever <ControlButton> opened it —
   // same convention as iconPicker/colorPicker/linePicker's own anchorRect.
@@ -1616,13 +1690,10 @@ function CanvasInner(): React.JSX.Element {
   // (so a later undo doesn't restore a stale orientation); it is not itself
   // an undo step. Set create/duplicate/delete/rename likewise just mutate
   // state and mark the diagram dirty, no snapshot.
-  const rewriteHistoryEdges = useCallback(
-    (transform: (edges: Edge[]) => Edge[]) => {
-      setPast((p) => p.map((s) => ({ ...s, edges: transform(s.edges) })))
-      setFuture((f) => f.map((s) => ({ ...s, edges: transform(s.edges) })))
-    },
-    []
-  )
+  const rewriteHistoryEdges = useCallback((transform: (edges: Edge[]) => Edge[]) => {
+    setPast((p) => p.map((s) => ({ ...s, edges: transform(s.edges) })))
+    setFuture((f) => f.map((s) => ({ ...s, edges: transform(s.edges) })))
+  }, [])
 
   const switchEdgeDirectionSet = useCallback(
     (toId: string) => {
@@ -1706,11 +1777,7 @@ function CanvasInner(): React.JSX.Element {
       const fromActive = activeEdgeDirectionSetId ?? sets[0]?.id
       const remaining = sets.filter((s) => s.id !== id)
       const targetActive =
-        remaining.length === 0
-          ? undefined
-          : id === fromActive
-            ? remaining[0].id
-            : fromActive
+        remaining.length === 0 ? undefined : id === fromActive ? remaining[0].id : fromActive
       // Per-edge records only exist at 2+ sets. Below that there's nothing
       // on the edges to touch — just drop the registry entry.
       if (sets.length >= 2) {
@@ -1732,6 +1799,93 @@ function CanvasInner(): React.JSX.Element {
       markDirty()
     },
     [edgeDirectionSets, activeEdgeDirectionSetId, setEdges, rewriteHistoryEdges, markDirty]
+  )
+
+  // --- Security matrix (ADR 0082) ---
+
+  // Diagram-level config: threat catalog, matrix membership, hide lists,
+  // scales, methods. Not part of undo history (like the other catalogs).
+  const updateSecurity = useCallback(
+    (next: DiagramSecurity) => {
+      setSecurity(next)
+      markDirty()
+    },
+    [markDirty]
+  )
+
+  // One assessment cell on a shape (`null` clears it). Routed through the
+  // node history — a cell edit is undoable.
+  const updateNodeSecurityCell = useCallback(
+    (nodeId: string, threatId: string, cell: RiskCell | null) => {
+      pushSnapshot()
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (n.id !== nodeId) return n
+          const existing = (n.data?.security as Record<string, RiskCell> | undefined) ?? {}
+          const nextSec = { ...existing }
+          if (cell === null) delete nextSec[threatId]
+          else nextSec[threatId] = cell
+          const data = { ...n.data }
+          if (Object.keys(nextSec).length > 0) data.security = nextSec
+          else delete data.security
+          return { ...n, data }
+        })
+      )
+      markDirty()
+    },
+    [setNodes, pushSnapshot, markDirty]
+  )
+
+  // Removing a threat / a shape from the matrix is destructive ("remove
+  // means remove" — the user) and deliberately NOT an undo step; it also
+  // strips the affected cells from every history snapshot so an unrelated
+  // undo can't resurrect orphan `data.security` entries.
+  const removeSecurityThreat = useCallback(
+    (threatId: string) => {
+      const strip = (nds: Node[]): Node[] =>
+        nds.map((n) => {
+          const cells = n.data?.security as Record<string, RiskCell> | undefined
+          if (!cells || !(threatId in cells)) return n
+          const nextSec = { ...cells }
+          delete nextSec[threatId]
+          const data = { ...n.data }
+          if (Object.keys(nextSec).length > 0) data.security = nextSec
+          else delete data.security
+          return { ...n, data }
+        })
+      setNodes(strip)
+      setPast((p) => p.map((s) => ({ ...s, nodes: strip(s.nodes) })))
+      setFuture((f) => f.map((s) => ({ ...s, nodes: strip(s.nodes) })))
+      setSecurity((cur) => ({
+        ...cur,
+        threats: cur.threats.filter((t) => t.id !== threatId),
+        hiddenThreatIds: cur.hiddenThreatIds?.filter((id) => id !== threatId)
+      }))
+      markDirty()
+    },
+    [setNodes, markDirty]
+  )
+
+  const removeSecurityShape = useCallback(
+    (nodeId: string) => {
+      const strip = (nds: Node[]): Node[] =>
+        nds.map((n) => {
+          if (n.id !== nodeId || !n.data?.security) return n
+          const data = { ...n.data }
+          delete data.security
+          return { ...n, data }
+        })
+      setNodes(strip)
+      setPast((p) => p.map((s) => ({ ...s, nodes: strip(s.nodes) })))
+      setFuture((f) => f.map((s) => ({ ...s, nodes: strip(s.nodes) })))
+      setSecurity((cur) => ({
+        ...cur,
+        matrixShapeIds: cur.matrixShapeIds.filter((id) => id !== nodeId),
+        hiddenShapeIds: cur.hiddenShapeIds?.filter((id) => id !== nodeId)
+      }))
+      markDirty()
+    },
+    [setNodes, markDirty]
   )
 
   const updateRequiredTags = useCallback(
@@ -3358,7 +3512,8 @@ function CanvasInner(): React.JSX.Element {
         gravityPresets,
         diagramMaxConnectionPointsPerSide,
         edgeDirectionSets,
-        activeEdgeDirectionSetId
+        activeEdgeDirectionSetId,
+        security
       )
       await window.api.saveDiagram(path, diagram, sessionIdRef.current)
       setNodes(savedNodes)
@@ -3377,7 +3532,8 @@ function CanvasInner(): React.JSX.Element {
       gravityPresets,
       diagramMaxConnectionPointsPerSide,
       edgeDirectionSets,
-      activeEdgeDirectionSetId
+      activeEdgeDirectionSetId,
+      security
     ]
   )
 
@@ -3543,6 +3699,7 @@ function CanvasInner(): React.JSX.Element {
         maxConnectionPointsPerSide: openedMaxConnectionPointsPerSide,
         edgeDirectionSets: openedEdgeDirectionSets,
         activeEdgeDirectionSetId: openedActiveEdgeDirectionSetId,
+        security: openedSecurity,
         hierarchyNotes: openedHierarchyNotes
       } = fromDiagramFile(diagram)
       // A different diagram entirely — old undo history doesn't apply to
@@ -3593,6 +3750,7 @@ function CanvasInner(): React.JSX.Element {
       setDiagramMaxConnectionPointsPerSide(openedMaxConnectionPointsPerSide)
       setEdgeDirectionSets(openedEdgeDirectionSets)
       setActiveEdgeDirectionSetId(openedActiveEdgeDirectionSetId)
+      setSecurity(openedSecurity)
       setHierarchyLoadNotes(openedHierarchyNotes)
       setDetailsDrafts({})
       setContextMenu(null)
@@ -3696,6 +3854,7 @@ function CanvasInner(): React.JSX.Element {
     diagramMaxConnectionPointsPerSide,
     edgeDirectionSets,
     activeEdgeDirectionSetId,
+    security,
     detailsDrafts
   })
   useEffect(() => {
@@ -3712,6 +3871,7 @@ function CanvasInner(): React.JSX.Element {
       diagramMaxConnectionPointsPerSide,
       edgeDirectionSets,
       activeEdgeDirectionSetId,
+      security,
       detailsDrafts
     }
   })
@@ -3730,7 +3890,8 @@ function CanvasInner(): React.JSX.Element {
         s.gravityPresets,
         s.diagramMaxConnectionPointsPerSide,
         s.edgeDirectionSets,
-        s.activeEdgeDirectionSetId
+        s.activeEdgeDirectionSetId,
+        s.security
       )
       window.api.writeRecoverySnapshot(
         s.currentPath,
@@ -4709,6 +4870,10 @@ function CanvasInner(): React.JSX.Element {
       <div className="app-shell">
         <div className="canvas-view">
           <div className="toolbar">
+            <MenuBar menus={menus} />
+            {/* Persona selector sits after the File/Edit/View/Help menus, not
+                before — the menus are the primary navigation, the persona
+                switch is a mode toggle (per the user). */}
             <select
               className="toolbar-persona-select"
               value={persona}
@@ -4719,7 +4884,6 @@ function CanvasInner(): React.JSX.Element {
               <option value="diagram">Diagram</option>
               <option value="matrix">Security Matrix (prototype)</option>
             </select>
-            <MenuBar menus={menus} />
             {showSavedFlash && (
               <span className="toolbar-saved-flash" role="status">
                 ✓ Saved
@@ -4772,7 +4936,14 @@ function CanvasInner(): React.JSX.Element {
             </button>
           </div>
           {persona === 'matrix' ? (
-            <ThreatMatrixView />
+            <ThreatMatrixView
+              nodes={nodes}
+              security={security}
+              onChange={updateSecurity}
+              onRemoveThreat={removeSecurityThreat}
+              onRemoveShape={removeSecurityShape}
+              onCellChange={updateNodeSecurityCell}
+            />
           ) : (
             <div className="canvas-view-body">
               <div

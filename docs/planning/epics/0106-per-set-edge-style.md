@@ -2,7 +2,7 @@
 
 ## Status
 
-Not Started — split out of [epic 0089](0089-flippable-edge-direction-mode.md)
+Not Started — split out of [epic 0089](completed/0089-flippable-edge-direction-mode.md)
 (2026-08-31), see [ADR 0081](../../decisions/0081-flippable-edge-direction-sets.md).
 Blocked on epic 0089 landing (needs the direction-set registry + the
 `directionSets` per-edge structure to hang style on).
@@ -35,7 +35,7 @@ different visual *style* per set is a separable concern.
   existing named line-style preset picker ([ADR 0010](../../decisions/0010-named-searchable-style-presets.md)).
 - **Legend interaction** — if "Trigger direction" is always dashed, should
   that convention be expressible as a Legend entry
-  ([ADR 0033](../../decisions/0033-legend-catalog.md))?
+  ([ADR 0033](../../decisions/0033-diagram-legend-design.md))?
 - **PNG export** — export already renders whatever's active; a per-set
   style just rides along, but confirm nothing in the export path assumes a
   single `EdgeStyle` per edge.

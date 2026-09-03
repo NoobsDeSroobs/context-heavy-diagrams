@@ -1,4 +1,6 @@
-import { useState, type MouseEvent } from 'react'
+import { useMemo, useState, type MouseEvent } from 'react'
+import type { Node } from '@xyflow/react'
+import type { AggregateMethod, CombineMethod, DiagramSecurity, RiskCell } from '@shared/diagram'
 import {
   cellScore,
   threatScore,
@@ -6,118 +8,147 @@ import {
   totalSecurityScore,
   COMBINE_METHOD_LABELS,
   AGGREGATE_METHOD_LABELS,
-  type RiskCell,
-  type CombineMethod,
-  type AggregateMethod
+  BLANK_RISK_CELL
 } from './threatMatrixMath'
-import { TEST_THREATS, TEST_SERVICES, TEST_CELLS } from './threatMatrixTestData'
-import { PROBABILITY_SCALE, CONSEQUENCE_SCALE } from './threatMatrixScale'
+import { effectiveScales } from './threatMatrixScale'
 import ThreatMatrixCellEditor from './ThreatMatrixCellEditor'
 import ThreatMatrixScaleReference from './ThreatMatrixScaleReference'
 import ThreatMatrixManagePanel from './ThreatMatrixManagePanel'
 
-type CellsByThreatAndService = Record<string, Record<string, RiskCell>>
+export interface ThreatMatrixViewProps {
+  // React Flow nodes — the matrix's columns are a subset of the 'shape'
+  // nodes, and each cell's data lives on `node.data.security`.
+  nodes: Node[]
+  // Always provided (Canvas keeps `{ threats: [], matrixShapeIds: [] }`
+  // when the feature is unused), so the view never deals with null.
+  security: DiagramSecurity
+  // Config-only changes: methods, hide toggles, add threat/shape, rename.
+  onChange: (next: DiagramSecurity) => void
+  // Destructive — Canvas also clears the affected `data.security` cells.
+  onRemoveThreat: (threatId: string) => void
+  onRemoveShape: (nodeId: string) => void
+  // One cell; `null` clears it.
+  onCellChange: (nodeId: string, threatId: string, cell: RiskCell | null) => void
+}
 
 interface EditingCell {
-  threat: string
-  service: string
+  threatId: string
+  nodeId: string
   anchorRect: DOMRect
 }
 
-// A freshly added threat/service has no assessment yet — starting both
-// dimensions at the scale's own lowest value reads as "not yet reviewed,"
-// rather than implying an average/moderate risk before anyone's looked.
-const DEFAULT_NEW_CELL: RiskCell = { probability: 1, consequence: 1 }
-
-function omitKey<T>(record: Record<string, T>, key: string): Record<string, T> {
-  const rest = { ...record }
-  delete rest[key]
-  return rest
+function nodeSecurity(node: Node | undefined): Record<string, RiskCell> {
+  const s = node?.data?.security
+  return s && typeof s === 'object' ? (s as Record<string, RiskCell>) : {}
 }
 
-// Threats/services can now be removed as well as
-// added — managed from ThreatMatrixManagePanel rather than inline table
-// controls (moved there entirely; see that file's own comment). Both
-// calculation "settings" (threatMatrixMath.ts) and the add/remove
-// machinery are still purely in-memory component state — nothing here
-// persists, no .chd/file-format involvement, and it isn't yet decided
-// whether any of this would eventually be per-installation Settings or
-// per-matrix Configuration in this app's own terms
-// (docs/architecture/glossary.md).
-export default function ThreatMatrixView(): React.JSX.Element {
-  const [threats, setThreats] = useState<string[]>(TEST_THREATS)
-  const [services, setServices] = useState<string[]>(TEST_SERVICES)
-  const [cells, setCells] = useState<CellsByThreatAndService>(TEST_CELLS)
+function newThreatId(): string {
+  return `threat-${crypto.randomUUID()}`
+}
+
+// The Security Matrix — a read-time view over every member shape's own
+// `data.security` plus the diagram-level `security` config (ADR 0082).
+// It owns no persisted state of its own: every edit goes straight back
+// through the callbacks to the nodes / the diagram config.
+export default function ThreatMatrixView({
+  nodes,
+  security,
+  onChange,
+  onRemoveThreat,
+  onRemoveShape,
+  onCellChange
+}: ThreatMatrixViewProps): React.JSX.Element {
   const [editingCell, setEditingCell] = useState<EditingCell | null>(null)
-  const [combineMethod, setCombineMethod] = useState<CombineMethod>('multiply')
-  const [aggregateMethod, setAggregateMethod] = useState<AggregateMethod>('average')
   const [managePanelAnchor, setManagePanelAnchor] = useState<DOMRect | null>(null)
 
-  const rowScores = threats.map((threat) =>
-    threatScore(
-      services.map((s) => cells[threat][s]),
-      combineMethod,
-      aggregateMethod
-    )
+  const combineMethod: CombineMethod = security.combineMethod ?? 'multiply'
+  const aggregateMethod: AggregateMethod = security.aggregateMethod ?? 'average'
+  const { probabilityScale, consequenceScale } = effectiveScales(security)
+
+  const nodeById = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes])
+
+  const hiddenThreatIds = new Set(security.hiddenThreatIds ?? [])
+  const hiddenShapeIds = new Set(security.hiddenShapeIds ?? [])
+
+  // Rows = catalog threats not hidden. Columns = matrix shapes not hidden,
+  // that still resolve to a real Shape node.
+  const visibleThreats = security.threats.filter((t) => !hiddenThreatIds.has(t.id))
+  const visibleShapeIds = security.matrixShapeIds.filter(
+    (id) => !hiddenShapeIds.has(id) && nodeById.get(id)?.type === 'shape'
   )
-  const columnScores = services.map((service) =>
-    vulnerabilityScore(
-      threats.map((t) => cells[t][service]),
-      combineMethod,
-      aggregateMethod
-    )
+
+  const shapeLabel = (id: string): string =>
+    String(nodeById.get(id)?.data?.label ?? '(missing shape)')
+
+  // Completeness (ADR 0082) — over EVERY matrixShape x EVERY threat,
+  // hidden included; a missing cell is an un-entered assessment.
+  const totalCells = security.matrixShapeIds.length * security.threats.length
+  const enteredCells = security.matrixShapeIds.reduce((count, shapeId) => {
+    const cells = nodeSecurity(nodeById.get(shapeId))
+    return count + security.threats.filter((t) => cells[t.id] !== undefined).length
+  }, 0)
+  const missingCells = totalCells - enteredCells
+
+  // Cell scores over the visible grid; absent cells are simply excluded
+  // from the aggregates (a half-assessed row still scores on what's there).
+  const assessedCellsForThreat = (threatId: string): RiskCell[] =>
+    visibleShapeIds
+      .map((id) => nodeSecurity(nodeById.get(id))[threatId])
+      .filter((c): c is RiskCell => c !== undefined)
+  const assessedCellsForShape = (shapeId: string): RiskCell[] => {
+    const cells = nodeSecurity(nodeById.get(shapeId))
+    return visibleThreats.map((t) => cells[t.id]).filter((c): c is RiskCell => c !== undefined)
+  }
+
+  const rowScores = visibleThreats.map((t) =>
+    threatScore(assessedCellsForThreat(t.id), combineMethod, aggregateMethod)
+  )
+  const columnScores = visibleShapeIds.map((id) =>
+    vulnerabilityScore(assessedCellsForShape(id), combineMethod, aggregateMethod)
   )
   const grandTotal = totalSecurityScore(rowScores, columnScores, combineMethod, aggregateMethod)
 
   const openEditor = (
-    threat: string,
-    service: string,
+    threatId: string,
+    nodeId: string,
     event: MouseEvent<HTMLTableCellElement>
   ): void => {
-    setEditingCell({ threat, service, anchorRect: event.currentTarget.getBoundingClientRect() })
+    setEditingCell({ threatId, nodeId, anchorRect: event.currentTarget.getBoundingClientRect() })
   }
 
-  const updateCell = (threat: string, service: string, cell: RiskCell): void => {
-    setCells((current) => ({
-      ...current,
-      [threat]: { ...current[threat], [service]: cell }
-    }))
-  }
+  // --- config-model edits ---
+  const patch = (next: Partial<DiagramSecurity>): void => onChange({ ...security, ...next })
 
   const addThreat = (name: string): void => {
-    if (threats.includes(name)) return
-    setThreats((current) => [...current, name])
-    setCells((current) => ({
-      ...current,
-      [name]: Object.fromEntries(services.map((service) => [service, DEFAULT_NEW_CELL]))
-    }))
+    const trimmed = name.trim()
+    if (!trimmed || security.threats.some((t) => t.name === trimmed)) return
+    patch({ threats: [...security.threats, { id: newThreatId(), name: trimmed }] })
   }
-
-  const addService = (name: string): void => {
-    if (services.includes(name)) return
-    setServices((current) => [...current, name])
-    setCells((current) => {
-      const next = { ...current }
-      for (const threat of threats) next[threat] = { ...next[threat], [name]: DEFAULT_NEW_CELL }
-      return next
+  const renameThreat = (id: string, name: string): void =>
+    patch({ threats: security.threats.map((t) => (t.id === id ? { ...t, name } : t)) })
+  const toggleThreatHidden = (id: string): void =>
+    patch({
+      hiddenThreatIds: hiddenThreatIds.has(id)
+        ? (security.hiddenThreatIds ?? []).filter((x) => x !== id)
+        : [...(security.hiddenThreatIds ?? []), id]
     })
-  }
 
-  const removeThreat = (threat: string): void => {
-    setThreats((current) => current.filter((t) => t !== threat))
-    setCells((current) => omitKey(current, threat))
-    setEditingCell((current) => (current?.threat === threat ? null : current))
+  const addShape = (nodeId: string): void => {
+    if (security.matrixShapeIds.includes(nodeId)) return
+    patch({ matrixShapeIds: [...security.matrixShapeIds, nodeId] })
   }
+  const toggleShapeHidden = (nodeId: string): void =>
+    patch({
+      hiddenShapeIds: hiddenShapeIds.has(nodeId)
+        ? (security.hiddenShapeIds ?? []).filter((x) => x !== nodeId)
+        : [...(security.hiddenShapeIds ?? []), nodeId]
+    })
 
-  const removeService = (service: string): void => {
-    setServices((current) => current.filter((s) => s !== service))
-    setCells((current) =>
-      Object.fromEntries(
-        Object.entries(current).map(([threat, byService]) => [threat, omitKey(byService, service)])
-      )
-    )
-    setEditingCell((current) => (current?.service === service ? null : current))
-  }
+  const assessableShapes = nodes
+    .filter((n) => n.type === 'shape' && !security.matrixShapeIds.includes(n.id))
+    .map((n) => ({ id: n.id, label: String(n.data?.label ?? n.id) }))
+
+  const nothingToShow = visibleThreats.length === 0 || visibleShapeIds.length === 0
 
   return (
     <div className="threat-matrix-view">
@@ -127,7 +158,7 @@ export default function ThreatMatrixView(): React.JSX.Element {
             Cell score
             <select
               value={combineMethod}
-              onChange={(event) => setCombineMethod(event.target.value as CombineMethod)}
+              onChange={(event) => patch({ combineMethod: event.target.value as CombineMethod })}
             >
               {Object.entries(COMBINE_METHOD_LABELS).map(([method, label]) => (
                 <option key={method} value={method}>
@@ -140,7 +171,9 @@ export default function ThreatMatrixView(): React.JSX.Element {
             Threat/vulnerability score
             <select
               value={aggregateMethod}
-              onChange={(event) => setAggregateMethod(event.target.value as AggregateMethod)}
+              onChange={(event) =>
+                patch({ aggregateMethod: event.target.value as AggregateMethod })
+              }
             >
               {Object.entries(AGGREGATE_METHOD_LABELS).map(([method, label]) => (
                 <option key={method} value={method}>
@@ -157,70 +190,136 @@ export default function ThreatMatrixView(): React.JSX.Element {
             Manage matrix…
           </button>
         </div>
-        <table className="threat-matrix-table">
-          <thead>
-            <tr>
-              <th className="threat-matrix-corner" />
-              {services.map((service) => (
-                <th key={service}>{service}</th>
+
+        {totalCells > 0 && (
+          <p
+            className={
+              missingCells > 0
+                ? 'threat-matrix-completeness threat-matrix-completeness-warn'
+                : 'threat-matrix-completeness'
+            }
+          >
+            {missingCells > 0
+              ? `⚠ ${missingCells} of ${totalCells} assessments not entered${
+                  security.hiddenThreatIds?.length || security.hiddenShapeIds?.length
+                    ? ' (hidden rows/columns included)'
+                    : ''
+                }`
+              : `✓ All ${totalCells} assessments entered`}
+          </p>
+        )}
+
+        {nothingToShow ? (
+          <p className="threat-matrix-empty">
+            {security.threats.length === 0 &&
+              'Add a threat, then add the shapes to assess against it — '}
+            {security.threats.length > 0 &&
+              security.matrixShapeIds.length === 0 &&
+              'Add the shapes to assess — '}
+            {security.threats.length > 0 &&
+              security.matrixShapeIds.length > 0 &&
+              'Everything is hidden — '}
+            use <strong>Manage matrix…</strong> above.
+          </p>
+        ) : (
+          <table className="threat-matrix-table">
+            <thead>
+              <tr>
+                <th className="threat-matrix-corner" />
+                {visibleShapeIds.map((id) => (
+                  <th key={id}>{shapeLabel(id)}</th>
+                ))}
+                <th className="threat-matrix-aggregate-header">Threat score</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visibleThreats.map((threat, rowIndex) => (
+                <tr key={threat.id}>
+                  <th scope="row">{threat.name}</th>
+                  {visibleShapeIds.map((shapeId) => {
+                    const cell = nodeSecurity(nodeById.get(shapeId))[threat.id]
+                    return (
+                      <td
+                        key={shapeId}
+                        className={
+                          cell
+                            ? 'threat-matrix-cell'
+                            : 'threat-matrix-cell threat-matrix-cell-unassessed'
+                        }
+                        onClick={(event) => openEditor(threat.id, shapeId, event)}
+                        title={cell ? 'Click to edit' : 'Not assessed — click to assess'}
+                      >
+                        {cell ? cellScore(cell, combineMethod) : '—'}
+                      </td>
+                    )
+                  })}
+                  <td className="threat-matrix-aggregate">
+                    {assessedCellsForThreat(threat.id).length > 0
+                      ? rowScores[rowIndex].toFixed(1)
+                      : '—'}
+                  </td>
+                </tr>
               ))}
-              <th className="threat-matrix-aggregate-header">Threat score</th>
-            </tr>
-          </thead>
-          <tbody>
-            {threats.map((threat, rowIndex) => (
-              <tr key={threat}>
-                <th scope="row">{threat}</th>
-                {services.map((service) => (
-                  <td
-                    key={service}
-                    className="threat-matrix-cell"
-                    onClick={(event) => openEditor(threat, service, event)}
-                    title="Click to set probability/consequence"
-                  >
-                    {cellScore(cells[threat][service], combineMethod)}
+              <tr className="threat-matrix-aggregate-row">
+                <th scope="row">Vulnerability score</th>
+                {columnScores.map((score, columnIndex) => (
+                  <td key={visibleShapeIds[columnIndex]} className="threat-matrix-aggregate">
+                    {assessedCellsForShape(visibleShapeIds[columnIndex]).length > 0
+                      ? score.toFixed(1)
+                      : '—'}
                   </td>
                 ))}
-                <td className="threat-matrix-aggregate">{rowScores[rowIndex].toFixed(1)}</td>
+                <td className="threat-matrix-grand-total">{grandTotal.toFixed(1)}</td>
               </tr>
-            ))}
-            <tr className="threat-matrix-aggregate-row">
-              <th scope="row">Vulnerability score</th>
-              {columnScores.map((score, columnIndex) => (
-                <td key={services[columnIndex]} className="threat-matrix-aggregate">
-                  {score.toFixed(1)}
-                </td>
-              ))}
-              <td className="threat-matrix-grand-total">{grandTotal.toFixed(1)}</td>
-            </tr>
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        )}
       </div>
+
       <ThreatMatrixScaleReference
-        probabilityScale={PROBABILITY_SCALE}
-        consequenceScale={CONSEQUENCE_SCALE}
+        probabilityScale={probabilityScale}
+        consequenceScale={consequenceScale}
       />
-      {editingCell && (
-        <ThreatMatrixCellEditor
-          threat={editingCell.threat}
-          service={editingCell.service}
-          anchorRect={editingCell.anchorRect}
-          cell={cells[editingCell.threat][editingCell.service]}
-          probabilityScale={PROBABILITY_SCALE}
-          consequenceScale={CONSEQUENCE_SCALE}
-          onChange={(cell) => updateCell(editingCell.threat, editingCell.service, cell)}
-          onClose={() => setEditingCell(null)}
-        />
-      )}
+
+      {editingCell &&
+        (() => {
+          const existing = nodeSecurity(nodeById.get(editingCell.nodeId))[editingCell.threatId]
+          const threatName =
+            security.threats.find((t) => t.id === editingCell.threatId)?.name ?? '(threat)'
+          return (
+            <ThreatMatrixCellEditor
+              threat={threatName}
+              service={shapeLabel(editingCell.nodeId)}
+              anchorRect={editingCell.anchorRect}
+              cell={existing ?? BLANK_RISK_CELL}
+              assessed={existing !== undefined}
+              probabilityScale={probabilityScale}
+              consequenceScale={consequenceScale}
+              onChange={(cell) => onCellChange(editingCell.nodeId, editingCell.threatId, cell)}
+              onClear={() => {
+                onCellChange(editingCell.nodeId, editingCell.threatId, null)
+                setEditingCell(null)
+              }}
+              onClose={() => setEditingCell(null)}
+            />
+          )
+        })()}
+
       {managePanelAnchor && (
         <ThreatMatrixManagePanel
           anchorRect={managePanelAnchor}
-          threats={threats}
-          services={services}
+          threats={security.threats}
+          hiddenThreatIds={hiddenThreatIds}
+          shapes={security.matrixShapeIds.map((id) => ({ id, label: shapeLabel(id) }))}
+          hiddenShapeIds={hiddenShapeIds}
+          assessableShapes={assessableShapes}
           onAddThreat={addThreat}
-          onRemoveThreat={removeThreat}
-          onAddService={addService}
-          onRemoveService={removeService}
+          onRenameThreat={renameThreat}
+          onToggleThreatHidden={toggleThreatHidden}
+          onRemoveThreat={onRemoveThreat}
+          onAddShape={addShape}
+          onToggleShapeHidden={toggleShapeHidden}
+          onRemoveShape={onRemoveShape}
           onClose={() => setManagePanelAnchor(null)}
         />
       )}

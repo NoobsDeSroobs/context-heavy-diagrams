@@ -1,7 +1,7 @@
 # 0095: Recent diagrams under File
 
 ## Status
-Done (2026-08-31), on `epic/0095-recent-diagrams-menu`, pending live test/merge. See [ADR 0078](../../decisions/0078-recent-diagrams-menu.md).
+Done (2026-08-31), merged to `master` (PR #81). Not live-tested (Electron renderer). See [ADR 0078](../../../decisions/0078-recent-diagrams-menu.md).
 
 ## What shipped
 - **MenuBar submenu support** — `MenuBarItem` gains `submenu?: MenuBarItem[]` and `separatorBefore?: boolean`; one nesting level, right-side flyout. Flyout only ever *opens* on hover (never closes), so the diagonal path parent→flyout can cross sibling leaves without it vanishing. `openSubmenu` state scoped `{ menu, label }` so a top-level switch drops it with no reset effect.
@@ -12,7 +12,7 @@ Done (2026-08-31), on `epic/0095-recent-diagrams-menu`, pending live test/merge.
 - `typecheck`/`lint` clean (0 errors). Not live-tested (Electron renderer).
 
 ## Goal
-A submenu (or flyout list) of recently opened diagrams under File, letting the user reopen one without a picker round-trip — standard desktop-app convention. Split out from [epic 0091](completed/0091-recent-diagrams-and-last-opened-path.md), whose item 1 (remember the last-opened directory for File → Open/Save As's dialogs) shipped on its own — this item needs real infrastructure and design work that item 1 didn't.
+A submenu (or flyout list) of recently opened diagrams under File, letting the user reopen one without a picker round-trip — standard desktop-app convention. Split out from [epic 0091](0091-recent-diagrams-and-last-opened-path.md), whose item 1 (remember the last-opened directory for File → Open/Save As's dialogs) shipped on its own — this item needs real infrastructure and design work that item 1 didn't.
 
 ## What's actually involved
 This app's custom top menu bar (`MenuBar.tsx`, epic 0049) has a flat `MenuBarItem[]` model today — **no nested submenu/flyout support exists at all**. "Recent diagrams" as a real submenu (the standard convention: File → Recent Diagrams → [list] → a separator → Clear Recent) needs that capability built first, not just a new top-level menu item.

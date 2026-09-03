@@ -1,6 +1,12 @@
-import type { ScaleLevel } from './threatMatrixScale'
+import type { SecurityScaleLevel } from '@shared/diagram'
 
-function ScaleList({ title, levels }: { title: string; levels: ScaleLevel[] }): React.JSX.Element {
+function ScaleList({
+  title,
+  levels
+}: {
+  title: string
+  levels: SecurityScaleLevel[]
+}): React.JSX.Element {
   return (
     <div className="threat-matrix-scale-group">
       <h3 className="threat-matrix-scale-title">{title}</h3>
@@ -26,8 +32,8 @@ export default function ThreatMatrixScaleReference({
   probabilityScale,
   consequenceScale
 }: {
-  probabilityScale: ScaleLevel[]
-  consequenceScale: ScaleLevel[]
+  probabilityScale: SecurityScaleLevel[]
+  consequenceScale: SecurityScaleLevel[]
 }): React.JSX.Element {
   return (
     <div className="threat-matrix-scale-reference">

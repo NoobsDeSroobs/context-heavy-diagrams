@@ -3211,6 +3211,85 @@ body {
   background: var(--ev-button-alt-hover-bg);
 }
 
+/* An un-entered assessment (ADR 0082) — a distinct, muted look so gaps in
+   the grid read at a glance, backing the completeness alert. */
+.threat-matrix-cell-unassessed {
+  color: var(--ev-c-text-3);
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 5px,
+    var(--color-background-mute) 5px,
+    var(--color-background-mute) 6px
+  );
+}
+
+.threat-matrix-completeness {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ev-c-text-2);
+}
+
+.threat-matrix-completeness-warn {
+  color: var(--color-warning, #b7791f);
+  font-weight: 600;
+}
+
+.threat-matrix-empty {
+  font-size: 13px;
+  color: var(--ev-c-text-2);
+  max-width: 42ch;
+}
+
+/* Manage panel — hide toggle + a row that's currently hidden. */
+.threat-matrix-manage-hide {
+  flex: 0 0 auto;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 4px;
+  opacity: 0.7;
+}
+
+.threat-matrix-manage-hide:hover {
+  opacity: 1;
+}
+
+.threat-matrix-manage-row-hidden {
+  opacity: 0.55;
+}
+
+.threat-matrix-add-shape-select {
+  width: 100%;
+  margin-top: 4px;
+  font: inherit;
+  font-size: 12px;
+}
+
+.threat-matrix-confirm-remove {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.threat-matrix-confirm-remove button {
+  font-size: 11px;
+  padding: 1px 6px;
+}
+
+.threat-matrix-cell-editor-unassessed {
+  color: var(--ev-c-text-3);
+  font-weight: normal;
+}
+
+.threat-matrix-cell-editor-clear {
+  margin-top: 4px;
+  font-size: 11px;
+  align-self: flex-start;
+  cursor: pointer;
+}
+
 /* Reference panel — so the meaning of a bare number
    isn't left to memory while filling the matrix in. Fixed-width, never
    stretches or wraps the table beside it (.threat-matrix-view's own

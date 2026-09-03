@@ -5,9 +5,9 @@
 Accepted (2026-08-31). Supersedes the leaning design in the epic doc
 (Derived/Independent sets grouped by `groupId`, per-set `included` flags,
 connection-point-keyed identity — all dropped). Builds on
-[ADR 0022](0022-tag-and-metadata-system.md) (id-keyed per-element data),
+[ADR 0022](0022-unified-tag-and-metadata-system.md) (id-keyed per-element data),
 [ADR 0057](0057-edge-routing-style.md) / the per-edge "Reverse direction"
-action (the involution this reuses), and [ADR 0025](0025-highlight-catalog-and-toggle-state.md)
+action (the involution this reuses), and [ADR 0025](0025-tagging-and-overlay-visualization.md)
 (split persistence — a catalog persists, a transient pointer's treatment is
 decided per case).
 
@@ -101,7 +101,7 @@ the "Edge direction sets" section, **not** in the Legend panel. Switching
 the active set swaps the row's label *and* swatch.
 
 This is author-asserted, same standing as a hand-authored `line`
-`LegendEntry` ([ADR 0033](0033-legend-catalog.md)) — it does **not**
+`LegendEntry` ([ADR 0033](0033-diagram-legend-design.md)) — it does **not**
 recolour the real edges (per-set *edge* styling stays deferred, below). It
 does not violate ADR 0033's "never auto-derived" rule: that governs the
 authored *catalog editor*; the export legend has always been a composition
@@ -229,7 +229,7 @@ from its current live direction; dropping 2→1 (or →0) strips them again.
 Diagram-level data, not a Setting ([ADR 0052](0052-settings-ownership-tiers.md)) —
 the registry and the active pointer are per-diagram.
 
-Unlike [ADR 0025](0025-highlight-catalog-and-toggle-state.md)'s split
+Unlike [ADR 0025](0025-tagging-and-overlay-visualization.md)'s split
 persistence, the active-set pointer **is** persisted: which reading a
 diagram opens in is a deliberate authoring choice, not transient UI state,
 and (thanks to base orientation) persisting it costs one line in the file.

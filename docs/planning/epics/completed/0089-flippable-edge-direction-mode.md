@@ -1,7 +1,7 @@
 # 0089: Flippable edge direction — data flow vs. invoker/trigger direction
 
 ## Status
-In progress — design committed 2026-08-31, see [ADR 0081](../../decisions/0081-flippable-edge-direction-sets.md). On `epic/0089-flippable-edge-direction`.
+Done (2026-08-31), merged to `master` (PR #84), see [ADR 0081](../../../decisions/0081-flippable-edge-direction-sets.md). Not live-tested (Electron renderer). Spawned [epic 0106](../0106-per-set-edge-style.md) (per-set edge style).
 
 ## Goal
 Sometimes an edge's arrow should show the direction data actually flows;
@@ -12,7 +12,7 @@ switchably, diagram-wide — not locked to whichever was drawn.
 
 ## Committed design (2026-08-31)
 Full rationale and the rejected alternatives are in
-[ADR 0081](../../decisions/0081-flippable-edge-direction-sets.md). Summary:
+[ADR 0081](../../../decisions/0081-flippable-edge-direction-sets.md). Summary:
 
 - **Every edge exists in every set; only the direction can swap.** The
   user's explicit simplification — no per-set inclusion/exclusion, no
@@ -48,7 +48,7 @@ Full rationale and the rejected alternatives are in
   next switch/save — `onConnect` etc. need no changes.
 - **UI**: an "Edge direction sets" `CollapsibleSection` in
   `DiagramSettingsPanel` (next to Required tags / Line bend presets, per
-  [ADR 0071](../../decisions/0071-consolidate-diagram-configuration-panel.md)'s
+  [ADR 0071](../../../decisions/0071-consolidate-diagram-configuration-panel.md)'s
   consolidation — no new dock panel, no new View item) — per-set name +
   legend swatch (colour + `StylePicker` line style/markers), Duplicate,
   Delete; an active-set `<select>` at 2+ sets; "Add direction set" usable
@@ -64,7 +64,7 @@ Full rationale and the rejected alternatives are in
   emits the new fields only when `edgeDirectionSets.length >= 2`. Creating
   a second set materialises `directionSets` for every edge; deleting back
   to one set drops them.
-- **Deferred**: per-set line/marker *style* → [epic 0106](0106-per-set-edge-style.md).
+- **Deferred**: per-set line/marker *style* → [epic 0106](../0106-per-set-edge-style.md).
 
 ## Tasks
 - [x] `src/shared/diagram.ts`: add `EdgeDirectionSet`, `EdgeDirection`,
@@ -149,7 +149,7 @@ by set id.
 - *Copy a set: same records or blank?* — Same (there is no valid blank —
   every edge must have a direction).
 - *Diagram-level, not a Setting?* — Confirmed ([ADR 0052]).
-- *Per-set marker/line style?* — Deferred to [epic 0106](0106-per-set-edge-style.md).
+- *Per-set marker/line style?* — Deferred to [epic 0106](../0106-per-set-edge-style.md).
 
 ## Notes
 Raised by the user 2026-08-24, refined across five passes that day, then cut

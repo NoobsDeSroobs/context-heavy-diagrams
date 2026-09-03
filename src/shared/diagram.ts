@@ -221,7 +221,85 @@ export interface DiagramNode {
     // viewer panels the user opens/closes, never rendered on the canvas
     // and never included in exports. Absent/empty means none.
     references?: string[]
+    // Threat/risk assessment for this element — see ADR 0082 (implements
+    // ADR 0055). 'shape' nodes only. A sparse map keyed by
+    // SecurityThreat.id (the diagram-level catalog in DiagramFile.security):
+    // an entry exists only once that (shape, threat) pair has actually
+    // been assessed. A shape carries this only while it's a member of
+    // DiagramFile.security.matrixShapeIds; a missing cell for a member
+    // pair is "not yet assessed" and drives the matrix's completeness
+    // alert. Absent/empty means this shape isn't in the security matrix.
+    security?: Record<string, RiskCell>
   }
+}
+
+// One (shape, threat) risk assessment — unchanged from the epic 0060
+// prototype, now part of the persisted schema (ADR 0082). `probability`
+// and `consequence` are values on the diagram's probability/consequence
+// scales (DiagramSecurity below; absent scales mean the app's built-in
+// 1-5). The two notes are independent free-text rationales — the reasoning
+// for "why this probability" and "why this consequence" are usually
+// unrelated, and both are optional.
+export interface RiskCell {
+  probability: number
+  consequence: number
+  probabilityNote?: string
+  consequenceNote?: string
+}
+
+// One threat in a diagram's threat catalog (DiagramSecurity.threats).
+// Id-keyed like every other catalog in this schema, so renaming a threat
+// is display-only and never touches per-element data.
+export interface SecurityThreat {
+  id: string
+  name: string
+  description?: string
+}
+
+// One level of a probability or consequence scale — supersedes the epic
+// 0060 prototype's `ScaleLevel`.
+export interface SecurityScaleLevel {
+  value: number
+  label: string
+  description: string
+}
+
+// How a probability/consequence pair becomes one cell score, and how a
+// list of cell scores becomes one row/column summary — see
+// threatMatrixMath.ts for the actual arithmetic. Absent on
+// DiagramSecurity means 'multiply' / 'average' (the prototype's defaults).
+export type CombineMethod = 'multiply' | 'add' | 'average'
+export type AggregateMethod = 'average' | 'sum' | 'max'
+
+// Diagram-level security/threat configuration — see ADR 0082. Absent means
+// the diagram has never used the Security Matrix (no `data.security` on any
+// node either). Same "absent means unused" convention as `requiredTags` /
+// `highlights` / `legend` / `gravityPresets` / `edgeDirectionSets`.
+export interface DiagramSecurity {
+  // The threat catalog — matrix row candidates. Ordered (row order). The
+  // matrix's data model spans EVERY threat here, shown or hidden.
+  threats: SecurityThreat[]
+  // Subset of `threats` (by id) currently not shown as a matrix row. Still
+  // part of the data model — hidden threats still need assessments for the
+  // completeness alert to clear. Absent/empty means all threats shown.
+  hiddenThreatIds?: string[]
+  // The matrix's data model on the shape axis: ids of 'shape' nodes being
+  // assessed. Ordered (column order). A shape NOT listed here has no
+  // `data.security` at all. Ids that no longer resolve to a Shape node are
+  // pruned on load.
+  matrixShapeIds: string[]
+  // Subset of `matrixShapeIds` (by id) currently not shown as a matrix
+  // column. Data kept, still counts toward completeness. Absent/empty
+  // means all shown.
+  hiddenShapeIds?: string[]
+  // Per-diagram scale definitions. Absent means the app's built-in 1-5
+  // scales (see threatMatrixScale.ts) — same Diagram-value-or-built-in
+  // pattern as gravityPresets (ADR 0052). No in-app editor in v1; the
+  // fields persist and are read.
+  probabilityScale?: SecurityScaleLevel[]
+  consequenceScale?: SecurityScaleLevel[]
+  combineMethod?: CombineMethod
+  aggregateMethod?: AggregateMethod
 }
 
 // A freeform line's own bend points (see ADR 0050) — see NodeStyle
@@ -360,6 +438,9 @@ export interface DiagramFile {
   // edges are always in the base ([0]) set's orientation regardless; this
   // only picks which reading to apply on load. Absent means the base set.
   activeEdgeDirectionSetId?: string
+  // Threat/risk model — see ADR 0082 and DiagramSecurity above. Absent
+  // means the Security Matrix has never been used for this diagram.
+  security?: DiagramSecurity
   nodes: DiagramNode[]
   edges: DiagramEdge[]
 }
@@ -426,6 +507,76 @@ function sortedDirectionSets(
   return sorted
 }
 
+// Fixed key order for one RiskCell; notes dropped when blank.
+function orderedRiskCell(cell: RiskCell): RiskCell {
+  return {
+    probability: cell.probability,
+    consequence: cell.consequence,
+    probabilityNote: cell.probabilityNote || undefined,
+    consequenceNote: cell.consequenceNote || undefined
+  }
+}
+
+// A node's `data.security` map — threat ids sorted, each cell key-ordered.
+// Dropped entirely when empty or on a non-'shape' node (ADR 0082: sparse
+// storage, shapes only).
+function sortedNodeSecurity(
+  security: Record<string, RiskCell> | undefined,
+  nodeType: string | undefined
+): Record<string, RiskCell> | undefined {
+  if (nodeType !== 'shape' || !security || Object.keys(security).length === 0) return undefined
+  const sorted: Record<string, RiskCell> = {}
+  for (const key of Object.keys(security).sort()) sorted[key] = orderedRiskCell(security[key])
+  return sorted
+}
+
+// The diagram-level `security` block — deterministic key order, ordered
+// arrays kept as-is (threats/matrixShapeIds order is meaningful), hidden id
+// lists sorted, empty optional pieces dropped. Emitted only when it carries
+// something (ADR 0082).
+function orderedDiagramSecurity(
+  security: DiagramSecurity | undefined
+): DiagramSecurity | undefined {
+  if (!security) return undefined
+  if (security.threats.length === 0 && security.matrixShapeIds.length === 0) return undefined
+  const hiddenThreatIds =
+    security.hiddenThreatIds && security.hiddenThreatIds.length > 0
+      ? [...security.hiddenThreatIds].sort()
+      : undefined
+  const hiddenShapeIds =
+    security.hiddenShapeIds && security.hiddenShapeIds.length > 0
+      ? [...security.hiddenShapeIds].sort()
+      : undefined
+  return {
+    threats: security.threats.map((t) => ({
+      id: t.id,
+      name: t.name,
+      description: t.description || undefined
+    })),
+    hiddenThreatIds,
+    matrixShapeIds: security.matrixShapeIds,
+    hiddenShapeIds,
+    probabilityScale:
+      security.probabilityScale && security.probabilityScale.length > 0
+        ? security.probabilityScale.map((l) => ({
+            value: l.value,
+            label: l.label,
+            description: l.description
+          }))
+        : undefined,
+    consequenceScale:
+      security.consequenceScale && security.consequenceScale.length > 0
+        ? security.consequenceScale.map((l) => ({
+            value: l.value,
+            label: l.label,
+            description: l.description
+          }))
+        : undefined,
+    combineMethod: security.combineMethod,
+    aggregateMethod: security.aggregateMethod
+  }
+}
+
 function sortedMetadata(
   metadata: Record<string, MetadataEntry> | undefined
 ): Record<string, MetadataEntry> | undefined {
@@ -478,6 +629,7 @@ export function serializeDiagram(diagram: DiagramFile): string {
         }))
       : undefined,
     activeEdgeDirectionSetId: hasDirectionSets ? diagram.activeEdgeDirectionSetId : undefined,
+    security: orderedDiagramSecurity(diagram.security),
     nodes: diagram.nodes.map((n) => ({
       id: n.id,
       type: n.type,
@@ -496,7 +648,13 @@ export function serializeDiagram(diagram: DiagramFile): string {
         icons: n.data.icons && Object.keys(n.data.icons).length > 0 ? n.data.icons : undefined,
         details: n.data.details,
         linkedDiagram: n.data.linkedDiagram,
-        points: n.data.points && n.data.points.length > 0 ? n.data.points : undefined
+        points: n.data.points && n.data.points.length > 0 ? n.data.points : undefined,
+        // NB: `references` was missing here until 2026-09-01 — a 5th
+        // instance of the serialize-picklist gap (see known-issues.md),
+        // found while adding `security`. Both added together.
+        references:
+          n.data.references && n.data.references.length > 0 ? n.data.references : undefined,
+        security: sortedNodeSecurity(n.data.security, n.type)
       }
     })),
     edges: diagram.edges.map((e) => ({

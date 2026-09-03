@@ -1,29 +1,24 @@
-// Pure math for the threat/risk matrix prototype (see ADR 0055) — no notion
-// of "diagram" or "React" here, same dependency-free-module precedent as
-// bendablePath.ts/alignment.ts, so this survives untouched regardless of
-// how (or whether) the surrounding view ends up wired into the rest of
-// the app.
+// Pure math for the threat/risk matrix — no notion of "diagram" or "React"
+// here, same dependency-free-module precedent as bendablePath.ts/
+// alignment.ts. The data types (RiskCell, CombineMethod, AggregateMethod)
+// are part of the persisted schema and live in @shared/diagram (ADR 0082);
+// this module just imports them and does the arithmetic.
 
-export interface RiskCell {
-  probability: number
-  consequence: number
-  // Free-text justification for each number — separate fields since the
-  // reasoning behind "why this probability" and "why this consequence"
-  // are usually unrelated. Both optional: a value can stand on its own
-  // without a written rationale.
-  probabilityNote?: string
-  consequenceNote?: string
-}
+import type { AggregateMethod, CombineMethod, RiskCell } from '@shared/diagram'
 
-// Two independently configurable calculations (the user's own ask):
+export type { AggregateMethod, CombineMethod, RiskCell }
+
+// The cell the editor opens on for an un-assessed pair — the scale's own
+// lowest value, just so the selects have something selected. Only written
+// to `data.security` once the user actually picks a value; never seeded
+// eagerly (ADR 0082).
+export const BLANK_RISK_CELL: RiskCell = { probability: 1, consequence: 1 }
+
 // combineMethod turns a probability/consequence pair into one number —
 // used identically for a cell's own score AND the grand-total cell (the
-// same combine() call, just on different inputs, per the original spec:
-// "the final cell... follows the same setting that the normal cells
-// [use] for combining"). aggregateMethod turns a list of cell scores
-// into one row/column summary (a threat score or a vulnerability score).
-export type CombineMethod = 'multiply' | 'add' | 'average'
-export type AggregateMethod = 'average' | 'sum' | 'max'
+// same combine() call, just on different inputs). aggregateMethod turns a
+// list of cell scores into one row/column summary (a threat score or a
+// vulnerability score).
 
 export const COMBINE_METHOD_LABELS: Record<CombineMethod, string> = {
   multiply: 'Multiply (P × C)',

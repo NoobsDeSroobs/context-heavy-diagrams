@@ -1,25 +1,89 @@
 # 0079: Security data as a diagram-element property (real persistence)
 
 ## Status
-Not Started — not yet scoped. Split off epic 0060 on its closure (2026-08-25), the first and foundational of three follow-ups. See [ADR 0055](../../decisions/0055-security-data-lives-on-diagram-elements.md) for the design decision this epic implements.
+In progress — design committed 2026-09-01, see [ADR 0082](../../decisions/0082-security-data-schema.md) (the concrete schema for [ADR 0055](../../decisions/0055-security-data-lives-on-diagram-elements.md)). On `epic/0079-security-data-as-element-property`.
 
 ## Goal
-Replace the epic 0060 prototype's hardcoded, in-memory-only threat/risk data (`threatMatrixTestData.ts`, `threatMatrixScale.ts`) with real data that lives on the diagram's own nodes and persists through `.chd` save/reload — plus a "Security" section in the Property Panel so a single shape's own security info is visible without opening the full matrix view (the user's own motivating case: no need to scan a potentially long matrix to find one service's row).
+Replace the epic 0060 threat-matrix prototype's hardcoded, in-memory-only
+data (`threatMatrixTestData.ts`, `threatMatrixScale.ts`, component-state
+calc modes) with real data that lives on the diagram's own Shape nodes and
+persists through `.chd` save/reload, so the Security Matrix view works on a
+real model instead of placeholders.
+
+## Committed design (2026-09-01)
+Full rationale + rejected alternatives in [ADR 0082](../../decisions/0082-security-data-schema.md).
+Settled with the user across two rounds:
+
+- **Shapes only** carry security data — not edges (a protocol attack is
+  real but doesn't fit the matrix's column model), not containers.
+  `DiagramNode.data.security?: Record<threatId, RiskCell>`, **sparse** (a
+  missing cell = "not assessed" = drives the completeness alert; no
+  placeholder seeding).
+- **Diagram-level `DiagramFile.security`**: `threats` catalog (id-keyed) +
+  `matrixShapeIds` (the matrix's data model, ordered) + `hiddenThreatIds`
+  / `hiddenShapeIds` + optional `probabilityScale` / `consequenceScale` /
+  `combineMethod` / `aggregateMethod` (absent → app built-in defaults).
+- **Hide ≠ Remove.** Hide = stays in the data model, not shown, still
+  counts toward completeness. Remove = deleted from the model *and* every
+  shape's cells (threats) / the shape's whole `data.security` (shapes).
+- **Completeness alert** in the matrix overview — "N of M assessments not
+  entered", over every (matrixShape × threat) pair, visible or hidden.
+- **No Property-panel Security section in v1** — the property view is
+  crowded and the diagram-side exposure needs its own design pass. Data is
+  entered through the matrix cell editor, as today. → [epic 0107](0107-per-element-security-exposure.md).
+- Schema types (`RiskCell`, `SecurityThreat`, `SecurityScaleLevel`,
+  `CombineMethod`, `AggregateMethod`) move to `src/shared/diagram.ts`; the
+  math (`combine`, `cellScore`, …) stays in the renderer.
+
+## Tasks
+- [x] `src/shared/diagram.ts`: `RiskCell`, `SecurityThreat`,
+      `SecurityScaleLevel`, `CombineMethod`, `AggregateMethod`,
+      `DiagramSecurity`; `DiagramNode.data.security`, `DiagramFile.security`.
+      `serializeDiagram` gating + deterministic key order + map-key sort +
+      `hidden*Ids` sort. **Also fixed a 5th instance of the serialize
+      picklist-gap bug found here: `data.references` (epic 0090) was never
+      serialized either — see known-issues.md.**
+- [x] `renderer/src/security/threatMatrixScale.ts` → `DEFAULT_PROBABILITY_SCALE`
+      / `DEFAULT_CONSEQUENCE_SCALE` + `effectiveScales(security)` helper.
+- [x] `threatMatrixMath.ts`: imports shared types; keeps the functions +
+      labels; `BLANK_RISK_CELL` moved here (react-refresh lint rule).
+- [x] Deleted `threatMatrixTestData.ts`.
+- [x] `Canvas.tsx`: `security` state; `fromDiagramFile` prunes dangling
+      shape refs + strips orphan cells (threat removed / shape not a member
+      / non-shape node) with a Diagnostics note; `toDiagramFile` (both call
+      sites) + autosave ref + `loadDiagramIntoCanvas`; `updateSecurity` +
+      `updateNodeSecurityCell` (undoable) + `removeSecurityThreat` /
+      `removeSecurityShape` (not undo steps; also strip history snapshots).
+- [x] `ThreatMatrixView` rewrite — props from Canvas, columns/rows from
+      the (de-hidden) model, scores over assessed cells only, methods
+      read/write `security.*`, completeness banner, empty-state guidance.
+- [x] `ThreatMatrixManagePanel` — threats add / rename / hide / remove;
+      shapes: `<select>` picker of un-added Shape nodes + per-shape hide /
+      remove. Two-step inline confirm on remove (destructive).
+- [x] `ThreatMatrixCellEditor` — threat × shape *label* header, "not
+      assessed" hint, "Clear this assessment" button.
+- [x] `docs/file-format.md`: new "Security" section + `data.security` row.
+- [x] `typecheck` clean; `lint` 0 errors.
+- [ ] Live-test (Electron): add threats + shapes, assess cells, hide vs
+      remove each, completeness banner, delete an assessed shape from the
+      canvas → matrix self-heals, save/reload round-trip, dormant diagram
+      stays dormant.
 
 ## Relevant existing behavior
-- `RiskCell` (`threatMatrixMath.ts`): `{ probability, consequence, probabilityNote?, consequenceNote? }` — already the right per-element, per-threat shape, just not yet attached to a node.
-- `CombineMethod`/`AggregateMethod` (`threatMatrixMath.ts`) and `PROBABILITY_SCALE`/`CONSEQUENCE_SCALE` (`threatMatrixScale.ts`) are currently hardcoded constants — these are diagram-level configuration, not per-element data, per ADR 0055.
-- `data.details`/`data.linkedDiagram` on `DiagramNode` (`src/shared/diagram.ts`) are the closest existing precedent for "optional richer context attached to one element" — same family a security entry joins.
-- The Property Panel (`src/renderer/src/components/PropertyPanel.tsx` — check current filename) already has a per-element sections pattern (style, metadata) a new "Security" section would follow.
-- File-format precedent for the new diagram-level config block: `requiredTags`/`highlights`/`legend`/`gravityPresets` in `docs/file-format.md` — absent means none/default, same rule this epic's new fields must follow (per ADR 0054).
-
-## Real open questions (deliberately not resolved here)
-- **Field shape and name** — a `data.security: Record<threatId, RiskCell>` on `DiagramNode`, or something else. Needs a stable threat identity (name vs. a generated id) that survives a threat being renamed in the diagram-level catalog.
-- **Do edges carry security data too?** Raised by the user when this epic was split off: "you can attack the communication protocol" — a real, distinct threat surface from attacking an endpoint. Structurally unresolved: the matrix's columns are node-based "services" today, and an edge doesn't obviously become a column the same way. Could be a separate concern from the matrix's own display (edges get a Security section in their own Property Panel without needing to appear as a matrix column) — worth deciding early since it affects the schema shape.
-- **Which node types can carry security data** — epic 0060's ninth round scoped the matrix's own *column* candidates to Shape-type nodes only (not Container/Text/Line/Anchor), but that was a decision about the view, made before this per-element-data model existed. Worth revisiting whether Container should carry security data too now that it's not matrix-only state (metadata already allows Container, per `docs/file-format.md`).
-- **Diagram-level config block's exact shape** — one `security` object bundling the threat catalog + both scales + both calculation modes, or several separate top-level fields. Should follow whatever reads cleanest against the existing top-level field list in `docs/file-format.md`.
-- **Threat catalog lifecycle** — renaming or removing a threat from the catalog needs a reconciliation rule for existing per-element entries referencing it, similar to `requiredTags`' "demote to free rather than delete" rule (`docs/file-format.md`'s Required tags section) — not yet designed for this case.
-- **Wiring the existing prototype views** (`ThreatMatrixView.tsx`, `ThreatMatrixCellEditor.tsx`, `ThreatMatrixManagePanel.tsx`) to read/write this real data instead of the test-data module — mechanical once the schema is settled, but real work (the manage panel's add/remove currently mutates in-memory-only state).
+- `RiskCell` (`threatMatrixMath.ts`) — already the right per-element shape.
+- `CombineMethod` / `AggregateMethod` + the pure math — reused as-is.
+- `data.details` / `data.linkedDiagram` / `data.references` — the family
+  `data.security` joins (optional richer context on one element).
+- `requiredTags` / `highlights` / `legend` / `gravityPresets` /
+  `edgeDirectionSets` — the "absent means unused" top-level precedent
+  `DiagramFile.security` follows.
+- `recentDiagrams`' prune-on-load (ADR 0078) — the model for
+  `matrixShapeIds` dangling-id cleanup.
 
 ## Notes
-Not scheduled into any current batch — logged the same day epic 0060 closed. This is the prerequisite for epic 0081 (recursive automation) doing anything real; that epic's tag-driven rollup has nothing to persist or read until this one lands.
+Split off epic 0060 on its closure (2026-08-25); prerequisite for
+[epic 0081](0081-recursive-matrix-population-and-automation.md) (recursive
+rollup — nothing to walk until real per-element data exists). Epic 0060's
+branch merged (PR #55) before this started. Design pass done 2026-09-01;
+the Property-panel / on-canvas exposure was deliberately carved out into
+[epic 0107](0107-per-element-security-exposure.md) at the user's request.

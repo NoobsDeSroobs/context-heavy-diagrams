@@ -1,7 +1,7 @@
 # 0080: Mode-aware top menu bar
 
 ## Status
-Done (2026-08-31), on `epic/0080-mode-aware-menu-bar`, pending live test/merge. See [ADR 0079](../../decisions/0079-mode-aware-menu-bar.md).
+Done (2026-08-31), merged to `master` (PR #82). Not live-tested (Electron renderer). See [ADR 0079](../../../decisions/0079-mode-aware-menu-bar.md).
 
 ## What shipped
 - **Mechanism**: `Canvas.tsx` builds `fileMenu`/`editMenu`/`viewMenu`/`helpMenu` as named locals and assembles the array per persona (`isDiagramPersona ? [file,edit,view,help] : [file,view,help]`). `MenuBar` stays persona-unaware — no per-item flag, no filtering in the shared component.
@@ -21,7 +21,7 @@ The top menu bar (`MenuBar`/`Canvas.tsx`'s `menus` array, epic 0049) currently s
 - `ThreatMatrixManagePanel.tsx` currently exposes add/remove threat/service controls as a floating dock panel, not menu items — worth deciding whether matrix-specific menu items duplicate or replace some of what that panel already does.
 
 ## Open questions — resolved with the user 2026-08-31
-- **Per-persona menu contents**: hide (don't rebuild). Matrix = diagram menus minus Edit, minus the diagram-only View panels, minus Export-as-PNG. See the table in [ADR 0079](../../decisions/0079-mode-aware-menu-bar.md).
+- **Per-persona menu contents**: hide (don't rebuild). Matrix = diagram menus minus Edit, minus the diagram-only View panels, minus Export-as-PNG. See the table in [ADR 0079](../../../decisions/0079-mode-aware-menu-bar.md).
 - **File/Edit across personas**: File basics identical ("open, close, etc. should be the same on both sides"); Edit hidden in matrix. Export as PNG dropped in matrix for now (matrix-PNG export "could make sense", isn't built).
 - **Mechanism**: composed named menu locals assembled per persona in `Canvas.tsx`; `MenuBar` stays persona-unaware. Not a per-item flag.
 - **Matrix-specific menu items** (calculation modes, manage matrix, matrix styling): deferred to epic 0079, when the matrix has real persisted state. The prototype's own controls stay in `ThreatMatrixView`'s inline row for now.

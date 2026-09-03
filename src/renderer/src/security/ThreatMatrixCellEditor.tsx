@@ -1,15 +1,16 @@
 import { useEffect, useRef } from 'react'
-import type { RiskCell } from './threatMatrixMath'
-import type { ScaleLevel } from './threatMatrixScale'
+import type { RiskCell, SecurityScaleLevel } from '@shared/diagram'
 
 interface ThreatMatrixCellEditorProps {
   threat: string
   service: string
   anchorRect: DOMRect
   cell: RiskCell
-  probabilityScale: ScaleLevel[]
-  consequenceScale: ScaleLevel[]
+  assessed: boolean
+  probabilityScale: SecurityScaleLevel[]
+  consequenceScale: SecurityScaleLevel[]
   onChange: (cell: RiskCell) => void
+  onClear: () => void
   onClose: () => void
 }
 
@@ -22,9 +23,11 @@ export default function ThreatMatrixCellEditor({
   service,
   anchorRect,
   cell,
+  assessed,
   probabilityScale,
   consequenceScale,
   onChange,
+  onClear,
   onClose
 }: ThreatMatrixCellEditorProps): React.JSX.Element {
   const ref = useRef<HTMLDivElement>(null)
@@ -52,6 +55,7 @@ export default function ThreatMatrixCellEditor({
     >
       <div className="threat-matrix-cell-editor-title">
         {threat} × {service}
+        {!assessed && <span className="threat-matrix-cell-editor-unassessed"> · not assessed</span>}
       </div>
       <label className="threat-matrix-cell-editor-field">
         Probability
@@ -104,6 +108,11 @@ export default function ThreatMatrixCellEditor({
           placeholder="Reasoning behind this consequence"
         />
       </label>
+      {assessed && (
+        <button type="button" className="threat-matrix-cell-editor-clear" onClick={onClear}>
+          Clear this assessment
+        </button>
+      )}
     </div>
   )
 }

@@ -17,4 +17,4 @@ Detail files (epic 0008) were named `<node-id>.md` — effectively `<type>-<uuid
 - [ ] Live test: create a shape, add details content, save, confirm the file is named from its label; rename the shape, save again, confirm the old file is gone and a new correctly-named one exists with the same content; open an existing diagram with an old-convention detail file, save it, confirm it gets migrated
 
 ## Notes
-Requested 2026-08-24, originally logged as a possible fourth item for the [0086](../0086-minor-ui-improvements.md) grab-bag epic, but split into its own epic once scoped — this needed real design decisions (rename-on-relabel behavior, migration strategy) rather than being a same-sized drop-in fix, so it got its own ADR (0060) the way epic 0086's other, genuinely-minor items didn't.
+Requested 2026-08-24, originally logged as a possible fourth item for the [0086](0086-minor-ui-improvements.md) grab-bag epic, but split into its own epic once scoped — this needed real design decisions (rename-on-relabel behavior, migration strategy) rather than being a same-sized drop-in fix, so it got its own ADR (0060) the way epic 0086's other, genuinely-minor items didn't.

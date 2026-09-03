@@ -1,18 +1,18 @@
 # 0092: Epic subfolders — sweep completed epics into `completed/`, parked ones into `later/`
 
 ## Status
-Done (2026-08-30), on `epic/0092-completed-epics-folder`, pending merge. This epic
-file stays in `epics/` until the branch merges, then moves to `completed/` itself
-(one final `git mv`).
+Done (2026-08-30), merged to `master` (PR #78; a follow-up parking 3 more epics into
+`later/` rode PR #79). This epic file itself moved to `completed/` on 2026-09-01,
+alongside 0078/0080/0086/0089/0095.
 
 ## Goal
-[ADR 0061](../../decisions/0061-completed-epic-filename-marker.md) established an
+[ADR 0061](../../../decisions/0061-completed-epic-filename-marker.md) established an
 `x`-prefix filename convention for completed epics but it was never rolled out.
 The user decided (2026-08-30) to use a `docs/planning/epics/completed/` subfolder
 instead. This epic wrote the ADR for that and did the retroactive move.
 
 ## Tasks
-- [x] **[ADR 0076](../../decisions/0076-completed-epics-subfolder.md)** —
+- [x] **[ADR 0076](../../../decisions/0076-completed-epics-subfolder.md)** —
   `completed/` subfolder supersedes ADR 0061's `x` prefix; keeps ADR 0061's
   definition of "completed" (`Done` **and** confirmed working, the practical
   proxy being merged-to-`master`); flat number namespace across both folders;
@@ -35,7 +35,7 @@ instead. This epic wrote the ADR for that and did the retroactive move.
   epics gain `../`), and from `PROGRESS.md` / `docs/known-issues.md` / ADRs /
   kept epics (gain `completed/`). `docs/architecture/**` had none (epic 0066
   already decoupled those). `examples/**` only reference 0022 (kept).
-- [x] Updated `docs/planning/README.md`, [ADR 0002](../../decisions/0002-planning-structure.md),
+- [x] Updated `docs/planning/README.md`, [ADR 0002](../../../decisions/0002-planning-structure.md),
   `CLAUDE.md`.
 - [x] Link-checker pass over every `*.md` in the repo — 0 broken links from the
   move. Also fixed 2 pre-existing broken links found in passing

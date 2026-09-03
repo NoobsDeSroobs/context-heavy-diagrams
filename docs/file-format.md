@@ -51,6 +51,7 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
 | `maxConnectionPointsPerSide` | number | Per-diagram override for the max connection points allowed on one side of a Shape/Container. Absent means "use whoever opens this file's own app-level preference" — a real constraint on what the diagram can contain, not a display setting, so it lives in the file rather than staying app-only. Lowering it below what an existing element already has never removes that element's points; the limit only stops adding more. |
 | `edgeDirectionSets` | array of EdgeDirectionSet | Named readings of the diagram's edges that differ only in arrow direction — e.g. "Data flow" vs. "Trigger direction". See [Edge direction sets](#edge-direction-sets) below. Absent/empty means the feature is unused. A single set names the current reading and gives it a legend row; two or more can be switched between and add per-edge `directionSets` records. |
 | `activeEdgeDirectionSetId` | string | Which entry of `edgeDirectionSets` is currently displayed. With two or more sets the edges on disk are always written in the *first* set's orientation regardless of this value (see [Edge direction sets](#edge-direction-sets)); this only says which reading to show on open. Absent means the first set. |
+| `security` | object | Threat/risk model — the threat catalog, which shapes are in the security matrix, calculation settings — see [Security](#security) below. Absent means the Security Matrix has never been used for this diagram (and no node has `data.security`). |
 | `nodes` | array of Node | See below. |
 | `edges` | array of Edge | See below. |
 
@@ -98,6 +99,7 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
 | `data.linkedDiagram` | string | no | Relative path (from this diagram file's own directory) to another `.chd` file — a drill-down link. Resolved and opened on demand (e.g. Ctrl/Cmd+click in this app), never eagerly. Absent means the node has no link. See the Linking section below for the missing-target and directionality rules. |
 | `data.points` | array of LinePoint | `"line"` only | The line's own shape — see [Line points](#line-points) below. Absent/empty on a `"line"` node means nothing has been drawn yet (this app never actually produces that — a freshly created line always has 2 points). Meaningless on every other node type. |
 | `data.references` | array of string | no | Only meaningful on `"shape"`/`"container"` nodes. Ordered list of relative paths (from this diagram file's own directory, same convention as `data.details`) to reference images — screenshots, diagrams, photos kept as working reference material for the concept this node represents. This app keeps them under a sibling `assets/references/` folder and shows them only in transient floating viewer windows; they are **never drawn on the canvas and never included in image exports**. A reader that only renders the diagram can ignore this field entirely. Absent/empty means none. |
+| `data.security` | object | `"shape"` only | Threat/risk assessment for this shape — a sparse map keyed by a threat `id` from the top-level [`security`](#security)`.threats` catalog, each value a `RiskCell` (`{ "probability", "consequence", "probabilityNote"?, "consequenceNote"? }`). An entry exists only once that (shape, threat) pair has actually been assessed; a missing cell for a matrix member pair means "not yet assessed". Present only on shapes listed in `security.matrixShapeIds`. Absent means this shape isn't in the security matrix. Purely analytical — has no effect on how the shape is drawn. |
 
 ### Line points
 
@@ -355,6 +357,40 @@ Named bend values — `gravityPresets` on the top-level object — offered on a 
 
 This is diagram-level data, not an app preference — reproducing the diagram for any reader means the readings, and which one is shown, have to live in the file.
 
+## Security
+
+`security` (top-level) holds a threat/risk model over the diagram's shapes. The per-shape assessments live on each shape's [`data.security`](#node); this block is the shared configuration: the threat catalog, which shapes are in the matrix, and the calculation settings.
+
+```json
+"security": {
+  "threats": [
+    { "id": "t-ddos", "name": "DDoS" },
+    { "id": "t-phish", "name": "Phishing", "description": "credential theft via a fake login" }
+  ],
+  "hiddenThreatIds": ["t-phish"],
+  "matrixShapeIds": ["shape-2", "shape-7", "shape-9"],
+  "hiddenShapeIds": ["shape-9"],
+  "probabilityScale": [ { "value": 1, "label": "Rare", "description": "…" } ],
+  "consequenceScale": [ { "value": 1, "label": "Negligible", "description": "…" } ],
+  "combineMethod": "multiply",
+  "aggregateMethod": "average"
+}
+```
+
+| Field | Type | Required | Meaning |
+|---|---|---|---|
+| `threats` | array of `{ id, name, description? }` | yes | The threat catalog — matrix row candidates. Ordered (row order). `id` is what each shape's `data.security` keys reference; `name` is display-only, so renaming a threat never touches per-shape data. |
+| `hiddenThreatIds` | array of string | no | Threat ids currently *hidden* from the matrix — not shown as a row, but still part of the model (their assessments are kept and still count toward completeness). Absent/empty means all threats shown. |
+| `matrixShapeIds` | array of string | yes | Ids of `"shape"` nodes that are in the matrix's data model. Ordered (column order). A shape not listed here carries no `data.security` at all. An id that no longer resolves to a shape is dropped on load. |
+| `hiddenShapeIds` | array of string | no | Shape ids in the matrix but currently hidden — not a column, data kept, still counts toward completeness. Absent/empty means all shown. |
+| `probabilityScale` / `consequenceScale` | array of `{ value, label, description }` | no | Per-diagram scale definitions. Absent means this app's built-in 1–5 scale. A reader only needs the `value`s to interpret a `RiskCell`; `label`/`description` are for the person filling the matrix in. |
+| `combineMethod` | `"multiply"` \| `"add"` \| `"average"` | no | How a cell's probability and consequence combine into one score. Absent means `"multiply"`. |
+| `aggregateMethod` | `"average"` \| `"sum"` \| `"max"` | no | How a set of cell scores rolls up into a per-threat or per-shape summary. Absent means `"average"`. |
+
+**Hide vs. remove.** *Hiding* a threat or shape keeps it in the model — its data is preserved and it still counts toward the matrix's "N of M assessments entered" completeness check — it just isn't rendered. *Removing* a threat deletes it from `threats` and deletes that threat's cell from **every** shape's `data.security`; removing a shape drops it from `matrixShapeIds` and deletes its whole `data.security`. Remove is the destructive, deliberate operation; hide is a view toggle.
+
+**Absent `security`** means the feature is dormant — no shape has `data.security` either. A writer emits this block once it has any threat or any matrix shape, and drops it again if both are empty. Storage is sparse: an un-entered assessment is simply an absent cell, which is what the completeness check reads — nothing is pre-seeded.
+
 ## Determinism
 
 Files are written with a fixed key order (matching the tables above) and 2-space indentation, plus a trailing newline. This is deliberate: two saves of an unchanged diagram produce byte-identical output, so git diffs only show real changes. A compatible writer should aim for the same property if it wants clean diffs, though it isn't required for a file to be readable.
@@ -369,7 +405,7 @@ The `.chd` file itself is always plain, deterministic JSON — kept git-friendly
 
 ## Versioning
 
-`version` is currently always `1`. Fields have been added over time (`size`, `rotation`, `connectionPoints`, `parentId`, `style` on both Node and Edge, edge `type`/`label`, `data.icons`, `data.details`, `data.linkedDiagram`, top-level `metadata`/`requiredTags`/`highlights`/`legend`, `metadata` on both Node and Edge, Edge style's `labelPosition`, Node's `zIndex`, Node's `locked`, the `"line"` node `type` with its `data.points`, Node style's `lineStyle`/`startMarker`/`endMarker`, top-level `gravityPresets`, Edge style's `routingStyle` with its own `points`, top-level `maxConnectionPointsPerSide`, `data.references`, and top-level `edgeDirectionSets` / `activeEdgeDirectionSetId` with each edge's `directionSets`) but always additively — a reader from an earlier point in this project's history can still open a newer file and just won't recognize the newer fields. The same holds in reverse: this app's own current code must still open a file from *before* one of these fields existed, without failing or requiring migration — see [ADR 0029](decisions/0029-backward-compatible-loading-is-a-standing-rule.md), which makes this a standing rule for every future field, not just an incidental property of the fields added so far. A breaking change to the meaning of an existing field would bump `version`; nothing has required that yet.
+`version` is currently always `1`. Fields have been added over time (`size`, `rotation`, `connectionPoints`, `parentId`, `style` on both Node and Edge, edge `type`/`label`, `data.icons`, `data.details`, `data.linkedDiagram`, top-level `metadata`/`requiredTags`/`highlights`/`legend`, `metadata` on both Node and Edge, Edge style's `labelPosition`, Node's `zIndex`, Node's `locked`, the `"line"` node `type` with its `data.points`, Node style's `lineStyle`/`startMarker`/`endMarker`, top-level `gravityPresets`, Edge style's `routingStyle` with its own `points`, top-level `maxConnectionPointsPerSide`, `data.references`, top-level `edgeDirectionSets` / `activeEdgeDirectionSetId` with each edge's `directionSets`, and top-level `security` with each shape's `data.security`) but always additively — a reader from an earlier point in this project's history can still open a newer file and just won't recognize the newer fields. The same holds in reverse: this app's own current code must still open a file from *before* one of these fields existed, without failing or requiring migration — see [ADR 0029](decisions/0029-backward-compatible-loading-is-a-standing-rule.md), which makes this a standing rule for every future field, not just an incidental property of the fields added so far. A breaking change to the meaning of an existing field would bump `version`; nothing has required that yet.
 
 ## Example
 
