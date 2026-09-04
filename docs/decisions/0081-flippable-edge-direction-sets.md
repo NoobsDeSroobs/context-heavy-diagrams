@@ -262,8 +262,9 @@ and (thanks to base orientation) persisting it costs one line in the file.
   large amount of model complexity for the minority case. A diagram that
   truly needs different edge pools can use two diagrams.
 - **Per-set styling of the real edges** ("Trigger direction" draws every
-  edge dashed on the canvas). Deferred to
-  [epic 0106](../planning/epics/0106-per-set-edge-style.md). Note this is
+  edge dashed on the canvas). Deferred at the time; later done as a
+  per-reading *creation-time default* — see
+  [ADR 0083](0083-per-set-edge-style-as-creation-template.md). Note this is
   *not* the same as the per-set **legend** swatch (colour + line style +
   markers) that shipped here — that only styles the one legend row, never
   the edges.

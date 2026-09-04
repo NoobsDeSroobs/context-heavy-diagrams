@@ -94,6 +94,16 @@ const api = {
     return ipcRenderer.invoke('links:pickExisting', diagramPath)
   },
 
+  // Bulk existence check for the Diagnostics "missing files" section
+  // (ADR 0084) — linked diagrams, custom icons, reference images, details
+  // files. One result per input relative path, in input order.
+  checkResourceFiles(
+    diagramPath: string,
+    relativePaths: string[]
+  ): Promise<{ relativePath: string; resolvedPath: string; found: boolean }[]> {
+    return ipcRenderer.invoke('resources:checkExist', diagramPath, relativePaths)
+  },
+
   // Multi-window model — see ADR 0023. All three open a new window (or
   // focus an existing one already showing that path) rather than ever
   // replacing the diagram in the window they were called from.

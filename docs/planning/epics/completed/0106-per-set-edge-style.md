@@ -2,11 +2,10 @@
 
 ## Status
 
-In Progress — on `epic/0106-per-set-edge-style` (2026-09-04). Split out of
-[epic 0089](completed/0089-flippable-edge-direction-mode.md) (2026-08-31),
-see [ADR 0081](../../decisions/0081-flippable-edge-direction-sets.md). Epic
-0089 has landed (PR #84), so the direction-set registry + per-edge
-`directionSets` structure this hangs style on now exist. Design pass first.
+Done — merged to `master` (PR #86, 2026-09-04). NOT live-tested (Electron
+renderer). Split out of [epic 0089](0089-flippable-edge-direction-mode.md)
+(2026-08-31), see [ADR 0081](../../../decisions/0081-flippable-edge-direction-sets.md)
++ [ADR 0083](../../../decisions/0083-per-set-edge-style-as-creation-template.md).
 
 ## Goal
 
@@ -15,7 +14,7 @@ just its own direction — so a diagram can draw its "Data flow" edges solid
 black and its "Trigger direction" edges dashed blue without hand-styling
 every edge.
 
-## Design — see [ADR 0083](../../decisions/0083-per-set-edge-style-as-creation-template.md)
+## Design — see [ADR 0083](../../../decisions/0083-per-set-edge-style-as-creation-template.md)
 
 Settled with the user (2026-09-04) across three rounds. The set style is a
 **creation template + the legend row's look**, not a live layer:

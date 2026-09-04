@@ -7,14 +7,7 @@ import {
   type DiagramFile,
   type RequiredTagDefinition
 } from '@shared/diagram'
-
-// A relativePath stored on a node can legitimately resolve to an absolute
-// path (path.relative() falls back to absolute across Windows drives) — a
-// bare path.join() would silently mangle that instead of erroring, so this
-// must be checked explicitly rather than always joining.
-function resolveLinkPath(diagramPath: string, relativePath: string): string {
-  return isAbsolute(relativePath) ? relativePath : join(dirname(diagramPath), relativePath)
-}
+import { resolveLinkPath } from './linkPaths'
 
 function normalizePath(path: string): string {
   return process.platform === 'win32' ? path.toLowerCase() : path

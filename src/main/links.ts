@@ -1,8 +1,9 @@
 import { dialog, ipcMain } from 'electron'
-import { mkdir, readdir, writeFile } from 'fs/promises'
+import { access, mkdir, readdir, writeFile } from 'fs/promises'
 import { basename, dirname, extname, join, relative } from 'path'
 import { createEmptyDiagram, serializeDiagram } from '@shared/diagram'
 import { labelToFileStem } from '@shared/labelFileName'
+import { resolveLinkPath } from './linkPaths'
 
 // Linked diagrams colocate in the same sibling folder as assets/details
 // (ADR 0005/0006, see assetsDirFor/detailsDirFor in icons.ts/details.ts) —
@@ -42,4 +43,25 @@ export function registerLinkHandlers(): void {
     if (result.canceled || result.filePaths.length === 0) return null
     return relative(dirname(diagramPath), result.filePaths[0]).split('\\').join('/')
   })
+
+  // Bulk existence check for the Diagnostics "missing files" section
+  // (ADR 0084) — linked diagrams, custom icons, reference images and
+  // details files all resolve the same way (resolveLinkPath). Same
+  // resolve + fs.access as windows:openLinked, over a (deduped) list.
+  // Returns one entry per input path, in input order.
+  ipcMain.handle(
+    'resources:checkExist',
+    async (_event, diagramPath: string, relativePaths: string[]) =>
+      Promise.all(
+        relativePaths.map(async (relativePath) => {
+          const resolvedPath = resolveLinkPath(diagramPath, relativePath)
+          try {
+            await access(resolvedPath)
+            return { relativePath, resolvedPath, found: true as const }
+          } catch {
+            return { relativePath, resolvedPath, found: false as const }
+          }
+        })
+      )
+  )
 }

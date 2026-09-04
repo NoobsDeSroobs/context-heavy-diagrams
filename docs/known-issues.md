@@ -12,6 +12,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 ## Open items at a glance
 
+- [Diagnostics "missing files" check didn't flag a reported broken relative path in real diagram data](#diagnostics-missing-files-check-didnt-flag-a-reported-broken-relative-path-in-real-diagram-data) — Open, reported once, not reproduced/confirmed.
 - [Dragging a new edge from a node inside a locked container can snap to the container itself](#dragging-a-new-edge-from-a-node-inside-a-locked-container-can-snap-to-the-container-itself) — Open, not investigated.
 - [Hovering a single edge on a large diagram re-renders every node and edge several times over](#hovering-a-single-edge-on-a-large-diagram-re-renders-every-node-and-edge-several-times-over) — Solved, ADR 0073 / epic 0101.
 - [A large diagram's edges, selection box, and new-connection dragging all silently failed until node measurement happened to catch up](#a-large-diagrams-edges-selection-box-and-new-connection-dragging-all-silently-failed-until-node-measurement-happened-to-catch-up) — Solved.
@@ -32,6 +33,23 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 - [Deleting / cutting a container + its selected children removes only the container, keeps the children](#deleting--cutting-a-container--its-selected-children-removes-only-the-container-keeps-the-children) — Open, deliberately not fixed (user wants a decision later).
 - [Copy/paste doesn't preserve container relationships](#copypaste-doesnt-preserve-container-relationships) — Open; ADR 0075 / epic 0103 reworked `remapForPaste` for exactly this, unmerged — retest after merge.
 - ["Reverse direction" did nothing visible on a styled edge (and showed arrows on both ends before that)](#reverse-direction-did-nothing-visible-on-a-styled-edge) — Solved (ADR 0083 / epic 0106).
+
+---
+
+## Diagnostics "missing files" check didn't flag a reported broken relative path in real diagram data
+
+**Status:** Open, reported once, not reproduced or confirmed
+**Found:** 2026-09-04, user report while live-testing epic 0108 (Diagnostics — missing files) on the same `epic/0108-diagnostics-broken-links` branch it shipped on
+
+**Symptom:** the user's real "Project Overview" project (used elsewhere as the source of epic 0103's `parentId`-drift bugs) has a `Service platform.chd` diagram whose nodes carry `icons[slot].path`/`details`/`linkedDiagram` values that look like they were copy-pasted in from a sibling diagram (`Project Overview.chd`) without the paths being adjusted for the new file's own directory — e.g. an icon path of `"Project Overview/assets/Azure-Cosmos-DB.svg"` stored *inside* `Service platform.chd`, which per `docs/file-format.md`'s "relative to the diagram file's own directory" rule should resolve to a nonexistent, doubled-up path. Opening this diagram in-app and checking the Diagnostics panel's "Missing files" section (including after Recheck) did **not** report any of these as missing.
+
+**What's confirmed vs. not:** code-read only, not verified against the actual files (they live outside this repo, on the user's own disk — not shared this session). Traced the whole scan path — `collectResourceRefs` (`Canvas.tsx`) → `resources:checkExist` IPC (`main/links.ts`) → `resolveLinkPath` (`main/linkPaths.ts`) — and it appears to correctly cover all four resource kinds (`linkedDiagram`, custom `icon`, `reference`, `details`) and to resolve exactly per the documented rule; no gap found by reading the code alone. That leaves two live possibilities, neither ruled out: (a) a genuine false-negative somewhere in the scan/check path that code-reading didn't surface, or (b) the specific paths in this file aren't actually broken the way they first looked (the "doubled path" read came from inferring the resolution rule against a directory listing, not from confirming inside the running app).
+
+**Why logged instead of chased:** reported once, not reproduced on a second look, and the underlying "does paste corrupt resource paths" question it was raised alongside was addressed separately (see the paste-time retarget fix below, `src/renderer/src/clipboard.ts`'s `retargetResourcePath`/`retargetNodeData`) — logging this now means the next time Diagnostics looks like it's missed something, this is the first place to check instead of re-diagnosing from scratch.
+
+**If revisited:** get the actual file — either the real directory (so `resolveLinkPath`'s output can be checked against a real `fs.access` call), or at minimum the exact `data.icons`/`data.details`/`data.linkedDiagram` values of the specific node plus a directory listing of what's actually sitting next to `Service platform.chd`. Confirm first whether the path is *actually* unresolved (settles (a) vs (b) above) before touching any scan code.
+
+**References:** `src/renderer/src/Canvas.tsx`'s `collectResourceRefs`/`scanMissingFiles`, `src/main/links.ts`'s `resources:checkExist` handler, `src/main/linkPaths.ts`'s `resolveLinkPath`, [ADR 0084](decisions/0084-diagnostics-missing-files.md), [epic 0108](planning/epics/0108-diagnostics-missing-files.md)
 
 ---
 

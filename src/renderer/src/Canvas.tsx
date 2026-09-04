@@ -64,7 +64,7 @@ import IconBrowser from './components/IconBrowser'
 import ColorPickerPopup from './components/ColorPickerPopup'
 import StylePicker from './components/StylePicker'
 import DetailsPanel from './components/DetailsPanel'
-import DiagnosticsPanel from './components/DiagnosticsPanel'
+import DiagnosticsPanel, { type MissingFileEntry } from './components/DiagnosticsPanel'
 import HighlightsPanel from './components/HighlightsPanel'
 import SearchOverlay from './components/SearchOverlay'
 import { matchesSearchQuery, nodeHasIcon } from './search'
@@ -839,6 +839,96 @@ function syncElementMetadata(
   return Object.keys(next).length > 0 ? next : undefined
 }
 
+// Every on-disk resource path referenced by a diagram element — for the
+// Diagnostics "missing files" check (ADR 0084). `resolvedPath` is filled in
+// later, after main reports back which paths don't exist.
+function collectResourceRefs(
+  nodeList: Node[],
+  legendList: LegendEntry[]
+): Omit<MissingFileEntry, 'resolvedPath'>[] {
+  const refs: Omit<MissingFileEntry, 'resolvedPath'>[] = []
+  for (const n of nodeList) {
+    const ownerLabel = String(n.data?.label ?? '')
+    const ownerType = n.type ?? 'shape'
+    const base = { ownerKind: 'node' as const, ownerId: n.id, ownerLabel, ownerType }
+    const d = n.data ?? {}
+    if (typeof d.linkedDiagram === 'string' && d.linkedDiagram) {
+      refs.push({ ...base, key: `${n.id}:linkedDiagram`, resourceKind: 'linkedDiagram', relativePath: d.linkedDiagram })
+    }
+    if (typeof d.details === 'string' && d.details) {
+      refs.push({ ...base, key: `${n.id}:details`, resourceKind: 'details', relativePath: d.details })
+    }
+    const icons = d.icons as Partial<Record<IconSlot, IconRef>> | undefined
+    for (const [slot, ref] of Object.entries(icons ?? {})) {
+      if (ref?.source === 'custom' && typeof ref.path === 'string') {
+        refs.push({ ...base, key: `${n.id}:icon:${slot}`, resourceKind: 'icon', relativePath: ref.path, iconSlot: slot })
+      }
+    }
+    const references = Array.isArray(d.references) ? (d.references as string[]) : []
+    references.forEach((p, i) => {
+      if (typeof p === 'string' && p) {
+        refs.push({ ...base, key: `${n.id}:reference:${i}`, resourceKind: 'reference', relativePath: p })
+      }
+    })
+  }
+  for (const e of legendList) {
+    if (e.kind === 'icon' && e.icon?.source === 'custom' && typeof e.icon.path === 'string') {
+      refs.push({
+        key: `legend:${e.id}`,
+        ownerKind: 'legend',
+        ownerId: e.id,
+        ownerLabel: e.label,
+        ownerType: 'legend',
+        resourceKind: 'icon',
+        relativePath: e.icon.path
+      })
+    }
+  }
+  return refs
+}
+
+// Apply one staged missing-file removal (ADR 0084) to a nodes+legend pair —
+// the same mutation each element's own UI does. Pure; used at save time
+// (persistDiagram), so a staged removal only ever reaches disk on save.
+function applyMissingFileRemoval(
+  nodes: Node[],
+  legend: LegendEntry[],
+  entry: MissingFileEntry
+): { nodes: Node[]; legend: LegendEntry[] } {
+  if (entry.ownerKind === 'legend') {
+    return { nodes, legend: legend.filter((e) => e.id !== entry.ownerId) }
+  }
+  return {
+    legend,
+    nodes: nodes.map((n) => {
+      if (n.id !== entry.ownerId) return n
+      const d: Record<string, unknown> = { ...n.data }
+      switch (entry.resourceKind) {
+        case 'linkedDiagram':
+          d.linkedDiagram = undefined
+          break
+        case 'details':
+          d.details = undefined
+          break
+        case 'icon': {
+          const icons = { ...(d.icons as Partial<Record<IconSlot, IconRef>> | undefined) }
+          if (entry.iconSlot) delete icons[entry.iconSlot as IconSlot]
+          d.icons = Object.keys(icons).length > 0 ? icons : undefined
+          break
+        }
+        case 'reference': {
+          const refs = (Array.isArray(d.references) ? (d.references as string[]) : []).filter(
+            (p) => p !== entry.relativePath
+          )
+          d.references = refs.length > 0 ? refs : undefined
+          break
+        }
+      }
+      return { ...n, data: d }
+    })
+  }
+}
+
 function CanvasInner(): React.JSX.Element {
   const { theme, setTheme } = useTheme()
   const [nodes, setNodes, onNodesChangeBase] = useNodesState<Node>([])
@@ -949,6 +1039,20 @@ function CanvasInner(): React.JSX.Element {
   // kept separate from `diagnostics` so a later required-tags sync doesn't
   // wipe it; combined for display in `displayedDiagnostics`.
   const [hierarchyLoadNotes, setHierarchyLoadNotes] = useState<string[]>([])
+  // Elements referencing a file that no longer resolves on disk — a linked
+  // diagram, a custom icon, a reference image, a details `.md` (ADR 0084).
+  // Refreshed by scanMissingFiles on load and on the Diagnostics "Recheck"
+  // button — an async fs check, so it can't be derived during render like
+  // the other advisories. Session-only, never persisted.
+  //
+  // A "Remove" in the panel doesn't mutate anything — it moves the entry
+  // into `stagedFileRemovals`, and those are applied (to nodes/legend) only
+  // when the diagram is saved, in persistDiagram. `dismissedFileKeys` hides
+  // a row for the session ("it's expected right now"). Both reset on the
+  // next scan.
+  const [missingFiles, setMissingFiles] = useState<MissingFileEntry[]>([])
+  const [stagedFileRemovals, setStagedFileRemovals] = useState<MissingFileEntry[]>([])
+  const [dismissedFileKeys, setDismissedFileKeys] = useState<Set<string>>(new Set())
   const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false)
   const [highlightsPanelOpen, setHighlightsPanelOpen] = useState(false)
   // Floating popup next to Legend's, in the bottom-left <Controls> cluster
@@ -1136,6 +1240,46 @@ function CanvasInner(): React.JSX.Element {
       setDiagnostics(notices)
     },
     [setNodes, setEdges]
+  )
+
+  // Missing-file scan for the Diagnostics panel (ADR 0084): collect every
+  // on-disk resource a diagram element references — linked diagrams, custom
+  // icons, reference images, details files — ask main which don't resolve,
+  // and keep those. Takes the node/legend lists + diagram path explicitly
+  // so it can run against a freshly-loaded diagram before that state has
+  // committed. An unsaved diagram (no path) can't have resolvable
+  // references — reports none.
+  const missingFileScanRef = useRef(0)
+  const scanMissingFiles = useCallback(
+    async (nodeList: Node[], legendList: LegendEntry[], diagramPath: string | null) => {
+      // Guard against a stale async result stomping a newer scan (load A
+      // then quickly reload B in the same window).
+      const scanId = ++missingFileScanRef.current
+      // A fresh scan supersedes any pending per-row decisions.
+      setStagedFileRemovals([])
+      setDismissedFileKeys(new Set())
+      const refs = collectResourceRefs(nodeList, legendList)
+      if (!diagramPath || refs.length === 0) {
+        setMissingFiles([])
+        return
+      }
+      const uniquePaths = [...new Set(refs.map((r) => r.relativePath))]
+      let results: { relativePath: string; resolvedPath: string; found: boolean }[]
+      try {
+        results = await window.api.checkResourceFiles(diagramPath, uniquePaths)
+      } catch {
+        return
+      }
+      if (scanId !== missingFileScanRef.current) return
+      const missing = new Set(results.filter((r) => !r.found).map((r) => r.relativePath))
+      const resolvedByPath = new Map(results.map((r) => [r.relativePath, r.resolvedPath]))
+      setMissingFiles(
+        refs
+          .filter((r) => missing.has(r.relativePath))
+          .map((r) => ({ ...r, resolvedPath: resolvedByPath.get(r.relativePath) ?? r.relativePath }))
+      )
+    },
+    []
   )
 
   const pushSnapshot = useCallback(() => {
@@ -1647,7 +1791,10 @@ function CanvasInner(): React.JSX.Element {
     [rfInstance, addReferencesToNode]
   )
 
-  const revealReferenceOwner = useCallback(
+  // Select just this node and frame the viewport on it. Used by the
+  // References inventory panel and the Diagnostics broken-links section
+  // (ADR 0084) — nothing reference-specific about it.
+  const revealNode = useCallback(
     (nodeId: string) => {
       setNodes((nds) =>
         nds.map((n) => (n.selected === (n.id === nodeId) ? n : { ...n, selected: n.id === nodeId }))
@@ -1655,6 +1802,56 @@ function CanvasInner(): React.JSX.Element {
       rfInstance.fitView({ nodes: [{ id: nodeId }], duration: 300, padding: 0.5 })
     },
     [setNodes, rfInstance]
+  )
+
+  // Diagnostics missing-file row actions (ADR 0084). None of these touch a
+  // file on disk. A removal is *staged* — moved into stagedFileRemovals —
+  // and only applied (to nodes/legend) when the diagram is saved, in
+  // persistDiagram. "Dismiss" hides a row for the session. "Relink" is an
+  // in-memory edit like any other (undoable, dirties, needs a save).
+  const stageMissingFileRemoval = useCallback((entry: MissingFileEntry) => {
+    setMissingFiles((prev) => prev.filter((m) => m.key !== entry.key))
+    setStagedFileRemovals((prev) => [...prev, entry])
+    markDirty()
+  }, [markDirty])
+
+  const unstageMissingFileRemoval = useCallback((entry: MissingFileEntry) => {
+    setStagedFileRemovals((prev) => prev.filter((m) => m.key !== entry.key))
+    setMissingFiles((prev) => [...prev, entry])
+  }, [])
+
+  const dismissMissingFile = useCallback((entry: MissingFileEntry) => {
+    setDismissedFileKeys((prev) => new Set(prev).add(entry.key))
+  }, [])
+
+  const relinkMissingFile = useCallback(
+    async (entry: MissingFileEntry) => {
+      if (!currentPath || entry.ownerKind !== 'node') return
+      let newPath: string | null = null
+      if (entry.resourceKind === 'linkedDiagram') {
+        newPath = await window.api.pickExistingLinkedDiagram(currentPath)
+      } else if (entry.resourceKind === 'icon') {
+        newPath = await window.api.pickAndCopyCustomIcon(currentPath)
+      }
+      if (!newPath) return
+      pushSnapshot()
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (n.id !== entry.ownerId) return n
+          const d: Record<string, unknown> = { ...n.data }
+          if (entry.resourceKind === 'linkedDiagram') {
+            d.linkedDiagram = newPath
+          } else if (entry.resourceKind === 'icon' && entry.iconSlot) {
+            const icons = { ...(d.icons as Partial<Record<IconSlot, IconRef>> | undefined) }
+            icons[entry.iconSlot as IconSlot] = { source: 'custom', path: newPath! }
+            d.icons = icons
+          }
+          return { ...n, data: d }
+        })
+      )
+      setMissingFiles((prev) => prev.filter((m) => m.key !== entry.key))
+    },
+    [currentPath, pushSnapshot, setNodes]
   )
 
   const updateGravityPresets = useCallback(
@@ -3242,11 +3439,11 @@ function CanvasInner(): React.JSX.Element {
   const copySelection = useCallback(() => {
     const selected = nodes.filter((n) => n.selected)
     if (selected.length === 0) return
-    const payload = buildClipboardPayload(selected, edges)
+    const payload = buildClipboardPayload(selected, edges, currentPath)
     window.api.copyToClipboard(JSON.stringify(payload))
     // A fresh copy starts a new paste-cascade sequence.
     lastPasteRef.current = null
-  }, [nodes, edges])
+  }, [nodes, edges, currentPath])
 
   const pasteFromClipboard = useCallback(() => {
     const text = window.api.readClipboardText()
@@ -3263,26 +3460,40 @@ function CanvasInner(): React.JSX.Element {
     const screenCenter = { x: window.innerWidth / 2, y: window.innerHeight / 2 }
     const center = rfInstance.screenToFlowPosition(screenCenter)
     const offset = cascade * 20
-    const { nodes: pastedNodes, edges: pastedEdges } = remapForPaste(payload, newNodeId, {
-      x: center.x + offset,
-      y: center.y + offset
-    })
+    const { nodes: pastedNodes, edges: pastedEdges } = remapForPaste(
+      payload,
+      newNodeId,
+      { x: center.x + offset, y: center.y + offset },
+      currentPath
+    )
 
     pushSnapshot()
     // sortNodesForHierarchy: a pasted container + its children can arrive in
     // any order, and React Flow requires a parent earlier in the array than
-    // its children — see remapForPaste (ADR 0075).
-    setNodes((nds) =>
-      sortNodesForHierarchy([
+    // its children — see remapForPaste (ADR 0075). Captured out of the
+    // updater (rather than closing over `nodes`) so the post-paste scan
+    // below sees the actual applied result, not a possibly-stale snapshot.
+    let nextNodes: Node[] = []
+    setNodes((nds) => {
+      nextNodes = sortNodesForHierarchy([
         ...nds.map((n) => (n.selected ? { ...n, selected: false } : n)),
         ...pastedNodes
       ])
-    )
+      return nextNodes
+    })
     setEdges((eds) => [
       ...eds.map((e) => (e.selected ? { ...e, selected: false } : e)),
       ...pastedEdges
     ])
-  }, [rfInstance, pushSnapshot, setNodes, setEdges])
+    // A cross-diagram paste can introduce a resource path (icon/details/
+    // linkedDiagram/reference) that doesn't resolve at the new location —
+    // rescan immediately rather than waiting for the next load or manual
+    // Recheck, same "surface it the moment it happens" reasoning as a
+    // compiler flagging an unresolved import right away. retargetNodeData
+    // (clipboard.ts) never makes a broken reference resolve on its own, so
+    // this is still the only thing that actually tells the user.
+    void scanMissingFiles(nextNodes, legend, currentPath)
+  }, [rfInstance, pushSnapshot, setNodes, setEdges, currentPath, legend, scanMissingFiles])
 
   const cutSelection = useCallback(() => {
     const selectedNodes = nodes.filter((n) => n.selected)
@@ -3518,7 +3729,16 @@ function CanvasInner(): React.JSX.Element {
   // goes through the same path instead of duplicating the write logic.
   const persistDiagram = useCallback(
     async (path: string, nodesToSave: Node[]): Promise<Node[]> => {
-      const savedNodes = await flushDetailsDrafts(path, nodesToSave)
+      let savedNodes = await flushDetailsDrafts(path, nodesToSave)
+      // Apply any staged missing-file removals (ADR 0084) — this is the one
+      // point they reach disk. Also drop them from `legend` and close any
+      // now-orphaned reference windows.
+      let legendToSave = legend
+      for (const entry of stagedFileRemovals) {
+        const r = applyMissingFileRemoval(savedNodes, legendToSave, entry)
+        savedNodes = r.nodes
+        legendToSave = r.legend
+      }
       const diagram = toDiagramFile(
         savedNodes,
         edges,
@@ -3526,7 +3746,7 @@ function CanvasInner(): React.JSX.Element {
         diagramMetadata,
         requiredTags,
         highlights,
-        legend,
+        legendToSave,
         gravityPresets,
         diagramMaxConnectionPointsPerSide,
         edgeDirectionSets,
@@ -3535,6 +3755,20 @@ function CanvasInner(): React.JSX.Element {
       )
       await window.api.saveDiagram(path, diagram, sessionIdRef.current)
       setNodes(savedNodes)
+      if (legendToSave !== legend) setLegend(legendToSave)
+      if (stagedFileRemovals.length > 0) {
+        const removedRefs = new Set(
+          stagedFileRemovals
+            .filter((e) => e.resourceKind === 'reference')
+            .map((e) => `${e.ownerId}::${e.relativePath}`)
+        )
+        if (removedRefs.size > 0) {
+          setReferenceWindows((prev) =>
+            prev.filter((w) => !removedRefs.has(`${w.nodeId}::${w.path}`))
+          )
+        }
+        setStagedFileRemovals([])
+      }
       setIsDirty(false)
       return savedNodes
     },
@@ -3543,10 +3777,12 @@ function CanvasInner(): React.JSX.Element {
       rfInstance,
       flushDetailsDrafts,
       setNodes,
+      setLegend,
       diagramMetadata,
       requiredTags,
       highlights,
       legend,
+      stagedFileRemovals,
       gravityPresets,
       diagramMaxConnectionPointsPerSide,
       edgeDirectionSets,
@@ -3796,8 +4032,10 @@ function CanvasInner(): React.JSX.Element {
       // Defensive, per ADR 0022 — reconcile against hand-edited drift on
       // every load, not just when the template is edited from within the app.
       runSync(openedRequiredTags)
+      // ADR 0084 — surface missing referenced files in Diagnostics.
+      void scanMissingFiles(openedNodes, openedLegend, path)
     },
-    [rfInstance, setNodes, setEdges, runSync, updateNodeInternals]
+    [rfInstance, setNodes, setEdges, runSync, scanMissingFiles, updateNodeInternals]
   )
 
   // A window opened with an initial diagram (File -> Open, or either
@@ -4659,6 +4897,16 @@ function CanvasInner(): React.JSX.Element {
     ]
   }, [diagnostics, hierarchyLoadNotes, hierarchyAnalysis, legend.length, edges.length])
 
+  // Missing-file rows still awaiting a decision (dismissed ones hidden).
+  const visibleMissingFiles = useMemo(
+    () => missingFiles.filter((m) => !dismissedFileKeys.has(m.key)),
+    [missingFiles, dismissedFileKeys]
+  )
+  // Count on the View-menu "Diagnostics (N)" label — undecided missing
+  // files + staged removals (a nudge to save), never dismissed ones.
+  const diagnosticsCount =
+    displayedDiagnostics.length + visibleMissingFiles.length + stagedFileRemovals.length
+
   // File -> Recent Diagrams submenu — labelled with the last two path
   // segments (…/parent/name.chd), enough to tell two same-named diagrams in
   // different folders apart without the full path. Empty list -> the parent
@@ -4765,7 +5013,7 @@ function CanvasInner(): React.JSX.Element {
     items: isDiagramPersona
       ? [
           {
-            label: `Diagnostics${displayedDiagnostics.length > 0 ? ` (${displayedDiagnostics.length})` : ''}`,
+            label: `Diagnostics${diagnosticsCount > 0 ? ` (${diagnosticsCount})` : ''}`,
             onSelect: toggleDiagnosticsPanel
           },
           { label: 'Layers', onSelect: toggleLayerPanel },
@@ -5289,7 +5537,17 @@ function CanvasInner(): React.JSX.Element {
           {diagnosticsPanelOpen && (
             <DiagnosticsPanel
               entries={displayedDiagnostics}
-              onRecheck={() => runSync(requiredTags)}
+              missingFiles={visibleMissingFiles}
+              stagedRemovals={stagedFileRemovals}
+              onRecheck={() => {
+                runSync(requiredTags)
+                void scanMissingFiles(graphRef.current.nodes, legend, currentPath)
+              }}
+              onRevealNode={revealNode}
+              onRelink={relinkMissingFile}
+              onDismiss={dismissMissingFile}
+              onStageRemoval={stageMissingFileRemoval}
+              onUnstageRemoval={unstageMissingFileRemoval}
               onClose={() => setDiagnosticsPanelOpen(false)}
             />
           )}
@@ -5309,7 +5567,7 @@ function CanvasInner(): React.JSX.Element {
             <ReferencesPanel
               diagramPath={currentPath}
               rows={referenceRows}
-              onReveal={revealReferenceOwner}
+              onReveal={revealNode}
               onOpen={openReferenceWindow}
               onClose={() => setReferencesPanelOpen(false)}
             />

@@ -36,9 +36,15 @@ export default function IconSlotView({
         if (!cancelled) setSvg(s)
       })
     } else if (diagramPath) {
-      window.api.readIconAsDataUrl(diagramPath, icon.path).then((url) => {
-        if (!cancelled) setDataUrl(url)
-      })
+      // A missing custom-icon file just renders nothing (the fallback
+      // <span> below) — the Diagnostics "missing files" section is where a
+      // dead reference is surfaced (ADR 0084), not an uncaught rejection.
+      window.api
+        .readIconAsDataUrl(diagramPath, icon.path)
+        .then((url) => {
+          if (!cancelled) setDataUrl(url)
+        })
+        .catch(() => {})
     }
     return () => {
       cancelled = true

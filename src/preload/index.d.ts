@@ -27,6 +27,11 @@ export interface DiagramApi {
   ): Promise<string>
   createLinkedDiagram(diagramPath: string, label: string): Promise<string>
   pickExistingLinkedDiagram(diagramPath: string): Promise<string | null>
+  checkResourceFiles(
+    diagramPath: string,
+    relativePaths: string[]
+  ): Promise<{ relativePath: string; resolvedPath: string; found: boolean }[]>
+
   newWindow(): Promise<void>
   openInNewWindow(isCurrentWindowEmpty: boolean): Promise<void>
   openLinkedInNewWindow(

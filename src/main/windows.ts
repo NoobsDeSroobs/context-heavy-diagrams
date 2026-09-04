@@ -1,10 +1,11 @@
 import { BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { access } from 'fs/promises'
-import { basename, dirname, isAbsolute, join } from 'path'
+import { basename, join } from 'path'
 import { is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { deleteRecoverySnapshot, newSessionId } from './recovery'
 import { readPreferences, updatePreferences } from './appPreferences'
+import { resolveLinkPath } from './linkPaths'
 
 const FILTERS = [{ name: 'Diagram', extensions: ['chd'] }]
 
@@ -47,13 +48,6 @@ function findWindowForPath(path: string): BrowserWindow | undefined {
   return windowsByPath.get(normalizePath(path))
 }
 
-// A relativePath stored on a node can legitimately resolve to an absolute
-// path (path.relative() falls back to absolute across Windows drives) — a
-// bare path.join() would silently mangle that instead of erroring, so this
-// must be checked explicitly rather than always joining.
-function resolveLinkPath(diagramPath: string, relativePath: string): string {
-  return isAbsolute(relativePath) ? relativePath : join(dirname(diagramPath), relativePath)
-}
 
 // Navigates an existing window to a path (re-registers it too) — shared
 // by createWindow's initial load and by reusing an already-open, empty
