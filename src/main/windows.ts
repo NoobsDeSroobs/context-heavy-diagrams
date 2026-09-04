@@ -128,12 +128,14 @@ export function createWindow(initialPath?: string): BrowserWindow {
 }
 
 // Focuses an existing window already showing this path; otherwise, if the
-// calling window was passed in and is currently empty (File -> Open with
-// nothing to lose in the window you're opening from — see the comment at
-// its call site), navigates that window to the path instead of opening a
-// new one; otherwise opens a brand new window. Both link-navigation flows
-// (create new / follow existing) never pass a reuse candidate — they
-// always open the target in its own window, never in-place (ADR 0023).
+// calling window was passed in and is currently empty (nothing to lose in
+// the window you're opening from — see the comment at each call site: File
+// -> Open and File -> Recent Diagrams both pass one), navigates that
+// window to the path instead of opening a new one; otherwise opens a brand
+// new window. The drill-down link-navigation flow (windows:openLinked)
+// never passes a reuse candidate — a linked child always opens in its own
+// window, never in-place (ADR 0023); only top-level "open a diagram"
+// entry points reuse an empty window.
 function openOrFocusWindow(path: string, reuseWindow?: BrowserWindow): void {
   const existing = findWindowForPath(path)
   if (existing) {
@@ -266,26 +268,33 @@ export function registerWindowHandlers(): void {
   )
 
   // File -> Recent Diagrams -> (an entry). Absolute path, no dialog —
-  // opens/focuses a window for it exactly like a followed link. On a path
+  // opens/focuses a window for it exactly like a followed link, except when
+  // the calling window's own diagram is currently empty, in which case that
+  // empty window is reused instead — same "nothing to lose" rule as
+  // File -> Open (windows:pickAndOpen above) and drag-and-drop. On a path
   // that no longer exists (moved/deleted since it was last opened), prunes
   // it from the recent list and returns found:false so the renderer can
   // show a brief "not found" notice — no stale entries linger, and no
   // per-menu-open filesystem check is needed.
-  ipcMain.handle('windows:openRecent', async (_event, path: string) => {
-    try {
-      await access(path)
-    } catch {
-      const prefs = await readPreferences()
-      if (prefs?.recentDiagrams?.includes(path)) {
-        await updatePreferences({
-          recentDiagrams: prefs.recentDiagrams.filter((p) => p !== path)
-        })
+  ipcMain.handle(
+    'windows:openRecent',
+    async (event, path: string, callingWindowEmpty: boolean) => {
+      try {
+        await access(path)
+      } catch {
+        const prefs = await readPreferences()
+        if (prefs?.recentDiagrams?.includes(path)) {
+          await updatePreferences({
+            recentDiagrams: prefs.recentDiagrams.filter((p) => p !== path)
+          })
+        }
+        return { found: false as const }
       }
-      return { found: false as const }
+      const callingWindow = callingWindowEmpty ? BrowserWindow.fromWebContents(event.sender) : null
+      openOrFocusWindow(path, callingWindow ?? undefined)
+      return { found: true as const }
     }
-    openOrFocusWindow(path)
-    return { found: true as const }
-  })
+  )
 
   // Drag-and-drop a .chd onto a window — paths are already
   // filtered to .chd and resolved to real filesystem paths by the

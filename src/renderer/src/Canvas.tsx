@@ -4306,17 +4306,26 @@ function CanvasInner(): React.JSX.Element {
   }, [])
 
   // File -> Recent Diagrams -> (an entry). Opens/focuses a window for the
-  // path exactly like following a link; on a file that's since been
+  // path exactly like following a link, except this window is reused
+  // in-place if its own diagram is currently empty — same "nothing to
+  // lose" rule as handleOpen/drag-and-drop. On a file that's since been
   // moved/deleted, main prunes it from the list and reports found:false —
   // the list re-renders without it once the preferences broadcast lands.
-  const handleOpenRecent = useCallback(async (path: string) => {
-    try {
-      const result = await window.api.openRecentDiagram(path)
-      if (!result.found) alert(`Diagram not found — it may have been moved or deleted:\n${path}`)
-    } catch (error) {
-      alert(`Couldn't open ${path}: ${error instanceof Error ? error.message : String(error)}`)
-    }
-  }, [])
+  const handleOpenRecent = useCallback(
+    async (path: string) => {
+      try {
+        const result = await window.api.openRecentDiagram(
+          path,
+          nodes.length === 0 && edges.length === 0
+        )
+        if (!result.found)
+          alert(`Diagram not found — it may have been moved or deleted:\n${path}`)
+      } catch (error) {
+        alert(`Couldn't open ${path}: ${error instanceof Error ? error.message : String(error)}`)
+      }
+    },
+    [nodes, edges]
+  )
 
   const handleClearRecent = useCallback(() => {
     updatePreferences({ recentDiagrams: [] })

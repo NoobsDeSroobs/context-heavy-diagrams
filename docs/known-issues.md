@@ -12,6 +12,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 ## Open items at a glance
 
+- [File → Recent Diagrams never reused an empty calling window](#file--recent-diagrams-never-reused-an-empty-calling-window) — Solved.
 - [Diagnostics "missing files" check didn't flag a reported broken relative path in real diagram data](#diagnostics-missing-files-check-didnt-flag-a-reported-broken-relative-path-in-real-diagram-data) — Open, reported once, not reproduced/confirmed.
 - [Dragging a new edge from a node inside a locked container can snap to the container itself](#dragging-a-new-edge-from-a-node-inside-a-locked-container-can-snap-to-the-container-itself) — Open, not investigated.
 - [Hovering a single edge on a large diagram re-renders every node and edge several times over](#hovering-a-single-edge-on-a-large-diagram-re-renders-every-node-and-edge-several-times-over) — Solved, ADR 0073 / epic 0101.
@@ -33,6 +34,21 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 - [Deleting / cutting a container + its selected children removes only the container, keeps the children](#deleting--cutting-a-container--its-selected-children-removes-only-the-container-keeps-the-children) — Open, deliberately not fixed (user wants a decision later).
 - [Copy/paste doesn't preserve container relationships](#copypaste-doesnt-preserve-container-relationships) — Open; ADR 0075 / epic 0103 reworked `remapForPaste` for exactly this, unmerged — retest after merge.
 - ["Reverse direction" did nothing visible on a styled edge (and showed arrows on both ends before that)](#reverse-direction-did-nothing-visible-on-a-styled-edge) — Solved (ADR 0083 / epic 0106).
+
+---
+
+## File → Recent Diagrams never reused an empty calling window
+
+**Status:** Solved
+**Found:** 2026-09-05, user report
+
+**Symptom:** File → Open and dropping a `.chd` onto a window both reuse that window in-place when it's currently empty ("nothing to lose"), per epic 0091/0038/0040's own shared rule. File → Recent Diagrams didn't — picking a recent entry from an empty window always opened (or focused) a separate window, leaving the empty one sitting there unused.
+
+**Root cause:** `windows:openRecent` (`main/windows.ts`, epic 0095) called the shared `openOrFocusWindow(path)` with no reuse candidate at all — it was written on the same "resolve and open, like a followed link" model as `windows:openLinked` (drill-down navigation, which deliberately *never* reuses the calling window — a linked child always gets its own window, ADR 0023). But unlike link navigation, Recent Diagrams is a top-level "open a diagram" entry point, same as File → Open, and should have followed *that* rule instead. `windows:pickAndOpen` already had the pattern to copy: the renderer computes `nodes.length === 0 && edges.length === 0` at call time and passes it through so main can decide whether to pass a `reuseWindow` into `openOrFocusWindow`.
+
+**Resolution:** `windows:openRecent` now takes the same `callingWindowEmpty` boolean, resolves `BrowserWindow.fromWebContents(event.sender)` when true, and passes it through to `openOrFocusWindow` exactly like `windows:pickAndOpen` does. `openRecentDiagram` (preload) and `handleOpenRecent` (`Canvas.tsx`) updated to compute and pass it, mirroring `handleOpen`.
+
+**References:** `src/main/windows.ts`'s `openOrFocusWindow`/`windows:openRecent`/`windows:pickAndOpen`, `src/preload/index.ts`'s `openRecentDiagram`, `src/renderer/src/Canvas.tsx`'s `handleOpenRecent`/`handleOpen`, [epic 0095](planning/epics/completed/0095-recent-diagrams-menu.md), [ADR 0023](decisions/0023-multi-window-diagram-model.md)
 
 ---
 

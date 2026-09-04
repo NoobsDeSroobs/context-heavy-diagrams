@@ -128,8 +128,10 @@ const api = {
 
   // File -> Recent Diagrams — absolute path, no dialog. found:false means
   // the file is gone and main has already pruned it from the list.
-  openRecentDiagram(path: string): Promise<{ found: boolean }> {
-    return ipcRenderer.invoke('windows:openRecent', path)
+  // isCurrentWindowEmpty: same reuse-if-nothing-to-lose rule as
+  // openInNewWindow above.
+  openRecentDiagram(path: string, isCurrentWindowEmpty: boolean): Promise<{ found: boolean }> {
+    return ipcRenderer.invoke('windows:openRecent', path, isCurrentWindowEmpty)
   },
 
   // File -> Close resets this window's content in-place, not via a page

@@ -34,6 +34,10 @@ Every core requirement from [docs/project-brief.md](docs/project-brief.md) is im
 
 **2026-08-27, batch tail re-scoped by the user**: after 0074 landed, the user decided this batch closes out with **~~[0090](docs/planning/epics/completed/0090-image-element.md) (image element → reference images)~~ then ~~[0066](docs/planning/epics/completed/0066-decouple-docs-from-epic-numbering.md) (decouple docs from epic numbering)~~** — after which the project **returns to one-epic-per-branch**. **[0086](docs/planning/epics/completed/0086-minor-ui-improvements.md)'s remaining item (step/smoothstep segment dragging) drops out of this batch** — its flagged design-pass fits the one-epic-per-branch model better. `batch/2026-08-27-backlog-cleanup-2` was merged (PR #71) after 0090 but before 0066, so **0066 landed on its own branch `epic/0066-decouple-docs-from-epic-numbering`** off `master`. **This batch is now complete.**
 
+## Current state (2026-09-05)
+
+- **Small fix, on `fix/recent-diagrams-reuse-empty-window`, pending live test/PR/merge**: user report — picking a File → Recent Diagrams entry always opened a new window, even when the calling window was empty, unlike File → Open and drag-and-drop (both already reuse an empty window per epic 0091/0038/0040's shared rule). Root cause: `windows:openRecent` (epic 0095) was modeled on the drill-down link-navigation flow (which deliberately never reuses a window), not on `windows:pickAndOpen`'s "top-level open" model it should have matched. Fixed by threading the same `callingWindowEmpty` boolean through preload/`Canvas.tsx`'s `handleOpenRecent`, mirroring `handleOpen`. See [known-issues.md](docs/known-issues.md#file--recent-diagrams-never-reused-an-empty-calling-window). `typecheck`/`lint` clean.
+
 ## Current state (2026-09-04)
 
 - **[Epic 0106](docs/planning/epics/completed/0106-per-set-edge-style.md) (per-set edge style) — Done, merged to `master` (PR #86), NOT live-tested (Electron renderer).** See below / [ADR 0083](docs/decisions/0083-per-set-edge-style-as-creation-template.md).
