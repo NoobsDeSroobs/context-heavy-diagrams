@@ -31,6 +31,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 - [Icon picker's grid overflowed horizontally, not just missing a vertical scrollbar gutter](#icon-pickers-grid-overflowed-horizontally-not-just-missing-a-vertical-scrollbar-gutter) — Solved.
 - [Deleting / cutting a container + its selected children removes only the container, keeps the children](#deleting--cutting-a-container--its-selected-children-removes-only-the-container-keeps-the-children) — Open, deliberately not fixed (user wants a decision later).
 - [Copy/paste doesn't preserve container relationships](#copypaste-doesnt-preserve-container-relationships) — Open; ADR 0075 / epic 0103 reworked `remapForPaste` for exactly this, unmerged — retest after merge.
+- ["Reverse direction" did nothing visible on a styled edge (and showed arrows on both ends before that)](#reverse-direction-did-nothing-visible-on-a-styled-edge) — Solved (ADR 0083 / epic 0106).
 
 ---
 
@@ -46,6 +47,21 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 **If revisited**: check whether the same snap happens near an _unlocked_ container too (isolates whether this is really about `locked` specifically, or a more general "a container's own handles are too eager to claim a nearby connection drag" issue that locked state happens to make more noticeable). If it's confirmed to be about `locked` specifically, the fix is likely making connection validation (`isValidConnection` or equivalent) reject a locked node the same way dragging/deleting it already does.
 
 **References:** `src/renderer/src/Canvas.tsx`'s `deriveNodeFields`, `spawnAnchorAt`/`resolveAnchorNode` (epic 0014's void-drop flow), `src/renderer/src/nodes/ContainerNode.tsx`
+
+---
+
+## "Reverse direction" did nothing visible on a styled edge
+
+**Status:** Solved (ADR 0083 / epic 0106)
+**Found:** 2026-09-04, user live-testing edge direction sets with per-set styles
+
+**Symptom:** right-clicking an edge → "Reverse direction" appeared to do nothing. On an earlier build it instead showed an arrowhead at *both* ends. Switching edge direction sets in a way that flipped an edge had the same problem.
+
+**Root cause:** `flipEdgeVisuals` (the old helper in `edges/edgeDirectionSets.ts`, shared by "Reverse direction" and a set switch) returned only the visual touch-ups and swapped `style.startMarker` ↔ `style.endMarker` *by value*; each caller then separately swapped the edge's `source`/`target`. But that endpoint swap alone already relocates the visible arrowhead — an `endMarker` renders at `target`, a `startMarker` at `source`, so trading the endpoints moves a target-anchored arrow to the other end. Doing both cancels out: a one-arrow edge stays a one-arrow edge on the *same physical end* → visual no-op. (Before the interim `undefined`→`'none'` patch, the swapped `endMarker: undefined` also fell through to React Flow's default end arrow in `LabeledEdge`, so you got arrows on both ends.) Latent since "Reverse direction" shipped (epic 0084, never live-tested); plain edges with an empty `style` happened to work because RF's default arrow just follows `target`. Epic 0106 made it the common case by seeding new edges with an explicit `endMarker` from the active direction set.
+
+**Fix:** the helper was also mis-factored — a fragment callers had to compose with a manual endpoint swap, which is how "also swap the markers" crept in. Replaced with **`reverseEdgeDirection(edge): Edge`** — one function that reverses the whole edge: swap the endpoints (+ handles), reverse the catmull-rom `points` order, mirror a custom `labelPosition`. **Markers are not touched** — the endpoint swap moves them by itself. The "Reverse direction" menu action calls it directly; `applyDirectionToEdge` calls it for the flip case then overrides endpoints/handles from the stored record. A clean byte-for-byte involution.
+
+**References:** `reverseEdgeDirection` / `applyDirectionToEdge` in `src/renderer/src/edges/edgeDirectionSets.ts`, the "Reverse direction" handler in `Canvas.tsx`, `LabeledEdge`'s `computedMarkerEnd`/`computedMarkerStart`
 
 ---
 

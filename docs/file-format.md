@@ -49,7 +49,7 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
 | `legend` | array of LegendEntry | Saved catalog of manually-authored legend entries explaining the diagram's own visual conventions — see [Legend](#legend) below. Absent means no legend defined. Like `highlights`, whether the legend panel is currently shown is local, in-memory, per-session state, never written to the file. |
 | `gravityPresets` | array of GravityPreset | Named bend values offered on a `"line"` node point's or a catmull-rom-routed Edge point's right-click menu (one shared catalog for both) — see [Gravity presets](#gravity-presets) below. Absent/empty means "use this app's own built-in four" (shown in the example above) — a diagram only needs to define its own once it actually diverges from them. |
 | `maxConnectionPointsPerSide` | number | Per-diagram override for the max connection points allowed on one side of a Shape/Container. Absent means "use whoever opens this file's own app-level preference" — a real constraint on what the diagram can contain, not a display setting, so it lives in the file rather than staying app-only. Lowering it below what an existing element already has never removes that element's points; the limit only stops adding more. |
-| `edgeDirectionSets` | array of EdgeDirectionSet | Named readings of the diagram's edges that differ only in arrow direction — e.g. "Data flow" vs. "Trigger direction". See [Edge direction sets](#edge-direction-sets) below. Absent/empty means the feature is unused. A single set names the current reading and gives it a legend row; two or more can be switched between and add per-edge `directionSets` records. |
+| `edgeDirectionSets` | array of EdgeDirectionSet | Named readings of the diagram's edges that differ only in arrow direction — e.g. "Data flow" vs. "Trigger direction". See [Edge direction sets](#edge-direction-sets) below. Absent/empty means the feature is unused. A single set names the current reading, gives it a legend row, and its `style` seeds edges drawn while it is active; two or more can be switched between and add per-edge `directionSets` records. |
 | `activeEdgeDirectionSetId` | string | Which entry of `edgeDirectionSets` is currently displayed. With two or more sets the edges on disk are always written in the *first* set's orientation regardless of this value (see [Edge direction sets](#edge-direction-sets)); this only says which reading to show on open. Absent means the first set. |
 | `security` | object | Threat/risk model — the threat catalog, which shapes are in the security matrix, calculation settings — see [Security](#security) below. Absent means the Security Matrix has never been used for this diagram (and no node has `data.security`). |
 | `nodes` | array of Node | See below. |
@@ -335,8 +335,8 @@ Named bend values — `gravityPresets` on the top-level object — offered on a 
 
 ```json
 "edgeDirectionSets": [
-  { "id": "set-1", "name": "Data flow", "legend": { "color": "#1a73e8", "endMarker": "arrowClosed" } },
-  { "id": "set-2", "name": "Trigger direction", "legend": { "color": "#e8710a", "lineStyle": "dashed", "endMarker": "arrowClosed" } }
+  { "id": "set-1", "name": "Data flow", "style": { "stroke": "#1a73e8", "endMarker": "arrowClosed" } },
+  { "id": "set-2", "name": "Trigger direction", "style": { "stroke": "#e8710a", "lineStyle": "dashed", "endMarker": "arrowClosed" } }
 ],
 "activeEdgeDirectionSetId": "set-2"
 ```
@@ -345,9 +345,9 @@ Named bend values — `gravityPresets` on the top-level object — offered on a 
 |---|---|---|---|
 | `id` | string | yes | Unique within the file. Referenced by the keys of each edge's `directionSets`. |
 | `name` | string | yes | Shown in the set picker, and used as the label of the legend row this reading contributes while it is active. Free-form. |
-| `legend` | object | no | How this reading draws as a legend row (in this app's Legend panel and PNG export) while it is the active set: `color` (CSS colour), `lineStyle` (`"solid"`/`"dashed"`/`"dotted"`), `startMarker`, `endMarker` (marker kinds — see [Edge style](#edge-style)). Author-asserted illustration only — it does **not** change how the actual edges are drawn. Absent means a default red arrow. |
+| `style` | object | no | This reading's **default edge style**. A subset of [Edge style](#edge-style): `stroke` (CSS colour), `strokeWidth`, `strokeOpacity`, `lineStyle` (`"solid"`/`"dashed"`/`"dotted"`), `startMarker`, `endMarker`. It does two things: (1) an edge **drawn while this set is the active one** is born with this style (composed over the app's global default-edge-style), and (2) it is how this reading draws as a legend row (Legend panel + PNG export) while active. It does **not** restyle edges that already exist, and switching the active set never changes an existing edge's appearance — only its direction. Absent `stroke` falls back to a default for the legend swatch. *(Named `legend` before this field was widened; a reader may still encounter the old key — `{ "color", "lineStyle", "startMarker", "endMarker" }` — and should treat `color` as `stroke`.)* |
 
-**A single set is meaningful.** With one set, there is no switching and no per-edge `directionSets` — the set just names the current reading (its `name` + `legend` become a legend row). Per-edge direction records and the base-orientation rule below apply only once a diagram has **two or more** sets.
+**A single set is meaningful.** With one set, there is no switching and no per-edge `directionSets` — the set just names the current reading (its `name` + `style` become a legend row, and `style` seeds new edges). Per-edge direction records and the base-orientation rule below apply only once a diagram has **two or more** sets.
 
 **Every edge exists in every set** — a set never adds or removes edges, it only changes their direction. At two or more sets, each edge stores a `directionSets` object (see [Edge](#edge)) mapping every set `id` to an `EdgeDirection`: `{ "source", "target", "sourceHandle"?, "targetHandle"? }`. The two endpoint *nodes* are identical across all sets; only which one is `source` (and which connection point each end lands on) varies.
 

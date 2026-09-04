@@ -14,12 +14,12 @@
     {
       "id": "s-card",
       "name": "Cardinality (1 to *)",
-      "legend": { "color": "#475569", "lineStyle": "solid", "startMarker": "crowsFootMany", "endMarker": "crowsFootOne" }
+      "style": { "stroke": "#475569", "lineStyle": "solid", "startMarker": "crowsFootMany", "endMarker": "crowsFootOne" }
     },
     {
       "id": "s-filter",
       "name": "Filter direction",
-      "legend": { "color": "#7c3aed", "lineStyle": "dashed", "startMarker": "none", "endMarker": "arrowClosed" }
+      "style": { "stroke": "#7c3aed", "lineStyle": "dashed", "startMarker": "none", "endMarker": "arrowClosed" }
     }
   ],
   "activeEdgeDirectionSetId": "s-card",

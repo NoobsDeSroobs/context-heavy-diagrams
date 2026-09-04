@@ -33,7 +33,7 @@ import {
   type DiagramSecurity,
   type EdgeDirection,
   type EdgeDirectionSet,
-  type EdgeDirectionSetLegend,
+  type EdgeDirectionSetStyle,
   type EdgeStyle,
   type GravityPreset,
   type HighlightDefinition,
@@ -88,13 +88,15 @@ import {
 import { nearestSegmentIndex, type PathPoint } from './geometry/bendablePath'
 import { nearestWaypointGap } from './geometry/orthogonalPath'
 import {
+  activeDirectionSetStyle,
   addDirectionSetFrom,
   DEFAULT_DIRECTION_SET_LEGEND_COLOR,
   directionSetLegendRow,
   ensureDirectionSets,
-  flipEdgeVisuals,
+  migrateDirectionSetStyle,
   refreshActiveDirectionSet,
   removeDirectionSetKey,
+  reverseEdgeDirection,
   stripDirectionSets,
   switchActiveDirectionSet
 } from './edges/edgeDirectionSets'
@@ -632,7 +634,8 @@ function fromDiagramFile(diagram: DiagramFile): {
   // orientation with per-set records in `directionSets`. Seed any missing
   // record from the live (base) fields, then — if a non-base set is the
   // saved active one — re-express the live edges in that set's orientation.
-  const directionSets = diagram.edgeDirectionSets ?? []
+  // migrateDirectionSetStyle: pre-ADR-0083 `legend` -> `style` (ADR 0083).
+  const directionSets = (diagram.edgeDirectionSets ?? []).map(migrateDirectionSetStyle)
   let edges: Edge[] = diagram.edges.map((e) => ({
     id: e.id,
     type: e.type,
@@ -1337,28 +1340,13 @@ function CanvasInner(): React.JSX.Element {
           label: 'Reverse direction',
           onSelect: () => {
             pushSnapshot()
-            setEdges((eds) =>
-              eds.map((e) => {
-                if (e.id !== edge.id) return e
-                // flipEdgeVisuals is the shared direction-only involution
-                // (edges/edgeDirectionSets.ts, ADR 0084/0081): the endpoints
-                // swap, so the direction-sensitive visuals must travel with
-                // their physical end — catmull-rom `points` reverse, start/
-                // end markers swap, a custom `labelPosition` mirrors. When a
-                // direction set is active, its per-edge record is refreshed
-                // from these live fields at the next switch/save, so this
-                // flips only the active reading.
-                const flipped = flipEdgeVisuals(e)
-                return {
-                  ...e,
-                  source: e.target,
-                  target: e.source,
-                  sourceHandle: e.targetHandle,
-                  targetHandle: e.sourceHandle,
-                  data: { ...e.data, points: flipped.points, style: flipped.style }
-                }
-              })
-            )
+            // reverseEdgeDirection (edges/edgeDirectionSets.ts, ADR 0084 /
+            // 0081 / 0083) swaps the endpoints + fixes up the direction-tied
+            // visuals (points order, labelPosition). When a direction set is
+            // active, its per-edge record is refreshed from these live
+            // fields at the next switch/save, so this reverses only the
+            // active reading.
+            setEdges((eds) => eds.map((e) => (e.id === edge.id ? reverseEdgeDirection(e) : e)))
           }
         },
         {
@@ -1729,9 +1717,11 @@ function CanvasInner(): React.JSX.Element {
       const newSet: EdgeDirectionSet = {
         id: `dirset-${crypto.randomUUID()}`,
         name,
-        legend: source?.legend
-          ? { ...source.legend }
-          : { color: DEFAULT_DIRECTION_SET_LEGEND_COLOR, endMarker: 'arrowClosed' }
+        // ADR 0083: `style` is the reading's default edge style — seeds new
+        // edges + drives the legend row. A fresh set gets a plain arrow.
+        style: source?.style
+          ? { ...source.style }
+          : { stroke: DEFAULT_DIRECTION_SET_LEGEND_COLOR, endMarker: 'arrowClosed' }
       }
       const next = [...existing, newSet]
       // Per-edge records only exist at 2+ sets — seed the new set (and
@@ -1759,10 +1749,13 @@ function CanvasInner(): React.JSX.Element {
     [markDirty]
   )
 
-  const updateEdgeDirectionSetLegend = useCallback(
-    (id: string, patch: Partial<EdgeDirectionSetLegend>) => {
+  // The set's default edge style (ADR 0083) — seeds new edges drawn while
+  // this reading is active, and drives its legend row. Does not restyle
+  // existing edges.
+  const updateEdgeDirectionSetStyle = useCallback(
+    (id: string, patch: Partial<EdgeDirectionSetStyle>) => {
       setEdgeDirectionSets((prev) =>
-        prev.map((s) => (s.id === id ? { ...s, legend: { ...s.legend, ...patch } } : s))
+        prev.map((s) => (s.id === id ? { ...s, style: { ...s.style, ...patch } } : s))
       )
       markDirty()
     },
@@ -2362,6 +2355,19 @@ function CanvasInner(): React.JSX.Element {
     })
   }, [detailsPanelNodeId, detailsDrafts, nodes, currentPath])
 
+  // Style seeded onto a brand-new edge (ADR 0045 / ADR 0083): the global
+  // default-edge-style preference, overlaid with the active edge direction
+  // set's own default style if one is set. An edge drawn while a reading is
+  // active is thus born in that reading's look; existing edges are never
+  // touched.
+  const newEdgeStyle = useMemo<EdgeStyle>(
+    () => ({
+      ...preferences.defaultEdgeStyle,
+      ...activeDirectionSetStyle(edgeDirectionSets, activeEdgeDirectionSetId)
+    }),
+    [preferences.defaultEdgeStyle, edgeDirectionSets, activeEdgeDirectionSetId]
+  )
+
   // Multi-connection-line (xyflow's own documented pattern for this,
   // reactflow.dev/examples/edges/multi-connection-line, adapted to this
   // app's own explicit-connection-point-id model rather than xyflow's
@@ -2400,7 +2406,7 @@ function CanvasInner(): React.JSX.Element {
             (n) => n.id === connection.source || (n.selected && isConnectableNodeType(n.type))
           )
           .map((n) => n.id)
-        return sourceIds.reduce((acc, sourceId) => {
+        const withNew = sourceIds.reduce((acc, sourceId) => {
           const sourceNode = byId.get(sourceId)
           const sourceAbs = sourceNode ? absolutePosition(sourceNode, byId) : null
           const sourceHandle =
@@ -2424,14 +2430,21 @@ function CanvasInner(): React.JSX.Element {
               sourceHandle,
               targetHandle: connection.targetHandle,
               type: 'labeled',
-              data: { metadata: seedMetadata(requiredTags), style: preferences.defaultEdgeStyle }
+              data: { metadata: seedMetadata(requiredTags), style: newEdgeStyle }
             },
             acc
           )
         }, eds)
+        // Seed the new edge's per-set direction records right away when the
+        // diagram has 2+ direction sets (ADR 0081), rather than lazily at
+        // the next switch — otherwise reversing the edge before any switch
+        // would bake the reversed orientation into *every* set.
+        return edgeDirectionSets.length >= 2
+          ? ensureDirectionSets(withNew, edgeDirectionSets.map((s) => s.id))
+          : withNew
       })
     },
-    [nodes, setEdges, pushSnapshot, requiredTags, preferences.defaultEdgeStyle]
+    [nodes, setEdges, pushSnapshot, requiredTags, newEdgeStyle, edgeDirectionSets]
   )
 
   // Grabbing an existing edge's own endpoint and redropping it elsewhere —
@@ -2557,22 +2570,27 @@ function CanvasInner(): React.JSX.Element {
 
       const point = pointFromEvent(event)
       spawnAnchorAt(point.clientX, point.clientY, (anchorId) =>
-        setEdges((eds) =>
-          addEdge(
+        setEdges((eds) => {
+          const withNew = addEdge(
             {
               source: origin.nodeId,
               sourceHandle: origin.handleId,
               target: anchorId,
               targetHandle: 'left',
               type: 'labeled',
-              data: { metadata: seedMetadata(requiredTags), style: preferences.defaultEdgeStyle }
+              data: { metadata: seedMetadata(requiredTags), style: newEdgeStyle }
             },
             eds
           )
-        )
+          // Seed per-set direction records immediately at 2+ sets — see
+          // onConnect above.
+          return edgeDirectionSets.length >= 2
+            ? ensureDirectionSets(withNew, edgeDirectionSets.map((s) => s.id))
+            : withNew
+        })
       )
     },
-    [spawnAnchorAt, setEdges, requiredTags, preferences.defaultEdgeStyle]
+    [spawnAnchorAt, setEdges, requiredTags, newEdgeStyle, edgeDirectionSets]
   )
 
   // Grabbing an existing edge's own endpoint and dropping it on empty
@@ -5358,7 +5376,7 @@ function CanvasInner(): React.JSX.Element {
               onCreateEdgeDirectionSet={() => addEdgeDirectionSet()}
               onDuplicateEdgeDirectionSet={(id) => addEdgeDirectionSet(id)}
               onRenameEdgeDirectionSet={renameEdgeDirectionSet}
-              onUpdateEdgeDirectionSetLegend={updateEdgeDirectionSetLegend}
+              onUpdateEdgeDirectionSetStyle={updateEdgeDirectionSetStyle}
               onDeleteEdgeDirectionSet={deleteEdgeDirectionSet}
               onClose={() => setDiagramSettingsPanelOpen(false)}
             />

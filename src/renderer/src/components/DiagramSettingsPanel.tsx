@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type {
   EdgeDirectionSet,
-  EdgeDirectionSetLegend,
+  EdgeDirectionSetStyle,
   GravityPreset,
   JsonValue,
   RequiredTagDefinition
@@ -30,14 +30,14 @@ interface DiagramSettingsPanelProps {
   gravityPresetsUserDefault: GravityPreset[] | undefined
   onSetGravityPresetsUserDefault: (presets: GravityPreset[]) => void
   onClearGravityPresetsUserDefault: () => void
-  // --- Edge direction sets section (ADR 0081) ---
+  // --- Edge direction sets section (ADR 0081 / ADR 0083) ---
   edgeDirectionSets: EdgeDirectionSet[]
   activeEdgeDirectionSetId: string | undefined
   onSwitchEdgeDirectionSet: (id: string) => void
   onCreateEdgeDirectionSet: () => void
   onDuplicateEdgeDirectionSet: (id: string) => void
   onRenameEdgeDirectionSet: (id: string, name: string) => void
-  onUpdateEdgeDirectionSetLegend: (id: string, patch: Partial<EdgeDirectionSetLegend>) => void
+  onUpdateEdgeDirectionSetStyle: (id: string, patch: Partial<EdgeDirectionSetStyle>) => void
   onDeleteEdgeDirectionSet: (id: string) => void
   onClose: () => void
 }
@@ -91,7 +91,7 @@ export default function DiagramSettingsPanel({
   onCreateEdgeDirectionSet,
   onDuplicateEdgeDirectionSet,
   onRenameEdgeDirectionSet,
-  onUpdateEdgeDirectionSetLegend,
+  onUpdateEdgeDirectionSetStyle,
   onDeleteEdgeDirectionSet,
   onClose
 }: DiagramSettingsPanelProps): React.JSX.Element {
@@ -178,7 +178,7 @@ export default function DiagramSettingsPanel({
             onCreate={onCreateEdgeDirectionSet}
             onDuplicate={onDuplicateEdgeDirectionSet}
             onRename={onRenameEdgeDirectionSet}
-            onUpdateLegend={onUpdateEdgeDirectionSetLegend}
+            onUpdateStyle={onUpdateEdgeDirectionSetStyle}
             onDelete={onDeleteEdgeDirectionSet}
           />
         </CollapsibleSection>

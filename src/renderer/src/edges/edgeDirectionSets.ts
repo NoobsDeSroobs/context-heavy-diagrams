@@ -3,6 +3,8 @@ import type {
   ConnectionPoint,
   EdgeDirection,
   EdgeDirectionSet,
+  EdgeDirectionSetLegend,
+  EdgeDirectionSetStyle,
   EdgeStyle,
   LineStyleKind,
   LinePoint,
@@ -34,11 +36,42 @@ export function directionSetLegendRow(
   if (!active) return null
   return {
     label: active.name,
-    color: active.legend?.color ?? DEFAULT_DIRECTION_SET_LEGEND_COLOR,
-    lineStyle: active.legend?.lineStyle,
-    startMarker: active.legend?.startMarker,
-    endMarker: active.legend?.endMarker
+    // The legend row shows the set's own default edge style (ADR 0083).
+    // `strokeWidth` is deliberately not reflected in the swatch in v1.
+    color: active.style?.stroke ?? DEFAULT_DIRECTION_SET_LEGEND_COLOR,
+    lineStyle: active.style?.lineStyle,
+    startMarker: active.style?.startMarker,
+    endMarker: active.style?.endMarker
   }
+}
+
+// Pre-ADR-0083 files stored a set's legend styling under `legend`
+// ({ color, lineStyle, startMarker, endMarker }). Map it into `style`
+// ({ stroke, ... }) on load, unless `style` is already present. One-way —
+// writers only ever emit `style`.
+export function migrateDirectionSetStyle(set: EdgeDirectionSet): EdgeDirectionSet {
+  const legacy = (set as { legend?: EdgeDirectionSetLegend }).legend
+  // Rebuild from scratch either way, so a lingering `legend` key never
+  // round-trips back to disk.
+  if (set.style || !legacy) {
+    return { id: set.id, name: set.name, ...(set.style ? { style: set.style } : {}) }
+  }
+  const { color, ...rest } = legacy
+  const style: EdgeDirectionSetStyle = { ...rest, ...(color ? { stroke: color } : {}) }
+  return { id: set.id, name: set.name, style }
+}
+
+// The active set's default edge style (ADR 0083), or `{}` when there is no
+// set or the active set carries no style. Merged over the global
+// default-edge-style preference at the two brand-new-edge sites in
+// Canvas.tsx, so an edge drawn while a reading is active is born in that
+// reading's look. Does not touch existing edges.
+export function activeDirectionSetStyle(
+  sets: EdgeDirectionSet[],
+  activeId: string | undefined
+): EdgeDirectionSetStyle {
+  const active = sets.find((s) => s.id === activeId) ?? sets[0]
+  return active?.style ?? {}
 }
 
 // Flippable edge direction — see ADR 0081. A diagram can carry several
@@ -73,25 +106,38 @@ export function edgeLiveDirection(edge: Edge): EdgeDirection {
   }
 }
 
-// The direction-only involution shared by "Reverse direction" (the
-// per-edge context-menu action) and a set switch that flips an edge: the
-// endpoints swap, so the direction-sensitive *visuals* must travel with
-// their physical end — catmull-rom `points` reverse (the curve is walked
-// [source, ...points, target]), start/end markers swap, and a custom
-// `labelPosition` (a ratio measured from source) mirrors. 0.5 / absent
-// values are unaffected, so this is a no-op for the common untouched case.
-// A true involution: applying it twice restores the original.
-export function flipEdgeVisuals(edge: Edge): { points: LinePoint[]; style: EdgeStyle | undefined } {
+// Reverse an edge's direction — the whole operation, not just a visual
+// touch-up. Swaps the two endpoints (`source` <-> `target`, and the handles
+// with them) and then fixes up only what the endpoint swap doesn't already
+// handle by itself:
+//
+//   - Markers are left alone. `startMarker` renders at `source` and
+//     `endMarker` at `target`, so swapping the endpoints moves the arrow to
+//     the other end on its own. Swapping the marker *fields* too would undo
+//     that and make the reversal a visual no-op (the ADR 0083 bug).
+//   - The catmull-rom `points` list is walked [source, ...points, target],
+//     so it has to be reversed to trace the same curve.
+//   - A custom `labelPosition` is a 0..1 ratio measured from `source`, so it
+//     mirrors to `1 - x`. 0.5 / absent is unaffected.
+//
+// A true involution: applying it twice returns the original edge exactly.
+// Shared by the "Reverse direction" context-menu action and, via
+// applyDirectionToEdge, a direction-set switch that flips an edge.
+export function reverseEdgeDirection(edge: Edge): Edge {
   const points = edgePoints(edge)
   const style = edgeStyle(edge)
+  const data: Record<string, unknown> = { ...edge.data }
+  if (points.length > 0) data.points = [...points].reverse()
+  if (style && style.labelPosition !== undefined) {
+    data.style = { ...style, labelPosition: 1 - style.labelPosition }
+  }
   return {
-    points: points.length > 0 ? [...points].reverse() : points,
-    style: style && {
-      ...style,
-      startMarker: style.endMarker,
-      endMarker: style.startMarker,
-      labelPosition: style.labelPosition !== undefined ? 1 - style.labelPosition : undefined
-    }
+    ...edge,
+    source: edge.target,
+    target: edge.source,
+    sourceHandle: edge.targetHandle,
+    targetHandle: edge.sourceHandle,
+    data
   }
 }
 
@@ -130,23 +176,19 @@ function withDirectionRecords(edge: Edge, records: Record<string, EdgeDirection>
   return { ...edge, data: { ...edge.data, directionSets: records } }
 }
 
-// Write `dir` into an edge's live fields, flipping the shared visuals if
-// the orientation differs from what the edge currently shows.
+// Point an edge's live fields at `dir`. When `dir` is the reversed
+// orientation (same two nodes, swapped), run the full reverse first so the
+// direction-tied visuals (`points`, `labelPosition`) come along; then set
+// the exact endpoints/handles from the record (which may also pick
+// different connection points per set).
 export function applyDirectionToEdge(edge: Edge, dir: EdgeDirection): Edge {
-  const flips = dir.source !== edge.source
-  const data: Record<string, unknown> = { ...edge.data }
-  if (flips) {
-    const flipped = flipEdgeVisuals(edge)
-    data.points = flipped.points
-    data.style = flipped.style
-  }
+  const oriented = dir.source !== edge.source ? reverseEdgeDirection(edge) : edge
   return {
-    ...edge,
+    ...oriented,
     source: dir.source,
     target: dir.target,
     sourceHandle: dir.sourceHandle,
-    targetHandle: dir.targetHandle,
-    data
+    targetHandle: dir.targetHandle
   }
 }
 

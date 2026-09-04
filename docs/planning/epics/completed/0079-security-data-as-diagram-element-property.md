@@ -1,7 +1,7 @@
 # 0079: Security data as a diagram-element property (real persistence)
 
 ## Status
-In progress — design committed 2026-09-01, see [ADR 0082](../../decisions/0082-security-data-schema.md) (the concrete schema for [ADR 0055](../../decisions/0055-security-data-lives-on-diagram-elements.md)). On `epic/0079-security-data-as-element-property`.
+Done — merged to `master` (PR #85, 2026-09-04). Design committed 2026-09-01, see [ADR 0082](../../decisions/0082-security-data-schema.md) (the concrete schema for [ADR 0055](../../decisions/0055-security-data-lives-on-diagram-elements.md)). NOT live-tested (Electron renderer). Follow-ups: [epic 0081](../0081-recursive-matrix-population-and-automation.md) (now unblocked), [epic 0107](../0107-per-element-security-exposure.md).
 
 ## Goal
 Replace the epic 0060 threat-matrix prototype's hardcoded, in-memory-only

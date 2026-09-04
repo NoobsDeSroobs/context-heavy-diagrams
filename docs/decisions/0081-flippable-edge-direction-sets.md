@@ -151,8 +151,10 @@ fields immediately before each:
    meaning; a geometric nearest isn't recoverable once the point is gone) —
    and if `newLive.source !== edge.source` (orientation flips), the
    existing **"Reverse direction" involution** is applied to the shared
-   visuals (reverse `points`, swap `startMarker`/`endMarker`,
-   `labelPosition → 1 - labelPosition`); then `live = newLive`.
+   visuals (reverse `points`, `labelPosition → 1 - labelPosition`; markers
+   are **not** swapped — the endpoint swap moves them on its own, see
+   [ADR 0083](0083-per-set-edge-style-as-creation-template.md)); then
+   `live = newLive`.
 
    A switch is **not itself an undo step** — it's trivially reversed from
    the panel dropdown, the same reason toggling a highlight is excluded
@@ -281,7 +283,10 @@ and (thanks to base orientation) persisting it costs one line in the file.
   `refreshActiveDirectionSet`, `ensureDirectionSets`, `switchActiveDirectionSet`,
   `applyDirectionToEdge` (repair + involution), `repairDirection`,
   `flipEdgeVisuals` (the extracted involution, also used by "Reverse
-  direction"), `stripDirectionSets` / `removeDirectionSetKey` /
+  direction" — later corrected + renamed `reverseEdgeDirection`, see
+  [ADR 0083](0083-per-set-edge-style-as-creation-template.md): it must not
+  swap the markers, only the endpoints + `points`/`labelPosition`),
+  `stripDirectionSets` / `removeDirectionSetKey` /
   `addDirectionSetFrom`, and `directionSetLegendRow`.
 - `docs/file-format.md` updated: `EdgeDirectionSet` (+ `legend`),
   `EdgeDirection`, `DiagramFile.edgeDirectionSets` /

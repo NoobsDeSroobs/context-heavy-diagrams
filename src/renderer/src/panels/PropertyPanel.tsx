@@ -4,7 +4,6 @@ import type {
   ConnectionPoint,
   ConnectionPointSide,
   EdgeStyle,
-  MarkerKind,
   MetadataEntry,
   NodeStyle,
   RequiredTagDefinition
@@ -21,6 +20,7 @@ import {
   SelectField
 } from './fields'
 import { computeFieldValue } from './fieldValue'
+import { MARKER_OPTIONS } from './edgeStyleOptions'
 import MetadataSection from './MetadataSection'
 import ReferencesSection from './ReferencesSection'
 
@@ -60,21 +60,6 @@ interface PropertyPanelProps {
   endContinuousEdit: () => void
   pushSnapshot: () => void
 }
-
-const MARKER_OPTIONS: { value: MarkerKind; label: string }[] = [
-  { value: 'none', label: 'None' },
-  { value: 'arrowOpen', label: 'Open arrow' },
-  { value: 'arrowClosed', label: 'Closed arrow' },
-  { value: 'circle', label: 'Circle' },
-  { value: 'circleFilled', label: 'Filled circle' },
-  { value: 'diamond', label: 'Diamond' },
-  { value: 'diamondFilled', label: 'Filled diamond' },
-  { value: 'crowsFootOne', label: "Crow's foot — one" },
-  { value: 'crowsFootMany', label: "Crow's foot — many" },
-  { value: 'crowsFootOneOrMany', label: "Crow's foot — one or many" },
-  { value: 'crowsFootZeroOrOne', label: "Crow's foot — zero or one" },
-  { value: 'crowsFootZeroOrMany', label: "Crow's foot — zero or many" }
-]
 
 // '' means the field is absent — a real style.routingStyle value, not a
 // placeholder — see fontFamily's own identical '' === "no override"

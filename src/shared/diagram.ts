@@ -334,19 +334,34 @@ export interface GravityPreset {
 // canonical pair. A set never adds or removes edges; every edge exists in
 // every set, only its direction (and which connection point each end uses)
 // changes. Empty `DiagramFile.edgeDirectionSets` means the feature is
-// dormant. A *single* set is meaningful: it names the current reading and
-// contributes a legend row (see `legend` below); per-edge `directionSets`
-// records and the base-orientation rule only kick in at two or more sets.
+// dormant. A *single* set is meaningful: it names the current reading,
+// contributes a legend row, and its `style` is the default for edges drawn
+// while it is active (see `style` below); per-edge `directionSets` records
+// and the base-orientation rule only kick in at two or more sets.
 export interface EdgeDirectionSet {
   id: string
   name: string
-  // How this reading is drawn in the legend (panel + PNG export) while it's
-  // the active set — the label is always the set `name`. Author-asserted,
-  // same as a hand-authored 'line' LegendEntry: it does NOT recolour the
-  // actual edges on canvas. Absent `color` falls back to a default.
-  legend?: EdgeDirectionSetLegend
+  // The default edge style for this reading — see ADR 0083. It does two
+  // things: (1) it seeds the style of any edge *drawn while this set is
+  // active* (composed over the global default-edge-style preference), and
+  // (2) it is how this reading draws as a legend row (panel + PNG export)
+  // while active — label is always `name`. It does NOT restyle edges that
+  // already exist; switching the active set changes direction only (ADR
+  // 0081). Absent `stroke` falls back to a default for the legend swatch.
+  // Renamed from `legend` (ADR 0081) and widened — `fromDiagramFile`
+  // migrates the old shape (`color` -> `stroke`).
+  style?: EdgeDirectionSetStyle
 }
 
+// A strict subset of EdgeStyle: the fields that make sense as a per-reading
+// default. No routingStyle (geometry, bend-point-coupled — stays per-edge),
+// no font, no labelPosition.
+export type EdgeDirectionSetStyle = Pick<
+  EdgeStyle,
+  'stroke' | 'strokeWidth' | 'strokeOpacity' | 'lineStyle' | 'startMarker' | 'endMarker'
+>
+
+// The pre-ADR-0083 shape of EdgeDirectionSet.style, still accepted on load.
 export interface EdgeDirectionSetLegend {
   color?: string
   lineStyle?: LineStyleKind
@@ -429,9 +444,10 @@ export interface DiagramFile {
   maxConnectionPointsPerSide?: number
   // Named readings of the diagram's edges that differ only in arrow
   // direction — see ADR 0081 and EdgeDirectionSet above. Absent/empty means
-  // the feature is unused. A single set names the current reading and adds a
-  // legend row; per-edge `directionSets` records and the base-orientation
-  // rule only apply at 2+ sets. Order matters: [0] is the "base" set whose
+  // the feature is unused. A single set names the current reading, adds a
+  // legend row, and seeds the style of edges drawn while it is active;
+  // per-edge `directionSets` records and the base-orientation rule only
+  // apply at 2+ sets. Order matters: [0] is the "base" set whose
   // orientation the edges are stored in on disk.
   edgeDirectionSets?: EdgeDirectionSet[]
   // Which set of `edgeDirectionSets` is currently displayed. The on-disk
@@ -466,22 +482,37 @@ function sortKeysDeep<T extends JsonValue>(value: T): T {
   return value
 }
 
-// Fixed key order for an EdgeDirectionSet's legend styling; dropped
-// entirely when it carries nothing.
-function sortedDirectionSetLegend(
-  legend: EdgeDirectionSetLegend | undefined
-): EdgeDirectionSetLegend | undefined {
-  if (!legend) return undefined
-  const { color, lineStyle, startMarker, endMarker } = legend
+// Fixed key order for an EdgeDirectionSet's default style (ADR 0083);
+// dropped entirely when it carries nothing. Also accepts (and up-converts)
+// the pre-ADR-0083 `legend` shape, so a file that never passed through the
+// renderer's load migration still serializes cleanly.
+function sortedDirectionSetStyle(
+  set: EdgeDirectionSet
+): EdgeDirectionSetStyle | undefined {
+  const legacy = (set as { legend?: EdgeDirectionSetLegend }).legend
+  const style: EdgeDirectionSetStyle | undefined =
+    set.style ??
+    (legacy
+      ? {
+          stroke: legacy.color,
+          lineStyle: legacy.lineStyle,
+          startMarker: legacy.startMarker,
+          endMarker: legacy.endMarker
+        }
+      : undefined)
+  if (!style) return undefined
+  const { stroke, strokeWidth, strokeOpacity, lineStyle, startMarker, endMarker } = style
   if (
-    color === undefined &&
+    stroke === undefined &&
+    strokeWidth === undefined &&
+    strokeOpacity === undefined &&
     lineStyle === undefined &&
     startMarker === undefined &&
     endMarker === undefined
   ) {
     return undefined
   }
-  return { color, lineStyle, startMarker, endMarker }
+  return { stroke, strokeWidth, strokeOpacity, lineStyle, startMarker, endMarker }
 }
 
 // Deterministic per-edge directionSets: set ids in sorted order, each
@@ -625,7 +656,7 @@ export function serializeDiagram(diagram: DiagramFile): string {
       ? diagram.edgeDirectionSets!.map((s) => ({
           id: s.id,
           name: s.name,
-          legend: sortedDirectionSetLegend(s.legend)
+          style: sortedDirectionSetStyle(s)
         }))
       : undefined,
     activeEdgeDirectionSetId: hasDirectionSets ? diagram.activeEdgeDirectionSetId : undefined,

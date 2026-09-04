@@ -1,7 +1,7 @@
 # 0081: Recursive matrix population and automation
 
 ## Status
-Not Started — not yet scoped. Split off epic 0060 on its closure (2026-08-25), consolidating the recursion/automation vision recorded across that epic's Notes rounds 7–10. Depends on [epic 0079](0079-security-data-as-diagram-element-property.md) (real per-element security data) — nothing here has real data to walk or roll up until that lands.
+Not Started — not yet scoped. Split off epic 0060 on its closure (2026-08-25), consolidating the recursion/automation vision recorded across that epic's Notes rounds 7–10. Depends on [epic 0079](completed/0079-security-data-as-diagram-element-property.md) (real per-element security data) — nothing here has real data to walk or roll up until that lands.
 
 ## Goal
 Stop requiring every service/column in the matrix to be manually typed, and every level of a diagram hierarchy to be manually re-assessed. Populate the matrix's non-threat dimension from the diagram itself (linked child diagrams, or shapes already present), roll a child diagram's own computed scores up into its parent's matrix automatically, and keep that rollup from silently going stale — while treating any value the app derived (rather than a human entered) as visually distinct and not manually editable.

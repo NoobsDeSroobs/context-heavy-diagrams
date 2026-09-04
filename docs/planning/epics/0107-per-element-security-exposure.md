@@ -1,9 +1,9 @@
 # 0107: Exposing a single element's security data outside the matrix
 
 ## Status
-Not Started — carved out of [epic 0079](0079-security-data-as-diagram-element-property.md)
-(2026-09-01) at the user's request. Blocked on 0079 landing (the data has
-to exist and persist first). Needs its own design pass.
+Not Started — carved out of [epic 0079](completed/0079-security-data-as-diagram-element-property.md)
+(2026-09-01) at the user's request. 0079 has landed (PR #85); this is now
+unblocked. Needs its own design pass.
 
 ## Goal
 Once a Shape carries real `data.security` (epic 0079 / [ADR 0082](../../decisions/0082-security-data-schema.md)),

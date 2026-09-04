@@ -73,8 +73,10 @@ Full rationale and the rejected alternatives are in
       (`length >= 2`), deterministic key order.
 - [x] `docs/file-format.md` — new fields + base-orientation rule.
 - [x] New `renderer/src/edges/edgeDirectionSets.ts`: `flipEdgeVisuals`
-      (extracted from `Canvas.tsx`'s inline "Reverse direction" handler),
-      `repairDirection`, `applyDirectionToEdge`, `ensureDirectionSets`,
+      (extracted from `Canvas.tsx`'s inline "Reverse direction" handler —
+      later corrected + renamed `reverseEdgeDirection`, ADR 0083: it must
+      not swap the markers), `repairDirection`, `applyDirectionToEdge`,
+      `ensureDirectionSets`,
       `refreshActiveDirectionSet`, `switchActiveDirectionSet`,
       `stripDirectionSets`, `removeDirectionSetKey`, `addDirectionSetFrom`.
 - [x] `Canvas.tsx` load path (`fromDiagramFile`): seed missing records from
@@ -85,7 +87,8 @@ Full rationale and the rejected alternatives are in
       `toDiagramFile` call sites + `fromDiagramFile` + `loadDiagramIntoCanvas`.
 - [x] Switch-active-set action + `rewriteHistoryEdges` (rewrites live edges
       + every `past`/`future` snapshot; not itself an undo step).
-- [x] `"Reverse direction"` handler re-expressed via `flipEdgeVisuals`.
+- [x] `"Reverse direction"` handler re-expressed via `flipEdgeVisuals`
+      (now `reverseEdgeDirection`, ADR 0083).
 - [x] `EdgeDirectionSetsSection` component + `CollapsibleSection` slot in
       `DiagramSettingsPanel`; state + handlers threaded from `Canvas.tsx`.
 - [x] New/Rename/Duplicate/Delete set operations (base-set promotion on
