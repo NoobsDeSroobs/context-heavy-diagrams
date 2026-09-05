@@ -1,0 +1,587 @@
+{
+  "version": 1,
+  "viewport": {
+    "x": 408.01724137931035,
+    "y": 380.62068965517244,
+    "zoom": 0.9913793103448276
+  },
+  "requiredTags": [
+    {
+      "key": "gdpr",
+      "allowedValues": [
+        "No PII",
+        "Pseudonymized",
+        "PII",
+        "Sensitive PII"
+      ],
+      "defaultValue": "No PII",
+      "lock": "lockedEditable"
+    },
+    {
+      "key": "nis2",
+      "allowedValues": [
+        "Essential entity",
+        "Important entity",
+        "Out of scope"
+      ],
+      "defaultValue": "Out of scope",
+      "lock": "lockedEditable"
+    },
+    {
+      "key": "owningTeam",
+      "allowedValues": [
+        "Ticketing Platform",
+        "Customer Digital",
+        "Booking & Payments",
+        "Network Operations",
+        "Fleet & Maintenance",
+        "Safety & Compliance",
+        "Data & Analytics",
+        "Corporate IT",
+        "HR & People Systems",
+        "Finance Systems",
+        "Partner & Interline",
+        "Legacy Systems",
+        "External"
+      ],
+      "defaultValue": null,
+      "lock": "lockedEditable"
+    },
+    {
+      "key": "businessDomain",
+      "allowedValues": [
+        "Ticketing & Booking",
+        "Customer Experience",
+        "Operations & Scheduling",
+        "Fleet & Maintenance",
+        "Finance & Billing",
+        "HR & Workforce",
+        "Safety & Compliance",
+        "Data & Analytics",
+        "Corporate IT",
+        "Partner & Interline"
+      ],
+      "defaultValue": null,
+      "lock": "lockedEditable"
+    },
+    {
+      "key": "serviceState",
+      "allowedValues": [
+        "Planned",
+        "In Development",
+        "Released",
+        "Maintenance",
+        "Phasing Out",
+        "Replaced",
+        "Retired"
+      ],
+      "defaultValue": null,
+      "lock": "lockedEditable"
+    }
+  ],
+  "highlights": [
+    {
+      "key": "gdpr",
+      "value": "Pseudonymized",
+      "color": "#dade17"
+    },
+    {
+      "key": "gdpr",
+      "value": "PII",
+      "color": "#ff961f"
+    },
+    {
+      "key": "gdpr",
+      "value": "No PII",
+      "color": "#e60f0f"
+    }
+  ],
+  "legend": [
+    {
+      "id": "legend-service-call",
+      "kind": "line",
+      "label": "Service-to-service call",
+      "lineStyle": "solid",
+      "startMarker": "none",
+      "endMarker": "arrowClosed"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "blurb",
+      "type": "text",
+      "position": {
+        "x": 0,
+        "y": -243
+      },
+      "size": {
+        "width": 750,
+        "height": 213
+      },
+      "zIndex": 200010,
+      "style": {
+        "fill": "#fefcbf",
+        "fillOpacity": 90,
+        "textAlign": "start",
+        "fontSize": 13,
+        "fontColor": "#744210"
+      },
+      "data": {
+        "label": "Ticketing & Booking — domain drill-down\n\nThe 7 services the flat landscape (#1) tags businessDomain=\"Ticketing & Booking\", re-hosted here as this domain's own sub-diagram, same tag values as #1. Cross-domain integration edges from #1 (e.g. to Payment Gateway Integration, Customer Profile Service) are omitted here for now — they'll come back once sibling domain sub-diagrams exist to connect to. Booking Session Manager links further down to a target-state AWS deployment view, testing the chd-diagrams skill's layout-guide.md conventions on a real diagram."
+      }
+    },
+    {
+      "id": "svc-ticket-issuance-api",
+      "type": "shape",
+      "position": {
+        "x": 0,
+        "y": 200
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "zIndex": 100010,
+      "metadata": {
+        "businessDomain": {
+          "value": "Ticketing & Booking",
+          "lock": "lockedEditable"
+        },
+        "gdpr": {
+          "value": "Pseudonymized",
+          "lock": "lockedEditable"
+        },
+        "nis2": {
+          "value": "Essential entity",
+          "lock": "lockedEditable"
+        },
+        "owningTeam": {
+          "value": "Ticketing Platform",
+          "lock": "lockedEditable"
+        },
+        "serviceState": {
+          "value": "Maintenance",
+          "lock": "lockedEditable"
+        }
+      },
+      "data": {
+        "label": "Ticket Issuance API"
+      }
+    },
+    {
+      "id": "svc-multi-leg-journey-planner",
+      "type": "shape",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "zIndex": 100020,
+      "metadata": {
+        "businessDomain": {
+          "value": "Ticketing & Booking",
+          "lock": "lockedEditable"
+        },
+        "gdpr": {
+          "value": "PII",
+          "lock": "lockedEditable"
+        },
+        "nis2": {
+          "value": "Essential entity",
+          "lock": "lockedEditable"
+        },
+        "owningTeam": {
+          "value": "Ticketing Platform",
+          "lock": "lockedEditable"
+        },
+        "serviceState": {
+          "value": "Released",
+          "lock": "lockedEditable"
+        }
+      },
+      "data": {
+        "label": "Multi-leg Journey Planner"
+      }
+    },
+    {
+      "id": "svc-promotions-discounts",
+      "type": "shape",
+      "position": {
+        "x": 0,
+        "y": 100
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "zIndex": 100030,
+      "metadata": {
+        "businessDomain": {
+          "value": "Ticketing & Booking",
+          "lock": "lockedEditable"
+        },
+        "gdpr": {
+          "value": "PII",
+          "lock": "lockedEditable"
+        },
+        "nis2": {
+          "value": "Important entity",
+          "lock": "lockedEditable"
+        },
+        "owningTeam": {
+          "value": "Ticketing Platform",
+          "lock": "lockedEditable"
+        },
+        "serviceState": {
+          "value": "Released",
+          "lock": "lockedEditable"
+        }
+      },
+      "data": {
+        "label": "Promotions & Discounts Service"
+      }
+    },
+    {
+      "id": "svc-refund-processing",
+      "type": "shape",
+      "position": {
+        "x": 0,
+        "y": 340
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "zIndex": 100040,
+      "metadata": {
+        "businessDomain": {
+          "value": "Ticketing & Booking",
+          "lock": "lockedEditable"
+        },
+        "gdpr": {
+          "value": "Pseudonymized",
+          "lock": "lockedEditable"
+        },
+        "nis2": {
+          "value": "Essential entity",
+          "lock": "lockedEditable"
+        },
+        "owningTeam": {
+          "value": "Ticketing Platform",
+          "lock": "lockedEditable"
+        },
+        "serviceState": {
+          "value": "Maintenance",
+          "lock": "lockedEditable"
+        }
+      },
+      "data": {
+        "label": "Refund Processing Service"
+      }
+    },
+    {
+      "id": "svc-booking-session-manager",
+      "type": "shape",
+      "position": {
+        "x": 280,
+        "y": 200.00000000000003
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "zIndex": 100050,
+      "connectionPoints": [
+        {
+          "id": "right-fare",
+          "side": "right",
+          "offset": 0.3
+        },
+        {
+          "id": "right-seat",
+          "side": "right",
+          "offset": 0.7
+        }
+      ],
+      "metadata": {
+        "businessDomain": {
+          "value": "Ticketing & Booking",
+          "lock": "lockedEditable"
+        },
+        "gdpr": {
+          "value": "Pseudonymized",
+          "lock": "lockedEditable"
+        },
+        "nis2": {
+          "value": "Essential entity",
+          "lock": "lockedEditable"
+        },
+        "owningTeam": {
+          "value": "Ticketing Platform",
+          "lock": "lockedEditable"
+        },
+        "serviceState": {
+          "value": "In Development",
+          "lock": "lockedEditable"
+        }
+      },
+      "data": {
+        "label": "Booking Session Manager",
+        "linkedDiagram": "ticketing-and-booking/aws-deployment.chd"
+      }
+    },
+    {
+      "id": "svc-fare-calculation-engine",
+      "type": "shape",
+      "position": {
+        "x": 550,
+        "y": 60
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "zIndex": 100060,
+      "connectionPoints": [
+        {
+          "id": "left-multileg",
+          "side": "left",
+          "offset": 0.2
+        },
+        {
+          "id": "left-booking",
+          "side": "left",
+          "offset": 0.5
+        },
+        {
+          "id": "left-promo",
+          "side": "left",
+          "offset": 0.8
+        }
+      ],
+      "metadata": {
+        "businessDomain": {
+          "value": "Ticketing & Booking",
+          "lock": "lockedEditable"
+        },
+        "gdpr": {
+          "value": "Pseudonymized",
+          "lock": "lockedEditable"
+        },
+        "nis2": {
+          "value": "Essential entity",
+          "lock": "lockedEditable"
+        },
+        "owningTeam": {
+          "value": "Booking & Payments",
+          "lock": "lockedEditable"
+        },
+        "serviceState": {
+          "value": "In Development",
+          "lock": "lockedEditable"
+        }
+      },
+      "data": {
+        "label": "Fare Calculation Engine"
+      }
+    },
+    {
+      "id": "svc-seat-reservation",
+      "type": "shape",
+      "position": {
+        "x": 550,
+        "y": 200.00000000000003
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "zIndex": 100070,
+      "metadata": {
+        "businessDomain": {
+          "value": "Ticketing & Booking",
+          "lock": "lockedEditable"
+        },
+        "gdpr": {
+          "value": "Pseudonymized",
+          "lock": "lockedEditable"
+        },
+        "nis2": {
+          "value": "Essential entity",
+          "lock": "lockedEditable"
+        },
+        "owningTeam": {
+          "value": "Booking & Payments",
+          "lock": "lockedEditable"
+        },
+        "serviceState": {
+          "value": "Maintenance",
+          "lock": "lockedEditable"
+        }
+      },
+      "data": {
+        "label": "Seat Reservation Service"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "xy-edge__svc-ticket-issuance-api-svc-booking-session-manager",
+      "source": "svc-ticket-issuance-api",
+      "target": "svc-booking-session-manager",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "creates session for",
+      "metadata": {
+        "businessDomain": {
+          "value": null,
+          "lock": "lockedEditable"
+        },
+        "gdpr": {
+          "value": "Pseudonymized",
+          "lock": "lockedEditable"
+        },
+        "nis2": {
+          "value": "Out of scope",
+          "lock": "lockedEditable"
+        },
+        "owningTeam": {
+          "value": null,
+          "lock": "lockedEditable"
+        },
+        "serviceState": {
+          "value": null,
+          "lock": "lockedEditable"
+        }
+      },
+      "type": "labeled"
+    },
+    {
+      "id": "xy-edge__svc-booking-session-manager-svc-seat-reservation",
+      "source": "svc-booking-session-manager",
+      "target": "svc-seat-reservation",
+      "sourceHandle": "right-seat",
+      "targetHandle": "left",
+      "label": "holds seats via",
+      "metadata": {
+        "businessDomain": {
+          "value": null,
+          "lock": "lockedEditable"
+        },
+        "gdpr": {
+          "value": "Pseudonymized",
+          "lock": "lockedEditable"
+        },
+        "nis2": {
+          "value": "Out of scope",
+          "lock": "lockedEditable"
+        },
+        "owningTeam": {
+          "value": null,
+          "lock": "lockedEditable"
+        },
+        "serviceState": {
+          "value": null,
+          "lock": "lockedEditable"
+        }
+      },
+      "type": "labeled"
+    },
+    {
+      "id": "xy-edge__svc-multi-leg-journey-planner-svc-fare-calculation-engine",
+      "source": "svc-multi-leg-journey-planner",
+      "target": "svc-fare-calculation-engine",
+      "sourceHandle": "right",
+      "targetHandle": "left-multileg",
+      "label": "requests fare quote from",
+      "metadata": {
+        "businessDomain": {
+          "value": null,
+          "lock": "lockedEditable"
+        },
+        "gdpr": {
+          "value": "No PII",
+          "lock": "lockedEditable"
+        },
+        "nis2": {
+          "value": "Out of scope",
+          "lock": "lockedEditable"
+        },
+        "owningTeam": {
+          "value": null,
+          "lock": "lockedEditable"
+        },
+        "serviceState": {
+          "value": null,
+          "lock": "lockedEditable"
+        }
+      },
+      "type": "labeled"
+    },
+    {
+      "id": "xy-edge__svc-promotions-discountsright-svc-fare-calculation-engineleft-booking",
+      "source": "svc-promotions-discounts",
+      "target": "svc-fare-calculation-engine",
+      "sourceHandle": "right",
+      "targetHandle": "left-booking",
+      "label": "applies discount via",
+      "metadata": {
+        "businessDomain": {
+          "value": null,
+          "lock": "lockedEditable"
+        },
+        "gdpr": {
+          "value": "Pseudonymized",
+          "lock": "lockedEditable"
+        },
+        "nis2": {
+          "value": "Out of scope",
+          "lock": "lockedEditable"
+        },
+        "owningTeam": {
+          "value": null,
+          "lock": "lockedEditable"
+        },
+        "serviceState": {
+          "value": null,
+          "lock": "lockedEditable"
+        }
+      },
+      "type": "labeled"
+    },
+    {
+      "id": "xy-edge__svc-booking-session-managerright-fare-svc-fare-calculation-engineleft-promo",
+      "source": "svc-booking-session-manager",
+      "target": "svc-fare-calculation-engine",
+      "sourceHandle": "right-fare",
+      "targetHandle": "left-promo",
+      "label": "requests fare quote from",
+      "metadata": {
+        "businessDomain": {
+          "value": null,
+          "lock": "lockedEditable"
+        },
+        "gdpr": {
+          "value": "Pseudonymized",
+          "lock": "lockedEditable"
+        },
+        "nis2": {
+          "value": "Out of scope",
+          "lock": "lockedEditable"
+        },
+        "owningTeam": {
+          "value": null,
+          "lock": "lockedEditable"
+        },
+        "serviceState": {
+          "value": null,
+          "lock": "lockedEditable"
+        }
+      },
+      "type": "labeled"
+    }
+  ]
+}

@@ -44,11 +44,14 @@ const DASH_ARRAY: Record<Exclude<EdgeStyle['lineStyle'], undefined>, string | un
   dotted: '2 4'
 }
 
-// React Flow's own CSS default (--xy-edge-stroke-width-default) — needed
+// This app's own default (a little thicker than React Flow's stock 1px —
+// bumped 2026-09-05 after the base was reported hard to see) — needed
 // explicitly here since a selected edge's width is computed as "whatever
 // it already is, plus a bit," and that base has to be a real number even
-// when nothing overrides it.
-const DEFAULT_STROKE_WIDTH = 1
+// when nothing overrides it. Always applied inline (see computedStyle
+// below), so unlike `stroke` this can't be steered by a CSS variable —
+// change it here, not in base.css.
+const DEFAULT_STROKE_WIDTH = 1.5
 // Additive, not a replacement value — composes with the highlight-override
 // width (ADR 0025) instead of competing with it, so a highlighted *and*
 // selected edge just gets both effects layered.

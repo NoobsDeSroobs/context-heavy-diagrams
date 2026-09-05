@@ -12,7 +12,13 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 ## Open items at a glance
 
+- [Details panel Markdown: tables (and other GFM syntax) rendered as literal text](#details-panel-markdown-tables-and-other-gfm-syntax-rendered-as-literal-text) — Solved.
 - [File → Recent Diagrams never reused an empty calling window](#file--recent-diagrams-never-reused-an-empty-calling-window) — Solved.
+- [Text nodes have zero internal padding — label touches the border, and clicking near the start grabs the node instead of placing a text cursor](#text-nodes-have-zero-internal-padding--label-touches-the-border-and-clicking-near-the-start-grabs-the-node-instead-of-placing-a-text-cursor) — Solved, pending live re-test.
+- [Text node content isn't clipped to its own box — a long label bleeds over whatever sits below it on canvas](#text-node-content-isnt-clipped-to-its-own-box--a-long-label-bleeds-over-whatever-sits-below-it-on-canvas) — Solved, pending live re-test.
+- [Legend line/shape swatches with no explicit `color` rendered completely invisible](#legend-lineshape-swatches-with-no-explicit-color-rendered-completely-invisible) — Solved, pending live re-test.
+- [Default edge stroke (color and width) was React Flow's stock value, unreadable against this app's dark-theme canvas](#default-edge-stroke-color-and-width-was-react-flows-stock-value-unreadable-against-this-apps-dark-theme-canvas) — Solved, pending live re-test.
+- [A hand-authored edge with no `type` field silently rendered as React Flow's built-in default edge, not this app's `LabeledEdge` — no style, no highlights, no custom routing, no error](#a-hand-authored-edge-with-no-type-field-silently-rendered-as-react-flows-built-in-default-edge-not-this-apps-labelededge--no-style-no-highlights-no-custom-routing-no-error) — Solved, confirmed live.
 - [Diagnostics "missing files" check didn't flag a reported broken relative path in real diagram data](#diagnostics-missing-files-check-didnt-flag-a-reported-broken-relative-path-in-real-diagram-data) — Open, reported once, not reproduced/confirmed.
 - [Dragging a new edge from a node inside a locked container can snap to the container itself](#dragging-a-new-edge-from-a-node-inside-a-locked-container-can-snap-to-the-container-itself) — Open, not investigated.
 - [Hovering a single edge on a large diagram re-renders every node and edge several times over](#hovering-a-single-edge-on-a-large-diagram-re-renders-every-node-and-edge-several-times-over) — Solved, ADR 0073 / epic 0101.
@@ -37,6 +43,21 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 ---
 
+## Details panel Markdown: tables (and other GFM syntax) rendered as literal text
+
+**Status:** Solved
+**Found:** 2026-09-05, user report — a table pasted into a node's details `.md` (from a real Azure resource-inventory diagram) showed no grid lines in the Details panel preview, nor in Notepad++'s MarkdownViewer++ plugin
+
+**Symptom:** a standard pipe-table (`| Resource | Type |` / `|---|---|` / row) rendered as plain, unstructured text — no borders, no columns — in both places the user checked.
+
+**Root cause:** pipe tables are a **GitHub-Flavored Markdown (GFM)** extension, not part of base CommonMark. `DetailsPanel.tsx` renders with plain `react-markdown` (CommonMark-only without an explicit plugin) and never had `remark-gfm` wired in — so tables, along with strikethrough and `- [ ]` task-list checkboxes, all silently fell back to literal text. This exact gap had already been found and logged once before, in [epic 0022](planning/epics/0022-example-diagram-gallery.md)'s Checklist-capability section (task-list checkboxes not rendering), but left as an unstarted task rather than fixed — this report is the same root cause reached from a different angle (a table, not a checklist). Notepad++'s MarkdownViewer++ hitting the same symptom was coincidental — a different, long-standing GFM-table gap in that plugin, unrelated to this app.
+
+**Resolution:** added `remark-gfm` and passed it to `<ReactMarkdown remarkPlugins={[remarkGfm]}>` in `DetailsPanel.tsx`. Also added `main.css` table styling (`.details-panel-preview table/th/td` — border, padding, header background) since nothing had ever needed to style a real `<table>` element in this panel before; without it a GFM table would parse correctly but render with no visible grid lines at all, which would have looked like the same bug all over again.
+
+**References:** `src/renderer/src/components/DetailsPanel.tsx`, `src/renderer/src/assets/main.css`'s `.details-panel-preview table/th/td`, [epic 0022](planning/epics/0022-example-diagram-gallery.md)'s Checklist-capability section (the earlier, unstarted instance of this same gap)
+
+---
+
 ## File → Recent Diagrams never reused an empty calling window
 
 **Status:** Solved
@@ -49,6 +70,94 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 **Resolution:** `windows:openRecent` now takes the same `callingWindowEmpty` boolean, resolves `BrowserWindow.fromWebContents(event.sender)` when true, and passes it through to `openOrFocusWindow` exactly like `windows:pickAndOpen` does. `openRecentDiagram` (preload) and `handleOpenRecent` (`Canvas.tsx`) updated to compute and pass it, mirroring `handleOpen`.
 
 **References:** `src/main/windows.ts`'s `openOrFocusWindow`/`windows:openRecent`/`windows:pickAndOpen`, `src/preload/index.ts`'s `openRecentDiagram`, `src/renderer/src/Canvas.tsx`'s `handleOpenRecent`/`handleOpen`, [epic 0095](planning/epics/completed/0095-recent-diagrams-menu.md), [ADR 0023](decisions/0023-multi-window-diagram-model.md)
+
+---
+
+## Text nodes have zero internal padding — label touches the border, and clicking near the start grabs the node instead of placing a text cursor
+
+**Status:** Solved, pending live re-test
+**Found:** 2026-09-05, user report while reviewing new gallery content (`examples/gallery/landscape/meridian-rail-landscape-layered/*.chd`'s sticky-note-style blurb text nodes) in-app
+
+**Symptom:** a `text`-type node's label renders with its first character touching (or nearly touching) the node's left border — visually cramped against the "wall" of the box. Worse than cosmetic: clicking near the very start of the label to place a text cursor there instead grabs the node's edge/selection handle, because the hit target for "select/resize the node" and the start of the editable text sit at almost the same pixel.
+
+**Root cause:** confirmed by reading the CSS directly — neither `.text-node` (`main.css:491`) nor `.text-node-label` (`main.css:511`) sets any `padding`, unlike virtually every other bordered/boxed element in `main.css` (property rows, panels, dropdowns, etc. all have some `padding: Npx Mpx`) — `.shape-node` already has `padding: 4px 8px`, so this was specifically a text-node gap, not app-wide. This isn't something a diagram author can work around from content either: the `.chd` format has no padding/inset field anywhere on Node style (see `docs/file-format.md`'s Node style table).
+
+**Resolution:** `padding: 8px` added to `.text-node-label` (display mode). Edit mode needed a separate fix since its textarea goes through the shared `.editable-label-input` class (used by every node/edge label's edit mode, `padding: 0` there deliberately, unaffected) — added a new `.text-node-label-input { padding: 8px; }` rule, placed after `.editable-label-input` in source order so it actually wins the cascade (same specificity, source order is the tiebreaker). Not yet independently confirmed in the running app.
+
+**References:** `src/renderer/src/nodes/TextNode.tsx`, `src/renderer/src/assets/main.css`'s `.text-node-label`/`.text-node-label-input`/`.editable-label-input`
+
+---
+
+## Text node content isn't clipped to its own box — a long label bleeds over whatever sits below it on canvas
+
+**Status:** Solved, pending live re-test
+**Found:** 2026-09-05, user report — a 3-paragraph blurb text node "goes out beyond the bounds of the text field by a lot, and even covers the upper 4 shapes" below it
+
+**Symptom:** a `text` node's label can render taller than the node's own declared `size.height`, visually overlapping unrelated shapes positioned below/around it — not a resize-handle or box-outline issue, the actual text glyphs render outside the node's rectangle.
+
+**Root cause:** none of `.text-node`, `.shape-node`, or `.container-node` (`main.css`) set `overflow: hidden` — a node's content box simply grows past its declared bounds instead of being clipped or truncated when it doesn't fit. Latent across all three node types, but only visibly bit on text nodes, which are the only type routinely holding long free-form paragraph content (a shape/container label is normally one short line). `overflow: hidden` can't just go on `.text-node` itself, though — `NodeResizer`'s own resize-handle divs render as DOM siblings of the label *inside* that same element (`TextNode.tsx`), sitting partly outside the box edge by design so they stay grabbable; clipping the whole node would clip those too.
+
+**Resolution:** scoped to `.text-node-label` only, not `.text-node` — added `max-height: 100%; overflow: hidden;`. The percentage resolves correctly because `.text-node` itself has a definite `height: 100%` (React Flow sets a real pixel height on the outer node wrapper), so the label's `max-height: 100%` ties it to that same resolved value without touching the node's own overflow behavior or the resize handles. `.shape-node-label`/`.container-node-label` have the same latent gap, left unfixed — lower priority since a short label rarely overflows enough to matter, revisit if it's ever reported for real.
+
+**References:** `src/renderer/src/assets/main.css`'s `.text-node-label`, `.shape-node`, `.container-node`; `src/renderer/src/nodes/TextNode.tsx`
+
+---
+
+## Legend line/shape swatches with no explicit `color` rendered completely invisible
+
+**Status:** Solved, pending live re-test
+**Found:** 2026-09-05, user report — "I can not see the legend arrow at all. It is effectively if not actually invisible," on a hand-authored `legend` entry that deliberately omitted `color` (per `docs/file-format.md`, absent color means "use this diagram's default look" — the in-app "add legend entry" flow always seeds an explicit color, so this path had never been exercised before)
+
+**Symptom:** a `legend` entry of kind `"line"` or `"shape"` with no `color` field rendered nothing at all in `LegendPanel`'s swatch — not just low-contrast, genuinely blank.
+
+**Root cause:** `LegendPanel.tsx`'s `LegendSwatch` set `stroke={entry.color}` (line kind) / `style={{ background: entry.color }}` (shape kind) directly, with no fallback. `entry.color` being `undefined` means React omits the `stroke`/`background` attribute entirely — which SVG/CSS treat as `stroke: none` / `background: transparent`, not "use some default color." Every other styleable surface in this app treats an absent color as "fall back to the real default look" (node fill, edge stroke, etc.) — the legend swatch was the one place that silently rendered nothing instead.
+
+**Resolution:** line-kind swatch now falls back to `var(--xy-edge-stroke-default)` (the same CSS variable real unstyled edges use — see the next entry), shape-kind falls back to `var(--ev-c-gray-1)`. Raised alongside a related, separate complaint that real edges' actual default stroke (not just the legend) was also hard to see, especially the dark-theme value — see the next entry for that fix.
+
+**References:** `src/renderer/src/components/LegendPanel.tsx`'s `LegendSwatch`
+
+---
+
+## Default edge stroke (color and width) was React Flow's stock value, unreadable against this app's dark-theme canvas
+
+**Status:** Solved, pending live re-test — a deliberate design adjustment more than a bug, logged anyway since it was reported as "effectively invisible"
+**Found:** 2026-09-05, user report (same session as the legend-swatch bug above, reported together as one complaint)
+
+**Symptom:** an edge with no explicit `style.stroke` was hard to see, worst in dark theme.
+
+**Root cause:** this app never overrode `@xyflow/react`'s own bundled CSS variables (`--xy-edge-stroke-default: #3e3e3e` in dark mode, `#b1b1b7` in light; `--xy-edge-stroke-width-default: 1`) — so an unstyled edge rendered at React Flow's stock 1px width and stock color, and `#3e3e3e` against this app's near-black dark-theme canvas background (`--ev-c-black: #1b1b1f`) has genuinely low contrast.
+
+**Resolution:** two separate changes, since they're not controlled by the same mechanism —
+1. **Color**: overrode `--xy-edge-stroke-default`/`--xy-edge-stroke-selected-default` per theme in `base.css`, following this app's existing 3-block theme pattern (dark default, OS-light-no-override, explicit `[data-theme='light']`) — lightened for dark theme (`#6b7684`), darkened for light theme (`#8a8a92`), i.e. adjusted toward more contrast in each theme's own direction rather than literally "lighter" everywhere, since a lighter gray would read worse against a white light-theme canvas. Flagged for the user to confirm this reads right in whichever theme they actually use.
+2. **Width**: a CSS variable override for `--xy-edge-stroke-width-default` would have had **no effect** — `LabeledEdge.tsx`'s `computedStyle` always sets an inline `strokeWidth` from a JS constant (`DEFAULT_STROKE_WIDTH`), unconditionally, unlike `stroke` (only set inline when an explicit `style.stroke` exists) — inline styles beat a CSS custom property every time. Bumped the JS constant itself from `1` to `1.5` instead. Caught only by tracing how `computedStyle` is actually built, not by testing — worth remembering for any future "default via CSS var" attempt on this component: check whether the property is set unconditionally first.
+
+**References:** `src/renderer/src/assets/base.css` (`--xy-edge-stroke-default` / `--xy-edge-stroke-selected-default`, all three theme blocks), `src/renderer/src/edges/LabeledEdge.tsx`'s `DEFAULT_STROKE_WIDTH`/`computedStyle`
+
+---
+
+## A hand-authored edge with no `type` field silently rendered as React Flow's built-in default edge, not this app's `LabeledEdge` — no style, no highlights, no custom routing, no error
+
+**Status:** Solved, confirmed live
+**Found:** 2026-09-05, user report — after eliminating every other explanation (a genuinely fresh `npm run dev` restart, no console error, node highlighting still worked in the exact same file), the decisive clue was: opening a *different*, previously-app-generated `.chd` file worked correctly, but every edge in the two new hand-authored gallery files (`examples/gallery/landscape/meridian-rail-landscape-layered/**/*.chd`) never responded to a highlight toggle **or** a manual style edit (color/width) from the property panel
+
+**Symptom:** on an edge with no `type` field in the file (which `docs/file-format.md` explicitly documents as valid — "Absent/unrecognized → treat as an unlabeled connector"), *nothing* about that edge's appearance ever updated: not tag-based highlight colors, not manual style edits via the property panel, nothing. No console error. The edge still drew correctly, in the right place, with its label visible — which is what made this so hard to localize; the failure was silent and partial, not a crash or an obviously-missing feature.
+
+**Root cause:** two things compounding, one in this app's code and one in `@xyflow/react`'s own `EdgeWrapper` (`node_modules/@xyflow/react/dist/esm/index.js`):
+1. This app's `<ReactFlow defaultEdgeOptions={{ type: 'labeled', ... }}>` (`Canvas.tsx`) is meant to give every edge lacking its own `type` a default of `'labeled'` — the type this app's own custom edge component (`LabeledEdge.tsx`, registered as `edgeTypes = { labeled: LabeledEdge }`) is registered under.
+2. `fromDiagramFile`'s edge mapping (`Canvas.tsx`) built every edge with `type: e.type` **unconditionally** — unlike every other optional field on the same object (`style`, `metadata`, `points`, `directionSets`), which were all correctly *conditionally* spread (`...(e.style ? { style: e.style } : {})`). For a file that omits `type` — exactly what `docs/file-format.md`'s own "absent means default" convention recommends, and what the `chd-diagrams` skill's minimal worked example does — this produces an edge object with an **explicit own-property `type: undefined`**, not a genuinely missing key.
+3. `EdgeWrapper` resolves the actual type via `edge = { ...defaultEdgeOptions, ...edge }` — spreading `defaultEdgeOptions` *first*, the real edge object *second*. Object spread copies a property's value regardless of whether it's `undefined`, so `edge.type: undefined` **overwrites** `defaultEdgeOptions.type: 'labeled'` right back to `undefined`. The very next line, `let edgeType = edge.type || 'default'`, then resolves to `'default'` — which isn't a key in this app's own `edgeTypes`, so it silently falls through to `builtinEdgeTypes.default` (React Flow's own plain edge component) instead of `LabeledEdge`. No error is raised anywhere in this path (`onError` only fires when the *final* fallback also fails to resolve, which it doesn't — React Flow always has its own built-in `default`).
+
+The result: the edge visually draws (position/path calculation happens independently of which component renders it) and even shows *something* resembling a label, but none of `LabeledEdge.tsx`'s own logic — `computedStyle`, `matchHighlights`, custom routing/bend-points, connection-point-aware handles — ever runs, because a completely different component is mounted.
+
+**Resolution:** two changes —
+1. **App fix**: `fromDiagramFile`'s edge mapping now spreads `type` conditionally, matching every other optional field on that object: `...(e.type ? { type: e.type } : {})`. A missing key (rather than an explicit `undefined`) lets `defaultEdgeOptions`'s spread-second-wins-nothing quirk resolve correctly, since there's no `type` property on the edge object at all for `{...edge}` to reassert.
+2. **Content**: added `"type": "labeled"` explicitly to every edge in both new gallery files anyway — belt-and-suspenders, and matches every other gallery `.chd`'s existing convention (checked: `meridian-rail-landscape.chd`'s edges all already declare it explicitly).
+
+Confirmed live after the app fix: highlight toggling and manual style edits both work correctly on the previously-broken edges.
+
+**Consequence for the `chd-diagrams` skill and `docs/file-format.md`**: the documented "absent `type` means an unlabeled connector, that's fine" guidance was technically true of the *file format's own semantics*, but *this app's specific rendering behavior*, before this fix, silently broke on it in a much worse way than "unlabeled" — it lost highlighting, styling, and custom routing entirely. Now fixed, so omitting `type` is safe again — but the skill's minimal worked example and authoring guidance were updated to declare `"type": "labeled"` explicitly anyway, since a hand-authored file may be opened by an older build that predates this fix, and explicit is cheap insurance.
+
+**References:** `src/renderer/src/Canvas.tsx`'s `fromDiagramFile` (edge mapping) and `DEFAULT_EDGE_OPTIONS`, `node_modules/@xyflow/react/dist/esm/index.js`'s `EdgeWrapper` (`edge = { ...defaultEdgeOptions, ...edge }`), `docs/file-format.md`'s Edge `type` field, the `chd-diagrams` skill's `field-reference.md`/minimal worked example
 
 ---
 

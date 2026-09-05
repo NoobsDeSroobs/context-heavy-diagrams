@@ -513,6 +513,20 @@ body {
   color: var(--color-text);
   text-align: center;
   overflow-wrap: anywhere;
+  padding: 8px;
+  box-sizing: border-box;
+  /* .text-node never clips its own content (no overflow rule, and adding
+     one there would also clip NodeResizer's handles, which render as its
+     sibling children and need to sit partly outside the box edge to stay
+     grabbable) — so text long enough to exceed the node's own height was
+     spilling out over whatever sat below/around it on canvas rather than
+     being contained or truncated. Scoped here to the label alone instead:
+     max-height ties it to the same resolved pixel height as .text-node
+     (100% of 100%, both definite once React Flow sizes the node), and
+     overflow: hidden clips at that point. Found 2026-09-05 on a
+     three-paragraph blurb that visibly overlapped shapes below it. */
+  max-height: 100%;
+  overflow: hidden;
 }
 
 .text-node-rotate-handle {
@@ -551,6 +565,14 @@ body {
   white-space: pre-wrap;
   line-height: 1.3;
   min-height: 1.3em;
+}
+
+/* Matches .text-node-label's own padding (above) so entering/leaving edit
+   mode on a text node doesn't visibly shift the text. Scoped to text nodes
+   only, not the shared .editable-label-input — shape/container/edge labels
+   keep their existing zero-padding, unaffected. */
+.text-node-label-input {
+  padding: 8px;
 }
 
 /* The edge-label-renderer div that portals every edge label (and every
@@ -968,6 +990,24 @@ body {
   border-radius: 3px;
   padding: 1px 4px;
   font-size: 12px;
+}
+
+.details-panel-preview table {
+  border-collapse: collapse;
+  margin: 0.5em 0;
+  font-size: 13px;
+}
+
+.details-panel-preview th,
+.details-panel-preview td {
+  border: 1px solid var(--ev-c-divider, var(--color-border));
+  padding: 4px 8px;
+  text-align: left;
+}
+
+.details-panel-preview th {
+  background: var(--color-background-mute);
+  font-weight: bold;
 }
 
 .item-palette {

@@ -638,7 +638,17 @@ function fromDiagramFile(diagram: DiagramFile): {
   const directionSets = (diagram.edgeDirectionSets ?? []).map(migrateDirectionSetStyle)
   let edges: Edge[] = diagram.edges.map((e) => ({
     id: e.id,
-    type: e.type,
+    // Conditional, not `type: e.type` — an *explicit* `type: undefined` on
+    // the edge object (as opposed to the key being absent) survives into
+    // React Flow's own `{ ...defaultEdgeOptions, ...edge }` merge
+    // (EdgeWrapper, @xyflow/react) and overwrites `defaultEdgeOptions.type`
+    // right back to `undefined`, silently routing the edge to RF's built-in
+    // default component instead of this app's `LabeledEdge` — no error, but
+    // none of LabeledEdge's own logic (style, highlights, custom routing)
+    // ever runs. Found 2026-09-05 on a hand-authored file that (correctly,
+    // per docs/file-format.md's own "absent means default" rule) omitted
+    // `type` on every edge.
+    ...(e.type ? { type: e.type } : {}),
     source: e.source,
     target: e.target,
     sourceHandle: e.sourceHandle,

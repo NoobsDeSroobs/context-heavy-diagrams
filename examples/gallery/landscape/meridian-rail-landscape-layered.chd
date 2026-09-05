@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "viewport": {
+    "x": 254.54285714285714,
+    "y": 334.7857142857143,
+    "zoom": 1.0257142857142858
+  },
+  "nodes": [
+    {
+      "id": "blurb",
+      "type": "text",
+      "position": {
+        "x": -60,
+        "y": -220
+      },
+      "size": {
+        "width": 700,
+        "height": 160
+      },
+      "zIndex": 200010,
+      "style": {
+        "fill": "#fefcbf",
+        "fillOpacity": 90,
+        "textAlign": "start",
+        "fontSize": 13,
+        "fontColor": "#744210"
+      },
+      "data": {
+        "label": "Meridian Rail — IT landscape (layered/domain view) — PROTOTYPE\n\nAn enterprise architect's survey of the same estate as the flat landscape (#1), restructured as a drill-down: one shape per business domain here, each linking down to a sub-diagram of that domain's individual services. Only \"Ticketing & Booking\" is built so far, as a proof of concept — the other 9 domains from #1's businessDomain tag are planned but not yet added. Compare against the flat version to see the same content two different ways: everything-at-once vs. drill-down-by-domain.\n\nPart of the Meridian Rail example gallery — epic 0022 (docs/planning/epics/0022-example-diagram-gallery.md)."
+      }
+    },
+    {
+      "id": "domain-ticketing-booking",
+      "type": "shape",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 220,
+        "height": 120
+      },
+      "zIndex": 100010,
+      "data": {
+        "label": "Ticketing & Booking",
+        "linkedDiagram": "meridian-rail-landscape-layered/ticketing-and-booking.chd"
+      }
+    }
+  ],
+  "edges": []
+}

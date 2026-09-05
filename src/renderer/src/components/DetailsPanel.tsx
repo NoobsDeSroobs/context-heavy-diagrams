@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 interface DetailsPanelProps {
   content: string
@@ -87,7 +88,9 @@ export default function DetailsPanel({
           />
         ) : (
           <div className="details-panel-preview" dir="auto">
-            <ReactMarkdown>{content}</ReactMarkdown>
+            {/* remark-gfm: tables, strikethrough, task lists — react-markdown
+                is CommonMark-only without it (see known-issues.md). */}
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
           </div>
         )}
       </div>

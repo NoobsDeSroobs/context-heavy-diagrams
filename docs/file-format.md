@@ -177,7 +177,7 @@ Every field is optional; an absent field means "use the current hardcoded look,"
 | Field | Type | Required | Meaning |
 |---|---|---|---|
 | `id` | string | yes | Unique within the file. |
-| `type` | string | no | Currently only `"labeled"` is meaningful (an edge that can carry a `label`). Absent/unrecognized types should be treated as an unlabeled connector. |
+| `type` | string | no | Currently only `"labeled"` is meaningful (an edge that can carry a `label`). Absent/unrecognized types should be treated as an unlabeled connector per the format's own semantics — but **write it explicitly as `"labeled"` anyway**: this app's own renderer had a real bug (fixed 2026-09-05, see `docs/known-issues.md`) where an edge with an *absent* `type` key could silently fall back to a generic, unstyled connector instead — a build predating that fix will hit it. Costs nothing to include and removes the ambiguity entirely. |
 | `source` / `target` | string | yes | Node `id`s this edge connects. |
 | `sourceHandle` / `targetHandle` | string | no | Which connection point on the source/target node, when a node has more than one. A `"shape"` or `"container"` node always exposes `"top"`/`"right"`/`"bottom"`/`"left"`, plus whatever `id`s are listed in that node's own `connectionPoints`. Absent means "let the renderer pick a reasonable point." |
 | `label` | string | no | Text shown on the edge, e.g. describing the relationship. |

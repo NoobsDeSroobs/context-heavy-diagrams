@@ -29,6 +29,13 @@
   --color-background: var(--ev-c-black);
   --color-background-soft: var(--ev-c-black-soft);
   --color-background-mute: var(--ev-c-black-mute);
+
+  /* Override React Flow's own bundled edge defaults (@xyflow/react's
+     style.css sets --xy-edge-stroke-default: #3e3e3e in dark mode) —
+     too close to the near-black canvas background to read comfortably.
+     Lightened for contrast, plus a touch thicker than RF's stock 1px. */
+  --xy-edge-stroke-default: #6b7684;
+  --xy-edge-stroke-selected-default: #9099a6;
 }
 
 /* Light theme's raw values — not applied to anything by themselves, just
@@ -60,6 +67,12 @@
     --color-background: var(--ev-c-white);
     --color-background-soft: var(--ev-c-white-soft);
     --color-background-mute: var(--ev-c-white-mute);
+
+    /* Darkened from RF's own #b1b1b7 default for better contrast against
+       a white/near-white canvas — see the dark-theme block above for the
+       matching override in that direction. */
+    --xy-edge-stroke-default: #8a8a92;
+    --xy-edge-stroke-selected-default: #4a4a4a;
   }
 }
 
@@ -76,6 +89,9 @@
   --color-background: var(--ev-c-white);
   --color-background-soft: var(--ev-c-white-soft);
   --color-background-mute: var(--ev-c-white-mute);
+
+  --xy-edge-stroke-default: #8a8a92;
+  --xy-edge-stroke-selected-default: #4a4a4a;
 }
 
 :root {

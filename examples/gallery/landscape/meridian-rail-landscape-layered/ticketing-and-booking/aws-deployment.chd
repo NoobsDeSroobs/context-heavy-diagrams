@@ -1,0 +1,592 @@
+{
+  "version": 1,
+  "viewport": {
+    "x": 605,
+    "y": 149,
+    "zoom": 1
+  },
+  "requiredTags": [
+    {
+      "key": "gdpr",
+      "allowedValues": [
+        "No PII",
+        "Pseudonymized",
+        "PII",
+        "Sensitive PII"
+      ],
+      "defaultValue": "No PII",
+      "lock": "lockedEditable"
+    }
+  ],
+  "highlights": [
+    {
+      "key": "gdpr",
+      "value": "No PII",
+      "color": "#18d838"
+    },
+    {
+      "key": "gdpr",
+      "value": "Pseudonymized",
+      "color": "#d8e619"
+    }
+  ],
+  "legend": [
+    {
+      "id": "legend-request-flow",
+      "kind": "line",
+      "label": "Request / data flow",
+      "lineStyle": "solid",
+      "startMarker": "none",
+      "endMarker": "arrowClosed"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "blurb",
+      "type": "text",
+      "position": {
+        "x": 0,
+        "y": -360
+      },
+      "size": {
+        "width": 750,
+        "height": 340
+      },
+      "zIndex": 200010,
+      "style": {
+        "fill": "#fefcbf",
+        "fillOpacity": 90,
+        "textAlign": "start",
+        "fontSize": 13,
+        "fontColor": "#744210"
+      },
+      "data": {
+        "label": "Booking Session Manager — target-state AWS deployment\n\nA cloud/infrastructure architect's proposal for where Booking Session Manager (currently \"In Development\" per the domain view one level up) would actually run: a standard 3-tier AWS deployment behind CloudFront. Doubles as a real test of the chd-diagrams skill's layout-guide.md conventions — nested boundary containers (Region > VPC > subnet), a layered tier stack, and the 20px/60px gap convention throughout.\n\nTags at this layer, deliberately: only GDPR is re-declared here, and only on the components that actually differ (ALB/NAT Gateway route traffic, No PII; the app tier, RDS, and ElastiCache handle the same session data as the service above, Pseudonymized). NIS2, owning team, business domain, and lifecycle state are properties of the whole service, not of any one AWS component inside it — they're not repeated at this depth. See epic 0112 (docs/planning/epics/later/0112-per-tag-cascade-scope-to-linked-children.md) for the open question this raises: today that's just an authoring convention, not something the app enforces or checks for drift.\n\nPart of the Meridian Rail example gallery — epic 0022 (docs/planning/epics/0022-example-diagram-gallery.md)."
+      }
+    },
+    {
+      "id": "client",
+      "type": "shape",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "zIndex": 100010,
+      "metadata": {
+        "gdpr": {
+          "value": "No PII",
+          "lock": "lockedEditable"
+        }
+      },
+      "data": {
+        "label": "Passenger\n(browser / app)",
+        "icons": {
+          "topRight": {
+            "source": "builtin",
+            "id": "browser"
+          }
+        }
+      }
+    },
+    {
+      "id": "route53",
+      "type": "shape",
+      "position": {
+        "x": 230,
+        "y": 0
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "zIndex": 100020,
+      "metadata": {
+        "gdpr": {
+          "value": "No PII",
+          "lock": "lockedEditable"
+        }
+      },
+      "data": {
+        "label": "Route 53\n(DNS)",
+        "icons": {
+          "topRight": {
+            "source": "builtin",
+            "id": "world"
+          }
+        }
+      }
+    },
+    {
+      "id": "cloudfront",
+      "type": "shape",
+      "position": {
+        "x": 460,
+        "y": 0
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "zIndex": 100030,
+      "metadata": {
+        "gdpr": {
+          "value": "No PII",
+          "lock": "lockedEditable"
+        }
+      },
+      "data": {
+        "label": "CloudFront\n(CDN)",
+        "icons": {
+          "topRight": {
+            "source": "builtin",
+            "id": "cloud"
+          }
+        }
+      }
+    },
+    {
+      "id": "s3-static",
+      "type": "shape",
+      "position": {
+        "x": 800,
+        "y": 0
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "zIndex": 100040,
+      "metadata": {
+        "gdpr": {
+          "value": "No PII",
+          "lock": "lockedEditable"
+        }
+      },
+      "data": {
+        "label": "S3\n(static assets)",
+        "icons": {
+          "topRight": {
+            "source": "builtin",
+            "id": "bucket"
+          }
+        }
+      }
+    },
+    {
+      "id": "aws-region",
+      "type": "container",
+      "position": {
+        "x": 0,
+        "y": 140
+      },
+      "size": {
+        "width": 620,
+        "height": 660
+      },
+      "zIndex": 20,
+      "metadata": {
+        "gdpr": {
+          "value": "No PII",
+          "lock": "lockedEditable"
+        }
+      },
+      "data": {
+        "label": "AWS Region — eu-west-1"
+      }
+    },
+    {
+      "id": "vpc",
+      "type": "container",
+      "position": {
+        "x": 30,
+        "y": 30
+      },
+      "size": {
+        "width": 560,
+        "height": 600
+      },
+      "zIndex": 30,
+      "parentId": "aws-region",
+      "metadata": {
+        "gdpr": {
+          "value": "No PII",
+          "lock": "lockedEditable"
+        }
+      },
+      "data": {
+        "label": "VPC — 10.20.0.0/16"
+      }
+    },
+    {
+      "id": "public-subnet",
+      "type": "container",
+      "position": {
+        "x": 30,
+        "y": 30
+      },
+      "size": {
+        "width": 440,
+        "height": 140
+      },
+      "zIndex": 40,
+      "parentId": "vpc",
+      "metadata": {
+        "gdpr": {
+          "value": "No PII",
+          "lock": "lockedEditable"
+        }
+      },
+      "data": {
+        "label": "Public Subnet"
+      }
+    },
+    {
+      "id": "alb",
+      "type": "shape",
+      "position": {
+        "x": 30,
+        "y": 30
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "zIndex": 100050,
+      "parentId": "public-subnet",
+      "metadata": {
+        "gdpr": {
+          "value": "No PII",
+          "lock": "lockedEditable"
+        }
+      },
+      "data": {
+        "label": "Application\nLoad Balancer",
+        "icons": {
+          "topRight": {
+            "source": "builtin",
+            "id": "router"
+          }
+        }
+      }
+    },
+    {
+      "id": "nat-gateway",
+      "type": "shape",
+      "position": {
+        "x": 290,
+        "y": 30
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "zIndex": 100060,
+      "parentId": "public-subnet",
+      "metadata": {
+        "gdpr": {
+          "value": "No PII",
+          "lock": "lockedEditable"
+        }
+      },
+      "data": {
+        "label": "NAT Gateway",
+        "icons": {
+          "topRight": {
+            "source": "builtin",
+            "id": "network"
+          }
+        }
+      }
+    },
+    {
+      "id": "app-subnet",
+      "type": "container",
+      "position": {
+        "x": 30,
+        "y": 230
+      },
+      "size": {
+        "width": 240,
+        "height": 140
+      },
+      "zIndex": 50,
+      "parentId": "vpc",
+      "metadata": {
+        "gdpr": {
+          "value": "No PII",
+          "lock": "lockedEditable"
+        }
+      },
+      "data": {
+        "label": "Private Subnet — App Tier"
+      }
+    },
+    {
+      "id": "app-tier",
+      "type": "shape",
+      "position": {
+        "x": 30,
+        "y": 30
+      },
+      "size": {
+        "width": 180,
+        "height": 80
+      },
+      "zIndex": 100070,
+      "connectionPoints": [
+        {
+          "id": "top-alb",
+          "side": "top",
+          "offset": 0.3
+        },
+        {
+          "id": "top-nat",
+          "side": "top",
+          "offset": 0.75
+        },
+        {
+          "id": "bottom-rds",
+          "side": "bottom",
+          "offset": 0.3
+        },
+        {
+          "id": "bottom-cache",
+          "side": "bottom",
+          "offset": 0.75
+        }
+      ],
+      "parentId": "app-subnet",
+      "metadata": {
+        "gdpr": {
+          "value": "Pseudonymized",
+          "lock": "lockedEditable"
+        }
+      },
+      "data": {
+        "label": "Booking Session Manager\n(Auto Scaling Group, 2-6× t3.medium)",
+        "icons": {
+          "topRight": {
+            "source": "builtin",
+            "id": "server"
+          }
+        }
+      }
+    },
+    {
+      "id": "data-subnet",
+      "type": "container",
+      "position": {
+        "x": 30,
+        "y": 430
+      },
+      "size": {
+        "width": 500,
+        "height": 140
+      },
+      "zIndex": 60,
+      "parentId": "vpc",
+      "metadata": {
+        "gdpr": {
+          "value": "No PII",
+          "lock": "lockedEditable"
+        }
+      },
+      "data": {
+        "label": "Private Subnet — Data Tier"
+      }
+    },
+    {
+      "id": "rds",
+      "type": "shape",
+      "position": {
+        "x": 30,
+        "y": 30
+      },
+      "size": {
+        "width": 150,
+        "height": 80
+      },
+      "zIndex": 100080,
+      "parentId": "data-subnet",
+      "metadata": {
+        "gdpr": {
+          "value": "Pseudonymized",
+          "lock": "lockedEditable"
+        }
+      },
+      "data": {
+        "label": "RDS PostgreSQL\n(Multi-AZ)",
+        "icons": {
+          "topRight": {
+            "source": "builtin",
+            "id": "database"
+          }
+        }
+      }
+    },
+    {
+      "id": "elasticache",
+      "type": "shape",
+      "position": {
+        "x": 320,
+        "y": 30
+      },
+      "size": {
+        "width": 150,
+        "height": 80
+      },
+      "zIndex": 100090,
+      "parentId": "data-subnet",
+      "metadata": {
+        "gdpr": {
+          "value": "Pseudonymized",
+          "lock": "lockedEditable"
+        }
+      },
+      "data": {
+        "label": "ElastiCache\n(session cache)",
+        "icons": {
+          "topRight": {
+            "source": "builtin",
+            "id": "bolt"
+          }
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "xy-edge__client-route53",
+      "source": "client",
+      "target": "route53",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "DNS lookup",
+      "metadata": {
+        "gdpr": {
+          "value": "No PII",
+          "lock": "lockedEditable"
+        }
+      },
+      "type": "labeled"
+    },
+    {
+      "id": "xy-edge__route53-cloudfront",
+      "source": "route53",
+      "target": "cloudfront",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "resolves to",
+      "metadata": {
+        "gdpr": {
+          "value": "No PII",
+          "lock": "lockedEditable"
+        }
+      },
+      "type": "labeled"
+    },
+    {
+      "id": "xy-edge__cloudfront-s3-static",
+      "source": "cloudfront",
+      "target": "s3-static",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "serves static assets from",
+      "metadata": {
+        "gdpr": {
+          "value": "No PII",
+          "lock": "lockedEditable"
+        }
+      },
+      "type": "labeled"
+    },
+    {
+      "id": "xy-edge__cloudfront-alb",
+      "source": "cloudfront",
+      "target": "alb",
+      "sourceHandle": "bottom",
+      "targetHandle": "top",
+      "label": "forwards dynamic requests to",
+      "metadata": {
+        "gdpr": {
+          "value": "Pseudonymized",
+          "lock": "lockedEditable"
+        }
+      },
+      "type": "labeled",
+      "style": {
+        "labelPosition": 0.3
+      }
+    },
+    {
+      "id": "xy-edge__alb-app-tier",
+      "source": "alb",
+      "target": "app-tier",
+      "sourceHandle": "bottom",
+      "targetHandle": "top-alb",
+      "label": "routes to",
+      "metadata": {
+        "gdpr": {
+          "value": "Pseudonymized",
+          "lock": "lockedEditable"
+        }
+      },
+      "type": "labeled"
+    },
+    {
+      "id": "xy-edge__app-tier-rds",
+      "source": "app-tier",
+      "target": "rds",
+      "sourceHandle": "bottom-rds",
+      "targetHandle": "top",
+      "label": "reads/writes session data",
+      "metadata": {
+        "gdpr": {
+          "value": "Pseudonymized",
+          "lock": "lockedEditable"
+        }
+      },
+      "type": "labeled",
+      "style": {
+        "labelPosition": 0.6
+      }
+    },
+    {
+      "id": "xy-edge__app-tier-elasticache",
+      "source": "app-tier",
+      "target": "elasticache",
+      "sourceHandle": "bottom-cache",
+      "targetHandle": "top",
+      "label": "session cache read/write",
+      "metadata": {
+        "gdpr": {
+          "value": "Pseudonymized",
+          "lock": "lockedEditable"
+        }
+      },
+      "type": "labeled",
+      "style": {
+        "labelPosition": 0.6
+      }
+    },
+    {
+      "id": "xy-edge__app-tier-nat-gateway",
+      "source": "app-tier",
+      "target": "nat-gateway",
+      "sourceHandle": "top-nat",
+      "targetHandle": "bottom",
+      "label": "outbound internet access",
+      "metadata": {
+        "gdpr": {
+          "value": "No PII",
+          "lock": "lockedEditable"
+        }
+      },
+      "type": "labeled"
+    }
+  ]
+}

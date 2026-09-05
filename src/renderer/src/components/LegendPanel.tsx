@@ -57,7 +57,12 @@ function LegendSwatch({
     )
   }
   if (entry.kind === 'shape') {
-    return <span className="legend-swatch legend-swatch-dot" style={{ background: entry.color }} />
+    return (
+      <span
+        className="legend-swatch legend-swatch-dot"
+        style={{ background: entry.color ?? 'var(--ev-c-gray-1)' }}
+      />
+    )
   }
   return (
     <svg className="legend-swatch legend-swatch-line" viewBox="0 0 48 16" width="48" height="16">
@@ -66,7 +71,15 @@ function LegendSwatch({
         y1="8"
         x2="43"
         y2="8"
-        stroke={entry.color}
+        // Absent color means "this diagram's default edge look" (same
+        // convention as an edge/node with no explicit style — see
+        // field-reference.md) — fall back to the real default rather than
+        // rendering with no stroke attribute at all, which SVG treats as
+        // stroke: none and is genuinely invisible. Found 2026-09-05: a
+        // hand-authored legend entry that deliberately omitted color (the
+        // in-app "add entry" flow always seeds one, so this never surfaced
+        // before) rendered completely blank.
+        stroke={entry.color ?? 'var(--xy-edge-stroke-default)'}
         strokeWidth={2}
         strokeLinecap="round"
         strokeDasharray={entry.lineStyle ? DASH_ARRAY[entry.lineStyle] : undefined}
