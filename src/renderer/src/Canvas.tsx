@@ -1461,6 +1461,26 @@ function CanvasInner(): React.JSX.Element {
     [setNodes, setEdges]
   )
 
+  // Flip the direction of every edge in `ids` in one action — see ADR 0087.
+  // reverseEdgeDirection (edges/edgeDirectionSets.ts) is a pure Edge -> Edge
+  // that swaps the endpoints + handles and the direction-tied visuals
+  // (points order, labelPosition); mapping it over N edges under a single
+  // snapshot makes the whole batch one undo step. When a direction set is
+  // active, each edge's per-set record is refreshed from these live fields
+  // at the next switch/save, so this reverses only the active reading —
+  // same as the single-edge case it generalizes. Declared here (early)
+  // because onEdgeContextMenu below references it in a deps array, which is
+  // evaluated at render time (see selectAllOfType's own note).
+  const reverseEdges = useCallback(
+    (ids: string[]) => {
+      if (ids.length === 0) return
+      const idSet = new Set(ids)
+      pushSnapshot()
+      setEdges((eds) => eds.map((e) => (idSet.has(e.id) ? reverseEdgeDirection(e) : e)))
+    },
+    [pushSnapshot, setEdges]
+  )
+
   const openIconPicker = useCallback((nodeId: string, anchorRect: DOMRect) => {
     setIconPicker({ nodeId, anchorRect })
   }, [])
@@ -1480,6 +1500,13 @@ function CanvasInner(): React.JSX.Element {
     (event: React.MouseEvent, edge: Edge) => {
       event.preventDefault()
       const clickPoint = rfInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY })
+      // Right-clicking an edge that's part of a multi-selection reverses the
+      // whole selection; right-clicking an unselected edge acts on just that
+      // one and leaves the selection alone (ADR 0087).
+      const reverseTargetIds =
+        edge.selected && edges.some((e) => e.selected && e.id !== edge.id)
+          ? edges.filter((e) => e.selected).map((e) => e.id)
+          : [edge.id]
       openContextMenu(event.clientX, event.clientY, [
         {
           label: 'Line style…',
@@ -1491,17 +1518,11 @@ function CanvasInner(): React.JSX.Element {
         },
         { label: 'Select all edges', onSelect: () => selectAllOfType('edge') },
         {
-          label: 'Reverse direction',
-          onSelect: () => {
-            pushSnapshot()
-            // reverseEdgeDirection (edges/edgeDirectionSets.ts, ADR 0084 /
-            // 0081 / 0083) swaps the endpoints + fixes up the direction-tied
-            // visuals (points order, labelPosition). When a direction set is
-            // active, its per-edge record is refreshed from these live
-            // fields at the next switch/save, so this reverses only the
-            // active reading.
-            setEdges((eds) => eds.map((e) => (e.id === edge.id ? reverseEdgeDirection(e) : e)))
-          }
+          label:
+            reverseTargetIds.length > 1
+              ? `Reverse direction (${reverseTargetIds.length})`
+              : 'Reverse direction',
+          onSelect: () => reverseEdges(reverseTargetIds)
         },
         {
           label: 'Add point here',
@@ -1564,7 +1585,7 @@ function CanvasInner(): React.JSX.Element {
         }
       ])
     },
-    [openContextMenu, rfInstance, nodes, pushSnapshot, setEdges, selectAllOfType]
+    [openContextMenu, rfInstance, nodes, edges, pushSnapshot, setEdges, reverseEdges, selectAllOfType]
   )
 
   // The utility dock shows one surface at a time (see ADR 0013) — opening
@@ -5023,6 +5044,18 @@ function CanvasInner(): React.JSX.Element {
         label: 'Align / Distribute…',
         disabled: selectedNodes.length < 2,
         onSelect: toggleAlignDistributePanel
+      },
+      {
+        // Reaches the same action as the edge context menu's "Reverse
+        // direction" (ADR 0087), for a selection made by box-select or
+        // "Select all edges" where a right-click on one edge isn't the
+        // natural gesture.
+        label:
+          selectedEdges.length > 1
+            ? `Reverse edge direction (${selectedEdges.length})`
+            : 'Reverse edge direction',
+        disabled: selectedEdges.length === 0,
+        onSelect: () => reverseEdges(selectedEdges.map((e) => e.id))
       }
     ]
   }
