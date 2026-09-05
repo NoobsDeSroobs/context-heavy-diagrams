@@ -1,9 +1,9 @@
 {
   "version": 1,
   "viewport": {
-    "x": -480.5,
-    "y": 363.7689170092018,
-    "zoom": 0.5
+    "x": -3105.5026123265707,
+    "y": 487.6713655244532,
+    "zoom": 0.8717046844730101
   },
   "metadata": {
     "epic": "0022 candidate #1",
@@ -5127,42 +5127,6 @@
       }
     },
     {
-      "id": "xy-edge__service-4-5-service-4-2cp-24",
-      "type": "labeled",
-      "source": "service-4-5",
-      "target": "service-4-2",
-      "targetHandle": "cp-24",
-      "style": {
-        "stroke": "#4a5568",
-        "strokeWidth": 1.5,
-        "lineStyle": "solid",
-        "startMarker": "none",
-        "endMarker": "arrowClosed"
-      },
-      "metadata": {
-        "businessDomain": {
-          "value": null,
-          "lock": "lockedEditable"
-        },
-        "gdpr": {
-          "value": "Pseudonymized",
-          "lock": "lockedEditable"
-        },
-        "nis2": {
-          "value": "Out of scope",
-          "lock": "lockedEditable"
-        },
-        "owningTeam": {
-          "value": null,
-          "lock": "lockedEditable"
-        },
-        "serviceState": {
-          "value": null,
-          "lock": "lockedEditable"
-        }
-      }
-    },
-    {
       "id": "xy-edge__service-4-1left-service-4-0right",
       "type": "labeled",
       "source": "service-4-1",
@@ -6621,43 +6585,6 @@
       }
     },
     {
-      "id": "xy-edge__service-0-3cp-13-service-1-0left",
-      "type": "labeled",
-      "source": "service-0-3",
-      "target": "service-1-0",
-      "sourceHandle": "cp-13",
-      "targetHandle": "left",
-      "style": {
-        "stroke": "#4a5568",
-        "strokeWidth": 1.5,
-        "lineStyle": "solid",
-        "startMarker": "none",
-        "endMarker": "arrowClosed"
-      },
-      "metadata": {
-        "businessDomain": {
-          "value": null,
-          "lock": "lockedEditable"
-        },
-        "gdpr": {
-          "value": "No PII",
-          "lock": "lockedEditable"
-        },
-        "nis2": {
-          "value": "Out of scope",
-          "lock": "lockedEditable"
-        },
-        "owningTeam": {
-          "value": null,
-          "lock": "lockedEditable"
-        },
-        "serviceState": {
-          "value": null,
-          "lock": "lockedEditable"
-        }
-      }
-    },
-    {
       "id": "xy-edge__service-0-2-service-0-3cp-14",
       "type": "labeled",
       "source": "service-0-2",
@@ -7152,6 +7079,79 @@
         },
         "gdpr": {
           "value": "PII",
+          "lock": "lockedEditable"
+        },
+        "nis2": {
+          "value": "Out of scope",
+          "lock": "lockedEditable"
+        },
+        "owningTeam": {
+          "value": null,
+          "lock": "lockedEditable"
+        },
+        "serviceState": {
+          "value": null,
+          "lock": "lockedEditable"
+        }
+      }
+    },
+    {
+      "id": "xy-edge__service-0-3cp-13-service-1-0top",
+      "type": "labeled",
+      "source": "service-0-3",
+      "target": "service-1-0",
+      "sourceHandle": "cp-13",
+      "targetHandle": "top",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 1.5,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowClosed"
+      },
+      "metadata": {
+        "businessDomain": {
+          "value": null,
+          "lock": "lockedEditable"
+        },
+        "gdpr": {
+          "value": "No PII",
+          "lock": "lockedEditable"
+        },
+        "nis2": {
+          "value": "Out of scope",
+          "lock": "lockedEditable"
+        },
+        "owningTeam": {
+          "value": null,
+          "lock": "lockedEditable"
+        },
+        "serviceState": {
+          "value": null,
+          "lock": "lockedEditable"
+        }
+      }
+    },
+    {
+      "id": "xy-edge__service-4-5-service-4-2cp-26",
+      "type": "labeled",
+      "source": "service-4-5",
+      "target": "service-4-2",
+      "targetHandle": "cp-26",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 1.5,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowClosed"
+      },
+      "metadata": {
+        "businessDomain": {
+          "value": null,
+          "lock": "lockedEditable"
+        },
+        "gdpr": {
+          "value": "Pseudonymized",
           "lock": "lockedEditable"
         },
         "nis2": {
