@@ -8,6 +8,13 @@ the "absent means unused" convention of `requiredTags` / `highlights` /
 `legend` / `gravityPresets` / `edgeDirectionSets`, so [ADR 0054](0054-progressive-disclosure-for-advanced-features.md)
 is satisfied for free.
 
+**Amended 2026-09-08 by [ADR 0088](0088-recursive-security-matrix-rollup.md):**
+`combineMethod` / `aggregateMethod` are **no longer persisted** — they became
+renderer session state when recursive rollup made a per-file mode incoherent
+(a traversal spanning files needs one mode set, not one per file). Files
+written before that change may still carry the keys; readers ignore them.
+Everything else in this ADR stands.
+
 ## Context
 
 The threat-matrix prototype ([`ThreatMatrixView.tsx`](../../src/renderer/src/security/ThreatMatrixView.tsx))

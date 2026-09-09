@@ -1,0 +1,201 @@
+{
+  "version": 1,
+  "viewport": {
+    "x": 40,
+    "y": 40,
+    "zoom": 0.85
+  },
+  "metadata": {
+    "layer": "Technical components (leaf)",
+    "note": "Leaf diagram — rolls up into Payments > Payment Gateway. 'Supply chain compromise' is deliberately the dominant risk here (third-party PSP dependency)."
+  },
+  "security": {
+    "threats": [
+      {
+        "id": "t-breach",
+        "name": "Data breach"
+      },
+      {
+        "id": "t-outage",
+        "name": "Service outage"
+      },
+      {
+        "id": "t-supply",
+        "name": "Supply chain compromise"
+      }
+    ],
+    "matrixShapeIds": [
+      "cmp-gwapi",
+      "cmp-vault",
+      "cmp-pspconn"
+    ]
+  },
+  "nodes": [
+    {
+      "id": "blurb",
+      "type": "text",
+      "position": {
+        "x": -20,
+        "y": -160
+      },
+      "size": {
+        "width": 900,
+        "height": 110
+      },
+      "style": {
+        "fill": "#fefcbf",
+        "fillOpacity": 92,
+        "stroke": "#d69e2e",
+        "fontColor": "#744210",
+        "fontSize": 12,
+        "textAlign": "start",
+        "fontFamily": "sans-serif"
+      },
+      "data": {
+        "label": "EXAMPLE (leaf) — Payment Gateway internals. Layer 3 of the security-rollup demo.\nThe Card Vault drives 'Data breach' consequence to the ceiling; the PSP Connector makes 'Supply chain compromise' the standout risk. Switching the Threat score mode from Average to Max makes that jump out."
+      }
+    },
+    {
+      "id": "cmp-gwapi",
+      "type": "shape",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 200,
+        "height": 96
+      },
+      "style": {
+        "fill": "#dcfce7",
+        "stroke": "#15803d",
+        "strokeWidth": 2,
+        "fontColor": "#14532d"
+      },
+      "data": {
+        "label": "Gateway API",
+        "security": {
+          "t-breach": {
+            "probability": 3,
+            "consequence": 4
+          },
+          "t-outage": {
+            "probability": 4,
+            "consequence": 4,
+            "probabilityNote": "On the synchronous checkout path — every outage is customer-visible."
+          },
+          "t-supply": {
+            "probability": 3,
+            "consequence": 3
+          }
+        }
+      }
+    },
+    {
+      "id": "cmp-vault",
+      "type": "shape",
+      "position": {
+        "x": 300,
+        "y": 0
+      },
+      "size": {
+        "width": 200,
+        "height": 96
+      },
+      "style": {
+        "fill": "#dcfce7",
+        "stroke": "#15803d",
+        "strokeWidth": 2,
+        "fontColor": "#14532d"
+      },
+      "data": {
+        "label": "Card Vault\n(HSM-backed)",
+        "security": {
+          "t-breach": {
+            "probability": 2,
+            "consequence": 5,
+            "consequenceNote": "PAN disclosure — regulatory and brand impact is catastrophic."
+          },
+          "t-outage": {
+            "probability": 2,
+            "consequence": 4
+          },
+          "t-supply": {
+            "probability": 3,
+            "consequence": 4
+          }
+        }
+      }
+    },
+    {
+      "id": "cmp-pspconn",
+      "type": "shape",
+      "position": {
+        "x": 600,
+        "y": 0
+      },
+      "size": {
+        "width": 200,
+        "height": 96
+      },
+      "style": {
+        "fill": "#dcfce7",
+        "stroke": "#15803d",
+        "strokeWidth": 2,
+        "fontColor": "#14532d"
+      },
+      "data": {
+        "label": "PSP Connector",
+        "security": {
+          "t-breach": {
+            "probability": 3,
+            "consequence": 3
+          },
+          "t-outage": {
+            "probability": 3,
+            "consequence": 4
+          },
+          "t-supply": {
+            "probability": 4,
+            "consequence": 4,
+            "probabilityNote": "Hard dependency on one external payment service provider; their incidents are ours."
+          }
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-api-vault",
+      "type": "labeled",
+      "source": "cmp-gwapi",
+      "target": "cmp-vault",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "tokenises via",
+      "style": {
+        "stroke": "#64748b",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "endMarker": "arrowClosed",
+        "routingStyle": "smoothstep"
+      }
+    },
+    {
+      "id": "e-api-psp",
+      "type": "labeled",
+      "source": "cmp-gwapi",
+      "target": "cmp-pspconn",
+      "sourceHandle": "bottom",
+      "targetHandle": "left",
+      "label": "authorises via",
+      "style": {
+        "stroke": "#64748b",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "endMarker": "arrowClosed",
+        "routingStyle": "smoothstep"
+      }
+    }
+  ]
+}

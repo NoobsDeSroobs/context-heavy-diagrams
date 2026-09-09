@@ -27,6 +27,8 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import {
+  type AggregateMethod,
+  type CombineMethod,
   type ConnectionPoint,
   type ConnectionPointSide,
   type DiagramFile,
@@ -47,6 +49,7 @@ import {
   type RequiredTagDefinition,
   type RiskCell
 } from '@shared/diagram'
+import type { SecurityCrawlResult } from '@shared/threatMatrixMath'
 import ShapeNode, { SHAPE_MIN_WIDTH, SHAPE_MIN_HEIGHT } from './nodes/ShapeNode'
 import TextNode, { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from './nodes/TextNode'
 import ContainerNode, { CONTAINER_MIN_WIDTH, CONTAINER_MIN_HEIGHT } from './nodes/ContainerNode'
@@ -707,9 +710,8 @@ function fromDiagramFile(diagram: DiagramFile): {
       matrixShapeIds,
       hiddenShapeIds: src.hiddenShapeIds?.filter((id) => matrixSet.has(id)),
       probabilityScale: src.probabilityScale,
-      consequenceScale: src.consequenceScale,
-      combineMethod: src.combineMethod,
-      aggregateMethod: src.aggregateMethod
+      consequenceScale: src.consequenceScale
+      // combineMethod / aggregateMethod: session-only, ignored on read (ADR 0088)
     }
     let droppedCells = 0
     securedNodes = finalNodes.map((n) => {
@@ -1015,6 +1017,12 @@ function CanvasInner(): React.JSX.Element {
   // drops it when empty. Per-element assessment cells live on
   // node.data.security, not here.
   const [security, setSecurity] = useState<DiagramSecurity>({ threats: [], matrixShapeIds: [] })
+  // Matrix calculation modes are session-only, not persisted (ADR 0088) —
+  // deliberately NOT reset on file open, so they behave as a property of
+  // the active matrix view and flow uniformly down a linked-diagram tree.
+  const [securityCombineMethod, setSecurityCombineMethod] = useState<CombineMethod>('multiply')
+  const [securityAggregateMethod, setSecurityAggregateMethod] =
+    useState<AggregateMethod>('average')
   const [diagramSettingsPanelOpen, setDiagramSettingsPanelOpen] = useState(false)
   // Anchors the floating panel next to whichever <ControlButton> opened it —
   // same convention as iconPicker/colorPicker/linePicker's own anchorRect.
@@ -2033,6 +2041,36 @@ function CanvasInner(): React.JSX.Element {
     },
     [markDirty]
   )
+
+  // Recursive rollup (ADR 0088). The crawl walks each linked matrix shape's
+  // subtree in the main process; the result is cached here for the session
+  // and only re-fetched on entering the matrix persona or an explicit
+  // Refresh — never persisted, so a derived value can't go stale.
+  const [securityCrawl, setSecurityCrawl] = useState<SecurityCrawlResult | null>(null)
+  const refreshSecurityCrawl = useEventCallback(() => {
+    if (!currentPath) {
+      setSecurityCrawl(null)
+      return
+    }
+    const nodeById = new Map(graphRef.current.nodes.map((n) => [n.id, n]))
+    const links = security.matrixShapeIds.flatMap((shapeId) => {
+      const link = nodeById.get(shapeId)?.data?.linkedDiagram
+      return typeof link === 'string' && link.trim() !== ''
+        ? [{ shapeId, relativePath: link }]
+        : []
+    })
+    if (links.length === 0) {
+      setSecurityCrawl({ columns: {}, warnings: [] })
+      return
+    }
+    void window.api.crawlLinkedSecurity(currentPath, links).then(setSecurityCrawl)
+  })
+
+  // Crawl on entering the matrix persona (ADR 0088). No cooldown throttle
+  // yet — that's a follow-up; today it's this + the explicit Refresh button.
+  useEffect(() => {
+    if (persona === 'matrix') refreshSecurityCrawl()
+  }, [persona, refreshSecurityCrawl])
 
   // One assessment cell on a shape (`null` clears it). Routed through the
   // node history — a cell edit is undoable.
@@ -5257,6 +5295,15 @@ function CanvasInner(): React.JSX.Element {
             <ThreatMatrixView
               nodes={nodes}
               security={security}
+              combineMethod={securityCombineMethod}
+              aggregateMethod={securityAggregateMethod}
+              onCombineMethodChange={setSecurityCombineMethod}
+              onAggregateMethodChange={setSecurityAggregateMethod}
+              crawl={securityCrawl}
+              onRefreshCrawl={refreshSecurityCrawl}
+              onOpenLinkedDiagram={(relativePath) => {
+                if (currentPath) void window.api.openLinkedInNewWindow(currentPath, relativePath)
+              }}
               onChange={updateSecurity}
               onRemoveThreat={removeSecurityThreat}
               onRemoveShape={removeSecurityShape}

@@ -1,0 +1,209 @@
+{
+  "version": 1,
+  "viewport": {
+    "x": 40,
+    "y": 40,
+    "zoom": 0.9
+  },
+  "metadata": {
+    "layer": "Technical components (leaf)",
+    "note": "Leaf diagram — assessments here are hand-entered and roll UP into Customer Management > Identity Service."
+  },
+  "security": {
+    "threats": [
+      {
+        "id": "t-breach",
+        "name": "Data breach"
+      },
+      {
+        "id": "t-outage",
+        "name": "Service outage"
+      },
+      {
+        "id": "t-supply",
+        "name": "Supply chain compromise"
+      },
+      {
+        "id": "t-insider",
+        "name": "Insider misuse",
+        "description": "Downstream-only threat — not in the parent catalog."
+      }
+    ],
+    "matrixShapeIds": [
+      "cmp-authdb",
+      "cmp-sessioncache",
+      "cmp-authapi"
+    ]
+  },
+  "nodes": [
+    {
+      "id": "blurb",
+      "type": "text",
+      "position": {
+        "x": -20,
+        "y": -170
+      },
+      "size": {
+        "width": 900,
+        "height": 120
+      },
+      "style": {
+        "fill": "#fefcbf",
+        "fillOpacity": 92,
+        "stroke": "#d69e2e",
+        "fontColor": "#744210",
+        "fontSize": 12,
+        "textAlign": "start",
+        "fontFamily": "sans-serif"
+      },
+      "data": {
+        "label": "EXAMPLE (leaf) — Identity Service internals. Layer 3 of the security-rollup demo.\nThese three components carry the real, hand-entered probability/consequence assessments. Their rolled-up \"Threat score\" per threat is what the Services layer (domain-customer.chd) shows for the linked \"Identity Service\" column.\n\"Insider misuse\" is assessed here but NOT in the parent catalog — the Services matrix surfaces it as a note rather than a row."
+      }
+    },
+    {
+      "id": "cmp-authdb",
+      "type": "shape",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 200,
+        "height": 96
+      },
+      "style": {
+        "fill": "#dbeafe",
+        "stroke": "#1d4ed8",
+        "strokeWidth": 2,
+        "fontColor": "#1e3a8a"
+      },
+      "data": {
+        "label": "Auth DB\n(PostgreSQL)",
+        "security": {
+          "t-breach": {
+            "probability": 3,
+            "consequence": 5,
+            "consequenceNote": "Full credential store — worst case is total account compromise."
+          },
+          "t-outage": {
+            "probability": 2,
+            "consequence": 4
+          },
+          "t-supply": {
+            "probability": 2,
+            "consequence": 3
+          }
+        }
+      }
+    },
+    {
+      "id": "cmp-sessioncache",
+      "type": "shape",
+      "position": {
+        "x": 280,
+        "y": 0
+      },
+      "size": {
+        "width": 200,
+        "height": 96
+      },
+      "style": {
+        "fill": "#dbeafe",
+        "stroke": "#1d4ed8",
+        "strokeWidth": 2,
+        "fontColor": "#1e3a8a"
+      },
+      "data": {
+        "label": "Session Cache\n(Redis)",
+        "security": {
+          "t-breach": {
+            "probability": 2,
+            "consequence": 2
+          },
+          "t-outage": {
+            "probability": 3,
+            "consequence": 3
+          },
+          "t-supply": {
+            "probability": 2,
+            "consequence": 2
+          }
+        }
+      }
+    },
+    {
+      "id": "cmp-authapi",
+      "type": "shape",
+      "position": {
+        "x": 560,
+        "y": 0
+      },
+      "size": {
+        "width": 200,
+        "height": 96
+      },
+      "style": {
+        "fill": "#dbeafe",
+        "stroke": "#1d4ed8",
+        "strokeWidth": 2,
+        "fontColor": "#1e3a8a"
+      },
+      "data": {
+        "label": "Auth API\n(Node)",
+        "security": {
+          "t-breach": {
+            "probability": 3,
+            "consequence": 4
+          },
+          "t-insider": {
+            "probability": 2,
+            "consequence": 4,
+            "probabilityNote": "Broad token-minting privileges held by a small on-call group."
+          },
+          "t-outage": {
+            "probability": 3,
+            "consequence": 4
+          },
+          "t-supply": {
+            "probability": 3,
+            "consequence": 3
+          }
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-api-db",
+      "type": "labeled",
+      "source": "cmp-authapi",
+      "target": "cmp-authdb",
+      "sourceHandle": "left",
+      "targetHandle": "right",
+      "label": "reads / writes",
+      "style": {
+        "stroke": "#64748b",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "endMarker": "arrowClosed",
+        "routingStyle": "smoothstep"
+      }
+    },
+    {
+      "id": "e-api-cache",
+      "type": "labeled",
+      "source": "cmp-authapi",
+      "target": "cmp-sessioncache",
+      "sourceHandle": "bottom",
+      "targetHandle": "bottom",
+      "label": "caches sessions in",
+      "style": {
+        "stroke": "#64748b",
+        "strokeWidth": 2,
+        "lineStyle": "dashed",
+        "endMarker": "arrowClosed",
+        "routingStyle": "smoothstep"
+      }
+    }
+  ]
+}

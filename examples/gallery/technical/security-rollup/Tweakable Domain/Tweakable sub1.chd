@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "viewport": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  },
+  "security": {
+    "threats": [
+      {
+        "id": "threat-68ce33dd-95bb-41b8-bcd5-8d06906a943d",
+        "name": "DDoS"
+      },
+      {
+        "id": "threat-f30acb36-0940-4a89-b4eb-4dfad8eedc74",
+        "name": "Service outage"
+      }
+    ],
+    "matrixShapeIds": [
+      "shape-44fdfd31-62f0-4d8c-903e-815be300c8a4"
+    ]
+  },
+  "nodes": [
+    {
+      "id": "shape-44fdfd31-62f0-4d8c-903e-815be300c8a4",
+      "type": "shape",
+      "position": {
+        "x": 382,
+        "y": 275.5
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "zIndex": 100010,
+      "data": {
+        "label": "Tweakable leaf",
+        "security": {
+          "threat-68ce33dd-95bb-41b8-bcd5-8d06906a943d": {
+            "probability": 1,
+            "consequence": 1
+          },
+          "threat-f30acb36-0940-4a89-b4eb-4dfad8eedc74": {
+            "probability": 1,
+            "consequence": 1
+          }
+        }
+      }
+    }
+  ],
+  "edges": []
+}

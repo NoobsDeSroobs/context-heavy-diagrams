@@ -1,6 +1,7 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
 import type { DiagramFile, RequiredTagDefinition } from '@shared/diagram'
 import type { AppPreferences } from '@shared/preferences'
+import type { SecurityCrawlResult } from '@shared/threatMatrixMath'
 
 export interface RequiredTagsWalkResult {
   reached: string[]
@@ -31,6 +32,10 @@ export interface DiagramApi {
     diagramPath: string,
     relativePaths: string[]
   ): Promise<{ relativePath: string; resolvedPath: string; found: boolean }[]>
+  crawlLinkedSecurity(
+    diagramPath: string,
+    links: { shapeId: string; relativePath: string }[]
+  ): Promise<SecurityCrawlResult>
 
   newWindow(): Promise<void>
   openInNewWindow(isCurrentWindowEmpty: boolean): Promise<void>

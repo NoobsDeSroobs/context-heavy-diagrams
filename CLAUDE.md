@@ -27,6 +27,18 @@ The user is the sole barrier between Claude and anything permanent or running on
 - Merging a feature branch into `main`/`master` (including via PR) is never something Claude does, under any circumstance. That step always goes through the user.
 - Local git only: never `fetch`/`pull`/`push`/create a PR/merge remotely — the user handles all remote git themselves. Claude only ever touches local repo state.
 
+## Cross-platform rule
+
+This tool must work on **Linux and Windows** equally — Linux is a first-class target, not a nice-to-have. The primary dev machine is Windows-only, so Linux-breaking code is easy to write and hard to notice here. When writing or reviewing code:
+
+- Never hardcode path separators or assume `\`. Use `path.join`/`path.resolve`; when a path is *stored* in a file, normalize to `/` (see `resolveLinkPath` in `src/main/linkPaths.ts` and the `.split('\\').join('/')` calls in `src/main/links.ts`).
+- No Windows-only APIs, shell built-ins, executable names, or `%APPDATA%`/registry assumptions — use Electron's `app.getPath(...)` for per-OS locations.
+- Files are read/written as UTF-8; don't depend on CRLF vs LF.
+- Keyboard shortcuts, fonts, and window-chrome behaviour differ per OS — consider both.
+- Packaging targets both (`electron-builder.yml`); changes to build config, entitlements, or icons must not assume one OS.
+
+Flag anything that can only be verified on Linux for the user to test there.
+
 ## Documentation conventions
 
 Split between in-code and high-level docs:

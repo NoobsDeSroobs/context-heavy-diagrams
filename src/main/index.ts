@@ -13,6 +13,7 @@ import { DEFAULT_PREFERENCES } from '@shared/preferences'
 import { registerAppInfoHandlers } from './appInfo'
 import { registerStylePaletteHandlers } from './stylePalette'
 import { registerExportHandlers } from './export'
+import { registerSecurityHandlers } from './security'
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -43,6 +44,7 @@ app.whenReady().then(() => {
   registerAppInfoHandlers()
   registerStylePaletteHandlers()
   registerExportHandlers()
+  registerSecurityHandlers()
 
   const initialWindow = createWindow()
 

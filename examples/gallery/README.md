@@ -23,4 +23,4 @@ Deferred, not dropped: a hello-world tier, and a standalone limits-tests folder 
 
 ## Status
 
-Skeleton only — no `.chd` files yet, and the candidate list itself isn't approved. See [epic 0022](../../docs/planning/epics/0022-example-diagram-gallery.md#candidate-diagram-list-meridian-rail-scenario--under-review) for the current list, and each folder's own README for its specific candidate entries.
+Partly built — several entries now have `.chd` files (see each folder's own README for its specific state); the candidate list itself still isn't fully approved. Newest: [`technical/security-rollup`](technical/security-rollup/README.md), a 7-file Security Matrix rollup demo added 2026-09-09 for [epic 0081](../../docs/planning/epics/0081-recursive-matrix-population-and-automation.md). See [epic 0022](../../docs/planning/epics/0022-example-diagram-gallery.md#candidate-diagram-list-meridian-rail-scenario--under-review) for the current list.

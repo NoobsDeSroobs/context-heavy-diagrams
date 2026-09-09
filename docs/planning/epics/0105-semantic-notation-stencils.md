@@ -52,6 +52,38 @@ validated ([ADR 0080](../../decisions/0080-bpmn-as-adopted-vocabulary-not-metamo
   aren't obviously in Tabler)? Ties into [epic 0019](0019-installable-icon-packs.md)
   and the custom-icon pipeline.
 
+## Selectable / toggleable stencil sets (2026-09-08, user thoughts — not designed)
+
+The user's current thinking, logged for the design pass, explicitly not resolved:
+
+- Stencils should be **selectable** — not one fixed global palette but **different
+  named sets** that can be toggled on/off to show or hide, the same way edge
+  direction sets work ([ADR 0081](../../decisions/0081-flippable-edge-direction-sets.md)).
+- The driving example is **threat modelling**: a "threat diagram" would layer a
+  set of threat-modelling symbols (trust boundaries, threat actors, attack
+  vectors, STRIDE markers, …) onto an otherwise ordinary architecture diagram,
+  toggled as one unit — turn the set on to see the threat view, off to see the
+  plain diagram.
+- This has to be **squared with edges**: you still want to route edges to and
+  from these symbols (a data flow crossing a trust boundary, an attacker →
+  asset arrow). Open tension — if a stencil set can be hidden as a group, what
+  happens to edges that connect to a hidden symbol? (Compare `edgeDirectionSets`,
+  where every edge exists in every set and only direction swaps; a hide-a-whole-
+  group model is a different shape.)
+- Relationship to highlights ([ADR 0026](../../decisions/0026-grouped-highlights.md))
+  and to the security matrix ([ADR 0055](../../decisions/0055-security-data-lives-on-diagram-elements.md) /
+  [ADR 0082](../../decisions/0082-security-data-schema.md)) is unexplored — a
+  "threat overlay" toggle sounds adjacent to both. Whether threat-modelling is a
+  stencil-set feature, a highlight-group feature, a security-matrix companion
+  view, or its own thing is an open question for the design pass, not decided
+  here.
+
+This meaningfully widens the epic beyond "a palette category of pre-iconed
+Shapes" — a stencil *set* is potentially real `.chd` state (which set is active,
+what's in each set), not just a palette convenience. Needs its own design pass
+and probably its own ADR; may warrant splitting the simple palette-category part
+from the toggleable-sets part.
+
 ## Notes
 
 The stencil category is the concrete home for the BPMN-vocabulary decision.

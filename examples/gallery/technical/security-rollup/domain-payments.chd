@@ -1,0 +1,120 @@
+{
+  "version": 1,
+  "viewport": {
+    "x": 40,
+    "y": 60,
+    "zoom": 0.9
+  },
+  "metadata": {
+    "layer": "Services (mid)",
+    "note": "Both columns are derived (rolled up from leaf diagrams). Change the Threat score mode between Average / Sum / Max and watch every derived cell recompute — the whole tree uses the mode of whichever matrix you're looking at (ADR 0088)."
+  },
+  "security": {
+    "threats": [
+      {
+        "id": "t-breach",
+        "name": "Data breach"
+      },
+      {
+        "id": "t-outage",
+        "name": "Service outage"
+      },
+      {
+        "id": "t-supply",
+        "name": "Supply chain compromise"
+      }
+    ],
+    "matrixShapeIds": [
+      "svc-gateway",
+      "svc-ledger"
+    ]
+  },
+  "nodes": [
+    {
+      "id": "blurb",
+      "type": "text",
+      "position": {
+        "x": -20,
+        "y": -170
+      },
+      "size": {
+        "width": 900,
+        "height": 120
+      },
+      "style": {
+        "fill": "#fefcbf",
+        "fillOpacity": 92,
+        "stroke": "#d69e2e",
+        "fontColor": "#744210",
+        "fontSize": 12,
+        "textAlign": "start",
+        "fontFamily": "sans-serif"
+      },
+      "data": {
+        "label": "EXAMPLE (mid) — Payments services. Layer 2 of the security-rollup demo.\nBoth Payment Gateway and Ledger Service are fully derived columns. Try Cell score = Multiply vs Average, and Threat score = Average vs Max: the numbers here and in the parent (security-rollup.chd) all move together, because the modes flow down from the matrix you're viewing."
+      }
+    },
+    {
+      "id": "svc-gateway",
+      "type": "shape",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 210,
+        "height": 96
+      },
+      "style": {
+        "fill": "#dcfce7",
+        "stroke": "#15803d",
+        "strokeWidth": 2,
+        "fontColor": "#14532d"
+      },
+      "data": {
+        "label": "Payment Gateway",
+        "linkedDiagram": "domain-payments/payment-gateway.chd"
+      }
+    },
+    {
+      "id": "svc-ledger",
+      "type": "shape",
+      "position": {
+        "x": 320,
+        "y": 0
+      },
+      "size": {
+        "width": 210,
+        "height": 96
+      },
+      "style": {
+        "fill": "#dcfce7",
+        "stroke": "#15803d",
+        "strokeWidth": 2,
+        "fontColor": "#14532d"
+      },
+      "data": {
+        "label": "Ledger Service",
+        "linkedDiagram": "domain-payments/ledger-service.chd"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-gw-ledger",
+      "type": "labeled",
+      "source": "svc-gateway",
+      "target": "svc-ledger",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "records settled payments in",
+      "style": {
+        "stroke": "#64748b",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "endMarker": "arrowClosed",
+        "routingStyle": "smoothstep"
+      }
+    }
+  ]
+}

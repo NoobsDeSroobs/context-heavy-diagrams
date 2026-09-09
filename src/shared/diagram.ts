@@ -266,8 +266,11 @@ export interface SecurityScaleLevel {
 
 // How a probability/consequence pair becomes one cell score, and how a
 // list of cell scores becomes one row/column summary — see
-// threatMatrixMath.ts for the actual arithmetic. Absent on
-// DiagramSecurity means 'multiply' / 'average' (the prototype's defaults).
+// threatMatrixMath.ts for the actual arithmetic. NOT persisted: since
+// ADR 0088 (recursive rollup) these are renderer session state on the
+// active matrix view, applied uniformly down a linked-diagram tree; a
+// per-file mode would be either ignored or inconsistent once a traversal
+// spans files. Defaults 'multiply' / 'average'.
 export type CombineMethod = 'multiply' | 'add' | 'average'
 export type AggregateMethod = 'average' | 'sum' | 'max'
 
@@ -298,8 +301,9 @@ export interface DiagramSecurity {
   // fields persist and are read.
   probabilityScale?: SecurityScaleLevel[]
   consequenceScale?: SecurityScaleLevel[]
-  combineMethod?: CombineMethod
-  aggregateMethod?: AggregateMethod
+  // combineMethod / aggregateMethod are deliberately NOT here — they are
+  // renderer session state, not persisted (ADR 0088). A file written by an
+  // older build may still carry them; they are ignored on read.
 }
 
 // A freeform line's own bend points (see ADR 0050) — see NodeStyle
@@ -602,9 +606,8 @@ function orderedDiagramSecurity(
             label: l.label,
             description: l.description
           }))
-        : undefined,
-    combineMethod: security.combineMethod,
-    aggregateMethod: security.aggregateMethod
+        : undefined
+    // combineMethod / aggregateMethod are session-only, never serialized (ADR 0088).
   }
 }
 

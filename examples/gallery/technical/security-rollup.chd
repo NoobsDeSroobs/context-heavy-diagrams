@@ -1,0 +1,240 @@
+{
+  "version": 1,
+  "viewport": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  },
+  "metadata": {
+    "layers": "Business domain (this file) -> Services -> Technical components (leaves)",
+    "purpose": "Showcase the recursive Security Matrix rollup (ADR 0088) across three layers.",
+    "scenario": "Meridian Rail"
+  },
+  "legend": [
+    {
+      "id": "lg-derived",
+      "kind": "shape",
+      "label": "Linked to a sub-diagram — its matrix column is DERIVED (rolled up)",
+      "color": "#c7d2fe"
+    },
+    {
+      "id": "lg-direct",
+      "kind": "shape",
+      "label": "No sub-diagram — assessed directly in this matrix",
+      "color": "#f1f5f9"
+    },
+    {
+      "id": "lg-broken",
+      "kind": "shape",
+      "label": "Sub-diagram link is broken — matrix cells are marked, not computed",
+      "color": "#fecaca"
+    }
+  ],
+  "security": {
+    "threats": [
+      {
+        "id": "t-breach",
+        "name": "Data breach"
+      },
+      {
+        "id": "t-outage",
+        "name": "Service outage"
+      },
+      {
+        "id": "t-supply",
+        "name": "Supply chain compromise"
+      }
+    ],
+    "matrixShapeIds": [
+      "dom-customer",
+      "dom-payments",
+      "dom-analytics",
+      "dom-website",
+      "shape-0f8249ba-f7e4-4cb7-9226-80ad0db6108f"
+    ]
+  },
+  "nodes": [
+    {
+      "id": "blurb",
+      "type": "text",
+      "position": {
+        "x": -40,
+        "y": -260
+      },
+      "size": {
+        "width": 1100,
+        "height": 210
+      },
+      "zIndex": 200010,
+      "style": {
+        "fill": "#fefcbf",
+        "fillOpacity": 92,
+        "stroke": "#d69e2e",
+        "fontColor": "#744210",
+        "fontSize": 12,
+        "textAlign": "start",
+        "fontFamily": "sans-serif"
+      },
+      "data": {
+        "label": "EXAMPLE — Security Matrix rollup demo (top / Business domain layer). Part of the Meridian Rail gallery.\n\nSwitch to the Security Matrix persona (toolbar, top-left). Four domains, one matrix, three threats:\n  • Customer Management, Payments  — 🔗 DERIVED columns. Rolled up from linked Services diagrams, which roll up from Technical-component leaves. Greyed and read-only; click a cell for the breakdown popup and an 'Open linked diagram' link.\n  • Analytics & Reporting          — ⚠ BROKEN link (points at a file that doesn't exist). Its column is hatched red and inert. Fix or remove the link on the shape.\n  • Corporate Website             — assessed DIRECTLY here (no sub-diagram). A normal editable column.\n\nUse '↻ Refresh links' after editing any leaf. Change 'Cell score' (Multiply / Add / Average) and 'Threat/vulnerability score' (Average / Sum / Max) — the active matrix's modes flow all the way down the tree, so every derived number recomputes. The completeness banner splits out how many gaps are downstream ('in linked diagrams').\n\nDetails: docs/decisions/0088-recursive-security-matrix-rollup.md"
+      }
+    },
+    {
+      "id": "dom-customer",
+      "type": "shape",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 230,
+        "height": 100
+      },
+      "zIndex": 100010,
+      "style": {
+        "fill": "#c7d2fe",
+        "stroke": "#4338ca",
+        "strokeWidth": 2,
+        "fontColor": "#312e81"
+      },
+      "data": {
+        "label": "Customer Management",
+        "linkedDiagram": "security-rollup/domain-customer.chd"
+      }
+    },
+    {
+      "id": "dom-payments",
+      "type": "shape",
+      "position": {
+        "x": 510,
+        "y": 0
+      },
+      "size": {
+        "width": 230,
+        "height": 100
+      },
+      "zIndex": 100020,
+      "style": {
+        "fill": "#c7d2fe",
+        "stroke": "#4338ca",
+        "strokeWidth": 2,
+        "fontColor": "#312e81"
+      },
+      "data": {
+        "label": "Payments",
+        "linkedDiagram": "security-rollup/domain-payments.chd"
+      }
+    },
+    {
+      "id": "dom-analytics",
+      "type": "shape",
+      "position": {
+        "x": 510,
+        "y": 147.2158336129493
+      },
+      "size": {
+        "width": 230,
+        "height": 100
+      },
+      "zIndex": 100030,
+      "style": {
+        "fill": "#fecaca",
+        "stroke": "#b91c1c",
+        "strokeWidth": 2,
+        "fontColor": "#7f1d1d"
+      },
+      "data": {
+        "label": "Analytics & Reporting\n(broken sub-diagram link)",
+        "linkedDiagram": "security-rollup/domain-analytics.chd"
+      }
+    },
+    {
+      "id": "dom-website",
+      "type": "shape",
+      "position": {
+        "x": 882.3027544820546,
+        "y": 0
+      },
+      "size": {
+        "width": 230,
+        "height": 100
+      },
+      "zIndex": 100040,
+      "style": {
+        "fill": "#f1f5f9",
+        "stroke": "#475569",
+        "strokeWidth": 2,
+        "fontColor": "#1e293b"
+      },
+      "data": {
+        "label": "Corporate Website\n(assessed directly)",
+        "security": {
+          "t-breach": {
+            "probability": 2,
+            "consequence": 2
+          },
+          "t-outage": {
+            "probability": 2,
+            "consequence": 2
+          },
+          "t-supply": {
+            "probability": 3,
+            "consequence": 3,
+            "probabilityNote": "Heavy use of third-party CMS plugins and marketing tags."
+          }
+        }
+      }
+    },
+    {
+      "id": "shape-0f8249ba-f7e4-4cb7-9226-80ad0db6108f",
+      "type": "shape",
+      "position": {
+        "x": 55,
+        "y": 397.9783016892835
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "zIndex": 100050,
+      "data": {
+        "label": "Tweakable Domain",
+        "linkedDiagram": "security-rollup/Tweakable Domain.chd"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-cust-pay",
+      "type": "labeled",
+      "source": "dom-customer",
+      "target": "dom-payments",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "shares identity with",
+      "style": {
+        "stroke": "#64748b",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "endMarker": "arrowClosed",
+        "routingStyle": "smoothstep"
+      }
+    },
+    {
+      "id": "xy-edge__dom-analyticsleft-dom-customerbottom",
+      "type": "labeled",
+      "source": "dom-analytics",
+      "target": "dom-customer",
+      "sourceHandle": "left",
+      "targetHandle": "bottom",
+      "label": "consumes events from",
+      "style": {
+        "stroke": "#64748b",
+        "strokeWidth": 2,
+        "lineStyle": "dashed",
+        "endMarker": "arrowClosed",
+        "routingStyle": "smoothstep"
+      }
+    }
+  ]
+}

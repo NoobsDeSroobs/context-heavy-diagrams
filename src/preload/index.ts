@@ -2,6 +2,7 @@ import { clipboard, contextBridge, ipcRenderer, webUtils } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import type { DiagramFile, RequiredTagDefinition } from '@shared/diagram'
 import type { AppPreferences } from '@shared/preferences'
+import type { SecurityCrawlResult } from '@shared/threatMatrixMath'
 
 interface RequiredTagsWalkResult {
   reached: string[]
@@ -102,6 +103,17 @@ const api = {
     relativePaths: string[]
   ): Promise<{ relativePath: string; resolvedPath: string; found: boolean }[]> {
     return ipcRenderer.invoke('resources:checkExist', diagramPath, relativePaths)
+  },
+
+  // Recursive security-matrix rollup (ADR 0088) — walk each linked matrix
+  // shape's subtree and return a CrawledMatrix per root column. Read-only;
+  // never records the visited files as "opened". `links` is the subset of
+  // the diagram's matrix shapes that carry a `data.linkedDiagram`.
+  crawlLinkedSecurity(
+    diagramPath: string,
+    links: { shapeId: string; relativePath: string }[]
+  ): Promise<SecurityCrawlResult> {
+    return ipcRenderer.invoke('security:crawlLinked', diagramPath, links)
   },
 
   // Multi-window model — see ADR 0023. All three open a new window (or

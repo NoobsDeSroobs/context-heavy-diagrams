@@ -1,0 +1,172 @@
+{
+  "version": 1,
+  "viewport": {
+    "x": 40,
+    "y": 60,
+    "zoom": 0.85
+  },
+  "metadata": {
+    "layer": "Services (mid)",
+    "note": "Identity + Profile are DERIVED columns (rolled up from their leaf diagrams). Notification Service is a NON-LINKED shape, assessed directly here — it works exactly like a normal matrix column alongside the derived ones."
+  },
+  "security": {
+    "threats": [
+      {
+        "id": "t-breach",
+        "name": "Data breach"
+      },
+      {
+        "id": "t-outage",
+        "name": "Service outage"
+      },
+      {
+        "id": "t-supply",
+        "name": "Supply chain compromise"
+      }
+    ],
+    "matrixShapeIds": [
+      "svc-identity",
+      "svc-profile",
+      "svc-notifications"
+    ]
+  },
+  "nodes": [
+    {
+      "id": "blurb",
+      "type": "text",
+      "position": {
+        "x": -20,
+        "y": -180
+      },
+      "size": {
+        "width": 960,
+        "height": 130
+      },
+      "style": {
+        "fill": "#fefcbf",
+        "fillOpacity": 92,
+        "stroke": "#d69e2e",
+        "fontColor": "#744210",
+        "fontSize": 12,
+        "textAlign": "start",
+        "fontFamily": "sans-serif"
+      },
+      "data": {
+        "label": "EXAMPLE (mid) — Customer Management services. Layer 2 of the security-rollup demo.\nOpen the Security Matrix persona. Identity Service and Profile Service are 🔗 derived columns — greyed, read-only, rolled up from their linked leaf diagrams; click a cell for the breakdown. Notification Service is assessed directly (no linked diagram).\nThe leaf 'Identity Service' also assesses 'Insider misuse', which isn't in this catalog — it shows up as a note under the completeness banner, not as a row."
+      }
+    },
+    {
+      "id": "svc-identity",
+      "type": "shape",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 210,
+        "height": 96
+      },
+      "style": {
+        "fill": "#e0e7ff",
+        "stroke": "#4338ca",
+        "strokeWidth": 2,
+        "fontColor": "#312e81"
+      },
+      "data": {
+        "label": "Identity Service",
+        "linkedDiagram": "domain-customer/identity-service.chd"
+      }
+    },
+    {
+      "id": "svc-profile",
+      "type": "shape",
+      "position": {
+        "x": 300,
+        "y": 0
+      },
+      "size": {
+        "width": 210,
+        "height": 96
+      },
+      "style": {
+        "fill": "#e0e7ff",
+        "stroke": "#4338ca",
+        "strokeWidth": 2,
+        "fontColor": "#312e81"
+      },
+      "data": {
+        "label": "Profile Service",
+        "linkedDiagram": "domain-customer/profile-service.chd"
+      }
+    },
+    {
+      "id": "svc-notifications",
+      "type": "shape",
+      "position": {
+        "x": 600,
+        "y": 0
+      },
+      "size": {
+        "width": 210,
+        "height": 96
+      },
+      "style": {
+        "fill": "#f1f5f9",
+        "stroke": "#475569",
+        "strokeWidth": 2,
+        "fontColor": "#1e293b"
+      },
+      "data": {
+        "label": "Notification Service\n(no sub-diagram)",
+        "security": {
+          "t-breach": {
+            "probability": 2,
+            "consequence": 2
+          },
+          "t-outage": {
+            "probability": 3,
+            "consequence": 3
+          },
+          "t-supply": {
+            "probability": 2,
+            "consequence": 2
+          }
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-identity-profile",
+      "type": "labeled",
+      "source": "svc-profile",
+      "target": "svc-identity",
+      "sourceHandle": "left",
+      "targetHandle": "right",
+      "label": "authenticates against",
+      "style": {
+        "stroke": "#64748b",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "endMarker": "arrowClosed",
+        "routingStyle": "smoothstep"
+      }
+    },
+    {
+      "id": "e-notif-identity",
+      "type": "labeled",
+      "source": "svc-notifications",
+      "target": "svc-identity",
+      "sourceHandle": "left",
+      "targetHandle": "bottom",
+      "label": "resolves recipients via",
+      "style": {
+        "stroke": "#64748b",
+        "strokeWidth": 2,
+        "lineStyle": "dashed",
+        "endMarker": "arrowClosed",
+        "routingStyle": "smoothstep"
+      }
+    }
+  ]
+}

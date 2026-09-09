@@ -1,7 +1,9 @@
 # 0081: Recursive matrix population and automation
 
 ## Status
-Not Started — not yet scoped. Split off epic 0060 on its closure (2026-08-25), consolidating the recursion/automation vision recorded across that epic's Notes rounds 7–10. Depends on [epic 0079](completed/0079-security-data-as-diagram-element-property.md) (real per-element security data) — nothing here has real data to walk or roll up until that lands.
+**Done — core feature complete, pending PR/merge (2026-09-10)**, on `epic/0081-recursive-matrix-population-and-automation`. The user's call: the recursive rollup as built is a complete, shippable feature on its own — items 1/3/4/5 + the worked example, live-confirmed working (derived columns, broken-link cells, downstream-only note, mode changes flowing down the tree). The remaining automation polish (scope tagging, crawl throttle, reserved property field, double-count safety net, virtual rows) is **split out to [epic 0116](0116-security-rollup-automation-polish.md)** — each its own branch, per the user.
+
+Split off epic 0060 on its closure (2026-08-25), consolidating the recursion/automation vision from that epic's Notes rounds 7–10. Depends on [epic 0079](completed/0079-security-data-as-diagram-element-property.md) — landed (PR #85).
 
 ## Goal
 Stop requiring every service/column in the matrix to be manually typed, and every level of a diagram hierarchy to be manually re-assessed. Populate the matrix's non-threat dimension from the diagram itself (linked child diagrams, or shapes already present), roll a child diagram's own computed scores up into its parent's matrix automatically, and keep that rollup from silently going stale — while treating any value the app derived (rather than a human entered) as visually distinct and not manually editable.
@@ -22,5 +24,38 @@ All of the following is design vision only, captured but not built — see [epic
 - **Exact cooldown duration** for the automatic on-persona-switch crawl (round 10 leaned 2–5 minutes, not decided).
 - **The tag-mapping UI** for in/out-of-scope classification, including the "offer to create the tag on a target diagram" flow round 8 flagged as needing its own confirmation step (a real write to someone else's diagram file).
 
+## Design pass (2026-09-08) — infrastructure findings
+
+Read of the current code before the design conversation:
+
+- **The matrix is one flat instance.** `security` (top-level `DiagramSecurity`) + per-shape `data.security` (ADR 0082). No child-matrix / cross-file concept anywhere. `ThreatMatrixView` computes everything live from `nodes` + `security` (`threatMatrixMath.ts` is pure).
+- **Linked children are reachable but not read headlessly today.** `data.linkedDiagram` holds a path relative to the diagram file's own dir; `resolveLinkPath` (`src/main/linkPaths.ts`) resolves it; linked `.chd` files colocate as `my-diagram/child.chd` (`links.ts`). But the only "read a `.chd`" IPC is `diagram:openPath`, which also records the file into recent/last-opened. **A crawl needs a new side-effect-free read IPC** (e.g. `security:readForCrawl` → `{ security, shapeSecurityById }` per file), or a raw `diagram:readRaw`.
+- **`parseDiagram` / `serializeDiagram` live in `@shared/diagram`** — usable from main, so a main-side crawler is viable. The math (`combine`/`threatScore`/…) is renderer-only right now; a crawl either moves the math to shared or crawls in the renderer over IPC-fetched file contents.
+- **No `zIndex`/version bump concerns** — anything added here stays additive (ADR 0029).
+
+## Decisions (2026-09-08) → [ADR 0088](../../decisions/0088-recursive-security-matrix-rollup.md)
+
+Settled with the user:
+
+- **Derived values are computed on open, cached in renderer memory, refreshable on click. Never persisted.** No `derived` flag, no lock state, no staleness fingerprint on disk — a derived value is recomputed from source every time it's shown, so staleness can't happen.
+- **Calculation modes (`combineMethod` / `aggregateMethod`) become session-only** — dropped from the persisted `.chd` schema (amends [ADR 0082](../../decisions/0082-security-data-schema.md)). A traversal passes the *active view's* two modes all the way down; every linked diagram at every depth is scored with the same modes. `diagram.threatScoreFor(normalizedThreatName, cellScoreMode, threatScoreMode) → number | null` — naturally recursive.
+- **Threats matched across files by normalized name** (trim, case-fold, collapse whitespace). Unmatched child threats → Diagnostics note. Shared cross-tree catalog deferred.
+- **A derived cell is greyed and read-only** — shows only the rolled-up threat score (or "—" for `null`); no probability/consequence; click → read-only breakdown, not the editor.
+- **Leaf = no `linkedDiagram` (structural). In/out-of-scope = a diagram-configured `externalTag` mapping**; absent → unclassified (in scope + note), never silently external.
+
+## Tasks
+
+Sliced by size (see [ADR 0088](../../decisions/0088-recursive-security-matrix-rollup.md)). Item 1 is independent of the recursion and useful on its own; 2–5 are the core; 6–8 are follow-ups.
+
+- [x] **1. Populate columns from the diagram** — "+ Add all N shapes" in `ThreatMatrixManagePanel` (bulk-add every `shape`-type node not in `matrixShapeIds`). Scope filtering deferred to item 2. *(commit 321b2de)*
+- [ ] 2. `DiagramSecurity.externalTag` + a tag-mapping UI in the manage panel; `unclassified`/`external` classification with Diagnostics notes; Shape-type-only + per-shape opt-out tag.
+- [x] 3. Dropped `combineMethod`/`aggregateMethod` from the persisted schema → Canvas session state (not reset on load); ignore-on-read, stop-on-write; `docs/file-format.md` + ADR 0082 updated. *(commit 3c04440)*
+- [x] 4. `threatMatrixMath.ts` → `@shared/`; `normalizeThreatName`, `CrawledMatrix`/`CrawledShape`, recursive `threatScoreFor` (→ `number | null`), `threatNamesInSubtree`. *(commit 3c769d9)*
+- [x] 5. `security:crawlLinked` main IPC (`src/main/security.ts`, side-effect-free) building a `CrawledMatrix` tree per linked matrix shape (ancestor-revisit → warning + leaf); Canvas session cache + crawl-on-persona-enter + "↻ Refresh links" button; derived columns render italic/muted read-only, **broken-link columns render a red hatch** (per the user); click a derived cell → read-only breakdown popup; completeness banner splits "(N in linked diagrams)". **v1: rows = own catalog only** — downstream-only threat names shown as a note, not virtual rows (deferred). *(commit 634926f)*
+  - Deferred here: virtual rows for downstream-only threats; the in/out-of-scope tag (item 2); the crawl throttle (item 6).
+- [x] **3-layer worked example** — `examples/gallery/technical/security-rollup.chd` + `security-rollup/` (7 files): Business domain → Services → Technical components, with a broken link, a non-linked shape, a downstream-only threat, and mode-sensitive numbers. *(commit 2068341)* Live-confirmed by the user (2026-09-10).
+
+**Moved to [epic 0116](0116-security-rollup-automation-polish.md):** 2 (in/out-of-scope `externalTag`), 6 (crawl cooldown throttle), 7 (reserved "Security score" property field — coordinate with [epic 0107](0107-per-element-security-exposure.md)), 8 (sharing/double-count safety net), and virtual rows for downstream-only threats.
+
 ## Notes
-Not scheduled into any current batch — logged the same day epic 0060 closed. This is the largest and least-scoped of the three epics split from 0060; expect a real design pass before implementation starts, same as 0060 itself needed.
+Split off the same day epic 0060 closed. Scoped and mostly built 2026-09-08–10; the user drew the line at "the rollup itself is a complete feature" and moved the automation polish to epic 0116 so each piece gets its own branch.

@@ -42,3 +42,8 @@ then design this against actual use.
 Keep this narrow: it's about *surfacing* existing data, not new data
 model. Anything that changes `DiagramSecurity` / `data.security` belongs
 back in 0079 or a schema follow-up.
+
+Overlaps [epic 0116](0116-security-rollup-automation-polish.md)'s "reserved
+Security score property field" (a linked shape's rolled-up grand-total,
+read-only, in the Property panel). Design the two together — 0116's item is
+the derived-number half, this epic is the hand-entered-cells half.

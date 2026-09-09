@@ -3398,6 +3398,63 @@ body {
   );
 }
 
+/* A derived column (ADR 0088) — rolled up from a linked diagram, read-only.
+   Muted + italic so it reads as "computed, not yours to edit"; click opens
+   a breakdown popup rather than the cell editor. */
+.threat-matrix-cell-derived {
+  font-style: italic;
+  color: var(--ev-c-text-2);
+  background: var(--color-background-mute);
+  cursor: help;
+}
+
+/* A broken linked-diagram column — the link didn't resolve, so nothing can
+   be rolled up. Struck through in red; not clickable. */
+.threat-matrix-cell-broken {
+  cursor: not-allowed;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 6px,
+    var(--color-danger, #c0392b) 6px,
+    var(--color-danger, #c0392b) 7px
+  );
+}
+
+.threat-matrix-col-derived {
+  font-style: italic;
+}
+
+.threat-matrix-col-broken {
+  color: var(--color-danger, #c0392b);
+}
+
+.threat-matrix-refresh-button {
+  cursor: pointer;
+  align-self: flex-end;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.threat-matrix-refresh-button:hover {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.threat-matrix-note {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ev-c-text-2);
+}
+
+.threat-matrix-breakdown p {
+  margin: 0 0 6px;
+  font-size: 12px;
+}
+
 .threat-matrix-completeness {
   margin: 0;
   font-size: 12px;

@@ -359,7 +359,7 @@ This is diagram-level data, not an app preference — reproducing the diagram fo
 
 ## Security
 
-`security` (top-level) holds a threat/risk model over the diagram's shapes. The per-shape assessments live on each shape's [`data.security`](#node); this block is the shared configuration: the threat catalog, which shapes are in the matrix, and the calculation settings.
+`security` (top-level) holds a threat/risk model over the diagram's shapes. The per-shape assessments live on each shape's [`data.security`](#node); this block is the shared configuration: the threat catalog, which shapes are in the matrix, and the scale definitions.
 
 ```json
 "security": {
@@ -371,9 +371,7 @@ This is diagram-level data, not an app preference — reproducing the diagram fo
   "matrixShapeIds": ["shape-2", "shape-7", "shape-9"],
   "hiddenShapeIds": ["shape-9"],
   "probabilityScale": [ { "value": 1, "label": "Rare", "description": "…" } ],
-  "consequenceScale": [ { "value": 1, "label": "Negligible", "description": "…" } ],
-  "combineMethod": "multiply",
-  "aggregateMethod": "average"
+  "consequenceScale": [ { "value": 1, "label": "Negligible", "description": "…" } ]
 }
 ```
 
@@ -384,8 +382,8 @@ This is diagram-level data, not an app preference — reproducing the diagram fo
 | `matrixShapeIds` | array of string | yes | Ids of `"shape"` nodes that are in the matrix's data model. Ordered (column order). A shape not listed here carries no `data.security` at all. An id that no longer resolves to a shape is dropped on load. |
 | `hiddenShapeIds` | array of string | no | Shape ids in the matrix but currently hidden — not a column, data kept, still counts toward completeness. Absent/empty means all shown. |
 | `probabilityScale` / `consequenceScale` | array of `{ value, label, description }` | no | Per-diagram scale definitions. Absent means this app's built-in 1–5 scale. A reader only needs the `value`s to interpret a `RiskCell`; `label`/`description` are for the person filling the matrix in. |
-| `combineMethod` | `"multiply"` \| `"add"` \| `"average"` | no | How a cell's probability and consequence combine into one score. Absent means `"multiply"`. |
-| `aggregateMethod` | `"average"` \| `"sum"` \| `"max"` | no | How a set of cell scores rolls up into a per-threat or per-shape summary. Absent means `"average"`. |
+
+**Calculation modes are not stored here.** How a cell's probability and consequence combine into one score (`multiply` / `add` / `average`), and how a set of cell scores rolls up into a per-threat or per-shape summary (`average` / `sum` / `max`), are **session state in the app that opens the matrix**, not persisted — the same two modes are applied uniformly across a diagram and every diagram it links to, so a per-file mode would be either ignored or inconsistent once a rollup spans files. A file written by an older build may still contain `combineMethod` / `aggregateMethod` keys at this level; a reader ignores them.
 
 **Hide vs. remove.** *Hiding* a threat or shape keeps it in the model — its data is preserved and it still counts toward the matrix's "N of M assessments entered" completeness check — it just isn't rendered. *Removing* a threat deletes it from `threats` and deletes that threat's cell from **every** shape's `data.security`; removing a shape drops it from `matrixShapeIds` and deletes its whole `data.security`. Remove is the destructive, deliberate operation; hide is a view toggle.
 

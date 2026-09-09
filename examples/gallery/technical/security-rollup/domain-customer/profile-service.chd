@@ -1,0 +1,147 @@
+{
+  "version": 1,
+  "viewport": {
+    "x": 40,
+    "y": 40,
+    "zoom": 0.9
+  },
+  "metadata": {
+    "layer": "Technical components (leaf)",
+    "note": "Leaf diagram — rolls up into Customer Management > Profile Service."
+  },
+  "security": {
+    "threats": [
+      {
+        "id": "t-breach",
+        "name": "Data breach"
+      },
+      {
+        "id": "t-outage",
+        "name": "Service outage"
+      },
+      {
+        "id": "t-supply",
+        "name": "Supply chain compromise"
+      }
+    ],
+    "matrixShapeIds": [
+      "cmp-profiledb",
+      "cmp-profileapi"
+    ]
+  },
+  "nodes": [
+    {
+      "id": "blurb",
+      "type": "text",
+      "position": {
+        "x": -20,
+        "y": -150
+      },
+      "size": {
+        "width": 760,
+        "height": 100
+      },
+      "style": {
+        "fill": "#fefcbf",
+        "fillOpacity": 92,
+        "stroke": "#d69e2e",
+        "fontColor": "#744210",
+        "fontSize": 12,
+        "textAlign": "start",
+        "fontFamily": "sans-serif"
+      },
+      "data": {
+        "label": "EXAMPLE (leaf) — Profile Service internals. Layer 3 of the security-rollup demo.\nAll three threats are assessed on both components; the parent \"Profile Service\" column is fully green in the completeness banner."
+      }
+    },
+    {
+      "id": "cmp-profiledb",
+      "type": "shape",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 200,
+        "height": 96
+      },
+      "style": {
+        "fill": "#dbeafe",
+        "stroke": "#1d4ed8",
+        "strokeWidth": 2,
+        "fontColor": "#1e3a8a"
+      },
+      "data": {
+        "label": "Profile DB\n(MongoDB)",
+        "security": {
+          "t-breach": {
+            "probability": 3,
+            "consequence": 4,
+            "consequenceNote": "Holds PII: names, contact details, preferences."
+          },
+          "t-outage": {
+            "probability": 2,
+            "consequence": 3
+          },
+          "t-supply": {
+            "probability": 2,
+            "consequence": 2
+          }
+        }
+      }
+    },
+    {
+      "id": "cmp-profileapi",
+      "type": "shape",
+      "position": {
+        "x": 300,
+        "y": 0
+      },
+      "size": {
+        "width": 200,
+        "height": 96
+      },
+      "style": {
+        "fill": "#dbeafe",
+        "stroke": "#1d4ed8",
+        "strokeWidth": 2,
+        "fontColor": "#1e3a8a"
+      },
+      "data": {
+        "label": "Profile API\n(Node)",
+        "security": {
+          "t-breach": {
+            "probability": 2,
+            "consequence": 3
+          },
+          "t-outage": {
+            "probability": 2,
+            "consequence": 3
+          },
+          "t-supply": {
+            "probability": 2,
+            "consequence": 2
+          }
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-api-db",
+      "type": "labeled",
+      "source": "cmp-profileapi",
+      "target": "cmp-profiledb",
+      "sourceHandle": "left",
+      "targetHandle": "right",
+      "label": "reads / writes",
+      "style": {
+        "stroke": "#64748b",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "endMarker": "arrowClosed",
+        "routingStyle": "smoothstep"
+      }
+    }
+  ]
+}

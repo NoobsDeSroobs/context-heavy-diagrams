@@ -1,15 +1,25 @@
-import { useMemo, useState, type MouseEvent } from 'react'
+import { useState, useMemo, type MouseEvent } from 'react'
 import type { Node } from '@xyflow/react'
-import type { AggregateMethod, CombineMethod, DiagramSecurity, RiskCell } from '@shared/diagram'
+import type {
+  AggregateMethod,
+  CombineMethod,
+  DiagramSecurity,
+  RiskCell,
+  SecurityThreat
+} from '@shared/diagram'
 import {
   cellScore,
-  threatScore,
-  vulnerabilityScore,
+  aggregateScores,
   totalSecurityScore,
+  threatScoreFor,
+  threatNamesInSubtree,
+  normalizeThreatName,
   COMBINE_METHOD_LABELS,
   AGGREGATE_METHOD_LABELS,
-  BLANK_RISK_CELL
-} from './threatMatrixMath'
+  BLANK_RISK_CELL,
+  type CrawledMatrix,
+  type SecurityCrawlResult
+} from '@shared/threatMatrixMath'
 import { effectiveScales } from './threatMatrixScale'
 import ThreatMatrixCellEditor from './ThreatMatrixCellEditor'
 import ThreatMatrixScaleReference from './ThreatMatrixScaleReference'
@@ -22,7 +32,18 @@ export interface ThreatMatrixViewProps {
   // Always provided (Canvas keeps `{ threats: [], matrixShapeIds: [] }`
   // when the feature is unused), so the view never deals with null.
   security: DiagramSecurity
-  // Config-only changes: methods, hide toggles, add threat/shape, rename.
+  // Calculation modes — session state owned by Canvas, NOT persisted
+  // (ADR 0088). Changing them recomputes the view; no file write.
+  combineMethod: CombineMethod
+  aggregateMethod: AggregateMethod
+  onCombineMethodChange: (next: CombineMethod) => void
+  onAggregateMethodChange: (next: AggregateMethod) => void
+  // Recursive rollup (ADR 0088) — `null` until the first crawl resolves.
+  // Keyed by root matrix shape id; only shapes with a `linkedDiagram` appear.
+  crawl: SecurityCrawlResult | null
+  onRefreshCrawl: () => void
+  onOpenLinkedDiagram: (relativePath: string) => void
+  // Config changes: hide toggles, add threat/shape, rename.
   onChange: (next: DiagramSecurity) => void
   // Destructive — Canvas also clears the affected `data.security` cells.
   onRemoveThreat: (threatId: string) => void
@@ -37,6 +58,28 @@ interface EditingCell {
   anchorRect: DOMRect
 }
 
+interface Breakdown {
+  threatName: string
+  shapeLabel: string
+  relativePath: string
+  value: number | null
+  contributions: number
+  anchorRect: DOMRect
+}
+
+// A column is one of three kinds: a normal editable leaf, a derived column
+// rolled up from a linked diagram, or a broken one whose link didn't resolve.
+type ColumnInfo =
+  | { kind: 'normal' }
+  | { kind: 'derived'; relativePath: string; matrix: CrawledMatrix }
+  | { kind: 'broken'; relativePath: string }
+
+// Per-cell resolution: the number to show (or null), plus how it got there.
+interface CellInfo {
+  value: number | null
+  kind: 'assessed' | 'unassessed' | 'derived' | 'derived-empty' | 'broken'
+}
+
 function nodeSecurity(node: Node | undefined): Record<string, RiskCell> {
   const s = node?.data?.security
   return s && typeof s === 'object' ? (s as Record<string, RiskCell>) : {}
@@ -46,13 +89,23 @@ function newThreatId(): string {
   return `threat-${crypto.randomUUID()}`
 }
 
+const BREAKDOWN_WIDTH = 260
+
 // The Security Matrix — a read-time view over every member shape's own
-// `data.security` plus the diagram-level `security` config (ADR 0082).
-// It owns no persisted state of its own: every edit goes straight back
-// through the callbacks to the nodes / the diagram config.
+// `data.security`, the diagram-level `security` config (ADR 0082), and the
+// recursive rollup of every linked matrix shape's subtree (ADR 0088). It
+// owns no persisted state: edits go back through the callbacks; the crawl
+// result is a session cache passed in from Canvas.
 export default function ThreatMatrixView({
   nodes,
   security,
+  combineMethod,
+  aggregateMethod,
+  onCombineMethodChange,
+  onAggregateMethodChange,
+  crawl,
+  onRefreshCrawl,
+  onOpenLinkedDiagram,
   onChange,
   onRemoveThreat,
   onRemoveShape,
@@ -60,9 +113,8 @@ export default function ThreatMatrixView({
 }: ThreatMatrixViewProps): React.JSX.Element {
   const [editingCell, setEditingCell] = useState<EditingCell | null>(null)
   const [managePanelAnchor, setManagePanelAnchor] = useState<DOMRect | null>(null)
+  const [breakdown, setBreakdown] = useState<Breakdown | null>(null)
 
-  const combineMethod: CombineMethod = security.combineMethod ?? 'multiply'
-  const aggregateMethod: AggregateMethod = security.aggregateMethod ?? 'average'
   const { probabilityScale, consequenceScale } = effectiveScales(security)
 
   const nodeById = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes])
@@ -70,8 +122,6 @@ export default function ThreatMatrixView({
   const hiddenThreatIds = new Set(security.hiddenThreatIds ?? [])
   const hiddenShapeIds = new Set(security.hiddenShapeIds ?? [])
 
-  // Rows = catalog threats not hidden. Columns = matrix shapes not hidden,
-  // that still resolve to a real Shape node.
   const visibleThreats = security.threats.filter((t) => !hiddenThreatIds.has(t.id))
   const visibleShapeIds = security.matrixShapeIds.filter(
     (id) => !hiddenShapeIds.has(id) && nodeById.get(id)?.type === 'shape'
@@ -80,33 +130,87 @@ export default function ThreatMatrixView({
   const shapeLabel = (id: string): string =>
     String(nodeById.get(id)?.data?.label ?? '(missing shape)')
 
-  // Completeness (ADR 0082) — over EVERY matrixShape x EVERY threat,
-  // hidden included; a missing cell is an un-entered assessment.
-  const totalCells = security.matrixShapeIds.length * security.threats.length
-  const enteredCells = security.matrixShapeIds.reduce((count, shapeId) => {
-    const cells = nodeSecurity(nodeById.get(shapeId))
-    return count + security.threats.filter((t) => cells[t.id] !== undefined).length
-  }, 0)
-  const missingCells = totalCells - enteredCells
-
-  // Cell scores over the visible grid; absent cells are simply excluded
-  // from the aggregates (a half-assessed row still scores on what's there).
-  const assessedCellsForThreat = (threatId: string): RiskCell[] =>
-    visibleShapeIds
-      .map((id) => nodeSecurity(nodeById.get(id))[threatId])
-      .filter((c): c is RiskCell => c !== undefined)
-  const assessedCellsForShape = (shapeId: string): RiskCell[] => {
-    const cells = nodeSecurity(nodeById.get(shapeId))
-    return visibleThreats.map((t) => cells[t.id]).filter((c): c is RiskCell => c !== undefined)
+  const columnInfo = (shapeId: string): ColumnInfo => {
+    const c = crawl?.columns[shapeId]
+    if (!c) return { kind: 'normal' }
+    return c.kind === 'resolved'
+      ? { kind: 'derived', relativePath: c.relativePath, matrix: c.matrix }
+      : { kind: 'broken', relativePath: c.relativePath }
   }
 
-  const rowScores = visibleThreats.map((t) =>
-    threatScore(assessedCellsForThreat(t.id), combineMethod, aggregateMethod)
+  // One cell's number + provenance. Derived cells recompute live from the
+  // crawl using the active modes (ADR 0088) — no recrawl on a mode change.
+  const cellInfo = (threat: SecurityThreat, shapeId: string): CellInfo => {
+    const col = columnInfo(shapeId)
+    if (col.kind === 'broken') return { value: null, kind: 'broken' }
+    if (col.kind === 'derived') {
+      const s = threatScoreFor(
+        col.matrix,
+        normalizeThreatName(threat.name),
+        combineMethod,
+        aggregateMethod
+      )
+      return s === null ? { value: null, kind: 'derived-empty' } : { value: s, kind: 'derived' }
+    }
+    const cell = nodeSecurity(nodeById.get(shapeId))[threat.id]
+    return cell
+      ? { value: cellScore(cell, combineMethod), kind: 'assessed' }
+      : { value: null, kind: 'unassessed' }
+  }
+
+  const nonNull = (xs: (number | null)[]): number[] => xs.filter((x): x is number => x !== null)
+
+  const rowScores = visibleThreats.map((t) => {
+    const vals = nonNull(visibleShapeIds.map((id) => cellInfo(t, id).value))
+    return vals.length > 0 ? aggregateScores(vals, aggregateMethod) : null
+  })
+  const columnScores = visibleShapeIds.map((id) => {
+    const vals = nonNull(visibleThreats.map((t) => cellInfo(t, id).value))
+    return vals.length > 0 ? aggregateScores(vals, aggregateMethod) : null
+  })
+  const grandTotal = totalSecurityScore(
+    nonNull(rowScores),
+    nonNull(columnScores),
+    combineMethod,
+    aggregateMethod
   )
-  const columnScores = visibleShapeIds.map((id) =>
-    vulnerabilityScore(assessedCellsForShape(id), combineMethod, aggregateMethod)
-  )
-  const grandTotal = totalSecurityScore(rowScores, columnScores, combineMethod, aggregateMethod)
+
+  // Completeness (ADR 0082/0088) — over EVERY matrixShape x EVERY threat,
+  // hidden included. A leaf gap is a missing hand assessment; a derived gap
+  // is a hole downstream (nothing assessed there, or a broken link).
+  let missingLeaf = 0
+  let missingDownstream = 0
+  for (const shapeId of security.matrixShapeIds) {
+    for (const threat of security.threats) {
+      const kind = cellInfo(threat, shapeId).kind
+      if (kind === 'unassessed') missingLeaf += 1
+      else if (kind === 'derived-empty' || kind === 'broken') missingDownstream += 1
+    }
+  }
+  const totalCells = security.matrixShapeIds.length * security.threats.length
+  const missingCells = missingLeaf + missingDownstream
+
+  // Threat names assessed only in linked subtrees, not in this matrix's own
+  // catalog — surfaced, not silently dropped (ADR 0088).
+  const downstreamOnlyThreats = useMemo(() => {
+    if (!crawl) return [] as string[]
+    const catalog = new Set(security.threats.map((t) => normalizeThreatName(t.name)))
+    const seen = new Set<string>()
+    for (const col of Object.values(crawl.columns)) {
+      if (col.kind !== 'resolved') continue
+      for (const name of threatNamesInSubtree(col.matrix)) if (!catalog.has(name)) seen.add(name)
+    }
+    return [...seen].sort()
+  }, [crawl, security.threats])
+
+  const crawlNotes: string[] = [
+    ...(crawl?.warnings ?? []),
+    ...(downstreamOnlyThreats.length > 0
+      ? [
+          `Linked diagrams also assess: ${downstreamOnlyThreats.join(', ')} — add these as threats to roll them up.`
+        ]
+      : [])
+  ]
 
   const openEditor = (
     threatId: string,
@@ -114,6 +218,26 @@ export default function ThreatMatrixView({
     event: MouseEvent<HTMLTableCellElement>
   ): void => {
     setEditingCell({ threatId, nodeId, anchorRect: event.currentTarget.getBoundingClientRect() })
+  }
+
+  const openBreakdown = (
+    threat: SecurityThreat,
+    shapeId: string,
+    info: CellInfo,
+    event: MouseEvent<HTMLTableCellElement>
+  ): void => {
+    const col = columnInfo(shapeId)
+    if (col.kind !== 'derived') return
+    const norm = normalizeThreatName(threat.name)
+    const contributions = countContributions(col.matrix, norm)
+    setBreakdown({
+      threatName: threat.name,
+      shapeLabel: shapeLabel(shapeId),
+      relativePath: col.relativePath,
+      value: info.value,
+      contributions,
+      anchorRect: event.currentTarget.getBoundingClientRect()
+    })
   }
 
   // --- config-model edits ---
@@ -148,7 +272,51 @@ export default function ThreatMatrixView({
     .filter((n) => n.type === 'shape' && !security.matrixShapeIds.includes(n.id))
     .map((n) => ({ id: n.id, label: String(n.data?.label ?? n.id) }))
 
+  // Bulk-add every shape not already in the matrix (ADR 0088, item 1) —
+  // one action instead of picking them one at a time. Scope filtering
+  // (in/out-of-scope tag, per-shape opt-out) comes with the tag-mapping work.
+  const addAllShapes = (): void => {
+    const toAdd = assessableShapes.map((s) => s.id)
+    if (toAdd.length > 0) patch({ matrixShapeIds: [...security.matrixShapeIds, ...toAdd] })
+  }
+
   const nothingToShow = visibleThreats.length === 0 || visibleShapeIds.length === 0
+
+  const cellDisplay = (info: CellInfo): string => {
+    if (info.kind === 'broken') return ''
+    if (info.value === null) return '—'
+    return info.kind === 'assessed' ? String(info.value) : info.value.toFixed(1)
+  }
+
+  const cellClass = (info: CellInfo): string => {
+    switch (info.kind) {
+      case 'assessed':
+        return 'threat-matrix-cell'
+      case 'unassessed':
+        return 'threat-matrix-cell threat-matrix-cell-unassessed'
+      case 'derived':
+        return 'threat-matrix-cell threat-matrix-cell-derived'
+      case 'derived-empty':
+        return 'threat-matrix-cell threat-matrix-cell-derived threat-matrix-cell-unassessed'
+      case 'broken':
+        return 'threat-matrix-cell threat-matrix-cell-broken'
+    }
+  }
+
+  const cellTitle = (info: CellInfo): string => {
+    switch (info.kind) {
+      case 'assessed':
+        return 'Click to edit'
+      case 'unassessed':
+        return 'Not assessed — click to assess'
+      case 'derived':
+        return 'Rolled up from a linked diagram — click for details'
+      case 'derived-empty':
+        return 'Not assessed anywhere in the linked diagram'
+      case 'broken':
+        return 'Linked diagram not found — fix the link on the shape'
+    }
+  }
 
   return (
     <div className="threat-matrix-view">
@@ -158,7 +326,7 @@ export default function ThreatMatrixView({
             Cell score
             <select
               value={combineMethod}
-              onChange={(event) => patch({ combineMethod: event.target.value as CombineMethod })}
+              onChange={(event) => onCombineMethodChange(event.target.value as CombineMethod)}
             >
               {Object.entries(COMBINE_METHOD_LABELS).map(([method, label]) => (
                 <option key={method} value={method}>
@@ -171,9 +339,7 @@ export default function ThreatMatrixView({
             Threat/vulnerability score
             <select
               value={aggregateMethod}
-              onChange={(event) =>
-                patch({ aggregateMethod: event.target.value as AggregateMethod })
-              }
+              onChange={(event) => onAggregateMethodChange(event.target.value as AggregateMethod)}
             >
               {Object.entries(AGGREGATE_METHOD_LABELS).map(([method, label]) => (
                 <option key={method} value={method}>
@@ -182,6 +348,14 @@ export default function ThreatMatrixView({
               ))}
             </select>
           </label>
+          <button
+            type="button"
+            className="threat-matrix-refresh-button"
+            onClick={onRefreshCrawl}
+            title="Re-read the linked diagrams and recompute derived columns"
+          >
+            ↻ Refresh links
+          </button>
           <button
             type="button"
             className="threat-matrix-manage-button"
@@ -200,14 +374,20 @@ export default function ThreatMatrixView({
             }
           >
             {missingCells > 0
-              ? `⚠ ${missingCells} of ${totalCells} assessments not entered${
-                  security.hiddenThreatIds?.length || security.hiddenShapeIds?.length
-                    ? ' (hidden rows/columns included)'
-                    : ''
-                }`
+              ? `⚠ ${missingCells} of ${totalCells} assessments not entered` +
+                (missingDownstream > 0 ? ` (${missingDownstream} in linked diagrams)` : '') +
+                (security.hiddenThreatIds?.length || security.hiddenShapeIds?.length
+                  ? ' — hidden rows/columns included'
+                  : '')
               : `✓ All ${totalCells} assessments entered`}
           </p>
         )}
+
+        {crawlNotes.map((note, i) => (
+          <p key={i} className="threat-matrix-note">
+            {note}
+          </p>
+        ))}
 
         {nothingToShow ? (
           <p className="threat-matrix-empty">
@@ -226,9 +406,32 @@ export default function ThreatMatrixView({
             <thead>
               <tr>
                 <th className="threat-matrix-corner" />
-                {visibleShapeIds.map((id) => (
-                  <th key={id}>{shapeLabel(id)}</th>
-                ))}
+                {visibleShapeIds.map((id) => {
+                  const col = columnInfo(id)
+                  return (
+                    <th
+                      key={id}
+                      className={
+                        col.kind === 'derived'
+                          ? 'threat-matrix-col-derived'
+                          : col.kind === 'broken'
+                            ? 'threat-matrix-col-broken'
+                            : undefined
+                      }
+                      title={
+                        col.kind === 'derived'
+                          ? `Rolled up from ${col.relativePath}`
+                          : col.kind === 'broken'
+                            ? `Linked diagram not found: ${col.relativePath}`
+                            : undefined
+                      }
+                    >
+                      {shapeLabel(id)}
+                      {col.kind === 'derived' && ' 🔗'}
+                      {col.kind === 'broken' && ' ⚠'}
+                    </th>
+                  )
+                })}
                 <th className="threat-matrix-aggregate-header">Threat score</th>
               </tr>
             </thead>
@@ -237,26 +440,26 @@ export default function ThreatMatrixView({
                 <tr key={threat.id}>
                   <th scope="row">{threat.name}</th>
                   {visibleShapeIds.map((shapeId) => {
-                    const cell = nodeSecurity(nodeById.get(shapeId))[threat.id]
+                    const info = cellInfo(threat, shapeId)
                     return (
                       <td
                         key={shapeId}
-                        className={
-                          cell
-                            ? 'threat-matrix-cell'
-                            : 'threat-matrix-cell threat-matrix-cell-unassessed'
-                        }
-                        onClick={(event) => openEditor(threat.id, shapeId, event)}
-                        title={cell ? 'Click to edit' : 'Not assessed — click to assess'}
+                        className={cellClass(info)}
+                        title={cellTitle(info)}
+                        onClick={(event) => {
+                          if (info.kind === 'assessed' || info.kind === 'unassessed') {
+                            openEditor(threat.id, shapeId, event)
+                          } else if (info.kind === 'derived' || info.kind === 'derived-empty') {
+                            openBreakdown(threat, shapeId, info, event)
+                          }
+                        }}
                       >
-                        {cell ? cellScore(cell, combineMethod) : '—'}
+                        {cellDisplay(info)}
                       </td>
                     )
                   })}
                   <td className="threat-matrix-aggregate">
-                    {assessedCellsForThreat(threat.id).length > 0
-                      ? rowScores[rowIndex].toFixed(1)
-                      : '—'}
+                    {rowScores[rowIndex] === null ? '—' : rowScores[rowIndex]!.toFixed(1)}
                   </td>
                 </tr>
               ))}
@@ -264,9 +467,7 @@ export default function ThreatMatrixView({
                 <th scope="row">Vulnerability score</th>
                 {columnScores.map((score, columnIndex) => (
                   <td key={visibleShapeIds[columnIndex]} className="threat-matrix-aggregate">
-                    {assessedCellsForShape(visibleShapeIds[columnIndex]).length > 0
-                      ? score.toFixed(1)
-                      : '—'}
+                    {score === null ? '—' : score.toFixed(1)}
                   </td>
                 ))}
                 <td className="threat-matrix-grand-total">{grandTotal.toFixed(1)}</td>
@@ -305,6 +506,46 @@ export default function ThreatMatrixView({
           )
         })()}
 
+      {breakdown && (
+        <div
+          className="legend-panel nodrag nopan threat-matrix-breakdown"
+          style={{
+            left: Math.min(breakdown.anchorRect.left, window.innerWidth - BREAKDOWN_WIDTH - 8),
+            top: breakdown.anchorRect.bottom + 6,
+            width: BREAKDOWN_WIDTH
+          }}
+        >
+          <div className="legend-panel-toolbar">
+            <span className="legend-panel-title">Derived score</span>
+            <div className="details-panel-spacer" />
+            <button type="button" title="Close" aria-label="Close" onClick={() => setBreakdown(null)}>
+              ✕
+            </button>
+          </div>
+          <div className="legend-panel-body">
+            <p>
+              <strong>{breakdown.threatName}</strong> × <strong>{breakdown.shapeLabel}</strong>
+            </p>
+            <p>
+              {breakdown.value === null
+                ? 'Not assessed anywhere in the linked diagram.'
+                : `${breakdown.value.toFixed(2)} — rolled up from ${breakdown.contributions} downstream assessment${breakdown.contributions === 1 ? '' : 's'} using the current Cell score / Threat score modes.`}
+            </p>
+            <p className="legend-panel-hint">Read-only: edit the assessments in the linked diagram.</p>
+            <button
+              type="button"
+              className="threat-matrix-manage-button"
+              onClick={() => {
+                onOpenLinkedDiagram(breakdown.relativePath)
+                setBreakdown(null)
+              }}
+            >
+              Open {breakdown.relativePath}
+            </button>
+          </div>
+        </div>
+      )}
+
       {managePanelAnchor && (
         <ThreatMatrixManagePanel
           anchorRect={managePanelAnchor}
@@ -313,6 +554,7 @@ export default function ThreatMatrixView({
           shapes={security.matrixShapeIds.map((id) => ({ id, label: shapeLabel(id) }))}
           hiddenShapeIds={hiddenShapeIds}
           assessableShapes={assessableShapes}
+          onAddAllShapes={addAllShapes}
           onAddThreat={addThreat}
           onRenameThreat={renameThreat}
           onToggleThreatHidden={toggleThreatHidden}
@@ -325,4 +567,16 @@ export default function ThreatMatrixView({
       )}
     </div>
   )
+}
+
+// How many leaf assessments in a subtree feed one threat's rollup — shown
+// in the derived-cell breakdown popup.
+function countContributions(matrix: CrawledMatrix, normalizedThreatName: string): number {
+  let n = 0
+  for (const shape of matrix.shapes) {
+    if (shape.linkBroken) continue
+    if (shape.child) n += countContributions(shape.child, normalizedThreatName)
+    else if (shape.cells[normalizedThreatName]) n += 1
+  }
+  return n
 }

@@ -101,6 +101,7 @@ interface ThreatMatrixManagePanelProps {
   shapes: { id: string; label: string }[]
   hiddenShapeIds: Set<string>
   assessableShapes: { id: string; label: string }[]
+  onAddAllShapes: () => void
   onAddThreat: (name: string) => void
   onRenameThreat: (id: string, name: string) => void
   onToggleThreatHidden: (id: string) => void
@@ -124,6 +125,7 @@ export default function ThreatMatrixManagePanel({
   shapes,
   hiddenShapeIds,
   assessableShapes,
+  onAddAllShapes,
   onAddThreat,
   onRenameThreat,
   onToggleThreatHidden,
@@ -207,20 +209,30 @@ export default function ThreatMatrixManagePanel({
             )
           })}
           {assessableShapes.length > 0 ? (
-            <select
-              className="threat-matrix-add-shape-select"
-              value=""
-              onChange={(event) => {
-                if (event.target.value) onAddShape(event.target.value)
-              }}
-            >
-              <option value="">+ Add a shape to assess…</option>
-              {assessableShapes.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
+            <>
+              <select
+                className="threat-matrix-add-shape-select"
+                value=""
+                onChange={(event) => {
+                  if (event.target.value) onAddShape(event.target.value)
+                }}
+              >
+                <option value="">+ Add a shape to assess…</option>
+                {assessableShapes.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className="threat-matrix-add-button"
+                onClick={onAddAllShapes}
+                title="Add every shape in the diagram to the matrix"
+              >
+                + Add all {assessableShapes.length} shape{assessableShapes.length === 1 ? '' : 's'}
+              </button>
+            </>
           ) : (
             <p className="legend-panel-hint">
               {shapes.length > 0 ? 'Every shape is already in the matrix.' : 'Draw a shape first.'}

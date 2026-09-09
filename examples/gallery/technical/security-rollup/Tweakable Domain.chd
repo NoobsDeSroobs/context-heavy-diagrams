@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "viewport": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  },
+  "security": {
+    "threats": [
+      {
+        "id": "threat-1f392fce-61be-4beb-9fa8-61dab426cf4c",
+        "name": "Service outage"
+      },
+      {
+        "id": "threat-0aba78ee-47b0-435a-806a-65846a1dc5e0",
+        "name": "DDoS"
+      }
+    ],
+    "matrixShapeIds": [
+      "shape-ddb6f6fb-ae7c-423f-b779-7ad926987b3c",
+      "shape-42c22e8a-b50a-4fe2-b307-72a1ac33a805"
+    ]
+  },
+  "nodes": [
+    {
+      "id": "shape-ddb6f6fb-ae7c-423f-b779-7ad926987b3c",
+      "type": "shape",
+      "position": {
+        "x": 276,
+        "y": 253.5
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "zIndex": 100010,
+      "data": {
+        "label": "Tweakable sub1",
+        "linkedDiagram": "Tweakable Domain/Tweakable sub1.chd"
+      }
+    },
+    {
+      "id": "shape-42c22e8a-b50a-4fe2-b307-72a1ac33a805",
+      "type": "shape",
+      "position": {
+        "x": 447,
+        "y": 257
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "zIndex": 100010,
+      "data": {
+        "label": "Tweakable sub2",
+        "security": {
+          "threat-0aba78ee-47b0-435a-806a-65846a1dc5e0": {
+            "probability": 3,
+            "consequence": 1
+          },
+          "threat-1f392fce-61be-4beb-9fa8-61dab426cf4c": {
+            "probability": 3,
+            "consequence": 1
+          }
+        }
+      }
+    }
+  ],
+  "edges": []
+}
