@@ -229,7 +229,17 @@ function AllowedValuesEditor({
           onChange={(event) => setNewDraft(event.target.value)}
           onBlur={commitNew}
           onKeyDown={(event) => {
-            if (event.key === 'Enter') event.currentTarget.blur()
+            // Deliberately NOT blur-to-commit like every other field in this
+            // panel (see commitOnEnter/useFieldDraft) — this row is always
+            // meant to be typed into again right after, so committing must
+            // leave focus right where it is instead of kicking it out to
+            // let onBlur pick it up. A real bug found live: blurring here
+            // cleared the row but left focus nowhere, so adding several
+            // values in a row meant reaching for the mouse between each one.
+            if (event.key === 'Enter') {
+              event.preventDefault()
+              commitNew()
+            }
           }}
         />
       </div>
@@ -419,11 +429,18 @@ export default function RequiredTagsSection({
     onChange(requiredTags.filter((_, i) => i !== index))
   }
 
+  // Seeds a blank key, not a placeholder string — Canvas.tsx's
+  // seedMetadata/syncElementMetadata both skip any requiredTags entry
+  // whose key is empty, so a freshly-added, not-yet-named tag is never
+  // stamped onto a single element. Only once the user actually types a
+  // real key (keyField's blur-commit below, which already refuses to
+  // commit an empty/whitespace value) does it become real and get synced.
+  // This is the root-cause fix for the "stamps its placeholder key onto
+  // every element" bug (known-issues.md) — a blank key can never leave
+  // behind a stray demoted free tag, because nothing was ever written
+  // under it in the first place.
   const addTag = (): void => {
-    let key = 'key'
-    let n = 2
-    while (requiredTags.some((tag) => tag.key === key)) key = `key ${n++}`
-    onChange([...requiredTags, { key, lock: 'lockedEditable' }])
+    onChange([...requiredTags, { key: '', lock: 'lockedEditable' }])
   }
 
   return (

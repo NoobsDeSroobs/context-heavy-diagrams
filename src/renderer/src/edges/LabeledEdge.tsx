@@ -33,6 +33,7 @@ import { HIGHLIGHT_BORDER_WIDTH } from '../highlights'
 import { isolateStyle } from '../search'
 import { withOpacity } from '../styles/colorOpacity'
 import { themeAdaptiveColor } from '../styles/themeAdaptiveColor'
+import type { Theme } from '../theme'
 import { markerUrl } from './markerIds'
 
 // solid has no dasharray at all (undefined, not '0'), matching a plain
@@ -49,9 +50,19 @@ const DASH_ARRAY: Record<Exclude<EdgeStyle['lineStyle'], undefined>, string | un
 // explicitly here since a selected edge's width is computed as "whatever
 // it already is, plus a bit," and that base has to be a real number even
 // when nothing overrides it. Always applied inline (see computedStyle
-// below), so unlike `stroke` this can't be steered by a CSS variable —
-// change it here, not in base.css.
+// below) — change it here, not in base.css.
 const DEFAULT_STROKE_WIDTH = 1.5
+
+// Same reasoning as DEFAULT_STROKE_WIDTH above, extended to color
+// (2026-09-15): an unstyled edge's stroke used to fall through to
+// base.css's --xy-edge-stroke-default CSS variable instead of a real
+// value here, unlike width — meaning "no explicit style" had a concrete
+// default in one channel but not the other, and a downstream reader
+// (PNG export, see known-issues.md's "PNG-exported arrowheads were
+// invisible..." entry) had nothing to inline-copy for the color case
+// specifically. Matches base.css's own --xy-edge-stroke-default values —
+// change both together if this ever needs to move.
+const DEFAULT_STROKE_COLOR: Record<Theme, string> = { dark: '#6b7684', light: '#8a8a92' }
 // Additive, not a replacement value — composes with the highlight-override
 // width (ADR 0025) instead of competing with it, so a highlighted *and*
 // selected edge just gets both effects layered.
@@ -281,11 +292,16 @@ function LabeledEdge({
       : (edgeStyle?.strokeWidth ?? DEFAULT_STROKE_WIDTH)
   const computedStyle: CSSProperties = {
     ...style,
-    ...(edgeStyle?.stroke
-      ? {
-          stroke: withOpacity(themeAdaptiveColor(edgeStyle.stroke, theme), edgeStyle.strokeOpacity)
-        }
-      : {}),
+    // Always a concrete value, same as strokeWidth below — falls back to
+    // DEFAULT_STROKE_COLOR rather than leaving `stroke` unset for CSS to
+    // fill in (see that constant's own comment). strokeOpacity now applies
+    // to the default color too, not just an explicit one — previously a
+    // strokeOpacity set with no explicit stroke was silently a no-op,
+    // since this whole key was omitted in that case.
+    stroke: withOpacity(
+      edgeStyle?.stroke ? themeAdaptiveColor(edgeStyle.stroke, theme) : DEFAULT_STROKE_COLOR[theme],
+      edgeStyle?.strokeOpacity
+    ),
     strokeWidth: selected ? baseStrokeWidth + SELECTED_STROKE_WIDTH_DELTA : baseStrokeWidth,
     ...(edgeStyle?.lineStyle ? { strokeDasharray: DASH_ARRAY[edgeStyle.lineStyle] } : {}),
     // A single matching highlight overrides the stroke color, same

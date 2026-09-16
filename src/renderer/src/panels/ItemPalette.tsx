@@ -4,6 +4,9 @@
 // click-to-add came first). These replace the
 // toolbar's old Add-shape/Add-container/Add-text buttons rather than
 // duplicating them.
+//
+// Right-click on Shape/Container opens the bulk-create dialog instead —
+// see ADR 0089. onClick keeps its existing single-add meaning.
 
 export type PaletteItemType = 'shape' | 'container' | 'text' | 'line'
 
@@ -22,12 +25,16 @@ export default function ItemPalette({
   onAddShape,
   onAddText,
   onAddContainer,
-  onAddLine
+  onAddLine,
+  onCreateMultipleShapes,
+  onCreateMultipleContainers
 }: {
   onAddShape: () => void
   onAddText: () => void
   onAddContainer: () => void
   onAddLine: () => void
+  onCreateMultipleShapes: () => void
+  onCreateMultipleContainers: () => void
 }): React.JSX.Element {
   return (
     <div className="item-palette">
@@ -38,6 +45,11 @@ export default function ItemPalette({
         draggable
         onDragStart={(e) => onItemDragStart(e, 'shape')}
         onClick={onAddShape}
+        onContextMenu={(e) => {
+          e.preventDefault()
+          onCreateMultipleShapes()
+        }}
+        title="Right-click to create multiple from a list"
       >
         <span className="item-palette-icon item-palette-icon-shape" />
         Shape
@@ -48,6 +60,11 @@ export default function ItemPalette({
         draggable
         onDragStart={(e) => onItemDragStart(e, 'container')}
         onClick={onAddContainer}
+        onContextMenu={(e) => {
+          e.preventDefault()
+          onCreateMultipleContainers()
+        }}
+        title="Right-click to create multiple from a list"
       >
         <span className="item-palette-icon item-palette-icon-container" />
         Container

@@ -3,6 +3,7 @@ import { getNodesBounds, type Node } from '@xyflow/react'
 import { resolveLegendIconMarkup, resolveLegendColors, buildLegendElement } from './exportLegendDom'
 import { placeLegend, type LegendCorner, type Rect } from './exportLegendPlacement'
 import type { ExportLegendItem } from './exportLegendItems'
+import { MARKER_ID } from '../edges/markerIds'
 
 export interface PngExportOptions {
   paddingPx: number
@@ -71,6 +72,87 @@ export function rgbStringToHex(rgb: string): string {
   if (!match) return '#ffffff'
   const toHex = (channel: string): string => Number(channel).toString(16).padStart(2, '0')
   return `#${toHex(match[1])}${toHex(match[2])}${toHex(match[3])}`
+}
+
+// This app's own edge markers (edgeMarkers.tsx) use the SVG `context-fill`/
+// `context-stroke` paint keywords so one marker def can be referenced by
+// edges of any color, each rendering the marker in its own live stroke
+// color. That works fine on screen but not through html-to-image's toPng():
+// a <marker>'s content is template content, never actually part of the
+// normal painted tree, so the "which element referenced me, and what's its
+// stroke" relationship context-stroke depends on doesn't survive
+// html-to-image's own DOM-to-image conversion — arrowheads render with no
+// visible color at all in the exported PNG (found live, 2026-09-15;
+// swapping which marker got referenced by default, a first attempted fix,
+// didn't help, since both this app's and React Flow's own default marker
+// used to point at the same underlying mechanism once that first change
+// landed — the real gap was context-stroke itself, not which def was used).
+//
+// Selection/hover-driven marker color doesn't need to survive export
+// (selection is already cleared before capture, same as the resize/
+// connection-point handles this function's own doc comment already notes
+// as a separate concern), so this only ever needs each edge's *current*
+// resolved color, not full CSS-var dynamism — resolving that ahead of time
+// into one literal-color marker clone per distinct color actually in use
+// (exactly how React Flow's own built-in markers already work) sidesteps
+// the whole context-* reliability question for export specifically,
+// without touching how markers render live.
+//
+// Operates on viewportEl directly (the live, connected tree) for the
+// duration of the capture, then restores every attribute it touched — same
+// pattern as the marker-defs clone below, chosen for the same reason
+// (moving/mutating the live React-managed edge nodes themselves, rather
+// than a append-only sibling clone, would be riskier; this instead only
+// ever restores exactly what it changed, synchronously, before any
+// re-render could observe the mutated state).
+function resolveMarkersForExport(viewportEl: HTMLElement): () => void {
+  const CHD_MARKER_IDS = new Set(Object.values(MARKER_ID))
+  const defs = viewportEl.querySelector('[data-export-role="edge-marker-defs"] defs')
+  if (!defs) return () => {}
+
+  const markerIdFromUrl = (value: string | null): string | null =>
+    value?.match(/^url\(#([^)]+)\)$/)?.[1] ?? null
+
+  const variantIds = new Map<string, string>() // `${baseId}::${color}` -> variant id
+  const ensureVariant = (baseId: string, color: string): string | null => {
+    const cacheKey = `${baseId}::${color}`
+    const cached = variantIds.get(cacheKey)
+    if (cached) return cached
+    const original = defs.querySelector(`#${CSS.escape(baseId)}`)
+    if (!original) return null
+    const clone = original.cloneNode(true) as Element
+    const variantId = `${baseId}__export-${variantIds.size}`
+    clone.setAttribute('id', variantId)
+    clone
+      .querySelectorAll('[fill="context-stroke"]')
+      .forEach((el) => el.setAttribute('fill', color))
+    clone
+      .querySelectorAll('[stroke="context-stroke"]')
+      .forEach((el) => el.setAttribute('stroke', color))
+    defs.appendChild(clone)
+    variantIds.set(cacheKey, variantId)
+    return variantId
+  }
+
+  // Not scoped to .react-flow__edge-path — the legend's own 'line'-kind
+  // swatches (exportLegendDom.ts) reference these same marker ids via a
+  // plain <line>, appended into viewportEl for the capture same as edges,
+  // and need the identical treatment.
+  const restores: (() => void)[] = []
+  viewportEl.querySelectorAll<SVGElement>('[marker-end], [marker-start]').forEach((el) => {
+    const color = getComputedStyle(el).stroke
+    ;(['marker-start', 'marker-end'] as const).forEach((attr) => {
+      const raw = el.getAttribute(attr)
+      const baseId = markerIdFromUrl(raw)
+      if (!baseId || !CHD_MARKER_IDS.has(baseId)) return
+      const variantId = ensureVariant(baseId, color)
+      if (!variantId) return
+      el.setAttribute(attr, `url(#${variantId})`)
+      restores.push(() => el.setAttribute(attr, raw as string))
+    })
+  })
+
+  return () => restores.forEach((restore) => restore())
 }
 
 // Captures the diagram's own content — cropped to nodes' bounds plus
@@ -172,6 +254,9 @@ export async function captureDiagramPng(
   const markerDefsClone = markerDefs?.cloneNode(true) as ChildNode | undefined
   if (markerDefsClone) viewportEl.insertBefore(markerDefsClone, viewportEl.firstChild)
   if (legendEl) viewportEl.appendChild(legendEl)
+  // Needs the clone's own <defs> in place first — see resolveMarkersForExport's
+  // own comment for why context-stroke needs resolving to literal colors here.
+  const restoreMarkers = markerDefsClone ? resolveMarkersForExport(viewportEl) : () => {}
 
   try {
     return await toPng(viewportEl, {
@@ -186,6 +271,7 @@ export async function captureDiagramPng(
       }
     })
   } finally {
+    restoreMarkers()
     if (markerDefsClone) viewportEl.removeChild(markerDefsClone)
     if (legendEl) viewportEl.removeChild(legendEl)
   }

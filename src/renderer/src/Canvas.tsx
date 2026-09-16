@@ -7,7 +7,6 @@ import {
   Controls,
   ControlButton,
   MiniMap,
-  MarkerType,
   ConnectionMode,
   SelectionMode,
   addEdge,
@@ -60,6 +59,7 @@ import { effectiveGravityPresets } from './lineGravityPresets'
 import LabeledEdge from './edges/LabeledEdge'
 import { highlightId, matchingHighlights, reconcileHighlightGroup } from './highlights'
 import EdgeMarkerDefs from './edges/edgeMarkers'
+import { markerUrl } from './edges/markerIds'
 import DiagramContext, { type DiagramContextValue } from './DiagramContext'
 import ContextMenu, { type ContextMenuItem } from './components/ContextMenu'
 import IconPicker from './components/IconPicker'
@@ -109,6 +109,7 @@ import PreferencesPanel from './components/PreferencesPanel'
 import AlignDistributePanel from './components/AlignDistributePanel'
 import AboutDialog from './components/AboutDialog'
 import ExportPngDialog, { type PngExportChoice } from './components/ExportPngDialog'
+import BulkCreateDialog from './components/BulkCreateDialog'
 import StylePalettePanel from './components/StylePalettePanel'
 import ReferenceWindow from './components/ReferenceWindow'
 import ReferencesPanel from './components/ReferencesPanel'
@@ -149,9 +150,25 @@ const edgeTypes = { labeled: LabeledEdge }
 // render (this was previously written inline on <ReactFlow>) forces *every*
 // edge to re-render on *every* render of this component, regardless of
 // whether any edge or node data actually changed.
+//
+// markerEnd used to be React Flow's own { type: MarkerType.ArrowClosed } —
+// RF generates its own marker def for that, colored via a `defaultColor`
+// prop this app never set, so it silently stayed RF's stock `#b1b1b7`
+// forever, independent of the edge line's own default color (base.css's
+// --xy-edge-stroke-default override, see known-issues.md's "Default edge
+// stroke... unreadable" entry) — the two only looked consistent by
+// coincidence on the dark canvas, and washed out ("invisible") against a
+// light PNG export background. A raw 'url(#id)' string here (same form
+// LabeledEdge's own computedMarkerEnd already uses for a styled edge's
+// endMarker) points every default, unstyled edge at this app's own
+// context-stroke marker (edgeMarkers.tsx) instead — RF passes a string
+// straight through with no def of its own generated (createMarkerIds only
+// acts on an object marker), and the arrowhead then always inherits
+// whatever color the edge itself actually draws in, live or exported, so
+// the two can't drift apart again.
 const DEFAULT_EDGE_OPTIONS = {
   type: 'labeled',
-  markerEnd: { type: MarkerType.ArrowClosed }
+  markerEnd: markerUrl('arrowClosed')
 }
 
 // A 'line' node's own rectangular bounding box is frequently much larger
@@ -761,15 +778,17 @@ function fromDiagramFile(diagram: DiagramFile): {
 // entry, seeded at its own defaultValue/lock. No diagnostics involved (a
 // new element has nothing to "reset"); that only applies to syncElementMetadata
 // below, which reconciles *existing* elements against a changed template.
+// A not-yet-named tag (addTag() seeds a blank key, not a placeholder — see
+// its own comment) is skipped: nothing to seed under an empty key.
 function seedMetadata(
   requiredTags: RequiredTagDefinition[]
 ): Record<string, MetadataEntry> | undefined {
-  if (requiredTags.length === 0) return undefined
   const result: Record<string, MetadataEntry> = {}
   for (const def of requiredTags) {
+    if (!def.key) continue
     result[def.key] = { value: def.defaultValue ?? null, lock: def.lock }
   }
-  return result
+  return Object.keys(result).length > 0 ? result : undefined
 }
 
 function isValidForTag(value: JsonValue, def: RequiredTagDefinition): boolean {
@@ -799,6 +818,11 @@ function isValidForTag(value: JsonValue, def: RequiredTagDefinition): boolean {
 // is already occupied by an old free entry, that free entry is the one that
 // gets bumped aside (" (demoted)", numbered if that's also taken), not the
 // reinstated required entry, so the template's key always stays clean.
+//
+// A not-yet-named tag (blank key — see addTag()'s own comment) is skipped
+// entirely here, both as a def to reconcile against and as a member of
+// requiredKeys: nothing was ever stamped under an empty key, so there's
+// nothing to reconcile or demote for it either.
 function syncElementMetadata(
   metadata: Record<string, MetadataEntry> | undefined,
   requiredTags: RequiredTagDefinition[],
@@ -806,9 +830,10 @@ function syncElementMetadata(
   diagnostics: string[]
 ): Record<string, MetadataEntry> | undefined {
   const next: Record<string, MetadataEntry> = { ...metadata }
-  const requiredKeys = new Set(requiredTags.map((def) => def.key))
+  const namedTags = requiredTags.filter((def) => def.key)
+  const requiredKeys = new Set(namedTags.map((def) => def.key))
 
-  for (const def of requiredTags) {
+  for (const def of namedTags) {
     const existing = next[def.key]
     const templateEntry: MetadataEntry = { value: def.defaultValue ?? null, lock: def.lock }
 
@@ -1119,6 +1144,8 @@ function CanvasInner(): React.JSX.Element {
   const [aboutDialogOpen, setAboutDialogOpen] = useState(false)
   const [exportPngDialogOpen, setExportPngDialogOpen] = useState(false)
   const [exportPngEffectiveColorHex, setExportPngEffectiveColorHex] = useState('#ffffff')
+  // See ADR 0089 — right-click on the ItemPalette Shape/Container button.
+  const [bulkCreateType, setBulkCreateType] = useState<'shape' | 'container' | null>(null)
   // onlyRenderVisibleElements (ADR 0073) keeps React Flow from mounting
   // off-screen nodes/edges — a large win on big diagrams, but PNG export
   // (handleExportPng) clones the .react-flow__viewport DOM subtree, so
@@ -3139,6 +3166,79 @@ function CanvasInner(): React.JSX.Element {
       }
     ])
   }, [setNodes, pushSnapshot, spawnPosition, requiredTags, preferences.defaultStyles.container])
+
+  // Bulk counterpart to addShapeNode/addContainerNode — see ADR 0089. One
+  // pushSnapshot/setNodes for the whole batch (one undo step), laid out in
+  // a grid centered on the viewport rather than spawnPosition's small
+  // per-click jitter (which exists to keep repeated single clicks visibly
+  // apart, not to lay out a deliberate batch). nextZIndex is recomputed
+  // against the array as it grows within the same batch, so zIndex among
+  // the new nodes stays deterministic (first line = lowest).
+  const addMultipleNodes = useCallback(
+    (type: 'shape' | 'container', labels: string[]) => {
+      if (labels.length === 0) return
+      pushSnapshot()
+      const width = type === 'shape' ? SHAPE_MIN_WIDTH * 2 : CONTAINER_MIN_WIDTH * 2
+      const height = type === 'shape' ? SHAPE_MIN_HEIGHT * 2 : CONTAINER_MIN_HEIGHT * 1.5
+      const gap = 40
+      const columns = Math.ceil(Math.sqrt(labels.length))
+      const rows = Math.ceil(labels.length / columns)
+      const center = rfInstance.screenToFlowPosition({
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2
+      })
+      const originX = center.x - (columns * width + (columns - 1) * gap) / 2
+      const originY = center.y - (rows * height + (rows - 1) * gap) / 2
+
+      setNodes((nds) => {
+        let acc = nds
+        for (let index = 0; index < labels.length; index++) {
+          const col = index % columns
+          const row = Math.floor(index / columns)
+          const data =
+            type === 'shape'
+              ? {
+                  label: labels[index],
+                  zIndex: nextZIndex(acc, 'shape'),
+                  metadata: seedMetadata(requiredTags),
+                  style: preferences.defaultStyles.shape
+                }
+              : {
+                  label: labels[index],
+                  zIndex: nextZIndex(acc, 'container'),
+                  style: preferences.defaultStyles.container ?? {
+                    fill: 'var(--ev-c-gray-1)',
+                    fillOpacity: 20
+                  },
+                  metadata: seedMetadata(requiredTags)
+                }
+          acc = [
+            ...acc,
+            {
+              id: newNodeId(type),
+              type,
+              position: {
+                x: originX + col * (width + gap),
+                y: originY + row * (height + gap)
+              },
+              width,
+              height,
+              data
+            }
+          ]
+        }
+        return sortNodesForHierarchy(acc)
+      })
+    },
+    [
+      setNodes,
+      pushSnapshot,
+      rfInstance,
+      requiredTags,
+      preferences.defaultStyles.shape,
+      preferences.defaultStyles.container
+    ]
+  )
 
   // A default 2-point horizontal line — see ADR 0050. Points are
   // node-local (relative to position), padded the same way normalizeLineBounds
@@ -5447,6 +5547,8 @@ function CanvasInner(): React.JSX.Element {
                 onAddText={addTextNode}
                 onAddContainer={addContainerNode}
                 onAddLine={addLineNode}
+                onCreateMultipleShapes={() => setBulkCreateType('shape')}
+                onCreateMultipleContainers={() => setBulkCreateType('container')}
                 onUpdateNodeStyle={updateNodeStyle}
                 onUpdateEdgeStyle={updateEdgeStyle}
                 onUpdateTransform={updateTransform}
@@ -5762,6 +5864,16 @@ function CanvasInner(): React.JSX.Element {
           )
         })}
         {aboutDialogOpen && <AboutDialog onClose={() => setAboutDialogOpen(false)} />}
+        {bulkCreateType && (
+          <BulkCreateDialog
+            typeLabel={bulkCreateType}
+            onClose={() => setBulkCreateType(null)}
+            onConfirm={(labels) => {
+              addMultipleNodes(bulkCreateType, labels)
+              setBulkCreateType(null)
+            }}
+          />
+        )}
         {exportPngDialogOpen && (
           <ExportPngDialog
             initial={{

@@ -20,6 +20,8 @@ function DiagramDock({
   onAddText,
   onAddContainer,
   onAddLine,
+  onCreateMultipleShapes,
+  onCreateMultipleContainers,
   onUpdateNodeStyle,
   onUpdateEdgeStyle,
   onUpdateTransform,
@@ -40,6 +42,8 @@ function DiagramDock({
   onAddText: () => void
   onAddContainer: () => void
   onAddLine: () => void
+  onCreateMultipleShapes: () => void
+  onCreateMultipleContainers: () => void
   onUpdateNodeStyle: (nodeIds: string[], patch: Partial<NodeStyle>) => void
   onUpdateEdgeStyle: (edgeIds: string[], patch: Partial<EdgeStyle>) => void
   onUpdateTransform: (nodeIds: string[], patch: TransformPatch) => void
@@ -77,7 +81,14 @@ function DiagramDock({
           onSetDefaultStyle={onSetDefaultStyle}
         />
       ) : (
-        <ItemPalette onAddShape={onAddShape} onAddText={onAddText} onAddContainer={onAddContainer} onAddLine={onAddLine} />
+        <ItemPalette
+          onAddShape={onAddShape}
+          onAddText={onAddText}
+          onAddContainer={onAddContainer}
+          onAddLine={onAddLine}
+          onCreateMultipleShapes={onCreateMultipleShapes}
+          onCreateMultipleContainers={onCreateMultipleContainers}
+        />
       )}
     </div>
   )

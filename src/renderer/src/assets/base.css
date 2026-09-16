@@ -33,7 +33,13 @@
   /* Override React Flow's own bundled edge defaults (@xyflow/react's
      style.css sets --xy-edge-stroke-default: #3e3e3e in dark mode) —
      too close to the near-black canvas background to read comfortably.
-     Lightened for contrast, plus a touch thicker than RF's stock 1px. */
+     Lightened for contrast, plus a touch thicker than RF's stock 1px.
+     LabeledEdge.tsx's own DEFAULT_STROKE_COLOR (kept equal to this value)
+     is what an ordinary edge actually renders with now — this CSS
+     variable only still matters as the fallback for RF's built-in edge
+     component, used when an edge's `type` doesn't resolve to LabeledEdge
+     at all (see known-issues.md's "hand-authored edge with no type
+     field" entry) — change both together if this value ever moves. */
   --xy-edge-stroke-default: #6b7684;
   --xy-edge-stroke-selected-default: #9099a6;
 }
