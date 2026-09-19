@@ -11,7 +11,6 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
 ```json
 {
   "version": 1,
-  "viewport": { "x": 0, "y": 0, "zoom": 1 },
   "metadata": { "owner": "platform-team" },
   "requiredTags": [
     { "key": "environment", "allowedValues": ["dev", "staging", "prod"], "defaultValue": "dev", "lock": "lockedEditable" }
@@ -42,7 +41,6 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
 | Field | Type | Meaning |
 |---|---|---|
 | `version` | `1` | Format version. Currently always `1`. See Versioning below. |
-| `viewport` | object | Camera position when the file was last saved: `x`, `y` (pan offset in canvas units) and `zoom` (scale factor, `1` = 100%). Purely cosmetic — restores where the view was, has no effect on the diagram's meaning. |
 | `metadata` | object | Diagram-level free-form key/value bag — plain JSON values, no locking concept at this level (that's what `requiredTags` is for). Absent means none set. See [Metadata](#metadata) below for the value shape's general rules (this is the same `JsonValue` type, just not wrapped in a per-entry `MetadataEntry`). |
 | `requiredTags` | array of RequiredTagDefinition | The diagram's own template for what every Shape/Container/Edge must carry — see [Required tags](#required-tags) below. Absent means no required tags. |
 | `highlights` | array of HighlightDefinition | Saved catalog of tag-based visual highlights — see [Highlights](#highlights) below. Absent means no highlights defined. Note there is no on/off state stored here: this app treats "which highlights are currently enabled" as local, in-memory, per-session state, never written to the file — a reader that only cares about reading the file back doesn't need to reconstruct or care about that. |

@@ -1,10 +1,5 @@
 {
   "version": 1,
-  "viewport": {
-    "x": 605,
-    "y": 149,
-    "zoom": 1
-  },
   "requiredTags": [
     {
       "key": "gdpr",

@@ -1,10 +1,5 @@
 {
   "version": 1,
-  "viewport": {
-    "x": 40,
-    "y": 40,
-    "zoom": 0.9
-  },
   "metadata": {
     "layer": "Technical components (leaf)",
     "note": "Leaf diagram — assessments here are hand-entered and roll UP into Customer Management > Identity Service."

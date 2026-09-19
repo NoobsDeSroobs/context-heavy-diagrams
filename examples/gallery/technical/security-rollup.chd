@@ -1,10 +1,5 @@
 {
   "version": 1,
-  "viewport": {
-    "x": 0,
-    "y": 0,
-    "zoom": 1
-  },
   "metadata": {
     "layers": "Business domain (this file) -> Services -> Technical components (leaves)",
     "purpose": "Showcase the recursive Security Matrix rollup (ADR 0088) across three layers.",

@@ -1,10 +1,5 @@
 {
   "version": 1,
-  "viewport": {
-    "x": 40,
-    "y": 60,
-    "zoom": 0.9
-  },
   "metadata": {
     "layer": "Services (mid)",
     "note": "Both columns are derived (rolled up from leaf diagrams). Change the Threat score mode between Average / Sum / Max and watch every derived cell recompute — the whole tree uses the mode of whichever matrix you're looking at (ADR 0088)."

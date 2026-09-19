@@ -21,8 +21,7 @@ import {
   type HandleType,
   type Node,
   type NodeChange,
-  type OnConnectStartParams,
-  type Viewport
+  type OnConnectStartParams
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import {
@@ -497,7 +496,6 @@ function isConnectableNodeType(type: string | undefined): boolean {
 function toDiagramFile(
   nodes: Node[],
   edges: Edge[],
-  viewport: Viewport,
   metadata: Record<string, JsonValue>,
   requiredTags: RequiredTagDefinition[],
   highlights: HighlightDefinition[],
@@ -532,7 +530,6 @@ function toDiagramFile(
   }
   return {
     version: 1,
-    viewport,
     metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
     highlights: highlights.length > 0 ? highlights : undefined,
     legend: legend.length > 0 ? legend : undefined,
@@ -3891,7 +3888,7 @@ function CanvasInner(): React.JSX.Element {
     [detailsDrafts, setNodes]
   )
 
-  // Writes nodesToSave (plus current edges/viewport) to path, flushing any
+  // Writes nodesToSave (plus current edges) to path, flushing any
   // pending detail drafts first, and syncs canvas state to whatever actually
   // got written — the one place a diagram is persisted to disk, so every
   // save-adjacent flow (manual save, link creation, forward link navigation)
@@ -3911,7 +3908,6 @@ function CanvasInner(): React.JSX.Element {
       const diagram = toDiagramFile(
         savedNodes,
         edges,
-        rfInstance.getViewport(),
         diagramMetadata,
         requiredTags,
         highlights,
@@ -4157,7 +4153,6 @@ function CanvasInner(): React.JSX.Element {
       // targets by data-id don't exist in the DOM until after this render
       // commits.
       requestAnimationFrame(() => updateNodeInternals(openedNodes.map((n) => n.id)))
-      rfInstance.setViewport(diagram.viewport)
       setCurrentPath(path)
       setDiagramMetadata(openedMetadata)
       setRequiredTags(openedRequiredTags)
@@ -4307,7 +4302,6 @@ function CanvasInner(): React.JSX.Element {
       const diagram = toDiagramFile(
         s.nodes,
         s.edges,
-        rfInstance.getViewport(),
         s.diagramMetadata,
         s.requiredTags,
         s.highlights,
@@ -4515,7 +4509,6 @@ function CanvasInner(): React.JSX.Element {
       return
     loadDiagramIntoCanvas(null, {
       version: 1,
-      viewport: { x: 0, y: 0, zoom: 1 },
       nodes: [],
       edges: []
     })

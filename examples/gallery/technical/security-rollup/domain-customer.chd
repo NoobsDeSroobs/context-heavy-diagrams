@@ -1,10 +1,5 @@
 {
   "version": 1,
-  "viewport": {
-    "x": 40,
-    "y": 60,
-    "zoom": 0.85
-  },
   "metadata": {
     "layer": "Services (mid)",
     "note": "Identity + Profile are DERIVED columns (rolled up from their leaf diagrams). Notification Service is a NON-LINKED shape, assessed directly here — it works exactly like a normal matrix column alongside the derived ones."

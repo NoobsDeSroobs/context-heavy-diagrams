@@ -422,7 +422,11 @@ export interface DiagramEdge {
 
 export interface DiagramFile {
   version: 1
-  viewport: { x: number; y: number; zoom: number }
+  // Camera position (pan/zoom) is deliberately NOT persisted here — it isn't
+  // diagram content, and saving it made every save's diff carry an unrelated
+  // viewport churn alongside real edits. See ADR 0090. A file written by an
+  // older build may still have a `viewport` key at this level; a reader just
+  // ignores it.
   // Diagram-level free-form bag — always unlocked, no requiredTags concept
   // at this level (see ADR 0022's Consequences).
   metadata?: Record<string, JsonValue>
@@ -466,7 +470,7 @@ export interface DiagramFile {
 }
 
 export function createEmptyDiagram(): DiagramFile {
-  return { version: 1, viewport: { x: 0, y: 0, zoom: 1 }, nodes: [], edges: [] }
+  return { version: 1, nodes: [], edges: [] }
 }
 
 // Recursively sorts object keys alphabetically — applied to metadata dicts
@@ -640,7 +644,6 @@ export function serializeDiagram(diagram: DiagramFile): string {
     !!diagram.edgeDirectionSets && diagram.edgeDirectionSets.length >= 2
   const ordered: DiagramFile = {
     version: diagram.version,
-    viewport: { x: diagram.viewport.x, y: diagram.viewport.y, zoom: diagram.viewport.zoom },
     metadata:
       diagram.metadata && Object.keys(diagram.metadata).length > 0
         ? (sortKeysDeep(diagram.metadata) as Record<string, JsonValue>)

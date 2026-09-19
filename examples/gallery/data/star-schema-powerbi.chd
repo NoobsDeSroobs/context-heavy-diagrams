@@ -1,6 +1,5 @@
 {
   "version": 1,
-  "viewport": { "x": 620, "y": 470, "zoom": 0.62 },
   "metadata": {
     "source": "Power BI semantic model (Import mode)",
     "grain": "one row per ticket line sold",
