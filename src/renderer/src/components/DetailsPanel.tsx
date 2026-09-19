@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
 interface DetailsPanelProps {
+  title: string
   content: string
   onChange: (content: string) => void
   onClose: () => void
@@ -15,6 +16,7 @@ type Mode = 'edit' | 'preview'
 // the brief's own framing: most substantial edits happen in an external
 // editor, this is just enough to jot something down without leaving the app.
 export default function DetailsPanel({
+  title,
   content,
   onChange,
   onClose
@@ -52,6 +54,9 @@ export default function DetailsPanel({
   return (
     <div className="details-panel">
       <div className="details-panel-toolbar">
+        <span className="details-panel-title" title={title}>
+          {title}
+        </span>
         {mode === 'edit' && (
           <div className="details-panel-format-buttons">
             <button type="button" title="Bold" onClick={() => wrapSelection('**')}>

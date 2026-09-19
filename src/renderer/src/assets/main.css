@@ -932,6 +932,15 @@ body {
   border-bottom: 1px solid var(--ev-c-gray-2);
 }
 
+.details-panel-title {
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
 .details-panel-format-buttons {
   display: flex;
   gap: 4px;
