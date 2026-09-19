@@ -19,6 +19,13 @@ export interface DiagramApi {
   pickAndCopyReferences(diagramPath: string): Promise<string[] | null>
   readReferenceAsDataUrl(diagramPath: string, relativePath: string): Promise<string>
   readDetails(diagramPath: string, relativePath: string): Promise<string>
+  checkExternalChange(path: string): Promise<{ changed: boolean; stamp: string | null }>
+  confirmExternalChange(
+    what: 'diagram' | 'details',
+    dirty: boolean,
+    names: string[]
+  ): Promise<'cancel' | 'overwrite' | 'reload'>
+  statDetails(diagramPath: string, relativePath: string): Promise<string | null>
   writeDetails(diagramPath: string, nodeId: string, label: string, content: string): Promise<string>
   syncDetailFileName(
     diagramPath: string,

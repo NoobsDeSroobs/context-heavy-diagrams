@@ -2,6 +2,7 @@ import { ipcMain } from 'electron'
 import { access, mkdir, readFile, rename, writeFile } from 'fs/promises'
 import { basename, dirname, extname, join, relative } from 'path'
 import { labelToFileStem } from '@shared/labelFileName'
+import { fileStamp } from './fileStamp'
 
 // Detail files live in a sibling folder named after the diagram file, same
 // convention as custom icons (ADR 0006) — e.g. my-diagram.chd ->
@@ -36,6 +37,13 @@ export function registerDetailsHandlers(): void {
       return ''
     }
   })
+
+  // Fingerprint of a detail file (see fileStamp.ts) — the renderer records it
+  // when it reads a note into a draft and compares before flushing that draft
+  // back, so an outside edit to the .md isn't silently overwritten.
+  ipcMain.handle('details:stat', (_event, diagramPath: string, relativePath: string) =>
+    fileStamp(join(dirname(diagramPath), relativePath))
+  )
 
   ipcMain.handle(
     'details:write',

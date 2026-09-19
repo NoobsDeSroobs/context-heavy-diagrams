@@ -1,5 +1,7 @@
+import { showAlert } from './alerts'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
+import { SaveAbortedError, isSaveAborted } from './saveAborted'
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -107,6 +109,7 @@ import MultiConnectionLine from './edges/MultiConnectionLine'
 import PreferencesPanel from './components/PreferencesPanel'
 import AlignDistributePanel from './components/AlignDistributePanel'
 import AboutDialog from './components/AboutDialog'
+import AlertDialog from './components/AlertDialog'
 import ExportPngDialog, { type PngExportChoice } from './components/ExportPngDialog'
 import BulkCreateDialog from './components/BulkCreateDialog'
 import StylePalettePanel from './components/StylePalettePanel'
@@ -491,6 +494,13 @@ function nodeMetadataEligible(type: string | undefined): boolean {
 // connection point that doesn't exist on it.
 function isConnectableNodeType(type: string | undefined): boolean {
   return type === 'shape' || type === 'container' || type === 'anchor'
+}
+
+// Names the note in the toolbar's "changed outside the app" notice: the
+// element's label (first line), else "This note".
+function detailsNoteName(node: Node | undefined): string {
+  const label = typeof node?.data?.label === 'string' ? node.data.label.split('\n')[0].trim() : ''
+  return label ? `Note "${label}"` : 'This note'
 }
 
 function toDiagramFile(
@@ -985,6 +995,33 @@ function CanvasInner(): React.JSX.Element {
   // every panel-open boolean, etc.) never touches this.
   const [isDirty, setIsDirty] = useState(false)
   const markDirty = useCallback(() => setIsDirty(true), [])
+  // Outside-the-app change detection (ADR 0091). isDirtyRef feeds the save-time
+  // guards (persistDiagram is a callback that shouldn't re-identify on every
+  // dirty flip); externalChangeStamp is non-null while the "changed on disk"
+  // banner shows; dismissedStampRef remembers which specific change the user
+  // ignored so a later focus doesn't re-show it (the save-time guard still
+  // fires — dismissing never touches the main-side baseline).
+  const isDirtyRef = useRef(false)
+  useEffect(() => {
+    isDirtyRef.current = isDirty
+  }, [isDirty])
+  const [externalChangeStamp, setExternalChangeStamp] = useState<string | null>(null)
+  const dismissedStampRef = useRef<string | null>(null)
+  // What each detail draft looked like on disk when it was read/written, so
+  // an unedited draft never overwrites an outside edit and an edited one
+  // raises the conflict popup.
+  const detailsBaselineRef = useRef<Record<string, { stamp: string | null; content: string }>>({})
+  // What the open Details panel says about an outside change to its note:
+  // 'refreshed' = it was unedited, so it was silently re-read from disk;
+  // 'conflict' = the draft has unsaved edits AND the file changed. The
+  // dismissed map remembers the stamp the user chose to ignore, per note.
+  const [detailsNotice, setDetailsNotice] = useState<{
+    nodeId: string
+    kind: 'refreshed' | 'conflict'
+  } | null>(null)
+  const detailsDismissedStampRef = useRef<Record<string, string>>({})
+  // Set once loadDiagramIntoCanvas exists (it's declared after persistDiagram).
+  const reloadFromDiskRef = useRef<((path: string) => Promise<void>) | null>(null)
   // See loadDiagramIntoCanvas's own comment on why this exists — a short
   // grace window after any load during which React Flow's own automatic
   // post-mount dimension measurement doesn't count as a discrete edit.
@@ -1782,7 +1819,7 @@ function CanvasInner(): React.JSX.Element {
   const addReferencesToNode = useCallback(
     async (nodeId: string) => {
       if (!currentPath) {
-        alert('Save the diagram before adding reference images.')
+        showAlert('Save the diagram before adding reference images.')
         return
       }
       let added: string[] | null
@@ -1792,7 +1829,7 @@ function CanvasInner(): React.JSX.Element {
         // Surface it rather than failing silently — most often a stale
         // preload bundle after adding this API (needs a full app restart),
         // occasionally a real copy/permissions error.
-        alert(`Could not add reference images: ${err instanceof Error ? err.message : String(err)}`)
+        showAlert(`Could not add reference images: ${err instanceof Error ? err.message : String(err)}`)
         return
       }
       if (!added || added.length === 0) return
@@ -2568,7 +2605,7 @@ function CanvasInner(): React.JSX.Element {
   // followed or written to — reported as excluded, not silently skipped.
   const copyRequiredTagsToChildren = useCallback(async () => {
     if (!currentPath) {
-      alert('Save the diagram before copying required tags to linked children.')
+      showAlert('Save the diagram before copying required tags to linked children.')
       return
     }
     const directChildRelativePaths = nodes
@@ -2577,20 +2614,20 @@ function CanvasInner(): React.JSX.Element {
       )
       .filter((p): p is string => p !== undefined)
     if (directChildRelativePaths.length === 0) {
-      alert('This diagram has no linked children yet.')
+      showAlert('This diagram has no linked children yet.')
       return
     }
     const preview = await window.api
       .previewRequiredTagsChildren(currentPath, directChildRelativePaths)
       .catch((error: unknown) => {
-        alert(
+        showAlert(
           `Couldn't scan linked diagrams: ${error instanceof Error ? error.message : String(error)}`
         )
         return null
       })
     if (!preview) return
     if (preview.reached.length === 0) {
-      alert('No linked diagrams to copy to (all links were external or unreadable).')
+      showAlert('No linked diagrams to copy to (all links were external or unreadable).')
       return
     }
     const externalNote =
@@ -2605,7 +2642,7 @@ function CanvasInner(): React.JSX.Element {
     const result = await window.api
       .copyRequiredTagsToChildren(currentPath, requiredTags, directChildRelativePaths)
       .catch((error: unknown) => {
-        alert(
+        showAlert(
           `Couldn't copy required tags: ${error instanceof Error ? error.message : String(error)}`
         )
         return null
@@ -2615,7 +2652,7 @@ function CanvasInner(): React.JSX.Element {
       result.unreadable.length > 0
         ? `\n\nCouldn't be read, skipped:\n${result.unreadable.map((p) => `  ${p}`).join('\n')}`
         : ''
-    alert(
+    showAlert(
       `Copied required tags to ${result.reached.length} linked diagram(s):\n\n` +
         result.reached.map((p) => `  ${p}`).join('\n') +
         unreadableNote
@@ -2638,12 +2675,75 @@ function CanvasInner(): React.JSX.Element {
     const node = nodes.find((n) => n.id === detailsPanelNodeId)
     const existingPath = typeof node?.data?.details === 'string' ? node.data.details : undefined
     if (!existingPath || !currentPath) return
-    window.api.readDetails(currentPath, existingPath).then((content) => {
-      setDetailsDrafts((prev) =>
-        detailsPanelNodeId in prev ? prev : { ...prev, [detailsPanelNodeId]: content }
-      )
+    const nodeId = detailsPanelNodeId
+    // Stamp before reading (see diagram:openPath) so a change in between is
+    // caught, not missed.
+    window.api.statDetails(currentPath, existingPath).then(async (stamp) => {
+      const content = await window.api.readDetails(currentPath, existingPath)
+      detailsBaselineRef.current[nodeId] = { stamp, content }
+      setDetailsDrafts((prev) => (nodeId in prev ? prev : { ...prev, [nodeId]: content }))
     })
   }, [detailsPanelNodeId, detailsDrafts, nodes, currentPath])
+
+  // Outside-the-app edit to the note shown in the open Details panel (ADR 0091).
+  // Runs when the panel opens on an already-loaded draft (the draft cache
+  // otherwise hides the change) and whenever the window regains focus.
+  // Unedited draft -> adopt the disk text and say so; edited draft -> a
+  // conflict notice with Reload / Keep mine (the save-time popup still guards
+  // the actual overwrite either way). Never marks the diagram dirty — the
+  // draft now equals the disk.
+  const checkOpenDetailsForChange = useEventCallback(async () => {
+    const nodeId = detailsPanelNodeId
+    if (!nodeId || !currentPath) return
+    const node = nodes.find((n) => n.id === nodeId)
+    const relPath = typeof node?.data?.details === 'string' ? node.data.details : undefined
+    const base = detailsBaselineRef.current[nodeId]
+    const draft = detailsDrafts[nodeId]
+    if (!relPath || !base || draft === undefined) return
+    const stamp = await window.api.statDetails(currentPath, relPath)
+    if (stamp === null || stamp === base.stamp) return
+    if (draft === base.content) {
+      const content = await window.api.readDetails(currentPath, relPath)
+      detailsBaselineRef.current[nodeId] = { stamp, content }
+      setDetailsDrafts((prev) => ({ ...prev, [nodeId]: content }))
+      setDetailsNotice({ nodeId, kind: 'refreshed' })
+    } else if (detailsDismissedStampRef.current[nodeId] !== stamp) {
+      setDetailsNotice({ nodeId, kind: 'conflict' })
+    }
+  })
+
+  useEffect(() => {
+    if (!detailsPanelNodeId) return undefined
+    void checkOpenDetailsForChange()
+    const onFocus = (): void => void checkOpenDetailsForChange()
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [detailsPanelNodeId, checkOpenDetailsForChange])
+
+  const reloadOpenDetailsFromDisk = useEventCallback(async () => {
+    const nodeId = detailsPanelNodeId
+    if (!nodeId || !currentPath) return
+    const node = nodes.find((n) => n.id === nodeId)
+    const relPath = typeof node?.data?.details === 'string' ? node.data.details : undefined
+    if (!relPath) return
+    const stamp = await window.api.statDetails(currentPath, relPath)
+    const content = await window.api.readDetails(currentPath, relPath)
+    detailsBaselineRef.current[nodeId] = { stamp, content }
+    setDetailsDrafts((prev) => ({ ...prev, [nodeId]: content }))
+    setDetailsNotice(null)
+  })
+
+  const keepMyDetailsEdits = useEventCallback(async () => {
+    const nodeId = detailsPanelNodeId
+    if (!nodeId || !currentPath) return
+    const node = nodes.find((n) => n.id === nodeId)
+    const relPath = typeof node?.data?.details === 'string' ? node.data.details : undefined
+    if (relPath) {
+      const stamp = await window.api.statDetails(currentPath, relPath)
+      if (stamp !== null) detailsDismissedStampRef.current[nodeId] = stamp
+    }
+    setDetailsNotice(null)
+  })
 
   // Style seeded onto a brand-new edge (ADR 0045 / ADR 0083): the global
   // default-edge-style preference, overlaid with the active edge direction
@@ -3853,10 +3953,66 @@ function CanvasInner(): React.JSX.Element {
     async (diagramPath: string, currentNodes: Node[]): Promise<Node[]> => {
       const entries = Object.entries(detailsDrafts)
       const draftUpdates: Record<string, string> = {}
+
+      // Outside-the-app edits to a note (ADR 0091). A draft whose file has
+      // changed on disk since we read it is either unedited (then the outside
+      // change wins — skip the write and adopt the disk content) or edited
+      // (a genuine conflict — ask). Drafts with no baseline (new notes,
+      // recovered drafts) aren't checked.
+      const skipWrite = new Set<string>()
+      const conflicts: { nodeId: string; relPath: string; label: string }[] = []
       for (const [nodeId, content] of entries) {
+        const node = currentNodes.find((n) => n.id === nodeId)
+        const relPath = typeof node?.data?.details === 'string' ? node.data.details : undefined
+        const base = detailsBaselineRef.current[nodeId]
+        if (!relPath || !base) continue
+        const stamp = await window.api.statDetails(diagramPath, relPath)
+        if (stamp === null || stamp === base.stamp) continue
+        if (content === base.content) skipWrite.add(nodeId)
+        else
+          conflicts.push({
+            nodeId,
+            relPath,
+            label: typeof node?.data?.label === 'string' ? node.data.label : nodeId
+          })
+      }
+      // Re-reads a note from disk into its baseline, returning the content.
+      const adoptDiskContent = async (nodeId: string, relPath: string): Promise<string> => {
+        const stamp = await window.api.statDetails(diagramPath, relPath)
+        const content = await window.api.readDetails(diagramPath, relPath)
+        detailsBaselineRef.current[nodeId] = { stamp, content }
+        return content
+      }
+      const adopted: Record<string, string> = {}
+      if (conflicts.length > 0) {
+        const choice = await window.api.confirmExternalChange(
+          'details',
+          true,
+          conflicts.map((c) => c.label)
+        )
+        if (choice !== 'overwrite') {
+          if (choice === 'reload') {
+            for (const c of conflicts) adopted[c.nodeId] = await adoptDiskContent(c.nodeId, c.relPath)
+            setDetailsDrafts((prev) => ({ ...prev, ...adopted }))
+          }
+          throw new SaveAbortedError()
+        }
+      }
+      for (const nodeId of skipWrite) {
+        const node = currentNodes.find((n) => n.id === nodeId)
+        adopted[nodeId] = await adoptDiskContent(nodeId, node?.data?.details as string)
+      }
+      if (skipWrite.size > 0) setDetailsDrafts((prev) => ({ ...prev, ...adopted }))
+
+      for (const [nodeId, content] of entries) {
+        if (skipWrite.has(nodeId)) continue
         const node = currentNodes.find((n) => n.id === nodeId)
         const label = typeof node?.data?.label === 'string' ? node.data.label : ''
         draftUpdates[nodeId] = await window.api.writeDetails(diagramPath, nodeId, label, content)
+        detailsBaselineRef.current[nodeId] = {
+          stamp: await window.api.statDetails(diagramPath, draftUpdates[nodeId]),
+          content
+        }
       }
       const withDrafts = currentNodes.map((n) =>
         draftUpdates[n.id] ? { ...n, data: { ...n.data, details: draftUpdates[n.id] } } : n
@@ -3895,6 +4051,17 @@ function CanvasInner(): React.JSX.Element {
   // goes through the same path instead of duplicating the write logic.
   const persistDiagram = useCallback(
     async (path: string, nodesToSave: Node[]): Promise<Node[]> => {
+      // Before anything is written (details included): has the diagram file
+      // changed outside the app since this window loaded/saved it? See
+      // ADR 0091 — the app names the situation and never merges.
+      const { changed } = await window.api.checkExternalChange(path)
+      if (changed) {
+        const choice = await window.api.confirmExternalChange('diagram', isDirtyRef.current, [])
+        if (choice !== 'overwrite') {
+          if (choice === 'reload') await reloadFromDiskRef.current?.(path)
+          throw new SaveAbortedError()
+        }
+      }
       let savedNodes = await flushDetailsDrafts(path, nodesToSave)
       // Apply any staged missing-file removals (ADR 0084) — this is the one
       // point they reach disk. Also drop them from `legend` and close any
@@ -3935,6 +4102,8 @@ function CanvasInner(): React.JSX.Element {
         setStagedFileRemovals([])
       }
       setIsDirty(false)
+      setExternalChangeStamp(null)
+      dismissedStampRef.current = null
       return savedNodes
     },
     [
@@ -3986,7 +4155,8 @@ function CanvasInner(): React.JSX.Element {
         setCurrentPath(path)
         flashSaved()
       } catch (error) {
-        alert(`Save failed: ${error instanceof Error ? error.message : String(error)}`)
+        if (isSaveAborted(error)) return
+        showAlert(`Save failed: ${error instanceof Error ? error.message : String(error)}`)
       }
     },
     [currentPath, nodes, persistDiagram, flashSaved]
@@ -4057,7 +4227,7 @@ function CanvasInner(): React.JSX.Element {
           : 'diagram.png'
         await window.api.exportPngToFile(dataUrl, suggestedFilename)
       } catch (error) {
-        alert(`PNG export failed: ${error instanceof Error ? error.message : String(error)}`)
+        showAlert(`PNG export failed: ${error instanceof Error ? error.message : String(error)}`)
       } finally {
         setIsExportingPng(false)
         setNodes((current) =>
@@ -4171,6 +4341,11 @@ function CanvasInner(): React.JSX.Element {
       setSecurity(openedSecurity)
       setHierarchyLoadNotes(openedHierarchyNotes)
       setDetailsDrafts({})
+      detailsBaselineRef.current = {}
+      detailsDismissedStampRef.current = {}
+      setDetailsNotice(null)
+      setExternalChangeStamp(null)
+      dismissedStampRef.current = null
       setContextMenu(null)
       setIconPicker(null)
       setColorPicker(null)
@@ -4239,7 +4414,7 @@ function CanvasInner(): React.JSX.Element {
         }
       })
       .catch((error) => {
-        alert(`Couldn't open ${path}: ${error instanceof Error ? error.message : String(error)}`)
+        showAlert(`Couldn't open ${path}: ${error instanceof Error ? error.message : String(error)}`)
       })
   }, [loadDiagramIntoCanvas, markDirty])
 
@@ -4354,7 +4529,8 @@ function CanvasInner(): React.JSX.Element {
         setCurrentPath(path)
         return path
       } catch (error) {
-        alert(`Save failed: ${error instanceof Error ? error.message : String(error)}`)
+        if (isSaveAborted(error)) return null
+        showAlert(`Save failed: ${error instanceof Error ? error.message : String(error)}`)
         return null
       }
     },
@@ -4425,7 +4601,7 @@ function CanvasInner(): React.JSX.Element {
         .map((file) => window.api.getPathForFile(file))
         .filter((path) => path.toLowerCase().endsWith('.chd'))
       if (paths.length === 0) {
-        alert('Only .chd diagram files can be opened this way.')
+        showAlert('Only .chd diagram files can be opened this way.')
         return
       }
       const s = dropStateRef.current
@@ -4458,7 +4634,7 @@ function CanvasInner(): React.JSX.Element {
       // diagram you actually meant to open.
       await window.api.openInNewWindow(nodes.length === 0 && edges.length === 0)
     } catch (error) {
-      alert(`Open failed: ${error instanceof Error ? error.message : String(error)}`)
+      showAlert(`Open failed: ${error instanceof Error ? error.message : String(error)}`)
     }
   }, [nodes, edges])
 
@@ -4482,9 +4658,9 @@ function CanvasInner(): React.JSX.Element {
           nodes.length === 0 && edges.length === 0
         )
         if (!result.found)
-          alert(`Diagram not found — it may have been moved or deleted:\n${path}`)
+          showAlert(`Diagram not found — it may have been moved or deleted:\n${path}`)
       } catch (error) {
-        alert(`Couldn't open ${path}: ${error instanceof Error ? error.message : String(error)}`)
+        showAlert(`Couldn't open ${path}: ${error instanceof Error ? error.message : String(error)}`)
       }
     },
     [nodes, edges]
@@ -4532,9 +4708,45 @@ function CanvasInner(): React.JSX.Element {
       const diagram = await window.api.openDiagramAtPath(currentPath)
       loadDiagramIntoCanvas(currentPath, diagram)
     } catch (error) {
-      alert(`Couldn't reload: ${error instanceof Error ? error.message : String(error)}`)
+      showAlert(`Couldn't reload: ${error instanceof Error ? error.message : String(error)}`)
     }
   }, [currentPath, isDirty, loadDiagramIntoCanvas])
+
+  // Used by the save-time conflict popup's "Reload from disk" — the user has
+  // already chosen, so no second confirm (unlike handleReload).
+  useEffect(() => {
+    reloadFromDiskRef.current = async (path: string) => {
+      try {
+        loadDiagramIntoCanvas(path, await window.api.openDiagramAtPath(path))
+      } catch (error) {
+        showAlert(`Couldn't reload: ${error instanceof Error ? error.message : String(error)}`)
+      }
+    }
+  }, [loadDiagramIntoCanvas])
+
+  // Window focus is when an outside edit (another editor, git, Claude) is
+  // most likely to have just happened — a cheap stat, no watcher/polling
+  // (ADR 0091). Shows the toolbar banner; dismissing remembers this specific
+  // change but the save-time guard still fires.
+  useEffect(() => {
+    if (!currentPath) return undefined
+    let cancelled = false
+    const check = async (): Promise<void> => {
+      const { changed, stamp } = await window.api.checkExternalChange(currentPath)
+      if (cancelled) return
+      setExternalChangeStamp(changed && stamp !== dismissedStampRef.current ? stamp : null)
+    }
+    window.addEventListener('focus', check)
+    return () => {
+      cancelled = true
+      window.removeEventListener('focus', check)
+    }
+  }, [currentPath])
+
+  const dismissExternalChange = useCallback(() => {
+    dismissedStampRef.current = externalChangeStamp
+    setExternalChangeStamp(null)
+  }, [externalChangeStamp])
 
   // Opens (or focuses, if already open elsewhere) a linked diagram in its
   // own window — used by both link-navigation flows below. Never mutates
@@ -4545,10 +4757,10 @@ function CanvasInner(): React.JSX.Element {
     try {
       const result = await window.api.openLinkedInNewWindow(parentPath, relativePath)
       if (!result.found) {
-        alert(`Linked diagram not found at ${result.resolvedPath}`)
+        showAlert(`Linked diagram not found at ${result.resolvedPath}`)
       }
     } catch (error) {
-      alert(
+      showAlert(
         `Linked diagram at ${relativePath} couldn't be read: ${error instanceof Error ? error.message : String(error)}`
       )
     }
@@ -4563,7 +4775,12 @@ function CanvasInner(): React.JSX.Element {
   // ADR 0023.
   const navigateExistingLink = useCallback(
     async (parentPath: string, relativePath: string) => {
-      await persistDiagram(parentPath, nodes)
+      try {
+        await persistDiagram(parentPath, nodes)
+      } catch (error) {
+        if (isSaveAborted(error)) return
+        throw error
+      }
       await openLinkedWindow(parentPath, relativePath)
     },
     [nodes, persistDiagram, openLinkedWindow]
@@ -4583,7 +4800,8 @@ function CanvasInner(): React.JSX.Element {
         await persistDiagram(parentPath, updatedNodes)
         await openLinkedWindow(parentPath, relativePath)
       } catch (error) {
-        alert(
+        if (isSaveAborted(error)) return
+        showAlert(
           `Couldn't create linked diagram: ${error instanceof Error ? error.message : String(error)}`
         )
       }
@@ -4604,7 +4822,8 @@ function CanvasInner(): React.JSX.Element {
         )
         await persistDiagram(parentPath, updatedNodes)
       } catch (error) {
-        alert(`Couldn't save the link: ${error instanceof Error ? error.message : String(error)}`)
+        if (isSaveAborted(error)) return
+        showAlert(`Couldn't save the link: ${error instanceof Error ? error.message : String(error)}`)
       }
     },
     [nodes, persistDiagram]
@@ -4622,7 +4841,7 @@ function CanvasInner(): React.JSX.Element {
   // from a Ctrl/Cmd+click, so the always-latest-closure semantics are safe.
   const handleLinkClick = useEventCallback((nodeId: string, clientX: number, clientY: number) => {
     if (!currentPath) {
-      alert('Save the diagram before linking to another diagram.')
+      showAlert('Save the diagram before linking to another diagram.')
       return
     }
     const node = nodes.find((n) => n.id === nodeId)
@@ -5343,6 +5562,41 @@ function CanvasInner(): React.JSX.Element {
                 {currentPath.split(/[\\/]/).pop()}
               </span>
             )}
+            {detailsNotice && detailsNotice.nodeId === detailsPanelNodeId && (
+              <span className="toolbar-external-change" role="status">
+                {detailsNoteName(nodes.find((n) => n.id === detailsNotice.nodeId))}
+                {detailsNotice.kind === 'refreshed'
+                  ? ' — updated from disk (changed outside the app).'
+                  : ' — changed outside the app, and you have unsaved edits.'}
+                {detailsNotice.kind === 'refreshed' ? (
+                  <button type="button" onClick={() => setDetailsNotice(null)}>
+                    OK
+                  </button>
+                ) : (
+                  <>
+                    <button type="button" onClick={() => void reloadOpenDetailsFromDisk()}>
+                      Reload (discard mine)
+                    </button>
+                    <button type="button" onClick={() => void keepMyDetailsEdits()}>
+                      Keep mine
+                    </button>
+                  </>
+                )}
+              </span>
+            )}
+            {externalChangeStamp && (
+              <span className="toolbar-external-change" role="alert">
+                {isDirty
+                  ? 'Changed outside the app — and you have unsaved changes.'
+                  : 'Changed outside the app.'}
+                <button type="button" onClick={handleReload}>
+                  Reload
+                </button>
+                <button type="button" onClick={dismissExternalChange}>
+                  Ignore
+                </button>
+              </span>
+            )}
             {/* Default-edge-style swatch — diagram-only; nothing in the
                 Security Matrix persona draws edges (ADR 0079). */}
             {isDiagramPersona && (
@@ -5725,7 +5979,10 @@ function CanvasInner(): React.JSX.Element {
                 setDetailsDrafts((prev) => ({ ...prev, [detailsPanelNodeId]: content }))
                 markDirty()
               }}
-              onClose={() => setDetailsPanelNodeId(null)}
+              onClose={() => {
+                setDetailsPanelNodeId(null)
+                setDetailsNotice(null)
+              }}
             />
           )}
           {diagnosticsPanelOpen && (
@@ -5857,6 +6114,7 @@ function CanvasInner(): React.JSX.Element {
           )
         })}
         {aboutDialogOpen && <AboutDialog onClose={() => setAboutDialogOpen(false)} />}
+        <AlertDialog />
         {bulkCreateType && (
           <BulkCreateDialog
             typeLabel={bulkCreateType}

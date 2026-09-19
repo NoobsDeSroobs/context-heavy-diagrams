@@ -83,6 +83,26 @@ const api = {
     return ipcRenderer.invoke('diagram:openPath', path)
   },
 
+  // Outside-the-app change detection (ADR 0091). checkExternalChange compares
+  // this window's diagram file against what it last loaded/saved;
+  // confirmExternalChange shows the native conflict popup; statDetails
+  // fingerprints one detail note so a draft isn't flushed over an outside edit.
+  checkExternalChange(path: string): Promise<{ changed: boolean; stamp: string | null }> {
+    return ipcRenderer.invoke('diagram:checkExternalChange', path)
+  },
+
+  confirmExternalChange(
+    what: 'diagram' | 'details',
+    dirty: boolean,
+    names: string[]
+  ): Promise<'cancel' | 'overwrite' | 'reload'> {
+    return ipcRenderer.invoke('diagram:confirmExternalChange', what, dirty, names)
+  },
+
+  statDetails(diagramPath: string, relativePath: string): Promise<string | null> {
+    return ipcRenderer.invoke('details:stat', diagramPath, relativePath)
+  },
+
   // Linked diagrams — see docs/decisions/0005-diagram-identity-and-linking.md.
   // createLinkedDiagram/pickExistingLinkedDiagram both return a relative
   // path (relative to diagramPath's own directory) to store on the node,

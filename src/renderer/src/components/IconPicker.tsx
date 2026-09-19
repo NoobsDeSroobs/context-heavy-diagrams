@@ -1,3 +1,4 @@
+import { showAlert } from '../alerts'
 import { useState } from 'react'
 import type { IconRef, IconSlot } from '@shared/diagram'
 import IconBrowser from './IconBrowser'
@@ -44,7 +45,7 @@ export default function IconPicker({
 
   const handleUpload = async (): Promise<void> => {
     if (!diagramPath) {
-      alert('Save the diagram before adding a custom icon.')
+      showAlert('Save the diagram before adding a custom icon.')
       return
     }
     const path = await window.api.pickAndCopyCustomIcon(diagramPath)

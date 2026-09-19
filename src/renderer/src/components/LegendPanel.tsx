@@ -1,3 +1,4 @@
+import { showAlert } from '../alerts'
 import { useEffect, useMemo, useState, type MouseEvent } from 'react'
 import type { EdgeStyle, IconRef, LegendEntry, LegendEntryKind } from '@shared/diagram'
 import { loadBuiltinIconSvg, searchBuiltinIconIds } from '../icons/builtinIcons'
@@ -139,7 +140,7 @@ function LegendIconPicker({
 
   const handleUpload = async (): Promise<void> => {
     if (!diagramPath) {
-      alert('Save the diagram before adding a custom icon.')
+      showAlert('Save the diagram before adding a custom icon.')
       return
     }
     const path = await window.api.pickAndCopyCustomIcon(diagramPath)

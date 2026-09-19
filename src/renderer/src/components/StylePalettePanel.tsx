@@ -1,3 +1,4 @@
+import { showAlert } from '../alerts'
 import { useState } from 'react'
 import type { EdgeStyle, NodeStyle } from '@shared/diagram'
 import type { NamedStylePalette, PaletteColor } from '../preferences'
@@ -284,12 +285,12 @@ export default function StylePalettePanel({
     try {
       parsed = JSON.parse(result.content)
     } catch {
-      alert('Not a valid style palette file (not valid JSON).')
+      showAlert('Not a valid style palette file (not valid JSON).')
       return
     }
     const candidate = parsed as { colors?: unknown; fonts?: unknown }
     if (!Array.isArray(candidate.colors) || !Array.isArray(candidate.fonts)) {
-      alert('Not a valid style palette file (missing colors/fonts arrays).')
+      showAlert('Not a valid style palette file (missing colors/fonts arrays).')
       return
     }
     // Import adds a new named palette (ADR 0068) rather than overwriting —

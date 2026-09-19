@@ -1,3 +1,4 @@
+import { showAlert } from '../alerts'
 import { useCallback, type MouseEvent } from 'react'
 import { type Edge, Position, useReactFlow, useUpdateNodeInternals } from '@xyflow/react'
 import type { ConnectionPoint, ConnectionPointSide } from '@shared/diagram'
@@ -358,7 +359,7 @@ export function useConnectionPointMenu(
           maxConnectionPointsPerSide
         )
         if (!points) {
-          alert(
+          showAlert(
             `This side already has the maximum of ${maxConnectionPointsPerSide} connection points.`
           )
           return
@@ -401,7 +402,7 @@ export function useConnectionPointMenu(
           onSelect: () => {
             const result = removeCustomPointWithTransfer(customPoints, point.id)
             if (!result) {
-              alert("Can't remove the last connection point on this side.")
+              showAlert("Can't remove the last connection point on this side.")
               return
             }
             pushSnapshot()

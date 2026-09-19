@@ -6,6 +6,11 @@ Short pointer only — the full backlog lives in [docs/planning/](docs/planning/
 
 Every core requirement from [docs/project-brief.md](docs/project-brief.md) is implemented, merged to `master`, and confirmed working. Substantial work beyond the brief's core list has also landed since, driven by real usage — containers, a full styling panel, undo/redo, alignment/snapping, configurable connection points, a multi-window diagram model, a unified tag/metadata system, tag-based highlights, a freeform curved-line node type, and more. See [docs/architecture/overview.md](docs/architecture/overview.md) for a current component-level map, and [docs/planning/epics/](docs/planning/epics/) for what shipped and why.
 
+## Current state (2026-09-19)
+
+- **Batch decided 2026-09-19, in order:** [0128](docs/planning/epics/0128-external-change-detection-and-save-conflict-warning.md) (external change detection + save-conflict warning) → [0119](docs/planning/epics/0119-details-peek-on-modifier-hold.md) (details peek while holding Ctrl/Cmd) → [0120](docs/planning/epics/0120-help-keyboard-shortcuts-page.md) (Help shortcuts page + shortcut registry) → [0121](docs/planning/epics/0121-copy-style-apply-mode.md) (copy style / apply mode). One branch per epic. From a brainstorm pass; the same session also logged 0122/0123 (parent context, semantic zoom — need design), 0127 (command palette, after 0120), and parked 0124/0125/0126 under `later/`.
+- **0128 in progress** on `epic/0128-external-change-detection-and-save-conflict-warning` (carries the epic docs logged this session).
+
 ## Current state (2026-09-16)
 
 - **[Epic 0118](docs/planning/epics/0118-create-multiple-from-text-list.md) (create multiple shapes/containers from a pasted text list) — merged to `master` (squash), local branch cleaned up (`git diff master <branch>` confirmed empty, `-D`'d since squash merges never show as ancestors).**

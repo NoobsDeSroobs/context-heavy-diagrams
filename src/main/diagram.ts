@@ -1,4 +1,4 @@
-import { BrowserWindow, dialog, ipcMain } from 'electron'
+import { BrowserWindow, dialog, ipcMain, type IpcMainInvokeEvent } from 'electron'
 import { readFile, writeFile } from 'fs/promises'
 import { dirname, join } from 'path'
 import { parseDiagram, serializeDiagram, type DiagramFile } from '@shared/diagram'
@@ -6,6 +6,7 @@ import { DEFAULT_PREFERENCES, withRecentDiagram } from '@shared/preferences'
 import { registerWindowPath } from './windows'
 import { deleteRecoverySnapshot } from './recovery'
 import { readPreferences, updatePreferences } from './appPreferences'
+import { fileStamp } from './fileStamp'
 
 // Shared by diagram:openPath and diagram:save — records `path` in both the
 // last-opened-directory preference and the recent-diagrams list, in a single
@@ -22,6 +23,21 @@ async function recordOpenedOrSaved(path: string): Promise<void> {
       prefs?.recentDiagramsLimit ?? DEFAULT_PREFERENCES.recentDiagramsLimit
     )
   })
+}
+
+// What each window last saw of its own diagram file on disk — recorded when
+// the window loads (diagram:openPath) or saves (diagram:save), compared later
+// by diagram:checkExternalChange to notice a change made outside the app
+// (docs/decisions/0091-external-change-detection.md). Keyed by the window's
+// webContents id; `path` is stored too so a Save As to a *different* path
+// (whose overwrite the OS save dialog already confirmed) isn't judged against
+// the old file's stamp.
+const diskBaselines = new Map<number, { path: string; stamp: string | null }>()
+
+function recordBaseline(event: IpcMainInvokeEvent, path: string, stamp: string | null): void {
+  const id = event.sender.id
+  if (!diskBaselines.has(id)) event.sender.once('destroyed', () => diskBaselines.delete(id))
+  diskBaselines.set(id, { path, stamp })
 }
 
 // Diagram files are a single file (.chd, plain JSON underneath) — see
@@ -70,6 +86,7 @@ export function registerDiagramHandlers(): void {
     'diagram:save',
     async (event, path: string, diagram: DiagramFile, sessionId: string) => {
       await writeFile(path, serializeDiagram(diagram), 'utf-8')
+      recordBaseline(event, path, await fileStamp(path))
       const win = BrowserWindow.fromWebContents(event.sender)
       if (win) registerWindowPath(win, path)
       // Two keys, not one: this path's own (repeat saves reuse it) and the
@@ -90,8 +107,66 @@ export function registerDiagramHandlers(): void {
   // eventually, so this is the one place that updates lastOpenedDirectory
   // and the recent-diagrams list to cover all of them, rather than
   // duplicating the update at every dialog/entry point separately.
-  ipcMain.handle('diagram:openPath', async (_event, path: string) => {
+  ipcMain.handle('diagram:openPath', async (event, path: string) => {
     await recordOpenedOrSaved(path)
-    return openDiagramAtPath(path)
+    // Stamp BEFORE reading: if the file changes in between, the baseline is
+    // older than what we hold, so the next check errs toward "changed" (a
+    // harmless extra prompt) rather than missing an outside edit.
+    const stamp = await fileStamp(path)
+    const diagram = await openDiagramAtPath(path)
+    recordBaseline(event, path, stamp)
+    return diagram
   })
+
+  // Has this window's diagram file been modified outside the app since this
+  // window last loaded or saved it? Never true for a path this window has no
+  // baseline for (a never-saved diagram, or a fresh Save As target), or when
+  // the file is gone (a save just recreates it). `stamp` is the file's
+  // current fingerprint, so the renderer can remember "the user dismissed
+  // the banner for this specific change" without touching the baseline.
+  ipcMain.handle('diagram:checkExternalChange', async (event, path: string) => {
+    const baseline = diskBaselines.get(event.sender.id)
+    const stamp = await fileStamp(path)
+    const changed =
+      baseline !== undefined &&
+      baseline.path === path &&
+      stamp !== null &&
+      stamp !== baseline.stamp
+    return { changed, stamp }
+  })
+
+  // The conflict popup. Native message box (same as the close prompt) — the
+  // app deliberately doesn't merge; git is the merge tool, so the choices are
+  // just "back out to git", "mine wins", "theirs wins".
+  // what: 'diagram' for the .chd file, 'details' for one or more detail notes.
+  ipcMain.handle(
+    'diagram:confirmExternalChange',
+    async (event, what: 'diagram' | 'details', dirty: boolean, names: string[]) => {
+      const win = BrowserWindow.fromWebContents(event.sender)
+      const subject =
+        what === 'diagram'
+          ? 'This diagram file'
+          : names.length === 1
+            ? `The detail notes for "${names[0]}"`
+            : `The detail notes for ${names.length} elements (${names.slice(0, 3).join(', ')}${names.length > 3 ? ', …' : ''})`
+      const message = dirty
+        ? `${subject} has unsaved changes in the editor AND was also changed outside the app.`
+        : `${subject} was changed outside the app since it was loaded.`
+      const options = {
+        type: 'warning' as const,
+        buttons: ['Cancel', 'Overwrite with editor version', 'Reload from disk'],
+        defaultId: 0,
+        cancelId: 0,
+        title: 'Changed outside the app',
+        message,
+        detail:
+          'To keep both versions: Cancel, commit the file as it is on disk (e.g. in git), come back and save to overwrite it, then reconcile the two versions in git.\n\n' +
+          'Overwrite replaces the file on disk with what is in the editor. Reload discards the editor version and loads the file from disk.'
+      }
+      const result = win
+        ? await dialog.showMessageBox(win, options)
+        : await dialog.showMessageBox(options)
+      return (['cancel', 'overwrite', 'reload'] as const)[result.response]
+    }
+  )
 }

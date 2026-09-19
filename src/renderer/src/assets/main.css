@@ -275,6 +275,23 @@ body {
   animation: toolbar-saved-flash-in 0.15s ease-out;
 }
 
+/* "Changed outside the app" notice (epic 0128) — sits beside the filename in
+   the toolbar; amber, not red, because nothing is lost until the user saves. */
+.toolbar-external-change {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #b7791f;
+}
+
+.toolbar-external-change button {
+  font-size: 12px;
+  padding: 1px 8px;
+  cursor: pointer;
+}
+
 @keyframes toolbar-saved-flash-in {
   from {
     opacity: 0;
@@ -3188,6 +3205,48 @@ body {
 .about-dialog-credits {
   color: var(--ev-c-text-3);
   font-size: 12px;
+}
+
+/* showAlert()'s dialog (AlertDialog.tsx) — reuses the About dialog shell.
+   Above the About/bulk-create overlays (z-index 100) since an error can fire
+   while one of those is open. The message is explicitly selectable: that is
+   the point of it over the native alert. */
+.alert-dialog {
+  width: 480px;
+}
+
+.about-dialog-overlay:has(.alert-dialog) {
+  z-index: 200;
+}
+
+.alert-dialog-message {
+  margin: 0;
+  max-height: 50vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: inherit;
+  user-select: text;
+  cursor: text;
+}
+
+.alert-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.alert-dialog-actions button {
+  cursor: pointer;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 4px 14px;
+}
+
+.alert-dialog-actions button:hover {
+  background: var(--ev-button-alt-hover-bg);
 }
 
 /* Wider than the base .about-dialog (360px) — a paste target needs the room. */
