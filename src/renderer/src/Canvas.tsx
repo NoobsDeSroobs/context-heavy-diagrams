@@ -135,6 +135,8 @@ import MultiConnectionLine from './edges/MultiConnectionLine'
 import PreferencesPanel from './components/PreferencesPanel'
 import AlignDistributePanel from './components/AlignDistributePanel'
 import AboutDialog from './components/AboutDialog'
+import ShortcutsDialog from './components/ShortcutsDialog'
+import { acceleratorFor, findKeyCommand, type CommandId } from './commands'
 import AlertDialog from './components/AlertDialog'
 import ExportPngDialog, { type PngExportChoice } from './components/ExportPngDialog'
 import BulkCreateDialog from './components/BulkCreateDialog'
@@ -1245,6 +1247,7 @@ function CanvasInner(): React.JSX.Element {
   // as switching tabs never destroys the other tab's content.
   const [persona, setPersona] = useState<'diagram' | 'matrix'>('diagram')
   const [aboutDialogOpen, setAboutDialogOpen] = useState(false)
+  const [shortcutsDialogOpen, setShortcutsDialogOpen] = useState(false)
   const [exportPngDialogOpen, setExportPngDialogOpen] = useState(false)
   const [exportPngEffectiveColorHex, setExportPngEffectiveColorHex] = useState('#ffffff')
   // See ADR 0089 — right-click on the ItemPalette Shape/Container button.
@@ -5084,102 +5087,51 @@ function CanvasInner(): React.JSX.Element {
   // Windows/Linux's Ctrl) — no reason to make this actively worse for Mac
   // users over a one-line check, even though macOS isn't a primary target.
   useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent): void => {
-      const target = event.target as HTMLElement | null
-      const isEditingText =
-        !!target &&
-        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
-      const mod = event.ctrlKey || event.metaKey
-
-      if (mod && event.key.toLowerCase() === 's') {
-        event.preventDefault()
-        if (event.shiftKey) handleSaveAs()
-        else handleSave()
-        return
-      }
-      if (mod && event.key.toLowerCase() === 'o') {
-        event.preventDefault()
-        handleOpen()
-        return
-      }
-      if (mod && event.key.toLowerCase() === 'n') {
-        event.preventDefault()
-        handleNew()
-        return
-      }
+    // Behaviour per command id; which keys reach which id (and which text-field
+    // conflicts defer to native editing) is the registry's business
+    // (commands.ts). A handler returning `false` declines the key press, which
+    // then keeps its native behaviour.
+    const handlers: Partial<Record<CommandId, () => unknown>> = {
+      'file.save': handleSave,
+      'file.saveAs': handleSaveAs,
+      'file.open': handleOpen,
+      'file.new': handleNew,
       // Universal desktop-app convention, added alongside the File -> Close
       // menu item — no shortcut existed for this action before.
       // See handleClose's own comment for what "Close" actually does here
       // (discard back to blank, not close the OS window).
-      if (mod && event.key.toLowerCase() === 'w') {
-        event.preventDefault()
-        handleClose()
-        return
-      }
+      'file.close': handleClose,
       // Search overlay (ADR 0062) — provisional V1 entry point,
-      // no permanent toolbar button yet (see the ADR). Not gated on
-      // isEditingText: same as Ctrl+S/O/N/W above, opening/closing search
-      // is a reasonable thing to do regardless of what else has focus.
-      if (mod && event.key.toLowerCase() === 'f') {
-        event.preventDefault()
+      // no permanent toolbar button yet (see the ADR). Not deferring to text
+      // fields: same as Ctrl+S/O/N/W, opening/closing search is a reasonable
+      // thing to do regardless of what else has focus.
+      'search.toggle': () => {
         if (searchOverlayOpen) closeSearchOverlay()
         else setSearchOverlayOpen(true)
-        return
-      }
-      // Ctrl+A/D are text-editing conventions (select-all-text, and in some
-      // apps duplicate-line) — defer to native behavior while a text field
-      // has focus rather than hijacking them for canvas actions.
-      if (mod && event.key.toLowerCase() === 'a' && !isEditingText) {
-        event.preventDefault()
-        selectAll()
-        return
-      }
-      if (mod && event.key.toLowerCase() === 'd' && !isEditingText) {
-        event.preventDefault()
-        duplicateSelected()
-        return
-      }
-      // Ctrl+C/V/X — same native-text-field deference as Ctrl+A/D above,
-      // so typing/pasting text in a label field still uses the browser's
-      // own clipboard handling, not this diagram-element one. Ctrl+C
-      // additionally defers whenever there's a live text selection
-      // (window.getSelection()) even outside a text field — found live in
-      // the threat matrix prototype: its plain service/threat
-      // names and scale descriptions aren't inputs, so isEditingText
-      // alone didn't catch them, and copySelection()'s own
-      // preventDefault() silently blocked copying that text at all.
-      if (mod && event.key.toLowerCase() === 'c' && !isEditingText) {
-        const hasTextSelection = (window.getSelection()?.toString().length ?? 0) > 0
-        if (hasTextSelection) return
-        event.preventDefault()
+      },
+      'selection.selectAll': selectAll,
+      'edit.duplicate': duplicateSelected,
+      // Ctrl+C defers to a live text selection (window.getSelection()) even
+      // outside a text field — found live in the threat matrix prototype:
+      // its plain service/threat names and scale descriptions aren't inputs,
+      // so the text-field deferral alone didn't catch them, and
+      // copySelection()'s own preventDefault() silently blocked copying that
+      // text at all.
+      'edit.copy': () => {
+        if ((window.getSelection()?.toString().length ?? 0) > 0) return false
         copySelection()
-        return
-      }
-      if (mod && event.key.toLowerCase() === 'v' && !isEditingText) {
-        event.preventDefault()
-        pasteFromClipboard()
-        return
-      }
-      if (mod && event.key.toLowerCase() === 'x' && !isEditingText) {
-        event.preventDefault()
-        cutSelection()
-        return
-      }
-      // Same reasoning as Ctrl+A/D — defer to native text-field undo while
-      // typing. Figma-style redo binding (Ctrl+Shift+Z), not Ctrl+Y.
-      if (mod && event.key.toLowerCase() === 'z' && !isEditingText) {
-        event.preventDefault()
-        if (event.shiftKey) redo()
-        else undo()
-        return
-      }
-      if (mod && event.key === '0') {
-        event.preventDefault()
-        rfInstance.fitView()
-        return
-      }
-      if (event.key === 'Escape') {
-        if (searchIconPicker) {
+        return true
+      },
+      'edit.paste': pasteFromClipboard,
+      'edit.cut': cutSelection,
+      // Figma-style redo binding (Ctrl+Shift+Z), not Ctrl+Y.
+      'edit.undo': undo,
+      'edit.redo': redo,
+      'view.fit': () => rfInstance.fitView(),
+      'selection.escape': () => {
+        if (shortcutsDialogOpen) {
+          setShortcutsDialogOpen(false)
+        } else if (searchIconPicker) {
           // The search overlay's icon-browser popup — close just it, one
           // step before the overlay itself.
           setSearchIconPicker(null)
@@ -5214,8 +5166,21 @@ function CanvasInner(): React.JSX.Element {
         } else {
           deselectAll()
         }
-        return
       }
+    }
+    const onKeyDown = (event: KeyboardEvent): void => {
+      const target = event.target as HTMLElement | null
+      // Ctrl+A/D/C/V/X/Z are text-editing conventions — commands flagged
+      // deferToTextField are skipped while a text field has focus rather than
+      // hijacked for canvas actions.
+      const isEditingText =
+        !!target &&
+        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
+      const command = findKeyCommand(event, isEditingText)
+      const run = command ? handlers[command.id as CommandId] : undefined
+      if (!command || !run) return
+      if (run() === false) return
+      if (!command.allowDefault) event.preventDefault()
       // No custom arrow-key nudge here — React Flow already moves selected
       // nodes on arrow keys natively (1px, 4px with Shift; see
       // arrowKeyDiffs/moveSelectedNodes in @xyflow/react). Adding our own
@@ -5243,6 +5208,7 @@ function CanvasInner(): React.JSX.Element {
     detailsPanelNodeId,
     searchOverlayOpen,
     searchIconPicker,
+    shortcutsDialogOpen,
     closeSearchOverlay,
     diagnosticsPanelOpen,
     highlightsPanelOpen,
@@ -5558,11 +5524,11 @@ function CanvasInner(): React.JSX.Element {
   const fileMenu: MenuBarMenu = {
     label: 'File',
     items: [
-      { label: 'New', accelerator: 'Ctrl+N', onSelect: handleNew },
-      { label: 'Open…', accelerator: 'Ctrl+O', onSelect: handleOpen },
+      { label: 'New', accelerator: acceleratorFor('file.new'), onSelect: handleNew },
+      { label: 'Open…', accelerator: acceleratorFor('file.open'), onSelect: handleOpen },
       recentDiagramsItem,
-      { label: 'Save', accelerator: 'Ctrl+S', onSelect: handleSave },
-      { label: 'Save As…', accelerator: 'Ctrl+Shift+S', onSelect: handleSaveAs },
+      { label: 'Save', accelerator: acceleratorFor('file.save'), onSelect: handleSave },
+      { label: 'Save As…', accelerator: acceleratorFor('file.saveAs'), onSelect: handleSaveAs },
       // Diagram-only for now — a "export the matrix as PNG" may make sense
       // later but isn't built.
       ...(isDiagramPersona
@@ -5575,36 +5541,36 @@ function CanvasInner(): React.JSX.Element {
           ]
         : []),
       { label: 'Reload', disabled: !currentPath, onSelect: handleReload },
-      { label: 'Close', accelerator: 'Ctrl+W', onSelect: handleClose }
+      { label: 'Close', accelerator: acceleratorFor('file.close'), onSelect: handleClose }
     ]
   }
 
   const editMenu: MenuBarMenu = {
     label: 'Edit',
     items: [
-      { label: 'Undo', accelerator: 'Ctrl+Z', disabled: past.length === 0, onSelect: undo },
+      { label: 'Undo', accelerator: acceleratorFor('edit.undo'), disabled: past.length === 0, onSelect: undo },
       {
         label: 'Redo',
-        accelerator: 'Ctrl+Shift+Z',
+        accelerator: acceleratorFor('edit.redo'),
         disabled: future.length === 0,
         onSelect: redo
       },
       {
         label: 'Cut',
-        accelerator: 'Ctrl+X',
+        accelerator: acceleratorFor('edit.cut'),
         disabled: !hasSelectedNodes,
         onSelect: cutSelection
       },
       {
         label: 'Copy',
-        accelerator: 'Ctrl+C',
+        accelerator: acceleratorFor('edit.copy'),
         disabled: !hasSelectedNodes,
         onSelect: copySelection
       },
       // Not disabled on an empty/invalid clipboard — same silent no-op
       // as the keyboard shortcut, avoids a synchronous clipboard read on
       // every render just to compute this menu's enabled state.
-      { label: 'Paste', accelerator: 'Ctrl+V', onSelect: pasteFromClipboard },
+      { label: 'Paste', accelerator: acceleratorFor('edit.paste'), onSelect: pasteFromClipboard },
       {
         label: 'Align / Distribute…',
         disabled: selectedNodes.length < 2,
@@ -5647,7 +5613,10 @@ function CanvasInner(): React.JSX.Element {
 
   const helpMenu: MenuBarMenu = {
     label: 'Help',
-    items: [{ label: 'About', onSelect: () => setAboutDialogOpen(true) }]
+    items: [
+      { label: 'Keyboard shortcuts…', onSelect: () => setShortcutsDialogOpen(true) },
+      { label: 'About', onSelect: () => setAboutDialogOpen(true) }
+    ]
   }
 
   const menus: MenuBarMenu[] = isDiagramPersona
@@ -6364,6 +6333,7 @@ function CanvasInner(): React.JSX.Element {
           )
         })}
         {aboutDialogOpen && <AboutDialog onClose={() => setAboutDialogOpen(false)} />}
+        {shortcutsDialogOpen && <ShortcutsDialog onClose={() => setShortcutsDialogOpen(false)} />}
         <AlertDialog />
         <ConflictDialog />
         {bulkCreateType && (

@@ -42,7 +42,7 @@ without the app trying to be a merge tool.
 - Details `.md` saved while its panel has unsaved textarea edits: same three choices, scoped to that file.
 - Overlaps in spirit with [epic 0115](0115-file-app-version-compatibility-and-data-loss-safety.md)
   (data-loss safety) — share wording/UX where sensible.
-- Tie-in: the peek card ([epic 0119](0119-details-peek-on-modifier-hold.md)) reads
+- Tie-in: the peek card ([epic 0119](completed/0119-details-peek-on-modifier-hold.md)) reads
   details on demand, so it is not stale either way.
 - Linux behaviour of the whole flow can only be verified on Linux
   ([CLAUDE.md](../../../CLAUDE.md) cross-platform rule).

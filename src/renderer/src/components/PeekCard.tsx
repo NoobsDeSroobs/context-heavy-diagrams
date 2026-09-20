@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { MetadataEntry } from '@shared/diagram'
+import { isMac } from '../commands'
 import type { PeekTarget } from '../hooks/useDetailsPeek'
 
 const CARD_WIDTH = 340
@@ -24,7 +25,6 @@ interface PeekCardProps {
   shadowContent: string | undefined
 }
 
-const isMac = /Mac/i.test(navigator.platform)
 
 function formatTagValue(value: unknown): string {
   return typeof value === 'string' ? value : JSON.stringify(value)

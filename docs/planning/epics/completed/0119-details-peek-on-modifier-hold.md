@@ -4,7 +4,7 @@
 Implemented 2026-09-20 on `epic/0119-details-peek-on-modifier-hold`;
 `typecheck`/`lint` clean, live-tested by the user on Windows (Linux
 unverified). Design + open-question answers in
-[ADR 0093](../../decisions/0093-details-peek-card-on-modifier-hold.md). The
+[ADR 0093](../../../decisions/0093-details-peek-card-on-modifier-hold.md). The
 optional delayed-hover Preference is deferred (see the ADR).
 
 ## Goal
@@ -44,7 +44,7 @@ rule: hover must never open the full detail panel).
 
 ## Open questions (resolved — see ADR 0093)
 - Edges: nodes only for v1 (edges have no details/link).
-- Frontmatter fields: none — that mechanism was retired ([epic 0021](completed/0021-detail-frontmatter.md)); tags cover it.
+- Frontmatter fields: none — that mechanism was retired ([epic 0021](../completed/0021-detail-frontmatter.md)); tags cover it.
 - Gesture conflicts: card hides while a pointer button is down, and after any
   other key / a click while the modifier is held, until it's released.
 
@@ -54,5 +54,5 @@ rule: hover must never open the full detail panel).
 - [x] `PeekCard` component; remove `useDetailsTooltip` `title`
 - [ ] Optional delayed-hover Preference — deferred
 - [x] `docs/architecture/overview.md` mention
-- [ ] List in the shortcuts page ([epic 0120](0120-help-keyboard-shortcuts-page.md)) — when that page exists
+- [ ] List in the shortcuts page ([epic 0120](../0120-help-keyboard-shortcuts-page.md)) — when that page exists
 - [x] Live test on Windows (Linux still unverified): hold Ctrl over shapes/text/containers; Ctrl+A / Ctrl+click / Ctrl+wheel / drag don't flash the card; unsaved note edits show
