@@ -1,6 +1,12 @@
 import { memo } from 'react'
 import type { Edge, Node } from '@xyflow/react'
-import type { ConnectionPointSide, EdgeStyle, MetadataEntry, NodeStyle, RequiredTagDefinition } from '@shared/diagram'
+import type {
+  ConnectionPointSide,
+  EdgeStyle,
+  MetadataEntry,
+  NodeStyle,
+  RequiredTagDefinition
+} from '@shared/diagram'
 import ItemPalette from './ItemPalette'
 import PropertyPanel, { type TransformPatch } from './PropertyPanel'
 
@@ -34,7 +40,9 @@ function DiagramDock({
   beginContinuousEdit,
   endContinuousEdit,
   pushSnapshot,
-  onSetDefaultStyle
+  onSetDefaultStyle,
+  styleBrushActive,
+  onToggleStyleBrush
 }: {
   selectedNodes: Node[]
   selectedEdges: Edge[]
@@ -48,8 +56,14 @@ function DiagramDock({
   onUpdateEdgeStyle: (edgeIds: string[], patch: Partial<EdgeStyle>) => void
   onUpdateTransform: (nodeIds: string[], patch: TransformPatch) => void
   onUpdateLocked: (nodeIds: string[], locked: boolean) => void
-  onUpdateNodeMetadata: (nodeId: string, metadata: Record<string, MetadataEntry> | undefined) => void
-  onUpdateEdgeMetadata: (edgeId: string, metadata: Record<string, MetadataEntry> | undefined) => void
+  onUpdateNodeMetadata: (
+    nodeId: string,
+    metadata: Record<string, MetadataEntry> | undefined
+  ) => void
+  onUpdateEdgeMetadata: (
+    edgeId: string,
+    metadata: Record<string, MetadataEntry> | undefined
+  ) => void
   onSetConnectionPointCount: (nodeId: string, side: ConnectionPointSide, totalCount: number) => void
   maxConnectionPointsPerSide: number
   requiredTags: RequiredTagDefinition[]
@@ -57,11 +71,17 @@ function DiagramDock({
   endContinuousEdit: () => void
   pushSnapshot: () => void
   onSetDefaultStyle: (type: 'shape' | 'container' | 'text', style: NodeStyle) => void
+  styleBrushActive: boolean
+  onToggleStyleBrush: () => void
 }): React.JSX.Element {
   const hasSelection = selectedNodes.length > 0 || selectedEdges.length > 0
 
   return (
-    <div className={hasSelection ? 'diagram-dock diagram-dock-properties' : 'diagram-dock diagram-dock-palette'}>
+    <div
+      className={
+        hasSelection ? 'diagram-dock diagram-dock-properties' : 'diagram-dock diagram-dock-palette'
+      }
+    >
       {hasSelection ? (
         <PropertyPanel
           selectedNodes={selectedNodes}
@@ -79,6 +99,8 @@ function DiagramDock({
           endContinuousEdit={endContinuousEdit}
           pushSnapshot={pushSnapshot}
           onSetDefaultStyle={onSetDefaultStyle}
+          styleBrushActive={styleBrushActive}
+          onToggleStyleBrush={onToggleStyleBrush}
         />
       ) : (
         <ItemPalette

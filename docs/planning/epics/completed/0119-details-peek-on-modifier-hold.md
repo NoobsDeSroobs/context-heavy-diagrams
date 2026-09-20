@@ -54,5 +54,5 @@ rule: hover must never open the full detail panel).
 - [x] `PeekCard` component; remove `useDetailsTooltip` `title`
 - [ ] Optional delayed-hover Preference — deferred
 - [x] `docs/architecture/overview.md` mention
-- [ ] List in the shortcuts page ([epic 0120](../0120-help-keyboard-shortcuts-page.md)) — when that page exists
+- [x] List in the shortcuts page ([epic 0120](0120-help-keyboard-shortcuts-page.md)) — done there as `links.peek`
 - [x] Live test on Windows (Linux still unverified): hold Ctrl over shapes/text/containers; Ctrl+A / Ctrl+click / Ctrl+wheel / drag don't flash the card; unsaved note edits show

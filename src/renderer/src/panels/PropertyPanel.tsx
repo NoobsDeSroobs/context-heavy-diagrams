@@ -23,6 +23,7 @@ import { computeFieldValue } from './fieldValue'
 import { MARKER_OPTIONS } from './edgeStyleOptions'
 import MetadataSection from './MetadataSection'
 import ReferencesSection from './ReferencesSection'
+import { canBrushNodeType } from '../styleBrush'
 
 export interface TransformPatch {
   x?: number
@@ -59,6 +60,10 @@ interface PropertyPanelProps {
   beginContinuousEdit: () => void
   endContinuousEdit: () => void
   pushSnapshot: () => void
+  // Copy style / apply mode (ADR 0095): the panel only offers the entry point
+  // and the exit; the brush itself lives in Canvas.
+  styleBrushActive: boolean
+  onToggleStyleBrush: () => void
 }
 
 // '' means the field is absent — a real style.routingStyle value, not a
@@ -704,7 +709,9 @@ export default function PropertyPanel({
   beginContinuousEdit,
   endContinuousEdit,
   pushSnapshot,
-  onSetDefaultStyle
+  onSetDefaultStyle,
+  styleBrushActive,
+  onToggleStyleBrush
 }: PropertyPanelProps): React.JSX.Element {
   const byType = new Map<string, Node[]>()
   for (const n of selectedNodes) {
@@ -780,6 +787,28 @@ export default function PropertyPanel({
     )
   }
 
+  // One element that can be a brush source (a shape/container/text/line or an
+  // edge) gets "Copy style"; while a brush is active, any selection shows
+  // the way out instead.
+  const singleElement = selectedNodes.length + selectedEdges.length === 1
+  const canCopyStyle =
+    singleElement && (selectedEdges.length === 1 || canBrushNodeType(selectedNodes[0].type))
+  const styleBrushButton =
+    canCopyStyle || styleBrushActive ? (
+      <button
+        type="button"
+        className={styleBrushActive ? 'style-brush-button active' : 'style-brush-button'}
+        title={
+          styleBrushActive
+            ? 'Stop applying the copied style (Esc)'
+            : 'Copy this element’s style, then click other elements of the same type to apply it'
+        }
+        onClick={onToggleStyleBrush}
+      >
+        {styleBrushActive ? 'Stop applying style' : '🖌 Copy style'}
+      </button>
+    ) : null
+
   if (groupCount === 0) return <div className="property-panel-empty">Nothing selected</div>
 
   // Same-type selection (including a single edge): no extra "Type (N)"
@@ -788,6 +817,7 @@ export default function PropertyPanel({
   if (groupCount === 1) {
     return (
       <div className="property-panel">
+        {styleBrushButton}
         {nodeGroups.map(([type, nodes]) => renderNodeGroup(type, nodes))}
         {selectedEdges.length > 0 && renderEdgeGroup()}
         {metadataTarget?.kind === 'node' && (
@@ -822,6 +852,7 @@ export default function PropertyPanel({
 
   return (
     <div className="property-panel">
+      {styleBrushButton}
       {nodeGroups.map(([type, nodes]) => (
         <CollapsibleSection
           key={type}

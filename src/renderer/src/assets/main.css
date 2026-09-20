@@ -1088,6 +1088,65 @@ body {
   opacity: 0.8;
 }
 
+/* Copy style / apply mode (ADR 0095). The wrapper carries
+   style-brush-<type>; elements that accept the brush get a copy cursor, every
+   other node a not-allowed one (later rules of equal specificity win). */
+.style-brush-active .react-flow__node,
+.style-brush-active .react-flow__node * {
+  cursor: not-allowed;
+}
+
+.style-brush-shape .react-flow__node-shape,
+.style-brush-shape .react-flow__node-shape *,
+.style-brush-container .react-flow__node-container,
+.style-brush-container .react-flow__node-container *,
+.style-brush-text .react-flow__node-text,
+.style-brush-text .react-flow__node-text *,
+.style-brush-line .react-flow__node-line,
+.style-brush-line .react-flow__node-line *,
+.style-brush-edge .react-flow__edge,
+.style-brush-edge .react-flow__edge * {
+  cursor: copy;
+}
+
+.style-brush-button {
+  cursor: pointer;
+  align-self: flex-start;
+  margin: 8px 8px 0;
+  padding: 4px 10px;
+  font-size: 12px;
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 4px;
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+}
+
+.style-brush-button:hover {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.style-brush-button.active {
+  border-color: #2e7fd6;
+  color: #2e7fd6;
+}
+
+/* Toolbar reminder while the mode is on — same amber-free, accent-blue idea as
+   Isolate/search's pressed state; nothing is at risk, it's just a mode. */
+.toolbar-style-brush {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #2e7fd6;
+}
+
+.toolbar-style-brush button {
+  cursor: pointer;
+  font-size: 12px;
+  padding: 1px 6px;
+}
+
 .item-palette {
   display: flex;
   flex-direction: column;

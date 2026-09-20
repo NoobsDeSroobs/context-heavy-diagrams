@@ -20,5 +20,5 @@ harder either."
   opened by a user with that feature off must still round-trip losslessly — cf.
   [epic 0115](../0115-file-app-version-compatibility-and-data-loss-safety.md)).
 - Registry-based (features declare themselves) vs scattered `if (pref)` checks.
-  Same registry idea as [epic 0120](../0120-help-keyboard-shortcuts-page.md).
+  Same registry idea as [epic 0120](../completed/0120-help-keyboard-shortcuts-page.md).
 - Should new features default on or off?

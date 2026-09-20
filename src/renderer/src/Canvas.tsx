@@ -137,6 +137,14 @@ import AlignDistributePanel from './components/AlignDistributePanel'
 import AboutDialog from './components/AboutDialog'
 import ShortcutsDialog from './components/ShortcutsDialog'
 import { acceleratorFor, findKeyCommand, type CommandId } from './commands'
+import {
+  applyBrushToEdgeData,
+  applyBrushToNodeData,
+  brushAppliesToNode,
+  captureEdgeBrush,
+  captureNodeBrush,
+  type StyleBrush
+} from './styleBrush'
 import AlertDialog from './components/AlertDialog'
 import ExportPngDialog, { type PngExportChoice } from './components/ExportPngDialog'
 import BulkCreateDialog from './components/BulkCreateDialog'
@@ -5081,6 +5089,85 @@ function CanvasInner(): React.JSX.Element {
     ])
   })
 
+  // Copy style / "format painter" (ADR 0095). The brush is a snapshot of the
+  // source's stored style taken on entry, not a live reference to the
+  // selection — clicking a target changes the selection. Session-only.
+  // Everything here reads the latest state through useEventCallback and the
+  // React Flow instance, so none of it churns the DiagramContext value.
+  const [styleBrush, setStyleBrush] = useState<StyleBrush | null>(null)
+
+  const toggleStyleBrush = useEventCallback(() => {
+    if (styleBrush) {
+      setStyleBrush(null)
+      return
+    }
+    const selNodes = rfInstance.getNodes().filter((n) => n.selected)
+    const selEdges = rfInstance.getEdges().filter((e) => e.selected)
+    if (selNodes.length + selEdges.length !== 1) return
+    const brush =
+      selNodes.length === 1 ? captureNodeBrush(selNodes[0]) : captureEdgeBrush(selEdges[0])
+    if (brush) setStyleBrush(brush)
+  })
+
+  // Applies the brush to whichever of the given elements accept it (same
+  // type only; a mismatch is silently skipped). One undo step for the batch.
+  const applyStyleBrush = useEventCallback((nodeIds: string[], edgeIds: string[]) => {
+    if (!styleBrush) return
+    const nodeTargets = new Set(
+      rfInstance
+        .getNodes()
+        .filter((n) => nodeIds.includes(n.id) && brushAppliesToNode(styleBrush, n))
+        .map((n) => n.id)
+    )
+    const edgeTargets = new Set(styleBrush.kind === 'edge' ? edgeIds : [])
+    if (nodeTargets.size + edgeTargets.size === 0) return
+    pushSnapshot()
+    if (nodeTargets.size > 0) {
+      setNodes((nds) =>
+        nds.map((n) =>
+          nodeTargets.has(n.id) ? { ...n, data: applyBrushToNodeData(styleBrush, n.data) } : n
+        )
+      )
+    }
+    if (edgeTargets.size > 0) {
+      setEdges((eds) =>
+        eds.map((e) =>
+          edgeTargets.has(e.id) ? { ...e, data: applyBrushToEdgeData(styleBrush, e.data) } : e
+        )
+      )
+    }
+  })
+
+  const pasteStyleToSelection = useEventCallback(() => {
+    applyStyleBrush(
+      rfInstance
+        .getNodes()
+        .filter((n) => n.selected)
+        .map((n) => n.id),
+      rfInstance
+        .getEdges()
+        .filter((e) => e.selected)
+        .map((e) => e.id)
+    )
+  })
+
+  // Plain clicks only — Ctrl/Cmd+click follows a link and Shift+click edits
+  // the selection, neither should also paint.
+  const onStyleBrushNodeClick = useCallback(
+    (event: React.MouseEvent, node: Node) => {
+      if (event.ctrlKey || event.metaKey || event.shiftKey) return
+      applyStyleBrush([node.id], [])
+    },
+    [applyStyleBrush]
+  )
+  const onStyleBrushEdgeClick = useCallback(
+    (event: React.MouseEvent, edge: Edge) => {
+      if (event.ctrlKey || event.metaKey || event.shiftKey) return
+      applyStyleBrush([], [edge.id])
+    },
+    [applyStyleBrush]
+  )
+
   // Global keyboard shortcuts. One handler rather than one useEffect
   // per shortcut, now that there are enough of these to make that
   // unwieldy. Checks both ctrlKey and metaKey throughout (not just on
@@ -5123,6 +5210,8 @@ function CanvasInner(): React.JSX.Element {
         return true
       },
       'edit.paste': pasteFromClipboard,
+      'style.copy': toggleStyleBrush,
+      'style.paste': pasteStyleToSelection,
       'edit.cut': cutSelection,
       // Figma-style redo binding (Ctrl+Shift+Z), not Ctrl+Y.
       'edit.undo': undo,
@@ -5163,6 +5252,8 @@ function CanvasInner(): React.JSX.Element {
           setLinePicker(null)
         } else if (contextMenu) {
           setContextMenu(null)
+        } else if (styleBrush) {
+          setStyleBrush(null)
         } else {
           deselectAll()
         }
@@ -5209,6 +5300,9 @@ function CanvasInner(): React.JSX.Element {
     searchOverlayOpen,
     searchIconPicker,
     shortcutsDialogOpen,
+    styleBrush,
+    toggleStyleBrush,
+    pasteStyleToSelection,
     closeSearchOverlay,
     diagnosticsPanelOpen,
     highlightsPanelOpen,
@@ -5736,6 +5830,15 @@ function CanvasInner(): React.JSX.Element {
               <option value="diagram">Diagram</option>
               <option value="matrix">Security Matrix (prototype)</option>
             </select>
+            {styleBrush && (
+              <span className="toolbar-style-brush" role="status">
+                Applying style — click{' '}
+                {styleBrush.kind === 'edge' ? 'an edge' : `a ${styleBrush.nodeType}`}
+                <button type="button" onClick={() => setStyleBrush(null)}>
+                  Stop (Esc)
+                </button>
+              </span>
+            )}
             {showSavedFlash && (
               <span className="toolbar-saved-flash" role="status">
                 ✓ Saved
@@ -5843,7 +5946,11 @@ function CanvasInner(): React.JSX.Element {
           ) : (
             <div className="canvas-view-body">
               <div
-                className="canvas-view-flow"
+                className={`canvas-view-flow${
+                  styleBrush
+                    ? ` style-brush-active style-brush-${styleBrush.kind === 'node' ? styleBrush.nodeType : 'edge'}`
+                    : ''
+                }`}
                 ref={flowWrapperRef}
                 onDragOver={onCanvasDragOver}
                 onDrop={onCanvasDrop}
@@ -5881,6 +5988,8 @@ function CanvasInner(): React.JSX.Element {
                   onEdgesChange={onEdgesChange}
                   onNodeDrag={onNodeDrag}
                   onNodeDragStop={onNodeDragStop}
+                  onNodeClick={onStyleBrushNodeClick}
+                  onEdgeClick={onStyleBrushEdgeClick}
                   onNodeMouseEnter={peekBindings.onNodeMouseEnter}
                   onNodeMouseLeave={peekBindings.onNodeMouseLeave}
                   onConnect={onConnect}
@@ -6015,6 +6124,8 @@ function CanvasInner(): React.JSX.Element {
                 endContinuousEdit={endContinuousEdit}
                 pushSnapshot={pushSnapshot}
                 onSetDefaultStyle={setDefaultStyle}
+                styleBrushActive={styleBrush !== null}
+                onToggleStyleBrush={toggleStyleBrush}
               />
             </div>
           )}

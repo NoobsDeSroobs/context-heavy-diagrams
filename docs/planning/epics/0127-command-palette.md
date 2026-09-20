@@ -3,7 +3,7 @@
 ## Status
 Not Started — logged 2026-09-19. User agreed to build it because its main
 cost (the command registry) is already required by
-[epic 0120](0120-help-keyboard-shortcuts-page.md). **Sequenced after 0120.**
+[epic 0120](completed/0120-help-keyboard-shortcuts-page.md). **Sequenced after 0120.**
 
 ## Goal
 A keyboard-invoked, searchable launcher for app actions (type "export png",

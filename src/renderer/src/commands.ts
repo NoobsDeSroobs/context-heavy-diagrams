@@ -14,6 +14,7 @@ export type CommandCategory =
   | 'File'
   | 'Edit'
   | 'View'
+  | 'Style'
   | 'Selection'
   | 'Connections & creation'
   | 'Labels'
@@ -90,14 +91,14 @@ export const COMMANDS = [
     id: 'edit.copy',
     title: 'Copy selection',
     category: 'Edit',
-    binding: { key: 'c', mod: true },
+    binding: { key: 'c', mod: true, shift: false },
     deferToTextField: true
   },
   {
     id: 'edit.paste',
     title: 'Paste',
     category: 'Edit',
-    binding: { key: 'v', mod: true },
+    binding: { key: 'v', mod: true, shift: false },
     deferToTextField: true
   },
   {
@@ -114,6 +115,21 @@ export const COMMANDS = [
     keys: 'Delete / Backspace'
   },
 
+  {
+    id: 'style.copy',
+    title:
+      'Copy the selected element’s style, then click elements of the same type to apply it (again or Esc to stop)',
+    category: 'Style',
+    binding: { key: 'c', mod: true, shift: true },
+    deferToTextField: true
+  },
+  {
+    id: 'style.paste',
+    title: 'Apply the copied style to every selected element of the same type',
+    category: 'Style',
+    binding: { key: 'v', mod: true, shift: true },
+    deferToTextField: true
+  },
   {
     id: 'selection.selectAll',
     title: 'Select everything',
