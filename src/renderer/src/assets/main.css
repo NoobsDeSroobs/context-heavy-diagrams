@@ -1036,6 +1036,58 @@ body {
   font-weight: bold;
 }
 
+/* Ctrl/Cmd-hover peek card (ADR 0093): read-only, never intercepts the pointer. */
+.peek-card {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--color-background-soft);
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  color: var(--color-text);
+  font-size: 13px;
+}
+
+.peek-card-title {
+  padding: 8px 12px 0;
+  font-weight: bold;
+}
+
+.peek-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px 12px 0;
+}
+
+.peek-card-tag {
+  background: var(--color-background-mute);
+  border-radius: 3px;
+  padding: 1px 6px;
+  font-size: 12px;
+}
+
+/* Reuses .details-panel-preview's markdown styling; flex/overflow overridden
+   since the card, not the body, is the size-capped box. */
+.peek-card-body.details-panel-preview {
+  flex: 0 1 auto;
+  overflow: hidden;
+  min-height: 0;
+  padding: 4px 12px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
+}
+
+.peek-card-link {
+  padding: 4px 12px 8px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
 .item-palette {
   display: flex;
   flex-direction: column;

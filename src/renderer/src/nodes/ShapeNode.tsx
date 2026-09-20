@@ -6,7 +6,6 @@ import HighlightChips from '../components/HighlightChips'
 import IconSlotView from '../components/IconSlotView'
 import LockBadge from '../components/LockBadge'
 import { useDiagramContext } from '../useDiagramContext'
-import { useDetailsTooltip } from '../hooks/useDetailsTooltip'
 import { HIGHLIGHT_BORDER_WIDTH } from '../highlights'
 import { isolateStyle } from '../search'
 import { nodeContainerCss, nodeLabelCss } from '../styles/nodeStyleCss'
@@ -63,11 +62,9 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
 
   const locked = data?.locked === true
   const icons = (data?.icons ?? {}) as Partial<Record<IconSlot, IconRef>>
-  const detailsPath = typeof data?.details === 'string' ? data.details : undefined
   const linkedPath = typeof data?.linkedDiagram === 'string' ? data.linkedDiagram : undefined
   const customPoints = (data?.connectionPoints ?? []) as ConnectionPoint[]
   const style = data?.style as NodeStyle | undefined
-  const tooltip = useDetailsTooltip(diagramPath, detailsPath)
   const { addConnectionPointItem, onPointContextMenu } = useConnectionPointMenu(id, customPoints)
 
   // See ADR 0025: exactly one matching enabled highlight
@@ -162,7 +159,6 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
       }}
       onContextMenu={onContextMenu}
       onClick={onClick}
-      title={tooltip}
     >
       <NodeResizer
         isVisible={selected && !locked}

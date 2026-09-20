@@ -4,7 +4,6 @@ import type { NodeStyle } from '@shared/diagram'
 import EditableLabel from '../components/EditableLabel'
 import LockBadge from '../components/LockBadge'
 import { useDiagramContext } from '../useDiagramContext'
-import { useDetailsTooltip } from '../hooks/useDetailsTooltip'
 import { isolateStyle } from '../search'
 import { nodeContainerCss, nodeLabelCss } from '../styles/nodeStyleCss'
 
@@ -20,7 +19,6 @@ export const TEXT_MIN_HEIGHT = 24
 function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
   const { updateNodeData, getNode } = useReactFlow()
   const {
-    diagramPath,
     openContextMenu,
     openDetailsPanel,
     detachFromParent,
@@ -39,9 +37,7 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
   const locked = data?.locked === true
   const nodeRef = useRef<HTMLDivElement>(null)
   const [rotating, setRotating] = useState(false)
-  const detailsPath = typeof data?.details === 'string' ? data.details : undefined
   const linkedPath = typeof data?.linkedDiagram === 'string' ? data.linkedDiagram : undefined
-  const tooltip = useDetailsTooltip(diagramPath, detailsPath)
   const style = data?.style as NodeStyle | undefined
 
   const onContextMenu = useCallback(
@@ -148,7 +144,6 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
       }}
       onContextMenu={onContextMenu}
       onClick={onClick}
-      title={tooltip}
     >
       <NodeResizer
         isVisible={selected && !locked}

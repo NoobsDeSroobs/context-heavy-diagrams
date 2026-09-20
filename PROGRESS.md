@@ -6,8 +6,11 @@ Short pointer only — the full backlog lives in [docs/planning/](docs/planning/
 
 Every core requirement from [docs/project-brief.md](docs/project-brief.md) is implemented, merged to `master`, and confirmed working. Substantial work beyond the brief's core list has also landed since, driven by real usage — containers, a full styling panel, undo/redo, alignment/snapping, configurable connection points, a multi-window diagram model, a unified tag/metadata system, tag-based highlights, a freeform curved-line node type, and more. See [docs/architecture/overview.md](docs/architecture/overview.md) for a current component-level map, and [docs/planning/epics/](docs/planning/epics/) for what shipped and why.
 
+## Current (2026-09-20)
+- **Epic 0129 merged (#97)** and moved to `completed/`. Batch continues: **[0119](docs/planning/epics/0119-details-peek-on-modifier-hold.md) implemented** on `epic/0119-details-peek-on-modifier-hold` ([ADR 0093](docs/decisions/0093-details-peek-card-on-modifier-hold.md)) — Ctrl/Cmd-hover peek card (label, tags, details text, link hint) replacing the native `title` tooltip; `typecheck`/`lint` clean, live-tested by the user on Windows (PR pending; Linux unverified). Next in the batch: 0120 (Help shortcuts page) → 0121 (copy style / apply mode).
+
 ## Pending housekeeping (2026-09-20)
-- **After the user finishes merging the epic 0129 PR:** delete the local branches that are merged into `master` — verify each with `git diff master <branch>` first (squash merges never show as ancestors; pre-approved for merged local branches only, never remote). Candidates: `epic/0128-external-change-detection-and-save-conflict-warning`, `fix/details-panel-shows-element-name`, `epic/0129-unified-multi-file-save-and-change-tracking`; `fix/drop-viewport-persistence` was merged (#94) but its diff to `master` is not clean — check it before touching. Then move [epic 0129](docs/planning/epics/0129-unified-multi-file-save-and-change-tracking.md) to `completed/`.
+- **Local branch cleanup done:** `epic/0129-…` (diffed clean), and `epic/0128-…`, `fix/details-panel-shows-element-name`, `fix/drop-viewport-persistence` (user confirmed merged via #95/#96/#94; their diff to `master` isn't empty only because they're behind it) were all deleted.
 
 ## Current state (2026-09-19)
 

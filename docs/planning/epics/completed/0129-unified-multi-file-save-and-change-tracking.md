@@ -1,9 +1,9 @@
 # 0129: Unified multi-file save and change tracking
 
 ## Status
-**Done as of 2026-09-20 apart from follow-ups that were deliberately split off into [epic 0130](later/0130-multi-file-save-follow-ups.md) (technical debt, later):** the unified change notice with minimal reload, orphaned edits in Diagnostics, and a few loose ends. Move this file to `completed/` once the PR (step 1 and step 2a together) is merged.
+**Done as of 2026-09-20 apart from follow-ups that were deliberately split off into [epic 0130](../later/0130-multi-file-save-follow-ups.md) (technical debt, later):** the unified change notice with minimal reload, orphaned edits in Diagnostics, and a few loose ends. Move this file to `completed/` once the PR (step 1 and step 2a together) is merged.
 
-Design agreed 2026-09-19 — see [ADR 0092](../../decisions/0092-unified-multi-file-save-and-change-detection.md). **Step 1 (core + Save migration) implemented and live-tested on Windows 2026-09-20** (checklist passed after two fixes it surfaced: partial save on conflict, and crash recovery); `typecheck`/`lint`/`build` clean, 30 unit tests. **Linux not yet verified.** Step 2 (notices on the registry, minimal reload, hub-reload reconcile, per-file conflict dialog) is next. See the ADR's "Implementation notes".
+Design agreed 2026-09-19 — see [ADR 0092](../../../decisions/0092-unified-multi-file-save-and-change-detection.md). **Step 1 (core + Save migration) implemented and live-tested on Windows 2026-09-20** (checklist passed after two fixes it surfaced: partial save on conflict, and crash recovery); `typecheck`/`lint`/`build` clean, 30 unit tests. **Linux not yet verified.** Step 2 (notices on the registry, minimal reload, hub-reload reconcile, per-file conflict dialog) is next. See the ADR's "Implementation notes".
 
 ## The observation
 The user's hunch: saving is a set of parallel, type-specific functions
@@ -25,12 +25,12 @@ go through the same logic.
   back-to-back on one Save. This duplication is 0128's own doing — it was bolted onto the
   existing structure rather than generalising it.
 - **Inconsistent write timing.** Details, renames and staged file-removals
-  ([ADR 0084](../../decisions/0084-diagnostics-missing-files.md)-era) happen **at save**;
+  ([ADR 0084](../../../decisions/0084-diagnostics-missing-files.md)-era) happen **at save**;
   custom icons (`icons:pickAndCopyCustom`), reference images (`references:pickAndCopy`)
   and a new linked diagram (`links:createNew`) are written to disk **immediately** at
   pick time. Nothing states the rule for which is which.
 - Per-file dirtiness doesn't exist: one `isDirty` boolean for everything
-  ([ADR 0040](../../decisions/0040-dirty-tracking-and-autosave-design.md)); a note's
+  ([ADR 0040](../../../decisions/0040-dirty-tracking-and-autosave-design.md)); a note's
   "dirty" is only derivable (`draft !== baseline.content`).
 
 ## Assessment: the hunch is right — with three refinements
@@ -56,11 +56,11 @@ go through the same logic.
 - Shadow registry/detector wholly in main? How the native popup lists many files. Test setup for the pure planner.
 
 ## Explicitly not in scope
-No `fs.watch`/file watcher, no in-app merge (git remains the merge tool) — settled in [ADR 0091](../../decisions/0091-external-change-detection.md).
+No `fs.watch`/file watcher, no in-app merge (git remains the merge tool) — settled in [ADR 0091](../../../decisions/0091-external-change-detection.md).
 
 ## Tasks
 ### Step 1 — core + Save migration (this PR)
-- [x] Design conversation → [ADR 0092](../../decisions/0092-unified-multi-file-save-and-change-detection.md)
+- [x] Design conversation → [ADR 0092](../../../decisions/0092-unified-multi-file-save-and-change-detection.md)
 - [x] Per-entry dirty flags (hub + each note) replacing the single `isDirty`; editing only a note no longer dirties/rewrites the hub
 - [x] Shadow registry in the renderer (nodeId key, original path, baseline, dirty, content) + one shared detector (`files:check`); replaces `diskBaselines` + `detailsBaselineRef`
 - [x] Pure save planner (`planSave`) + executor (`documentSaveExec`) + tests (`npm test`, 25 cases)
@@ -73,10 +73,10 @@ No `fs.watch`/file watcher, no in-app merge (git remains the merge tool) — set
 
 ### Step 2 — next PR
 - [x] In-app conflict dialog: per-file Keep mine / Take disk, set-all shortcuts, Cancel (replaces the interim native popup); hub "Take disk" stops the save after reload — **step 2a, on the same branch, live-tested on Windows 2026-09-20 (checklist below passed); Linux unverified**
-- [ ] → moved to [0130](later/0130-multi-file-save-follow-ups.md): Focus/panel-open check → one notice for every file (Reload / Ignore, minimal reload, marks files with unsaved edits)
+- [ ] → moved to [0130](../later/0130-multi-file-save-follow-ups.md): Focus/panel-open check → one notice for every file (Reload / Ignore, minimal reload, marks files with unsaved edits)
 - [x] Diagram reload keeps unsaved note edits (done with 2a, also for the toolbar Reload)
-- [ ] → moved to [0130](later/0130-multi-file-save-follow-ups.md): dirty orphans (element gone) surfaced in Diagnostics instead of an alert / discarded on Save
-- [ ] → moved to [0130](later/0130-multi-file-save-follow-ups.md): remove the remaining special-casing of the diagram vs notes in the notices
+- [ ] → moved to [0130](../later/0130-multi-file-save-follow-ups.md): dirty orphans (element gone) surfaced in Diagnostics instead of an alert / discarded on Save
+- [ ] → moved to [0130](../later/0130-multi-file-save-follow-ups.md): remove the remaining special-casing of the diagram vs notes in the notices
 
 ## Live-test checklist for step 1
 1. **Plain save:** edit the diagram, Save — file written, "Saved" flash. Ctrl+S on a clean diagram writes nothing (file's modified time unchanged).

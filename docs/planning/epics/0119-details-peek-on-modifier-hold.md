@@ -1,8 +1,11 @@
 # 0119: Details peek card while holding Ctrl/Cmd over an element
 
 ## Status
-Not Started — logged 2026-09-19 from a brainstorming pass. Direction agreed
-with the user; needs a short design pass (see open questions) before building.
+Implemented 2026-09-20 on `epic/0119-details-peek-on-modifier-hold`;
+`typecheck`/`lint` clean, live-tested by the user on Windows (Linux
+unverified). Design + open-question answers in
+[ADR 0093](../../decisions/0093-details-peek-card-on-modifier-hold.md). The
+optional delayed-hover Preference is deferred (see the ADR).
 
 ## Goal
 Let the canvas act as a browsing surface for the context already captured in
@@ -39,15 +42,17 @@ rule: hover must never open the full detail panel).
   new mouseenter fires), and window blur must clear the held state.
 - Optional Preference (default off): also show after a hover delay (0.5–1 s).
 
-## Open questions
-- Edges: peek too, or elements only for v1?
-- Show selected frontmatter fields ([epic 0021](completed/0021-detail-frontmatter.md)) on the card?
-- Ctrl is also held for Ctrl+A/C/V/Z etc. — confirm no gesture conflict while
-  dragging or box-selecting (card should suppress itself during drags).
+## Open questions (resolved — see ADR 0093)
+- Edges: nodes only for v1 (edges have no details/link).
+- Frontmatter fields: none — that mechanism was retired ([epic 0021](completed/0021-detail-frontmatter.md)); tags cover it.
+- Gesture conflicts: card hides while a pointer button is down, and after any
+  other key / a click while the modifier is held, until it's released.
 
 ## Tasks
-- [ ] Design pass (open questions above) + ADR
-- [ ] Hover-target + held-modifier tracking hook
-- [ ] `PeekCard` component; remove `useDetailsTooltip` `title`
-- [ ] Optional delayed-hover Preference
-- [ ] `docs/architecture/overview.md` mention; list in the shortcuts page ([epic 0120](0120-help-keyboard-shortcuts-page.md))
+- [x] Design pass (open questions above) + ADR
+- [x] Hover-target + held-modifier tracking hook (`useDetailsPeek`)
+- [x] `PeekCard` component; remove `useDetailsTooltip` `title`
+- [ ] Optional delayed-hover Preference — deferred
+- [x] `docs/architecture/overview.md` mention
+- [ ] List in the shortcuts page ([epic 0120](0120-help-keyboard-shortcuts-page.md)) — when that page exists
+- [x] Live test on Windows (Linux still unverified): hold Ctrl over shapes/text/containers; Ctrl+A / Ctrl+click / Ctrl+wheel / drag don't flash the card; unsaved note edits show

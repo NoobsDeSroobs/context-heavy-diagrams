@@ -2,7 +2,7 @@
 
 ## Status
 Not Started — parked on purpose, logged 2026-09-20. **Technical debt, to be done later**, not
-a scheduled epic. Split off from [epic 0129](../0129-unified-multi-file-save-and-change-tracking.md)
+a scheduled epic. Split off from [epic 0129](../completed/0129-unified-multi-file-save-and-change-tracking.md)
 when its save side (shadow model, one save plan, per-file conflict dialog, reload that keeps
 unsaved notes) was finished and live-tested: what remains is refinement, and the queued batch
 ([0119](../0119-details-peek-on-modifier-hold.md) → [0120](../0120-help-keyboard-shortcuts-page.md)

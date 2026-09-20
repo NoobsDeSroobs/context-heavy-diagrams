@@ -150,6 +150,8 @@ import { buildClipboardPayload, parseClipboardPayload, remapForPaste } from './c
 import type { TransformPatch } from './panels/PropertyPanel'
 import { useTheme } from './theme'
 import { useEventCallback } from './hooks/useEventCallback'
+import { useDetailsPeek } from './hooks/useDetailsPeek'
+import PeekCard from './components/PeekCard'
 import { effectiveStylePalette, usePreferences } from './preferences'
 import {
   captureDiagramPng,
@@ -1285,6 +1287,8 @@ function CanvasInner(): React.JSX.Element {
   // Editing a node's details doesn't write to disk immediately — it's just
   // draft state here, flushed as part of the main save flow.
   const rfInstance = useReactFlow()
+  const { peek, bindings: peekBindings } = useDetailsPeek()
+  const peekNode = peek ? rfInstance.getNode(peek.nodeId) : undefined
   const updateNodeInternals = useUpdateNodeInternals()
   // Scopes the PNG export (ADR 0051) capture to this window's own
   // .react-flow__viewport rather than a bare document-wide query — no
@@ -1318,7 +1322,7 @@ function CanvasInner(): React.JSX.Element {
   // on every node/edge change, so did the context value, re-rendering every
   // node and edge on every edit/drag/hover and defeating that memoization
   // (ADR 0073). Reading a ref inside a callback — not during render — is
-  // allowed by the react-hooks lint rules; same pattern as useDetailsTooltip
+  // allowed by the react-hooks lint rules; same pattern as useDetailsPeek
   // and openReferencesFor's rfInstance.getNode read.
   const graphRef = useRef<{ nodes: Node[]; edges: Edge[] }>({ nodes: [], edges: [] })
   useEffect(() => {
@@ -5876,6 +5880,24 @@ function CanvasInner(): React.JSX.Element {
                 onDrop={onCanvasDrop}
               >
                 <EdgeMarkerDefs />
+                {peek && peekNode && (
+                  <PeekCard
+                    key={peek.nodeId}
+                    target={peek}
+                    label={typeof peekNode.data?.label === 'string' ? peekNode.data.label : ''}
+                    detailsPath={
+                      typeof peekNode.data?.details === 'string' ? peekNode.data.details : undefined
+                    }
+                    linkedPath={
+                      typeof peekNode.data?.linkedDiagram === 'string'
+                        ? peekNode.data.linkedDiagram
+                        : undefined
+                    }
+                    metadata={peekNode.data?.metadata as Record<string, MetadataEntry> | undefined}
+                    diagramPath={currentPath}
+                    shadowContent={noteShadows[peek.nodeId]?.content}
+                  />
+                )}
                 <ReactFlow
                   nodes={nodes}
                   edges={orderedEdges}
@@ -5890,6 +5912,8 @@ function CanvasInner(): React.JSX.Element {
                   onEdgesChange={onEdgesChange}
                   onNodeDrag={onNodeDrag}
                   onNodeDragStop={onNodeDragStop}
+                  onNodeMouseEnter={peekBindings.onNodeMouseEnter}
+                  onNodeMouseLeave={peekBindings.onNodeMouseLeave}
                   onConnect={onConnect}
                   onConnectStart={onConnectStart}
                   onConnectEnd={onConnectEnd}
