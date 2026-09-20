@@ -1,4 +1,4 @@
-# 0120: Help → Keyboard shortcuts & gestures page (from a single registry)
+# 0120: Help → Keyboard shortcuts & gestures page (from a single command registry)
 
 ## Status
 Not Started — logged 2026-09-19 as a side-note from the copy-style discussion
@@ -13,12 +13,12 @@ the OS (Ctrl on Windows/Linux, Cmd on Mac).
 Shortcuts are currently hard-coded inline in one big `keydown` handler in
 `Canvas.tsx` (`mod && event.key === 's'`, …), plus separate menu-bar labels.
 A hand-written help page would drift from that on the first change. So the
-epic is really: **introduce a small shortcut/action registry** (id, keys,
+epic is really: **introduce a small command registry** (id, keys,
 description, category, handler-or-reference) that the keydown handler, the
 menu bar's accelerator labels, and the Help page all read.
 
-That registry is also the foundation for the command palette
-([epic 0127](0127-command-palette.md)), which is why the registry needs an
+That command registry is also the foundation for the command palette
+([epic 0127](0127-command-palette.md)), which is why the command registry needs an
 "available now" predicate and human-readable titles from the start.
 
 ## Scope
@@ -32,6 +32,6 @@ That registry is also the foundation for the command palette
 
 ## Tasks
 - [ ] Inventory all current shortcuts/gestures (Canvas.tsx keydown handler, MenuBar, node components)
-- [ ] Registry module + migrate the keydown handler to read it
+- [ ] Command registry module + migrate the keydown handler to read it
 - [ ] Help → Keyboard shortcuts dialog/page
 - [ ] New features (0119, 0121) register through it from day one

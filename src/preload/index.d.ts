@@ -1,5 +1,12 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
 import type { DiagramFile, RequiredTagDefinition } from '@shared/diagram'
+import type {
+  NoteBaseline,
+  RecoverySnapshot,
+  SaveDocumentRequest,
+  SaveOutcome,
+  Stamp
+} from '@shared/documentSave'
 import type { AppPreferences } from '@shared/preferences'
 import type { SecurityCrawlResult } from '@shared/threatMatrixMath'
 
@@ -10,8 +17,8 @@ export interface RequiredTagsWalkResult {
 }
 
 export interface DiagramApi {
-  openDiagramAtPath(path: string): Promise<DiagramFile>
-  saveDiagram(path: string, diagram: DiagramFile, sessionId: string): Promise<void>
+  openDiagramAtPath(path: string): Promise<{ diagram: DiagramFile; stamp: Stamp }>
+  saveDocument(request: SaveDocumentRequest): Promise<SaveOutcome>
   pickSavePath(): Promise<string | null>
   pickAndCopyCustomIcon(diagramPath: string): Promise<string | null>
   listCustomIcons(diagramPath: string): Promise<string[]>
@@ -19,20 +26,14 @@ export interface DiagramApi {
   pickAndCopyReferences(diagramPath: string): Promise<string[] | null>
   readReferenceAsDataUrl(diagramPath: string, relativePath: string): Promise<string>
   readDetails(diagramPath: string, relativePath: string): Promise<string>
-  checkExternalChange(path: string): Promise<{ changed: boolean; stamp: string | null }>
-  confirmExternalChange(
-    what: 'diagram' | 'details',
-    dirty: boolean,
-    names: string[]
-  ): Promise<'cancel' | 'overwrite' | 'reload'>
-  statDetails(diagramPath: string, relativePath: string): Promise<string | null>
-  writeDetails(diagramPath: string, nodeId: string, label: string, content: string): Promise<string>
-  syncDetailFileName(
+  readDetailsWithStamp(
     diagramPath: string,
-    nodeId: string,
-    label: string,
-    currentRelativePath: string
-  ): Promise<string>
+    relativePath: string
+  ): Promise<{ content: string; stamp: Stamp }>
+  checkFiles(
+    diagramPath: string,
+    entries: { relPath: string | null; stamp: Stamp }[]
+  ): Promise<{ changed: boolean; stamp: Stamp }[]>
   createLinkedDiagram(diagramPath: string, label: string): Promise<string>
   pickExistingLinkedDiagram(diagramPath: string): Promise<string | null>
   checkResourceFiles(
@@ -75,15 +76,12 @@ export interface DiagramApi {
     path: string | null,
     sessionId: string,
     diagram: DiagramFile,
-    detailsDrafts: Record<string, string>
+    detailsDrafts: Record<string, string>,
+    noteBaselines?: Record<string, NoteBaseline>
   ): Promise<void>
   deleteRecoverySnapshot(path: string | null, sessionId: string): Promise<void>
-  checkRecoveryForPath(
-    path: string
-  ): Promise<{ diagram: DiagramFile; detailsDrafts: Record<string, string> } | null>
-  onRecoveredOrphan(
-    callback: (snapshot: { diagram: DiagramFile; detailsDrafts: Record<string, string> }) => void
-  ): () => void
+  checkRecoveryForPath(path: string): Promise<RecoverySnapshot | null>
+  onRecoveredOrphan(callback: (snapshot: RecoverySnapshot) => void): () => void
   onCloseRequested(callback: () => void): () => void
   requestCloseDecision(): Promise<'save' | 'discard' | 'cancel'>
   closeApproved(path: string | null, sessionId: string): Promise<void>

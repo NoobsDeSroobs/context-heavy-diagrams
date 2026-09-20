@@ -3,6 +3,7 @@ import { createHash, randomUUID } from 'crypto'
 import { mkdir, readdir, readFile, rm, stat, writeFile } from 'fs/promises'
 import { join } from 'path'
 import type { DiagramFile } from '@shared/diagram'
+import type { NoteBaseline, RecoverySnapshot } from '@shared/documentSave'
 
 // Crash-recovery snapshots — see ADR 0040. Stored centrally
 // under userData, never as siblings of the real .chd (would clutter the
@@ -21,11 +22,9 @@ interface RecoveryEnvelope {
   savedAt: number
   diagram: DiagramFile
   detailsDrafts: Record<string, string>
-}
-
-export interface RecoverySnapshot {
-  diagram: DiagramFile
-  detailsDrafts: Record<string, string>
+  // Each draft's note baseline (path, stamp, text) so a restored note can still
+  // detect an outside change (ADR 0092). Absent in older snapshots.
+  noteBaselines?: Record<string, NoteBaseline>
 }
 
 function recoveryDir(): string {
@@ -59,14 +58,16 @@ export async function writeRecoverySnapshot(
   path: string | null,
   sessionId: string,
   diagram: DiagramFile,
-  detailsDrafts: Record<string, string>
+  detailsDrafts: Record<string, string>,
+  noteBaselines?: Record<string, NoteBaseline>
 ): Promise<void> {
   await ensureRecoveryDir()
   const envelope: RecoveryEnvelope = {
     originalPath: path,
     savedAt: Date.now(),
     diagram,
-    detailsDrafts
+    detailsDrafts,
+    noteBaselines
   }
   await writeFile(fileFor(keyFor(path, sessionId)), JSON.stringify(envelope), 'utf-8')
 }
@@ -105,7 +106,11 @@ export async function checkRecoveryForPath(path: string): Promise<RecoverySnapsh
     // error instead of this recovery check.
     return null
   }
-  return { diagram: envelope.diagram, detailsDrafts: envelope.detailsDrafts }
+  return {
+    diagram: envelope.diagram,
+    detailsDrafts: envelope.detailsDrafts,
+    noteBaselines: envelope.noteBaselines
+  }
 }
 
 interface OrphanEntry {
@@ -127,7 +132,11 @@ async function listOrphans(): Promise<OrphanEntry[]> {
     if (envelope && envelope.originalPath === null) {
       orphans.push({
         key: entry.replace(/\.json$/, ''),
-        snapshot: { diagram: envelope.diagram, detailsDrafts: envelope.detailsDrafts }
+        snapshot: {
+          diagram: envelope.diagram,
+          detailsDrafts: envelope.detailsDrafts,
+          noteBaselines: envelope.noteBaselines
+        }
       })
     }
   }
@@ -194,9 +203,10 @@ export function registerRecoveryHandlers(): void {
       path: string | null,
       sessionId: string,
       diagram: DiagramFile,
-      detailsDrafts: Record<string, string>
+      detailsDrafts: Record<string, string>,
+      noteBaselines?: Record<string, NoteBaseline>
     ) => {
-      await writeRecoverySnapshot(path, sessionId, diagram, detailsDrafts)
+      await writeRecoverySnapshot(path, sessionId, diagram, detailsDrafts, noteBaselines)
     }
   )
 

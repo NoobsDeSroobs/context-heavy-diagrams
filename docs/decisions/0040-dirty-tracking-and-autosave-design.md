@@ -41,3 +41,19 @@ Dirty tracking was raised early (during the details-panel design discussion) and
 - A window's recovery key changes identity once across its lifetime — session id before the first save, path hash after — with the pre-save orphan file deleted once that switch happens (covered by the same save-time cleanup as the normal case).
 - Real OS window-close now round-trips through IPC to check dirty state before the close is allowed to proceed, where previously `BrowserWindow.close()` was unconditional.
 - A new small settings-mirror file under `userData` (outside `AppPreferences`'s own `localStorage` storage), owned by main, holding just the one startup-scan boolean — a narrow, deliberate exception to "settings live in `localStorage`," not a precedent to extend to other settings without its own reason.
+
+## Addendum 2026-09-20 — tighter autosave, and unresolved save conflicts (ADR 0092)
+Found while live-testing the multi-file save: killing the app soon after an edit (or right
+after a Save that left a conflict unresolved) offered no recovery. Causes and changes:
+- **The 60 s interval was too coarse.** An edit made and then killed within the minute had never
+  been snapshotted. Now **every 5 s, but only while dirty and only if any piece of state changed
+  since the last snapshot** (reference equality), so an idle dirty window still writes nothing.
+- **A snapshot older than the real file is ignored** (`checkRecoveryForPath`), by design. After
+  a Save that writes the diagram but leaves a conflicting note unsaved, every earlier snapshot is
+  therefore ignored and the unsaved note existed only in memory. The save now writes a fresh
+  snapshot **before** showing the conflict popup (so a crash during it, or after Cancel, is
+  recoverable); the snapshot is only deleted once nothing is left unsaved.
+- **Snapshots carry each dirty note's baseline** (path, disk stamp, original text). A note
+  restored from one still detects an outside edit made before the crash — without it a restored
+  draft would silently overwrite that edit on the next Save. Snapshots from older builds restore
+  as before (no baseline, never conflict-checked).

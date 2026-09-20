@@ -1,14 +1,16 @@
-import { BrowserWindow, dialog, ipcMain, type IpcMainInvokeEvent } from 'electron'
-import { readFile, writeFile } from 'fs/promises'
+import { BrowserWindow, dialog, ipcMain } from 'electron'
+import { readFile } from 'fs/promises'
 import { dirname, join } from 'path'
 import { parseDiagram, serializeDiagram, type DiagramFile } from '@shared/diagram'
+import type { SaveDocumentRequest, SaveOutcome, Stamp } from '@shared/documentSave'
 import { DEFAULT_PREFERENCES, withRecentDiagram } from '@shared/preferences'
 import { registerWindowPath } from './windows'
 import { deleteRecoverySnapshot } from './recovery'
 import { readPreferences, updatePreferences } from './appPreferences'
 import { fileStamp } from './fileStamp'
+import { executeSave } from './documentSaveExec'
 
-// Shared by diagram:openPath and diagram:save — records `path` in both the
+// Shared by diagram:openPath and document:save — records `path` in both the
 // last-opened-directory preference and the recent-diagrams list, in a single
 // write+broadcast. Reads current prefs to compute the new list; the TOCTOU
 // window is the same one diagram:pickSavePath already accepts (preference
@@ -23,21 +25,6 @@ async function recordOpenedOrSaved(path: string): Promise<void> {
       prefs?.recentDiagramsLimit ?? DEFAULT_PREFERENCES.recentDiagramsLimit
     )
   })
-}
-
-// What each window last saw of its own diagram file on disk — recorded when
-// the window loads (diagram:openPath) or saves (diagram:save), compared later
-// by diagram:checkExternalChange to notice a change made outside the app
-// (docs/decisions/0091-external-change-detection.md). Keyed by the window's
-// webContents id; `path` is stored too so a Save As to a *different* path
-// (whose overwrite the OS save dialog already confirmed) isn't judged against
-// the old file's stamp.
-const diskBaselines = new Map<number, { path: string; stamp: string | null }>()
-
-function recordBaseline(event: IpcMainInvokeEvent, path: string, stamp: string | null): void {
-  const id = event.sender.id
-  if (!diskBaselines.has(id)) event.sender.once('destroyed', () => diskBaselines.delete(id))
-  diskBaselines.set(id, { path, stamp })
 }
 
 // Diagram files are a single file (.chd, plain JSON underneath) — see
@@ -74,30 +61,65 @@ export function registerDiagramHandlers(): void {
     return result.filePath
   })
 
+  // Saves the diagram and its notes as one plan (ADR 0092): check for conflicts,
+  // save everything that doesn't conflict in the crash-safe order
+  // (documentSaveExec.ts), and report what was held back so the renderer can ask
+  // the user per file and call again with overwrite: true for just those.
+  //
   // Registers this window's path in the windows.ts registry so a later
   // attempt to open the same file elsewhere focuses this window instead
   // of opening a duplicate (ADR 0023) — covers both Save and the first
   // Save As, the only two points a window's path becomes known if it
   // wasn't opened with one already (e.g. File -> New). sessionId is the
-  // window's pre-save recovery identity (see ADR 0040) — a
-  // successful save makes any recovery snapshot under either key (the old
-  // session id, or this same path from a previous save) redundant.
+  // window's pre-save recovery identity (see ADR 0040) — a successful save
+  // makes any recovery snapshot under either key (the old session id, or
+  // this same path from a previous save) redundant.
   ipcMain.handle(
-    'diagram:save',
-    async (event, path: string, diagram: DiagramFile, sessionId: string) => {
-      await writeFile(path, serializeDiagram(diagram), 'utf-8')
-      recordBaseline(event, path, await fileStamp(path))
+    'document:save',
+    async (event, request: SaveDocumentRequest): Promise<SaveOutcome> => {
+      const { diagram, fallbackPaths } = request
+      const outcome = await executeSave(
+        {
+          diagramPath: request.diagramPath,
+          writeHub: request.writeHub,
+          expectedHubStamp: request.expectedHubStamp,
+          ops: request.ops,
+          overwrite: request.overwrite
+        },
+        {
+          stamp: fileStamp,
+          serializeHub: (revertNodeIds) => {
+            // A note that did not reach its new path (no source to move, or held
+            // back by a conflict) must not leave the diagram pointing at a file
+            // that doesn't exist: it keeps the old path, or none for a new note.
+            for (const id of revertNodeIds) {
+              const node = diagram.nodes.find((n) => n.id === id)
+              const fallback = fallbackPaths[id]
+              if (!node?.data || fallback === undefined) continue
+              if (fallback === null) delete node.data.details
+              else node.data.details = fallback
+            }
+            return serializeDiagram(diagram)
+          }
+        }
+      )
+      if (outcome.status !== 'saved') return outcome
+
       const win = BrowserWindow.fromWebContents(event.sender)
-      if (win) registerWindowPath(win, path)
+      if (win) registerWindowPath(win, request.diagramPath)
       // Two keys, not one: this path's own (repeat saves reuse it) and the
       // window's pre-save session-id key (only relevant the first time a
-      // previously-unsaved window is saved, harmless no-op otherwise).
-      await deleteRecoverySnapshot(path, sessionId)
-      await deleteRecoverySnapshot(null, sessionId)
+      // previously-unsaved window is saved, harmless no-op otherwise). Kept
+      // while conflicts are unresolved — those edits are not saved yet.
+      if (outcome.conflicts.length === 0) {
+        await deleteRecoverySnapshot(request.diagramPath, request.sessionId)
+        await deleteRecoverySnapshot(null, request.sessionId)
+      }
       // A repeat Save (not just the first Save As) is still real evidence
       // of "actively working in this file" — updates both lastOpenedDirectory
       // and the recent-diagrams list.
-      await recordOpenedOrSaved(path)
+      await recordOpenedOrSaved(request.diagramPath)
+      return outcome
     }
   )
 
@@ -107,66 +129,43 @@ export function registerDiagramHandlers(): void {
   // eventually, so this is the one place that updates lastOpenedDirectory
   // and the recent-diagrams list to cover all of them, rather than
   // duplicating the update at every dialog/entry point separately.
-  ipcMain.handle('diagram:openPath', async (event, path: string) => {
-    await recordOpenedOrSaved(path)
-    // Stamp BEFORE reading: if the file changes in between, the baseline is
-    // older than what we hold, so the next check errs toward "changed" (a
-    // harmless extra prompt) rather than missing an outside edit.
-    const stamp = await fileStamp(path)
-    const diagram = await openDiagramAtPath(path)
-    recordBaseline(event, path, stamp)
-    return diagram
-  })
-
-  // Has this window's diagram file been modified outside the app since this
-  // window last loaded or saved it? Never true for a path this window has no
-  // baseline for (a never-saved diagram, or a fresh Save As target), or when
-  // the file is gone (a save just recreates it). `stamp` is the file's
-  // current fingerprint, so the renderer can remember "the user dismissed
-  // the banner for this specific change" without touching the baseline.
-  ipcMain.handle('diagram:checkExternalChange', async (event, path: string) => {
-    const baseline = diskBaselines.get(event.sender.id)
-    const stamp = await fileStamp(path)
-    const changed =
-      baseline !== undefined &&
-      baseline.path === path &&
-      stamp !== null &&
-      stamp !== baseline.stamp
-    return { changed, stamp }
-  })
-
-  // The conflict popup. Native message box (same as the close prompt) — the
-  // app deliberately doesn't merge; git is the merge tool, so the choices are
-  // just "back out to git", "mine wins", "theirs wins".
-  // what: 'diagram' for the .chd file, 'details' for one or more detail notes.
+  // Returns the file's stamp alongside it — the renderer's baseline for
+  // detecting later outside changes (ADR 0092). Stamped BEFORE reading: if
+  // the file changes in between, the baseline is older than what we hold, so
+  // the next check errs toward "changed" (a harmless extra prompt) rather than
+  // missing an outside edit.
   ipcMain.handle(
-    'diagram:confirmExternalChange',
-    async (event, what: 'diagram' | 'details', dirty: boolean, names: string[]) => {
-      const win = BrowserWindow.fromWebContents(event.sender)
-      const subject =
-        what === 'diagram'
-          ? 'This diagram file'
-          : names.length === 1
-            ? `The detail notes for "${names[0]}"`
-            : `The detail notes for ${names.length} elements (${names.slice(0, 3).join(', ')}${names.length > 3 ? ', …' : ''})`
-      const message = dirty
-        ? `${subject} has unsaved changes in the editor AND was also changed outside the app.`
-        : `${subject} was changed outside the app since it was loaded.`
-      const options = {
-        type: 'warning' as const,
-        buttons: ['Cancel', 'Overwrite with editor version', 'Reload from disk'],
-        defaultId: 0,
-        cancelId: 0,
-        title: 'Changed outside the app',
-        message,
-        detail:
-          'To keep both versions: Cancel, commit the file as it is on disk (e.g. in git), come back and save to overwrite it, then reconcile the two versions in git.\n\n' +
-          'Overwrite replaces the file on disk with what is in the editor. Reload discards the editor version and loads the file from disk.'
-      }
-      const result = win
-        ? await dialog.showMessageBox(win, options)
-        : await dialog.showMessageBox(options)
-      return (['cancel', 'overwrite', 'reload'] as const)[result.response]
+    'diagram:openPath',
+    async (_event, path: string): Promise<{ diagram: DiagramFile; stamp: Stamp }> => {
+      await recordOpenedOrSaved(path)
+      const stamp = await fileStamp(path)
+      const diagram = await openDiagramAtPath(path)
+      return { diagram, stamp }
     }
+  )
+
+  // The one detector for "did a file change on disk since I last looked" —
+  // used by the window-focus check for both the diagram (relPath null) and any
+  // note (folder-relative path). Never `changed` for an entry with no baseline
+  // or a file that has vanished. `stamp` is the current fingerprint so the
+  // renderer can remember which specific change the user chose to ignore.
+  ipcMain.handle(
+    'files:check',
+    async (
+      _event,
+      diagramPath: string,
+      entries: { relPath: string | null; stamp: Stamp }[]
+    ): Promise<{ changed: boolean; stamp: Stamp }[]> =>
+      Promise.all(
+        entries.map(async (entry) => {
+          const stamp = await fileStamp(
+            entry.relPath === null ? diagramPath : join(dirname(diagramPath), entry.relPath)
+          )
+          return {
+            changed: entry.stamp !== null && stamp !== null && stamp !== entry.stamp,
+            stamp
+          }
+        })
+      )
   )
 }

@@ -24,7 +24,7 @@ stroke / thickness / font on each one through the property panel.
   Ctrl+Shift+C is DevTools "inspect" in Chromium if dev menus are on) or
   Ctrl+Alt+C / Ctrl+Alt+V (Google Docs; **but Ctrl+Alt is AltGr on many
   European layouts**, e.g. Nordic — risky). Check the existing set in
-  `Canvas.tsx` and register through [epic 0120](0120-help-keyboard-shortcuts-page.md)'s registry.
+  `Canvas.tsx` and register through [epic 0120](0120-help-keyboard-shortcuts-page.md)'s command registry.
   A GUI entry point must exist regardless of hotkey.
 - **Which fields:** fill, stroke, thickness, line style, font/size/colour;
   *not* label, size, position, tags, details, links, security data. For edges:
@@ -42,4 +42,4 @@ stroke / thickness / font on each one through the property panel.
 - [ ] Design pass + ADR (fields copied, palette refs, mode entry, hotkey)
 - [ ] Pure `extractStyle` / `applyStyle` per element type (in a testable module)
 - [ ] Mode state + cursor + Esc handling in `Canvas.tsx`
-- [ ] Property panel entry point; hotkey via registry
+- [ ] Property panel entry point; hotkey via the command registry

@@ -58,7 +58,7 @@ Electron runs two JS contexts:
 
 **Main process** (`src/main/`), one small module per concern, each registering its own IPC handlers:
 - `windows.ts` — one `BrowserWindow` per open diagram (ADR 0023), a path→window registry so opening an already-open file focuses it instead of duplicating, and the File→Open empty-window-reuse special case (ADR 0023's post-merge addendum).
-- `diagram.ts` — save/open/pick-save-path for the `.chd` file itself, plus the per-window disk baseline and the "changed outside the app" check/popup ([ADR 0091](../decisions/0091-external-change-detection.md)); `fileStamp.ts` is the tiny `mtime:size` fingerprint it (and `details.ts`) use.
+- `diagram.ts` — open/pick-save-path for the `.chd` file, plus `document:save` (saving the diagram *and* the detail notes it owns as one plan), `files:check` (the one "did it change on disk" detector) and the interim save-conflict popup ([ADR 0092](../decisions/0092-unified-multi-file-save-and-change-detection.md), which superseded ADR 0091's structure). `documentSaveExec.ts` executes a plan in the crash-safe order (Electron-free, unit-tested); `fileStamp.ts` is the tiny `mtime:size` fingerprint. `details.ts` only *reads* notes now. Shared, pure and unit-tested: `src/shared/documentSave.ts` (per-note shadows + `planSave`) and `detailPaths.ts`. Run the tests with `npm test`. The per-file save-conflict dialog is `components/ConflictDialog.tsx` (opened via `conflictDialog.ts`); the choice logic is the pure `resolveConflicts` in `documentSave.ts`.
 - `links.ts` — creating and browsing to linked diagrams.
 - `icons.ts` — custom icon upload/storage in a diagram's sibling `assets/` folder.
 - `details.ts` — the detail-sublayer Markdown files in a diagram's sibling `details/` folder.

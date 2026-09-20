@@ -3,6 +3,32 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { SaveAbortedError, isSaveAborted } from './saveAborted'
 import {
+  adoptDisk,
+  anyNoteDirty,
+  dirtyBaselines,
+  dirtyDrafts,
+  editNote,
+  HUB_KEY,
+  loadedNoteShadow,
+  markSaved,
+  newNoteShadow,
+  planSave,
+  recoveredNoteShadow,
+  resolveConflicts,
+  restoredNoteShadow,
+  type NoteBaseline,
+  type NoteShadow,
+  type PlanNoteInput,
+  type RecoverySnapshot,
+  type SavedNote,
+  type SaveDocumentRequest,
+  type SaveOutcome,
+  type Stamp
+} from '@shared/documentSave'
+import { derivedDetailsPath } from '@shared/detailPaths'
+import { askConflictResolution, type ConflictItem } from './conflictDialog'
+import ConflictDialog from './components/ConflictDialog'
+import {
   ReactFlow,
   ReactFlowProvider,
   Background,
@@ -515,6 +541,23 @@ function detailsNoteName(node: Node | undefined): string {
   return label ? `Note "${label}"` : 'This note'
 }
 
+// Notes restored from a crash-recovery snapshot become dirty shadows. With their
+// recorded baseline the disk check still works (an outside edit made before the
+// crash is still caught on Save); snapshots from older builds have none.
+function shadowsFromSnapshot(snapshot: RecoverySnapshot): Record<string, NoteShadow> {
+  const out: Record<string, NoteShadow> = {}
+  for (const [id, content] of Object.entries(snapshot.detailsDrafts)) {
+    const baseline = snapshot.noteBaselines?.[id]
+    if (baseline) {
+      out[id] = restoredNoteShadow(id, content, baseline)
+    } else {
+      const details = snapshot.diagram.nodes.find((n) => n.id === id)?.data?.details
+      out[id] = recoveredNoteShadow(id, typeof details === 'string' ? details : null, content)
+    }
+  }
+  return out
+}
+
 function toDiagramFile(
   nodes: Node[],
   edges: Edge[],
@@ -1002,38 +1045,50 @@ function CanvasInner(): React.JSX.Element {
   // Unsaved-changes tracking (see ADR 0040) — set directly at every
   // site that mutates something toDiagramFile() actually serializes, not
   // derived from the undo/redo stack (which only covers nodes/edges, not
-  // requiredTags/highlights/legend/detailsDrafts — see the ADR for why
+  // requiredTags/highlights/legend/noteShadows — see the ADR for why
   // that coupling was rejected). Session-only state (enabledHighlightIds,
   // every panel-open boolean, etc.) never touches this.
-  const [isDirty, setIsDirty] = useState(false)
-  const markDirty = useCallback(() => setIsDirty(true), [])
-  // Outside-the-app change detection (ADR 0091). isDirtyRef feeds the save-time
-  // guards (persistDiagram is a callback that shouldn't re-identify on every
-  // dirty flip); externalChangeStamp is non-null while the "changed on disk"
-  // banner shows; dismissedStampRef remembers which specific change the user
-  // ignored so a later focus doesn't re-show it (the save-time guard still
-  // fires — dismissing never touches the main-side baseline).
-  const isDirtyRef = useRef(false)
+  // Dirty state is per file (ADR 0092): the diagram — the "hub" — has its own
+  // flag, and each detail note its own inside its shadow. `isDirty` (close
+  // prompt, autosave, reload confirms) is simply "any of them".
+  const [hubDirty, setHubDirty] = useState(false)
+  // In-memory copies ("shadows") of the detail notes that are open or have
+  // unsaved edits — content, baseline and dirty flag per note (documentSave.ts).
+  // A note nobody has touched has no entry: it is just a file on disk.
+  const [noteShadows, setNoteShadows] = useState<Record<string, NoteShadow>>({})
+  const isDirty = hubDirty || anyNoteDirty(noteShadows)
+  // The latest shadows, readable from callbacks that must not depend on them
+  // (a diagram reload needs to know which notes have unsaved edits).
+  const noteShadowsRef = useRef(noteShadows)
   useEffect(() => {
-    isDirtyRef.current = isDirty
-  }, [isDirty])
+    noteShadowsRef.current = noteShadows
+  })
+  // Reloads the diagram file from disk keeping unsaved note edits — set once
+  // loadDiagramIntoCanvas exists (it is declared after persistDiagram).
+  const reloadHubRef = useRef<((path: string) => Promise<void>) | null>(null)
+  const markDirty = useCallback(() => setHubDirty(true), [])
+  // What we last read/wrote of the diagram file — the baseline the window-focus
+  // check and the save-time conflict check compare against.
+  const hubBaselineRef = useRef<{ path: string | null; stamp: Stamp }>({
+    path: null,
+    stamp: null
+  })
+  // Outside-the-app change notice for the diagram file: externalChangeStamp is
+  // non-null while the "changed on disk" banner shows; dismissedStampRef
+  // remembers which specific change the user ignored so a later focus doesn't
+  // re-show it (the save-time check still fires — dismissing never touches the
+  // baseline).
   const [externalChangeStamp, setExternalChangeStamp] = useState<string | null>(null)
   const dismissedStampRef = useRef<string | null>(null)
-  // What each detail draft looked like on disk when it was read/written, so
-  // an unedited draft never overwrites an outside edit and an edited one
-  // raises the conflict popup.
-  const detailsBaselineRef = useRef<Record<string, { stamp: string | null; content: string }>>({})
   // What the open Details panel says about an outside change to its note:
   // 'refreshed' = it was unedited, so it was silently re-read from disk;
-  // 'conflict' = the draft has unsaved edits AND the file changed. The
+  // 'conflict' = the note has unsaved edits AND the file changed. The
   // dismissed map remembers the stamp the user chose to ignore, per note.
   const [detailsNotice, setDetailsNotice] = useState<{
     nodeId: string
     kind: 'refreshed' | 'conflict'
   } | null>(null)
   const detailsDismissedStampRef = useRef<Record<string, string>>({})
-  // Set once loadDiagramIntoCanvas exists (it's declared after persistDiagram).
-  const reloadFromDiskRef = useRef<((path: string) => Promise<void>) | null>(null)
   // See loadDiagramIntoCanvas's own comment on why this exists — a short
   // grace window after any load during which React Flow's own automatic
   // post-mount dimension measurement doesn't count as a discrete edit.
@@ -1229,7 +1284,6 @@ function CanvasInner(): React.JSX.Element {
   const [detailsPanelNodeId, setDetailsPanelNodeId] = useState<string | null>(null)
   // Editing a node's details doesn't write to disk immediately — it's just
   // draft state here, flushed as part of the main save flow.
-  const [detailsDrafts, setDetailsDrafts] = useState<Record<string, string>>({})
   const rfInstance = useReactFlow()
   const updateNodeInternals = useUpdateNodeInternals()
   // Scopes the PNG export (ADR 0051) capture to this window's own
@@ -1693,9 +1747,9 @@ function CanvasInner(): React.JSX.Element {
       // seeded synchronously right here rather than in the effect below
       // — nothing asynchronous happens in this branch, so
       // there's no reason to route it through an effect at all. The
-      // functional-updater guard (not a closure read of detailsDrafts)
+      // functional-updater guard (not a closure read of noteShadows)
       // keeps this callback's own identity stable regardless of how often
-      // detailsDrafts itself changes (every keystroke while editing) —
+      // noteShadows itself changes (every keystroke while editing) —
       // matters because this callback is threaded through DiagramContext's
       // memoized value (ADR 0056).
       // Read the node off the React Flow instance, not a closed-over `nodes`
@@ -1705,7 +1759,7 @@ function CanvasInner(): React.JSX.Element {
       const node = rfInstance.getNode(nodeId)
       const existingPath = typeof node?.data?.details === 'string' ? node.data.details : undefined
       if (!existingPath || !currentPath) {
-        setDetailsDrafts((prev) => (nodeId in prev ? prev : { ...prev, [nodeId]: '' }))
+        setNoteShadows((prev) => (nodeId in prev ? prev : { ...prev, [nodeId]: newNoteShadow(nodeId) }))
       }
     },
     [rfInstance, currentPath]
@@ -2677,49 +2731,48 @@ function CanvasInner(): React.JSX.Element {
   const colorPickerNode = colorPicker ? nodes.find((n) => n.id === colorPicker.nodeId) : undefined
   const colorPickerStyle = (colorPickerNode?.data?.style as NodeStyle | undefined) ?? {}
 
-  // Seed the draft from an existing details file the first time a node's
-  // details panel is opened this session — the no-existing-file case is
-  // handled synchronously in openDetailsPanel itself; this
-  // effect only ever does real I/O (reading the file), which is why it's
-  // still an effect rather than folded into that callback too.
+  // Load a note's shadow from its file the first time its panel is opened this
+  // session (a note with no file yet is seeded synchronously in
+  // openDetailsPanel). Stamped before reading (see details:readWithStamp) so a
+  // change in between is caught, not missed.
   useEffect(() => {
-    if (!detailsPanelNodeId || detailsPanelNodeId in detailsDrafts) return
+    if (!detailsPanelNodeId || detailsPanelNodeId in noteShadows) return
     const node = nodes.find((n) => n.id === detailsPanelNodeId)
     const existingPath = typeof node?.data?.details === 'string' ? node.data.details : undefined
     if (!existingPath || !currentPath) return
     const nodeId = detailsPanelNodeId
-    // Stamp before reading (see diagram:openPath) so a change in between is
-    // caught, not missed.
-    window.api.statDetails(currentPath, existingPath).then(async (stamp) => {
-      const content = await window.api.readDetails(currentPath, existingPath)
-      detailsBaselineRef.current[nodeId] = { stamp, content }
-      setDetailsDrafts((prev) => (nodeId in prev ? prev : { ...prev, [nodeId]: content }))
+    window.api.readDetailsWithStamp(currentPath, existingPath).then(({ content, stamp }) => {
+      setNoteShadows((prev) =>
+        nodeId in prev ? prev : { ...prev, [nodeId]: loadedNoteShadow(nodeId, existingPath, stamp, content) }
+      )
     })
-  }, [detailsPanelNodeId, detailsDrafts, nodes, currentPath])
+  }, [detailsPanelNodeId, noteShadows, nodes, currentPath])
 
-  // Outside-the-app edit to the note shown in the open Details panel (ADR 0091).
-  // Runs when the panel opens on an already-loaded draft (the draft cache
-  // otherwise hides the change) and whenever the window regains focus.
-  // Unedited draft -> adopt the disk text and say so; edited draft -> a
-  // conflict notice with Reload / Keep mine (the save-time popup still guards
-  // the actual overwrite either way). Never marks the diagram dirty — the
-  // draft now equals the disk.
+  // Outside-the-app edit to the note shown in the open Details panel (ADR 0092,
+  // same detector as the diagram's focus check). Runs when the panel opens on an
+  // already-loaded shadow (which would otherwise hide the change) and whenever
+  // the window regains focus. Unedited -> adopt the disk text and say so; edited
+  // -> a conflict notice with Reload / Keep mine (the save-time check still
+  // guards the actual overwrite either way). Never marks anything dirty — the
+  // shadow now equals the disk.
   const checkOpenDetailsForChange = useEventCallback(async () => {
     const nodeId = detailsPanelNodeId
-    if (!nodeId || !currentPath) return
-    const node = nodes.find((n) => n.id === nodeId)
-    const relPath = typeof node?.data?.details === 'string' ? node.data.details : undefined
-    const base = detailsBaselineRef.current[nodeId]
-    const draft = detailsDrafts[nodeId]
-    if (!relPath || !base || draft === undefined) return
-    const stamp = await window.api.statDetails(currentPath, relPath)
-    if (stamp === null || stamp === base.stamp) return
-    if (draft === base.content) {
-      const content = await window.api.readDetails(currentPath, relPath)
-      detailsBaselineRef.current[nodeId] = { stamp, content }
-      setDetailsDrafts((prev) => ({ ...prev, [nodeId]: content }))
+    const shadow = nodeId ? noteShadows[nodeId] : undefined
+    if (!nodeId || !currentPath || !shadow || shadow.originalPath === null) return
+    const [result] = await window.api.checkFiles(currentPath, [
+      { relPath: shadow.originalPath, stamp: shadow.baselineStamp }
+    ])
+    if (!result.changed) return
+    if (!shadow.dirty) {
+      const { content, stamp } = await window.api.readDetailsWithStamp(
+        currentPath,
+        shadow.originalPath
+      )
+      setNoteShadows((prev) =>
+        prev[nodeId] ? { ...prev, [nodeId]: adoptDisk(prev[nodeId], content, stamp) } : prev
+      )
       setDetailsNotice({ nodeId, kind: 'refreshed' })
-    } else if (detailsDismissedStampRef.current[nodeId] !== stamp) {
+    } else if (detailsDismissedStampRef.current[nodeId] !== result.stamp) {
       setDetailsNotice({ nodeId, kind: 'conflict' })
     }
   })
@@ -2734,26 +2787,23 @@ function CanvasInner(): React.JSX.Element {
 
   const reloadOpenDetailsFromDisk = useEventCallback(async () => {
     const nodeId = detailsPanelNodeId
-    if (!nodeId || !currentPath) return
-    const node = nodes.find((n) => n.id === nodeId)
-    const relPath = typeof node?.data?.details === 'string' ? node.data.details : undefined
-    if (!relPath) return
-    const stamp = await window.api.statDetails(currentPath, relPath)
-    const content = await window.api.readDetails(currentPath, relPath)
-    detailsBaselineRef.current[nodeId] = { stamp, content }
-    setDetailsDrafts((prev) => ({ ...prev, [nodeId]: content }))
+    const shadow = nodeId ? noteShadows[nodeId] : undefined
+    if (!nodeId || !currentPath || !shadow || shadow.originalPath === null) return
+    const { content, stamp } = await window.api.readDetailsWithStamp(currentPath, shadow.originalPath)
+    setNoteShadows((prev) =>
+      prev[nodeId] ? { ...prev, [nodeId]: adoptDisk(prev[nodeId], content, stamp) } : prev
+    )
     setDetailsNotice(null)
   })
 
   const keepMyDetailsEdits = useEventCallback(async () => {
     const nodeId = detailsPanelNodeId
-    if (!nodeId || !currentPath) return
-    const node = nodes.find((n) => n.id === nodeId)
-    const relPath = typeof node?.data?.details === 'string' ? node.data.details : undefined
-    if (relPath) {
-      const stamp = await window.api.statDetails(currentPath, relPath)
-      if (stamp !== null) detailsDismissedStampRef.current[nodeId] = stamp
-    }
+    const shadow = nodeId ? noteShadows[nodeId] : undefined
+    if (!nodeId || !currentPath || !shadow || shadow.originalPath === null) return
+    const [result] = await window.api.checkFiles(currentPath, [
+      { relPath: shadow.originalPath, stamp: shadow.baselineStamp }
+    ])
+    if (result.stamp !== null) detailsDismissedStampRef.current[nodeId] = result.stamp
     setDetailsNotice(null)
   })
 
@@ -3952,176 +4002,274 @@ function CanvasInner(): React.JSX.Element {
     [setNodes]
   )
 
-  // Writes any dirty detail drafts to disk and returns nodes with
-  // data.details updated to point at them — must happen before the main
-  // diagram.chd write so that write reflects the new references. Also
-  // keeps every *other* existing detail file's name in sync with its
-  // element's current label (ADR 0060), even for a node whose draft was
-  // never opened this session — this is what makes a relabel eventually
-  // rename its file, and also transparently migrates any old
-  // `<type>-<uuid>.md` file the first time its diagram is saved again, with
-  // no separate one-off migration step needed.
-  const flushDetailsDrafts = useCallback(
-    async (diagramPath: string, currentNodes: Node[]): Promise<Node[]> => {
-      const entries = Object.entries(detailsDrafts)
-      const draftUpdates: Record<string, string> = {}
-
-      // Outside-the-app edits to a note (ADR 0091). A draft whose file has
-      // changed on disk since we read it is either unedited (then the outside
-      // change wins — skip the write and adopt the disk content) or edited
-      // (a genuine conflict — ask). Drafts with no baseline (new notes,
-      // recovered drafts) aren't checked.
-      const skipWrite = new Set<string>()
-      const conflicts: { nodeId: string; relPath: string; label: string }[] = []
-      for (const [nodeId, content] of entries) {
-        const node = currentNodes.find((n) => n.id === nodeId)
-        const relPath = typeof node?.data?.details === 'string' ? node.data.details : undefined
-        const base = detailsBaselineRef.current[nodeId]
-        if (!relPath || !base) continue
-        const stamp = await window.api.statDetails(diagramPath, relPath)
-        if (stamp === null || stamp === base.stamp) continue
-        if (content === base.content) skipWrite.add(nodeId)
-        else
-          conflicts.push({
-            nodeId,
-            relPath,
-            label: typeof node?.data?.label === 'string' ? node.data.label : nodeId
-          })
-      }
-      // Re-reads a note from disk into its baseline, returning the content.
-      const adoptDiskContent = async (nodeId: string, relPath: string): Promise<string> => {
-        const stamp = await window.api.statDetails(diagramPath, relPath)
-        const content = await window.api.readDetails(diagramPath, relPath)
-        detailsBaselineRef.current[nodeId] = { stamp, content }
-        return content
-      }
-      const adopted: Record<string, string> = {}
-      if (conflicts.length > 0) {
-        const choice = await window.api.confirmExternalChange(
-          'details',
-          true,
-          conflicts.map((c) => c.label)
-        )
-        if (choice !== 'overwrite') {
-          if (choice === 'reload') {
-            for (const c of conflicts) adopted[c.nodeId] = await adoptDiskContent(c.nodeId, c.relPath)
-            setDetailsDrafts((prev) => ({ ...prev, ...adopted }))
-          }
-          throw new SaveAbortedError()
-        }
-      }
-      for (const nodeId of skipWrite) {
-        const node = currentNodes.find((n) => n.id === nodeId)
-        adopted[nodeId] = await adoptDiskContent(nodeId, node?.data?.details as string)
-      }
-      if (skipWrite.size > 0) setDetailsDrafts((prev) => ({ ...prev, ...adopted }))
-
-      for (const [nodeId, content] of entries) {
-        if (skipWrite.has(nodeId)) continue
-        const node = currentNodes.find((n) => n.id === nodeId)
-        const label = typeof node?.data?.label === 'string' ? node.data.label : ''
-        draftUpdates[nodeId] = await window.api.writeDetails(diagramPath, nodeId, label, content)
-        detailsBaselineRef.current[nodeId] = {
-          stamp: await window.api.statDetails(diagramPath, draftUpdates[nodeId]),
-          content
-        }
-      }
-      const withDrafts = currentNodes.map((n) =>
-        draftUpdates[n.id] ? { ...n, data: { ...n.data, details: draftUpdates[n.id] } } : n
-      )
-
-      let changed = entries.length > 0
-      const finalNodes = await Promise.all(
-        withDrafts.map(async (n) => {
-          if (draftUpdates[n.id]) return n // just (re)written with the current name
-          const existingPath = typeof n.data?.details === 'string' ? n.data.details : undefined
-          if (!existingPath) return n
-          const label = typeof n.data?.label === 'string' ? n.data.label : ''
-          const newPath = await window.api.syncDetailFileName(
-            diagramPath,
-            n.id,
-            label,
-            existingPath
-          )
-          if (newPath === existingPath) return n
-          changed = true
-          return { ...n, data: { ...n.data, details: newPath } }
-        })
-      )
-
-      if (!changed) return currentNodes
-      setNodes(finalNodes)
-      return finalNodes
-    },
-    [detailsDrafts, setNodes]
-  )
-
-  // Writes nodesToSave (plus current edges) to path, flushing any
-  // pending detail drafts first, and syncs canvas state to whatever actually
-  // got written — the one place a diagram is persisted to disk, so every
-  // save-adjacent flow (manual save, link creation, forward link navigation)
-  // goes through the same path instead of duplicating the write logic.
+  // Saves the diagram AND the detail notes it owns as one operation (ADR 0092)
+  // and syncs canvas state to whatever actually got written — the one place a
+  // diagram is persisted to disk, so every save-adjacent flow (manual save,
+  // link creation, forward link navigation) goes through the same path.
+  //
+  // The macro flow lives here and hides the detail: build the desired file set
+  // (a note's path follows its label, derived now, never stored) -> plan
+  // (planSave: which files are written/moved, is the diagram itself rewritten?)
+  // -> main verifies every file it would overwrite against the disk and applies
+  // the writes in the crash-safe order. A conflict writes nothing; the user is
+  // asked once and the same request is re-sent with overwrite. Only files with
+  // something to save are touched — editing one note does not rewrite the
+  // diagram file unless a path in it changes. forceHub: the caller changed the
+  // diagram itself outside the normal dirty tracking (link creation).
   const persistDiagram = useCallback(
-    async (path: string, nodesToSave: Node[]): Promise<Node[]> => {
-      // Before anything is written (details included): has the diagram file
-      // changed outside the app since this window loaded/saved it? See
-      // ADR 0091 — the app names the situation and never merges.
-      const { changed } = await window.api.checkExternalChange(path)
-      if (changed) {
-        const choice = await window.api.confirmExternalChange('diagram', isDirtyRef.current, [])
-        if (choice !== 'overwrite') {
-          if (choice === 'reload') await reloadFromDiskRef.current?.(path)
-          throw new SaveAbortedError()
-        }
-      }
-      let savedNodes = await flushDetailsDrafts(path, nodesToSave)
+    async (
+      path: string,
+      nodesToSave: Node[],
+      opts?: { forceHub?: boolean }
+    ): Promise<Node[]> => {
       // Apply any staged missing-file removals (ADR 0084) — this is the one
       // point they reach disk. Also drop them from `legend` and close any
       // now-orphaned reference windows.
+      let savedNodes = nodesToSave
       let legendToSave = legend
       for (const entry of stagedFileRemovals) {
         const r = applyMissingFileRemoval(savedNodes, legendToSave, entry)
         savedNodes = r.nodes
         legendToSave = r.legend
       }
-      const diagram = toDiagramFile(
-        savedNodes,
-        edges,
-        diagramMetadata,
-        requiredTags,
-        highlights,
-        legendToSave,
-        gravityPresets,
-        diagramMaxConnectionPointsPerSide,
-        edgeDirectionSets,
-        activeEdgeDirectionSetId,
-        security
-      )
-      await window.api.saveDiagram(path, diagram, sessionIdRef.current)
-      setNodes(savedNodes)
-      if (legendToSave !== legend) setLegend(legendToSave)
-      if (stagedFileRemovals.length > 0) {
-        const removedRefs = new Set(
-          stagedFileRemovals
-            .filter((e) => e.resourceKind === 'reference')
-            .map((e) => `${e.ownerId}::${e.relativePath}`)
-        )
-        if (removedRefs.size > 0) {
-          setReferenceWindows((prev) =>
-            prev.filter((w) => !removedRefs.has(`${w.nodeId}::${w.path}`))
-          )
-        }
-        setStagedFileRemovals([])
+
+      // Save As / first save: paths relative to the old location are meaningless.
+      const baseline = hubBaselineRef.current
+      const newLocation = baseline.path !== path
+      const notes: PlanNoteInput[] = []
+      for (const n of savedNodes) {
+        const nodeDetailsPath = typeof n.data?.details === 'string' ? n.data.details : null
+        const shadow = noteShadows[n.id]
+        if (nodeDetailsPath === null && !shadow) continue
+        const label = typeof n.data?.label === 'string' ? n.data.label : ''
+        notes.push({
+          nodeId: n.id,
+          desiredPath: derivedDetailsPath(path, n.id, label),
+          nodeDetailsPath,
+          shadow
+        })
       }
-      setIsDirty(false)
-      setExternalChangeStamp(null)
-      dismissedStampRef.current = null
+      const plan = planSave({
+        hubDirty: hubDirty || !!opts?.forceHub || newLocation || stagedFileRemovals.length > 0,
+        newLocation,
+        notes
+      })
+
+      // Sets (or, for null, removes) each listed node's note path.
+      const withPaths = (list: Node[], paths: Record<string, string | null>): Node[] =>
+        list.map((n) => {
+          const p = paths[n.id]
+          if (p === undefined || (n.data?.details ?? null) === p) return n
+          const data = { ...n.data }
+          if (p === null) delete data.details
+          else data.details = p
+          return { ...n, data }
+        })
+      savedNodes = withPaths(savedNodes, plan.finalPaths)
+
+      // Where each note's node points if that note does not reach its new path
+      // (held back by a conflict, or nothing to move): its old path, or none.
+      const fallbackPaths: Record<string, string | null> = {}
+      const sentContent: Record<string, string> = {}
+      for (const op of plan.ops) {
+        fallbackPaths[op.nodeId] = op.from
+        if (op.kind === 'write') sentContent[op.nodeId] = op.content
+      }
+      const buildDiagram = (list: Node[]): DiagramFile =>
+        toDiagramFile(
+          list,
+          edges,
+          diagramMetadata,
+          requiredTags,
+          highlights,
+          legendToSave,
+          gravityPresets,
+          diagramMaxConnectionPointsPerSide,
+          edgeDirectionSets,
+          activeEdgeDirectionSetId,
+          security
+        )
+      const request: SaveDocumentRequest = {
+        diagramPath: path,
+        sessionId: sessionIdRef.current,
+        diagram: buildDiagram(savedNodes),
+        writeHub: plan.writeHub,
+        expectedHubStamp: newLocation ? null : baseline.stamp,
+        ops: plan.ops,
+        fallbackPaths,
+        overwrite: false
+      }
+
+      // Records what actually reached disk on each note's shadow; text typed
+      // while the save was in flight stays dirty (markSaved).
+      const applyNoteResults = (results: Record<string, SavedNote>): void => {
+        setNoteShadows((prev) => {
+          const next = { ...prev }
+          for (const [id, r] of Object.entries(results)) {
+            const shadow = next[id]
+            if (shadow) {
+              next[id] = markSaved(shadow, r.path, r.stamp, sentContent[id] ?? shadow.baselineContent)
+            }
+          }
+          return next
+        })
+      }
+      const completed = new Set<string>()
+      let hubWrittenEver = false
+      const applySaved = (o: Extract<SaveOutcome, { status: 'saved' }>): void => {
+        applyNoteResults(o.notes)
+        for (const id of Object.keys(o.notes)) completed.add(id)
+        if (o.hubWritten) {
+          hubBaselineRef.current = { path, stamp: o.hubStamp }
+          hubWrittenEver = true
+        }
+        if (o.warnings.length > 0) showAlert(o.warnings.join('\n'))
+      }
+      const failure = (o: Extract<SaveOutcome, { status: 'failed' }>): Error => {
+        applyNoteResults(o.notes)
+        if (o.hubWritten) hubBaselineRef.current = { path, stamp: o.hubStamp }
+        return new Error(
+          `${o.error} (${Object.keys(o.notes).length} note file(s) had already been written; the diagram file ${o.hubWritten ? 'was' : 'was not'} written)`
+        )
+      }
+
+      // Save everything that can be saved first; conflicts (edited here AND
+      // changed on disk) are held back by main and handled at the end.
+      const first = await window.api.saveDocument(request)
+      if (first.status === 'failed') throw failure(first)
+      applySaved(first)
+      let aborted = false
+      let hubToReload = false
+      if (first.conflicts.length > 0) {
+        // What is left unsaved now exists only in memory until the user decides,
+        // so snapshot it BEFORE asking: a crash during the popup or after Cancel
+        // must still be recoverable. The periodic autosave can't be relied on
+        // here — it may not have run yet, and an older snapshot predates the
+        // diagram file just written, so recovery would ignore it.
+        try {
+          const heldPaths: Record<string, string | null> = {}
+          const drafts: Record<string, string> = {}
+          const baselines: Record<string, NoteBaseline> = {}
+          for (const op of plan.ops) {
+            if (completed.has(op.nodeId)) continue
+            heldPaths[op.nodeId] = fallbackPaths[op.nodeId]
+            const shadow = noteShadows[op.nodeId]
+            if (op.kind === 'write' && shadow) {
+              drafts[op.nodeId] = op.content
+              baselines[op.nodeId] = {
+                originalPath: shadow.originalPath,
+                stamp: shadow.baselineStamp,
+                baselineContent: shadow.baselineContent
+              }
+            }
+          }
+          await window.api.writeRecoverySnapshot(
+            path,
+            sessionIdRef.current,
+            buildDiagram(withPaths(savedNodes, heldPaths)),
+            drafts,
+            baselines
+          )
+        } catch {
+          // Best effort — never let the safety net block the save flow.
+        }
+        const items: ConflictItem[] = first.conflicts.map((c) =>
+          c.kind === 'hub'
+            ? { key: HUB_KEY, kind: 'hub', label: 'The diagram file' }
+            : {
+                key: c.nodeId ?? '',
+                kind: 'note',
+                label: detailsNoteName(savedNodes.find((n) => n.id === c.nodeId))
+              }
+        )
+        const decisions = await askConflictResolution(items)
+        if (decisions === null) {
+          aborted = true
+        } else {
+          // Per-file resolution (ADR 0092): what to overwrite, what to take from disk.
+          const pendingOps = plan.ops.filter((op) => first.remaining.nodeIds.includes(op.nodeId))
+          const resolution = resolveConflicts(pendingOps, decisions)
+          for (const id of resolution.adoptDiskNodeIds) {
+            delete sentContent[id] // my text is being discarded, never recorded as saved
+            const shadow = noteShadows[id]
+            if (!shadow || shadow.originalPath === null) continue
+            const disk = await window.api.readDetailsWithStamp(path, shadow.originalPath)
+            setNoteShadows((prev) =>
+              prev[id] ? { ...prev, [id]: adoptDisk(prev[id], disk.content, disk.stamp) } : prev
+            )
+          }
+          if (resolution.runOps.length > 0 || resolution.writeHub) {
+            const second = await window.api.saveDocument({
+              ...request,
+              ops: resolution.runOps,
+              writeHub: resolution.writeHub,
+              overwrite: true
+            })
+            if (second.status === 'failed') throw failure(second)
+            applySaved(second)
+          }
+          hubToReload = resolution.reloadHub
+          // Everything is resolved now, so the snapshot taken before asking is stale
+          // (it would offer to "recover" edits that were just saved or discarded). If
+          // the diagram is being reloaded, autosave re-snapshots any kept note edits.
+          await window.api.deleteRecoverySnapshot(path, sessionIdRef.current)
+          await window.api.deleteRecoverySnapshot(null, sessionIdRef.current)
+        }
+      }
+
+      // The user took the disk's version of the diagram: reload it (unsaved notes
+      // are kept) and stop — the plan above was built from state that just changed.
+      if (hubToReload) {
+        await reloadHubRef.current?.(path)
+        showAlert(
+          'The diagram was reloaded from disk. Your unsaved note edits were kept — review, then save again.'
+        )
+        throw new SaveAbortedError()
+      }
+
+      // A note that did not complete (missing source, or still held back) leaves
+      // its node pointing at the old path.
+      const notDone: Record<string, string | null> = {}
+      for (const op of plan.ops) if (!completed.has(op.nodeId)) notDone[op.nodeId] = fallbackPaths[op.nodeId]
+      savedNodes = withPaths(savedNodes, notDone)
+
+      // Notes of elements that no longer exist have nothing left to save.
+      const liveIds = new Set(savedNodes.map((n) => n.id))
+      setNoteShadows((prev) =>
+        Object.keys(prev).every((id) => liveIds.has(id))
+          ? prev
+          : Object.fromEntries(Object.entries(prev).filter(([id]) => liveIds.has(id)))
+      )
+
+      // The diagram's own state is only finalised if it was actually written (or
+      // there was nothing to write). If it was held back it stays dirty and
+      // staged removals stay staged, so the next save retries them.
+      if (hubWrittenEver || !plan.writeHub) {
+        setNodes(savedNodes)
+        if (legendToSave !== legend) setLegend(legendToSave)
+        if (stagedFileRemovals.length > 0) {
+          const removedRefs = new Set(
+            stagedFileRemovals
+              .filter((e) => e.resourceKind === 'reference')
+              .map((e) => `${e.ownerId}::${e.relativePath}`)
+          )
+          if (removedRefs.size > 0) {
+            setReferenceWindows((prev) =>
+              prev.filter((w) => !removedRefs.has(`${w.nodeId}::${w.path}`))
+            )
+          }
+          setStagedFileRemovals([])
+        }
+        setHubDirty(false)
+        setExternalChangeStamp(null)
+        dismissedStampRef.current = null
+      }
+      // Something stayed unsaved (the user cancelled): not a "Saved" moment.
+      if (aborted) throw new SaveAbortedError()
       return savedNodes
     },
     [
       edges,
-      rfInstance,
-      flushDetailsDrafts,
       setNodes,
       setLegend,
       diagramMetadata,
@@ -4133,7 +4281,9 @@ function CanvasInner(): React.JSX.Element {
       diagramMaxConnectionPointsPerSide,
       edgeDirectionSets,
       activeEdgeDirectionSetId,
-      security
+      security,
+      hubDirty,
+      noteShadows
     ]
   )
 
@@ -4288,7 +4438,17 @@ function CanvasInner(): React.JSX.Element {
   // 0023). Also resets any panel/menu state, defensively, in case this
   // ever gets a second caller again.
   const loadDiagramIntoCanvas = useCallback(
-    (path: string | null, diagram: DiagramFile) => {
+    (
+      path: string | null,
+      diagram: DiagramFile,
+      stamp?: Stamp,
+      opts?: { keepNoteShadows?: boolean }
+    ) => {
+      // The hub's baseline: a fresh disk read supplies its stamp; a blank
+      // diagram has none; loading recovered content over an already-read path
+      // keeps the baseline of the file that is really on disk.
+      if (stamp !== undefined) hubBaselineRef.current = { path, stamp }
+      else if (path === null) hubBaselineRef.current = { path: null, stamp: null }
       const {
         nodes: openedNodes,
         edges: openedEdges,
@@ -4308,7 +4468,7 @@ function CanvasInner(): React.JSX.Element {
       // restore a previous diagram's nodes into the wrong file context).
       setPast([])
       setFuture([])
-      setIsDirty(false)
+      setHubDirty(false)
       // React Flow measures every freshly-mounted node's real DOM size via
       // ResizeObserver and reports it back as a 'dimensions' NodeChange
       // with resizing left undefined — indistinguishable, by shape alone,
@@ -4352,8 +4512,28 @@ function CanvasInner(): React.JSX.Element {
       setActiveEdgeDirectionSetId(openedActiveEdgeDirectionSetId)
       setSecurity(openedSecurity)
       setHierarchyLoadNotes(openedHierarchyNotes)
-      setDetailsDrafts({})
-      detailsBaselineRef.current = {}
+      if (opts?.keepNoteShadows) {
+        // A reload replaces the diagram only — notes are independent files with their
+        // own state. Unsaved note edits are kept (clean copies are just a cache and are
+        // re-read on demand); edits for an element the reloaded diagram no longer has
+        // can't be shown, so say so rather than dropping them silently.
+        const live = new Set(openedNodes.map((n) => n.id))
+        const kept: Record<string, NoteShadow> = {}
+        let lost = 0
+        for (const [id, shadow] of Object.entries(noteShadowsRef.current)) {
+          if (!shadow.dirty) continue
+          if (live.has(id)) kept[id] = shadow
+          else lost++
+        }
+        setNoteShadows(kept)
+        if (lost > 0) {
+          showAlert(
+            `The reloaded diagram no longer contains ${lost} element(s) whose notes had unsaved edits; those edits were discarded.`
+          )
+        }
+      } else {
+        setNoteShadows({})
+      }
       detailsDismissedStampRef.current = {}
       setDetailsNotice(null)
       setExternalChangeStamp(null)
@@ -4405,8 +4585,8 @@ function CanvasInner(): React.JSX.Element {
     if (!path) return
     window.api
       .openDiagramAtPath(path)
-      .then(async (diagram) => {
-        loadDiagramIntoCanvas(path, diagram)
+      .then(async ({ diagram, stamp }) => {
+        loadDiagramIntoCanvas(path, diagram, stamp)
         // Crash recovery (ADR 0040) — a snapshot newer than the
         // real file means the last session ended without saving (crash or
         // force-quit). Prompted, not silently preferred, so a stale
@@ -4419,7 +4599,7 @@ function CanvasInner(): React.JSX.Element {
           )
         ) {
           loadDiagramIntoCanvas(path, recovered.diagram)
-          setDetailsDrafts(recovered.detailsDrafts)
+          setNoteShadows(shadowsFromSnapshot(recovered))
           markDirty()
         } else {
           window.api.deleteRecoverySnapshot(path, sessionIdRef.current)
@@ -4438,13 +4618,15 @@ function CanvasInner(): React.JSX.Element {
   useEffect(() => {
     return window.api.onRecoveredOrphan((snapshot) => {
       loadDiagramIntoCanvas(null, snapshot.diagram)
-      setDetailsDrafts(snapshot.detailsDrafts)
+      setNoteShadows(shadowsFromSnapshot(snapshot))
       markDirty()
     })
   }, [loadDiagramIntoCanvas, markDirty])
 
-  // Periodic autosave (ADR 0040) — only writes while isDirty, no
-  // point re-snapshotting unchanged state. Refs, not effect deps, carry the
+  // Periodic autosave (ADR 0040) — every 5 s (was 60 s; an edit made and then
+  // killed within the minute was simply lost), but only while isDirty AND only if
+  // something changed since the last snapshot (same object references = nothing
+  // to write), so an idle dirty window costs nothing. Refs, not effect deps, carry the
   // latest values into the interval callback: re-creating the interval on
   // every nodes/edges change (which is most renders) would mean it almost
   // never actually reaches its own timeout.
@@ -4462,7 +4644,7 @@ function CanvasInner(): React.JSX.Element {
     edgeDirectionSets,
     activeEdgeDirectionSetId,
     security,
-    detailsDrafts
+    noteShadows
   })
   useEffect(() => {
     autosaveStateRef.current = {
@@ -4479,13 +4661,17 @@ function CanvasInner(): React.JSX.Element {
       edgeDirectionSets,
       activeEdgeDirectionSetId,
       security,
-      detailsDrafts
+      noteShadows
     }
   })
+  const lastSnapshotStateRef = useRef<typeof autosaveStateRef.current | null>(null)
   useEffect(() => {
     const interval = setInterval(() => {
       const s = autosaveStateRef.current
       if (!s.isDirty) return
+      const last = lastSnapshotStateRef.current
+      if (last && (Object.keys(s) as (keyof typeof s)[]).every((k) => last[k] === s[k])) return
+      lastSnapshotStateRef.current = s
       const diagram = toDiagramFile(
         s.nodes,
         s.edges,
@@ -4503,9 +4689,10 @@ function CanvasInner(): React.JSX.Element {
         s.currentPath,
         sessionIdRef.current,
         diagram,
-        s.detailsDrafts
+        dirtyDrafts(s.noteShadows),
+        dirtyBaselines(s.noteShadows)
       )
-    }, 60_000)
+    }, 5_000)
     return () => clearInterval(interval)
   }, [rfInstance])
 
@@ -4714,22 +4901,28 @@ function CanvasInner(): React.JSX.Element {
   // dirty-aware — a clean window reloads without prompting.
   const handleReload = useCallback(async () => {
     if (!currentPath) return
-    if (isDirty && !confirm('Reload from disk? Any changes since the last save will be lost.'))
+    if (
+      hubDirty &&
+      !confirm(
+        'Reload from disk? Unsaved changes to the diagram itself will be lost (unsaved note edits are kept).'
+      )
+    )
       return
     try {
-      const diagram = await window.api.openDiagramAtPath(currentPath)
-      loadDiagramIntoCanvas(currentPath, diagram)
+      const { diagram, stamp } = await window.api.openDiagramAtPath(currentPath)
+      loadDiagramIntoCanvas(currentPath, diagram, stamp, { keepNoteShadows: true })
     } catch (error) {
       showAlert(`Couldn't reload: ${error instanceof Error ? error.message : String(error)}`)
     }
-  }, [currentPath, isDirty, loadDiagramIntoCanvas])
+  }, [currentPath, hubDirty, loadDiagramIntoCanvas])
 
-  // Used by the save-time conflict popup's "Reload from disk" — the user has
+  // Used by the save-conflict dialog's "Take disk" for the diagram — the user has
   // already chosen, so no second confirm (unlike handleReload).
   useEffect(() => {
-    reloadFromDiskRef.current = async (path: string) => {
+    reloadHubRef.current = async (path: string) => {
       try {
-        loadDiagramIntoCanvas(path, await window.api.openDiagramAtPath(path))
+        const { diagram, stamp } = await window.api.openDiagramAtPath(path)
+        loadDiagramIntoCanvas(path, diagram, stamp, { keepNoteShadows: true })
       } catch (error) {
         showAlert(`Couldn't reload: ${error instanceof Error ? error.message : String(error)}`)
       }
@@ -4744,9 +4937,15 @@ function CanvasInner(): React.JSX.Element {
     if (!currentPath) return undefined
     let cancelled = false
     const check = async (): Promise<void> => {
-      const { changed, stamp } = await window.api.checkExternalChange(currentPath)
+      const baseline = hubBaselineRef.current
+      if (baseline.path !== currentPath) return
+      const [result] = await window.api.checkFiles(currentPath, [
+        { relPath: null, stamp: baseline.stamp }
+      ])
       if (cancelled) return
-      setExternalChangeStamp(changed && stamp !== dismissedStampRef.current ? stamp : null)
+      setExternalChangeStamp(
+        result.changed && result.stamp !== dismissedStampRef.current ? result.stamp : null
+      )
     }
     window.addEventListener('focus', check)
     return () => {
@@ -4809,7 +5008,7 @@ function CanvasInner(): React.JSX.Element {
         const updatedNodes = nodes.map((n) =>
           n.id === nodeId ? { ...n, data: { ...n.data, linkedDiagram: relativePath } } : n
         )
-        await persistDiagram(parentPath, updatedNodes)
+        await persistDiagram(parentPath, updatedNodes, { forceHub: true })
         await openLinkedWindow(parentPath, relativePath)
       } catch (error) {
         if (isSaveAborted(error)) return
@@ -4832,7 +5031,7 @@ function CanvasInner(): React.JSX.Element {
         const updatedNodes = nodes.map((n) =>
           n.id === nodeId ? { ...n, data: { ...n.data, linkedDiagram: relativePath } } : n
         )
-        await persistDiagram(parentPath, updatedNodes)
+        await persistDiagram(parentPath, updatedNodes, { forceHub: true })
       } catch (error) {
         if (isSaveAborted(error)) return
         showAlert(`Couldn't save the link: ${error instanceof Error ? error.message : String(error)}`)
@@ -5987,14 +6186,28 @@ function CanvasInner(): React.JSX.Element {
           {detailsPanelNodeId && (
             <DetailsPanel
               title={detailsPanelTitle(nodes.find((n) => n.id === detailsPanelNodeId))}
-              content={detailsDrafts[detailsPanelNodeId] ?? ''}
+              content={noteShadows[detailsPanelNodeId]?.content ?? ''}
               onChange={(content) => {
-                setDetailsDrafts((prev) => ({ ...prev, [detailsPanelNodeId]: content }))
-                markDirty()
+                // The one edit site: the note's own dirty flag, not the diagram's.
+                setNoteShadows((prev) => ({
+                  ...prev,
+                  [detailsPanelNodeId]: editNote(
+                    prev[detailsPanelNodeId] ?? newNoteShadow(detailsPanelNodeId),
+                    content
+                  )
+                }))
               }}
               onClose={() => {
+                const closingId = detailsPanelNodeId
                 setDetailsPanelNodeId(null)
                 setDetailsNotice(null)
+                // A note nobody edited needs no in-memory copy: next open reads it fresh.
+                setNoteShadows((prev) => {
+                  if (!prev[closingId] || prev[closingId].dirty) return prev
+                  const next = { ...prev }
+                  delete next[closingId]
+                  return next
+                })
               }}
             />
           )}
@@ -6128,6 +6341,7 @@ function CanvasInner(): React.JSX.Element {
         })}
         {aboutDialogOpen && <AboutDialog onClose={() => setAboutDialogOpen(false)} />}
         <AlertDialog />
+        <ConflictDialog />
         {bulkCreateType && (
           <BulkCreateDialog
             typeLabel={bulkCreateType}

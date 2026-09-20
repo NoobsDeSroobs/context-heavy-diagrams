@@ -1,6 +1,13 @@
 import { clipboard, contextBridge, ipcRenderer, webUtils } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import type { DiagramFile, RequiredTagDefinition } from '@shared/diagram'
+import type {
+  NoteBaseline,
+  RecoverySnapshot,
+  SaveDocumentRequest,
+  SaveOutcome,
+  Stamp
+} from '@shared/documentSave'
 import type { AppPreferences } from '@shared/preferences'
 import type { SecurityCrawlResult } from '@shared/threatMatrixMath'
 
@@ -11,13 +18,16 @@ interface RequiredTagsWalkResult {
 }
 
 // Custom APIs for renderer. See docs/decisions/0005-diagram-identity-and-linking.md
-// for the single-file model. pickSavePath and saveDiagram are deliberately
+// for the single-file model. pickSavePath and saveDocument are deliberately
 // separate (not one combined "save as" call) — the save flow needs to pick
-// the path, flush any pending detail-panel drafts using it, *then* write the
-// final diagram content, all before the file actually lands on disk.
+// the path first, then plan the whole save (diagram + its notes, ADR 0092)
+// against it.
 const api = {
-  saveDiagram(path: string, diagram: DiagramFile, sessionId: string): Promise<void> {
-    return ipcRenderer.invoke('diagram:save', path, diagram, sessionId)
+  // Saves the diagram and its notes as one plan (ADR 0092). Everything that
+  // doesn't conflict is saved; `conflicts` in the outcome lists what was held back
+  // — resolve per file, then call again with overwrite: true for just those.
+  saveDocument(request: SaveDocumentRequest): Promise<SaveOutcome> {
+    return ipcRenderer.invoke('document:save', request)
   },
 
   pickSavePath(): Promise<string | null> {
@@ -50,57 +60,34 @@ const api = {
   },
 
   // Detail files — see ADR 0060 for the label+uuid naming convention.
-  // readDetails takes an already-known relative path;
-  // writeDetails takes a node id/label and computes the conventional path
-  // itself, returning it so the caller can store it on data.details.
-  // syncDetailFileName renames an already-existing file if the element's
-  // label has since changed (also migrates old `<type>-<uuid>.md` filenames).
+  // Reading only: notes are *written* (and renamed to follow a label) as part
+  // of saveDocument (ADR 0092).
   readDetails(diagramPath: string, relativePath: string): Promise<string> {
     return ipcRenderer.invoke('details:read', diagramPath, relativePath)
   },
 
-  writeDetails(
+  // Content plus the file's change fingerprint — the note's baseline (ADR 0092).
+  readDetailsWithStamp(
     diagramPath: string,
-    nodeId: string,
-    label: string,
-    content: string
-  ): Promise<string> {
-    return ipcRenderer.invoke('details:write', diagramPath, nodeId, label, content)
-  },
-
-  syncDetailFileName(
-    diagramPath: string,
-    nodeId: string,
-    label: string,
-    currentRelativePath: string
-  ): Promise<string> {
-    return ipcRenderer.invoke('details:syncName', diagramPath, nodeId, label, currentRelativePath)
+    relativePath: string
+  ): Promise<{ content: string; stamp: Stamp }> {
+    return ipcRenderer.invoke('details:readWithStamp', diagramPath, relativePath)
   },
 
   // No dialog — used by a window's own initial-load mount effect, given
   // an absolute path via ?path= query string (ADR 0023).
-  openDiagramAtPath(path: string): Promise<DiagramFile> {
+  // Returns the diagram and its file's change fingerprint (the hub's baseline).
+  openDiagramAtPath(path: string): Promise<{ diagram: DiagramFile; stamp: Stamp }> {
     return ipcRenderer.invoke('diagram:openPath', path)
   },
 
-  // Outside-the-app change detection (ADR 0091). checkExternalChange compares
-  // this window's diagram file against what it last loaded/saved;
-  // confirmExternalChange shows the native conflict popup; statDetails
-  // fingerprints one detail note so a draft isn't flushed over an outside edit.
-  checkExternalChange(path: string): Promise<{ changed: boolean; stamp: string | null }> {
-    return ipcRenderer.invoke('diagram:checkExternalChange', path)
-  },
-
-  confirmExternalChange(
-    what: 'diagram' | 'details',
-    dirty: boolean,
-    names: string[]
-  ): Promise<'cancel' | 'overwrite' | 'reload'> {
-    return ipcRenderer.invoke('diagram:confirmExternalChange', what, dirty, names)
-  },
-
-  statDetails(diagramPath: string, relativePath: string): Promise<string | null> {
-    return ipcRenderer.invoke('details:stat', diagramPath, relativePath)
+  // The one "did a file change on disk since I last looked" check (ADR 0092),
+  // for the diagram (relPath null) and/or notes (folder-relative paths).
+  checkFiles(
+    diagramPath: string,
+    entries: { relPath: string | null; stamp: Stamp }[]
+  ): Promise<{ changed: boolean; stamp: Stamp }[]> {
+    return ipcRenderer.invoke('files:check', diagramPath, entries)
   },
 
   // Linked diagrams — see docs/decisions/0005-diagram-identity-and-linking.md.
@@ -246,31 +233,32 @@ const api = {
     path: string | null,
     sessionId: string,
     diagram: DiagramFile,
-    detailsDrafts: Record<string, string>
+    detailsDrafts: Record<string, string>,
+    noteBaselines?: Record<string, NoteBaseline>
   ): Promise<void> {
-    return ipcRenderer.invoke('recovery:write', path, sessionId, diagram, detailsDrafts)
+    return ipcRenderer.invoke(
+      'recovery:write',
+      path,
+      sessionId,
+      diagram,
+      detailsDrafts,
+      noteBaselines
+    )
   },
 
   deleteRecoverySnapshot(path: string | null, sessionId: string): Promise<void> {
     return ipcRenderer.invoke('recovery:delete', path, sessionId)
   },
 
-  checkRecoveryForPath(
-    path: string
-  ): Promise<{ diagram: DiagramFile; detailsDrafts: Record<string, string> } | null> {
+  checkRecoveryForPath(path: string): Promise<RecoverySnapshot | null> {
     return ipcRenderer.invoke('recovery:checkForPath', path)
   },
 
   // Startup orphan scan (main-driven) tells a freshly created window to
   // load a recovered diagram instead of starting blank — subscribed once
   // per window, unsubscribed on unmount.
-  onRecoveredOrphan(
-    callback: (snapshot: { diagram: DiagramFile; detailsDrafts: Record<string, string> }) => void
-  ): () => void {
-    const listener = (
-      _event: unknown,
-      snapshot: { diagram: DiagramFile; detailsDrafts: Record<string, string> }
-    ): void => callback(snapshot)
+  onRecoveredOrphan(callback: (snapshot: RecoverySnapshot) => void): () => void {
+    const listener = (_event: unknown, snapshot: RecoverySnapshot): void => callback(snapshot)
     ipcRenderer.on('recovery:loadOrphan', listener)
     return () => ipcRenderer.off('recovery:loadOrphan', listener)
   },

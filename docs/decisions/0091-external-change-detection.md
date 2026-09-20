@@ -1,7 +1,7 @@
 # 0091: Detecting and surviving changes made outside the app
 
 ## Status
-Decided and implemented (2026-09-19). Not yet live-tested in the running app.
+Decided and implemented (2026-09-19). **Structure superseded by [ADR 0092](0092-unified-multi-file-save-and-change-detection.md)** (2026-09-20): the behaviour described below (focus notice, save-time popup, "git is the merge tool") stands, but the split main-side/renderer-side baselines, the two popups and `flushDetailsDrafts` were replaced by one shadow registry, one detector (`files:check`) and one save plan (`document:save`).
 
 ## Context
 
