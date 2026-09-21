@@ -10,6 +10,8 @@ import type {
 } from '@shared/documentSave'
 import type { AppPreferences } from '@shared/preferences'
 import type { SecurityCrawlResult } from '@shared/threatMatrixMath'
+import type { LinkedSearchLink, LinkedSearchResult } from '@shared/linkedSearch'
+import type { SearchCriteria } from '@shared/search'
 
 interface RequiredTagsWalkResult {
   reached: string[]
@@ -121,6 +123,17 @@ const api = {
     links: { shapeId: string; relativePath: string }[]
   ): Promise<SecurityCrawlResult> {
     return ipcRenderer.invoke('security:crawlLinked', diagramPath, links)
+  },
+
+  // Deep search (ADR 0097) — the criteria the open diagram was just searched
+  // with, run over the subtree behind each of the open diagram's links; returns
+  // which links have a match somewhere below. Read-only.
+  searchLinkedDiagrams(
+    diagramPath: string,
+    links: LinkedSearchLink[],
+    criteria: SearchCriteria
+  ): Promise<LinkedSearchResult> {
+    return ipcRenderer.invoke('search:linkedDiagrams', diagramPath, links, criteria)
   },
 
   // Multi-window model — see ADR 0023. All three open a new window (or

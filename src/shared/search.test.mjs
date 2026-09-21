@@ -4,6 +4,7 @@ import assert from 'node:assert/strict'
 import {
   criteriaFromQuery,
   elementMatchesCriteria,
+  elementMatchesWithDetails,
   hasSearchCriteria,
   matchesStructuredCriteria,
   parseSearchQuery
@@ -164,4 +165,36 @@ test('structured criteria exclude the any terms and are vacuously true when none
   assert.equal(matchesStructuredCriteria(q('missing'), gdprNoPic), true)
   assert.equal(matchesStructuredCriteria(q('missing has:references'), gdprNoPic), false)
   assert.equal(matchesStructuredCriteria(q('missing label:customer'), customerDb), true)
+})
+
+// A details note may satisfy an `any` term the in-memory fields don't (ADR 0097).
+const withNote = (raw, el, note) => {
+  const reads = []
+  return elementMatchesWithDetails(q(raw), el, async (rel) => {
+    reads.push(rel)
+    return note
+  }).then((result) => ({ result, reads }))
+}
+const server = { id: 's1', label: 'Server', details: 'notes/server.md', metadata: {} }
+
+test('details: a term found only in the note matches, and every missing term must be there', async () => {
+  assert.equal((await withNote('oauth', server, 'Uses OAuth 2')).result, true)
+  assert.equal((await withNote('oauth', server, 'nothing relevant')).result, false)
+  assert.equal((await withNote('server oauth', server, 'Uses OAuth')).result, false) // one phrase, not in the note
+  assert.equal((await withNote('label:server oauth', server, 'Uses OAuth')).result, true)
+})
+
+test('details: the note is only read when it could change the answer', async () => {
+  // already matches in memory
+  assert.deepEqual((await withNote('server', server, 'x')).reads, [])
+  // no note path
+  assert.deepEqual((await withNote('oauth', { id: 'n', label: 'Client' }, 'oauth')).reads, [])
+  // fails a structured term, so the note is irrelevant
+  assert.deepEqual((await withNote('oauth has:icon', server, 'oauth')).reads, [])
+  // a real candidate
+  assert.deepEqual((await withNote('oauth', server, 'x')).reads, ['notes/server.md'])
+})
+
+test('details: an empty criteria set still matches nothing', async () => {
+  assert.equal((await withNote('', server, 'anything')).result, false)
 })

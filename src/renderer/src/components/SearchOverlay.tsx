@@ -10,6 +10,8 @@ interface SearchOverlayProps {
   onToggleDeepSearch: () => void
   deepSearchAvailable: boolean
   deepSearchLoading: boolean
+  // Linked diagrams that couldn't be read in the last deep search.
+  unreadableLinks: string[]
   onSubmit: () => void
   searchRun: boolean
   matchCount: number
@@ -38,6 +40,7 @@ export default function SearchOverlay({
   onToggleDeepSearch,
   deepSearchAvailable,
   deepSearchLoading,
+  unreadableLinks,
   onSubmit,
   searchRun,
   matchCount,
@@ -129,10 +132,12 @@ export default function SearchOverlay({
         className="search-overlay-input"
         type="text"
         placeholder={
-          iconMode ? 'Searching by icon…' : 'Search labels, ids, tags…  (has:references, tag:…)'
+          iconMode
+            ? 'Searching by icon…'
+            : 'Search labels, ids, tags, notes…  (has:references, tag:…)'
         }
         title={
-          'Free text (or any:) matches id, label and tags. All terms must match. Narrow with label:x, id:x, tag:value, tag:key=value, has:references, has:icon, has:details, has:link. Quote values with spaces: tag:"data class"=pii'
+          'Free text (or any:) matches id, label, tags and the element\'s notes. All terms must match. Narrow with label:x, id:x, tag:value, tag:key=value, has:references, has:icon, has:details, has:link. Quote values with spaces: tag:"data class"=pii'
         }
         value={iconMode ? '' : query}
         readOnly={iconMode}
@@ -199,17 +204,15 @@ export default function SearchOverlay({
       <label
         className="search-overlay-deep"
         title={
-          iconMode
-            ? "Deep search scans detail notes for text — it doesn't apply to an icon search"
-            : deepSearchAvailable
-              ? "Also scan each element's detail notes on disk — slower, no live-as-you-type"
-              : 'Save the diagram first — detail files have nowhere to resolve from yet'
+          deepSearchAvailable
+            ? 'Also search every diagram this one links to, and theirs in turn, including their notes. A shape whose linked diagrams contain a match counts as a match. Slower.'
+            : 'Save the diagram first — its links have nowhere to resolve from yet'
         }
       >
         <input
           type="checkbox"
           checked={deepSearchEnabled}
-          disabled={iconMode || !deepSearchAvailable}
+          disabled={!deepSearchAvailable}
           onChange={onToggleDeepSearch}
         />
         Deep search
@@ -235,6 +238,11 @@ export default function SearchOverlay({
           </>
         )}
         {noMatches && <span>No matches</span>}
+        {!deepSearchLoading && unreadableLinks.length > 0 && (
+          <span className="search-overlay-problem" title={unreadableLinks.join('\n')}>
+            {`${unreadableLinks.length} linked diagram${unreadableLinks.length === 1 ? '' : 's'} couldn't be read`}
+          </span>
+        )}
         {queryProblems.length > 0 && (
           <span className="search-overlay-problem" title={queryProblems.join('\n')}>
             {queryProblems[0]}

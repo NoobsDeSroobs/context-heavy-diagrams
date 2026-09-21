@@ -43,6 +43,6 @@ A first cut added a "Has reference images" checkbox; that was rejected because e
 - No `.chd` schema change; everything reads existing `data` fields.
 - The search logic now has unit tests (`search.test.mjs`) — before, only the UI exercised it.
 - Discoverability: the input's placeholder and tooltip list the terms, and a bad `has:` value shows a hint; a "+ filter" picker that inserts terms is a possible later addition on top of the same syntax.
-- `details:` (search only details files) is not built; it belongs with the drill-down epic, where the question of whether bare text also reads details files when searching linked diagrams gets decided. In the open diagram, details remain opt-in through Deep search, because unlike id/label/tags they are not in memory (ADR 0062).
+- `details:` (search only details files) is not built. The question it was parked for is answered by [ADR 0097](0097-deep-search-across-linked-diagrams.md): bare text reads details notes by default, in the open diagram and (with Deep search) in linked diagrams — so it isn't needed. (This ADR's Deep search description, "details of the open diagram", is superseded by 0097.)
 - A literal search for the text `has:references` (or another recognised `name:`) needs quoting tricks or isn't possible; accepted.
 - Behaviour change: an icon search now also honours any terms typed in the box, and the read-only-box behaviour in icon mode is unchanged.

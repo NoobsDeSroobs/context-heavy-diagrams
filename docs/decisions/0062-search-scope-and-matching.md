@@ -1,7 +1,7 @@
 # 0062: Search scope, matching, and entry point
 
 ## Status
-Decided (2026-08-26), implementation starting same session.
+Decided (2026-08-26), implementation starting same session. **Amended by [ADR 0097](0097-deep-search-across-linked-diagrams.md) (2026-09-21):** details notes are now part of the default search, and "Deep search" now means drilling into linked diagrams — the opt-in-notes decision below no longer holds.
 
 ## Context
 

@@ -9,6 +9,8 @@ import type {
 } from '@shared/documentSave'
 import type { AppPreferences } from '@shared/preferences'
 import type { SecurityCrawlResult } from '@shared/threatMatrixMath'
+import type { LinkedSearchLink, LinkedSearchResult } from '@shared/linkedSearch'
+import type { SearchCriteria } from '@shared/search'
 
 export interface RequiredTagsWalkResult {
   reached: string[]
@@ -44,6 +46,12 @@ export interface DiagramApi {
     diagramPath: string,
     links: { shapeId: string; relativePath: string }[]
   ): Promise<SecurityCrawlResult>
+
+  searchLinkedDiagrams(
+    diagramPath: string,
+    links: LinkedSearchLink[],
+    criteria: SearchCriteria
+  ): Promise<LinkedSearchResult>
 
   newWindow(): Promise<void>
   openInNewWindow(isCurrentWindowEmpty: boolean): Promise<void>

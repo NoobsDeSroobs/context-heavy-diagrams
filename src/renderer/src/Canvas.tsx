@@ -100,9 +100,8 @@ import SearchOverlay from './components/SearchOverlay'
 import {
   criteriaFromQuery,
   elementMatchesCriteria,
+  elementMatchesWithDetails,
   hasSearchCriteria,
-  matchesStructuredCriteria,
-  matchesSearchQuery,
   parseSearchQuery,
   searchableFromData,
   type SearchCriteria
@@ -1251,6 +1250,9 @@ function CanvasInner(): React.JSX.Element {
   // Query-token problems (unknown `has:` value, empty `tag:`) shown in the
   // overlay so a typo isn't silently "no matches" (ADR 0096).
   const searchQueryProblems = useMemo(() => parseSearchQuery(searchQuery).problems, [searchQuery])
+  // Linked diagrams that couldn't be read during the last deep search — shown
+  // in the overlay so a broken link is never silently "no match" (ADR 0097).
+  const [searchUnreadable, setSearchUnreadable] = useState<string[]>([])
   // "Isolate" (ADR 0063) — search-driven only, per the user's
   // own call: a separate explicit toggle next to Search, not folded into
   // running a search itself, so turning it on/off doesn't require
@@ -2489,17 +2491,65 @@ function CanvasInner(): React.JSX.Element {
     setSearchRun(true)
   }, [])
 
-  // Which elements satisfy the criteria without touching disk (ADR 0096) —
-  // free text over id/label/tags, an exact icon, has-reference-images, all
-  // ANDed. Edges carry no icons or references, so those criteria exclude them.
-  const shallowMatchIds = useCallback(
-    (criteria: SearchCriteria): Set<string> =>
-      new Set(
-        [...nodes, ...edges]
-          .filter((el) => elementMatchesCriteria(criteria, searchableFromData(el.id, el.data)))
-          .map((el) => el.id)
-      ),
-    [nodes, edges]
+  // Every element that satisfies the criteria (ADR 0096, 0097) — free text over
+  // id/label/tags *and* the node's details note, an exact icon, has: facets, all
+  // ANDed. A note is read from its unsaved in-memory copy when the user has one
+  // open, else from disk; reading is cheap, and the search terms (label:, tag:…)
+  // are how the user narrows it. With Deep search on, a node that carries a link
+  // to another diagram also matches when anything in that linked subtree does —
+  // so the match lands on the shape in *this* diagram, cyclable like any other.
+  // Edges carry no icons, references or notes, so those criteria exclude them.
+  const computeMatchIds = useCallback(
+    async (criteria: SearchCriteria): Promise<Set<string>> => {
+      const matchedIds = new Set<string>()
+      setDeepSearchLoading(true)
+      try {
+        const nodeHits = await Promise.all(
+          nodes.map((n) =>
+            elementMatchesWithDetails(
+              criteria,
+              searchableFromData(n.id, n.data),
+              async (relativePath) => {
+                const shadow = noteShadowsRef.current[n.id]
+                if (shadow) return shadow.content
+                return currentPath ? window.api.readDetails(currentPath, relativePath) : ''
+              }
+            )
+          )
+        )
+        nodes.forEach((n, i) => {
+          if (nodeHits[i]) matchedIds.add(n.id)
+        })
+        for (const e of edges) {
+          if (elementMatchesCriteria(criteria, searchableFromData(e.id, e.data))) {
+            matchedIds.add(e.id)
+          }
+        }
+
+        if (deepSearchEnabled && currentPath && hasSearchCriteria(criteria)) {
+          // The in-memory links, so a link added since the last save is searched.
+          const links = nodes.flatMap((n) => {
+            const link = n.data?.linkedDiagram
+            return typeof link === 'string' && link.trim() !== '' && !matchedIds.has(n.id)
+              ? [{ nodeId: n.id, relativePath: link }]
+              : []
+          })
+          try {
+            const linked = await window.api.searchLinkedDiagrams(currentPath, links, criteria)
+            for (const id of linked.matchedNodeIds) matchedIds.add(id)
+            setSearchUnreadable(linked.unreadable)
+          } catch (error) {
+            showAlert(
+              `Couldn't search linked diagrams: ${error instanceof Error ? error.message : String(error)}`
+            )
+          }
+        }
+      } finally {
+        setDeepSearchLoading(false)
+      }
+      return matchedIds
+    },
+    [nodes, edges, currentPath, deepSearchEnabled]
   )
 
   // The stable next/prev order: nodes in their current array order, then edges.
@@ -2511,61 +2561,17 @@ function CanvasInner(): React.JSX.Element {
 
   // Shared by both trigger buttons (ADR 0063 split Search and
   // Isolate into two independent actions over the same underlying match
-  // computation — only what happens *after* matching differs). Matching is
-  // synchronous over the in-memory nodes/edges; deep search (text only)
-  // additionally opens each not-yet-matched node's detail file on disk and
-  // does a plain substring check, no indexing (ADR 0062's deliberate choice —
-  // this is an occasional toggle, not the default path), skipping nodes that
-  // already fail the icon / has-references criteria. Returns the match order,
-  // empty when no criterion is set.
+  // computation — only what happens *after* matching differs). Returns the
+  // match order, empty when no criterion is set.
   const computeAndSetMatches = useCallback(async (): Promise<string[]> => {
     const criteria: SearchCriteria = criteriaFromQuery(searchQuery, searchIcon)
     if (!hasSearchCriteria(criteria)) return []
-    const matchedIds = shallowMatchIds(criteria)
-
-    // Deep search: a bare/any: term may also be satisfied by the node's details
-    // file. Only nodes that pass every in-memory term and are missing some
-    // `any` term are worth a read; they match when their file supplies each
-    // missing term.
-    if (criteria.any.length > 0 && deepSearchEnabled && currentPath) {
-      const diagramPath = currentPath
-      setDeepSearchLoading(true)
-      const candidates = nodes
-        .map((n) => ({ n, el: searchableFromData(n.id, n.data) }))
-        .filter(
-          ({ n, el }) =>
-            !matchedIds.has(n.id) &&
-            typeof n.data?.details === 'string' &&
-            matchesStructuredCriteria(criteria, el)
-        )
-        .map(({ n, el }) => ({
-          id: n.id,
-          detailsPath: n.data.details as string,
-          missing: criteria.any.filter((term) => !matchesSearchQuery(term, el))
-        }))
-      const hits = await Promise.all(
-        candidates.map(async (cand) => {
-          const content = (await window.api.readDetails(diagramPath, cand.detailsPath)).toLowerCase()
-          return cand.missing.every((term) => content.includes(term.toLowerCase())) ? cand.id : null
-        })
-      )
-      for (const id of hits) if (id) matchedIds.add(id)
-      setDeepSearchLoading(false)
-    }
-
+    setSearchUnreadable([])
+    const matchedIds = await computeMatchIds(criteria)
     const order = orderMatches(matchedIds)
     applyMatchOrder(matchedIds, order)
     return order
-  }, [
-    searchIcon,
-    searchQuery,
-    shallowMatchIds,
-    orderMatches,
-    nodes,
-    deepSearchEnabled,
-    currentPath,
-    applyMatchOrder
-  ])
+  }, [searchIcon, searchQuery, computeMatchIds, orderMatches, applyMatchOrder])
 
   const runSearch = useCallback(async () => {
     const order = await computeAndSetMatches()
@@ -2628,6 +2634,7 @@ function CanvasInner(): React.JSX.Element {
     // Any query change or close drops icon mode too (ADR 0072) — the icon
     // and free-text searches never coexist.
     setSearchIcon(null)
+    setSearchUnreadable([])
   }, [])
 
   // Isolate is its own independent trigger (ADR 0063, revised
@@ -2668,17 +2675,25 @@ function CanvasInner(): React.JSX.Element {
   // flow: choosing an icon replaces whatever's in the text box, closes the
   // popup, and immediately runs the search + frames the first hit.
   const pickSearchIcon = useCallback(
-    (icon: IconRef) => {
+    async (icon: IconRef) => {
       setSearchQuery('')
       setSearchIcon(icon)
       setSearchIconPicker(null)
       setIsolateActive(false)
-      const matchedIds = shallowMatchIds({ any: [], labels: [], ids: [], tags: [], has: [], icon })
+      setSearchUnreadable([])
+      const matchedIds = await computeMatchIds({
+        any: [],
+        labels: [],
+        ids: [],
+        tags: [],
+        has: [],
+        icon
+      })
       const order = orderMatches(matchedIds)
       applyMatchOrder(matchedIds, order)
       if (order.length > 0) focusSearchMatch(order[0])
     },
-    [shallowMatchIds, orderMatches, applyMatchOrder, focusSearchMatch]
+    [computeMatchIds, orderMatches, applyMatchOrder, focusSearchMatch]
   )
 
   const toggleSearchIconPicker = useCallback((anchorRect: DOMRect) => {
@@ -4586,6 +4601,7 @@ function CanvasInner(): React.JSX.Element {
       setIsolateActive(false)
       setSearchIcon(null)
       setSearchIconPicker(null)
+      setSearchUnreadable([])
       // Defensive, per ADR 0022 — reconcile against hand-edited drift on
       // every load, not just when the template is edited from within the app.
       runSync(openedRequiredTags)
@@ -6269,6 +6285,7 @@ function CanvasInner(): React.JSX.Element {
               onToggleDeepSearch={() => setDeepSearchEnabled((v) => !v)}
               deepSearchAvailable={currentPath !== null}
               deepSearchLoading={deepSearchLoading}
+              unreadableLinks={searchUnreadable}
               onSubmit={runSearch}
               searchRun={searchRun}
               matchCount={searchMatchOrder.length}
