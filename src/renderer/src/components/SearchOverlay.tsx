@@ -23,6 +23,7 @@ interface SearchOverlayProps {
   iconPickerOpen: boolean
   onToggleIconPicker: (anchorRect: DOMRect) => void
   onClearIcon: () => void
+  queryProblems: string[]
   onClose: () => void
 }
 
@@ -50,6 +51,7 @@ export default function SearchOverlay({
   iconPickerOpen,
   onToggleIconPicker,
   onClearIcon,
+  queryProblems,
   onClose
 }: SearchOverlayProps): React.JSX.Element {
   const inputRef = useRef<HTMLInputElement>(null)
@@ -118,6 +120,7 @@ export default function SearchOverlay({
 
   const noMatches = searchRun && !deepSearchLoading && matchCount === 0
   const iconMode = searchIcon !== null
+  const canSearch = iconMode || query.trim().length > 0
 
   return (
     <div className="search-overlay nodrag nopan">
@@ -125,7 +128,12 @@ export default function SearchOverlay({
         ref={inputRef}
         className="search-overlay-input"
         type="text"
-        placeholder={iconMode ? 'Searching by icon…' : 'Search labels, ids, tags…'}
+        placeholder={
+          iconMode ? 'Searching by icon…' : 'Search labels, ids, tags…  (has:references, tag:…)'
+        }
+        title={
+          'Free text (or any:) matches id, label and tags. All terms must match. Narrow with label:x, id:x, tag:value, tag:key=value, has:references, has:icon, has:details, has:link. Quote values with spaces: tag:"data class"=pii'
+        }
         value={iconMode ? '' : query}
         readOnly={iconMode}
         onChange={(event) => onQueryChange(event.target.value)}
@@ -171,12 +179,7 @@ export default function SearchOverlay({
           </button>
         )}
       </span>
-      <button
-        type="button"
-        className="search-overlay-run"
-        onClick={onSubmit}
-        disabled={!iconMode && query.trim().length === 0}
-      >
+      <button type="button" className="search-overlay-run" onClick={onSubmit} disabled={!canSearch}>
         Search
       </button>
       <button
@@ -184,7 +187,7 @@ export default function SearchOverlay({
         className={`search-overlay-isolate${isolateActive ? ' active' : ''}`}
         aria-pressed={isolateActive}
         onClick={onToggleIsolate}
-        disabled={!isolateActive && !iconMode && query.trim().length === 0}
+        disabled={!isolateActive && !canSearch}
         title={
           isolateActive
             ? 'Turn off Isolate'
@@ -232,6 +235,11 @@ export default function SearchOverlay({
           </>
         )}
         {noMatches && <span>No matches</span>}
+        {queryProblems.length > 0 && (
+          <span className="search-overlay-problem" title={queryProblems.join('\n')}>
+            {queryProblems[0]}
+          </span>
+        )}
       </div>
       <button
         type="button"

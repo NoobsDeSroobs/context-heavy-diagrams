@@ -6,7 +6,7 @@ a scheduled epic. Split off from [epic 0129](../completed/0129-unified-multi-fil
 when its save side (shadow model, one save plan, per-file conflict dialog, reload that keeps
 unsaved notes) was finished and live-tested: what remains is refinement, and the queued batch
 ([0119](../completed/0119-details-peek-on-modifier-hold.md) → [0120](../completed/0120-help-keyboard-shortcuts-page.md)
-→ [0121](../0121-copy-style-apply-mode.md)) goes first. Design is already agreed in
+→ [0121](../completed/0121-copy-style-apply-mode.md)) goes first. Design is already agreed in
 [ADR 0092](../../../decisions/0092-unified-multi-file-save-and-change-detection.md); no new
 design conversation is needed for the first two items.
 

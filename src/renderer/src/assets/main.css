@@ -2832,6 +2832,14 @@ body {
   white-space: nowrap;
 }
 
+.search-overlay-problem {
+  color: #d9822b;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .search-overlay-status {
   display: flex;
   align-items: center;

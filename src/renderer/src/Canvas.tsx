@@ -97,7 +97,16 @@ import DetailsPanel from './components/DetailsPanel'
 import DiagnosticsPanel, { type MissingFileEntry } from './components/DiagnosticsPanel'
 import HighlightsPanel from './components/HighlightsPanel'
 import SearchOverlay from './components/SearchOverlay'
-import { matchesSearchQuery, nodeHasIcon } from './search'
+import {
+  criteriaFromQuery,
+  elementMatchesCriteria,
+  hasSearchCriteria,
+  matchesStructuredCriteria,
+  matchesSearchQuery,
+  parseSearchQuery,
+  searchableFromData,
+  type SearchCriteria
+} from './search'
 import LegendPanel from './components/LegendPanel'
 import MenuBar, { type MenuBarMenu, type MenuBarItem } from './components/MenuBar'
 import LayerPanel from './components/LayerPanel'
@@ -1239,6 +1248,9 @@ function CanvasInner(): React.JSX.Element {
   // the overlay's icon button while its IconBrowser popup is open.
   const [searchIcon, setSearchIcon] = useState<IconRef | null>(null)
   const [searchIconPicker, setSearchIconPicker] = useState<DOMRect | null>(null)
+  // Query-token problems (unknown `has:` value, empty `tag:`) shown in the
+  // overlay so a typo isn't silently "no matches" (ADR 0096).
+  const searchQueryProblems = useMemo(() => parseSearchQuery(searchQuery).problems, [searchQuery])
   // "Isolate" (ADR 0063) — search-driven only, per the user's
   // own call: a separate explicit toggle next to Search, not folded into
   // running a search itself, so turning it on/off doesn't require
@@ -2477,82 +2489,79 @@ function CanvasInner(): React.JSX.Element {
     setSearchRun(true)
   }, [])
 
-  // Icon search (ADR 0072) is just "which nodes carry this exact icon" —
-  // no edges (edges have no icons), no deep search, no per-field nuance.
-  const applyIconMatches = useCallback(
-    (icon: IconRef): string[] => {
-      const order = nodes
-        .filter((n) =>
-          nodeHasIcon(icon, n.data?.icons as Partial<Record<IconSlot, IconRef>> | undefined)
-        )
-        .map((n) => n.id)
-      applyMatchOrder(new Set(order), order)
-      return order
-    },
-    [nodes, applyMatchOrder]
+  // Which elements satisfy the criteria without touching disk (ADR 0096) —
+  // free text over id/label/tags, an exact icon, has-reference-images, all
+  // ANDed. Edges carry no icons or references, so those criteria exclude them.
+  const shallowMatchIds = useCallback(
+    (criteria: SearchCriteria): Set<string> =>
+      new Set(
+        [...nodes, ...edges]
+          .filter((el) => elementMatchesCriteria(criteria, searchableFromData(el.id, el.data)))
+          .map((el) => el.id)
+      ),
+    [nodes, edges]
+  )
+
+  // The stable next/prev order: nodes in their current array order, then edges.
+  const orderMatches = useCallback(
+    (matchedIds: Set<string>): string[] =>
+      [...nodes, ...edges].filter((el) => matchedIds.has(el.id)).map((el) => el.id),
+    [nodes, edges]
   )
 
   // Shared by both trigger buttons (ADR 0063 split Search and
   // Isolate into two independent actions over the same underlying match
-  // computation — only what happens *after* matching differs). An icon
-  // search (ADR 0072) short-circuits to applyIconMatches; otherwise free-
-  // text/tag matching is synchronous over the in-memory nodes/edges, and
-  // deep search additionally opens each not-yet-matched node's detail file
-  // on disk and does a plain substring check, no indexing (ADR 0062's
-  // deliberate choice — this is an occasional toggle, not the default
-  // path). Returns the stable next/prev-ordered match list (nodes in
-  // their current array order, then edges), empty for an empty query.
+  // computation — only what happens *after* matching differs). Matching is
+  // synchronous over the in-memory nodes/edges; deep search (text only)
+  // additionally opens each not-yet-matched node's detail file on disk and
+  // does a plain substring check, no indexing (ADR 0062's deliberate choice —
+  // this is an occasional toggle, not the default path), skipping nodes that
+  // already fail the icon / has-references criteria. Returns the match order,
+  // empty when no criterion is set.
   const computeAndSetMatches = useCallback(async (): Promise<string[]> => {
-    if (searchIcon) return applyIconMatches(searchIcon)
-    const query = searchQuery.trim()
-    if (!query) return []
-    const nodeMatchIds = nodes
-      .filter((n) =>
-        matchesSearchQuery(query, {
-          id: n.id,
-          label: typeof n.data?.label === 'string' ? n.data.label : undefined,
-          metadata: n.data?.metadata as Record<string, MetadataEntry> | undefined
-        })
-      )
-      .map((n) => n.id)
-    const edgeMatchIds = edges
-      .filter((e) =>
-        matchesSearchQuery(query, {
-          id: e.id,
-          label: typeof e.data?.label === 'string' ? e.data.label : undefined,
-          metadata: e.data?.metadata as Record<string, MetadataEntry> | undefined
-        })
-      )
-      .map((e) => e.id)
-    const matchedIds = new Set([...nodeMatchIds, ...edgeMatchIds])
+    const criteria: SearchCriteria = criteriaFromQuery(searchQuery, searchIcon)
+    if (!hasSearchCriteria(criteria)) return []
+    const matchedIds = shallowMatchIds(criteria)
 
-    if (deepSearchEnabled && currentPath) {
+    // Deep search: a bare/any: term may also be satisfied by the node's details
+    // file. Only nodes that pass every in-memory term and are missing some
+    // `any` term are worth a read; they match when their file supplies each
+    // missing term.
+    if (criteria.any.length > 0 && deepSearchEnabled && currentPath) {
       const diagramPath = currentPath
       setDeepSearchLoading(true)
       const candidates = nodes
-        .filter((n) => !matchedIds.has(n.id))
-        .map((n) => ({ id: n.id, detailsPath: n.data?.details }))
-        .filter((c): c is { id: string; detailsPath: string } => typeof c.detailsPath === 'string')
+        .map((n) => ({ n, el: searchableFromData(n.id, n.data) }))
+        .filter(
+          ({ n, el }) =>
+            !matchedIds.has(n.id) &&
+            typeof n.data?.details === 'string' &&
+            matchesStructuredCriteria(criteria, el)
+        )
+        .map(({ n, el }) => ({
+          id: n.id,
+          detailsPath: n.data.details as string,
+          missing: criteria.any.filter((term) => !matchesSearchQuery(term, el))
+        }))
       const hits = await Promise.all(
-        candidates.map(async (c) => {
-          const content = await window.api.readDetails(diagramPath, c.detailsPath)
-          return content.toLowerCase().includes(query.toLowerCase()) ? c.id : null
+        candidates.map(async (cand) => {
+          const content = (await window.api.readDetails(diagramPath, cand.detailsPath)).toLowerCase()
+          return cand.missing.every((term) => content.includes(term.toLowerCase())) ? cand.id : null
         })
       )
       for (const id of hits) if (id) matchedIds.add(id)
       setDeepSearchLoading(false)
     }
 
-    const order = [...nodes, ...edges].filter((el) => matchedIds.has(el.id)).map((el) => el.id)
-
+    const order = orderMatches(matchedIds)
     applyMatchOrder(matchedIds, order)
     return order
   }, [
     searchIcon,
-    applyIconMatches,
     searchQuery,
+    shallowMatchIds,
+    orderMatches,
     nodes,
-    edges,
     deepSearchEnabled,
     currentPath,
     applyMatchOrder
@@ -2664,10 +2673,12 @@ function CanvasInner(): React.JSX.Element {
       setSearchIcon(icon)
       setSearchIconPicker(null)
       setIsolateActive(false)
-      const order = applyIconMatches(icon)
+      const matchedIds = shallowMatchIds({ any: [], labels: [], ids: [], tags: [], has: [], icon })
+      const order = orderMatches(matchedIds)
+      applyMatchOrder(matchedIds, order)
       if (order.length > 0) focusSearchMatch(order[0])
     },
-    [applyIconMatches, focusSearchMatch]
+    [shallowMatchIds, orderMatches, applyMatchOrder, focusSearchMatch]
   )
 
   const toggleSearchIconPicker = useCallback((anchorRect: DOMRect) => {
@@ -6271,6 +6282,7 @@ function CanvasInner(): React.JSX.Element {
               iconPickerOpen={searchIconPicker !== null}
               onToggleIconPicker={toggleSearchIconPicker}
               onClearIcon={clearSearchIcon}
+              queryProblems={searchQueryProblems}
               onClose={closeSearchOverlay}
             />
           )}

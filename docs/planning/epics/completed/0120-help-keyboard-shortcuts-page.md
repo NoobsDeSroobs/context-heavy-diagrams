@@ -5,7 +5,7 @@ Implemented 2026-09-20 on `epic/0120-help-keyboard-shortcuts-page`
 ([ADR 0094](../../../decisions/0094-command-registry-and-shortcuts-help.md));
 `typecheck`/`lint`/`npm test` clean, **not live-tested** (Electron renderer;
 Linux/Mac display unverified). Logged 2026-09-19 as a side-note from the
-copy-style discussion ([epic 0121](../0121-copy-style-apply-mode.md)).
+copy-style discussion ([epic 0121](0121-copy-style-apply-mode.md)).
 
 ## Goal
 A page under the Help menu listing every hotkey **and mouse gesture** the app

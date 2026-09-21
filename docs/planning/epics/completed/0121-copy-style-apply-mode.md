@@ -1,8 +1,8 @@
 # 0121: Copy style / "format painter" apply mode
 
 ## Status
-Implemented 2026-09-20 on `epic/0121-copy-style-apply-mode`
-([ADR 0095](../../decisions/0095-copy-style-apply-mode.md)); `typecheck`/`lint`/`npm test`
+Merged (#100), 2026-09-20 — implemented on `epic/0121-copy-style-apply-mode`
+([ADR 0095](../../../decisions/0095-copy-style-apply-mode.md)); `typecheck`/`lint`/`npm test`
 clean, **not live-tested** (Electron renderer; Linux/Mac unverified). Logged
 2026-09-19; direction agreed then, design pass done in the ADR.
 
@@ -26,16 +26,16 @@ stroke / thickness / font on each one through the property panel.
   Ctrl+Shift+C is DevTools "inspect" in Chromium if dev menus are on) or
   Ctrl+Alt+C / Ctrl+Alt+V (Google Docs; **but Ctrl+Alt is AltGr on many
   European layouts**, e.g. Nordic — risky). Check the existing set in
-  `Canvas.tsx` and register through [epic 0120](completed/0120-help-keyboard-shortcuts-page.md)'s command registry.
+  `Canvas.tsx` and register through [epic 0120](0120-help-keyboard-shortcuts-page.md)'s command registry.
   A GUI entry point must exist regardless of hotkey.
 - **Which fields:** fill, stroke, thickness, line style, font/size/colour;
   *not* label, size, position, tags, details, links, security data. For edges:
   style only — not endpoints, routing waypoints or direction sets.
 - **Palette references vs values:** if the source uses a named palette entry
-  ([ADR 0074-era palettes](completed/0074-multiple-named-style-palettes.md)),
+  ([ADR 0074-era palettes](0074-multiple-named-style-palettes.md)),
   copy the reference (so a palette edit still propagates) or the resolved
   values? Probably reference-when-present.
-- **Theme-adaptive colour flip** ([ADR 0034](../../decisions/0034-theme-adaptive-color-value-flip.md)):
+- **Theme-adaptive colour flip** ([ADR 0034](../../../decisions/0034-theme-adaptive-color-value-flip.md)):
   copy the *stored* values, never the theme-flipped display values.
 - A multi-selection as target ("Paste style" to all selected at once) is a
   cheap addition of the same code path.
