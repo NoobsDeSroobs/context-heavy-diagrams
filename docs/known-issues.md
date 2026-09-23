@@ -41,6 +41,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 - [Copy/paste doesn't preserve container relationships](#copypaste-doesnt-preserve-container-relationships) — Open; ADR 0075 / epic 0103 reworked `remapForPaste` for exactly this, unmerged — retest after merge.
 - ["Reverse direction" did nothing visible on a styled edge (and showed arrows on both ends before that)](#reverse-direction-did-nothing-visible-on-a-styled-edge) — Solved (ADR 0083 / epic 0106).
 - [PNG-exported arrowheads were invisible on any edge relying on this app's own `context-stroke` markers](#png-exported-arrowheads-were-invisible-on-any-edge-relying-on-this-apps-own-context-stroke-markers) — Solved.
+- [Search couldn't find text in a note that had never been saved to disk](#search-couldnt-find-text-in-a-note-that-had-never-been-saved-to-disk) — Solved.
 
 ---
 
@@ -763,3 +764,20 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 **General lesson (extends the one from "Exported PNGs had no visible arrowheads on any edge" above):** this app's export code has now hit CSS custom-property resolution gaps *and* SVG paint-context (`context-fill`/`context-stroke`) gaps in `html-to-image`'s pipeline, on top of the missing-`<defs>` gap that started this file's whole "capture only a subtree" caution. Anything relying on a value resolved indirectly (a CSS var, a paint-context keyword) rather than a literal, already-resolved value written directly onto the element is worth treating as suspect in this export path specifically, even when it's proven reliable in live rendering.
 
 **References:** `src/renderer/src/export/exportPng.ts`'s `resolveMarkersForExport`/`captureDiagramPng`, `src/renderer/src/Canvas.tsx`'s `DEFAULT_EDGE_OPTIONS`, `src/renderer/src/edges/markerIds.ts`'s `MARKER_ID`/`markerUrl`, `src/renderer/src/edges/edgeMarkers.tsx`, `src/renderer/src/export/exportLegendDom.ts`, [ADR 0014](decisions/0014-node-and-edge-style-schema.md) (custom marker system), the "Default edge stroke", "Exported PNGs had no visible arrowheads", and "'Use canvas color' PNG export always exported plain white" entries above
+
+---
+
+## Search couldn't find text in a note that had never been saved to disk
+
+**Status:** Solved
+**Found:** 2026-09-23, user report — after live-testing epic 0093's drill-down/notes search (never live-tested before this, per its own doc), the default search over a node's details note didn't find a term that was only in the note's text, on a diagram open but not yet saved. The "Deep search" checkbox was also greyed out in the same session, which turned out to be unrelated and working as designed — it requires `currentPath` to resolve a link's linked-diagram path against, and the diagram hadn't been saved yet (its own tooltip already says this).
+
+**Symptom:** typing a term that exists only inside a node's Details note returned no match, even though the note was open and visibly contained that text.
+
+**Root cause:** `elementMatchesViaDetails` ([ADR 0097](decisions/0097-deep-search-across-linked-diagrams.md)) gates on `el.details` — the node's *stored* details path — before ever reading note content, correctly for the general/deep-search case where a note only exists as a file on disk. But a brand-new (or any never-yet-saved) note has no stored path at all: `data.details` isn't assigned until the note's first save (epic 0087's sync-on-save/label-derived-filename convention), even though its real content already exists in the renderer's own in-memory shadow (`noteShadowsRef`, populated the moment the Details panel opens for that node — see `openDetailsPanel`). `Canvas.tsx`'s `computeMatchIds` built the searchable element straight from `data.details`, so an in-memory-only note looked to the matcher exactly like "no note at all," regardless of what it actually contained.
+
+**Resolution:** `computeMatchIds` now overrides the searchable element's `details` field to a truthy placeholder whenever a live shadow exists for that node, even if `data.details` itself is still unset. The placeholder's exact value never matters — the `readDetails` callback already checks the shadow first and ignores the path argument entirely once one exists — it only needs to be truthy so `elementMatchesViaDetails`'s gate (and the `has:details` facet) see the note as present. A saved diagram was unaffected either way, which is why the user's own re-test against saved diagrams worked before this fix.
+
+**Also fixed in the same pass, spotted while investigating:** `src/main/details.ts`'s `details:read`/`details:readWithStamp` handlers resolved a stored path with a plain `join(dirname(diagramPath), relativePath)` instead of the shared `resolveLinkPath` (`src/main/linkPaths.ts`) every other reader is supposed to share — missed an absolute-path check and backslash-splitting for a path written on Windows and read back on Linux. Didn't cause this particular symptom (ordinary Windows relative forward-slash paths still resolved fine) but was a real, confirmed divergence from the project's own documented single-source-of-truth rule for this. `src/main/icons.ts` and `src/main/references.ts` have a milder version of the same gap (inline backslash-splitting but no absolute-path check) — flagged, not fixed here, to keep this change narrowly scoped.
+
+**References:** `src/renderer/src/Canvas.tsx`'s `computeMatchIds`/`openDetailsPanel`/`noteShadowsRef`, `src/shared/search.ts`'s `elementMatchesViaDetails`, `src/main/details.ts`, `src/main/linkPaths.ts`'s `resolveLinkPath`, [ADR 0097](decisions/0097-deep-search-across-linked-diagrams.md), [epic 0087](planning/epics/completed/0087-detail-file-naming.md) (sync-on-save naming)

@@ -233,7 +233,7 @@ export default function HighlightsPanel({
                 <button
                   type="button"
                   className="highlight-group-resync"
-                  title="Resync with current tag values — adds missing ones, removes ones nothing carries anymore"
+                  title="Resync now — a required tag's group already keeps itself in sync with its allowed values; a free tag's group with its currently-used values"
                   aria-label="Resync group"
                   onClick={() => onAddOrResyncGroup(key)}
                 >

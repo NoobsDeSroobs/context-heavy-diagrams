@@ -104,17 +104,30 @@ export function nearestConnectionPoint(
   return { side, offset: Math.min(1, Math.max(0, raw)) }
 }
 
+// A point's own absolute {x, y} on the node's current rect — shared by
+// nearestConnectionPointWithCoordinates below and by the multi-connection-line
+// "same ordinal" resolvers, which both need to turn a resolved ConnectionPoint
+// into real screen coordinates once they already know which point they want.
+export function pointCoordinates(rect: RectLike, point: ConnectionPoint): { x: number; y: number } {
+  switch (point.side) {
+    case 'top':
+      return { x: rect.left + rect.width * point.offset, y: rect.top }
+    case 'bottom':
+      return { x: rect.left + rect.width * point.offset, y: rect.top + rect.height }
+    case 'left':
+      return { x: rect.left, y: rect.top + rect.height * point.offset }
+    case 'right':
+      return { x: rect.left + rect.width, y: rect.top + rect.height * point.offset }
+  }
+}
+
 // Nearest *existing, connectable* point (a real point, not just a side +
 // ideal offset) to an arbitrary point in the same coordinate space as
 // `rect`, plus that point's own absolute {x, y} in that same space — used
-// by the multi-connection-line feature for both the live drag visual
-// (nearest point facing the current pointer, needs real coordinates to
-// draw a line to) and the actual edges created on drop (nearest point
-// facing the real target node's center, needs just the id). Single
-// resolver for both so they can never disagree about which point counts as
-// "nearest" — nearestConnectionPoint alone only resolves a side and an
-// ideal offset along it; this picks whichever of that side's real points
-// (synthesized default or customized) sits closest to that ideal offset.
+// by right-click "add connection point here"'s side/offset resolution.
+// nearestConnectionPoint alone only resolves a side and an ideal offset
+// along it; this picks whichever of that side's real points (synthesized
+// default or customized) sits closest to that ideal offset.
 export function nearestConnectionPointWithCoordinates(
   storedPoints: ConnectionPoint[],
   rect: RectLike,
@@ -126,27 +139,42 @@ export function nearestConnectionPointWithCoordinates(
   const point = onSide.reduce((best, candidate) =>
     Math.abs(candidate.offset - offset) < Math.abs(best.offset - offset) ? candidate : best
   )
-  switch (side) {
-    case 'top':
-      return { point, x: rect.left + rect.width * point.offset, y: rect.top }
-    case 'bottom':
-      return { point, x: rect.left + rect.width * point.offset, y: rect.top + rect.height }
-    case 'left':
-      return { point, x: rect.left, y: rect.top + rect.height * point.offset }
-    case 'right':
-      return { point, x: rect.left + rect.width, y: rect.top + rect.height * point.offset }
-  }
+  return { point, ...pointCoordinates(rect, point) }
 }
 
-// Just the id — the common case (multi-connection onConnect only needs to
-// know *which* handle to attach to, not where it sits on screen).
-export function nearestConnectionPointId(
+// A point's clockwise position on its own side (1-based) plus how many
+// points that side has — multi-connection-line's starting point: resolve
+// the dragged-from handle to "3rd of 5 on top" once, then replicate that
+// ordinal onto every other selected shape via connectionPointAtOrdinal
+// below, rather than each shape picking its own nearest point independently
+// (see ADR 0059's addendum — nearest-to-target looked inconsistent in real
+// use, since unrelated shapes rarely face the target the same way).
+export function pointOrdinal(
   storedPoints: ConnectionPoint[],
-  rect: RectLike,
-  pointX: number,
-  pointY: number
-): string {
-  return nearestConnectionPointWithCoordinates(storedPoints, rect, pointX, pointY).point.id
+  pointId: string
+): { side: ConnectionPointSide; ordinal: number; total: number } | undefined {
+  const effective = effectiveConnectionPoints(storedPoints)
+  const point = effective.find((p) => p.id === pointId)
+  if (!point) return undefined
+  const onSide = sortClockwise(
+    effective.filter((p) => p.side === point.side),
+    point.side
+  )
+  return { side: point.side, ordinal: onSide.findIndex((p) => p.id === pointId) + 1, total: onSide.length }
+}
+
+// The point at the same clockwise ordinal on a given side — clamped to
+// however many points that side actually has, so ordinal 3 on a side with
+// only 2 falls back to point 2 (the closest available), and 1 on a
+// single-point side. Always returns a real point since every side has at
+// least one.
+export function connectionPointAtOrdinal(
+  storedPoints: ConnectionPoint[],
+  side: ConnectionPointSide,
+  ordinal: number
+): ConnectionPoint {
+  const onSide = sortClockwise(effectivePointsForSide(storedPoints, side), side)
+  return onSide[Math.min(ordinal, onSide.length) - 1]
 }
 
 // Clockwise-around-the-box order per side, used by the count-based

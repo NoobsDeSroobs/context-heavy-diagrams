@@ -1,6 +1,7 @@
 import { dialog, ipcMain } from 'electron'
 import { copyFile, mkdir, readdir, readFile } from 'fs/promises'
 import { basename, dirname, extname, join, relative } from 'path'
+import { resolveLinkPath } from './linkPaths'
 
 // Custom icons live in a sibling folder named after the diagram file, per
 // ADR 0005's convention and ADR 0006's icon storage model — e.g.
@@ -58,11 +59,7 @@ export function registerIconHandlers(): void {
   ipcMain.handle(
     'icons:readAsDataUrl',
     async (_event, diagramPath: string, relativePath: string) => {
-      // Split on either separator so a path stored with '\' (e.g. written
-      // by an older build, or hand-edited on Windows) still resolves when
-      // this runs on Linux, where path.join would otherwise treat '\' as a
-      // literal filename character.
-      const fullPath = join(dirname(diagramPath), ...relativePath.split(/[\\/]/))
+      const fullPath = resolveLinkPath(diagramPath, relativePath)
       const buffer = await readFile(fullPath)
       return `data:${mimeTypeFor(fullPath)};base64,${buffer.toString('base64')}`
     }

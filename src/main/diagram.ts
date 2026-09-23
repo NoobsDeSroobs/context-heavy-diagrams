@@ -9,6 +9,7 @@ import { deleteRecoverySnapshot } from './recovery'
 import { readPreferences, updatePreferences } from './appPreferences'
 import { fileStamp } from './fileStamp'
 import { executeSave } from './documentSaveExec'
+import { resolveLinkPath } from './linkPaths'
 
 // Shared by diagram:openPath and document:save — records `path` in both the
 // last-opened-directory preference and the recent-diagrams list, in a single
@@ -159,7 +160,7 @@ export function registerDiagramHandlers(): void {
       Promise.all(
         entries.map(async (entry) => {
           const stamp = await fileStamp(
-            entry.relPath === null ? diagramPath : join(dirname(diagramPath), entry.relPath)
+            entry.relPath === null ? diagramPath : resolveLinkPath(diagramPath, entry.relPath)
           )
           return {
             changed: entry.stamp !== null && stamp !== null && stamp !== entry.stamp,

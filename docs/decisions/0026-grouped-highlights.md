@@ -24,3 +24,16 @@ The user came back with a simpler proposal: an "Add group" action that auto-gene
 - No changes needed to `src/shared/diagram.ts`, `serializeDiagram`/`parseDiagram`, or the file format — grouping is entirely a renderer/panel-side feature on top of the already-shipped highlight persistence.
 - The Highlights panel needs a second add flow (a key-only picker, distinct from "Add highlight"'s key+value picker) and a grouped-vs-flat rendering split, but the underlying add/remove/toggle/recolor operations are the exact same ones already built (`addHighlight`/`removeHighlight`/`updateHighlightColor`/`toggleHighlightEnabled`) — the reconcile pass is just multiple calls to those, not new state-mutation logic.
 - A group's membership can silently shrink between one open and the next if values genuinely stop being used and someone reconciles it — acceptable since reconciling is always an explicit click, never automatic, and the original "key-level scale" idea is fully superseded by this, not layered alongside it.
+
+## Addendum (2026-09-23): required-tag groups seed from allowedValues, and resync is automatic
+
+Real use surfaced two gaps in the original decision:
+
+- **A required tag's group only ever showed values already in use**, same as a free tag's. For a compliance-style rollup ("does any domain hold GDPR data?") the useful view is the whole legend of *possible* values up front — including one nothing currently carries — not a group that only grows as elements happen to get tagged.
+- **"Reconcile is explicit, never automatic" (this ADR's original decision) turned out to be the wrong default in practice.** Adding a new allowed value to a required tag, or a new value to a free tag, left every already-added group stale until someone remembered to click its ↻ button.
+
+**New rules:**
+- A group whose key is a required tag with a real `allowedValues` list seeds and resyncs from that **full list**, plus that tag's own implicit "None" (ADR 0046) — every legal value gets a slot, used or not. A free tag (or a required tag with no `allowedValues`, i.e. free text) keeps the original "whatever's actually in use" behavior, since there's no fixed universe to enumerate instead.
+- **Resync is now automatic** for any key that already has a group — adding an allowed value, or a new value for a free tag actually appearing somewhere in the diagram, updates that group's rows without a manual click. A key with no group yet is still never auto-created ("Add group" stays deliberate).
+
+`highlightGroupSourceValues` (`highlights.ts`) is the one place that decides a group's source (allowedValues vs. usedTags), shared by "Add group," the (now largely redundant but harmless) manual per-group resync button, and the automatic resync. The automatic resync itself is computed directly in `Canvas.tsx`'s render body, conditionally calling `setHighlights` when the reconciled result actually differs — not a `useEffect`, since deriving one piece of state from another synchronously inside an effect is exactly the anti-pattern this project's lint setup (and react.dev's own guidance) flags; the render-time version is idempotent by construction (an unchanged source reconciles to a referentially-unchanged result) so it settles in at most one extra render, never loops.

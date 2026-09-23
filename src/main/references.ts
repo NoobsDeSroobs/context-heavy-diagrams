@@ -1,6 +1,7 @@
 import { dialog, ipcMain } from 'electron'
 import { copyFile, mkdir, readdir, readFile } from 'fs/promises'
 import { basename, dirname, extname, join, relative } from 'path'
+import { resolveLinkPath } from './linkPaths'
 
 // Reference images (see ADR 0069) live in a sibling subfolder,
 // assets/references/, next to the assets/ folder custom icons use (ADR
@@ -69,9 +70,7 @@ export function registerReferenceHandlers(): void {
   ipcMain.handle(
     'references:readAsDataUrl',
     async (_event, diagramPath: string, relativePath: string) => {
-      // Split on either separator so a '\'-stored path still resolves on
-      // Linux — same reasoning as icons.ts's readAsDataUrl.
-      const fullPath = join(dirname(diagramPath), ...relativePath.split(/[\\/]/))
+      const fullPath = resolveLinkPath(diagramPath, relativePath)
       const buffer = await readFile(fullPath)
       return `data:${mimeTypeFor(fullPath)};base64,${buffer.toString('base64')}`
     }

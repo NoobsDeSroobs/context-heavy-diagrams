@@ -1,4 +1,9 @@
-import type { HighlightDefinition, JsonValue, MetadataEntry } from '@shared/diagram'
+import type {
+  HighlightDefinition,
+  JsonValue,
+  MetadataEntry,
+  RequiredTagDefinition
+} from '@shared/diagram'
 
 // A single-match highlight overrides a node's border or an edge's stroke,
 // drawn a bit thicker than the default 1.5px — see ADR 0025.
@@ -18,6 +23,30 @@ export const DEFAULT_HIGHLIGHT_COLOR = '#ffffff'
 // by array position (which shifts on remove/reorder).
 export function highlightId(h: { key: string; value: HighlightDefinition['value'] }): string {
   return `${h.key}::${JSON.stringify(h.value)}`
+}
+
+// What a group's entries get reconciled against (ADR 0026, addendum
+// 2026-09-23) — shared by "Add group", the manual per-group resync
+// button, and the automatic resync effect in Canvas.tsx, so all three can
+// never disagree about what a group "should" contain. A key backed by a
+// required tag with a real `allowedValues` list uses the *full list* —
+// every legal value, whether anything currently carries it or not — plus
+// that tag's own implicit "None" (ADR 0046; every editable required tag
+// always allows it, so it belongs in the group even though it's never
+// itself listed in `allowedValues`). Any other key (a free tag, or a
+// required tag with no allowedValues restriction, i.e. free text) falls
+// back to whatever values are actually in use somewhere in the diagram —
+// there's no fixed universe to enumerate instead.
+export function highlightGroupSourceValues(
+  key: string,
+  requiredTags: RequiredTagDefinition[],
+  usedTags: { key: string; value: JsonValue }[]
+): JsonValue[] {
+  const def = requiredTags.find((t) => t.key === key)
+  if (def?.allowedValues && def.allowedValues.length > 0) {
+    return [...def.allowedValues, null]
+  }
+  return usedTags.filter((t) => t.key === key).map((t) => t.value)
 }
 
 // "Add group" (ADR 0026): reconciles the catalog's entries for

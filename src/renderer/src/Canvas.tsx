@@ -84,7 +84,12 @@ import LineNode, { LINE_BOUNDS_PADDING } from './nodes/LineNode'
 import DiagramSettingsPanel from './components/DiagramSettingsPanel'
 import { effectiveGravityPresets } from './lineGravityPresets'
 import LabeledEdge from './edges/LabeledEdge'
-import { highlightId, matchingHighlights, reconcileHighlightGroup } from './highlights'
+import {
+  highlightGroupSourceValues,
+  highlightId,
+  matchingHighlights,
+  reconcileHighlightGroup
+} from './highlights'
 import EdgeMarkerDefs from './edges/edgeMarkers'
 import { markerUrl } from './edges/markerIds'
 import DiagramContext, { type DiagramContextValue } from './DiagramContext'
@@ -118,8 +123,9 @@ import {
   reorderZIndex
 } from './layers/zIndexOrdering'
 import {
+  connectionPointAtOrdinal,
   effectiveConnectionPoints,
-  nearestConnectionPointId,
+  pointOrdinal,
   reassignConnectionPointHandles,
   setSideCustomPointCount
 } from './nodes/connectionPoints'
@@ -2428,16 +2434,21 @@ function CanvasInner(): React.JSX.Element {
     return [...seen.values()]
   }, [nodes, edges])
 
-  // "Add group" and each existing group's resync control both call this
-  // with the same key — ADR 0026. Reconciles against usedTags
-  // (already a live scan of every node/edge's metadata), not a separate
-  // scan: a value with no entry gets a new white one, an entry for a
-  // value nothing carries anymore is dropped, everything else untouched.
-  // Also prunes enabledHighlightIds for whatever got dropped, so a
-  // removed row can't leave an orphaned enabled-id behind.
+  // "Add group" and each existing group's manual resync button both call
+  // this with the same key — ADR 0026. Reconciles against
+  // highlightGroupSourceValues (allowedValues for a required tag, else a
+  // live scan of every node/edge's metadata): a value with no entry gets a
+  // new white one, an entry for a value nothing carries/allows anymore is
+  // dropped, everything else untouched. Also prunes enabledHighlightIds for
+  // whatever got dropped, so a removed row can't leave an orphaned
+  // enabled-id behind. The effect below does the same thing automatically
+  // for every *existing* group whenever its source actually changes — this
+  // stays the explicit "add a group that doesn't exist yet" entry point,
+  // and a manual "resync now" the automatic effect makes mostly redundant
+  // but harmless to keep.
   const addOrResyncHighlightGroup = useCallback(
     (key: string) => {
-      const currentValues = usedTags.filter((t) => t.key === key).map((t) => t.value)
+      const currentValues = highlightGroupSourceValues(key, requiredTags, usedTags)
       const next = reconcileHighlightGroup(highlights, key, currentValues)
       const nextIds = new Set(next.map(highlightId))
       setHighlights(next)
@@ -2447,8 +2458,46 @@ function CanvasInner(): React.JSX.Element {
       })
       markDirty()
     },
-    [highlights, usedTags, markDirty]
+    [highlights, requiredTags, usedTags, markDirty]
   )
+
+  // Automatic resync (ADR 0026 addendum, 2026-09-23): every *existing*
+  // group's entries stay in sync with their source as it changes — a new
+  // allowed value added to a required tag, or a new value for a free tag
+  // actually appearing somewhere in the diagram — without needing the
+  // manual ↻ button. Never auto-creates a group for a key that doesn't
+  // have one yet ("Add group" stays the deliberate first step).
+  //
+  // Deliberately NOT a useEffect: this is "adjust state as a dependency
+  // changes," which react.dev's own effect guidance (and this project's
+  // lint setup) flags as a synchronous-setState-in-effect anti-pattern —
+  // computed here instead, directly in the render body, React's documented
+  // alternative for this exact case. Cheap and safe to run every render:
+  // reconcileHighlightGroup returns kept entries by the same reference, so
+  // folding it over every existing key either produces the *same* array
+  // (nothing changed, no setState — the overwhelmingly common case, e.g.
+  // every render during an unrelated drag) or a genuinely different one
+  // (setState fires once; React immediately re-renders, that pass finds
+  // nothing changed, and it settles — never a loop).
+  const existingHighlightKeys = [...new Set(highlights.map((h) => h.key))]
+  let resyncedHighlights = highlights
+  for (const key of existingHighlightKeys) {
+    const currentValues = highlightGroupSourceValues(key, requiredTags, usedTags)
+    const candidate = reconcileHighlightGroup(resyncedHighlights, key, currentValues)
+    const unchanged =
+      candidate.length === resyncedHighlights.length &&
+      candidate.every((h, i) => h === resyncedHighlights[i])
+    if (!unchanged) resyncedHighlights = candidate
+  }
+  if (resyncedHighlights !== highlights) {
+    const nextIds = new Set(resyncedHighlights.map(highlightId))
+    setHighlights(resyncedHighlights)
+    setEnabledHighlightIds((prev) => {
+      const filtered = new Set([...prev].filter((id) => nextIds.has(id)))
+      return filtered.size === prev.size ? prev : filtered
+    })
+    markDirty()
+  }
 
   const matchHighlights = useCallback(
     (metadata: Record<string, MetadataEntry> | undefined) =>
@@ -2505,17 +2554,25 @@ function CanvasInner(): React.JSX.Element {
       setDeepSearchLoading(true)
       try {
         const nodeHits = await Promise.all(
-          nodes.map((n) =>
-            elementMatchesWithDetails(
-              criteria,
-              searchableFromData(n.id, n.data),
-              async (relativePath) => {
-                const shadow = noteShadowsRef.current[n.id]
-                if (shadow) return shadow.content
-                return currentPath ? window.api.readDetails(currentPath, relativePath) : ''
-              }
-            )
-          )
+          nodes.map((n) => {
+            const shadow = noteShadowsRef.current[n.id]
+            const searchable = searchableFromData(n.id, n.data)
+            // A note actively open but never yet saved (a brand-new note, or
+            // any note on a diagram that's never been saved at all) has no
+            // stored path yet — data.details stays unset until the first
+            // save (epic 0087's sync-on-save convention) — but it still has
+            // real, searchable content sitting in its shadow. Without this,
+            // elementMatchesViaDetails' `!el.details` gate would treat an
+            // in-memory-only note as if it didn't exist. The placeholder
+            // value is never actually read as a path below — the shadow
+            // branch always wins first — so its exact contents don't matter,
+            // only that it's truthy.
+            const details = searchable.details ?? (shadow ? '(unsaved note)' : undefined)
+            return elementMatchesWithDetails(criteria, { ...searchable, details }, async (relativePath) => {
+              if (shadow) return shadow.content
+              return currentPath ? window.api.readDetails(currentPath, relativePath) : ''
+            })
+          })
         )
         nodes.forEach((n, i) => {
           if (nodeHits[i]) matchedIds.add(n.id)
@@ -2873,49 +2930,41 @@ function CanvasInner(): React.JSX.Element {
   //
   // The dragged node's own edge keeps the exact handle the user actually
   // dropped onto (connection.sourceHandle) — every *other* selected node
-  // has no such explicit choice, so its handle is resolved to whichever of
-  // its own connection points sits nearest the target's center
-  // (nearestConnectionPointId, connectionPoints.ts — the same nearest-side
-  // math already used for right-click "add connection point here"), so
-  // each additional edge still looks deliberate regardless of how that
-  // node happens to be positioned relative to the target.
+  // replicates that same handle's clockwise ordinal on the same side
+  // (pointOrdinal/connectionPointAtOrdinal, connectionPoints.ts), clamped to
+  // however many points that side actually has, rather than each picking
+  // whichever of its own points sits nearest the target (see ADR 0059's
+  // addendum — nearest-to-target looked inconsistent in real use, since
+  // unrelated shapes rarely face the target the same way; "the same point"
+  // reads as deliberate regardless of position).
   const onConnect = useCallback(
     (connection: Connection) => {
       pushSnapshot()
       setEdges((eds) => {
         const byId = new Map(nodes.map((n) => [n.id, n]))
-        const targetNode = byId.get(connection.target)
-        const targetCenter = targetNode
-          ? (() => {
-              const abs = absolutePosition(targetNode, byId)
-              return {
-                x: abs.x + (targetNode.width ?? 0) / 2,
-                y: abs.y + (targetNode.height ?? 0) / 2
-              }
-            })()
-          : null
+        const sourceNode = byId.get(connection.source)
+        const fromOrdinal =
+          sourceNode && connection.sourceHandle
+            ? pointOrdinal(
+                (sourceNode.data?.connectionPoints as ConnectionPoint[] | undefined) ?? [],
+                connection.sourceHandle
+              )
+            : undefined
         const sourceIds = nodes
           .filter(
             (n) => n.id === connection.source || (n.selected && isConnectableNodeType(n.type))
           )
           .map((n) => n.id)
         const withNew = sourceIds.reduce((acc, sourceId) => {
-          const sourceNode = byId.get(sourceId)
-          const sourceAbs = sourceNode ? absolutePosition(sourceNode, byId) : null
+          const otherNode = byId.get(sourceId)
           const sourceHandle =
-            sourceId === connection.source || !sourceNode || !targetCenter || !sourceAbs
+            sourceId === connection.source || !otherNode || !fromOrdinal
               ? connection.sourceHandle
-              : nearestConnectionPointId(
-                  (sourceNode.data?.connectionPoints as ConnectionPoint[] | undefined) ?? [],
-                  {
-                    left: sourceAbs.x,
-                    top: sourceAbs.y,
-                    width: sourceNode.width ?? 0,
-                    height: sourceNode.height ?? 0
-                  },
-                  targetCenter.x,
-                  targetCenter.y
-                )
+              : connectionPointAtOrdinal(
+                  (otherNode.data?.connectionPoints as ConnectionPoint[] | undefined) ?? [],
+                  fromOrdinal.side,
+                  fromOrdinal.ordinal
+                ).id
           return addEdge(
             {
               source: sourceId,

@@ -1,7 +1,7 @@
 import { useNodes, type Node } from '@xyflow/react'
 import type { ConnectionPoint } from '@shared/diagram'
 import { absolutePosition } from '../geometry/nodePosition'
-import { nearestConnectionPointWithCoordinates } from '../nodes/connectionPoints'
+import { connectionPointAtOrdinal, pointCoordinates, pointOrdinal } from '../nodes/connectionPoints'
 
 // Same three types as Canvas.tsx's isConnectableNodeType — kept as its own
 // copy (not imported) since importing from Canvas.tsx just for this one
@@ -15,6 +15,7 @@ function isConnectableNodeType(type: string | undefined): boolean {
 
 interface MultiConnectionLineProps {
   fromNode?: { id: string } | null
+  fromHandle?: { id?: string | null } | null
   fromX: number
   fromY: number
   toX: number
@@ -33,13 +34,17 @@ interface MultiConnectionLineProps {
 // entirely (see @xyflow/react's own ConnectionLine), so the "from" line
 // has to be drawn here too, not just the extra ones.
 //
-// Each additional node's own line starts from whichever of its connection
-// points is nearest the current cursor position (nearestConnectionPoint
-// WithCoordinates, connectionPoints.ts) — the exact same resolver
+// Each additional node's own line starts from the same clockwise ordinal
+// point as the one actually being dragged from (pointOrdinal/
+// connectionPointAtOrdinal, connectionPoints.ts) — the exact same resolver
 // onConnect uses to decide the real edge's handle once you release, so the
-// preview never points somewhere the actual result won't.
+// preview never points somewhere the actual result won't. Falls back to the
+// node's first point if the drag's own handle can't be resolved yet (mid-
+// drag, before React Flow has settled fromHandle) rather than drawing
+// nothing.
 export default function MultiConnectionLine({
   fromNode,
+  fromHandle,
   fromX,
   fromY,
   toX,
@@ -51,6 +56,14 @@ export default function MultiConnectionLine({
   const others = nodes.filter(
     (n: Node) => n.id !== fromNode?.id && n.selected && isConnectableNodeType(n.type)
   )
+  const draggedFrom = fromNode ? byId.get(fromNode.id) : undefined
+  const fromOrdinal =
+    draggedFrom && fromHandle?.id
+      ? pointOrdinal(
+          (draggedFrom.data?.connectionPoints as ConnectionPoint[] | undefined) ?? [],
+          fromHandle.id
+        )
+      : undefined
   return (
     <>
       <path
@@ -61,12 +74,12 @@ export default function MultiConnectionLine({
       />
       {others.map((n: Node) => {
         const abs = absolutePosition(n, byId)
-        const { x, y } = nearestConnectionPointWithCoordinates(
-          (n.data?.connectionPoints as ConnectionPoint[] | undefined) ?? [],
-          { left: abs.x, top: abs.y, width: n.width ?? 0, height: n.height ?? 0 },
-          toX,
-          toY
-        )
+        const rect = { left: abs.x, top: abs.y, width: n.width ?? 0, height: n.height ?? 0 }
+        const storedPoints = (n.data?.connectionPoints as ConnectionPoint[] | undefined) ?? []
+        const point = fromOrdinal
+          ? connectionPointAtOrdinal(storedPoints, fromOrdinal.side, fromOrdinal.ordinal)
+          : connectionPointAtOrdinal(storedPoints, 'top', 1)
+        const { x, y } = pointCoordinates(rect, point)
         return (
           <path
             key={n.id}

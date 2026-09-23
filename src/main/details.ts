@@ -1,8 +1,8 @@
 import { ipcMain } from 'electron'
 import { readFile } from 'fs/promises'
-import { dirname, join } from 'path'
 import type { Stamp } from '@shared/documentSave'
 import { fileStamp } from './fileStamp'
+import { resolveLinkPath } from './linkPaths'
 
 // Reading detail notes. *Writing* (and renaming to follow a label) is part of
 // the multi-file save in documentSaveExec.ts / diagram.ts (ADR 0092); the path
@@ -10,7 +10,7 @@ import { fileStamp } from './fileStamp'
 export function registerDetailsHandlers(): void {
   ipcMain.handle('details:read', async (_event, diagramPath: string, relativePath: string) => {
     try {
-      return await readFile(join(dirname(diagramPath), relativePath), 'utf-8')
+      return await readFile(resolveLinkPath(diagramPath, relativePath), 'utf-8')
     } catch {
       return ''
     }
@@ -26,7 +26,7 @@ export function registerDetailsHandlers(): void {
       diagramPath: string,
       relativePath: string
     ): Promise<{ content: string; stamp: Stamp }> => {
-      const path = join(dirname(diagramPath), relativePath)
+      const path = resolveLinkPath(diagramPath, relativePath)
       const stamp = await fileStamp(path)
       try {
         return { content: await readFile(path, 'utf-8'), stamp }
