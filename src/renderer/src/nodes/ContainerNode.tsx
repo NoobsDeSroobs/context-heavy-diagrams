@@ -37,7 +37,8 @@ function ContainerNode({ id, data, selected }: NodeProps): React.JSX.Element {
     searchMatchIds,
     isolateActive,
     isolateOpacity,
-    selectAllOfType
+    selectAllOfType,
+    groupResize
   } = useDiagramContext()
   const { updateNodeData, getNode } = useReactFlow()
   const locked = data?.locked === true
@@ -99,6 +100,9 @@ function ContainerNode({ id, data, selected }: NodeProps): React.JSX.Element {
         isVisible={selected && !locked}
         minWidth={CONTAINER_MIN_WIDTH}
         minHeight={CONTAINER_MIN_HEIGHT}
+        onResizeStart={() => groupResize.start(id)}
+        onResize={(_, params) => groupResize.resize(id, params)}
+        onResizeEnd={groupResize.end}
       />
       <ConnectionHandles storedPoints={customPoints} onPointContextMenu={onPointContextMenu} />
       {locked && <LockBadge />}

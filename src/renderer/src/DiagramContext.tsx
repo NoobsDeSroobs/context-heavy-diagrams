@@ -1,4 +1,5 @@
 import { createContext } from 'react'
+import type { ResizeParams } from '@xyflow/react'
 import type { GravityPreset, HighlightDefinition, MetadataEntry } from '@shared/diagram'
 import type { ContextMenuItem } from './components/ContextMenu'
 import type { Theme } from './theme'
@@ -115,6 +116,14 @@ export interface DiagramContextValue {
   // can offer "Select all shapes"/"...containers"/etc. without Canvas.tsx
   // having to build every node's context menu itself.
   selectAllOfType: (type: 'shape' | 'container' | 'text' | 'line' | 'edge') => void
+  // Multi-select resize (ADR 0098) — the three resizable node types forward
+  // their NodeResizer's start/resize/end here so Canvas can scale the rest of
+  // the selection by the same percentage.
+  groupResize: {
+    start: (nodeId: string) => void
+    resize: (nodeId: string, params: ResizeParams) => void
+    end: () => void
+  }
 }
 
 // The accessor hook lives in its own file (useDiagramContext.ts) — a file

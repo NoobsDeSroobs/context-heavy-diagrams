@@ -31,7 +31,8 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
     searchMatchIds,
     isolateActive,
     isolateOpacity,
-    selectAllOfType
+    selectAllOfType,
+    groupResize
   } = useDiagramContext()
   const rotation = typeof data?.rotation === 'number' ? (data.rotation as number) : 0
   const locked = data?.locked === true
@@ -149,6 +150,9 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
         isVisible={selected && !locked}
         minWidth={TEXT_MIN_WIDTH}
         minHeight={TEXT_MIN_HEIGHT}
+        onResizeStart={() => groupResize.start(id)}
+        onResize={(_, params) => groupResize.resize(id, params)}
+        onResizeEnd={groupResize.end}
       />
       {selected && !locked && (
         <div

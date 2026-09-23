@@ -3954,3 +3954,11 @@ body {
   resize: vertical;
   min-height: 40px;
 }
+
+/* React Flow draws a box over a multi-selection once it's made. It's noise here
+   (each node already shows its own selection + resize handles) and it sat on top
+   of those handles. The rubber-band box *while* selecting is a different element
+   (.react-flow__selection) and is unaffected. */
+.react-flow__nodesselection-rect {
+  display: none;
+}

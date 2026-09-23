@@ -79,6 +79,7 @@ import type { SecurityCrawlResult } from '@shared/threatMatrixMath'
 import ShapeNode, { SHAPE_MIN_WIDTH, SHAPE_MIN_HEIGHT } from './nodes/ShapeNode'
 import TextNode, { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from './nodes/TextNode'
 import ContainerNode, { CONTAINER_MIN_WIDTH, CONTAINER_MIN_HEIGHT } from './nodes/ContainerNode'
+import { scaleGroupMembers, type GroupResizeMember } from './groupResize'
 import AnchorNode, { ANCHOR_SIZE } from './nodes/AnchorNode'
 import LineNode, { LINE_BOUNDS_PADDING } from './nodes/LineNode'
 import DiagramSettingsPanel from './components/DiagramSettingsPanel'
@@ -3790,6 +3791,70 @@ function CanvasInner(): React.JSX.Element {
     })
   }, [nodes, setNodes, pushSnapshot])
 
+  // Multi-select resize (ADR 0098): every selected node shows its own
+  // NodeResizer, but React Flow only resizes the one being dragged. These
+  // callbacks (called from each node's NodeResizer via context) make the
+  // other selected, unlocked, resizable nodes scale by the same percentage in
+  // place. Their writes bypass onNodesChange, so they add no undo snapshot of
+  // their own — the dragged node's own resize change already opened one.
+  const groupResizeRef = useRef<{
+    primaryId: string
+    primaryStart: { x: number; y: number; width: number; height: number }
+    members: GroupResizeMember[]
+  } | null>(null)
+  const groupResize = useMemo<DiagramContextValue['groupResize']>(() => {
+    const minSize: Record<string, { w: number; h: number }> = {
+      shape: { w: SHAPE_MIN_WIDTH, h: SHAPE_MIN_HEIGHT },
+      container: { w: CONTAINER_MIN_WIDTH, h: CONTAINER_MIN_HEIGHT },
+      text: { w: TEXT_MIN_WIDTH, h: TEXT_MIN_HEIGHT }
+    }
+    return {
+      start: (id) => {
+        groupResizeRef.current = null
+        const all = graphRef.current.nodes
+        const primary = all.find((n) => n.id === id)
+        if (!primary?.selected || primary.width == null || primary.height == null) return
+        const members: GroupResizeMember[] = []
+        for (const n of all) {
+          const min = n.type ? minSize[n.type] : undefined
+          if (n.id === id || !n.selected || n.data?.locked === true || !min) continue
+          if (n.width == null || n.height == null) continue
+          members.push({
+            id: n.id,
+            start: { x: n.position.x, y: n.position.y, width: n.width, height: n.height },
+            minWidth: min.w,
+            minHeight: min.h
+          })
+        }
+        if (members.length === 0) return
+        groupResizeRef.current = {
+          primaryId: id,
+          primaryStart: {
+            x: primary.position.x,
+            y: primary.position.y,
+            width: primary.width,
+            height: primary.height
+          },
+          members
+        }
+      },
+      resize: (id, params) => {
+        const group = groupResizeRef.current
+        if (!group || group.primaryId !== id) return
+        const boxes = scaleGroupMembers(group.members, group.primaryStart, params)
+        setNodes((nds) =>
+          nds.map((n) => {
+            const b = boxes.get(n.id)
+            return b ? { ...n, position: { x: b.x, y: b.y }, width: b.width, height: b.height } : n
+          })
+        )
+      },
+      end: () => {
+        groupResizeRef.current = null
+      }
+    }
+  }, [setNodes])
+
   // Under Edit, via AlignDistributePanel — "Align Vertically" stacks the
   // selection top-to-bottom (all sharing the leftmost element's left edge,
   // `gapPx` of clear space between each element's bottom and the next
@@ -5836,6 +5901,7 @@ function CanvasInner(): React.JSX.Element {
       pushSnapshot,
       attachContainedNodes,
       detachFromParent,
+      groupResize,
       matchHighlights,
       edgeStraightSegmentLength: preferences.edgeStraightSegmentLength,
       maxConnectionPointsPerSide:
@@ -5869,6 +5935,7 @@ function CanvasInner(): React.JSX.Element {
       pushSnapshot,
       attachContainedNodes,
       detachFromParent,
+      groupResize,
       matchHighlights,
       preferences.edgeStraightSegmentLength,
       preferences.maxConnectionPointsPerSide,

@@ -56,7 +56,8 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
     searchMatchIds,
     isolateActive,
     isolateOpacity,
-    selectAllOfType
+    selectAllOfType,
+    groupResize
   } = useDiagramContext()
   const { updateNodeData, getNode } = useReactFlow()
 
@@ -164,6 +165,9 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
         isVisible={selected && !locked}
         minWidth={SHAPE_MIN_WIDTH}
         minHeight={SHAPE_MIN_HEIGHT}
+        onResizeStart={() => groupResize.start(id)}
+        onResize={(_, params) => groupResize.resize(id, params)}
+        onResizeEnd={groupResize.end}
       />
       <ConnectionHandles storedPoints={customPoints} onPointContextMenu={onPointContextMenu} />
       {locked && <LockBadge />}
