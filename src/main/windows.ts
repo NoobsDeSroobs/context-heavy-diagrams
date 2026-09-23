@@ -96,7 +96,9 @@ export function createWindow(initialPath?: string): BrowserWindow {
     width: 900,
     height: 670,
     show: false,
-    autoHideMenuBar: true,
+    // Not autoHideMenuBar: that only hides the native menu until Alt is pressed,
+    // and Alt is the duplicate-drag modifier (ADR 0099). The app draws its own
+    // menu in the renderer; the native one stays hidden via setMenuBarVisibility.
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -104,6 +106,7 @@ export function createWindow(initialPath?: string): BrowserWindow {
     }
   })
 
+  win.setMenuBarVisibility(false)
   win.on('ready-to-show', () => win.show())
   win.on('closed', () => unregisterWindow(win))
   attachCloseGuard(win)

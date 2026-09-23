@@ -225,6 +225,12 @@ export const COMMANDS = [
     keys: 'Drag from palette'
   },
   {
+    id: 'create.duplicateDrag',
+    title: 'Duplicate the dragged element(s): the original stays, a copy is dragged',
+    category: 'Connections & creation',
+    keys: 'Alt+Drag'
+  },
+  {
     id: 'create.bulk',
     title: 'Create many shapes or containers from a pasted list',
     category: 'Connections & creation',

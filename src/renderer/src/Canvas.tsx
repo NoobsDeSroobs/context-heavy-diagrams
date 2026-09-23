@@ -175,6 +175,7 @@ import { buildClipboardPayload, parseClipboardPayload, remapForPaste } from './c
 import type { TransformPatch } from './panels/PropertyPanel'
 import { useTheme } from './theme'
 import { useEventCallback } from './hooks/useEventCallback'
+import { useModifierDragDuplicate } from './hooks/useModifierDragDuplicate'
 import { useDetailsPeek } from './hooks/useDetailsPeek'
 import PeekCard from './components/PeekCard'
 import { effectiveStylePalette, usePreferences } from './preferences'
@@ -3855,6 +3856,69 @@ function CanvasInner(): React.JSX.Element {
     }
   }, [setNodes])
 
+  // Modifier+drag duplicate (ADR 0099), called by useModifierDragDuplicate
+  // once the pointer has actually moved. Clones the dragged selection (or just
+  // the grabbed node if it wasn't selected) plus every descendant of a cloned
+  // container, in place, and selects the clones so the replayed drag moves
+  // *them*; the originals keep their ids, edges and position. Edges between
+  // cloned nodes are cloned too (like copy/paste, unlike Ctrl+D). A clone whose
+  // parent wasn't cloned stays inside that same container. Opens the gesture's
+  // one undo step via beginContinuousEdit; the drag's end closes it.
+  const duplicateForDrag = useEventCallback((grabbedId: string): string | null => {
+    const { nodes: all, edges: allEdges } = graphRef.current
+    const grabbed = all.find((n) => n.id === grabbedId)
+    if (!grabbed || grabbed.data?.locked === true) return null
+    const roots = grabbed.selected ? all.filter((n) => n.selected) : [grabbed]
+    const ids = new Set(roots.map((n) => n.id))
+    for (let grew = true; grew; ) {
+      grew = false
+      for (const n of all) {
+        if (n.parentId && ids.has(n.parentId) && !ids.has(n.id)) {
+          ids.add(n.id)
+          grew = true
+        }
+      }
+    }
+    const idMap = new Map<string, string>()
+    for (const n of all) if (ids.has(n.id)) idMap.set(n.id, newNodeId(n.type ?? 'shape'))
+    const clones = all
+      .filter((n) => ids.has(n.id))
+      .map((n) => {
+        const clone: Node = {
+          ...n,
+          id: idMap.get(n.id)!,
+          selected: true,
+          dragging: false,
+          data: structuredClone(n.data)
+        }
+        if (n.parentId) clone.parentId = idMap.get(n.parentId) ?? n.parentId
+        return clone
+      })
+    const edgeClones = allEdges
+      .filter((e) => ids.has(e.source) && ids.has(e.target))
+      .map((e) => {
+        const data: Record<string, unknown> = { ...e.data }
+        delete data.directionSets
+        return {
+          ...e,
+          id: newNodeId('edge'),
+          source: idMap.get(e.source)!,
+          target: idMap.get(e.target)!,
+          selected: false,
+          data
+        }
+      })
+    beginContinuousEdit()
+    setNodes((nds) =>
+      sortNodesForHierarchy([
+        ...nds.map((n) => (n.selected ? { ...n, selected: false } : n)),
+        ...clones
+      ])
+    )
+    if (edgeClones.length > 0) setEdges((eds) => [...eds, ...edgeClones])
+    return idMap.get(grabbedId) ?? null
+  })
+
   // Under Edit, via AlignDistributePanel — "Align Vertically" stacks the
   // selection top-to-bottom (all sharing the leftmost element's left edge,
   // `gapPx` of clear space between each element's bottom and the next
@@ -5236,6 +5300,11 @@ function CanvasInner(): React.JSX.Element {
   // Everything here reads the latest state through useEventCallback and the
   // React Flow instance, so none of it churns the DiagramContext value.
   const [styleBrush, setStyleBrush] = useState<StyleBrush | null>(null)
+  useModifierDragDuplicate({
+    enabled: !styleBrush,
+    duplicate: duplicateForDrag,
+    cancelGesture: endContinuousEdit
+  })
 
   const toggleStyleBrush = useEventCallback(() => {
     if (styleBrush) {

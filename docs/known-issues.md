@@ -12,6 +12,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 ## Open items at a glance
 
+- [Alt+drag duplicate may be swallowed by Linux window managers](#alt-drag-duplicate-may-be-swallowed-by-linux-window-managers) — Open, untested on Linux.
 - [Details panel Markdown: tables (and other GFM syntax) rendered as literal text](#details-panel-markdown-tables-and-other-gfm-syntax-rendered-as-literal-text) — Solved.
 - [File → Recent Diagrams never reused an empty calling window](#file--recent-diagrams-never-reused-an-empty-calling-window) — Solved.
 - [Text nodes have zero internal padding — label touches the border, and clicking near the start grabs the node instead of placing a text cursor](#text-nodes-have-zero-internal-padding--label-touches-the-border-and-clicking-near-the-start-grabs-the-node-instead-of-placing-a-text-cursor) — Solved, pending live re-test.
@@ -42,6 +43,21 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 - ["Reverse direction" did nothing visible on a styled edge (and showed arrows on both ends before that)](#reverse-direction-did-nothing-visible-on-a-styled-edge) — Solved (ADR 0083 / epic 0106).
 - [PNG-exported arrowheads were invisible on any edge relying on this app's own `context-stroke` markers](#png-exported-arrowheads-were-invisible-on-any-edge-relying-on-this-apps-own-context-stroke-markers) — Solved.
 - [Search couldn't find text in a note that had never been saved to disk](#search-couldnt-find-text-in-a-note-that-had-never-been-saved-to-disk) — Solved.
+
+---
+
+## Alt+drag duplicate may be swallowed by Linux window managers
+
+**Status:** Open, untested on Linux
+**Found:** 2026-09-24, while designing epic 0132 (not yet observed — no Linux machine available)
+
+**Symptom (expected):** on Linux desktops where the window manager grabs Alt+drag to move windows (GNOME/Mutter, KDE/KWin and XFCE by default), the app never receives the Alt mouse-down, so Alt+drag duplicate does nothing and the whole window moves instead.
+
+**Deliberately not fixed yet:** the user would rather not have OS-dependent hotkeys, so Alt ships on all platforms and this is logged as a potential problem to verify on a Linux machine.
+
+**If it bites:** switch `DUPLICATE_DRAG_MODIFIER` in `src/renderer/src/hooks/useModifierDragDuplicate.ts` to `'ctrlKey'` (one line; also update the `create.duplicateDrag` label in `commands.ts`) — Ctrl+drag is not grabbed by those window managers and nothing else in the app uses it. Choosing the modifier per OS is the alternative the user wants to avoid. Also verify on Linux that `setMenuBarVisibility(false)` in `src/main/windows.ts` keeps Alt from revealing the native menu.
+
+**References:** [ADR 0099](decisions/0099-modifier-drag-duplicate.md), `src/renderer/src/hooks/useModifierDragDuplicate.ts`
 
 ---
 
