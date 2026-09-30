@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 interface BulkCreateDialogProps {
-  // e.g. "shape" / "container" — used for the title and the live count line.
+  // e.g. "entity" / "container" — used for the title and the live count line.
   typeLabel: string
   onConfirm: (labels: string[]) => void
   onClose: () => void
@@ -14,7 +14,7 @@ function parseLabels(text: string): string[] {
     .filter((line) => line.length > 0)
 }
 
-// Right-click entry point on ItemPalette's Shape/Container buttons — see
+// Right-click entry point on ItemPalette's Entity/Container buttons — see
 // ADR 0089. Styled after ExportPngDialog's centered-overlay shell rather
 // than the click-anchored popups (ColorPickerPopup/IconPicker); a
 // multi-line paste target reads better centered than pinned to a small

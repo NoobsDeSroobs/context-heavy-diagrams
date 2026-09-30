@@ -79,7 +79,7 @@ export interface MetadataEntry {
   lock?: MetadataLock
 }
 
-// Diagram-level template: what every applicable element (shape/container/
+// Diagram-level template: what every applicable element (entity/container/
 // edge, not text/anchor — see ADR 0022) must carry. Not stored per
 // element; used to seed new elements and to retroactively backfill
 // existing ones when the template itself changes (see Canvas.tsx's
@@ -106,16 +106,16 @@ export interface HighlightDefinition {
 // Legend catalog — see ADR 0033. Each entry explains one visual
 // convention the diagram author deliberately used, in the author's own
 // words — never auto-derived from `highlights` or anything else. `color`
-// only applies to 'line'/'shape' kinds: this app's icons are fixed
+// only applies to 'line'/'entity' kinds: this app's icons are fixed
 // multi-color bundled/custom assets, not tintable, so an 'icon' entry
 // carries no color at all (see the epic's Decided section for why a
 // background chip was also rejected — same ambiguity as a colored box).
-export type LegendEntryKind = 'line' | 'icon' | 'shape'
+export type LegendEntryKind = 'line' | 'icon' | 'entity'
 export interface LegendEntry {
   id: string
   kind: LegendEntryKind
   label: string
-  // 'line' and 'shape' kinds only.
+  // 'line' and 'entity' kinds only.
   color?: string
   // 'line' kind only — same fields/vocabulary as EdgeStyle's, reusing the
   // existing named line-style preset picker (ADR 0010) rather than a
@@ -156,7 +156,7 @@ export interface EdgeStyle extends FontStyle {
   labelPosition?: number
   // How the path is routed between the two endpoints — see ADR 0057.
   // 'straight'/'step'/'smoothstep' are React Flow's own built-in path
-  // shapes; 'catmullRom' reuses the freeform-line curve math (ADR 0050,
+  // entities; 'catmullRom' reuses the freeform-line curve math (ADR 0050,
   // bendablePath.ts) with DiagramEdge.points as manual bend
   // points. Absent means today's only behavior, a plain bezier
   // (React Flow's default, plus the edgeStraightSegmentLength lead-in/out
@@ -168,7 +168,7 @@ export interface EdgeStyle extends FontStyle {
 
 export interface DiagramNode {
   id: string
-  // 'shape' (resizable, connectable, never rotated) | 'text' (resizable,
+  // 'entity' (resizable, connectable, never rotated) | 'text' (resizable,
   // rotatable, never connectable) | 'container' (resizable, connectable,
   // never rotated, can parent other nodes) | 'line' (a freeform curved
   // line, see ADR 0050 — position/size are the bounding box of data.points,
@@ -180,13 +180,13 @@ export interface DiagramNode {
   rotation?: number
   // Stacking order — see ADR 0035. Higher renders on top. No
   // type-based special-casing anywhere that reads this: the "containers
-  // render behind shapes" look most diagrams start with is just a
+  // render behind entities" look most diagrams start with is just a
   // consequence of the backfilled starting values (containers seeded low,
-  // shapes/text seeded high), not a rule enforced on top of this field.
+  // entities/text seeded high), not a rule enforced on top of this field.
   // Absent means "never touched by the layer panel" — see Canvas.tsx's
   // load-time backfill for how an old file gets real values on first open.
   zIndex?: number
-  // Only 'shape' nodes are connectable, so only they meaningfully have
+  // Only 'entity' nodes are connectable, so only they meaningfully have
   // this — same reasoning as size/rotation being optional. Absent/empty
   // means "just the 4 default points," not "no connection points at all."
   connectionPoints?: ConnectionPoint[]
@@ -201,7 +201,7 @@ export interface DiagramNode {
   // of their own to accidentally relocate). Absent means unlocked.
   locked?: boolean
   style?: NodeStyle
-  // Only 'shape'/'container' meaningfully have this — see ADR 0022.
+  // Only 'entity'/'container' meaningfully have this — see ADR 0022.
   // 'text', 'anchor', and 'line' nodes never get seeded or edited here.
   metadata?: Record<string, MetadataEntry>
   data: {
@@ -214,7 +214,7 @@ export interface DiagramNode {
     // ordered — array position is the only thing that identifies a point,
     // there is no separate id.
     points?: LinePoint[]
-    // Reference images (see ADR 0069) — 'shape'/'container' only.
+    // Reference images (see ADR 0069) — 'entity'/'container' only.
     // Ordered list of relative paths (from this diagram file's own dir,
     // same convention as `details`) to files under the sibling
     // assets/references/ folder. Pure working aid: shown only in floating
@@ -222,18 +222,18 @@ export interface DiagramNode {
     // and never included in exports. Absent/empty means none.
     references?: string[]
     // Threat/risk assessment for this element — see ADR 0082 (implements
-    // ADR 0055). 'shape' nodes only. A sparse map keyed by
+    // ADR 0055). 'entity' nodes only. A sparse map keyed by
     // SecurityThreat.id (the diagram-level catalog in DiagramFile.security):
-    // an entry exists only once that (shape, threat) pair has actually
-    // been assessed. A shape carries this only while it's a member of
-    // DiagramFile.security.matrixShapeIds; a missing cell for a member
+    // an entry exists only once that (entity, threat) pair has actually
+    // been assessed. An entity carries this only while it's a member of
+    // DiagramFile.security.matrixEntityIds; a missing cell for a member
     // pair is "not yet assessed" and drives the matrix's completeness
-    // alert. Absent/empty means this shape isn't in the security matrix.
+    // alert. Absent/empty means this entity isn't in the security matrix.
     security?: Record<string, RiskCell>
   }
 }
 
-// One (shape, threat) risk assessment — unchanged from the epic 0060
+// One (entity, threat) risk assessment — unchanged from the epic 0060
 // prototype, now part of the persisted schema (ADR 0082). `probability`
 // and `consequence` are values on the diagram's probability/consequence
 // scales (DiagramSecurity below; absent scales mean the app's built-in
@@ -286,15 +286,15 @@ export interface DiagramSecurity {
   // part of the data model — hidden threats still need assessments for the
   // completeness alert to clear. Absent/empty means all threats shown.
   hiddenThreatIds?: string[]
-  // The matrix's data model on the shape axis: ids of 'shape' nodes being
-  // assessed. Ordered (column order). A shape NOT listed here has no
-  // `data.security` at all. Ids that no longer resolve to a Shape node are
+  // The matrix's data model on the entity axis: ids of 'entity' nodes being
+  // assessed. Ordered (column order). An entity NOT listed here has no
+  // `data.security` at all. Ids that no longer resolve to a Entity node are
   // pruned on load.
-  matrixShapeIds: string[]
-  // Subset of `matrixShapeIds` (by id) currently not shown as a matrix
+  matrixEntityIds: string[]
+  // Subset of `matrixEntityIds` (by id) currently not shown as a matrix
   // column. Data kept, still counts toward completeness. Absent/empty
   // means all shown.
-  hiddenShapeIds?: string[]
+  hiddenEntityIds?: string[]
   // Per-diagram scale definitions. Absent means the app's built-in 1-5
   // scales (see threatMatrixScale.ts) — same Diagram-value-or-built-in
   // pattern as gravityPresets (ADR 0052). No in-app editor in v1; the
@@ -440,7 +440,7 @@ export interface DiagramFile {
   // built-in four."
   gravityPresets?: GravityPreset[]
   // Per-diagram override for the max connection points allowed on one
-  // side of a Shape/Container (see ADR 0067; ADR 0052's Diagram override ->
+  // side of a Entity/Container (see ADR 0067; ADR 0052's Diagram override ->
   // User default -> Built-in default pattern) — absent means fall back to
   // whoever opens this file's own Settings value (AppPreferences.
   // maxConnectionPointsPerSide). A real constraint on what the diagram
@@ -557,34 +557,34 @@ function orderedRiskCell(cell: RiskCell): RiskCell {
 }
 
 // A node's `data.security` map — threat ids sorted, each cell key-ordered.
-// Dropped entirely when empty or on a non-'shape' node (ADR 0082: sparse
-// storage, shapes only).
+// Dropped entirely when empty or on a non-'entity' node (ADR 0082: sparse
+// storage, entities only).
 function sortedNodeSecurity(
   security: Record<string, RiskCell> | undefined,
   nodeType: string | undefined
 ): Record<string, RiskCell> | undefined {
-  if (nodeType !== 'shape' || !security || Object.keys(security).length === 0) return undefined
+  if (nodeType !== 'entity' || !security || Object.keys(security).length === 0) return undefined
   const sorted: Record<string, RiskCell> = {}
   for (const key of Object.keys(security).sort()) sorted[key] = orderedRiskCell(security[key])
   return sorted
 }
 
 // The diagram-level `security` block — deterministic key order, ordered
-// arrays kept as-is (threats/matrixShapeIds order is meaningful), hidden id
+// arrays kept as-is (threats/matrixEntityIds order is meaningful), hidden id
 // lists sorted, empty optional pieces dropped. Emitted only when it carries
 // something (ADR 0082).
 function orderedDiagramSecurity(
   security: DiagramSecurity | undefined
 ): DiagramSecurity | undefined {
   if (!security) return undefined
-  if (security.threats.length === 0 && security.matrixShapeIds.length === 0) return undefined
+  if (security.threats.length === 0 && security.matrixEntityIds.length === 0) return undefined
   const hiddenThreatIds =
     security.hiddenThreatIds && security.hiddenThreatIds.length > 0
       ? [...security.hiddenThreatIds].sort()
       : undefined
-  const hiddenShapeIds =
-    security.hiddenShapeIds && security.hiddenShapeIds.length > 0
-      ? [...security.hiddenShapeIds].sort()
+  const hiddenEntityIds =
+    security.hiddenEntityIds && security.hiddenEntityIds.length > 0
+      ? [...security.hiddenEntityIds].sort()
       : undefined
   return {
     threats: security.threats.map((t) => ({
@@ -593,8 +593,8 @@ function orderedDiagramSecurity(
       description: t.description || undefined
     })),
     hiddenThreatIds,
-    matrixShapeIds: security.matrixShapeIds,
-    hiddenShapeIds,
+    matrixEntityIds: security.matrixEntityIds,
+    hiddenEntityIds,
     probabilityScale:
       security.probabilityScale && security.probabilityScale.length > 0
         ? security.probabilityScale.map((l) => ({
@@ -711,6 +711,55 @@ export function serializeDiagram(diagram: DiagramFile): string {
   return JSON.stringify(ordered, null, 2) + '\n'
 }
 
+// Legacy field/value names from before the Shape -> Entity rename (epic
+// 0076) — accepted on load so a file saved before the rename keeps opening
+// unmodified, never written. serializeDiagram always emits the current
+// names, so a loaded-then-saved file silently upgrades itself. Remove once
+// no file predating the rename is expected to still be opened. Three spots
+// carried 'shape': a node's own `type`, a legend entry's `kind`, and
+// DiagramSecurity's matrix-membership id lists.
+function normalizeLegacyFields(diagram: DiagramFile): DiagramFile {
+  const hasLegacyNodeType = diagram.nodes.some((n) => (n.type as string | undefined) === 'shape')
+  const nodes = hasLegacyNodeType
+    ? diagram.nodes.map((n) =>
+        (n.type as string | undefined) === 'shape' ? { ...n, type: 'entity' } : n
+      )
+    : diagram.nodes
+
+  const hasLegacyLegendKind = diagram.legend?.some((entry) => (entry.kind as string) === 'shape')
+  const legend = hasLegacyLegendKind
+    ? diagram.legend!.map((entry) =>
+        (entry.kind as string) === 'shape' ? { ...entry, kind: 'entity' as const } : entry
+      )
+    : diagram.legend
+
+  const legacySecurity = diagram.security as
+    | (DiagramSecurity & { matrixShapeIds?: string[]; hiddenShapeIds?: string[] })
+    | undefined
+  const hasLegacySecurityIds = !!(legacySecurity?.matrixShapeIds || legacySecurity?.hiddenShapeIds)
+  const security = hasLegacySecurityIds
+    ? (() => {
+        // Destructure the legacy keys out rather than spreading them
+        // through — `rest` carries only current-shape fields, so the
+        // normalized object never leaks the old names back into memory.
+        const { matrixShapeIds, hiddenShapeIds, ...rest } = legacySecurity!
+        return {
+          ...rest,
+          matrixEntityIds: legacySecurity!.matrixEntityIds ?? matrixShapeIds ?? [],
+          hiddenEntityIds: legacySecurity!.hiddenEntityIds ?? hiddenShapeIds
+        }
+      })()
+    : diagram.security
+
+  if (!hasLegacyNodeType && !hasLegacyLegendKind && !hasLegacySecurityIds) return diagram
+  return {
+    ...diagram,
+    nodes,
+    ...(legend !== undefined ? { legend } : {}),
+    ...(security ? { security } : {})
+  }
+}
+
 // Deliberately no metadata/requiredTags-specific validation here (see
 // ADR 0022) — parseDiagram has never validated the shape of any other optional
 // field either (icons, style, connectionPoints, ...), so singling out
@@ -729,5 +778,5 @@ export function parseDiagram(raw: string): DiagramFile {
   ) {
     throw new Error('Not a recognized diagram.json (expected { version: 1, nodes, edges, ... })')
   }
-  return parsed as DiagramFile
+  return normalizeLegacyFields(parsed as DiagramFile)
 }

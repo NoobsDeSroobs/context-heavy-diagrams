@@ -51,11 +51,11 @@ interface PropertyPanelProps {
   onSetConnectionPointCount: (nodeId: string, side: ConnectionPointSide, totalCount: number) => void
   maxConnectionPointsPerSide: number
   // Copies one selected node's current style into preferences.defaultStyles
-  // for its type (ADR 0048) — only offered for shape/container/text, only
+  // for its type (ADR 0048) — only offered for entity/container/text, only
   // when exactly one node of that type is selected (a style is only
   // well-defined for a single node, not a multi-selection). Edges
   // already have their own equivalent via the toolbar swatch (ADR 0045).
-  onSetDefaultStyle: (type: 'shape' | 'container' | 'text', style: NodeStyle) => void
+  onSetDefaultStyle: (type: 'entity' | 'container' | 'text', style: NodeStyle) => void
   requiredTags: RequiredTagDefinition[]
   beginContinuousEdit: () => void
   endContinuousEdit: () => void
@@ -108,7 +108,7 @@ function edgeStyleOf(e: Edge): EdgeStyle {
   return (e.data?.style as EdgeStyle | undefined) ?? {}
 }
 
-// Fill/Border/Font/Transform — shared between shape and container nodes per
+// Fill/Border/Font/Transform — shared between entity and container nodes per
 // ADR 0014's grouping (container fill is customizable now, deliberately no
 // longer hardcoded-transparent). `includeTextAlign` distinguishes the one
 // field difference from TextFields below (font-only, no fill/border).
@@ -677,19 +677,19 @@ function ConnectionPointFields({
   )
 }
 
-// Shape/container share NodeStyleFields' four groups; text gets the same
+// Entity/container share NodeStyleFields' four groups; text gets the same
 // component minus fill/border, since a text node's "look" is font +
 // transform only (deliberately still allows a fill for consistency's sake —
 // see ADR 0014 — even though it's rare in practice). Rotation is text-only
-// (ADR 0004/0012 — shapes/containers are never rotated).
+// (ADR 0004/0012 — entities/containers are never rotated).
 const TYPE_LABELS: Record<string, string> = {
-  shape: 'Shapes',
+  entity: 'Entities',
   container: 'Containers',
   text: 'Text',
   line: 'Lines'
 }
 const MIN_SIZE: Record<string, { width: number; height: number }> = {
-  shape: { width: 60, height: 40 },
+  entity: { width: 60, height: 40 },
   container: { width: 160, height: 120 },
   text: { width: 40, height: 24 }
 }
@@ -715,7 +715,7 @@ export default function PropertyPanel({
 }: PropertyPanelProps): React.JSX.Element {
   const byType = new Map<string, Node[]>()
   for (const n of selectedNodes) {
-    const type = n.type ?? 'shape'
+    const type = n.type ?? 'entity'
     byType.set(type, [...(byType.get(type) ?? []), n])
   }
   const nodeGroups = Array.from(byType.entries())
@@ -727,7 +727,7 @@ export default function PropertyPanel({
   const metadataTarget: { kind: 'node'; node: Node } | { kind: 'edge'; edge: Edge } | undefined =
     selectedNodes.length + selectedEdges.length === 1
       ? selectedNodes.length === 1 &&
-        (selectedNodes[0].type === 'shape' || selectedNodes[0].type === 'container')
+        (selectedNodes[0].type === 'entity' || selectedNodes[0].type === 'container')
         ? { kind: 'node', node: selectedNodes[0] }
         : selectedEdges.length === 1
           ? { kind: 'edge', edge: selectedEdges[0] }
@@ -749,9 +749,9 @@ export default function PropertyPanel({
         />
       )
     }
-    const min = MIN_SIZE[type] ?? MIN_SIZE.shape
+    const min = MIN_SIZE[type] ?? MIN_SIZE.entity
     const canSetDefault =
-      nodes.length === 1 && (type === 'shape' || type === 'container' || type === 'text')
+      nodes.length === 1 && (type === 'entity' || type === 'container' || type === 'text')
     return (
       <NodeStyleFields
         key={type}
@@ -764,7 +764,7 @@ export default function PropertyPanel({
         updateLocked={(locked) => onUpdateLocked(ids, locked)}
         onSetDefault={
           canSetDefault
-            ? () => onSetDefaultStyle(type as 'shape' | 'container' | 'text', nodeStyleOf(nodes[0]))
+            ? () => onSetDefaultStyle(type as 'entity' | 'container' | 'text', nodeStyleOf(nodes[0]))
             : undefined
         }
         beginContinuousEdit={beginContinuousEdit}
@@ -787,7 +787,7 @@ export default function PropertyPanel({
     )
   }
 
-  // One element that can be a brush source (a shape/container/text/line or an
+  // One element that can be a brush source (an entity/container/text/line or an
   // edge) gets "Copy style"; while a brush is active, any selection shows
   // the way out instead.
   const singleElement = selectedNodes.length + selectedEdges.length === 1

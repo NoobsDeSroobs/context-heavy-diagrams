@@ -115,12 +115,12 @@ const api = {
   },
 
   // Recursive security-matrix rollup (ADR 0088) — walk each linked matrix
-  // shape's subtree and return a CrawledMatrix per root column. Read-only;
+  // entity's subtree and return a CrawledMatrix per root column. Read-only;
   // never records the visited files as "opened". `links` is the subset of
-  // the diagram's matrix shapes that carry a `data.linkedDiagram`.
+  // the diagram's matrix entities that carry a `data.linkedDiagram`.
   crawlLinkedSecurity(
     diagramPath: string,
-    links: { shapeId: string; relativePath: string }[]
+    links: { entityId: string; relativePath: string }[]
   ): Promise<SecurityCrawlResult> {
     return ipcRenderer.invoke('security:crawlLinked', diagramPath, links)
   },

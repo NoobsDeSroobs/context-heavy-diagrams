@@ -25,7 +25,7 @@ const customerDb = {
 const gdprNoPic = { ...customerDb, id: 'n2', references: [] }
 const cache = { id: 'n3', label: 'Cache', references: ['assets/references/b.png'] }
 const edge = { id: 'e1', label: 'GDPR link', metadata: { classification: { value: 'GDPR.PII' } } }
-// A shape *named* Integration, with no integration tag — what tag: must not match.
+// An entity *named* Integration, with no integration tag — what tag: must not match.
 const integrationShape = { id: 'n4', label: 'Integration gateway', details: 'details/i.md' }
 const taggedIntegration = {
   id: 'n5',

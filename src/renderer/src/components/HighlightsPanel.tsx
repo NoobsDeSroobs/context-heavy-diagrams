@@ -191,7 +191,7 @@ export default function HighlightsPanel({
       </div>
       <div className="highlights-panel-body">
         <p className="highlights-panel-hint">
-          Each highlight colors every Shape, Container, or Edge tagged with an exact key = value match. A single
+          Each highlight colors every Entity, Container, or Edge tagged with an exact key = value match. A single
           matching highlight recolors the element&rsquo;s border; two or more show as small color chips instead.
           Enabled/disabled state isn&rsquo;t saved with the file — everyone starts with highlights off.
         </p>

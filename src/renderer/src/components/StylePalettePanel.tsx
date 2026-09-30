@@ -9,7 +9,7 @@ import { themeAdaptiveColor } from '../styles/themeAdaptiveColor'
 interface StylePalettePanelProps {
   palettes: NamedStylePalette[]
   activePaletteId: string | null
-  defaultStyles: { shape?: NodeStyle; container?: NodeStyle; text?: NodeStyle }
+  defaultStyles: { entity?: NodeStyle; container?: NodeStyle; text?: NodeStyle }
   defaultEdgeStyle: EdgeStyle
   canvasBackgroundColor: string | undefined
   // Needed to flip the canvas background swatch the same way every other
@@ -23,13 +23,13 @@ interface StylePalettePanelProps {
   // activeStylePaletteId }), all the array work lives here.
   onChangePalettes: (palettes: NamedStylePalette[], activePaletteId: string | null) => void
   onChangeCanvasBackgroundColor: (value: string | undefined) => void
-  onClearDefault: (type: 'shape' | 'container' | 'text' | 'edge') => void
+  onClearDefault: (type: 'entity' | 'container' | 'text' | 'edge') => void
   onClose: () => void
 }
 
 const DEFAULT_SWATCH_COLOR = '#808080'
-const TYPE_LABELS: Record<'shape' | 'container' | 'text' | 'edge', string> = {
-  shape: 'Shape',
+const TYPE_LABELS: Record<'entity' | 'container' | 'text' | 'edge', string> = {
+  entity: 'Entity',
   container: 'Container',
   text: 'Text',
   edge: 'Edge'
@@ -312,10 +312,10 @@ export default function StylePalettePanel({
   }
 
   const defaultRows: {
-    type: 'shape' | 'container' | 'text' | 'edge'
+    type: 'entity' | 'container' | 'text' | 'edge'
     style: NodeStyle | EdgeStyle | undefined
   }[] = [
-    { type: 'shape', style: defaultStyles.shape },
+    { type: 'entity', style: defaultStyles.entity },
     { type: 'container', style: defaultStyles.container },
     { type: 'text', style: defaultStyles.text },
     { type: 'edge', style: Object.keys(defaultEdgeStyle).length > 0 ? defaultEdgeStyle : undefined }
@@ -425,7 +425,7 @@ export default function StylePalettePanel({
         </CollapsibleSection>
         <CollapsibleSection title="Defaults for new elements">
           <p className="required-tags-panel-hint">
-            Style a shape/container/text exactly how you want using the property panel, then use its
+            Style an entity/container/text exactly how you want using the property panel, then use its
             &ldquo;Set as default style&rdquo; button — new elements of that type will start with
             it. Edges: use the toolbar swatch next to the file name. Global, not per-palette.
           </p>

@@ -1,7 +1,7 @@
 # 0127: Command palette
 
 ## Status
-Implemented (2026-09-29), live-tested and confirmed working by the user (2026-09-30), pending PR/merge. See [ADR 0100](../decisions/0100-command-palette-reuses-the-menu-bar.md). `typecheck`/`lint`/`npm test` clean (93 tests). From the plan to do the shape-to-concept rename ([epic 0076](0076-rename-shape-to-concept.md)) right after this one.
+Implemented (2026-09-29), live-tested and confirmed working by the user (2026-09-30), pending PR/merge. See [ADR 0100](../decisions/0100-command-palette-reuses-the-menu-bar.md). `typecheck`/`lint`/`npm test` clean (93 tests). From the plan to do the Shape-to-Entity rename ([epic 0076](0076-rename-shape-to-entity.md)) right after this one.
 
 ## Goal
 A keyboard-invoked, searchable launcher for app actions (type "export png",

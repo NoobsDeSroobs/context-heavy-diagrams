@@ -12,14 +12,14 @@ import { nodeContainerCss, nodeLabelCss } from '../styles/nodeStyleCss'
 import { ConnectionHandles } from './ConnectionHandles'
 import { useConnectionPointMenu } from './connectionPoints'
 
-export const SHAPE_MIN_WIDTH = 60
-export const SHAPE_MIN_HEIGHT = 40
+export const ENTITY_MIN_WIDTH = 60
+export const ENTITY_MIN_HEIGHT = 40
 
 const SLOT_CLASS: Record<IconSlot, string> = {
-  topLeft: 'shape-node-icon shape-node-icon-top-left',
-  topRight: 'shape-node-icon shape-node-icon-top-right',
-  bottomLeft: 'shape-node-icon shape-node-icon-bottom-left',
-  bottomRight: 'shape-node-icon shape-node-icon-bottom-right'
+  topLeft: 'entity-node-icon entity-node-icon-top-left',
+  topRight: 'entity-node-icon entity-node-icon-top-right',
+  bottomLeft: 'entity-node-icon entity-node-icon-bottom-left',
+  bottomRight: 'entity-node-icon entity-node-icon-bottom-right'
 }
 const SLOTS = Object.keys(SLOT_CLASS) as IconSlot[]
 
@@ -37,10 +37,10 @@ function iconSlotKey(slot: IconSlot, icon: IconRef | undefined): string {
 //
 // Icon slots deliberately render at the true corners with no special
 // handling to dodge NodeResizer's corner handles — same stacking order the
-// shape's own body already has under them, per user direction.
+// entity's own body already has under them, per user direction.
 // The icon *picker* and details panel are NOT rendered here — see
 // DiagramContext for why.
-function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
+function EntityNode({ id, data, selected }: NodeProps): React.JSX.Element {
   const {
     diagramPath,
     openContextMenu,
@@ -115,9 +115,9 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
         ...detachItem,
         addConnectionPointItem(rect, event.clientX, event.clientY),
         {
-          label: 'Select all shapes',
+          label: 'Select all entities',
           separatorBefore: true,
-          onSelect: () => selectAllOfType('shape')
+          onSelect: () => selectAllOfType('entity')
         }
       ])
     },
@@ -152,7 +152,7 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
 
   return (
     <div
-      className={`shape-node${entityHighlightNodeId === id ? ' entity-highlighted' : ''}${searchMatchIds.has(id) ? ' search-match' : ''}`}
+      className={`entity-node${entityHighlightNodeId === id ? ' entity-highlighted' : ''}${searchMatchIds.has(id) ? ' search-match' : ''}`}
       style={{
         ...nodeContainerCss(style, theme),
         ...highlightCss,
@@ -163,8 +163,8 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
     >
       <NodeResizer
         isVisible={selected && !locked}
-        minWidth={SHAPE_MIN_WIDTH}
-        minHeight={SHAPE_MIN_HEIGHT}
+        minWidth={ENTITY_MIN_WIDTH}
+        minHeight={ENTITY_MIN_HEIGHT}
         onResizeStart={() => groupResize.start(id)}
         onResize={(_, params) => groupResize.resize(id, params)}
         onResizeEnd={groupResize.end}
@@ -185,8 +185,8 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
         />
       ))}
       <EditableLabel
-        className="shape-node-label"
-        inputClassName="shape-node-label-input"
+        className="entity-node-label"
+        inputClassName="entity-node-label-input"
         multiline
         style={nodeLabelCss(style, theme)}
         value={String(data?.label ?? '')}
@@ -199,4 +199,4 @@ function ShapeNode({ id, data, selected }: NodeProps): React.JSX.Element {
   )
 }
 
-export default memo(ShapeNode)
+export default memo(EntityNode)

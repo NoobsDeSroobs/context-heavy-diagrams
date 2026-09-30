@@ -38,7 +38,7 @@ const MAX_ICON_RESULTS = 24
 
 // Small swatch previewing what a legend entry actually looks like on
 // canvas — a short marked line for 'line', the real icon for 'icon', a
-// plain circle (never a box, see ADR 0033) for 'shape'. Sized generously
+// plain circle (never a box, see ADR 0033) for 'entity'. Sized generously
 // (48px for a line) so a dashed/dotted pattern actually reads as dashed
 // rather than aliasing into what looks like a solid line at a glance.
 function LegendSwatch({
@@ -57,7 +57,7 @@ function LegendSwatch({
       />
     )
   }
-  if (entry.kind === 'shape') {
+  if (entry.kind === 'entity') {
     return (
       <span
         className="legend-swatch legend-swatch-dot"
@@ -92,7 +92,7 @@ function LegendSwatch({
 }
 
 // Compact icon search, deliberately not the full IconPicker component —
-// that one's built around assigning an icon to one of a shape's 4 corner
+// that one's built around assigning an icon to one of an entity's 4 corner
 // slots, which has no meaning for a legend entry. Reuses the same
 // builtin/custom icon data sources, just without the slot picker.
 function LegendIconPicker({
@@ -236,7 +236,7 @@ export default function LegendPanel({
       setDraft({ kind, color: DEFAULT_COLOR })
       return
     }
-    if (kind === 'shape') {
+    if (kind === 'entity') {
       setDraft({ kind, color: DEFAULT_COLOR })
       return
     }
@@ -327,7 +327,7 @@ export default function LegendPanel({
             <button type="button" onClick={() => startKind('icon')}>
               Icon
             </button>
-            <button type="button" onClick={(event) => startKind('shape', event)}>
+            <button type="button" onClick={(event) => startKind('entity', event)}>
               Color
             </button>
             <button type="button" onClick={resetDraft}>

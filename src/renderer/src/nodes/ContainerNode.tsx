@@ -15,7 +15,7 @@ export const CONTAINER_MIN_WIDTH = 160
 export const CONTAINER_MIN_HEIGHT = 120
 
 // Resizable, connectable, never rotated — same structural category as
-// ShapeNode, deliberately, not TextNode. See ADR 0012 for why (a container
+// EntityNode, deliberately, not TextNode. See ADR 0012 for why (a container
 // plausibly needs edges attached to it directly, e.g. an external system
 // connecting to a "VPC" as a whole — rotating a connectable node reopens
 // the edge-misattachment bug ADR 0004 already solved once).
@@ -46,7 +46,7 @@ function ContainerNode({ id, data, selected }: NodeProps): React.JSX.Element {
   const style = data?.style as NodeStyle | undefined
   const { addConnectionPointItem, onPointContextMenu } = useConnectionPointMenu(id, customPoints)
 
-  // See ShapeNode's identical treatment / ADR 0025.
+  // See EntityNode's identical treatment / ADR 0025.
   const highlightMatches = matchHighlights(
     data?.metadata as Record<string, MetadataEntry> | undefined
   )
@@ -63,7 +63,7 @@ function ContainerNode({ id, data, selected }: NodeProps): React.JSX.Element {
         ? [{ label: 'Detach from parent', onSelect: () => detachFromParent(id) }]
         : []
       openContextMenu(event.clientX, event.clientY, [
-        { label: 'Attach contained shapes', onSelect: () => attachContainedNodes(id) },
+        { label: 'Attach contained entities', onSelect: () => attachContainedNodes(id) },
         ...detachItem,
         { label: 'Reference images…', onSelect: () => openReferencesFor(id) },
         addConnectionPointItem(rect, event.clientX, event.clientY),

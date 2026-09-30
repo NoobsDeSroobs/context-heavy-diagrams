@@ -9,7 +9,7 @@ export interface ReferenceRow {
 interface ReferencesPanelProps {
   diagramPath: string | null
   rows: ReferenceRow[]
-  // Select + focus the owning shape on canvas.
+  // Select + focus the owning entity on canvas.
   onReveal: (nodeId: string) => void
   // Open the floating viewer window for this reference.
   onOpen: (nodeId: string, path: string) => void
@@ -39,11 +39,11 @@ export default function ReferencesPanel({
       <div className="layer-panel-body">
         <p className="layer-panel-hint">
           Every reference image in the diagram. Click a row to open its window; click the label to
-          find its shape on the canvas.
+          find its entity on the canvas.
         </p>
         {rows.length === 0 && (
           <p className="layer-panel-hint">
-            No reference images yet. Select a shape and add some from its property panel.
+            No reference images yet. Select an entity and add some from its property panel.
           </p>
         )}
         {rows.map((row) => (

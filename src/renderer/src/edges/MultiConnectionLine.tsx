@@ -10,7 +10,7 @@ import { connectionPointAtOrdinal, pointCoordinates, pointOrdinal } from '../nod
 // coupling. If it ever drifts out of sync, both call sites are one grep
 // for "isConnectableNodeType" away from each other.
 function isConnectableNodeType(type: string | undefined): boolean {
-  return type === 'shape' || type === 'container' || type === 'anchor'
+  return type === 'entity' || type === 'container' || type === 'anchor'
 }
 
 interface MultiConnectionLineProps {

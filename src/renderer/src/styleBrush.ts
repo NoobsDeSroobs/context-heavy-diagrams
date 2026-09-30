@@ -7,7 +7,7 @@ import type { EdgeStyle, NodeStyle } from '@shared/diagram'
 // selection, so the source must not depend on it).
 
 // Node types that carry a `data.style`; 'anchor' is a transient placeholder.
-const BRUSH_NODE_TYPES = ['shape', 'container', 'text', 'line'] as const
+const BRUSH_NODE_TYPES = ['entity', 'container', 'text', 'line'] as const
 
 export type StyleBrush =
   { kind: 'node'; nodeType: string; style: NodeStyle } | { kind: 'edge'; style: EdgeStyle }
@@ -27,11 +27,11 @@ interface EdgeLike {
 }
 
 export function canBrushNodeType(type: string | undefined): boolean {
-  return (BRUSH_NODE_TYPES as readonly string[]).includes(type ?? 'shape')
+  return (BRUSH_NODE_TYPES as readonly string[]).includes(type ?? 'entity')
 }
 
 export function captureNodeBrush(node: NodeLike): StyleBrush | null {
-  const nodeType = node.type ?? 'shape'
+  const nodeType = node.type ?? 'entity'
   if (!canBrushNodeType(nodeType)) return null
   return { kind: 'node', nodeType, style: { ...(node.data?.style as NodeStyle | undefined) } }
 }
@@ -42,10 +42,10 @@ export function captureEdgeBrush(edge: EdgeLike): StyleBrush {
   return { kind: 'edge', style }
 }
 
-// Only the same type accepts a brush: shape -> shape, container -> container,
+// Only the same type accepts a brush: entity -> entity, container -> container,
 // text -> text, line -> line.
 export function brushAppliesToNode(brush: StyleBrush, node: NodeLike): boolean {
-  return brush.kind === 'node' && brush.nodeType === (node.type ?? 'shape')
+  return brush.kind === 'node' && brush.nodeType === (node.type ?? 'entity')
 }
 
 // A node's whole `style` bag is visual, so the target takes the source's bag

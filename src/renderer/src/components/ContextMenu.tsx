@@ -48,7 +48,7 @@ export default function ContextMenu({ x, y, items, onClose }: ContextMenuProps):
             onClick={() => {
               // Close first, then run the action — not the other way round.
               // An item whose onSelect() itself opens a *new* context menu
-              // (e.g. ShapeNode/TextNode's "Link to diagram…", which opens a
+              // (e.g. EntityNode/TextNode's "Link to diagram…", which opens a
               // create-new/link-existing chooser) sets the same contextMenu
               // state this menu is rendered from; calling onClose() after
               // onSelect() would immediately null that new menu back out in

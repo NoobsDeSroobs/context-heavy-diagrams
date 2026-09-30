@@ -172,7 +172,7 @@ export function remapForPaste(
   destDiagramPath: string | null
 ): { nodes: Node[]; edges: Edge[] } {
   const idMap = new Map<string, string>()
-  for (const n of payload.nodes) idMap.set(n.id, newId(n.type ?? 'shape'))
+  for (const n of payload.nodes) idMap.set(n.id, newId(n.type ?? 'entity'))
   const destDiagramBaseName = diagramBaseName(destDiagramPath)
 
   const hasParentInPayload = (n: Node): boolean => n.parentId != null && idMap.has(n.parentId)

@@ -44,7 +44,7 @@ export interface DiagramApi {
   ): Promise<{ relativePath: string; resolvedPath: string; found: boolean }[]>
   crawlLinkedSecurity(
     diagramPath: string,
-    links: { shapeId: string; relativePath: string }[]
+    links: { entityId: string; relativePath: string }[]
   ): Promise<SecurityCrawlResult>
 
   searchLinkedDiagrams(

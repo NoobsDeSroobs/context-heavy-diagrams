@@ -20,7 +20,7 @@ export const LAYER_GAP = 10
 // render-on-top-of-shapes expectation — see the layer-order correction
 // this was fixed alongside.
 export const CONTAINER_BASE = LAYER_GAP
-export const SHAPE_BASE = 100_000
+export const ENTITY_BASE = 100_000
 export const TEXT_BASE = 200_000
 
 export interface ZIndexed {
@@ -32,7 +32,7 @@ export interface ZIndexed {
 function baseForType(type: string | undefined): number {
   if (type === 'container') return CONTAINER_BASE
   if (type === 'text') return TEXT_BASE
-  return SHAPE_BASE
+  return ENTITY_BASE
 }
 
 // Assigns a real zIndex to every node missing one, in array order —
@@ -61,7 +61,7 @@ export function backfillZIndex<T extends ZIndexed>(nodes: T[]): T[] {
 // "current max across whatever was passed in, plus one gap" — as low as
 // 10 or 20 in a fresh diagram, nowhere near its intended tier; caught by
 // the user directly, see docs/known-issues.md.
-export function nextZIndexAbove(nodes: ZIndexed[], base: number = SHAPE_BASE): number {
+export function nextZIndexAbove(nodes: ZIndexed[], base: number = ENTITY_BASE): number {
   const max = nodes.reduce((m, n) => (n.zIndex != null && n.zIndex > m ? n.zIndex : m), base)
   return max + LAYER_GAP
 }

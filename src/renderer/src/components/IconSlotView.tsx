@@ -14,7 +14,7 @@ interface IconSlotViewProps {
 // doesn't execute embedded scripts the way dangerouslySetInnerHTML would.
 //
 // No manual "reset before fetching" here — the caller keys
-// this component by icon identity (ShapeNode.tsx's iconSlotKey), so React
+// this component by icon identity (EntityNode.tsx's iconSlotKey), so React
 // unmounts/remounts a fresh instance whenever the icon actually changes,
 // rather than reusing one instance and needing svg/dataUrl cleared by
 // hand mid-fetch (which is what used to cause the lint-flagged

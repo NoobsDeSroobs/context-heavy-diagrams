@@ -19,7 +19,7 @@ export type ExportLegendSwatch =
       startMarker?: MarkerKind
       endMarker?: MarkerKind
     }
-  | { kind: 'shape'; color: string }
+  | { kind: 'entity'; color: string }
   | { kind: 'icon'; icon: IconRef }
   | { kind: 'highlight'; color: string }
 

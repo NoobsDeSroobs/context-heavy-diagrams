@@ -305,7 +305,7 @@ function LabeledEdge({
     strokeWidth: selected ? baseStrokeWidth + SELECTED_STROKE_WIDTH_DELTA : baseStrokeWidth,
     ...(edgeStyle?.lineStyle ? { strokeDasharray: DASH_ARRAY[edgeStyle.lineStyle] } : {}),
     // A single matching highlight overrides the stroke color, same
-    // treatment as ShapeNode/ContainerNode's border override — see
+    // treatment as EntityNode/ContainerNode's border override — see
     // ADR 0025. Width is handled by baseStrokeWidth above instead of
     // here, so it can still be added to when also selected.
     ...(highlightMatches.length === 1 ? { stroke: highlightMatches[0].color } : {}),
@@ -496,7 +496,7 @@ function LabeledEdge({
         {highlightMatches.length >= 2 && (
           // Offset above the label point, same anchor coordinates — an
           // edge has no "corner" the way a node does, so this is the
-          // closest equivalent to ShapeNode/ContainerNode's chip
+          // closest equivalent to EntityNode/ContainerNode's chip
           // placement (ADR 0025).
           <div
             className="edge-highlight-chips"

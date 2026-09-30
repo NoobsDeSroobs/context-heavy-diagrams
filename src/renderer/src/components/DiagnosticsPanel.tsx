@@ -9,7 +9,7 @@ export interface MissingFileEntry {
   ownerId: string
   // The element's label (or a legend entry's label).
   ownerLabel: string
-  // Node type ('shape' | 'container' | 'text' | …) or 'legend'.
+  // Node type ('entity' | 'container' | 'text' | …) or 'legend'.
   ownerType: string
   resourceKind: 'linkedDiagram' | 'icon' | 'reference' | 'details'
   // The stored relative path.

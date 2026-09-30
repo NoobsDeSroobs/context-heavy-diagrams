@@ -93,15 +93,15 @@ export interface AppPreferences {
   // id) means "fall back to the first palette, or an empty set if there
   // are none" — see effectiveStylePalette().
   activeStylePaletteId: string | null
-  // Default style stamped onto a freshly created Shape/Container/Text —
+  // Default style stamped onto a freshly created Entity/Container/Text —
   // ADR 0048. Set explicitly (StylePalettePanel's "Set as default"
   // button, copying a selected element's current style), never inferred
   // from "whatever was last used." Edges already have this via
   // defaultEdgeStyle above (ADR 0045) — deliberately not duplicated here.
   // Absent per type means today's existing look (Container keeps its own
-  // hardcoded faint-fill fallback; Shape/Text keep ADR 0014's "no style at
+  // hardcoded faint-fill fallback; Entity/Text keep ADR 0014's "no style at
   // all").
-  defaultStyles: { shape?: NodeStyle; container?: NodeStyle; text?: NodeStyle }
+  defaultStyles: { entity?: NodeStyle; container?: NodeStyle; text?: NodeStyle }
   // Overrides React Flow's own light/dark default canvas background —
   // ADR 0048. Global, not per-diagram (matches the rest of the
   // style palette). Absent means today's existing theme-based background,
@@ -234,10 +234,19 @@ export function withRecentDiagram(
 // into the named collection as one "Default" palette. Idempotent — an
 // already-migrated blob has `stylePalettes` set, so the branch is skipped.
 export function normalizePreferences(
-  raw: Partial<AppPreferences> & { stylePalette?: LegacyStylePalette }
+  raw: Partial<AppPreferences> & {
+    stylePalette?: LegacyStylePalette
+    // Pre-rename field name (Shape -> Entity, see epic 0076) — `defaultStyles`
+    // itself is spread from `rest` below, so this legacy sub-key is read and
+    // folded in separately rather than via `rest`.
+    defaultStyles?: { shape?: NodeStyle; entity?: NodeStyle; container?: NodeStyle; text?: NodeStyle }
+  }
 ): AppPreferences {
   const { stylePalette: legacy, ...rest } = raw
   const merged: AppPreferences = { ...DEFAULT_PREFERENCES, ...rest }
+  if (raw.defaultStyles?.shape && !raw.defaultStyles.entity) {
+    merged.defaultStyles = { ...merged.defaultStyles, entity: raw.defaultStyles.shape }
+  }
   // Recent-diagrams list: dedupe defensively and clamp to the (possibly
   // just-lowered) limit, so every boundary that receives a prefs blob
   // enforces both — same "normalize, don't trust the stored shape" stance

@@ -3,7 +3,7 @@ import { Handle } from '@xyflow/react'
 import type { ConnectionPoint } from '@shared/diagram'
 import { SIDE_POSITION, connectionPointStyle, effectiveConnectionPoints } from './connectionPoints'
 
-// Every point a node's sides currently have — shared between ShapeNode and
+// Every point a node's sides currently have — shared between EntityNode and
 // ContainerNode. Split into its own file (kept out of connectionPoints.ts)
 // so that file stays component-free — mixing a component export with
 // hook/function exports in one file breaks React Fast Refresh.

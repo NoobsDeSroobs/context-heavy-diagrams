@@ -61,7 +61,7 @@ function groupEntries(entries: MetadataEntryTuple[]): {
 // mixed-across-selection
 // display, but metadata is a variable-length, per-element key set with no
 // obvious "union of keys, mixed per key" UI yet. Only rendered when
-// PropertyPanel has resolved exactly one selected Shape/Container/Edge.
+// PropertyPanel has resolved exactly one selected Entity/Container/Edge.
 export default function MetadataSection({
   metadata,
   onChange,

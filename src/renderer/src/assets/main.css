@@ -301,7 +301,7 @@ body {
   }
 }
 
-.shape-node {
+.entity-node {
   position: relative;
   width: 100%;
   height: 100%;
@@ -315,14 +315,14 @@ body {
   padding: 4px 8px;
 }
 
-.shape-node-icon {
+.entity-node-icon {
   position: absolute;
   width: 18px;
   height: 18px;
   pointer-events: none;
 }
 
-.shape-node-icon svg {
+.entity-node-icon svg {
   width: 100%;
   height: 100%;
   color: var(--color-text);
@@ -351,24 +351,24 @@ body {
   z-index: 1;
 }
 
-.shape-node-icon-top-left {
+.entity-node-icon-top-left {
   top: 2px;
   left: 2px;
 }
-.shape-node-icon-top-right {
+.entity-node-icon-top-right {
   top: 2px;
   right: 2px;
 }
-.shape-node-icon-bottom-left {
+.entity-node-icon-bottom-left {
   bottom: 2px;
   left: 2px;
 }
-.shape-node-icon-bottom-right {
+.entity-node-icon-bottom-right {
   bottom: 2px;
   right: 2px;
 }
 
-.shape-node-label {
+.entity-node-label {
   font-size: 13px;
   color: var(--color-text);
   text-align: center;
@@ -413,14 +413,14 @@ body {
    visual containment — no extra "proximity margin" trick needed. Applies
    everywhere ConnectionHandles is used: ShapeNode, ContainerNode, and the
    placeholder AnchorNode. */
-.shape-node .react-flow__handle,
+.entity-node .react-flow__handle,
 .container-node .react-flow__handle,
 .anchor-node .react-flow__handle {
   opacity: 0;
   transition: opacity 0.1s ease;
 }
 
-.shape-node:hover .react-flow__handle,
+.entity-node:hover .react-flow__handle,
 .container-node:hover .react-flow__handle,
 .anchor-node:hover .react-flow__handle {
   opacity: 1;
@@ -586,7 +586,7 @@ body {
 
 /* Matches .text-node-label's own padding (above) so entering/leaving edit
    mode on a text node doesn't visibly shift the text. Scoped to text nodes
-   only, not the shared .editable-label-input — shape/container/edge labels
+   only, not the shared .editable-label-input — entity/container/edge labels
    keep their existing zero-padding, unaffected. */
 .text-node-label-input {
   padding: 8px;
@@ -1096,8 +1096,8 @@ body {
   cursor: not-allowed;
 }
 
-.style-brush-shape .react-flow__node-shape,
-.style-brush-shape .react-flow__node-shape *,
+.style-brush-entity .react-flow__node-entity,
+.style-brush-entity .react-flow__node-entity *,
 .style-brush-container .react-flow__node-container,
 .style-brush-container .react-flow__node-container *,
 .style-brush-text .react-flow__node-text,
@@ -1186,7 +1186,7 @@ body {
   box-sizing: border-box;
 }
 
-.item-palette-icon-shape {
+.item-palette-icon-entity {
   border-radius: 3px;
 }
 
@@ -2069,7 +2069,7 @@ body {
    highlight system (ADR 0025, .highlight-chips/matchHighlights)
    despite the shared word. A simple outline, deliberately distinct from
    both the selection outline and the property-highlight border override. */
-.shape-node.entity-highlighted,
+.entity-node.entity-highlighted,
 .container-node.entity-highlighted,
 .text-node.entity-highlighted {
   outline: 2px dashed var(--ev-c-text-1);
@@ -2082,7 +2082,7 @@ body {
    property-highlight border override, never touches the element's own
    border color — the whole point is coexisting with an active highlight
    rather than fighting it for the same CSS property. */
-.shape-node.search-match,
+.entity-node.search-match,
 .container-node.search-match,
 .text-node.search-match {
   outline: 3px dashed var(--search-match-color);
@@ -3923,7 +3923,7 @@ body {
   opacity: 0.55;
 }
 
-.threat-matrix-add-shape-select {
+.threat-matrix-add-entity-select {
   width: 100%;
   margin-top: 4px;
   font: inherit;

@@ -7,7 +7,7 @@ Terms this project uses precisely, for the same reason a shared vocabulary matte
 Every piece of state in this app belongs to exactly one of these. The test is *scope*: how far does a change to this value reach?
 
 ### Properties
-**Scope: one element** (a Shape, Container, Text, Line, or Edge). Everything shown in the Property Panel for a single selected element — style (fill, border, font, line style, markers, ...) and the metadata/tags attached to that specific element. Lives in that element's own `data` on `DiagramNode`/`DiagramEdge`. Changing a shape's fill color never affects any other element.
+**Scope: one element** (an Entity, Container, Text, Line, or Edge). Everything shown in the Property Panel for a single selected element — style (fill, border, font, line style, markers, ...) and the metadata/tags attached to that specific element. Lives in that element's own `data` on `DiagramNode`/`DiagramEdge`. Changing an entity's fill color never affects any other element.
 
 ### Diagram settings
 **Scope: one diagram.** State that applies to every element in a diagram, but only that diagram — stored at the top level of `DiagramFile` (everything except `nodes`/`edges` themselves): `requiredTags`, `highlights`, `legend`, `gravityPresets`, `maxConnectionPointsPerSide`, `metadata`. Opening the same `.chd` file always shows the same Diagram settings, regardless of who opens it or what their own Preferences look like. Camera position (pan/zoom) is deliberately *not* part of this tier — it isn't persisted at all (see [ADR 0090](../decisions/0090-drop-viewport-persistence.md)). The View → **Diagram settings** panel (`DiagramSettingsPanel`) edits the subset a human authors directly. (Older docs/comments call this tier "Configuration".)
@@ -28,11 +28,13 @@ Some values sit at the boundary between Diagram settings and Preferences — the
 
 This is deliberately *not* applied everywhere — see [ADR 0052](../decisions/0052-settings-ownership-tiers.md) for which values get it and why (max connection points per side, gravity presets) versus which stay Preferences-only with no diagram tier at all (the style palette — see that ADR for why a diagram-local copy would be redundant with what Properties already stores).
 
-## Shape vs. Container
+## Entity vs. Container
 
-Easy to conflate since either can be styled identically, but they mean different things regardless of how they look:
+Easy to conflate since either can be styled identically, but they mean different things regardless of how they look. (Renamed from Shape/Container 2026-09-30 — see [ADR 0101](../decisions/0101-shape-to-entity-rename.md) — including the on-disk `.chd` type value and the code's own node type/component/CSS naming; a pre-rename file's `"shape"` type is accepted as a synonym for `"entity"` on load, per [docs/file-format.md](../file-format.md).)
 
-- **Shape** represents a standalone entity in whatever the diagram is modeling — a service, a system, a team, a component, anything the diagram's own domain treats as "a thing." The name itself is a historical holdover from its default plain-box rendering; it doesn't mean "a geometric shape," it means "an entity." A Shape styled to look identical to a Container is still a Shape — the meaning lives in the node's *type*, not its appearance.
-- **Container** represents grouping/boundary — a scope that holds other elements, never a standalone entity of its own. A Container never means "a thing"; it always means "a collection of things."
+- **Entity** represents a standalone thing in whatever the diagram is modeling — a service, a system, a team, a queue, anything the diagram's own domain treats as "a thing." An Entity styled to look identical to a Container is still an Entity — the meaning lives in the node's *type*, not its appearance.
+- **Container** represents grouping/boundary — a scope that holds other elements, never a standalone thing of its own. A Container never means "a thing"; it always means "a collection of things."
 
-"Shape" is under consideration for a rename to something that reads as a semantic category rather than a visual one (e.g. "Concept"). Deliberately not decided yet, including the actual replacement name; this entry documents the *meaning*, independent of whatever the type ends up being called.
+**Both are scoped to the diagram they're drawn in, not absolute.** What's a Container in one diagram — a logical grouping of several related Entities — can itself be drawn as a single Entity in a different, higher-level diagram. For example: a diagram scoped to a cross-functional team might show each of that team's services as a Container, with the compute, queues and storage that make it up as the Entities inside it; a diagram one level up, scoped to the whole organization, might then draw that entire service as one Entity, linked (via an Entity's `linkedDiagram`) down to the more detailed diagram it's a Container in. Nothing new needs building for this — it's exactly what linked-diagram drill-down already does; naming Entity/Container this way just makes the existing mechanic legible.
+
+One consequence worth being explicit about: an Entity is not necessarily atomic. It means "this diagram treats it as one thing and isn't modeling its internals here" — not "this thing has no internal structure." An Entity can be arbitrarily complex underneath, visible by following its linked diagram.

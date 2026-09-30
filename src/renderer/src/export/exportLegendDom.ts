@@ -84,7 +84,7 @@ function buildSwatch(item: ExportLegendItem, iconMarkup: Map<string, ResolvedIco
     'display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 18px; flex: none;'
 
   const { swatch } = item
-  if (swatch.kind === 'shape') {
+  if (swatch.kind === 'entity') {
     const dot = document.createElement('span')
     dot.style.cssText = `display: block; width: 14px; height: 14px; border-radius: 50%; background: ${swatch.color};`
     wrapper.appendChild(dot)
@@ -138,7 +138,7 @@ function buildSwatch(item: ExportLegendItem, iconMarkup: Map<string, ResolvedIco
 // Builds a fully self-styled (no inherited/custom-property CSS — see
 // resolveLegendColors above) legend box: one row per item, a swatch
 // matching how that item's kind already renders elsewhere in this app
-// (LegendSwatch for 'line'/'icon'/'shape', HighlightsPanel's swatch for
+// (LegendSwatch for 'line'/'icon'/'entity', HighlightsPanel's swatch for
 // 'highlight') plus its label. Detached — the caller positions/inserts it
 // (exportPng.ts).
 export function buildLegendElement(

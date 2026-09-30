@@ -76,7 +76,7 @@ import {
   type RiskCell
 } from '@shared/diagram'
 import type { SecurityCrawlResult } from '@shared/threatMatrixMath'
-import ShapeNode, { SHAPE_MIN_WIDTH, SHAPE_MIN_HEIGHT } from './nodes/ShapeNode'
+import EntityNode, { ENTITY_MIN_WIDTH, ENTITY_MIN_HEIGHT } from './nodes/EntityNode'
 import TextNode, { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from './nodes/TextNode'
 import ContainerNode, { CONTAINER_MIN_WIDTH, CONTAINER_MIN_HEIGHT } from './nodes/ContainerNode'
 import { scaleGroupMembers, type GroupResizeMember } from './groupResize'
@@ -117,7 +117,7 @@ import MenuBar, { type MenuBarMenu, type MenuBarItem } from './components/MenuBa
 import LayerPanel from './components/LayerPanel'
 import {
   CONTAINER_BASE,
-  SHAPE_BASE,
+  ENTITY_BASE,
   TEXT_BASE,
   backfillZIndex,
   nextZIndexAbove,
@@ -193,7 +193,7 @@ import { themeAdaptiveColor } from './styles/themeAdaptiveColor'
 // Defined at module scope so React Flow gets a stable reference — recreating
 // these objects every render triggers a React Flow warning and remounts.
 const nodeTypes = {
-  shape: ShapeNode,
+  entity: EntityNode,
   text: TextNode,
   container: ContainerNode,
   anchor: AnchorNode,
@@ -289,14 +289,14 @@ function deriveEdgeFields(e: Edge, zIndex: number): Edge {
   return { ...e, zIndex }
 }
 
-// A sequential per-session counter (shape-1, shape-2, ...) collided with
+// A sequential per-session counter (entity-1, entity-2, ...) collided with
 // ids already used in a *loaded* file, since a fresh session always starts
-// back at 1 — opening a diagram that already had "shape-1" and adding
-// another shape silently overwrote it. A random UUID suffix makes that
+// back at 1 — opening a diagram that already had "entity-1" and adding
+// another entity silently overwrote it. A random UUID suffix makes that
 // whole class of collision structurally impossible (no cross-session
 // coordination needed) rather than something to patch around on every load
 // path. Keeps the readable type prefix — this project's file format is
-// meant to stay git-diff-friendly and human-debuggable, and "shape-<uuid>"
+// meant to stay git-diff-friendly and human-debuggable, and "entity-<uuid>"
 // is still a lot easier to recognize at a glance than a bare UUID.
 function newNodeId(prefix: string): string {
   return `${prefix}-${crypto.randomUUID()}`
@@ -480,17 +480,17 @@ function applyZIndexBackfill(nodes: Node[]): Node[] {
 
 // Same data.zIndex extraction as applyZIndexBackfill, for a freshly-created
 // node — see ADR 0035. Always scopes "above everything" to just
-// that node's own type/tier (CONTAINER_BASE/SHAPE_BASE/TEXT_BASE), so a
-// brand new node lands solidly within its tier — behind existing shapes if
-// it's a container, above existing shapes if it's text, etc. — matching
+// that node's own type/tier (CONTAINER_BASE/ENTITY_BASE/TEXT_BASE), so a
+// brand new node lands solidly within its tier — behind existing entities if
+// it's a container, above existing entities if it's text, etc. — matching
 // the backfilled default arrangement, rather than jumping in front of (or
 // behind) nodes of a different tier just because it's new. An earlier
-// version scoped shapes/text to *every* node regardless of type with no
-// tier floor at all, so a fresh diagram's first shape/container landed at
+// version scoped entities/text to *every* node regardless of type with no
+// tier floor at all, so a fresh diagram's first entity/container landed at
 // 10 or 20 instead of its intended tier — caught by the user directly, see
 // docs/known-issues.md.
-function nextZIndex(nodes: Node[], type: 'shape' | 'text' | 'container' | 'line'): number {
-  const base = type === 'container' ? CONTAINER_BASE : type === 'text' ? TEXT_BASE : SHAPE_BASE
+function nextZIndex(nodes: Node[], type: 'entity' | 'text' | 'container' | 'line'): number {
+  const base = type === 'container' ? CONTAINER_BASE : type === 'text' ? TEXT_BASE : ENTITY_BASE
   const scoped = nodes.filter((n) => n.type === type)
   return nextZIndexAbove(
     scoped.map((n) => ({ id: n.id, zIndex: n.data?.zIndex as number | undefined })),
@@ -534,22 +534,22 @@ const DEFAULT_EDGE_SWATCH_DASH: Record<'solid' | 'dashed' | 'dotted', string | u
   dotted: '1.5 2'
 }
 
-// Only shape/container nodes and edges meaningfully carry metadata — see
+// Only entity/container nodes and edges meaningfully carry metadata — see
 // ADR 0022. Kept as a helper since both toDiagramFile and the metadata-only
 // node type guard elsewhere need the same "does this node type qualify"
 // check.
 function nodeMetadataEligible(type: string | undefined): boolean {
-  return type === 'shape' || type === 'container'
+  return type === 'entity' || type === 'container'
 }
 
-// Only these three types render ConnectionHandles (see ShapeNode/
+// Only these three types render ConnectionHandles (see EntityNode/
 // ContainerNode/AnchorNode) — 'text' and 'line' have no handles at all, so
 // a selected one of either can never legitimately be an edge endpoint.
 // Used by multi-connection onConnect below to skip a selected node that
 // happens not to be connectable, rather than trying to resolve a
 // connection point that doesn't exist on it.
 function isConnectableNodeType(type: string | undefined): boolean {
-  return type === 'shape' || type === 'container' || type === 'anchor'
+  return type === 'entity' || type === 'container' || type === 'anchor'
 }
 
 // DetailsPanel's own header — the element's current label (first line only,
@@ -635,7 +635,7 @@ function toDiagramFile(
     activeEdgeDirectionSetId,
     // serializeDiagram drops this when it carries nothing.
     security:
-      security.threats.length > 0 || security.matrixShapeIds.length > 0 ? security : undefined,
+      security.threats.length > 0 || security.matrixEntityIds.length > 0 ? security : undefined,
     requiredTags: requiredTags.length > 0 ? requiredTags : undefined,
     nodes: nodes.map((n) => ({
       id: n.id,
@@ -665,7 +665,7 @@ function toDiagramFile(
             ? (n.data.references as string[])
             : undefined,
         security:
-          n.type === 'shape' && n.data?.security && typeof n.data.security === 'object'
+          n.type === 'entity' && n.data?.security && typeof n.data.security === 'object'
             ? (n.data.security as Record<string, RiskCell>)
             : undefined
       }
@@ -732,7 +732,7 @@ function fromDiagramFile(diagram: DiagramFile): {
         ...(Array.isArray(n.data.references) && n.data.references.length > 0
           ? { references: n.data.references }
           : {}),
-        ...(n.type === 'shape' && n.data.security && Object.keys(n.data.security).length > 0
+        ...(n.type === 'entity' && n.data.security && Object.keys(n.data.security).length > 0
           ? { security: n.data.security }
           : {}),
         ...(n.style ? { style: n.style } : {}),
@@ -799,25 +799,25 @@ function fromDiagramFile(diagram: DiagramFile): {
   }
 
   // Security model (ADR 0082) — prune references that no longer resolve
-  // (shape deleted from the canvas) and strip orphan per-shape cells
-  // (threat since removed from the catalog, or shape no longer a matrix
+  // (entity deleted from the canvas) and strip orphan per-entity cells
+  // (threat since removed from the catalog, or entity no longer a matrix
   // member — e.g. resurrected by an undo across a remove). One Diagnostics
   // note if anything changed. Same self-cleaning stance as recentDiagrams.
   const securityNotes: string[] = []
-  let security: DiagramSecurity = { threats: [], matrixShapeIds: [] }
+  let security: DiagramSecurity = { threats: [], matrixEntityIds: [] }
   let securedNodes = finalNodes
   const src = diagram.security
-  if (src && (src.threats.length > 0 || src.matrixShapeIds.length > 0)) {
-    const shapeIds = new Set(finalNodes.filter((n) => n.type === 'shape').map((n) => n.id))
+  if (src && (src.threats.length > 0 || src.matrixEntityIds.length > 0)) {
+    const entityIds = new Set(finalNodes.filter((n) => n.type === 'entity').map((n) => n.id))
     const threatIds = new Set(src.threats.map((t) => t.id))
-    const matrixShapeIds = src.matrixShapeIds.filter((id) => shapeIds.has(id))
-    const matrixSet = new Set(matrixShapeIds)
-    const droppedShapes = src.matrixShapeIds.length - matrixShapeIds.length
+    const matrixEntityIds = src.matrixEntityIds.filter((id) => entityIds.has(id))
+    const matrixSet = new Set(matrixEntityIds)
+    const droppedEntities = src.matrixEntityIds.length - matrixEntityIds.length
     security = {
       threats: src.threats,
       hiddenThreatIds: src.hiddenThreatIds?.filter((id) => threatIds.has(id)),
-      matrixShapeIds,
-      hiddenShapeIds: src.hiddenShapeIds?.filter((id) => matrixSet.has(id)),
+      matrixEntityIds,
+      hiddenEntityIds: src.hiddenEntityIds?.filter((id) => matrixSet.has(id)),
       probabilityScale: src.probabilityScale,
       consequenceScale: src.consequenceScale
       // combineMethod / aggregateMethod: session-only, ignored on read (ADR 0088)
@@ -827,7 +827,7 @@ function fromDiagramFile(diagram: DiagramFile): {
       const cells = n.data?.security as Record<string, RiskCell> | undefined
       if (!cells) return n
       const keep =
-        n.type === 'shape' && matrixSet.has(n.id)
+        n.type === 'entity' && matrixSet.has(n.id)
           ? Object.fromEntries(Object.entries(cells).filter(([tid]) => threatIds.has(tid)))
           : {}
       const removed = Object.keys(cells).length - Object.keys(keep).length
@@ -838,14 +838,14 @@ function fromDiagramFile(diagram: DiagramFile): {
       else delete nextData.security
       return { ...n, data: nextData }
     })
-    if (droppedShapes > 0) {
+    if (droppedEntities > 0) {
       securityNotes.push(
-        `Security matrix: ${droppedShapes} shape reference(s) dropped — the shape no longer exists.`
+        `Security matrix: ${droppedEntities} entity reference(s) dropped — the entity no longer exists.`
       )
     }
     if (droppedCells > 0) {
       securityNotes.push(
-        `Security matrix: ${droppedCells} orphan assessment(s) dropped — the threat was removed, or the shape isn't in the matrix.`
+        `Security matrix: ${droppedCells} orphan assessment(s) dropped — the threat was removed, or the entity isn't in the matrix.`
       )
     }
   }
@@ -866,7 +866,7 @@ function fromDiagramFile(diagram: DiagramFile): {
   }
 }
 
-// Fresh metadata for a brand-new Shape/Container/Edge — every requiredTags
+// Fresh metadata for a brand-new Entity/Container/Edge — every requiredTags
 // entry, seeded at its own defaultValue/lock. No diagnostics involved (a
 // new element has nothing to "reset"); that only applies to syncElementMetadata
 // below, which reconciles *existing* elements against a changed template.
@@ -978,7 +978,7 @@ function collectResourceRefs(
   const refs: Omit<MissingFileEntry, 'resolvedPath'>[] = []
   for (const n of nodeList) {
     const ownerLabel = String(n.data?.label ?? '')
-    const ownerType = n.type ?? 'shape'
+    const ownerType = n.type ?? 'entity'
     const base = { ownerKind: 'node' as const, ownerId: n.id, ownerLabel, ownerType }
     const d = n.data ?? {}
     if (typeof d.linkedDiagram === 'string' && d.linkedDiagram) {
@@ -1172,7 +1172,7 @@ function CanvasInner(): React.JSX.Element {
   // arrays when the Security Matrix has never been used; serialization
   // drops it when empty. Per-element assessment cells live on
   // node.data.security, not here.
-  const [security, setSecurity] = useState<DiagramSecurity>({ threats: [], matrixShapeIds: [] })
+  const [security, setSecurity] = useState<DiagramSecurity>({ threats: [], matrixEntityIds: [] })
   // Matrix calculation modes are session-only, not persisted (ADR 0088) —
   // deliberately NOT reset on file open, so they behave as a property of
   // the active matrix view and flow uniformly down a linked-diagram tree.
@@ -1193,7 +1193,7 @@ function CanvasInner(): React.JSX.Element {
   // Reference images (ADR 0069). `referencesPanelOpen` is the
   // diagram-wide inventory View (same UtilityDock family as Layers).
   // `referenceWindows` is the set of open floating viewer windows — pure
-  // session state, one entry per (shape, image path), gone on reload.
+  // session state, one entry per (entity, image path), gone on reload.
   const [referencesPanelOpen, setReferencesPanelOpen] = useState(false)
   const [referenceWindows, setReferenceWindows] = useState<{ nodeId: string; path: string }[]>([])
   // Edge hover (a catmull-rom edge's bend-point handles are hover-revealed,
@@ -1284,8 +1284,8 @@ function CanvasInner(): React.JSX.Element {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
   const [exportPngDialogOpen, setExportPngDialogOpen] = useState(false)
   const [exportPngEffectiveColorHex, setExportPngEffectiveColorHex] = useState('#ffffff')
-  // See ADR 0089 — right-click on the ItemPalette Shape/Container button.
-  const [bulkCreateType, setBulkCreateType] = useState<'shape' | 'container' | null>(null)
+  // See ADR 0089 — right-click on the ItemPalette Entity/Container button.
+  const [bulkCreateType, setBulkCreateType] = useState<'entity' | 'container' | null>(null)
   // onlyRenderVisibleElements (ADR 0073) keeps React Flow from mounting
   // off-screen nodes/edges — a large win on big diagrams, but PNG export
   // (handleExportPng) clones the .react-flow__viewport DOM subtree, so
@@ -1367,7 +1367,7 @@ function CanvasInner(): React.JSX.Element {
   }, [nodes, edges])
 
   // Which node/handle a connection drag started from — set in onConnectStart,
-  // read (and cleared) in onConnectEnd to spawn a new shape when the drag is
+  // read (and cleared) in onConnectEnd to spawn a new entity when the drag is
   // released over empty canvas instead of a valid handle. See ADR 0015.
   const connectStartRef = useRef<{ nodeId: string; handleId: string | null } | null>(null)
 
@@ -1401,7 +1401,7 @@ function CanvasInner(): React.JSX.Element {
       setNodes((nds) =>
         nds.map((n) => {
           if (!nodeMetadataEligible(n.type)) return n
-          const label = `${n.type === 'shape' ? 'Shape' : 'Container'} "${String(n.data?.label ?? n.id)}"`
+          const label = `${n.type === 'entity' ? 'Entity' : 'Container'} "${String(n.data?.label ?? n.id)}"`
           const metadata = syncElementMetadata(
             n.data?.metadata as Record<string, MetadataEntry> | undefined,
             tags,
@@ -1614,7 +1614,7 @@ function CanvasInner(): React.JSX.Element {
 
   // See ADR 0065 — replaces the current selection with every element of one
   // type, rather than shift-clicking each one individually. Exposed via
-  // each type's own right-click context menu (ShapeNode/ContainerNode/
+  // each type's own right-click context menu (EntityNode/ContainerNode/
   // TextNode/LineNode/onEdgeContextMenu below) rather than a top menu-bar
   // item — MenuBar has no submenu support yet, and a per-type context menu
   // entry is already exactly where the user's own example ("select all
@@ -1626,7 +1626,7 @@ function CanvasInner(): React.JSX.Element {
   // callback body itself, so a later declaration would be a genuine
   // temporal-dead-zone error, not just a theoretical one.
   const selectAllOfType = useCallback(
-    (type: 'shape' | 'container' | 'text' | 'line' | 'edge') => {
+    (type: 'entity' | 'container' | 'text' | 'line' | 'edge') => {
       setNodes((nds) =>
         nds.map((n) => (n.selected === (n.type === type) ? n : { ...n, selected: n.type === type }))
       )
@@ -1974,7 +1974,7 @@ function CanvasInner(): React.JSX.Element {
     [pushSnapshot, setNodes]
   )
 
-  // DiagramContext entry point — shape/container right-click "Reference
+  // DiagramContext entry point — entity/container right-click "Reference
   // images…": open a window for each of the node's references, or jump
   // straight to the file picker when it has none yet.
   const openReferencesFor = useCallback(
@@ -2210,7 +2210,7 @@ function CanvasInner(): React.JSX.Element {
     [markDirty]
   )
 
-  // Recursive rollup (ADR 0088). The crawl walks each linked matrix shape's
+  // Recursive rollup (ADR 0088). The crawl walks each linked matrix entity's
   // subtree in the main process; the result is cached here for the session
   // and only re-fetched on entering the matrix persona or an explicit
   // Refresh — never persisted, so a derived value can't go stale.
@@ -2221,10 +2221,10 @@ function CanvasInner(): React.JSX.Element {
       return
     }
     const nodeById = new Map(graphRef.current.nodes.map((n) => [n.id, n]))
-    const links = security.matrixShapeIds.flatMap((shapeId) => {
-      const link = nodeById.get(shapeId)?.data?.linkedDiagram
+    const links = security.matrixEntityIds.flatMap((entityId) => {
+      const link = nodeById.get(entityId)?.data?.linkedDiagram
       return typeof link === 'string' && link.trim() !== ''
-        ? [{ shapeId, relativePath: link }]
+        ? [{ entityId, relativePath: link }]
         : []
     })
     if (links.length === 0) {
@@ -2240,7 +2240,7 @@ function CanvasInner(): React.JSX.Element {
     if (persona === 'matrix') refreshSecurityCrawl()
   }, [persona, refreshSecurityCrawl])
 
-  // One assessment cell on a shape (`null` clears it). Routed through the
+  // One assessment cell on an entity (`null` clears it). Routed through the
   // node history — a cell edit is undoable.
   const updateNodeSecurityCell = useCallback(
     (nodeId: string, threatId: string, cell: RiskCell | null) => {
@@ -2263,7 +2263,7 @@ function CanvasInner(): React.JSX.Element {
     [setNodes, pushSnapshot, markDirty]
   )
 
-  // Removing a threat / a shape from the matrix is destructive ("remove
+  // Removing a threat / an entity from the matrix is destructive ("remove
   // means remove" — the user) and deliberately NOT an undo step; it also
   // strips the affected cells from every history snapshot so an unrelated
   // undo can't resurrect orphan `data.security` entries.
@@ -2293,7 +2293,7 @@ function CanvasInner(): React.JSX.Element {
     [setNodes, markDirty]
   )
 
-  const removeSecurityShape = useCallback(
+  const removeSecurityEntity = useCallback(
     (nodeId: string) => {
       const strip = (nds: Node[]): Node[] =>
         nds.map((n) => {
@@ -2307,8 +2307,8 @@ function CanvasInner(): React.JSX.Element {
       setFuture((f) => f.map((s) => ({ ...s, nodes: strip(s.nodes) })))
       setSecurity((cur) => ({
         ...cur,
-        matrixShapeIds: cur.matrixShapeIds.filter((id) => id !== nodeId),
-        hiddenShapeIds: cur.hiddenShapeIds?.filter((id) => id !== nodeId)
+        matrixEntityIds: cur.matrixEntityIds.filter((id) => id !== nodeId),
+        hiddenEntityIds: cur.hiddenEntityIds?.filter((id) => id !== nodeId)
       }))
       markDirty()
     },
@@ -2552,7 +2552,7 @@ function CanvasInner(): React.JSX.Element {
   // open, else from disk; reading is cheap, and the search terms (label:, tag:…)
   // are how the user narrows it. With Deep search on, a node that carries a link
   // to another diagram also matches when anything in that linked subtree does —
-  // so the match lands on the shape in *this* diagram, cyclable like any other.
+  // so the match lands on the entity in *this* diagram, cyclable like any other.
   // Edges carry no icons, references or notes, so those criteria exclude them.
   const computeMatchIds = useCallback(
     async (criteria: SearchCriteria): Promise<Set<string>> => {
@@ -2949,7 +2949,7 @@ function CanvasInner(): React.JSX.Element {
   // however many points that side actually has, rather than each picking
   // whichever of its own points sits nearest the target (see ADR 0059's
   // addendum — nearest-to-target looked inconsistent in real use, since
-  // unrelated shapes rarely face the target the same way; "the same point"
+  // unrelated entities rarely face the target the same way; "the same point"
   // reads as deliberate regardless of position).
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -3008,7 +3008,7 @@ function CanvasInner(): React.JSX.Element {
   // handle). `edgesReconnectable` on <ReactFlow> is what turns this on;
   // React Flow's own `reconnectEdge` computes the updated edge, same
   // pattern as `addEdge` above. Lets a connection that made sense on one
-  // side keep making sense after shapes get rearranged (e.g. "left" now
+  // side keep making sense after entities get rearranged (e.g. "left" now
   // fits better as "top") without deleting and redrawing the whole edge.
   const onReconnect = useCallback(
     (oldEdge: Edge, newConnection: Connection) => {
@@ -3035,31 +3035,31 @@ function CanvasInner(): React.JSX.Element {
     isReconnectingRef.current = true
   }, [])
 
-  // Turns a placeholder AnchorNode (see below) into a real Shape or
+  // Turns a placeholder AnchorNode (see below) into a real Entity or
   // Container, in place — same id, recentered on the anchor's own center
   // rather than its (much smaller) top-left corner. No edge update needed:
   // AnchorNode shares the same 4 handle ids ('top'/'right'/'bottom'/'left')
-  // as ShapeNode/ContainerNode via the same ConnectionHandles component, so
+  // as EntityNode/ContainerNode via the same ConnectionHandles component, so
   // whatever handle the edge already attached to on the anchor stays valid
   // on the resolved node too.
   const resolveAnchorNode = useCallback(
-    (nodeId: string, type: 'shape' | 'container') => {
+    (nodeId: string, type: 'entity' | 'container') => {
       pushSnapshot()
       setNodes((nds) =>
         nds.map((n) => {
           if (n.id !== nodeId) return n
           const centerX = n.position.x + (n.width ?? ANCHOR_SIZE) / 2
           const centerY = n.position.y + (n.height ?? ANCHOR_SIZE) / 2
-          const width = type === 'shape' ? SHAPE_MIN_WIDTH * 2 : CONTAINER_MIN_WIDTH * 2
-          const height = type === 'shape' ? SHAPE_MIN_HEIGHT * 2 : CONTAINER_MIN_HEIGHT * 1.5
+          const width = type === 'entity' ? ENTITY_MIN_WIDTH * 2 : CONTAINER_MIN_WIDTH * 2
+          const height = type === 'entity' ? ENTITY_MIN_HEIGHT * 2 : CONTAINER_MIN_HEIGHT * 1.5
           const metadata = seedMetadata(requiredTags)
           // An anchor never has a zIndex (ADR 0035) — resolving it
-          // into a real shape/container needs one now, same default as
-          // addShapeNode/addContainerNode.
+          // into a real entity/container needs one now, same default as
+          // addEntityNode/addContainerNode.
           const zIndex = nextZIndex(nds, type)
           const data =
-            type === 'shape'
-              ? { label: 'Shape', zIndex, metadata }
+            type === 'entity'
+              ? { label: 'Entity', zIndex, metadata }
               : {
                   label: 'Container',
                   zIndex,
@@ -3084,7 +3084,7 @@ function CanvasInner(): React.JSX.Element {
   // confirmed as genuine empty canvas (via isVoidDrop): spawn an AnchorNode
   // there, let the caller wire whichever edge end needs it (the one part
   // that differs between "brand-new edge" and "existing edge's endpoint"),
-  // and offer the same Shape/Container popup drag-to-empty-space already established.
+  // and offer the same Entity/Container popup drag-to-empty-space already established.
   // Dismissing the popup (click elsewhere/Escape, same generic ContextMenu
   // every other popup in this file uses) just leaves the anchor as a small
   // draggable dot — no default type is assumed.
@@ -3107,7 +3107,7 @@ function CanvasInner(): React.JSX.Element {
       ])
       wireEdge(id)
       openContextMenu(clientX, clientY, [
-        { label: 'Shape', onSelect: () => resolveAnchorNode(id, 'shape') },
+        { label: 'Entity', onSelect: () => resolveAnchorNode(id, 'entity') },
         { label: 'Container', onSelect: () => resolveAnchorNode(id, 'container') }
       ])
     },
@@ -3248,15 +3248,15 @@ function CanvasInner(): React.JSX.Element {
         let nodeType: string
         let data: Record<string, unknown>
         switch (type) {
-          case 'shape':
-            width = SHAPE_MIN_WIDTH * 2
-            height = SHAPE_MIN_HEIGHT * 2
-            nodeType = 'shape'
+          case 'entity':
+            width = ENTITY_MIN_WIDTH * 2
+            height = ENTITY_MIN_HEIGHT * 2
+            nodeType = 'entity'
             data = {
-              label: 'Shape',
-              zIndex: nextZIndex(nds, 'shape'),
+              label: 'Entity',
+              zIndex: nextZIndex(nds, 'entity'),
               metadata: seedMetadata(requiredTags),
-              style: preferences.defaultStyles.shape
+              style: preferences.defaultStyles.entity
             }
             break
           case 'container':
@@ -3322,7 +3322,7 @@ function CanvasInner(): React.JSX.Element {
       pushSnapshot,
       setNodes,
       requiredTags,
-      preferences.defaultStyles.shape,
+      preferences.defaultStyles.entity,
       preferences.defaultStyles.container,
       preferences.defaultStyles.text
     ]
@@ -3351,28 +3351,28 @@ function CanvasInner(): React.JSX.Element {
     [rfInstance, addNodeAtPosition]
   )
 
-  const addShapeNode = useCallback(() => {
+  const addEntityNode = useCallback(() => {
     pushSnapshot()
-    const id = newNodeId('shape')
-    const width = SHAPE_MIN_WIDTH * 2
-    const height = SHAPE_MIN_HEIGHT * 2
+    const id = newNodeId('entity')
+    const width = ENTITY_MIN_WIDTH * 2
+    const height = ENTITY_MIN_HEIGHT * 2
     setNodes((nds) => [
       ...nds,
       {
         id,
-        type: 'shape',
+        type: 'entity',
         position: spawnPosition(width, height, nds.length),
         width,
         height,
         data: {
-          label: 'Shape',
-          zIndex: nextZIndex(nds, 'shape'),
+          label: 'Entity',
+          zIndex: nextZIndex(nds, 'entity'),
           metadata: seedMetadata(requiredTags),
-          style: preferences.defaultStyles.shape
+          style: preferences.defaultStyles.entity
         }
       }
     ])
-  }, [setNodes, pushSnapshot, spawnPosition, requiredTags, preferences.defaultStyles.shape])
+  }, [setNodes, pushSnapshot, spawnPosition, requiredTags, preferences.defaultStyles.entity])
 
   const addTextNode = useCallback(() => {
     pushSnapshot()
@@ -3430,7 +3430,7 @@ function CanvasInner(): React.JSX.Element {
     ])
   }, [setNodes, pushSnapshot, spawnPosition, requiredTags, preferences.defaultStyles.container])
 
-  // Bulk counterpart to addShapeNode/addContainerNode — see ADR 0089. One
+  // Bulk counterpart to addEntityNode/addContainerNode — see ADR 0089. One
   // pushSnapshot/setNodes for the whole batch (one undo step), laid out in
   // a grid centered on the viewport rather than spawnPosition's small
   // per-click jitter (which exists to keep repeated single clicks visibly
@@ -3438,11 +3438,11 @@ function CanvasInner(): React.JSX.Element {
   // against the array as it grows within the same batch, so zIndex among
   // the new nodes stays deterministic (first line = lowest).
   const addMultipleNodes = useCallback(
-    (type: 'shape' | 'container', labels: string[]) => {
+    (type: 'entity' | 'container', labels: string[]) => {
       if (labels.length === 0) return
       pushSnapshot()
-      const width = type === 'shape' ? SHAPE_MIN_WIDTH * 2 : CONTAINER_MIN_WIDTH * 2
-      const height = type === 'shape' ? SHAPE_MIN_HEIGHT * 2 : CONTAINER_MIN_HEIGHT * 1.5
+      const width = type === 'entity' ? ENTITY_MIN_WIDTH * 2 : CONTAINER_MIN_WIDTH * 2
+      const height = type === 'entity' ? ENTITY_MIN_HEIGHT * 2 : CONTAINER_MIN_HEIGHT * 1.5
       const gap = 40
       const columns = Math.ceil(Math.sqrt(labels.length))
       const rows = Math.ceil(labels.length / columns)
@@ -3459,12 +3459,12 @@ function CanvasInner(): React.JSX.Element {
           const col = index % columns
           const row = Math.floor(index / columns)
           const data =
-            type === 'shape'
+            type === 'entity'
               ? {
                   label: labels[index],
-                  zIndex: nextZIndex(acc, 'shape'),
+                  zIndex: nextZIndex(acc, 'entity'),
                   metadata: seedMetadata(requiredTags),
-                  style: preferences.defaultStyles.shape
+                  style: preferences.defaultStyles.entity
                 }
               : {
                   label: labels[index],
@@ -3498,7 +3498,7 @@ function CanvasInner(): React.JSX.Element {
       pushSnapshot,
       rfInstance,
       requiredTags,
-      preferences.defaultStyles.shape,
+      preferences.defaultStyles.entity,
       preferences.defaultStyles.container
     ]
   )
@@ -3522,7 +3522,7 @@ function CanvasInner(): React.JSX.Element {
         width,
         height,
         data: {
-          // Matches Shape/Container/Text's own default-label-equals-type-
+          // Matches Entity/Container/Text's own default-label-equals-type-
           // name convention (there's no on-canvas label editing for a line
           // yet, unlike those three, but the Layers panel still needs
           // something better than "(unlabeled)" to show).
@@ -3693,7 +3693,7 @@ function CanvasInner(): React.JSX.Element {
   )
 
   // Bulk version of the drag-in reparenting above, for a container's
-  // "Attach contained shapes" menu item — encapsulating a lot of
+  // "Attach contained entities" menu item — encapsulating a lot of
   // already-positioned nodes shouldn't require one drag per node. Only
   // currently-top-level nodes fully inside the container's bounds qualify —
   // a node already parented elsewhere is left alone, not silently moved
@@ -3753,7 +3753,7 @@ function CanvasInner(): React.JSX.Element {
     [pushSnapshot, rfInstance, setNodes]
   )
 
-  // One-click inverse of drag-out / "Attach contained shapes" (ADR 0075):
+  // One-click inverse of drag-out / "Attach contained entities" (ADR 0075):
   // clears a node's parentId and rebases its position from parent-relative
   // to absolute so it doesn't jump. Any node type can be a container child.
   const detachFromParent = useCallback(
@@ -3795,7 +3795,7 @@ function CanvasInner(): React.JSX.Element {
       if (selected.length === 0) return nds
       const clones = selected.map((n) => ({
         ...n,
-        id: newNodeId(n.type ?? 'shape'),
+        id: newNodeId(n.type ?? 'entity'),
         position: { x: n.position.x + 20, y: n.position.y + 20 },
         selected: true,
         data: { ...n.data }
@@ -3817,7 +3817,7 @@ function CanvasInner(): React.JSX.Element {
   } | null>(null)
   const groupResize = useMemo<DiagramContextValue['groupResize']>(() => {
     const minSize: Record<string, { w: number; h: number }> = {
-      shape: { w: SHAPE_MIN_WIDTH, h: SHAPE_MIN_HEIGHT },
+      entity: { w: ENTITY_MIN_WIDTH, h: ENTITY_MIN_HEIGHT },
       container: { w: CONTAINER_MIN_WIDTH, h: CONTAINER_MIN_HEIGHT },
       text: { w: TEXT_MIN_WIDTH, h: TEXT_MIN_HEIGHT }
     }
@@ -3892,7 +3892,7 @@ function CanvasInner(): React.JSX.Element {
       }
     }
     const idMap = new Map<string, string>()
-    for (const n of all) if (ids.has(n.id)) idMap.set(n.id, newNodeId(n.type ?? 'shape'))
+    for (const n of all) if (ids.has(n.id)) idMap.set(n.id, newNodeId(n.type ?? 'entity'))
     const clones = all
       .filter((n) => ids.has(n.id))
       .map((n) => {
@@ -5110,7 +5110,7 @@ function CanvasInner(): React.JSX.Element {
   // Now that isDirty exists, the confirm() guard is skipped
   // whenever there's genuinely nothing to lose, not just when the canvas
   // happens to be empty (a diagram can be dirty while empty too — add a
-  // shape, delete it again — so this is a real behavior change from before).
+  // entity, delete it again — so this is a real behavior change from before).
   const handleClose = useCallback(() => {
     if (isDirty && !confirm('Close this diagram? Any changes since the last save will be lost.'))
       return
@@ -5554,10 +5554,10 @@ function CanvasInner(): React.JSX.Element {
   const selectedEdges = useMemo(() => edges.filter((e) => e.selected), [edges])
 
   // Each node's persisted stacking order — see ADR 0035. No
-  // type-based special-casing here: the "containers render behind shapes"
+  // type-based special-casing here: the "containers render behind entities"
   // look most diagrams start with is purely a consequence of the
   // load-time backfill's starting values (applyZIndexBackfill/nextZIndex),
-  // not a rule enforced at render time — drag a container above a shape in
+  // not a rule enforced at render time — drag a container above an entity in
   // the layer panel and it genuinely renders above it from then on. React
   // Flow still adds its own selection elevation on top of whatever's set
   // here (elevateNodesOnSelect, on by default).
@@ -5630,7 +5630,7 @@ function CanvasInner(): React.JSX.Element {
   }, [edges])
 
   // An edge has no zIndex of its own to control — ADR 0035
-  // deliberately scoped this feature to Shape/Container/Text only. Instead
+  // deliberately scoped this feature to Entity/Container/Text only. Instead
   // it always sits at the midpoint of its two endpoints' current stacking,
   // computed fresh here alongside orderedEdges above, never persisted.
   //
@@ -5686,7 +5686,7 @@ function CanvasInner(): React.JSX.Element {
   //    panel sorts on raw zIndex (the value drag-to-restack edits), so these
   //    are the rows whose displayed order disagrees with what's clickable.
   //  - outgrownAdvisories: a child whose bounds escape its parent's — the
-  //    shape that makes the z-inversion visible and confusing (warn only, no
+  //    entity that makes the z-inversion visible and confusing (warn only, no
   //    auto-fix).
   const hierarchyAnalysis = useMemo(() => {
     const byId = new Map(nodes.map((n) => [n.id, n]))
@@ -5732,7 +5732,7 @@ function CanvasInner(): React.JSX.Element {
       [...nodes]
         .map((n) => ({
           id: n.id,
-          type: n.type ?? 'shape',
+          type: n.type ?? 'entity',
           label: String(n.data?.label ?? ''),
           zIndex: (n.data?.zIndex as number | undefined) ?? 0,
           parentLabel: hierarchyAnalysis.parentLabelById.get(n.id) ?? null,
@@ -5743,7 +5743,7 @@ function CanvasInner(): React.JSX.Element {
     [nodes, hierarchyAnalysis]
   )
 
-  // Flat "shape → one reference path" list backing the References inventory
+  // Flat "entity → one reference path" list backing the References inventory
   // panel (ADR 0069) — a live projection of node data, owns nothing.
   const referenceRows = useMemo(
     () =>
@@ -6014,7 +6014,7 @@ function CanvasInner(): React.JSX.Element {
   // useCallback (not an inline arrow on <DiagramDock>) so memo(DiagramDock)
   // can actually bail on unrelated CanvasInner renders (ADR 0073).
   const setDefaultStyle = useCallback(
-    (type: 'shape' | 'container' | 'text', style: NodeStyle) =>
+    (type: 'entity' | 'container' | 'text', style: NodeStyle) =>
       updatePreferences({ defaultStyles: { ...preferences.defaultStyles, [type]: style } }),
     [updatePreferences, preferences.defaultStyles]
   )
@@ -6228,7 +6228,7 @@ function CanvasInner(): React.JSX.Element {
               }}
               onChange={updateSecurity}
               onRemoveThreat={removeSecurityThreat}
-              onRemoveShape={removeSecurityShape}
+              onRemoveEntity={removeSecurityEntity}
               onCellChange={updateNodeSecurityCell}
             />
           ) : (
@@ -6391,11 +6391,11 @@ function CanvasInner(): React.JSX.Element {
               <DiagramDock
                 selectedNodes={selectedNodes}
                 selectedEdges={selectedEdges}
-                onAddShape={addShapeNode}
+                onAddEntity={addEntityNode}
                 onAddText={addTextNode}
                 onAddContainer={addContainerNode}
                 onAddLine={addLineNode}
-                onCreateMultipleShapes={() => setBulkCreateType('shape')}
+                onCreateMultipleEntities={() => setBulkCreateType('entity')}
                 onCreateMultipleContainers={() => setBulkCreateType('container')}
                 onUpdateNodeStyle={updateNodeStyle}
                 onUpdateEdgeStyle={updateEdgeStyle}
@@ -6713,7 +6713,7 @@ function CanvasInner(): React.JSX.Element {
         </UtilityDock>
         {referenceWindows.map((w, index) => {
           const owner = nodes.find((n) => n.id === w.nodeId)
-          // A window whose owning shape or reference is gone (deleted,
+          // A window whose owning entity or reference is gone (deleted,
           // undone) just stops rendering — no stale windows left behind.
           const stillAttached =
             owner &&

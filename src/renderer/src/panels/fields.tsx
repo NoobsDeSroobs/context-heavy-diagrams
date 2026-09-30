@@ -12,7 +12,7 @@ import { useRafThrottledCallback } from '../hooks/useRafThrottledCallback'
 
 // Remembered open/closed state, per section, for the lifetime of the app
 // session — module-level rather than component state, so
-// closing "Transform" on one shape stays closed when a different shape/
+// closing "Transform" on one entity stays closed when a different entity/
 // edge/container is selected next, instead of resetting on every remount
 // (a selection change always remounts the whole property panel). Session-
 // only on purpose, no persistence to disk — this is view state, not

@@ -3,7 +3,7 @@ import ReferenceImage from '../components/ReferenceImage'
 import { useDiagramContext } from '../useDiagramContext'
 import { CollapsibleSection } from './fields'
 
-// Reference-image management for a single selected shape/container (see
+// Reference-image management for a single selected entity/container (see
 // ADR 0069). Viewing happens in the floating windows; this is where
 // you add and remove. All the actual work lives on Canvas via context.
 export default function ReferencesSection({ node }: { node: Node }): React.JSX.Element {
@@ -32,7 +32,7 @@ export default function ReferencesSection({ node }: { node: Node }): React.JSX.E
               <button
                 type="button"
                 className="property-references-remove"
-                title="Remove from this shape"
+                title="Remove from this entity"
                 aria-label="Remove reference"
                 onClick={() => removeReferenceFromNode(node.id, path)}
               >

@@ -240,7 +240,7 @@ function LineNode({ id, data, selected }: NodeProps): React.JSX.Element {
           style={{ pointerEvents: 'stroke' }}
           onContextMenu={onPathContextMenu}
         />
-        {/* Layer panel's "point at" indicator (ADR 0035) — ShapeNode/
+        {/* Layer panel's "point at" indicator (ADR 0035) — EntityNode/
             ContainerNode/TextNode do this with a CSS outline on their own
             (filled, roughly-rectangular) box, but that reads wrong on a
             sparse/concave curve where the bounding box is mostly empty

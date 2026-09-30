@@ -5,7 +5,7 @@ import type { ConnectionPoint, ConnectionPointSide } from '@shared/diagram'
 import { useDiagramContext } from '../useDiagramContext'
 import type { ContextMenuItem } from '../components/ContextMenu'
 
-// Shared between ShapeNode and ContainerNode — both are connectable,
+// Shared between EntityNode and ContainerNode — both are connectable,
 // non-rotatable node types with the same connection point model (see ADR
 // 0012 for why containers are connectable at all).
 
@@ -145,10 +145,10 @@ export function nearestConnectionPointWithCoordinates(
 // A point's clockwise position on its own side (1-based) plus how many
 // points that side has — multi-connection-line's starting point: resolve
 // the dragged-from handle to "3rd of 5 on top" once, then replicate that
-// ordinal onto every other selected shape via connectionPointAtOrdinal
-// below, rather than each shape picking its own nearest point independently
+// ordinal onto every other selected entity via connectionPointAtOrdinal
+// below, rather than each entity picking its own nearest point independently
 // (see ADR 0059's addendum — nearest-to-target looked inconsistent in real
-// use, since unrelated shapes rarely face the target the same way).
+// use, since unrelated entities rarely face the target the same way).
 export function pointOrdinal(
   storedPoints: ConnectionPoint[],
   pointId: string

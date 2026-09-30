@@ -456,7 +456,7 @@ export default function RequiredTagsSection({
         </button>
       </div>
       <p className="required-tags-panel-hint">
-        Every Shape, Container, and Edge in this diagram always carries these keys. &ldquo;Locked,
+        Every Entity, Container, and Edge in this diagram always carries these keys. &ldquo;Locked,
         editable&rdquo; leaves the value for a human to fill in; &ldquo;locked, fixed&rdquo; always
         shows the template&rsquo;s own value.
       </p>

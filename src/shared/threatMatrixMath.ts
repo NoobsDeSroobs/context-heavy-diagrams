@@ -116,13 +116,13 @@ export function normalizeThreatName(name: string): string {
   return name.trim().replace(/\s+/g, ' ').toLowerCase()
 }
 
-// One shape in a crawled subtree. A leaf (no linked diagram) carries its own
+// One entity in a crawled subtree. A leaf (no linked diagram) carries its own
 // hand-entered `cells`, keyed by normalized threat name. A non-leaf carries
 // `child` instead — its own cells are never consulted, its score is entirely
-// its subtree's rollup (a non-leaf shape is derived, not assessed).
-// `linkBroken` marks a shape whose linked diagram didn't resolve: it can be
+// its subtree's rollup (a non-leaf entity is derived, not assessed).
+// `linkBroken` marks a entity whose linked diagram didn't resolve: it can be
 // neither assessed nor rolled up, so it contributes nothing.
-export interface CrawledShape {
+export interface CrawledEntity {
   id: string
   label: string
   cells: Record<string, RiskCell>
@@ -130,12 +130,12 @@ export interface CrawledShape {
   linkBroken?: { relativePath: string }
 }
 
-// One diagram's matrix contribution in a rollup crawl — the shapes in its
-// own `security.matrixShapeIds`, each resolved to a leaf or a nested child.
+// One diagram's matrix contribution in a rollup crawl — the entities in its
+// own `security.matrixEntityIds`, each resolved to a leaf or a nested child.
 // Produced by the main-process crawler; the tree is already acyclic (the
 // crawler drops a link that revisits an ancestor).
 export interface CrawledMatrix {
-  shapes: CrawledShape[]
+  entities: CrawledEntity[]
 }
 
 // One root matrix column that has a linked diagram (ADR 0088). `resolved`
@@ -145,8 +145,8 @@ export type CrawledColumn =
   | { kind: 'resolved'; relativePath: string; matrix: CrawledMatrix }
   | { kind: 'broken'; relativePath: string }
 
-// The `security:crawlLinked` IPC result: one entry per root matrix shape
-// that has a linked diagram, keyed by shape id, plus any non-fatal warnings
+// The `security:crawlLinked` IPC result: one entry per root matrix entity
+// that has a linked diagram, keyed by entity id, plus any non-fatal warnings
 // hit while walking (deeper broken links, ancestor cycles) for Diagnostics.
 export interface SecurityCrawlResult {
   columns: Record<string, CrawledColumn>
@@ -165,18 +165,18 @@ export function threatScoreFor(
   aggregateMethod: AggregateMethod
 ): number | null {
   const contributions: number[] = []
-  for (const shape of matrix.shapes) {
-    if (shape.linkBroken) continue // can't roll up or assess — contributes nothing
-    if (shape.child) {
+  for (const entity of matrix.entities) {
+    if (entity.linkBroken) continue // can't roll up or assess — contributes nothing
+    if (entity.child) {
       const childScore = threatScoreFor(
-        shape.child,
+        entity.child,
         normalizedThreatName,
         combineMethod,
         aggregateMethod
       )
       if (childScore !== null) contributions.push(childScore)
     } else {
-      const cell = shape.cells[normalizedThreatName]
+      const cell = entity.cells[normalizedThreatName]
       if (cell) contributions.push(cellScore(cell, combineMethod))
     }
   }
@@ -188,10 +188,10 @@ export function threatScoreFor(
 export function threatNamesInSubtree(matrix: CrawledMatrix): Set<string> {
   const names = new Set<string>()
   const walk = (m: CrawledMatrix): void => {
-    for (const shape of m.shapes) {
-      if (shape.linkBroken) continue
-      if (shape.child) walk(shape.child)
-      else for (const name of Object.keys(shape.cells)) names.add(name)
+    for (const entity of m.entities) {
+      if (entity.linkBroken) continue
+      if (entity.child) walk(entity.child)
+      else for (const name of Object.keys(entity.cells)) names.add(name)
     }
   }
   walk(matrix)

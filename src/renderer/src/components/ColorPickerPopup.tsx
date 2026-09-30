@@ -17,7 +17,7 @@ interface ColorPickerPopupProps {
 
 const PICKER_WIDTH = 200
 
-// Quick-access "Fill…"/"Border…" popup from a shape/container's right-click
+// Quick-access "Fill…"/"Border…" popup from an entity/container's right-click
 // menu — see ADR 0010. Reuses IconPicker's fixed-positioned popup shell and
 // the property panel's own ColorField/NumberField, so this and the panel
 // always look and behave identically; it edits the exact same style

@@ -36,7 +36,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 - [Adding a new required tag immediately stamps its placeholder key onto every element, then demotes it to a stray free tag on rename](#adding-a-new-required-tag-immediately-stamps-its-placeholder-key-onto-every-element-then-demotes-it-to-a-stray-free-tag-on-rename) — Solved.
 - [Pasting a copied child-of-a-container node can land it far off screen](#pasting-a-copied-child-of-a-container-node-can-land-it-far-off-screen) — Solved (ADR 0075 / epic 0103), pending live test.
 - [Clicking a container selects a different container that visually encloses it](#clicking-a-container-selects-a-different-container-that-visually-encloses-it) — Worked around (ADR 0075 / epic 0103) — the z-inversion is a React Flow invariant; surfaced via Diagnostics + a Layers-panel marker. Pending live test.
-- ["Attach contained shapes" can fling a node to the canvas origin](#attach-contained-shapes-can-fling-a-node-to-the-canvas-origin) — Solved (ADR 0075 / epic 0103), pending live test.
+- ["Attach contained entities" can fling a node to the canvas origin](#attach-contained-entities-can-fling-a-node-to-the-canvas-origin) — Solved (ADR 0075 / epic 0103), pending live test.
 - [Icon picker's grid overflowed horizontally, not just missing a vertical scrollbar gutter](#icon-pickers-grid-overflowed-horizontally-not-just-missing-a-vertical-scrollbar-gutter) — Solved.
 - [Deleting / cutting a container + its selected children removes only the container, keeps the children](#deleting--cutting-a-container--its-selected-children-removes-only-the-container-keeps-the-children) — Open, deliberately not fixed (user wants a decision later).
 - [Copy/paste doesn't preserve container relationships](#copypaste-doesnt-preserve-container-relationships) — Open; ADR 0075 / epic 0103 reworked `remapForPaste` for exactly this, unmerged — retest after merge.
@@ -117,7 +117,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **Resolution:** scoped to `.text-node-label` only, not `.text-node` — added `max-height: 100%; overflow: hidden;`. The percentage resolves correctly because `.text-node` itself has a definite `height: 100%` (React Flow sets a real pixel height on the outer node wrapper), so the label's `max-height: 100%` ties it to that same resolved value without touching the node's own overflow behavior or the resize handles. `.shape-node-label`/`.container-node-label` have the same latent gap, left unfixed — lower priority since a short label rarely overflows enough to matter, revisit if it's ever reported for real.
 
-**References:** `src/renderer/src/assets/main.css`'s `.text-node-label`, `.shape-node`, `.container-node`; `src/renderer/src/nodes/TextNode.tsx`
+**References:** `src/renderer/src/assets/main.css`'s `.text-node-label`, `.entity-node`, `.container-node`; `src/renderer/src/nodes/TextNode.tsx`
 
 ---
 
@@ -233,7 +233,7 @@ Confirmed live after the app fix: highlight toggling and manual style edits both
 **Status:** Solved (2026-08-29, ADR 0073 / epic 0101), live-confirmed by the user — the whole diagram now "feels smooth as hell" for hover, marquee-select and colour drags, with no regressions found
 **Found:** 2026-08-24, live use by the user on the Meridian Rail landscape (82 nodes, 84 edges), while live-testing the fix for the entry below
 
-**Symptom:** on this large diagram, drag-to-select noticeably stutters (~300ms) every time the selection boundary crosses in or out of an item. Isolated further via live `console.count` instrumentation in `ShapeNode`/`LabeledEdge` (same technique as the epic 0067/ADR 0056 investigation): merely **hovering one edge and moving off** — no click, no selection, from a fully-settled diagram — produced ~340 `LabeledEdge` renders and ~280 `ShapeNode` renders (roughly 4 and 3.4 per element, for what should be a change affecting exactly one edge). Reproduced identically across multiple clean restarts (all `electron.exe`/`node.exe` processes killed each time), ruling out stale HMR/caching.
+**Symptom:** on this large diagram, drag-to-select noticeably stutters (~300ms) every time the selection boundary crosses in or out of an item. Isolated further via live `console.count` instrumentation in `EntityNode`/`LabeledEdge` (same technique as the epic 0067/ADR 0056 investigation): merely **hovering one edge and moving off** — no click, no selection, from a fully-settled diagram — produced ~340 `LabeledEdge` renders and ~280 `EntityNode` renders (roughly 4 and 3.4 per element, for what should be a change affecting exactly one edge). Reproduced identically across multiple clean restarts (all `electron.exe`/`node.exe` processes killed each time), ruling out stale HMR/caching.
 
 **Two real, confirmed contributing causes found and fixed** (`src/renderer/src/Canvas.tsx`), but fixing both changed the render counts by roughly 0% — something else, not yet identified, dominates:
 
@@ -340,9 +340,9 @@ Confirmed live after the app fix: highlight toggling and manual style edits both
 
 **Symptom:** creating a container then a shape in a diagram gave them z-index values of 10 and 20 — nowhere near the tiered ranges epic 0043 established (containers low, shapes/text much higher, so a fresh container defaults behind existing shapes and vice versa).
 
-**Root cause:** `nextZIndex` (the helper behind `addShapeNode`/`addTextNode`/`addContainerNode`) only scoped _containers_ correctly (to other existing containers). Shapes and text both scoped to _every_ node regardless of type, with no tier floor at all — so in a small or empty diagram, "current max across everything, plus one gap" landed far below the intended tier. The load-time backfill (`backfillZIndex`, used for old files) had always done this correctly; only the new-node-creation path had the bug, so it went unnoticed until enough manual node creation happened in one session for the user to notice the numbers directly (visible in the layer panel).
+**Root cause:** `nextZIndex` (the helper behind `addEntityNode`/`addTextNode`/`addContainerNode`) only scoped _containers_ correctly (to other existing containers). Shapes and text both scoped to _every_ node regardless of type, with no tier floor at all — so in a small or empty diagram, "current max across everything, plus one gap" landed far below the intended tier. The load-time backfill (`backfillZIndex`, used for old files) had always done this correctly; only the new-node-creation path had the bug, so it went unnoticed until enough manual node creation happened in one session for the user to notice the numbers directly (visible in the layer panel).
 
-**Resolution:** `nextZIndex` now always scopes to the node's own type and passes that type's own base floor into `nextZIndexAbove`, so a brand new node of any type lands solidly within its tier even when nothing of that type exists yet. Also added a third tier: text now seeds above shapes (`TEXT_BASE`, higher than `SHAPE_BASE`), a small enhancement bundled into the same fix at the user's request, since annotations reasonably belong on top of the shapes they label.
+**Resolution:** `nextZIndex` now always scopes to the node's own type and passes that type's own base floor into `nextZIndexAbove`, so a brand new node of any type lands solidly within its tier even when nothing of that type exists yet. Also added a third tier: text now seeds above shapes (`TEXT_BASE`, higher than `ENTITY_BASE`), a small enhancement bundled into the same fix at the user's request, since annotations reasonably belong on top of the shapes they label.
 
 **References:** `docs/planning/epics/0043-layer-order-control.md`'s Notes, `src/renderer/src/layers/zIndexOrdering.ts`, `src/renderer/src/Canvas.tsx`
 
@@ -590,7 +590,7 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 
 **Symptom:** a line bent into a U-shape (or any concave curve) could be selected — and dragged as a whole — by clicking anywhere inside its own empty interior, not just on the stroke. Reported as "it will end up blocking too much," with the user's own comparison: an edge only responds to a click fairly close to or on top of its path, a line didn't.
 
-**Root cause:** React Flow's default node hit-testing is the node's _rectangular_ `position`/`size` box — fine for Shape/Container/Text, which are always filled boxes anyway, but a line (epic 0064/ADR 0050 modeled it as a `DiagramNode`, specifically to reuse that box-based selection/drag/lock machinery) can be sparse and concave, so its tightest bounding rectangle routinely includes large stretches of genuinely empty space. `LineNode.tsx` already had a purpose-built wide invisible hit-stroke (for right-click "add point"), but nothing stopped React Flow's own wrapper `<div>` from independently claiming every click inside the whole box first.
+**Root cause:** React Flow's default node hit-testing is the node's _rectangular_ `position`/`size` box — fine for Entity/Container/Text, which are always filled boxes anyway, but a line (epic 0064/ADR 0050 modeled it as a `DiagramNode`, specifically to reuse that box-based selection/drag/lock machinery) can be sparse and concave, so its tightest bounding rectangle routinely includes large stretches of genuinely empty space. `LineNode.tsx` already had a purpose-built wide invisible hit-stroke (for right-click "add point"), but nothing stopped React Flow's own wrapper `<div>` from independently claiming every click inside the whole box first.
 
 **Resolution:** React Flow applies a node's `style` field (a real, normally-unused-in-this-codebase `Node` field, distinct from this app's own `data.style` convention) directly onto its own wrapper element — so setting `pointerEvents: 'none'` there (`Canvas.tsx`'s `zIndexedNodes`, `line`-typed nodes only) makes the _whole box_ click/drag-through by default. `pointer-events` is inherited but overridable per descendant, so `LineNode.tsx`'s existing invisible hit-stroke path (`pointerEvents: 'stroke'`) and its point handles (`pointer-events: auto` in CSS) each explicitly opt back in — only the curve itself, within the hit-stroke's tolerance, and its points stay interactive. **General lesson for any future node type whose visual shape doesn't fill its own rectangular bounding box**: React Flow's default click/drag hit-testing is the box, not the rendered content — the `Node.style` field is the documented escape hatch, not `data.style` or anything rendered inside the component.
 
@@ -696,12 +696,12 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 
 ---
 
-## "Attach contained shapes" can fling a node to the canvas origin
+## "Attach contained entities" can fling a node to the canvas origin
 
 **Status:** Solved (ADR 0075 / epic 0103, 2026-08-30) — pending the user's live test
 **Found:** 2026-08-29, live use by the user (same "Project Overview" diagram as the entry above)
 
-**Symptom:** selecting the container "Container B", right-click → "Attach contained shapes", and a node jumps to the top corner of the canvas.
+**Symptom:** selecting the container "Container B", right-click → "Attach contained entities" (formerly "Attach contained shapes"), and a node jumps to the top corner of the canvas.
 
 **Root cause:** `attachContainedNodes` (`Canvas.tsx`) builds its candidate set as `getIntersectingNodes(container, false).filter((n) => n.id !== containerId && !n.parentId)`. In this diagram the only match is **Container A** — it's top-level (passes `!n.parentId`) and fully inside Container B's rect (passes `getIntersectingNodes(..., false)`, whose `partially: false` branch also matches a node that fully covers _or_ is fully covered by the target). But Container A is Container B's own **parent** (see the entry above), so attaching it makes a parent cycle Container A → Container B → Container A. `absolutePosition` (`geometry/nodePosition.ts`) has a `seen`-set cycle break, but React Flow's own `updateChildNode`/`calculateChildXYZ` reads `parentNode.internals.positionAbsolute` for a parent that isn't positioned yet under a cycle → `{x: 0, y: 0}` → the node collapses toward the canvas origin. The drag-to-reparent path (`onNodeDragStop`) already guards this with an `isDescendantOf(candidateId, draggedId)` ancestry check; `attachContainedNodes` was never given the equivalent.
 

@@ -10,7 +10,7 @@ import {
 } from './styleBrush.ts'
 
 const shape = (style, extra = {}) => ({
-  type: 'shape',
+  type: 'entity',
   data: { label: 'A', style, ...extra }
 })
 
@@ -36,7 +36,7 @@ test('the target ends up matching the source, not a blend (unset fields are clea
 })
 
 test('a source with no style resets the target to defaults', () => {
-  const brush = captureNodeBrush({ type: 'shape', data: {} })
+  const brush = captureNodeBrush({ type: 'entity', data: {} })
   const next = applyBrushToNodeData(brush, { style: { fill: '#0f0' } })
   assert.deepEqual(next.style, {})
 })
@@ -57,16 +57,16 @@ test('applying does not share the brush’s object with the target', () => {
 
 test('only the same node type accepts the brush', () => {
   const brush = captureNodeBrush(shape({ fill: '#f00' }))
-  assert.equal(brushAppliesToNode(brush, { type: 'shape' }), true)
+  assert.equal(brushAppliesToNode(brush, { type: 'entity' }), true)
   assert.equal(brushAppliesToNode(brush, { type: 'container' }), false)
   assert.equal(brushAppliesToNode(brush, { type: 'text' }), false)
   assert.equal(brushAppliesToNode(brush, { type: 'line' }), false)
   // a node brush never applies where an edge brush was captured, and vice versa
-  assert.equal(brushAppliesToNode(captureEdgeBrush({ data: {} }), { type: 'shape' }), false)
+  assert.equal(brushAppliesToNode(captureEdgeBrush({ data: {} }), { type: 'entity' }), false)
 })
 
 test('an untyped node counts as a shape; an anchor cannot be a source', () => {
-  assert.equal(captureNodeBrush({ data: {} })?.nodeType, 'shape')
+  assert.equal(captureNodeBrush({ data: {} })?.nodeType, 'entity')
   assert.equal(captureNodeBrush({ type: 'anchor', data: {} }), null)
 })
 

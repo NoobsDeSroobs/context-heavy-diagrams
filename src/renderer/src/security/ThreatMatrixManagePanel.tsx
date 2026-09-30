@@ -98,41 +98,41 @@ interface ThreatMatrixManagePanelProps {
   anchorRect: DOMRect
   threats: SecurityThreat[]
   hiddenThreatIds: Set<string>
-  shapes: { id: string; label: string }[]
-  hiddenShapeIds: Set<string>
-  assessableShapes: { id: string; label: string }[]
-  onAddAllShapes: () => void
+  entities: { id: string; label: string }[]
+  hiddenEntityIds: Set<string>
+  assessableEntities: { id: string; label: string }[]
+  onAddAllEntities: () => void
   onAddThreat: (name: string) => void
   onRenameThreat: (id: string, name: string) => void
   onToggleThreatHidden: (id: string) => void
   onRemoveThreat: (id: string) => void
-  onAddShape: (nodeId: string) => void
-  onToggleShapeHidden: (nodeId: string) => void
-  onRemoveShape: (nodeId: string) => void
+  onAddEntity: (nodeId: string) => void
+  onToggleEntityHidden: (nodeId: string) => void
+  onRemoveEntity: (nodeId: string) => void
   onClose: () => void
 }
 
 // Grows/shrinks the matrix (ADR 0082). Threats are a free-text catalog;
-// shapes are picked from the diagram's own 'shape' nodes. Every row has a
+// entities are picked from the diagram's own 'entity' nodes. Every row has a
 // hide toggle (keep the data, drop it from the grid) distinct from remove
 // (delete it and its assessments). Reuses LegendPanel's dock-shell classes
-// (.legend-panel/-toolbar/-title/-body) and .legend-row shape, close via
+// (.legend-panel/-toolbar/-title/-body) and .legend-row layout, close via
 // ×-button only.
 export default function ThreatMatrixManagePanel({
   anchorRect,
   threats,
   hiddenThreatIds,
-  shapes,
-  hiddenShapeIds,
-  assessableShapes,
-  onAddAllShapes,
+  entities,
+  hiddenEntityIds,
+  assessableEntities,
+  onAddAllEntities,
   onAddThreat,
   onRenameThreat,
   onToggleThreatHidden,
   onRemoveThreat,
-  onAddShape,
-  onToggleShapeHidden,
-  onRemoveShape,
+  onAddEntity,
+  onToggleEntityHidden,
+  onRemoveEntity,
   onClose
 }: ThreatMatrixManagePanelProps): React.JSX.Element {
   const left = Math.min(anchorRect.left, window.innerWidth - PANEL_WIDTH - 8)
@@ -183,16 +183,18 @@ export default function ThreatMatrixManagePanel({
         </div>
 
         <div className="threat-matrix-manage-group">
-          <h3 className="threat-matrix-manage-title">Shapes</h3>
-          {shapes.length === 0 && <p className="legend-panel-hint">No shapes in the matrix yet.</p>}
-          {shapes.map((shape) => {
-            const hidden = hiddenShapeIds.has(shape.id)
+          <h3 className="threat-matrix-manage-title">Entities</h3>
+          {entities.length === 0 && (
+            <p className="legend-panel-hint">No entities in the matrix yet.</p>
+          )}
+          {entities.map((entity) => {
+            const hidden = hiddenEntityIds.has(entity.id)
             return (
               <div
-                key={shape.id}
+                key={entity.id}
                 className={hidden ? 'legend-row threat-matrix-manage-row-hidden' : 'legend-row'}
               >
-                <span className="legend-row-label">{shape.label}</span>
+                <span className="legend-row-label">{entity.label}</span>
                 <button
                   type="button"
                   className="threat-matrix-manage-hide"
@@ -200,25 +202,28 @@ export default function ThreatMatrixManagePanel({
                     hidden ? 'Show as a matrix column' : 'Hide from the matrix (keep the data)'
                   }
                   aria-label={hidden ? 'Show' : 'Hide'}
-                  onClick={() => onToggleShapeHidden(shape.id)}
+                  onClick={() => onToggleEntityHidden(entity.id)}
                 >
                   {hidden ? '🙈' : '👁'}
                 </button>
-                <ConfirmRemove what={`"${shape.label}"`} onRemove={() => onRemoveShape(shape.id)} />
+                <ConfirmRemove
+                  what={`"${entity.label}"`}
+                  onRemove={() => onRemoveEntity(entity.id)}
+                />
               </div>
             )
           })}
-          {assessableShapes.length > 0 ? (
+          {assessableEntities.length > 0 ? (
             <>
               <select
-                className="threat-matrix-add-shape-select"
+                className="threat-matrix-add-entity-select"
                 value=""
                 onChange={(event) => {
-                  if (event.target.value) onAddShape(event.target.value)
+                  if (event.target.value) onAddEntity(event.target.value)
                 }}
               >
-                <option value="">+ Add a shape to assess…</option>
-                {assessableShapes.map((s) => (
+                <option value="">+ Add an entity to assess…</option>
+                {assessableEntities.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.label}
                   </option>
@@ -227,15 +232,18 @@ export default function ThreatMatrixManagePanel({
               <button
                 type="button"
                 className="threat-matrix-add-button"
-                onClick={onAddAllShapes}
-                title="Add every shape in the diagram to the matrix"
+                onClick={onAddAllEntities}
+                title="Add every entity in the diagram to the matrix"
               >
-                + Add all {assessableShapes.length} shape{assessableShapes.length === 1 ? '' : 's'}
+                + Add all {assessableEntities.length}{' '}
+                {assessableEntities.length === 1 ? 'entity' : 'entities'}
               </button>
             </>
           ) : (
             <p className="legend-panel-hint">
-              {shapes.length > 0 ? 'Every shape is already in the matrix.' : 'Draw a shape first.'}
+              {entities.length > 0
+                ? 'Every entity is already in the matrix.'
+                : 'Draw an entity first.'}
             </p>
           )}
         </div>

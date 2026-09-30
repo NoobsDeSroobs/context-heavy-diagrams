@@ -10,7 +10,7 @@ interface ReferenceWindowProps {
   diagramPath: string | null
   nodeId: string
   path: string
-  // Owning shape's label, for the header.
+  // Owning entity's label, for the header.
   ownerLabel: string
   // Cascade offset so several opened at once don't stack exactly.
   index: number
@@ -226,7 +226,7 @@ export default function ReferenceWindow({
         <button
           type="button"
           className="reference-window-btn"
-          title="Remove this reference from the shape"
+          title="Remove this reference from the entity"
           aria-label="Remove reference"
           onClick={onRemove}
         >
@@ -235,7 +235,7 @@ export default function ReferenceWindow({
         <button
           type="button"
           className="reference-window-btn"
-          title="Close (keeps the reference on the shape)"
+          title="Close (keeps the reference on the entity)"
           aria-label="Close"
           onClick={onClose}
         >

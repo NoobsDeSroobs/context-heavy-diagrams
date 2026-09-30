@@ -205,7 +205,7 @@ export default function SearchOverlay({
         className="search-overlay-deep"
         title={
           deepSearchAvailable
-            ? 'Also search every diagram this one links to, and theirs in turn, including their notes. A shape whose linked diagrams contain a match counts as a match. Slower.'
+            ? 'Also search every diagram this one links to, and theirs in turn, including their notes. An entity whose linked diagrams contain a match counts as a match. Slower.'
             : 'Save the diagram first — its links have nowhere to resolve from yet'
         }
       >

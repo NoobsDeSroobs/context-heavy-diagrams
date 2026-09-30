@@ -19,7 +19,7 @@ export interface DiagramContextValue {
   openColorPicker: (nodeId: string, kind: 'fill' | 'border', anchorRect: DOMRect) => void
   // Fixed right-side dock — no anchor needed, it's not attached to the node.
   openDetailsPanel: (nodeId: string) => void
-  // Reference images (see ADR 0069). openReferencesFor: shape/
+  // Reference images (see ADR 0069). openReferencesFor: entity/
   // container right-click "Reference images…" — opens a floating viewer
   // window per attached reference, or the file picker if the node has none
   // yet. addReferencesToNode / removeReferenceFromNode: the property
@@ -45,7 +45,7 @@ export interface DiagramContextValue {
   // internal store directly), so nothing else observes them for undo
   // history. Call this immediately before the updateNodeData call.
   pushSnapshot: () => void
-  // Container's "Attach contained shapes" menu item — bulk
+  // Container's "Attach contained entities" menu item — bulk
   // version of the drag-in reparenting, for encapsulating a lot of
   // already-positioned free-floating nodes at once rather than one drag per
   // node. Only ever attaches currently-top-level nodes fully inside the
@@ -55,7 +55,7 @@ export interface DiagramContextValue {
   // A node's "Detach from parent" menu item (shown only when it has a
   // parentId) — clears parentId and rebases the node's position from
   // parent-relative to absolute so it stays put visually. The one-click
-  // inverse of drag-out / "Attach contained shapes" — see ADR 0075.
+  // inverse of drag-out / "Attach contained entities" — see ADR 0075.
   detachFromParent: (nodeId: string) => void
   // Every currently-enabled highlight matching this element's metadata —
   // see ADR 0025. Bound to Canvas's own highlights/enabled-set
@@ -113,9 +113,9 @@ export interface DiagramContextValue {
   isolateOpacity: number
   // See ADR 0065 — replaces the current selection with every element of one
   // type. Exposed here so each node type's own right-click context menu
-  // can offer "Select all shapes"/"...containers"/etc. without Canvas.tsx
+  // can offer "Select all entities"/"...containers"/etc. without Canvas.tsx
   // having to build every node's context menu itself.
-  selectAllOfType: (type: 'shape' | 'container' | 'text' | 'line' | 'edge') => void
+  selectAllOfType: (type: 'entity' | 'container' | 'text' | 'line' | 'edge') => void
   // Multi-select resize (ADR 0098) — the three resizable node types forward
   // their NodeResizer's start/resize/end here so Canvas can scale the rest of
   // the selection by the same percentage.

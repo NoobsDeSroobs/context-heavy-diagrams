@@ -22,11 +22,11 @@ import PropertyPanel, { type TransformPatch } from './PropertyPanel'
 function DiagramDock({
   selectedNodes,
   selectedEdges,
-  onAddShape,
+  onAddEntity,
   onAddText,
   onAddContainer,
   onAddLine,
-  onCreateMultipleShapes,
+  onCreateMultipleEntities,
   onCreateMultipleContainers,
   onUpdateNodeStyle,
   onUpdateEdgeStyle,
@@ -46,11 +46,11 @@ function DiagramDock({
 }: {
   selectedNodes: Node[]
   selectedEdges: Edge[]
-  onAddShape: () => void
+  onAddEntity: () => void
   onAddText: () => void
   onAddContainer: () => void
   onAddLine: () => void
-  onCreateMultipleShapes: () => void
+  onCreateMultipleEntities: () => void
   onCreateMultipleContainers: () => void
   onUpdateNodeStyle: (nodeIds: string[], patch: Partial<NodeStyle>) => void
   onUpdateEdgeStyle: (edgeIds: string[], patch: Partial<EdgeStyle>) => void
@@ -70,7 +70,7 @@ function DiagramDock({
   beginContinuousEdit: () => void
   endContinuousEdit: () => void
   pushSnapshot: () => void
-  onSetDefaultStyle: (type: 'shape' | 'container' | 'text', style: NodeStyle) => void
+  onSetDefaultStyle: (type: 'entity' | 'container' | 'text', style: NodeStyle) => void
   styleBrushActive: boolean
   onToggleStyleBrush: () => void
 }): React.JSX.Element {
@@ -104,11 +104,11 @@ function DiagramDock({
         />
       ) : (
         <ItemPalette
-          onAddShape={onAddShape}
+          onAddEntity={onAddEntity}
           onAddText={onAddText}
           onAddContainer={onAddContainer}
           onAddLine={onAddLine}
-          onCreateMultipleShapes={onCreateMultipleShapes}
+          onCreateMultipleEntities={onCreateMultipleEntities}
           onCreateMultipleContainers={onCreateMultipleContainers}
         />
       )}
