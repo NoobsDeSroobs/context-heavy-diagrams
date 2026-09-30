@@ -1,7 +1,7 @@
 # 0131: Multi-select resize scales every selected node
 
 ## Status
-Implemented (2026-09-23), live-tested on Windows by the user (2026-09-24; Linux unverified), on `epic/0131-multi-select-resize`, pending merge. See [ADR 0098](../../decisions/0098-multi-select-resize-percentage-scaling.md). `typecheck`/`lint`/`npm test` — see Tasks. From the first external feature request (the second half; the first, alt-drag duplicate, is [0132](0132-alt-drag-duplicate.md)).
+Implemented (2026-09-23), live-tested on Windows by the user (2026-09-24; Linux unverified), merged (#104). See [ADR 0098](../../decisions/0098-multi-select-resize-percentage-scaling.md). `typecheck`/`lint`/`npm test` — see Tasks. From the first external feature request (the second half; the first, alt-drag duplicate, is [0132](0132-alt-drag-duplicate.md)).
 
 ## Goal
 With several nodes selected, dragging any one node's resize handle resizes all of them by the same percentage, each in place — no reflow of the layout.

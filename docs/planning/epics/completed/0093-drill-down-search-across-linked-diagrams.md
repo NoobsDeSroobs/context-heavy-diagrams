@@ -1,7 +1,7 @@
 # 0093: Drill-down search across linked diagrams
 
 ## Status
-Implemented on `epic/0093-drill-down-search-across-linked-diagrams` (2026-09-21), `typecheck`/`lint`/`npm test` clean (82 tests), **not live-tested** (Electron renderer) — checklist below. See [ADR 0097](../../decisions/0097-deep-search-across-linked-diagrams.md).
+Implemented (2026-09-21), live-tested and confirmed working by the user, merged (#102). See [ADR 0097](../../decisions/0097-deep-search-across-linked-diagrams.md).
 
 ## Goal
 Extend [epic 0062](completed/0062-search-and-highlight-matches.md)'s search to reach into linked child diagrams (epic 0009's linked-diagram navigation), not just the currently-open one — useful when a diagram tree is large or not well-maintained enough for the user to already know where something lives.

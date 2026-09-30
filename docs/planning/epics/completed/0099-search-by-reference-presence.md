@@ -1,7 +1,7 @@
 # 0099: Search / isolate by reference presence
 
 ## Status
-Implemented 2026-09-20 (as a query language, not a checkbox) on `epic/0099-search-by-reference-presence` ([ADR 0096](../../decisions/0096-search-facets-and-shared-match-predicate.md)); `typecheck`/`lint`/`npm test` clean, **not live-tested** (Electron renderer). Split off [epic 0090](completed/0090-image-element.md) (2026-08-27, [ADR 0069](../../decisions/0069-reference-images.md)).
+Implemented 2026-09-20 (as a query language, not a checkbox, [ADR 0096](../../decisions/0096-search-facets-and-shared-match-predicate.md)); live-tested and confirmed working by the user, merged (#101). Split off [epic 0090](completed/0090-image-element.md) (2026-08-27, [ADR 0069](../../decisions/0069-reference-images.md)).
 
 ## Goal
 Make "has one or more reference images" (epic 0090) a matchable facet in the search overlay (epic 0062/ADR 0062), combinable with the existing free-text / tag matching — the user's illustrative example: `hasPicture = true & tag=GDPR.PII`. Since search feeds Isolate (epic 0063), this also makes "dim everything except shapes that carry a reference" work for free.

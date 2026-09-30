@@ -169,6 +169,14 @@ export const COMMANDS = [
     category: 'View',
     binding: { key: '0', mod: true }
   },
+  // Command palette (ADR 0100) — the widely-used single-key convention
+  // (Slack/Linear/Notion/Raycast) over VS Code's three-key Ctrl+Shift+P.
+  {
+    id: 'view.commandPalette',
+    title: 'Open command palette',
+    category: 'View',
+    binding: { key: 'k', mod: true }
+  },
   { id: 'view.pan', title: 'Pan the canvas', category: 'View', keys: 'Drag empty canvas' },
   { id: 'view.zoom', title: 'Zoom the canvas', category: 'View', keys: 'Mouse wheel' },
 

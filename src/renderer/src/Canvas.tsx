@@ -151,6 +151,8 @@ import PreferencesPanel from './components/PreferencesPanel'
 import AlignDistributePanel from './components/AlignDistributePanel'
 import AboutDialog from './components/AboutDialog'
 import ShortcutsDialog from './components/ShortcutsDialog'
+import CommandPalette from './components/CommandPalette'
+import { buildPaletteActions, type ExtraPaletteAction } from './paletteActions'
 import { acceleratorFor, findKeyCommand, type CommandId } from './commands'
 import {
   applyBrushToEdgeData,
@@ -1278,6 +1280,8 @@ function CanvasInner(): React.JSX.Element {
   const [persona, setPersona] = useState<'diagram' | 'matrix'>('diagram')
   const [aboutDialogOpen, setAboutDialogOpen] = useState(false)
   const [shortcutsDialogOpen, setShortcutsDialogOpen] = useState(false)
+  // Command palette (ADR 0100).
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
   const [exportPngDialogOpen, setExportPngDialogOpen] = useState(false)
   const [exportPngEffectiveColorHex, setExportPngEffectiveColorHex] = useState('#ffffff')
   // See ADR 0089 — right-click on the ItemPalette Shape/Container button.
@@ -2729,6 +2733,14 @@ function CanvasInner(): React.JSX.Element {
     setSearchIconPicker(null)
     clearSearchResults()
   }, [clearSearchResults])
+
+  // Shared by the Ctrl+F keydown handler and the command palette's "Open or
+  // close search" row (ADR 0100) — one place for the toggle logic instead of
+  // two copies drifting.
+  const toggleSearchOverlay = useCallback(() => {
+    if (searchOverlayOpen) closeSearchOverlay()
+    else setSearchOverlayOpen(true)
+  }, [searchOverlayOpen, closeSearchOverlay])
 
   // Auto-run on pick (ADR 0072) — same as IconPicker's own pick-and-close
   // flow: choosing an icon replaces whatever's in the text box, closes the
@@ -5402,10 +5414,9 @@ function CanvasInner(): React.JSX.Element {
       // no permanent toolbar button yet (see the ADR). Not deferring to text
       // fields: same as Ctrl+S/O/N/W, opening/closing search is a reasonable
       // thing to do regardless of what else has focus.
-      'search.toggle': () => {
-        if (searchOverlayOpen) closeSearchOverlay()
-        else setSearchOverlayOpen(true)
-      },
+      'search.toggle': toggleSearchOverlay,
+      // Command palette (ADR 0100).
+      'view.commandPalette': () => setCommandPaletteOpen(true),
       'selection.selectAll': selectAll,
       'edit.duplicate': duplicateSelected,
       // Ctrl+C defers to a live text selection (window.getSelection()) even
@@ -5428,7 +5439,12 @@ function CanvasInner(): React.JSX.Element {
       'edit.redo': redo,
       'view.fit': () => rfInstance.fitView(),
       'selection.escape': () => {
-        if (shortcutsDialogOpen) {
+        if (commandPaletteOpen) {
+          // The palette also has its own window-level Escape listener
+          // (CommandPalette.tsx) — same harmless redundancy as
+          // shortcutsDialogOpen just below.
+          setCommandPaletteOpen(false)
+        } else if (shortcutsDialogOpen) {
           setShortcutsDialogOpen(false)
         } else if (searchIconPicker) {
           // The search overlay's icon-browser popup — close just it, one
@@ -5508,8 +5524,10 @@ function CanvasInner(): React.JSX.Element {
     rfInstance,
     detailsPanelNodeId,
     searchOverlayOpen,
+    toggleSearchOverlay,
     searchIconPicker,
     shortcutsDialogOpen,
+    commandPaletteOpen,
     styleBrush,
     toggleStyleBrush,
     pasteStyleToSelection,
@@ -5895,10 +5913,17 @@ function CanvasInner(): React.JSX.Element {
     ]
   }
 
+  const commandPaletteItem: MenuBarItem = {
+    label: 'Command palette…',
+    accelerator: acceleratorFor('view.commandPalette'),
+    onSelect: () => setCommandPaletteOpen(true)
+  }
+
   const viewMenu: MenuBarMenu = {
     label: 'View',
     items: isDiagramPersona
       ? [
+          commandPaletteItem,
           {
             label: `Diagnostics${diagnosticsCount > 0 ? ` (${diagnosticsCount})` : ''}`,
             onSelect: toggleDiagnosticsPanel
@@ -5912,7 +5937,7 @@ function CanvasInner(): React.JSX.Element {
           { label: 'Diagram settings', onSelect: toggleDiagramSettingsPanel },
           preferencesItem
         ]
-      : [preferencesItem]
+      : [commandPaletteItem, preferencesItem]
   }
 
   const helpMenu: MenuBarMenu = {
@@ -5926,6 +5951,57 @@ function CanvasInner(): React.JSX.Element {
   const menus: MenuBarMenu[] = isDiagramPersona
     ? [fileMenu, editMenu, viewMenu, helpMenu]
     : [fileMenu, viewMenu, helpMenu]
+
+  // Command palette (ADR 0100): every menu leaf above, flattened, plus the
+  // few keyboard-only actions that have a real handler but no menu item of
+  // their own (see the ADR for why exactly these six).
+  const extraPaletteActions: ExtraPaletteAction[] = isDiagramPersona
+    ? [
+        {
+          id: 'edit.duplicate',
+          title: 'Duplicate selection',
+          category: 'Edit',
+          shortcut: acceleratorFor('edit.duplicate'),
+          run: duplicateSelected
+        },
+        {
+          id: 'selection.selectAll',
+          title: 'Select everything',
+          category: 'Selection',
+          shortcut: acceleratorFor('selection.selectAll'),
+          run: selectAll
+        },
+        {
+          id: 'style.copy',
+          title: 'Copy style',
+          category: 'Style',
+          shortcut: acceleratorFor('style.copy'),
+          run: toggleStyleBrush
+        },
+        {
+          id: 'style.paste',
+          title: 'Apply copied style to selection',
+          category: 'Style',
+          shortcut: acceleratorFor('style.paste'),
+          run: pasteStyleToSelection
+        },
+        {
+          id: 'view.fit',
+          title: 'Fit the whole diagram in view',
+          category: 'View',
+          shortcut: acceleratorFor('view.fit'),
+          run: () => rfInstance.fitView()
+        },
+        {
+          id: 'search.toggle',
+          title: 'Open or close search',
+          category: 'Search',
+          shortcut: acceleratorFor('search.toggle'),
+          run: toggleSearchOverlay
+        }
+      ]
+    : []
+  const paletteActions = buildPaletteActions(menus, extraPaletteActions)
 
   // Whichever named palette is active (ADR 0068), resolved live —
   // memoized on the two fields it depends on so the Context value below
@@ -6659,6 +6735,9 @@ function CanvasInner(): React.JSX.Element {
         })}
         {aboutDialogOpen && <AboutDialog onClose={() => setAboutDialogOpen(false)} />}
         {shortcutsDialogOpen && <ShortcutsDialog onClose={() => setShortcutsDialogOpen(false)} />}
+        {commandPaletteOpen && (
+          <CommandPalette actions={paletteActions} onClose={() => setCommandPaletteOpen(false)} />
+        )}
         <AlertDialog />
         <ConflictDialog />
         {bulkCreateType && (

@@ -1,7 +1,7 @@
 # 0081: Recursive matrix population and automation
 
 ## Status
-**Done — core feature complete, pending PR/merge (2026-09-10)**, on `epic/0081-recursive-matrix-population-and-automation`. The user's call: the recursive rollup as built is a complete, shippable feature on its own — items 1/3/4/5 + the worked example, live-confirmed working (derived columns, broken-link cells, downstream-only note, mode changes flowing down the tree). The remaining automation polish (scope tagging, crawl throttle, reserved property field, double-count safety net, virtual rows) is **split out to [epic 0116](0116-security-rollup-automation-polish.md)** — each its own branch, per the user.
+**Done and merged (#92).** The user's call: the recursive rollup as built is a complete, shippable feature on its own — items 1/3/4/5 + the worked example, live-confirmed working (derived columns, broken-link cells, downstream-only note, mode changes flowing down the tree). The remaining automation polish (scope tagging, crawl throttle, reserved property field, double-count safety net, virtual rows) is **split out to [epic 0116](0116-security-rollup-automation-polish.md)** — each its own branch, per the user.
 
 Split off epic 0060 on its closure (2026-08-25), consolidating the recursion/automation vision from that epic's Notes rounds 7–10. Depends on [epic 0079](completed/0079-security-data-as-diagram-element-property.md) — landed (PR #85).
 

@@ -1,7 +1,7 @@
 # 0128: External change detection and save-conflict warning
 
 ## Status
-Implemented 2026-09-19 on `epic/0128-external-change-detection-and-save-conflict-warning` — `typecheck`/`lint` clean, **NOT live-tested** (Electron). See [ADR 0091](../../decisions/0091-external-change-detection.md). Originally: design agreed with the user 2026-09-19. (Raised from the brainstorm: files here are edited
+Implemented 2026-09-19 — live-tested and confirmed working by the user, merged (#95). See [ADR 0091](../../decisions/0091-external-change-detection.md). Originally: design agreed with the user 2026-09-19. (Raised from the brainstorm: files here are edited
 outside the app — the user's own editor for details `.md` files, `git checkout`,
 and Claude editing `.chd` files directly — so a window can silently hold a stale
 copy, and saving from it would silently overwrite the outside change.)

@@ -3389,6 +3389,94 @@ body {
   color: var(--ev-c-text-3);
 }
 
+/* Command palette (CommandPalette.tsx, ADR 0100) — top-anchored, not
+   centered like About/Shortcuts: a type-and-go launcher, not a reference
+   page. */
+.command-palette-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  padding-top: 12vh;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.command-palette {
+  width: 560px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 24vh);
+  display: flex;
+  flex-direction: column;
+  background: var(--color-background-soft);
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+
+.command-palette-input {
+  padding: 12px 14px;
+  font-size: 14px;
+  border: none;
+  border-bottom: 1px solid var(--ev-c-gray-2);
+  background: transparent;
+  color: var(--color-text);
+}
+
+.command-palette-input:focus {
+  outline: none;
+}
+
+.command-palette-list {
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.command-palette-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 8px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.command-palette-row.highlighted {
+  background: var(--color-background-mute);
+}
+
+.command-palette-title {
+  flex: none;
+}
+
+.command-palette-category {
+  flex: 1;
+  color: var(--ev-c-text-3);
+  font-size: 12px;
+}
+
+.command-palette-shortcut {
+  flex: none;
+  font-family: inherit;
+  font-size: 12px;
+  background: var(--color-background-mute);
+  border-radius: 3px;
+  padding: 1px 6px;
+}
+
+.command-palette-empty {
+  margin: 10px 8px;
+  color: var(--ev-c-text-3);
+  font-size: 13px;
+}
+
 /* showAlert()'s dialog (AlertDialog.tsx) — reuses the About dialog shell.
    Above the About/bulk-create overlays (z-index 100) since an error can fire
    while one of those is open. The message is explicitly selectable: that is

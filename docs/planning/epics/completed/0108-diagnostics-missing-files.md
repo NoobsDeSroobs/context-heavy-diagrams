@@ -4,8 +4,7 @@
 
 Done — implemented, `typecheck`/`lint`/`build` clean, live-tested and
 confirmed working by the user (2026-09-04), including the paste-retargeting
-follow-up (ADR 0085). On `epic/0108-diagnostics-broken-links`, pending
-PR/merge.
+follow-up (ADR 0085). Merged (#87).
 
 ## Goal
 

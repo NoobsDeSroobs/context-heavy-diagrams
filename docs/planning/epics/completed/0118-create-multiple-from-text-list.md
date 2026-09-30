@@ -1,7 +1,7 @@
 # 0118: Create multiple shapes/containers from a pasted text list
 
 ## Status
-In Progress, on `epic/0118-create-multiple-from-text-list`.
+Done — live-tested and confirmed working by the user, merged (squash).
 
 ## Goal
 
@@ -13,7 +13,7 @@ Right-click the Shape or Container button in the "Add to diagram" dock palette t
 - [x] `Canvas.tsx`: `addMultipleNodes(type, labels)` — grid layout, one undo step, same per-type defaults as the existing single-add callbacks
 - [x] `ItemPalette.tsx` / `DiagramDock.tsx`: right-click on Shape/Container buttons opens the dialog
 - [x] `typecheck` / `lint`
-- [ ] Live test in the Electron renderer (user)
+- [x] Live test in the Electron renderer (user)
 
 ## Notes
 

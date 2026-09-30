@@ -1,7 +1,7 @@
 # 0113: Reverse direction on an edge selection
 
 ## Status
-Done (2026-09-05), on `epic/0113-reverse-edge-direction-on-selection`, pending live test/merge. See [ADR 0087](../../decisions/0087-reverse-edge-direction-on-selection.md). `typecheck`/`lint` clean.
+Done (2026-09-05), live-tested and confirmed working by the user, merged (#91). See [ADR 0087](../../decisions/0087-reverse-edge-direction-on-selection.md). `typecheck`/`lint` clean.
 
 ## Goal
 Let the user flip the direction of several edges at once: select a group of edges (by any existing means), then reverse all of them in one action — instead of right-clicking "Reverse direction" on each edge in turn.

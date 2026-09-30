@@ -73,3 +73,7 @@ test('formatting: bindings and display-only entries', () => {
   const follow = COMMANDS.find((c) => c.id === 'links.follow')
   assert.equal(formatKeys(follow), 'Ctrl+Click')
 })
+
+test('Ctrl+K opens the command palette', () => {
+  assert.equal(findKeyCommand(key('k', { ctrlKey: true }), false)?.id, 'view.commandPalette')
+})
