@@ -20,6 +20,7 @@ export interface RequiredTagsWalkResult {
 
 export interface DiagramApi {
   openDiagramAtPath(path: string): Promise<{ diagram: DiagramFile; stamp: Stamp }>
+  rereadDiagramForDiff(path: string): Promise<DiagramFile | null>
   saveDocument(request: SaveDocumentRequest): Promise<SaveOutcome>
   pickSavePath(): Promise<string | null>
   pickAndCopyCustomIcon(diagramPath: string): Promise<string | null>
@@ -91,7 +92,7 @@ export interface DiagramApi {
   checkRecoveryForPath(path: string): Promise<RecoverySnapshot | null>
   onRecoveredOrphan(callback: (snapshot: RecoverySnapshot) => void): () => void
   onCloseRequested(callback: () => void): () => void
-  requestCloseDecision(): Promise<'save' | 'discard' | 'cancel'>
+  requestCloseDecision(detail?: string): Promise<'save' | 'discard' | 'cancel'>
   closeApproved(path: string | null, sessionId: string): Promise<void>
   readPreferences(): Promise<AppPreferences | null>
   writePreferences(preferences: AppPreferences): Promise<void>

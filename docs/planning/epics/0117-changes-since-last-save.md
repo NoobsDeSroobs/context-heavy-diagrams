@@ -1,9 +1,12 @@
 # 0117: "Changes since last save" overview
 
 ## Status
-Not Started — logged 2026-09-11 from a user ask. The user's own framing:
-"Right now, there is no way to know what has changed without doing the save
-and checking git. If I do not want to save, that is not good enough."
+Implemented (2026-10-01), on `epic/0117-changes-since-last-save`, pending
+live test/PR/merge. See [ADR 0102](../decisions/0102-changes-since-last-save-scope.md)
+for v1 scope and mechanism. `typecheck`/`lint`/`npm test`/`npm run build`
+clean (109 tests, 9 new). Logged 2026-09-11 from a user ask. The user's own
+framing: "Right now, there is no way to know what has changed without doing
+the save and checking git. If I do not want to save, that is not good enough."
 
 ## Goal
 An on-demand view of what's changed in the currently-open diagram versus the
@@ -43,18 +46,28 @@ security-matrix rollup crawl ([epic 0081](0081-recursive-matrix-population-and-a
   `dialog.showMessageBox`** — buttons + plain text, no list, nothing
   clickable. A rich, reviewable diff can't live inside it.
 
-## Recommended shape (not decided — for the design pass)
-- **A dock panel/window**, same UI family as Diagnostics/Layers: grouped
-  Added / Removed / Modified sections, each row click → select + frame the
-  element on canvas (reuses the existing reveal-on-canvas mechanism).
-  Openable any time (View menu / toolbar), not gated on closing.
-- **The native close-prompt stays native** (rewriting it to a custom in-app
-  modal is a separate, larger, riskier change to ADR 0040's close flow) but
-  gains a cheap one-line count in its `detail` text — e.g. "3 modified, 1
-  added, 1 removed — see View → Changes to review" — computed from the same
-  diff engine.
-- Whether to also offer this at Discard-confirmation time specifically
-  (vs. every close) is an open question for the design pass.
+## Decided 2026-10-01: shape and v1 scope
+
+See [ADR 0102](../decisions/0102-changes-since-last-save-scope.md) for the
+full record. Summary:
+- **v1 diffs nodes/edges only** — the 8 top-level collections
+  (`requiredTags`, `highlights`, `legend`, `gravityPresets`, `security`,
+  `edgeDirectionSets`, `metadata`, `maxConnectionPointsPerSide`) are a
+  fast-follow, not v1.
+- **A dock panel**, same UI family as Diagnostics/Layers: grouped Added /
+  Removed / Modified sections, each row click → select + frame the element
+  on canvas (reuses `revealNode`). Openable any time (View menu / command
+  palette), not gated on closing.
+- **Details-file edits get their own bucket**, reusing `noteShadows`'
+  existing `dirty` flag (ADR 0092) — no new tracking, no content diff.
+- **The native close-prompt stays native**, gains a one-line count via a new
+  optional `detail` parameter on `requestCloseDecision`. No separate
+  Discard-specific gate — Cancel is the existing safety net.
+- **Mechanism**: a new side-effect-free IPC (never calls
+  `recordOpenedOrSaved`, same precedent as `security:crawlLinked`) rereads
+  the file at `currentPath` via `openDiagramAtPath`; a new pure
+  `src/shared/changesSinceSave.ts` diffs it against `toDiagramFile(...)`'s
+  live output by id.
 
 ## Future extension, deliberately not designed yet (2026-09-11, refined 2026-09-11)
 
@@ -116,6 +129,16 @@ mechanism alongside undo/redo. This concern doesn't apply to whole-element
 revert (see above) — it would only resurface if per-field granularity is
 ever wanted.
 </details>
+
+## Tasks
+- [x] Design pass — ADR 0102 (v1 scope, mechanism)
+- [x] `src/shared/changesSinceSave.ts` — pure id-keyed node/edge diff (added/removed/modified, modified rows list which fields differ), unit-tested (`changesSinceSave.test.mjs`)
+- [x] Side-effect-free `diagram:rereadForDiff` IPC (main + preload + `.d.ts`)
+- [x] `ChangesPanel.tsx` — dock panel, grouped Modified/Added/Removed sections, row click → `focusSearchMatch` (works for both nodes and edges); Details-changed bucket from `noteShadows`' existing dirty flag
+- [x] Wire into View menu + `commands.ts` (`view.changesSinceLastSave`) — shows up in the command palette for free (ADR 0100 flattens the menu bar); no shortcut assigned
+- [x] Extend `requestCloseDecision` with optional `detail?: string`, computed from the diff via `buildCloseChangesSummary`, forwarded into the native dialog
+- [x] `typecheck` / `lint` / `npm run build` clean
+- [ ] Live test in the Electron renderer (user)
 
 ## Relationship to existing behavior
 - Diff engine + panel is purely additive; no `.chd` schema change.

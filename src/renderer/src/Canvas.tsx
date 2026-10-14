@@ -53,6 +53,7 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import {
+  createEmptyDiagram,
   type AggregateMethod,
   type CombineMethod,
   type ConnectionPoint,
@@ -76,6 +77,7 @@ import {
   type RiskCell
 } from '@shared/diagram'
 import type { SecurityCrawlResult } from '@shared/threatMatrixMath'
+import { diffDiagrams, summarizeChanges, type ChangesSinceSave } from '@shared/changesSinceSave'
 import EntityNode, { ENTITY_MIN_WIDTH, ENTITY_MIN_HEIGHT } from './nodes/EntityNode'
 import TextNode, { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from './nodes/TextNode'
 import ContainerNode, { CONTAINER_MIN_WIDTH, CONTAINER_MIN_HEIGHT } from './nodes/ContainerNode'
@@ -101,6 +103,7 @@ import ColorPickerPopup from './components/ColorPickerPopup'
 import StylePicker from './components/StylePicker'
 import DetailsPanel from './components/DetailsPanel'
 import DiagnosticsPanel, { type MissingFileEntry } from './components/DiagnosticsPanel'
+import ChangesPanel, { type DetailsChangedEntry } from './components/ChangesPanel'
 import HighlightsPanel from './components/HighlightsPanel'
 import SearchOverlay from './components/SearchOverlay'
 import {
@@ -1228,6 +1231,11 @@ function CanvasInner(): React.JSX.Element {
   const [stagedFileRemovals, setStagedFileRemovals] = useState<MissingFileEntry[]>([])
   const [dismissedFileKeys, setDismissedFileKeys] = useState<Set<string>>(new Set())
   const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false)
+  // "Changes since last save" (epic 0117, ADR 0102) — v1 scope, nodes/edges
+  // only. null means "not computed yet" (opening the panel triggers the
+  // async reread), distinct from an empty diff (no changes).
+  const [changesPanelOpen, setChangesPanelOpen] = useState(false)
+  const [changesDiff, setChangesDiff] = useState<ChangesSinceSave | null>(null)
   const [highlightsPanelOpen, setHighlightsPanelOpen] = useState(false)
   // Floating popup next to Legend's, in the bottom-left <Controls> cluster
   // (fix/highlights-free-tags-and-toggle) — same anchorRect convention as
@@ -1783,6 +1791,7 @@ function CanvasInner(): React.JSX.Element {
       setAlignDistributePanelOpen(false)
       setDiagramSettingsPanelOpen(false)
       setReferencesPanelOpen(false)
+      setChangesPanelOpen(false)
       setDetailsPanelNodeId(nodeId)
       // No-existing-file (or nothing saved yet to resolve one against) is
       // seeded synchronously right here rather than in the effect below
@@ -1814,6 +1823,7 @@ function CanvasInner(): React.JSX.Element {
     setAlignDistributePanelOpen(false)
     setDiagramSettingsPanelOpen(false)
     setReferencesPanelOpen(false)
+    setChangesPanelOpen(false)
     setDiagnosticsPanelOpen((open) => !open)
   }, [])
 
@@ -1825,6 +1835,7 @@ function CanvasInner(): React.JSX.Element {
     setAlignDistributePanelOpen(false)
     setDiagramSettingsPanelOpen(false)
     setReferencesPanelOpen(false)
+    setChangesPanelOpen(false)
     setPreferencesPanelOpen((open) => !open)
   }, [])
 
@@ -1836,6 +1847,7 @@ function CanvasInner(): React.JSX.Element {
     setAlignDistributePanelOpen(false)
     setDiagramSettingsPanelOpen(false)
     setReferencesPanelOpen(false)
+    setChangesPanelOpen(false)
     setStylePalettePanelOpen((open) => !open)
   }, [])
 
@@ -1847,6 +1859,7 @@ function CanvasInner(): React.JSX.Element {
     setStylePalettePanelOpen(false)
     setDiagramSettingsPanelOpen(false)
     setReferencesPanelOpen(false)
+    setChangesPanelOpen(false)
     setAlignDistributePanelOpen((open) => !open)
   }, [])
 
@@ -1867,6 +1880,7 @@ function CanvasInner(): React.JSX.Element {
     setDiagramSettingsPanelOpen(false)
     setEntityHighlightNodeId(null)
     setReferencesPanelOpen(false)
+    setChangesPanelOpen(false)
     setLayerPanelOpen((open) => !open)
   }, [])
 
@@ -1878,6 +1892,7 @@ function CanvasInner(): React.JSX.Element {
     setStylePalettePanelOpen(false)
     setAlignDistributePanelOpen(false)
     setReferencesPanelOpen(false)
+    setChangesPanelOpen(false)
     setDiagramSettingsPanelOpen((open) => !open)
   }, [])
 
@@ -1889,8 +1904,66 @@ function CanvasInner(): React.JSX.Element {
     setStylePalettePanelOpen(false)
     setAlignDistributePanelOpen(false)
     setDiagramSettingsPanelOpen(false)
+    setChangesPanelOpen(false)
     setReferencesPanelOpen((open) => !open)
   }, [])
+
+  // Recomputes the disk-vs-memory diff (epic 0117, ADR 0102) — a
+  // side-effect-free reread (never recordOpenedOrSaved) via
+  // rereadDiagramForDiff, diffed against the same toDiagramFile() shape the
+  // real save path uses. A never-saved diagram (currentPath null) diffs
+  // against createEmptyDiagram().
+  const computeChangesDiff = useCallback(async () => {
+    const saved = currentPath
+      ? ((await window.api.rereadDiagramForDiff(currentPath)) ?? createEmptyDiagram())
+      : createEmptyDiagram()
+    const current = toDiagramFile(
+      nodes,
+      edges,
+      diagramMetadata,
+      requiredTags,
+      highlights,
+      legend,
+      gravityPresets,
+      diagramMaxConnectionPointsPerSide,
+      edgeDirectionSets,
+      activeEdgeDirectionSetId,
+      security
+    )
+    setChangesDiff(diffDiagrams(saved, current))
+  }, [
+    currentPath,
+    nodes,
+    edges,
+    diagramMetadata,
+    requiredTags,
+    highlights,
+    legend,
+    gravityPresets,
+    diagramMaxConnectionPointsPerSide,
+    edgeDirectionSets,
+    activeEdgeDirectionSetId,
+    security
+  ])
+
+  const toggleChangesPanel = useCallback(() => {
+    setDetailsPanelNodeId(null)
+    setDiagnosticsPanelOpen(false)
+    setPreferencesPanelOpen(false)
+    setLayerPanelOpen(false)
+    setStylePalettePanelOpen(false)
+    setAlignDistributePanelOpen(false)
+    setDiagramSettingsPanelOpen(false)
+    setReferencesPanelOpen(false)
+    setChangesPanelOpen((open) => {
+      const next = !open
+      if (next) {
+        setChangesDiff(null)
+        void computeChangesDiff()
+      }
+      return next
+    })
+  }, [computeChangesDiff])
 
   // Persona switch (ADR 0079). Switching to the Security Matrix closes the
   // diagram-only utility-dock panels so a stale Layers/Diagnostics/etc.
@@ -1906,6 +1979,7 @@ function CanvasInner(): React.JSX.Element {
       setAlignDistributePanelOpen(false)
       setDiagramSettingsPanelOpen(false)
       setReferencesPanelOpen(false)
+      setChangesPanelOpen(false)
       setDefaultEdgeStylePicker(null)
     }
   }, [])
@@ -4780,6 +4854,8 @@ function CanvasInner(): React.JSX.Element {
       setAlignDistributePanelOpen(false)
       setDiagramSettingsPanelOpen(false)
       setReferencesPanelOpen(false)
+      setChangesPanelOpen(false)
+      setChangesDiff(null)
       setReferenceWindows([])
       setSearchOverlayOpen(false)
       setSearchQuery('')
@@ -4968,6 +5044,36 @@ function CanvasInner(): React.JSX.Element {
     [persistDiagram]
   )
 
+  // One-line change-count for the close-prompt's native dialog (epic 0117,
+  // ADR 0102) — reads the same autosaveStateRef the autosave snapshot uses,
+  // for the same "don't rebind this listener on every nodes/edges change"
+  // reason. Best-effort: any failure (e.g. an unreadable file) just omits
+  // the detail line rather than blocking the close flow.
+  const buildCloseChangesSummary = useCallback(async (): Promise<string | undefined> => {
+    const s = autosaveStateRef.current
+    try {
+      const saved = s.currentPath
+        ? ((await window.api.rereadDiagramForDiff(s.currentPath)) ?? createEmptyDiagram())
+        : createEmptyDiagram()
+      const current = toDiagramFile(
+        s.nodes,
+        s.edges,
+        s.diagramMetadata,
+        s.requiredTags,
+        s.highlights,
+        s.legend,
+        s.gravityPresets,
+        s.diagramMaxConnectionPointsPerSide,
+        s.edgeDirectionSets,
+        s.activeEdgeDirectionSetId,
+        s.security
+      )
+      return summarizeChanges(diffDiagrams(saved, current)) || undefined
+    } catch {
+      return undefined
+    }
+  }, [])
+
   useEffect(() => {
     return window.api.onCloseRequested(async () => {
       const {
@@ -4979,7 +5085,7 @@ function CanvasInner(): React.JSX.Element {
         window.api.closeApproved(pathNow, sessionIdRef.current)
         return
       }
-      const decision = await window.api.requestCloseDecision()
+      const decision = await window.api.requestCloseDecision(await buildCloseChangesSummary())
       if (decision === 'cancel') return
       if (decision === 'discard') {
         window.api.closeApproved(pathNow, sessionIdRef.current)
@@ -4988,7 +5094,7 @@ function CanvasInner(): React.JSX.Element {
       const savedPath = await performSaveNow(nodesNow, pathNow)
       if (savedPath) window.api.closeApproved(savedPath, sessionIdRef.current)
     })
-  }, [performSaveNow])
+  }, [performSaveNow, buildCloseChangesSummary])
 
   // "Save changes, Open Here" (drop onto a dirty window) —
   // main shows the dialog and asks back here since it can't perform the
@@ -5417,6 +5523,8 @@ function CanvasInner(): React.JSX.Element {
       'search.toggle': toggleSearchOverlay,
       // Command palette (ADR 0100).
       'view.commandPalette': () => setCommandPaletteOpen(true),
+      // "Changes since last save" (epic 0117, ADR 0102).
+      'view.changesSinceLastSave': toggleChangesPanel,
       'selection.selectAll': selectAll,
       'edit.duplicate': duplicateSelected,
       // Ctrl+C defers to a live text selection (window.getSelection()) even
@@ -5468,6 +5576,8 @@ function CanvasInner(): React.JSX.Element {
           setDiagramSettingsPanelOpen(false)
         } else if (referencesPanelOpen) {
           setReferencesPanelOpen(false)
+        } else if (changesPanelOpen) {
+          setChangesPanelOpen(false)
         } else if (referenceWindows.length > 0) {
           setReferenceWindows((prev) => prev.slice(0, -1))
         } else if (iconPicker) {
@@ -5539,6 +5649,8 @@ function CanvasInner(): React.JSX.Element {
     alignDistributePanelOpen,
     diagramSettingsPanelOpen,
     referencesPanelOpen,
+    changesPanelOpen,
+    toggleChangesPanel,
     referenceWindows,
     iconPicker,
     colorPicker,
@@ -5795,6 +5907,19 @@ function CanvasInner(): React.JSX.Element {
     () => missingFiles.filter((m) => !dismissedFileKeys.has(m.key)),
     [missingFiles, dismissedFileKeys]
   )
+
+  // "Changes since last save" Details bucket (epic 0117, ADR 0102) — reuses
+  // noteShadows' existing dirty flag (ADR 0092) directly, no new tracking.
+  const detailsChangedEntries: DetailsChangedEntry[] = useMemo(
+    () =>
+      Object.values(noteShadows)
+        .filter((s) => s.dirty)
+        .map((s) => ({
+          nodeId: s.nodeId,
+          label: String(nodes.find((n) => n.id === s.nodeId)?.data?.label ?? '') || '(unlabeled)'
+        })),
+    [noteShadows, nodes]
+  )
   // Count on the View-menu "Diagnostics (N)" label — undecided missing
   // files + staged removals (a nudge to save), never dismissed ones.
   const diagnosticsCount =
@@ -5927,6 +6052,11 @@ function CanvasInner(): React.JSX.Element {
           {
             label: `Diagnostics${diagnosticsCount > 0 ? ` (${diagnosticsCount})` : ''}`,
             onSelect: toggleDiagnosticsPanel
+          },
+          {
+            label: 'Changes since last save…',
+            accelerator: acceleratorFor('view.changesSinceLastSave'),
+            onSelect: toggleChangesPanel
           },
           { label: 'Layers', onSelect: toggleLayerPanel },
           {
@@ -6620,6 +6750,16 @@ function CanvasInner(): React.JSX.Element {
               onStageRemoval={stageMissingFileRemoval}
               onUnstageRemoval={unstageMissingFileRemoval}
               onClose={() => setDiagnosticsPanelOpen(false)}
+            />
+          )}
+          {changesPanelOpen && (
+            <ChangesPanel
+              diff={changesDiff}
+              detailsChanged={detailsChangedEntries}
+              neverSaved={currentPath === null}
+              onRefresh={() => void computeChangesDiff()}
+              onReveal={focusSearchMatch}
+              onClose={() => setChangesPanelOpen(false)}
             />
           )}
           {layerPanelOpen && (

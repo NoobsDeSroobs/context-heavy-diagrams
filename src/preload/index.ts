@@ -83,6 +83,13 @@ const api = {
     return ipcRenderer.invoke('diagram:openPath', path)
   },
 
+  // Side-effect-free reread for "changes since last save" (epic 0117,
+  // ADR 0102) — unlike openDiagramAtPath, never records the file as
+  // opened/recent. Resolves null if the path no longer resolves.
+  rereadDiagramForDiff(path: string): Promise<DiagramFile | null> {
+    return ipcRenderer.invoke('diagram:rereadForDiff', path)
+  },
+
   // The one "did a file change on disk since I last looked" check (ADR 0092),
   // for the diagram (relPath null) and/or notes (folder-relative paths).
   checkFiles(
@@ -286,8 +293,10 @@ const api = {
     return () => ipcRenderer.off('window:closeRequested', listener)
   },
 
-  requestCloseDecision(): Promise<'save' | 'discard' | 'cancel'> {
-    return ipcRenderer.invoke('windows:requestCloseDecision')
+  // `detail` (epic 0117, ADR 0102): an optional one-line change-count
+  // ("3 modified, 1 added") shown in the native dialog's detail text.
+  requestCloseDecision(detail?: string): Promise<'save' | 'discard' | 'cancel'> {
+    return ipcRenderer.invoke('windows:requestCloseDecision', detail)
   },
 
   closeApproved(path: string | null, sessionId: string): Promise<void> {

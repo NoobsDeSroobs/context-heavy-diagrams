@@ -1,7 +1,7 @@
 # 0076: Rename "Shape" to "Entity"
 
 ## Status
-**Name decided and the full code/`.chd` rename implemented and live-tested (2026-09-30).** See [ADR 0101](../decisions/0101-shape-to-entity-rename.md) for the rename itself (scope, alias-on-read mechanism, what's deferred). `typecheck`/`lint`/`npm test` clean (100 tests). Confirmed working by the user in the Electron renderer — pending PR/merge. Raised by the user (2026-08-24) alongside epic 0060 design work, but unrelated to it.
+**Done — merged to `master`** (PR #107). Name decided and the full code/`.chd` rename implemented and live-tested (2026-09-30). See [ADR 0101](../../decisions/0101-shape-to-entity-rename.md) for the rename itself (scope, alias-on-read mechanism, what's deferred). `typecheck`/`lint`/`npm test` clean (100 tests). Confirmed working by the user in the Electron renderer. Raised by the user (2026-08-24) alongside epic 0060 design work, but unrelated to it. Follow-up (deferred on purpose, not part of this epic): the 28 example `.chd` files under `examples/` still say `"shape"` — folded into the next 0022 gallery pass.
 
 ## Goal
 The user's own framing: a Shape and a Container remain conceptually different things even if every style property is set identically between them — a Container represents grouping/boundary, a Shape represents a standalone entity. "Shape" undersells that distinction, reading as a purely geometric/visual term rather than a semantic category. Something like "Concept" (or another name capturing "a distinct thing in the system," independent of how it's styled) might fit better.
@@ -33,11 +33,11 @@ Two objections considered and not treated as blocking: it's visually/phoneticall
 
 ## Decided 2026-09-30: the code/`.chd` rename is implemented
 
-The user's original plan was to do this part themselves, but reconsidered once the actual scope became clear (561 raw matches across 58 source files) and asked for it to be done as one pass instead. See [ADR 0101](../decisions/0101-shape-to-entity-rename.md) for the full decision record. Summary:
+The user's original plan was to do this part themselves, but reconsidered once the actual scope became clear (561 raw matches across 58 source files) and asked for it to be done as one pass instead. See [ADR 0101](../../decisions/0101-shape-to-entity-rename.md) for the full decision record. Summary:
 
 - **Full rename** — stored `.chd` values (`type`, legend `kind`, `DiagramSecurity`'s id-list field names), every code identifier (`ShapeNode.tsx` → `EntityNode.tsx`, constants, functions, the threat-matrix internals), CSS classes, and every user-visible string.
 - **Alias on read, rewrite on write, no `version` bump** — `normalizeLegacyFields` in `parseDiagram` (`src/shared/diagram.ts`) accepts the old names and normalizes immediately on load; `serializeDiagram` only ever writes the current ones. Same treatment applied to the one local-preferences case (`defaultStyles.shape` → `.entity`) in `normalizePreferences`.
-- **[docs/file-format.md](../file-format.md) updated** — canonical names throughout, the legacy synonym documented inline at each affected field, and a new Versioning-section entry logging the rename.
+- **[docs/file-format.md](../../file-format.md) updated** — canonical names throughout, the legacy synonym documented inline at each affected field, and a new Versioning-section entry logging the rename.
 - **Deferred, on purpose:** the 28 example `.chd` files under `examples/` still say `"shape"` — they load fine via the alias; rewriting them to the current name is its own follow-up task, after this lands and is tested.
 
 ## Candidate names (2026-09-07, logged for context — superseded by the 2026-09-30 decision above)

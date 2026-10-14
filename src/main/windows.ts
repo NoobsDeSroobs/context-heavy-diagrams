@@ -358,7 +358,13 @@ export function registerWindowHandlers(): void {
   // stays entirely in the renderer's existing save flow; main only shows
   // the native 3-button dialog and, once told the close is approved,
   // cleans up the recovery file and lets the window actually close.
-  ipcMain.handle('windows:requestCloseDecision', async (event) => {
+  // `detail` (epic 0117, ADR 0102) is a one-line change-count computed
+  // renderer-side from the same diff engine the Changes panel uses — main
+  // only forwards it into the native dialog, same "main owns dialog
+  // mechanics, renderer owns what to compute" split as the rest of this
+  // handler. Absent/empty means no detail line (e.g. a never-saved diagram
+  // with nothing yet worth summarizing).
+  ipcMain.handle('windows:requestCloseDecision', async (event, detail?: string) => {
     const win = BrowserWindow.fromWebContents(event.sender)
     const options = {
       type: 'question' as const,
@@ -366,7 +372,8 @@ export function registerWindowHandlers(): void {
       defaultId: 0,
       cancelId: 2,
       title: 'Unsaved changes',
-      message: 'Save changes before closing this window?'
+      message: 'Save changes before closing this window?',
+      ...(detail ? { detail } : {})
     }
     const result = win
       ? await dialog.showMessageBox(win, options)

@@ -1589,6 +1589,7 @@ body {
    below (fix/highlights-free-tags-and-toggle). */
 .required-tags-panel,
 .diagnostics-panel,
+.changes-panel,
 .layer-panel,
 .preferences-panel,
 .align-distribute-panel {
@@ -3258,6 +3259,74 @@ body {
 .diagnostics-missing-file-staged {
   border-left-color: var(--ev-c-gray-2);
   opacity: 0.75;
+}
+
+/* "Changes since last save" panel (epic 0117, ADR 0102) — same dock shell
+   as Diagnostics, reuses .diagnostics-panel-toolbar/-title/-empty/
+   -section-title directly (identical treatment), own row styling below
+   since a changed element's row shape (kind badge + label + changed-field
+   list) differs from a missing-file row. */
+.changes-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.changes-section {
+  margin-bottom: 12px;
+}
+
+.changes-row-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.changes-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+
+.changes-row-target {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  border: none;
+  background: none;
+  padding: 0;
+  text-align: left;
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.changes-row-target:hover .changes-row-label {
+  text-decoration: underline;
+}
+
+.changes-row-kind {
+  flex: 0 0 auto;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--ev-c-text-3);
+}
+
+.changes-row-label {
+  font-weight: 600;
+}
+
+.changes-row-fields {
+  font-size: 11px;
+  color: var(--ev-c-text-2);
+  padding-left: 2px;
 }
 
 /* About dialog — a centered overlay, not a UtilityDock panel;

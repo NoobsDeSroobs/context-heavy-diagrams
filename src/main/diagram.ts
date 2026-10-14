@@ -145,6 +145,20 @@ export function registerDiagramHandlers(): void {
     }
   )
 
+  // Side-effect-free reread for the "changes since last save" diff (epic
+  // 0117, ADR 0102) — same precedent as security:crawlLinked. Never calls
+  // recordOpenedOrSaved: opening the diff view must not touch
+  // lastOpenedDirectory or the recent-diagrams list. Returns null for a
+  // path that no longer resolves (deleted/moved since open) rather than
+  // throwing — the renderer treats that as "nothing to diff against."
+  ipcMain.handle('diagram:rereadForDiff', async (_event, path: string): Promise<DiagramFile | null> => {
+    try {
+      return await openDiagramAtPath(path)
+    } catch {
+      return null
+    }
+  })
+
   // The one detector for "did a file change on disk since I last looked" —
   // used by the window-focus check for both the diagram (relPath null) and any
   // note (folder-relative path). Never `changed` for an entry with no baseline
