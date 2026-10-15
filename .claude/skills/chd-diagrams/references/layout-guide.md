@@ -2,7 +2,7 @@
 
 This is about *composition*, not structure — where to put things and what to leave unstyled, when authoring a `.chd` file from a blank canvas with no existing layout to follow. [field-reference.md](field-reference.md) and [authoring-guide.md](authoring-guide.md) tell you how to write a structurally correct file; this tells you how to make a first-draft layout look organized rather than ad hoc — evenly spaced, legibly grouped, not a rainbow of one-off colors.
 
-**These are starting points, not rules the format enforces.** Nothing here is validated by `scripts/validate_chd.py` and nothing here overrides field-reference.md if the two ever seem to conflict. A `.chd` diagram is a long-lived document a human keeps opening and hand-adjusting in a real canvas editor for months — once a person has arranged something on purpose, don't "fix" it back toward one of these recipes on a later edit. Use this guide for the first cut of a diagram (or a new section added to one), not as an invariant to defend afterward.
+**These are starting points, not rules the format enforces.** Nothing here is validated by `scripts/validate_chd.mjs` and nothing here overrides field-reference.md if the two ever seem to conflict. A `.chd` diagram is a long-lived document a human keeps opening and hand-adjusting in a real canvas editor for months — once a person has arranged something on purpose, don't "fix" it back toward one of these recipes on a later edit. Use this guide for the first cut of a diagram (or a new section added to one), not as an invariant to defend afterward.
 
 ## Do geometry last, after content — not before it
 

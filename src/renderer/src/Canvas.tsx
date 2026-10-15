@@ -153,6 +153,8 @@ import MultiConnectionLine from './edges/MultiConnectionLine'
 import PreferencesPanel from './components/PreferencesPanel'
 import AlignDistributePanel from './components/AlignDistributePanel'
 import AboutDialog from './components/AboutDialog'
+import { AI_INSTRUCTIONS } from '@shared/aiInstructions'
+import { summarizeAiFolderResult } from '@shared/aiFolderResult'
 import ShortcutsDialog from './components/ShortcutsDialog'
 import CommandPalette from './components/CommandPalette'
 import { buildPaletteActions, type ExtraPaletteAction } from './paletteActions'
@@ -6078,9 +6080,49 @@ function CanvasInner(): React.JSX.Element {
     ]
   }
 
-  const menus: MenuBarMenu[] = isDiagramPersona
-    ? [fileMenu, editMenu, viewMenu, helpMenu]
-    : [fileMenu, viewMenu, helpMenu]
+  // AI menu (ADR 0103): between View and Help; hidden by the
+  // `aiFeaturesEnabled` preference. Each epic-0133 task group appends its
+  // items here — until the first one lands the menu has nothing to show and
+  // is omitted rather than rendered empty.
+  const aiMenuItems: MenuBarItem[] = [
+    {
+      label: 'Enable AI assistance in a folder…',
+      onSelect: () => {
+        window.api
+          .enableAiInFolder()
+          .then((result) => {
+            if (result) showAlert(summarizeAiFolderResult(result))
+          })
+          .catch((err) =>
+            showAlert(`Could not set up AI assistance: ${err instanceof Error ? err.message : String(err)}`)
+          )
+      }
+    },
+    {
+      label: 'Copy AI instructions',
+      onSelect: () => {
+        window.api.copyToClipboard(AI_INSTRUCTIONS)
+        // The dialog's Copy button re-copies the instructions, not this
+        // confirmation text (ADR 0104).
+        showAlert(
+          'Copied the AI instructions to your clipboard. Paste them into a chat with Claude (or another AI assistant), then attach or paste your .chd file.',
+          AI_INSTRUCTIONS
+        )
+      }
+    }
+  ]
+  const aiMenu: MenuBarMenu | null =
+    preferences.aiFeaturesEnabled && aiMenuItems.length > 0
+      ? { label: 'AI', items: aiMenuItems }
+      : null
+
+  const menus: MenuBarMenu[] = [
+    fileMenu,
+    ...(isDiagramPersona ? [editMenu] : []),
+    viewMenu,
+    ...(aiMenu ? [aiMenu] : []),
+    helpMenu
+  ]
 
   // Command palette (ADR 0100): every menu leaf above, flattened, plus the
   // few keyboard-only actions that have a real handler but no menu item of

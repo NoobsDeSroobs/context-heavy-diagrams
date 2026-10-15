@@ -57,6 +57,10 @@ Expected output, based on `electron-builder.yml`'s config (unverified until an a
 
 `linux.maintainer` in `electron-builder.yml` is a placeholder (`Context-Heavy Diagram Tool (Preview)`, replacing the scaffold's `electronjs.org`) — Debian packaging convention actually wants a `Name <email>` format, which means this is exactly the kind of real-identity question deliberately deferred alongside `package.json`'s `author`/`homepage` fields — worth a real value before `deb` packaging is taken seriously, not just before it looks polished.
 
+## The `chd` command-line launcher
+
+Windows and Linux builds also carry a small `chd` launcher next to the app executable (`chd.cmd` on Windows, `chd` on Linux; `electron-builder.yml` `extraFiles`, sources in `build/launchers/`). It runs the app's own exe as plain Node (`ELECTRON_RUN_AS_NODE`) on `resources/cli/chd.mjs` — no second binary. It is **not on PATH**; see [ADR 0106](../decisions/0106-chd-command-line-tool.md) for why and what is unverified. To check a build: `dist\win-unpacked\chd.cmd --version` (after `npm run build:unpack`), or on Linux `dist/linux-unpacked/chd --version`.
+
 ## Mac
 
 ```bash

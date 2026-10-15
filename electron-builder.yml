@@ -13,6 +13,10 @@ asarUnpack:
   - resources/**
 win:
   executableName: context-heavy-diagram-tool
+  # chd launcher next to the exe (ADR 0106)
+  extraFiles:
+    - from: build/launchers/chd.cmd
+      to: chd.cmd
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
@@ -29,6 +33,12 @@ mac:
 dmg:
   artifactName: ${name}-${version}.${ext}
 linux:
+  # Pinned because the chd launcher hardcodes it (same value electron-builder derives from package.json's name).
+  executableName: context-heavy-diagram-tool
+  # chd launcher next to the executable (ADR 0106)
+  extraFiles:
+    - from: build/launchers/chd
+      to: chd
   target:
     - AppImage
     - snap

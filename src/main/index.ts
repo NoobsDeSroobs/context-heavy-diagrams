@@ -15,6 +15,7 @@ import { registerStylePaletteHandlers } from './stylePalette'
 import { registerExportHandlers } from './export'
 import { registerSecurityHandlers } from './security'
 import { registerLinkedSearchHandlers } from './linkedSearch'
+import { registerAiHandlers } from './ai'
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -47,6 +48,7 @@ app.whenReady().then(() => {
   registerExportHandlers()
   registerSecurityHandlers()
   registerLinkedSearchHandlers()
+  registerAiHandlers()
 
   const initialWindow = createWindow()
 

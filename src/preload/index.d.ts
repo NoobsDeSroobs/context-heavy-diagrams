@@ -7,6 +7,7 @@ import type {
   SaveOutcome,
   Stamp
 } from '@shared/documentSave'
+import type { AiFolderResult } from '@shared/aiFolderResult'
 import type { AppPreferences } from '@shared/preferences'
 import type { SecurityCrawlResult } from '@shared/threatMatrixMath'
 import type { LinkedSearchLink, LinkedSearchResult } from '@shared/linkedSearch'
@@ -98,6 +99,7 @@ export interface DiagramApi {
   writePreferences(preferences: AppPreferences): Promise<void>
   onPreferencesChanged(callback: (preferences: AppPreferences) => void): () => void
   getAppVersion(): Promise<string>
+  enableAiInFolder(): Promise<AiFolderResult | null>
   exportStylePalette(json: string): Promise<boolean>
   importStylePalette(): Promise<{ name: string; content: string } | null>
   exportPngToFile(dataUrl: string, suggestedFilename: string): Promise<boolean>

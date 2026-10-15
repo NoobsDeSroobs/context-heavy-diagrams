@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { subscribeToAlerts } from '../alerts'
+import { subscribeToAlerts, type AlertContent } from '../alerts'
 
 // Renders whatever showAlert() (alerts.ts) receives. Mounted once, by Canvas.
 // Messages queue rather than replace each other, so two errors fired in a
@@ -8,7 +8,7 @@ import { subscribeToAlerts } from '../alerts'
 // no click-outside-to-close: an error shouldn't vanish because of a stray click
 // while someone is trying to select it. Enter/Escape close it.
 export default function AlertDialog(): React.JSX.Element | null {
-  const [queue, setQueue] = useState<string[]>([])
+  const [queue, setQueue] = useState<AlertContent[]>([])
   const [copied, setCopied] = useState(false)
   const okRef = useRef<HTMLButtonElement>(null)
 
@@ -34,7 +34,7 @@ export default function AlertDialog(): React.JSX.Element | null {
 
   const copy = (): void => {
     navigator.clipboard
-      .writeText(current)
+      .writeText(current.textToCopy)
       .then(() => setCopied(true))
       .catch(() => setCopied(false))
   }
@@ -48,7 +48,7 @@ export default function AlertDialog(): React.JSX.Element | null {
           </span>
         </div>
         <div className="about-dialog-body">
-          <pre className="alert-dialog-message">{current}</pre>
+          <pre className="alert-dialog-message">{current.textToShow}</pre>
           <div className="alert-dialog-actions">
             <button type="button" onClick={copy}>
               {copied ? 'Copied' : 'Copy'}

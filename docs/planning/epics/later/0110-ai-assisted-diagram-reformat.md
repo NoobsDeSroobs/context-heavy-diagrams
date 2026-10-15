@@ -14,8 +14,9 @@ edges were added quickly with no real attention to positioning — the
 mechanical structure is correct but the layout looks ad hoc — and have
 Claude re-run a layout pass over it: re-derive positions/sizes/spacing using
 the same conventions as the `chd-diagrams` Claude Code skill's
-`references/layout-guide.md` (a global, user-level skill file, not part of
-this repo — the app's own default sizes, the 20px/60px gap convention,
+`references/layout-guide.md` (now in this repo at
+`resources/ai/skills/chd-diagrams/`, [ADR 0105](../../../decisions/0105-bundled-ai-material-and-folder-setup.md)
+— the app's own default sizes, the 20px/60px gap convention,
 archetype recipes) without touching structure (node/edge ids, `parentId`,
 metadata, tags, links) or anything the user has clearly arranged on purpose
 already.

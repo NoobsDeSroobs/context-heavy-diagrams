@@ -14,8 +14,10 @@ This skill covers three jobs: **reading** a `.chd` file correctly, **hand-editin
 Run the bundled validator first — it catches the most common ways a `.chd` file breaks, including a real bug class this skill exists because of (see below):
 
 ```bash
-python scripts/validate_chd.py path/to/diagram.chd
+node scripts/validate_chd.mjs path/to/diagram.chd
 ```
+
+(Plain Node, no packages. If `node` isn't installed, skip the script but still check ids, parent-before-child ordering and relative paths by hand, as described below.)
 
 It checks JSON validity, id uniqueness, parent-before-child node ordering, dangling `parentId`/`source`/`target` references, and whether every relative path (`data.icons.*.path`, `data.details`, `data.linkedDiagram`, `data.references`) actually resolves to a file on disk *relative to that `.chd` file's own directory*. Run it again after you edit, and run it over every `.chd` in a project when asked to audit one — broken relative paths are silent at the JSON level and only show up this way.
 
@@ -50,7 +52,7 @@ Missing targets are meant to be recoverable, not fatal — the app shows "not fo
 4. **New edge → reference existing node ids** via `source`/`target`. Only set `sourceHandle`/`targetHandle` if you need a *specific* connection point; otherwise omit and let the renderer pick one.
 5. **Adding a `linkedDiagram`** (drill-down to a child diagram): decide the child's actual file location first, *then* compute the path relative to the parent's own directory — not the other way around. See the invariant above; this is where that bug is introduced most often.
 6. **Metadata/tags**: a plain human-added key is `{ "value": ... }` with no `lock`. Only set `lock` if the diagram's `requiredTags` template governs that key — see [references/field-reference.md](references/field-reference.md#metadata) for the `lockedEditable`/`lockedStatic` distinction before touching a locked entry, since a `lockedStatic` value should track the template's `defaultValue`, not be edited independently.
-7. **Validate before considering the edit done** — run `scripts/validate_chd.py` on the file (and on any other `.chd` file whose relative paths you might have affected, e.g. a parent that links to a child you moved).
+7. **Validate before considering the edit done** — run `scripts/validate_chd.mjs` on the file (and on any other `.chd` file whose relative paths you might have affected, e.g. a parent that links to a child you moved).
 
 ### Determinism (why this matters for git-tracked diagrams)
 

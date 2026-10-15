@@ -42,7 +42,7 @@ or, if the child diagram should have its own colocated copy of the asset instead
 
 ### How to check for this
 
-The bundled `scripts/validate_chd.py` resolves every relative path in a file against that file's own directory and reports any that don't exist on disk. Run it on every `.chd` file you touch, and on any file that links to one you moved — a parent's `linkedDiagram` pointing at a child you relocated breaks the same way.
+The bundled `scripts/validate_chd.mjs` resolves every relative path in a file against that file's own directory and reports any that don't exist on disk. Run it on every `.chd` file you touch, and on any file that links to one you moved — a parent's `linkedDiagram` pointing at a child you relocated breaks the same way.
 
 ## Colocation folders
 
@@ -56,7 +56,7 @@ Filenames within the folder follow conventions too (`<label>-<uuid-suffix>.md` f
 
 - **Links only point downward**, parent → child. A child diagram never references its own parent. This is what makes every `.chd` file independently openable as its own root — don't add a "back to parent" link even if it would help navigation; that's not what this field is for.
 - **A missing link target is a recoverable error, not a hard failure**: the app shows "linked diagram not found at `<path>`" and the diagram containing the broken reference keeps working normally. This is deliberate — it's what makes it safe to share a parent diagram without all its children, or to have a child diagram temporarily deleted mid-restructure. Detail-file references get the same treatment.
-- When auditing a multi-diagram project, `scripts/validate_chd.py` walks every `linkedDiagram` it finds and reports which targets don't resolve — useful for a project with several linked files, since a broken link in a child several levels down is easy to miss just by opening the top-level file (the app never eagerly loads children).
+- When auditing a multi-diagram project, `scripts/validate_chd.mjs` walks every `linkedDiagram` it finds and reports which targets don't resolve — useful for a project with several linked files, since a broken link in a child several levels down is easy to miss just by opening the top-level file (the app never eagerly loads children).
 
 ## Tags aren't visible or useful until something renders them — set up highlights and a legend in the same pass
 
@@ -81,7 +81,7 @@ The `.chd` file itself is deterministic JSON by design (fixed key order, no inli
 
 When asked to audit, extend, or restructure a project with several linked `.chd` files:
 
-1. Run `scripts/validate_chd.py` on every `.chd` file in the tree, not just the one you're editing — a change to one file's location or a copy-paste into another is exactly what breaks a sibling's relative paths.
+1. Run `scripts/validate_chd.mjs` on every `.chd` file in the tree, not just the one you're editing — a change to one file's location or a copy-paste into another is exactly what breaks a sibling's relative paths.
 2. Confirm link direction only ever goes parent → child; flag (don't silently "fix") anything that looks like an intentional child → parent reference, since that may indicate a misunderstanding of what the field is for rather than a bug.
 3. If nodes were copied between files, re-derive every relative path on the copy rather than assuming it survived the move.
 4. Leave viewport, highlight-enabled-state, and legend-shown-state alone — none of these exist in the file in the first place, so there's nothing to "restore."

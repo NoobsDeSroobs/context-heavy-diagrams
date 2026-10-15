@@ -1,6 +1,6 @@
 {
   "name": "context-heavy-diagram-tool",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A context-heavy, boxes-and-arrows-free diagramming tool for IT architecture and information distillation. Early preview build.",
   "main": "./out/main/index.js",
   "license": "GPL-3.0-or-later",
@@ -13,6 +13,7 @@
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
     "test": "node --test \"src/**/*.test.mjs\"",
+    "sync-ai": "node scripts/sync-ai.mjs",
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
     "build": "npm run typecheck && electron-vite build",

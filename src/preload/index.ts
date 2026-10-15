@@ -8,6 +8,7 @@ import type {
   SaveOutcome,
   Stamp
 } from '@shared/documentSave'
+import type { AiFolderResult } from '@shared/aiFolderResult'
 import type { AppPreferences } from '@shared/preferences'
 import type { SecurityCrawlResult } from '@shared/threatMatrixMath'
 import type { LinkedSearchLink, LinkedSearchResult } from '@shared/linkedSearch'
@@ -329,6 +330,12 @@ const api = {
   // open, cheap enough not to bother.
   getAppVersion(): Promise<string> {
     return ipcRenderer.invoke('app:getVersion')
+  },
+
+  // AI -> Enable AI assistance in a folder (ADR 0105): folder picker + file
+  // writes happen in main; null means the user cancelled the picker.
+  enableAiInFolder(): Promise<AiFolderResult | null> {
+    return ipcRenderer.invoke('ai:enableInFolder')
   },
 
   // Style palette export/import (see ADR 0048) — returns false/null

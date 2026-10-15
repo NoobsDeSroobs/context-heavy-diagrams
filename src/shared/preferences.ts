@@ -180,6 +180,11 @@ export interface AppPreferences {
   // baked in once at load time. A diagram with its own override is
   // unaffected either way, since that tier always wins outright.
   gravityPresetsUserDefault?: GravityPreset[]
+  // Whether the top-level AI menu (and everything hanging off it) is shown —
+  // see ADR 0103. A pure chrome toggle: nothing in a .chd file depends on it.
+  // Default on; a future installer can seed it from its "enable AI features?"
+  // question (epic 0053).
+  aiFeaturesEnabled: boolean
 }
 
 export const DEFAULT_PREFERENCES: AppPreferences = {
@@ -201,7 +206,8 @@ export const DEFAULT_PREFERENCES: AppPreferences = {
   minZoom: 0.1,
   maxZoom: 2,
   isolateOpacity: 0.5,
-  recentDiagramsLimit: 10
+  recentDiagramsLimit: 10,
+  aiFeaturesEnabled: true
 }
 
 // Standard desktop convention; also a floor for the user-facing limit input

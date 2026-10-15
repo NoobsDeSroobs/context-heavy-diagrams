@@ -1,0 +1,5 @@
+#!/bin/sh
+# chd launcher (ADR 0106): runs the bundled CLI with the app's own executable as plain Node.
+# readlink -f so it still finds the app when this file is symlinked onto PATH.
+here="$(dirname "$(readlink -f "$0")")"
+ELECTRON_RUN_AS_NODE=1 exec "$here/context-heavy-diagram-tool" "$here/resources/app.asar.unpacked/resources/cli/chd.mjs" "$@"

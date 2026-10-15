@@ -6,7 +6,9 @@ import eslintPluginReactHooks from 'eslint-plugin-react-hooks'
 import eslintPluginReactRefresh from 'eslint-plugin-react-refresh'
 
 export default defineConfig(
-  { ignores: ['**/node_modules', '**/dist', '**/out'] },
+  // The skill's scripts ship to users as standalone plain-JS files (ADR 0105),
+  // not part of the typed app code; .claude/skills holds a synced copy.
+  { ignores: ['**/node_modules', '**/dist', '**/out', 'resources/ai/skills/**', '.claude/**'] },
   tseslint.configs.recommended,
   eslintPluginReact.configs.flat.recommended,
   eslintPluginReact.configs.flat['jsx-runtime'],
@@ -29,8 +31,9 @@ export default defineConfig(
     }
   },
   {
-    // Plain-JS node:test files — the return-type rule is for app code.
-    files: ['**/*.test.mjs'],
+    // Plain-JS node:test files and the standalone `chd` CLI (ADR 0106) — the
+    // return-type rule is for app code.
+    files: ['**/*.test.mjs', 'resources/cli/**/*.mjs'],
     rules: { '@typescript-eslint/explicit-function-return-type': 'off' }
   },
   eslintConfigPrettier

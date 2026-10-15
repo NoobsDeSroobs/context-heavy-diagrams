@@ -223,6 +223,14 @@ export default function PreferencesPanel({
             title="Look for crash-recovery snapshots from diagrams that were never saved, every time the app starts"
           />
         </FieldRow>
+        <FieldRow label="Show AI menu">
+          <input
+            type="checkbox"
+            checked={preferences.aiFeaturesEnabled}
+            onChange={(e) => onChange({ aiFeaturesEnabled: e.target.checked })}
+            title="Show the AI menu, with helpers for working on your diagrams with Claude or another AI assistant"
+          />
+        </FieldRow>
         <NumberField
           label="Recent diagrams to remember"
           value={preferences.recentDiagramsLimit}
