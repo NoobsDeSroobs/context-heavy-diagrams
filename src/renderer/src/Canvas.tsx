@@ -82,7 +82,6 @@ import EntityNode, { ENTITY_MIN_WIDTH, ENTITY_MIN_HEIGHT } from './nodes/EntityN
 import TextNode, { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from './nodes/TextNode'
 import ContainerNode, { CONTAINER_MIN_WIDTH, CONTAINER_MIN_HEIGHT } from './nodes/ContainerNode'
 import { scaleGroupMembers, type GroupResizeMember } from './groupResize'
-import AnchorNode, { ANCHOR_SIZE } from './nodes/AnchorNode'
 import LineNode, { LINE_BOUNDS_PADDING } from './nodes/LineNode'
 import DiagramSettingsPanel from './components/DiagramSettingsPanel'
 import { effectiveGravityPresets } from './lineGravityPresets'
@@ -201,7 +200,6 @@ const nodeTypes = {
   entity: EntityNode,
   text: TextNode,
   container: ContainerNode,
-  anchor: AnchorNode,
   line: LineNode
 }
 const edgeTypes = { labeled: LabeledEdge }
@@ -547,14 +545,14 @@ function nodeMetadataEligible(type: string | undefined): boolean {
   return type === 'entity' || type === 'container'
 }
 
-// Only these three types render ConnectionHandles (see EntityNode/
-// ContainerNode/AnchorNode) — 'text' and 'line' have no handles at all, so
+// Only these two types render ConnectionHandles (see EntityNode/
+// ContainerNode) — 'text' and 'line' have no handles at all, so
 // a selected one of either can never legitimately be an edge endpoint.
 // Used by multi-connection onConnect below to skip a selected node that
 // happens not to be connectable, rather than trying to resolve a
 // connection point that doesn't exist on it.
 function isConnectableNodeType(type: string | undefined): boolean {
-  return type === 'entity' || type === 'container' || type === 'anchor'
+  return type === 'entity' || type === 'container'
 }
 
 // DetailsPanel's own header — the element's current label (first line only,
@@ -1378,8 +1376,15 @@ function CanvasInner(): React.JSX.Element {
 
   // Which node/handle a connection drag started from — set in onConnectStart,
   // read (and cleared) in onConnectEnd to spawn a new entity when the drag is
-  // released over empty canvas instead of a valid handle. See ADR 0015.
+  // released over empty canvas instead of a valid handle. See ADR 0107.
   const connectStartRef = useRef<{ nodeId: string; handleId: string | null } | null>(null)
+
+  // The Entity just created by an empty-canvas edge drop (spawnEntityAt),
+  // which should open straight into label editing. Transient renderer state
+  // — deliberately not on the node's data, so it never reaches the file or
+  // an undo snapshot. The node's label clears it once editing has started.
+  const [pendingLabelEditId, setPendingLabelEditId] = useState<string | null>(null)
+  const clearPendingLabelEdit = useCallback(() => setPendingLabelEditId(null), [])
 
   // React Flow's own EdgeUpdateAnchors implementation fires BOTH
   // onReconnectStart *and* the generic onConnectStart for the same
@@ -1389,7 +1394,7 @@ function CanvasInner(): React.JSX.Element {
   // synchronously, every time). Without this flag, a reconnect dropped in
   // empty space fired both onConnectEnd (the drag-to-empty-space logic)
   // *and* onReconnectEnd (the reconnection logic) independently, each spawning its own
-  // anchor+edge — the exact "two edges end up connected to the anchor"
+  // new node+edge — the exact "two edges end up connected to the new node"
   // bug the user reported. Set in onReconnectStart (which always runs
   // first within that composite), read by onConnectStart to skip arming
   // connectStartRef for a gesture onReconnectEnd already owns, reset in
@@ -3111,157 +3116,6 @@ function CanvasInner(): React.JSX.Element {
     isReconnectingRef.current = true
   }, [])
 
-  // Turns a placeholder AnchorNode (see below) into a real Entity or
-  // Container, in place — same id, recentered on the anchor's own center
-  // rather than its (much smaller) top-left corner. No edge update needed:
-  // AnchorNode shares the same 4 handle ids ('top'/'right'/'bottom'/'left')
-  // as EntityNode/ContainerNode via the same ConnectionHandles component, so
-  // whatever handle the edge already attached to on the anchor stays valid
-  // on the resolved node too.
-  const resolveAnchorNode = useCallback(
-    (nodeId: string, type: 'entity' | 'container') => {
-      pushSnapshot()
-      setNodes((nds) =>
-        nds.map((n) => {
-          if (n.id !== nodeId) return n
-          const centerX = n.position.x + (n.width ?? ANCHOR_SIZE) / 2
-          const centerY = n.position.y + (n.height ?? ANCHOR_SIZE) / 2
-          const width = type === 'entity' ? ENTITY_MIN_WIDTH * 2 : CONTAINER_MIN_WIDTH * 2
-          const height = type === 'entity' ? ENTITY_MIN_HEIGHT * 2 : CONTAINER_MIN_HEIGHT * 1.5
-          const metadata = seedMetadata(requiredTags)
-          // An anchor never has a zIndex (ADR 0035) — resolving it
-          // into a real entity/container needs one now, same default as
-          // addEntityNode/addContainerNode.
-          const zIndex = nextZIndex(nds, type)
-          const data =
-            type === 'entity'
-              ? { label: 'Entity', zIndex, metadata }
-              : {
-                  label: 'Container',
-                  zIndex,
-                  style: { fill: 'var(--ev-c-gray-1)', fillOpacity: 20 },
-                  metadata
-                }
-          return {
-            ...n,
-            type,
-            position: { x: centerX - width / 2, y: centerY - height / 2 },
-            width,
-            height,
-            data
-          }
-        })
-      )
-    },
-    [setNodes, pushSnapshot, requiredTags]
-  )
-
-  // Shared tail of onConnectEnd/onReconnectEnd once a drop has already been
-  // confirmed as genuine empty canvas (via isVoidDrop): spawn an AnchorNode
-  // there, let the caller wire whichever edge end needs it (the one part
-  // that differs between "brand-new edge" and "existing edge's endpoint"),
-  // and offer the same Entity/Container popup drag-to-empty-space already established.
-  // Dismissing the popup (click elsewhere/Escape, same generic ContextMenu
-  // every other popup in this file uses) just leaves the anchor as a small
-  // draggable dot — no default type is assumed.
-  const spawnAnchorAt = useCallback(
-    (clientX: number, clientY: number, wireEdge: (anchorId: string) => void): void => {
-      const dropPosition = rfInstance.screenToFlowPosition({ x: clientX, y: clientY })
-      const id = newNodeId('anchor')
-
-      pushSnapshot()
-      setNodes((nds) => [
-        ...nds,
-        {
-          id,
-          type: 'anchor',
-          position: { x: dropPosition.x - ANCHOR_SIZE / 2, y: dropPosition.y - ANCHOR_SIZE / 2 },
-          width: ANCHOR_SIZE,
-          height: ANCHOR_SIZE,
-          data: { label: '' }
-        }
-      ])
-      wireEdge(id)
-      openContextMenu(clientX, clientY, [
-        { label: 'Entity', onSelect: () => resolveAnchorNode(id, 'entity') },
-        { label: 'Container', onSelect: () => resolveAnchorNode(id, 'container') }
-      ])
-    },
-    [rfInstance, pushSnapshot, setNodes, openContextMenu, resolveAnchorNode]
-  )
-
-  // Drag-to-create: releasing a connection drag over empty canvas (rather
-  // than onto a valid handle) spawns a placeholder AnchorNode — see
-  // ADR 0015 and isVoidDrop's own comment for why the check is more than just
-  // "is event.target the pane."
-  const onConnectEnd = useCallback(
-    (event: MouseEvent | TouchEvent, connectionState: FinalConnectionState) => {
-      const origin = connectStartRef.current
-      connectStartRef.current = null
-      if (!origin || !isVoidDrop(event, connectionState)) return
-
-      const point = pointFromEvent(event)
-      spawnAnchorAt(point.clientX, point.clientY, (anchorId) =>
-        setEdges((eds) => {
-          const withNew = addEdge(
-            {
-              source: origin.nodeId,
-              sourceHandle: origin.handleId,
-              target: anchorId,
-              targetHandle: 'left',
-              type: 'labeled',
-              data: { metadata: seedMetadata(requiredTags), style: newEdgeStyle }
-            },
-            eds
-          )
-          // Seed per-set direction records immediately at 2+ sets — see
-          // onConnect above.
-          return edgeDirectionSets.length >= 2
-            ? ensureDirectionSets(withNew, edgeDirectionSets.map((s) => s.id))
-            : withNew
-        })
-      )
-    },
-    [spawnAnchorAt, setEdges, requiredTags, newEdgeStyle, edgeDirectionSets]
-  )
-
-  // Grabbing an existing edge's own endpoint and dropping it on empty
-  // canvas — the reconnect-side counterpart of onConnectEnd above, same
-  // AnchorNode outcome. React Flow hands us the edge and which end
-  // (`handleType`) directly, so unlike onConnectStart/onConnectEnd there's
-  // no need for a ref to bridge drag-start to drag-end.
-  const onReconnectEnd = useCallback(
-    (
-      event: MouseEvent | TouchEvent,
-      edge: Edge,
-      handleType: HandleType,
-      connectionState: FinalConnectionState
-    ) => {
-      isReconnectingRef.current = false
-      if (!isVoidDrop(event, connectionState)) return
-
-      const point = pointFromEvent(event)
-      spawnAnchorAt(point.clientX, point.clientY, (anchorId) =>
-        setEdges((eds) =>
-          eds.map((e) => {
-            if (e.id !== edge.id) return e
-            // `handleType` here is React Flow's own "oppositeHandle" type —
-            // the FIXED end that's staying put, not the one being dragged
-            // (confirmed by reading EdgeUpdateAnchors' source: grabbing the
-            // source anchor passes the *target*'s type, and vice versa).
-            // So handleType === 'target' means the target is fixed and the
-            // source is what got dragged loose — the inverse of the
-            // naive reading.
-            return handleType === 'target'
-              ? { ...e, source: anchorId, sourceHandle: 'left' }
-              : { ...e, target: anchorId, targetHandle: 'left' }
-          })
-        )
-      )
-    },
-    [spawnAnchorAt, setEdges]
-  )
-
   // Anchors new nodes to the middle of whatever part of the canvas is
   // currently visible, not a fixed canvas-coordinate origin — on a large,
   // panned/zoomed-into diagram, a fixed spawn point is very likely off
@@ -3295,8 +3149,10 @@ function CanvasInner(): React.JSX.Element {
   // whichever containing container has the highest zIndex if more than
   // one contains the point (nested containers), matching what's visually
   // on top.
+  // `presetId` lets a caller that has to reference the new node right away
+  // (spawnEntityAt, wiring an edge to it) choose the id up front.
   const addNodeAtPosition = useCallback(
-    (type: PaletteItemType, dropPoint: { x: number; y: number }) => {
+    (type: PaletteItemType, dropPoint: { x: number; y: number }, presetId?: string) => {
       pushSnapshot()
       setNodes((nds) => {
         const byId = new Map(nds.map((n) => [n.id, n]))
@@ -3381,7 +3237,7 @@ function CanvasInner(): React.JSX.Element {
         const position = parent
           ? subtractPosition(topLeft, absolutePosition(parent, byId))
           : topLeft
-        const id = newNodeId(nodeType)
+        const id = presetId ?? newNodeId(nodeType)
         const newNode: Node = {
           id,
           type: nodeType,
@@ -3403,6 +3259,96 @@ function CanvasInner(): React.JSX.Element {
       preferences.defaultStyles.text
     ]
   )
+
+  // Shared tail of onConnectEnd/onReconnectEnd once a drop has already been
+  // confirmed as genuine empty canvas (via isVoidDrop): create an Entity
+  // centered on the drop point (same defaults and container reparenting as a
+  // palette drop, ADR 0107), let the caller wire whichever edge end needs it
+  // (the one part that differs between "brand-new edge" and "existing edge's
+  // endpoint"), and drop the new Entity straight into label editing. The
+  // Entity and the edge share one undo step (addNodeAtPosition takes the
+  // snapshot).
+  const spawnEntityAt = useCallback(
+    (clientX: number, clientY: number, wireEdge: (entityId: string) => void): void => {
+      const id = newNodeId('entity')
+      addNodeAtPosition('entity', rfInstance.screenToFlowPosition({ x: clientX, y: clientY }), id)
+      wireEdge(id)
+      setPendingLabelEditId(id)
+    },
+    [rfInstance, addNodeAtPosition]
+  )
+
+  // Drag-to-create: releasing a connection drag over empty canvas (rather
+  // than onto a valid handle) spawns an Entity there — see isVoidDrop's own
+  // comment for why the check is more than just "is event.target the pane."
+  const onConnectEnd = useCallback(
+    (event: MouseEvent | TouchEvent, connectionState: FinalConnectionState) => {
+      const origin = connectStartRef.current
+      connectStartRef.current = null
+      if (!origin || !isVoidDrop(event, connectionState)) return
+
+      const point = pointFromEvent(event)
+      spawnEntityAt(point.clientX, point.clientY, (entityId) =>
+        setEdges((eds) => {
+          const withNew = addEdge(
+            {
+              source: origin.nodeId,
+              sourceHandle: origin.handleId,
+              target: entityId,
+              targetHandle: 'left',
+              type: 'labeled',
+              data: { metadata: seedMetadata(requiredTags), style: newEdgeStyle }
+            },
+            eds
+          )
+          // Seed per-set direction records immediately at 2+ sets — see
+          // onConnect above.
+          return edgeDirectionSets.length >= 2
+            ? ensureDirectionSets(withNew, edgeDirectionSets.map((s) => s.id))
+            : withNew
+        })
+      )
+    },
+    [spawnEntityAt, setEdges, requiredTags, newEdgeStyle, edgeDirectionSets]
+  )
+
+  // Grabbing an existing edge's own endpoint and dropping it on empty
+  // canvas — the reconnect-side counterpart of onConnectEnd above, same
+  // Entity outcome. React Flow hands us the edge and which end
+  // (`handleType`) directly, so unlike onConnectStart/onConnectEnd there's
+  // no need for a ref to bridge drag-start to drag-end.
+  const onReconnectEnd = useCallback(
+    (
+      event: MouseEvent | TouchEvent,
+      edge: Edge,
+      handleType: HandleType,
+      connectionState: FinalConnectionState
+    ) => {
+      isReconnectingRef.current = false
+      if (!isVoidDrop(event, connectionState)) return
+
+      const point = pointFromEvent(event)
+      spawnEntityAt(point.clientX, point.clientY, (entityId) =>
+        setEdges((eds) =>
+          eds.map((e) => {
+            if (e.id !== edge.id) return e
+            // `handleType` here is React Flow's own "oppositeHandle" type —
+            // the FIXED end that's staying put, not the one being dragged
+            // (confirmed by reading EdgeUpdateAnchors' source: grabbing the
+            // source anchor passes the *target*'s type, and vice versa).
+            // So handleType === 'target' means the target is fixed and the
+            // source is what got dragged loose — the inverse of the
+            // naive reading.
+            return handleType === 'target'
+              ? { ...e, source: entityId, sourceHandle: 'left' }
+              : { ...e, target: entityId, targetHandle: 'left' }
+          })
+        )
+      )
+    },
+    [spawnEntityAt, setEdges]
+  )
+
 
   // dataTransfer's actual value isn't readable during dragover in most
   // browsers (only .types is, by design) — checking .types is enough to
@@ -6234,7 +6180,9 @@ function CanvasInner(): React.JSX.Element {
       searchMatchIds,
       isolateActive,
       isolateOpacity: preferences.isolateOpacity,
-      selectAllOfType
+      selectAllOfType,
+      pendingLabelEditId,
+      clearPendingLabelEdit
     }),
     [
       currentPath,
@@ -6265,7 +6213,9 @@ function CanvasInner(): React.JSX.Element {
       searchMatchIds,
       isolateActive,
       preferences.isolateOpacity,
-      selectAllOfType
+      selectAllOfType,
+      pendingLabelEditId,
+      clearPendingLabelEdit
     ]
   )
 

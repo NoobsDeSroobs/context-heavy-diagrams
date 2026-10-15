@@ -57,7 +57,9 @@ function EntityNode({ id, data, selected }: NodeProps): React.JSX.Element {
     isolateActive,
     isolateOpacity,
     selectAllOfType,
-    groupResize
+    groupResize,
+    pendingLabelEditId,
+    clearPendingLabelEdit
   } = useDiagramContext()
   const { updateNodeData, getNode } = useReactFlow()
 
@@ -188,6 +190,8 @@ function EntityNode({ id, data, selected }: NodeProps): React.JSX.Element {
         className="entity-node-label"
         inputClassName="entity-node-label-input"
         multiline
+        autoEdit={pendingLabelEditId === id}
+        onAutoEditStarted={clearPendingLabelEdit}
         style={nodeLabelCss(style, theme)}
         value={String(data?.label ?? '')}
         onCommit={(label) => {

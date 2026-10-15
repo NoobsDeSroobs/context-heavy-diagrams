@@ -22,10 +22,9 @@ interface LayerPanelProps {
   onClose: () => void
 }
 
-// 'entity' | 'container' | 'text' | 'line' | 'anchor' (never listed here, no
-// label) — anything unrecognized falls back to its first letter
-// uppercased, same lenient spirit as docs/file-format.md's own node `type`
-// handling.
+// 'entity' | 'container' | 'text' | 'line' — anything unrecognized falls
+// back to its first letter uppercased, same lenient spirit as
+// docs/file-format.md's own node `type` handling.
 const TYPE_BADGE: Record<string, string> = { entity: 'S', container: 'C', text: 'T', line: 'L' }
 
 // Same UtilityDock shell as Highlights/Required tags/Diagnostics/Settings —

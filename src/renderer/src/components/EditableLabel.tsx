@@ -25,6 +25,11 @@ interface EditableLabelProps {
   // single-line. The on-canvas *display* guardrail (clip to the element's
   // box, don't grow the shape) is CSS on each label class, not here.
   multiline?: boolean
+  // True asks the label to open straight into edit mode (a freshly created
+  // Entity, ADR 0107). `onAutoEditStarted` then fires once so the owner can
+  // reset whatever flag drove `autoEdit`.
+  autoEdit?: boolean
+  onAutoEditStarted?: () => void
 }
 
 // Double-click to edit, Enter/blur commits, Escape cancels. dir="auto" so
@@ -39,7 +44,9 @@ export default function EditableLabel({
   className,
   inputClassName,
   style,
-  multiline = false
+  multiline = false,
+  autoEdit = false,
+  onAutoEditStarted
 }: EditableLabelProps): React.JSX.Element {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(value)
@@ -62,6 +69,19 @@ export default function EditableLabel({
       autosize()
     }
   }, [editing, autosize])
+
+  // Deferred a tick so the mouse-up/click that ended the drop gesture has
+  // finished before the input takes focus — otherwise the pane's own click
+  // handling can blur it straight away, which would commit and close the editor.
+  useEffect(() => {
+    if (!autoEdit) return
+    const timer = setTimeout(() => {
+      setDraft(value)
+      setEditing(true)
+      onAutoEditStarted?.()
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [autoEdit, value, onAutoEditStarted])
 
   const startEditing = (event: MouseEvent): void => {
     event.stopPropagation()

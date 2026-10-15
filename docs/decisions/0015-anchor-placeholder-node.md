@@ -1,7 +1,7 @@
 # 0015: Anchor placeholder node for unresolved drag-created edges
 
 ## Status
-Accepted
+Superseded by [ADR 0107](0107-remove-anchor-placeholder-node.md) — the anchor node no longer exists; an edge dropped on empty canvas now creates an Entity. Kept for the history of why it existed.
 
 ## Context
 Dragging an edge into empty space originally assumed the dropped edge always creates a `ShapeNode`. User testing corrected that: the type shouldn't be assumed — a small popup (Shape / Container / more later) should let the user choose, and if they dismiss it without choosing, "just leave the edge in space, I can drag it around later."

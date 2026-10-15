@@ -3,14 +3,14 @@ import type { ConnectionPoint } from '@shared/diagram'
 import { absolutePosition } from '../geometry/nodePosition'
 import { connectionPointAtOrdinal, pointCoordinates, pointOrdinal } from '../nodes/connectionPoints'
 
-// Same three types as Canvas.tsx's isConnectableNodeType — kept as its own
+// Same two types as Canvas.tsx's isConnectableNodeType — kept as its own
 // copy (not imported) since importing from Canvas.tsx just for this one
 // helper would pull in that whole module's side effects for no reason;
 // this is small and stable enough that a duplicate is cheaper than the
 // coupling. If it ever drifts out of sync, both call sites are one grep
 // for "isConnectableNodeType" away from each other.
 function isConnectableNodeType(type: string | undefined): boolean {
-  return type === 'entity' || type === 'container' || type === 'anchor'
+  return type === 'entity' || type === 'container'
 }
 
 interface MultiConnectionLineProps {

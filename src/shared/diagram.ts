@@ -80,7 +80,7 @@ export interface MetadataEntry {
 }
 
 // Diagram-level template: what every applicable element (entity/container/
-// edge, not text/anchor — see ADR 0022) must carry. Not stored per
+// edge, not text — see ADR 0022) must carry. Not stored per
 // element; used to seed new elements and to retroactively backfill
 // existing ones when the template itself changes (see Canvas.tsx's
 // `syncRequiredTags`).
@@ -196,13 +196,12 @@ export interface DiagramNode {
   parentId?: string
   // Blocks drag/resize/rotate and accidental delete via this app's own UI
   // — not a read-only mode, every other edit (style, tags, label,
-  // connection points, details) stays allowed. Not meaningful on 'anchor'
-  // (transient, never persists as a real element) or edges (no position
-  // of their own to accidentally relocate). Absent means unlocked.
+  // connection points, details) stays allowed. Not meaningful on edges (no
+  // position of their own to accidentally relocate). Absent means unlocked.
   locked?: boolean
   style?: NodeStyle
   // Only 'entity'/'container' meaningfully have this — see ADR 0022.
-  // 'text', 'anchor', and 'line' nodes never get seeded or edited here.
+  // 'text' and 'line' nodes never get seeded or edited here.
   metadata?: Record<string, MetadataEntry>
   data: {
     label: string

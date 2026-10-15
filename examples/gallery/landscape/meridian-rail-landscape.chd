@@ -4094,22 +4094,6 @@
       "data": {
         "label": "Third-party Booking Aggregator"
       }
-    },
-    {
-      "id": "anchor-6835e7da-f074-4832-80ec-31fcdfa085b8",
-      "type": "anchor",
-      "position": {
-        "x": 2682.527334409633,
-        "y": 1848.9699088046523
-      },
-      "size": {
-        "width": 14,
-        "height": 14
-      },
-      "zIndex": 100010,
-      "data": {
-        "label": ""
-      }
     }
   ],
   "edges": [
@@ -6508,11 +6492,11 @@
       }
     },
     {
-      "id": "xy-edge__anchor-6835e7da-f074-4832-80ec-31fcdfa085b8top-service-2-3bottom",
+      "id": "xy-edge__service-5-1right-service-2-3bottom",
       "type": "labeled",
-      "source": "anchor-6835e7da-f074-4832-80ec-31fcdfa085b8",
+      "source": "service-5-1",
       "target": "service-2-3",
-      "sourceHandle": "top",
+      "sourceHandle": "right",
       "targetHandle": "bottom",
       "style": {
         "stroke": "#4a5568",
@@ -6520,41 +6504,6 @@
         "lineStyle": "solid",
         "startMarker": "none",
         "endMarker": "arrowClosed"
-      },
-      "metadata": {
-        "businessDomain": {
-          "value": null,
-          "lock": "lockedEditable"
-        },
-        "gdpr": {
-          "value": "No PII",
-          "lock": "lockedEditable"
-        },
-        "nis2": {
-          "value": "Out of scope",
-          "lock": "lockedEditable"
-        },
-        "owningTeam": {
-          "value": null,
-          "lock": "lockedEditable"
-        },
-        "serviceState": {
-          "value": null,
-          "lock": "lockedEditable"
-        }
-      }
-    },
-    {
-      "id": "xy-edge__anchor-6835e7da-f074-4832-80ec-31fcdfa085b8left-service-5-1right",
-      "type": "labeled",
-      "source": "anchor-6835e7da-f074-4832-80ec-31fcdfa085b8",
-      "target": "service-5-1",
-      "sourceHandle": "left",
-      "targetHandle": "right",
-      "style": {
-        "endMarker": "none",
-        "stroke": "#4a5568",
-        "strokeWidth": 1.5
       },
       "metadata": {
         "businessDomain": {

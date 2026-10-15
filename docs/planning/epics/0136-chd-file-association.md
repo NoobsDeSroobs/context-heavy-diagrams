@@ -22,6 +22,9 @@ After installing, double-clicking a `.chd` file in the file manager opens it in 
 - [ ] Docs: `docs/architecture/packaging.md` section on associations; known-issues entry if Windows/Linux defaults misbehave
 - [ ] Live-test matrix: Windows (cold launch via double-click, running-app double-click, path with spaces/unicode), Linux (**unverifiable on the dev machine — flag for the user**), macOS (untested, no Mac)
 
+## Decisions so far
+- **Keep the `.chd` extension** (decided 2026-10-15). The MAME/RetroArch collision affects a small slice of users, who can still open our files via drag-and-drop or File → Open. Mitigation: a distinctive ProgID/MIME type, never claim default aggressively, and the end user decides which app is default. **The installer should let the user choose whether to associate `.chd`** (an opt-in checkbox/page on Windows, not silent) — design it that way in the NSIS config.
+
 ## Open questions / risks
 - **Extension collision.** `.chd` is also the MAME/RetroArch "Compressed Hunks of Data" disk-image format. Registering ours could capture those files for users who have emulators (and theirs may capture ours). The format and extension are established, so changing it is a big call — at minimum choose a distinctive ProgID/MIME type, don't claim "default" aggressively, and decide deliberately whether the extension is acceptable before the public release ([epic 0070](later/0070-public-release-under-new-identity.md)).
 - **Windows will not let an installer force the default app** (user-choice protection): the association registers us as a handler, but the first double-click may show an "open with" chooser. Expected, document it.

@@ -124,6 +124,11 @@ export interface DiagramContextValue {
     resize: (nodeId: string, params: ResizeParams) => void
     end: () => void
   }
+  // The node (an Entity just created by dropping an edge on empty canvas,
+  // ADR 0107) whose label should open straight into edit mode, and the call
+  // that clears the request once the label has taken it. Session-only.
+  pendingLabelEditId: string | null
+  clearPendingLabelEdit: () => void
 }
 
 // The accessor hook lives in its own file (useDiagramContext.ts) — a file

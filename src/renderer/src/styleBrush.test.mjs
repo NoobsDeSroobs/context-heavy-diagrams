@@ -65,9 +65,9 @@ test('only the same node type accepts the brush', () => {
   assert.equal(brushAppliesToNode(captureEdgeBrush({ data: {} }), { type: 'entity' }), false)
 })
 
-test('an untyped node counts as a shape; an anchor cannot be a source', () => {
+test('an untyped node counts as an entity; an unrecognized type cannot be a source', () => {
   assert.equal(captureNodeBrush({ data: {} })?.nodeType, 'entity')
-  assert.equal(captureNodeBrush({ type: 'anchor', data: {} }), null)
+  assert.equal(captureNodeBrush({ type: 'unknown-future-type', data: {} }), null)
 })
 
 test('edges: look is copied, label position and routing stay the target’s', () => {

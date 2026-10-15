@@ -88,16 +88,16 @@ Complete field-by-field reference. Read the relevant section rather than the who
 | Field | Type | Required | Meaning |
 |---|---|---|---|
 | `id` | string | yes | Unique within the file. Referenced by `source`/`target` on edges. |
-| `type` | string | no | `"shape"` (box: resizable, connection points, icon slots, never rotated), `"text"` (text-only, resizable, rotatable, never connection points/icons), `"container"` (grouping box: resizable, connection points, never rotated, can be a `parentId`), `"anchor"` (small unstyled placeholder, connection points but no label/icons — result of dragging an edge into empty space), or `"line"` (freeform curve — see [Line points](#line-points); never connectable, never rotated, `position`/`size` are the bounding box). Absent/unrecognized → treat as `"shape"`. |
+| `type` | string | no | `"shape"` (box: resizable, connection points, icon slots, never rotated), `"text"` (text-only, resizable, rotatable, never connection points/icons), `"container"` (grouping box: resizable, connection points, never rotated, can be a `parentId`), or `"line"` (freeform curve — see [Line points](#line-points); never connectable, never rotated, `position`/`size` are the bounding box). Absent/unrecognized → treat as `"shape"`. The removed `"anchor"` placeholder type is no longer supported by the app; never write it. |
 | `position` | `{x, y}` | yes | Top-left corner, canvas units. Relative to canvas origin normally, but relative to the **parent container's own top-left** when `parentId` is set. |
 | `size` | `{width, height}` | no | Absent means "let the renderer size to content." |
 | `rotation` | number | no | Degrees. Only meaningful for `"text"` — `"shape"`/`"container"` are never rotated. |
 | `zIndex` | integer | no | Stacking order, higher on top. Compared directly across all nodes regardless of type — no automatic "containers behind" rule beyond it being the typical starting arrangement. **Exception enforced by the renderer, not the file**: a node with `parentId` always draws above its parent regardless of stored `zIndex` (React Flow forces child z ≥ parent + 1) — so the comparison is only reliable among *siblings*. Absent → treat as `0` or preserve array order. Edges/anchors never have one; edges derive display position from their endpoints. |
 | `connectionPoints` | array | no | Only meaningful on `"shape"`/`"container"`. Every side always has ≥1 point. No entries for a side → implicit single centered point (`offset` 0.5, `id` = side name `"top"`/`"right"`/`"bottom"`/`"left"`). Once edited, may appear explicitly with any `offset`; a side can never be reduced to zero entries. Entry: `id` (string, unique in node, referenced by edge `sourceHandle`/`targetHandle`), `side` (`"top"`\|`"right"`\|`"bottom"`\|`"left"`), `offset` (0–1 fraction along the side, not pixels — stays correct across resize). |
 | `parentId` | string | no | Another node's `id` — this node is its child. Absent = top-level. **Parent must appear earlier in the `nodes` array than its children.** Nesting to any depth is allowed. Deleting a container reparents children rather than deleting them. A reader should repair (not choke on) a `parentId` that doesn't resolve (drop it, node becomes top-level) or a parent cycle (cut one link) — a writer shouldn't produce either. |
-| `locked` | boolean | no | Blocks drag/resize/rotate/accidental-delete in the app's UI only — every other edit (style, tags, label, connection points, details) stays allowed. Absent = `false`. Not meaningful on `"anchor"` or edges. Locking a container does not cascade to children. |
+| `locked` | boolean | no | Blocks drag/resize/rotate/accidental-delete in the app's UI only — every other edit (style, tags, label, connection points, details) stays allowed. Absent = `false`. Not meaningful on edges. Locking a container does not cascade to children. |
 | `style` | object | no | See [Node style](#node-style). Absent = current hardcoded look. |
-| `metadata` | object | no | Only on `"shape"`/`"container"` — never on `"text"`/`"anchor"`. See [Metadata](#metadata). |
+| `metadata` | object | no | Only on `"shape"`/`"container"` — never on `"text"`. See [Metadata](#metadata). |
 | `data.label` | string | yes | Display text. May be empty. |
 | `data.icons` | object | no | Only on `"shape"`/`"container"`. Up to 4 keys: `topLeft`, `topRight`, `bottomLeft`, `bottomRight` — each an [icon reference](#icon-reference). |
 | `data.details` | string | no | Relative path (from **this diagram file's own directory**) to a Markdown notes file, shown as a side panel. This app names it `<label>-<uuid-suffix>.md` and keeps it in sync on relabel, but treat the stored value as an opaque path — never parse/reconstruct it. |
@@ -235,7 +235,7 @@ Every field optional; absent = current hardcoded look, same as `style` being abs
 
 ## Metadata
 
-Structured key/value data on a Shape/Container node or an Edge — meant to be *read and acted on* (by this app's highlighting, and by external tooling), not just displayed. `"text"`/`"anchor"` never carry this.
+Structured key/value data on a Shape/Container node or an Edge — meant to be *read and acted on* (by this app's highlighting, and by external tooling), not just displayed. `"text"` never carries this.
 
 ```json
 {

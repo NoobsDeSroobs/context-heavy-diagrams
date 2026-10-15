@@ -6,7 +6,7 @@ import type { EdgeStyle, NodeStyle } from '@shared/diagram'
 // never a reference to the selection — clicking a target changes the
 // selection, so the source must not depend on it).
 
-// Node types that carry a `data.style`; 'anchor' is a transient placeholder.
+// Node types that carry a `data.style`.
 const BRUSH_NODE_TYPES = ['entity', 'container', 'text', 'line'] as const
 
 export type StyleBrush =
