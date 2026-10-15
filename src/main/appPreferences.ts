@@ -1,7 +1,8 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
-import { readFile, writeFile } from 'fs/promises'
-import { join } from 'path'
+import { access, readFile, writeFile } from 'fs/promises'
+import { dirname, join } from 'path'
 import { DEFAULT_PREFERENCES, normalizePreferences, type AppPreferences } from '@shared/preferences'
+import { parseInstallOptions } from '@shared/installOptions'
 
 // Real per-OS preferences file (see ADR 0053) — replaces the renderer's
 // former localStorage-only storage (ADR 0032) with a file under this OS's
@@ -27,6 +28,32 @@ export async function readPreferences(): Promise<AppPreferences | null> {
     return normalizePreferences(JSON.parse(raw) as Partial<AppPreferences>)
   } catch {
     return null
+  }
+}
+
+// First-run defaults chosen in the Windows installer (ADR 0108): the installer
+// writes install-options.json next to the executable, and this turns it into
+// the initial settings file. Strictly first-run — if a settings file already
+// exists (an upgrade, a reinstall, a user who has since changed Preferences)
+// the options are left alone, so the Preferences panel stays the only source of
+// truth. Skipped when not packaged: a dev run has no installer and its
+// execPath is Electron's own binary.
+export async function seedPreferencesFromInstallOptions(): Promise<void> {
+  if (!app.isPackaged) return
+  try {
+    await access(preferencesFile())
+    return
+  } catch {
+    // No settings file yet — fall through and look for installer options.
+  }
+  try {
+    const raw = await readFile(join(dirname(process.execPath), 'install-options.json'), 'utf-8')
+    const options = parseInstallOptions(raw)
+    if (Object.keys(options).length > 0) {
+      await writeFile(preferencesFile(), JSON.stringify(options), 'utf-8')
+    }
+  } catch {
+    // No installer options (portable run, AppImage, Linux/macOS): defaults apply.
   }
 }
 

@@ -22,7 +22,7 @@ Only needed on the machine doing the *build* — whoever receives the finished i
 npm run build:win
 ```
 
-Produces `dist/context-heavy-diagram-tool-<version>-setup.exe` — a self-contained one-click NSIS installer (the Electron runtime, the app, everything needed is bundled inside it). **Built and verified working** (2026-08-23).
+Produces `dist/context-heavy-diagram-tool-<version>-setup.exe` — a self-contained NSIS installer (the Electron runtime, the app, everything needed is bundled inside it). It was a one-click installer until [ADR 0108](../decisions/0108-chd-file-association-and-single-instance.md); it is now a short per-user wizard with a setup-options page (see [File association and installer options](#file-association-and-installer-options)). Built and live-tested on Windows (2026-10-15): the wizard, the options page, the association and the first-run AI seeding were confirmed working. The earlier one-click build was verified working on 2026-08-23.
 
 **What to actually send**: just that one `.exe` file. Nothing else needs to travel with it.
 
@@ -38,7 +38,21 @@ Produces `dist/context-heavy-diagram-tool-<version>-setup.exe` — a self-contai
 2. Windows shows a blue **"Windows protected your PC"** screen.
 3. Click the small **"More info"** link.
 4. Click **"Run anyway"**.
-5. It installs immediately — no install wizard, no admin/UAC prompt (per-user install) — and adds a desktop shortcut.
+5. A short wizard follows: pick "just for me" (the default; no admin/UAC prompt), then the setup-options page (below), then it installs and adds a desktop shortcut.
+
+### File association and installer options
+
+The Windows wizard has one options page with two checkboxes, both ticked by default (`build/installer.nsh`, [ADR 0108](../decisions/0108-chd-file-association-and-single-instance.md)):
+
+- **Open .chd diagram files with this app.** Writes the per-user `.chd` association (ProgID `ContextHeavyDiagramTool.Diagram`, under `HKCUSoftwareClasses`). Untick it if another program, for example a MAME/RetroArch emulator, should keep `.chd`. The installer remembers the previous owner and the uninstaller hands it back; it only removes the `.chd` default if it still points at us.
+- **Enable AI features.** Writes `install-options.json` next to the exe; on the very first run the app turns it into the initial `aiFeaturesEnabled` preference (`seedPreferencesFromInstallOptions`). Never re-applied once a settings file exists, so an update or reinstall never undoes a later change in Preferences.
+
+Things to expect:
+- **Windows decides the default app, not the installer.** Even with the box ticked, the first double-click may show an "open with" chooser; picking "Always" there is what makes it stick. This is Windows' user-choice protection, not a bug.
+- An **update** (`--updated`) skips the options page and leaves both choices alone.
+- The association is deliberately *not* done through electron-builder's `fileAssociations` on Windows, because that registers unconditionally. `fileAssociations` is only set on the `mac` and `linux` sections.
+- The app runs as **one instance**: double-clicking a second `.chd` while it is open opens another window in the same process (a development run skips this).
+- The document icon is the app icon for now.
 
 ## Linux
 
@@ -52,6 +66,8 @@ Expected output, based on `electron-builder.yml`'s config (unverified until an a
 - `dist/context-heavy-diagram-tool-<version>.AppImage` — a single self-contained executable, no installation step; the recipient marks it executable (`chmod +x`) and runs it directly. Closest Linux equivalent to the Windows installer's simplicity.
 - `dist/context-heavy-diagram-tool-<version>.deb` — a Debian package (Ubuntu/Debian and derivatives), installed via `dpkg -i` or a graphical package installer.
 - A `snap` package, installed via `snap install --dangerous <file>.snap` since it won't be signed/published to the Snap Store in Phase 1.
+
+**File association (unverified)**: the `linux.fileAssociations` entry should make the deb/snap ship the `application/vnd.context-heavy-diagram+json` MIME type and list it in the desktop entry, so a file manager offers the app for `.chd`. An AppImage cannot register an association on its own (a tool such as AppImageLauncher can). Run the build on Linux and check the MIME definition and double-click, then update this paragraph.
 
 **What to actually send**: whichever single file matches the recipient's format of choice (AppImage is the safest default — it doesn't care which distro they're on). Same principle as Windows: these are meant to be self-contained; don't assume that's confirmed until a real build has actually been run and checked.
 
@@ -75,3 +91,5 @@ Two real things worth knowing before that first attempt:
 - **Apple Silicon vs. Intel.** `electron-builder.yml`'s `mac` section doesn't currently pin an architecture, so a plain `--mac` build likely targets whatever architecture the build machine itself is (or may need an explicit `--x64`/`--arm64`/`--universal` flag to control it — not yet confirmed). A universal binary (both architectures in one DMG) is the friendliest option for reaching both Intel and Apple Silicon users without asking which one they have, at roughly double the file size — worth deciding deliberately once this is actually being built, not defaulting to whatever happens to come out first.
 
 One more thing worth fixing before this is taken seriously, not just before it looks polished: `mac.extendInfo` in `electron-builder.yml` requests camera, microphone, Documents, and Downloads access (`NSCameraUsageDescription` etc.) — inherited scaffold defaults from the electron-vite template, not anything this app actually uses. Requesting camera/microphone permissions for a diagramming tool would look suspicious to exactly the non-technical users this whole effort is for, and is broader access than the app needs regardless of how it looks. Trim this down to whatever this app genuinely touches (Documents/Downloads, for opening/saving `.chd` files, is plausible; camera/microphone almost certainly isn't) before a real Mac build ever goes out.
+
+**File association (unverified)**: `mac.fileAssociations` declares the `.chd` document type, and a Finder double-click reaches the app as an `open-file` event (queued until the app is ready). Neither the DMG nor that path has been run on a Mac; verify once one is available.

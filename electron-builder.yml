@@ -17,12 +17,29 @@ win:
   extraFiles:
     - from: build/launchers/chd.cmd
       to: chd.cmd
+# Wizard-style, still per-user (no elevation). Needed so the installer can ask the
+# .chd-association and AI-features questions on an options page (ADR 0108).
+# No global `fileAssociations` on purpose: electron-builder would register .chd
+# on Windows unconditionally. build/installer.nsh writes it, behind a checkbox.
 nsis:
+  oneClick: false
+  perMachine: false
+  allowElevation: false
+  allowToChangeInstallationDirectory: false
+  include: build/installer.nsh
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
 mac:
+  # Declares the .chd document type (ADR 0108); Finder double-clicks arrive as an
+  # open-file event. Icon omitted: reuses the app icon until branding.
+  fileAssociations:
+    - ext: chd
+      name: Context-Heavy Diagram
+      description: Context-Heavy Diagram
+      mimeType: application/vnd.context-heavy-diagram+json
+      role: Editor
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
     - NSCameraUsageDescription: Application requests access to the device's camera.
@@ -33,6 +50,14 @@ mac:
 dmg:
   artifactName: ${name}-${version}.${ext}
 linux:
+  # Declares the .chd MIME type and adds it to the desktop entry for deb/snap
+  # (ADR 0108). AppImage cannot register an association by itself.
+  fileAssociations:
+    - ext: chd
+      name: Context-Heavy Diagram
+      description: Context-Heavy Diagram
+      mimeType: application/vnd.context-heavy-diagram+json
+      role: Editor
   # Pinned because the chd launcher hardcodes it (same value electron-builder derives from package.json's name).
   executableName: context-heavy-diagram-tool
   # chd launcher next to the executable (ADR 0106)

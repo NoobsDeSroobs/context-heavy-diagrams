@@ -22,12 +22,16 @@ the lock/metadata rules, CSS, and the format docs.
   `spawnEntityAt`.
 - **Placement and size:** the Entity is centered on the drop point, default
   Entity size, default Entity style, seeded required-tag metadata and a fresh
-  `zIndex` — exactly what a palette drop produces. The edge attaches to the
-  Entity's left connection point, as it did on the anchor.
+  `zIndex`, and reparented into the container under the drop point if there is
+  one — exactly what a palette drop produces. The edge attaches to the
+  Entity's left connection point, as it did on the anchor, whichever side the
+  drag came from.
 - **Label focus:** the new Entity enters label-edit mode immediately, with its
   default text selected. This is a small piece of transient renderer state in
   `Canvas.tsx` (a "pending label edit" node id, read via `DiagramContext`), not
   stored in the node's data, so it never reaches the file or the undo history.
+  Editing starts one tick after the drop so the gesture's own click cannot blur
+  the new input and close it again.
 - **Undo is the cancel path.** The Entity and the edge are created in one undo
   step; there is nothing to dismiss.
 - **Containers are no longer offered by this gesture.** A drop always yields an
@@ -71,8 +75,12 @@ the lock/metadata rules, CSS, and the format docs.
 - [ADR 0021](0021-connection-point-removal-blocked.md)'s note that an anchor
   could re-target an edge when a connection point is removed no longer applies;
   point removal stays blocked while an edge is attached.
-- A bus/relay node (`later/0065`) was framed as an upgrade of the anchor. That
-  idea now starts from a clean slate and must be a new node type.
+- The parked bus/relay-node idea was framed as an upgrade of the anchor. It now
+  starts from a clean slate and would have to be a new node type of its own.
+- The docs that describe the node types (the file-format spec, the AI
+  instructions and the bundled skill) no longer list `anchor`.
+- Always attaching to the left point is a known simplification; choosing the
+  side that faces the source node would be a small polish.
 - No in-place "convert Entity to Container" action exists yet. If dropping an
   edge and wanting a container turns out to matter, that is a small separate
   follow-up.

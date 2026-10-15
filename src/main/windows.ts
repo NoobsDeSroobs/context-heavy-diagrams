@@ -16,6 +16,12 @@ const FILTERS = [{ name: 'Diagram', extensions: ['chd'] }]
 // absolute path.
 const windowsByPath = new Map<string, BrowserWindow>()
 
+// Most recently focused window, for focusLastUsedWindow. Electron has no
+// "last active window" query of its own, and getFocusedWindow() is null
+// whenever the app itself is in the background — exactly when a second launch
+// arrives.
+let lastFocusedWindow: BrowserWindow | null = null
+
 function normalizePath(path: string): string {
   return process.platform === 'win32' ? path.toLowerCase() : path
 }
@@ -109,6 +115,9 @@ export function createWindow(initialPath?: string): BrowserWindow {
   win.setMenuBarVisibility(false)
   win.on('ready-to-show', () => win.show())
   win.on('closed', () => unregisterWindow(win))
+  win.on('focus', () => {
+    lastFocusedWindow = win
+  })
   attachCloseGuard(win)
 
   win.webContents.setWindowOpenHandler((details) => {
@@ -139,18 +148,49 @@ export function createWindow(initialPath?: string): BrowserWindow {
 // never passes a reuse candidate — a linked child always opens in its own
 // window, never in-place (ADR 0023); only top-level "open a diagram"
 // entry points reuse an empty window.
-function openOrFocusWindow(path: string, reuseWindow?: BrowserWindow): void {
+function openOrFocusWindow(path: string, reuseWindow?: BrowserWindow): BrowserWindow {
   const existing = findWindowForPath(path)
   if (existing) {
     if (existing.isMinimized()) existing.restore()
     existing.focus()
-    return
+    return existing
   }
   if (reuseWindow) {
     loadPathIntoWindow(reuseWindow, path)
+    return reuseWindow
+  }
+  return createWindow(path)
+}
+
+// Files handed to the app from outside — a double-click in the file manager
+// (launch arguments, second-instance, macOS open-file; ADR 0108). Each gets
+// its own window, or focuses the one already showing it; an empty window is
+// never reused here because only the renderer knows whether one is empty.
+// Returns the windows in order so a cold start can parent its recovery
+// dialogs to the first.
+export function openExternalPaths(paths: string[]): BrowserWindow[] {
+  return paths.map((path) => {
+    const win = openOrFocusWindow(path)
+    // A just-created window shows itself on ready-to-show; follow that with a
+    // focus so a file opened while the app was in the background comes forward.
+    if (!win.isVisible()) win.once('ready-to-show', () => win.focus())
+    return win
+  })
+}
+
+// Launching the app again with no file (Start menu, dock): bring the window the
+// user last had in front forward rather than starting a second process.
+export function focusLastUsedWindow(): void {
+  const win =
+    lastFocusedWindow && !lastFocusedWindow.isDestroyed()
+      ? lastFocusedWindow
+      : BrowserWindow.getAllWindows()[0]
+  if (!win) {
+    createWindow()
     return
   }
-  createWindow(path)
+  if (win.isMinimized()) win.restore()
+  win.focus()
 }
 
 // Drop-onto-a-window (ADR 0040's own design pass, 2026-08-22,

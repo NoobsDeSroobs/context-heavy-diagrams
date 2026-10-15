@@ -5,10 +5,15 @@ import { registerIconHandlers } from './icons'
 import { registerReferenceHandlers } from './references'
 import { registerDetailsHandlers } from './details'
 import { registerLinkHandlers } from './links'
-import { createWindow, registerWindowHandlers } from './windows'
+import { createWindow, focusLastUsedWindow, openExternalPaths, registerWindowHandlers } from './windows'
+import { diagramPathsFromArgs } from './launchArgs'
 import { registerRequiredTagsHandlers } from './requiredTags'
 import { registerRecoveryHandlers, runStartupOrphanScan } from './recovery'
-import { readPreferences, registerPreferencesHandlers } from './appPreferences'
+import {
+  readPreferences,
+  registerPreferencesHandlers,
+  seedPreferencesFromInstallOptions
+} from './appPreferences'
 import { DEFAULT_PREFERENCES } from '@shared/preferences'
 import { registerAppInfoHandlers } from './appInfo'
 import { registerStylePaletteHandlers } from './stylePalette'
@@ -17,10 +22,37 @@ import { registerSecurityHandlers } from './security'
 import { registerLinkedSearchHandlers } from './linkedSearch'
 import { registerAiHandlers } from './ai'
 
+// One running instance (ADR 0108): settings, crash-recovery snapshots and the
+// window-by-path registry are all per-user state a second process would
+// trample. A second launch exits at once and its command line arrives in this
+// process as 'second-instance'. Skipped when not packaged so a dev run never
+// fights an installed copy for the lock.
+const hasInstanceLock = !app.isPackaged || app.requestSingleInstanceLock()
+if (!hasInstanceLock) app.quit()
+
+app.on('second-instance', (_event, argv, workingDirectory) => {
+  const paths = diagramPathsFromArgs(argv, workingDirectory)
+  if (paths.length > 0) openExternalPaths(paths)
+  else focusLastUsedWindow()
+})
+
+// macOS hands a double-clicked file to the running (or just-starting) app as
+// 'open-file', never as an argument, and it can arrive before 'ready' — so it
+// is queued until the first window machinery exists.
+let appReady = false
+const pendingOpenFiles: string[] = []
+app.on('open-file', (event, path) => {
+  event.preventDefault()
+  if (appReady) openExternalPaths([path])
+  else pendingOpenFiles.push(path)
+})
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  if (!hasInstanceLock) return
+
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
 
@@ -50,7 +82,18 @@ app.whenReady().then(() => {
   registerLinkedSearchHandlers()
   registerAiHandlers()
 
-  const initialWindow = createWindow()
+  // Installer-chosen first-run defaults must be in place before any window
+  // reads the preferences.
+  await seedPreferencesFromInstallOptions()
+
+  // Files the OS launched us with (double-click on Windows/Linux, or
+  // open-file queued on macOS) open instead of the blank window; with none, the
+  // launch is exactly what it always was. The recovery dialogs hang off the
+  // first window either way.
+  const launchPaths = [...diagramPathsFromArgs(process.argv, process.cwd()), ...pendingOpenFiles]
+  pendingOpenFiles.length = 0
+  appReady = true
+  const initialWindow = openExternalPaths(launchPaths)[0] ?? createWindow()
 
   // Not awaited — a diagram that crashed before ever being saved once has
   // no path to key a per-window recovery check against (that path runs
