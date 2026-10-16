@@ -7,7 +7,7 @@ import type {
   SaveOutcome,
   Stamp
 } from '@shared/documentSave'
-import type { AiFolderResult } from '@shared/aiFolderResult'
+import type { AiFolderResult, ClaudeExtensionOutcome } from '@shared/aiFolderResult'
 import type { AppPreferences } from '@shared/preferences'
 import type { SecurityCrawlResult } from '@shared/threatMatrixMath'
 import type { LinkedSearchLink, LinkedSearchResult } from '@shared/linkedSearch'
@@ -100,6 +100,7 @@ export interface DiagramApi {
   onPreferencesChanged(callback: (preferences: AppPreferences) => void): () => void
   getAppVersion(): Promise<string>
   enableAiInFolder(): Promise<AiFolderResult | null>
+  installClaudeExtension(): Promise<ClaudeExtensionOutcome>
   exportStylePalette(json: string): Promise<boolean>
   importStylePalette(): Promise<{ name: string; content: string } | null>
   exportPngToFile(dataUrl: string, suggestedFilename: string): Promise<boolean>

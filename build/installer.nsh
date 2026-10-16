@@ -55,7 +55,7 @@
     ${NSD_CreateCheckbox} 0 58u 100% 12u "Enable AI features (adds an AI menu)"
     Pop $ChdAiBox
     ${NSD_SetState} $ChdAiBox $ChdAiWanted
-    ${NSD_CreateLabel} 12u 72u 94% 24u "You can turn this on or off later in Preferences."
+    ${NSD_CreateLabel} 12u 72u 94% 44u "Warning: this only prepares your diagrams for AI tools you choose to use. Anything you share with an AI assistant, including diagram contents, may leave your computer and be sent to the company that runs it. Leave this off if your diagrams are confidential. You can change this later in Preferences."
     Pop $0
 
     nsDialogs::Show

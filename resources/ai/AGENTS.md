@@ -5,6 +5,8 @@ This folder contains `.chd` diagram files (from the Context-Heavy Diagram Tool).
 
 **Before reading, creating or editing any `.chd` file, read `.claude/skills/chd-diagrams/SKILL.md`** and follow it. It points to the field reference, the authoring guide and the layout guide in the same folder.
 
+Before you write an edited file back, check that it hasn't changed since you read it (read it again, or compare `chd hash <file>`); if it has, re-read it and redo your edit on the fresh content instead of overwriting.
+
 After every edit, validate:
 
 ```bash

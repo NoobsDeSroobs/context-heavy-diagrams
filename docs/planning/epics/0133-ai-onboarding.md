@@ -1,9 +1,12 @@
 # 0133: AI onboarding — let a non-technical user work with Claude (or similar) on their diagrams
 
 ## Status
-In Progress — started 2026-10-15 on `epic/0133-ai-onboarding`. Design for the
-pieces below was discussed 2026-10-14/15; each task group gets its own ADR
-when it is built (the group list is the decided shape, not a frozen spec).
+Implemented — groups A–D merged earlier (PR #109); groups E and F on
+`epic/0133-ai-extension-and-docs` (2026-10-16), live-tested on Windows and
+confirmed working by the user. Pending PR/merge, then move to `completed/`.
+Still unverified: macOS (the extension) and Linux (`chd` on PATH was deferred).
+Design for the pieces below was discussed 2026-10-14/15; each task group got its
+own ADR (the group list was the decided shape, not a frozen spec).
 
 ## Goal
 A person who just installed the app can start using Claude (Claude Code,
@@ -70,18 +73,48 @@ Delivery has to work for two different setups — an *agent in a folder* and a
 - [x] ADR ([ADR 0106](../../decisions/0106-chd-command-line-tool.md))
 
 ### E. Claude Desktop extension (MCPB)
-- [ ] Spike: what a bundled `.mcpb` exposes (read/validate/spec first; write tools only if worth the risk)
-- [ ] "Install Claude Desktop extension…" menu item, only if the spike says it's worth shipping
-- [ ] ADR
+- [x] Spike: what a bundled `.mcpb` exposes — findings and recommendation in [Spike findings (group E)](#spike-findings-group-e) below; **scope decided**
+- [x] ADR ([ADR 0110](../../decisions/0110-claude-desktop-extension.md))
+- [x] `extension/`: the MCP server as plain ESM (`list_files`, `get_format_spec`, `validate_diagram`, `read_file`, `create_file`, `update_file`), path confinement, file-type rules (read: text types; write: `.chd`/`.md`/`.txt`/`.svg`; never dot-files), SHA-256 fingerprint helper — unit-tested directly and over stdio with the MCP SDK client
+- [x] `extension/manifest.json` (manifest version 0.3, `directory` setting for the folder, `boolean` setting for update) and `npm run build:extension` (esbuild bundle, `mcpb` validate + pack into a git-ignored file under `resources/`); the app build runs it
+- [x] "Install Claude Desktop extension…" menu item (Windows/macOS, AI features on): explanatory dialog incl. the data-leaves-the-machine sentence, then open the bundled `.mcpb`, else reveal it with instructions
+- [x] Docs: packaging section for the extension build and how to test it with Claude Desktop
+- [x] Live test (user, needs Claude Desktop) — **confirmed working on Windows 2026-10-16** (installs, tools run; macOS still untried): install flow, folder picker, update checkbox reaching the server, stale-edit refusal, unsigned-bundle warning
 
 ### F. Docs
-- [ ] `docs/architecture/` page describing the AI-delivery paths and which user setup each serves
-- [ ] Keep `docs/file-format.md` and the skill in step (standing rule)
+- [x] `docs/architecture/` page describing the AI-delivery paths and which user setup each serves ([ai-integration.md](../../architecture/ai-integration.md))
+- [x] Keep `docs/file-format.md` and the skill in step (standing rule) — the skill references still said `shape` for the node type, legend kind and security id lists (renamed to `entity` earlier); brought in step, with the accepted-synonym note
+
+## Spike findings (group E)
+Researched 2026-10-16 from the MCPB repo's README and manifest spec (nothing built).
+
+**How it works.** A `.mcpb` is a zip: a required `manifest.json` plus the server code and its dependencies. Claude Desktop (Windows/macOS) shows an install prompt when the file is opened, and **launches the server itself** as a stdio child process — our app never hosts or starts it, and nothing is auto-discovered. Node ships with Claude Desktop, so a `server.type: "node"` bundle needs no separate Node install. Build with the `@anthropic-ai/mcpb` CLI (`init`, `pack`); the repo page says nothing about signing.
+
+**Manifest facts that matter.** Required: `manifest_version`, `name`, `version`, `description`, `author`, `server`. The spec reads 0.3 (one example uses 0.4) — a moving format, so pin the version. `server.entry_point` + `server.mcp_config` (`command`/`args`/`env`, `${__dirname}`, `platform_overrides`). `user_config` entries can be of type `directory`/`file`, shown to the user at install and substituted into the launch args as `${user_config.KEY}` — a natural way to make the user pick **the one folder the server may touch**. `tools` is a name+description list. **There is no sandbox or permission model**: the server runs with the user's rights, so any folder scoping is our own code's job. `privacy_policies` is only required for extensions that call external services; ours must not.
+
+**Fit with this project.**
+- Reuse: the Node validator (`resources/ai/skills/chd-diagrams/scripts/validate_chd.mjs`), `chd spec`, and the skill's reference text already exist as plain Node ESM with no dependencies. The server would be a thin MCP wrapper over them, bundled to one file (the MCP SDK is the only new dependency).
+- Fully local and offline: the bundle ships inside our installer and the server makes no network calls. (Claude itself still needs internet, and anything a tool returns becomes conversation content sent to the model — see the warning question below.)
+- **Platforms:** Claude Desktop exists for Windows and macOS only, so the menu item should be hidden on Linux. That makes this a Windows/macOS feature; the agent-in-a-folder route (groups C/D) remains the Linux story.
+- Unverifiable here: how the OS hands a `.mcpb` to Claude Desktop (association unknown), whether an unsigned bundle shows a warning, and the Mac path. The Windows install flow needs the user's Claude Desktop to test.
+
+**Decided scope for v1 (2026-10-16, revised same day to cover more than `.chd`).** Writing to existing files is allowed, opt-in, with no extra safeguards beyond that and a stale-edit check. Full detail in [ADR 0110](../../decisions/0110-claude-desktop-extension.md):
+- `list_files`, `get_format_spec`, `validate_diagram`, `read_file` (content **and a content hash**), `create_file` (new file only; exclusive create) — always on.
+- `update_file` — **only available when the user ticks "Allow Claude to modify existing files (can cause data loss)"**, a `boolean` entry in the manifest's `user_config`, off by default and worded plainly in the install text.
+- **Files.** The chosen folder holds diagrams, their Markdown "details" notes, icons, and supporting documents the user placed there for the assistant. Read: text types (`.chd`, `.md`, `.txt`, `.json`, `.csv`, `.yaml`, `.svg`, ...). Write: only `.chd`, `.md`, `.txt`, `.svg` (never anything runnable). Never dot-files or dot-directories (`.env`, `.git`, ...). Binary files (PDF, images) are not served in v1.
+- **Stale-edit check on every write** (a project-wide standing rule now: [ADR 0109](../../decisions/0109-stale-edit-check-for-every-ai-write-path.md); `chd hash` and the skill/`AGENTS.md`/copy-paste wording already carry it): an update must send back the hash from the last read and is refused, with a "re-read first" message, if the file's current hash differs; a create is refused if the file now exists.
+- **Deliberately no backups or other safeguards.** The people who enable writing are the ones who would be using an agent with terminal access, which can already overwrite anything, and the files are plain text that version control handles well. Opt-in plus the stale check is the whole policy.
+- All paths are resolved and checked against the chosen folder (reject `..`, absolute paths outside it, and symlinks that escape); size limits.
+- Install-time text and the extension description state plainly that file contents the assistant reads are sent to the AI provider.
+- An open window with **unsaved** edits is not visible to a file hash; the app's existing external-change warning is what covers that case.
+
+**Menu item.** "Install Claude Desktop extension…" (Windows/macOS only): try opening the bundled `.mcpb` with the OS; if nothing handles it, reveal it in the file manager with a short dialog explaining the two-step install. The `.mcpb` is built by an npm script during the app build and shipped under `resources/`.
 
 ## Open questions
+- ~~**AI-menu data-leak notice (raised 2026-10-16, for later discussion).**~~ Decided 2026-10-16: a short orange/amber notice line at the top of the AI dropdown ("Could cause data leaks: what an AI assistant reads is sent to its provider."), implemented via `MenuBarMenu.notice`. Not decided: whether the first-use flows (Copy AI instructions / Enable in a folder) also need their own wording. Original question: The installer's AI checkbox now carries a warning that sharing diagrams with an AI assistant may leak their contents. Should the AI menu itself carry a similar notice — where (a persistent line, a first-use dialog, in the "Copy AI instructions" / "Enable AI assistance in a folder" / extension-install flows), what wording, and whether it can be dismissed? Not decided.
 - ~~Skill ownership/location~~ — decided (ADR 0105). Still open: auto-refreshing a folder's copy after an app upgrade (today: re-run the menu item).
 - ~~Does the CLI ship in the installer by default?~~ — yes, the launchers always ship (ADR 0106). Still open: putting `chd` on PATH (Windows NSIS, Linux deb/AppImage), planned alongside the file-association installer work.
-- MCPB write tools: a mis-edit by an AI is a data-loss risk; how much do we expose (ties to [epic 0115](0115-file-app-version-compatibility-and-data-loss-safety.md))?
+- ~~MCPB write tools: how much do we expose?~~ — decided 2026-10-16: create is always on, update is opt-in with a stale-edit check on every write (see Spike findings).
 
 ## Notes
 - Task groups are sequenced A → B → C → D → E; each is shippable alone. Whether

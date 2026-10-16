@@ -6044,6 +6044,23 @@ function CanvasInner(): React.JSX.Element {
           )
       }
     },
+    // Claude Desktop exists for Windows and macOS only (ADR 0110).
+    ...(window.electron.process.platform === 'win32' || window.electron.process.platform === 'darwin'
+      ? [
+          {
+            label: 'Install Claude Desktop extension…',
+            onSelect: () => {
+              window.api
+                .installClaudeExtension()
+                .catch((err) =>
+                  showAlert(
+                    `Could not install the Claude Desktop extension: ${err instanceof Error ? err.message : String(err)}`
+                  )
+                )
+            }
+          }
+        ]
+      : []),
     {
       label: 'Copy AI instructions',
       onSelect: () => {
@@ -6059,7 +6076,13 @@ function CanvasInner(): React.JSX.Element {
   ]
   const aiMenu: MenuBarMenu | null =
     preferences.aiFeaturesEnabled && aiMenuItems.length > 0
-      ? { label: 'AI', items: aiMenuItems }
+      ? {
+          label: 'AI',
+          // Always visible when the menu is open (ADR 0103): anything an assistant
+          // reads is sent to its provider.
+          notice: 'Could cause data leaks: what an AI assistant reads is sent to its provider.',
+          items: aiMenuItems
+        }
       : null
 
   const menus: MenuBarMenu[] = [

@@ -31,9 +31,10 @@ export default defineConfig(
     }
   },
   {
-    // Plain-JS node:test files and the standalone `chd` CLI (ADR 0106) — the
-    // return-type rule is for app code.
-    files: ['**/*.test.mjs', 'resources/cli/**/*.mjs'],
+    // Plain-JS node:test files, the standalone `chd` CLI (ADR 0106), the Claude
+    // Desktop extension (ADR 0110) and its build script — the return-type rule
+    // is for app code.
+    files: ['**/*.test.mjs', 'resources/cli/**/*.mjs', 'extension/**/*.mjs', 'scripts/**/*.mjs'],
     rules: { '@typescript-eslint/explicit-function-return-type': 'off' }
   },
   eslintConfigPrettier

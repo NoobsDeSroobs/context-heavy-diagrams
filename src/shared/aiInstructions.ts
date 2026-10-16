@@ -21,4 +21,6 @@ Coordinates — easy to get wrong:
 
 Relative paths: any file path in the diagram (icons, "data.details" notes, "data.linkedDiagram" links to other diagrams) is relative to the .chd file that contains it. If you copy a node into a diagram in a different folder, rewrite its paths. Don't move or rename files that other diagrams link to.
 
+Always work from the newest version of the file I have shown you; if I paste a newer one, start again from that instead of from your earlier copy.
+
 When you change a file: keep ids unique, don't delete things I didn't ask you to, and tell me what you changed. The full format reference is docs/file-format.md in the project's repository.`

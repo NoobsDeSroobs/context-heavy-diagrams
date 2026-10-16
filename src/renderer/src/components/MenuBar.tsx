@@ -19,6 +19,9 @@ export interface MenuBarItem {
 export interface MenuBarMenu {
   label: string
   items: MenuBarItem[]
+  // A short, non-interactive line shown at the top of the dropdown in warning
+  // colors (the AI menu's data-leak notice, ADR 0103).
+  notice?: string
 }
 
 interface MenuBarProps {
@@ -178,6 +181,11 @@ export default function MenuBar({ menus }: MenuBarProps): React.JSX.Element {
           </button>
           {openIndex === index && (
             <div className="menu-bar-dropdown">
+              {menu.notice && (
+                <div className="menu-bar-notice" role="note">
+                  {menu.notice}
+                </div>
+              )}
               {menu.items.map((item) => (
                 <DropdownItem
                   key={item.label}

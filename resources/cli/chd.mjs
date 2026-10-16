@@ -5,6 +5,7 @@
 // needs no separate Node install. It can also be run directly: `node chd.mjs`.
 //
 // Exit codes: 0 ok, 1 validation errors found, 2 usage error.
+import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -27,11 +28,15 @@ const HELP = `chd — command-line companion to the Context-Heavy Diagram Tool
 Usage:
   chd spec [fields|authoring|layout|all]   Print the .chd file format reference
   chd validate <file.chd>... [--recursive] Check diagram files for structural problems
+  chd hash <file.chd>                      Print the file's fingerprint (SHA-256 of its bytes)
   chd --version
   chd --help
 
 If you are an AI assistant: run \`chd spec\` first to learn the .chd format, then
-run \`chd validate <file>\` after every edit you make to a diagram.
+run \`chd validate <file>\` after every edit you make to a diagram. Before you write an
+edited file back, run \`chd hash <file>\` again and compare it with the value from when
+you read it: if it differs, someone changed the file meanwhile, so re-read it and redo
+your edit on the fresh content.
 
   spec       Default: the core rules and traps. 'fields' is the exact field-by-field
              reference, 'authoring' covers linking/tags/git, 'layout' covers spacing
@@ -40,6 +45,9 @@ run \`chd validate <file>\` after every edit you make to a diagram.
              ordering, and relative paths (icons, notes, linked diagrams) that don't
              resolve. --recursive also follows linked diagrams. Exit code 1 if any
              ERROR was found (warnings alone don't fail).
+  hash       Prints the lowercase-hex SHA-256 of the file's raw bytes — the same
+             fingerprint the Claude Desktop extension uses (ADR 0109). Exit code 1 if
+             the file can't be read.
 `
 
 function readSkillFile(rel) {
@@ -97,6 +105,17 @@ function appVersion() {
   return 'unknown'
 }
 
+// The stale-edit fingerprint (ADR 0109): SHA-256 of the raw bytes, lowercase hex.
+function hash(file) {
+  try {
+    console.log(createHash('sha256').update(readFileSync(file)).digest('hex'))
+    return 0
+  } catch (error) {
+    console.error(`chd: can't read '${file}': ${error instanceof Error ? error.message : error}`)
+    return 1
+  }
+}
+
 export function run(argv) {
   const [command, ...rest] = argv
   switch (command) {
@@ -118,6 +137,12 @@ export function run(argv) {
         return 2
       }
       return validateMain(rest)
+    case 'hash':
+      if (rest.length !== 1) {
+        console.error('Usage: chd hash <file.chd>')
+        return 2
+      }
+      return hash(rest[0])
     default:
       console.error(`chd: unknown command '${command}'. Run 'chd --help'.`)
       return 2

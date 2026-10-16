@@ -1,3 +1,12 @@
+// Result of AI -> "Install Claude Desktop extension…" (ADR 0110). Main shows
+// every dialog itself; this only tells the renderer whether to say anything.
+export type ClaudeExtensionOutcome =
+  | 'opened' // the OS was asked to open the .mcpb (Claude Desktop takes over)
+  | 'revealed' // nothing could open it; shown in the file manager instead
+  | 'cancelled'
+  | 'unsupported' // Claude Desktop does not exist on this OS
+  | 'missing' // the .mcpb was not built into this copy of the app
+
 // Result of "Enable AI assistance in a folder" (ADR 0105): main does the file
 // work, the renderer turns this into the message the user reads.
 export interface AiFolderResult {

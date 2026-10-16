@@ -45,7 +45,7 @@ Produces `dist/context-heavy-diagram-tool-<version>-setup.exe` — a self-contai
 The Windows wizard has one options page with two checkboxes, both ticked by default (`build/installer.nsh`, [ADR 0108](../decisions/0108-chd-file-association-and-single-instance.md)):
 
 - **Open .chd diagram files with this app.** Writes the per-user `.chd` association (ProgID `ContextHeavyDiagramTool.Diagram`, under `HKCUSoftwareClasses`). Untick it if another program, for example a MAME/RetroArch emulator, should keep `.chd`. The installer remembers the previous owner and the uninstaller hands it back; it only removes the `.chd` default if it still points at us.
-- **Enable AI features.** Writes `install-options.json` next to the exe; on the very first run the app turns it into the initial `aiFeaturesEnabled` preference (`seedPreferencesFromInstallOptions`). Never re-applied once a settings file exists, so an update or reinstall never undoes a later change in Preferences.
+- **Enable AI features.** The checkbox carries a warning that anything shared with an AI assistant, diagram contents included, may leave the computer. Writes `install-options.json` next to the exe; on the very first run the app turns it into the initial `aiFeaturesEnabled` preference (`seedPreferencesFromInstallOptions`). Never re-applied once a settings file exists, so an update or reinstall never undoes a later change in Preferences.
 
 Things to expect:
 - **Windows decides the default app, not the installer.** Even with the box ticked, the first double-click may show an "open with" chooser; picking "Always" there is what makes it stick. This is Windows' user-choice protection, not a bug.
@@ -72,6 +72,14 @@ Expected output, based on `electron-builder.yml`'s config (unverified until an a
 **What to actually send**: whichever single file matches the recipient's format of choice (AppImage is the safest default — it doesn't care which distro they're on). Same principle as Windows: these are meant to be self-contained; don't assume that's confirmed until a real build has actually been run and checked.
 
 `linux.maintainer` in `electron-builder.yml` is a placeholder (`Context-Heavy Diagram Tool (Preview)`, replacing the scaffold's `electronjs.org`) — Debian packaging convention actually wants a `Name <email>` format, which means this is exactly the kind of real-identity question deliberately deferred alongside `package.json`'s `author`/`homepage` fields — worth a real value before `deb` packaging is taken seriously, not just before it looks polished.
+
+## The Claude Desktop extension
+
+`npm run build:extension` (run by `npm run build`, so by every platform build) produces `resources/extension/context-heavy-diagrams.mcpb` — a git-ignored build artifact that ships unpacked next to the other resources ([ADR 0110](../decisions/0110-claude-desktop-extension.md)). It bundles `extension/server.mjs` with esbuild (the MCP SDK and the skill's spec text inlined, one file, no `node_modules`), writes `extension/manifest.json` with the app's version, validates it with the official `mcpb` CLI and packs it. The `mcpb` and esbuild packages and the MCP SDK are development dependencies only.
+
+The AI menu's "Install Claude Desktop extension…" (Windows and macOS) shows a short explanation, then asks the OS to open that file; Claude Desktop shows its own install prompt, asks for the diagram folder and offers the "modify existing files" option.
+
+**Testing it**: `npm test` starts the real server over stdio, from source and from the esbuild bundle, with the MCP SDK's client. Manual check with Claude Desktop (done on Windows 2026-10-16: it installs and the tools work; macOS untried): use the menu item, pick a folder, confirm the tools appear, ask for a diagram, and try an update with the option on and off.
 
 ## The `chd` command-line launcher
 

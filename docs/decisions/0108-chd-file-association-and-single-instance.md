@@ -74,7 +74,8 @@ the default. The mitigations are:
 
 ### The AI-features choice rides on the same options page
 The wizard’s options page also asks "Enable AI features (adds an AI menu)",
-**checked by default**, which seeds the `aiFeaturesEnabled` preference
+**checked by default**, with a short warning under it that using AI tools can send diagram
+content to the AI provider (so an organization with confidential diagrams opts in knowingly), which seeds the `aiFeaturesEnabled` preference
 ([ADR 0103](0103-ai-menu-and-feature-preference.md)) — the installer question
 that ADR anticipated.
 

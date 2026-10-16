@@ -47,7 +47,7 @@ Complete field-by-field reference. Read the relevant section rather than the who
 | `version` | `1` | Format version. Currently always `1`. |
 | `viewport` | object | Camera position when last saved: `x`, `y` (pan offset) and `zoom` (scale, `1` = 100%). Purely cosmetic. |
 | `metadata` | object | Diagram-level free-form key/value bag (plain JSON values, no locking at this level — that's `requiredTags`). Absent means none set. Same `JsonValue` shape as a metadata entry's `value`, just not wrapped in `{value, lock}`. |
-| `requiredTags` | array of RequiredTagDefinition | Template for what every Shape/Container/Edge must carry — see [Required tags](#required-tags). Absent means none. |
+| `requiredTags` | array of RequiredTagDefinition | Template for what every Entity/Container/Edge must carry — see [Required tags](#required-tags). Absent means none. |
 | `highlights` | array of HighlightDefinition | Catalog of tag-based visual highlights — see [Highlights](#highlights). Absent means none. Enabled/disabled state is never stored here. |
 | `legend` | array of LegendEntry | Catalog of manually-authored legend entries — see [Legend](#legend). Absent means none. Shown/hidden state is never stored here. |
 | `gravityPresets` | array of GravityPreset | Named bend values for line-node/catmull-rom-edge points — see [Gravity presets](#gravity-presets). Absent/empty means the built-in four shown above. |
@@ -64,8 +64,8 @@ Complete field-by-field reference. Read the relevant section rather than the who
 
 ```json
 {
-  "id": "shape-1",
-  "type": "shape",
+  "id": "entity-1",
+  "type": "entity",
   "position": { "x": -22.5, "y": 25 },
   "size": { "width": 120, "height": 80 },
   "rotation": 0,
@@ -88,23 +88,23 @@ Complete field-by-field reference. Read the relevant section rather than the who
 | Field | Type | Required | Meaning |
 |---|---|---|---|
 | `id` | string | yes | Unique within the file. Referenced by `source`/`target` on edges. |
-| `type` | string | no | `"shape"` (box: resizable, connection points, icon slots, never rotated), `"text"` (text-only, resizable, rotatable, never connection points/icons), `"container"` (grouping box: resizable, connection points, never rotated, can be a `parentId`), or `"line"` (freeform curve — see [Line points](#line-points); never connectable, never rotated, `position`/`size` are the bounding box). Absent/unrecognized → treat as `"shape"`. The removed `"anchor"` placeholder type is no longer supported by the app; never write it. |
+| `type` | string | no | `"entity"` (box: resizable, connection points, icon slots, never rotated), `"text"` (text-only, resizable, rotatable, never connection points/icons), `"container"` (grouping box: resizable, connection points, never rotated, can be a `parentId`), or `"line"` (freeform curve — see [Line points](#line-points); never connectable, never rotated, `position`/`size` are the bounding box). Absent/unrecognized → treat as `"entity"`. Pre-rename files may carry `"shape"` — treat it as a synonym for `"entity"`; the app accepts either on read and only ever writes `"entity"`. The removed `"anchor"` placeholder type is no longer supported by the app; never write it. |
 | `position` | `{x, y}` | yes | Top-left corner, canvas units. Relative to canvas origin normally, but relative to the **parent container's own top-left** when `parentId` is set. |
 | `size` | `{width, height}` | no | Absent means "let the renderer size to content." |
-| `rotation` | number | no | Degrees. Only meaningful for `"text"` — `"shape"`/`"container"` are never rotated. |
+| `rotation` | number | no | Degrees. Only meaningful for `"text"` — `"entity"`/`"container"` are never rotated. |
 | `zIndex` | integer | no | Stacking order, higher on top. Compared directly across all nodes regardless of type — no automatic "containers behind" rule beyond it being the typical starting arrangement. **Exception enforced by the renderer, not the file**: a node with `parentId` always draws above its parent regardless of stored `zIndex` (React Flow forces child z ≥ parent + 1) — so the comparison is only reliable among *siblings*. Absent → treat as `0` or preserve array order. Edges/anchors never have one; edges derive display position from their endpoints. |
-| `connectionPoints` | array | no | Only meaningful on `"shape"`/`"container"`. Every side always has ≥1 point. No entries for a side → implicit single centered point (`offset` 0.5, `id` = side name `"top"`/`"right"`/`"bottom"`/`"left"`). Once edited, may appear explicitly with any `offset`; a side can never be reduced to zero entries. Entry: `id` (string, unique in node, referenced by edge `sourceHandle`/`targetHandle`), `side` (`"top"`\|`"right"`\|`"bottom"`\|`"left"`), `offset` (0–1 fraction along the side, not pixels — stays correct across resize). |
+| `connectionPoints` | array | no | Only meaningful on `"entity"`/`"container"`. Every side always has ≥1 point. No entries for a side → implicit single centered point (`offset` 0.5, `id` = side name `"top"`/`"right"`/`"bottom"`/`"left"`). Once edited, may appear explicitly with any `offset`; a side can never be reduced to zero entries. Entry: `id` (string, unique in node, referenced by edge `sourceHandle`/`targetHandle`), `side` (`"top"`\|`"right"`\|`"bottom"`\|`"left"`), `offset` (0–1 fraction along the side, not pixels — stays correct across resize). |
 | `parentId` | string | no | Another node's `id` — this node is its child. Absent = top-level. **Parent must appear earlier in the `nodes` array than its children.** Nesting to any depth is allowed. Deleting a container reparents children rather than deleting them. A reader should repair (not choke on) a `parentId` that doesn't resolve (drop it, node becomes top-level) or a parent cycle (cut one link) — a writer shouldn't produce either. |
 | `locked` | boolean | no | Blocks drag/resize/rotate/accidental-delete in the app's UI only — every other edit (style, tags, label, connection points, details) stays allowed. Absent = `false`. Not meaningful on edges. Locking a container does not cascade to children. |
 | `style` | object | no | See [Node style](#node-style). Absent = current hardcoded look. |
-| `metadata` | object | no | Only on `"shape"`/`"container"` — never on `"text"`. See [Metadata](#metadata). |
+| `metadata` | object | no | Only on `"entity"`/`"container"` — never on `"text"`. See [Metadata](#metadata). |
 | `data.label` | string | yes | Display text. May be empty. |
-| `data.icons` | object | no | Only on `"shape"`/`"container"`. Up to 4 keys: `topLeft`, `topRight`, `bottomLeft`, `bottomRight` — each an [icon reference](#icon-reference). |
+| `data.icons` | object | no | Only on `"entity"`/`"container"`. Up to 4 keys: `topLeft`, `topRight`, `bottomLeft`, `bottomRight` — each an [icon reference](#icon-reference). |
 | `data.details` | string | no | Relative path (from **this diagram file's own directory**) to a Markdown notes file, shown as a side panel. This app names it `<label>-<uuid-suffix>.md` and keeps it in sync on relabel, but treat the stored value as an opaque path — never parse/reconstruct it. |
 | `data.linkedDiagram` | string | no | Relative path (from **this diagram file's own directory**) to another `.chd` file — a drill-down link, resolved on demand, never eagerly. See [authoring-guide.md](authoring-guide.md) for directionality/missing-target rules. |
 | `data.points` | array of LinePoint | `"line"` only | See [Line points](#line-points). Meaningless on other types. |
-| `data.references` | array of string | no | Only on `"shape"`/`"container"`. Ordered relative paths (same convention as `data.details`) to reference images, conventionally under a sibling `assets/references/` folder. Shown only in floating viewers — **never drawn on canvas, never in image exports.** A rendering-only reader can ignore this field. |
-| `data.security` | object | `"shape"` only | Sparse map keyed by threat `id` (from top-level `security.threats`) → `RiskCell` (`{probability, consequence, probabilityNote?, consequenceNote?}`). Present only on shapes listed in `security.matrixShapeIds`; a missing cell = "not yet assessed." Purely analytical, doesn't affect rendering. See [Security](#security). |
+| `data.references` | array of string | no | Only on `"entity"`/`"container"`. Ordered relative paths (same convention as `data.details`) to reference images, conventionally under a sibling `assets/references/` folder. Shown only in floating viewers — **never drawn on canvas, never in image exports.** A rendering-only reader can ignore this field. |
+| `data.security` | object | `"entity"` only | Sparse map keyed by threat `id` (from top-level `security.threats`) → `RiskCell` (`{probability, consequence, probabilityNote?, consequenceNote?}`). Present only on entities listed in `security.matrixEntityIds`; a missing cell = "not yet assessed." Purely analytical, doesn't affect rendering. See [Security](#security). |
 
 ### Line points
 
@@ -151,7 +151,7 @@ Every field optional; absent = current hardcoded look, same as `style` being abs
 
 | Field | Type | Meaning |
 |---|---|---|
-| `fill` | CSS color | Body fill. `"shape"`, `"container"`, `"text"` (usually unset on text). |
+| `fill` | CSS color | Body fill. `"entity"`, `"container"`, `"text"` (usually unset on text). |
 | `fillOpacity` | 0–100 | Percentage, not 0-1 fraction. Absent = 100. Independent per-channel from `strokeOpacity`/`fontOpacity`. |
 | `stroke` | CSS color | Border color. Not meaningful for `"text"`. |
 | `strokeOpacity` | 0–100 | Same percentage convention. |
@@ -171,10 +171,10 @@ Every field optional; absent = current hardcoded look, same as `style` being abs
 
 ```json
 {
-  "id": "xy-edge__shape-2right-shape-1left",
+  "id": "xy-edge__entity-2right-entity-1left",
   "type": "labeled",
-  "source": "shape-2",
-  "target": "shape-1",
+  "source": "entity-2",
+  "target": "entity-1",
   "sourceHandle": "right",
   "targetHandle": "left",
   "label": "reads from",
@@ -188,7 +188,7 @@ Every field optional; absent = current hardcoded look, same as `style` being abs
 | `id` | string | yes | Unique within the file. |
 | `type` | string | no | Only `"labeled"` is currently meaningful (carries a `label`). Absent/unrecognized → treat as an unlabeled connector per the format's own semantics. **Always write it explicitly as `"labeled"` anyway when authoring a new edge** — this app had a real bug (fixed 2026-09-05) where an edge with a genuinely-absent `type` could silently render via a generic fallback with no styling, no highlight support, and no custom routing, on a build that predates the fix. Costs nothing, removes the risk entirely. |
 | `source` / `target` | string | yes | Node `id`s this edge connects. |
-| `sourceHandle` / `targetHandle` | string | no | Which connection point when a node has more than one. `"shape"`/`"container"` always expose `"top"`/`"right"`/`"bottom"`/`"left"` plus any custom `connectionPoints` ids. Absent = "renderer picks." |
+| `sourceHandle` / `targetHandle` | string | no | Which connection point when a node has more than one. `"entity"`/`"container"` always expose `"top"`/`"right"`/`"bottom"`/`"left"` plus any custom `connectionPoints` ids. Absent = "renderer picks." |
 | `label` | string | no | Text shown on the edge. |
 | `style` | object | no | See [Edge style](#edge-style). |
 | `metadata` | object | no | Same shape/rules as Node metadata — see [Metadata](#metadata). |
@@ -235,7 +235,7 @@ Every field optional; absent = current hardcoded look, same as `style` being abs
 
 ## Metadata
 
-Structured key/value data on a Shape/Container node or an Edge — meant to be *read and acted on* (by this app's highlighting, and by external tooling), not just displayed. `"text"` never carries this.
+Structured key/value data on a Entity/Container node or an Edge — meant to be *read and acted on* (by this app's highlighting, and by external tooling), not just displayed. `"text"` never carries this.
 
 ```json
 {
@@ -255,7 +255,7 @@ Each key maps to an entry, not a bare value:
 
 ## Required tags
 
-Diagram-level template — top-level `requiredTags` — describing which metadata keys every Shape/Container/Edge must carry.
+Diagram-level template — top-level `requiredTags` — describing which metadata keys every Entity/Container/Edge must carry.
 
 ```json
 [ { "key": "environment", "allowedValues": ["dev", "staging", "prod"], "defaultValue": "dev", "lock": "lockedEditable" } ]
@@ -297,7 +297,7 @@ Top-level `legend` — manually-authored entries explaining the diagram's own vi
 ```json
 [
   { "id": "legend-1", "kind": "line", "label": "Sensitive data transfer", "color": "#e6194b", "lineStyle": "solid", "startMarker": "none", "endMarker": "arrowClosed" },
-  { "id": "legend-3", "kind": "shape", "label": "GDPR-relevant data", "color": "#e6194b" },
+  { "id": "legend-3", "kind": "entity", "label": "GDPR-relevant data", "color": "#e6194b" },
   { "id": "legend-4", "kind": "icon", "label": "Managed database", "icon": { "source": "builtin", "id": "database" } }
 ]
 ```
@@ -305,9 +305,9 @@ Top-level `legend` — manually-authored entries explaining the diagram's own vi
 | Field | Type | Required | Meaning |
 |---|---|---|---|
 | `id` | string | yes | Unique within the file, no other significance. |
-| `kind` | `"line"` \| `"icon"` \| `"shape"` | yes | `"line"` renders a sample line/arrow; `"icon"` renders the icon as-is; `"shape"` renders a plain colored **circle** (deliberately not a box — implying the meaning isn't limited to rectangular shapes). |
+| `kind` | `"line"` \| `"icon"` \| `"entity"` | yes | `"line"` renders a sample line/arrow; `"icon"` renders the icon as-is; `"entity"` renders a plain colored **circle** (deliberately not a box — implying the meaning isn't limited to rectangular shapes). |
 | `label` | string | yes | Free-text explanation. |
-| `color` | CSS color | no | `"line"`/`"shape"` only — never set for `"icon"` (icons are fixed multi-color assets, not tintable; ignore if present). |
+| `color` | CSS color | no | `"line"`/`"entity"` only — never set for `"icon"` (icons are fixed multi-color assets, not tintable; ignore if present). |
 | `lineStyle` | `"solid"` \| `"dashed"` \| `"dotted"` | no | `"line"` kind only. |
 | `startMarker` / `endMarker` | marker kind | no | `"line"` kind only. |
 | `icon` | IconRef | conditionally | Required for `"icon"` kind — same shape as `data.icons.*` (see [Icon reference](#icon-reference)). |
@@ -364,7 +364,7 @@ Absent/empty `edgeDirectionSets` = the whole mechanism dormant — no `direction
 
 ## Security
 
-Top-level `security` — threat/risk model. Per-shape assessments live in each shape's `data.security` (see [Node](#node)); this block is shared config.
+Top-level `security` — threat/risk model. Per-entity assessments live in each entity's `data.security` (see [Node](#node)); this block is shared config.
 
 ```json
 "security": {
@@ -373,8 +373,8 @@ Top-level `security` — threat/risk model. Per-shape assessments live in each s
     { "id": "t-phish", "name": "Phishing", "description": "credential theft via a fake login" }
   ],
   "hiddenThreatIds": ["t-phish"],
-  "matrixShapeIds": ["shape-2", "shape-7", "shape-9"],
-  "hiddenShapeIds": ["shape-9"],
+  "matrixEntityIds": ["entity-2", "entity-7", "entity-9"],
+  "hiddenEntityIds": ["entity-9"],
   "probabilityScale": [ { "value": 1, "label": "Rare", "description": "…" } ],
   "consequenceScale": [ { "value": 1, "label": "Negligible", "description": "…" } ],
   "combineMethod": "multiply",
@@ -384,17 +384,17 @@ Top-level `security` — threat/risk model. Per-shape assessments live in each s
 
 | Field | Type | Required | Meaning |
 |---|---|---|---|
-| `threats` | array of `{id, name, description?}` | yes | Threat catalog — matrix row candidates, ordered (row order). `id` is what `data.security` keys reference; `name` is display-only (renaming never touches per-shape data). |
+| `threats` | array of `{id, name, description?}` | yes | Threat catalog — matrix row candidates, ordered (row order). `id` is what `data.security` keys reference; `name` is display-only (renaming never touches per-entity data). |
 | `hiddenThreatIds` | array of string | no | Threats hidden from the matrix but still part of the model — data kept, still counts toward completeness. Absent/empty = all shown. |
-| `matrixShapeIds` | array of string | yes | `"shape"` node ids in the matrix, ordered (column order). A shape not listed carries no `data.security` at all. An id that no longer resolves is dropped on load. |
-| `hiddenShapeIds` | array of string | no | Same hide-not-remove treatment as `hiddenThreatIds`, for shapes. |
+| `matrixEntityIds` | array of string | yes | `"entity"` node ids in the matrix, ordered (column order). An entity not listed carries no `data.security` at all. An id that no longer resolves is dropped on load. |
+| `hiddenEntityIds` | array of string | no | Same hide-not-remove treatment as `hiddenThreatIds`, for entities. |
 | `probabilityScale` / `consequenceScale` | array of `{value, label, description}` | no | Per-diagram scale definitions. Absent = built-in 1–5 scale. A reader only needs the `value`s to interpret a `RiskCell`. |
 | `combineMethod` | `"multiply"` \| `"add"` \| `"average"` | no | How probability × consequence combine into one cell score. Absent = `"multiply"`. |
-| `aggregateMethod` | `"average"` \| `"sum"` \| `"max"` | no | How cell scores roll up per-threat/per-shape. Absent = `"average"`. |
+| `aggregateMethod` | `"average"` \| `"sum"` \| `"max"` | no | How cell scores roll up per-threat/per-entity. Absent = `"average"`. |
 
-**Hide vs. remove**: hiding keeps data and still counts toward completeness, just isn't rendered. Removing a threat deletes it from `threats` **and** deletes that threat's cell from every shape's `data.security`; removing a shape drops it from `matrixShapeIds` **and** deletes its whole `data.security`. Remove is destructive/deliberate; hide is a view toggle.
+**Hide vs. remove**: hiding keeps data and still counts toward completeness, just isn't rendered. Removing a threat deletes it from `threats` **and** deletes that threat's cell from every entity's `data.security`; removing an entity drops it from `matrixEntityIds` **and** deletes its whole `data.security`. Remove is destructive/deliberate; hide is a view toggle.
 
-Absent `security` = feature dormant, no shape has `data.security`. Storage is sparse — an un-entered assessment is simply an absent cell (what the completeness check reads), nothing is pre-seeded.
+Absent `security` = feature dormant, no entity has `data.security`. Storage is sparse — an un-entered assessment is simply an absent cell (what the completeness check reads), nothing is pre-seeded.
 
 ---
 

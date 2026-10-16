@@ -8,7 +8,7 @@ import type {
   SaveOutcome,
   Stamp
 } from '@shared/documentSave'
-import type { AiFolderResult } from '@shared/aiFolderResult'
+import type { AiFolderResult, ClaudeExtensionOutcome } from '@shared/aiFolderResult'
 import type { AppPreferences } from '@shared/preferences'
 import type { SecurityCrawlResult } from '@shared/threatMatrixMath'
 import type { LinkedSearchLink, LinkedSearchResult } from '@shared/linkedSearch'
@@ -336,6 +336,12 @@ const api = {
   // writes happen in main; null means the user cancelled the picker.
   enableAiInFolder(): Promise<AiFolderResult | null> {
     return ipcRenderer.invoke('ai:enableInFolder')
+  },
+
+  // AI -> Install Claude Desktop extension (ADR 0110): main shows the dialogs
+  // and asks the OS to open the bundled .mcpb.
+  installClaudeExtension(): Promise<ClaudeExtensionOutcome> {
+    return ipcRenderer.invoke('ai:installExtension')
   },
 
   // Style palette export/import (see ADR 0048) — returns false/null

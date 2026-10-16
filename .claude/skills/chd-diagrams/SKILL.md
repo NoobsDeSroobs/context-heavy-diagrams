@@ -1,6 +1,6 @@
 ---
 name: chd-diagrams
-description: Read, author, and hand-edit .chd files — the JSON-based diagram format used by the "context-heavy diagrams" (chd) tool (nodes: shapes/containers/text/freeform lines, edges, metadata/tags, linked drill-down diagrams, custom icons, security matrices). Use this skill whenever a .chd file is opened, referenced, or needs to be created, parsed, or modified — adding/editing shapes or connections, wiring up linked diagrams across files, adding metadata or required-tag templates, fixing broken relative-path references (icons/details/linked diagrams), reasoning about coordinate systems, laying out/arranging a new diagram (spacing, sizing, color restraint, or archetypes like swimlanes/layered architecture/hub-and-spoke), or answering any question about how the format works. Trigger even when the user just says "this diagram," "the .chd file," or names a specific diagram (e.g. an Azure/infra overview) without spelling out the format — and for any project directory that contains .chd files.
+description: Read, author, and hand-edit .chd files — the JSON-based diagram format used by the "context-heavy diagrams" (chd) tool (nodes: entities/containers/text/freeform lines, edges, metadata/tags, linked drill-down diagrams, custom icons, security matrices). Use this skill whenever a .chd file is opened, referenced, or needs to be created, parsed, or modified — adding/editing shapes or connections, wiring up linked diagrams across files, adding metadata or required-tag templates, fixing broken relative-path references (icons/details/linked diagrams), reasoning about coordinate systems, laying out/arranging a new diagram (spacing, sizing, color restraint, or archetypes like swimlanes/layered architecture/hub-and-spoke), or answering any question about how the format works. Trigger even when the user just says "this diagram," "the .chd file," or names a specific diagram (e.g. an Azure/infra overview) without spelling out the format — and for any project directory that contains .chd files.
 ---
 
 # .chd diagram format
@@ -39,7 +39,7 @@ Missing targets are meant to be recoverable, not fatal — the app shows "not fo
   - A node with `parentId` set has `position` relative to *its parent's own top-left corner*, not the canvas.
   - A `"line"` node's `data.points` are relative to *that line node's own `position`*.
   - An `edge`'s `points` (routing waypoints) are absolute canvas coordinates — a different convention from line-node points despite looking similar. Don't reuse line-point logic for edge-point logic.
-- Node `type` determines what's meaningful: `"shape"`/`"container"` have connection points, icons, metadata; `"text"` has rotation but no connection points/icons; `"line"` has `data.points` and nothing else structural.
+- Node `type` determines what's meaningful: `"entity"`/`"container"` have connection points, icons, metadata; `"text"` has rotation but no connection points/icons; `"line"` has `data.points` and nothing else structural.
 - **Absent means default, everywhere** — with one specific, deliberate exception: **always write an edge's `"type": "labeled"` explicitly**, never omit it. Every other field really does follow "absent means default": no `style` object means "current hardcoded look," no `rotation` means `0`, no `connectionPoints` means one centered point per side, no `lock` on a metadata entry means it's a free (non-template) entry — don't treat an absent optional field as an error or as needing to be filled in, and when *writing*, omit a field rather than writing its default value explicitly (keeps diffs meaningful and matches how this app itself writes files). Edge `type` is the one field where that instinct actively hurt — this app's renderer had a real bug (fixed 2026-09-05, see `docs/known-issues.md`) where an edge with a genuinely-absent `type` key silently rendered with no styling, no highlight support, and no custom routing, no error shown anywhere. Fixed now, but a build predating the fix will still hit it — explicit costs nothing.
 - `nodes` array order matters structurally, not just cosmetically: **a parent node must appear before its children.** This is a React Flow requirement, not a style preference — build/preserve this ordering in anything you write.
 - For the full field-by-field reference (every field, type, and exact meaning across top-level object, Node, Node style, Edge, Edge style, line points, edge points, icon references, metadata, required tags, highlights, legend, gravity presets, edge direction sets, and the security matrix), see [references/field-reference.md](references/field-reference.md). Read it whenever you need an exact field name/type/enum rather than guessing.
@@ -47,12 +47,13 @@ Missing targets are meant to be recoverable, not fatal — the app shows "not fo
 ## Editing a file by hand
 
 1. **Parse, mutate the in-memory structure, re-serialize** — don't do string-level surgery on the JSON text, since key order and indentation both matter for clean diffs (see Determinism below).
-2. **Generate new node/edge ids as `<type>-<uuid>`** (e.g. `shape-1a2b3c4d-5e6f-...`) to match this app's own convention, though the format only requires ids be unique within the file — nothing parses structure out of the id string itself.
+2. **Generate new node/edge ids as `<type>-<uuid>`** (e.g. `entity-1a2b3c4d-5e6f-...`) to match this app's own convention, though the format only requires ids be unique within the file — nothing parses structure out of the id string itself.
 3. **New node → append after its would-be parent**, respecting the parent-before-child ordering rule above. If it's top-level, position doesn't matter relative to other top-level nodes.
 4. **New edge → reference existing node ids** via `source`/`target`. Only set `sourceHandle`/`targetHandle` if you need a *specific* connection point; otherwise omit and let the renderer pick one.
 5. **Adding a `linkedDiagram`** (drill-down to a child diagram): decide the child's actual file location first, *then* compute the path relative to the parent's own directory — not the other way around. See the invariant above; this is where that bug is introduced most often.
 6. **Metadata/tags**: a plain human-added key is `{ "value": ... }` with no `lock`. Only set `lock` if the diagram's `requiredTags` template governs that key — see [references/field-reference.md](references/field-reference.md#metadata) for the `lockedEditable`/`lockedStatic` distinction before touching a locked entry, since a `lockedStatic` value should track the template's `defaultValue`, not be edited independently.
-7. **Validate before considering the edit done** — run `scripts/validate_chd.mjs` on the file (and on any other `.chd` file whose relative paths you might have affected, e.g. a parent that links to a child you moved).
+7. **Check for a stale edit right before writing back** (a standing rule, applies to every way an assistant writes a diagram): note the file's fingerprint when you first read it (`chd hash <file>`, or just remember what you read), and immediately before saving your edit read it again. If it changed in between — the user saved from the app, another tool or agent wrote to it — do not overwrite: re-read the file and redo your edit on the fresh content. Never write back a snapshot you took earlier.
+8. **Validate before considering the edit done** — run `scripts/validate_chd.mjs` on the file (and on any other `.chd` file whose relative paths you might have affected, e.g. a parent that links to a child you moved).
 
 ### Determinism (why this matters for git-tracked diagrams)
 
@@ -78,15 +79,15 @@ A two-node, one-edge diagram, correctly formatted:
   "viewport": { "x": 0, "y": 0, "zoom": 1 },
   "nodes": [
     {
-      "id": "shape-1",
-      "type": "shape",
+      "id": "entity-1",
+      "type": "entity",
       "position": { "x": 0, "y": 0 },
       "size": { "width": 120, "height": 80 },
       "data": { "label": "Client" }
     },
     {
-      "id": "shape-2",
-      "type": "shape",
+      "id": "entity-2",
+      "type": "entity",
       "position": { "x": 300, "y": 0 },
       "size": { "width": 120, "height": 80 },
       "data": { "label": "API" }
@@ -94,10 +95,10 @@ A two-node, one-edge diagram, correctly formatted:
   ],
   "edges": [
     {
-      "id": "xy-edge__shape-1right-shape-2left",
+      "id": "xy-edge__entity-1right-entity-2left",
       "type": "labeled",
-      "source": "shape-1",
-      "target": "shape-2",
+      "source": "entity-1",
+      "target": "entity-2",
       "sourceHandle": "right",
       "targetHandle": "left",
       "label": "requests"

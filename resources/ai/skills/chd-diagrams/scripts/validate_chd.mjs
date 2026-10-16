@@ -30,7 +30,7 @@
 // alone don't fail the run, but are always printed).
 
 import { existsSync, readFileSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
+import { basename, dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 function load(path) {
@@ -206,7 +206,13 @@ export function main(argv) {
   return hadErrors ? 1 : 0
 }
 
-// Run only when executed directly, so tests can import validateFile.
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+// Run only when executed directly, so tests can import validateFile. The name check
+// keeps this from firing when the file is bundled into another program (the Claude
+// Desktop extension), where import.meta.url is that program's own file.
+if (
+  process.argv[1] &&
+  basename(fileURLToPath(import.meta.url)) === 'validate_chd.mjs' &&
+  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+) {
   process.exit(main(process.argv.slice(2)))
 }

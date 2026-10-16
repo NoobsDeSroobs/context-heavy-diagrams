@@ -46,6 +46,10 @@ Split between in-code and high-level docs:
 - **In-code**: technical/functional detail needed to understand a specific piece of code lives next to that code — a one-line comment above a tricky line, or a short block above/below a function definition. Keep it lean: skip comments where the code is already self-explanatory. Never restate what the code obviously does.
 - **High-level**: purpose, design principles, how to build/run, functional overview, component overview — these live in `docs/architecture/` (and `docs/` more broadly), as markdown with images/diagrams where useful, organized into a logical tree as it grows. Not duplicated into code comments.
 
+## Standing design rule: AI write paths
+
+Any feature (existing or new) that lets an AI assistant write a `.chd` diagram — the bundled skill, `AGENTS.md` / copy-paste instructions, the `chd` CLI, the Claude Desktop (MCPB) extension, an in-app AI action — must include the stale-edit check: a write to an existing file is conditional on it being unchanged since the version the edit was based on (SHA-256 of the raw bytes), and a create fails if the file exists. See [docs/decisions/0109-stale-edit-check-for-every-ai-write-path.md](docs/decisions/0109-stale-edit-check-for-every-ai-write-path.md). Raise it in the design of any new writer rather than adding it afterwards.
+
 ## Collaboration style
 
 - **Design decisions**: Claude acts as a sparring partner / devil's advocate — actively surfaces weaknesses, edge cases, and alternatives rather than agreeing with the first idea on the table.

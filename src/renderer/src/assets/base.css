@@ -30,6 +30,9 @@
   --color-background-soft: var(--ev-c-black-soft);
   --color-background-mute: var(--ev-c-black-mute);
 
+  /* Text for a warning that must stand out without being an error. */
+  --color-warning-text: #f2a444;
+
   /* Override React Flow's own bundled edge defaults (@xyflow/react's
      style.css sets --xy-edge-stroke-default: #3e3e3e in dark mode) —
      too close to the near-black canvas background to read comfortably.
@@ -73,6 +76,7 @@
     --color-background: var(--ev-c-white);
     --color-background-soft: var(--ev-c-white-soft);
     --color-background-mute: var(--ev-c-white-mute);
+    --color-warning-text: #b45309;
 
     /* Darkened from RF's own #b1b1b7 default for better contrast against
        a white/near-white canvas — see the dark-theme block above for the
@@ -95,6 +99,7 @@
   --color-background: var(--ev-c-white);
   --color-background-soft: var(--ev-c-white-soft);
   --color-background-mute: var(--ev-c-white-mute);
+  --color-warning-text: #b45309;
 
   --xy-edge-stroke-default: #8a8a92;
   --xy-edge-stroke-selected-default: #4a4a4a;

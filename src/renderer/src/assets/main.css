@@ -233,6 +233,20 @@ body {
   margin-left: auto;
 }
 
+/* Non-interactive warning line at the top of a dropdown (MenuBarMenu.notice). */
+.menu-bar-notice {
+  max-width: 260px;
+  padding: 6px 8px 8px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--ev-c-gray-2);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--color-warning-text);
+  cursor: default;
+  user-select: none;
+}
+
 .menu-bar-separator {
   height: 1px;
   margin: 4px 6px;

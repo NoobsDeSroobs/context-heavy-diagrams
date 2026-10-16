@@ -38,6 +38,11 @@ told they exist — and to hide them entirely if they don't want AI features.
 - **Label "Assistant"** — less searchable; users look for "AI".
 
 ## Consequences
+- The dropdown starts with a non-interactive notice in warning colors, "Could cause
+  data leaks: what an AI assistant reads is sent to its provider." (added
+  2026-10-16, matching the warning under the installer's AI checkbox). It is
+  menu chrome, not a menu item, so the command palette, which lists only items,
+  does not show it.
 - One more top-level menu; harmless on narrow windows (five short labels).
 - The preference gates *UI*, not capability: the CLI and any files the app
   has already written into a folder keep working with the menu hidden.

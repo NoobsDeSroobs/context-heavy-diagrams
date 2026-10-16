@@ -45,7 +45,7 @@ Two gap sizes cover most layouts:
 
 ## Color and style: restraint, not a fixed palette
 
-This app ships with **no built-in colors** — a freshly created Shape/Container/Text has no `style` object at all until someone sets one (pure CSS default look), and the default style palette starts empty (this app's ADR 0048). There's no house palette to match, so don't invent fixed hex constants and treat them as this app's brand — there isn't one.
+This app ships with **no built-in colors** — a freshly created Entity/Container/Text has no `style` object at all until someone sets one (pure CSS default look), and the default style palette starts empty (this app's ADR 0048). There's no house palette to match, so don't invent fixed hex constants and treat them as this app's brand — there isn't one.
 
 What generalizes anyway, as a starting convention for a hand-authored diagram:
 
@@ -65,7 +65,7 @@ Horizontal bands stacked top-to-bottom (presentation → application → data, o
 - Cross-layer edges (a shape in one band connecting to a shape in the band below) usually want `sourceHandle: "bottom"` / `targetHandle: "top"`.
 
 ### Hub-and-spoke
-One central Shape with several others arranged around it, each connected directly to the hub.
+One central Entity with several others arranged around it, each connected directly to the hub.
 
 - Place the hub first; place spokes at the four (or eight) compass points around it, each offset by roughly `hub size/2 + baseline gap + spoke size/2` along that axis — e.g. a spoke directly above the hub sits at `hub.x + (hub.width - spoke.width)/2`, `hub.y - spoke.height - 20`.
 - With more than ~4 spokes, prefer an evenly-angled ring (simple trig around the hub's center) over cramming everything onto the four cardinal points — pick connection-point sides that face the hub rather than defaulting to the same side for every spoke.
