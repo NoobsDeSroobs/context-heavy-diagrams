@@ -12,7 +12,7 @@ The obviously most useful built-in icons for IT architecture diagrams would be t
 
 ## AI-written code and copyright
 
-Not legal advice; a note for the lawyer pass in [ADR 0011](decisions/0011-software-license-choice.md).
+Not legal advice; a note for a lawyer pass, should one ever be wanted (see [ADR 0011](decisions/0011-software-license-choice.md)).
 
 A large share of the code was written by an AI assistant under the author's direction (disclosed in the README). In some jurisdictions copyright needs human authorship, and the US Copyright Office's position is that purely AI-generated output is not protected. Where that applies, a licence has nothing to attach to for those parts: the GPL, the contribution terms in [CONTRIBUTING.md](../CONTRIBUTING.md) and any later relicensing would protect them less, or not at all.
 
