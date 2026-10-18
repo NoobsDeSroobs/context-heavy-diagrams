@@ -26,7 +26,7 @@
     },
     {
       "id": "domain-ticketing-booking",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 0,
         "y": 0

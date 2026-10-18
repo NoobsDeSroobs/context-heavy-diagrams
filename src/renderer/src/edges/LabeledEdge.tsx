@@ -30,10 +30,10 @@ import EditableLabel from '../components/EditableLabel'
 import HighlightChips from '../components/HighlightChips'
 import { useDiagramContext } from '../useDiagramContext'
 import { HIGHLIGHT_BORDER_WIDTH } from '../highlights'
+import { EDGE_STYLE_DEFAULTS } from '../styles/styleDefaults'
 import { isolateStyle } from '../search'
 import { withOpacity } from '../styles/colorOpacity'
 import { themeAdaptiveColor } from '../styles/themeAdaptiveColor'
-import type { Theme } from '../theme'
 import { markerUrl } from './markerIds'
 
 // solid has no dasharray at all (undefined, not '0'), matching a plain
@@ -45,24 +45,14 @@ const DASH_ARRAY: Record<Exclude<EdgeStyle['lineStyle'], undefined>, string | un
   dotted: '2 4'
 }
 
-// This app's own default (a little thicker than React Flow's stock 1px —
-// bumped 2026-09-05 after the base was reported hard to see) — needed
-// explicitly here since a selected edge's width is computed as "whatever
-// it already is, plus a bit," and that base has to be a real number even
-// when nothing overrides it. Always applied inline (see computedStyle
-// below) — change it here, not in base.css.
-const DEFAULT_STROKE_WIDTH = 1.5
-
-// Same reasoning as DEFAULT_STROKE_WIDTH above, extended to color
-// (2026-09-15): an unstyled edge's stroke used to fall through to
-// base.css's --xy-edge-stroke-default CSS variable instead of a real
-// value here, unlike width — meaning "no explicit style" had a concrete
-// default in one channel but not the other, and a downstream reader
-// (PNG export, see known-issues.md's "PNG-exported arrowheads were
-// invisible..." entry) had nothing to inline-copy for the color case
-// specifically. Matches base.css's own --xy-edge-stroke-default values —
-// change both together if this ever needs to move.
-const DEFAULT_STROKE_COLOR: Record<Theme, string> = { dark: '#6b7684', light: '#8a8a92' }
+// The default stroke width and colour (a little thicker than React Flow's stock
+// 1px, and a concrete colour so a PNG export has something to copy) are data in
+// styleDefaults.ts (ADR 0117), shared with the property panel. They are always
+// applied inline (see computedStyle below), because a selected edge's width is
+// "whatever it already is, plus a bit" and needs a real number to start from.
+// base.css still carries the same colour for React Flow's own fallback edge; a
+// test keeps the two equal.
+const DEFAULT_STROKE_WIDTH = EDGE_STYLE_DEFAULTS.strokeWidth
 // Additive, not a replacement value — composes with the highlight-override
 // width (ADR 0025) instead of competing with it, so a highlighted *and*
 // selected edge just gets both effects layered.
@@ -150,6 +140,10 @@ function buildBezierPath(
   return `M${sourceX},${sourceY} L${offsetSourceX},${offsetSourceY} ${curve.slice(curve.indexOf('C'))} L${targetX},${targetY}`
 }
 
+// One shared empty list, so an edge with no bend points has a stable `bendPoints`
+// identity across renders and the hooks below that depend on it do not re-run.
+const NO_POINTS: LinePoint[] = []
+
 // Fixed midpoint only, no drag-along-path — deliberately simple for v1, see
 // docs/planning/epics/0012-editable-anchored-labels.md. The label is always
 // rendered (even empty) so there's something to double-click on to add one.
@@ -203,7 +197,7 @@ function LabeledEdge({
   const [draggingSegmentIndex, setDraggingSegmentIndex] = useState<number | null>(null)
   const bendPointsVisible = hovered || selected || draggingPointIndex !== null
   const segmentHandlesVisible = hovered || selected || draggingSegmentIndex !== null
-  const bendPoints = (data?.points as LinePoint[] | undefined) ?? []
+  const bendPoints = (data?.points as LinePoint[] | undefined) ?? NO_POINTS
   const isOrthogonal = routingStyle === 'step' || routingStyle === 'smoothstep'
 
   // Expanded orthogonal vertex list (source, synthetic corners, waypoints,
@@ -293,13 +287,15 @@ function LabeledEdge({
   const computedStyle: CSSProperties = {
     ...style,
     // Always a concrete value, same as strokeWidth below — falls back to
-    // DEFAULT_STROKE_COLOR rather than leaving `stroke` unset for CSS to
+    // EDGE_STYLE_DEFAULTS.stroke rather than leaving `stroke` unset for CSS to
     // fill in (see that constant's own comment). strokeOpacity now applies
     // to the default color too, not just an explicit one — previously a
     // strokeOpacity set with no explicit stroke was silently a no-op,
     // since this whole key was omitted in that case.
     stroke: withOpacity(
-      edgeStyle?.stroke ? themeAdaptiveColor(edgeStyle.stroke, theme) : DEFAULT_STROKE_COLOR[theme],
+      edgeStyle?.stroke
+        ? themeAdaptiveColor(edgeStyle.stroke, theme)
+        : EDGE_STYLE_DEFAULTS.stroke[theme],
       edgeStyle?.strokeOpacity
     ),
     strokeWidth: selected ? baseStrokeWidth + SELECTED_STROKE_WIDTH_DELTA : baseStrokeWidth,

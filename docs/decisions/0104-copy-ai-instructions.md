@@ -35,8 +35,8 @@ They need one click that puts the essentials on the clipboard.
   update the spec when the format changes, plus the test above for the key rules.
 - **Paste the whole spec.** Large, and most of it (security, legend, gravity
   presets) is irrelevant to a first edit.
-- **Embed a repository URL.** The repository is not public yet, so the text
-  names the file path only; add the URL when it is.
+- **Embed a repository URL.** The repository was not public when this was written, so the text
+  names the file path only; add the URL once the repository is public.
 
 ## Consequences
 - The text can go stale relative to the spec; changing coordinate, path or

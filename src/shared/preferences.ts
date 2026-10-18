@@ -245,7 +245,12 @@ export function normalizePreferences(
     // Pre-rename field name (Shape -> Entity, see epic 0076) — `defaultStyles`
     // itself is spread from `rest` below, so this legacy sub-key is read and
     // folded in separately rather than via `rest`.
-    defaultStyles?: { shape?: NodeStyle; entity?: NodeStyle; container?: NodeStyle; text?: NodeStyle }
+    defaultStyles?: {
+      shape?: NodeStyle
+      entity?: NodeStyle
+      container?: NodeStyle
+      text?: NodeStyle
+    }
   }
 ): AppPreferences {
   const { stylePalette: legacy, ...rest } = raw

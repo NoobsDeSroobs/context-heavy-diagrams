@@ -45,6 +45,7 @@ Complete field-by-field reference. Read the relevant section rather than the who
 | Field | Type | Meaning |
 |---|---|---|
 | `version` | `1` | Format version. Currently always `1`. |
+| `savedWith` | string | Version of the Context Heavy Diagrams application that last wrote the file (e.g. `"0.2.1"`), written right after `version`; the app warns when it opens a file marked newer than itself. **Leave an existing value exactly as it is, and never add one** — only the application sets it. Absent means unknown, which is normal for files an assistant created. |
 | `viewport` | object | Camera position when last saved: `x`, `y` (pan offset) and `zoom` (scale, `1` = 100%). Purely cosmetic. |
 | `metadata` | object | Diagram-level free-form key/value bag (plain JSON values, no locking at this level — that's `requiredTags`). Absent means none set. Same `JsonValue` shape as a metadata entry's `value`, just not wrapped in `{value, lock}`. |
 | `requiredTags` | array of RequiredTagDefinition | Template for what every Entity/Container/Edge must carry — see [Required tags](#required-tags). Absent means none. |

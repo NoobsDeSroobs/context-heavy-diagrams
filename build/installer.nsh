@@ -15,8 +15,8 @@
 !include nsDialogs.nsh
 !include LogicLib.nsh
 
-!define CHD_PROGID "ContextHeavyDiagramTool.Diagram"
-!define CHD_BACKUP_VALUE "ContextHeavyDiagramTool.backup"
+!define CHD_PROGID "ContextHeavyDiagrams.Diagram"
+!define CHD_BACKUP_VALUE "ContextHeavyDiagrams.backup"
 
 ; electron-builder runs this file twice (installer, then the uninstaller build);
 ; NSIS warnings are errors here, so variables only the installer uses are not
@@ -90,7 +90,7 @@
       ${EndIf}
       WriteRegStr SHELL_CONTEXT "Software\Classes\.chd" "" "${CHD_PROGID}"
       WriteRegNone SHELL_CONTEXT "Software\Classes\.chd\OpenWithProgids" "${CHD_PROGID}"
-      WriteRegStr SHELL_CONTEXT "Software\Classes\${CHD_PROGID}" "" "Context-Heavy Diagram"
+      WriteRegStr SHELL_CONTEXT "Software\Classes\${CHD_PROGID}" "" "Context Heavy Diagram"
       WriteRegStr SHELL_CONTEXT "Software\Classes\${CHD_PROGID}\DefaultIcon" "" "$INSTDIR\${APP_EXECUTABLE_FILENAME},0"
       WriteRegStr SHELL_CONTEXT "Software\Classes\${CHD_PROGID}\shell" "" "open"
       WriteRegStr SHELL_CONTEXT "Software\Classes\${CHD_PROGID}\shell\open" "" "Open"

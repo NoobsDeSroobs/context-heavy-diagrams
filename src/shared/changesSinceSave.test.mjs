@@ -78,6 +78,9 @@ test('edge with no label uses endpoint labels', () => {
 })
 
 test('summarizeChanges: omits empty buckets, order modified/added/removed', () => {
-  assert.equal(summarizeChanges({ added: [{}], removed: [], modified: [{}, {}] }), '2 modified, 1 added')
+  assert.equal(
+    summarizeChanges({ added: [{}], removed: [], modified: [{}, {}] }),
+    '2 modified, 1 added'
+  )
   assert.equal(summarizeChanges({ added: [], removed: [], modified: [] }), '')
 })

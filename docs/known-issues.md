@@ -1,463 +1,408 @@
 # Known issues and challenges
 
-A running log of real bugs and hard problems found during development — not a bug tracker for open work (that's `docs/planning/epics/`), but a lookup table: if something looks familiar, check here first before re-diagnosing it from scratch. Each entry captures the symptom, the actual root cause (often not what it looked like at first), and how it was resolved or why it's still open.
+A running log of real bugs and hard problems found during development — not a bug tracker for open work (that's `docs/planning/epics/`), but a lookup table: if something looks familiar, check here first before re-diagnosing it from scratch. Each entry has the symptom, the actual root cause (often not what it looked like at first), and how it was resolved or why it's still open.
 
-Add an entry whenever a bug takes real investigation to track down, or a design turns out to have a real, recurring class of failure — not for routine typos/typechecks caught immediately. Keep entries even after they're solved; the value here is precedent, not a to-do list.
+Add an entry whenever a bug takes real investigation to track down, or a design turns out to have a real, recurring class of failure — not for routine typos or errors caught immediately. Solved entries are kept short (symptom, cause, fix, lesson); Open and Worked-around entries keep their full reasoning.
 
 ## Status legend
 
 - **Solved** — root cause fixed, shouldn't recur.
 - **Worked around** — mitigated or narrowly patched, but the underlying cause is still there; a broader version of the problem could resurface.
+- **Closed** — investigated and not a defect to fix: not reproducible, explained, or accepted by design. The entry says why and what would reopen it.
 - **Open** — known, not blocking, deliberately not fixed yet. Has a documented direction to revisit if it becomes a real complaint.
 
-## Open items at a glance
+## Open and worked-around at a glance
 
 - [Alt+drag duplicate may be swallowed by Linux window managers](#alt-drag-duplicate-may-be-swallowed-by-linux-window-managers) — Open, untested on Linux.
-- [Details panel Markdown: tables (and other GFM syntax) rendered as literal text](#details-panel-markdown-tables-and-other-gfm-syntax-rendered-as-literal-text) — Solved.
-- [File → Recent Diagrams never reused an empty calling window](#file--recent-diagrams-never-reused-an-empty-calling-window) — Solved.
-- [Text nodes have zero internal padding — label touches the border, and clicking near the start grabs the node instead of placing a text cursor](#text-nodes-have-zero-internal-padding--label-touches-the-border-and-clicking-near-the-start-grabs-the-node-instead-of-placing-a-text-cursor) — Solved, pending live re-test.
-- [Text node content isn't clipped to its own box — a long label bleeds over whatever sits below it on canvas](#text-node-content-isnt-clipped-to-its-own-box--a-long-label-bleeds-over-whatever-sits-below-it-on-canvas) — Solved, pending live re-test.
-- [Legend line/shape swatches with no explicit `color` rendered completely invisible](#legend-lineshape-swatches-with-no-explicit-color-rendered-completely-invisible) — Solved, pending live re-test.
-- [Default edge stroke (color and width) was React Flow's stock value, unreadable against this app's dark-theme canvas](#default-edge-stroke-color-and-width-was-react-flows-stock-value-unreadable-against-this-apps-dark-theme-canvas) — Solved, pending live re-test.
-- [A hand-authored edge with no `type` field silently rendered as React Flow's built-in default edge, not this app's `LabeledEdge` — no style, no highlights, no custom routing, no error](#a-hand-authored-edge-with-no-type-field-silently-rendered-as-react-flows-built-in-default-edge-not-this-apps-labelededge--no-style-no-highlights-no-custom-routing-no-error) — Solved, confirmed live.
-- [Diagnostics "missing files" check didn't flag a reported broken relative path in real diagram data](#diagnostics-missing-files-check-didnt-flag-a-reported-broken-relative-path-in-real-diagram-data) — Open, reported once, not reproduced/confirmed.
-- [Dragging a new edge from a node inside a locked container can snap to the container itself](#dragging-a-new-edge-from-a-node-inside-a-locked-container-can-snap-to-the-container-itself) — Open, not investigated.
-- [Hovering a single edge on a large diagram re-renders every node and edge several times over](#hovering-a-single-edge-on-a-large-diagram-re-renders-every-node-and-edge-several-times-over) — Solved, ADR 0073 / epic 0101.
-- [A large diagram's edges, selection box, and new-connection dragging all silently failed until node measurement happened to catch up](#a-large-diagrams-edges-selection-box-and-new-connection-dragging-all-silently-failed-until-node-measurement-happened-to-catch-up) — Solved.
-- [`.react-flow__edgelabel-renderer`'s z-index ceiling went stale, silently breaking edge labels and (new) bend points](#react-flowedgelabel-rendereres-z-index-ceiling-went-stale-silently-breaking-edge-labels-and-new-bend-points) — Solved.
-- [`serializeDiagram` silently dropped `locked`, `gravityPresets`, and a line's `points` on every save](#serializediagram-silently-dropped-locked-gravitypresets-and-a-lines-points-on-every-save) — Solved (+ 4th `maxConnectionPointsPerSide` 2026-08-31, + 5th `data.references` 2026-09-01).
-- [Theme flip reads as "negative image" on toggle](#theme-flip-reads-as-negative-image-on-toggle) — Open, not urgent.
-- [Enabling a highlight makes a container look like it shrinks](#enabling-a-highlight-makes-a-container-look-like-it-shrinks) — Open, not investigated.
-- [A dragged edge endpoint snapped to the wrong side's point after a count change](#a-dragged-edge-endpoint-snapped-to-the-wrong-sides-point-after-a-count-change) — Open, not reproduced.
-- [A native confirm() dialog left <select> elements unresponsive afterward](#a-native-confirm-dialog-left-select-elements-unresponsive-afterward) — Worked around, class of bug could recur.
-- [`npm run lint` reports ~10,000 CRLF warnings repo-wide](#npm-run-lint-reports-10000-crlf-warnings-repo-wide) — Open, not this machine's normal experience, cause not confirmed.
-- [Exported PNGs had no visible arrowheads on any edge](#exported-pngs-had-no-visible-arrowheads-on-any-edge) — Solved.
-- ["Use canvas color" PNG export always exported plain white](#use-canvas-color-png-export-always-exported-plain-white) — Solved.
-- [Adding a new required tag immediately stamps its placeholder key onto every element, then demotes it to a stray free tag on rename](#adding-a-new-required-tag-immediately-stamps-its-placeholder-key-onto-every-element-then-demotes-it-to-a-stray-free-tag-on-rename) — Solved.
-- [Pasting a copied child-of-a-container node can land it far off screen](#pasting-a-copied-child-of-a-container-node-can-land-it-far-off-screen) — Solved (ADR 0075 / epic 0103), pending live test.
-- [Clicking a container selects a different container that visually encloses it](#clicking-a-container-selects-a-different-container-that-visually-encloses-it) — Worked around (ADR 0075 / epic 0103) — the z-inversion is a React Flow invariant; surfaced via Diagnostics + a Layers-panel marker. Pending live test.
-- ["Attach contained entities" can fling a node to the canvas origin](#attach-contained-entities-can-fling-a-node-to-the-canvas-origin) — Solved (ADR 0075 / epic 0103), pending live test.
-- [Icon picker's grid overflowed horizontally, not just missing a vertical scrollbar gutter](#icon-pickers-grid-overflowed-horizontally-not-just-missing-a-vertical-scrollbar-gutter) — Solved.
-- [Deleting / cutting a container + its selected children removes only the container, keeps the children](#deleting--cutting-a-container--its-selected-children-removes-only-the-container-keeps-the-children) — Open, deliberately not fixed (user wants a decision later).
-- [Copy/paste doesn't preserve container relationships](#copypaste-doesnt-preserve-container-relationships) — Open; ADR 0075 / epic 0103 reworked `remapForPaste` for exactly this, unmerged — retest after merge.
-- ["Reverse direction" did nothing visible on a styled edge (and showed arrows on both ends before that)](#reverse-direction-did-nothing-visible-on-a-styled-edge) — Solved (ADR 0083 / epic 0106).
-- [PNG-exported arrowheads were invisible on any edge relying on this app's own `context-stroke` markers](#png-exported-arrowheads-were-invisible-on-any-edge-relying-on-this-apps-own-context-stroke-markers) — Solved.
-- [Search couldn't find text in a note that had never been saved to disk](#search-couldnt-find-text-in-a-note-that-had-never-been-saved-to-disk) — Solved.
+- [A colour typed in light mode comes back changed (the theme flip is not exactly reversible)](#a-colour-typed-in-light-mode-comes-back-changed-the-theme-flip-is-not-exactly-reversible) — Open, needs a design decision.
+- [A native confirm() dialog left `<select>` elements unresponsive afterward](#a-native-confirm-dialog-left-select-elements-unresponsive-afterward) — Worked around.
+- [Clicking a container selects a different container that visually encloses it](#clicking-a-container-selects-a-different-container-that-visually-encloses-it) — Worked around.
 
 ---
 
 ## Alt+drag duplicate may be swallowed by Linux window managers
 
 **Status:** Open, untested on Linux
-**Found:** 2026-09-24, while designing epic 0132 (not yet observed — no Linux machine available)
+**Found:** 2026-09-24, while designing the duplicate-drag feature (not yet observed — no Linux machine available)
 
 **Symptom (expected):** on Linux desktops where the window manager grabs Alt+drag to move windows (GNOME/Mutter, KDE/KWin and XFCE by default), the app never receives the Alt mouse-down, so Alt+drag duplicate does nothing and the whole window moves instead.
 
-**Deliberately not fixed yet:** the user would rather not have OS-dependent hotkeys, so Alt ships on all platforms and this is logged as a potential problem to verify on a Linux machine.
+**Deliberately not fixed yet:** the author would rather not have OS-dependent hotkeys, so Alt ships on all platforms and this is logged as a potential problem to verify on a Linux machine.
 
-**If it bites:** switch `DUPLICATE_DRAG_MODIFIER` in `src/renderer/src/hooks/useModifierDragDuplicate.ts` to `'ctrlKey'` (one line; also update the `create.duplicateDrag` label in `commands.ts`) — Ctrl+drag is not grabbed by those window managers and nothing else in the app uses it. Choosing the modifier per OS is the alternative the user wants to avoid. Also verify on Linux that `setMenuBarVisibility(false)` in `src/main/windows.ts` keeps Alt from revealing the native menu.
+**If it bites:** switch `DUPLICATE_DRAG_MODIFIER` in `src/renderer/src/hooks/useModifierDragDuplicate.ts` to `'ctrlKey'` (one line; also update the `create.duplicateDrag` label in `commands.ts`) — Ctrl+drag is not grabbed by those window managers and nothing else in the app uses it. Choosing the modifier per OS is the alternative the author wants to avoid. Also verify on Linux that `setMenuBarVisibility(false)` in `src/main/windows.ts` keeps Alt from revealing the native menu.
 
 **References:** [ADR 0099](decisions/0099-modifier-drag-duplicate.md), `src/renderer/src/hooks/useModifierDragDuplicate.ts`
 
 ---
 
+## A colour typed in light mode comes back changed (the theme flip is not exactly reversible)
+
+**Status:** Open, measured 2026-10-17, needs a design decision (pre-existing; found while verifying ADR 0117)
+
+**Symptom:** in light mode, select an element, type `#ff0000` into a colour field, and the field settles on `#c83a2d`; the element is drawn that colour, not the red that was typed. Switching to dark mode shows `#9f0000` for the same stored value, and back to light shows `#c83a2d` again, so the panel and the drawing always agree with each other, just not with what was typed.
+
+**Root cause:** an edit stores `themeAdaptiveColor(typed, theme)` (the dark-theme baseline) and the display flips it back. The flip mirrors lightness in Oklab and keeps hue and chroma; for a saturated colour the mirrored lightness falls outside the sRGB gamut and is clamped, so flipping twice does not return the original. Pale or low-chroma colours round-trip almost exactly; strong reds, blues and greens do not.
+
+**Why it matters:** stored values are the dark baseline and light mode is a conversion of it, which is right, but the *edit* path in light mode must then find a baseline whose conversion equals what was typed, and today it only applies the forward flip.
+
+**Direction (not decided):** solve for the baseline instead of flipping the typed value, e.g. search the stored-form colour whose light-mode conversion is closest to what was typed (hue and chroma fixed, lightness found numerically), or accept the typed value exactly in the current theme and store the nearest baseline. Needs a decision on how close is close enough, and a test over a grid of colours.
+
+**References:** `src/renderer/src/styles/themeAdaptiveColor.ts`, `src/renderer/src/panels/PropertyPanel.tsx` (the `onChange` of each `ColorField`), [ADR 0034](decisions/0034-theme-adaptive-color-value-flip.md)
+
+---
+
+## A native confirm() dialog left `<select>` elements unresponsive afterward
+
+**Status:** Worked around
+**Found:** 2026-08-22, live testing
+
+**Symptom:** after `AllowedValuesEditor`'s in-use warning (`window.confirm(...)`) was dismissed — confirmed or cancelled — every `<select>` in the Required Tags panel stopped opening on click. No console error.
+
+**Root cause:** not understood at the Electron/Chromium level; a focus/interaction state left broken by the native dialog closing. The app uses `confirm()`/`alert()` successfully elsewhere, but none of those is immediately followed by opening a native `<select>` in the same still-open panel, which is probably what exposed it.
+
+**Workaround:** replaced the native `confirm()` with an in-panel confirmation (the row being removed becomes an inline message plus Confirm/Cancel buttons). **Any feature that shows a native `confirm()`/`alert()` and then expects the user to keep using `<select>` elements in the same view should watch for this and prefer an in-app confirmation.**
+
+**References:** [ADR 0047](decisions/0047-allowed-values-list-editor.md), `src/renderer/src/components/RequiredTagsPanel.tsx`
+
+---
+
+## Clicking a container selects a different container that visually encloses it
+
+**Status:** Worked around, confirmed (2026-10-17). The z-inversion itself is a React Flow invariant and cannot be fixed; it is surfaced instead of silent.
+**Found:** 2026-08-29, live use on a real Azure overview diagram
+
+**Symptom:** two containers; the Layers panel shows A above B, but clicking A's visible area selects B.
+
+**Root cause:** in the file, B is a **child** of A (`parentId`) but is the geometrically larger box that fully encloses A, so the data hierarchy is inverted relative to the visual nesting (B was resized past its parent; resizing doesn't un-parent). React Flow forces a child's effective z-index to at least `parentZ + 1` regardless of the explicit `zIndex` (`calculateChildXYZ` in `@xyflow/system`, kept even with `zIndexMode: 'manual'`), so B renders and hit-tests above A while this app's Layers panel, which reads raw `data.zIndex`, correctly says A is on top. Nothing reconciled the two.
+
+**What was done (ADR 0075):** a standing Diagnostics advisory names both containers when a child extends outside its parent; the Layers panel keeps sorting on raw `data.zIndex` (that is what drag-to-restack edits) but marks rows where raw and effective order disagree (`in: <parent>` with a warning icon); a right-click **Detach from parent** is available on any nested node. Auto-un-parenting was declined (the child may overflow deliberately); load-time healing covers only dangling or cyclic `parentId`.
+
+**References:** [ADR 0035](decisions/0035-layer-order-control.md), [ADR 0075](decisions/0075-container-hierarchy-integrity.md), `src/renderer/src/layers/zIndexOrdering.ts`, `src/renderer/src/components/LayerPanel.tsx`
+
+---
+
 ## Details panel Markdown: tables (and other GFM syntax) rendered as literal text
 
-**Status:** Solved
-**Found:** 2026-09-05, user report — a table pasted into a node's details `.md` (from a real Azure resource-inventory diagram) showed no grid lines in the Details panel preview, nor in Notepad++'s MarkdownViewer++ plugin
+**Status:** Solved (2026-09-05)
 
-**Symptom:** a standard pipe-table (`| Resource | Type |` / `|---|---|` / row) rendered as plain, unstructured text — no borders, no columns — in both places the user checked.
+**Symptom:** a pipe table in a node's details `.md` showed as plain text in the preview.
 
-**Root cause:** pipe tables are a **GitHub-Flavored Markdown (GFM)** extension, not part of base CommonMark. `DetailsPanel.tsx` renders with plain `react-markdown` (CommonMark-only without an explicit plugin) and never had `remark-gfm` wired in — so tables, along with strikethrough and `- [ ]` task-list checkboxes, all silently fell back to literal text. This exact gap had already been found and logged once before, in [epic 0022](planning/epics/0022-example-diagram-gallery.md)'s Checklist-capability section (task-list checkboxes not rendering), but left as an unstarted task rather than fixed — this report is the same root cause reached from a different angle (a table, not a checklist). Notepad++'s MarkdownViewer++ hitting the same symptom was coincidental — a different, long-standing GFM-table gap in that plugin, unrelated to this app.
+**Cause:** pipe tables, strikethrough and `- [ ]` task lists are GitHub-Flavored Markdown extensions; `react-markdown` is CommonMark-only without `remark-gfm`, which was never wired in.
 
-**Resolution:** added `remark-gfm` and passed it to `<ReactMarkdown remarkPlugins={[remarkGfm]}>` in `DetailsPanel.tsx`. Also added `main.css` table styling (`.details-panel-preview table/th/td` — border, padding, header background) since nothing had ever needed to style a real `<table>` element in this panel before; without it a GFM table would parse correctly but render with no visible grid lines at all, which would have looked like the same bug all over again.
+**Fix:** `remark-gfm` added to the Details panel's `ReactMarkdown`, plus `.details-panel-preview table/th/td` styling (otherwise a correctly parsed table would have no visible grid and look like the same bug).
 
-**References:** `src/renderer/src/components/DetailsPanel.tsx`, `src/renderer/src/assets/main.css`'s `.details-panel-preview table/th/td`, [epic 0022](planning/epics/0022-example-diagram-gallery.md)'s Checklist-capability section (the earlier, unstarted instance of this same gap)
+**References:** `src/renderer/src/components/DetailsPanel.tsx`, `src/renderer/src/assets/main.css`
 
 ---
 
 ## File → Recent Diagrams never reused an empty calling window
 
-**Status:** Solved
-**Found:** 2026-09-05, user report
+**Status:** Solved (2026-09-05)
 
-**Symptom:** File → Open and dropping a `.chd` onto a window both reuse that window in-place when it's currently empty ("nothing to lose"), per epic 0091/0038/0040's own shared rule. File → Recent Diagrams didn't — picking a recent entry from an empty window always opened (or focused) a separate window, leaving the empty one sitting there unused.
+**Symptom:** File → Open and drag-drop reuse an empty window; picking a recent diagram from an empty window opened a separate one.
 
-**Root cause:** `windows:openRecent` (`main/windows.ts`, epic 0095) called the shared `openOrFocusWindow(path)` with no reuse candidate at all — it was written on the same "resolve and open, like a followed link" model as `windows:openLinked` (drill-down navigation, which deliberately *never* reuses the calling window — a linked child always gets its own window, ADR 0023). But unlike link navigation, Recent Diagrams is a top-level "open a diagram" entry point, same as File → Open, and should have followed *that* rule instead. `windows:pickAndOpen` already had the pattern to copy: the renderer computes `nodes.length === 0 && edges.length === 0` at call time and passes it through so main can decide whether to pass a `reuseWindow` into `openOrFocusWindow`.
+**Cause:** `windows:openRecent` was modelled on link navigation (which deliberately never reuses the calling window) instead of on File → Open, although it is a top-level "open a diagram" entry point.
 
-**Resolution:** `windows:openRecent` now takes the same `callingWindowEmpty` boolean, resolves `BrowserWindow.fromWebContents(event.sender)` when true, and passes it through to `openOrFocusWindow` exactly like `windows:pickAndOpen` does. `openRecentDiagram` (preload) and `handleOpenRecent` (`Canvas.tsx`) updated to compute and pass it, mirroring `handleOpen`.
+**Fix:** it now takes the same `callingWindowEmpty` flag as `windows:pickAndOpen` and passes the calling window as the reuse candidate.
 
-**References:** `src/main/windows.ts`'s `openOrFocusWindow`/`windows:openRecent`/`windows:pickAndOpen`, `src/preload/index.ts`'s `openRecentDiagram`, `src/renderer/src/Canvas.tsx`'s `handleOpenRecent`/`handleOpen`, [epic 0095](planning/epics/completed/0095-recent-diagrams-menu.md), [ADR 0023](decisions/0023-multi-window-diagram-model.md)
+**References:** `src/main/windows.ts` (`openOrFocusWindow`, `windows:openRecent`), [ADR 0023](decisions/0023-multi-window-diagram-model.md)
 
 ---
 
 ## Text nodes have zero internal padding — label touches the border, and clicking near the start grabs the node instead of placing a text cursor
 
-**Status:** Solved, pending live re-test
-**Found:** 2026-09-05, user report while reviewing new gallery content (`examples/gallery/landscape/meridian-rail-landscape-layered/*.chd`'s sticky-note-style blurb text nodes) in-app
+**Status:** Solved, confirmed live (2026-10-17)
 
-**Symptom:** a `text`-type node's label renders with its first character touching (or nearly touching) the node's left border — visually cramped against the "wall" of the box. Worse than cosmetic: clicking near the very start of the label to place a text cursor there instead grabs the node's edge/selection handle, because the hit target for "select/resize the node" and the start of the editable text sit at almost the same pixel.
+**Symptom:** a text node's label touched its left border, and clicking near the start of the text grabbed the node's edge instead of placing the cursor.
 
-**Root cause:** confirmed by reading the CSS directly — neither `.text-node` (`main.css:491`) nor `.text-node-label` (`main.css:511`) sets any `padding`, unlike virtually every other bordered/boxed element in `main.css` (property rows, panels, dropdowns, etc. all have some `padding: Npx Mpx`) — `.shape-node` already has `padding: 4px 8px`, so this was specifically a text-node gap, not app-wide. This isn't something a diagram author can work around from content either: the `.chd` format has no padding/inset field anywhere on Node style (see `docs/file-format.md`'s Node style table).
+**Cause:** neither `.text-node` nor `.text-node-label` set any padding (entities already had `4px 8px`), and the `.chd` format has no padding field to work around it.
 
-**Resolution:** `padding: 8px` added to `.text-node-label` (display mode). Edit mode needed a separate fix since its textarea goes through the shared `.editable-label-input` class (used by every node/edge label's edit mode, `padding: 0` there deliberately, unaffected) — added a new `.text-node-label-input { padding: 8px; }` rule, placed after `.editable-label-input` in source order so it actually wins the cascade (same specificity, source order is the tiebreaker). Not yet independently confirmed in the running app.
-
-**References:** `src/renderer/src/nodes/TextNode.tsx`, `src/renderer/src/assets/main.css`'s `.text-node-label`/`.text-node-label-input`/`.editable-label-input`
+**Fix:** `padding: 8px` on `.text-node-label`; edit mode needed its own `.text-node-label-input` rule placed after the shared `.editable-label-input` (same specificity, source order wins).
 
 ---
 
 ## Text node content isn't clipped to its own box — a long label bleeds over whatever sits below it on canvas
 
-**Status:** Solved, pending live re-test
-**Found:** 2026-09-05, user report — a 3-paragraph blurb text node "goes out beyond the bounds of the text field by a lot, and even covers the upper 4 shapes" below it
+**Status:** Solved, confirmed live (2026-10-17)
 
-**Symptom:** a `text` node's label can render taller than the node's own declared `size.height`, visually overlapping unrelated shapes positioned below/around it — not a resize-handle or box-outline issue, the actual text glyphs render outside the node's rectangle.
+**Symptom:** a long text node label rendered taller than the node and covered shapes below it.
 
-**Root cause:** none of `.text-node`, `.shape-node`, or `.container-node` (`main.css`) set `overflow: hidden` — a node's content box simply grows past its declared bounds instead of being clipped or truncated when it doesn't fit. Latent across all three node types, but only visibly bit on text nodes, which are the only type routinely holding long free-form paragraph content (a shape/container label is normally one short line). `overflow: hidden` can't just go on `.text-node` itself, though — `NodeResizer`'s own resize-handle divs render as DOM siblings of the label *inside* that same element (`TextNode.tsx`), sitting partly outside the box edge by design so they stay grabbable; clipping the whole node would clip those too.
+**Cause:** no node type clipped its content. `overflow: hidden` cannot go on `.text-node` itself because `NodeResizer`'s handles are DOM children that sit partly outside the box by design.
 
-**Resolution:** scoped to `.text-node-label` only, not `.text-node` — added `max-height: 100%; overflow: hidden;`. The percentage resolves correctly because `.text-node` itself has a definite `height: 100%` (React Flow sets a real pixel height on the outer node wrapper), so the label's `max-height: 100%` ties it to that same resolved value without touching the node's own overflow behavior or the resize handles. `.shape-node-label`/`.container-node-label` have the same latent gap, left unfixed — lower priority since a short label rarely overflows enough to matter, revisit if it's ever reported for real.
-
-**References:** `src/renderer/src/assets/main.css`'s `.text-node-label`, `.entity-node`, `.container-node`; `src/renderer/src/nodes/TextNode.tsx`
+**Fix:** `max-height: 100%; overflow: hidden` on `.text-node-label` only (the percentage resolves because React Flow gives the node wrapper a definite height). Entity and container labels have the same latent gap and are left until reported.
 
 ---
 
 ## Legend line/shape swatches with no explicit `color` rendered completely invisible
 
-**Status:** Solved, pending live re-test
-**Found:** 2026-09-05, user report — "I can not see the legend arrow at all. It is effectively if not actually invisible," on a hand-authored `legend` entry that deliberately omitted `color` (per `docs/file-format.md`, absent color means "use this diagram's default look" — the in-app "add legend entry" flow always seeds an explicit color, so this path had never been exercised before)
+**Status:** Solved, confirmed live (2026-10-17)
 
-**Symptom:** a `legend` entry of kind `"line"` or `"shape"` with no `color` field rendered nothing at all in `LegendPanel`'s swatch — not just low-contrast, genuinely blank.
+**Symptom:** a hand-authored legend entry without `color` drew nothing.
 
-**Root cause:** `LegendPanel.tsx`'s `LegendSwatch` set `stroke={entry.color}` (line kind) / `style={{ background: entry.color }}` (shape kind) directly, with no fallback. `entry.color` being `undefined` means React omits the `stroke`/`background` attribute entirely — which SVG/CSS treat as `stroke: none` / `background: transparent`, not "use some default color." Every other styleable surface in this app treats an absent color as "fall back to the real default look" (node fill, edge stroke, etc.) — the legend swatch was the one place that silently rendered nothing instead.
+**Cause:** `LegendSwatch` set `stroke={entry.color}` / `background: entry.color` with no fallback; `undefined` means no stroke and a transparent background, not "use the default look" like every other styleable surface.
 
-**Resolution:** line-kind swatch now falls back to `var(--xy-edge-stroke-default)` (the same CSS variable real unstyled edges use — see the next entry), shape-kind falls back to `var(--ev-c-gray-1)`. Raised alongside a related, separate complaint that real edges' actual default stroke (not just the legend) was also hard to see, especially the dark-theme value — see the next entry for that fix.
-
-**References:** `src/renderer/src/components/LegendPanel.tsx`'s `LegendSwatch`
+**Fix:** line swatches fall back to `var(--xy-edge-stroke-default)`, shape swatches to `var(--ev-c-gray-1)`.
 
 ---
 
 ## Default edge stroke (color and width) was React Flow's stock value, unreadable against this app's dark-theme canvas
 
-**Status:** Solved, pending live re-test — a deliberate design adjustment more than a bug, logged anyway since it was reported as "effectively invisible"
-**Found:** 2026-09-05, user report (same session as the legend-swatch bug above, reported together as one complaint)
+**Status:** Solved for what was reported (the stroke is readable); the related blank-property-panel gap was fixed later (see "Property panel shows blank fields for style values that are unset")
+**Found:** 2026-09-05
 
 **Symptom:** an edge with no explicit `style.stroke` was hard to see, worst in dark theme.
 
-**Root cause:** this app never overrode `@xyflow/react`'s own bundled CSS variables (`--xy-edge-stroke-default: #3e3e3e` in dark mode, `#b1b1b7` in light; `--xy-edge-stroke-width-default: 1`) — so an unstyled edge rendered at React Flow's stock 1px width and stock color, and `#3e3e3e` against this app's near-black dark-theme canvas background (`--ev-c-black: #1b1b1f`) has genuinely low contrast.
+**Cause:** the app never overrode React Flow's `--xy-edge-stroke-default` (`#3e3e3e` dark, `#b1b1b7` light) or its 1px default width.
 
-**Resolution:** two separate changes, since they're not controlled by the same mechanism —
-1. **Color**: overrode `--xy-edge-stroke-default`/`--xy-edge-stroke-selected-default` per theme in `base.css`, following this app's existing 3-block theme pattern (dark default, OS-light-no-override, explicit `[data-theme='light']`) — lightened for dark theme (`#6b7684`), darkened for light theme (`#8a8a92`), i.e. adjusted toward more contrast in each theme's own direction rather than literally "lighter" everywhere, since a lighter gray would read worse against a white light-theme canvas. Flagged for the user to confirm this reads right in whichever theme they actually use.
-2. **Width**: a CSS variable override for `--xy-edge-stroke-width-default` would have had **no effect** — `LabeledEdge.tsx`'s `computedStyle` always sets an inline `strokeWidth` from a JS constant (`DEFAULT_STROKE_WIDTH`), unconditionally, unlike `stroke` (only set inline when an explicit `style.stroke` exists) — inline styles beat a CSS custom property every time. Bumped the JS constant itself from `1` to `1.5` instead. Caught only by tracing how `computedStyle` is actually built, not by testing — worth remembering for any future "default via CSS var" attempt on this component: check whether the property is set unconditionally first.
+**Fix:** per-theme overrides of the colour variables in `base.css` (lighter on dark, darker on light). Width could **not** be done with a CSS variable: `LabeledEdge.tsx` sets an inline `strokeWidth` unconditionally, and an inline style beats a custom property every time, so the JS constant went from 1 to 1.5. Later (2026-09-15) `stroke` was also made unconditionally inline (`DEFAULT_STROKE_COLOR`, kept equal to `base.css` by hand) because that asymmetry was also why the PNG arrowhead bug only hit unstyled edges.
 
-**Follow-up (2026-09-15):** the color/width asymmetry this entry's own point 2 flagged ("unlike `stroke`, only set inline when an explicit `style.stroke` exists") turned out to matter beyond live-rendering contrast — it's also *why* the PNG-export arrowhead-color bug (below) only affected unstyled edges. Per the user's own request ("the default edge should come with a default colour and a default thickness already set, for clarity... that also fixes downstream issues like this"), `stroke` is now unconditionally inline too — a new `DEFAULT_STROKE_COLOR` (kept equal to `base.css`'s values) resolved via the same `edgeStyle?.stroke ?? default` pattern `strokeWidth` already used, instead of ever falling through to the CSS variable for the normal case. `--xy-edge-stroke-default` stays in `base.css` as the fallback for RF's own built-in edge component (the "hand-authored edge with no `type` field" entry below) — the two values must now be kept in sync by hand, noted in both places.
+**Lesson:** before a "default via CSS variable" change on a component, check whether the property is already set unconditionally inline.
 
-**References:** `src/renderer/src/assets/base.css` (`--xy-edge-stroke-default` / `--xy-edge-stroke-selected-default`, all three theme blocks), `src/renderer/src/edges/LabeledEdge.tsx`'s `DEFAULT_STROKE_WIDTH`/`DEFAULT_STROKE_COLOR`/`computedStyle`
+**References:** `src/renderer/src/assets/base.css`, `src/renderer/src/edges/LabeledEdge.tsx`
 
 ---
 
 ## A hand-authored edge with no `type` field silently rendered as React Flow's built-in default edge, not this app's `LabeledEdge` — no style, no highlights, no custom routing, no error
 
-**Status:** Solved, confirmed live
-**Found:** 2026-09-05, user report — after eliminating every other explanation (a genuinely fresh `npm run dev` restart, no console error, node highlighting still worked in the exact same file), the decisive clue was: opening a *different*, previously-app-generated `.chd` file worked correctly, but every edge in the two new hand-authored gallery files (`examples/gallery/landscape/meridian-rail-landscape-layered/**/*.chd`) never responded to a highlight toggle **or** a manual style edit (color/width) from the property panel
+**Status:** Solved, confirmed live (2026-09-05)
 
-**Symptom:** on an edge with no `type` field in the file (which `docs/file-format.md` explicitly documents as valid — "Absent/unrecognized → treat as an unlabeled connector"), *nothing* about that edge's appearance ever updated: not tag-based highlight colors, not manual style edits via the property panel, nothing. No console error. The edge still drew correctly, in the right place, with its label visible — which is what made this so hard to localize; the failure was silent and partial, not a crash or an obviously-missing feature.
+**Symptom:** edges without a `type` (valid per the file format) drew in the right place with a label, but ignored highlights, style edits and custom routing. No console error; opening an app-generated file worked, which made it hard to localise.
 
-**Root cause:** two things compounding, one in this app's code and one in `@xyflow/react`'s own `EdgeWrapper` (`node_modules/@xyflow/react/dist/esm/index.js`):
-1. This app's `<ReactFlow defaultEdgeOptions={{ type: 'labeled', ... }}>` (`Canvas.tsx`) is meant to give every edge lacking its own `type` a default of `'labeled'` — the type this app's own custom edge component (`LabeledEdge.tsx`, registered as `edgeTypes = { labeled: LabeledEdge }`) is registered under.
-2. `fromDiagramFile`'s edge mapping (`Canvas.tsx`) built every edge with `type: e.type` **unconditionally** — unlike every other optional field on the same object (`style`, `metadata`, `points`, `directionSets`), which were all correctly *conditionally* spread (`...(e.style ? { style: e.style } : {})`). For a file that omits `type` — exactly what `docs/file-format.md`'s own "absent means default" convention recommends, and what the `chd-diagrams` skill's minimal worked example does — this produces an edge object with an **explicit own-property `type: undefined`**, not a genuinely missing key.
-3. `EdgeWrapper` resolves the actual type via `edge = { ...defaultEdgeOptions, ...edge }` — spreading `defaultEdgeOptions` *first*, the real edge object *second*. Object spread copies a property's value regardless of whether it's `undefined`, so `edge.type: undefined` **overwrites** `defaultEdgeOptions.type: 'labeled'` right back to `undefined`. The very next line, `let edgeType = edge.type || 'default'`, then resolves to `'default'` — which isn't a key in this app's own `edgeTypes`, so it silently falls through to `builtinEdgeTypes.default` (React Flow's own plain edge component) instead of `LabeledEdge`. No error is raised anywhere in this path (`onError` only fires when the *final* fallback also fails to resolve, which it doesn't — React Flow always has its own built-in `default`).
+**Cause:** `fromDiagramFile` built every edge with `type: e.type` unconditionally, producing an own-property `type: undefined`. React Flow resolves the type with `edge = { ...defaultEdgeOptions, ...edge }`, and spreading copies `undefined` values, so the `'labeled'` default was overwritten, `edge.type || 'default'` picked React Flow's own built-in component, and nothing reported an error.
 
-The result: the edge visually draws (position/path calculation happens independently of which component renders it) and even shows *something* resembling a label, but none of `LabeledEdge.tsx`'s own logic — `computedStyle`, `matchHighlights`, custom routing/bend-points, connection-point-aware handles — ever runs, because a completely different component is mounted.
+**Fix:** spread `type` conditionally like every other optional field (`...(e.type ? { type: e.type } : {})`). The skill's examples still declare `"type": "labeled"` explicitly, as insurance for older builds.
 
-**Resolution:** two changes —
-1. **App fix**: `fromDiagramFile`'s edge mapping now spreads `type` conditionally, matching every other optional field on that object: `...(e.type ? { type: e.type } : {})`. A missing key (rather than an explicit `undefined`) lets `defaultEdgeOptions`'s spread-second-wins-nothing quirk resolve correctly, since there's no `type` property on the edge object at all for `{...edge}` to reassert.
-2. **Content**: added `"type": "labeled"` explicitly to every edge in both new gallery files anyway — belt-and-suspenders, and matches every other gallery `.chd`'s existing convention (checked: `meridian-rail-landscape.chd`'s edges all already declare it explicitly).
+**Lesson:** never put an optional key on an object as `key: undefined` when a later spread is meant to fill it from defaults.
 
-Confirmed live after the app fix: highlight toggling and manual style edits both work correctly on the previously-broken edges.
-
-**Consequence for the `chd-diagrams` skill and `docs/file-format.md`**: the documented "absent `type` means an unlabeled connector, that's fine" guidance was technically true of the *file format's own semantics*, but *this app's specific rendering behavior*, before this fix, silently broke on it in a much worse way than "unlabeled" — it lost highlighting, styling, and custom routing entirely. Now fixed, so omitting `type` is safe again — but the skill's minimal worked example and authoring guidance were updated to declare `"type": "labeled"` explicitly anyway, since a hand-authored file may be opened by an older build that predates this fix, and explicit is cheap insurance.
-
-**References:** `src/renderer/src/Canvas.tsx`'s `fromDiagramFile` (edge mapping) and `DEFAULT_EDGE_OPTIONS`, `node_modules/@xyflow/react/dist/esm/index.js`'s `EdgeWrapper` (`edge = { ...defaultEdgeOptions, ...edge }`), `docs/file-format.md`'s Edge `type` field, the `chd-diagrams` skill's `field-reference.md`/minimal worked example
+**References:** `src/renderer/src/Canvas.tsx` (`fromDiagramFile`, `DEFAULT_EDGE_OPTIONS`), `@xyflow/react`'s `EdgeWrapper`
 
 ---
 
 ## Diagnostics "missing files" check didn't flag a reported broken relative path in real diagram data
 
-**Status:** Open, reported once, not reproduced or confirmed
-**Found:** 2026-09-04, user report while live-testing epic 0108 (Diagnostics — missing files) on the same `epic/0108-diagnostics-broken-links` branch it shipped on
+**Status:** Closed, cannot reproduce (2026-10-17)
+**Found:** 2026-09-04
 
-**Symptom:** the user's real "Project Overview" project (used elsewhere as the source of epic 0103's `parentId`-drift bugs) has a `Service platform.chd` diagram whose nodes carry `icons[slot].path`/`details`/`linkedDiagram` values that look like they were copy-pasted in from a sibling diagram (`Project Overview.chd`) without the paths being adjusted for the new file's own directory — e.g. an icon path of `"Project Overview/assets/Azure-Cosmos-DB.svg"` stored *inside* `Service platform.chd`, which per `docs/file-format.md`'s "relative to the diagram file's own directory" rule should resolve to a nonexistent, doubled-up path. Opening this diagram in-app and checking the Diagnostics panel's "Missing files" section (including after Recheck) did **not** report any of these as missing.
+**Symptom:** a user's diagram had icon/details/link paths that looked copy-pasted from a sibling diagram (e.g. `Project Overview/assets/Azure-Cosmos-DB.svg` stored inside a diagram in another folder) and should not resolve, but the Diagnostics "Missing files" section did not list them.
 
-**What's confirmed vs. not:** code-read only, not verified against the actual files (they live outside this repo, on the user's own disk — not shared this session). Traced the whole scan path — `collectResourceRefs` (`Canvas.tsx`) → `resources:checkExist` IPC (`main/links.ts`) → `resolveLinkPath` (`main/linkPaths.ts`) — and it appears to correctly cover all four resource kinds (`linkedDiagram`, custom `icon`, `reference`, `details`) and to resolve exactly per the documented rule; no gap found by reading the code alone. That leaves two live possibilities, neither ruled out: (a) a genuine false-negative somewhere in the scan/check path that code-reading didn't surface, or (b) the specific paths in this file aren't actually broken the way they first looked (the "doubled path" read came from inferring the resolution rule against a directory listing, not from confirming inside the running app).
+**Status of the investigation:** the scan path (`collectResourceRefs` → `resources:checkExist` → `resolveLinkPath`) was traced twice by reading and no gap was found; the files are not in this repository, so it was never verified against real data. Either there is a false negative somewhere, or the paths were not actually broken.
 
-**Why logged instead of chased:** reported once, not reproduced on a second look, and the underlying "does paste corrupt resource paths" question it was raised alongside was addressed separately (see the paste-time retarget fix below, `src/renderer/src/clipboard.ts`'s `retargetResourcePath`/`retargetNodeData`) — logging this now means the next time Diagnostics looks like it's missed something, this is the first place to check instead of re-diagnosing from scratch.
+**Reopen with** the diagram and a listing of its folder; first confirm the path really does not resolve before touching scan code.
 
-**If revisited:** get the actual file — either the real directory (so `resolveLinkPath`'s output can be checked against a real `fs.access` call), or at minimum the exact `data.icons`/`data.details`/`data.linkedDiagram` values of the specific node plus a directory listing of what's actually sitting next to `Service platform.chd`. Confirm first whether the path is *actually* unresolved (settles (a) vs (b) above) before touching any scan code.
-
-**References:** `src/renderer/src/Canvas.tsx`'s `collectResourceRefs`/`scanMissingFiles`, `src/main/links.ts`'s `resources:checkExist` handler, `src/main/linkPaths.ts`'s `resolveLinkPath`, [ADR 0084](decisions/0084-diagnostics-missing-files.md), [epic 0108](planning/epics/0108-diagnostics-missing-files.md)
+**References:** [ADR 0084](decisions/0084-diagnostics-missing-files.md), `src/main/linkPaths.ts`
 
 ---
 
 ## Dragging a new edge from a node inside a locked container can snap to the container itself
 
-**Status:** Open, not investigated
-**Found:** 2026-08-24, live use by the user, reported to be logged rather than fixed immediately
+**Status:** Closed, no longer reproduces (2026-10-17)
+**Found:** 2026-08-24
 
-**Symptom:** dragging a new connection from a shape that sits inside a container, near the container's own edge, snaps/connects to the _container_ rather than passing through it — even when that container is locked. Dropping the connection there then pops up the "what do you want to create" prompt (the void-drop AnchorNode flow, `spawnAnchorAt`/`resolveAnchorNode`, epic 0014) rather than behaving as a normal connection or a clean drop onto empty canvas. The user's expectation: a locked container should be completely transparent to this interaction, "as if it was not there."
+**Symptom:** dragging a connection from a shape near its container's edge snapped to the (locked) container instead of passing through it.
 
-**Not yet investigated**, but a likely starting point: `locked` (`data.locked`, `deriveNodeFields` in `Canvas.tsx`) only ever maps onto React Flow's `draggable`/`deletable` node overrides — `selectable` and, implicitly, connectability are deliberately left untouched (see that function's own comment: "the whole point was blocking accidental drags/deletes while keeping selection/highlighting working normally"). That was a deliberate choice for _selection_, but connection-drag snapping was never considered against it — a locked container's own connection-point handles are plausibly just as live as an unlocked one's, which would fully explain this symptom without needing anything container-specific or z-index-related.
-
-**If revisited**: check whether the same snap happens near an _unlocked_ container too (isolates whether this is really about `locked` specifically, or a more general "a container's own handles are too eager to claim a nearby connection drag" issue that locked state happens to make more noticeable). If it's confirmed to be about `locked` specifically, the fix is likely making connection validation (`isValidConnection` or equivalent) reject a locked node the same way dragging/deleting it already does.
-
-**References:** `src/renderer/src/Canvas.tsx`'s `deriveNodeFields`, `spawnAnchorAt`/`resolveAnchorNode` (epic 0014's void-drop flow), `src/renderer/src/nodes/ContainerNode.tsx`
+**Outcome:** the author reports it no longer happens. Nothing was changed for it on purpose; the likely reason is incidental (the anchor placeholder was removed in 2026-10, which changed what a drop on empty space does). The original hypothesis, never confirmed, was that `locked` maps only to `draggable`/`deletable` and leaves a container's connection handles live. Reopen with exact steps.
 
 ---
 
 ## "Reverse direction" did nothing visible on a styled edge
 
-**Status:** Solved (ADR 0083 / epic 0106)
-**Found:** 2026-09-04, user live-testing edge direction sets with per-set styles
+**Status:** Solved (2026-09-04, ADR 0083)
 
-**Symptom:** right-clicking an edge → "Reverse direction" appeared to do nothing. On an earlier build it instead showed an arrowhead at *both* ends. Switching edge direction sets in a way that flipped an edge had the same problem.
+**Symptom:** right-click → Reverse direction appeared to do nothing (or showed arrowheads at both ends on an earlier build).
 
-**Root cause:** `flipEdgeVisuals` (the old helper in `edges/edgeDirectionSets.ts`, shared by "Reverse direction" and a set switch) returned only the visual touch-ups and swapped `style.startMarker` ↔ `style.endMarker` *by value*; each caller then separately swapped the edge's `source`/`target`. But that endpoint swap alone already relocates the visible arrowhead — an `endMarker` renders at `target`, a `startMarker` at `source`, so trading the endpoints moves a target-anchored arrow to the other end. Doing both cancels out: a one-arrow edge stays a one-arrow edge on the *same physical end* → visual no-op. (Before the interim `undefined`→`'none'` patch, the swapped `endMarker: undefined` also fell through to React Flow's default end arrow in `LabeledEdge`, so you got arrows on both ends.) Latent since "Reverse direction" shipped (epic 0084, never live-tested); plain edges with an empty `style` happened to work because RF's default arrow just follows `target`. Epic 0106 made it the common case by seeding new edges with an explicit `endMarker` from the active direction set.
+**Cause:** the helper swapped `startMarker` ↔ `endMarker` by value *and* the caller swapped `source`/`target`. Swapping the endpoints already moves the arrowhead, so doing both cancelled out for any edge with an explicit `endMarker`.
 
-**Fix:** the helper was also mis-factored — a fragment callers had to compose with a manual endpoint swap, which is how "also swap the markers" crept in. Replaced with **`reverseEdgeDirection(edge): Edge`** — one function that reverses the whole edge: swap the endpoints (+ handles), reverse the catmull-rom `points` order, mirror a custom `labelPosition`. **Markers are not touched** — the endpoint swap moves them by itself. The "Reverse direction" menu action calls it directly; `applyDirectionToEdge` calls it for the flip case then overrides endpoints/handles from the stored record. A clean byte-for-byte involution.
+**Fix:** one function, `reverseEdgeDirection(edge)`, swaps endpoints and handles, reverses catmull-rom `points`, mirrors a custom `labelPosition`, and does **not** touch markers. It is a byte-for-byte involution.
 
-**References:** `reverseEdgeDirection` / `applyDirectionToEdge` in `src/renderer/src/edges/edgeDirectionSets.ts`, the "Reverse direction" handler in `Canvas.tsx`, `LabeledEdge`'s `computedMarkerEnd`/`computedMarkerStart`
+**Lesson:** a fragment that callers must compose with a manual step invites exactly this double-apply; make the helper do the whole operation.
+
+**References:** `src/renderer/src/edges/edgeDirectionSets.ts`
 
 ---
 
 ## Hovering a single edge on a large diagram re-renders every node and edge several times over
 
-**Status:** Solved (2026-08-29, ADR 0073 / epic 0101), live-confirmed by the user — the whole diagram now "feels smooth as hell" for hover, marquee-select and colour drags, with no regressions found
-**Found:** 2026-08-24, live use by the user on the Meridian Rail landscape (82 nodes, 84 edges), while live-testing the fix for the entry below
+**Status:** Solved (2026-08-29, ADR 0073), live-confirmed
+**Found:** 2026-08-24 on a large diagram (82 nodes, 84 edges)
 
-**Symptom:** on this large diagram, drag-to-select noticeably stutters (~300ms) every time the selection boundary crosses in or out of an item. Isolated further via live `console.count` instrumentation in `EntityNode`/`LabeledEdge` (same technique as the epic 0067/ADR 0056 investigation): merely **hovering one edge and moving off** — no click, no selection, from a fully-settled diagram — produced ~340 `LabeledEdge` renders and ~280 `EntityNode` renders (roughly 4 and 3.4 per element, for what should be a change affecting exactly one edge). Reproduced identically across multiple clean restarts (all `electron.exe`/`node.exe` processes killed each time), ruling out stale HMR/caching.
+**Symptom:** marquee-select stuttered; merely hovering an edge produced ~340 `LabeledEdge` and ~280 `EntityNode` renders.
 
-**Two real, confirmed contributing causes found and fixed** (`src/renderer/src/Canvas.tsx`), but fixing both changed the render counts by roughly 0% — something else, not yet identified, dominates:
+**Cause:** the memoised `DiagramContext` value was stable, but three of the callbacks inside it (`pushSnapshot`, `beginContinuousEdit`, `openDetailsPanel`, and `handleLinkClick`) closed over `nodes`/`edges`, so they changed identity on every array change. Edge hover wrote `edge.data.hovered` into the shared array, which rebuilt those callbacks, which rebuilt the context value, which re-rendered every consumer. Two earlier fixes (stable per-item wrappers, stable `<ReactFlow>` props including `defaultEdgeOptions`, which React Flow reads with an unguarded `useStore`) were real but did not move the numbers.
 
-1. `zIndexedNodes`/`zIndexedEdges` were rebuilt as fresh wrapper objects for _every_ node/edge on _every_ render, regardless of whether that item had actually changed — this also directly caused the separate bug in the entry below (React Flow's `adoptUserNodes` only reuses a node's cached measurement when the _exact same_ object is passed back). Replaced with an effect that materializes the derived fields (`zIndex`/`draggable`/`deletable`/edge `hovered`) directly onto `nodes`/`edges` state, only replacing the specific items that changed — see `deriveNodeFields`/`deriveEdgeFields` (module scope) and their call sites. Written as a "read during render, write only from an effect" pattern specifically because this repo's react-compiler ESLint rule (enforced as an error) disallows reading _or_ writing a ref's `.current` during render, which ruled out the more obvious manual-cache approach tried first.
-2. `onEdgeMouseEnter`/`onEdgeMouseLeave`/`defaultEdgeOptions` were passed to `<ReactFlow>` as inline arrow functions/object literals, recreated on every render. `defaultEdgeOptions` in particular is read by React Flow's own `EdgeWrapper` via a _separate, unguarded_ `useStore(s => s.defaultEdgeOptions)` call with no equality check — a fresh reference there forces every edge to re-render regardless of whether `nodes`/`edges` themselves changed. Fixed: `onEdgeMouseEnter`/`onEdgeMouseLeave` are now `useCallback`-stable, `defaultEdgeOptions` is a static module-level constant (it never depended on any state).
+**Fix:** hover is local `useState` in `LabeledEdge`; the callbacks read a `graphRef` / `rfInstance` / `useEventCallback` instead of closing over state; `onlyRenderVisibleElements` enabled.
 
-**Not yet found:** after both fixes, a clean-restart retest produced render counts within noise of the original (340/280 → still ~338-340/~280). Whatever is forcing _every_ node and edge to re-render from a single edge's hover state is still active. `NodeWrapper` (`@xyflow/react`) has only one `useStore` call, correctly using `shallow` comparison, unlike `EdgeWrapper`'s extra unguarded one — so nodes re-rendering in lockstep with edges, from a change that only touches `hoveredEdgeId`/one edge's data, doesn't fit either mechanism found so far. `DiagramContext`'s value is confirmed properly memoized (no selection/hover-related dependencies) via ADR 0056's existing fix, so it's very likely not the shared cause either. Ruled out as _not_ the cause: React Flow's own reference-preserving `applyChanges`/`adoptUserNodes` (confirmed correct by reading `@xyflow/system`'s source), stale caching/HMR (reproduced fresh every time), and `DiagramContext` re-render cascade (already fixed in epic 0067, deps checked again here).
+**Lesson:** a memoised context value is only as stable as the *callbacks* inside it; look at their dependencies, not just the value's own dependency list. Counting renders from outside has diminishing returns; reading identity chains is faster.
 
-**If revisited:** the user made the call to stop here rather than continue via `console.count` instrumentation, given several rounds already produced fixes that didn't move the actual numbers — diminishing returns on this technique for this specific problem. The recommended next step is the **React DevTools Profiler**, attached to the Electron renderer, which can show _why_ a given render happened (props/state/context/parent) instead of just _that_ it happened — a fundamentally more precise tool for this class of problem than counting renders from the outside.
-
-**2026-08-29 — root-caused and fixed (ADR 0073 / epic 0101), by code reading rather than the profiler.** The prior round's "`DiagramContext`'s value is confirmed properly memoized (no selection/hover-related dependencies)" was the miss: the memoized value's own dependency list looked clean, but three of the _callbacks_ in it — `pushSnapshot`, `beginContinuousEdit`, `openDetailsPanel` (and `handleLinkClick`) — closed over `nodes`/`edges` and so were rebuilt whenever either array changed. Edge hover wrote `edge.data.hovered` via a `setEdges` effect → new `edges` array → new `pushSnapshot`/`openDetailsPanel` identities → new `diagramContextValue` identity → every `useContext` consumer (every node and edge) re-rendered, which is exactly why nodes re-rendered in lockstep with edges from a pure hover. Fixes: (1) hover is now per-edge local `useState` in `LabeledEdge`, never touching the shared array; (2) those callbacks read a `graphRef` / `rfInstance.getNode` / a new `useEventCallback` wrapper instead of closing over state, so `diagramContextValue` keeps a stable identity across edits. Also enabled `onlyRenderVisibleElements` (viewport culling). **Live-confirmed by the user**: hover, marquee-select and colour drags on the Meridian Rail landscape are all smooth, no regressions found (PNG export of an oversized diagram, reconnect handles, undo/redo, container delete, etc. all still work). The React DevTools Profiler round and a state-store refactor were both left unused — not needed once the callback-identity cause was found.
-
-**References:** `src/renderer/src/Canvas.tsx` (`graphRef`, `pushSnapshot`, `openDetailsPanel`, `deriveEdgeFields`, `onlyRenderVisibleElements`), `src/renderer/src/edges/LabeledEdge.tsx` (local `hovered` state), `src/renderer/src/hooks/useEventCallback.ts`, `node_modules/@xyflow/react`'s `NodeWrapper`/`EdgeWrapper`, [ADR 0056](decisions/0056-diagram-context-rerender-performance.md) and [ADR 0073](decisions/0073-react-flow-render-performance-round-2.md), `examples/gallery/landscape/meridian-rail-landscape.chd`
+**References:** [ADR 0056](decisions/0056-diagram-context-rerender-performance.md), [ADR 0073](decisions/0073-react-flow-render-performance-round-2.md), `src/renderer/src/hooks/useEventCallback.ts`
 
 ---
 
 ## A large diagram's edges, selection box, and new-connection dragging all silently failed until node measurement happened to catch up
 
-**Status:** Solved
-**Found:** 2026-08-24, live use by the user opening the Meridian Rail landscape (82 nodes, 84 edges — the largest diagram in the gallery) on both `epic/0032-edge-routing-and-waypoints` and `master`
+**Status:** Solved (2026-08-24)
 
-**Symptom:** opening this one file — and only this file — showed zero edges: no arrows, nothing selectable, no highlighting, right from the first paint. Separately, drag-to-select selected every element regardless of how small the drag box was or where it was drawn, and dragging a new connection between two existing shapes didn't work either. A brand-new blank diagram worked perfectly for all three. Console was clean throughout — no errors, no warnings. Reproduced after a fully clean restart (all `electron.exe`/`node.exe` processes killed, `node_modules/.vite` deleted), on both branches, ruling out every caching theory tried first (Vite dev-server cache, a stale Electron process, a stale crash-recovery snapshot — the recovery folder was confirmed empty).
+**Symptom:** opening one large file showed no edges, drag-select selected everything, and new connections couldn't be dragged. A blank diagram worked; the console was clean.
 
-**Root cause:** confirmed by temporarily instrumenting `loadDiagramIntoCanvas`, the `zIndexedEdges` computation, and `LabeledEdge`'s render (same live `console.log`/`console.count` technique as this log's other hard bugs) rather than guessing. `edges` state genuinely held all 84 edges immediately after load, and 84 were being passed to `<ReactFlow edges={...}>` — but `LabeledEdge` was only ever invoked for roughly half of them. Reading `@xyflow/react`'s own source (`EdgeWrapper`) found the mechanism: it silently returns `null` — no warning, no error — for any edge whose source or target node isn't yet "initialized," which specifically means `node.internals.handleBounds` and `node.measured.width/height` aren't populated yet in React Flow's own internal store. That measurement is normally driven passively by a `ResizeObserver` per node after mount, converging over an unpredictable number of render passes — usually fast enough to be invisible, but at this diagram's scale (82 nodes, several with 10+ connection-point handles) it sometimes never fully caught up on its own. The same missing/incomplete `nodeLookup` data plausibly explains the other two symptoms too (rubber-band selection and new-connection dragging both depend on the same internal node/handle bounds) — not separately root-caused, but a single underlying cause was sufficient to explain all three, and fixing it resolved all three together.
+**Cause:** React Flow's `EdgeWrapper` silently returns `null` for an edge whose source or target node isn't initialised (`handleBounds` and measured size missing). That measurement normally arrives passively via `ResizeObserver`, and at this scale it sometimes never caught up.
 
-**Resolution:** `loadDiagramIntoCanvas` now calls React Flow's `updateNodeInternals` for every just-loaded node, deferred one animation frame (so the nodes' DOM elements — found by `data-id`, which `updateNodeInternals` queries for directly — actually exist by the time it runs). Unlike the passive `ResizeObserver` path, `updateNodeInternals` measures a node's handle bounds and dimensions synchronously via direct `getBoundingClientRect()` reads (confirmed by reading `@xyflow/system`'s own implementation), so every node's internal state is populated in one deterministic pass right after load instead of racing. Live-confirmed by the user: edges render immediately with no wait, drag-to-select behaves correctly, and new connections can be dragged, all on the first open of the same large file.
+**Fix:** after load, call `updateNodeInternals` for every node, deferred one animation frame so the DOM exists; it measures synchronously.
 
-**References:** `src/renderer/src/Canvas.tsx`'s `loadDiagramIntoCanvas`, `node_modules/@xyflow/react`'s `EdgeWrapper`/`isNodeInitialized`, `node_modules/@xyflow/system`'s `updateNodeInternals`, `examples/gallery/landscape/meridian-rail-landscape.chd`
+**References:** `src/renderer/src/Canvas.tsx` (`loadDiagramIntoCanvas`), `@xyflow/react`'s `EdgeWrapper`
 
 ---
 
 ## `.react-flow__edgelabel-renderer`'s z-index ceiling went stale, silently breaking edge labels and (new) bend points
 
-**Status:** Solved
-**Found:** 2026-08-24, live use by the user testing epic 0032's new catmull-rom edge bend points
+**Status:** Solved (2026-08-24)
 
-**Symptom:** a newly-added bend point on a catmull-rom-routed edge rendered correctly (right position, curve bent correctly) but couldn't be interacted with at all — no drag, no right-click menu, no hover response. Separately, and apparently unrelated at first: the user also reported having "lost the ability to add a label to an edge" — an existing, long-shipped feature (epic 0012), not something epic 0032 touched.
+**Symptom:** a new bend point couldn't be dragged or right-clicked, and edge labels couldn't be added.
 
-**Root cause:** both symptoms were the same bug. `main.css`'s `.react-flow__edgelabel-renderer` rule (the shared portal React Flow's `<EdgeLabelRenderer>` renders every edge's label — and, as of epic 0032, every catmull-rom edge's bend-point handles — into) sets an explicit `z-index` specifically so it always paints and hit-tests above the edges/nodes it visually overlaps; without it, epic 0042 found labels painting behind their own selected edge. That value was `5000`, sized in epic 0042 against a documented ceiling of ~4000 ("2000 node z-index + up to ~2000 more from selection elevation"). Two later epics silently invalidated that ceiling without anyone revisiting this comment: epic 0043/ADR 0035's real z-index tiers (`zIndexOrdering.ts`) go up to `TEXT_BASE = 200_000`, and epic 0046's `SELECTED_EDGE_Z_BOOST` (`Canvas.tsx`) adds `1_000_000` on top for a selected edge — a real ceiling of 1,200,000+, roughly 240× higher than the CSS assumed. Any edge in that range (in practice: any _selected_ edge, which is exactly the state a user is in right after clicking one to add a point or edit its label) painted and hit-tested above the shared portal, silently swallowing every click meant for a label or bend point. Confirmed by reading `@xyflow/react`'s own bundled source (`EdgeLabelRenderer` portals to a plain, unstyled `<div className="react-flow__edgelabel-renderer">` with no z-index of its own) and cross-referencing the actual current constants, not by guessing.
+**Cause:** the shared label/bend-point portal had `z-index: 5000`, sized against an old ceiling of ~4000. Later work raised real z-indexes to 200,000 (text tier) and added a +1,000,000 boost for a selected edge, so a selected edge painted and hit-tested above the portal and swallowed the clicks.
 
-**Resolution:** raised the CSS z-index to `2_000_000` — comfortably above the real current ceiling, with real headroom rather than an exact-fit value (the same mistake that let this go stale once already). The rule's own comment now names the actual source constants (`TEXT_BASE`, `SELECTED_EDGE_Z_BOOST`) instead of a plain number, and flags itself as a manually-maintained ceiling nothing re-checks automatically — the first thing to re-verify if this class of bug ever resurfaces.
+**Fix:** raised to `2_000_000` with headroom, and the rule's comment now names the source constants (`TEXT_BASE`, `SELECTED_EDGE_Z_BOOST`) and says it is a manually maintained ceiling. First thing to re-check if this class of bug returns.
 
-**References:** `src/renderer/src/assets/main.css`'s `.react-flow__edgelabel-renderer`, `src/renderer/src/layers/zIndexOrdering.ts`, `src/renderer/src/Canvas.tsx`'s `SELECTED_EDGE_Z_BOOST`, [epic 0032](planning/epics/completed/0032-edge-routing-and-waypoints.md), [ADR 0030](decisions/0030-edge-label-z-index-override.md) (the original epic 0042 fix this value came from).
+**References:** [ADR 0030](decisions/0030-edge-label-z-index-override.md), `src/renderer/src/layers/zIndexOrdering.ts`
 
 ---
 
 ## `serializeDiagram` silently dropped `locked`, `gravityPresets`, and a line's `points` on every save
 
-**Status:** Solved
-**Found:** 2026-08-23, while reading `src/shared/diagram.ts` in preparation for epic 0032's edge/line unification (unrelated task — noticed by chance while re-reading the save path to see what shape it currently writes)
+**Status:** Solved (2026-08-23; recurred and was fixed again twice)
 
-**Symptom:** none reported by the user before this was found by code inspection — the actual user-visible symptom, confirmed by tracing the code rather than reproduced live, would be: lock a shape, save, reopen the file — the shape comes back unlocked. Set custom gravity presets (`GravityPresetsPanel`), save, reopen — back to this app's built-in four. Draw a freeform line (epic 0064) with any bend points, save, reopen — the line comes back with `data.points` missing entirely, i.e. invisible (`LineNode` renders nothing for an empty point list).
+**Symptom:** a locked shape came back unlocked after save and reload, custom gravity presets reverted, a freeform line lost its points.
 
-**Root cause:** `src/main/diagram.ts`'s `diagram:save` IPC handler — the one real `.chd` write path (confirmed: `links.ts`/`requiredTags.ts` are the only other callers of `serializeDiagram`, and `recovery.ts`'s crash-recovery envelopes are a separate, unrelated JSON format) — calls `serializeDiagram`, which rebuilds a fresh, deliberately-key-ordered object from the in-memory `DiagramFile` rather than passing it through directly (see that function's own comment: fixed key order makes `JSON.stringify` output deterministic for git diffs). That rebuild is a manual field-by-field picklist, and three fields added by later epics were never added to it: `DiagramFile.gravityPresets` (epic 0064) and, per node, `locked` (epic 0043) and `data.points` (epic 0064). `parseDiagram`/`fromDiagramFile` (the read side) never had an equivalent gap — `toDiagramFile` (`Canvas.tsx`, the in-memory → `DiagramFile` step that runs _before_ `serializeDiagram`) already builds these fields correctly; `serializeDiagram`'s own re-pick on top of that correct object is what silently discards them again on the way to disk.
+**Cause:** `serializeDiagram` rebuilds the object field by field to get a fixed key order, so every field added later has to be added there too, and three were not. The same gap hit `maxConnectionPointsPerSide` (2026-08-31) and `data.references` (2026-09-01, so reference images never survived a save), each found by chance. Live testing missed it because no pass included a save-and-reload round trip.
 
-**Why epic 0064's own live-testing didn't catch this:** both live-testing passes (see epic 0064's Notes) covered hit-testing and the Layers panel within a single running session — a save/reload round-trip specifically wasn't part of either pass.
+**Fix:** the missing fields were added. The root cause, the manual picklist, remains; replacing it with spread-and-omit would reorder emitted keys and churn every `.chd` diff, so it needs its own careful pass. A round-trip test over all `examples/*.chd` now guards against losing known fields.
 
-**Resolution:** added the three missing fields to `serializeDiagram`'s picklist, same "omit only when empty" convention already used for every sibling field in that function (`gravityPresets: ... .length > 0 ? ... : undefined`, `locked: n.locked`, `data.points: ... .length > 0 ? ... : undefined`).
+**Lesson:** a new persisted field is not done until a save-and-reload round trip shows it survives.
 
-**2026-08-31 — a fourth instance of the same gap, found the same way:** `DiagramFile.maxConnectionPointsPerSide` (epic 0073's per-diagram override) was also missing from `serializeDiagram`'s picklist, so a diagram-level max-connection-points override never survived a save/reload — it was written into the in-memory `DiagramFile` by `toDiagramFile` and then dropped again on serialize, exactly like the three above. Found while adding `edgeDirectionSets` fields to the same function for epic 0089. Fixed with the same one-liner (`maxConnectionPointsPerSide: diagram.maxConnectionPointsPerSide`), folded into epic 0089's first commit since it's the same lines. This strongly suggests the picklist should be replaced with an explicit-omit approach (spread the object, delete/skip only the keys that need conditional omission) so the next added field can't silently regress — logged as a cleanup thought, not done here.
-
-**2026-09-01 — a fifth instance:** `DiagramNode.data.references` (epic 0090's reference images) was never in `serializeDiagram`'s per-node `data` picklist — so a shape's reference-image paths were written by `toDiagramFile` and then dropped on serialize, meaning **reference images never survived a save/reload** since epic 0090 shipped (never caught because it needs Electron + a saved diagram + a reload to observe, and epic 0090 wasn't live-tested). Found while adding `data.security` to the same picklist for epic 0079. Both added together (`references` + `security`). The explicit-omit refactor above is now overdue — this is the 5th silent regression from the same root cause — but it's deferred out of epic 0079 because reordering the emitted keys would churn every existing `.chd` file's git diff on its next save, which needs its own careful pass.
-
-**References:** `src/shared/diagram.ts`'s `serializeDiagram`, `src/main/diagram.ts`'s `diagram:save` handler.
+**References:** `src/shared/diagram.ts`, `src/shared/savedWith.test.mjs`
 
 ---
 
 ## A menu bar's hover-switch races its own click handler
 
-**Status:** Solved
-**Found:** 2026-08-22, epic 0049, while building the custom top menu bar
+**Status:** Solved (2026-08-22)
 
-**Symptom:** clicking a different top-level menu label (e.g. "View") while a sibling menu ("File") was already open closed the whole menu bar instead of switching to the clicked one. Only reproduced with a real click landing on a different label than whatever was already open — a bare click from a fully-closed state, or a repeat click on the same already-open label, both worked fine on their own.
+**Symptom:** clicking a different top-level menu while another was open closed the whole menu bar instead of switching.
 
-**Root cause:** the menu bar supports the conventional "hover a sibling to switch while one is open" behavior via `onMouseEnter`. A mouse click gesture always fires `mouseenter` on the target element _before_ `click` (the cursor has to arrive before it can press) — so by the time the click handler ran, `onMouseEnter` had already switched `openIndex` to the clicked menu. The click handler's own toggle logic (`current === index ? close : open`) then saw "you clicked the menu that's already open" and closed it, even though that "already open" state was only a few milliseconds old and produced by the same physical gesture, not a genuinely separate prior interaction.
+**Cause:** the hover-to-switch `onMouseEnter` fires before `click`, so by the time the click handler ran, the clicked menu already looked "open" and its toggle closed it.
 
-**Resolution:** a ref (`hoverSwitchedToRef`) records the index `onMouseEnter` just switched _to_, but only when it represents a genuine switch (arriving from a different index — re-entering the same already-open menu, or hovering while nothing is open, don't touch it). The click handler checks this first: if the click is landing on the menu hover just switched to as part of the same gesture, it keeps the menu open instead of toggling it closed.
+**Fix:** a ref remembers the menu that hover just switched to; a click landing on it keeps it open.
 
-**Investigation note:** this was hard to pin down via the Browser pane's automated clicks — repeated attempts at the identical test sequence gave inconsistent results (sometimes the switch worked, sometimes it didn't), most likely because the automation tool's cursor-positioning between separate tool calls doesn't reliably match real continuous mouse movement (whether `mouseenter` fires at all, and exactly when, depended on exactly how the pointer "arrived"). Ground truth came from temporarily instrumenting the component with `console.log` on every `mouseenter`/`click` and reading the actual event sequence back via the console, not from trusting the automation's click results directly — worth reaching for that technique earlier next time a hover-timing-sensitive interaction needs debugging in this environment.
+**Lesson:** the browser automation's cursor movement did not reproduce real pointer sequences reliably; temporary `console.log` on every `mouseenter`/`click` gave the ground truth.
 
-**References:** [epic 0049](planning/epics/completed/0049-top-menu-bar.md), [ADR 0039](decisions/0039-top-menu-bar.md), `src/renderer/src/components/MenuBar.tsx`
+**References:** [ADR 0039](decisions/0039-top-menu-bar.md), `src/renderer/src/components/MenuBar.tsx`
 
 ---
 
 ## Enabling a highlight makes a container look like it shrinks
 
-**Status:** Open, not investigated
-**Found:** 2026-08-22, live use by the user, while testing epic 0026's highlight feature during epic 0049 design work
+**Status:** Closed, explained (2026-10-17)
 
-**Symptom:** enabling a highlight that matches a container makes the container appear slightly smaller — the user confirmed its actual transform (position/size data) is unchanged, so this is a rendering/visual effect only, not a real resize.
+**Symptom:** a highlighted container appears slightly smaller; its actual size is unchanged.
 
-**Root cause:** not investigated yet. Plausible, unconfirmed hypothesis worth checking first: a single-match highlight overrides border width to `HIGHLIGHT_BORDER_WIDTH` (3px, `highlights.ts`) on top of a container's own default `1.5px dashed` border (`main.css`'s `.container-node`) — both node types are `box-sizing: border-box`, so the outer box shouldn't actually move, but a border doubling in width is a well-known perceptual effect (more visual "weight" at the edge reads as a smaller interior) and might be compounded by the dashed pattern's spacing changing at the new width. Unconfirmed — could also be a real (if small) box-sizing or dashed-border-rendering quirk specific to containers vs. shapes, not just perception.
-
-**Current state:** flagged by the user explicitly as not urgent — logged so it isn't lost, not because a fix is wanted now. If revisited, start by checking whether `.container-node`'s rendered bounding box (`getBoundingClientRect`) actually changes at all when a highlight is enabled, which would immediately confirm or rule out the perceptual-only hypothesis above.
-
-**References:** `src/renderer/src/highlights.ts`, `src/renderer/src/assets/main.css`'s `.container-node`, `src/renderer/src/nodes/ContainerNode.tsx`
+**Explanation (from the code, not measured):** both node types are `box-sizing: border-box` at 100% size, so the outer box cannot change. A highlight raises the border from 1.5px to 3px, and a border-box border grows **inward**, which on a transparent dashed container reads as the box shrinking. If it ever bothers anyone, draw the highlight as an outer ring (`box-shadow`) instead of widening the border.
 
 ---
 
 ## New-node z-index seeding ignored its own tier scheme
 
-**Status:** Solved
-**Found:** 2026-08-22, live use by the user, right after epic 0044 shipped
+**Status:** Solved (2026-08-22)
 
-**Symptom:** creating a container then a shape in a diagram gave them z-index values of 10 and 20 — nowhere near the tiered ranges epic 0043 established (containers low, shapes/text much higher, so a fresh container defaults behind existing shapes and vice versa).
+**Symptom:** a new container and entity got z-indexes 10 and 20, far below the tier ranges the layer system defines.
 
-**Root cause:** `nextZIndex` (the helper behind `addEntityNode`/`addTextNode`/`addContainerNode`) only scoped _containers_ correctly (to other existing containers). Shapes and text both scoped to _every_ node regardless of type, with no tier floor at all — so in a small or empty diagram, "current max across everything, plus one gap" landed far below the intended tier. The load-time backfill (`backfillZIndex`, used for old files) had always done this correctly; only the new-node-creation path had the bug, so it went unnoticed until enough manual node creation happened in one session for the user to notice the numbers directly (visible in the layer panel).
+**Cause:** `nextZIndex` scoped only containers correctly; entities and text scoped to every node with no tier floor, so a small diagram landed below the tier. The load-time backfill had always been right.
 
-**Resolution:** `nextZIndex` now always scopes to the node's own type and passes that type's own base floor into `nextZIndexAbove`, so a brand new node of any type lands solidly within its tier even when nothing of that type exists yet. Also added a third tier: text now seeds above shapes (`TEXT_BASE`, higher than `ENTITY_BASE`), a small enhancement bundled into the same fix at the user's request, since annotations reasonably belong on top of the shapes they label.
+**Fix:** always scope to the node's own type and pass that type's base floor; text now seeds above entities.
 
-**References:** `docs/planning/epics/0043-layer-order-control.md`'s Notes, `src/renderer/src/layers/zIndexOrdering.ts`, `src/renderer/src/Canvas.tsx`
+**References:** `src/renderer/src/layers/zIndexOrdering.ts`
 
 ---
 
 ## React Flow requires `updateNodeInternals()` after dynamically adding a handle
 
-**Status:** Solved
-**Found:** 2026-08-20, epic 0022 gallery testing (originally shipped as part of epic 0013)
+**Status:** Solved (2026-08-20)
 
-**Symptom:** a connection point added via "Add connection point here" rendered fine and looked clickable, but silently refused to accept an edge being dragged onto it — specifically as an edge's _target_ (an edge originating elsewhere and terminating on the new point). The point had gone untested in that specific direction for months because gallery-scale diagrams hadn't exercised it until epic 0022.
+**Symptom:** a connection point added at runtime rendered and looked clickable but refused to accept an edge dragged onto it as a target.
 
-**Root cause:** React Flow caches each node's handle bounds for connection validation at mount time. A `Handle` added to an already-rendered node afterward exists in the DOM and looks correct, but React Flow's internal cache doesn't know about it until `updateNodeInternals(nodeId)` is called explicitly. This codebase never called it.
+**Cause:** React Flow caches handle bounds for connection validation at mount; a handle added later exists in the DOM but not in that cache until `updateNodeInternals(nodeId)` is called.
 
-**Resolution:** both the add and remove paths in `connectionPoints.ts` call `updateNodeInternals(id)` after mutating a node's connection points. Generalized into the standing pattern for any future dynamically-added handle, not just this one call site — see the pattern repeated (correctly) throughout epic 0039's later work on the same file. **If a future feature adds any other kind of dynamically-created handle to a node, check for this same requirement before assuming "it renders, so it works."**
+**Fix:** the add and remove paths call it. **Any feature that adds another kind of dynamic handle must do the same; "it renders" does not mean "it works".**
 
-**References:** [epic 0013](planning/epics/completed/0013-configurable-connection-points.md), `src/renderer/src/nodes/connectionPoints.ts`
+**References:** `src/renderer/src/nodes/connectionPoints.ts`
 
 ---
 
 ## Connection point count/spacing model — five-round bug chain
 
-**Status:** Solved
-**Found:** 2026-08-21/22, epic 0039
+**Status:** Solved (2026-08-21/22)
 
-The single richest bug chain so far — worth reading in full via [ADR 0036](decisions/0036-connection-point-count-and-transfer.md) (five dated revisions) and [epic 0039](planning/epics/completed/0039-connection-point-counts.md)'s Verification section, but the short version:
+The richest bug chain so far; the full story is in [ADR 0036](decisions/0036-connection-point-count-and-transfer.md) (five dated revisions). In short:
 
-1. **Spacing overlap/clustering**: computing evenly-spaced offsets for only the _custom_ points (ignoring that a side's always-present default point sat at a fixed 0.5) made every even total count overlap a point exactly onto the default, and every odd total visually cluster around it.
-2. **Root cause of #1, and independently, wrong-neighbor edge transfers on reconnect**: the default point was a real, separate, hardcoded concept (4 unconditional `<Handle>` elements, fixed id, fixed offset) living entirely outside the array the app's own clockwise-ordering/transfer logic reasoned about. **General lesson: a "keep this one element fixed to avoid a bigger rework" scoping compromise, applied to something meant to look/behave uniformly with the rest of a set, tends to be a false economy — the exception becomes exactly where bugs hide.** Fixed by unifying the default into the same per-side array as everything else (synthesized on demand only for an untouched side, materialized as an ordinary point the moment the side is touched).
-3. **Manual add/remove not re-spacing**: a deliberate "precision tool, don't touch anything but the one point you're editing" design choice — looked broken in practice rather than precise. Every structural operation (bulk count field, manual add, manual remove) now re-spaces the whole side afterward; only _which_ point moves differs.
-4. **Bottom/left mirrored**: the shared re-spacing helper always zipped ascending offset values onto a clockwise-sorted array by plain index — correct on top/right (clockwise = ascending raw offset there) but backwards on bottom/left (clockwise = descending). Fixed by reversing the offset assignment on those two sides.
-5. **Max-per-side setting bypassed**: the setting was only ever wired into the property panel's number field; the separate manual right-click "add" code path had no knowledge of it at all. **General lesson: when a limit/setting needs enforcing, check every entry point that can trigger the guarded action, not just the one you're focused on** — threaded the setting through `DiagramContext` (shared by every node component) instead of just the one UI surface.
-
-**References:** [ADR 0036](decisions/0036-connection-point-count-and-transfer.md), [epic 0039](planning/epics/completed/0039-connection-point-counts.md), `src/renderer/src/nodes/connectionPoints.ts`
+1. **Spacing overlap:** offsets were computed for the custom points only, ignoring the always-present default at 0.5, so even counts overlapped it and odd counts clustered around it.
+2. **Wrong-neighbour edge transfers:** the default point was a separate hard-coded concept outside the array the ordering logic reasoned about. Fixed by putting it in the same per-side array as everything else. **Lesson: a "keep this one element fixed to avoid a bigger rework" compromise on something meant to be uniform becomes exactly where the bugs hide.**
+3. **Manual add/remove not re-spacing:** a deliberate "precision tool" choice that looked broken in practice; every structural operation now re-spaces the side.
+4. **Bottom and left mirrored:** the re-spacing zipped ascending offsets onto a clockwise-sorted array, wrong on the two sides where clockwise is descending.
+5. **Max-per-side bypassed:** the limit was enforced only in the property panel field, not the right-click add path. **Lesson: when a limit needs enforcing, check every entry point that can trigger the guarded action.**
 
 ---
 
 ## A dragged edge endpoint snapped to the wrong side's point after a count change
 
-**Status:** Open, not reproduced
-**Found:** 2026-08-22, live testing by the user on the Meridian Rail landscape
+**Status:** Closed, cannot reproduce (2026-10-17)
+**Found:** 2026-08-22
 
-**Symptom:** changed a shape's LEFT side from 1 to 2 connection points (property panel count field), then tried dragging an edge's endpoint onto the new left-side point — it snapped onto the _last point on the BOTTOM side_ instead. The user's own hypothesis, worth taking seriously: an off-by-one across sides, since bottom immediately precedes left in this app's canonical clockwise order. Not reproduced on a repeat attempt.
+**Symptom:** after changing a shape's left side from 1 to 2 points, dragging an edge end onto the new left point snapped to the last point on the bottom side. Not reproduced on a second attempt.
 
-**Investigation so far, no fix attempted (matches the user's own "log it, don't chase it blind" framing given it's unreproducible):**
-
-- The side-ordering hunch checks out structurally: `SIDES = ['top', 'right', 'bottom', 'left']` in `connectionPoints.ts` — bottom really is index 2, left index 3, immediately adjacent.
-- Traced the actual data path for a 1→2 count change (`setSideCustomPointCount` → `Canvas.tsx`'s `setConnectionPointCount`) by hand and it produces correct, distinctly-ID'd points on the _right_ side (`left` keeps its original id at the new offset, a fresh `cp-N` id gets the other) — no off-by-one visible in the data itself for this specific case.
-- Given it didn't reproduce on a second attempt, a **timing race is a more likely culprit than a logic bug**: `setConnectionPointCount` calls `updateNodeInternals(nodeId)` synchronously, in the same callback as the `setNodes(...)` call that adds the new handle to the node's data — before React necessarily commits the re-render that actually mounts the new `<Handle>` DOM element. If `updateNodeInternals` measures handle bounds before the new one exists in the DOM, React Flow's own hit-testing would have to fall back to whatever's currently registered, and picking the geometrically-nearest _stale_ handle instead of the new one is a plausible way to land on an unrelated side. This would be the same underlying bug class as "[React Flow requires updateNodeInternals() after dynamically adding a handle](#react-flow-requires-updatenodeinternals-after-dynamically-adding-a-handle)" above, but a timing variant (the call exists, but may run too early) rather than a missing call.
-
-**If revisited**: try wrapping the `updateNodeInternals` call in a `requestAnimationFrame` or a `useEffect` keyed on the node's point count, so it runs after React has actually committed the new handle, and see if that's enough to close the race. Reproducing it at all first (maybe by changing a count and immediately, rapidly starting a drag, rather than pausing between the two) would help confirm the timing theory before touching anything.
-
-**References:** [epic 0039](planning/epics/completed/0039-connection-point-counts.md), [epic 0022](planning/epics/0022-example-diagram-gallery.md) (where it was found), `src/renderer/src/nodes/connectionPoints.ts`, `src/renderer/src/Canvas.tsx`'s `setConnectionPointCount`
+**Outcome:** the data path was traced by hand and is correct. The leading theory, `updateNodeInternals` running before React commits the new handle, is ruled out: React Flow's own `useUpdateNodeInternals` (v12.11.3) defers measurement to the next animation frame, after the commit. Never seen again. Reopen with exact steps; first capture the handle ids on both sides.
 
 ---
 
 ## Layer panel drag-and-drop: ambiguous drop target, then a dead zone
 
-**Status:** Solved
-**Found:** 2026-08-21, epic 0043, live testing by the user
+**Status:** Solved (2026-08-21)
 
-**Symptom:** two separate issues found back to back while testing the new layer-reorder panel: (1) dropping directly onto a row didn't make clear which side of that row the dragged item would land on; (2) after adding a visible insertion-line indicator to fix that, dropping _between_ rows (on the indicator itself, or in the gaps) produced a "not allowed" cursor and the drop silently failed.
+**Symptom:** dropping onto a row didn't show which side the item would land on; after adding an insertion line, dropping between rows silently failed.
 
-**Root cause:** (1) was a UX gap, not a bug — no visual feedback for an inherently ambiguous gesture. (2) was a real bug: only the row elements had drag-over/drop listeners, so the space between them (where the insertion line rendered) had no drop handler at all.
+**Fix:** a visible insertion line computed from the cursor position, and drag-over/drop handled on the whole list container with the slot computed geometrically, since the gaps had no handler at all.
 
-**Resolution:** (1) replaced ambiguous drop-onto-a-row with a visible insertion line computed from cursor position. (2) moved drag-over/drop listening to the whole list container and computed the target slot geometrically from cursor position, rather than relying on which specific child element the pointer happened to be over.
-
-**References:** [epic 0043](planning/epics/completed/0043-layer-order-control.md), [ADR 0035](decisions/0035-layer-order-control.md), `src/renderer/src/components/LayerPanel.tsx`
+**References:** [ADR 0035](decisions/0035-layer-order-control.md), `src/renderer/src/components/LayerPanel.tsx`
 
 ---
 
 ## Edge reconnect-handle "ownership" at a shared connection point isn't decided by z-index
 
-**Status:** Solved — see the 2026-08-22 revision below; the original epic 0046 fix (DOM order) turned out not to be the real mechanism at all
-**Found:** 2026-08-21, epic 0046; recurred and properly root-caused 2026-08-22, epic 0022 (Meridian Rail landscape testing)
+**Status:** Solved (2026-08-22; the first fix on 2026-08-21 was wrong)
 
-**Symptom:** with several edges converging on the same connection point, the reconnect-drag handle (the small circle used to move an edge's endpoint) belonged to the wrong edge, regardless of which edge was actually selected — a user couldn't reliably grab a specific edge at a busy convergence point.
+**Symptom:** with several edges converging on one connection point, the reconnect handle belonged to the wrong edge regardless of which was selected.
 
-**Original (2026-08-21) investigation — later found incomplete.** The working theory at the time was that React Flow's `elevateEdgesOnSelect` (assumed on by default) should already bump a selected edge's z-index by 1000, winning any hit-test "for free," but didn't. Live testing on a shape with three converging edges seemed to show DOM/creation order was the actual deciding mechanism instead, so the fix built then (`Canvas.tsx`'s `orderedEdges`, moving selected edges last in the array passed to `<ReactFlow edges={...}>`) targeted that. It happened to resolve that one test case, but not because the theory was right.
+**Cause:** the first theory (DOM order; selected edges moved last in the array) happened to pass one test. Instrumenting `onReconnectStart` and reading React Flow's source showed each edge renders in its **own `<svg style={{ zIndex }}>`**, and `elevateEdgesOnSelect` **defaults to false**, so selection had no effect on z-index. What governed it was the app's own midpoint-of-endpoint-z-index computation.
 
-**2026-08-22: recurred, and actually root-caused this time**, live-debugged with temporary `console.log` instrumentation in `onReconnectStart`/`onReconnect` (same technique as the menu-bar hover-switch bug above) rather than re-guessing. The logged data showed a _selected_ edge (`edge-16`) losing a reconnect-handle grab to a completely different, unselected edge — which `orderedEdges` should have prevented if DOM order were really the mechanism. Reading React Flow's actual source (`node_modules/@xyflow/react`, `node_modules/@xyflow/system`) settled it: **each edge renders inside its own separate `<svg style={{ zIndex }}>` wrapper** — a real, independent CSS z-index per edge, not shared DOM/paint order at all. That z-index comes from `getElevatedEdgeZIndex`, which only adds a selection bump when `elevateEdgesOnSelect` is true — and it **defaults to `false`** in this installed React Flow version, and was never explicitly turned on in this codebase. So the 2026-08-21 theory had it backwards: selection had _zero_ effect on any edge's real z-index the whole time. What actually governed it was `zIndexedEdges`' own pre-existing computation (`Canvas.tsx`, epic 0043/ADR 0035) — the midpoint of the edge's two endpoint nodes' z-index — entirely unrelated to which edge a user had clicked.
+**Fix:** `zIndexedEdges` adds `SELECTED_EDGE_Z_BOOST = 1_000_000` for a selected edge; the DOM reordering stays as a harmless tie-breaker.
 
-**Actual resolution**: `zIndexedEdges` now adds a large explicit boost (`SELECTED_EDGE_Z_BOOST = 1_000_000`) on top of the midpoint z-index when `e.selected` is true, so a selected edge's real CSS z-index reliably wins regardless of its endpoints' own z-index. `orderedEdges` (the original DOM-reordering fix) is kept as a harmless tie-breaker for edges that land on the exact same computed z-index, but is no longer what does the actual work.
+**Lesson:** verify a fix against the real mechanism, not just the one scenario that happened to pass.
 
-**Lesson**: the original fix "worked" in its one test case by coincidence — always verify a fix against the actual mechanism (here, reading the library's own source once real data contradicted the working theory), not just against the one scenario that happened to pass.
-
-**References:** [epic 0046](planning/epics/completed/0046-edge-selection-highlight-and-priority.md), [epic 0022](planning/epics/0022-example-diagram-gallery.md), `src/renderer/src/Canvas.tsx`'s `zIndexedEdges`, `node_modules/@xyflow/react`'s `EdgeWrapper`/`getElevatedEdgeZIndex`
+**References:** `src/renderer/src/Canvas.tsx` (`zIndexedEdges`), `@xyflow/react`'s `getElevatedEdgeZIndex`
 
 ---
 
 ## Theme flip reads as "negative image" on toggle
 
-**Status:** Open, not urgent
-**Found:** 2026-08-21, epic 0040
+**Status:** Closed, accepted by design (2026-10-17)
 
-**Symptom:** even after the Oklab-based fix for the color-mirroring mechanism (see below), the user reports a lingering feeling of "looking at a negative image of my diagram" when toggling between light and dark theme.
-
-**Root cause:** not a bug — this is the expected visual signature of the _blanket_ mirroring approach epic 0040 deliberately chose: every explicitly-colored element's lightness flips uniformly around the same midpoint on every theme change, which reads as a whole-diagram inversion. A targeted, contrast-driven approach (only adjust colors that actually have a legibility problem against the new background, leave everything else alone) would avoid this feeling, but was rejected in [ADR 0034](decisions/0034-theme-adaptive-color-value-flip.md) as more complexity than wanted for v1.
-
-**Current state:** flagged by the user as something to get used to, not currently a real complaint — deliberately not fixed. **If it resurfaces as an actual complaint**, the contrast-driven alternative is the documented direction to revisit — see ADR 0034's Alternatives section for the tradeoffs already considered.
-
-**References:** [ADR 0034](decisions/0034-theme-adaptive-color-value-flip.md), [epic 0040](planning/epics/completed/0040-theme-adaptive-color-value-flip.md)
+**Explanation:** not a bug. Every explicit colour's lightness is mirrored around one midpoint on each theme change, which reads as a whole-diagram inversion. A contrast-driven approach (adjust only colours with a legibility problem) would avoid it but was rejected in [ADR 0034](decisions/0034-theme-adaptive-color-value-flip.md) as more complexity than wanted. That alternative is the documented direction if it becomes a real complaint.
 
 ---
 
 ## Theme-mirror mechanism: HSV Value isn't hue-blind-safe
 
-**Status:** Solved (same-day revision, before the issue above was ever separately reported)
-**Found:** 2026-08-21, epic 0040, live testing by the user
+**Status:** Solved (2026-08-21)
 
-**Symptom:** the first shipped version of the theme-adaptive color flip (mirroring HSV's Value channel: `V' = 100 - V`) produced real contrast problems on some colors when the user tested it live — some flipped colors were hard to read against their new background.
+**Cause:** the first colour flip mirrored HSV Value, which doesn't track perceived brightness across hues (a saturated red reads darker than its V suggests), so some flipped colours were hard to read.
 
-**Root cause:** HSV's Value doesn't track actual perceived brightness consistently across hues — it's hue-blind, so two colors with the same V can look quite different in actual lightness (a saturated red reads darker than its V value suggests). Mirroring V doesn't reliably preserve legibility.
-
-**Resolution:** switched same-day to mirroring Oklab's Lightness channel instead (`flip(L) = 1 - L`, chroma/hue held fixed) — Oklab's L is designed to track actual perceived brightness across every hue, which is what a legibility-preserving mirror actually needs.
+**Fix:** mirror Oklab Lightness instead (`flip(L) = 1 - L`, hue and chroma held).
 
 **References:** [ADR 0034](decisions/0034-theme-adaptive-color-value-flip.md), `src/renderer/src/styles/themeAdaptiveColor.ts`
 
@@ -465,335 +410,296 @@ The single richest bug chain so far — worth reading in full via [ADR 0036](dec
 
 ## File → Close leaves a stale "this window shows path X" registration
 
-**Status:** Solved
-**Found:** 2026-08-22, epic 0020, live testing by the user
+**Status:** Solved (2026-08-22)
 
-**Symptom:** open a file, File → Close it (resets to blank), then try to open that same file again — nothing visibly happens.
+**Symptom:** open a file, File → Close, open it again: nothing happens.
 
-**Root cause:** `windows.ts` tracks which `BrowserWindow` shows which path (`windowsByPath`) so opening an already-open file focuses the existing window instead of duplicating it. That registration is normally kept in sync by `loadPathIntoWindow`, called on every real page navigation (initial open, File → Open reuse, link navigation). File → Close (epic 0049) deliberately resets the window's content _in place_ — `loadDiagramIntoCanvas(null, ...)` in the renderer, no page navigation at all — so `windowsByPath` never learned the window stopped showing that path. Reopening the same file found the (stale) registration, and just focused the now-blank window instead of loading anything into it.
+**Cause:** `windowsByPath` is updated on page navigation, but File → Close resets the window in place with no navigation, so the registration stayed and "open" just focused the blank window.
 
-**Resolution:** new `windows:clearPath` IPC call, invoked from `handleClose` right after the in-place reset, which removes this window's entry from `windowsByPath` (reusing the existing `unregisterWindow` matches-by-window-reference helper, already used on real window close).
+**Fix:** a `windows:clearPath` IPC call right after the in-place reset.
 
-**References:** [epic 0020](planning/epics/completed/0020-autosave-and-crash-recovery.md), [ADR 0039](decisions/0039-top-menu-bar.md) (File → Close's original design), `src/main/windows.ts`, `src/renderer/src/Canvas.tsx`
+**References:** `src/main/windows.ts`
 
 ---
 
 ## React Flow's post-load auto-measurement was misclassified as a real edit
 
-**Status:** Solved
-**Found:** 2026-08-22, epic 0020, live testing by the user
+**Status:** Solved (2026-08-22)
 
-**Symptom:** File → Close and File → Reload's confirm prompt ("changes since the last save will be lost") appeared every time, identically, whether or not the user had actually made any edits since opening the file.
+**Symptom:** Close and Reload always asked "changes will be lost", even with no edits.
 
-**Root cause:** `onNodesChange`'s existing change-classifier (predates epic 0020) treats a `dimensions` NodeChange with `resizing === undefined` as a discrete, snapshot-worthy edit — meant to catch a scripted/programmatic resize. React Flow's own `ResizeObserver`-driven post-mount measurement of every freshly-loaded node fires that exact same shape of change (a `dimensions` change with `resizing` left undefined, since it isn't part of any user drag gesture). Before this epic, that misclassification was invisible — it just added a harmless extra no-op entry to the undo stack. Once `pushSnapshot()` also started marking the diagram dirty (this epic's whole point), every load falsely dirtied the diagram immediately, defeating the new dirty-aware prompts entirely.
+**Cause:** `onNodesChange` treated a `dimensions` change with `resizing === undefined` as a discrete edit; React Flow's own post-mount measurement emits exactly that. Harmless until `pushSnapshot()` also marked the diagram dirty.
 
-**Resolution:** a short (500ms) grace window after any `loadDiagramIntoCanvas`, tracked via a ref, during which a `dimensions`-with-`resizing`-undefined change no longer counts as discrete. Every other discrete-change condition (remove/add/replace, a real position change) is untouched — deliberately the narrowest fix that addresses the specific ambiguous case rather than broadening the suppression window to cover more change types than necessary.
+**Fix:** a 500 ms grace window after any load during which that specific change shape doesn't count; every other change type is untouched.
 
-**References:** [epic 0020](planning/epics/completed/0020-autosave-and-crash-recovery.md), [ADR 0040](decisions/0040-dirty-tracking-and-autosave-design.md), `src/renderer/src/Canvas.tsx`'s `onNodesChange`/`loadDiagramIntoCanvas`
+**References:** [ADR 0040](decisions/0040-dirty-tracking-and-autosave-design.md)
 
 ---
 
 ## Unparented native dialog can open behind the app window
 
-**Status:** Solved
-**Found:** 2026-08-22, epic 0020, live testing by the user
+**Status:** Solved (2026-08-22)
 
-**Symptom:** the startup orphan-recovery dialog (Recover/Discard for a diagram that crashed before ever being saved) opened _behind_ the main Electron window instead of on top of it.
+**Cause:** the startup orphan-recovery `dialog.showMessageBox` had no owner window, so its z-order lost the race against the initial window taking focus.
 
-**Root cause:** `dialog.showMessageBox()` was called with no owning `BrowserWindow` — at the point the startup scan runs, no window created specifically _for_ the recovered content exists yet (that window is only created if the user chooses Recover). An unparented native dialog has no guaranteed z-order relative to the app's own windows, and lost the race against the initial blank window claiming focus after its own `ready-to-show`.
+**Fix:** the already-created initial window is passed as the owner.
 
-**Resolution:** the app's already-created initial window (from `createWindow()`, called just before the scan starts) is passed as the dialog's owner, giving it a defined z-order/parent relationship instead of none.
-
-**References:** [epic 0020](planning/epics/completed/0020-autosave-and-crash-recovery.md), [ADR 0040](decisions/0040-dirty-tracking-and-autosave-design.md), `src/main/recovery.ts`'s `runStartupOrphanScan`, `src/main/index.ts`
+**References:** `src/main/recovery.ts`
 
 ---
 
 ## `registerWindowPath` never cleared a window's own previous entry
 
-**Status:** Solved
-**Found:** 2026-08-22, epic 0038, live testing by the user
+**Status:** Solved (2026-08-22)
 
-**Symptom:** drop file1 onto a window (opens correctly), drop file2 onto the same window and choose "Open Here" (opens correctly), then drop file1 again — silently ignored.
+**Symptom:** drop file1, then file2 with "Open Here", then file1 again: silently ignored.
 
-**Root cause:** `windowsByPath` is keyed by path, not by window, and `registerWindowPath` only ever _added_ a new entry — it never removed whatever entry previously pointed at the same window. Before epic 0038, a single window's path only ever changed once in its lifetime (at creation, or via File → Open's reuse-if-empty, itself only usable once on a window that then stops being empty), so this gap never got exercised. Epic 0038 navigates the same non-empty window to a new path repeatedly across several drops — after dropping file2 "Open Here" onto a window already showing file1, the map held _both_ `file1 → win` and `file2 → win`. Dropping file1 again found the stale entry and just focused the (already-focused) window instead of loading it. The same underlying class of bug as "[File → Close leaves a stale window-path registration](#file--close-leaves-a-stale-this-window-shows-path-x-registration)" above, but a different code path: that one was a registration never _created_ by an in-place reset; this one was a registration never _replaced_ by a real navigation.
+**Cause:** `windowsByPath` is keyed by path and `registerWindowPath` only added entries, so the stale `file1 → window` survived and the app "focused" the already-focused window. Same class as the Close bug above (a registration never replaced instead of never cleared).
 
-**Resolution:** `registerWindowPath` now calls the existing `unregisterWindow` (matches-by-window-reference) on its own target window before adding the new entry — a window can only ever be associated with one path key at a time, enforced at the one place entries get added rather than requiring every caller to remember to clear the old one first.
+**Fix:** `registerWindowPath` first unregisters the target window's existing entries, so a window has at most one path at the one place entries are added.
 
-**References:** [epic 0038](planning/epics/completed/0038-drag-file-to-open.md), `src/main/windows.ts`
+**References:** `src/main/windows.ts`
 
 ---
 
 ## Drop-onto-a-dirty-window prompt was misleading and inconsistent with the close-prompt
 
-**Status:** Solved
-**Found:** 2026-08-22, epic 0038, live testing by the user (same session as the bug above)
+**Status:** Solved (2026-08-22)
 
-**Symptom:** the user reported "Open Here" opened a dropped file with no save prompt at all, and that there was no Cancel option — while testing what they believed was a drop onto a _dirty_ window. Diagnosis: the button label "Open Here" was identical between the clean (2-button) and dirty (3-button) branches, and the clean branch had no Cancel button at all (dismissing it mapped to "New Window" instead) — so there was no way to tell from the dialog itself which branch had actually fired, or to safely back out of either.
+**Cause:** not a logic bug; the "Open Here" button was identical in the clean and dirty branches, the clean branch had no Cancel, and the dirty branch offered no Save, unlike the close prompt.
 
-**Root cause:** not a logic bug — both branches were working exactly as originally designed (back when epic 0038 was first scoped, before its dirty-tracking blocker). But that original design had two real gaps: button labels didn't state their own consequence ("Open Here" meant "discard and open" in the dirty branch, with nothing in the label saying so), and the dirty branch's discard-only shape was inconsistent with the close-prompt (epic 0020), which does offer a genuine Save option for the same kind of "unsaved changes" situation.
+**Fix:** every button names its consequence ("Save changes, Open Here" / "Discard changes, Open Here" / "New Window" / "Cancel"), both branches have a real Cancel, the message states the dirty state, and Save reuses the close prompt's `performSaveNow`.
 
-**Resolution:** redesigned both branches. Every button now names its own consequence ("Save changes, Open Here" / "Discard changes, Open Here" / "New Window" / "Cancel" for dirty — wording refined once more the same day per the user's request, so both options read as parallel phrases sharing the same "changes" wording; "Open Here" / "New Window" / "Cancel" for clean, where "Open Here" is now genuinely safe since there's nothing to lose). Both branches have a real Cancel. The dialog message states the window's dirty state outright rather than leaving it to be inferred. The new Save option reuses `performSaveNow`, a helper extracted from the close-prompt's own save logic — not a duplicate implementation — round-tripping through the renderer via a new `window:performSaveThenOpenDropped` event since main can't perform a save itself (path-picking and detail-draft flushing live in `Canvas.tsx`).
-
-**References:** [epic 0038](planning/epics/completed/0038-drag-file-to-open.md), [epic 0020](planning/epics/completed/0020-autosave-and-crash-recovery.md) (the close-prompt this was brought into consistency with), `src/main/windows.ts`'s `openDroppedFileForWindow`, `src/renderer/src/Canvas.tsx`'s `performSaveNow`
+**References:** `src/main/windows.ts` (`openDroppedFileForWindow`)
 
 ---
 
 ## Highlights panel couldn't grow past a flat 320px cap
 
-**Status:** Solved
-**Found:** 2026-08-22, epic 0022, live testing by the user reviewing the new Meridian Rail landscape gallery entry (37 highlights across 5 groups)
+**Status:** Solved (2026-08-22)
 
-**Symptom:** the highlights panel needed to grow taller and scroll once a diagram had enough highlights to matter, and didn't seem to.
+**Cause:** a static `max-height: 320px`, unrelated to the space available; the scrolling CSS was fine but never exercised until a diagram had 37 highlights.
 
-**Root cause:** `.highlights-panel` (`main.css`) had a flat `max-height: 320px`, unrelated to how much room was actually available on screen. The scrolling CSS itself (`.highlights-panel-body`'s `flex: 1; min-height: 0; overflow-y: auto`) was already correct — it just almost never got exercised before, since no diagram had come close to 320px of highlight content until this one.
-
-**Resolution:** `HighlightsPanel.tsx` now computes `maxHeight` inline from the actual space available above the panel's anchor (`window.innerHeight - bottom - 16`, where `bottom` is the same anchor-relative offset already used to position the panel), rather than using a fixed guess. The now-redundant static `max-height: 320px` was removed from `main.css` (inline style always wins over it anyway).
-
-**References:** [epic 0022](planning/epics/0022-example-diagram-gallery.md), `src/renderer/src/components/HighlightsPanel.tsx`, `src/renderer/src/assets/main.css`
-
----
-
-## A native confirm() dialog left `<select>` elements unresponsive afterward
-
-**Status:** Worked around
-**Found:** 2026-08-22, epic 0055, live testing by the user on the Meridian Rail landscape's `owningTeam` tag
-
-**Symptom:** after `AllowedValuesEditor`'s in-use warning (`window.confirm(...)`, added by epic 0055's allowed-values list editor) appeared and was dismissed — confirmed _or_ cancelled, either way — every `<select>` dropdown in the Required Tags panel stopped opening on click. No console error. Reported first as "the dropdowns just don't work anymore" before the user pinned it down to this specific trigger (removing the `owningTeam` tag's `"None"` allowed value while it was also that tag's current default, a real value on the Meridian Rail landscape from epic 0022's 13th round).
-
-**Root cause:** not fully understood at the Electron/Chromium level — no exception, no error, purely a focus/interaction state left broken by the native dialog closing. Matches a known general class of native-dialog-vs-focus quirk in Electron (see "[Unparented native dialog can open behind the app window](#unparented-native-dialog-can-open-behind-the-app-window)" above for a different symptom in the same general family: native dialogs not integrating cleanly with this app's window/focus model). This app already uses `confirm()`/`alert()` successfully elsewhere (Close, Reload, copy-to-children) — none of those are immediately followed by trying to open a native `<select>` in the same still-open panel, which may be exactly what this specific interaction needed to actually surface the quirk.
-
-**Resolution:** replaced the native `confirm()` in `AllowedValuesEditor` with an in-panel confirmation — the row being removed/renamed is swapped for a small inline message + Confirm/Cancel buttons (`.required-tag-value-confirm`), no native dialog involved at all. Not a fix for the underlying Electron quirk itself (still not understood), just an avoidance — **any future feature that shows a native `confirm()`/`alert()` and then expects the user to keep interacting with `<select>` elements in the same view should watch for this same symptom**, and prefer an in-app confirmation the way this one now does.
-
-**References:** [epic 0055](planning/epics/completed/0055-required-tags-allowed-values-list-editor.md), [ADR 0047](decisions/0047-allowed-values-list-editor.md), `src/renderer/src/components/RequiredTagsPanel.tsx`
+**Fix:** `maxHeight` computed inline from the space above the panel's anchor; the static cap removed.
 
 ---
 
 ## Setting `style={{ backgroundColor }}` on `<ReactFlow>` does nothing
 
-**Status:** Solved
-**Found:** 2026-08-22, epic 0030, live testing by the user immediately after the canvas-background-color feature shipped
+**Status:** Solved (2026-08-22)
 
-**Symptom:** picking a canvas background color in the new Style Palette panel had no visible effect at all — the canvas kept showing React Flow's own default light/dark background regardless of what was picked.
+**Cause:** the `style` prop does land on `.react-flow`, but `<Background>` paints a separate absolutely positioned SVG whose rule reads the **custom property** `--xy-background-color`, not the literal `background-color`.
 
-**Root cause:** `<ReactFlow>`'s `style` prop does land on the actual `.react-flow` root element (confirmed by reading `node_modules/@xyflow/react/dist/esm/index.mjs` — `style: { ...style, ...wrapperStyle }` on the same div that carries the `react-flow` className), so a plain `backgroundColor` _does_ change that element's own paint. But it's never visible: `<Background>` renders a separate, absolutely-positioned SVG on top (`.react-flow__background`, covering the whole pane) whose own CSS rule is `background-color: var(--xy-background-color-props, var(--xy-background-color, var(--xy-background-color-default)))` (`node_modules/@xyflow/react/dist/style.css`) — it reads a **CSS custom property**, not the literal `background-color`, and that custom property isn't set by passing a plain `backgroundColor` in the style object at all.
+**Fix:** set `style={{ '--xy-background-color': value }}`.
 
-**Resolution:** set the custom property directly instead: `style={{ '--xy-background-color': value } as React.CSSProperties}` (the cast is needed since custom properties aren't part of the standard `CSSProperties` type). Custom properties inherit down the DOM tree, so setting it on the outer `.react-flow` element correctly reaches the child `<Background>` SVG that actually paints. **General lesson for anything touching React Flow's visual defaults**: check whether the library exposes a CSS custom property before assuming a plain style/CSS property will reach the actual paint layer — several of React Flow's own defaults (edge stroke, node background, handle color, etc.) follow this same `var(--xy-*-props, var(--xy-*, var(--xy-*-default)))` fallback chain, not a plain property.
+**Lesson:** several React Flow defaults (edge stroke, node background, handle colour) follow a `var(--xy-*-props, var(--xy-*, var(--xy-*-default)))` chain; check for the custom property before assuming a plain style reaches the paint layer.
 
-**References:** [epic 0030](planning/epics/completed/0030-custom-style-palettes-and-defaults.md), [ADR 0048](decisions/0048-style-palette-and-defaults.md), `src/renderer/src/Canvas.tsx`, `node_modules/@xyflow/react/dist/style.css`
+**References:** [ADR 0048](decisions/0048-style-palette-and-defaults.md)
 
 ---
 
 ## A concave line's bounding box was clickable everywhere inside it, not just on the curve
 
-**Status:** Solved
-**Found:** 2026-08-22, epic 0064, live testing by the user immediately after the freeform line's first pass shipped
+**Status:** Solved (2026-08-22)
 
-**Symptom:** a line bent into a U-shape (or any concave curve) could be selected — and dragged as a whole — by clicking anywhere inside its own empty interior, not just on the stroke. Reported as "it will end up blocking too much," with the user's own comparison: an edge only responds to a click fairly close to or on top of its path, a line didn't.
+**Cause:** React Flow hit-tests a node's rectangular box, and a sparse or concave freeform line's box includes large empty areas.
 
-**Root cause:** React Flow's default node hit-testing is the node's _rectangular_ `position`/`size` box — fine for Entity/Container/Text, which are always filled boxes anyway, but a line (epic 0064/ADR 0050 modeled it as a `DiagramNode`, specifically to reuse that box-based selection/drag/lock machinery) can be sparse and concave, so its tightest bounding rectangle routinely includes large stretches of genuinely empty space. `LineNode.tsx` already had a purpose-built wide invisible hit-stroke (for right-click "add point"), but nothing stopped React Flow's own wrapper `<div>` from independently claiming every click inside the whole box first.
+**Fix:** `pointerEvents: 'none'` on the line node's wrapper through the node's own `style` field (distinct from this app's `data.style`); the line's invisible hit-stroke and its point handles opt back in.
 
-**Resolution:** React Flow applies a node's `style` field (a real, normally-unused-in-this-codebase `Node` field, distinct from this app's own `data.style` convention) directly onto its own wrapper element — so setting `pointerEvents: 'none'` there (`Canvas.tsx`'s `zIndexedNodes`, `line`-typed nodes only) makes the _whole box_ click/drag-through by default. `pointer-events` is inherited but overridable per descendant, so `LineNode.tsx`'s existing invisible hit-stroke path (`pointerEvents: 'stroke'`) and its point handles (`pointer-events: auto` in CSS) each explicitly opt back in — only the curve itself, within the hit-stroke's tolerance, and its points stay interactive. **General lesson for any future node type whose visual shape doesn't fill its own rectangular bounding box**: React Flow's default click/drag hit-testing is the box, not the rendered content — the `Node.style` field is the documented escape hatch, not `data.style` or anything rendered inside the component.
+**Lesson:** for any node whose shape doesn't fill its box, `Node.style` is the escape hatch for default box-based hit-testing.
 
-**References:** [epic 0064](planning/epics/completed/0064-simple-curved-freeform-line.md), [ADR 0050](decisions/0050-freeform-line-as-node-type.md), `src/renderer/src/Canvas.tsx`, `src/renderer/src/nodes/LineNode.tsx`
+**References:** [ADR 0050](decisions/0050-freeform-line-as-node-type.md), `src/renderer/src/nodes/LineNode.tsx`
 
 ---
 
 ## `npm run lint` reports ~10,000 CRLF warnings repo-wide
 
-**Status:** Open, not this machine's normal experience, cause not confirmed
-**Found:** 2026-08-23, epic 0010, running `npm run lint` after adding the PNG export feature
+**Status:** Solved (2026-10-17)
 
-**Symptom:** a routine `npm run lint` run reported ~10,200 `prettier/prettier` "Delete `␍`" warnings spread across dozens of pre-existing files never touched this session (confirmed via `git status` — only this session's own 10 changed/new files showed up there), alongside the same 4 real errors [epic 0028](planning/epics/completed/0028-remaining-lint-cleanup.md) already tracks as this project's pre-existing baseline. `file` on an untouched file (`AboutDialog.tsx`) confirmed it has actual CRLF line terminators on disk; `git config --get core.autocrlf` returned `true` and there's no `.gitattributes` pinning line endings, so a normal Windows checkout on this machine legitimately produces CRLF files while ESLint's Prettier config expects LF.
+**Cause:** Git on Windows has `core.autocrlf=true`, so files are checked out with CRLF, while Prettier's default `endOfLine: lf` flagged every line (21,479 warnings across 103 files).
 
-**Not yet explained:** why this hadn't surfaced before now, given PROGRESS.md's repeated "same pre-existing lint-error count as master, no new ones" checks presumably ran on this same Windows machine. `.eslintcache` (gitignored) was rewritten by this run — plausible this run was the first with a cold/invalidated cache and prior checks were unknowingly reading a stale cache that skipped re-reporting already-warned, unchanged files. Not confirmed; worth checking on the next fresh clone or `rm .eslintcache` run whether it reproduces from a clean state.
-
-**Not fixed here** — deliberately out of scope for epic 0010's small PNG-export change; this is really [epic 0028](planning/epics/completed/0028-remaining-lint-cleanup.md)'s territory (either pin `.gitattributes`/`core.autocrlf` for this repo, or set ESLint/Prettier's `endOfLine` to `auto`), and a repo-wide line-ending rewrite is exactly the kind of drastic, unrelated change CLAUDE.md says to pause and ask about rather than fold into an unrelated epic.
-
-**References:** [epic 0028](planning/epics/completed/0028-remaining-lint-cleanup.md), [epic 0010](planning/epics/completed/0010-export.md)
+**Fix:** `endOfLine: auto` in `.prettierrc.yaml`; the 171 genuine formatting differences left were fixed with `eslint --fix` (code only, never the docs) and 8 `react-hooks/exhaustive-deps` warnings by hand. `npm run lint` reports nothing.
 
 ---
 
 ## Exported PNGs had no visible arrowheads on any edge
 
-**Status:** Solved
-**Found:** 2026-08-23, epic 0010, live testing by the user immediately after PNG export's first pass shipped
+**Status:** Solved (2026-08-23)
 
-**Symptom:** every edge exported to PNG with no arrowhead at all — reported as arrows "not visible," confirmed not just a size/contrast issue since making the marker much thicker and a different color still didn't make it appear.
+**Cause:** `EdgeMarkerDefs` renders every `<marker>` in a separate zero-size `<svg>` that is a sibling of `<ReactFlow>`; PNG export clones only `.react-flow__viewport`, so every `marker-end="url(#…)"` pointed at an id that wasn't in the captured content.
 
-**Root cause:** `EdgeMarkerDefs` (`src/renderer/src/edges/edgeMarkers.tsx`) renders every `<marker>` definition inside a separate, zero-size `<svg>` that's a _sibling_ of `<ReactFlow>` in the DOM — deliberately, per that file's own existing comment, so marker ids stay resolvable from any edge in the document regardless of which `<svg>` the edge itself renders inside. PNG export (`captureDiagramPng`, `src/renderer/src/export/exportPng.ts`) only clones `.react-flow__viewport` — the subtree containing nodes/edges — to keep Background/Controls/MiniMap chrome out of the exported image (see [ADR 0051](decisions/0051-png-export.md)). That subtree never included the marker defs at all, so every edge's `marker-end="url(#...)"` attribute referenced an id that simply didn't exist in the captured content — not a rendering glitch, the referenced element was never there.
+**Fix:** the defs svg is tagged `data-export-role="edge-marker-defs"`; `captureDiagramPng` inserts a clone of it into the viewport for the duration of the capture and removes it in a `finally`.
 
-**Resolution:** give the marker-defs `<svg>` a stable `data-export-role="edge-marker-defs"` attribute, then in `captureDiagramPng`, clone that element (`cloneNode(true)`, not moving the live node — moving it could confuse React's own reconciliation for an element it still manages) and temporarily insert the clone as the viewport's first child for the duration of the `toPng()` call, removing it in a `finally` immediately after. **General lesson**: this app renders more than one kind of "global, id-referenced, zero-visual-footprint" definition outside the node/edge tree (this marker-defs pattern specifically) — anything that captures/serializes only a subtree of the canvas (export, and potentially any future feature doing the same) needs to check whether it's implicitly relying on DOM state that lives outside that subtree.
+**Lesson:** anything that captures only a subtree must check whether it relies on DOM state that lives outside it.
 
-**References:** [epic 0010](planning/epics/completed/0010-export.md), [ADR 0051](decisions/0051-png-export.md), `src/renderer/src/edges/edgeMarkers.tsx`, `src/renderer/src/export/exportPng.ts`
+**References:** [ADR 0051](decisions/0051-png-export.md), `src/renderer/src/export/exportPng.ts`
 
 ---
 
 ## "Use canvas color" PNG export always exported plain white
 
-**Status:** Solved
-**Found:** 2026-08-23, epic 0010, live testing by the user right after the previous two PNG export fixes landed
+**Status:** Solved (2026-08-23)
 
-**Symptom:** exporting with "Use canvas color" (no background override, no transparency) produced a plain white background, regardless of the diagram's actual on-screen canvas color — reported directly as "ended up as just white, not the actually active canvas colours."
+**Cause:** the code read the custom property `--xy-background-color` directly, but React Flow only *uses* it inside `var()` fallback chains and never assigns it unless a custom colour is set, so the read returned empty and hit the hard-coded `#ffffff`. In light mode with no override the real colour comes from the app's `body` background several ancestors up.
 
-**Root cause:** the first fix read `getComputedStyle(viewportEl).getPropertyValue('--xy-background-color')` directly, expecting it to already hold the resolved color. But `.react-flow`'s own CSS (`node_modules/@xyflow/react/dist/style.css`) only ever _uses_ that custom property inside a `var()` fallback chain — `background-color: var(--xy-background-color, var(--xy-background-color-default))` — it never assigns the literal `--xy-background-color` property a value unless a custom `canvasBackgroundColor` is set. Reading the property name directly, rather than reading through a `var()` reference, returns an empty string in the common no-override case, silently hitting this function's own hardcoded `'#ffffff'` fallback every time. Compounding it: even the _correctly_ resolved `.react-flow` background in light mode with no override is `--xy-background-color-default: transparent` — the real color the user sees painted behind the canvas in that case comes from this app's own `body { background: var(--color-background) }` (`assets/base.css`), several DOM ancestors above `.react-flow` itself, not from React Flow's own background mechanism at all.
+**Fix:** `resolveEffectiveBackgroundColor()` walks up the ancestors reading each one's computed `backgroundColor` until it finds one that isn't transparent.
 
-**Resolution:** `resolveEffectiveBackgroundColor()` walks up from the viewport element through `.parentElement`, reading each ancestor's real, already-resolved `getComputedStyle(...).backgroundColor` (the actual CSS property, not a custom-property name) until it finds one that isn't `transparent`/`rgba(0, 0, 0, 0)` — the same compositing a browser (and a viewer's eyes) already does to decide what color is "really" behind an element, regardless of which specific ancestor happens to own it or how many `var()` fallback levels are involved. **General lesson**: a custom CSS property (`--foo`) and the standard property that consumes it via `var(--foo, fallback)` are not interchangeable to read back — querying the custom property directly skips the entire fallback chain and returns empty unless something explicitly assigned it a value.
+**Lesson:** a custom property and the standard property that consumes it via `var()` are not interchangeable to read back.
 
-**References:** [epic 0010](planning/epics/completed/0010-export.md), [ADR 0051](decisions/0051-png-export.md), `src/renderer/src/export/exportPng.ts`
+**References:** [ADR 0051](decisions/0051-png-export.md), `src/renderer/src/export/exportPng.ts`
 
 ---
 
 ## Adding a new required tag immediately stamps its placeholder key onto every element, then demotes it to a stray free tag on rename
 
 **Status:** Solved (2026-09-15)
-**Found:** 2026-08-24, reported by the user from live use, logged rather than fixed immediately
 
-**Symptom:** click "Add required tag" in the Required Tags panel, then rename the new tag's key to something real (e.g. "sensitivity") — every Shape/Container/Edge in the diagram ends up with a stray, no-longer-required free tag named `key` (or `key (demoted)` if `key` was already taken) sitting alongside the real, correctly-named required tag. The user's framing: a new tag "starts out with the name key, and gets added on change." Same root cause also surfaces on outright removal (not just rename): remove a still-default-named required tag via its × button and `key` is left behind as a demoted free tag on every element too.
+**Symptom:** after "Add required tag" and renaming the key, every element kept a stray free tag called `key` (or `key (demoted)`). Removal of a still-default-named tag did the same.
 
-**Root cause:** `RequiredTagsSection.tsx`'s `addTag()` calls `onChange([...requiredTags, { key: 'key', lock: 'lockedEditable' }])` **synchronously and immediately** on click — unlike every other field in this panel, which drafts locally and only commits on blur/Enter (see `useFieldDraft`'s own comment, added specifically to fix a related but distinct bug: per-keystroke commits while typing a key). That immediate `onChange` flows straight to `Canvas.tsx`'s `updateRequiredTags` → `syncElementMetadata`, which runs its full backfill pass against every element right then — seeding literal key `"key"` onto all of them, before the user has typed anything. Whether the key then leaves `requiredTags` via a rename or an explicit removal, `syncElementMetadata`'s demote-not-delete rule (ADR 0022's "don't destroy data") faithfully preserved the orphaned `"key"` entry as a free tag on every element — exactly as designed for a genuine rename/removal of a real, user-named tag, but wrong here: a brand-new, not-yet-named tag was treated as "real" data worth preserving when it never actually was.
+**Cause:** `addTag()` committed `{ key: 'key', … }` immediately, unlike every other field in the panel, which drafts and commits on blur; `syncElementMetadata` backfilled `"key"` onto every element, and its "demote, don't delete" rule then preserved it.
 
-**Resolution:** root-caused rather than patched at demote time (an earlier same-day pass tried a demote-time pattern-match on the placeholder key — "key", "key 2", … — and was replaced by this once a cleaner fix was pointed out). `addTag()` now seeds a genuinely **blank** key (`{ key: '', lock: 'lockedEditable' }`) instead of a placeholder string. `seedMetadata` and `syncElementMetadata` (`Canvas.tsx`) both skip any requiredTags entry whose key is empty — nothing is stamped onto any element while the tag is unnamed, so there is nothing to demote or delete later regardless of whether the tag is renamed, removed, or just left blank. Once the user types a real key, `keyField`'s existing blur-commit (which already refuses to commit an empty/whitespace value) is what makes it real and triggers the first sync. No heuristics, no key-name special-casing, and no trade-off against a legitimately-named tag — the fix removes the premature stamp instead of guessing which stamped keys were "real."
+**Fix:** a new tag starts with a blank key and `seedMetadata`/`syncElementMetadata` skip entries with an empty key, so nothing is stamped until the tag is named. No key-name heuristics.
 
-**References:** `src/renderer/src/components/RequiredTagsSection.tsx`'s `addTag`/`useFieldDraft`, `src/renderer/src/Canvas.tsx`'s `seedMetadata`/`syncElementMetadata`/`updateRequiredTags`, [epic 0034](planning/epics/completed/0034-unified-tag-and-metadata-system.md), [ADR 0022](decisions/0022-unified-tag-and-metadata-system.md)
+**References:** [ADR 0022](decisions/0022-unified-tag-and-metadata-system.md), `src/renderer/src/components/RequiredTagsSection.tsx`
 
 ---
 
 ## Pasting a copied child-of-a-container node can land it far off screen
 
-**Status:** Solved (ADR 0075 / epic 0103, 2026-08-30) — pending the user's live test
-**Found:** 2026-08-24, reported by the user from live use, logged rather than fixed immediately
+**Status:** Solved (ADR 0075, 2026-08-30)
 
-**2026-08-30 fix (ADR 0075):** `remapForPaste` now branches on `parentId`. If the node's parent container is also in the payload, `parentId` is remapped through the same `idMap` as node ids and the child's relative `position` is kept untouched (no centroid recenter). If the parent isn't in the payload — an orphaned child, or a cross-diagram paste — `parentId` is stripped and the node pastes as a normal top-level node. The paste centroid is computed over top-level-in-payload nodes only, so a container's small parent-relative child coordinates no longer skew it. `pasteFromClipboard` wraps the merged array in `sortNodesForHierarchy`. Also folded into the same epic: a load-time `healHierarchy` pass that drops a dangling `parentId` from files already saved in this broken state.
+**Cause:** a child's `position` is relative to its parent, but `remapForPaste` applied absolute centroid math to it and never touched `parentId`: a child pasted without its container kept a dangling reference, and one pasted with it still pointed at the old id.
 
-**2026-08-29 confirmation:** the "suspected" mechanism below is exactly right, confirmed against a real user diagram ("Project Overview") where ~18 pasted nodes carried `"parentId": "container-1a2b3c4d-…"` for a container that isn't in the file at all. `remapForPaste` (`clipboard.ts`) spreads `...n` and **never remaps, strips, or inspects `parentId`** — so a child pasted without its container keeps a dangling reference, and (if the container _was_ copied too) still points at the _old_ id because `idMap` is only applied to `id`/`source`/`target`, never `parentId`. Now folded into epic 0103 alongside two sibling container-hierarchy bugs (the two entries just below).
+**Fix:** if the parent is in the payload, `parentId` is remapped through the same id map and the relative position is kept; otherwise `parentId` is stripped and the node pastes top-level. The centroid uses top-level nodes only, and a load-time `healHierarchy` pass drops dangling `parentId`s from files saved in this state. Copy/paste with containers confirmed working by the author (2026-10-17).
 
-**Symptom:** pasting a copied element sometimes lands it way outside the visible viewport, instead of centered on-screen the way `remapForPaste`'s own logic (`clipboard.ts`) intends.
-
-**Suspected root cause (read from code, not yet live-debugged):** `position.x`/`position.y` on a node with `parentId` set is **relative to its parent container**, not the canvas — an explicit, deliberate rule from ADR 0012, also documented in `docs/file-format.md`'s `position` field. `remapForPaste` (`src/renderer/src/clipboard.ts`) computes each pasted node's new position as `center + (n.position - centroid)`, where `center` is an absolute canvas/flow coordinate (`rfInstance.screenToFlowPosition` of the screen's center, `Canvas.tsx`'s `pasteFromClipboard`) — correct _only_ if `n.position` was itself an absolute coordinate to begin with. For a copied node that's a child of a container, `n.position` is actually parent-relative (typically small numbers, e.g. `{x: 20, y: 20}`), so this computation produces a small, roughly-centroid-relative absolute value — but the pasted node also keeps its **original `parentId`**, unchanged: neither `remapForPaste` nor `buildClipboardPayload` remaps, clears, or even inspects `parentId` at all. React Flow will then render the new node at _the original container's own absolute position_ **plus** this newly-computed (already-meant-to-be-absolute) offset — a double displacement that could plausibly land arbitrarily far from both the container and the paste target, matching "way off screen."
-
-**Not yet fixed** — logged per the user's "for later" framing rather than chased down immediately; the above is a plausible mechanism from reading the code, not something reproduced and confirmed step-by-step yet.
-
-**If revisited:** first confirm by copying a node that's actually inside a container (not a top-level shape) and pasting, ideally with the container positioned far from the canvas origin — the theory predicts the further the container sits from `(0,0)`, the further off screen the paste lands. If confirmed, the fix is likely one of: (a) clear `parentId` on paste (pasted content always becomes top-level, simplest but loses containment), or (b) if the node's original parent container was _also_ copied and pasted alongside it, remap `parentId` through the same `idMap` already built for node ids and keep the position parent-relative as-is (untouched, no `center` offset applied to it at all — only top-level pasted nodes should get the `center`-based repositioning); if the parent _wasn't_ copied along with it, fall back to (a). Either way, `remapForPaste`'s position math needs to branch on whether a given node has a `parentId`, which it currently doesn't.
-
-**References:** `src/renderer/src/clipboard.ts`'s `remapForPaste`/`buildClipboardPayload`, `src/renderer/src/Canvas.tsx`'s `pasteFromClipboard`, [epic 0025](planning/epics/completed/0025-copy-paste.md), [ADR 0049](decisions/0049-clipboard-copy-paste.md), [ADR 0012](decisions/0012-container-node-design.md) (parent-relative `position` for a contained child — also restated in `docs/file-format.md`'s `position` field), [epic 0103](planning/epics/completed/0103-container-hierarchy-integrity.md)
-
----
-
-## Clicking a container selects a different container that visually encloses it
-
-**Status:** Worked around (ADR 0075 / epic 0103, 2026-08-30) — pending the user's live test. The z-inversion itself is a React Flow invariant and can't be fixed; it's now surfaced instead of silent.
-**Found:** 2026-08-29, live use by the user on a "Project Overview" diagram
-
-**Symptom:** two containers, "Container A" and "Container B". The Layers panel shows Container A above Container B. Clicking on the visible area of Container A selects Container B instead.
-
-**Root cause:** in the file, Container B is a **child** of Container A (`parentId` points at it), but it's the geometrically _larger_ box that fully encloses Container A — the data hierarchy is inverted relative to the visual nesting (most likely: the user resized/moved Container B to be bigger than its parent after it was first parented; resizing a container past its parent's bounds doesn't un-parent it). React Flow **forces a child's effective z-index to at least `parentZ + 1`**, regardless of the explicit `zIndex` — confirmed by reading `@xyflow/system`'s `calculateChildXYZ`: `z: parentZ >= childZ ? parentZ + 1 : childZ`. Container A has `zIndex: 55`, Container B `zIndex: 40`, so this app's Layers panel (which reads raw `data.zIndex`) correctly shows Container A on top — but React Flow renders Container B at `z = 56` because it's the child, so it wins the hit-test in the overlap region. This app's own z-index model (ADR 0035) assumes it fully controls stacking; React Flow's parent-above-child rule silently overrides it, and nothing reconciles the two or tells the user.
-
-**If revisited / fix direction (epic 0103):** "a child always renders above its parent" is a React Flow invariant this app can't override (even `zIndexMode: 'manual'` keeps the `parentZ + 1` in `calculateChildXYZ`). So the fixes are: (1) a Diagnostics warning when a child extends outside its parent's bounds; (2) the Layers panel should show the _effective_ order (and the nesting) rather than raw `data.zIndex`, so it stops contradicting what's clickable; (3) load-time / quick-fix option to un-parent a child that has outgrown its parent.
-
-**2026-08-30 (ADR 0075):** shipped (1) as a standing Diagnostics advisory (`hierarchyAnalysis` in `Canvas.tsx`) naming both containers. For (2), the user's call was to keep the Layers panel sorted on **raw** `data.zIndex` (that's the value drag-to-restack edits — showing a different order there would be a worse kind of lying) and instead mark the rows where raw and effective order disagree: a nested row shows an `in: <parent>` badge with a ⚠ when React Flow renders it above its parent. (3) — auto/quick-fix un-parenting — was explicitly declined: warn only, the user may have a deliberately-overflowing child. Load-time healing covers only genuinely broken (dangling / cyclic) `parentId`, not a merely-outgrown one. A manual **"Detach from parent"** right-click item (shown on any node with a `parentId`) was added instead, so the user always has a one-click way out once the warning points them at it.
-
-**References:** `node_modules/@xyflow/system`'s `calculateChildXYZ`/`updateChildNode`, `src/renderer/src/layers/zIndexOrdering.ts`, `src/renderer/src/components/LayerPanel.tsx`, [ADR 0035](decisions/0035-layer-order-control.md), [epic 0103](planning/epics/completed/0103-container-hierarchy-integrity.md)
+**References:** [ADR 0075](decisions/0075-container-hierarchy-integrity.md), [ADR 0049](decisions/0049-clipboard-copy-paste.md), `src/renderer/src/clipboard.ts`
 
 ---
 
 ## "Attach contained entities" can fling a node to the canvas origin
 
-**Status:** Solved (ADR 0075 / epic 0103, 2026-08-30) — pending the user's live test
-**Found:** 2026-08-29, live use by the user (same "Project Overview" diagram as the entry above)
+**Status:** Solved, confirmed live (2026-10-17)
 
-**Symptom:** selecting the container "Container B", right-click → "Attach contained entities" (formerly "Attach contained shapes"), and a node jumps to the top corner of the canvas.
+**Cause:** the candidate filter could pick a node that is the container's own *parent* (it fully contains the container), creating a parent cycle; React Flow then reads an unpositioned parent as `{0,0}` and collapses the node to the origin. The drag-to-reparent path already had an ancestry check.
 
-**Root cause:** `attachContainedNodes` (`Canvas.tsx`) builds its candidate set as `getIntersectingNodes(container, false).filter((n) => n.id !== containerId && !n.parentId)`. In this diagram the only match is **Container A** — it's top-level (passes `!n.parentId`) and fully inside Container B's rect (passes `getIntersectingNodes(..., false)`, whose `partially: false` branch also matches a node that fully covers _or_ is fully covered by the target). But Container A is Container B's own **parent** (see the entry above), so attaching it makes a parent cycle Container A → Container B → Container A. `absolutePosition` (`geometry/nodePosition.ts`) has a `seen`-set cycle break, but React Flow's own `updateChildNode`/`calculateChildXYZ` reads `parentNode.internals.positionAbsolute` for a parent that isn't positioned yet under a cycle → `{x: 0, y: 0}` → the node collapses toward the canvas origin. The drag-to-reparent path (`onNodeDragStop`) already guards this with an `isDescendantOf(candidateId, draggedId)` ancestry check; `attachContainedNodes` was never given the equivalent.
-
-**If revisited / fix direction (epic 0103):** add the ancestor check to `attachContainedNodes`' candidate filter (reuse `isDescendantOf` from `onNodeDragStop`), and also skip a candidate whose bounds _enclose_ the container — a box bigger than its would-be parent shouldn't become its child.
-
-**2026-08-30 (ADR 0075):** done exactly as above — `attachContainedNodes`' candidate filter now also rejects a node that is an ancestor of the container (a local `containerIsDescendantOf` walk, same shape as `onNodeDragStop`'s `isDescendantOf`) and any candidate whose absolute bounds enclose the container.
-
-**References:** `src/renderer/src/Canvas.tsx`'s `attachContainedNodes` and `onNodeDragStop`'s `isDescendantOf`, `src/renderer/src/geometry/nodePosition.ts`, `node_modules/@xyflow/react`'s `getIntersectingNodes` (the `partially` branch), [epic 0103](planning/epics/completed/0103-container-hierarchy-integrity.md)
+**Fix:** reject ancestors of the container and any candidate whose bounds enclose it ([ADR 0075](decisions/0075-container-hierarchy-integrity.md)).
 
 ---
 
 ## Icon picker's grid overflowed horizontally, not just missing a vertical scrollbar gutter
 
-**Status:** Solved
-**Found:** 2026-08-25, epic 0086, live use by the user — a first fix attempt was reported still broken
+**Status:** Solved (2026-08-25)
 
-**Symptom:** the icon picker's rightmost column of icons looked partially covered/overlapped, and a horizontal scrollbar appeared along the bottom of the icon grid.
+**Symptom:** the rightmost icon column looked covered, with a horizontal scrollbar.
 
-**First fix attempt, and why it didn't work:** the symptom looked like a classic "content box doesn't reserve space for its own scrollbar" issue, so `scrollbar-gutter: stable` was added to `.icon-picker-scroll` (the `overflow-y: auto` wrapper). Reported by the user as still broken. That diagnosis was real but incomplete — it addressed a plausible cause, not the actual one, and the fix landed without ever being visually verified (this Electron app's renderer can't be checked by opening the Vite dev server standalone in a browser).
+**Cause:** a grid item's default `min-width: auto` includes its content's intrinsic size (each button holds a raw SVG), so the six `1fr` columns couldn't shrink below it. With only `overflow-y` set, CSS computes `overflow-x` to `auto` too. A first fix (`scrollbar-gutter: stable`) addressed a plausible cause and was never verified.
 
-**Actual root cause, confirmed by reproducing it, not just re-reading the CSS**: `.icon-picker-grid button` never had `min-width: 0`. A CSS Grid item's default `min-width` is `auto`, which factors in the item's own content's intrinsic size — each button holds a raw `<svg>` (Tabler icon markup with its own baked-in width/height), so the grid's 6 `1fr` columns refused to shrink below that intrinsic size, regardless of the existing `width: 100%` on the svg/img (that CSS only affects the _rendered_ size once a track width is chosen, not the track-sizing algorithm's own minimum). This forced genuine horizontal overflow inside the icon picker's fixed 220px width (`IconPicker.tsx`'s `PICKER_WIDTH`). Because only `overflow-y` was ever set on the container, the CSS Overflow spec's own rule ("if one axis is non-`visible` and the other is `visible`, the `visible` one computes to `auto` instead") silently turned `overflow-x` into `auto` too — which is what actually produced the unwanted horizontal scrollbar. The "overlap" was never really the vertical scrollbar covering content; it was the rightmost column genuinely being cut off/scrolled out of view by real horizontal overflow.
+**Fix:** `min-width: 0` on `.icon-picker-grid button` and `overflow-x: hidden` on the scroll container.
 
-**How this was actually confirmed, not just reasoned about**: a standalone HTML reproduction of the exact markup/CSS was built and served through the running Vite dev server (`http://localhost:5173`, not opened directly as a `file://` URL, which gets sandboxed with a script-blocking CSP and can't run any JS to measure anything) — then measured `scrollWidth`/`clientWidth`/each button's bounding rect directly via the browser's own JS console. Confirmed the original CSS produces real overflow (the 6th button's right edge lands 3px past the scroll container's own right edge) and that adding the fix below removes it (comfortably inside, `scrollWidth === clientWidth`).
-
-**Resolution**: `.icon-picker-grid button` gets `min-width: 0` (lets a column actually shrink to fit), and `.icon-picker-scroll` gets an explicit `overflow-x: hidden` (removes the now-unneeded horizontal scrollbar outright, rather than leaving it to the CSS spec's auto-compute rule). The original `scrollbar-gutter: stable` fix is kept — still correct for the vertical scrollbar itself, it just wasn't what was actually broken.
-
-**General lesson**: a grid/flex item containing an image, SVG, or anything else with its own intrinsic size will resist shrinking below that size unless `min-width: 0` (or `min-width: 0; min-height: 0` for a flex column) is set explicitly — one of the most common real-world CSS Grid/Flexbox surprises, worth checking first whenever a grid/flex item "won't shrink" or overflows its container despite percentage sizing on its contents. Also: when a fix can't be visually verified in this app (Electron-only rendering), a targeted static HTML reproduction served through the existing dev server — not opened as a bare `file://` URL — is a real way to get actual browser measurements instead of shipping an untested guess.
-
-**References:** `src/renderer/src/assets/main.css`'s `.icon-picker-grid button`/`.icon-picker-scroll`, `src/renderer/src/components/IconPicker.tsx`'s `PICKER_WIDTH`, [epic 0086](planning/epics/completed/0086-minor-ui-improvements.md)
+**Lesson:** grid/flex items holding images or SVGs resist shrinking unless `min-width: 0` is set. When a fix can't be seen in the Electron renderer, a static reproduction served through the dev server (not a bare `file://` URL) gives real measurements.
 
 ---
 
 ## Deleting / cutting a container + its selected children removes only the container, keeps the children
 
-**Status:** Open — deliberately not fixed yet; the user wants the current "container goes, contents survive" behaviour kept for now and a decision made later (see below)
-**Found:** 2026-08-30, reported by the user from live use, logged for later
+**Status:** Solved (2026-10-17, [ADR 0116](decisions/0116-deleting-a-container-and-its-selected-children.md)), pending live test
 
-**Symptom:** first reported as "Ctrl+X only cuts one item." On a closer look the user pinned it down: with a container **and** shapes inside it all selected, Delete (and Cut, which deletes after copying) removes the container first, then the shapes are *not* removed — they survive, promoted to top-level. So a multi-selection that spans a container and its own children ends up only partly deleted. The user's note: the "container first, then shapes" ordering "might be a good feature" — do **not** fix it right now, just record it.
+**Cause:** deleting a container promotes its children (ADR 0012), and the rule filtered out the removal of any descendant of a removed container even when the child was explicitly selected too.
 
-**Almost certainly the ADR 0012 child-promotion cascade, working as designed for the lone-container case but surprising here.** `deleteElements` emits a batch of `remove` changes; `onNodesChange` (`Canvas.tsx`) filters out the `remove` for any node that is a descendant of a container also being removed (`isDescendantOfRemovedContainer`) — because deleting a container is supposed to *promote* its children, not delete them (ADR 0012). That rule doesn't distinguish "the child just happened to be inside a deleted container" from "the child was explicitly selected for deletion too" — so an explicitly-selected child of an explicitly-selected container has its own deletion silently suppressed. Cut inherits this directly (`cutSelection` = `copySelection()` then `deleteElements`); the clipboard side is probably fine (`buildClipboardPayload` copies all selected nodes), so a subsequent paste would bring back everything even though the delete only removed the container.
-
-**Open decision when this is picked up:** when a container and one or more of its own children are deleted together, should the children (a) be promoted, as now — the container "dissolves," contents stay; or (b) be deleted too, since they were explicitly selected? Option (b) is closer to what most editors do for a spanning multi-select; option (a) is a genuinely useful "unwrap this container" gesture the user wants to keep *some* way to trigger. Possible resolution: keep (a) as the behaviour when only the container is selected, switch to (b) when children are also in the selection.
-
-**References:** `src/renderer/src/Canvas.tsx`'s `cutSelection` / `copySelection` / `onNodesChange`'s `isDescendantOfRemovedContainer`, `src/renderer/src/clipboard.ts`'s `buildClipboardPayload`, [ADR 0012](decisions/0012-container-node-design.md) (child promotion on container delete), [ADR 0049](decisions/0049-clipboard-copy-paste.md)
+**Fix:** decided with the author: promote when only the container is selected, delete everything selected otherwise (`resolveDeletion` in `onBeforeDelete`, unit-tested). Also fixed in the same cascade: unwrapping a container used to delete the edges of the children it promoted. To check live: delete only a container (children and their edges stay); select everything and delete; `Ctrl+X` the same.
 
 ---
 
 ## Copy/paste doesn't preserve container relationships
 
-**Status:** Open — ADR 0075 / epic 0103 reworked `remapForPaste` for exactly this and is **unmerged**; retest after merge before investigating further
-**Found:** 2026-08-30, reported by the user from live use, logged for later
+**Status:** Solved (confirmed by the author 2026-10-17)
 
-**Symptom:** copying elements that are inside a container and pasting them (via Ctrl+C / Ctrl+V — distinct from the in-place Ctrl+D _duplicate_, which is a separate, simpler path) does not keep the container nesting, and the pasted elements land "all over the place" rather than as a coherent group.
-
-**Very likely already addressed, unmerged.** [ADR 0075](decisions/0075-container-hierarchy-integrity.md) / [epic 0103](planning/epics/completed/0103-container-hierarchy-integrity.md) rewrote `remapForPaste` (`clipboard.ts`) precisely for this: before it, the function spread `...n` and never touched `parentId`, so a pasted child kept a stale/dangling parent reference _and_ had this app's centroid-recenter math applied to what was actually a parent-relative coordinate — a double displacement that matches "all over the place." The reworked version remaps `parentId` through `idMap` when the container is in the payload (keeping the child's relative position), strips it otherwise, and computes the paste centroid over top-level nodes only. **First step when revisited: confirm whether this still reproduces on `epic/0103-container-hierarchy-integrity` (or after it merges).**
-
-**One angle epic 0103 does _not_ cover:** `buildClipboardPayload` only copies the nodes that are actually `.selected`. Clicking a container does not auto-select its children in React Flow, so "select a container, copy, paste" copies the container alone and pastes an empty box. If the intended behaviour is "copying a container brings its contents," that's a separate `buildClipboardPayload` change (pull in descendants of any selected container), not a `remapForPaste` one — worth deciding on when this is picked up.
-
-**References:** `src/renderer/src/clipboard.ts`'s `remapForPaste` / `buildClipboardPayload`, `src/renderer/src/Canvas.tsx`'s `pasteFromClipboard`, [ADR 0049](decisions/0049-clipboard-copy-paste.md), [ADR 0075](decisions/0075-container-hierarchy-integrity.md), [epic 0103](planning/epics/completed/0103-container-hierarchy-integrity.md)
+Fixed by the paste rework described under "Pasting a copied child-of-a-container node can land it far off screen". Not addressed and left as is: selecting a container and copying copies only the container, because `buildClipboardPayload` copies only selected nodes.
 
 ---
 
 ## PNG-exported arrowheads were invisible on any edge relying on this app's own `context-stroke` markers
 
-**Status:** Solved
-**Found:** 2026-09-15, user report — "when I export a PNG the default arrows are invisible," offered "define our own default arrow" as the likely fix. **Two fixes attempted**; the first was real but insufficient, and is kept below rather than deleted, since it documents a genuine adjacent bug and the reasoning trail matters here (the user's own follow-up testing — "it exported properly when I gave each edge a thickness and a colour" — was the clue that reopened this).
+**Status:** Solved (2026-09-15)
 
-**Symptom:** an edge exported to PNG with an invisible (or, per the first fix below, low-contrast) arrowhead. Live on-canvas rendering was unaffected in both rounds — this only ever showed up in the exported file.
+**Symptom:** an edge without an explicit stroke exported to PNG with an invisible arrowhead; on screen it was fine. A first fix (pointing `markerEnd` at the app's own marker instead of React Flow's grey one) was a real bug but did not fix the report.
 
-**First fix attempted (real bug, not the actual cause of the user's report):** `Canvas.tsx`'s `DEFAULT_EDGE_OPTIONS.markerEnd` was still React Flow's own `{ type: MarkerType.ArrowClosed }`, colored via a `defaultMarkerColor` prop this app never overrode, so it silently stayed RF's stock `#b1b1b7` grey — independent of the edge *line's* own theme-aware default color (`--xy-edge-stroke-default` in `base.css`, a separate earlier fix). Genuinely low-contrast against a light export background, but fixing it (pointing `markerEnd` at this app's own `context-stroke`-based marker instead, `markerUrl('arrowClosed')`) **did not fix the user's report** — confirmed by a live re-test right after.
+**Cause:** `context-fill`/`context-stroke` (so one marker can serve any edge colour) don't survive `html-to-image`, and an unstyled edge's colour comes from a CSS custom-property chain that is also fragile there; an edge with an explicit inline stroke exported correctly, which was the decisive clue.
 
-**Actual root cause:** `context-fill`/`context-stroke` (`edgeMarkers.tsx`, used so one marker def can be referenced by edges of any color) don't survive `html-to-image`'s `toPng()` pipeline at all — a `<marker>`'s content is template content, never part of the normally-painted tree, so the "which element referenced me, what's its stroke" relationship context-stroke depends on isn't available when html-to-image reconstructs the captured subtree. The user's own follow-up test pinned this down further: an edge with an **explicit** `style.stroke` (set via the property panel) exported correctly, one without did not. The difference is that an explicit stroke is written as an *inline* style on the edge's `<path>`, which html-to-image copies faithfully, while an unstyled edge's color comes from a CSS custom-property chain (`.react-flow__edge-path { stroke: var(--xy-edge-stroke, var(--xy-edge-stroke-default)) }`) — a second point of fragility in the same export pipeline (this app has hit CSS-custom-property resolution gaps in this exact export code before, see "'Use canvas color' PNG export always exported plain white" above), compounding on top of `context-stroke`'s own unreliability. Either way, the marker's fill never resolves to anything paintable once html-to-image is done with it.
+**Fix:** `resolveMarkersForExport` runs for the duration of the capture: for each element referencing one of the app's markers it reads the element's already-resolved computed `stroke` and repoints it at a clone of the marker with that literal colour, restoring everything in `finally`. Live rendering is untouched.
 
-**Resolution:** `exportPng.ts` gains `resolveMarkersForExport(viewportEl)`, run for the duration of the capture only (same "mutate the live tree, restore in `finally`" pattern the marker-defs clone already used). For every element in the captured subtree with a `marker-start`/`marker-end` referencing one of this app's own marker ids (edge paths *and* the legend's own `<line>` swatches, `exportLegendDom.ts` — both reference the same ids), it reads that element's **already-resolved** `getComputedStyle(el).stroke` (correct regardless of whether the color came from an inline style or a CSS variable chain — that's the browser's own job, not html-to-image's) and clones the referenced marker with its `context-stroke`/`context-fill` attributes overwritten to that literal color string, deduped per distinct (marker kind, color) pair actually in use, then repoints the element at the new literal-color clone for the capture. Doesn't touch live rendering at all (still `context-stroke`-based, still automatically tracks selection/hover/highlight color changes on screen) — selection is already cleared before capture, so export never needed that dynamism, only each edge's color *at the moment of export*, which this now resolves the same reliable way regardless of source.
+**Lesson:** in this export path, treat anything resolved indirectly (CSS variables, paint-context keywords) as suspect even when it works on screen; use literal, already-resolved values.
 
-**General lesson (extends the one from "Exported PNGs had no visible arrowheads on any edge" above):** this app's export code has now hit CSS custom-property resolution gaps *and* SVG paint-context (`context-fill`/`context-stroke`) gaps in `html-to-image`'s pipeline, on top of the missing-`<defs>` gap that started this file's whole "capture only a subtree" caution. Anything relying on a value resolved indirectly (a CSS var, a paint-context keyword) rather than a literal, already-resolved value written directly onto the element is worth treating as suspect in this export path specifically, even when it's proven reliable in live rendering.
-
-**References:** `src/renderer/src/export/exportPng.ts`'s `resolveMarkersForExport`/`captureDiagramPng`, `src/renderer/src/Canvas.tsx`'s `DEFAULT_EDGE_OPTIONS`, `src/renderer/src/edges/markerIds.ts`'s `MARKER_ID`/`markerUrl`, `src/renderer/src/edges/edgeMarkers.tsx`, `src/renderer/src/export/exportLegendDom.ts`, [ADR 0014](decisions/0014-node-and-edge-style-schema.md) (custom marker system), the "Default edge stroke", "Exported PNGs had no visible arrowheads", and "'Use canvas color' PNG export always exported plain white" entries above
+**References:** [ADR 0014](decisions/0014-node-and-edge-style-schema.md), `src/renderer/src/export/exportPng.ts`
 
 ---
 
 ## Search couldn't find text in a note that had never been saved to disk
 
-**Status:** Solved
-**Found:** 2026-09-23, user report — after live-testing epic 0093's drill-down/notes search (never live-tested before this, per its own doc), the default search over a node's details note didn't find a term that was only in the note's text, on a diagram open but not yet saved. The "Deep search" checkbox was also greyed out in the same session, which turned out to be unrelated and working as designed — it requires `currentPath` to resolve a link's linked-diagram path against, and the diagram hadn't been saved yet (its own tooltip already says this).
+**Status:** Solved (2026-09-23)
 
-**Symptom:** typing a term that exists only inside a node's Details note returned no match, even though the note was open and visibly contained that text.
+**Cause:** `elementMatchesViaDetails` gates on the node's stored details path, but a brand-new note has no path until its first save even though its text already exists in the renderer's in-memory shadow, so it looked like "no note".
 
-**Root cause:** `elementMatchesViaDetails` ([ADR 0097](decisions/0097-deep-search-across-linked-diagrams.md)) gates on `el.details` — the node's *stored* details path — before ever reading note content, correctly for the general/deep-search case where a note only exists as a file on disk. But a brand-new (or any never-yet-saved) note has no stored path at all: `data.details` isn't assigned until the note's first save (epic 0087's sync-on-save/label-derived-filename convention), even though its real content already exists in the renderer's own in-memory shadow (`noteShadowsRef`, populated the moment the Details panel opens for that node — see `openDetailsPanel`). `Canvas.tsx`'s `computeMatchIds` built the searchable element straight from `data.details`, so an in-memory-only note looked to the matcher exactly like "no note at all," regardless of what it actually contained.
+**Fix:** `computeMatchIds` sets a truthy placeholder `details` whenever a live shadow exists for the node. "Deep search" being greyed out in the same session was unrelated and by design (it needs a saved path). Also noted in the same pass: `src/main/details.ts` joined paths itself instead of using the shared `resolveLinkPath`; fixed there, with a milder gap in `icons.ts`/`references.ts` left for later.
 
-**Resolution:** `computeMatchIds` now overrides the searchable element's `details` field to a truthy placeholder whenever a live shadow exists for that node, even if `data.details` itself is still unset. The placeholder's exact value never matters — the `readDetails` callback already checks the shadow first and ignores the path argument entirely once one exists — it only needs to be truthy so `elementMatchesViaDetails`'s gate (and the `has:details` facet) see the note as present. A saved diagram was unaffected either way, which is why the user's own re-test against saved diagrams worked before this fix.
+**References:** [ADR 0097](decisions/0097-deep-search-across-linked-diagrams.md), `src/shared/search.ts`
 
-**Also fixed in the same pass, spotted while investigating:** `src/main/details.ts`'s `details:read`/`details:readWithStamp` handlers resolved a stored path with a plain `join(dirname(diagramPath), relativePath)` instead of the shared `resolveLinkPath` (`src/main/linkPaths.ts`) every other reader is supposed to share — missed an absolute-path check and backslash-splitting for a path written on Windows and read back on Linux. Didn't cause this particular symptom (ordinary Windows relative forward-slash paths still resolved fine) but was a real, confirmed divergence from the project's own documented single-source-of-truth rule for this. `src/main/icons.ts` and `src/main/references.ts` have a milder version of the same gap (inline backslash-splitting but no absolute-path check) — flagged, not fixed here, to keep this change narrowly scoped.
+---
 
-**References:** `src/renderer/src/Canvas.tsx`'s `computeMatchIds`/`openDetailsPanel`/`noteShadowsRef`, `src/shared/search.ts`'s `elementMatchesViaDetails`, `src/main/details.ts`, `src/main/linkPaths.ts`'s `resolveLinkPath`, [ADR 0097](decisions/0097-deep-search-across-linked-diagrams.md), [epic 0087](planning/epics/completed/0087-detail-file-naming.md) (sync-on-save naming)
+## Save could copy and delete files outside the diagram's folder, driven by a path in a shared `.chd`
+
+**Status:** Solved (found 2026-10-17, during the pre-release security pass; not exploited anywhere)
+
+**Symptom (found by reading, then reproduced with failing tests):** a node's `details` path is plain text. If it was `../../Documents/report.docx`, the next Save treated the note as "renamed", copied that file into the notes folder, then deleted the original.
+
+**Cause:** the multi-file save executor joined stored paths onto the diagram's folder with `join()`, which resolves `..`; nothing checked containment.
+
+**Fix:** `containedPath()` refuses absolute paths, climbing `..` and drive-relative or stream paths on Windows; `executeSave` uses it for every copy-from, write and delete. Read-only handlers were left alone (they only display content, and the app is offline).
+
+**Precedent:** any code that writes, copies from or deletes a path read out of a file must contain it. Not covered: symbolic links inside the folder that point outside.
+
+**References:** [ADR 0115](decisions/0115-paths-stored-in-diagrams-are-untrusted.md), `src/main/containedPath.ts`
+
+---
+
+## A link in a note navigated the app window to a remote page that had the file-access API
+
+**Status:** Solved (found 2026-10-16, same pass)
+
+**Cause:** the details panel renders Markdown links as plain anchors, and the app window has `window.api` (file access over IPC) exposed by its preload; dropping a file onto the window had the same shape.
+
+**Fix:** a navigation guard cancels any navigation away from the app's page and hands web and mail links to the user's browser; the preload is sandboxed and no longer exposes generic IPC ([ADR 0112](decisions/0112-electron-hardening-sandbox-and-navigation.md)).
+
+---
+
+## The app resolved the host `wpad` on every start, with no request of its own
+
+**Status:** Solved (found 2026-10-16, same pass)
+
+**Cause:** Chromium's proxy auto-detection runs at startup by default; a grep for network calls could never have found it.
+
+**Fix:** the `no-proxy-server` switch, a session policy cancelling every non-local request, and a test that fails if a network API enters the code ([ADR 0113](decisions/0113-enforced-offline-behaviour.md)). To re-measure: run the app with `--log-net-log=<file> --net-log-capture-mode=Everything` and look for `"url"` or `"host"` entries.
+
+---
+
+## Property panel shows blank fields for style values that are unset
+
+**Status:** Solved (2026-10-17, ADR 0117), verified in the packaged app
+
+**Symptom:** an element with no explicit style showed empty colour, width and font fields, as if it had no colour or border.
+
+**Cause:** the panel read only the stored style; the built-in default look lived in CSS and in constants inside the edge component, where the panel could not see it.
+
+**Fix:** the built-in default look is now data ([ADR 0117](decisions/0117-built-in-style-defaults-are-data.md)), read by the panel, by the CSS through generated custom properties, and by the edge and line components. The drawn look is unchanged (51 of 52 measured properties identical, the 52nd a flaw in the old baseline).
+
+---
+
+## A pasted element landed to the right of centre, by roughly half its size plus the dock
+
+**Status:** Solved (2026-10-17), measured in the running app
+
+**Cause, three stacking effects:** `remapForPaste` put the group's top-left corner on the paste point instead of centring it (off by half the element's size); the paste point was the centre of the whole window rather than of the canvas, which is narrower because of the dock; and a paste selects its result, which swaps the narrow palette dock (96 px) for the properties panel (260 px) and shrinks the canvas from the right.
+
+**Fix:** `remapForPaste` centres the group's bounding box; the point is the centre of the canvas as it will be with the properties panel open (`visibleCanvasCenter`, reading the width from `--dock-properties-width`). Measured in the packaged build: offset 0, 0.
+
+**References:** `src/renderer/src/clipboard.ts`, `src/renderer/src/Canvas.tsx` (`visibleCanvasCenter`)

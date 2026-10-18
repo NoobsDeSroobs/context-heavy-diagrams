@@ -39,7 +39,7 @@ async function listFiles(dir: string, prefix = ''): Promise<string[]> {
 // there is no stable path to point at.
 function cliNote(cliPath: string | undefined): string {
   if (!cliPath) return ''
-  return `The Context-Heavy Diagram Tool app also installs a command-line tool that needs no Node install. It does the same checks as the script above, and can print the full format reference:
+  return `The Context Heavy Diagrams app also installs a command-line tool that needs no Node install. It does the same checks as the script above, and can print the full format reference:
 
 \`\`\`bash
 "${cliPath}" validate path/to/diagram.chd

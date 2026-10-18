@@ -20,4 +20,4 @@ A constant top-level `"$comment"` line, emitted first by the serializer, pointin
 - `serializeDiagram` ([diagram.ts](../../../../src/shared/diagram.ts)) builds objects from a fixed key order and known fields, so the serializer must emit the constant itself — a hand-added `$comment` would otherwise be dropped on save. The loader only checks `version`/`nodes`/`edges`, so reading is already compatible.
 - Cost: one line per file; must be a stable constant so diffs never show noise. Touches `docs/file-format.md` (optional, ignorable field).
 - A URL only helps if the AI can fetch it — hence the other legs of epic 0133. Whether to embed a summary vs. just a pointer is open.
-- Interacts with [epic 0115](../0115-file-app-version-compatibility-and-data-loss-safety.md) (unknown-field preservation / app-version stamping) — design the two together if this is picked up.
+- Interacts with [epic 0115](../../completed-epics.md#0115-fileapp-version-compatibility-and-data-loss-safety) (unknown-field preservation / app-version stamping) — design the two together if this is picked up.

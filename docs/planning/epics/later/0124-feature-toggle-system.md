@@ -18,7 +18,7 @@ harder either."
 - What is a "feature" — a menu entry, a dock panel, a mode, a palette category?
 - Off = hidden UI only, or also inert data (a diagram containing security data
   opened by a user with that feature off must still round-trip losslessly — cf.
-  [epic 0115](../0115-file-app-version-compatibility-and-data-loss-safety.md)).
+  [epic 0115](../../completed-epics.md#0115-fileapp-version-compatibility-and-data-loss-safety)).
 - Registry-based (features declare themselves) vs scattered `if (pref)` checks.
-  Same registry idea as [epic 0120](../completed/0120-help-keyboard-shortcuts-page.md).
+  Same registry idea as [epic 0120](../../completed-epics.md#0120-help--keyboard-shortcuts--gestures-page).
 - Should new features default on or off?

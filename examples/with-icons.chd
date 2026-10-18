@@ -3,7 +3,7 @@
   "nodes": [
     {
       "id": "shape-1",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 0,
         "y": 0
@@ -24,7 +24,7 @@
     },
     {
       "id": "shape-2",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 220,
         "y": 0

@@ -5,8 +5,12 @@ import assert from 'node:assert/strict'
 import { parseInstallOptions } from './installOptions.ts'
 
 test('reads the AI-features choice in either direction', () => {
-  assert.deepEqual(parseInstallOptions('{ "aiFeaturesEnabled": false }'), { aiFeaturesEnabled: false })
-  assert.deepEqual(parseInstallOptions('{ "aiFeaturesEnabled": true }'), { aiFeaturesEnabled: true })
+  assert.deepEqual(parseInstallOptions('{ "aiFeaturesEnabled": false }'), {
+    aiFeaturesEnabled: false
+  })
+  assert.deepEqual(parseInstallOptions('{ "aiFeaturesEnabled": true }'), {
+    aiFeaturesEnabled: true
+  })
 })
 
 test('tolerates the CRLF line ending the installer writes', () => {
@@ -16,7 +20,10 @@ test('tolerates the CRLF line ending the installer writes', () => {
 })
 
 test('ignores unknown fields and wrongly typed values', () => {
-  assert.deepEqual(parseInstallOptions('{ "aiFeaturesEnabled": "no", "recentDiagramsLimit": 1 }'), {})
+  assert.deepEqual(
+    parseInstallOptions('{ "aiFeaturesEnabled": "no", "recentDiagramsLimit": 1 }'),
+    {}
+  )
   assert.deepEqual(parseInstallOptions('{ "somethingElse": true }'), {})
 })
 

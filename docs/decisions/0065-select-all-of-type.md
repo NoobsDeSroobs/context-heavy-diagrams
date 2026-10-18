@@ -11,7 +11,7 @@ Select-all-of-type left two real questions open: where the trigger lives, and ho
 
 **Trigger: a "Select all X" item in each type's own right-click context menu**, not a top menu-bar item. `MenuBar` has no submenu support yet (a real gap, noted independently elsewhere), which rules out a clean `Edit → Select All → Shapes/Containers/.../Edges` submenu without first building that infrastructure. A per-type context-menu entry needs no new UI surface at all — every node type and edges already have their own right-click menu — and it's exactly where the user's own framing pointed ("select all edges").
 
-**Scope: whole-type only, no finer filtering.** The epic's own open question about narrower scoping (e.g. "all edges with this routing style") is left for later if it turns out to matter — the base case (every shape, every edge, etc.) covers the motivating use case (a bulk style change across everything of one kind).
+**Scope: whole-type only, no finer filtering.** The open question about narrower scoping (e.g. "all edges with this routing style") is left for later if it turns out to matter — the base case (every shape, every edge, etc.) covers the motivating use case (a bulk style change across everything of one kind).
 
 **Lines are the one exception to "menu item on the element itself."** Right-clicking a `LineNode`'s own body doesn't open a menu at all today — it immediately adds a bend point (`onPathContextMenu`), an established, presumably-valued shortcut. Adding a menu there would change that existing behavior. Instead, "Select all lines" lives in the *per-point* context menu (gravity presets, "Remove point") — still a real right-click menu on a line element, just reached via one of its points rather than its body.
 
@@ -24,7 +24,7 @@ One implementation wrinkle: `selectAllOfType` had to be declared *before* `onEdg
 ## Alternatives considered
 
 - **Top menu-bar item under Edit** — rejected for now; blocked on `MenuBar` submenu support that doesn't exist yet, and building that just for this would be a much larger lift than the feature itself warrants.
-- **Finer scope filtering** (by routing style, by tag, etc.) — rejected for V1, logged as a possible future refinement in the epic doc, not designed.
+- **Finer scope filtering** (by routing style, by tag, etc.) — rejected for V1, a possible future refinement, not designed.
 - **A menu on right-clicking a line's own body** — rejected to avoid changing the existing add-point-on-right-click behavior there.
 
 ## Consequences

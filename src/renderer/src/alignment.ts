@@ -18,7 +18,14 @@ export interface Bounds {
 }
 
 export function boundsFrom(x: number, y: number, width: number, height: number): Bounds {
-  return { left: x, right: x + width, top: y, bottom: y + height, centerX: x + width / 2, centerY: y + height / 2 }
+  return {
+    left: x,
+    right: x + width,
+    top: y,
+    bottom: y + height,
+    centerX: x + width / 2,
+    centerY: y + height / 2
+  }
 }
 
 export interface SnapResult {

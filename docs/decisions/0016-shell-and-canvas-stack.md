@@ -14,7 +14,7 @@ This is the author's first GUI/desktop project (experienced backend/server devel
 - **Hand-rolled canvas rendering** (raw `<canvas>` or a lower-level rendering library instead of React Flow): not seriously considered — would mean building pan/zoom, drag, edge-routing, and hit-testing from scratch, all with no prior frontend experience to draw on. React Flow's node-as-component model was the specific feature that made the rest of the stack tractable.
 
 ## Consequences
-- Every custom node/edge (`ShapeNode`, `TextNode`, `ContainerNode`, `AnchorNode`, `LabeledEdge`) is a plain React component — this is *why* features like icon slots, editable labels, and per-node context menus were straightforward additions rather than custom-render code.
+- Every custom node/edge (`ShapeNode`, `TextNode`, `ContainerNode`, `LabeledEdge`, and the since-removed `AnchorNode`) is a plain React component — this is *why* features like icon slots, editable labels, and per-node context menus were straightforward additions rather than custom-render code.
 - Containers ([ADR 0012](0012-container-node-design.md)) build directly on React Flow's native parent/child node relationships rather than a bespoke grouping mechanism.
 - Persistence is plain files via Electron's `fs`/native dialogs — no database, no server, consistent with the brief's explicit non-goals.
 - Ties the project to Electron's packaging/update story (`electron-builder`, code signing eventually) and to whatever React Flow does/doesn't support going forward (e.g. rotated-node edge-attachment math, [ADR 0004](0004-shape-text-node-split.md)) — a real constraint every subsequent node-type decision has had to design around.

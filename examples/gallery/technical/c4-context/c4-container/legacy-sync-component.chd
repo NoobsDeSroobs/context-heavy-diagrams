@@ -25,7 +25,7 @@
     },
     {
       "id": "booking-api",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": -650,
         "y": -20
@@ -75,7 +75,7 @@
     },
     {
       "id": "inventory-request-handler",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 30,
         "y": 90
@@ -100,7 +100,7 @@
     },
     {
       "id": "legacy-protocol-adapter",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 270,
         "y": 90
@@ -125,7 +125,7 @@
     },
     {
       "id": "ext-legacy-mainframe",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 364.7215833612949,
         "y": -20

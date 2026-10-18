@@ -1,9 +1,29 @@
 # Examples
 
-Real, working diagram files, kept as manual regression fixtures and as a starting point for anyone trying the tool out. Each is a single `.chd` file (plain JSON underneath) — see [docs/decisions/0005-diagram-identity-and-linking.md](../docs/decisions/0005-diagram-identity-and-linking.md) for the file model. An example only gets a sibling folder (`<name>/assets/`, `<name>/details/`) once it actually demonstrates a feature that needs one.
+Real, working diagram files. Open any of them with **File → Open** (or drop it onto the window). Each is a single `.chd` file, which is plain JSON (see [`docs/file-format.md`](../docs/file-format.md)). A diagram that uses a feature needing extra files (notes, linked diagrams, images) keeps them in a sibling folder named after it (`<name>/details/`, `<name>/assets/`).
 
-- **`hello-world.chd`** — the minimal case: two nodes, one edge. Proves save/load round-trips correctly.
-- **`with-icons.chd`** — two shapes with built-in corner icons (epic 0007).
-- **`with-metadata.chd`** — a diagram-level `requiredTags` template plus one required tag and one free tag on a node (epic 0034/ADR 0022).
+## Start here
 
-These three are minimal regression fixtures, not a feature showcase — a real gallery (containers, linked diagrams, highlights, multi-view compliance overlays, one per architect discipline) is [`gallery/`](gallery/README.md), tracked by [epic 0022](../docs/planning/epics/0022-example-diagram-gallery.md). The two purposes (round-trip fixtures here vs. a showcase there) are kept separate on purpose. As of 2026-08-20 the gallery is a domain-folder skeleton only — no `.chd` files built yet, see its own README for the current plan.
+| File | What it shows |
+|---|---|
+| [`hello-world.chd`](hello-world.chd) | The smallest diagram: two entities and one edge. |
+| [`with-icons.chd`](with-icons.chd) | Two entities with built-in corner icons. |
+| [`with-metadata.chd`](with-metadata.chd) | A diagram-level required-tag template, one required tag and one free tag on an entity. |
+
+These three also serve as round-trip fixtures: the app must open and re-save them without changing their meaning.
+
+## The gallery
+
+[`gallery/`](gallery/README.md) is a broader set built around one fictional rail operator, "Meridian Rail", showing how the tool holds up for different kinds of architecture work:
+
+| Open this | To see |
+|---|---|
+| [`gallery/landscape/meridian-rail-landscape.chd`](gallery/landscape/meridian-rail-landscape.chd) | A full as-is IT landscape of about 70 services, tagged for GDPR and NIS2 so you can switch highlight overlays on and off. |
+| [`gallery/landscape/meridian-rail-landscape-layered.chd`](gallery/landscape/meridian-rail-landscape-layered.chd) | A prototype of the same estate as a drill-down: Ctrl/Cmd-click the Ticketing & Booking domain to open its services, then one service's AWS deployment. |
+| [`gallery/technical/c4-context.chd`](gallery/technical/c4-context.chd) | A C4 drill-down: Context, then Container, then seven Component diagrams, all linked. |
+| [`gallery/technical/security-rollup.chd`](gallery/technical/security-rollup/README.md) | A security matrix whose scores roll up through three layers of linked diagrams. |
+| [`gallery/business/customer-journey.chd`](gallery/business/customer-journey.chd) | Edges as a sequence rather than a hierarchy. |
+| [`gallery/organisation/motivation-goals.chd`](gallery/organisation/motivation-goals.chd) | A motivation view, with substantial Markdown notes on every node. |
+| [`gallery/data/star-schema-powerbi.chd`](gallery/data/star-schema-powerbi.chd) | A Power BI star schema using multi-line labels and crow's-foot markers. |
+
+Everything in the gallery is fictional content, written to find where the tool's flexibility holds up and where it breaks down.

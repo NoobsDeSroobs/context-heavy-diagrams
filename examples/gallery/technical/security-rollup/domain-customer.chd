@@ -19,7 +19,7 @@
         "name": "Supply chain compromise"
       }
     ],
-    "matrixShapeIds": [
+    "matrixEntityIds": [
       "svc-identity",
       "svc-profile",
       "svc-notifications"
@@ -52,7 +52,7 @@
     },
     {
       "id": "svc-identity",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 0,
         "y": 0
@@ -74,7 +74,7 @@
     },
     {
       "id": "svc-profile",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 300,
         "y": 0
@@ -96,7 +96,7 @@
     },
     {
       "id": "svc-notifications",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 600,
         "y": 0

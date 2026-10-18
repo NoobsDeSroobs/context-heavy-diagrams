@@ -32,7 +32,7 @@ no repo).
   replaced — the skill folder wholesale, so files removed in a newer version
   don't linger — which doubles as the "update after an app upgrade" path: run
   the menu item again.
-- **The validator is now Node** (`scripts/validate_chd.mjs`, no dependencies;
+- **The validator is now Node** (`resources/ai/skills/chd-diagrams/scripts/validate_chd.mjs`, no dependencies;
   the Python script is deleted). The skill and `AGENTS.md` say to skip it and
   check by hand if `node` is missing. Group D's `chd validate` will make it
   runnable without a system Node.

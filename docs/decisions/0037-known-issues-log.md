@@ -12,7 +12,7 @@ Neither is optimized for "does this look familiar?" — a symptom-first, cross-e
 
 ## Decision
 A single file, `docs/known-issues.md`, not a directory of one-per-bug files (unlike ADRs/epics) — bug write-ups here are meant to be short enough that one flat, searchable/greppable file stays usable, and the user asked for "a file," not a directory. Each entry:
-- **Status**: `Solved`, `Worked around`, or `Open` (with a documented direction to revisit, not just "known and ignored").
+- **Status**: `Solved`, `Worked around`, `Closed` (investigated, not a defect to fix) or `Open` (with a documented direction to revisit, not just "known and ignored").
 - Symptom, root cause (often the interesting part — many of these turned out not to be what they first looked like), and resolution.
 - Links back to the epic/ADR/source file where the real detail lives — this file is a lookup index and summary, not a duplicate of the full investigation.
 

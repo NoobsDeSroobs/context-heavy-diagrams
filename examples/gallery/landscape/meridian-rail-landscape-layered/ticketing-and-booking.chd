@@ -127,7 +127,7 @@
     },
     {
       "id": "svc-ticket-issuance-api",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 0,
         "y": 200
@@ -165,7 +165,7 @@
     },
     {
       "id": "svc-multi-leg-journey-planner",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 0,
         "y": 0
@@ -203,7 +203,7 @@
     },
     {
       "id": "svc-promotions-discounts",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 0,
         "y": 100
@@ -241,7 +241,7 @@
     },
     {
       "id": "svc-refund-processing",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 0,
         "y": 340
@@ -279,7 +279,7 @@
     },
     {
       "id": "svc-booking-session-manager",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 280,
         "y": 200.00000000000003
@@ -330,7 +330,7 @@
     },
     {
       "id": "svc-fare-calculation-engine",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 550,
         "y": 60
@@ -385,7 +385,7 @@
     },
     {
       "id": "svc-seat-reservation",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 550,
         "y": 200.00000000000003

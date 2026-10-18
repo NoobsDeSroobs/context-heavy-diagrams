@@ -89,8 +89,14 @@ body {
   width: 96px;
 }
 
+/* A variable (not a bare number) so Canvas.tsx can ask how wide the canvas will be
+   once a selection swaps the palette for this panel (see visibleCanvasCenter). */
+:root {
+  --dock-properties-width: 260px;
+}
+
 .diagram-dock-properties {
-  width: 260px;
+  width: var(--dock-properties-width);
 }
 
 .toolbar {
@@ -320,9 +326,11 @@ body {
   width: 100%;
   height: 100%;
   box-sizing: border-box;
-  border: 1.5px solid var(--ev-c-gray-1);
+  /* The default look comes from styleDefaults.ts via CSS variables set at startup
+     (applyDefaultStyleVars, ADR 0117); an element's own style overrides it inline. */
+  border: var(--default-entity-stroke-width) solid var(--default-entity-stroke);
   border-radius: 6px;
-  background: var(--color-background-soft);
+  background: var(--default-entity-fill);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -383,9 +391,10 @@ body {
 }
 
 .entity-node-label {
-  font-size: 13px;
-  color: var(--color-text);
-  text-align: center;
+  font-size: var(--default-entity-font-size);
+  color: var(--default-entity-font-color);
+  font-weight: var(--default-entity-font-weight);
+  text-align: var(--default-entity-text-align);
   overflow-wrap: anywhere;
 }
 
@@ -394,9 +403,9 @@ body {
   width: 100%;
   height: 100%;
   box-sizing: border-box;
-  border: 1.5px dashed var(--ev-c-gray-1);
+  border: var(--default-container-stroke-width) dashed var(--default-container-stroke);
   border-radius: 6px;
-  background: transparent;
+  background: var(--default-container-fill);
   padding: 4px 8px;
 }
 
@@ -404,8 +413,10 @@ body {
   position: absolute;
   top: 4px;
   left: 8px;
-  font-size: 12px;
-  color: var(--color-text);
+  font-size: var(--default-container-font-size);
+  color: var(--default-container-font-color);
+  font-weight: var(--default-container-font-weight);
+  text-align: var(--default-container-text-align);
 }
 
 /* Connection handles stay hidden until the node itself is hovered, then all
@@ -518,8 +529,9 @@ body {
      but valid on text nodes) has a border-style to actually render against;
      border-width 0 keeps it invisible until a style override sets one. */
   border-style: solid;
-  border-color: transparent;
-  border-width: 0;
+  border-color: var(--default-text-stroke);
+  border-width: var(--default-text-stroke-width);
+  background: var(--default-text-fill);
 }
 
 .text-node.rotating {
@@ -527,9 +539,10 @@ body {
 }
 
 .text-node-label {
-  font-size: 13px;
-  color: var(--color-text);
-  text-align: center;
+  font-size: var(--default-text-font-size);
+  color: var(--default-text-font-color);
+  font-weight: var(--default-text-font-weight);
+  text-align: var(--default-text-text-align);
   overflow-wrap: anywhere;
   padding: 8px;
   box-sizing: border-box;
@@ -663,8 +676,8 @@ body {
 }
 
 .edge-label-text {
-  font-size: 12px;
-  color: var(--color-text);
+  font-size: var(--default-edge-label-font-size);
+  color: var(--default-edge-label-font-color);
   text-align: center;
   background: transparent;
   border: 1px solid transparent;
@@ -1244,6 +1257,20 @@ body {
 
 .property-set-default:hover {
   background: var(--ev-button-alt-hover-bg);
+}
+
+/* "Copy style" and "Set as default style" share one row at the top of the panel;
+   wraps onto a second line only if the panel is ever too narrow for both. */
+.property-style-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 8px 0;
+}
+
+.property-style-actions > button {
+  margin: 0;
+  align-self: auto;
 }
 
 .property-section-header {

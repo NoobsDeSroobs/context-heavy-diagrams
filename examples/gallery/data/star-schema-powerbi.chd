@@ -6,8 +6,8 @@
     "model": "star schema — 1 fact, 5 conformed dimensions"
   },
   "legend": [
-    { "id": "lg-fact", "kind": "shape", "label": "Fact table (grain: one ticket line sold)", "color": "#1d4ed8" },
-    { "id": "lg-dim", "kind": "shape", "label": "Dimension table", "color": "#cbd5e1" }
+    { "id": "lg-fact", "kind": "entity", "label": "Fact table (grain: one ticket line sold)", "color": "#1d4ed8" },
+    { "id": "lg-dim", "kind": "entity", "label": "Dimension table", "color": "#cbd5e1" }
   ],
   "edgeDirectionSets": [
     {
@@ -35,7 +35,7 @@
     },
     {
       "id": "fact_ticket_sales",
-      "type": "shape",
+      "type": "entity",
       "position": { "x": 0, "y": 0 },
       "size": { "width": 300, "height": 262 },
       "style": { "fill": "#1d4ed8", "stroke": "#1e3a8a", "strokeWidth": 2, "fontColor": "#ffffff", "fontSize": 12, "textAlign": "start", "fontFamily": "monospace" },
@@ -50,7 +50,7 @@
     },
     {
       "id": "dim_date",
-      "type": "shape",
+      "type": "entity",
       "position": { "x": 35, "y": -300 },
       "size": { "width": 230, "height": 196 },
       "style": { "fill": "#e2e8f0", "stroke": "#94a3b8", "strokeWidth": 2, "fontColor": "#1e293b", "fontSize": 12, "textAlign": "start", "fontFamily": "monospace" },
@@ -60,7 +60,7 @@
     },
     {
       "id": "dim_route",
-      "type": "shape",
+      "type": "entity",
       "position": { "x": 470, "y": -30 },
       "size": { "width": 250, "height": 182 },
       "style": { "fill": "#e2e8f0", "stroke": "#94a3b8", "strokeWidth": 2, "fontColor": "#1e293b", "fontSize": 12, "textAlign": "start", "fontFamily": "monospace" },
@@ -70,7 +70,7 @@
     },
     {
       "id": "dim_station",
-      "type": "shape",
+      "type": "entity",
       "position": { "x": 430, "y": 400 },
       "size": { "width": 230, "height": 164 },
       "style": { "fill": "#e2e8f0", "stroke": "#94a3b8", "strokeWidth": 2, "fontColor": "#1e293b", "fontSize": 12, "textAlign": "start", "fontFamily": "monospace" },
@@ -80,7 +80,7 @@
     },
     {
       "id": "dim_passenger",
-      "type": "shape",
+      "type": "entity",
       "position": { "x": -470, "y": 410 },
       "size": { "width": 250, "height": 182 },
       "style": { "fill": "#e2e8f0", "stroke": "#94a3b8", "strokeWidth": 2, "fontColor": "#1e293b", "fontSize": 12, "textAlign": "start", "fontFamily": "monospace" },
@@ -91,7 +91,7 @@
     },
     {
       "id": "dim_channel",
-      "type": "shape",
+      "type": "entity",
       "position": { "x": -480, "y": -20 },
       "size": { "width": 230, "height": 146 },
       "style": { "fill": "#e2e8f0", "stroke": "#94a3b8", "strokeWidth": 2, "fontColor": "#1e293b", "fontSize": 12, "textAlign": "start", "fontFamily": "monospace" },

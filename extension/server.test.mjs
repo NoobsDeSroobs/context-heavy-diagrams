@@ -46,7 +46,9 @@ async function exercise(entry) {
         'read_file',
         'validate_diagram'
       ])
-      const read = JSON.parse(textOf(await client.callTool({ name: 'read_file', arguments: { path: 'a.chd' } })))
+      const read = JSON.parse(
+        textOf(await client.callTool({ name: 'read_file', arguments: { path: 'a.chd' } }))
+      )
       assert.equal(read.content, VALID)
       const spec = await client.callTool({ name: 'get_format_spec', arguments: {} })
       assert.match(textOf(spec), /# \.chd diagram format/)

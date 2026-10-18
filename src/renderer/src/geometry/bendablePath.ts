@@ -149,8 +149,18 @@ export function nearestSegmentIndex(points: PathPoint[], click: { x: number; y: 
 // or handle hit-target padding, callers add their own margin (see
 // LineNode's LINE_BOUNDS_PADDING). 'line' nodes only; an edge has no
 // bounding box of its own to maintain.
-export function pointsBoundingBox(points: LinePoint[]): { minX: number; minY: number; maxX: number; maxY: number } {
+export function pointsBoundingBox(points: LinePoint[]): {
+  minX: number
+  minY: number
+  maxX: number
+  maxY: number
+} {
   const xs = points.map((p) => p.x)
   const ys = points.map((p) => p.y)
-  return { minX: Math.min(...xs), minY: Math.min(...ys), maxX: Math.max(...xs), maxY: Math.max(...ys) }
+  return {
+    minX: Math.min(...xs),
+    minY: Math.min(...ys),
+    maxX: Math.max(...xs),
+    maxY: Math.max(...ys)
+  }
 }

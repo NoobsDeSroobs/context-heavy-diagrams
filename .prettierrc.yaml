@@ -2,3 +2,6 @@ singleQuote: true
 semi: false
 printWidth: 100
 trailingComma: none
+# Accept whichever line ending the checkout has: Windows with core.autocrlf checks
+# files out as CRLF, and the default (lf) flagged every line of every file.
+endOfLine: auto

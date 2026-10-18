@@ -6,6 +6,7 @@ import icon from '../../resources/icon.png?asset'
 import { deleteRecoverySnapshot, newSessionId } from './recovery'
 import { readPreferences, updatePreferences } from './appPreferences'
 import { resolveLinkPath } from './linkPaths'
+import { isSafeExternalUrl, isSameDocument } from './navigationGuard'
 
 const FILTERS = [{ name: 'Diagram', extensions: ['chd'] }]
 
@@ -53,7 +54,6 @@ export function registerWindowPath(win: BrowserWindow, path: string): void {
 function findWindowForPath(path: string): BrowserWindow | undefined {
   return windowsByPath.get(normalizePath(path))
 }
-
 
 // Navigates an existing window to a path (re-registers it too) — shared
 // by createWindow's initial load and by reusing an already-open, empty
@@ -108,7 +108,9 @@ export function createWindow(initialPath?: string): BrowserWindow {
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+      // Sandboxed preload: it can only use ipcRenderer/contextBridge/webUtils
+      // (ADR 0112). Clipboard access goes through IPC (main/clipboard.ts).
+      sandbox: true
     }
   })
 
@@ -120,9 +122,18 @@ export function createWindow(initialPath?: string): BrowserWindow {
   })
   attachCloseGuard(win)
 
+  // The window must never show anything but the app's own page: a link in a
+  // note or diagram would otherwise load a remote page in a window that has
+  // `window.api` (file read/write over IPC) exposed. Links go to the user's
+  // browser instead, and only for web/mail URLs (ADR 0112).
   win.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
+    if (isSafeExternalUrl(details.url)) shell.openExternal(details.url)
     return { action: 'deny' }
+  })
+  win.webContents.on('will-navigate', (event, url) => {
+    if (isSameDocument(url, win.webContents.getURL())) return
+    event.preventDefault()
+    if (isSafeExternalUrl(url)) shell.openExternal(url)
   })
 
   if (initialPath) {
@@ -319,25 +330,22 @@ export function registerWindowHandlers(): void {
   // it from the recent list and returns found:false so the renderer can
   // show a brief "not found" notice — no stale entries linger, and no
   // per-menu-open filesystem check is needed.
-  ipcMain.handle(
-    'windows:openRecent',
-    async (event, path: string, callingWindowEmpty: boolean) => {
-      try {
-        await access(path)
-      } catch {
-        const prefs = await readPreferences()
-        if (prefs?.recentDiagrams?.includes(path)) {
-          await updatePreferences({
-            recentDiagrams: prefs.recentDiagrams.filter((p) => p !== path)
-          })
-        }
-        return { found: false as const }
+  ipcMain.handle('windows:openRecent', async (event, path: string, callingWindowEmpty: boolean) => {
+    try {
+      await access(path)
+    } catch {
+      const prefs = await readPreferences()
+      if (prefs?.recentDiagrams?.includes(path)) {
+        await updatePreferences({
+          recentDiagrams: prefs.recentDiagrams.filter((p) => p !== path)
+        })
       }
-      const callingWindow = callingWindowEmpty ? BrowserWindow.fromWebContents(event.sender) : null
-      openOrFocusWindow(path, callingWindow ?? undefined)
-      return { found: true as const }
+      return { found: false as const }
     }
-  )
+    const callingWindow = callingWindowEmpty ? BrowserWindow.fromWebContents(event.sender) : null
+    openOrFocusWindow(path, callingWindow ?? undefined)
+    return { found: true as const }
+  })
 
   // Drag-and-drop a .chd onto a window — paths are already
   // filtered to .chd and resolved to real filesystem paths by the

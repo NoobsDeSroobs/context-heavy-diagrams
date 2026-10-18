@@ -2,7 +2,13 @@ import { useEffect } from 'react'
 import type { EdgeDirectionSet, EdgeDirectionSetStyle } from '@shared/diagram'
 import { useDiagramContext } from '../useDiagramContext'
 import { themeAdaptiveColor } from '../styles/themeAdaptiveColor'
-import { CollapsibleSection, ColorField, NumberField, SelectField, SliderField } from '../panels/fields'
+import {
+  CollapsibleSection,
+  ColorField,
+  NumberField,
+  SelectField,
+  SliderField
+} from '../panels/fields'
 import { LINE_STYLE_OPTIONS, MARKER_OPTIONS } from '../panels/edgeStyleOptions'
 
 interface EdgeDirectionSetStyleEditorProps {
@@ -50,7 +56,9 @@ export default function EdgeDirectionSetStyleEditor({
       style={{ left, top, width: EDITOR_WIDTH }}
     >
       <div className="edge-direction-set-style-editor-head">
-        <span className="edge-direction-set-style-editor-title">Default edge style — {set.name}</span>
+        <span className="edge-direction-set-style-editor-title">
+          Default edge style — {set.name}
+        </span>
         <button type="button" onClick={onClose} aria-label="Close">
           ×
         </button>

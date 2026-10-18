@@ -144,12 +144,12 @@ Per-node `security` map: keys sorted. No `version` bump — purely additive.
   "the property view is already crowded; let us think about how to expose
   it on that side first." v1 has no Property-panel Security section — data
   is entered through the matrix's cell editor, as today. Logged as its own
-  epic.
+  piece of work.
 - **Scale-editing UI** — the scale fields persist and are read, but there's
   no in-app editor for them in v1.
 - **A Preferences-tier default** for scales / methods.
 - **Edge security**, container security.
-- **Recursive rollup across linked diagrams** — [epic 0081](../planning/epics/0081-recursive-matrix-population-and-automation.md),
+- **Recursive rollup across linked diagrams** (see [ADR 0088](0088-recursive-security-matrix-rollup.md)),
   which this ADR unblocks.
 
 ## Alternatives considered

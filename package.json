@@ -1,11 +1,18 @@
 {
-  "name": "context-heavy-diagram-tool",
+  "name": "context-heavy-diagrams",
   "version": "0.2.1",
-  "description": "A context-heavy, boxes-and-arrows-free diagramming tool for IT architecture and information distillation. Early preview build.",
+  "description": "Offline desktop diagramming for IT architecture: git-friendly plain-text diagrams, drill-down linked diagrams, and per-node notes and tags. Early open-source release.",
   "main": "./out/main/index.js",
   "license": "GPL-3.0-or-later",
-  "author": "example.com",
-  "homepage": "https://electron-vite.org",
+  "author": "Magnus Elden",
+  "homepage": "https://github.com/NoobsDeSroobs/context-heavy-diagrams#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NoobsDeSroobs/context-heavy-diagrams.git"
+  },
+  "bugs": {
+    "url": "https://github.com/NoobsDeSroobs/context-heavy-diagrams/issues"
+  },
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint --cache .",
@@ -14,6 +21,7 @@
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
     "test": "node --test \"src/**/*.test.mjs\" \"extension/**/*.test.mjs\"",
     "sync-ai": "node scripts/sync-ai.mjs",
+    "notices": "node scripts/generate-notices.mjs",
     "build:extension": "node scripts/build-extension.mjs",
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
@@ -25,11 +33,9 @@
     "build:linux": "npm run build && electron-builder --linux"
   },
   "dependencies": {
-    "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
     "@tabler/icons": "^3.46.0",
     "@xyflow/react": "^12.11.3",
-    "electron-updater": "^6.3.9",
     "html-to-image": "^1.11.13",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1"
@@ -59,9 +65,9 @@
     "vite": "^7.2.6"
   },
   "allowScripts": {
-    "electron@43.4.0": true,
-    "electron-winstaller@5.4.0": true,
+    "electron-winstaller": false,
     "esbuild@0.25.12": true,
-    "esbuild@0.28.2": true
+    "esbuild@0.28.2": true,
+    "fsevents": false
   }
 }

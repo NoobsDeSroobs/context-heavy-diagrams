@@ -61,7 +61,7 @@
     },
     {
       "id": "client",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 0,
         "y": 0
@@ -89,7 +89,7 @@
     },
     {
       "id": "route53",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 230,
         "y": 0
@@ -117,7 +117,7 @@
     },
     {
       "id": "cloudfront",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 460,
         "y": 0
@@ -145,7 +145,7 @@
     },
     {
       "id": "s3-static",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 800,
         "y": 0
@@ -241,7 +241,7 @@
     },
     {
       "id": "alb",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 30,
         "y": 30
@@ -270,7 +270,7 @@
     },
     {
       "id": "nat-gateway",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 290,
         "y": 30
@@ -322,7 +322,7 @@
     },
     {
       "id": "app-tier",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 30,
         "y": 30
@@ -396,7 +396,7 @@
     },
     {
       "id": "rds",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 30,
         "y": 30
@@ -425,7 +425,7 @@
     },
     {
       "id": "elasticache",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 320,
         "y": 30

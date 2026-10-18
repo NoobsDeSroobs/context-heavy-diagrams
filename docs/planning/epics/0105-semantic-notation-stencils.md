@@ -2,7 +2,7 @@
 
 ## Status
 
-Not Started — scoped out of the [epic 0078](completed/0078-bpmn-as-visual-language-basis.md)
+Not Started — scoped out of the [epic 0078](../completed-epics.md#0078-bpmn-as-a-basis-for-this-apps-visual-language)
 BPMN discussion (2026-08-31), see [ADR 0080](../../decisions/0080-bpmn-as-adopted-vocabulary-not-metamodel.md).
 Not blocked on anything — a stencil is a plain rectangular Shape pre-seeded
 with an icon + label.

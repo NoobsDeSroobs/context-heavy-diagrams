@@ -21,8 +21,10 @@ import { themeAdaptiveColor } from './themeAdaptiveColor'
 export function nodeContainerCss(style: NodeStyle | undefined, theme: Theme): CSSProperties {
   if (!style) return {}
   const css: CSSProperties = {}
-  if (style.fill) css.background = withOpacity(themeAdaptiveColor(style.fill, theme), style.fillOpacity)
-  if (style.stroke) css.borderColor = withOpacity(themeAdaptiveColor(style.stroke, theme), style.strokeOpacity)
+  if (style.fill)
+    css.background = withOpacity(themeAdaptiveColor(style.fill, theme), style.fillOpacity)
+  if (style.stroke)
+    css.borderColor = withOpacity(themeAdaptiveColor(style.stroke, theme), style.strokeOpacity)
   if (style.strokeWidth != null) css.borderWidth = style.strokeWidth
   return css
 }
@@ -31,7 +33,8 @@ export function nodeLabelCss(style: NodeStyle | undefined, theme: Theme): CSSPro
   if (!style) return {}
   const css: CSSProperties = {}
   if (style.fontSize != null) css.fontSize = style.fontSize
-  if (style.fontColor) css.color = withOpacity(themeAdaptiveColor(style.fontColor, theme), style.fontOpacity)
+  if (style.fontColor)
+    css.color = withOpacity(themeAdaptiveColor(style.fontColor, theme), style.fontOpacity)
   if (style.fontWeight) css.fontWeight = style.fontWeight
   if (style.fontFamily) css.fontFamily = style.fontFamily
   if (style.textAlign) css.textAlign = style.textAlign

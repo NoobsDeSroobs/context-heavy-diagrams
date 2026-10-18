@@ -11,6 +11,7 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
 ```json
 {
   "version": 1,
+  "savedWith": "0.2.1",
   "metadata": { "owner": "platform-team" },
   "requiredTags": [
     { "key": "environment", "allowedValues": ["dev", "staging", "prod"], "defaultValue": "dev", "lock": "lockedEditable" }
@@ -41,6 +42,7 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
 | Field | Type | Meaning |
 |---|---|---|
 | `version` | `1` | Format version. Currently always `1`. See Versioning below. |
+| `savedWith` | string | The version of the application that last wrote the file, as three numbers (e.g. `"0.2.1"`), so an older application opening it can warn that saving may lose what it does not understand. Written right after `version`. Only ever raised: an application changes it only when its own version is higher than what is recorded, so saving with the same or an older version leaves it alone. Absent means unknown (files written before the field existed, and files an assistant or another tool created); a reader treats absent, unreadable and equal-or-older values as "nothing to warn about". A tool that writes a diagram should leave an existing `savedWith` untouched; a tool that is not this application should not invent one. See Versioning below. |
 | `metadata` | object | Diagram-level free-form key/value bag — plain JSON values, no locking concept at this level (that's what `requiredTags` is for). Absent means none set. See [Metadata](#metadata) below for the value shape's general rules (this is the same `JsonValue` type, just not wrapped in a per-entry `MetadataEntry`). |
 | `requiredTags` | array of RequiredTagDefinition | The diagram's own template for what every Entity/Container/Edge must carry — see [Required tags](#required-tags) below. Absent means no required tags. |
 | `highlights` | array of HighlightDefinition | Saved catalog of tag-based visual highlights — see [Highlights](#highlights) below. Absent means no highlights defined. Note there is no on/off state stored here: this app treats "which highlights are currently enabled" as local, in-memory, per-session state, never written to the file — a reader that only cares about reading the file back doesn't need to reconstruct or care about that. |
@@ -400,6 +402,12 @@ The `.chd` file itself is always plain, deterministic JSON — kept git-friendly
 **Linked diagrams** are how drill-down navigation works (e.g. Ctrl/Cmd+click in this app): an explicit relative path stored on the node, resolved at use time, never inferred from a naming convention. Links only ever point downward (parent → child) — a child never references its parent — which is what makes any diagram independently openable as its own root. A missing target (a broken link, a diagram shared without its children) is expected to be a recoverable error ("linked diagram not found at `<path>`"), not a hard failure — the diagram containing the broken reference still opens and works. Detail file references follow the same "missing is recoverable" handling already.
 
 ## Versioning
+
+`version` is currently always `1`. Two things carry compatibility information: this format `version` (bumped only for a breaking change) and the `savedWith` application version (see below).
+
+**`savedWith` and the newer-file warning ([ADR 0118](decisions/0118-saved-with-version-marker.md)).** Additive fields mean an older application can open a newer file and silently drop the fields it does not know when it saves. So the application records the version that last wrote the file, and warns when it opens a file whose `savedWith` is **newer than itself**. The comparison uses the whole version (major, minor and patch): a later patch release can change what a file contains just as a later minor can, so there is no "only minor matters" shortcut. Equal, older, absent and unreadable markers never warn. The warning is advisory only; nothing is blocked. A pre-release or build suffix (`1.0.0-beta.2`) is ignored when comparing.
+
+Everything below this point is about the format `version`.
 
 `version` is currently always `1`. Fields have been added over time (`size`, `rotation`, `connectionPoints`, `parentId`, `style` on both Node and Edge, edge `type`/`label`, `data.icons`, `data.details`, `data.linkedDiagram`, top-level `metadata`/`requiredTags`/`highlights`/`legend`, `metadata` on both Node and Edge, Edge style's `labelPosition`, Node's `zIndex`, Node's `locked`, the `"line"` node `type` with its `data.points`, Node style's `lineStyle`/`startMarker`/`endMarker`, top-level `gravityPresets`, Edge style's `routingStyle` with its own `points`, top-level `maxConnectionPointsPerSide`, `data.references`, top-level `edgeDirectionSets` / `activeEdgeDirectionSetId` with each edge's `directionSets`, and top-level `security` with each entity's `data.security`) but always additively — a reader from an earlier point in this project's history can still open a newer file and just won't recognize the newer fields. The same holds in reverse: this app's own current code must still open a file from *before* one of these fields existed, without failing or requiring migration — see [ADR 0029](decisions/0029-backward-compatible-loading-is-a-standing-rule.md), which makes this a standing rule for every future field, not just an incidental property of the fields added so far. A breaking change to the meaning of an existing field would bump `version`; nothing has required that yet.
 

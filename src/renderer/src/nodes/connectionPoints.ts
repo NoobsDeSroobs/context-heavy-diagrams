@@ -160,7 +160,11 @@ export function pointOrdinal(
     effective.filter((p) => p.side === point.side),
     point.side
   )
-  return { side: point.side, ordinal: onSide.findIndex((p) => p.id === pointId) + 1, total: onSide.length }
+  return {
+    side: point.side,
+    ordinal: onSide.findIndex((p) => p.id === pointId) + 1,
+    total: onSide.length
+  }
 }
 
 // The point at the same clockwise ordinal on a given side — clamped to

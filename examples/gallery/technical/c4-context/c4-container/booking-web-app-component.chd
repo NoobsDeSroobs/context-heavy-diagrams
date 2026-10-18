@@ -25,7 +25,7 @@
     },
     {
       "id": "actor-passenger",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": -750,
         "y": -45
@@ -74,7 +74,7 @@
     },
     {
       "id": "ui-layer",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 30,
         "y": 80
@@ -99,7 +99,7 @@
     },
     {
       "id": "local-state-store",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 30,
         "y": 259.63266994857963
@@ -124,7 +124,7 @@
     },
     {
       "id": "booking-client",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 328.5800901402119,
         "y": 80
@@ -149,7 +149,7 @@
     },
     {
       "id": "booking-api",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 240,
         "y": -35

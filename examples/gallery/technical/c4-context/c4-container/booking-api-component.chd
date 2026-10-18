@@ -25,7 +25,7 @@
     },
     {
       "id": "booking-web-app",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": -750,
         "y": -150
@@ -49,7 +49,7 @@
     },
     {
       "id": "staff-portal",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": -750,
         "y": 50
@@ -98,7 +98,7 @@
     },
     {
       "id": "booking-controller",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 40,
         "y": 90
@@ -130,7 +130,7 @@
     },
     {
       "id": "search-reservation-service",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 372.4992927838375,
         "y": 135
@@ -155,7 +155,7 @@
     },
     {
       "id": "orchestration-service",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 382.4992927838375,
         "y": 305
@@ -192,7 +192,7 @@
     },
     {
       "id": "profile-sync-service",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 372.4992927838375,
         "y": 20
@@ -217,7 +217,7 @@
     },
     {
       "id": "platform-database",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 500.00000000000006,
         "y": -211.59963777571727
@@ -241,7 +241,7 @@
     },
     {
       "id": "payment-orchestration",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 500,
         "y": -105
@@ -265,7 +265,7 @@
     },
     {
       "id": "interop-gateway",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 500.00000000000006,
         "y": 356.56799337496085
@@ -289,7 +289,7 @@
     },
     {
       "id": "legacy-sync",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 500,
         "y": 0
@@ -313,7 +313,7 @@
     },
     {
       "id": "notification-service",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 500,
         "y": 110
@@ -337,7 +337,7 @@
     },
     {
       "id": "ext-loyalty-crm",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 500.00000000000006,
         "y": -314.33610899997177

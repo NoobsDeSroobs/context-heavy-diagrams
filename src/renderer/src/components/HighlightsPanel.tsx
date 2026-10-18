@@ -181,7 +181,10 @@ export default function HighlightsPanel({
   const groups = groupByKey(highlights)
 
   return (
-    <div className="highlights-panel nodrag nopan" style={{ left, bottom, width: PANEL_WIDTH, maxHeight }}>
+    <div
+      className="highlights-panel nodrag nopan"
+      style={{ left, bottom, width: PANEL_WIDTH, maxHeight }}
+    >
       <div className="highlights-panel-toolbar">
         <span className="highlights-panel-title">Highlights</span>
         <div className="details-panel-spacer" />
@@ -191,9 +194,10 @@ export default function HighlightsPanel({
       </div>
       <div className="highlights-panel-body">
         <p className="highlights-panel-hint">
-          Each highlight colors every Entity, Container, or Edge tagged with an exact key = value match. A single
-          matching highlight recolors the element&rsquo;s border; two or more show as small color chips instead.
-          Enabled/disabled state isn&rsquo;t saved with the file — everyone starts with highlights off.
+          Each highlight colors every Entity, Container, or Edge tagged with an exact key = value
+          match. A single matching highlight recolors the element&rsquo;s border; two or more show
+          as small color chips instead. Enabled/disabled state isn&rsquo;t saved with the file —
+          everyone starts with highlights off.
         </p>
         {highlights.length === 0 && <p className="highlights-panel-hint">No highlights yet.</p>}
         {[...groups.entries()].map(([key, members]) => {
@@ -214,7 +218,8 @@ export default function HighlightsPanel({
           }
           const memberIds = members.map(highlightId)
           const enabledCount = memberIds.filter((id) => enabledIds.has(id)).length
-          const state = enabledCount === 0 ? 'none' : enabledCount === memberIds.length ? 'all' : 'mixed'
+          const state =
+            enabledCount === 0 ? 'none' : enabledCount === memberIds.length ? 'all' : 'mixed'
           const collapsed = collapsedGroups.has(key)
           return (
             <div key={key} className="highlight-group">
@@ -226,9 +231,16 @@ export default function HighlightsPanel({
                   aria-expanded={!collapsed}
                   title={collapsed ? 'Expand' : 'Collapse'}
                 >
-                  <span className={collapsed ? 'highlight-group-caret' : 'highlight-group-caret open'}>▸</span>
+                  <span
+                    className={collapsed ? 'highlight-group-caret' : 'highlight-group-caret open'}
+                  >
+                    ▸
+                  </span>
                 </button>
-                <GroupCheckbox state={state} onChange={() => onToggleGroup(memberIds, state !== 'all')} />
+                <GroupCheckbox
+                  state={state}
+                  onChange={() => onToggleGroup(memberIds, state !== 'all')}
+                />
                 <span className="highlight-group-title">{key}</span>
                 <button
                   type="button"
@@ -271,7 +283,9 @@ export default function HighlightsPanel({
               autoFocus
             />
             <div className="highlight-add-picker-list">
-              {filteredTags.length === 0 && <p className="highlights-panel-hint">No matching tags.</p>}
+              {filteredTags.length === 0 && (
+                <p className="highlights-panel-hint">No matching tags.</p>
+              )}
               {filteredTags.map((t) => (
                 <button
                   key={highlightId(t)}
@@ -301,7 +315,9 @@ export default function HighlightsPanel({
               autoFocus
             />
             <div className="highlight-add-picker-list">
-              {filteredKeys.length === 0 && <p className="highlights-panel-hint">No matching keys.</p>}
+              {filteredKeys.length === 0 && (
+                <p className="highlights-panel-hint">No matching keys.</p>
+              )}
               {filteredKeys.map((k) => (
                 <button
                   key={k}

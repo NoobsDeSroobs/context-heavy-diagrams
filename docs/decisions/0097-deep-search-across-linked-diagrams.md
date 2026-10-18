@@ -1,7 +1,7 @@
 # 0097: Notes are searched by default; "Deep search" now means drill down into linked diagrams, and the match lands on the linking shape
 
 ## Status
-Decided and implemented (2026-09-21). Typecheck/lint/unit tests pass; not live-tested (Electron renderer). Amends [ADR 0062](0062-search-scope-and-matching.md) (details search was an opt-in "Deep search") and follows up [ADR 0096](0096-search-facets-and-shared-match-predicate.md) (which said the linked-diagram search would reuse its predicate and left "does bare text read notes in linked diagrams" open).
+Accepted (2026-09-21); implemented and live-tested. Amends [ADR 0062](0062-search-scope-and-matching.md) (details search was an opt-in "Deep search") and follows up [ADR 0096](0096-search-facets-and-shared-match-predicate.md) (which said the linked-diagram search would reuse its predicate and left "does bare text read notes in linked diagrams" open).
 
 ## Context
 
@@ -32,7 +32,7 @@ A first cut added a separate "Linked diagrams" toggle and a result list grouped 
 - **Breadth-first instead of depth-first:** rejected. Terms are largely defined by the layer a diagram sits on, and sibling diagrams on one layer share a term pool — so if the first child misses, its siblings probably do too, and the next new terms are more likely one level down. Depth-first is at least as fast, often faster.
 - **A separate result list of matches in other diagrams** (the first cut): rejected by the user — it breaks "search answers in this window" and makes cycling/isolate second-class.
 - **Keep notes opt-in under a "Deep search" box and add a second toggle for linked diagrams:** two switches for one intuitive idea of depth; the user wants one.
-- **Exclude notes in linked diagrams** (the original epic scope, to keep this to locating elements): dropped — the user's example searches notes, and notes are cheap.
+- **Exclude notes in linked diagrams** (the original scope, to keep this to locating elements): dropped — the user's example searches notes, and notes are cheap.
 - **Ancestors / whole colocation folder:** only descendants are reached; links are stored on the parent, so "up" needs a reverse index, and the whole folder is a project grep rather than a drill-down.
 - **Read linked diagrams in the renderer:** would send whole diagrams over IPC just to test them; matching in main keeps the payload to a list of node ids.
 - **Live state of other open windows:** other windows' unsaved edits are not seen (files are read from disk). Accepted; the open diagram, which is what the user is editing, is always live.

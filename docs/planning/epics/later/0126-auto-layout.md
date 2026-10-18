@@ -8,7 +8,7 @@ workable. (Earlier scattered mentions: epics 0011, 0031, 0110.)
 
 ## Goal
 Reposition elements from the connection graph (dagre/elk-style layered layout)
-so bulk-created or LLM-authored diagrams (e.g. [epic 0118](../0118-create-multiple-from-text-list.md), or Claude
+so bulk-created or LLM-authored diagrams (e.g. [epic 0118](../../completed-epics.md#0118-create-multiple-shapescontainers-from-a-pasted-text-list), or Claude
 editing the `.chd` directly) don't need hand-arranging.
 
 ## What would have to be true (the bar to clear)

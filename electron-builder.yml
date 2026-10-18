@@ -1,18 +1,18 @@
-appId: com.contextheavydiagramtool.app
-productName: Context-Heavy Diagram Tool (Preview)
+appId: com.contextheavydiagrams.app
+productName: Context Heavy Diagrams
 directories:
   buildResources: build
 files:
   - '!**/.vscode/*'
   - '!src/*'
   - '!electron.vite.config.{js,ts,mjs,cjs}'
-  - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
+  - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,CHANGELOG.md,README.md}'
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
 asarUnpack:
   - resources/**
 win:
-  executableName: context-heavy-diagram-tool
+  executableName: context-heavy-diagrams
   # chd launcher next to the exe (ADR 0106)
   extraFiles:
     - from: build/launchers/chd.cmd
@@ -36,16 +36,16 @@ mac:
   # open-file event. Icon omitted: reuses the app icon until branding.
   fileAssociations:
     - ext: chd
-      name: Context-Heavy Diagram
-      description: Context-Heavy Diagram
+      name: Context Heavy Diagram
+      description: Context Heavy Diagram
       mimeType: application/vnd.context-heavy-diagram+json
       role: Editor
   entitlementsInherit: build/entitlements.mac.plist
+  # Only what the app really does: open and save diagram files wherever the user
+  # keeps them. No camera or microphone (ADR 0112 also denies every web permission).
   extendInfo:
-    - NSCameraUsageDescription: Application requests access to the device's camera.
-    - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
-    - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
-    - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
+    - NSDocumentsFolderUsageDescription: Context Heavy Diagrams opens and saves your diagram files in your Documents folder.
+    - NSDownloadsFolderUsageDescription: Context Heavy Diagrams opens and saves your diagram files in your Downloads folder.
   notarize: false
 dmg:
   artifactName: ${name}-${version}.${ext}
@@ -54,12 +54,12 @@ linux:
   # (ADR 0108). AppImage cannot register an association by itself.
   fileAssociations:
     - ext: chd
-      name: Context-Heavy Diagram
-      description: Context-Heavy Diagram
+      name: Context Heavy Diagram
+      description: Context Heavy Diagram
       mimeType: application/vnd.context-heavy-diagram+json
       role: Editor
   # Pinned because the chd launcher hardcodes it (same value electron-builder derives from package.json's name).
-  executableName: context-heavy-diagram-tool
+  executableName: context-heavy-diagrams
   # chd launcher next to the executable (ADR 0106)
   extraFiles:
     - from: build/launchers/chd
@@ -68,11 +68,10 @@ linux:
     - AppImage
     - snap
     - deb
-  maintainer: Context-Heavy Diagram Tool (Preview)
+  maintainer: Magnus Elden <5158595+NoobsDeSroobs@users.noreply.github.com>
   category: Utility
 appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
-publish:
-  provider: generic
-  url: https://example.com/auto-updates
+# No `publish` block on purpose: the app has no auto-update and makes no network
+# requests (ADR 0113).

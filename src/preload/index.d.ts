@@ -1,4 +1,3 @@
-import { ElectronAPI } from '@electron-toolkit/preload'
 import type { DiagramFile, RequiredTagDefinition } from '@shared/diagram'
 import type {
   NoteBaseline,
@@ -106,11 +105,11 @@ export interface DiagramApi {
   exportPngToFile(dataUrl: string, suggestedFilename: string): Promise<boolean>
   copyToClipboard(text: string): void
   readClipboardText(): string
+  platform: NodeJS.Platform
 }
 
 declare global {
   interface Window {
-    electron: ElectronAPI
     api: DiagramApi
   }
 }

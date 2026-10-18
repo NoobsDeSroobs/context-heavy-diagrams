@@ -27,8 +27,8 @@ supposed to match.
 
 ## Relevant existing behavior (this is none of it — genuinely new)
 
-- [ADR 0024](../../decisions/0024-propagate-required-tags-to-children.md) /
-  [epic 0035](../completed/0035-propagate-required-tags-to-children.md)
+- [ADR 0024](../../completed-epics.md#0024-multi-diagram-tabs-or-windows) /
+  [epic 0035](../../completed-epics.md#0035-propagate-required-tags-to-linked-children)
   already pushes a `requiredTags` template *down* the link tree, but
   uniformly — the whole template, merged into every child, no per-tag
   opt-out. This epic is about a tag declaring itself "doesn't apply below

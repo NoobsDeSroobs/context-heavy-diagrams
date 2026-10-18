@@ -1,7 +1,7 @@
 # 0094: A command registry behind the keyboard handler, menu accelerators and the Help shortcuts page
 
 ## Status
-Decided and implemented (2026-09-20). Typecheck/lint/unit tests pass; not live-tested (Electron renderer). Linux/Mac display unverified.
+Accepted (2026-09-20); implemented and live-tested on Windows. Linux/Mac display unverified.
 
 ## Context
 

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react'
+import { applyDefaultStyleVars } from './styles/applyDefaultStyleVars'
 
 export type Theme = 'light' | 'dark'
 
@@ -61,5 +62,13 @@ export function useTheme(): { theme: Theme; setTheme: (theme: Theme) => void } {
     setStored(theme)
   }, [])
 
-  return { theme: stored ?? system, setTheme }
+  const theme = stored ?? system
+  // The built-in default look is data (styleDefaults.ts, ADR 0117) handed to the
+  // stylesheet as CSS variables; set before paint so no element ever renders
+  // without them, and again when the theme changes.
+  useLayoutEffect(() => {
+    applyDefaultStyleVars(theme)
+  }, [theme])
+
+  return { theme, setTheme }
 }

@@ -20,8 +20,6 @@ try {
   })
   await server.connect(new StdioServerTransport())
 } catch (error) {
-  console.error(
-    error instanceof ToolError ? `context-heavy-diagrams: ${error.message}` : error
-  )
+  console.error(error instanceof ToolError ? `context-heavy-diagrams: ${error.message}` : error)
   process.exit(1)
 }

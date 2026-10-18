@@ -5,7 +5,7 @@ Accepted (2026-08-30)
 
 ## Context
 
-A user's "Project Overview" diagram surfaced three bugs that share one
+A real-world Azure overview diagram surfaced three bugs that share one
 root theme — a node's `parentId` (the container-nesting link, ADR 0012) drifting
 out of sync with what the user sees, then failing in an opaque way. All three are
 recorded in [docs/known-issues.md](../known-issues.md).
@@ -88,7 +88,7 @@ When a child's absolute bounds extend outside its parent's bounds, add a
 Diagnostics advisory naming both nodes. Do **not** auto-un-parent it: the user
 may have a slightly-overflowing child on purpose, and silently rewriting the
 hierarchy on load is more surprising than a warning. No quick-fix button in this
-epic — the existing detach affordances (drag out, delete container) already
+change — the existing detach affordances (drag out, delete container) already
 cover the manual fix; a one-click fix can be added later if the warning alone
 proves insufficient.
 
@@ -114,7 +114,7 @@ An **indented tree** was the user's first instinct and is the richer display,
 but it breaks the panel's "one flat descending array" model: `reorderZIndex`
 and all the drop-slot geometry assume a flat list, and a tree forces a decision
 on within-siblings vs. cross-group drag (and whether cross-group drag reparents —
-a separate feature). Deferred to its own epic with its own design pass on drag
+a separate feature). Deferred to its own piece of work with its own design pass on drag
 semantics, to be picked up only if the badge proves hard to follow on a
 deeply-nested diagram. The badge is a smaller *complete* thing, not a broken
 compromise.

@@ -61,7 +61,10 @@ function validateCandidate(root, targetAbsolute, rel, content) {
 // Messages carry absolute paths: show diagram-relative ones instead.
 function tidyValidation(root, { errors, warnings }, validatedPath, rel) {
   const tidy = (message) =>
-    message.replaceAll(validatedPath, rel).replaceAll(root + sep, '').replaceAll(root, '.')
+    message
+      .replaceAll(validatedPath, rel)
+      .replaceAll(root + sep, '')
+      .replaceAll(root, '.')
   return {
     ok: errors.length === 0,
     errors: errors.map(tidy),
@@ -95,7 +98,10 @@ export function createTools({ root, allowUpdate, specSources }) {
         }
         const stats = statSync(full)
         files.push({
-          path: full.slice(root.length + 1).split(sep).join('/'),
+          path: full
+            .slice(root.length + 1)
+            .split(sep)
+            .join('/'),
           bytes: stats.size,
           modified: stats.mtime.toISOString(),
           writable: WRITE_EXTENSIONS.has(ext)

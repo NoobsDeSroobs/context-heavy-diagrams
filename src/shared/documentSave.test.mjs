@@ -90,7 +90,14 @@ test('a snapshot round-trip keeps the baseline, so an outside edit is still dete
   const p = planSave({
     hubDirty: false,
     newLocation: false,
-    notes: [{ nodeId: 'n', desiredPath: 'd/details/A-1.md', nodeDetailsPath: 'd/details/A-1.md', shadow: restored }]
+    notes: [
+      {
+        nodeId: 'n',
+        desiredPath: 'd/details/A-1.md',
+        nodeDetailsPath: 'd/details/A-1.md',
+        shadow: restored
+      }
+    ]
   })
   assert.equal(p.ops[0].expectedStamp, 'stamp-7')
 })
@@ -148,7 +155,7 @@ test('a dirty note whose label changed is written to the new name; the old is it
   assert.equal(p.writeHub, true)
 })
 
-test('the shadow\'s original path wins over the diagram\'s (the real file is the identity)', () => {
+test("the shadow's original path wins over the diagram's (the real file is the identity)", () => {
   const shadow = loadedNoteShadow('entity-1', 'd/details/Actual-1.md', 's1', 'a')
   const p = plan([note({ nodeDetailsPath: 'd/details/A-1.md', shadow })])
   assert.equal(p.ops[0].from, 'd/details/Actual-1.md')
@@ -165,7 +172,11 @@ test('Save As / first save: dirty notes go to the new location unchecked; others
   const p = plan(
     [
       note({ shadow: dirty, nodeDetailsPath: 'old/details/A-1.md' }),
-      note({ nodeId: 'entity-2', nodeDetailsPath: 'old/details/B-2.md', desiredPath: 'new/details/B-2.md' })
+      note({
+        nodeId: 'entity-2',
+        nodeDetailsPath: 'old/details/B-2.md',
+        desiredPath: 'new/details/B-2.md'
+      })
     ],
     { newLocation: true, hubDirty: true }
   )
@@ -186,7 +197,14 @@ test('many untouched notes produce no work at all', () => {
 
 // --- resolving conflicts ----------------------------------------------------
 
-const w = (nodeId, from, to) => ({ kind: 'write', nodeId, from, to, content: 'c', expectedStamp: 's' })
+const w = (nodeId, from, to) => ({
+  kind: 'write',
+  nodeId,
+  from,
+  to,
+  content: 'c',
+  expectedStamp: 's'
+})
 const mv = (nodeId, from, to) => ({ kind: 'move', nodeId, from, to })
 
 test('resolve: keep mine for a note conflict just re-sends its write', () => {
@@ -217,7 +235,10 @@ test('resolve: per-file choices are independent', () => {
     [w('a', 'a.md', 'a.md'), w('b', 'b.md', 'b.md'), w('c', 'c.md', 'c.md')],
     { a: 'mine', b: 'disk', c: 'mine' }
   )
-  assert.deepEqual(r.runOps.map((o) => o.nodeId), ['a', 'c'])
+  assert.deepEqual(
+    r.runOps.map((o) => o.nodeId),
+    ['a', 'c']
+  )
   assert.deepEqual(r.adoptDiskNodeIds, ['b'])
 })
 

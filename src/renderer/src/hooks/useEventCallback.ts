@@ -14,9 +14,7 @@ import { useCallback, useEffect, useRef } from 'react'
 //
 // Same ref-in-an-effect shape as useRafThrottledCallback — a ref write
 // during render is disallowed by the react-hooks lint rules.
-export function useEventCallback<A extends unknown[], R>(
-  fn: (...args: A) => R
-): (...args: A) => R {
+export function useEventCallback<A extends unknown[], R>(fn: (...args: A) => R): (...args: A) => R {
   const ref = useRef(fn)
   useEffect(() => {
     ref.current = fn

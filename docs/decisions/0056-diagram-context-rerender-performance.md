@@ -20,7 +20,7 @@ Fixing the first, most obvious cause (memoizing the context value) surfaced two 
 
 ## Alternatives considered
 
-**Throttling/debouncing the color input as the primary fix, before memoizing the context.** Raised early in this epic's discussion and deliberately deferred: it treats one symptom at one call site, doesn't help every other current or future rapid-input field, and (at a fixed delay rather than animation-frame granularity) costs live-preview smoothness the memoization fix doesn't. Used only once the structural fixes above left a genuine, confirmed-live residual cost.
+**Throttling/debouncing the color input as the primary fix, before memoizing the context.** Raised early in the discussion and deliberately deferred: it treats one symptom at one call site, doesn't help every other current or future rapid-input field, and (at a fixed delay rather than animation-frame granularity) costs live-preview smoothness the memoization fix doesn't. Used only once the structural fixes above left a genuine, confirmed-live residual cost.
 
 **Splitting `DiagramContext` into multiple contexts by change frequency** (raised as an open question before this work started). Not needed in the end — moving `selectedEdgeHighlightColor` to a CSS var solved the one field that actually needed this, without adding a second context that every consumer would still need to know about.
 

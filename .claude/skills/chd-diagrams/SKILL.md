@@ -1,6 +1,6 @@
 ---
 name: chd-diagrams
-description: Read, author, and hand-edit .chd files — the JSON-based diagram format used by the "context-heavy diagrams" (chd) tool (nodes: entities/containers/text/freeform lines, edges, metadata/tags, linked drill-down diagrams, custom icons, security matrices). Use this skill whenever a .chd file is opened, referenced, or needs to be created, parsed, or modified — adding/editing shapes or connections, wiring up linked diagrams across files, adding metadata or required-tag templates, fixing broken relative-path references (icons/details/linked diagrams), reasoning about coordinate systems, laying out/arranging a new diagram (spacing, sizing, color restraint, or archetypes like swimlanes/layered architecture/hub-and-spoke), or answering any question about how the format works. Trigger even when the user just says "this diagram," "the .chd file," or names a specific diagram (e.g. an Azure/infra overview) without spelling out the format — and for any project directory that contains .chd files.
+description: Read, author, and hand-edit .chd files — the JSON-based diagram format used by Context Heavy Diagrams (chd) (nodes: entities/containers/text/freeform lines, edges, metadata/tags, linked drill-down diagrams, custom icons, security matrices). Use this skill whenever a .chd file is opened, referenced, or needs to be created, parsed, or modified — adding/editing shapes or connections, wiring up linked diagrams across files, adding metadata or required-tag templates, fixing broken relative-path references (icons/details/linked diagrams), reasoning about coordinate systems, laying out/arranging a new diagram (spacing, sizing, color restraint, or archetypes like swimlanes/layered architecture/hub-and-spoke), or answering any question about how the format works. Trigger even when the user just says "this diagram," "the .chd file," or names a specific diagram (e.g. an Azure/infra overview) without spelling out the format — and for any project directory that contains .chd files.
 ---
 
 # .chd diagram format
@@ -33,7 +33,7 @@ Missing targets are meant to be recoverable, not fatal — the app shows "not fo
 
 ## Reading a file: mental model
 
-- Top-level object has `version`, `viewport` (cosmetic camera position, ignore for meaning), optional `metadata`/`requiredTags`/`highlights`/`legend`/`gravityPresets`/`edgeDirectionSets`/`security`, and the two arrays that matter: `nodes` and `edges`.
+- Top-level object has `version`, optional `savedWith` (the app version that last saved the file: **leave it untouched, never invent one**), `viewport` (cosmetic camera position, ignore for meaning), optional `metadata`/`requiredTags`/`highlights`/`legend`/`gravityPresets`/`edgeDirectionSets`/`security`, and the two arrays that matter: `nodes` and `edges`.
 - **Coordinate systems differ by context** — get this wrong and every position calculation is wrong:
   - A top-level node's `position` is absolute canvas coordinates.
   - A node with `parentId` set has `position` relative to *its parent's own top-left corner*, not the canvas.

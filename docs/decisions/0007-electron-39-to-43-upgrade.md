@@ -29,5 +29,5 @@ Audited manually against Electron's breaking-changes notes for 40/41/42/43 first
 
 ## Consequences
 - `npm install` alone still fully provisions a dev environment (via the updated `postinstall`), so [README.md](../../README.md)'s setup instructions don't need to change.
-- Open/save/icon-picker dialogs no longer remember the last-used directory (default to Downloads instead) until we explicitly pass a remembered `defaultPath` to `dialog.showOpenDialog`/`showSaveDialog`. Worth a small follow-up task at some point — not urgent enough to block this upgrade, but worth fixing before this becomes a daily-use annoyance.
+- The open and save dialogs stopped remembering the last-used directory (they default to Downloads). This was fixed afterwards: the last-opened directory is kept in Preferences (`lastOpenedDirectory`) and passed as `defaultPath`.
 - Future major Electron upgrades should be treated the same way: check the breaking-changes doc for the versions being crossed *before* running `npm audit fix --force`, not after.

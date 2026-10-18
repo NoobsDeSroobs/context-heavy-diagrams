@@ -22,7 +22,13 @@ import { MARKER_ID } from './markerIds'
 // this pass. These just need to be recognizably the right *shape*. See
 // markerIds.ts for the id map and the url(#id) helper LabeledEdge uses.
 
-const STROKE = { fill: 'none', stroke: 'context-stroke', strokeWidth: 1.5, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
+const STROKE = {
+  fill: 'none',
+  stroke: 'context-stroke',
+  strokeWidth: 1.5,
+  strokeLinecap: 'round' as const,
+  strokeLinejoin: 'round' as const
+}
 const FILLED = { fill: 'context-stroke', stroke: 'none' }
 
 // Rendered once, globally — see Canvas.tsx. Zero-size and non-interactive;
@@ -48,38 +54,126 @@ function EdgeMarkerDefs(): React.JSX.Element {
       data-export-role="edge-marker-defs"
     >
       <defs>
-        <marker id={MARKER_ID.arrowOpen} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+        <marker
+          id={MARKER_ID.arrowOpen}
+          viewBox="0 0 10 10"
+          refX="8"
+          refY="5"
+          markerWidth="8"
+          markerHeight="8"
+          orient="auto-start-reverse"
+        >
           <path d="M1,1 L8,5 L1,9" {...STROKE} />
         </marker>
-        <marker id={MARKER_ID.arrowClosed} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+        <marker
+          id={MARKER_ID.arrowClosed}
+          viewBox="0 0 10 10"
+          refX="9"
+          refY="5"
+          markerWidth="8"
+          markerHeight="8"
+          orient="auto-start-reverse"
+        >
           <path d="M1,1 L9,5 L1,9 Z" {...FILLED} />
         </marker>
-        <marker id={MARKER_ID.circle} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+        <marker
+          id={MARKER_ID.circle}
+          viewBox="0 0 10 10"
+          refX="8"
+          refY="5"
+          markerWidth="8"
+          markerHeight="8"
+          orient="auto-start-reverse"
+        >
           <circle cx="5" cy="5" r="3" {...STROKE} />
         </marker>
-        <marker id={MARKER_ID.circleFilled} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+        <marker
+          id={MARKER_ID.circleFilled}
+          viewBox="0 0 10 10"
+          refX="8"
+          refY="5"
+          markerWidth="8"
+          markerHeight="8"
+          orient="auto-start-reverse"
+        >
           <circle cx="5" cy="5" r="3" {...FILLED} />
         </marker>
-        <marker id={MARKER_ID.diamond} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="8" orient="auto-start-reverse">
+        <marker
+          id={MARKER_ID.diamond}
+          viewBox="0 0 10 10"
+          refX="9"
+          refY="5"
+          markerWidth="9"
+          markerHeight="8"
+          orient="auto-start-reverse"
+        >
           <path d="M1,5 L5,1 L9,5 L5,9 Z" {...STROKE} />
         </marker>
-        <marker id={MARKER_ID.diamondFilled} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="8" orient="auto-start-reverse">
+        <marker
+          id={MARKER_ID.diamondFilled}
+          viewBox="0 0 10 10"
+          refX="9"
+          refY="5"
+          markerWidth="9"
+          markerHeight="8"
+          orient="auto-start-reverse"
+        >
           <path d="M1,5 L5,1 L9,5 L5,9 Z" {...FILLED} />
         </marker>
-        <marker id={MARKER_ID.crowsFootOne} viewBox="0 0 10 10" refX="6" refY="5" markerWidth="7" markerHeight="8" orient="auto-start-reverse">
+        <marker
+          id={MARKER_ID.crowsFootOne}
+          viewBox="0 0 10 10"
+          refX="6"
+          refY="5"
+          markerWidth="7"
+          markerHeight="8"
+          orient="auto-start-reverse"
+        >
           <path d="M6,1 L6,9" {...STROKE} />
         </marker>
-        <marker id={MARKER_ID.crowsFootMany} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+        <marker
+          id={MARKER_ID.crowsFootMany}
+          viewBox="0 0 10 10"
+          refX="9"
+          refY="5"
+          markerWidth="8"
+          markerHeight="8"
+          orient="auto-start-reverse"
+        >
           <path d="M9,5 L1,1 M9,5 L1,5 M9,5 L1,9" {...STROKE} />
         </marker>
-        <marker id={MARKER_ID.crowsFootOneOrMany} viewBox="0 0 14 10" refX="13" refY="5" markerWidth="11" markerHeight="8" orient="auto-start-reverse">
+        <marker
+          id={MARKER_ID.crowsFootOneOrMany}
+          viewBox="0 0 14 10"
+          refX="13"
+          refY="5"
+          markerWidth="11"
+          markerHeight="8"
+          orient="auto-start-reverse"
+        >
           <path d="M13,5 L5,1 M13,5 L5,5 M13,5 L5,9 M3,1 L3,9" {...STROKE} />
         </marker>
-        <marker id={MARKER_ID.crowsFootZeroOrOne} viewBox="0 0 12 10" refX="9" refY="5" markerWidth="9.6" markerHeight="8" orient="auto-start-reverse">
+        <marker
+          id={MARKER_ID.crowsFootZeroOrOne}
+          viewBox="0 0 12 10"
+          refX="9"
+          refY="5"
+          markerWidth="9.6"
+          markerHeight="8"
+          orient="auto-start-reverse"
+        >
           <path d="M9,1 L9,9" {...STROKE} />
           <circle cx="4.5" cy="5" r="3" {...STROKE} />
         </marker>
-        <marker id={MARKER_ID.crowsFootZeroOrMany} viewBox="0 0 14 10" refX="13" refY="5" markerWidth="11" markerHeight="8" orient="auto-start-reverse">
+        <marker
+          id={MARKER_ID.crowsFootZeroOrMany}
+          viewBox="0 0 14 10"
+          refX="13"
+          refY="5"
+          markerWidth="11"
+          markerHeight="8"
+          orient="auto-start-reverse"
+        >
           <path d="M13,5 L7,1 M13,5 L7,5 M13,5 L7,9" {...STROKE} />
           <circle cx="3.5" cy="5" r="3" {...STROKE} />
         </marker>

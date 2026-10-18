@@ -69,7 +69,7 @@ real inputs, with `DiagramDock` `memo()`d and its last inline-arrow prop
 alone — several of its handlers legitimately churn via the save path, and it's
 cheap to reconcile.)
 
-**4a. Stabilize the callbacks threaded through `DiagramContext` (found mid-epic —
+**4a. Stabilize the callbacks threaded through `DiagramContext` (found mid-round —
 likely the dominant cause).** ADR 0056 memoized the context value, but
 `pushSnapshot`, `beginContinuousEdit`, `openDetailsPanel` and `handleLinkClick`
 all closed over `nodes`/`edges` (directly or transitively), so the memoized value
@@ -95,7 +95,7 @@ React Flow's own recommended pattern ("decouple selection state") and the real
 structural fix for Problem A (component re-render isolation). Deferred behind a
 **decision gate**: after the fixes above land and are live-tested on the large
 landscape, if any of hover / marquee / colour-drag is still laggy, this becomes
-its own epic with its own ADR — not bolted onto this round. Rejected as this
+its own piece of work with its own ADR — not bolted onto this round. Rejected as this
 round's scope because it is a multi-session refactor touching every panel and
 every mutation path, with real regression risk, and the cheaper fixes may make it
 unnecessary. **Outcome: the gate was met — all three gestures are smooth — so
@@ -133,4 +133,4 @@ wasn't the reported symptom.
   must keep fitting the whole diagram before capture.
 - No `.chd` / file-format impact.
 - If the decision gate isn't met, the next step is a dedicated store-refactor or
-  profiler epic, not further guessing.
+  profiler round, not further guessing.

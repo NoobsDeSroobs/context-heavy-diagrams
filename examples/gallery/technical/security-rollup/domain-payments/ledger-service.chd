@@ -19,7 +19,7 @@
         "name": "Supply chain compromise"
       }
     ],
-    "matrixShapeIds": [
+    "matrixEntityIds": [
       "cmp-ledgerdb",
       "cmp-ledgerworker"
     ]
@@ -51,7 +51,7 @@
     },
     {
       "id": "cmp-ledgerdb",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 0,
         "y": 0
@@ -87,7 +87,7 @@
     },
     {
       "id": "cmp-ledgerworker",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 300,
         "y": 0

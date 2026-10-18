@@ -25,7 +25,7 @@
     },
     {
       "id": "actor-station-staff",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": -750,
         "y": -45
@@ -74,7 +74,7 @@
     },
     {
       "id": "counter-ui",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 30,
         "y": 80
@@ -99,7 +99,7 @@
     },
     {
       "id": "session-auth",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": -340,
         "y": 91
@@ -123,7 +123,7 @@
     },
     {
       "id": "booking-client",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 510,
         "y": 80
@@ -148,7 +148,7 @@
     },
     {
       "id": "booking-api",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 550,
         "y": -45

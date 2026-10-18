@@ -17,7 +17,11 @@ const PICKER_WIDTH = 220
 // learn. Picking an entry just pre-fills the raw style fields (lineStyle/
 // startMarker/endMarker) via the same updateEdgeStyle the property panel
 // uses — nothing "remembers" which preset was picked.
-export default function StylePicker({ anchorRect, onPick, onClose }: StylePickerProps): React.JSX.Element {
+export default function StylePicker({
+  anchorRect,
+  onPick,
+  onClose
+}: StylePickerProps): React.JSX.Element {
   const [query, setQuery] = useState('')
   const results = useMemo(() => searchLineStylePresets(query), [query])
 
@@ -42,7 +46,9 @@ export default function StylePicker({ anchorRect, onPick, onClose }: StylePicker
               className="style-picker-item"
               onClick={() => onPick(preset.style)}
             >
-              <span className={`style-picker-swatch style-picker-swatch-${preset.style.lineStyle ?? 'solid'}`} />
+              <span
+                className={`style-picker-swatch style-picker-swatch-${preset.style.lineStyle ?? 'solid'}`}
+              />
               {preset.label}
             </button>
           ))}

@@ -125,7 +125,11 @@ export function dirtyBaselines(shadows: Record<string, NoteShadow>): Record<stri
   for (const id in shadows) {
     const s = shadows[id]
     if (s.dirty) {
-      out[id] = { originalPath: s.originalPath, stamp: s.baselineStamp, baselineContent: s.baselineContent }
+      out[id] = {
+        originalPath: s.originalPath,
+        stamp: s.baselineStamp,
+        baselineContent: s.baselineContent
+      }
     }
   }
   return out

@@ -1,7 +1,7 @@
 # 0098: Configurable asset subfolder paths
 
 ## Status
-Not Started — split off [epic 0090](completed/0090-image-element.md) (2026-08-27, [ADR 0069](../../decisions/0069-reference-images.md)).
+Not Started — split off [epic 0090](../completed-epics.md#0090-reference-images-attached-to-shapes) (2026-08-27, [ADR 0069](../../decisions/0069-reference-images.md)).
 
 ## Goal
 Today the sibling-folder layout for a diagram's attachments is hardcoded: custom icons go in `<diagram-base>/assets/`, reference images (epic 0090) in `<diagram-base>/assets/references/`, detail files in `<diagram-base>/details/`. The user wants these relative paths configurable — e.g. an `AppSettings` field (or per-diagram Configuration?) for the assets subfolder.

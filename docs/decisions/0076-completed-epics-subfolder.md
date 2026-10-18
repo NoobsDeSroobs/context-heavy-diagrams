@@ -3,7 +3,9 @@
 ## Status
 Accepted (2026-08-30). Supersedes the mechanism in
 [ADR 0061](0061-completed-epic-filename-marker.md) (the `x` filename prefix);
-keeps ADR 0061's *definition* of "completed."
+keeps ADR 0061's *definition* of "completed." The `completed/` folder was later
+replaced by a single index file ([ADR 0120](0120-completed-epics-collapse-into-an-index.md)); the
+definition of "completed" below still stands.
 
 ## Context
 
@@ -100,8 +102,8 @@ repo-wide) after each:
   completion.
 - `epics/` becomes a readable live-backlog view — roughly 30 files, all
   `Not Started` / `In Progress` / `Blocked` / `Done-pending-confirmation`.
-- Any external bookmark to a raw epic-file URL breaks. Acceptable — this repo
-  isn't published and the files are found by number, not URL.
+- Any external bookmark to a raw epic-file URL breaks. Acceptable — at the time
+  this repo wasn't published and the files are found by number, not URL.
 - [ADR 0061](0061-completed-epic-filename-marker.md) is now
   "Superseded by 0076" for its *mechanism*; its rationale for having a marker at
   all, and its definition of "completed," still stand.

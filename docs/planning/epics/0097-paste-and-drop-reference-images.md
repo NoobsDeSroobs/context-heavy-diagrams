@@ -1,7 +1,7 @@
 # 0097: Paste and drag-and-drop for reference images
 
 ## Status
-Not Started — split off [epic 0090](completed/0090-image-element.md) (2026-08-27, [ADR 0069](../../decisions/0069-reference-images.md)). Depends on 0090 landing first.
+Not Started — split off [epic 0090](../completed-epics.md#0090-reference-images-attached-to-shapes) (2026-08-27, [ADR 0069](../../decisions/0069-reference-images.md)). Depends on 0090 landing first.
 
 ## Goal
 Add two more ways to attach a reference image to a shape, beyond 0090's file picker:

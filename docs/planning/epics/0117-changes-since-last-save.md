@@ -2,7 +2,7 @@
 
 ## Status
 Implemented (2026-10-01), on `epic/0117-changes-since-last-save`, pending
-live test/PR/merge. See [ADR 0102](../decisions/0102-changes-since-last-save-scope.md)
+live test/PR/merge. See [ADR 0102](../completed-epics.md#0102-multi-line-element-labels)
 for v1 scope and mechanism. `typecheck`/`lint`/`npm test`/`npm run build`
 clean (109 tests, 9 new). Logged 2026-09-11 from a user ask. The user's own
 framing: "Right now, there is no way to know what has changed without doing
@@ -16,8 +16,8 @@ save/discard decision point.
 
 ## Feasibility (2026-09-11 assessment)
 **Not hard — medium-sized, comparable to the Diagnostics "missing files"
-work ([epic 0108](completed/0108-diagnostics-missing-files.md)) or the
-security-matrix rollup crawl ([epic 0081](0081-recursive-matrix-population-and-automation.md)).**
+work ([epic 0108](../completed-epics.md#0108-diagnostics--list-missing-referenced-files)) or the
+security-matrix rollup crawl ([epic 0081](../completed-epics.md#0081-recursive-matrix-population-and-automation)).**
 
 - **[ADR 0040](../../decisions/0040-dirty-tracking-and-autosave-design.md)
   already scoped this.** A full deep-diff against the last-saved file was
@@ -48,7 +48,7 @@ security-matrix rollup crawl ([epic 0081](0081-recursive-matrix-population-and-a
 
 ## Decided 2026-10-01: shape and v1 scope
 
-See [ADR 0102](../decisions/0102-changes-since-last-save-scope.md) for the
+See [ADR 0102](../completed-epics.md#0102-multi-line-element-labels) for the
 full record. Summary:
 - **v1 diffs nodes/edges only** — the 8 top-level collections
   (`requiredTags`, `highlights`, `legend`, `gravityPresets`, `security`,

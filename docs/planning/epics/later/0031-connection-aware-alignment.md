@@ -1,7 +1,7 @@
 # 0031: Connection-aware alignment
 
 ## Status
-Not Started — not yet scoped. Split out of [epic 0011](../completed/0011-alignment-and-snapping.md) when that epic started: its task list flagged this specific idea as genuinely undecided between two very different scopes, not a small addition to fold into shape-to-shape snapping. Decided with the user: keep 0011 scoped to drag-time visual guides + snap-to-shape, defer this here.
+Not Started — not yet scoped. Split out of [epic 0011](../../completed-epics.md#0011-alignment-and-snapping) when that epic started: its task list flagged this specific idea as genuinely undecided between two very different scopes, not a small addition to fold into shape-to-shape snapping. Decided with the user: keep 0011 scoped to drag-time visual guides + snap-to-shape, defer this here.
 
 ## Goal
 Position a node relative to what it's connected to — e.g. a node with one incoming/outgoing edge could align on the same axis as its connected neighbor, rather than sitting wherever it happened to land. Raised as a quality-of-life idea for diagrams that grow more complex and edge-heavy over time.

@@ -182,7 +182,10 @@ test('update_file replaces a file only with the fingerprint of what the edit was
 
 test('update_file requires a well-formed fingerprint and an existing file', () => {
   const tools = make(true)
-  refusal(() => tools.update_file({ path: 'a.chd', content: VALID }), /base_fingerprint is required/)
+  refusal(
+    () => tools.update_file({ path: 'a.chd', content: VALID }),
+    /base_fingerprint is required/
+  )
   refusal(
     () => tools.update_file({ path: 'a.chd', content: VALID, base_fingerprint: 'abc' }),
     /base_fingerprint is required/

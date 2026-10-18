@@ -85,7 +85,11 @@ export interface ZIndexUpdate {
 //  3. Only one neighbor exists (moving to the very front or back of the
 //     whole order): extrapolate a fresh LAYER_GAP from it, preserving
 //     headroom for future inserts at that new boundary.
-export function reorderZIndex(orderedDescending: ZIndexed[], movedId: string, newIndex: number): ZIndexUpdate[] {
+export function reorderZIndex(
+  orderedDescending: ZIndexed[],
+  movedId: string,
+  newIndex: number
+): ZIndexUpdate[] {
   const rest = orderedDescending.filter((n) => n.id !== movedId)
   const high = newIndex > 0 ? rest[newIndex - 1] : undefined
   const low = newIndex < rest.length ? rest[newIndex] : undefined
@@ -99,7 +103,11 @@ export function reorderZIndex(orderedDescending: ZIndexed[], movedId: string, ne
     for (let i = newIndex - 2; i >= 0; i -= 1) {
       const candidate = rest[i]
       const prevInBlock = block[block.length - 1]
-      if (candidate.zIndex != null && prevInBlock.zIndex != null && candidate.zIndex === prevInBlock.zIndex + 1) {
+      if (
+        candidate.zIndex != null &&
+        prevInBlock.zIndex != null &&
+        candidate.zIndex === prevInBlock.zIndex + 1
+      ) {
         block.push(candidate)
       } else {
         break

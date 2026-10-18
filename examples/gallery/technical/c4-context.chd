@@ -25,7 +25,7 @@
     },
     {
       "id": "system-ticketing",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": -110,
         "y": -40
@@ -73,7 +73,7 @@
     },
     {
       "id": "actor-passenger",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": -570,
         "y": -140.62731451558807
@@ -97,7 +97,7 @@
     },
     {
       "id": "actor-station-staff",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": -570,
         "y": -10
@@ -121,7 +121,7 @@
     },
     {
       "id": "ext-payment-gateway",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 399.881451784224,
         "y": -300.62731451558807
@@ -145,7 +145,7 @@
     },
     {
       "id": "ext-rail-interop",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 399.881451784224,
         "y": -140.62731451558807
@@ -169,7 +169,7 @@
     },
     {
       "id": "ext-loyalty-crm",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 399.881451784224,
         "y": 19.372685484411917
@@ -193,7 +193,7 @@
     },
     {
       "id": "ext-legacy-mainframe",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 399.8814517842241,
         "y": 179.37268548441193

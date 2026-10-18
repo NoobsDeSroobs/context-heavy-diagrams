@@ -202,9 +202,7 @@ function simplify(vertices: OrthoPoint[]): OrthoPoint[] {
   const t = COLLAPSE_TOLERANCE
   const deduped = vertices.filter(
     (v, i) =>
-      i === 0 ||
-      Math.abs(v.x - vertices[i - 1].x) >= t ||
-      Math.abs(v.y - vertices[i - 1].y) >= t
+      i === 0 || Math.abs(v.x - vertices[i - 1].x) >= t || Math.abs(v.y - vertices[i - 1].y) >= t
   )
   if (deduped.length <= 2) return deduped
   const out: OrthoPoint[] = [deduped[0]]

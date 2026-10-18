@@ -25,7 +25,7 @@
     },
     {
       "id": "driver-declining-ridership",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": -900,
         "y": -97.13369757279733
@@ -49,7 +49,7 @@
     },
     {
       "id": "driver-legacy-risk",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": -900,
         "y": -370.78072403270676
@@ -73,7 +73,7 @@
     },
     {
       "id": "driver-regulatory-pressure",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": -900,
         "y": 46.352973540090574
@@ -97,7 +97,7 @@
     },
     {
       "id": "driver-customer-expectations",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": -900,
         "y": -233.78500959617537
@@ -128,7 +128,7 @@
     },
     {
       "id": "goal-modernize-platform",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": -400,
         "y": -400
@@ -159,7 +159,7 @@
     },
     {
       "id": "goal-improve-compliance",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": -400,
         "y": 36.352973540090574
@@ -183,7 +183,7 @@
     },
     {
       "id": "goal-grow-ridership",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": -400,
         "y": -171.35404534336476
@@ -214,7 +214,7 @@
     },
     {
       "id": "objective-decommission-mainframe",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 150,
         "y": -400
@@ -238,7 +238,7 @@
     },
     {
       "id": "objective-nis2-readiness",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 150,
         "y": 36.35297354009058
@@ -262,7 +262,7 @@
     },
     {
       "id": "objective-increase-bookings",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 150,
         "y": -171.35404534336476

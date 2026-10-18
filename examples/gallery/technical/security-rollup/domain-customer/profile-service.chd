@@ -19,7 +19,7 @@
         "name": "Supply chain compromise"
       }
     ],
-    "matrixShapeIds": [
+    "matrixEntityIds": [
       "cmp-profiledb",
       "cmp-profileapi"
     ]
@@ -51,7 +51,7 @@
     },
     {
       "id": "cmp-profiledb",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 0,
         "y": 0
@@ -87,7 +87,7 @@
     },
     {
       "id": "cmp-profileapi",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 300,
         "y": 0

@@ -7,7 +7,7 @@ Decided and implemented (2026-08-27).
 
 The last of the settings-tier trio from [ADR 0052](0052-settings-ownership-tiers.md). The style palette ([ADR 0048](0048-style-palette-and-defaults.md)) stays Settings-only — no diagram tier — but ADR 0048's "one active palette, not several merged ones; importing replaces it outright" turned out to be too tight: someone maintaining a "Company" set, a "GDPR" set and a "Client" set has to re-import a file every time they switch. The user wants several kept around at once with a quick active-palette switch.
 
-The four questions ADR 0048 and the epic deliberately left open, resolved with the user before building:
+The four questions ADR 0048 deliberately left open, resolved with the user before building:
 
 ## Decision
 

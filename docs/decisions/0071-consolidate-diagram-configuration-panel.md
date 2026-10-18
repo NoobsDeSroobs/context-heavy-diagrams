@@ -41,7 +41,7 @@ Each was a fully self-contained component (own toolbar, title, close button) wit
 - **Tabs instead of stacked sections** — rejected; new interaction pattern, and one-section-at-a-time hides the others.
 - **Keep the three panels, just relabel** — doesn't address the real cost (three menu entries, three toggle states, three self-contained components for one concept).
 - **Also fold in Highlights/Legend** — rejected; reverses a deliberate, documented UX decision. If the user wants it, it's a separate question to raise specifically.
-- **Refactor the whole ~8-member mutual-exclusion boilerplate into one `openExclusivePanel(name)` helper** while here — deferred. It's a separate, larger change touching every panel with its own risk; this epic already removes two members and leaves the pattern smaller. The repetition is deliberate and low-risk (each toggle names every sibling explicitly), noted in `Canvas.tsx`'s own comment.
+- **Refactor the whole ~8-member mutual-exclusion boilerplate into one `openExclusivePanel(name)` helper** while here — deferred. It's a separate, larger change touching every panel with its own risk; this change already removes two members and leaves the pattern smaller. The repetition is deliberate and low-risk (each toggle names every sibling explicitly), noted in `Canvas.tsx`'s own comment.
 
 ## Consequences
 

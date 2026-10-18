@@ -421,6 +421,12 @@ export interface DiagramEdge {
 
 export interface DiagramFile {
   version: 1
+  // The version of this app (e.g. "0.2.1") that last wrote the file, so an OLDER
+  // app opening it can warn that saving may lose what it does not understand
+  // (ADR 0118). Only ever raised: a save by the same or an older app leaves it
+  // as it is. Absent in files written before the field existed and in files an
+  // AI assistant created; absent means "unknown", which never warns.
+  savedWith?: string
   // Camera position (pan/zoom) is deliberately NOT persisted here — it isn't
   // diagram content, and saving it made every save's diff carry an unrelated
   // viewport churn alongside real edits. See ADR 0090. A file written by an
@@ -493,9 +499,7 @@ function sortKeysDeep<T extends JsonValue>(value: T): T {
 // dropped entirely when it carries nothing. Also accepts (and up-converts)
 // the pre-ADR-0083 `legend` shape, so a file that never passed through the
 // renderer's load migration still serializes cleanly.
-function sortedDirectionSetStyle(
-  set: EdgeDirectionSet
-): EdgeDirectionSetStyle | undefined {
+function sortedDirectionSetStyle(set: EdgeDirectionSet): EdgeDirectionSetStyle | undefined {
   const legacy = (set as { legend?: EdgeDirectionSetLegend }).legend
   const style: EdgeDirectionSetStyle | undefined =
     set.style ??
@@ -643,6 +647,7 @@ export function serializeDiagram(diagram: DiagramFile): string {
     !!diagram.edgeDirectionSets && diagram.edgeDirectionSets.length >= 2
   const ordered: DiagramFile = {
     version: diagram.version,
+    savedWith: diagram.savedWith,
     metadata:
       diagram.metadata && Object.keys(diagram.metadata).length > 0
         ? (sortKeysDeep(diagram.metadata) as Record<string, JsonValue>)
@@ -733,8 +738,7 @@ function normalizeLegacyFields(diagram: DiagramFile): DiagramFile {
     : diagram.legend
 
   const legacySecurity = diagram.security as
-    | (DiagramSecurity & { matrixShapeIds?: string[]; hiddenShapeIds?: string[] })
-    | undefined
+    (DiagramSecurity & { matrixShapeIds?: string[]; hiddenShapeIds?: string[] }) | undefined
   const hasLegacySecurityIds = !!(legacySecurity?.matrixShapeIds || legacySecurity?.hiddenShapeIds)
   const security = hasLegacySecurityIds
     ? (() => {

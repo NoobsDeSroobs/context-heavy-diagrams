@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
+import { PROJECT_URL } from '../projectInfo'
 
 interface AboutDialogProps {
   onClose: () => void
 }
 
-const REPO_URL = 'https://github.com/NoobsDeSroobs/context-heavy-diagram-tool'
+const REPO_URL = PROJECT_URL
 
 // See ADR 0044. A centered overlay, not one of the fixed right-dock
 // panels (ADR 0013) — those are ongoing inspection tools you leave open

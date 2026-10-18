@@ -1,5 +1,4 @@
-import { clipboard, contextBridge, ipcRenderer, webUtils } from 'electron'
-import { electronAPI } from '@electron-toolkit/preload'
+import { contextBridge, ipcRenderer, webUtils } from 'electron'
 import type { DiagramFile, RequiredTagDefinition } from '@shared/diagram'
 import type {
   NoteBaseline,
@@ -362,17 +361,22 @@ const api = {
     return ipcRenderer.invoke('export:pngToFile', dataUrl, suggestedFilename)
   },
 
-  // Copy/paste (see ADR 0049) — the real OS clipboard, not IPC to
-  // main: `clipboard` is available directly here since this window's
-  // preload runs unsandboxed (`sandbox: false`, main/windows.ts), so
-  // there's no round-trip needed for a synchronous, already-local API.
+  // Copy/paste (see ADR 0049) — the real OS clipboard. The preload is
+  // sandboxed (ADR 0112), which has no `clipboard` module, so main does it
+  // (main/clipboard.ts); the read is synchronous because paste is.
   copyToClipboard(text: string): void {
-    clipboard.writeText(text)
+    ipcRenderer.send('clipboard:writeText', text)
   },
 
   readClipboardText(): string {
-    return clipboard.readText()
-  }
+    return ipcRenderer.sendSync('clipboard:readText')
+  },
+
+  // The only thing the renderer needs to know about the host OS (to hide menu
+  // items that exist for Windows/macOS only). Replaces the broad
+  // @electron-toolkit/preload bridge, which exposed arbitrary IPC and a copy of
+  // process.env to the page (ADR 0112).
+  platform: process.platform
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
@@ -380,14 +384,11 @@ const api = {
 // just add to the DOM global.
 if (process.contextIsolated) {
   try {
-    contextBridge.exposeInMainWorld('electron', electronAPI)
     contextBridge.exposeInMainWorld('api', api)
   } catch (error) {
     console.error(error)
   }
 } else {
-  // @ts-ignore (define in dts)
-  window.electron = electronAPI
   // @ts-ignore (define in dts)
   window.api = api
 }

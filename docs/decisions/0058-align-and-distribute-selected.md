@@ -22,7 +22,7 @@ Geometry is computed in each element's **absolute** canvas position (`absolutePo
 
 ## Alternatives considered
 
-**Traditional split Align + Distribute, six separate actions** (Left/Center/Right/Top/Middle/Bottom align, plus horizontal/vertical distribute with an "equal gaps" option instead of a fixed pixel value) — closer to Figma/Illustrator convention, but rejected as more UI and more decisions than the user's actual request asked for. Nothing rules this out as a later, separate epic if a real need for individual-axis alignment (without also respacing) shows up; this epic's scope is deliberately the combined "arrange into a column/row with this gap" action only.
+**Traditional split Align + Distribute, six separate actions** (Left/Center/Right/Top/Middle/Bottom align, plus horizontal/vertical distribute with an "equal gaps" option instead of a fixed pixel value) — closer to Figma/Illustrator convention, but rejected as more UI and more decisions than the user's actual request asked for. Nothing rules this out as later, separate work if a real need for individual-axis alignment (without also respacing) shows up; the scope here is deliberately the combined "arrange into a column/row with this gap" action only.
 
 **Anchor-to-anchor gap** (ignore each element's size, just space top-left corners by N px) — simpler to implement, explicitly rejected by the user in favor of edge-to-edge: with containers, shapes, and text mixed in one selection (routine in this app), anchor-to-anchor spacing would visibly overlap larger elements at small gap values, defeating the point of a "space these apart" tool.
 

@@ -58,10 +58,7 @@ export default function IconPicker({
   const top = Math.min(anchorRect.top, window.innerHeight - 320)
 
   return (
-    <div
-      className="icon-picker nodrag nopan"
-      style={{ left, top, width: PICKER_WIDTH }}
-    >
+    <div className="icon-picker nodrag nopan" style={{ left, top, width: PICKER_WIDTH }}>
       <div className="corner-picker">
         <div className="corner-picker-box" />
         {SLOTS.map(({ slot: s, label }) => (

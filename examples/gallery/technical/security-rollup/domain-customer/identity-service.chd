@@ -24,7 +24,7 @@
         "description": "Downstream-only threat — not in the parent catalog."
       }
     ],
-    "matrixShapeIds": [
+    "matrixEntityIds": [
       "cmp-authdb",
       "cmp-sessioncache",
       "cmp-authapi"
@@ -57,7 +57,7 @@
     },
     {
       "id": "cmp-authdb",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 0,
         "y": 0
@@ -93,7 +93,7 @@
     },
     {
       "id": "cmp-sessioncache",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 280,
         "y": 0
@@ -128,7 +128,7 @@
     },
     {
       "id": "cmp-authapi",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 560,
         "y": 0

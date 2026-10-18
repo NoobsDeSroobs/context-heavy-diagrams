@@ -25,7 +25,7 @@
     },
     {
       "id": "booking-api",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": -750,
         "y": -45
@@ -75,7 +75,7 @@
     },
     {
       "id": "trigger-listener",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 30,
         "y": 70
@@ -100,7 +100,7 @@
     },
     {
       "id": "template-renderer",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 272.76382579891134,
         "y": 70
@@ -125,7 +125,7 @@
     },
     {
       "id": "delivery-dispatcher",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 520,
         "y": 70
@@ -150,7 +150,7 @@
     },
     {
       "id": "actor-passenger",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 627.3871223695176,
         "y": -45

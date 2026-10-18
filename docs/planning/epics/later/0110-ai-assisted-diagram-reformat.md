@@ -29,7 +29,7 @@ already.
   place. Cheapest option; entirely a Claude-side behavior, ships independent
   of the app itself.
 - **An in-app "Auto-arrange" command** (Edit menu, next to Align/Distribute —
-  [ADR 0058](../../decisions/0058-align-and-distribute-selected.md)) that
+  [ADR 0058](../../completed-epics.md#0058-an-implicit-none-value-for-required-tags)) that
   runs a real layout algorithm (e.g. a dagre/elk-style layered layout) over
   the whole diagram or the current selection. Real app feature, not
   Claude-specific — would help a human-only user too, not just an

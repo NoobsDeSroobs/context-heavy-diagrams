@@ -57,9 +57,7 @@ export default function ReferenceImage({
       src={dataUrl}
       alt=""
       draggable={false}
-      onLoad={(e) =>
-        onNaturalSize?.(e.currentTarget.naturalWidth, e.currentTarget.naturalHeight)
-      }
+      onLoad={(e) => onNaturalSize?.(e.currentTarget.naturalWidth, e.currentTarget.naturalHeight)}
     />
   )
 }

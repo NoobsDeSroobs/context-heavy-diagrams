@@ -102,8 +102,8 @@ export default function ConflictDialog(): React.JSX.Element | null {
                   </span>
                   {item.key === HUB_KEY && choice === 'disk' && (
                     <span className="conflict-dialog-hint">
-                      Reloads the diagram from disk — your unsaved changes to the diagram itself
-                      are lost (unsaved notes are kept) — and stops this save; save again after.
+                      Reloads the diagram from disk — your unsaved changes to the diagram itself are
+                      lost (unsaved notes are kept) — and stops this save; save again after.
                     </span>
                   )}
                 </li>
@@ -111,8 +111,8 @@ export default function ConflictDialog(): React.JSX.Element | null {
             })}
           </ul>
           <p className="conflict-dialog-note">
-            To keep both versions: Cancel (they stay unsaved here), commit the disk version in
-            git, then save again and reconcile in git.
+            To keep both versions: Cancel (they stay unsaved here), commit the disk version in git,
+            then save again and reconcile in git.
           </p>
           <div className="alert-dialog-actions">
             {items.length > 1 && (

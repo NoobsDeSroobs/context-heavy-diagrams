@@ -11,7 +11,7 @@ The user rejected that: this app is going to need a real Preferences surface for
 ## Decision
 A `PreferencesPanel` component, using the exact same shell this app already has for `RequiredTagsPanel`/`DiagnosticsPanel`/`HighlightsPanel`: rendered in `UtilityDock` (ADR 0013's fixed dock slot), toggled by its own toolbar button, mutually exclusive with the other four dock panels (opening any one closes the rest, same as today).
 
-Persistence mirrors `theme.ts`'s existing pattern — the only precedent this app already had for a global, cross-window preference — but as one extensible object (`AppPreferences`) under a single `localStorage` key, not one key per setting the way `theme.ts` does for its single value. The next global setting just adds a field to `AppPreferences` and a row in `PreferencesPanel`; no new storage key, no new sync plumbing. Settings sync live across windows via the same `storage`-event listener `useTheme` already established.
+Persistence mirrors `theme.ts`'s existing pattern — the only precedent this app already had for a global, cross-window preference — but as one extensible object (`AppPreferences`) under a single `localStorage` key, not one key per setting the way `theme.ts` does for its single value. (Preferences were later moved from `localStorage` to a settings file in the OS-conventional location, see [ADR 0053](0053-os-conventional-settings-storage.md); the one-extensible-object shape stayed.) The next global setting just adds a field to `AppPreferences` and a row in `PreferencesPanel`; no new storage key, no new sync plumbing. Settings sync live across windows via the same `storage`-event listener `useTheme` already established.
 
 Settings values reach edge/node rendering code through `DiagramContext`, the same way `matchHighlights` already does — components that need a setting read it via `useDiagramContext()`, not by receiving it as a prop threaded down manually.
 
@@ -21,7 +21,7 @@ Settings values reach edge/node rendering code through `DiagramContext`, the sam
 - **One `localStorage` key per setting**, matching `theme.ts` literally. Rejected in favor of one extensible object — `theme.ts` only ever needed to store one value, so a dedicated key made sense for it; a panel meant to grow needs the pattern that stays cheap to extend, not the pattern that was convenient for a single field.
 
 ## Consequences
-- Every future global-preference epic has a clear, established place to land: add a field to `AppPreferences` (`preferences.ts`), a row to `PreferencesPanel`, and (if a renderer needs it) a field on `DiagramContext` — not a new panel, popup, or storage mechanism.
+- Every future global preference has a clear, established place to land: add a field to `AppPreferences` (`preferences.ts`), a row to `PreferencesPanel`, and (if a renderer needs it) a field on `DiagramContext` — not a new panel, popup, or storage mechanism.
 - `PreferencesPanel` currently holds exactly one field. It'll look sparse until more settings arrive, which is expected and fine — the point was building the right shape now, not filling it immediately.
 - If a top menu bar does land later, whoever builds it should open this same `PreferencesPanel` rather than building a second settings surface.
 

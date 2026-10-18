@@ -33,7 +33,7 @@ Delivery has to work for two different setups — an *agent in a folder* and a
   Shown in both the diagram and matrix personas for the items that don't act
   on diagram content.
 - **`aiFeaturesEnabled` app preference (default on)** controls whether the menu
-  shows. Toggleable in Preferences; a future installer ([epic 0053](later/0053-installable-distribution.md))
+  shows. Toggleable in Preferences; a future installer ([epic 0053](../completed-epics.md#0053-installable-distribution-for-non-technical-users))
   can seed it from a "Do you want to enable AI features?" question. Must merge
   over defaults at every point it's read.
 - **Auto-arrange lives under Edit** (next to Align / Distribute), not in the AI
@@ -68,7 +68,7 @@ Delivery has to work for two different setups — an *agent in a folder* and a
 - [x] `chd spec` (print the format), `chd validate <file>` (reuses the skill's Node validator — no Python or system Node for end users)
 - [x] `--help` section: "If you are an AI assistant, run `chd spec` to learn this format"
 - [x] Packaging so a console CLI and the GUI app coexist per OS: `chd.cmd` / `chd` launchers run the app exe with `ELECTRON_RUN_AS_NODE`, copied next to it via `extraFiles`
-- [x] PATH story: **deferred** — no PATH registration yet (needs unverifiable installer scripting, shared with [epic 0136](0136-chd-file-association.md)); "Enable AI assistance in a folder" writes the launcher's absolute path into `AGENTS.md` instead
+- [x] PATH story: **deferred** — no PATH registration yet (needs unverifiable installer scripting, shared with [epic 0136](../completed-epics.md#0136-associate-chd-files-with-the-app-double-click-to-open)); "Enable AI assistance in a folder" writes the launcher's absolute path into `AGENTS.md` instead
 - [ ] **Linux-only verification flagged for the user** (cross-platform rule): launcher `readlink -f`/exec bit/`extraFiles` on a real deb/AppImage/snap build; and a real-console check on Windows (only checked through pipes so far)
 - [x] ADR ([ADR 0106](../../decisions/0106-chd-command-line-tool.md))
 

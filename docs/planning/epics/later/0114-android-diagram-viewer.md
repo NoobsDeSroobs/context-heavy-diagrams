@@ -36,7 +36,7 @@ interactions the user asked for are the cheap part.
 1. **Decouple the renderer from Electron IPC.** The canvas currently
    reaches disk through IPC: `icons:readAsDataUrl`, details `.md` reads,
    `linkedDiagram` resolution, `resources:checkExist` (see
-   [epic 0108](../0108-diagnostics-missing-files.md)). A mobile build needs
+   [epic 0108](../../completed-epics.md#0108-diagnostics--list-missing-referenced-files)). A mobile build needs
    all of that behind a small `DiagramResourceProvider`-style interface
    with a non-Electron implementation. **This is the bulk of the effort**
    — and it's worth doing regardless, because it also unlocks a
@@ -69,4 +69,4 @@ Real value beyond the mobile use case: step 1 (a renderer with no Electron
 dependency) is the same prerequisite a web/browser viewer would need, so
 this epic's groundwork is not throwaway even if the Android app itself
 never ships. Windows + Linux desktop remain the only supported *editing*
-platforms ([docs/project-brief.md](../../project-brief.md)).
+platforms ([docs/project-brief.md](../../../project-brief.md)).

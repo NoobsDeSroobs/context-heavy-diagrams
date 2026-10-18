@@ -49,6 +49,7 @@ import {
   type HandleType,
   type Node,
   type NodeChange,
+  type OnBeforeDelete,
   type OnConnectStartParams
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
@@ -178,6 +179,8 @@ import UtilityDock from './panels/UtilityDock'
 import AlignmentGuides from './components/AlignmentGuides'
 import { SNAP_THRESHOLD_PX, boundsFrom, computeSnap } from './alignment'
 import { buildClipboardPayload, parseClipboardPayload, remapForPaste } from './clipboard'
+import { resolveDeletion } from './containerRemoval'
+import { warnIfSavedWithNewer } from './fileVersionWarning'
 import type { TransformPatch } from './panels/PropertyPanel'
 import { useTheme } from './theme'
 import { useEventCallback } from './hooks/useEventCallback'
@@ -518,6 +521,34 @@ function removeContainerReparenting(nodes: Node[], containerId: string): Node[] 
       return { ...n, parentId: newParentId, position }
     })
   return sortNodesForHierarchy(updated)
+}
+
+// Centre of the part of the window that is actually the canvas, in screen
+// coordinates. The window is wider than the canvas (the right-hand dock takes
+// its share), so the window's own centre sits visibly to the right of what the
+// user is looking at; new nodes and pastes were landing there.
+//
+// willSelect: a paste selects what it adds, which swaps the narrow palette dock
+// for the wider properties panel and shrinks the canvas from the right. The
+// element keeps its screen position while the middle of the canvas moves left,
+// so a paste centred on the canvas as it is now ends up visibly right of centre.
+// Pass true to centre on the canvas as it will be once that panel is open.
+//
+// Falls back to the window centre if the canvas isn't mounted yet.
+function visibleCanvasCenter(willSelect = false): { x: number; y: number } {
+  const pane = document.querySelector('.react-flow')?.getBoundingClientRect()
+  if (!pane || pane.width <= 0 || pane.height <= 0) {
+    return { x: window.innerWidth / 2, y: window.innerHeight / 2 }
+  }
+  let right = pane.right
+  if (willSelect) {
+    const dock = document.querySelector('.diagram-dock')?.getBoundingClientRect()
+    const panelWidth = parseFloat(
+      getComputedStyle(document.documentElement).getPropertyValue('--dock-properties-width')
+    )
+    if (dock && Number.isFinite(panelWidth)) right = dock.right - panelWidth
+  }
+  return { x: pane.left + (right - pane.left) / 2, y: pane.top + pane.height / 2 }
 }
 
 // Undo/redo — see ADR 0018. Deliberately just {nodes, edges}, not
@@ -985,21 +1016,42 @@ function collectResourceRefs(
     const base = { ownerKind: 'node' as const, ownerId: n.id, ownerLabel, ownerType }
     const d = n.data ?? {}
     if (typeof d.linkedDiagram === 'string' && d.linkedDiagram) {
-      refs.push({ ...base, key: `${n.id}:linkedDiagram`, resourceKind: 'linkedDiagram', relativePath: d.linkedDiagram })
+      refs.push({
+        ...base,
+        key: `${n.id}:linkedDiagram`,
+        resourceKind: 'linkedDiagram',
+        relativePath: d.linkedDiagram
+      })
     }
     if (typeof d.details === 'string' && d.details) {
-      refs.push({ ...base, key: `${n.id}:details`, resourceKind: 'details', relativePath: d.details })
+      refs.push({
+        ...base,
+        key: `${n.id}:details`,
+        resourceKind: 'details',
+        relativePath: d.details
+      })
     }
     const icons = d.icons as Partial<Record<IconSlot, IconRef>> | undefined
     for (const [slot, ref] of Object.entries(icons ?? {})) {
       if (ref?.source === 'custom' && typeof ref.path === 'string') {
-        refs.push({ ...base, key: `${n.id}:icon:${slot}`, resourceKind: 'icon', relativePath: ref.path, iconSlot: slot })
+        refs.push({
+          ...base,
+          key: `${n.id}:icon:${slot}`,
+          resourceKind: 'icon',
+          relativePath: ref.path,
+          iconSlot: slot
+        })
       }
     }
     const references = Array.isArray(d.references) ? (d.references as string[]) : []
     references.forEach((p, i) => {
       if (typeof p === 'string' && p) {
-        refs.push({ ...base, key: `${n.id}:reference:${i}`, resourceKind: 'reference', relativePath: p })
+        refs.push({
+          ...base,
+          key: `${n.id}:reference:${i}`,
+          resourceKind: 'reference',
+          relativePath: p
+        })
       }
     })
   }
@@ -1135,6 +1187,9 @@ function CanvasInner(): React.JSX.Element {
   // Diagram-level metadata/requiredTags (ADR 0022) — analogous to
   // currentPath: file-scoped state with no React Flow home of its own,
   // reset on every load, carried into every save via toDiagramFile.
+  // The `savedWith` of the file that was loaded (ADR 0118); undefined for a new or
+  // marker-less diagram. A ref, not state: nothing renders from it.
+  const loadedSavedWithRef = useRef<string | undefined>(undefined)
   const [diagramMetadata, setDiagramMetadata] = useState<Record<string, JsonValue>>({})
   const [requiredTags, setRequiredTags] = useState<RequiredTagDefinition[]>([])
   // Highlight catalog (ADR 0025) — persisted, same file-scoped
@@ -1180,8 +1235,7 @@ function CanvasInner(): React.JSX.Element {
   // deliberately NOT reset on file open, so they behave as a property of
   // the active matrix view and flow uniformly down a linked-diagram tree.
   const [securityCombineMethod, setSecurityCombineMethod] = useState<CombineMethod>('multiply')
-  const [securityAggregateMethod, setSecurityAggregateMethod] =
-    useState<AggregateMethod>('average')
+  const [securityAggregateMethod, setSecurityAggregateMethod] = useState<AggregateMethod>('average')
   const [diagramSettingsPanelOpen, setDiagramSettingsPanelOpen] = useState(false)
   // Anchors the floating panel next to whichever <ControlButton> opened it —
   // same convention as iconPicker/colorPicker/linePicker's own anchorRect.
@@ -1477,7 +1531,10 @@ function CanvasInner(): React.JSX.Element {
       setMissingFiles(
         refs
           .filter((r) => missing.has(r.relativePath))
-          .map((r) => ({ ...r, resolvedPath: resolvedByPath.get(r.relativePath) ?? r.relativePath }))
+          .map((r) => ({
+            ...r,
+            resolvedPath: resolvedByPath.get(r.relativePath) ?? r.relativePath
+          }))
       )
     },
     []
@@ -1561,33 +1618,18 @@ function CanvasInner(): React.JSX.Element {
       // them too (ADR 0012) — handled separately from React Flow's default
       // remove-change application, which would otherwise just drop them.
       //
-      // React Flow's own delete handling (deleteElements/getElementsToRemove
-      // in @xyflow/system) cascades to every descendant automatically —
-      // selecting just the container still produces a `remove` change for
-      // each nested node too, transitively, not only the container itself.
-      // Every descendant's remove-change needs stripping here as well, or
-      // they get deleted via the normal path before removeContainerReparenting
-      // ever runs (and by the time it does, there's nothing left to promote).
+      // React Flow cascades a delete to every descendant, but onBeforeDelete
+      // (see resolveDeletion, ADR 0116) has already cut that down to what was
+      // really asked for: the container, plus any child that was selected too.
+      // So a `remove` here for a non-container is a real deletion and passes
+      // through; a container's own removal is replaced by reparenting its
+      // surviving children.
       const removedIds = new Set(changes.filter((c) => c.type === 'remove').map((c) => c.id))
       const containerRemovalIds = Array.from(removedIds).filter(
         (removedId) => nodes.find((n) => n.id === removedId)?.type === 'container'
       )
-      const isDescendantOfRemovedContainer = (id: string): boolean => {
-        let current = nodes.find((n) => n.id === id)
-        while (current?.parentId) {
-          if (containerRemovalIds.includes(current.parentId)) return true
-          current = nodes.find((n) => n.id === current!.parentId)
-        }
-        return false
-      }
       const passthroughChanges = containerRemovalIds.length
-        ? changes.filter(
-            (c) =>
-              !(
-                c.type === 'remove' &&
-                (containerRemovalIds.includes(c.id) || isDescendantOfRemovedContainer(c.id))
-              )
-          )
+        ? changes.filter((c) => !(c.type === 'remove' && containerRemovalIds.includes(c.id)))
         : changes
       onNodesChangeBase(passthroughChanges)
       if (containerRemovalIds.length > 0) {
@@ -1611,6 +1653,16 @@ function CanvasInner(): React.JSX.Element {
       setNodes,
       setEdges
     ]
+  )
+
+  // Narrows React Flow's cascading delete to what was actually asked for: a
+  // deleted container's children are promoted (and keep their edges) unless they
+  // were selected too (ADR 0012, ADR 0116). Runs for the Delete key, cut and
+  // anything else that goes through deleteElements.
+  const onBeforeDelete = useCallback<OnBeforeDelete>(
+    async ({ nodes: cascadedNodes, edges: cascadedEdges }) =>
+      resolveDeletion(cascadedNodes, cascadedEdges),
+    []
   )
 
   // Edges have no drag/resize concept — every non-select change is already
@@ -1776,7 +1828,16 @@ function CanvasInner(): React.JSX.Element {
         }
       ])
     },
-    [openContextMenu, rfInstance, nodes, edges, pushSnapshot, setEdges, reverseEdges, selectAllOfType]
+    [
+      openContextMenu,
+      rfInstance,
+      nodes,
+      edges,
+      pushSnapshot,
+      setEdges,
+      reverseEdges,
+      selectAllOfType
+    ]
   )
 
   // The utility dock shows one surface at a time (see ADR 0013) — opening
@@ -1816,7 +1877,9 @@ function CanvasInner(): React.JSX.Element {
       const node = rfInstance.getNode(nodeId)
       const existingPath = typeof node?.data?.details === 'string' ? node.data.details : undefined
       if (!existingPath || !currentPath) {
-        setNoteShadows((prev) => (nodeId in prev ? prev : { ...prev, [nodeId]: newNoteShadow(nodeId) }))
+        setNoteShadows((prev) =>
+          nodeId in prev ? prev : { ...prev, [nodeId]: newNoteShadow(nodeId) }
+        )
       }
     },
     [rfInstance, currentPath]
@@ -2017,7 +2080,9 @@ function CanvasInner(): React.JSX.Element {
         // Surface it rather than failing silently — most often a stale
         // preload bundle after adding this API (needs a full app restart),
         // occasionally a real copy/permissions error.
-        showAlert(`Could not add reference images: ${err instanceof Error ? err.message : String(err)}`)
+        showAlert(
+          `Could not add reference images: ${err instanceof Error ? err.message : String(err)}`
+        )
         return
       }
       if (!added || added.length === 0) return
@@ -2097,11 +2162,14 @@ function CanvasInner(): React.JSX.Element {
   // and only applied (to nodes/legend) when the diagram is saved, in
   // persistDiagram. "Dismiss" hides a row for the session. "Relink" is an
   // in-memory edit like any other (undoable, dirties, needs a save).
-  const stageMissingFileRemoval = useCallback((entry: MissingFileEntry) => {
-    setMissingFiles((prev) => prev.filter((m) => m.key !== entry.key))
-    setStagedFileRemovals((prev) => [...prev, entry])
-    markDirty()
-  }, [markDirty])
+  const stageMissingFileRemoval = useCallback(
+    (entry: MissingFileEntry) => {
+      setMissingFiles((prev) => prev.filter((m) => m.key !== entry.key))
+      setStagedFileRemovals((prev) => [...prev, entry])
+      markDirty()
+    },
+    [markDirty]
+  )
 
   const unstageMissingFileRemoval = useCallback((entry: MissingFileEntry) => {
     setStagedFileRemovals((prev) => prev.filter((m) => m.key !== entry.key))
@@ -2655,10 +2723,14 @@ function CanvasInner(): React.JSX.Element {
             // branch always wins first — so its exact contents don't matter,
             // only that it's truthy.
             const details = searchable.details ?? (shadow ? '(unsaved note)' : undefined)
-            return elementMatchesWithDetails(criteria, { ...searchable, details }, async (relativePath) => {
-              if (shadow) return shadow.content
-              return currentPath ? window.api.readDetails(currentPath, relativePath) : ''
-            })
+            return elementMatchesWithDetails(
+              criteria,
+              { ...searchable, details },
+              async (relativePath) => {
+                if (shadow) return shadow.content
+                return currentPath ? window.api.readDetails(currentPath, relativePath) : ''
+              }
+            )
           })
         )
         nodes.forEach((n, i) => {
@@ -2936,7 +3008,9 @@ function CanvasInner(): React.JSX.Element {
     const nodeId = detailsPanelNodeId
     window.api.readDetailsWithStamp(currentPath, existingPath).then(({ content, stamp }) => {
       setNoteShadows((prev) =>
-        nodeId in prev ? prev : { ...prev, [nodeId]: loadedNoteShadow(nodeId, existingPath, stamp, content) }
+        nodeId in prev
+          ? prev
+          : { ...prev, [nodeId]: loadedNoteShadow(nodeId, existingPath, stamp, content) }
       )
     })
   }, [detailsPanelNodeId, noteShadows, nodes, currentPath])
@@ -2982,7 +3056,10 @@ function CanvasInner(): React.JSX.Element {
     const nodeId = detailsPanelNodeId
     const shadow = nodeId ? noteShadows[nodeId] : undefined
     if (!nodeId || !currentPath || !shadow || shadow.originalPath === null) return
-    const { content, stamp } = await window.api.readDetailsWithStamp(currentPath, shadow.originalPath)
+    const { content, stamp } = await window.api.readDetailsWithStamp(
+      currentPath,
+      shadow.originalPath
+    )
     setNoteShadows((prev) =>
       prev[nodeId] ? { ...prev, [nodeId]: adoptDisk(prev[nodeId], content, stamp) } : prev
     )
@@ -3077,7 +3154,10 @@ function CanvasInner(): React.JSX.Element {
         // the next switch — otherwise reversing the edge before any switch
         // would bake the reversed orientation into *every* set.
         return edgeDirectionSets.length >= 2
-          ? ensureDirectionSets(withNew, edgeDirectionSets.map((s) => s.id))
+          ? ensureDirectionSets(
+              withNew,
+              edgeDirectionSets.map((s) => s.id)
+            )
           : withNew
       })
     },
@@ -3125,10 +3205,7 @@ function CanvasInner(): React.JSX.Element {
   // session the way the old length-based offset did.
   const spawnPosition = useCallback(
     (width: number, height: number, index: number): { x: number; y: number } => {
-      const center = rfInstance.screenToFlowPosition({
-        x: window.innerWidth / 2,
-        y: window.innerHeight / 2
-      })
+      const center = rfInstance.screenToFlowPosition(visibleCanvasCenter())
       const jitter = (index % 5) * 24
       return { x: center.x - width / 2 + jitter, y: center.y - height / 2 + jitter }
     },
@@ -3304,7 +3381,10 @@ function CanvasInner(): React.JSX.Element {
           // Seed per-set direction records immediately at 2+ sets — see
           // onConnect above.
           return edgeDirectionSets.length >= 2
-            ? ensureDirectionSets(withNew, edgeDirectionSets.map((s) => s.id))
+            ? ensureDirectionSets(
+                withNew,
+                edgeDirectionSets.map((s) => s.id)
+              )
             : withNew
         })
       )
@@ -3348,7 +3428,6 @@ function CanvasInner(): React.JSX.Element {
     },
     [spawnEntityAt, setEdges]
   )
-
 
   // dataTransfer's actual value isn't readable during dragover in most
   // browsers (only .types is, by design) — checking .types is enough to
@@ -3468,10 +3547,7 @@ function CanvasInner(): React.JSX.Element {
       const gap = 40
       const columns = Math.ceil(Math.sqrt(labels.length))
       const rows = Math.ceil(labels.length / columns)
-      const center = rfInstance.screenToFlowPosition({
-        x: window.innerWidth / 2,
-        y: window.innerHeight / 2
-      })
+      const center = rfInstance.screenToFlowPosition(visibleCanvasCenter())
       const originX = center.x - (columns * width + (columns - 1) * gap) / 2
       const originY = center.y - (rows * height + (rows - 1) * gap) / 2
 
@@ -3904,7 +3980,7 @@ function CanvasInner(): React.JSX.Element {
     if (!grabbed || grabbed.data?.locked === true) return null
     const roots = grabbed.selected ? all.filter((n) => n.selected) : [grabbed]
     const ids = new Set(roots.map((n) => n.id))
-    for (let grew = true; grew; ) {
+    for (let grew = true; grew;) {
       grew = false
       for (const n of all) {
         if (n.parentId && ids.has(n.parentId) && !ids.has(n.id)) {
@@ -4038,8 +4114,7 @@ function CanvasInner(): React.JSX.Element {
     // ADR 0023) makes "wherever it was copied from" meaningless, and even
     // same-window the view may have panned/zoomed since the copy. See
     // remapForPaste's own comment.
-    const screenCenter = { x: window.innerWidth / 2, y: window.innerHeight / 2 }
-    const center = rfInstance.screenToFlowPosition(screenCenter)
+    const center = rfInstance.screenToFlowPosition(visibleCanvasCenter(true))
     const offset = cascade * 20
     const { nodes: pastedNodes, edges: pastedEdges } = remapForPaste(
       payload,
@@ -4270,11 +4345,7 @@ function CanvasInner(): React.JSX.Element {
   // diagram file unless a path in it changes. forceHub: the caller changed the
   // diagram itself outside the normal dirty tracking (link creation).
   const persistDiagram = useCallback(
-    async (
-      path: string,
-      nodesToSave: Node[],
-      opts?: { forceHub?: boolean }
-    ): Promise<Node[]> => {
+    async (path: string, nodesToSave: Node[], opts?: { forceHub?: boolean }): Promise<Node[]> => {
       // Apply any staged missing-file removals (ADR 0084) — this is the one
       // point they reach disk. Also drop them from `legend` and close any
       // now-orphaned reference windows.
@@ -4328,8 +4399,8 @@ function CanvasInner(): React.JSX.Element {
         fallbackPaths[op.nodeId] = op.from
         if (op.kind === 'write') sentContent[op.nodeId] = op.content
       }
-      const buildDiagram = (list: Node[]): DiagramFile =>
-        toDiagramFile(
+      const buildDiagram = (list: Node[]): DiagramFile => ({
+        ...toDiagramFile(
           list,
           edges,
           diagramMetadata,
@@ -4341,7 +4412,9 @@ function CanvasInner(): React.JSX.Element {
           edgeDirectionSets,
           activeEdgeDirectionSetId,
           security
-        )
+        ),
+        savedWith: loadedSavedWithRef.current
+      })
       const request: SaveDocumentRequest = {
         diagramPath: path,
         sessionId: sessionIdRef.current,
@@ -4361,7 +4434,12 @@ function CanvasInner(): React.JSX.Element {
           for (const [id, r] of Object.entries(results)) {
             const shadow = next[id]
             if (shadow) {
-              next[id] = markSaved(shadow, r.path, r.stamp, sentContent[id] ?? shadow.baselineContent)
+              next[id] = markSaved(
+                shadow,
+                r.path,
+                r.stamp,
+                sentContent[id] ?? shadow.baselineContent
+              )
             }
           }
           return next
@@ -4483,7 +4561,8 @@ function CanvasInner(): React.JSX.Element {
       // A note that did not complete (missing source, or still held back) leaves
       // its node pointing at the old path.
       const notDone: Record<string, string | null> = {}
-      for (const op of plan.ops) if (!completed.has(op.nodeId)) notDone[op.nodeId] = fallbackPaths[op.nodeId]
+      for (const op of plan.ops)
+        if (!completed.has(op.nodeId)) notDone[op.nodeId] = fallbackPaths[op.nodeId]
       savedNodes = withPaths(savedNodes, notDone)
 
       // Notes of elements that no longer exist have nothing left to save.
@@ -4765,6 +4844,10 @@ function CanvasInner(): React.JSX.Element {
       setActiveEdgeDirectionSetId(openedActiveEdgeDirectionSetId)
       setSecurity(openedSecurity)
       setHierarchyLoadNotes(openedHierarchyNotes)
+      // The version that last wrote this file (ADR 0118): kept so a save does not
+      // lower it, and compared with this app's to warn about a newer file.
+      loadedSavedWithRef.current = diagram.savedWith
+      void warnIfSavedWithNewer(path, diagram.savedWith)
       if (opts?.keepNoteShadows) {
         // A reload replaces the diagram only — notes are independent files with their
         // own state. Unsaved note edits are kept (clean copies are just a cache and are
@@ -4822,7 +4905,7 @@ function CanvasInner(): React.JSX.Element {
       // ADR 0084 — surface missing referenced files in Diagnostics.
       void scanMissingFiles(openedNodes, openedLegend, path)
     },
-    [rfInstance, setNodes, setEdges, runSync, scanMissingFiles, updateNodeInternals]
+    [setNodes, setEdges, runSync, scanMissingFiles, updateNodeInternals]
   )
 
   // A window opened with an initial diagram (File -> Open, or either
@@ -4862,7 +4945,9 @@ function CanvasInner(): React.JSX.Element {
         }
       })
       .catch((error) => {
-        showAlert(`Couldn't open ${path}: ${error instanceof Error ? error.message : String(error)}`)
+        showAlert(
+          `Couldn't open ${path}: ${error instanceof Error ? error.message : String(error)}`
+        )
       })
   }, [loadDiagramIntoCanvas, markDirty])
 
@@ -4928,19 +5013,22 @@ function CanvasInner(): React.JSX.Element {
       const last = lastSnapshotStateRef.current
       if (last && (Object.keys(s) as (keyof typeof s)[]).every((k) => last[k] === s[k])) return
       lastSnapshotStateRef.current = s
-      const diagram = toDiagramFile(
-        s.nodes,
-        s.edges,
-        s.diagramMetadata,
-        s.requiredTags,
-        s.highlights,
-        s.legend,
-        s.gravityPresets,
-        s.diagramMaxConnectionPointsPerSide,
-        s.edgeDirectionSets,
-        s.activeEdgeDirectionSetId,
-        s.security
-      )
+      const diagram: DiagramFile = {
+        ...toDiagramFile(
+          s.nodes,
+          s.edges,
+          s.diagramMetadata,
+          s.requiredTags,
+          s.highlights,
+          s.legend,
+          s.gravityPresets,
+          s.diagramMaxConnectionPointsPerSide,
+          s.edgeDirectionSets,
+          s.activeEdgeDirectionSetId,
+          s.security
+        ),
+        savedWith: loadedSavedWithRef.current
+      }
       window.api.writeRecoverySnapshot(
         s.currentPath,
         sessionIdRef.current,
@@ -5145,7 +5233,9 @@ function CanvasInner(): React.JSX.Element {
         if (!result.found)
           showAlert(`Diagram not found — it may have been moved or deleted:\n${path}`)
       } catch (error) {
-        showAlert(`Couldn't open ${path}: ${error instanceof Error ? error.message : String(error)}`)
+        showAlert(
+          `Couldn't open ${path}: ${error instanceof Error ? error.message : String(error)}`
+        )
       }
     },
     [nodes, edges]
@@ -5320,7 +5410,9 @@ function CanvasInner(): React.JSX.Element {
         await persistDiagram(parentPath, updatedNodes, { forceHub: true })
       } catch (error) {
         if (isSaveAborted(error)) return
-        showAlert(`Couldn't save the link: ${error instanceof Error ? error.message : String(error)}`)
+        showAlert(
+          `Couldn't save the link: ${error instanceof Error ? error.message : String(error)}`
+        )
       }
     },
     [nodes, persistDiagram]
@@ -5943,7 +6035,12 @@ function CanvasInner(): React.JSX.Element {
   const editMenu: MenuBarMenu = {
     label: 'Edit',
     items: [
-      { label: 'Undo', accelerator: acceleratorFor('edit.undo'), disabled: past.length === 0, onSelect: undo },
+      {
+        label: 'Undo',
+        accelerator: acceleratorFor('edit.undo'),
+        disabled: past.length === 0,
+        onSelect: undo
+      },
       {
         label: 'Redo',
         accelerator: acceleratorFor('edit.redo'),
@@ -6040,12 +6137,14 @@ function CanvasInner(): React.JSX.Element {
             if (result) showAlert(summarizeAiFolderResult(result))
           })
           .catch((err) =>
-            showAlert(`Could not set up AI assistance: ${err instanceof Error ? err.message : String(err)}`)
+            showAlert(
+              `Could not set up AI assistance: ${err instanceof Error ? err.message : String(err)}`
+            )
           )
       }
     },
     // Claude Desktop exists for Windows and macOS only (ADR 0110).
-    ...(window.electron.process.platform === 'win32' || window.electron.process.platform === 'darwin'
+    ...(window.api.platform === 'win32' || window.api.platform === 'darwin'
       ? [
           {
             label: 'Install Claude Desktop extension…',
@@ -6419,6 +6518,7 @@ function CanvasInner(): React.JSX.Element {
                   onlyRenderVisibleElements={!isExportingPng}
                   onNodesChange={onNodesChange}
                   onEdgesChange={onEdgesChange}
+                  onBeforeDelete={onBeforeDelete}
                   onNodeDrag={onNodeDrag}
                   onNodeDragStop={onNodeDragStop}
                   onNodeClick={onStyleBrushNodeClick}

@@ -17,7 +17,9 @@ test('a pre-rename node type is normalized to entity on load', () => {
 
 test('an already-current node type is left untouched', () => {
   const file = parseDiagram(
-    minimal({ nodes: [{ id: 'n1', type: 'entity', position: { x: 0, y: 0 }, data: { label: '' } }] })
+    minimal({
+      nodes: [{ id: 'n1', type: 'entity', position: { x: 0, y: 0 }, data: { label: '' } }]
+    })
   )
   assert.equal(file.nodes[0].type, 'entity')
 })

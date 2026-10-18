@@ -31,8 +31,8 @@ export default function AlignDistributePanel({
       </div>
       <div className="align-distribute-panel-body">
         <p className="align-distribute-panel-hint">
-          Arranges the selected elements into a column or row, spaced edge-to-edge by the gap
-          below — the leftmost/topmost element among them stays put, the rest line up after it.
+          Arranges the selected elements into a column or row, spaced edge-to-edge by the gap below
+          — the leftmost/topmost element among them stays put, the rest line up after it.
         </p>
         <NumberField
           label="Gap (px)"

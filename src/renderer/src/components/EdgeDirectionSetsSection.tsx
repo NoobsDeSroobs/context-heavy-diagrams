@@ -81,9 +81,9 @@ export default function EdgeDirectionSetsSection({
         <p className="required-tags-panel-hint">
           Name the direction your edges show &mdash; e.g. &ldquo;Data flow&rdquo; &mdash; and it
           becomes a legend row and the default style for edges you draw. Add a second reading (e.g.
-          &ldquo;Trigger direction&rdquo;) to switch the whole diagram between them: every edge stays
-          in every reading, only its arrow direction (and which connection point each end uses)
-          changes.
+          &ldquo;Trigger direction&rdquo;) to switch the whole diagram between them: every edge
+          stays in every reading, only its arrow direction (and which connection point each end
+          uses) changes.
         </p>
         <button type="button" className="required-tag-add" onClick={onCreate}>
           Add direction set
@@ -120,15 +120,18 @@ export default function EdgeDirectionSetsSection({
         {sets.length >= 2 && (
           <>
             {' '}
-            The first set is the <em>base</em>: edges are stored on disk in its orientation whichever
-            reading is active, so switching keeps file diffs small.
+            The first set is the <em>base</em>: edges are stored on disk in its orientation
+            whichever reading is active, so switching keeps file diffs small.
           </>
         )}
       </p>
       <div className="required-tag-values-list">
         {sets.map((s) => (
           <div key={s.id} className="required-tag-value-row edge-direction-set-row">
-            <span className="edge-direction-set-swatch" title="Preview of this reading's edge style">
+            <span
+              className="edge-direction-set-swatch"
+              title="Preview of this reading's edge style"
+            >
               <DirectionSwatch style={s.style} />
             </span>
             <button

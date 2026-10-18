@@ -27,7 +27,7 @@ This revisits `preferences.ts`'s original `localStorage`-based storage ([ADR 003
 **Having main reach into the renderer's `localStorage` directly** (e.g. via a session/webContents API) to migrate without any renderer-side code — rejected; Electron has no clean synchronous-at-startup path to another process's browser storage, and the renderer already has this data loaded for free.
 
 ## Consequences
-- New files: `src/shared/settings.ts` (moved `AppPreferences`/`DEFAULT_PREFERENCES`/`PaletteColor`/`LegendCorner`), `src/main/appSettings.ts`. Removed: `src/main/settingsMirror.ts`.
+- New files: `src/shared/settings.ts` (since renamed `preferences.ts`; moved `AppPreferences`/`DEFAULT_PREFERENCES`/`PaletteColor`/`LegendCorner`), `src/main/appSettings.ts`. Removed: `src/main/settingsMirror.ts`.
 - New IPC surface: `preferences:read`, `preferences:write`, `preferences:changed` (main → renderer broadcast). Removed: `settings:mirrorScanOnStartup`.
 - No `.chd` schema impact — this is entirely the app-wide Settings tier (see [ADR 0052](0052-settings-ownership-tiers.md)), never diagram content.
 - Sets up the settings-tier follow-ups ([ADR 0066](0066-gravity-presets-user-default.md), [ADR 0067](0067-max-connection-points-diagram-override.md), [ADR 0068](0068-multiple-named-style-palettes.md)) to extend `AppPreferences`'s shape on a stable foundation, rather than mid-migration.

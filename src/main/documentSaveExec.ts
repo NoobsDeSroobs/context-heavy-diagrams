@@ -1,5 +1,5 @@
 import { copyFile, mkdir, unlink, writeFile } from 'fs/promises'
-import { dirname, join } from 'path'
+import { dirname } from 'path'
 import type { Conflict, NoteOp, SavedNote, SaveOutcome, Stamp } from '../shared/documentSave'
 
 // Executes a save plan (see src/shared/documentSave.ts and ADR 0092): checks
@@ -25,6 +25,9 @@ export interface SaveRequest {
 }
 
 export interface ExecDeps {
+  // Resolves a stored note path against the diagram's folder, or null if it
+  // would reach outside it (containedPath.ts, ADR 0115).
+  contain: (baseDir: string, relativePath: string) => string | null
   stamp: (absolutePath: string) => Promise<Stamp>
   // Called after the note files are in place. `revertNodeIds` are nodes whose
   // note is NOT at its new path (a move with no source file, or an op held
@@ -47,7 +50,16 @@ function changesReference(op: NoteOp): boolean {
 
 export async function executeSave(req: SaveRequest, deps: ExecDeps): Promise<SaveOutcome> {
   const baseDir = dirname(req.diagramPath)
-  const abs = (rel: string): string => join(baseDir, rel)
+  // Note paths come from the diagram file, which is untrusted once diagrams are
+  // shared (ADR 0115): a path outside the diagram's folder is never copied from,
+  // written to or deleted. `inside` returns null for one; `mustBeInside` fails.
+  const inside = (rel: string): string | null => deps.contain(baseDir, rel)
+  const mustBeInside = (rel: string): string => {
+    const path = inside(rel)
+    if (path === null)
+      throw new Error(`"${rel}" is outside the diagram's folder, so it was not touched`)
+    return path
+  }
 
   // 1. Find what conflicts — but don't stop: everything else still saves.
   const conflicts: Conflict[] = []
@@ -60,7 +72,9 @@ export async function executeSave(req: SaveRequest, deps: ExecDeps): Promise<Sav
     }
     for (const op of req.ops) {
       if (op.kind !== 'write' || op.from === null) continue
-      if (changedOnDisk(op.expectedStamp, await deps.stamp(abs(op.from)))) {
+      // An outside "old" path is never read or removed, so it cannot conflict.
+      const from = inside(op.from)
+      if (from !== null && changedOnDisk(op.expectedStamp, await deps.stamp(from))) {
         conflicts.push({ kind: 'note', path: op.from, nodeId: op.nodeId })
         conflictedNodes.add(op.nodeId)
       }
@@ -84,23 +98,31 @@ export async function executeSave(req: SaveRequest, deps: ExecDeps): Promise<Sav
     // 2. New and changed note files (a move copies, so the old name is still
     //    valid until the diagram points elsewhere).
     for (const op of runNow) {
-      await mkdir(dirname(abs(op.to)), { recursive: true })
+      const to = mustBeInside(op.to)
+      await mkdir(dirname(to), { recursive: true })
       if (op.kind === 'write') {
-        await writeFile(abs(op.to), op.content, 'utf-8')
+        await writeFile(to, op.content, 'utf-8')
       } else {
-        const exists = (await deps.stamp(abs(op.from))) !== null
+        // A move whose source is outside the folder is treated as having no
+        // source: nothing is copied, and the node keeps its old path.
+        const from = inside(op.from)
+        const exists = from !== null && (await deps.stamp(from)) !== null
         if (!exists) {
           skippedMoves.push(op.nodeId)
           continue
         }
-        await copyFile(abs(op.from), abs(op.to))
+        await copyFile(from, to)
       }
-      notes[op.nodeId] = { path: op.to, stamp: await deps.stamp(abs(op.to)) }
+      notes[op.nodeId] = { path: op.to, stamp: await deps.stamp(to) }
     }
 
     // 3. The diagram, now that every path it mentions exists.
     if (req.writeHub && !hubHeld) {
-      await writeFile(req.diagramPath, deps.serializeHub([...skippedMoves, ...heldNodeIds]), 'utf-8')
+      await writeFile(
+        req.diagramPath,
+        deps.serializeHub([...skippedMoves, ...heldNodeIds]),
+        'utf-8'
+      )
       hubWritten = true
       hubStamp = await deps.stamp(req.diagramPath)
     }
@@ -118,8 +140,10 @@ export async function executeSave(req: SaveRequest, deps: ExecDeps): Promise<Sav
   //    failed save — the new state is already fully in place.
   for (const op of runNow) {
     if (op.from === null || op.from === op.to || !(op.nodeId in notes)) continue
+    const from = inside(op.from)
+    if (from === null) continue
     try {
-      await unlink(abs(op.from))
+      await unlink(from)
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
         warnings.push(`Couldn't remove the old file ${op.from}`)

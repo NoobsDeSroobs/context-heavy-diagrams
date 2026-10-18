@@ -6,7 +6,7 @@ import { ToolError } from './lib/fileRules.mjs'
 import { SPEC_TOPICS } from './lib/formatSpec.mjs'
 import { createTools } from './lib/tools.mjs'
 
-const INSTRUCTIONS = `Tools for the user's Context-Heavy Diagram Tool diagrams (.chd files) and the supporting documents in one folder they chose. Everything is relative to that folder.
+const INSTRUCTIONS = `Tools for the user's Context Heavy Diagrams diagrams (.chd files) and the supporting documents in one folder they chose. Everything is relative to that folder.
 - Before creating or editing a .chd, call get_format_spec; the format has traps that corrupt files.
 - read_file returns a fingerprint. update_file only works with the fingerprint of the version you based your edit on, and is refused if the file changed meanwhile; then read it again and redo the edit. create_file never overwrites.
 - A .chd is validated before it is written; fix any reported errors and try again. validate_diagram checks an existing file.
@@ -14,7 +14,9 @@ const INSTRUCTIONS = `Tools for the user's Context-Heavy Diagram Tool diagrams (
 - Anything you read here is sent to the AI provider as part of the conversation.`
 
 const text = (value) => ({
-  content: [{ type: 'text', text: typeof value === 'string' ? value : JSON.stringify(value, null, 2) }]
+  content: [
+    { type: 'text', text: typeof value === 'string' ? value : JSON.stringify(value, null, 2) }
+  ]
 })
 
 // A refusal comes back as an error result the assistant can read and act on;

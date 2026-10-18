@@ -1,7 +1,7 @@
 # 0100: The command palette reads the live menu bar instead of a second registry
 
 ## Status
-Decided and implemented (2026-09-29). Not live-tested (Electron renderer).
+Accepted (2026-09-29); implemented and live-tested.
 
 ## Context
 A keyboard-invoked, searchable launcher for app actions was planned to be driven by the command registry (`commands.ts`, [ADR 0094](0094-command-registry-and-shortcuts-help.md)), the way the Help → shortcuts page already is. Looking at it closer: `commands.ts` only ever grew to cover *keyboard shortcuts and mouse gestures* — that was its whole brief. Most of what a user would actually want to reach by typing a name ("diagnostics", "export png", "preferences") is a **menu item with no `CommandDef` at all**: it lives only in the hand-built `fileMenu`/`editMenu`/`viewMenu`/`helpMenu` objects in `Canvas.tsx`, each item already carrying exactly the fields a palette needs (`label`, `accelerator`, `disabled`, `onSelect`).

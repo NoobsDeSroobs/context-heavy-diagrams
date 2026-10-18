@@ -19,7 +19,7 @@
         "name": "Supply chain compromise"
       }
     ],
-    "matrixShapeIds": [
+    "matrixEntityIds": [
       "svc-gateway",
       "svc-ledger"
     ]
@@ -51,7 +51,7 @@
     },
     {
       "id": "svc-gateway",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 0,
         "y": 0
@@ -73,7 +73,7 @@
     },
     {
       "id": "svc-ledger",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 320,
         "y": 0

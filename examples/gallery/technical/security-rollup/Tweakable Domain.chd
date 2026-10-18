@@ -11,7 +11,7 @@
         "name": "DDoS"
       }
     ],
-    "matrixShapeIds": [
+    "matrixEntityIds": [
       "shape-ddb6f6fb-ae7c-423f-b779-7ad926987b3c",
       "shape-42c22e8a-b50a-4fe2-b307-72a1ac33a805"
     ]
@@ -19,7 +19,7 @@
   "nodes": [
     {
       "id": "shape-ddb6f6fb-ae7c-423f-b779-7ad926987b3c",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 276,
         "y": 253.5
@@ -36,7 +36,7 @@
     },
     {
       "id": "shape-42c22e8a-b50a-4fe2-b307-72a1ac33a805",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 447,
         "y": 257

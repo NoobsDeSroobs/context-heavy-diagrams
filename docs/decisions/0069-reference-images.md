@@ -1,7 +1,7 @@
 # 0069: Reference images attached to shapes
 
 ## Status
-Decided (2026-08-27), implementation in progress.
+Decided and implemented (2026-08-27).
 
 ## Context
 
@@ -30,7 +30,7 @@ This single line is what makes the concept coherent — the moment a reference c
 
 ## Alternatives considered
 
-- **Image as a first-class canvas element** (the epic's original framing) — rejected; see Context. The `"image"` node type, connection points, canvas rendering, and export inclusion all fall away with it.
+- **Image as a first-class canvas element** (the original framing) — rejected; see Context. The `"image"` node type, connection points, canvas rendering, and export inclusion all fall away with it.
 - **Diagram-level reference pool with per-shape tagging** ("search `hasPicture = true & tag=GDPR.PII`") — the user's own richer idea. Deferred: the pool + tagging model is its own piece of work, and a `has:references` search facet extends search's matching the same way search-by-icon does — logged as its own follow-up. Per-shape `string[]` is the v1.
 - **Configurable `assets/` / `assets/references/` subfolder paths** — deferred to a separate follow-up; it needs a settings field threaded through every asset read plus a migration story for existing diagrams, none of which belongs here. Hardcoded `assets/references/` for now, consistent with the hardcoded `assets/` for icons.
 - **Pop-out to a real always-on-top OS window** (true reference-software behaviour) — a natural later step, much more plumbing (new window type, asset IPC into it). In-canvas floating panel for v1, reusing the existing overlay pattern.

@@ -1,6 +1,6 @@
 # Example gallery
 
-Skeleton for [epic 0022](../../docs/planning/epics/0022-example-diagram-gallery.md) — a broad, illustrative example set, distinct from the minimal round-trip fixtures in the parent [`examples/`](../README.md) folder. Nothing here is about this tool itself except `self-documentation/`; everything else is fictional content used to find out where the tool's flexibility holds up and where it breaks down.
+A broad, illustrative example set, distinct from the minimal round-trip fixtures in the parent [`examples/`](../README.md) folder (start there for an index of what to open). Tracked by [epic 0022](../../docs/planning/epics/0022-example-diagram-gallery.md). Nothing here is about this tool itself except `self-documentation/` (not built yet); everything else is fictional content used to find out where the tool's flexibility holds up and where it breaks down.
 
 See [ADR 0028](../../docs/decisions/0028-example-gallery-shared-landscape-and-domain-folders.md) (and its amendments, especially the 2026-08-20 one on domain-over-persona framing and trimming) for why the gallery is shaped this way.
 
@@ -23,4 +23,4 @@ Deferred, not dropped: a hello-world tier, and a standalone limits-tests folder 
 
 ## Status
 
-Partly built — several entries now have `.chd` files (see each folder's own README for its specific state); the candidate list itself still isn't fully approved. Newest: [`technical/security-rollup`](technical/security-rollup/README.md), a 7-file Security Matrix rollup demo added 2026-09-09 for [epic 0081](../../docs/planning/epics/0081-recursive-matrix-population-and-automation.md). See [epic 0022](../../docs/planning/epics/0022-example-diagram-gallery.md#candidate-diagram-list-meridian-rail-scenario--under-review) for the current list.
+Partly built — most folders have `.chd` files (see each folder's own README for its specific state); `self-documentation/` is still only a plan, and the candidate list itself isn't fully approved. Newest: [`technical/security-rollup`](technical/security-rollup/README.md), a Security Matrix rollup demo spanning three layers of linked diagrams, added for [epic 0081](../../docs/planning/completed-epics.md#0081-recursive-matrix-population-and-automation). See [epic 0022](../../docs/planning/epics/0022-example-diagram-gallery.md#candidate-diagram-list-meridian-rail-scenario--under-review) for the current list.

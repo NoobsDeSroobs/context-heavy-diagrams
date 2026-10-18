@@ -11,6 +11,7 @@ import LockBadge from '../components/LockBadge'
 import { useDiagramContext } from '../useDiagramContext'
 import { withOpacity } from '../styles/colorOpacity'
 import { themeAdaptiveColor } from '../styles/themeAdaptiveColor'
+import { LINE_STYLE_DEFAULTS } from '../styles/styleDefaults'
 import { markerUrl } from '../edges/markerIds'
 import { buildBendablePath, nearestSegmentIndex, pointsBoundingBox } from '../geometry/bendablePath'
 
@@ -20,8 +21,10 @@ import { buildBendablePath, nearestSegmentIndex, pointsBoundingBox } from '../ge
 // line consistently with what dragging/editing later settles into.
 export const LINE_BOUNDS_PADDING = 10
 const LINE_POINT_HANDLE_SIZE = 10
-const DEFAULT_STROKE = '#4a5568'
-const DEFAULT_STROKE_WIDTH = 2
+// A line's default colour and width are data in styleDefaults.ts (ADR 0117), shared
+// with the property panel.
+const DEFAULT_STROKE = LINE_STYLE_DEFAULTS.stroke
+const DEFAULT_STROKE_WIDTH = LINE_STYLE_DEFAULTS.strokeWidth
 const SELECTED_STROKE_WIDTH_DELTA = 1
 
 // Small local copy, not imported from LabeledEdge.tsx — that file already
@@ -66,6 +69,10 @@ function normalizeLineBounds(
   })
 }
 
+// One shared empty list, so a line with no points has a stable `points` identity
+// across renders and the callbacks below that depend on it are not re-created.
+const NO_POINTS: LinePoint[] = []
+
 // A freeform curved line (see ADR 0050) — an ordered list of points,
 // each with an optional "gravity" (Catmull-Rom tension) controlling how
 // much the curve bends there. Deliberately its own node type rather than
@@ -84,7 +91,7 @@ function LineNode({ id, data, selected }: NodeProps): React.JSX.Element {
   const { getNode, updateNodeData, screenToFlowPosition } = rf
 
   const locked = data?.locked === true
-  const points = (data?.points as LinePoint[] | undefined) ?? []
+  const points = (data?.points as LinePoint[] | undefined) ?? NO_POINTS
   const style = (data?.style ?? {}) as NodeStyle
   const path = buildBendablePath(points)
 

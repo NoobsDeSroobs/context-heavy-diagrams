@@ -23,7 +23,7 @@ const SPEC_TOPICS = {
   layout: { title: 'Layout guide', file: 'references/layout-guide.md' }
 }
 
-const HELP = `chd — command-line companion to the Context-Heavy Diagram Tool
+const HELP = `chd — command-line companion to Context Heavy Diagrams
 
 Usage:
   chd spec [fields|authoring|layout|all]   Print the .chd file format reference

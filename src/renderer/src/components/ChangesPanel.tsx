@@ -107,8 +107,12 @@ export default function ChangesPanel({
             This diagram has never been saved — comparing against a blank diagram.
           </p>
         )}
-        {diff === null && <p className="diagnostics-panel-empty">Comparing against the saved file…</p>}
-        {empty && <p className="diagnostics-panel-empty">No changes since the file was last saved.</p>}
+        {diff === null && (
+          <p className="diagnostics-panel-empty">Comparing against the saved file…</p>
+        )}
+        {empty && (
+          <p className="diagnostics-panel-empty">No changes since the file was last saved.</p>
+        )}
         {diff && (
           <>
             <Section title="Modified" elements={diff.modified} onReveal={onReveal} />

@@ -1,11 +1,16 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
-import { electronApp, optimizer } from '@electron-toolkit/utils'
+import { app, BrowserWindow, ipcMain, session } from 'electron'
+import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import { registerDiagramHandlers } from './diagram'
 import { registerIconHandlers } from './icons'
 import { registerReferenceHandlers } from './references'
 import { registerDetailsHandlers } from './details'
 import { registerLinkHandlers } from './links'
-import { createWindow, focusLastUsedWindow, openExternalPaths, registerWindowHandlers } from './windows'
+import {
+  createWindow,
+  focusLastUsedWindow,
+  openExternalPaths,
+  registerWindowHandlers
+} from './windows'
 import { diagramPathsFromArgs } from './launchArgs'
 import { registerRequiredTagsHandlers } from './requiredTags'
 import { registerRecoveryHandlers, runStartupOrphanScan } from './recovery'
@@ -21,6 +26,8 @@ import { registerExportHandlers } from './export'
 import { registerSecurityHandlers } from './security'
 import { registerLinkedSearchHandlers } from './linkedSearch'
 import { registerAiHandlers } from './ai'
+import { registerClipboardHandlers } from './clipboard'
+import { disableProxyDiscovery, enforceOffline } from './offline'
 
 // One running instance (ADR 0108): settings, crash-recovery snapshots and the
 // window-by-path registry are all per-user state a second process would
@@ -29,6 +36,9 @@ import { registerAiHandlers } from './ai'
 // fights an installed copy for the lock.
 const hasInstanceLock = !app.isPackaged || app.requestSingleInstanceLock()
 if (!hasInstanceLock) app.quit()
+
+// Command-line switches only take effect before 'ready' (ADR 0113).
+disableProxyDiscovery()
 
 app.on('second-instance', (_event, argv, workingDirectory) => {
   const paths = diagramPathsFromArgs(argv, workingDirectory)
@@ -54,7 +64,7 @@ app.whenReady().then(async () => {
   if (!hasInstanceLock) return
 
   // Set app user model id for windows
-  electronApp.setAppUserModelId('com.electron')
+  electronApp.setAppUserModelId('com.contextheavydiagrams.app')
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
@@ -81,6 +91,17 @@ app.whenReady().then(async () => {
   registerSecurityHandlers()
   registerLinkedSearchHandlers()
   registerAiHandlers()
+  registerClipboardHandlers()
+
+  // The renderer never needs camera, microphone, geolocation, notifications or
+  // any other permission-gated capability (ADR 0112), so refuse every request.
+  session.defaultSession.setPermissionRequestHandler((_webContents, _permission, callback) =>
+    callback(false)
+  )
+
+  // Offline by enforcement, not just by habit (ADR 0113). The dev server is
+  // the one exception, and only when running `npm run dev`.
+  enforceOffline(session.defaultSession, is.dev ? process.env['ELECTRON_RENDERER_URL'] : undefined)
 
   // Installer-chosen first-run defaults must be in place before any window
   // reads the preferences.

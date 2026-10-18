@@ -2,7 +2,7 @@
 
 A three-layer worked example for the recursive Security Matrix rollup — see
 [ADR 0088](../../../../docs/decisions/0088-recursive-security-matrix-rollup.md)
-and [epic 0081](../../../../docs/planning/epics/0081-recursive-matrix-population-and-automation.md).
+and [epic 0081](../../../../docs/planning/completed-epics.md#0081-recursive-matrix-population-and-automation).
 Fictional Meridian Rail content.
 
 ## Layout

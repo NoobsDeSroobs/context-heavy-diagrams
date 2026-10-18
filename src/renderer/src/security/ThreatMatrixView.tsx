@@ -518,7 +518,12 @@ export default function ThreatMatrixView({
           <div className="legend-panel-toolbar">
             <span className="legend-panel-title">Derived score</span>
             <div className="details-panel-spacer" />
-            <button type="button" title="Close" aria-label="Close" onClick={() => setBreakdown(null)}>
+            <button
+              type="button"
+              title="Close"
+              aria-label="Close"
+              onClick={() => setBreakdown(null)}
+            >
               ✕
             </button>
           </div>
@@ -531,7 +536,9 @@ export default function ThreatMatrixView({
                 ? 'Not assessed anywhere in the linked diagram.'
                 : `${breakdown.value.toFixed(2)} — rolled up from ${breakdown.contributions} downstream assessment${breakdown.contributions === 1 ? '' : 's'} using the current Cell score / Threat score modes.`}
             </p>
-            <p className="legend-panel-hint">Read-only: edit the assessments in the linked diagram.</p>
+            <p className="legend-panel-hint">
+              Read-only: edit the assessments in the linked diagram.
+            </p>
             <button
               type="button"
               className="threat-matrix-manage-button"

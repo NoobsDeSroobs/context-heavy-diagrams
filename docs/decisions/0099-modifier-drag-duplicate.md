@@ -1,7 +1,7 @@
 # 0099: Modifier+drag duplicates by dragging a fresh copy; the original is left untouched
 
 ## Status
-Decided and implemented (2026-09-24). Not live-tested (Electron renderer).
+Accepted (2026-09-24); implemented and live-tested on Windows (Linux untested, see known-issues).
 
 ## Context
 First external feature request: "Alt+drag = duplicate". The natural model (Figma, draw.io) is that the original stays where it is — same id, same edges — and the thing under the pointer is a new object.

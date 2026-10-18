@@ -15,7 +15,7 @@ Raised (2026-08-20): the resize handles on a selected shape/container/text node 
 - **One shared fix covers all three resizable node types** (`ShapeNode`, `ContainerNode`, `TextNode`) — confirmed by reading the code that all three already render the exact same unstyled `<NodeResizer>`, not separate implementations, so there was never a need to touch each individually.
 
 ## Alternatives considered
-- **Small visible dot, larger invisible hit padding around it** (the epic doc's own "simplest fix" framing) — the natural first instinct, and genuinely free for the edge lines (built that way). For corner handles specifically, rejected for the reason above: the handle div has no separable visible/hit-area concept, and this exact tradeoff was already tried and reversed once on this project (the edge-reconnection work) — no reason to reintroduce it here.
+- **Small visible dot, larger invisible hit padding around it** (the "simplest fix" framing from the original request) — the natural first instinct, and genuinely free for the edge lines (built that way). For corner handles specifically, rejected for the reason above: the handle div has no separable visible/hit-area concept, and this exact tradeoff was already tried and reversed once on this project (the edge-reconnection work) — no reason to reintroduce it here.
 - **Building the "transform mode" now** instead of a simple size bump. Rejected — real scope of its own (entry/exit gesture, conflict with normal click-to-move, and a plausible shared mechanism with edge routing's bend handles that hasn't been designed yet), and the simple sizing fix likely resolves most of the reported friction on its own.
 
 ## Consequences

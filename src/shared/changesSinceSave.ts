@@ -138,7 +138,13 @@ export function diffDiagrams(saved: DiagramFile, current: DiagramFile): ChangesS
     if (!prior) continue
     const changedFields = diffFields(NODE_FIELDS, prior, n)
     if (changedFields.length > 0) {
-      modified.push({ kind: 'node', id: n.id, label: nodeLabel(n), changeType: 'modified', changedFields })
+      modified.push({
+        kind: 'node',
+        id: n.id,
+        label: nodeLabel(n),
+        changeType: 'modified',
+        changedFields
+      })
     }
   }
 
@@ -147,12 +153,22 @@ export function diffDiagrams(saved: DiagramFile, current: DiagramFile): ChangesS
 
   for (const e of current.edges) {
     if (!savedEdgesById.has(e.id)) {
-      added.push({ kind: 'edge', id: e.id, label: edgeLabel(e, currentLabelsById), changeType: 'added' })
+      added.push({
+        kind: 'edge',
+        id: e.id,
+        label: edgeLabel(e, currentLabelsById),
+        changeType: 'added'
+      })
     }
   }
   for (const e of saved.edges) {
     if (!currentEdgesById.has(e.id)) {
-      removed.push({ kind: 'edge', id: e.id, label: edgeLabel(e, savedLabelsById), changeType: 'removed' })
+      removed.push({
+        kind: 'edge',
+        id: e.id,
+        label: edgeLabel(e, savedLabelsById),
+        changeType: 'removed'
+      })
     }
   }
   for (const e of current.edges) {

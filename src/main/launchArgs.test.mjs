@@ -9,8 +9,14 @@ const cwd = resolve('work', 'dir')
 const abs = (...parts) => resolve('abs', ...parts)
 
 test('keeps only .chd arguments, ignoring the executable, switches and other files', () => {
-  const exe = resolve('app', 'context-heavy-diagram-tool.exe')
-  const args = [exe, '--allow-file-access-from-files', abs('a.chd'), abs('notes.txt'), '--flag=x.chd']
+  const exe = resolve('app', 'context-heavy-diagrams.exe')
+  const args = [
+    exe,
+    '--allow-file-access-from-files',
+    abs('a.chd'),
+    abs('notes.txt'),
+    '--flag=x.chd'
+  ]
   assert.deepEqual(diagramPathsFromArgs(args, cwd), [abs('a.chd')])
 })
 

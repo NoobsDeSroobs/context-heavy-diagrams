@@ -109,6 +109,6 @@ pass), which covers the need without new UI.
 - `getSmoothStepPath` is no longer used anywhere; `LabeledEdge.tsx` drops the
   import.
 - New CSS: `.edge-segment-handle` (+ `-h` / `-v` cursor variants).
-- Follow-up worth its own epic if wanted: draggable endpoint-adjacent segments
+- Follow-up worth separate work if wanted: draggable endpoint-adjacent segments
   (stub synthesis), and an explicit "remove waypoint" affordance for orthogonal
   edges.

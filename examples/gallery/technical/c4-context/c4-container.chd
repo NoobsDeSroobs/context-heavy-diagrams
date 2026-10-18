@@ -25,7 +25,7 @@
     },
     {
       "id": "actor-passenger",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": -900,
         "y": -260
@@ -56,7 +56,7 @@
     },
     {
       "id": "actor-station-staff",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": -877.0838008598162,
         "y": -70
@@ -105,7 +105,7 @@
     },
     {
       "id": "booking-web-app",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 15.174117598134274,
         "y": 160
@@ -131,7 +131,7 @@
     },
     {
       "id": "staff-portal",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 15.174117598134274,
         "y": 260
@@ -157,7 +157,7 @@
     },
     {
       "id": "notification-service",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 15.174117598134274,
         "y": 55
@@ -183,7 +183,7 @@
     },
     {
       "id": "booking-api",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 310,
         "y": 210
@@ -222,7 +222,7 @@
     },
     {
       "id": "payment-orchestration",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 593.8081458877741,
         "y": 55
@@ -248,7 +248,7 @@
     },
     {
       "id": "interop-gateway",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 59.83149271966067,
         "y": 461.21321286914497
@@ -274,7 +274,7 @@
     },
     {
       "id": "legacy-sync",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 656.3873304672792,
         "y": 400
@@ -300,7 +300,7 @@
     },
     {
       "id": "platform-database",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 426.3873304672792,
         "y": 501.21321286914497
@@ -325,7 +325,7 @@
     },
     {
       "id": "ext-payment-gateway",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 824.0395480513641,
         "y": -314.32262446261484
@@ -349,7 +349,7 @@
     },
     {
       "id": "ext-rail-interop",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 824.0395480513641,
         "y": 238.8693324746308
@@ -373,7 +373,7 @@
     },
     {
       "id": "ext-loyalty-crm",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 824.0395480513641,
         "y": -34.322624462614854
@@ -397,7 +397,7 @@
     },
     {
       "id": "ext-legacy-mainframe",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 824.0395480513641,
         "y": 105.67737553738513

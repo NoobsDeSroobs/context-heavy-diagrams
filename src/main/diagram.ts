@@ -1,7 +1,8 @@
-import { BrowserWindow, dialog, ipcMain } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain } from 'electron'
 import { readFile } from 'fs/promises'
 import { dirname, join } from 'path'
 import { parseDiagram, serializeDiagram, type DiagramFile } from '@shared/diagram'
+import { stampSavedWith } from '@shared/appVersion'
 import type { SaveDocumentRequest, SaveOutcome, Stamp } from '@shared/documentSave'
 import { DEFAULT_PREFERENCES, withRecentDiagram } from '@shared/preferences'
 import { registerWindowPath } from './windows'
@@ -10,6 +11,7 @@ import { readPreferences, updatePreferences } from './appPreferences'
 import { fileStamp } from './fileStamp'
 import { executeSave } from './documentSaveExec'
 import { resolveLinkPath } from './linkPaths'
+import { containedPath } from './containedPath'
 
 // Shared by diagram:openPath and document:save — records `path` in both the
 // last-opened-directory preference and the recent-diagrams list, in a single
@@ -88,6 +90,7 @@ export function registerDiagramHandlers(): void {
           overwrite: request.overwrite
         },
         {
+          contain: containedPath,
           stamp: fileStamp,
           serializeHub: (revertNodeIds) => {
             // A note that did not reach its new path (no source to move, or held
@@ -100,6 +103,10 @@ export function registerDiagramHandlers(): void {
               if (fallback === null) delete node.data.details
               else node.data.details = fallback
             }
+            // Record this app's version, but only if it is newer than what the file
+            // already says (ADR 0118): an older app never lowers it, and the same
+            // version changes nothing.
+            diagram.savedWith = stampSavedWith(diagram.savedWith, app.getVersion())
             return serializeDiagram(diagram)
           }
         }
@@ -151,13 +158,16 @@ export function registerDiagramHandlers(): void {
   // lastOpenedDirectory or the recent-diagrams list. Returns null for a
   // path that no longer resolves (deleted/moved since open) rather than
   // throwing — the renderer treats that as "nothing to diff against."
-  ipcMain.handle('diagram:rereadForDiff', async (_event, path: string): Promise<DiagramFile | null> => {
-    try {
-      return await openDiagramAtPath(path)
-    } catch {
-      return null
+  ipcMain.handle(
+    'diagram:rereadForDiff',
+    async (_event, path: string): Promise<DiagramFile | null> => {
+      try {
+        return await openDiagramAtPath(path)
+      } catch {
+        return null
+      }
     }
-  })
+  )
 
   // The one detector for "did a file change on disk since I last looked" —
   // used by the window-focus check for both the diagram (relPath null) and any

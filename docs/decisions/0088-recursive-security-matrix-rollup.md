@@ -2,7 +2,7 @@
 
 ## Status
 Accepted (2026-09-08). Implements the recursion/automation vision from the
-threat-matrix design Notes (rounds 7–10 of the epic that closed as
+threat-matrix design Notes (rounds 7–10 of the design discussion recorded in
 [ADR 0055](0055-security-data-lives-on-diagram-elements.md)); builds on
 [ADR 0082](0082-security-data-schema.md) (the `.chd` security schema).
 **Amends ADR 0082** — see Consequences.
@@ -122,7 +122,7 @@ opt-out is a tag, not schema.
 - `ThreatMatrixView` gains a memory-cached crawl result, a Refresh control,
   derived-column rendering, and the read-only derived-cell breakdown.
 - Unblocks the reserved "Security score" property-panel field (overlaps
-  [epic 0107](../planning/epics/0107-per-element-security-exposure.md)).
+  the planned per-element security exposure work).
 
 ## Implementation notes (2026-09-08)
 
@@ -145,7 +145,6 @@ opt-out is a tag, not schema.
   (`securityCombineMethod` / `securityAggregateMethod`), passed down; a mode
   change recomputes derived cells from the cached crawl with no re-crawl.
 - **Crawl triggers:** entering the matrix persona + an explicit "↻ Refresh
-  links" button. No cooldown throttle yet — that's a follow-up (epic 0081
-  item 6).
+  links" button. No cooldown throttle yet — that's a follow-up (recorded in the backlog).
 - **Derived cell click → read-only breakdown popup** (source path, contributing
   assessment count, "Open <linked diagram>"), never the P/C editor.

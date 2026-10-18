@@ -6,3 +6,4 @@ tsconfig.json
 tsconfig.*.json
 resources/ai
 .claude
+THIRD-PARTY-NOTICES.md

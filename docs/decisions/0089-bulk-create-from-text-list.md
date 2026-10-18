@@ -7,7 +7,7 @@ Decided and implemented (2026-09-15).
 
 Adding several shapes or containers one at a time — click the palette button, rename, repeat — is slow when the user already has a list of names in mind (or pasted from somewhere else: a spreadsheet column, a bullet list). The user asked for a right-click action on the dock's "Add to diagram" palette (`ItemPalette.tsx`) that opens a small text window; each non-blank line becomes the label of one new node.
 
-Scoped to **Shape and Container only** for v1 — Text and Line are left for a later epic if the pattern proves useful there too.
+Scoped to **Shape and Container only** for v1 — Text and Line are left for later if the pattern proves useful there too.
 
 ## Decision
 

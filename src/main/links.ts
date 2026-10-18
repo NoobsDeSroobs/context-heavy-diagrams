@@ -1,4 +1,4 @@
-import { dialog, ipcMain } from 'electron'
+import { app, dialog, ipcMain } from 'electron'
 import { access, mkdir, readdir, writeFile } from 'fs/promises'
 import { basename, dirname, extname, join, relative } from 'path'
 import { createEmptyDiagram, serializeDiagram } from '@shared/diagram'
@@ -30,7 +30,9 @@ export function registerLinkHandlers(): void {
     await mkdir(dir, { recursive: true })
     const fileName = await uniqueDiagramFileName(dir, labelToFileStem(label, 'diagram'))
     const filePath = join(dir, fileName)
-    await writeFile(filePath, serializeDiagram(createEmptyDiagram()), 'utf-8')
+    // A new file records the app that created it (ADR 0118).
+    const created = { ...createEmptyDiagram(), savedWith: app.getVersion() }
+    await writeFile(filePath, serializeDiagram(created), 'utf-8')
     return relative(dirname(diagramPath), filePath).split('\\').join('/')
   })
 

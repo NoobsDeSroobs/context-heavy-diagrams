@@ -1,7 +1,7 @@
-<!-- chd-ai-managed: written by Context-Heavy Diagram Tool v{{VERSION}} — safe to delete; re-running "Enable AI assistance" in the app refreshes it -->
+<!-- chd-ai-managed: written by Context Heavy Diagrams v{{VERSION}} — safe to delete; re-running "Enable AI assistance" in the app refreshes it -->
 # Working with the diagrams in this folder
 
-This folder contains `.chd` diagram files (from the Context-Heavy Diagram Tool). A `.chd` file is plain JSON, but it has format rules that are easy to break by hand — coordinate systems, parent/child ordering, and file paths that are relative to each diagram file.
+This folder contains `.chd` diagram files (from Context Heavy Diagrams). A `.chd` file is plain JSON, but it has format rules that are easy to break by hand — coordinate systems, parent/child ordering, and file paths that are relative to each diagram file.
 
 **Before reading, creating or editing any `.chd` file, read `.claude/skills/chd-diagrams/SKILL.md`** and follow it. It points to the field reference, the authoring guide and the layout guide in the same folder.
 

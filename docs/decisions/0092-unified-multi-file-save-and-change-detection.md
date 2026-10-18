@@ -6,7 +6,7 @@ open in the first revision are now settled (per-file conflict resolution; rename
 at save with the original path kept). **Step 1 implemented 2026-09-20** (core + Save migration — see "Implementation notes"
 at the end); the follow-up (notices, minimal reload, hub-reload reconcile, per-file dialog)
 is not. Tracked in
-[epic 0129](../planning/epics/completed/0129-unified-multi-file-save-and-change-tracking.md).
+the backlog.
 Supersedes the *structure* of [ADR 0091](0091-external-change-detection.md) (its behaviour and
 "git is the merge tool" stance stand; its split baselines and per-kind logic do not).
 

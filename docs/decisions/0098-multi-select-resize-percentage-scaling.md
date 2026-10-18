@@ -1,7 +1,7 @@
 # 0098: Multi-select resize scales every selected node by the same percentage, each anchored like the dragged one
 
 ## Status
-Decided and implemented (2026-09-23). Not live-tested (Electron renderer).
+Accepted (2026-09-23); implemented and live-tested.
 
 ## Context
 Every selected node already shows its own resize handles, but React Flow resizes only the one being dragged, so resizing a selection meant one node at a time. The first user request asked for the whole selection to resize together.

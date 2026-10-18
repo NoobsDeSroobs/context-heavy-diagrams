@@ -6,6 +6,7 @@ import { existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { executeSave } from './documentSaveExec.ts'
+import { containedPath } from './containedPath.ts'
 
 let dir
 let diagram
@@ -23,7 +24,7 @@ const stamp = async (p) => {
     return null
   }
 }
-const deps = (over = {}) => ({ stamp, serializeHub: () => 'HUB', ...over })
+const deps = (over = {}) => ({ contain: containedPath, stamp, serializeHub: () => 'HUB', ...over })
 const write = (nodeId, from, to, content, expectedStamp = null) => ({
   kind: 'write',
   nodeId,
@@ -155,7 +156,7 @@ test('a conflicting note is held back; everything else — including the hub —
   assert.deepEqual(r.remaining, { hub: false, nodeIds: ['n1'] })
 })
 
-test('the user\'s case: diagram and a note both edited, the note conflicts -> the diagram still saves', async () => {
+test("the user's case: diagram and a note both edited, the note conflicts -> the diagram still saves", async () => {
   const baseline = await outsideEdited('d/details/A-1.md')
   const r = await executeSave(
     req({
@@ -192,7 +193,7 @@ test('a conflicting note that is also being renamed: hub is saved but keeps the 
   assert.deepEqual(r.remaining, { hub: true, nodeIds: ['n1'] })
 })
 
-test('the hub changed on disk is held back — and so are creates/renames the hub can\'t point at yet', async () => {
+test("the hub changed on disk is held back — and so are creates/renames the hub can't point at yet", async () => {
   await writeFile(diagram, 'v1')
   const hubBaseline = await stamp(diagram)
   await writeFile(diagram, 'changed outside the app!')
@@ -306,4 +307,71 @@ test('a failure part-way reports what was completed and leaves the hub unwritten
   assert.equal(r.hubWritten, false)
   assert.deepEqual(Object.keys(r.notes), ['ok'])
   assert.equal(existsSync(diagram), false)
+})
+
+// --- Paths stored in a diagram are untrusted (ADR 0115) -----------------------
+// A shared diagram can name any file as a note. Save must never copy from, or
+// delete, anything outside the diagram's own folder.
+import { relative, sep } from 'node:path'
+
+let outside
+beforeEach(async () => {
+  outside = await mkdtemp(join(tmpdir(), 'chd-outside-'))
+  await writeFile(join(outside, 'victim.txt'), 'precious')
+})
+afterEach(() => rm(outside, { recursive: true, force: true }))
+const toStored = (p) => p.split(sep).join('/')
+const pointerToVictim = () => toStored(relative(dir, join(outside, 'victim.txt')))
+
+test('hostile move: a note path outside the folder is not copied and not deleted', async () => {
+  const r = await executeSave(
+    req({ writeHub: true, ops: [move('n1', pointerToVictim(), 'd/details/A.md')] }),
+    deps()
+  )
+  assert.equal(r.status, 'saved')
+  assert.equal(await readFile(join(outside, 'victim.txt'), 'utf-8'), 'precious')
+  assert.equal(has('d/details/A.md'), false)
+  assert.deepEqual(r.skippedMoves, ['n1'])
+})
+
+test('hostile write: the outside file named as the old note survives', async () => {
+  const r = await executeSave(
+    req({ writeHub: true, ops: [write('n1', pointerToVictim(), 'd/details/A.md', 'new text')] }),
+    deps()
+  )
+  assert.equal(r.status, 'saved')
+  assert.equal(await read('d/details/A.md'), 'new text')
+  assert.equal(await readFile(join(outside, 'victim.txt'), 'utf-8'), 'precious')
+})
+
+test('hostile write: an absolute old-note path is never deleted either', async () => {
+  const absolute = join(outside, 'victim.txt')
+  const r = await executeSave(
+    req({ writeHub: true, ops: [write('n1', absolute, 'd/details/A.md', 'new text')] }),
+    deps()
+  )
+  assert.equal(r.status, 'saved')
+  assert.equal(await readFile(absolute, 'utf-8'), 'precious')
+})
+
+test('a destination outside the folder fails the save and writes nothing there', async () => {
+  const escape = toStored(relative(dir, join(outside, 'planted.txt')))
+  const r = await executeSave(
+    req({ writeHub: true, ops: [write('n1', null, escape, 'x')] }),
+    deps()
+  )
+  assert.equal(r.status, 'failed')
+  assert.equal(existsSync(join(outside, 'planted.txt')), false)
+  assert.equal(existsSync(diagram), false)
+})
+
+test('".." that stays inside the folder still works', async () => {
+  await put('d/details/old.md', 'kept')
+  const r = await executeSave(
+    req({ writeHub: true, ops: [move('n1', 'd/details/../details/old.md', 'd/details/new.md')] }),
+    deps()
+  )
+  assert.equal(r.status, 'saved')
+  assert.equal(await read('d/details/new.md'), 'kept')
+  assert.equal(has('d/details/old.md'), false)
 })

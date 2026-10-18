@@ -20,8 +20,9 @@ The Security Matrix persona is still a **render-only prototype**
 ([ADR 0055](0055-security-data-lives-on-diagram-elements.md)) — its
 calculation-mode selects and "Manage matrix…" button are local state inside
 `ThreatMatrixView`, not Canvas-level actions. Real matrix-specific menus need
-the persisted per-element security-data model (not yet built); there's nothing
-solid to hang them on yet.
+the persisted per-element security-data model (built afterwards, see
+[ADR 0082](0082-security-data-schema.md)); there was nothing solid to hang
+them on at the time.
 
 ## Decision
 

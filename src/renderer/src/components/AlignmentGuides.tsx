@@ -11,7 +11,9 @@ interface AlignmentGuidesProps {
 // this on every pan/zoom, so guides stay correctly positioned if the
 // canvas moves mid-drag. pointer-events: none throughout — this must never
 // intercept the very drag gesture it's illustrating.
-export default function AlignmentGuides({ guides }: AlignmentGuidesProps): React.JSX.Element | null {
+export default function AlignmentGuides({
+  guides
+}: AlignmentGuidesProps): React.JSX.Element | null {
   const viewport = useViewport()
   if (!guides || (guides.x.length === 0 && guides.y.length === 0)) return null
 

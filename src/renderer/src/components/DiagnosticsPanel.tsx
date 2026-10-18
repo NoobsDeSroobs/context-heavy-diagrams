@@ -87,8 +87,7 @@ export default function DiagnosticsPanel({
   onUnstageRemoval,
   onClose
 }: DiagnosticsPanelProps): React.JSX.Element {
-  const empty =
-    entries.length === 0 && missingFiles.length === 0 && stagedRemovals.length === 0
+  const empty = entries.length === 0 && missingFiles.length === 0 && stagedRemovals.length === 0
 
   return (
     <div className="diagnostics-panel">

@@ -4,13 +4,13 @@
 Decided (2026-10-01).
 
 ## Context
-Epic 0117 wants an on-demand view of what's changed in the open diagram versus the file on disk, usable without saving. The epic's own feasibility pass (2026-09-11) scoped a fairly large diff: nodes/edges plus all eight top-level collections (`requiredTags`, `highlights`, `legend`, `gravityPresets`, `security`, `edgeDirectionSets`, `metadata`, `maxConnectionPointsPerSide`). It also left open whether Details-file edits belong in the view at all, and whether the Discard step needs a stronger gate than the existing native close-prompt.
+The wish is for an on-demand view of what's changed in the open diagram versus the file on disk, usable without saving. The feasibility pass (2026-09-11) scoped a fairly large diff: nodes/edges plus all eight top-level collections (`requiredTags`, `highlights`, `legend`, `gravityPresets`, `security`, `edgeDirectionSets`, `metadata`, `maxConnectionPointsPerSide`). It also left open whether Details-file edits belong in the view at all, and whether the Discard step needs a stronger gate than the existing native close-prompt.
 
 ## Decision
 
 **v1 diffs nodes and edges only** (position, size, style, label, metadata/tags, security, `linkedDiagram`, connection points) — not the eight top-level collections. Those change far less often per editing session than node/edge content does; diffing them adds real work (each has its own identity key — `id` for most, `key` for `requiredTagDefinition`, `key`+`value` for `HighlightDefinition`) for a case that isn't the common one. Fast-follow, not dropped.
 
-**Details-file edits get their own bucket, reusing existing state — no new tracking.** `noteShadows` (`src/shared/documentSave.ts`, ADR 0092) already maps node id → `NoteShadow` with a `dirty` boolean, kept current since epic 0129. The diff view lists "N elements have unsaved Details changes" straight from `anyNoteDirty`/the dirty subset of `noteShadows` — no content diff, no new dirty-tracking mechanism.
+**Details-file edits get their own bucket, reusing existing state — no new tracking.** `noteShadows` (`src/shared/documentSave.ts`, ADR 0092) already maps node id → `NoteShadow` with a `dirty` boolean, kept current by the unified multi-file save (ADR 0092). The diff view lists "N elements have unsaved Details changes" straight from `anyNoteDirty`/the dirty subset of `noteShadows` — no content diff, no new dirty-tracking mechanism.
 
 **The close-prompt gets a one-line count, no new gate.** `windows:requestCloseDecision` (`src/main/windows.ts`) takes no arguments today and shows a bare native `dialog.showMessageBox` (Save/Discard/Cancel, no `detail` text). Extend it to accept an optional `detail?: string`, computed renderer-side from the same diff engine (e.g. `"3 modified, 1 added, 1 removed"`), forwarded into the dialog's `detail` field. No separate confirmation step at Discard specifically — Cancel is already the safety net, and a second gate is friction without a corresponding new risk (the count is already visible before the user commits to Discard).
 

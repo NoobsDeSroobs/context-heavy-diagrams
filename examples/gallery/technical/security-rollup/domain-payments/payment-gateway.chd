@@ -19,7 +19,7 @@
         "name": "Supply chain compromise"
       }
     ],
-    "matrixShapeIds": [
+    "matrixEntityIds": [
       "cmp-gwapi",
       "cmp-vault",
       "cmp-pspconn"
@@ -52,7 +52,7 @@
     },
     {
       "id": "cmp-gwapi",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 0,
         "y": 0
@@ -88,7 +88,7 @@
     },
     {
       "id": "cmp-vault",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 300,
         "y": 0
@@ -124,7 +124,7 @@
     },
     {
       "id": "cmp-pspconn",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 600,
         "y": 0

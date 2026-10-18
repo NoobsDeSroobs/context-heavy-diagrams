@@ -19,7 +19,7 @@ Solution/technical architecture content — merges what were previously separate
 
 Together this is the gallery's main showcase of linked-diagram navigation (epic 0009) outside `self-documentation/` — the C4 chain is now content-complete top to bottom.
 
-- **Security Matrix rollup demo**: `security-rollup.chd` + [`security-rollup/`](security-rollup/README.md) — a 7-file, three-layer tree (Business domain → Services → Technical components) showcasing the recursive Security Matrix rollup ([ADR 0088](../../../docs/decisions/0088-recursive-security-matrix-rollup.md) / [epic 0081](../../../docs/planning/epics/0081-recursive-matrix-population-and-automation.md)): derived columns, a deliberately broken sub-diagram link, a directly-assessed non-linked shape, a downstream-only threat, and calculation modes that flow down the whole tree. Built 2026-09-09 alongside epic 0081 item 5; **not yet opened in the app.**
+- **Security Matrix rollup demo**: `security-rollup.chd` + [`security-rollup/`](security-rollup/README.md) — a 7-file, three-layer tree (Business domain → Services → Technical components) showcasing the recursive Security Matrix rollup ([ADR 0088](../../../docs/decisions/0088-recursive-security-matrix-rollup.md) / [epic 0081](../../../docs/planning/completed-epics.md#0081-recursive-matrix-population-and-automation)): derived columns, a deliberately broken sub-diagram link, a directly-assessed non-linked shape, a downstream-only threat, and calculation modes that flow down the whole tree. Built 2026-09-09 alongside epic 0081 item 5; **not yet opened in the app.**
 
 ## Deferred (not dropped, just not in this round)
 

@@ -10,6 +10,14 @@ import type {
 } from '@shared/diagram'
 import { useDiagramContext } from '../useDiagramContext'
 import { themeAdaptiveColor } from '../styles/themeAdaptiveColor'
+import {
+  EDGE_STYLE_DEFAULTS,
+  LINE_STYLE_DEFAULTS,
+  NODE_STYLE_DEFAULTS,
+  displayColor,
+  styledNodeType,
+  type NodeStyleDefaults
+} from '../styles/styleDefaults'
 import { connectionPointCountForSide } from '../nodes/connectionPoints'
 import {
   CollapsibleSection,
@@ -21,6 +29,7 @@ import {
 } from './fields'
 import { computeFieldValue } from './fieldValue'
 import { MARKER_OPTIONS } from './edgeStyleOptions'
+import { GROUP_PALETTE, GROUP_SYSTEM, withStoredFonts, type FontOption } from './fontOptions'
 import MetadataSection from './MetadataSection'
 import ReferencesSection from './ReferencesSection'
 import { canBrushNodeType } from '../styleBrush'
@@ -92,16 +101,25 @@ const ROUTING_STYLE_OPTIONS: {
 // see SelectField), stored as fontFamily: undefined. Curated specific
 // fonts can be added here later without a schema change (fontFamily is a
 // raw CSS font-family string, not an enum).
-const FONT_FAMILY_OPTIONS: { value: string; label: string }[] = [
+// The four CSS generic families are categories, not fonts: each means "whichever
+// font this computer uses for that kind", so they are grouped apart from named fonts.
+const FONT_FAMILY_OPTIONS: FontOption[] = [
   { value: '', label: 'Default' },
-  { value: 'sans-serif', label: 'Sans-serif' },
-  { value: 'serif', label: 'Serif' },
-  { value: 'monospace', label: 'Monospace' },
-  { value: 'cursive', label: 'Cursive' }
+  { value: 'sans-serif', label: 'Sans-serif', group: GROUP_SYSTEM },
+  { value: 'serif', label: 'Serif', group: GROUP_SYSTEM },
+  { value: 'monospace', label: 'Monospace', group: GROUP_SYSTEM },
+  { value: 'cursive', label: 'Cursive', group: GROUP_SYSTEM }
 ]
 
 function nodeStyleOf(n: Node): NodeStyle {
   return (n.data?.style as NodeStyle | undefined) ?? {}
+}
+
+// What an element is drawn with when its own style leaves a field unset (ADR 0117).
+// The property panel shows these instead of an empty field, so it reads the
+// element's data and the built-in defaults as data, never the rendered pixels.
+function nodeDefaultsOf(n: Node): NodeStyleDefaults {
+  return NODE_STYLE_DEFAULTS[styledNodeType(n.type)]
 }
 
 function edgeStyleOf(e: Edge): EdgeStyle {
@@ -122,8 +140,7 @@ function NodeStyleFields({
   updateLocked,
   beginContinuousEdit,
   endContinuousEdit,
-  pushSnapshot,
-  onSetDefault
+  pushSnapshot
 }: {
   nodes: Node[]
   minWidth: number
@@ -135,26 +152,49 @@ function NodeStyleFields({
   beginContinuousEdit: () => void
   endContinuousEdit: () => void
   pushSnapshot: () => void
-  // Only set when exactly one node is selected — see PropertyPanelProps'
-  // own comment on onSetDefaultStyle.
-  onSetDefault?: () => void
 }): React.JSX.Element {
   const { theme, paletteColors, paletteFonts } = useDiagramContext()
-  const fontFamilyOptions = [
-    ...FONT_FAMILY_OPTIONS,
-    ...paletteFonts.map((f) => ({ value: f, label: f }))
-  ]
-  const fill = computeFieldValue(nodes, (n) => nodeStyleOf(n).fill)
-  const fillOpacity = computeFieldValue(nodes, (n) => nodeStyleOf(n).fillOpacity)
-  const stroke = computeFieldValue(nodes, (n) => nodeStyleOf(n).stroke)
-  const strokeOpacity = computeFieldValue(nodes, (n) => nodeStyleOf(n).strokeOpacity)
-  const strokeWidth = computeFieldValue(nodes, (n) => nodeStyleOf(n).strokeWidth)
-  const fontSize = computeFieldValue(nodes, (n) => nodeStyleOf(n).fontSize)
-  const fontColor = computeFieldValue(nodes, (n) => nodeStyleOf(n).fontColor)
-  const fontOpacity = computeFieldValue(nodes, (n) => nodeStyleOf(n).fontOpacity)
-  const fontWeight = computeFieldValue(nodes, (n) => nodeStyleOf(n).fontWeight)
+  const fontFamilyOptions = withStoredFonts(
+    [
+      ...FONT_FAMILY_OPTIONS,
+      ...paletteFonts.map((f) => ({ value: f, label: f, group: GROUP_PALETTE }))
+    ],
+    nodes.map((n) => nodeStyleOf(n).fontFamily)
+  )
+  const shownColor = (n: Node, field: 'fill' | 'stroke' | 'fontColor'): string =>
+    displayColor(nodeStyleOf(n)[field], nodeDefaultsOf(n)[field], theme, themeAdaptiveColor)
+  const fill = computeFieldValue(nodes, (n) => shownColor(n, 'fill'))
+  const fillOpacity = computeFieldValue(
+    nodes,
+    (n) => nodeStyleOf(n).fillOpacity ?? nodeDefaultsOf(n).fillOpacity
+  )
+  const stroke = computeFieldValue(nodes, (n) => shownColor(n, 'stroke'))
+  const strokeOpacity = computeFieldValue(
+    nodes,
+    (n) => nodeStyleOf(n).strokeOpacity ?? nodeDefaultsOf(n).strokeOpacity
+  )
+  const strokeWidth = computeFieldValue(
+    nodes,
+    (n) => nodeStyleOf(n).strokeWidth ?? nodeDefaultsOf(n).strokeWidth
+  )
+  const fontSize = computeFieldValue(
+    nodes,
+    (n) => nodeStyleOf(n).fontSize ?? nodeDefaultsOf(n).fontSize
+  )
+  const fontColor = computeFieldValue(nodes, (n) => shownColor(n, 'fontColor'))
+  const fontOpacity = computeFieldValue(
+    nodes,
+    (n) => nodeStyleOf(n).fontOpacity ?? nodeDefaultsOf(n).fontOpacity
+  )
+  const fontWeight = computeFieldValue(
+    nodes,
+    (n) => nodeStyleOf(n).fontWeight ?? nodeDefaultsOf(n).fontWeight
+  )
   const fontFamily = computeFieldValue(nodes, (n) => nodeStyleOf(n).fontFamily)
-  const textAlign = computeFieldValue(nodes, (n) => nodeStyleOf(n).textAlign)
+  const textAlign = computeFieldValue(
+    nodes,
+    (n) => nodeStyleOf(n).textAlign ?? nodeDefaultsOf(n).textAlign
+  )
   const x = computeFieldValue(nodes, (n) => n.position.x)
   const y = computeFieldValue(nodes, (n) => n.position.y)
   const width = computeFieldValue(nodes, (n) => n.width ?? undefined)
@@ -180,20 +220,10 @@ function NodeStyleFields({
           title="Blocks drag/resize/rotate and accidental delete via the canvas — every other edit (this panel, tags, connection points) stays allowed"
         />
       </FieldRow>
-      {onSetDefault && (
-        <button
-          type="button"
-          className="property-set-default"
-          onClick={onSetDefault}
-          title="Newly created elements of this type will start with this exact style"
-        >
-          Set as default style
-        </button>
-      )}
       <CollapsibleSection title="Fill">
         <ColorField
           label="Fill"
-          value={themeAdaptiveColor(fill.value, theme)}
+          value={fill.value}
           mixed={fill.mixed}
           onChange={(v) => updateStyle({ fill: themeAdaptiveColor(v, theme) })}
           onSessionStart={beginContinuousEdit}
@@ -212,7 +242,7 @@ function NodeStyleFields({
       <CollapsibleSection title="Border">
         <ColorField
           label="Color"
-          value={themeAdaptiveColor(stroke.value, theme)}
+          value={stroke.value}
           mixed={stroke.mixed}
           onChange={(v) => updateStyle({ stroke: themeAdaptiveColor(v, theme) })}
           onSessionStart={beginContinuousEdit}
@@ -239,7 +269,7 @@ function NodeStyleFields({
       </CollapsibleSection>
       <CollapsibleSection title="Font">
         <SelectField
-          label="Family"
+          label="Name"
           value={fontFamily.value ?? ''}
           mixed={fontFamily.mixed}
           options={fontFamilyOptions}
@@ -257,7 +287,7 @@ function NodeStyleFields({
         />
         <ColorField
           label="Color"
-          value={themeAdaptiveColor(fontColor.value, theme)}
+          value={fontColor.value}
           mixed={fontColor.mixed}
           onChange={(v) => updateStyle({ fontColor: themeAdaptiveColor(v, theme) })}
           onSessionStart={beginContinuousEdit}
@@ -360,23 +390,37 @@ function EdgeFields({
   pushSnapshot: () => void
 }): React.JSX.Element {
   const { theme, paletteColors, paletteFonts } = useDiagramContext()
-  const fontFamilyOptions = [
-    ...FONT_FAMILY_OPTIONS,
-    ...paletteFonts.map((f) => ({ value: f, label: f }))
-  ]
-  const startMarker = computeFieldValue(edges, (e) => edgeStyleOf(e).startMarker)
-  const endMarker = computeFieldValue(edges, (e) => edgeStyleOf(e).endMarker)
-  const stroke = computeFieldValue(edges, (e) => edgeStyleOf(e).stroke)
-  const strokeOpacity = computeFieldValue(edges, (e) => edgeStyleOf(e).strokeOpacity)
-  const strokeWidth = computeFieldValue(edges, (e) => edgeStyleOf(e).strokeWidth)
-  const lineStyle = computeFieldValue(edges, (e) => edgeStyleOf(e).lineStyle)
+  const fontFamilyOptions = withStoredFonts(
+    [
+      ...FONT_FAMILY_OPTIONS,
+      ...paletteFonts.map((f) => ({ value: f, label: f, group: GROUP_PALETTE }))
+    ],
+    edges.map((e) => edgeStyleOf(e).fontFamily)
+  )
+  const D = EDGE_STYLE_DEFAULTS
+  const startMarker = computeFieldValue(edges, (e) => edgeStyleOf(e).startMarker ?? D.startMarker)
+  const endMarker = computeFieldValue(edges, (e) => edgeStyleOf(e).endMarker ?? D.endMarker)
+  const stroke = computeFieldValue(edges, (e) =>
+    displayColor(edgeStyleOf(e).stroke, D.stroke, theme, themeAdaptiveColor)
+  )
+  const strokeOpacity = computeFieldValue(
+    edges,
+    (e) => edgeStyleOf(e).strokeOpacity ?? D.strokeOpacity
+  )
+  const strokeWidth = computeFieldValue(edges, (e) => edgeStyleOf(e).strokeWidth ?? D.strokeWidth)
+  const lineStyle = computeFieldValue(edges, (e) => edgeStyleOf(e).lineStyle ?? D.lineStyle)
   const routingStyle = computeFieldValue(edges, (e) => edgeStyleOf(e).routingStyle)
-  const fontSize = computeFieldValue(edges, (e) => edgeStyleOf(e).fontSize)
-  const fontColor = computeFieldValue(edges, (e) => edgeStyleOf(e).fontColor)
-  const fontOpacity = computeFieldValue(edges, (e) => edgeStyleOf(e).fontOpacity)
-  const fontWeight = computeFieldValue(edges, (e) => edgeStyleOf(e).fontWeight)
+  const fontSize = computeFieldValue(edges, (e) => edgeStyleOf(e).fontSize ?? D.fontSize)
+  const fontColor = computeFieldValue(edges, (e) =>
+    displayColor(edgeStyleOf(e).fontColor, D.fontColor, theme, themeAdaptiveColor)
+  )
+  const fontOpacity = computeFieldValue(edges, (e) => edgeStyleOf(e).fontOpacity ?? D.fontOpacity)
+  const fontWeight = computeFieldValue(edges, (e) => edgeStyleOf(e).fontWeight ?? D.fontWeight)
   const fontFamily = computeFieldValue(edges, (e) => edgeStyleOf(e).fontFamily)
-  const labelPosition = computeFieldValue(edges, (e) => edgeStyleOf(e).labelPosition)
+  const labelPosition = computeFieldValue(
+    edges,
+    (e) => edgeStyleOf(e).labelPosition ?? D.labelPosition
+  )
 
   return (
     <>
@@ -401,7 +445,7 @@ function EdgeFields({
         />
         <ColorField
           label="Color"
-          value={themeAdaptiveColor(stroke.value, theme)}
+          value={stroke.value}
           mixed={stroke.mixed}
           onChange={(v) => updateStyle({ stroke: themeAdaptiveColor(v, theme) })}
           onSessionStart={beginContinuousEdit}
@@ -459,7 +503,7 @@ function EdgeFields({
           onSessionEnd={endContinuousEdit}
         />
         <SelectField
-          label="Family"
+          label="Font"
           value={fontFamily.value ?? ''}
           mixed={fontFamily.mixed}
           options={fontFamilyOptions}
@@ -477,7 +521,7 @@ function EdgeFields({
         />
         <ColorField
           label="Color"
-          value={themeAdaptiveColor(fontColor.value, theme)}
+          value={fontColor.value}
           mixed={fontColor.mixed}
           onChange={(v) => updateStyle({ fontColor: themeAdaptiveColor(v, theme) })}
           onSessionStart={beginContinuousEdit}
@@ -532,12 +576,30 @@ function LineStyleFields({
 }): React.JSX.Element {
   const { theme, paletteColors } = useDiagramContext()
   const locked = computeFieldValue(nodes, (n) => n.data?.locked === true)
-  const startMarker = computeFieldValue(nodes, (n) => nodeStyleOf(n).startMarker)
-  const endMarker = computeFieldValue(nodes, (n) => nodeStyleOf(n).endMarker)
-  const stroke = computeFieldValue(nodes, (n) => nodeStyleOf(n).stroke)
-  const strokeOpacity = computeFieldValue(nodes, (n) => nodeStyleOf(n).strokeOpacity)
-  const strokeWidth = computeFieldValue(nodes, (n) => nodeStyleOf(n).strokeWidth)
-  const lineStyle = computeFieldValue(nodes, (n) => nodeStyleOf(n).lineStyle)
+  const startMarker = computeFieldValue(
+    nodes,
+    (n) => nodeStyleOf(n).startMarker ?? LINE_STYLE_DEFAULTS.startMarker
+  )
+  const endMarker = computeFieldValue(
+    nodes,
+    (n) => nodeStyleOf(n).endMarker ?? LINE_STYLE_DEFAULTS.endMarker
+  )
+  // A line's default colour is a stored-form (dark baseline) value, flipped for the theme like any stored one.
+  const stroke = computeFieldValue(nodes, (n) =>
+    themeAdaptiveColor(nodeStyleOf(n).stroke ?? LINE_STYLE_DEFAULTS.stroke, theme)
+  )
+  const strokeOpacity = computeFieldValue(
+    nodes,
+    (n) => nodeStyleOf(n).strokeOpacity ?? LINE_STYLE_DEFAULTS.strokeOpacity
+  )
+  const strokeWidth = computeFieldValue(
+    nodes,
+    (n) => nodeStyleOf(n).strokeWidth ?? LINE_STYLE_DEFAULTS.strokeWidth
+  )
+  const lineStyle = computeFieldValue(
+    nodes,
+    (n) => nodeStyleOf(n).lineStyle ?? LINE_STYLE_DEFAULTS.lineStyle
+  )
 
   return (
     <>
@@ -568,7 +630,7 @@ function LineStyleFields({
       <CollapsibleSection title="Line">
         <ColorField
           label="Color"
-          value={themeAdaptiveColor(stroke.value, theme)}
+          value={stroke.value}
           mixed={stroke.mixed}
           onChange={(v) => updateStyle({ stroke: themeAdaptiveColor(v, theme) })}
           onSessionStart={beginContinuousEdit}
@@ -750,8 +812,6 @@ export default function PropertyPanel({
       )
     }
     const min = MIN_SIZE[type] ?? MIN_SIZE.entity
-    const canSetDefault =
-      nodes.length === 1 && (type === 'entity' || type === 'container' || type === 'text')
     return (
       <NodeStyleFields
         key={type}
@@ -762,11 +822,6 @@ export default function PropertyPanel({
         updateStyle={(patch) => onUpdateNodeStyle(ids, patch)}
         updateTransform={(patch) => onUpdateTransform(ids, patch)}
         updateLocked={(locked) => onUpdateLocked(ids, locked)}
-        onSetDefault={
-          canSetDefault
-            ? () => onSetDefaultStyle(type as 'entity' | 'container' | 'text', nodeStyleOf(nodes[0]))
-            : undefined
-        }
         beginContinuousEdit={beginContinuousEdit}
         endContinuousEdit={endContinuousEdit}
         pushSnapshot={pushSnapshot}
@@ -809,6 +864,31 @@ export default function PropertyPanel({
       </button>
     ) : null
 
+  // "Set as default style": exactly one entity, container or text node selected
+  // (see PropertyPanelProps' comment on onSetDefaultStyle). It sits beside
+  // "Copy style" because both act on the style of the element you are looking at.
+  const defaultStyleType =
+    selectedNodes.length === 1 && selectedEdges.length === 0
+      ? (['entity', 'container', 'text'] as const).find((t) => t === selectedNodes[0].type)
+      : undefined
+  const setDefaultButton = defaultStyleType ? (
+    <button
+      type="button"
+      className="property-set-default"
+      onClick={() => onSetDefaultStyle(defaultStyleType, nodeStyleOf(selectedNodes[0]))}
+      title="Newly created elements of this type will start with this exact style"
+    >
+      Set as default style
+    </button>
+  ) : null
+  const styleActions =
+    styleBrushButton || setDefaultButton ? (
+      <div className="property-style-actions">
+        {styleBrushButton}
+        {setDefaultButton}
+      </div>
+    ) : null
+
   if (groupCount === 0) return <div className="property-panel-empty">Nothing selected</div>
 
   // Same-type selection (including a single edge): no extra "Type (N)"
@@ -817,7 +897,7 @@ export default function PropertyPanel({
   if (groupCount === 1) {
     return (
       <div className="property-panel">
-        {styleBrushButton}
+        {styleActions}
         {nodeGroups.map(([type, nodes]) => renderNodeGroup(type, nodes))}
         {selectedEdges.length > 0 && renderEdgeGroup()}
         {metadataTarget?.kind === 'node' && (
@@ -852,7 +932,7 @@ export default function PropertyPanel({
 
   return (
     <div className="property-panel">
-      {styleBrushButton}
+      {styleActions}
       {nodeGroups.map(([type, nodes]) => (
         <CollapsibleSection
           key={type}

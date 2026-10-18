@@ -27,7 +27,7 @@ Isolate was scoped via a real design conversation on 2026-08-25 that reframed it
 ## Alternatives considered
 
 - **One combined Search+Isolate toggle** — rejected per the user's own pushback; see Decision above.
-- **Manual-selection trigger alongside search** — rejected, matches the epic's own prior deferral reasoning.
+- **Manual-selection trigger alongside search** — rejected, for the same reasons it was deferred earlier.
 - **Hardcoded opacity constant** — rejected; the user explicitly asked for a Setting instead.
 
 ## Consequences

@@ -1,0 +1,52 @@
+# Checks every push to master and every pull request on both target platforms
+# (the project supports Windows and Linux equally). Nothing here publishes or
+# deploys anything; no secrets are used.
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  # Weekly, so a newly published advisory against a shipped dependency shows up
+  # even when nobody has pushed.
+  schedule:
+    - cron: '17 5 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Check (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      # `build` runs typecheck first, then the extension bundle and the Electron build.
+      - run: npm run build
+      - run: npm test
+
+  audit:
+    name: Audit shipped dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      # Only what ends up in the app. Advisories in build and dev tooling are
+      # tracked in the release epic and do not ship.
+      - run: npm audit --omit=dev

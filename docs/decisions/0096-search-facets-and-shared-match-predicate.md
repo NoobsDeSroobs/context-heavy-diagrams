@@ -1,7 +1,7 @@
 # 0096: A small search query language — ANDed `name:value` terms — over one shared match predicate
 
 ## Status
-Decided and implemented (2026-09-20). Typecheck/lint/unit tests pass; not live-tested (Electron renderer).
+Accepted (2026-09-20); implemented and live-tested.
 
 ## Context
 

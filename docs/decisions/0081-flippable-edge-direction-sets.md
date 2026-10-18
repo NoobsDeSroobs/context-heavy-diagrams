@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (2026-08-31). Supersedes the leaning design in the epic doc
+Accepted (2026-08-31). Supersedes the earlier leaning design
 (Derived/Independent sets grouped by `groupId`, per-set `included` flags,
 connection-point-keyed identity — all dropped). Builds on
 [ADR 0022](0022-unified-tag-and-metadata-system.md) (id-keyed per-element data),
@@ -19,8 +19,8 @@ way an interaction is triggered/authenticated — often opposite directions
 client→server). Today an edge is locked to whichever direction it was drawn.
 The ask: let one diagram show either, switchably, diagram-wide.
 
-The user cut the original design down deliberately (see the epic's own
-history for the five-pass version that this replaces). The accepted scope:
+The user cut the original design down deliberately (the five-pass version
+this replaces is gone). The accepted scope:
 
 > **Every edge exists in every set. Only the direction can swap.** The
 > number-one use case is switching a single diagram between data-flow,
@@ -186,8 +186,8 @@ The transform is a true involution: A→B→A restores byte-for-byte.
 
 `onConnect` and multi-connection wiring seed **every** set's
 `directionSets` entry with the drawn direction, so no set is ever caught
-without a record (the "fallback should structurally never fire" point from
-the epic).
+without a record (the "fallback should structurally never fire" point
+from the original design).
 
 ### Set management
 

@@ -11,14 +11,14 @@
         "name": "Service outage"
       }
     ],
-    "matrixShapeIds": [
+    "matrixEntityIds": [
       "shape-44fdfd31-62f0-4d8c-903e-815be300c8a4"
     ]
   },
   "nodes": [
     {
       "id": "shape-44fdfd31-62f0-4d8c-903e-815be300c8a4",
-      "type": "shape",
+      "type": "entity",
       "position": {
         "x": 382,
         "y": 275.5

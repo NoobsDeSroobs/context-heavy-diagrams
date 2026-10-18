@@ -12,7 +12,11 @@ import { Children, type ReactNode } from 'react'
 // `!children` on a non-empty array is always false, even when every entry
 // is `false`, so that check alone can't tell "nothing open" from "one of
 // several possibly open." Children.toArray strips the falsy entries first.
-export default function UtilityDock({ children }: { children: ReactNode }): React.JSX.Element | null {
+export default function UtilityDock({
+  children
+}: {
+  children: ReactNode
+}): React.JSX.Element | null {
   const content = Children.toArray(children)
   if (content.length === 0) return null
   return <div className="utility-dock">{content}</div>

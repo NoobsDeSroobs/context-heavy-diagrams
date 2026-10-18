@@ -244,7 +244,9 @@ export default function StylePalettePanel({
     onChangePalettes(palettes, id)
   }
 
-  const updateActive = (patch: Partial<Pick<NamedStylePalette, 'colors' | 'fonts' | 'name'>>): void => {
+  const updateActive = (
+    patch: Partial<Pick<NamedStylePalette, 'colors' | 'fonts' | 'name'>>
+  ): void => {
     if (!active) return
     onChangePalettes(
       palettes.map((p) => (p.id === active.id ? { ...p, ...patch } : p)),
@@ -353,7 +355,9 @@ export default function StylePalettePanel({
               </option>
             ))}
           </select>
-          {active && <PaletteNameField palette={active} onRename={(name) => updateActive({ name })} />}
+          {active && (
+            <PaletteNameField palette={active} onRename={(name) => updateActive({ name })} />
+          )}
           <div className="style-palette-picker-actions">
             <button type="button" onClick={() => createPalette('empty')}>
               New
@@ -425,9 +429,9 @@ export default function StylePalettePanel({
         </CollapsibleSection>
         <CollapsibleSection title="Defaults for new elements">
           <p className="required-tags-panel-hint">
-            Style an entity/container/text exactly how you want using the property panel, then use its
-            &ldquo;Set as default style&rdquo; button — new elements of that type will start with
-            it. Edges: use the toolbar swatch next to the file name. Global, not per-palette.
+            Style an entity/container/text exactly how you want using the property panel, then use
+            its &ldquo;Set as default style&rdquo; button — new elements of that type will start
+            with it. Edges: use the toolbar swatch next to the file name. Global, not per-palette.
           </p>
           <div className="style-palette-defaults-list">
             {defaultRows.map(({ type, style }) => (

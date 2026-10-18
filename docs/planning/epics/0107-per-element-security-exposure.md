@@ -1,7 +1,7 @@
 # 0107: Exposing a single element's security data outside the matrix
 
 ## Status
-Not Started — carved out of [epic 0079](completed/0079-security-data-as-diagram-element-property.md)
+Not Started — carved out of [epic 0079](../completed-epics.md#0079-security-data-as-a-diagram-element-property-real-persistence)
 (2026-09-01) at the user's request. 0079 has landed (PR #85); this is now
 unblocked. Needs its own design pass.
 

@@ -1,0 +1,20 @@
+# Dependabot opens pull requests on the remote; merging them is the maintainer's call.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    groups:
+      # One PR for routine bumps; major versions (Electron, React, Vite, ...) stay
+      # separate so each can be read and tested on its own.
+      minor-and-patch:
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ['*']

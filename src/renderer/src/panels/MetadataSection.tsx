@@ -74,7 +74,8 @@ export default function MetadataSection({
   const { required, user, external } = groupEntries(entries)
   const allowedValuesByKey = new Map<string, string[]>()
   for (const tag of requiredTags) {
-    if (tag.allowedValues && tag.allowedValues.length > 0) allowedValuesByKey.set(tag.key, tag.allowedValues)
+    if (tag.allowedValues && tag.allowedValues.length > 0)
+      allowedValuesByKey.set(tag.key, tag.allowedValues)
   }
 
   const commitValue = (key: string, raw: string): void => {
@@ -111,13 +112,21 @@ export default function MetadataSection({
           <div key={key} className="metadata-row">
             <span
               className={entry.lock ? 'metadata-key locked' : 'metadata-key'}
-              title={entry.lock === 'lockedStatic' ? 'Locked, fixed' : entry.lock === 'lockedEditable' ? 'Locked, editable' : 'Free'}
+              title={
+                entry.lock === 'lockedStatic'
+                  ? 'Locked, fixed'
+                  : entry.lock === 'lockedEditable'
+                    ? 'Locked, editable'
+                    : 'Free'
+              }
             >
               {entry.lock && <span className="metadata-lock-icon">🔒</span>}
               {key}
             </span>
             {entry.lock === 'lockedStatic' ? (
-              <span className="metadata-value metadata-value-static">{displayValue(entry.value)}</span>
+              <span className="metadata-value metadata-value-static">
+                {displayValue(entry.value)}
+              </span>
             ) : allowedValues ? (
               <select
                 className="metadata-value-select"
@@ -163,9 +172,15 @@ export default function MetadataSection({
 
   return (
     <CollapsibleSection title="Metadata">
-      {required.length > 0 && <CollapsibleSection title="Required fields">{renderRows(required)}</CollapsibleSection>}
-      {user.length > 0 && <CollapsibleSection title="User fields">{renderRows(user)}</CollapsibleSection>}
-      {external.length > 0 && <CollapsibleSection title="External fields">{renderRows(external)}</CollapsibleSection>}
+      {required.length > 0 && (
+        <CollapsibleSection title="Required fields">{renderRows(required)}</CollapsibleSection>
+      )}
+      {user.length > 0 && (
+        <CollapsibleSection title="User fields">{renderRows(user)}</CollapsibleSection>
+      )}
+      {external.length > 0 && (
+        <CollapsibleSection title="External fields">{renderRows(external)}</CollapsibleSection>
+      )}
       <div className="metadata-add-row">
         <input
           className="metadata-add-key"
@@ -185,7 +200,11 @@ export default function MetadataSection({
             if (event.key === 'Enter') addEntry()
           }}
         />
-        <button type="button" onClick={addEntry} disabled={!newKey.trim() || Boolean(metadata?.[newKey.trim()])}>
+        <button
+          type="button"
+          onClick={addEntry}
+          disabled={!newKey.trim() || Boolean(metadata?.[newKey.trim()])}
+        >
           Add
         </button>
       </div>

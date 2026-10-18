@@ -1,4 +1,5 @@
-import { ipcMain } from 'electron'
+import { app, ipcMain } from 'electron'
+import { stampSavedWith } from '@shared/appVersion'
 import { readFile, writeFile } from 'fs/promises'
 import { basename, dirname, extname, isAbsolute, join, relative } from 'path'
 import {
@@ -139,7 +140,11 @@ export function registerRequiredTagsHandlers(): void {
       walk(diagramPath, directChildRelativePaths, async (path, diagram) => {
         const merged = mergeRequiredTags(requiredTags, diagram.requiredTags)
         if (JSON.stringify(merged) === JSON.stringify(diagram.requiredTags ?? [])) return diagram
-        const updated: DiagramFile = { ...diagram, requiredTags: merged }
+        const updated: DiagramFile = {
+          ...diagram,
+          requiredTags: merged,
+          savedWith: stampSavedWith(diagram.savedWith, app.getVersion())
+        }
         await writeFile(path, serializeDiagram(updated), 'utf-8')
         return updated
       })

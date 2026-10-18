@@ -1,7 +1,7 @@
 # 0062: Search scope, matching, and entry point
 
 ## Status
-Decided (2026-08-26), implementation starting same session. **Amended by [ADR 0097](0097-deep-search-across-linked-diagrams.md) (2026-09-21):** details notes are now part of the default search, and "Deep search" now means drilling into linked diagrams — the opt-in-notes decision below no longer holds.
+Decided and implemented (2026-08-26). **Amended by [ADR 0097](0097-deep-search-across-linked-diagrams.md) (2026-09-21):** details notes are now part of the default search, and "Deep search" now means drilling into linked diagrams — the opt-in-notes decision below no longer holds.
 
 ## Context
 
@@ -21,7 +21,7 @@ Search was raised 2026-08-22 after navigating the 70-node Meridian Rail landscap
 
 **Match rendering reuses `highlights.ts`'s existing border/fill mechanics but as a visually distinct "search result" style**, coexisting with any active user-defined highlights rather than suspending them — so turning on search doesn't make it look like the user's own highlight groups changed.
 
-**Fit-to-node/selection is in scope here**, per the user's earlier instruction (logged in the epic doc before this ADR) not to split it into its own epic — once a match is selectable, framing the viewport on it is a small, obvious extension of the same interaction.
+**Fit-to-node/selection is in scope here**, per the user's earlier instruction (given before this ADR) not to split it out as separate work — once a match is selectable, framing the viewport on it is a small, obvious extension of the same interaction.
 
 ## Alternatives considered
 

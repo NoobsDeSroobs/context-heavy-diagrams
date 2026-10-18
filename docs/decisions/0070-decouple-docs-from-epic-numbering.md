@@ -44,3 +44,4 @@ Two things made it a liability:
 - `typecheck` clean, `lint` 0 errors (comment-only changes).
 - The READMEs under `docs/decisions/` and `docs/planning/` never actually mandated the "reference the originating epic" pattern, so neither needed updating — the pattern was habit, not written convention.
 - New provenance guidance going forward: cite the ADR, not the epic. If a decision has no ADR, describe the trigger in prose.
+- Update (2026-10-18): `docs/planning/` stayed under `docs/`, and the finished epic files were not pruned by a retention rule but collapsed into one index, see [ADR 0120](0120-completed-epics-collapse-into-an-index.md). This ADR's rule still holds; a few generic mentions of "the epic" that survived the first sweep were removed then.

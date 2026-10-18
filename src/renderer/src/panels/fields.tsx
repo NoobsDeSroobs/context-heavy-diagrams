@@ -349,10 +349,14 @@ export function SelectField<T extends string>({
   label: string
   value: T | undefined
   mixed: boolean
-  options: { value: T; label: string }[]
+  // An option with a `group` is listed under a heading (<optgroup>); options
+  // without one come first, ungrouped. Groups keep the order they first appear in.
+  options: { value: T; label: string; group?: string }[]
   onChange: (value: T) => void
   pushSnapshot: () => void
 }): React.JSX.Element {
+  const ungrouped = options.filter((o) => !o.group)
+  const groupNames = [...new Set(options.filter((o) => o.group).map((o) => o.group as string))]
   return (
     <FieldRow label={label}>
       <select
@@ -377,10 +381,21 @@ export function SelectField<T extends string>({
             Select…
           </option>
         )}
-        {options.map((opt) => (
+        {ungrouped.map((opt) => (
           <option key={opt.value} value={opt.value}>
             {opt.label}
           </option>
+        ))}
+        {groupNames.map((name) => (
+          <optgroup key={name} label={name}>
+            {options
+              .filter((opt) => opt.group === name)
+              .map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+          </optgroup>
         ))}
       </select>
     </FieldRow>

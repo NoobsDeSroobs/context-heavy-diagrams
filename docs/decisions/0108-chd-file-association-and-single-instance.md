@@ -37,7 +37,7 @@ open our files by drag-and-drop or File → Open, and can keep their emulator as
 the default. The mitigations are:
 
 - A **distinctive identity** for our registration: a Windows ProgID of
-  `ContextHeavyDiagramTool.Diagram` and a vendor MIME type
+  `ContextHeavyDiagrams.Diagram` (renamed with the product, [ADR 0114](0114-product-name-context-heavy-diagrams.md)) and a vendor MIME type
   (`application/vnd.context-heavy-diagram+json`) rather than a generic
   `application/x-chd`.
 - **Never take the default silently.** On Windows the association is created

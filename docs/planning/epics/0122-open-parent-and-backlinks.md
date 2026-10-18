@@ -24,14 +24,14 @@ top because the app can see the folder around the file.
   and the side-effect-free crawl in `security.ts`. Needs a defined scan root
   (the file's parent dir? a user-set "workspace folder"?) and a cost cap.
 - **Index-based:** remember who-opened-whom from Recent/last-opened
-  history ([epic 0091](completed/0091-recent-diagrams-and-last-opened-path.md)).
+  history ([epic 0091](../completed-epics.md#0091-remember-last-opened-path-recent-diagrams-under-file)).
   Cheap but incomplete and per-machine.
 - Multiple parents → a list, not one "parent". Broken/moved links → nothing.
 
 ## Related
 - [Epic 0123](0123-semantic-zoom-and-parent-context.md) (zoom out to see one
   level above) needs exactly this parent-resolution as a prerequisite.
-- [Epic 0093](0093-drill-down-search-across-linked-diagrams.md) shares the
+- [Epic 0093](../completed-epics.md#0093-drill-down-search-across-linked-diagrams) shares the
   tree-crawl machinery.
 
 ## Tasks

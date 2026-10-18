@@ -53,7 +53,7 @@ Consequences of picking model 1:
 - **No per-(edge, set) style storage.** `directionSets` records stay
   `{ source, target, sourceHandle?, targetHandle? }`.
 - **Switching sets never restyles anything.** This is a real limitation
-  versus the epic's original "without re-styling every edge on each switch"
+  versus the original "without re-styling every edge on each switch"
   aspiration — accepted deliberately by the user. The delivered value is:
   new edges drawn while a reading is active are born in that reading's look,
   and the legend row reflects it.
@@ -173,7 +173,7 @@ custom `labelPosition` (both defined along the source→target walk).
 **Markers are untouched.** The "Reverse direction" menu action calls it
 directly; `applyDirectionToEdge` calls it for the flip case, then overrides
 the endpoints/handles from the stored `EdgeDirection` record. A clean
-byte-for-byte involution. Epic 0084's note that markers should "travel with
+byte-for-byte involution. An earlier note that markers should "travel with
 their physical end" was backwards for what the feature is for, and it had
 never been live-tested — plain edges (empty `style`) happened to work via
 RF's default arrow tracking `target`.
@@ -208,7 +208,7 @@ today's behaviour exactly.
   disagree. The user wants the legend to *match* the set default, so one
   field is correct.
 - **Live cascade `edge.style.X ?? activeSet.style.X ?? default` at render.**
-  The original proposal in this epic's design pass. Delivers restyle-on-
+  The original proposal in the design pass. Delivers restyle-on-
   switch cleanly (per-edge explicit always wins), but the user explicitly
   did not want existing edges affected by a set at all.
 - **Include `routingStyle` in the template.** Routing is coupled to

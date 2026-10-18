@@ -25,7 +25,6 @@ interface PeekCardProps {
   shadowContent: string | undefined
 }
 
-
 function formatTagValue(value: unknown): string {
   return typeof value === 'string' ? value : JSON.stringify(value)
 }

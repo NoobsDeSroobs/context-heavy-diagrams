@@ -64,7 +64,10 @@ test('hash prints the SHA-256 of the raw bytes, changes when the file does, and 
   const first = run('hash', file)
   assert.equal(first.status, 0)
   // sha256("hello")
-  assert.equal(first.stdout.trim(), '2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824')
+  assert.equal(
+    first.stdout.trim(),
+    '2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824'
+  )
   await writeFile(file, 'hello!')
   assert.notEqual(run('hash', file).stdout.trim(), first.stdout.trim())
   assert.equal(run('hash').status, 2)

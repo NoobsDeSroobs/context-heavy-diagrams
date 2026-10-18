@@ -7,9 +7,8 @@ import type { IconRef, IconSlot } from '@shared/diagram'
 // processes); the system clipboard makes cross-window/cross-diagram paste
 // work for free, and matches what a user already expects from every other
 // desktop app. Plain JSON text, not a custom native format — Electron's
-// clipboard exposes `writeText`/`readText` directly in the (unsandboxed,
-// see main/windows.ts's `sandbox: false`) preload with no IPC round-trip
-// needed. The `chdClipboard` marker is what tells "this is our own payload"
+// clipboard is reached through two small IPC calls in the sandboxed preload
+// (main/clipboard.ts, ADR 0112). The `chdClipboard` marker is what tells "this is our own payload"
 // apart from arbitrary text the user copied from somewhere else — an
 // unmarked or malformed clipboard is just a silent no-op on paste, never an
 // error, same as duplicateSelected's own "nothing selected, do nothing."
@@ -177,15 +176,24 @@ export function remapForPaste(
 
   const hasParentInPayload = (n: Node): boolean => n.parentId != null && idMap.has(n.parentId)
 
-  // Centroid over top-level-within-payload nodes only — a contained child's
-  // coordinates are parent-relative (small numbers), a different space than a
-  // top-level node's, and averaging the two together skews where the group lands.
+  // The middle of the group's bounding box, over top-level-within-payload nodes
+  // only — a contained child's coordinates are parent-relative (small numbers),
+  // a different space than a top-level node's, and mixing the two skews where the
+  // group lands. Sizes are included so the group's visual centre, not its
+  // top-left corner, lands on the paste point (a lone entity used to hang off
+  // the point by half its size). A node with no recorded size counts as a point.
   const topLevel = payload.nodes.filter((n) => !hasParentInPayload(n))
-  const count = topLevel.length || 1
-  const centroid = {
-    x: topLevel.reduce((sum, n) => sum + n.position.x, 0) / count,
-    y: topLevel.reduce((sum, n) => sum + n.position.y, 0) / count
-  }
+  const sizeOf = (n: Node): { w: number; h: number } => ({
+    w: n.width ?? n.measured?.width ?? 0,
+    h: n.height ?? n.measured?.height ?? 0
+  })
+  const left = Math.min(...topLevel.map((n) => n.position.x))
+  const top = Math.min(...topLevel.map((n) => n.position.y))
+  const right = Math.max(...topLevel.map((n) => n.position.x + sizeOf(n).w))
+  const bottom = Math.max(...topLevel.map((n) => n.position.y + sizeOf(n).h))
+  const centroid = topLevel.length
+    ? { x: (left + right) / 2, y: (top + bottom) / 2 }
+    : { x: 0, y: 0 }
 
   const nodes = payload.nodes.map((n) => {
     const base = {

@@ -1,12 +1,12 @@
 {
   "manifest_version": "0.3",
   "name": "context-heavy-diagrams",
-  "display_name": "Context-Heavy Diagrams",
+  "display_name": "Context Heavy Diagrams",
   "version": "0.0.0",
   "description": "Let Claude read, validate and create the diagrams (.chd files) and supporting documents in one folder you choose. Everything runs on your computer; whatever Claude reads is sent to Anthropic as part of the conversation.",
-  "long_description": "Works with the diagrams made by the Context-Heavy Diagram Tool. Claude can list the files in the folder you choose, read diagrams, notes and supporting documents, check a diagram for structural problems, and create new diagrams and notes. Optionally, it can also modify existing files; if you allow that, an edit replaces the file, so keep your diagrams in version control. Claude can never touch anything outside the chosen folder, dot-files such as .env, or files that could be run. This extension makes no network connections, but anything Claude reads is sent to its provider as part of the conversation, so do not point it at a folder with confidential material unless that is acceptable.",
+  "long_description": "Works with the diagrams made by Context Heavy Diagrams. Claude can list the files in the folder you choose, read diagrams, notes and supporting documents, check a diagram for structural problems, and create new diagrams and notes. Optionally, it can also modify existing files; if you allow that, an edit replaces the file, so keep your diagrams in version control. Claude can never touch anything outside the chosen folder, dot-files such as .env, or files that could be run. This extension makes no network connections, but anything Claude reads is sent to its provider as part of the conversation, so do not point it at a folder with confidential material unless that is acceptable.",
   "author": {
-    "name": "Context-Heavy Diagram Tool"
+    "name": "Context Heavy Diagrams"
   },
   "license": "GPL-3.0-or-later",
   "icon": "icon.png",

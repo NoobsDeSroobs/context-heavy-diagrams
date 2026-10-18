@@ -28,7 +28,7 @@ fresh diagram is unchanged ([ADR 0054](../../decisions/0054-progressive-disclosu
 A permanent per-node tag/metadata subtitle was considered and **rejected**
 (space/overlap with labels; highlights already cover "which tags are where";
 where would the what-to-show toggle live?) — the peek card
-([epic 0119](completed/0119-details-peek-on-modifier-hold.md)) covers tags on demand.
+([epic 0119](../completed-epics.md#0119-details-peek-card-while-holding-ctrlcmd-over-an-element)) covers tags on demand.
 
 ## Tasks
 - [ ] Prototype/mock: what does each zoom band show? (user review)
