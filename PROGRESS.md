@@ -18,7 +18,7 @@ The first branch merged on 2026-10-18; the follow-up work is on `epic/0137-relea
 - Screenshots and animations (shot list in the epic), read the new [getting-started guide](docs/getting-started.md) with the app open (it was written from the code), GitHub repository settings (description, topics), enable private vulnerability reporting, tag the first release.
 - Push once so CI runs for the first time; the Linux job is untested.
 - Live test still pending: opening a couple of the converted gallery examples. (The delete rule, paste centring and the property panel defaults were tested on 2026-10-18.)
-- Decisions: no lawyer pass is needed, and `-or-later`, no trademark and the README's AI disclosure were settled on 2026-10-18; open is whether a colour typed in light mode should round-trip exactly (it comes back changed for saturated colours, see known-issues).
+- Decisions: no lawyer pass is needed, and `-or-later`, no trademark and the README's AI disclosure were settled on 2026-10-18. A colour typed in light mode that comes back changed for saturated colours stays a known issue, to be fixed after the release.
 
 **Not blocking the release:** Linux and macOS verification (including Alt+drag duplicate), the real icon (waits on the artist), a real installer build under the new name, [epic 0139](docs/planning/epics/0139-diagram-default-font-and-available-fonts.md) (diagram-wide default font) and [epic 0138](docs/planning/epics/later/0138-architecture-conformance-checks.md).
 

@@ -37,7 +37,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 ## A colour typed in light mode comes back changed (the theme flip is not exactly reversible)
 
-**Status:** Open, measured 2026-10-17, needs a design decision (pre-existing; found while verifying ADR 0117)
+**Status:** Open, measured 2026-10-17 (pre-existing; found while verifying ADR 0117). Decided 2026-10-18 not to block the first release; to be fixed later
 
 **Symptom:** in light mode, select an element, type `#ff0000` into a colour field, and the field settles on `#c83a2d`; the element is drawn that colour, not the red that was typed. Switching to dark mode shows `#9f0000` for the same stored value, and back to light shows `#c83a2d` again, so the panel and the drawing always agree with each other, just not with what was typed.
 
