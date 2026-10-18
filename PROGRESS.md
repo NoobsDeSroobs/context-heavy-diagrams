@@ -12,7 +12,7 @@ The first branch merged on 2026-10-18; the follow-up work is on `epic/0137-relea
 
 **Docs clean-up (done 2026-10-18):** completed epics collapsed into an index ([ADR 0120](docs/decisions/0120-completed-epics-collapse-into-an-index.md)), solved entries in `docs/known-issues.md` condensed, ADRs given a light pass (stale epic wording, TBDs, outdated status lines; the content is untouched), a project name and a personal detail removed. The author has read all the ADRs line by line; the open epics and the rest of `docs/` have been searched for names, emails and paths but not read line by line.
 
-**Git history rewrite (done 2026-10-18):** the history was cleaned of project-specific content and the author's personal address, keeping all commits ([ADR 0121](docs/decisions/0121-history-rewritten-before-first-release.md)), and force-pushed. The hosting site may still show the old commits by SHA until the repository is recreated or the site purges them.
+**Git history rewrite (done 2026-10-18):** the history was cleaned of project-specific content and the author's personal address, keeping all commits ([ADR 0121](docs/decisions/0121-history-rewritten-before-first-release.md)), and force-pushed. The hosting repository was then recreated from the rewritten `master` alone, because the old one kept the old commits in its pull-request refs; older `PR #NNN` mentions refer to the former repository.
 
 **Needs the maintainer:**
 - Screenshots and animations (shot list in the epic), read the new [getting-started guide](docs/getting-started.md) with the app open (it was written from the code), GitHub repository settings (description, topics), enable private vulnerability reporting, tag the first release.

@@ -20,9 +20,10 @@ The repository had never been public, so a one-off rewrite was still cheap: nobo
 ## Alternatives considered
 - **Leave the history and accept the exposure.** Rejected for the real-system content: it is not the author's to publish. The email would have been the smaller problem alone.
 - **Squash to a single root commit.** Simplest to verify, but loses the commit trail that ADR 0111 wants to keep.
-- **A fresh repository.** Same loss of trail, and it would also lose issue and PR numbering on the hosting site.
+- **A fresh repository, with the history rewritten in place first.** Rejected on its own, since a fresh repository with the *old* history would carry the same problem. It turned out to be needed anyway, see the consequences.
 
 ## Consequences
 - Every commit hash changed. No document in `docs/` refers to a hash, so nothing there needed fixing. Anyone holding a clone from before the rewrite must re-clone.
-- `PR #NNN` references in older docs stay valid only if the hosting repository is kept; the hosting site may also keep the old commits reachable through its own PR refs and cached SHAs until the repository is recreated or the old refs are removed there. That part is outside this repository.
+- **The hosting repository had to be recreated.** After the rewritten branches were force-pushed, the hosting site still held the old commits through its read-only `refs/pull/*` refs (one per earlier pull request), which a push cannot remove, and possibly in pull-request text. The repository was therefore recreated under the same name from the rewritten `master` alone, and the previous one was deleted. Pull requests, issues and their numbering did not carry over: the `PR #NNN` mentions in older docs and the `(#NNN)` in squash-merge commit titles refer to the former private repository and do not resolve in the current one.
+- A rewrite on a repository that has pull requests is not finished until the pull refs are gone too; that is the lesson for any later clean-up.
 - The committer on commits made through the hosting site's web interface is that site's own no-reply identity; that is not a personal address and was left as it is.
