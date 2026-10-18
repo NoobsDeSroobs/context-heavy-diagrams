@@ -1,6 +1,6 @@
 # Building an installer
 
-How to produce a real, double-click-installable build of this app, for each platform this project actually targets. This covers **Phase 1 only**: an unsigned installer with placeholder branding, good enough to hand directly to a non-technical person. Phase 2 (real branding, code signing, a real distribution channel, auto-update) isn't built yet, and this doc will grow to cover it once that happens.
+How to produce a real, double-click-installable build of this app, for each platform this project actually targets. This covers **Phase 1 only**: an unsigned installer, good enough to hand directly to a non-technical person. Phase 2 (code signing, a real distribution channel, auto-update) isn't built yet, and this doc will grow to cover it once that happens.
 
 **Platforms**: this project's own required target is Linux + Windows (see [docs/project-brief.md](../project-brief.md)) — that's what the author actually uses and verifies. Mac is covered here too, even though nobody on this project currently uses one to test against: plenty of real users are on Mac, and there's no reason building for them should be any harder than it needs to be just because the maintainer's own machines don't include one. Treat the Mac section below the same way as Linux's — documented from `electron-builder.yml`'s existing config, not personally verified — rather than the "out of scope" framing an earlier pass gave it.
 
@@ -53,6 +53,10 @@ Things to expect:
 - The association is deliberately *not* done through electron-builder's `fileAssociations` on Windows, because that registers unconditionally. `fileAssociations` is only set on the `mac` and `linux` sections.
 - The app runs as **one instance**: double-clicking a second `.chd` while it is open opens another window in the same process (a development run skips this).
 - The document icon is the app icon for now.
+
+### The icon
+
+The app icon comes from one SVG master, `build/icon.svg`. `npm run icons` regenerates `build/icon.png`, `build/icon.ico`, `build/icon.icns` and `resources/icon.png` from it ([ADR 0122](../decisions/0122-app-icon-generated-from-one-svg.md)); do not edit those four by hand. electron-builder picks up `build/icon.*` by name, so no config is needed. The macOS file is unverified on a Mac.
 
 ## Linux
 

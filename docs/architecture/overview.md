@@ -84,7 +84,7 @@ How an assistant gets the format knowledge and a way to check its edits (the AI 
 
 ## Building a distributable
 
-`npm run dev` for development. For a real installable Windows build (unsigned, Phase 1 placeholder branding), see [docs/architecture/packaging.md](packaging.md).
+`npm run dev` for development. For a real installable Windows build (unsigned, Phase 1), see [docs/architecture/packaging.md](packaging.md).
 
 ## Current status
 

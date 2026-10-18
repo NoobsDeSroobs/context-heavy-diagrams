@@ -19,3 +19,7 @@ A large share of the code was written by an AI assistant under the author's dire
 On firmer ground are the parts a human authored or shaped: the design and direction, the selection and arrangement of what goes in, hand edits, review, and the written material (decision records, docs, planning). The line between "AI-generated" and "AI-assisted" is not settled either, so no one can say today exactly how much of the code is covered.
 
 This is not a blocker for the release and changes nothing about how the project is used or licensed today. It matters mostly if the author later wants to enforce the licence against a copier, sell, dual-licence or relicense.
+
+## The app icon
+
+The raven icon (`build/icon.svg`, original in `build/icon-artist-original.svg`) was drawn by an artist commissioned by the author. **Open:** the terms it may be used under are not recorded yet: who owns the copyright, what licence it is released under (the code is GPL-3.0-or-later, the artwork need not be), and whether others may use it in forks or must not. Ask the artist, then write the answer here and, if it is a licence that needs attribution, in `THIRD-PARTY-NOTICES.md`'s source (`scripts/generate-notices.mjs`).

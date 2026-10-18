@@ -19,7 +19,7 @@ The public repo is **this repo, history and docs included** — epics, ADRs and 
 - The known-issues log starts from a clean slate.
 - CI and Dependabot are added.
 - Linux verification is a good-first-contributor task, not a blocker.
-- The icon waits on the user's artist. Bundled Tabler icons for entities are fine as they are.
+- The icon came from the user's artist (first version, 2026-10-19) and is generated from one SVG master ([ADR 0122](../../decisions/0122-app-icon-generated-from-one-svg.md)). Bundled Tabler icons for entities are fine as they are.
 
 ## Tasks
 
@@ -36,7 +36,7 @@ Hosting is settled (see Decided): the repo and account stay as they are, and the
 - [x] Settings location and installer identity: both change with the name; settings do not migrate (copy the old data folder by hand) and the new installer installs next to the old one, which must be uninstalled by hand (ADR 0114)
 - [x] Dropped "(Preview)"
 - [x] Rename the GitHub repository to match (done by the author; the repo is now `context-heavy-diagrams`); the repo URLs in `package.json`, the README clone command, `SECURITY.md`, the issue template config and `projectInfo.ts` use the new name
-- [ ] Real icon — waits on the user's artist ([epic 0027](../completed-epics.md#0027-app-branding-and-licensing)'s icon task)
+- [x] Real icon (first version from the artist, 2026-10-19): `build/icon.svg` master, `npm run icons`, checked by building the unpacked Windows app and extracting the icon from the exe. **Still open:** the artist's terms for the artwork (see `docs/licensing.md`); the macOS and Linux files are unverified; a social preview image (1280×640) for the GitHub page
 
 ### 3. README and showcase
 - [x] Public README rewritten (2026-10-16): pitch, features, build-from-source, examples, AI assistants, docs map, status, AI-assisted-development disclosure, contributing placeholder, license. Wording of the AI disclosure confirmed by the author 2026-10-18; the contributing paragraph is still a draft for the author to confirm
