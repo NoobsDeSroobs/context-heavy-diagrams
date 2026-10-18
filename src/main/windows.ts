@@ -105,7 +105,9 @@ export function createWindow(initialPath?: string): BrowserWindow {
     // Not autoHideMenuBar: that only hides the native menu until Alt is pressed,
     // and Alt is the duplicate-drag modifier (ADR 0099). The app draws its own
     // menu in the renderer; the native one stays hidden via setMenuBarVisibility.
-    ...(process.platform === 'linux' ? { icon } : {}),
+    // Linux has no icon resource in the executable, and a dev run on any OS starts the stock
+    // Electron binary. A packaged Windows or macOS build carries the icon in the executable.
+    ...(process.platform === 'linux' || (is.dev && process.platform !== 'darwin') ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       // Sandboxed preload: it can only use ipcRenderer/contextBridge/webUtils
