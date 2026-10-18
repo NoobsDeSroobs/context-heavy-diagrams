@@ -26,7 +26,7 @@ A demo prompted the first outside request for access, which made the open-source
 
 ## Consequences
 - `docs/` is public: it needed a pass for anything that should not be, `CLAUDE.md` had to be split into contributor conventions and user-specific rules, and `PROGRESS.md` had to become a short status. All three were done (2026-10-18), the personal rules moving to a git-ignored `CLAUDE.local.md`.
-- All commits are kept (with the one-time clean-up in ADR 0121), so the commit trail survives. Commit hashes changed; `PR #NNN` references in `docs/` stay valid as long as the hosting repository is kept.
+- All commits are kept (with the one-time clean-up in ADR 0121), so the commit trail survives. Commit hashes changed, and the hosting repository was recreated, so `PR #NNN` mentions in older docs refer to the former private repository and do not resolve.
 - Some of the code is AI-generated, and whether purely AI-generated code is copyrightable is unsettled in some jurisdictions; that limits how much a license or CLA can protect those parts. Recorded as an open caveat, not a blocker.
 - The README must be honest about platform status (Windows tested; Linux and macOS not).
 - Packaging, code signing and auto-update are deferred; the unused `electron-updater` dependency and the placeholder `publish` block can go if auto-update stays off.

@@ -1,7 +1,7 @@
 # 0022: Example diagram gallery
 
 ## Status
-**Paused again, 2026-08-22** — the branch merged to `master` ([PR #40](https://github.com/NoobsDeSroobs/context-heavy-diagrams/pull/40)) with 6 of 10 candidate entries built (#1, #4-#6, #8, #9 — see the table below); #1 reviewed and confirmed by the user, including a real revision (containers removed, integration edges added — see Notes). Per the "doesn't fit the normal lifecycle" note below, this isn't "Done" — it's resuming again later. Remaining: #2/#3 (the compliance overlays #1 unblocks), #7, #10. The backlog this pass surfaced (epics 0037-0050, plus 0020/0038/0049) is now also done and merged — see [PROGRESS.md](../../../PROGRESS.md), which is now focused on a new batch (0025/0030/0051/0055/0057/0058/0061) before this epic resumes again.
+**Paused again, 2026-08-22** — the branch merged to `master` (PR #40 in the former private repository) with 6 of 10 candidate entries built (#1, #4-#6, #8, #9 — see the table below); #1 reviewed and confirmed by the user, including a real revision (containers removed, integration edges added — see Notes). Per the "doesn't fit the normal lifecycle" note below, this isn't "Done" — it's resuming again later. Remaining: #2/#3 (the compliance overlays #1 unblocks), #7, #10. The backlog this pass surfaced (epics 0037-0050, plus 0020/0038/0049) is now also done and merged — see [PROGRESS.md](../../../PROGRESS.md), which is now focused on a new batch (0025/0030/0051/0055/0057/0058/0061) before this epic resumes again.
 
 ## Goal
 Two purposes under one epic:
