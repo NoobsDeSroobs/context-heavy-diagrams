@@ -81,7 +81,7 @@ This is the first open-source release of a project that was developed privately 
 
 ## AI-assisted development
 
-A large share of the code, especially the frontend and everything you see on screen, was written by Claude (Anthropic's AI assistant) working under the author's direction. The author sets the requirements, makes and records the design decisions, and tests the result. The decision records in `docs/decisions/` show how the work was steered. If you contribute, AI-assisted contributions are fine, but you are responsible for understanding and testing what you submit.
+A large share of the code, especially the user interface, was written by an AI assistant working under the author's direction. Code the author writes by hand also goes through an AI review pass to check for potential issues. In either case the author sets the requirements, makes and records the design decisions, and tests the result. The [decision records](docs/decisions/) show the reasoning behind those choices. If you contribute, AI-assisted contributions are fine, but you are responsible for understanding and testing what you submit.
 
 ## Contributing
 

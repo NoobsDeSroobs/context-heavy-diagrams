@@ -9,3 +9,13 @@ The obviously most useful built-in icons for IT architecture diagrams would be t
 **Current stance**: not bundled, not built. [ADR 0006](decisions/0006-icon-storage-model.md) uses a permissively-licensed generic set (Tabler Icons, MIT) as the only built-in icon source for now. Vendor icons remain fully usable via the custom-upload path — the user supplies their own downloaded copy, we don't redistribute anything.
 
 **Blocked on**: the user contacting AWS/Azure/GCP (and whichever others become relevant) directly about redistribution terms. Revisit epic [0019](planning/epics/0019-installable-icon-packs.md) once that's resolved.
+
+## AI-written code and copyright
+
+Not legal advice; a note for the lawyer pass in [ADR 0011](decisions/0011-software-license-choice.md).
+
+A large share of the code was written by an AI assistant under the author's direction (disclosed in the README). In some jurisdictions copyright needs human authorship, and the US Copyright Office's position is that purely AI-generated output is not protected. Where that applies, a licence has nothing to attach to for those parts: the GPL, the contribution terms in [CONTRIBUTING.md](../CONTRIBUTING.md) and any later relicensing would protect them less, or not at all.
+
+On firmer ground are the parts a human authored or shaped: the design and direction, the selection and arrangement of what goes in, hand edits, review, and the written material (decision records, docs, planning). The line between "AI-generated" and "AI-assisted" is not settled either, so no one can say today exactly how much of the code is covered.
+
+This is not a blocker for the release and changes nothing about how the project is used or licensed today. It matters mostly if the author later wants to enforce the licence against a copier, sell, dual-licence or relicense.
