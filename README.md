@@ -58,7 +58,7 @@ npm install
 npm run dev
 ```
 
-Then open a file from [`examples/`](examples/README.md) with **File → Open**, or drop it onto the window. (Double-clicking a `.chd` in your file manager only works with an installed build: the Windows installer offers to associate the file type, and Linux and macOS are unverified. A dev run from source never registers it.) `hello-world.chd` is the smallest example. The [gallery](examples/gallery/README.md) has a full fictional rail operator's landscape, a C4 drill-down, a customer journey, a Power BI star schema and more.
+Then open a file from [`examples/`](examples/README.md) with **File → Open**, or drop it onto the window. (Double-clicking a `.chd` in your file manager only works with an installed build: the Windows installer offers to associate the file type, and Linux and macOS are unverified. A dev run from source never registers it.) `hello-world.chd` is the smallest example, and the [getting-started guide](docs/getting-started.md) walks through drawing your first diagram. The [gallery](examples/gallery/README.md) has a full fictional rail operator's landscape, a C4 drill-down, a customer journey, a Power BI star schema and more.
 
 Other scripts: `npm test`, `npm run typecheck`, `npm run lint`. To build an installer for your own machine run `npm run build:win`, `build:mac` or `build:linux` (see [packaging](docs/architecture/packaging.md)). In VS Code, the **Debug All** launch configuration attaches to both the main and renderer processes.
 
@@ -68,6 +68,7 @@ An **AI** menu helps an assistant (Claude or another) read and write your diagra
 
 ## Documentation
 
+- [`docs/getting-started.md`](docs/getting-started.md): a ten-minute tour of the app.
 - [`docs/file-format.md`](docs/file-format.md): the `.chd` format specification.
 - [`docs/architecture/`](docs/architecture/overview.md): purpose, design principles, components, packaging.
 - [`docs/decisions/`](docs/decisions/): one short record per significant design decision, covering what was decided, why, and what else was considered.
@@ -76,7 +77,7 @@ An **AI** menu helps an assistant (Claude or another) read and write your diagra
 
 ## Project status
 
-This is the first open-source release of a project that was developed privately until now. The decision records and epics in `docs/` are the real history of how it got here, and they are published as they were written, on purpose, so the backlog is candid. The `.chd` format is at version 1 and changes are additive. A warning for files saved by a newer version is planned.
+This is the first open-source release of a project that was developed privately until now. The decision records and epics in `docs/` are the real history of how it got here, and they are published as they were written, on purpose, so the backlog is candid. The `.chd` format is at version 1 and changes are additive. Each file records the app version that last saved it, and the app warns when it opens a file saved by a newer version ([ADR 0118](docs/decisions/0118-saved-with-version-marker.md)).
 
 ## AI-assisted development
 
