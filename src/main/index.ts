@@ -116,18 +116,14 @@ app.whenReady().then(async () => {
   appReady = true
   const initialWindow = openExternalPaths(launchPaths)[0] ?? createWindow()
 
-  // Not awaited — a diagram that crashed before ever being saved once has
-  // no path to key a per-window recovery check against (that path runs
-  // per-window on open instead, see diagram open flow), so this is the
-  // only place it can be found. Gated on the setting since the scan is a
-  // real startup cost some users may want to skip (see ADR 0040).
-  // Runs after createWindow() so the first window shows up without
-  // waiting on this. initialWindow parents the recovery dialog(s) so they
-  // get a defined z-order — see runStartupOrphanScan's own comment.
-  // readPreferences() returning null (settings.json doesn't exist yet —
-  // ADR 0053) can't wait on the renderer's own localStorage
-  // migration at this point in startup; DEFAULT_PREFERENCES' own true here
-  // matches what the file this replaced already defaulted to on a miss.
+  // Not awaited. A diagram that crashed before ever being saved has no path to key a per-window
+  // recovery check on (that check runs per window on open), so this scan is the only place it can
+  // be found. Gated on the setting because the scan is a real startup cost some users may want to
+  // skip (ADR 0040). Runs after createWindow() so the first window doesn't wait on it;
+  // initialWindow parents the recovery dialogs for a defined z-order (see runStartupOrphanScan).
+  // readPreferences() returning null (no settings.json yet, ADR 0053) can't wait on the renderer's
+  // localStorage migration at this point in startup; DEFAULT_PREFERENCES' `true` matches what the
+  // replaced file defaulted to on a miss.
   readPreferences().then((settings) => {
     if ((settings ?? DEFAULT_PREFERENCES).scanForUnsavedRecoveryOnStartup) {
       runStartupOrphanScan(initialWindow, createWindow)

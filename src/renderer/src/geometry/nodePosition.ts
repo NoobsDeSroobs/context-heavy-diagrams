@@ -1,16 +1,13 @@
 import type { Node } from '@xyflow/react'
 
-// Containers (ADR 0012) — a child node's `position` is relative
-// to its immediate parent's own position, cascading up through any nesting
-// depth. These helpers convert between that relative space and true
-// absolute canvas coordinates, and keep the invariant React Flow requires:
-// a parent node must appear earlier in the `nodes` array than its children.
+// Containers (ADR 0012): a child node's `position` is relative to its immediate parent's, cascading
+// through any nesting depth. These helpers convert between that relative space and absolute canvas
+// coordinates and keep the invariant React Flow requires: a parent must appear earlier in the
+// `nodes` array than its children.
 //
-// Split out of Canvas.tsx so MultiConnection
-// Line.tsx can use the same conversion without importing Canvas.tsx itself
-// — that would be a real circular import (Canvas.tsx renders
-// MultiConnectionLine as its connectionLineComponent), not just an
-// awkward one.
+// Split out of Canvas.tsx so MultiConnectionLine.tsx can use the same conversion without importing
+// Canvas.tsx, which would be a real circular import (Canvas.tsx renders MultiConnectionLine as its
+// connectionLineComponent).
 
 export function absolutePosition(node: Node, byId: Map<string, Node>): { x: number; y: number } {
   let x = node.position.x

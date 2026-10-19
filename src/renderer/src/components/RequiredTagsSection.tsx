@@ -30,14 +30,11 @@ function parseDefaultValue(raw: string): JsonValue | undefined {
   }
 }
 
-// The default-value dropdown's option value for "None" — same "null"
-// token/round-trip convention MetadataSection's per-element dropdown
-// already established (ADR 0046): JSON.parse("null") already
-// yields real null via parseDefaultValue above, no special-casing needed
-// on commit. undefined and explicit null are both "None" here — this app
-// already treats an absent defaultValue as null everywhere else
-// (docs/file-format.md), so the dropdown shouldn't draw a distinction the
-// rest of the app doesn't.
+// The default-value dropdown's option value for "None", using the same "null" token round-trip as
+// MetadataSection's per-element dropdown (ADR 0046): JSON.parse("null") yields a real null via
+// parseDefaultValue above, so commit needs no special case. undefined and explicit null both mean
+// "None": the app treats an absent defaultValue as null everywhere (docs/file-format.md), so the
+// dropdown shouldn't distinguish them.
 function defaultValueToken(value: JsonValue | undefined): string {
   return value == null ? 'null' : stringifyDefault(value)
 }
@@ -53,16 +50,13 @@ function isKnownDefaultValue(value: JsonValue | undefined, allowedValues: string
   return typeof value === 'string' && allowedValues.includes(value)
 }
 
-// Local draft, resynced from `value` only while not focused, committed via
-// `onCommit` on blur — NOT on every keystroke. Every commit here flows
-// straight to Canvas's updateRequiredTags, which re-runs the full backfill
-// sync (syncElementMetadata) against every node/edge immediately. That sync
-// demotes-but-keeps a key that's no longer required rather than deleting
-// it (ADR 0022's "don't destroy data" rule) — fine for a real edit, but
-// catastrophic per-keystroke: typing a new key one letter at a time would
-// demote (and leave behind) one stale entry per intermediate spelling.
-// Typing "sensitivity" one letter at a time left 11 stale tags behind. Blur-only
-// commit is what makes "one key rename = one sync pass" true again.
+// Local draft, resynced from `value` only while not focused and committed via `onCommit` on blur,
+// not per keystroke. Every commit goes to Canvas's updateRequiredTags, which re-runs the full
+// backfill sync (syncElementMetadata) over every node and edge. That sync demotes but keeps a key
+// that is no longer required (ADR 0022's "don't destroy data" rule): fine for a real edit, but
+// typing a new key one letter at a time demotes and leaves behind one stale entry per intermediate
+// spelling ("sensitivity" left 11 stale tags). Blur-only commit makes "one key rename = one sync
+// pass" true again.
 function useFieldDraft(
   value: string,
   onCommit: (value: string) => void
@@ -96,17 +90,13 @@ function commitOnEnter(event: React.KeyboardEvent<HTMLInputElement>): void {
   if (event.key === 'Enter') event.currentTarget.blur()
 }
 
-// One row per existing allowed value (rename via the same blur-commit
-// draft pattern as everything else in this panel, reorder/remove as
-// discrete one-shot actions), plus a trailing always-blank row — typing
-// into it and blurring/pressing Enter appends a new value and the row
-// goes blank again, ready for the next one. Not literally per-keystroke
-// (that would mean one sync per character, the exact bug this panel's
-// other fields already learned to avoid — see useFieldDraft's own
-// comment) but still buttonless: no "Add" click needed between values,
-// See ADR 0047.
-// A pending remove/rename of an in-use value — see AllowedValuesEditor's
-// own comment for why this replaced window.confirm().
+// One row per existing allowed value (rename via the blur-commit draft pattern, reorder and remove
+// as one-shot actions), plus a trailing always-blank row: typing into it and blurring or pressing
+// Enter appends a value, and the row goes blank for the next. That isn't per keystroke (one sync
+// per character is the bug useFieldDraft avoids) but stays buttonless, with no "Add" click between
+// values. See ADR 0047.
+// A pending remove/rename of an in-use value: see AllowedValuesEditor for why this replaced
+// window.confirm().
 interface PendingChange {
   index: number
   replacement: string | null
@@ -137,19 +127,15 @@ function AllowedValuesEditor({
     onChange(values.map((v, i) => (i === index ? replacement : v)))
   }
 
-  // Covers both "remove this row outright" and "rename it to something
-  // that already collided/emptied" — a rename that changes what an
-  // in-use value actually reads as has the exact same consequence as
-  // deleting it (the old value stops being allowed, so any element still
-  // holding it goes invalid and resets to the tag's default on next
-  // sync), so both paths share this one confirmation.
+  // Covers both removing a row outright and renaming it to something that collided or emptied:
+  // renaming an in-use value has the same consequence as deleting it (the old value stops being
+  // allowed, so elements still holding it become invalid and reset to the tag's default on the next
+  // sync), so both share one confirmation.
   //
-  // Deliberately NOT window.confirm() — a real bug found live: a native
-  // confirm() dialog, once dismissed (confirmed OR cancelled), left this
-  // panel's <select> elements unresponsive to further clicks (no console
-  // error, matching a known Electron/Chromium class of native-dialog/
-  // focus-state quirk — see docs/known-issues.md). Confirming in-panel
-  // via `pending` state instead avoids a native dialog entirely.
+  // Deliberately not window.confirm(): once dismissed (confirmed or cancelled), a native confirm()
+  // left this panel's <select> elements unresponsive, with no console error, matching a known
+  // Electron/Chromium native-dialog/focus quirk (docs/known-issues.md). Confirming in-panel through
+  // `pending` state avoids a native dialog entirely.
   const commitRemovalOrRename = (index: number, replacement: string | null): void => {
     const oldValue = values[index]
     if (replacement === oldValue) return
@@ -407,14 +393,12 @@ function RequiredTagRow({
   )
 }
 
-// One section of DiagramSettingsPanel — see ADR 0022 for the required-tags
-// model, ADR 0071 for why this (and line bend presets) fold into a single
-// diagram-Configuration panel rather than each owning a top-level dock
-// toggle. Body-only: the enclosing CollapsibleSection provides the
-// title/expand chrome, DiagramSettingsPanel provides the outer panel shell
-// and close button. Text fields are draft-until-blur (see useFieldDraft
-// above); the lock dropdown, remove, and add are discrete one-shot actions
-// so they commit immediately, same as everywhere else in the app.
+// One section of DiagramSettingsPanel: ADR 0022 for the required-tags model, ADR 0071 for why this
+// (and line bend presets) fold into one diagram-configuration panel instead of each owning a dock
+// toggle. Body only: the enclosing CollapsibleSection provides the title and expand chrome,
+// DiagramSettingsPanel the panel shell and close button. Text fields are draft-until-blur
+// (useFieldDraft above); the lock dropdown, remove and add are one-shot actions that commit
+// immediately.
 export default function RequiredTagsSection({
   requiredTags,
   usedTags,
@@ -429,16 +413,12 @@ export default function RequiredTagsSection({
     onChange(requiredTags.filter((_, i) => i !== index))
   }
 
-  // Seeds a blank key, not a placeholder string — Canvas.tsx's
-  // seedMetadata/syncElementMetadata both skip any requiredTags entry
-  // whose key is empty, so a freshly-added, not-yet-named tag is never
-  // stamped onto a single element. Only once the user actually types a
-  // real key (keyField's blur-commit below, which already refuses to
-  // commit an empty/whitespace value) does it become real and get synced.
-  // This is the root-cause fix for the "stamps its placeholder key onto
-  // every element" bug (known-issues.md) — a blank key can never leave
-  // behind a stray demoted free tag, because nothing was ever written
-  // under it in the first place.
+  // Seeds a blank key, not a placeholder string: Canvas.tsx's seedMetadata/syncElementMetadata skip
+  // any requiredTags entry with an empty key, so a new, not-yet-named tag is never stamped onto an
+  // element. Only when a real key is typed (keyField's blur-commit refuses an empty or whitespace
+  // value) does it become real and get synced. This is the root-cause fix for the "stamps its
+  // placeholder key onto every element" bug (known-issues.md): nothing is ever written under a
+  // blank key, so it can't leave a stray demoted free tag.
   const addTag = (): void => {
     onChange([...requiredTags, { key: '', lock: 'lockedEditable' }])
   }

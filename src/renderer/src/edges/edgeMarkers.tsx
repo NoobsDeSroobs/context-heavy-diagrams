@@ -1,26 +1,20 @@
 import { memo } from 'react'
 import { MARKER_ID } from './markerIds'
 
-// Custom SVG <marker> defs for the full MarkerKind set — see ADR 0014.
-// React Flow's own MarkerType only covers plain/closed arrows, so anything
-// beyond that (circles, diamonds, crow's-foot) needs hand-drawn markers
-// referenced by id, same mechanism RF's own built-ins use under the hood.
+// Custom SVG <marker> defs for the full MarkerKind set (ADR 0014). React Flow's MarkerType covers
+// only plain and closed arrows, so circles, diamonds and crow's-foot need hand-drawn markers
+// referenced by id, the mechanism RF's built-ins use.
 //
-// Every shape is drawn pointing toward +x (the node the edge connects to)
-// with its "attachment" point (where it meets the node boundary) at the
-// marker's own refX — orient="auto-start-reverse" then handles both ends:
-// it points forward for markerEnd and auto-flips 180° for markerStart, so
-// one definition serves both.
+// Every shape points toward +x (the node the edge connects to) with its attachment point (where it
+// meets the node boundary) at the marker's refX. orient="auto-start-reverse" handles both ends:
+// forward for markerEnd, flipped 180° for markerStart, so one definition serves both.
 //
-// fill/stroke use the CSS context-fill/context-stroke keywords (supported
-// since Chromium 121 — this project ships Electron 43, well past that) to
-// inherit the referencing path's own stroke color, so there's no need for
-// one marker per color.
+// fill/stroke use the CSS context-fill/context-stroke keywords (Chromium 121+; this project ships
+// Electron 43) to inherit the referencing path's stroke colour, so there is no marker per colour.
 //
-// Deliberately approximate, not pixel-correct ERD/UML notation — see ADR
-// 0014's Notes on why the exact notation-base question is out of scope for
-// this pass. These just need to be recognizably the right *shape*. See
-// markerIds.ts for the id map and the url(#id) helper LabeledEdge uses.
+// Deliberately approximate, not pixel-correct ERD/UML notation (ADR 0014's Notes on why the
+// notation question is out of scope): the shapes only need to be recognizably right. markerIds.ts
+// has the id map and the url(#id) helper LabeledEdge uses.
 
 const STROKE = {
   fill: 'none',
@@ -31,21 +25,16 @@ const STROKE = {
 }
 const FILLED = { fill: 'context-stroke', stroke: 'none' }
 
-// Rendered once, globally — see Canvas.tsx. Zero-size and non-interactive;
-// only exists so <marker> ids are resolvable from any edge's marker-end/
-// marker-start attribute (SVG marker id references resolve document-wide,
-// not just within the same <svg>).
+// Rendered once, globally (Canvas.tsx). Zero-size and non-interactive; it exists so <marker> ids
+// resolve from any edge's marker-end/marker-start (SVG marker references resolve document-wide, not
+// just within the same <svg>).
 //
-// data-export-role: this <svg> is a sibling of <ReactFlow>, not a
-// descendant of .react-flow__viewport — PNG export (exportPng.ts) only
-// clones that viewport subtree, so without these defs actually present
-// inside the cloned content, every edge's marker-end="url(#...)" reference
-// dangles and arrowheads silently don't render in the exported image. exportPng.ts finds this
-// element by
-// this attribute and temporarily clones it into the capture.
-// memo()'d — static markup with no props, but it's a sibling of
-// <ReactFlow> under CanvasInner and would otherwise reconcile on every one
-// of that component's renders (ADR 0073).
+// data-export-role: this <svg> is a sibling of <ReactFlow>, not inside .react-flow__viewport, and
+// PNG export (exportPng.ts) clones only that viewport subtree, so without these defs in the cloned
+// content every marker-end="url(#...)" dangles and arrowheads don't render in the exported image.
+// exportPng.ts finds this element by that attribute and temporarily clones it into the capture.
+// memo()'d: static markup with no props, but a sibling of <ReactFlow> under CanvasInner that would
+// otherwise reconcile on every render of that component (ADR 0073).
 function EdgeMarkerDefs(): React.JSX.Element {
   return (
     <svg

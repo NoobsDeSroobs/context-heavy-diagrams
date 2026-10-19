@@ -11,14 +11,10 @@
 // without ever needing the cascade fallback below.
 export const LAYER_GAP = 10
 
-// Deep enough that the initial backfill's three ranges can never
-// accidentally cross on first load — not a hard boundary once the user
-// starts dragging things around in the panel (see ADR 0035:
-// containers-behind-shapes is a default arrangement, not a rule enforced
-// afterward). Text sits above shapes by the same "annotations should stay
-// readable over the thing they're labeling" reasoning as its default
-// render-on-top-of-shapes expectation — see the layer-order correction
-// this was fixed alongside.
+// Deep enough that the initial backfill's three ranges can't cross on first load, but not a hard
+// boundary once the user drags things around in the panel (ADR 0035: containers-behind-shapes is a
+// default arrangement, not an enforced rule). Text sits above shapes because annotations should
+// stay readable over what they label.
 export const CONTAINER_BASE = LAYER_GAP
 export const ENTITY_BASE = 100_000
 export const TEXT_BASE = 200_000
@@ -70,20 +66,17 @@ export interface ZIndexUpdate {
   zIndex: number
 }
 
-// Computes the minimal set of zIndex updates needed to move `movedId` to
-// `newIndex` within `orderedDescending` (already sorted highest-to-lowest —
-// index 0 is the current frontmost, matching the panel's own display
-// order). Three cases, in order:
-//  1. Both new neighbors exist with room between them (gap >= 2): average.
-//     Only the moved node changes.
-// 2. Both exist with no room (gap <= 1 — e.g. neighbors at 10 and 11: midpoint 11.5 would round into
-// an
-//     already-occupied slot): shift the contiguous saturated run starting
-//     at the upper neighbor up by 1 until a gap opens, then take the freed
-//     slot. Bounded to that run, never a full-diagram renumber.
-//  3. Only one neighbor exists (moving to the very front or back of the
-//     whole order): extrapolate a fresh LAYER_GAP from it, preserving
-//     headroom for future inserts at that new boundary.
+// Computes the minimal zIndex updates to move `movedId` to `newIndex` within `orderedDescending`
+// (sorted highest to lowest, so index 0 is the frontmost, matching the panel's display order).
+// Three cases, in order:
+// 1. Both new neighbours exist with room between them (gap >= 2): average. Only the moved node
+// changes.
+// 2. Both exist with no room (gap <= 1, e.g. neighbours at 10 and 11: midpoint 11.5 would round
+// into an occupied slot): shift the contiguous saturated run starting at the upper neighbour up by
+// 1 until a gap opens, then take the freed slot. Bounded to that run, never a full-diagram
+// renumber.
+// 3. Only one neighbour exists (moving to the very front or back): extrapolate a fresh LAYER_GAP
+// from it, leaving headroom for future inserts at that boundary.
 export function reorderZIndex(
   orderedDescending: ZIndexed[],
   movedId: string,

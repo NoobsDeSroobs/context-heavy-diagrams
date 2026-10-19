@@ -1,15 +1,12 @@
-// Pure model behind saving a diagram *and the files it owns* as one operation
+// Pure model behind saving a diagram and the files it owns as one operation
 // (docs/decisions/0092-unified-multi-file-save-and-change-detection.md).
 //
-// The diagram file is the "hub"; each detail note the user has touched is a
-// "shadow" (NoteShadow): an in-memory copy of one real file, with its own dirty
-// flag, kept independent of the diagram's data model. This module has no
-// runtime imports and no I/O (only a type import) so it can be unit-tested with
-// plain node:test (`npm test`) — the
-// renderer owns the shadows, main executes the plan
-// (src/main/documentSaveExec.ts).
-//
-// Paths are relative to the diagram file's directory, '/'-separated.
+// The diagram file is the "hub"; each detail note the user has touched is a "shadow" (NoteShadow):
+// an in-memory copy of one real file with its own dirty flag, kept apart from the diagram's data
+// model. The module has no runtime imports and no I/O (a type import only), so it can be
+// unit-tested with plain node:test (`npm test`). The renderer owns the shadows; main executes the
+// plan (src/main/documentSaveExec.ts). Paths are relative to the diagram file's directory,
+// '/'-separated.
 
 import type { DiagramFile } from './diagram'
 

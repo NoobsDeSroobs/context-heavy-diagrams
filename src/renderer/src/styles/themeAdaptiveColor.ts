@@ -28,18 +28,13 @@ function parseCssColor(color: string): { r: number; g: number; b: number } | nul
   return { r: Number(match[1]), g: Number(match[2]), b: Number(match[3]) }
 }
 
-// sRGB (0-255) <-> Oklab — a perceptually uniform color space (Björn
-// Ottosson, 2020; same conversion the CSS oklab()/oklch() spec uses).
-// Superseded a first version of this file that mirrored HSV's Value instead
-// — see ADR 0034's revision note. HSV's V (= max channel / 255) is
-// hue-blind: pure yellow and pure blue both read V=100%, even though yellow
-// looks nearly white and blue looks quite dark. Red sits in an awkward
-// middle — it looks noticeably darker than its V suggests — which is
-// exactly what broke the naive mirror for the case that motivated this
-// flip (readable white-on-red flipping to unreadable black-on-red instead
-// of the equally-readable inverse). Oklab's L tracks actual perceived
-// brightness across every hue, so mirroring *that* instead behaves the way
-// a human expects.
+// sRGB (0-255) <-> Oklab, a perceptually uniform colour space (Björn Ottosson, 2020; the conversion
+// the CSS oklab()/oklch() spec uses). It replaced a first version that mirrored HSV's Value (ADR
+// 0034's revision note). HSV's V (max channel / 255) is hue-blind: pure yellow and pure blue both
+// read 100% although yellow looks nearly white and blue quite dark, and red looks darker than its V
+// suggests, which broke the naive mirror for the motivating case (readable white-on-red flipping to
+// unreadable black-on-red instead of the equally readable inverse). Oklab's L tracks perceived
+// brightness across every hue, so mirroring that behaves the way a human expects.
 function srgbChannelToLinear(c: number): number {
   const cn = c / 255
   return cn <= 0.04045 ? cn / 12.92 : ((cn + 0.055) / 1.055) ** 2.4

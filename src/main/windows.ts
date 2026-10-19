@@ -33,19 +33,12 @@ function unregisterWindow(win: BrowserWindow): void {
   }
 }
 
-// Exported for diagram.ts's save handler — a window's path is only known
-// once it's saved for the first time (or opened with one already known).
-// Clears this window's own previous entry first — a window can only ever
-// legitimately show one path at a time, but the underlying Map is keyed
-// by path, not by window, so nothing enforced that on its own. Before
-// drag-to-open, a window's path only ever changed once in its lifetime (at
-// creation, or via File -> Open's reuse-if-empty, itself only usable
-// once), so the gap never showed up. Drag-to-open navigates the same
-// (non-empty) window to a new path repeatedly across several drops,
-// which exposed it: dropping file2 "Open Here" onto a window already
-// showing file1 left BOTH `file1 -> win` and `file2 -> win` in the map,
-// so dropping file1 again just found the stale entry and focused the
-// (already-focused) window instead of loading it.
+// Exported for diagram.ts's save handler: a window's path is only known once it is saved (or opened
+// with one). Clears this window's own previous entry first: a window shows one path at a time, but
+// the Map is keyed by path, not by window, so nothing enforced that. It never showed until
+// drag-to-open navigated the same non-empty window to new paths repeatedly: dropping file2 "Open
+// Here" onto a window showing file1 left both `file1 -> win` and `file2 -> win`, so dropping file1
+// again found the stale entry and focused the already-focused window instead of loading it.
 export function registerWindowPath(win: BrowserWindow, path: string): void {
   unregisterWindow(win)
   windowsByPath.set(normalizePath(path), win)
@@ -152,15 +145,11 @@ export function createWindow(initialPath?: string): BrowserWindow {
   return win
 }
 
-// Focuses an existing window already showing this path; otherwise, if the
-// calling window was passed in and is currently empty (nothing to lose in
-// the window you're opening from — see the comment at each call site: File
-// -> Open and File -> Recent Diagrams both pass one), navigates that
-// window to the path instead of opening a new one; otherwise opens a brand
-// new window. The drill-down link-navigation flow (windows:openLinked)
-// never passes a reuse candidate — a linked child always opens in its own
-// window, never in-place (ADR 0023); only top-level "open a diagram"
-// entry points reuse an empty window.
+// Focuses an existing window already showing this path; otherwise, if the calling window was passed
+// in and is empty (nothing to lose; File -> Open and File -> Recent Diagrams both pass one),
+// navigates it to the path; otherwise opens a new window. Drill-down link navigation
+// (windows:openLinked) never passes a reuse candidate: a linked child always opens in its own
+// window (ADR 0023). Only top-level "open a diagram" entry points reuse an empty window.
 function openOrFocusWindow(path: string, reuseWindow?: BrowserWindow): BrowserWindow {
   const existing = findWindowForPath(path)
   if (existing) {
@@ -206,25 +195,19 @@ export function focusLastUsedWindow(): void {
   win.focus()
 }
 
-// Drop-onto-a-window (ADR 0040, see docs/known-issues.md) — only
-// the drop *target* window's own state is ever in question, so this only
-// applies to the first of possibly several dropped files; every other
-// file just goes through the ordinary openOrFocusWindow above.
+// Drop onto a window (ADR 0040, see docs/known-issues.md). Only the drop target window's state is
+// in question, so this applies to the first of possibly several dropped files; the rest go through
+// the ordinary openOrFocusWindow above.
 //
-// Empty: reuse directly, same "nothing to lose" reasoning as File -> Open.
-// Non-empty: every button label states its own consequence explicitly
-// (no bare "Open Here", which is misleading), every branch has a real Cancel, and the message states
-// the
-// window's dirty state outright rather than leaving it for the user to
-// infer from which button set happened to show up. Dirty adds a genuine
-// Save option, matching the close-prompt's own Save/Discard/Cancel shape
-// (discard alone would be asymmetric) —
-// "Save changes, Open Here" hands off to the renderer's own save flow via
-// window:performSaveThenOpenDropped, since main can't perform a save
-// itself (path-picking, detail-draft flushing all live in Canvas.tsx).
-// "Discard changes, Open Here" cleans up any pending recovery snapshot
-// for the old identity first (mirrors the close-prompt's own Discard), so
-// a stale orphan doesn't linger for a future startup scan to offer back.
+// Empty: reuse directly, same "nothing to lose" reasoning as File -> Open. Non-empty: every button
+// label states its own consequence (no bare "Open Here", which is misleading), every branch has a
+// real Cancel, and the message states the window's dirty state outright instead of leaving it to be
+// inferred from which buttons appear. Dirty adds a Save option, matching the close prompt's
+// Save/Discard/Cancel shape (discard alone would be asymmetric). "Save changes, Open Here" hands
+// off to the renderer's save flow via window:performSaveThenOpenDropped, since main can't save
+// (path-picking and detail-draft flushing live in Canvas.tsx). "Discard changes, Open Here" first
+// removes any pending recovery snapshot for the old identity, like the close prompt's Discard, so a
+// stale orphan isn't offered back by a later startup scan.
 async function openDroppedFileForWindow(
   path: string,
   callingWindow: BrowserWindow,
@@ -322,15 +305,11 @@ export function registerWindowHandlers(): void {
     }
   )
 
-  // File -> Recent Diagrams -> (an entry). Absolute path, no dialog —
-  // opens/focuses a window for it exactly like a followed link, except when
-  // the calling window's own diagram is currently empty, in which case that
-  // empty window is reused instead — same "nothing to lose" rule as
-  // File -> Open (windows:pickAndOpen above) and drag-and-drop. On a path
-  // that no longer exists (moved/deleted since it was last opened), prunes
-  // it from the recent list and returns found:false so the renderer can
-  // show a brief "not found" notice — no stale entries linger, and no
-  // per-menu-open filesystem check is needed.
+  // File -> Recent Diagrams -> (an entry). Absolute path, no dialog: opens or focuses a window like
+  // a followed link, except that an empty calling window is reused, the same "nothing to lose" rule
+  // as File -> Open (windows:pickAndOpen above) and drag-and-drop. If the path no longer exists, it
+  // is pruned from the recent list and found:false is returned so the renderer can show a brief
+  // "not found" notice; no stale entries linger and no per-menu-open filesystem check is needed.
   ipcMain.handle('windows:openRecent', async (event, path: string, callingWindowEmpty: boolean) => {
     try {
       await access(path)
@@ -401,17 +380,13 @@ export function registerWindowHandlers(): void {
     if (win) unregisterWindow(win)
   })
 
-  // Close-prompt choreography (see ADR 0040) — the complex "how to
-  // actually save" logic (flush drafts, pick a path if none yet, etc.)
-  // stays entirely in the renderer's existing save flow; main only shows
-  // the native 3-button dialog and, once told the close is approved,
-  // cleans up the recovery file and lets the window actually close.
-  // `detail` (ADR 0102) is a one-line change-count computed
-  // renderer-side from the same diff engine the Changes panel uses — main
-  // only forwards it into the native dialog, same "main owns dialog
-  // mechanics, renderer owns what to compute" split as the rest of this
-  // handler. Absent/empty means no detail line (e.g. a never-saved diagram
-  // with nothing yet worth summarizing).
+  // Close-prompt choreography (ADR 0040): the "how to save" logic (flush drafts, pick a path if
+  // none) stays in the renderer's save flow; main only shows the native three-button dialog and,
+  // once the close is approved, removes the recovery file and lets the window close. `detail` (ADR
+  // 0102) is a one-line change count computed in the renderer by the diff engine the Changes panel
+  // uses; main only forwards it into the dialog (main owns dialog mechanics, the renderer owns what
+  // to compute). Absent or empty means no detail line, e.g. a never-saved diagram with nothing to
+  // summarize.
   ipcMain.handle('windows:requestCloseDecision', async (event, detail?: string) => {
     const win = BrowserWindow.fromWebContents(event.sender)
     const options = {

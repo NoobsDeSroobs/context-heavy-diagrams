@@ -3,18 +3,12 @@ import { Handle } from '@xyflow/react'
 import type { ConnectionPoint } from '@shared/diagram'
 import { SIDE_POSITION, connectionPointStyle, effectiveConnectionPoints } from './connectionPoints'
 
-// Every point a node's sides currently have — shared between EntityNode and
-// ContainerNode. Split into its own file (kept out of connectionPoints.ts)
-// so that file stays component-free — mixing a component export with
-// hook/function exports in one file breaks React Fast Refresh.
-//
-// This originally special-cased 4 always-present, unmovable default
-// points here (hardcoded, no style override, no context menu) plus
-// whatever was in `storedPoints`. That split turned out to be the root
-// cause of two real bugs: every point a side has is now
-// rendered uniformly from `effectiveConnectionPoints`, which synthesizes a
-// side's implicit single centered point only where nothing's been stored
-// for it yet (see that function's own comment).
+// Every point a node's sides currently have, shared by EntityNode and ContainerNode. A separate
+// file from connectionPoints.ts so that one stays component-free (a component export mixed with
+// hook/function exports breaks React Fast Refresh). Every point a side has is rendered uniformly
+// from `effectiveConnectionPoints`, which synthesizes a side's implicit single centred point only
+// where nothing is stored. (Special-casing four always-present, unmovable defaults here, with no
+// style override or context menu, was the root cause of two real bugs.)
 export function ConnectionHandles({
   storedPoints,
   onPointContextMenu

@@ -76,46 +76,34 @@ export interface AppPreferences {
   // <ReactFlow>'s own defaultEdgeOptions fall back to) — an unset field
   // here doesn't get a hardcoded second default of its own.
   defaultEdgeStyle: EdgeStyle
-  // User/org-owned reusable colors and fonts — ADR 0048,
-  // reshaped into a named collection by ADR 0068. Surfaced as
-  // quick-pick options inside ColorField (Fill/Border/Font color, panel
-  // and context-menu popups both) and the Font Family dropdown — always
-  // from whichever palette activeStylePaletteId points at, resolved live
-  // via effectiveStylePalette(). Several named palettes are kept around at
-  // once and switched between in StylePalettePanel; importing a file adds
-  // a new one rather than overwriting. Colors/fonts only — canvas
-  // background and per-type default styles below are still single global
-  // values, not per-palette (the feature is "get the colors right while
-  // authoring," not swappable diagram themes).
+  // User/org-owned reusable colours and fonts (ADR 0048), kept as named palettes (ADR 0068). They
+  // appear as quick-picks in ColorField (Fill/Border/Font colour, panel and context-menu popups)
+  // and the Font Family dropdown, from the palette activeStylePaletteId points at, resolved live
+  // via effectiveStylePalette(). Several palettes are kept and switched in StylePalettePanel;
+  // importing a file adds one. Colours and fonts only: canvas background and per-type default
+  // styles below are single global values, since the feature is "get the colours right while
+  // authoring", not swappable diagram themes.
   stylePalettes: NamedStylePalette[]
   // Which entry of stylePalettes is currently active. null (or a dangling
   // id) means "fall back to the first palette, or an empty set if there
   // are none" — see effectiveStylePalette().
   activeStylePaletteId: string | null
-  // Default style stamped onto a freshly created Entity/Container/Text —
-  // ADR 0048. Set explicitly (StylePalettePanel's "Set as default"
-  // button, copying a selected element's current style), never inferred
-  // from "whatever was last used." Edges already have this via
-  // defaultEdgeStyle above (ADR 0045) — deliberately not duplicated here.
-  // Absent per type means today's existing look (Container keeps its own
-  // hardcoded faint-fill fallback; Entity/Text keep ADR 0014's "no style at
-  // all").
+  // Default style stamped onto a new Entity/Container/Text (ADR 0048). Set explicitly
+  // (StylePalettePanel's "Set as default", copying a selected element's style), never inferred from
+  // what was used last. Edges have this via defaultEdgeStyle above (ADR 0045). Absent per type
+  // means today's look (Container keeps its hardcoded faint-fill fallback; Entity/Text keep ADR
+  // 0014's "no style at all").
   defaultStyles: { entity?: NodeStyle; container?: NodeStyle; text?: NodeStyle }
   // Overrides React Flow's own light/dark default canvas background —
   // ADR 0048. Global, not per-diagram (matches the rest of the
   // style palette). Absent means today's existing theme-based background,
   // unchanged.
   canvasBackgroundColor?: string
-  // PNG export (ADR 0051) — the
-  // *last used* values from the Export as PNG… dialog (ExportPngDialog),
-  // remembered here purely so the dialog reopens prefilled next time
-  // rather than resetting to defaults on every export. The dialog itself,
-  // not this settings object, is the actual place these get edited.
-  // paddingPx: exported-image pixels around the diagram's own content
-  // bounds. transparentBackground: omit the canvas background entirely
-  // instead of filling it. backgroundColorOverride: an explicit fill color
-  // distinct from canvasBackgroundColor above (the on-screen editor
-  // background) — absent means "use whatever's on screen right now."
+  // PNG export (ADR 0051): the last used values from the Export as PNG… dialog (ExportPngDialog),
+  // kept only so the dialog reopens prefilled; the dialog is where they are edited. paddingPx:
+  // pixels around the diagram's content bounds. transparentBackground: omit the canvas background
+  // instead of filling it. backgroundColorOverride: an explicit fill distinct from
+  // canvasBackgroundColor (the on-screen background); absent means use what is on screen now.
   pngExportPaddingPx: number
   pngExportTransparentBackground: boolean
   pngExportBackgroundColorOverride?: string
@@ -144,39 +132,28 @@ export interface AppPreferences {
   // non-matches entirely; deliberately left as a plain opacity rather than
   // a visibility toggle so de-emphasized structure/context stays visible.
   isolateOpacity: number
-  // Directory of the last opened/saved diagram — passed as
-  // `defaultPath` to File -> Open/Save As's dialogs so they default to
-  // wherever the user was last working, instead of the OS/Electron's own
-  // arbitrary default. Absent means "no dialog opened yet this install,"
-  // not a meaningful default of its own — deliberately optional rather
-  // than defaulted to e.g. the home directory. Written directly by main
-  // (windows.ts/diagram.ts), never edited through PreferencesPanel — this is
-  // a silent backend preference, not user-facing UI.
+  // Directory of the last opened or saved diagram, passed as `defaultPath` to File -> Open/Save As
+  // so the dialogs start where the user was last working. Absent means no dialog opened yet this
+  // install, deliberately not defaulted to e.g. the home directory. Written by main
+  // (windows.ts/diagram.ts), never edited through PreferencesPanel: a silent backend preference,
+  // not UI.
   lastOpenedDirectory?: string
-  // Absolute paths of recently opened/saved diagrams, most-recent-first —
-  // feeds File -> Recent Diagrams (see ADR 0078). Every path that lands in a
-  // window funnels through diagram:openPath, so "opened" here includes File
-  // -> Open, drag-and-drop, and following a linked diagram; a repeat Save
-  // counts too. Deduped, and clamped to `recentDiagramsLimit` at every
-  // normalize boundary. Written directly by main, never edited through
-  // PreferencesPanel (the list itself is not user-facing — only its limit
-  // and the "Clear Recent" action are). Absent means none yet.
+  // Absolute paths of recently opened or saved diagrams, most recent first, feeding File -> Recent
+  // Diagrams (ADR 0078). Every path that lands in a window funnels through diagram:openPath, so
+  // "opened" covers File -> Open, drag-and-drop and following a linked diagram; a repeat Save
+  // counts too. Deduped, clamped to `recentDiagramsLimit` at every normalize boundary. Written by
+  // main; the list isn't user-facing, only its limit and "Clear Recent" are. Absent means none yet.
   recentDiagrams?: string[]
   // How many entries File -> Recent Diagrams keeps. User-facing (unlike the
   // list). Lowering it trims the stored list at the next normalize; the
   // dropped entries don't come back if raised again. Absent means the
   // default (10).
   recentDiagramsLimit: number
-  // User default tier for line gravity/bend presets (see ADR 0066;
-  // ADR 0052's Diagram override -> User default -> Built-in default
-  // fallback pattern) — the middle tier that was missing when that pattern was
-  // first named. Absent means "no personal default set," falling all the
-  // way through to DEFAULT_GRAVITY_PRESETS (lineGravityPresets.ts), same
-  // "absent means default" convention as everything else in this app.
-  // Applies live to any already-open diagram that has no override of its
-  // own — resolved reactively (same as every other Setting here), not
-  // baked in once at load time. A diagram with its own override is
-  // unaffected either way, since that tier always wins outright.
+  // User default tier for line gravity/bend presets (ADR 0066; the Diagram override -> User default
+  // -> Built-in default pattern of ADR 0052). Absent means no personal default, falling through to
+  // DEFAULT_GRAVITY_PRESETS (lineGravityPresets.ts), the same "absent means default" convention as
+  // everywhere else. It applies live to any open diagram without its own override, resolved
+  // reactively and not baked in at load; a diagram with its own override always wins.
   gravityPresetsUserDefault?: GravityPreset[]
   // Whether the top-level AI menu (and everything hanging off it) is shown —
   // see ADR 0103. A pure chrome toggle: nothing in a .chd file depends on it.
@@ -224,19 +201,16 @@ export function withRecentDiagram(
   return [path, ...rest].slice(0, Math.max(1, limit))
 }
 
-// Every point that receives a stored/relayed preferences blob runs this
-// (main's file read, the renderer's file read, the cross-window broadcast,
-// the legacy-localStorage migration) — the standing rule is that no
-// AppPreferences field may ever resolve to undefined, so re-merging over
-// DEFAULT_PREFERENCES at each boundary is deliberate, not redundant (a field
-// added in newer renderer code must still show its default even if main
-// hasn't been rebuilt yet — this bit us once with isolateOpacity).
+// Every point that receives a stored or relayed preferences blob runs this (main's file read, the
+// renderer's file read, the cross-window broadcast, the legacy-localStorage migration). The
+// standing rule is that no AppPreferences field may resolve to undefined, so re-merging over
+// DEFAULT_PREFERENCES at each boundary is deliberate, not redundant: a field added in newer
+// renderer code must still show its default when main hasn't been rebuilt yet (this bit us once
+// with isolateOpacity).
 //
-// It also carries the named-style-palettes migration (ADR 0068): an older
-// blob has a single `stylePalette: { colors, fonts }` and no
-// `stylePalettes` array. Fold it
-// into the named collection as one "Default" palette. Idempotent — an
-// already-migrated blob has `stylePalettes` set, so the branch is skipped.
+// It also carries the named-palettes migration (ADR 0068): an older blob has a single
+// `stylePalette: { colors, fonts }` and no `stylePalettes`, and is folded into the collection as
+// one "Default" palette. Idempotent: a migrated blob has `stylePalettes`, so the branch is skipped.
 export function normalizePreferences(
   raw: Partial<AppPreferences> & {
     stylePalette?: LegacyStylePalette
@@ -281,14 +255,11 @@ export function normalizePreferences(
   return merged
 }
 
-// The colors/fonts every color field and the Font Family dropdown draw
-// from — whichever palette `activeId` points at, falling back to the first
-// palette if that id is dangling (deleted without the pointer being
-// updated), then to an empty set if there are no palettes at all. Takes
-// the two fields rather than the whole AppPreferences (same shape as
-// effectiveGravityPresets, ADR 0066) so a useMemo over it lists exactly
-// what it depends on. Resolved live on every render — nothing snapshotted
-// at load, so switching the active palette applies immediately everywhere.
+// The colours and fonts every colour field and the Font Family dropdown draw from: the palette
+// `activeId` points at, falling back to the first palette if that id is dangling, then to an empty
+// set. Takes the two fields, not the whole AppPreferences (as effectiveGravityPresets does, ADR
+// 0066), so a useMemo over it lists exactly what it depends on. Resolved live on every render, so
+// switching the active palette applies everywhere immediately.
 export function effectiveStylePalette(
   palettes: NamedStylePalette[],
   activeId: string | null

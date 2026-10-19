@@ -29,22 +29,15 @@ export function connectionPointStyle(
 
 let nextConnectionPointId = 1
 
-// Every side always has at least one point. A side with no entries at all
-// in the node's own stored `connectionPoints` implicitly has exactly one,
-// centered (offset 0.5), using the side's own name as a fixed, stable id
-// ("top"/"right"/"bottom"/"left") — the same id every file predating
-// custom per-side counts already references from its edges, since that's
-// what this app exposed as its 4 always-present, unmovable default
-// handles back then. That was originally kept as a real, permanently separate, immovable
-// concept — that split caused two real bugs (an
-// evenly-spaced *custom* layout can never truly include a point that
-// isn't free to move, and the app's own clockwise/transfer math didn't
-// know the fixed point was there at all) — so this is now purely a
-// *synthesis* used where a side has never been explicitly touched. Once a
-// side's point count changes (or a point is added/removed on it), its
-// full point set — this synthesized entry included — is written back for
-// real, and it behaves exactly like an ordinary point from then on:
-// movable, reorderable, removable (down to a minimum of one per side).
+// Every side always has at least one point. A side with nothing in the node's stored
+// `connectionPoints` implicitly has exactly one, centred (offset 0.5), with the side's own name as
+// a stable id ("top"/"right"/"bottom"/"left"), the id edges in files predating custom per-side
+// counts already reference. That used to be a permanently separate, immovable concept, which caused
+// two real bugs: an evenly spaced custom layout can't include a point that is not free to move, and
+// the clockwise/transfer math didn't know the fixed point existed. It is now only a synthesis for
+// sides never explicitly touched. Once a side's count changes (or a point is added or removed), its
+// full point set, the synthesized entry included, is written back and behaves like any point:
+// movable, reorderable, removable (down to one per side).
 function effectivePointsForSide(
   storedPoints: ConnectionPoint[],
   side: ConnectionPointSide
@@ -207,22 +200,15 @@ function evenOffsets(count: number): number[] {
   return Array.from({ length: count }, (_, i) => (i + 1) / (count + 1))
 }
 
-// The one spacing step every structural connection-point operation shares
-// — bulk count-field regenerate, manual add, manual remove alike:
-// `points` must already be in the desired clockwise order (whatever was
-// inserted/removed already reflected), and every point in it — ids
-// preserved — gets slid onto the evenly-spaced offset matching its
-// position in that order.
+// The one spacing step every structural connection-point operation shares (bulk count change,
+// manual add, manual remove): `points` must already be in the desired clockwise order, and every
+// point in it, ids preserved, slides onto the evenly spaced offset for its position.
 //
-// evenOffsets() always returns ascending raw-offset values, but "ascending
-// raw offset" only means "clockwise" on top/right (CLOCKWISE_ASCENDING) —
-// on bottom/left, clockwise means *descending* raw offset. Handing the
-// ascending offsets array straight to a clockwise-sorted points array
-// silently mirrored the whole side on bottom/left (the clockwise-first
-// point got the smallest raw offset instead of the largest), which showed as a correct order that
-// was visually flipped. Reversing the
-// offsets on those two sides before zipping them onto the points keeps
-// "index 0 in the points array" meaning "clockwise-first" for every side.
+// evenOffsets() returns ascending raw offsets, but ascending means clockwise only on top/right
+// (CLOCKWISE_ASCENDING); on bottom/left clockwise is descending. Zipping the ascending array
+// straight onto a clockwise-sorted points array mirrored the whole side on bottom/left (correct
+// order, visually flipped), so the offsets are reversed on those two sides. That keeps "index 0"
+// meaning "clockwise-first" on every side.
 function respaceClockwise(points: ConnectionPoint[], side: ConnectionPointSide): ConnectionPoint[] {
   const offsets = evenOffsets(points.length)
   const orderedOffsets = CLOCKWISE_ASCENDING[side] ? offsets : [...offsets].reverse()
@@ -251,19 +237,14 @@ export function reassignConnectionPointHandles(
   })
 }
 
-// The count-per-side generator (ADR 0036). `targetTotalCount` is the side's
-// whole point count, exactly what the property panel shows and lets the
-// user edit — no more default/custom split to convert between. Starts
-// from the side's *effective* points (synthesizing its implicit single
-// centered point first, if it's never been touched) so growing a
-// never-touched side still keeps working from something real. Growing
-// keeps every existing point (same id, so its edges stay attached) and
-// appends new empty ones at the clockwise end; shrinking removes
-// clockwise-most points one at a time, each transferring its edges to the
-// new clockwise-most survivor — never below 1 survivor. Either way the
-// final set is re-spaced evenly. Only the touched side is written back in
-// full; every other side's raw stored data (including any of its own
-// still-implicit points) is passed through untouched.
+// The count-per-side generator (ADR 0036). `targetTotalCount` is the side's whole point count,
+// exactly what the property panel shows and edits. It starts from the side's effective points
+// (synthesizing the implicit centred point first if the side was never touched). Growing keeps
+// every existing point (same id, so its edges stay attached) and appends new empty ones at the
+// clockwise end; shrinking removes the clockwise-most points one at a time, each handing its edges
+// to the new clockwise-most survivor, never below one. Either way the final set is re-spaced
+// evenly. Only the touched side is written back in full; every other side's raw stored data,
+// including its still-implicit points, passes through untouched.
 export function setSideCustomPointCount(
   storedPoints: ConnectionPoint[],
   side: ConnectionPointSide,
@@ -289,17 +270,12 @@ export function setSideCustomPointCount(
   return { points: [...otherSides, ...respaceClockwise(survivors, side)], handleReassignments }
 }
 
-// Manual right-click removal. Transfers the removed point's edges to the
-// counter-clockwise neighbor ("the point behind it"), except removing the
-// clockwise-first point transfers forward to what becomes the new first
-// point instead — then, like the bulk generator above, re-spaces every
-// surviving point on that side evenly. (An earlier version deliberately
-// left survivors' positions untouched, on the theory that manual removal
-// should stay hands-off of everything but the one point being removed —
-// that proved "broken" in practice: a side's remaining points
-// should always look evenly spread after a removal, the same as after any
-// other count change.) Refuses (returns undefined) when this would leave
-// the side with zero points — every side must always have at least one.
+// Manual right-click removal. The removed point's edges transfer to the counter-clockwise neighbour
+// ("the point behind it"); removing the clockwise-first point transfers forward to the new first
+// point. Like the bulk generator, it then re-spaces every surviving point on that side evenly:
+// leaving survivors where they were looked broken, since a side's remaining points should look
+// evenly spread after any count change. Refuses (returns undefined) when that would leave the side
+// with zero points.
 export function removeCustomPointWithTransfer(
   storedPoints: ConnectionPoint[],
   pointId: string
@@ -322,20 +298,14 @@ export function removeCustomPointWithTransfer(
   }
 }
 
-// Manual right-click "add point here". The click position picks a side and
-// a rough offset (nearestConnectionPoint) — that's only precise enough to
-// determine *where in clockwise order* the new point belongs (between
-// which two existing points), not its exact final offset: like the
-// removal above, the whole side is re-spaced evenly afterward, with the
-// new point taking whichever ordinal slot its click position sorted into.
-// (An earlier version placed the new point at the raw click offset and
-// left every other point untouched — same "broken" report as removal:
-// wedging a point in without re-spacing looked uneven rather than
-// deliberately placed.) Existing points keep their ids (and edges), just
-// slide to their new evenly-spaced offset. Refuses (returns undefined)
-// once the side is already at `maxCount` — the property panel's count
-// field enforces the same limit via its own `max` prop, but this path
-// bypasses that field entirely, so it needs its own check.
+// Manual right-click "add point here". The click position (nearestConnectionPoint) only decides
+// where in the clockwise order the new point belongs, between which two existing points, not its
+// final offset: as with removal, the whole side is re-spaced evenly afterwards and the new point
+// takes the ordinal slot it sorted into. Placing it at the raw click offset and leaving the others
+// alone looked uneven rather than deliberate. Existing points keep their ids (and edges) and just
+// slide to their new offsets. Refuses (returns undefined) once the side is at `maxCount`: the
+// property panel's count field enforces the same limit through its own `max` prop, but this path
+// bypasses that field.
 export function insertConnectionPointAt(
   storedPoints: ConnectionPoint[],
   side: ConnectionPointSide,
@@ -416,14 +386,11 @@ export function useConnectionPointMenu(
     ]
   )
 
-  // Right-click on any point (including one that's still only implicit —
-  // point identity is resolved through the same effective-points view
-  // removeCustomPointWithTransfer itself uses) removes it, distinct from
-  // the node-wide menu (which adds one) — stopPropagation so the two
-  // don't both fire for the same click. ADR 0036 replaced the original
-  // block-if-edge-attached guard with edge transfer — removing a wired
-  // point no longer requires disconnecting it first; the only remaining
-  // refusal is removing a side's last point.
+  // Right-click on any point, including one that is still only implicit (identity is resolved
+  // through the same effective-points view removeCustomPointWithTransfer uses), removes it,
+  // distinct from the node-wide menu that adds one; stopPropagation keeps the two from both firing
+  // for one click. ADR 0036 replaced the block-if-edge-attached guard with edge transfer, so
+  // removing a wired point needs no prior disconnect; the only refusal left is a side's last point.
   const onPointContextMenu = useCallback(
     (event: MouseEvent<HTMLDivElement>, point: ConnectionPoint) => {
       event.preventDefault()

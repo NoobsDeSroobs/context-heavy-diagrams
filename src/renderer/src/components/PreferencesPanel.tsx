@@ -108,16 +108,13 @@ function ZoomLimitField({
   )
 }
 
-// Fractional 0-1 opacity (see ADR 0063) — NumberField's own draft
-// has no `step`, same reason ZoomLimitField above doesn't use it either.
-// Same two-class combo ZoomLimitField's own inputs use: .property-number-
-// field for the actual theme-aware background/border/color (its own
-// width: 100% is what this field doesn't want), .preferences-zoom-limit-
-// input layered after it to override just the width down to a small
-// fixed box and hide the native spinner. Dropping the first class
-// entirely (an earlier version of this fix did) leaves the input with no
-// background/border rule at all — browser default white, which is
-// exactly wrong in dark theme.
+// Fractional 0-1 opacity (ADR 0063). NumberField's draft has no `step`, for the same reason
+// ZoomLimitField above has none. Same two-class combination as ZoomLimitField:
+// .property-number-field supplies the theme-aware background, border and colour (its own width:
+// 100% is what this field doesn't want), and .preferences-zoom-limit-input, layered after it,
+// overrides only the width to a small fixed box and hides the native spinner. Dropping the first
+// class leaves the input with no background or border rule, i.e. browser-default white, which is
+// wrong in dark theme.
 function IsolateOpacityField({
   value,
   onChange
@@ -147,19 +144,16 @@ function IsolateOpacityField({
   )
 }
 
-// Same fixed right-side dock shell as DetailsPanel/DiagnosticsPanel — see
-// ADR 0013. Global, app-wide preferences (Preferences tier — the
-// per-installation, every-diagram scope; see the glossary), not diagram
-// content: nothing here goes through pushSnapshot/undo, and it isn't reset
-// when a different diagram loads. See ADR 0032 for why this panel exists
-// as its own thing, ADR 0052's addendum for the "Settings" -> "Preferences"
-// rename.
+// Same fixed right-side dock shell as DetailsPanel/DiagnosticsPanel (ADR 0013). Global, app-wide
+// preferences (the per-installation, every-diagram tier; see the glossary), not diagram content:
+// nothing here goes through pushSnapshot/undo, and a different diagram loading doesn't reset it.
+// See ADR 0032 for why this panel exists and ADR 0052's addendum for the "Settings" ->
+// "Preferences" rename.
 //
-// Reuses NumberField from the property panel's field primitives even
-// though nothing here is a style field on a selection — it's the same
-// "draft until blur" number input either way. `mixed`/session callbacks
-// are property-panel concepts (multi-selection, undo grouping) that don't
-// apply to a single global value, so they're passed as always-false/no-op.
+// Reuses NumberField from the property panel's field primitives although nothing here is a style
+// field on a selection: it is the same "draft until blur" number input. `mixed` and the session
+// callbacks are property-panel concepts (multi-selection, undo grouping) that don't apply to a
+// single global value, so they are passed as always-false/no-op.
 export default function PreferencesPanel({
   preferences,
   onChange,

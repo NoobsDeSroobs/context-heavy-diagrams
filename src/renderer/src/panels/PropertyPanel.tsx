@@ -75,15 +75,12 @@ interface PropertyPanelProps {
   onToggleStyleBrush: () => void
 }
 
-// '' means the field is absent — a real style.routingStyle value, not a
-// placeholder — see fontFamily's own identical '' === "no override"
-// pattern below. 'straight'/'step'/'smoothstep' are React Flow's own
-// built-in path shapes; 'catmullRom' reuses the freeform-line curve math
-// (ADR 0050, bendablePath.ts) with this edge's own manual bend
-// points — see ADR 0057. A local copy, not shared with PreferencesPanel.tsx's
-// identical default-routing-style picker: this file already can't export
-// a second named value alongside its default component export
-// (react-refresh/only-export-components).
+// '' means the field is absent: a real style.routingStyle value, not a placeholder (the same '' ===
+// "no override" pattern as fontFamily below). 'straight'/'step'/'smoothstep' are React Flow's
+// built-in path shapes; 'catmullRom' reuses the freeform-line curve math (ADR 0050,
+// bendablePath.ts) with this edge's manual bend points (ADR 0057). A local copy, not shared with
+// PreferencesPanel.tsx's identical default-routing-style picker, because this file can't export a
+// second named value next to its default component export (react-refresh/only-export-components).
 const ROUTING_STYLE_OPTIONS: {
   value: Exclude<EdgeStyle['routingStyle'], undefined> | ''
   label: string
@@ -95,14 +92,12 @@ const ROUTING_STYLE_OPTIONS: {
   { value: 'catmullRom', label: 'Catmull-Rom (gravity)' }
 ]
 
-// Generic CSS families only, for now — a specific named font isn't
-// reliably available on both of this app's target platforms (Windows/
-// Linux). '' is a real option meaning "no override" (not a placeholder —
-// see SelectField), stored as fontFamily: undefined. Curated specific
-// fonts can be added here later without a schema change (fontFamily is a
-// raw CSS font-family string, not an enum).
-// The four CSS generic families are categories, not fonts: each means "whichever
-// font this computer uses for that kind", so they are grouped apart from named fonts.
+// Generic CSS families only, for now: a specific named font isn't reliably available on both target
+// platforms (Windows/Linux). '' is a real option meaning "no override" (see SelectField), stored as
+// fontFamily: undefined. Curated named fonts can be added later without a schema change, since
+// fontFamily is a raw CSS font-family string, not an enum. The four CSS generic families are
+// categories, not fonts: each means "whichever font this computer uses for that kind", so they are
+// grouped apart from named fonts.
 const FONT_FAMILY_OPTIONS: FontOption[] = [
   { value: '', label: 'Default' },
   { value: 'sans-serif', label: 'Sans-serif', group: GROUP_SYSTEM },
@@ -689,16 +684,13 @@ const CONNECTION_POINT_SIDE_LABELS: Record<ConnectionPointSide, string> = {
   left: 'Left'
 }
 
-// Single-node-selection only — unlike the style fields above,
-// a count here reads from and structurally rewrites one specific node's
-// own connectionPoints/edges, which doesn't generalize to "apply this
-// patch to every selected node" the way a color or opacity does.
+// Single-node selection only: unlike the style fields above, a count reads from and structurally
+// rewrites one node's own connectionPoints and edges, which doesn't generalize to "apply this patch
+// to every selected node" the way a colour or opacity does.
 //
-// Deliberately applies on blur/Enter (onSessionEnd), not per-keystroke
-// like every other NumberField in this panel: unlike a style patch, commit
-// here regenerates points and can transfer edges between handles, so
-// typing "12" must not run that as "1" then "12". A ref tracks the
-// in-progress value between onChange and onSessionEnd.
+// Applies on blur/Enter (onSessionEnd), not per keystroke like the panel's other NumberFields:
+// commit regenerates points and can transfer edges between handles, so typing "12" must not run
+// that as "1" then "12". A ref tracks the in-progress value between onChange and onSessionEnd.
 function ConnectionPointFields({
   node,
   maxPerSide,

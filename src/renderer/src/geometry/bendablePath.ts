@@ -2,37 +2,25 @@ import type { LinePoint } from '@shared/diagram'
 
 const DEFAULT_GRAVITY = 0.5
 
-// A point in a connector's path, with one addition over the persisted
-// LinePoint: a fixed outward `direction` (unit vector). A `'line'` node's
-// own points never set this (nothing to leave "outward" from — see
-// LineNode.tsx). An ordinary edge's two endpoints always do, once rendered
-// with `routingStyle: 'catmullRom'` (see LabeledEdge.tsx) — "which way
-// this edge leaves the shape's side" is a real, always-available thing for
-// an edge (both ends are always bound to a real node), unlike a decorative
-// line's points, which never have a side to leave from. Renderer-only,
-// never part of the persisted schema.
+// A point in a connector's path: the persisted LinePoint plus a fixed outward `direction` (unit
+// vector). A 'line' node's points never set it (there is no shape to leave "outward" from; see
+// LineNode.tsx). An ordinary edge's two endpoints always do once rendered with `routingStyle:
+// 'catmullRom'` (see LabeledEdge.tsx), since both ends are bound to a real node and "which way this
+// edge leaves the shape's side" always exists. Renderer-only, never part of the persisted schema.
 export interface PathPoint extends LinePoint {
   direction?: { x: number; y: number }
 }
 
-// Tangent at point i. A point with `direction` uses that fixed direction,
-// scaled by its own gravity and by distance to its one real neighbor —
-// same scaling convention as the neighbor-based case below, so it still
-// responds to its own gravity value the same way a plain point's does.
-// Sign depends on which end it's at, standard Hermite-tangent convention:
-// at the *first* point, the tangent is the direction the curve heads as it
-// LEAVES (outward from the shape — `direction` as-is). At the *last*
-// point, the tangent is the direction the curve heads as it ARRIVES —
-// INTO the shape, i.e. the negation of "outward." Using the same sign for
-// both (a real bug) makes the curve
-// approach the target's side from the wrong side, connecting as if
-// departing toward whatever it's attached to rather than arriving
-// perpendicular to the shape. Everything else (a line's own points; an
-// edge's own manual bend points) uses per-point Catmull-Rom "gravity"
-// (tension) via its neighbor(s) — see
-// docs/decisions/0050-freeform-line-as-node-type.md. A point with no
-// direction and only one neighbor uses that single neighbor; an interior
-// point uses both.
+// Tangent at point i. A point with `direction` uses it, scaled by its own gravity and by the
+// distance to its one real neighbour, the same scaling as the neighbour-based case below, so it
+// responds to its gravity value like a plain point. The sign depends on the end (standard
+// Hermite-tangent convention): at the first point the tangent is where the curve heads as it LEAVES
+// (`direction` as-is); at the last point it is where the curve heads as it ARRIVES, INTO the shape,
+// i.e. the negation of "outward". Using the same sign for both (a real bug) made the curve approach
+// the target's side from the wrong side instead of arriving perpendicular to the shape. Everything
+// else (a line's own points, an edge's manual bend points) uses per-point Catmull-Rom gravity
+// (tension) via its neighbours (ADR 0050). A point with no direction and one neighbour uses that
+// neighbour; an interior point uses both.
 function tangentAt(points: PathPoint[], i: number): { x: number; y: number } {
   const point = points[i]
   const gravity = point.gravity ?? DEFAULT_GRAVITY
@@ -50,16 +38,12 @@ function tangentAt(points: PathPoint[], i: number): { x: number; y: number } {
   return { x: (next.x - prev.x) * gravity, y: (next.y - prev.y) * gravity }
 }
 
-// Ordered point list -> SVG path string. Deliberately no notion of "node"
-// or "edge" here beyond PathPoint's own minimal `direction` field — the
-// whole point of splitting this out (ADR 0050) is that the same
-// curve math serves a decorative line's own points and an edge's manual
-// bend points alike (the "catmull-rom" routing style, ADR 0057) without
-// duplicating it. Each segment between consecutive points becomes one
-// cubic bezier via the standard Hermite-to-Bezier conversion. A straight
-// 2-point line with no `direction` on either end comes out perfectly
-// straight regardless of gravity: both tangents are parallel to the
-// chord, so both derived control points land exactly on it.
+// Ordered point list -> SVG path string. It knows nothing of "node" or "edge" beyond PathPoint's
+// `direction`: the point of the split (ADR 0050) is that the same curve math serves a decorative
+// line's points and an edge's manual bend points (the "catmull-rom" routing style, ADR 0057). Each
+// segment between consecutive points becomes one cubic bezier by the standard Hermite-to-Bezier
+// conversion. A straight two-point line with no `direction` comes out straight whatever the
+// gravity: both tangents are parallel to the chord, so both control points land on it.
 export function buildBendablePath(points: PathPoint[]): string {
   if (points.length === 0) return ''
   if (points.length === 1) return `M${points[0].x},${points[0].y}`
@@ -80,16 +64,14 @@ export function buildBendablePath(points: PathPoint[]): string {
   return d
 }
 
-// Straight lead-in/out before curving, at whichever end(s) have a
-// `direction` — the global edgeStraightSegmentLength setting (preferences.ts/
-// PreferencesPanel, ADR 0032), reused by catmull-rom-routed edges
-// (ADR 0057) alongside the bezier routing it originally applied to. Offsets an endpoint outward along its own direction by
-// `length` (clamped to half the distance to its real neighbor in the
-// original list, so a short segment can never overlap or fold back on
-// itself), builds the underlying curve between those offset points, then
-// splices each true endpoint back on with a literal straight `L` segment.
-// Relies on buildBendablePath's output always starting "M<x>,<y> C..."
-// (its actual, stable implementation, not just documented behavior).
+// Straight lead-in/out before curving, at whichever ends have a `direction`: the global
+// edgeStraightSegmentLength setting (preferences.ts/PreferencesPanel, ADR 0032), reused by
+// catmull-rom edges (ADR 0057) alongside the bezier routing it first applied to. Offsets an
+// endpoint outward along its direction by `length` (clamped to half the distance to its real
+// neighbour in the original list, so a short segment can't overlap or fold back), builds the curve
+// between the offset points, then splices each true endpoint back on with a literal straight `L`
+// segment. Relies on buildBendablePath's output always starting "M<x>,<y> C..." (its actual, stable
+// implementation, not just documented behaviour).
 export function buildConnectorPath(points: PathPoint[], straightSegmentLength: number): string {
   if (points.length < 2) return buildBendablePath(points)
   if (straightSegmentLength <= 0) return buildBendablePath(points)

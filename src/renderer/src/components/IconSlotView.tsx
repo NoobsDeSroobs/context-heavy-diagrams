@@ -8,17 +8,14 @@ interface IconSlotViewProps {
   className?: string
 }
 
-// Built-in icons render as inline SVG (trusted, bundled at build time — see
-// ADR 0006). Custom icons render via <img src="data:..."> instead, never
-// inlined: an arbitrary user-supplied SVG could embed a script, and <img>
-// doesn't execute embedded scripts the way dangerouslySetInnerHTML would.
+// Built-in icons render as inline SVG (trusted, bundled at build time, ADR 0006). Custom icons
+// render through <img src="data:..."> and are never inlined: an arbitrary user-supplied SVG could
+// embed a script, and <img> doesn't execute embedded scripts the way dangerouslySetInnerHTML would.
 //
-// No manual "reset before fetching" here — the caller keys
-// this component by icon identity (EntityNode.tsx's iconSlotKey), so React
-// unmounts/remounts a fresh instance whenever the icon actually changes,
-// rather than reusing one instance and needing svg/dataUrl cleared by
-// hand mid-fetch (which is what used to cause the lint-flagged
-// setState-synchronously-in-effect pattern here).
+// There is no manual "reset before fetching": the caller keys this component by icon identity
+// (EntityNode.tsx's iconSlotKey), so React mounts a fresh instance whenever the icon changes,
+// instead of one instance having its svg/dataUrl cleared by hand mid-fetch (which needed a
+// setState-in-effect the lint rules reject).
 export default function IconSlotView({
   icon,
   diagramPath,

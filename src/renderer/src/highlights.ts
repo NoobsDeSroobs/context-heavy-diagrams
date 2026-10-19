@@ -25,18 +25,13 @@ export function highlightId(h: { key: string; value: HighlightDefinition['value'
   return `${h.key}::${JSON.stringify(h.value)}`
 }
 
-// What a group's entries get reconciled against (ADR 0026, addendum
-// 2026-09-23) — shared by "Add group", the manual per-group resync
-// button, and the automatic resync effect in Canvas.tsx, so all three can
-// never disagree about what a group "should" contain. A key backed by a
-// required tag with a real `allowedValues` list uses the *full list* —
-// every legal value, whether anything currently carries it or not — plus
-// that tag's own implicit "None" (ADR 0046; every editable required tag
-// always allows it, so it belongs in the group even though it's never
-// itself listed in `allowedValues`). Any other key (a free tag, or a
-// required tag with no allowedValues restriction, i.e. free text) falls
-// back to whatever values are actually in use somewhere in the diagram —
-// there's no fixed universe to enumerate instead.
+// What a group's entries are reconciled against (ADR 0026 addendum), shared by "Add group", the
+// per-group resync button and Canvas.tsx's automatic resync, so all three always agree on what a
+// group should contain. A key backed by a required tag with an `allowedValues` list uses the full
+// list, every legal value whether or not anything carries it, plus that tag's implicit "None" (ADR
+// 0046: every editable required tag allows it, though it is never listed in `allowedValues`). Any
+// other key (a free tag, or a required tag without an allowedValues restriction) falls back to the
+// values actually in use in the diagram, since there is no fixed universe to enumerate.
 export function highlightGroupSourceValues(
   key: string,
   requiredTags: RequiredTagDefinition[],
@@ -49,16 +44,12 @@ export function highlightGroupSourceValues(
   return usedTags.filter((t) => t.key === key).map((t) => t.value)
 }
 
-// "Add group" (ADR 0026): reconciles the catalog's entries for
-// one key against the values that key currently, actually carries
-// somewhere in the diagram — adds a white entry for a value not yet
-// covered, and *removes* an existing entry whose value nothing carries
-// anymore (a stale row for a retired value is actively misleading, not harmless leftover state).
-// Existing
-// entries for values still in use are returned untouched, keeping
-// whatever color/position they already had. Entries for every other key
-// are left alone. Pure — the caller (Canvas.tsx) supplies currentValues
-// from its own scan of live node/edge metadata and applies the result.
+// "Add group" (ADR 0026): reconciles the catalog's entries for one key against the values that key
+// currently carries in the diagram. It adds a white entry for a value not yet covered and removes
+// an entry whose value nothing carries anymore (a stale row for a retired value is actively
+// misleading). Entries for values still in use are returned untouched, keeping their colour and
+// position; entries for other keys are left alone. Pure: the caller (Canvas.tsx) supplies
+// currentValues from its scan of live node/edge metadata and applies the result.
 export function reconcileHighlightGroup(
   highlights: HighlightDefinition[],
   key: string,

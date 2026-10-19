@@ -3,19 +3,16 @@ import type { Theme } from '../theme'
 
 // The built-in look of an element that has no style of its own, as DATA (ADR 0117).
 //
-// A stored style only holds what the author changed; everything else is "the
-// default". Those defaults used to live in three places that had to agree by
-// hand: CSS rules (nodes), constants in LabeledEdge.tsx / LineNode.tsx, and
-// nowhere at all for the property panel, which therefore showed blank fields
-// for an element that was visibly coloured and bordered. Now they are defined
-// once, here, and everything reads them: the CSS gets its values from
-// defaultStyleCssVars(), the edges and lines import them directly, and the
-// property panel shows them for any field the element does not set.
+// A stored style holds only what the author changed; everything else is "the default". Defaults are
+// defined once, here, and everything reads them: the CSS gets its values from
+// defaultStyleCssVars(), edges and lines import them directly, and the property panel shows them
+// for any field the element doesn't set (they used to be spread over CSS rules and constants in
+// LabeledEdge.tsx/LineNode.tsx that had to agree by hand, and the panel showed blank fields for a
+// visibly coloured element).
 //
-// Colours are listed per theme because the built-in light look was always
-// hand-picked rather than computed from the dark one; making a default purely
-// derived (ADR 0034's flip) is a matter of dropping its `light` entry. Opacity
-// is 0-100, like the stored fields.
+// Colours are listed per theme because the built-in light look was hand-picked, not computed from
+// the dark one; making a default purely derived (ADR 0034's flip) means dropping its `light` entry.
+// Opacity is 0-100, like the stored fields.
 
 export interface ThemedValue {
   dark: string

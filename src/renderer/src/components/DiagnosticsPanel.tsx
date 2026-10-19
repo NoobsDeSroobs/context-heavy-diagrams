@@ -63,18 +63,15 @@ function OwnerLabel({ mf }: { mf: MissingFileEntry }): React.JSX.Element {
   )
 }
 
-// Fixed right-side dock, same shell/toggle model as DetailsPanel/
-// RequiredTagsPanel — see ADR 0013. First use was required-tags backfill
-// notices (ADR 0022); the generic `entries` text list was deliberately kept
-// as plain strings so an unrelated diagram-health check could reuse it
-// without a shape change (the legend-empty advisory is one such). The
-// "Missing files" section (ADR 0084) is the first check that needs per-row
-// controls, so it gets its own typed block above the text list.
+// Fixed right-side dock, same shell and toggle model as DetailsPanel/RequiredTagsPanel (ADR 0013).
+// `entries` is a plain text list (first used for required-tags backfill notices, ADR 0022) so any
+// unrelated diagram-health check can reuse it without a shape change (the legend-empty advisory
+// does). The "Missing files" section (ADR 0084) is the first check needing per-row controls, so it
+// has its own typed block above the list.
 //
-// Nothing here touches files on disk. A "Remove" only *stages* the
-// reference; it is written out when — and only when — the diagram is saved.
-// Session-only, recomputed not logged: `entries` is rebuilt every render;
-// `missingFiles` / `stagedRemovals` are refreshed on load and on "Recheck".
+// Nothing here touches files on disk: "Remove" only stages the reference, and it is written out
+// only when the diagram is saved. Session-only and recomputed, not logged: `entries` is rebuilt
+// every render; `missingFiles`/`stagedRemovals` refresh on load and on "Recheck".
 export default function DiagnosticsPanel({
   entries,
   missingFiles,
