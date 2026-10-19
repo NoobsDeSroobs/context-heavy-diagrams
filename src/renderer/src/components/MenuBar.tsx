@@ -114,8 +114,8 @@ export default function MenuBar({ menus }: MenuBarProps): React.JSX.Element {
   // by the time the click handler runs, `openIndex` already reflects
   // hover's switch. Without this, the click's own toggle logic reads that
   // as "you clicked the menu that's already open" and closes it right back
-  // — a real bug caught live: clicking a different top-level menu while
-  // another was open did nothing but close the bar. This ref lets a click
+  // — without it, clicking a different top-level menu while another was open did nothing but close
+  // the bar. This ref lets a click
   // tell "hover just switched us here as part of this same gesture" apart
   // from "this menu was already open from an earlier, separate click."
   const hoverSwitchedToRef = useRef<number | null>(null)

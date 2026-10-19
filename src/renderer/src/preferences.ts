@@ -19,7 +19,7 @@ export type {
 export { DEFAULT_PREFERENCES, effectiveStylePalette } from '@shared/preferences'
 
 // The pre-ADR-0053 localStorage key. Unchanged despite the "Settings" ->
-// "Preferences" rename (epic 0100) — it's what old data was written under,
+// "Preferences" rename — it's what old data was written under,
 // and this only ever reads it once for migration.
 const LEGACY_STORAGE_KEY = 'settings'
 

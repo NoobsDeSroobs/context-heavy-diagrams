@@ -24,7 +24,7 @@ export interface PathPoint extends LinePoint {
 // LEAVES (outward from the shape — `direction` as-is). At the *last*
 // point, the tangent is the direction the curve heads as it ARRIVES —
 // INTO the shape, i.e. the negation of "outward." Using the same sign for
-// both (a real bug, found live-testing edge routing) makes the curve
+// both (a real bug) makes the curve
 // approach the target's side from the wrong side, connecting as if
 // departing toward whatever it's attached to rather than arriving
 // perpendicular to the shape. Everything else (a line's own points; an

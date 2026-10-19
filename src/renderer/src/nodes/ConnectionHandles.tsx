@@ -11,7 +11,7 @@ import { SIDE_POSITION, connectionPointStyle, effectiveConnectionPoints } from '
 // This originally special-cased 4 always-present, unmovable default
 // points here (hardcoded, no style override, no context menu) plus
 // whatever was in `storedPoints`. That split turned out to be the root
-// cause of two real bugs the user found — every point a side has is now
+// cause of two real bugs: every point a side has is now
 // rendered uniformly from `effectiveConnectionPoints`, which synthesizes a
 // side's implicit single centered point only where nothing's been stored
 // for it yet (see that function's own comment).

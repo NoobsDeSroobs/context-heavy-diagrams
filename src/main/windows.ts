@@ -45,7 +45,7 @@ function unregisterWindow(win: BrowserWindow): void {
 // which exposed it: dropping file2 "Open Here" onto a window already
 // showing file1 left BOTH `file1 -> win` and `file2 -> win` in the map,
 // so dropping file1 again just found the stale entry and focused the
-// (already-focused) window instead of loading it — live-testing catch.
+// (already-focused) window instead of loading it.
 export function registerWindowPath(win: BrowserWindow, path: string): void {
   unregisterWindow(win)
   windowsByPath.set(normalizePath(path), win)
@@ -105,7 +105,9 @@ export function createWindow(initialPath?: string): BrowserWindow {
     // Not autoHideMenuBar: that only hides the native menu until Alt is pressed,
     // and Alt is the duplicate-drag modifier (ADR 0099). The app draws its own
     // menu in the renderer; the native one stays hidden via setMenuBarVisibility.
-    ...(process.platform === 'linux' ? { icon } : {}),
+    // Linux has no icon resource in the executable, and a dev run on any OS starts the stock
+    // Electron binary. A packaged Windows or macOS build carries the icon in the executable.
+    ...(process.platform === 'linux' || (is.dev && process.platform !== 'darwin') ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       // Sandboxed preload: it can only use ipcRenderer/contextBridge/webUtils
@@ -204,20 +206,19 @@ export function focusLastUsedWindow(): void {
   win.focus()
 }
 
-// Drop-onto-a-window (ADR 0040's own design pass, 2026-08-22,
-// revised same-day after live testing — see docs/known-issues.md) — only
+// Drop-onto-a-window (ADR 0040, see docs/known-issues.md) — only
 // the drop *target* window's own state is ever in question, so this only
 // applies to the first of possibly several dropped files; every other
 // file just goes through the ordinary openOrFocusWindow above.
 //
 // Empty: reuse directly, same "nothing to lose" reasoning as File -> Open.
 // Non-empty: every button label states its own consequence explicitly
-// (no bare "Open Here" — the first live-testing pass found that
-// misleading), every branch has a real Cancel, and the message states the
+// (no bare "Open Here", which is misleading), every branch has a real Cancel, and the message states
+// the
 // window's dirty state outright rather than leaving it for the user to
 // infer from which button set happened to show up. Dirty adds a genuine
 // Save option, matching the close-prompt's own Save/Discard/Cancel shape
-// (the first pass only had discard, an asymmetry the user flagged) —
+// (discard alone would be asymmetric) —
 // "Save changes, Open Here" hands off to the renderer's own save flow via
 // window:performSaveThenOpenDropped, since main can't perform a save
 // itself (path-picking, detail-draft flushing all live in Canvas.tsx).
@@ -394,8 +395,7 @@ export function registerWindowHandlers(): void {
   // loadPathIntoWindow/registerWindowPath again the way every other path
   // change does. Without this, the window stayed registered as "showing"
   // its old path after being closed, so reopening that same file just
-  // focused the (now blank) window instead of reloading it — a real bug
-  // caught in live testing, not present in the original design.
+  // focused the (now blank) window instead of reloading it.
   ipcMain.handle('windows:clearPath', (event) => {
     const win = BrowserWindow.fromWebContents(event.sender)
     if (win) unregisterWindow(win)
@@ -406,7 +406,7 @@ export function registerWindowHandlers(): void {
   // stays entirely in the renderer's existing save flow; main only shows
   // the native 3-button dialog and, once told the close is approved,
   // cleans up the recovery file and lets the window actually close.
-  // `detail` (epic 0117, ADR 0102) is a one-line change-count computed
+  // `detail` (ADR 0102) is a one-line change-count computed
   // renderer-side from the same diff engine the Changes panel uses — main
   // only forwards it into the native dialog, same "main owns dialog
   // mechanics, renderer owns what to compute" split as the rest of this

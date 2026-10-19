@@ -152,8 +152,7 @@ export function registerDiagramHandlers(): void {
     }
   )
 
-  // Side-effect-free reread for the "changes since last save" diff (epic
-  // 0117, ADR 0102) — same precedent as security:crawlLinked. Never calls
+  // Side-effect-free reread for the "changes since last save" diff (ADR 0102) — same precedent as security:crawlLinked. Never calls
   // recordOpenedOrSaved: opening the diff view must not touch
   // lastOpenedDirectory or the recent-diagrams list. Returns null for a
   // path that no longer resolves (deleted/moved since open) rather than

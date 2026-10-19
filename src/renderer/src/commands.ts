@@ -177,7 +177,7 @@ export const COMMANDS = [
     category: 'View',
     binding: { key: 'k', mod: true }
   },
-  // "Changes since last save" (epic 0117, ADR 0102) — no shortcut decided
+  // "Changes since last save" (ADR 0102) — no shortcut decided
   // yet, reachable via the View menu and the command palette.
   {
     id: 'view.changesSinceLastSave',

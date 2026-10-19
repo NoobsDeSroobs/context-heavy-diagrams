@@ -25,13 +25,11 @@ export interface LegendPlacement {
 
 // Places the legend in one corner of `bounds` (the diagram's own content
 // bounding box), insetted by `margin`. Legend size is never shrunk to fit
-// — the user's own framing, after seeing the first pass: "make sure the
-// legend grows to make the content readable, that is most important."
+// — it grows to keep its content readable, which matters most.
 // If the corner's existing space is free of every obstacle (every node's
 // own bounds, plus a coarse per-edge bounding box — see exportPng.ts),
 // the legend just slots into that empty space and the image size is
-// unchanged (avoids the "wasteful" case the user flagged: don't grow the
-// canvas just because a corner *could* need it). If that space doesn't
+// unchanged (the canvas doesn't grow just because a corner *could* need it). If that space doesn't
 // exist or is occupied, `bounds` grows outward from that same corner by
 // exactly the legend's own footprint (plus margin) — a dedicated new
 // strip, not a search for a smaller gap elsewhere, so the result is

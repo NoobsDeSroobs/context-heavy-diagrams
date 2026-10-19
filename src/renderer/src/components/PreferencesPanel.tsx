@@ -52,8 +52,8 @@ function useNumberDraft(value: number): [string, (v: string) => void, () => void
   ]
 }
 
-// One compact row, not two full-width NumberField rows — the user's own
-// spec: "Zoom limit: in [0.1] out[2.0]". min/max HTML attributes on each
+// One compact row, not two full-width NumberField rows — laid out as "Zoom limit: in [0.1]
+// out[2.0]". min/max HTML attributes on each
 // box keep the two ends from crossing each other in the UI, but don't
 // stop a genuinely bad pair (min > max) from being saved — React Flow's
 // own runtime behavior at that point is untested/unspecified, not

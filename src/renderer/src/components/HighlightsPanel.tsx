@@ -115,12 +115,9 @@ function GroupCheckbox({
 
 // Small floating panel next to the canvas's bottom-left <Controls> widget,
 // alongside LegendPanel — see ADR 0025 for the feature itself.
-// Originally the same fixed-position UtilityDock shell as RequiredTagsPanel/
-// DiagnosticsPanel; moved to this floating-popup treatment
-// (fix/highlights-free-tags-and-toggle) to sit next to the Legend toggle
-// instead, at the user's request. Both add flows stay inline searchable
-// lists (not a second nested floating popup like IconPicker) — unchanged
-// by the move, they never needed their own anchor.
+// A floating popup next to the Legend toggle, not a fixed-position UtilityDock shell like
+// RequiredTagsPanel/DiagnosticsPanel. Both add flows stay inline searchable
+// lists (not a second nested floating popup like IconPicker) — they never needed their own anchor.
 export default function HighlightsPanel({
   highlights,
   enabledIds,

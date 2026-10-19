@@ -6,7 +6,7 @@ import type { Node } from '@xyflow/react'
 // absolute canvas coordinates, and keep the invariant React Flow requires:
 // a parent node must appear earlier in the `nodes` array than its children.
 //
-// Split out of Canvas.tsx (epic "multi-connection-line") so MultiConnection
+// Split out of Canvas.tsx so MultiConnection
 // Line.tsx can use the same conversion without importing Canvas.tsx itself
 // — that would be a real circular import (Canvas.tsx renders
 // MultiConnectionLine as its connectionLineComponent), not just an

@@ -4,7 +4,11 @@
 
 > **Early open-source release (0.x).** It is built and tested mainly on Windows. Linux and macOS are supported targets but not yet verified, and there are no prebuilt downloads yet, so you build it from source (below). File compatibility is a priority, but expect rough edges. `1.0.0` is reserved for when the tool is feature-complete.
 
-<!-- Hero screenshot or short animation goes here (docs/images/). -->
+![Context Heavy Diagrams showing the Meridian Rail landscape in dark mode, with the notes panel open on the Customer Profile Service](docs/images/hero.png)
+
+https://github.com/user-attachments/assets/50d4d6b5-6aeb-47e9-b7b5-9f252e3970c4
+
+*Drill down through linked diagrams, then add a highlight from the tags that are shown. The same rules apply as the features interact.*
 
 ## Why another diagramming tool?
 
@@ -13,7 +17,7 @@ Commercial architecture tools are restrictive, and general box-and-arrow editors
 - **A node is one thing.** Notes, links, tags and icons are fields *on* the node, never separate objects you have to keep aligned.
 - **Edges are always attached.** They are bound to connection points and re-route when anything moves or resizes.
 - **Context goes behind the box, not on top of it.** Long explanations live in a Markdown notes panel, deeper structure lives in a linked diagram, and the canvas stays a readable overview.
-- **Your files are yours.** Plain, deterministic JSON on disk. No server, no account, no network.
+- **Your files are yours.** Plain, gitable and deterministic JSON on disk; no server, no account, no network.
 
 ## Features
 
@@ -23,6 +27,11 @@ Commercial architecture tools are restrictive, and general box-and-arrow editors
 - **One window per diagram**, with undo/redo, real OS clipboard copy/paste across windows, and a command palette (Ctrl/Cmd+K).
 
 ### Git-friendly
+
+![A diff of a .chd file: adding notes to four entities changes four lines in the diagram](docs/images/git-diff.png)
+
+*Adding notes to four entities is four changed lines in the diagram, plus the new note files.*
+
 - **Plain-text `.chd` files:** deterministic JSON with a fixed key order and no embedded binaries, built to diff and merge like source code.
 - **The format is a standalone spec** ([docs/file-format.md](docs/file-format.md)). A third party can read or write it without this codebase.
 - **A "Changes since last save" panel**, and PNG export with an auto-generated legend.
@@ -34,6 +43,11 @@ Commercial architecture tools are restrictive, and general box-and-arrow editors
 - **Search** with a small query language (`tag:env=prod`, `has:details`, and more), optionally drilling into linked diagrams, with an isolate mode that dims everything else.
 
 ### Tags, highlights and views
+
+https://github.com/user-attachments/assets/2e63dee5-85f8-4b32-a75a-f986084bd873
+
+*Highlighting by tag: metadata fields such as GDPR and owning team colour the elements.*
+
 - **A unified tag system** with free tags and diagram-defined *required* tags that have allowed values.
 - **Highlights and a legend.** Colour elements by tag value, group them, and keep several sets side by side.
 - **A security matrix view,** a threat/risk matrix over your entities whose scores roll up through linked diagrams (try [`security-rollup`](examples/gallery/technical/security-rollup/README.md)).
@@ -44,6 +58,23 @@ Commercial architecture tools are restrictive, and general box-and-arrow editors
 - About 5,800 bundled [Tabler](https://tabler.io/icons) icons (MIT) plus your own SVG/PNG icons, in up to four corner slots per entity.
 - **Configurable connection points**, straight, step, smooth and curved routing, manual bend points, direction sets, and multi-connection wiring.
 - A full **style panel**, named style palettes you can share, alignment guides, snapping, align/distribute, and multi-select resize.
+
+### And more
+- Legend and tag-based highlights (including grouped ones)
+- Named style palettes for brand colours, fonts and default styles
+- Edge direction sets
+- Per-element lock
+- Format painter
+- Alt+drag duplicate and bulk create
+- Isolate mode
+- Search by tag, string, metadata, and icon, with a deep search toggle
+- Peek card
+- Required tags that propagate to children
+- Paste with retargeted paths
+- External change detection
+- File-version warning
+- Recent diagrams and shortcuts help
+- The `chd` command line tool
 
 > Advanced features are opt-in. A new diagram behaves like plain boxes and arrows until you reach for more ([ADR 0054](docs/decisions/0054-progressive-disclosure-for-advanced-features.md)).
 
@@ -81,7 +112,7 @@ This is the first open-source release of a project that was developed privately 
 
 ## AI-assisted development
 
-A large share of the code, especially the frontend and everything you see on screen, was written by Claude (Anthropic's AI assistant) working under the author's direction. The author sets the requirements, makes and records the design decisions, and tests the result. The decision records in `docs/decisions/` show how the work was steered. If you contribute, AI-assisted contributions are fine, but you are responsible for understanding and testing what you submit.
+A large share of the code, especially the user interface, was written by an AI assistant working under the author's direction. Code the author writes by hand also goes through an AI review pass to check for potential issues. In either case the author sets the requirements, makes and records the design decisions, and tests the result. The [decision records](docs/decisions/) show the reasoning behind those choices. If you contribute, AI-assisted contributions are fine, but you are responsible for understanding and testing what you submit.
 
 ## Contributing
 

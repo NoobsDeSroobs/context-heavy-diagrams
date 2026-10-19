@@ -40,8 +40,8 @@ const FILLED = { fill: 'context-stroke', stroke: 'none' }
 // descendant of .react-flow__viewport — PNG export (exportPng.ts) only
 // clones that viewport subtree, so without these defs actually present
 // inside the cloned content, every edge's marker-end="url(#...)" reference
-// dangles and arrowheads silently don't render in the exported image
-// (found live-testing PNG export, 2026-08-23). exportPng.ts finds this element by
+// dangles and arrowheads silently don't render in the exported image. exportPng.ts finds this
+// element by
 // this attribute and temporarily clones it into the capture.
 // memo()'d — static markup with no props, but it's a sibling of
 // <ReactFlow> under CanvasInner and would otherwise reconcile on every one

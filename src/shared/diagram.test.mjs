@@ -1,6 +1,5 @@
 // Run with `npm test` (Node's built-in runner; TypeScript is type-stripped).
-// Covers parseDiagram's legacy-field normalization (Shape -> Entity rename,
-// epic 0076) — every other DiagramFile concern is exercised through the app
+// Covers parseDiagram's legacy-field normalization (Shape -> Entity rename) — every other DiagramFile concern is exercised through the app
 // itself, not unit-tested here.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'

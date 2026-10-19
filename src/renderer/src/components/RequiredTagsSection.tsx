@@ -61,7 +61,7 @@ function isKnownDefaultValue(value: JsonValue | undefined, allowedValues: string
 // it (ADR 0022's "don't destroy data" rule) — fine for a real edit, but
 // catastrophic per-keystroke: typing a new key one letter at a time would
 // demote (and leave behind) one stale entry per intermediate spelling.
-// Reported live: typing "sensitivity" produced 11 leftover tags. Blur-only
+// Typing "sensitivity" one letter at a time left 11 stale tags behind. Blur-only
 // commit is what makes "one key rename = one sync pass" true again.
 function useFieldDraft(
   value: string,
@@ -104,7 +104,7 @@ function commitOnEnter(event: React.KeyboardEvent<HTMLInputElement>): void {
 // (that would mean one sync per character, the exact bug this panel's
 // other fields already learned to avoid — see useFieldDraft's own
 // comment) but still buttonless: no "Add" click needed between values,
-// matching the user's own stated preference. See ADR 0047.
+// See ADR 0047.
 // A pending remove/rename of an in-use value — see AllowedValuesEditor's
 // own comment for why this replaced window.confirm().
 interface PendingChange {

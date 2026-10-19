@@ -856,7 +856,8 @@
         }
       },
       "data": {
-        "label": "Customer Profile Service"
+        "label": "Customer Profile Service",
+        "details": "meridian-rail-landscape/details/customer-profile-service.md"
       }
     },
     {
@@ -2041,7 +2042,8 @@
         }
       },
       "data": {
-        "label": "Payment Gateway Integration"
+        "label": "Payment Gateway Integration",
+        "details": "meridian-rail-landscape/details/payment-gateway-integration.md"
       }
     },
     {
@@ -2217,7 +2219,8 @@
         }
       },
       "data": {
-        "label": "Fraud Detection Service"
+        "label": "Fraud Detection Service",
+        "details": "meridian-rail-landscape/details/fraud-detection-service.md"
       }
     },
     {
@@ -3492,7 +3495,8 @@
         }
       },
       "data": {
-        "label": "Identity & Access Management"
+        "label": "Identity & Access Management",
+        "details": "meridian-rail-landscape/details/identity-and-access-management.md"
       }
     },
     {

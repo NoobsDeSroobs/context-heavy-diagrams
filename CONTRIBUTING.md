@@ -7,7 +7,7 @@ Thanks for your interest.
 This is the author's personal tool. It is built for the author's own use and shared in case it is useful to others. It is not a community-governed project: what goes in, and how it works, is decided by the author alone.
 
 - **Forks are welcome.** The code is [GPL-3.0-or-later](LICENSE); take it in whatever direction you like.
-- **Suggestions are welcome, but they are suggestions.** If you can make a convincing case that something is a good idea, the author will implement it or accept your implementation. If not, the answer is no, and it may be given briefly. Opening a pull request creates no expectation that it will be merged.
+- **Suggestions are welcome, but they are suggestions.** If you can make a convincing case that something is a good idea, the author will implement it or accept your implementation. If not, the answer is no. Opening a pull request creates no expectation that it will be merged.
 - **Please open an issue first** to talk through a bug or an idea, before spending time on code. Bug reports, feedback, example diagrams and testing on Linux and macOS are all very welcome.
 
 ## What you give by contributing
@@ -19,7 +19,7 @@ Anything you send in (code, documentation, examples or other material, by pull r
 3. You grant the author a perpetual, worldwide, irrevocable, royalty-free license to use, copy, modify, distribute, sublicense and **relicense** your contribution under any terms, including different open-source or proprietary ones. You keep the copyright you already have and may use your own code elsewhere.
 4. To the extent the law allows, you waive any moral or similar rights that would get in the way of that.
 
-Every pull request has a checkbox for this; one without it ticked will not be merged. If you can't agree, don't submit code (an issue describing the idea is still fine). This is a plain statement of terms, not legal advice.
+Every pull request has a checkbox for this; one without it ticked will not be merged. If you can't agree, don't submit code (an issue describing the idea is still very welcome). This is a plain statement of terms, not legal advice, and only here to safeguard the author from undue headaches.
 
 ## Setting up
 

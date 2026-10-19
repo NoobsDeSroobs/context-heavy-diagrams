@@ -50,8 +50,8 @@ export default function LayerPanel({
 
   // Drag-over/drop listen on the whole list, not per row — a per-row
   // handler leaves gaps (the insertion line itself, padding, the hint
-  // text) with no element accepting the drop, which is exactly what
-  // produced the "not allowed" cursor and a failed drop the user hit.
+  // text) with no element accepting the drop, which shows as a "not allowed" cursor and a failed
+  // drop.
   // Geometric lookup instead: which row's vertical midpoint the pointer
   // is above decides the slot, computed fresh on every dragover so there's
   // no dead zone anywhere in the panel body to fall through.

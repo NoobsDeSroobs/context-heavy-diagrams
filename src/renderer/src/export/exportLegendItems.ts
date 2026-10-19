@@ -37,17 +37,16 @@ function stringifyValue(value: JsonValue): string {
 }
 
 // Combines the diagram's own authored Legend entries with one row per
-// currently-*enabled* highlight (raised after live-testing PNG
-// export — "if I use the GDPR highlights when exporting, the legend
-// should contain green saying No PII, blue saying Pseudonymized...").
+// currently-*enabled* highlight (so an exported image explains the GDPR highlights: green for No
+// PII, blue for Pseudonymized, and so on).
 // Highlight enabled/disabled is deliberately session-only, never persisted
 // (see HighlightDefinition's own comment in shared/diagram.ts) — this
 // reads whatever's actually toggled on right now, the same set already
 // visibly recoloring the canvas, not the full catalog regardless of state.
 // A highlight's label mirrors HighlightsPanel's own convention exactly:
 // `key = value` when it's the only enabled member of its key, just the
-// value when it shares its key with other enabled entries (matching the
-// user's own example: four GDPR classification values, no group header).
+// value when it shares its key with other enabled entries (e.g. four GDPR classification values, no
+// group header).
 export function buildExportLegendItems(
   legend: LegendEntry[],
   highlights: HighlightDefinition[],

@@ -22,6 +22,7 @@
     "test": "node --test \"src/**/*.test.mjs\" \"extension/**/*.test.mjs\"",
     "sync-ai": "node scripts/sync-ai.mjs",
     "notices": "node scripts/generate-notices.mjs",
+    "icons": "electron scripts/make-icons.mjs",
     "build:extension": "node scripts/build-extension.mjs",
     "start": "electron-vite preview",
     "dev": "electron-vite dev",

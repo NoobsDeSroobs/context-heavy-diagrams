@@ -24,10 +24,8 @@ interface ExportPngDialogProps {
   onClose: () => void
 }
 
-// See ADR 0051 (revised 2026-08-23 after live feedback: the first
-// pass put padding/transparency in the global Settings panel instead of
-// here, on the theory they'd rarely change export-to-export — wrong in
-// practice, the user expected a dialog). Reuses AboutDialog's centered-
+// See ADR 0051 (padding and transparency live in this dialog, not in the global Preferences panel,
+// because they change from one export to the next). Reuses AboutDialog's centered-
 // overlay shell (about-dialog-*) and RequiredTagsPanel's confirm-row
 // button styling (required-tag-value-confirm-actions) rather than
 // introducing new CSS for a shape both already have.

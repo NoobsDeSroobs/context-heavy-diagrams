@@ -295,7 +295,7 @@ body {
   animation: toolbar-saved-flash-in 0.15s ease-out;
 }
 
-/* "Changed outside the app" notice (epic 0128) — sits beside the filename in
+/* "Changed outside the app" notice (ADR 0091) — sits beside the filename in
    the toolbar; amber, not red, because nothing is lost until the user saves. */
 .toolbar-external-change {
   display: inline-flex;
@@ -350,9 +350,9 @@ body {
   color: var(--color-text);
 }
 
-/* Locked indicator (epic — see docs/file-format.md's `locked` field) —
+/* Locked indicator (ADR 0043, docs/file-format.md's `locked` field) —
    centered horizontally, straddling the node's own top edge (half above,
-   half below), per the user's own placement spec. Shared by ShapeNode/
+   half below). Shared by ShapeNode/
    ContainerNode/TextNode via LockBadge.tsx; a small round backing so the
    grey glyph stays legible regardless of the node's own fill color. */
 .node-lock-badge {
@@ -652,7 +652,7 @@ body {
    target, so a bigger grab area unavoidably means a bigger dot — no way
    to split the two here. Same tradeoff the edge-reconnection work already went through
    for edge reconnect points (tried a smaller-visible/larger-invisible
-   split, walked it back after live testing felt like an approximation,
+   split, walked it back because it felt like an approximation,
    landed on "the visible size is the real grab size"); same call here,
    roughly doubled rather than a token bump. Border/radius scaled to
    match the larger box, same proportions as the library's own default.
@@ -3289,7 +3289,7 @@ body {
   opacity: 0.75;
 }
 
-/* "Changes since last save" panel (epic 0117, ADR 0102) — same dock shell
+/* "Changes since last save" panel (ADR 0102) — same dock shell
    as Diagnostics, reuses .diagnostics-panel-toolbar/-title/-empty/
    -section-title directly (identical treatment), own row styling below
    since a changed element's row shape (kind badge + label + changed-field

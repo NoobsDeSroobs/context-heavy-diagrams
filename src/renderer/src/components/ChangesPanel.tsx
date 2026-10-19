@@ -71,7 +71,7 @@ function Section({
 }
 
 // Fixed right-side dock, same shell/toggle model as Diagnostics/Layers (ADR
-// 0013) — see epic 0117 / ADR 0102. v1 covers nodes/edges only; the
+// 0013) — see ADR 0102. v1 covers nodes/edges only; the
 // top-level collections (highlights, legend, requiredTags, …) are a
 // deliberate fast-follow, not shown here.
 export default function ChangesPanel({

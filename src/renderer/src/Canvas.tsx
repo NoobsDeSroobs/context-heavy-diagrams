@@ -493,8 +493,7 @@ function applyZIndexBackfill(nodes: Node[]): Node[] {
 // behind) nodes of a different tier just because it's new. An earlier
 // version scoped entities/text to *every* node regardless of type with no
 // tier floor at all, so a fresh diagram's first entity/container landed at
-// 10 or 20 instead of its intended tier — caught by the user directly, see
-// docs/known-issues.md.
+// 10 or 20 instead of its intended tier (see docs/known-issues.md).
 function nextZIndex(nodes: Node[], type: 'entity' | 'text' | 'container' | 'line'): number {
   const base = type === 'container' ? CONTAINER_BASE : type === 'text' ? TEXT_BASE : ENTITY_BASE
   const scoped = nodes.filter((n) => n.type === type)
@@ -1285,7 +1284,7 @@ function CanvasInner(): React.JSX.Element {
   const [stagedFileRemovals, setStagedFileRemovals] = useState<MissingFileEntry[]>([])
   const [dismissedFileKeys, setDismissedFileKeys] = useState<Set<string>>(new Set())
   const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false)
-  // "Changes since last save" (epic 0117, ADR 0102) — v1 scope, nodes/edges
+  // "Changes since last save" (ADR 0102) — v1 scope, nodes/edges
   // only. null means "not computed yet" (opening the panel triggers the
   // async reread), distinct from an empty diff (no changes).
   const [changesPanelOpen, setChangesPanelOpen] = useState(false)
@@ -1325,8 +1324,8 @@ function CanvasInner(): React.JSX.Element {
   // Linked diagrams that couldn't be read during the last deep search — shown
   // in the overlay so a broken link is never silently "no match" (ADR 0097).
   const [searchUnreadable, setSearchUnreadable] = useState<string[]>([])
-  // "Isolate" (ADR 0063) — search-driven only, per the user's
-  // own call: a separate explicit toggle next to Search, not folded into
+  // "Isolate" (ADR 0063) — search-driven only: a separate explicit toggle next to Search, not folded
+  // into
   // running a search itself, so turning it on/off doesn't require
   // re-searching. Always cleared alongside search results (see
   // clearSearchResults below) since it's meaningless without a live match
@@ -1449,7 +1448,7 @@ function CanvasInner(): React.JSX.Element {
   // empty space fired both onConnectEnd (the drag-to-empty-space logic)
   // *and* onReconnectEnd (the reconnection logic) independently, each spawning its own
   // new node+edge — the exact "two edges end up connected to the new node"
-  // bug the user reported. Set in onReconnectStart (which always runs
+  // bug. Set in onReconnectStart (which always runs
   // first within that composite), read by onConnectStart to skip arming
   // connectStartRef for a gesture onReconnectEnd already owns, reset in
   // onReconnectEnd once the gesture is fully over.
@@ -1684,8 +1683,8 @@ function CanvasInner(): React.JSX.Element {
   // each type's own right-click context menu (EntityNode/ContainerNode/
   // TextNode/LineNode/onEdgeContextMenu below) rather than a top menu-bar
   // item — MenuBar has no submenu support yet, and a per-type context menu
-  // entry is already exactly where the user's own example ("select all
-  // edges") pointed. Whole-type only for now, no finer filtering (e.g.
+  // entry is where "select all edges" naturally lives. Whole-type only for now, no finer filtering
+  // (e.g.
   // "edges with this routing style") — left as an open question, not resolved here.
   // Declared here (early) rather than alongside selectAll/deselectAll
   // further down — onEdgeContextMenu below needs it, and a useCallback's
@@ -1978,7 +1977,7 @@ function CanvasInner(): React.JSX.Element {
     setReferencesPanelOpen((open) => !open)
   }, [])
 
-  // Recomputes the disk-vs-memory diff (epic 0117, ADR 0102) — a
+  // Recomputes the disk-vs-memory diff (ADR 0102) — a
   // side-effect-free reread (never recordOpenedOrSaved) via
   // rereadDiagramForDiff, diffed against the same toDiagramFile() shape the
   // real save path uses. A never-saved diagram (currentPath null) diffs
@@ -2412,8 +2411,8 @@ function CanvasInner(): React.JSX.Element {
     [setNodes, pushSnapshot, markDirty]
   )
 
-  // Removing a threat / an entity from the matrix is destructive ("remove
-  // means remove" — the user) and deliberately NOT an undo step; it also
+  // Removing a threat / an entity from the matrix is destructive and deliberately NOT an undo step;
+  // it also
   // strips the affected cells from every history snapshot so an unrelated
   // undo can't resurrect orphan `data.security` entries.
   const removeSecurityThreat = useCallback(
@@ -2715,7 +2714,7 @@ function CanvasInner(): React.JSX.Element {
             // A note actively open but never yet saved (a brand-new note, or
             // any note on a diagram that's never been saved at all) has no
             // stored path yet — data.details stays unset until the first
-            // save (epic 0087's sync-on-save convention) — but it still has
+            // save (the sync-on-save convention) — but it still has
             // real, searchable content sitting in its shadow. Without this,
             // elementMatchesViaDetails' `!el.details` gate would treat an
             // in-memory-only note as if it didn't exist. The placeholder
@@ -2853,8 +2852,7 @@ function CanvasInner(): React.JSX.Element {
     setSearchUnreadable([])
   }, [])
 
-  // Isolate is its own independent trigger (ADR 0063, revised
-  // after the user's follow-up: available from the start, not gated on
+  // Isolate is its own independent trigger (ADR 0063: available from the start, not gated on
   // Search having already run) — when off, it runs the same matching
   // Search does against whatever query is currently typed, then frames
   // every match at once (fitAllMatches) instead of jumping to one node.
@@ -4312,8 +4310,8 @@ function CanvasInner(): React.JSX.Element {
     [setNodes]
   )
 
-  // Locked (epic — blocks drag/resize/rotate and accidental delete via the
-  // canvas, see docs/file-format.md's `locked` field). `false` is written
+  // Locked (ADR 0043): blocks drag/resize/rotate and accidental delete via the
+  // canvas, see docs/file-format.md's `locked` field. `false` is written
   // as `undefined`, not stored explicitly — matches every other "absent
   // means off" optional node field (rotation, connectionPoints, etc.),
   // keeps an unlocked node's data free of a lingering `locked: false`.
@@ -4619,9 +4617,8 @@ function CanvasInner(): React.JSX.Element {
     ]
   )
 
-  // Brief "Saved" confirmation next to the toolbar's Save button — the
-  // user reported missing that a save actually happened (there was only
-  // ever an alert on *failure*, nothing on success). Re-triggering the
+  // Brief "Saved" confirmation next to the toolbar's Save button — without it a successful save gave
+  // no feedback at all (there was only ever an alert on *failure*). Re-triggering the
   // timeout on every successful save (not just the first) means rapid
   // successive saves each restart the same visible flash rather than the
   // indicator disappearing mid-flash.
@@ -4814,8 +4811,8 @@ function CanvasInner(): React.JSX.Element {
       setEdges(openedEdges)
       // On a large diagram, React Flow's own passive ResizeObserver-driven
       // measurement of every node's handle bounds can take an unpredictable
-      // number of render passes to fully settle (found live-testing the
-      // Meridian Rail landscape, 82 nodes/84 edges: edges silently failed
+      // number of render passes to fully settle (seen on the Meridian Rail landscape, 82 nodes/84
+      // edges: edges silently failed
       // to render — no error, since @xyflow/react's EdgeWrapper just
       // returns null for any edge whose endpoints aren't "initialized" yet
       // — sometimes never catching up on its own). updateNodeInternals
@@ -5080,8 +5077,8 @@ function CanvasInner(): React.JSX.Element {
     [persistDiagram]
   )
 
-  // One-line change-count for the close-prompt's native dialog (epic 0117,
-  // ADR 0102) — reads the same autosaveStateRef the autosave snapshot uses,
+  // One-line change-count for the close-prompt's native dialog (ADR 0102) —
+  // reads the same autosaveStateRef the autosave snapshot uses,
   // for the same "don't rebind this listener on every nodes/edges change"
   // reason. Best-effort: any failure (e.g. an unreadable file) just omits
   // the detail line rather than blocking the close flow.
@@ -5246,7 +5243,7 @@ function CanvasInner(): React.JSX.Element {
   }, [updatePreferences])
 
   // File -> Close — NOT closing the OS window (this app's own
-  // convention, confirmed with the user: a window is a diagram, not
+  // convention: a window is a diagram, not
   // necessarily disposable). Discards the current diagram back to a blank
   // one *in this same window*, reusing loadDiagramIntoCanvas — the same
   // full-state reset every other load path already goes through — rather
@@ -5563,7 +5560,7 @@ function CanvasInner(): React.JSX.Element {
       'search.toggle': toggleSearchOverlay,
       // Command palette (ADR 0100).
       'view.commandPalette': () => setCommandPaletteOpen(true),
-      // "Changes since last save" (epic 0117, ADR 0102).
+      // "Changes since last save" (ADR 0102).
       'view.changesSinceLastSave': toggleChangesPanel,
       'selection.selectAll': selectAll,
       'edit.duplicate': duplicateSelected,
@@ -5912,8 +5909,7 @@ function CanvasInner(): React.JSX.Element {
   )
 
   // Top menu bar (ADR 0039) — File/Edit/View, an explicit information-
-  // architecture split worked out with the user alongside a planned (later
-  // cancelled) left sidebar: file-level actions here, per-diagram
+  // architecture split: file-level actions here, per-diagram
   // inspection panels also here for now (View), Highlights already moved
   // to its own floating popup next to Legend beforehand. Every item reuses an existing
   // handler unchanged — this menu is purely a new way to reach them, not a
@@ -5948,7 +5944,7 @@ function CanvasInner(): React.JSX.Element {
     [missingFiles, dismissedFileKeys]
   )
 
-  // "Changes since last save" Details bucket (epic 0117, ADR 0102) — reuses
+  // "Changes since last save" Details bucket (ADR 0102) — reuses
   // noteShadows' existing dirty flag (ADR 0092) directly, no new tracking.
   const detailsChangedEntries: DetailsChangedEntry[] = useMemo(
     () =>
@@ -5998,8 +5994,8 @@ function CanvasInner(): React.JSX.Element {
   // so for now "matrix" just hides what doesn't apply: the whole Edit menu,
   // the diagram-specific View panels, and Export as PNG. File basics
   // (New/Open/Recent/Save/Save As/Reload/Close), Preferences and About are
-  // shared. Matrix-specific menus get added back as epic 0079 gives the
-  // matrix real, persisted state to act on.
+  // shared. Matrix-specific menus get added back once the matrix has real,
+  // persisted state to act on.
   const isDiagramPersona = persona === 'diagram'
   const preferencesItem: MenuBarItem = { label: 'Preferences', onSelect: togglePreferencesPanel }
 
@@ -6124,9 +6120,8 @@ function CanvasInner(): React.JSX.Element {
   }
 
   // AI menu (ADR 0103): between View and Help; hidden by the
-  // `aiFeaturesEnabled` preference. Each epic-0133 task group appends its
-  // items here — until the first one lands the menu has nothing to show and
-  // is omitted rather than rendered empty.
+  // `aiFeaturesEnabled` preference, and omitted rather than rendered empty
+  // when it has no items.
   const aiMenuItems: MenuBarItem[] = [
     {
       label: 'Enable AI assistance in a folder…',

@@ -37,7 +37,7 @@ function iconSlotKey(slot: IconSlot, icon: IconRef | undefined): string {
 //
 // Icon slots deliberately render at the true corners with no special
 // handling to dodge NodeResizer's corner handles — same stacking order the
-// entity's own body already has under them, per user direction.
+// entity's own body already has under them.
 // The icon *picker* and details panel are NOT rendered here — see
 // DiagramContext for why.
 function EntityNode({ id, data, selected }: NodeProps): React.JSX.Element {

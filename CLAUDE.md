@@ -18,7 +18,7 @@ Everything that needs to survive is written to disk in this repo, in git-friendl
 - `docs/file-format.md` — standalone spec of the `.chd` diagram file format, deliberately written so a third party could build a compatible importer/exporter without reading this codebase or its decision history (less lock-in). Update it whenever `src/shared/diagram.ts` changes — it must stay current, not just accurate at the moment it was written.
 - `docs/planning/` — epics (`docs/planning/epics/NNNN-title.md`; `…/epics/later/` if parked far out; once an epic is done and confirmed it becomes an entry in [`docs/planning/completed-epics.md`](docs/planning/completed-epics.md) and its file is deleted — [ADR 0120](docs/decisions/0120-completed-epics-collapse-into-an-index.md)) with task checklists inside them. See [docs/planning/README.md](docs/planning/README.md) and [docs/decisions/0002-planning-structure.md](docs/decisions/0002-planning-structure.md).
 - `docs/known-issues.md` — a single-file, symptom-first log of real bugs/hard problems found during development, each marked Solved/Worked around/Open with root cause and resolution. Not a duplicate of ADRs or epics' own Notes — a lookup table for "does this look familiar?" across the whole project. See [docs/decisions/0037-known-issues-log.md](docs/decisions/0037-known-issues-log.md). Add an entry whenever a bug takes real investigation to track down, not for routine fixes.
-- `PROGRESS.md` — short pointer: current epic/task, last updated. Not a duplicate backlog — the full backlog lives in `docs/planning/`.
+- `PROGRESS.md` — short pointer: current epic/task, last updated. Not a duplicate backlog — the full backlog lives in `docs/planning/`. Keep it frugal: it is a work document for the current stretch, so delete items when they finish instead of logging them (the epic and `git log` hold the history).
 - `THIRD-PARTY-NOTICES.md` — generated; after adding or updating a dependency run `npm run notices` ([ADR 0119](docs/decisions/0119-generated-third-party-notices.md)).
 
 Keep these updated as the work happens, not retroactively.
@@ -50,6 +50,7 @@ Flag anything that can only be verified on one OS so someone can test it there.
 Split between in-code and high-level docs:
 
 - **In-code**: technical/functional detail needed to understand a specific piece of code lives next to that code — a one-line comment above a tricky line, or a short block above/below a function definition. Keep it lean: skip comments where the code is already self-explanatory. Never restate what the code obviously does.
+- **Comments cite ADRs, never epics.** Epics are work documents that get collapsed into an index and deleted, so a citation in code goes dead. A comment states the rule or the reason; who asked for something, or when, belongs in the ADR, not above the code. If a comment needs more than a few lines of rationale, the rationale belongs in an ADR and the comment links to it.
 - **High-level**: purpose, design principles, how to build/run, functional overview, component overview — these live in `docs/architecture/` (and `docs/` more broadly), as markdown with images/diagrams where useful, organized into a logical tree as it grows. Not duplicated into code comments.
 
 ## Standing design rule: AI write paths
