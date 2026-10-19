@@ -4,7 +4,11 @@
 
 > **Early open-source release (0.x).** It is built and tested mainly on Windows. Linux and macOS are supported targets but not yet verified, and there are no prebuilt downloads yet, so you build it from source (below). File compatibility is a priority, but expect rough edges. `1.0.0` is reserved for when the tool is feature-complete.
 
-<!-- Hero screenshot or short animation goes here (docs/images/). -->
+<!-- Hero screenshot goes here (docs/images/). -->
+
+https://github.com/user-attachments/assets/50d4d6b5-6aeb-47e9-b7b5-9f252e3970c4
+
+*Drill down through linked diagrams, then add a highlight from the tags that are shown. The same rules apply as the features interact.*
 
 ## Why another diagramming tool?
 
@@ -34,6 +38,11 @@ Commercial architecture tools are restrictive, and general box-and-arrow editors
 - **Search** with a small query language (`tag:env=prod`, `has:details`, and more), optionally drilling into linked diagrams, with an isolate mode that dims everything else.
 
 ### Tags, highlights and views
+
+https://github.com/user-attachments/assets/2e63dee5-85f8-4b32-a75a-f986084bd873
+
+*Highlighting by tag: metadata fields such as GDPR and owning team colour the elements.*
+
 - **A unified tag system** with free tags and diagram-defined *required* tags that have allowed values.
 - **Highlights and a legend.** Colour elements by tag value, group them, and keep several sets side by side.
 - **A security matrix view,** a threat/risk matrix over your entities whose scores roll up through linked diagrams (try [`security-rollup`](examples/gallery/technical/security-rollup/README.md)).
