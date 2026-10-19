@@ -1,17 +1,13 @@
 import type { Edge, Node } from '@xyflow/react'
 import type { IconRef, IconSlot } from '@shared/diagram'
 
-// Real OS clipboard, not in-app-only state — this app already committed to
-// one real BrowserWindow per diagram (ADR 0023), so an in-app
-// React-state clipboard couldn't cross windows at all (separate renderer
-// processes); the system clipboard makes cross-window/cross-diagram paste
-// work for free, and matches what a user already expects from every other
-// desktop app. Plain JSON text, not a custom native format — Electron's
-// clipboard is reached through two small IPC calls in the sandboxed preload
-// (main/clipboard.ts, ADR 0112). The `chdClipboard` marker is what tells "this is our own payload"
-// apart from arbitrary text the user copied from somewhere else — an
-// unmarked or malformed clipboard is just a silent no-op on paste, never an
-// error, same as duplicateSelected's own "nothing selected, do nothing."
+// Real OS clipboard, not in-app state: each diagram has its own BrowserWindow (ADR 0023), so a
+// React-state clipboard couldn't cross windows (separate renderer processes), while the system
+// clipboard makes cross-window and cross-diagram paste work for free and matches what users expect.
+// Plain JSON text, not a custom native format; Electron's clipboard is reached through two small
+// IPC calls in the sandboxed preload (main/clipboard.ts, ADR 0112). The `chdClipboard` marker tells
+// our payload from arbitrary copied text; an unmarked or malformed clipboard is a silent no-op on
+// paste, never an error, like duplicateSelected with nothing selected.
 export interface ClipboardPayload {
   chdClipboard: true
   version: 1
@@ -76,44 +72,27 @@ export function parseClipboardPayload(text: string): ClipboardPayload | null {
   }
 }
 
-// Regenerates every node/edge id (old id -> new id map built first so
-// edges can remap source/target consistently) and repositions the whole
-// group as a unit, preserving each node's offset from the group's own
-// centroid — so a multi-node copy pastes back in the same relative
-// arrangement, just recentered on `center` rather than reusing the
-// original absolute position (which could be far outside the current
-// viewport, especially pasting into a different diagram entirely — see
-// ADR 0049). Connection point ids are left untouched: they're only ever
-// looked up in combination with their owning node's id, so two different
-// nodes reusing the same point id (e.g. both having a "cp-3") is already
-// normal, not a collision.
+// Regenerates every node/edge id (the old-to-new map is built first so edges remap source/target
+// consistently) and repositions the group as a unit, keeping each node's offset from the group's
+// centroid, so a multi-node copy pastes in the same arrangement recentred on `center` (the original
+// absolute position could be far outside the current viewport, especially when pasting into another
+// diagram; ADR 0049). Connection point ids are left alone: they are only looked up together with
+// their owning node's id, so two nodes both having a "cp-3" is normal, not a collision.
 //
-// A node's four resource-path fields (`linkedDiagram`, `details`, a custom
-// `icons[slot].path`, each entry of `references`) are all stored relative to
-// *the diagram file that owns them* (docs/file-format.md's "Linking and
-// file organization"). Paste never copies or moves the file a path points
-// at, so it can never make a broken reference resolve on its own — deciding
-// whether a paste is meant to share, fork, or drop those files is the
-// user's call, not this app's to guess (only *they* know if this is a
-// carbon copy, a move, or a copy-then-diverge). What paste *can* safely do:
-// when a path starts with the source diagram's own name — this app's
-// standing default for where a diagram's own resources live
-// (`<diagram-name>/assets/...`, `<diagram-name>/details/...`, a freshly
-// created `<diagram-name>/<child>.chd`; see linkPaths.ts/links.ts/icons.ts)
-// — relabel that leading segment to the *destination* diagram's own name.
-// This never turns a broken reference into a resolving one by itself: the
-// underlying file hasn't moved, so the relabeled path is exactly as
-// unresolved as the original one was, and Diagnostics (ADR 0084) still
-// flags it either way. What it does do: if the user's actual next step is
-// to copy the referenced file into the new diagram's own colocation folder
-// (the same convention this app already uses everywhere), the path is
-// already correct once they do — no separate manual Relink needed on top.
-// If they never do that, nothing was lost: same "not found" row, same
-// recovery options, just against the new diagram's own name instead of the
-// old one's. A path that doesn't match the source name at all — hand-relinked,
-// absolute, or an intentional pointer at some other diagram's file — is left
-// completely untouched, since there's no colocation-default reasoning that
-// applies to it.
+// A node's four resource-path fields (`linkedDiagram`, `details`, a custom `icons[slot].path`, each
+// entry of `references`) are stored relative to the diagram file that owns them
+// (docs/file-format.md, "Linking and file organization"). Paste never copies or moves the file a
+// path points at, so it can't make a broken reference resolve; whether a paste should share, fork
+// or drop those files is the user's call. What it can do safely: when a path starts with the source
+// diagram's own name, the default home for a diagram's resources (`<diagram-name>/assets/...`,
+// `<diagram-name>/details/...`, a new `<diagram-name>/<child>.chd`; see
+// linkPaths.ts/links.ts/icons.ts), that leading segment is relabelled to the destination diagram's
+// name. The file hasn't moved, so the path is exactly as unresolved as before and Diagnostics (ADR
+// 0084) flags it either way; but if the user then copies the file into the new diagram's own
+// folder, the path is already right, with no separate Relink. If they never do, nothing is lost:
+// the same "not found" row and recovery options, against the new name. A path that doesn't match
+// the source name (hand-relinked, absolute, or deliberately pointing at another diagram's file) is
+// left untouched.
 function retargetResourcePath(
   path: string,
   sourceDiagramBaseName: string | null,

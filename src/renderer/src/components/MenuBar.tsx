@@ -28,17 +28,14 @@ interface MenuBarProps {
   menus: MenuBarMenu[]
 }
 
-// One row of a dropdown — a leaf (runs `onSelect` and closes the bar) or a
-// submenu parent (hovering/clicking opens a flyout to its right). `close`
-// tears the whole bar down after a leaf runs, same "close before the action"
-// ordering ContextMenu.tsx documents.
+// One row of a dropdown: a leaf (runs `onSelect` and closes the bar) or a submenu parent (hover or
+// click opens a flyout to its right). `close` tears the bar down after a leaf runs, with the same
+// "close before the action" ordering ContextMenu.tsx documents.
 //
-// Hovering only ever *opens* a flyout (on a submenu parent) — never closes
-// one. Hovering a plain leaf leaves any open flyout alone, so moving the
-// pointer diagonally from a parent toward its flyout can cross sibling
-// leaves without the flyout vanishing (the classic menu-corner problem).
-// A flyout closes only on: another submenu parent hovered, a leaf clicked,
-// a top-level switch, or click-outside/Escape.
+// Hovering only ever opens a flyout (on a submenu parent), never closes one. Hovering a leaf leaves
+// an open flyout alone, so moving the pointer diagonally from a parent toward its flyout can cross
+// sibling leaves without it vanishing (the classic menu-corner problem). A flyout closes only on
+// another submenu parent hovered, a leaf clicked, a top-level switch, or click-outside/Escape.
 function DropdownItem({
   item,
   open,
@@ -93,14 +90,11 @@ function DropdownItem({
   )
 }
 
-// Custom in-renderer menu bar — see ADR 0039. Deliberately not a
-// native Electron menu (see that ADR for the tradeoff): every item reuses
-// an existing handler as-is, no new main<->renderer IPC needed beyond
-// File -> Close. Click-outside/Escape-to-close and the "close before
-// running the action" ordering are copied from ContextMenu.tsx — an
-// item's own onSelect() opening new UI (a dialog, another popup) must not
-// have its state update raced by this menu's own close, same reasoning
-// documented there.
+// Custom in-renderer menu bar (ADR 0039), deliberately not a native Electron menu (see the ADR for
+// the tradeoff): every item reuses an existing handler, so no new main/renderer IPC is needed
+// beyond File -> Close. Click-outside/Escape and the "close before running the action" ordering are
+// copied from ContextMenu.tsx: an item's onSelect() that opens new UI (a dialog, another popup)
+// must not have its state update raced by this menu's own close.
 export default function MenuBar({ menus }: MenuBarProps): React.JSX.Element {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
   // Which submenu-parent is expanded, one level deep only. Scoped to the
@@ -108,16 +102,12 @@ export default function MenuBar({ menus }: MenuBarProps): React.JSX.Element {
   // menus implicitly drops it — no effect needed to reset it.
   const [openSubmenu, setOpenSubmenu] = useState<{ menu: number; label: string } | null>(null)
   const ref = useRef<HTMLDivElement>(null)
-  // Which index the hover-switch below most recently opened, if any — a
-  // click always fires after mouseenter for the same gesture (moving onto
-  // a new label necessarily fires mouseenter before the click lands), so
-  // by the time the click handler runs, `openIndex` already reflects
-  // hover's switch. Without this, the click's own toggle logic reads that
-  // as "you clicked the menu that's already open" and closes it right back
-  // — without it, clicking a different top-level menu while another was open did nothing but close
-  // the bar. This ref lets a click
-  // tell "hover just switched us here as part of this same gesture" apart
-  // from "this menu was already open from an earlier, separate click."
+  // Which index the hover-switch below most recently opened, if any. A click always fires after
+  // mouseenter for the same gesture, so by the time the click handler runs `openIndex` already
+  // reflects the hover's switch, and the click's toggle logic would read that as "you clicked the
+  // menu that's already open" and close it right back: clicking a different top-level menu while
+  // another was open did nothing but close the bar. This ref lets a click tell "hover just switched
+  // us here in this same gesture" from "this menu was already open from an earlier click".
   const hoverSwitchedToRef = useRef<number | null>(null)
 
   const close = (): void => {

@@ -95,20 +95,15 @@ const OUTWARD_DIRECTION: Record<Position, { x: number; y: number }> = {
   [Position.Left]: { x: -1, y: 0 }
 }
 
-// Straight lead-in/out before curving — the global edgeStraightSegmentLength
-// setting (settings.ts/PreferencesPanel, ADR 0032). Only meaningful
-// for the two "curvy" routing styles (bezier, catmull-rom); straight/step/
-// smoothstep already leave each side perpendicular by construction, with no
-// ambiguity to disambiguate. getBezierPath has no concept of a lead-in
-// itself, so the curve is instead run between two points offset straight
-// outward from the real endpoints, and a straight `L` segment splices each
-// real endpoint onto that curve's own path string. Relies on getBezierPath's
-// returned path always starting "M<x>,<y> C..." (its actual, stable
-// implementation, not just documented behavior) — the same assumption
-// pointAtRatio above already makes by treating the returned string as valid
-// path data either way. Clamped to half the straight-line distance between
-// the real endpoints so two short segments can never overlap or fold a
-// short edge's path back on itself.
+// Straight lead-in/out before curving: the global edgeStraightSegmentLength setting
+// (settings.ts/PreferencesPanel, ADR 0032). It matters only for the two curvy routing styles
+// (bezier, catmull-rom); straight/step/smoothstep already leave each side perpendicular.
+// getBezierPath has no lead-in, so the curve is run between two points offset straight outward from
+// the real endpoints and a straight `L` segment splices each real endpoint onto that path string.
+// Relies on getBezierPath's path always starting "M<x>,<y> C..." (its actual, stable
+// implementation), the same assumption pointAtRatio above makes. Clamped to half the straight-line
+// distance between the real endpoints so two short segments can't overlap or fold a short edge back
+// on itself.
 function buildBezierPath(
   sourceX: number,
   sourceY: number,
@@ -144,15 +139,13 @@ function buildBezierPath(
 // identity across renders and the hooks below that depend on it do not re-run.
 const NO_POINTS: LinePoint[] = []
 
-// Fixed midpoint only, no drag-along-path — deliberately simple for v1 (ADR 0020). The label is always
-// rendered (even empty) so there's something to double-click on to add one.
+// Fixed midpoint only, no drag-along-path: deliberately simple for v1 (ADR 0020). The label is
+// always rendered, even empty, so there is something to double-click to add one.
 //
-// Style (ADR 0014): `style`/`markerEnd` arriving as props are React Flow's
-// own resolution of defaultEdgeOptions (Canvas.tsx) for an edge with no
-// explicit style override — used as-is when data.style leaves a field
-// unset, so an edge with no style keeps today's look exactly. `markerStart`
-// has no such default (RF only auto-generates markerEnd), so it's only
-// ever set via an explicit style override.
+// Style (ADR 0014): `style`/`markerEnd` arriving as props are React Flow's resolution of
+// defaultEdgeOptions (Canvas.tsx) for an edge with no style override, used as-is when data.style
+// leaves a field unset, so an unstyled edge keeps today's look. `markerStart` has no such default
+// (RF only auto-generates markerEnd), so it is only set through an explicit style override.
 function LabeledEdge({
   id,
   sourceX,
@@ -270,15 +263,13 @@ function LabeledEdge({
     [edgePath, labelRatio]
   )
 
-  // Opacity is per-channel (strokeOpacity/fontOpacity), not one whole-
-  // element value — see FontStyle.fontOpacity's comment for why. Each is
-  // baked into its own color via color-mix() (withOpacity), applied
-  // separately to the path and the label since EdgeLabelRenderer portals
-  // the label into its own DOM container outside the SVG — it isn't a
-  // descendant of the path and wouldn't inherit anything from it.
-  // Width is always resolved to a concrete number (not left to CSS's own
-  // default) since a selected edge needs a real base to add the selection
-  // delta on top of — see SELECTED_STROKE_WIDTH_DELTA above.
+  // Opacity is per channel (strokeOpacity/fontOpacity), not one whole-element value (see
+  // FontStyle.fontOpacity for why). Each is baked into its own colour with color-mix()
+  // (withOpacity) and applied separately to the path and the label, because EdgeLabelRenderer
+  // portals the label into a DOM container outside the SVG, so it isn't a descendant of the path
+  // and inherits nothing from it. Width is always a concrete number, not CSS's default, since a
+  // selected edge needs a real base to add the selection delta to (SELECTED_STROKE_WIDTH_DELTA
+  // above).
   const baseStrokeWidth =
     highlightMatches.length === 1
       ? HIGHLIGHT_BORDER_WIDTH
@@ -316,17 +307,14 @@ function LabeledEdge({
             'drop-shadow(0 0 3px var(--search-match-color)) drop-shadow(0 0 3px var(--search-match-color))'
         }
       : {}),
-    // Selection wins over both the edge's own explicit color and any
-    // highlight-match color — the whole point is staying findable in a
-    // busy diagram regardless of the edge's own look. A selected edge is otherwise easy to lose
-    // track of visually, even with correct handle priority (docs/known-issues.md).
+    // Selection wins over both the edge's explicit colour and any highlight-match colour, so a
+    // selected edge stays findable in a busy diagram whatever its own look; otherwise it is easy to
+    // lose track of even with correct handle priority (docs/known-issues.md).
     //
-    // A CSS var (set once on the <ReactFlow> wrapper in Canvas.tsx), not a
-    // DiagramContext field (ADR 0056): this value only ever matters to
-    // whichever edge is currently selected, so reading it via Context would
-    // re-render every edge whenever it changes, selected or not. The
-    // browser resolves the var directly; no re-render needed even for the
-    // selected edge itself.
+    // A CSS variable (set once on the <ReactFlow> wrapper in Canvas.tsx), not a DiagramContext
+    // field (ADR 0056): it matters only to the selected edge, so reading it through Context would
+    // re-render every edge when it changes. The browser resolves the variable directly, with no
+    // re-render even for the selected edge.
     ...(selected ? { stroke: 'var(--selected-edge-highlight-color)' } : {}),
     // "Isolate" (ADR 0063) — layered last, same as every other
     // override here; opacity doesn't conflict with anything above it so

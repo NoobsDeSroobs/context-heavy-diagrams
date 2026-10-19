@@ -164,16 +164,14 @@ export function orthogonalPath(vertices: OrthoPoint[], borderRadius: number): st
   return d
 }
 
-// Drag handles for the "interior" segments of the path — those whose two ends
-// are both bend vertices, never the edge's fixed source or target. This is a
-// deliberate v1 scope line (ADR 0077): moving a segment attached to a fixed
-// endpoint means synthesising a perpendicular stub so the endpoint stays put,
-// which is where the fiddliness (and the risk) lives. The common case — the
-// mid crossbar of a step edge between two shapes facing each other — is an
-// interior segment, so it works. An L-shaped edge (perpendicular sides, no
-// interior segment) has no draggable segment until the user adds a waypoint
-// via "Add point here". Segments shorter than MIN_HANDLE_SEGMENT_LENGTH are
-// also skipped (nothing usable to grab).
+// Drag handles for the "interior" segments of the path: those whose two ends are both bend
+// vertices, never the edge's fixed source or target. This is a deliberate v1 scope line (ADR 0077):
+// moving a segment attached to a fixed endpoint means synthesising a perpendicular stub so the
+// endpoint stays put, which is where the fiddliness and risk live. The common case, the mid
+// crossbar of a step edge between two facing shapes, is an interior segment. An L-shaped edge
+// (perpendicular sides, no interior segment) has no draggable segment until a waypoint is added via
+// "Add point here". Segments shorter than MIN_HANDLE_SEGMENT_LENGTH are skipped too (nothing usable
+// to grab).
 export function orthogonalSegments(vertices: OrthoPoint[]): OrthoSegment[] {
   const segments: OrthoSegment[] = []
   for (let i = 1; i < vertices.length - 2; i++) {

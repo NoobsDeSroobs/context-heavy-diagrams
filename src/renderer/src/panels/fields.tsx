@@ -1,14 +1,11 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useRafThrottledCallback } from '../hooks/useRafThrottledCallback'
 
-// Shared, dumb field primitives for the property panel — no knowledge of
-// NodeStyle/EdgeStyle or the diagram model, just generic value-in/onChange-out
-// controls plus the "mixed across selection" display convention from the
-// styling panel (blank/placeholder rather than defaulting to the first
-// item's value). See
-// fieldValue.ts for the FieldValue/computeFieldValue helpers this reads —
-// split into their own file so this one only exports components (Fast
-// Refresh requirement).
+// Shared, dumb field primitives for the property panel: generic value-in/onChange-out controls with
+// no knowledge of NodeStyle/EdgeStyle or the diagram model, plus the "mixed across selection"
+// display convention (blank or placeholder, not the first item's value). fieldValue.ts holds the
+// FieldValue/computeFieldValue helpers they read; it is a separate file so this one exports only
+// components (Fast Refresh requirement).
 
 // Remembered open/closed state, per section, for the lifetime of the app
 // session — module-level rather than component state, so
@@ -78,19 +75,14 @@ export function FieldRow({
 const HEX_RE = /^#[0-9a-fA-F]{6}$/
 
 // A session groups every change between focus and blur into one undo step
-// (via beginContinuousEdit/endContinuousEdit) — matches the pattern
-// TextNode's rotate handle already established for continuous, non-React-Flow-
-// native gestures. A plain click that doesn't focus anything (the "clear"
-// button) brackets itself explicitly instead.
+// (beginContinuousEdit/endContinuousEdit), the pattern TextNode's rotate handle established for
+// continuous gestures React Flow doesn't handle natively. A plain click that focuses nothing (the
+// "clear" button) brackets itself explicitly.
 //
-// Both text inputs below keep a local `draft` string, only resynced from
-// the incoming (selection-derived) `value` while not focused — the same
-// technique EditableLabel uses. Without it, a controlled input bound
-// straight to `value` fights every keystroke: typing a character triggers
-// onChange -> parent state update -> new `value` prop -> which is exactly
-// what's already on screen, but the round-trip makes multi-character entry
-// (e.g. typing "120" into a width field) effectively impossible to observe
-// correctly since intermediate keystrokes could be clobbered by the same
+// Both text inputs keep a local `draft` string, resynced from the incoming `value` only while not
+// focused (the technique EditableLabel uses). A controlled input bound straight to `value` fights
+// every keystroke: onChange -> parent state -> new `value` prop makes multi-character entry (typing
+// "120" into a width field) unreliable, since intermediate keystrokes can be clobbered by the same
 // tick's re-derived value.
 function useDraft(
   value: string,
@@ -258,15 +250,11 @@ export function NumberField({
   )
 }
 
-// Slider + number, linked — both are controlled from the same value/
-// onChange, so dragging one and typing the other naturally stay in sync
-// without extra wiring. Originally built for the fillOpacity/strokeOpacity/
-// fontOpacity fields (per-channel opacity, not one whole-element value — see
-// FontStyle.fontOpacity's comment), generalized for any bounded numeric
-// field that reads naturally as a slider — e.g. an edge label's
-// position. Mixed selections show the slider at `defaultValue` — a range
-// input has no way to represent "blank" the way NumberField's placeholder
-// does.
+// Slider and number, linked: both are controlled from the same value/onChange, so they stay in sync
+// without extra wiring. Built for the fillOpacity/strokeOpacity/fontOpacity fields (per-channel
+// opacity; see FontStyle.fontOpacity) and usable for any bounded numeric field that reads as a
+// slider, e.g. an edge label's position. Mixed selections show the slider at `defaultValue`, since
+// a range input can't be blank the way NumberField's placeholder is.
 export function SliderField({
   label,
   value,

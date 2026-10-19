@@ -23,25 +23,18 @@ interface MultiConnectionLineProps {
   connectionLineStyle?: React.CSSProperties
 }
 
-// Live drag-time visual for multi-connection-line (see onConnect's own
-// comment in Canvas.tsx for the full feature and why it exists) — draws
-// React Flow's own default dashed line (same className, so it inherits the
-// same CSS look with no extra styling needed) from the node actually being
-// dragged from, plus one more identical line from every *other* selected,
-// connectable node to the same cursor position, so the eventual multi-edge
-// result is visible before you even release. Providing a custom
-// connectionLineComponent replaces React Flow's default rendering
-// entirely (see @xyflow/react's own ConnectionLine), so the "from" line
-// has to be drawn here too, not just the extra ones.
+// Live drag-time visual for multi-connection-line (see onConnect in Canvas.tsx for the feature):
+// React Flow's default dashed line (same className, so it inherits the same CSS) from the node
+// being dragged from, plus an identical line from every other selected, connectable node to the
+// same cursor position, so the eventual multi-edge result is visible before release. A custom
+// connectionLineComponent replaces React Flow's default rendering entirely (see @xyflow/react's
+// ConnectionLine), so the "from" line must be drawn here too.
 //
-// Each additional node's own line starts from the same clockwise ordinal
-// point as the one actually being dragged from (pointOrdinal/
-// connectionPointAtOrdinal, connectionPoints.ts) — the exact same resolver
-// onConnect uses to decide the real edge's handle once you release, so the
-// preview never points somewhere the actual result won't. Falls back to the
-// node's first point if the drag's own handle can't be resolved yet (mid-
-// drag, before React Flow has settled fromHandle) rather than drawing
-// nothing.
+// Each additional line starts from the same clockwise-ordinal point as the dragged-from one
+// (pointOrdinal/connectionPointAtOrdinal, connectionPoints.ts), the same resolver onConnect uses
+// for the real edge's handle on release, so the preview never points somewhere the result won't.
+// Falls back to the node's first point if the drag's handle can't be resolved yet (mid-drag, before
+// React Flow has settled fromHandle), rather than drawing nothing.
 export default function MultiConnectionLine({
   fromNode,
   fromHandle,

@@ -5,18 +5,15 @@ import { join } from 'path'
 import type { DiagramFile } from '@shared/diagram'
 import type { NoteBaseline, RecoverySnapshot } from '@shared/documentSave'
 
-// Crash-recovery snapshots — see ADR 0040. Stored centrally
-// under userData, never as siblings of the real .chd (would clutter the
-// user's project folder, risk an accidental git commit, and has nowhere
-// sensible to live for a diagram that's never been saved). Each envelope
-// records its own originalPath so a diagram with no path yet (originalPath:
-// null) can still be found later by the startup orphan scan, which has no
-// path to key a lookup against.
-// detailsDrafts rides alongside the diagram, not inside it — a details
-// edit only becomes part of DiagramFile's own shape once persistDiagram's
-// flushDetailsDrafts actually writes it to a real per-node file at save
-// time (see Canvas.tsx). Without carrying it here too, a crash mid-edit of
-// a node's Details text would recover everything except that text itself.
+// Crash-recovery snapshots (ADR 0040). Stored centrally under userData, never beside the real .chd:
+// that would clutter the user's project folder, risk an accidental git commit, and has nowhere to
+// live for a never-saved diagram. Each envelope records its own originalPath so a diagram with no
+// path yet (originalPath: null) can still be found by the startup orphan scan, which has no path to
+// key a lookup on.
+// detailsDrafts rides alongside the diagram, not inside it: a details edit only becomes part of
+// DiagramFile once persistDiagram's flushDetailsDrafts writes it to a per-node file at save time
+// (Canvas.tsx). Without carrying it here, a crash mid-edit of a node's Details text would recover
+// everything except that text.
 interface RecoveryEnvelope {
   originalPath: string | null
   savedAt: number
@@ -151,19 +148,15 @@ async function discardOrphan(key: string): Promise<void> {
   }
 }
 
-// Run once at app startup (gated by the caller on the real preferences file
-// — see appPreferences.ts). Sequential native dialogs, one per
-// orphan: rare in practice (only diagrams that crashed before ever being
-// saved once), so no need for a fancier batch UI. Each recovered orphan
-// opens its own new window with the snapshot's content, still unsaved
-// (the window gets a fresh session id — see windows.ts's createWindow —
-// so periodic autosave picks it back up under that new identity within
-// ~60s). openWindow is injected rather than imported directly from
-// windows.ts, which itself needs deleteRecoverySnapshot/newSessionId from
-// this module — avoids a circular module dependency between the two.
-// ownerWindow parents the dialog to the app's own initial window — an
-// unparented dialog has no guaranteed z-order and was observed in live
-// testing to open behind the app's window rather than on top of it.
+// Run once at app startup (gated by the caller on the real preferences file, see
+// appPreferences.ts). Sequential native dialogs, one per orphan: orphans are rare (only diagrams
+// that crashed before ever being saved), so no batch UI. Each recovered orphan opens in its own
+// window with the snapshot's content, still unsaved (the window gets a fresh session id, see
+// windows.ts's createWindow, so periodic autosave picks it up under that identity within ~60s).
+// openWindow is injected, not imported from windows.ts, which itself needs
+// deleteRecoverySnapshot/newSessionId from this module: that avoids a circular dependency.
+// ownerWindow parents the dialog to the app's initial window, because an unparented dialog has no
+// guaranteed z-order and has been seen opening behind the app.
 export async function runStartupOrphanScan(
   ownerWindow: BrowserWindow,
   openWindow: () => BrowserWindow

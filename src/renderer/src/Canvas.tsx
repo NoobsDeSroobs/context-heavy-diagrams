@@ -207,61 +207,36 @@ const nodeTypes = {
 }
 const edgeTypes = { labeled: LabeledEdge }
 
-// Static — module scope so React Flow gets a stable reference, same reason
-// as nodeTypes/edgeTypes above. EdgeWrapper (@xyflow/react) reads this via
-// its own separate, unguarded useStore(s => s.defaultEdgeOptions) call —
-// no shallow/custom equality — so a fresh object literal here on every
-// render (this was previously written inline on <ReactFlow>) forces *every*
-// edge to re-render on *every* render of this component, regardless of
-// whether any edge or node data actually changed.
+// Static, at module scope, so React Flow gets a stable reference (same reason as
+// nodeTypes/edgeTypes above): EdgeWrapper reads defaultEdgeOptions through its own unguarded
+// useStore selector, so a fresh object per render would re-render every edge.
 //
-// markerEnd used to be React Flow's own { type: MarkerType.ArrowClosed } —
-// RF generates its own marker def for that, colored via a `defaultColor`
-// prop this app never set, so it silently stayed RF's stock `#b1b1b7`
-// forever, independent of the edge line's own default color (base.css's
-// --xy-edge-stroke-default override, see known-issues.md's "Default edge
-// stroke... unreadable" entry) — the two only looked consistent by
-// coincidence on the dark canvas, and washed out ("invisible") against a
-// light PNG export background. A raw 'url(#id)' string here (same form
-// LabeledEdge's own computedMarkerEnd already uses for a styled edge's
-// endMarker) points every default, unstyled edge at this app's own
-// context-stroke marker (edgeMarkers.tsx) instead — RF passes a string
-// straight through with no def of its own generated (createMarkerIds only
-// acts on an object marker), and the arrowhead then always inherits
-// whatever color the edge itself actually draws in, live or exported, so
-// the two can't drift apart again.
+// markerEnd is a raw 'url(#id)' string pointing at this app's context-stroke marker
+// (edgeMarkers.tsx), not RF's { type: MarkerType.ArrowClosed }. RF colours that one from a
+// `defaultColor` this app never sets, so it stayed stock grey and washed out on a light PNG export.
+// RF passes a string through untouched (createMarkerIds only acts on object markers), and the
+// arrowhead then inherits whatever colour the edge draws in, live or exported.
 const DEFAULT_EDGE_OPTIONS = {
   type: 'labeled',
   markerEnd: markerUrl('arrowClosed')
 }
 
-// A 'line' node's own rectangular bounding box is frequently much larger
-// than its actual (possibly concave, e.g. a U-bend) curve — see ADR 0050's
-// addendum. React Flow applies `style` straight onto its own node wrapper,
-// so pointerEvents: 'none' here makes the *whole box* click/drag-through by
-// default; LineNode.tsx's invisible hit-stroke path and its own point
-// handles each explicitly re-enable pointer events (CSS pointer-events is
-// inherited but overridable per descendant), so only the curve itself and
-// its points stay interactive — matching how an edge only responds near
-// its own path, not its own bounding rectangle.
+// A 'line' node's bounding box is often much larger than its (possibly concave) curve; see ADR
+// 0050's addendum. pointerEvents: 'none' makes the whole box click-through, and LineNode.tsx
+// re-enables pointer events on its hit-stroke path and point handles (CSS pointer-events is
+// overridable per descendant), so only the curve and its points stay interactive, like an edge near
+// its own path.
 function needsLineStyleFix(n: Node): boolean {
   return n.type === 'line' && (n.style as React.CSSProperties | undefined)?.pointerEvents !== 'none'
 }
 
-// Locked (data.locked, see docs/file-format.md) maps onto React Flow's own
-// native draggable/deletable per-node overrides; zIndex (ADR 0035)
-// likewise onto React Flow's own field — selectable is deliberately
-// left alone (still true), since the whole point of `locked` was blocking
-// accidental drags/deletes while keeping selection/highlighting working
-// normally.
+// Maps locked (data.locked, see docs/file-format.md) onto React Flow's per-node draggable/deletable
+// overrides, and zIndex (ADR 0035) onto its own field. selectable is left alone on purpose: a
+// locked node must stay selectable and highlightable.
 //
-// Pure — returns `n` itself, unchanged, when every derived field already
-// matches (the common case), or a new object only when something actually
-// needs to change. That "return the same reference when nothing changed"
-// property is what CanvasInner's own materializing effect (see its call
-// site) relies on to keep an unrelated node's object identity stable
-// across renders — see that effect's own comment for why that stability
-// specifically matters on a large diagram.
+// Pure: returns `n` itself when every derived field already matches (the common case), a new object
+// only when something changes. CanvasInner's materializing effect relies on that to keep unrelated
+// nodes' identity stable across renders, which matters on a large diagram.
 function deriveNodeFields(n: Node): Node {
   const zIndex = (n.data?.zIndex as number | undefined) ?? 0
   const draggable = n.data?.locked !== true
@@ -295,32 +270,22 @@ function deriveEdgeFields(e: Edge, zIndex: number): Edge {
   return { ...e, zIndex }
 }
 
-// A sequential per-session counter (entity-1, entity-2, ...) collided with
-// ids already used in a *loaded* file, since a fresh session always starts
-// back at 1 — opening a diagram that already had "entity-1" and adding
-// another entity silently overwrote it. A random UUID suffix makes that
-// whole class of collision structurally impossible (no cross-session
-// coordination needed) rather than something to patch around on every load
-// path. Keeps the readable type prefix — this project's file format is
-// meant to stay git-diff-friendly and human-debuggable, and "entity-<uuid>"
-// is still a lot easier to recognize at a glance than a bare UUID.
+// Ids are the type prefix plus a random UUID suffix. A per-session counter (entity-1, entity-2,
+// ...) restarts at 1 every session, so adding an entity to a loaded file that already had
+// "entity-1" silently overwrote it; a UUID makes that collision impossible without coordination on
+// any load path. The readable prefix stays because the file format is meant to be git-diff-friendly
+// and human-debuggable.
 function newNodeId(prefix: string): string {
   return `${prefix}-${crypto.randomUUID()}`
 }
 
-// Shared by onConnectEnd (a brand-new edge dragged out from a handle) and
-// onReconnectEnd (an existing edge's own endpoint dragged loose) — both
-// need to tell "released on genuine empty canvas" apart from every other
-// way a drag can end. `!connectionState.isValid` is the primary signal —
-// checking only `event.target`'s `react-flow__pane` class (React Flow's
-// own docs example for this pattern) is NOT enough on its own: React Flow
-// snaps to any handle within `connectionRadius` (default 20px) of the
-// release point, so a drop a few pixels off a real handle but still within
-// that radius still completes a valid connection while the raw DOM element
-// under the cursor is still the pane. The pane check is kept too, alongside
-// isValid, so a drop that's merely invalid (released over another node's
-// body without hitting a handle, or over toolbar/panel UI) doesn't spawn an
-// anchor either — only a genuine empty-canvas release does.
+// Shared by onConnectEnd (a new edge dragged from a handle) and onReconnectEnd (an existing edge's
+// end dragged loose): tells "released on genuine empty canvas" from every other way a drag can end.
+// `!connectionState.isValid` is the primary signal. The pane class on `event.target` alone (React
+// Flow's documented pattern) is not enough: RF snaps to any handle within `connectionRadius` (20px
+// by default), so a drop a few pixels off a handle still completes a connection while the element
+// under the cursor is the pane. The pane check stays as well, so a merely invalid drop (over a node
+// body without a handle, or over toolbar/panel UI) doesn't spawn an anchor either.
 function isVoidDrop(
   event: MouseEvent | TouchEvent,
   connectionState: FinalConnectionState
@@ -484,16 +449,11 @@ function applyZIndexBackfill(nodes: Node[]): Node[] {
   )
 }
 
-// Same data.zIndex extraction as applyZIndexBackfill, for a freshly-created
-// node — see ADR 0035. Always scopes "above everything" to just
-// that node's own type/tier (CONTAINER_BASE/ENTITY_BASE/TEXT_BASE), so a
-// brand new node lands solidly within its tier — behind existing entities if
-// it's a container, above existing entities if it's text, etc. — matching
-// the backfilled default arrangement, rather than jumping in front of (or
-// behind) nodes of a different tier just because it's new. An earlier
-// version scoped entities/text to *every* node regardless of type with no
-// tier floor at all, so a fresh diagram's first entity/container landed at
-// 10 or 20 instead of its intended tier (see docs/known-issues.md).
+// Same data.zIndex extraction as applyZIndexBackfill, for a freshly created node (ADR 0035). "Above
+// everything" is scoped to the node's own tier (CONTAINER_BASE/ENTITY_BASE/TEXT_BASE), so a new
+// node lands inside its tier like the backfilled default: behind entities if it's a container,
+// above them if it's text. Scoping to every node regardless of type, with no tier floor, put a
+// fresh diagram's first entity or container at 10 or 20 (see docs/known-issues.md).
 function nextZIndex(nodes: Node[], type: 'entity' | 'text' | 'container' | 'line'): number {
   const base = type === 'container' ? CONTAINER_BASE : type === 'text' ? TEXT_BASE : ENTITY_BASE
   const scoped = nodes.filter((n) => n.type === type)
@@ -522,16 +482,13 @@ function removeContainerReparenting(nodes: Node[], containerId: string): Node[] 
   return sortNodesForHierarchy(updated)
 }
 
-// Centre of the part of the window that is actually the canvas, in screen
-// coordinates. The window is wider than the canvas (the right-hand dock takes
-// its share), so the window's own centre sits visibly to the right of what the
-// user is looking at; new nodes and pastes were landing there.
+// Centre of the part of the window that is the canvas, in screen coordinates. The right-hand dock
+// takes its share of the window, so the window centre sits right of what the user is looking at.
 //
-// willSelect: a paste selects what it adds, which swaps the narrow palette dock
-// for the wider properties panel and shrinks the canvas from the right. The
-// element keeps its screen position while the middle of the canvas moves left,
-// so a paste centred on the canvas as it is now ends up visibly right of centre.
-// Pass true to centre on the canvas as it will be once that panel is open.
+// willSelect: a paste selects what it adds, which swaps the narrow palette dock for the wider
+// properties panel and shrinks the canvas from the right, so a paste centred on the canvas as it is
+// now ends up right of centre. Pass true to centre on the canvas as it will be once that panel is
+// open.
 //
 // Falls back to the window centre if the canvas isn't mounted yet.
 function visibleCanvasCenter(willSelect = false): { x: number; y: number } {
@@ -783,16 +740,10 @@ function fromDiagramFile(diagram: DiagramFile): {
   const directionSets = (diagram.edgeDirectionSets ?? []).map(migrateDirectionSetStyle)
   let edges: Edge[] = diagram.edges.map((e) => ({
     id: e.id,
-    // Conditional, not `type: e.type` — an *explicit* `type: undefined` on
-    // the edge object (as opposed to the key being absent) survives into
-    // React Flow's own `{ ...defaultEdgeOptions, ...edge }` merge
-    // (EdgeWrapper, @xyflow/react) and overwrites `defaultEdgeOptions.type`
-    // right back to `undefined`, silently routing the edge to RF's built-in
-    // default component instead of this app's `LabeledEdge` — no error, but
-    // none of LabeledEdge's own logic (style, highlights, custom routing)
-    // ever runs. Found 2026-09-05 on a hand-authored file that (correctly,
-    // per docs/file-format.md's own "absent means default" rule) omitted
-    // `type` on every edge.
+    // Conditional, not `type: e.type`: an explicit `type: undefined` survives React Flow's `{
+    // ...defaultEdgeOptions, ...edge }` merge (EdgeWrapper) and overwrites defaultEdgeOptions.type,
+    // silently routing the edge to RF's built-in component instead of LabeledEdge, with no error.
+    // Hand-authored files that omit `type` (docs/file-format.md: absent means default) hit this.
     ...(e.type ? { type: e.type } : {}),
     source: e.source,
     target: e.target,
@@ -929,25 +880,19 @@ function isValidForTag(value: JsonValue, def: RequiredTagDefinition): boolean {
   return typeof value === 'string' && def.allowedValues.includes(value)
 }
 
-// Reconciles one element's existing metadata against the diagram's current
-// requiredTags template — see ADR 0022's "Retroactive backfill" and its
-// exact rules (lockedEditable keeps a still-valid value / resets an invalid
-// one, lockedStatic always takes the template value, a removed key demotes
-// rather than deletes). Pushes one message per correction onto `diagnostics`
-// (mutated in place — called once per node/edge per sync pass, so a shared
-// array avoids threading an accumulator return value through every call).
+// Reconciles one element's metadata against the diagram's requiredTags template. ADR 0022
+// ("Retroactive backfill") has the exact rules: lockedEditable keeps a still-valid value or resets
+// an invalid one, lockedStatic always takes the template value, a removed key demotes rather than
+// deletes. Pushes one message per correction onto `diagnostics`, mutated in place: it runs once per
+// node/edge per sync pass, so a shared array avoids threading an accumulator through every call.
 //
-// The "collision-affixing" case from the ADR (demote-then-reinstate: a key
-// leaves requiredTags, becomes a free entry, then gets re-added later) is
-// handled on the *reinstating* side below — when a required key's own slot
-// is already occupied by an old free entry, that free entry is the one that
-// gets bumped aside (" (demoted)", numbered if that's also taken), not the
-// reinstated required entry, so the template's key always stays clean.
+// The ADR's collision-affixing case (a key leaves requiredTags, becomes a free entry, then is
+// re-added) is handled on the reinstating side: when a required key's slot is held by an old free
+// entry, that free entry is bumped aside (" (demoted)", numbered if also taken), so the template's
+// key stays clean.
 //
-// A not-yet-named tag (blank key — see addTag()'s own comment) is skipped
-// entirely here, both as a def to reconcile against and as a member of
-// requiredKeys: nothing was ever stamped under an empty key, so there's
-// nothing to reconcile or demote for it either.
+// A not-yet-named tag (blank key, see addTag()) is skipped, both as a def and as a member of
+// requiredKeys: nothing was ever stamped under an empty key.
 function syncElementMetadata(
   metadata: Record<string, MetadataEntry> | undefined,
   requiredTags: RequiredTagDefinition[],
@@ -1126,15 +1071,13 @@ function CanvasInner(): React.JSX.Element {
   const sessionIdRef = useRef(
     new URLSearchParams(window.location.search).get('session') ?? crypto.randomUUID()
   )
-  // Unsaved-changes tracking (see ADR 0040) — set directly at every
-  // site that mutates something toDiagramFile() actually serializes, not
-  // derived from the undo/redo stack (which only covers nodes/edges, not
-  // requiredTags/highlights/legend/noteShadows — see the ADR for why
-  // that coupling was rejected). Session-only state (enabledHighlightIds,
-  // every panel-open boolean, etc.) never touches this.
-  // Dirty state is per file (ADR 0092): the diagram — the "hub" — has its own
-  // flag, and each detail note its own inside its shadow. `isDirty` (close
-  // prompt, autosave, reload confirms) is simply "any of them".
+  // Unsaved-changes tracking (ADR 0040): set at every site that mutates something toDiagramFile()
+  // serializes, not derived from the undo stack, which covers only nodes/edges and not
+  // requiredTags/highlights/legend/noteShadows. Session-only state (enabledHighlightIds, panel-open
+  // flags, ...) never touches it.
+  // Dirty state is per file (ADR 0092): the diagram, the "hub", has its own flag and each detail
+  // note has one inside its shadow. `isDirty` (close prompt, autosave, reload confirms) is "any of
+  // them".
   const [hubDirty, setHubDirty] = useState(false)
   // In-memory copies ("shadows") of the detail notes that are open or have
   // unsaved edits — content, baseline and dirty flag per note (documentSave.ts).
@@ -1252,34 +1195,25 @@ function CanvasInner(): React.JSX.Element {
   // session state, one entry per (entity, image path), gone on reload.
   const [referencesPanelOpen, setReferencesPanelOpen] = useState(false)
   const [referenceWindows, setReferenceWindows] = useState<{ nodeId: string; path: string }[]>([])
-  // Edge hover (a catmull-rom edge's bend-point handles are hover-revealed,
-  // see ADR 0057) is tracked per-edge, locally in LabeledEdge — see ADR
-  // 0073. It used to live here as a single hoveredEdgeId, materialized onto
-  // edge.data.hovered via a setEdges effect, which rebuilt the whole edges
-  // array (and forced React Flow to re-sync its entire edge store) on every
-  // hover. LabeledEdge now owns a local useState flag driven by an
-  // invisible hit-path it renders itself.
-  // Non-blocking notices from the most recent syncElementMetadata pass —
-  // deliberately *replaced*, not appended, on every sync: this reflects
-  // current state (what the last backfill run had to correct), not a
-  // growing history log. A file with nothing to correct clears the list.
+  // Edge hover (the hover-revealed bend-point handles of catmull-rom edges, ADR 0057) is tracked
+  // per edge inside LabeledEdge, not here (ADR 0073): one shared hoveredEdgeId materialized onto
+  // edge.data rebuilt the whole edges array on every hover.
+  // Non-blocking notices from the most recent syncElementMetadata pass, *replaced* on every sync,
+  // not appended: they show what the last backfill had to correct, not a history log. A file with
+  // nothing to correct clears the list.
   const [diagnostics, setDiagnostics] = useState<string[]>([])
   // Notices from healHierarchy at load time (ADR 0075) — a dangling or cyclic
   // parentId that was silently repaired. Session-only, replaced on every load,
   // kept separate from `diagnostics` so a later required-tags sync doesn't
   // wipe it; combined for display in `displayedDiagnostics`.
   const [hierarchyLoadNotes, setHierarchyLoadNotes] = useState<string[]>([])
-  // Elements referencing a file that no longer resolves on disk — a linked
-  // diagram, a custom icon, a reference image, a details `.md` (ADR 0084).
-  // Refreshed by scanMissingFiles on load and on the Diagnostics "Recheck"
-  // button — an async fs check, so it can't be derived during render like
-  // the other advisories. Session-only, never persisted.
+  // Elements referencing a file that no longer resolves: a linked diagram, custom icon, reference
+  // image or details `.md` (ADR 0084). Refreshed by scanMissingFiles on load and by the Diagnostics
+  // "Recheck" button; it is an async fs check, so it can't be derived during render. Session-only.
   //
-  // A "Remove" in the panel doesn't mutate anything — it moves the entry
-  // into `stagedFileRemovals`, and those are applied (to nodes/legend) only
-  // when the diagram is saved, in persistDiagram. `dismissedFileKeys` hides
-  // a row for the session ("it's expected right now"). Both reset on the
-  // next scan.
+  // "Remove" in the panel doesn't mutate anything: it moves the entry into `stagedFileRemovals`,
+  // applied to nodes/legend only on save (persistDiagram). `dismissedFileKeys` hides a row for the
+  // session. Both reset on the next scan.
   const [missingFiles, setMissingFiles] = useState<MissingFileEntry[]>([])
   const [stagedFileRemovals, setStagedFileRemovals] = useState<MissingFileEntry[]>([])
   const [dismissedFileKeys, setDismissedFileKeys] = useState<Set<string>>(new Set())
@@ -1394,15 +1328,11 @@ function CanvasInner(): React.JSX.Element {
   // relying on that staying true.
   const flowWrapperRef = useRef<HTMLDivElement>(null)
 
-  // Undo/redo history — see ADR 0018. Explicit calls at each real mutation
-  // site (pushSnapshot before mutating), not a useEffect reacting to
-  // nodes/edges changing — an earlier version tried the effect approach and
-  // it broke under React StrictMode's dev-mode double-invoke: the effect's
-  // only observable "output" was a ref mutation (lastSettledRef), and an
-  // effect whose side effect isn't safe to run twice is exactly what
-  // StrictMode's double-invoke exists to catch. Explicit calls from event
-  // handlers don't have this problem — StrictMode only double-invokes
-  // render bodies and effects, not regular callbacks.
+  // Undo/redo history (ADR 0018): explicit pushSnapshot calls at each mutation site, not an effect
+  // reacting to nodes/edges changes. The effect version broke under React StrictMode's dev
+  // double-invoke: its only output was a ref mutation (lastSettledRef), and an effect whose side
+  // effect isn't safe to run twice is what StrictMode catches. StrictMode doesn't double-invoke
+  // event-handler callbacks.
   const [past, setPast] = useState<HistorySnapshot[]>([])
   const [future, setFuture] = useState<HistorySnapshot[]>([])
   // Mid-drag/resize/rotate: don't split one continuous gesture into many
@@ -1412,16 +1342,12 @@ function CanvasInner(): React.JSX.Element {
   // handler (no such flag there — it's just repeated updateNodeData calls).
   const interactionInProgressRef = useRef(false)
 
-  // Latest nodes/edges, mirrored into a ref (updated from an effect) so
-  // callbacks that only need to *read* the current graph — pushSnapshot,
-  // undo/redo, openDetailsPanel — can do so without listing nodes/edges in
-  // their useCallback deps. Those callbacks are threaded through the
-  // memoized DiagramContext value (ADR 0056); when their identity churned
-  // on every node/edge change, so did the context value, re-rendering every
-  // node and edge on every edit/drag/hover and defeating that memoization
-  // (ADR 0073). Reading a ref inside a callback — not during render — is
-  // allowed by the react-hooks lint rules; same pattern as useDetailsPeek
-  // and openReferencesFor's rfInstance.getNode read.
+  // Latest nodes/edges mirrored into a ref (from an effect), so callbacks that only read the
+  // current graph (pushSnapshot, undo/redo, openDetailsPanel) needn't list nodes/edges in their
+  // useCallback deps. Those callbacks go through the memoized DiagramContext value (ADR 0056);
+  // churning their identity on every change re-rendered every node and edge on every edit, drag and
+  // hover (ADR 0073). Reading a ref inside a callback, not during render, is allowed by the
+  // react-hooks lint rules; same pattern as useDetailsPeek and openReferencesFor.
   const graphRef = useRef<{ nodes: Node[]; edges: Edge[] }>({ nodes: [], edges: [] })
   useEffect(() => {
     graphRef.current = { nodes, edges }
@@ -1439,30 +1365,21 @@ function CanvasInner(): React.JSX.Element {
   const [pendingLabelEditId, setPendingLabelEditId] = useState<string | null>(null)
   const clearPendingLabelEdit = useCallback(() => setPendingLabelEditId(null), [])
 
-  // React Flow's own EdgeUpdateAnchors implementation fires BOTH
-  // onReconnectStart *and* the generic onConnectStart for the same
-  // drag-an-existing-edge's-endpoint gesture (confirmed by reading
-  // @xyflow/react's source: its internal `_onConnectStart` composite calls
-  // `onReconnectStart?.(...)` immediately before `onConnectStart?.(...)`,
-  // synchronously, every time). Without this flag, a reconnect dropped in
-  // empty space fired both onConnectEnd (the drag-to-empty-space logic)
-  // *and* onReconnectEnd (the reconnection logic) independently, each spawning its own
-  // new node+edge — the exact "two edges end up connected to the new node"
-  // bug. Set in onReconnectStart (which always runs
-  // first within that composite), read by onConnectStart to skip arming
-  // connectStartRef for a gesture onReconnectEnd already owns, reset in
-  // onReconnectEnd once the gesture is fully over.
+  // React Flow fires BOTH onReconnectStart and the generic onConnectStart for the same drag of an
+  // existing edge's endpoint (its internal `_onConnectStart` composite calls onReconnectStart right
+  // before onConnectStart; verified in @xyflow/react's source). Without this flag, a reconnect
+  // dropped on empty canvas fired both onConnectEnd (drag-to-empty-space) and onReconnectEnd, each
+  // spawning its own node and edge: "two edges end up connected to the new node". Set in
+  // onReconnectStart, read by onConnectStart to skip arming connectStartRef for a gesture
+  // onReconnectEnd already owns, reset in onReconnectEnd when the gesture ends.
   const isReconnectingRef = useRef(false)
 
-  // Reconciles every eligible node/edge's metadata against `tags`, via
-  // syncElementMetadata — see that function's own comment for the exact
-  // rules. Runs on file open (defensively, in case of hand-edited drift)
-  // and whenever the requiredTags template itself is edited. Deliberately
-  // NOT wrapped in pushSnapshot/undo history: this is a diagram-level
-  // settings change, not a canvas gesture, and requiredTags itself isn't
-  // part of the {nodes, edges} history snapshot shape — undoing the
-  // resulting metadata edits without also undoing the template change that
-  // caused them would just leave the two out of sync again.
+  // Reconciles every eligible node/edge's metadata against `tags` via syncElementMetadata (see its
+  // comment for the rules). Runs on file open, in case of hand-edited drift, and whenever the
+  // requiredTags template is edited. Deliberately not wrapped in pushSnapshot: this is a
+  // diagram-level settings change, not a canvas gesture, and requiredTags isn't part of the {nodes,
+  // edges} snapshot, so undoing the metadata edits without the template change would leave the two
+  // out of sync.
   const runSync = useCallback(
     (tags: RequiredTagDefinition[]) => {
       const notices: string[] = []
@@ -1613,16 +1530,12 @@ function CanvasInner(): React.JSX.Element {
         else if (discrete) pushSnapshot()
         if (ending) endContinuousEdit()
       }
-      // Deleting a container promotes its children rather than removing
-      // them too (ADR 0012) — handled separately from React Flow's default
-      // remove-change application, which would otherwise just drop them.
-      //
-      // React Flow cascades a delete to every descendant, but onBeforeDelete
-      // (see resolveDeletion, ADR 0116) has already cut that down to what was
-      // really asked for: the container, plus any child that was selected too.
-      // So a `remove` here for a non-container is a real deletion and passes
-      // through; a container's own removal is replaced by reparenting its
-      // surviving children.
+      // Deleting a container promotes its children instead of removing them (ADR 0012), handled
+      // apart from React Flow's default remove-change application. RF cascades a delete to every
+      // descendant, but onBeforeDelete (resolveDeletion, ADR 0116) has already cut that down to
+      // what was asked for: the container plus any child selected too. So a `remove` for a
+      // non-container is a real deletion and passes through; a container's removal is replaced by
+      // reparenting its surviving children.
       const removedIds = new Set(changes.filter((c) => c.type === 'remove').map((c) => c.id))
       const containerRemovalIds = Array.from(removedIds).filter(
         (removedId) => nodes.find((n) => n.id === removedId)?.type === 'container'
@@ -1678,19 +1591,13 @@ function CanvasInner(): React.JSX.Element {
     setContextMenu({ x, y, items })
   }, [])
 
-  // See ADR 0065 — replaces the current selection with every element of one
-  // type, rather than shift-clicking each one individually. Exposed via
-  // each type's own right-click context menu (EntityNode/ContainerNode/
-  // TextNode/LineNode/onEdgeContextMenu below) rather than a top menu-bar
-  // item — MenuBar has no submenu support yet, and a per-type context menu
-  // entry is where "select all edges" naturally lives. Whole-type only for now, no finer filtering
-  // (e.g.
-  // "edges with this routing style") — left as an open question, not resolved here.
-  // Declared here (early) rather than alongside selectAll/deselectAll
-  // further down — onEdgeContextMenu below needs it, and a useCallback's
-  // own deps array is evaluated immediately at render time, unlike the
-  // callback body itself, so a later declaration would be a genuine
-  // temporal-dead-zone error, not just a theoretical one.
+  // Replaces the selection with every element of one type (ADR 0065). Exposed in each type's
+  // right-click context menu (EntityNode/ContainerNode/TextNode/LineNode/onEdgeContextMenu), not
+  // the top menu bar, which has no submenu support. Whole-type only; finer filtering (e.g. "edges
+  // with this routing style") is an open question.
+  // Declared early, before selectAll/deselectAll: onEdgeContextMenu needs it, and a useCallback's
+  // deps array is evaluated at render time, unlike the callback body, so a later declaration would
+  // be a real temporal-dead-zone error.
   const selectAllOfType = useCallback(
     (type: 'entity' | 'container' | 'text' | 'line' | 'edge') => {
       setNodes((nds) =>
@@ -1703,16 +1610,12 @@ function CanvasInner(): React.JSX.Element {
     [setNodes, setEdges]
   )
 
-  // Flip the direction of every edge in `ids` in one action — see ADR 0087.
-  // reverseEdgeDirection (edges/edgeDirectionSets.ts) is a pure Edge -> Edge
-  // that swaps the endpoints + handles and the direction-tied visuals
-  // (points order, labelPosition); mapping it over N edges under a single
-  // snapshot makes the whole batch one undo step. When a direction set is
-  // active, each edge's per-set record is refreshed from these live fields
-  // at the next switch/save, so this reverses only the active reading —
-  // same as the single-edge case it generalizes. Declared here (early)
-  // because onEdgeContextMenu below references it in a deps array, which is
-  // evaluated at render time (see selectAllOfType's own note).
+  // Flips the direction of every edge in `ids` in one action (ADR 0087). reverseEdgeDirection
+  // (edges/edgeDirectionSets.ts) is a pure Edge -> Edge that swaps endpoints and handles and the
+  // direction-tied visuals (points order, labelPosition); mapping it over N edges under one
+  // snapshot makes the batch one undo step. With a direction set active, each edge's per-set record
+  // is refreshed from these live fields at the next switch/save, so only the active reading is
+  // reversed. Declared early for the same deps-array reason as selectAllOfType.
   const reverseEdges = useCallback(
     (ids: string[]) => {
       if (ids.length === 0) return
@@ -1839,16 +1742,12 @@ function CanvasInner(): React.JSX.Element {
     ]
   )
 
-  // The utility dock shows one surface at a time (see ADR 0013) — opening
-  // any of the family closes every other one, same as clicking a different
-  // tab. Each toggle below therefore has to name every sibling; the
-  // repetition is deliberate and low-risk, not worth a generic
-  // exclusive-panel abstraction. Highlights and Legend are NOT in this
-  // family — both are floating popups anchored near the bottom-left
-  // <Controls> cluster, independent of the dock. Required tags and line
-  // bend presets used to be members too; ADR 0071 folded them into
-  // DiagramSettingsPanel as collapsible sections, so only that one toggle
-  // remains for all three.
+  // The utility dock shows one surface at a time (ADR 0013): opening any panel in the family closes
+  // the others, so each toggle names every sibling. The repetition is deliberate and low-risk, not
+  // worth a generic exclusive-panel abstraction. Highlights and Legend are not in this family: both
+  // are floating popups near the bottom-left <Controls>, independent of the dock. Required tags and
+  // line bend presets are collapsible sections of DiagramSettingsPanel (ADR 0071), so one toggle
+  // covers all three.
   const openDetailsPanel = useCallback(
     (nodeId: string) => {
       setDiagnosticsPanelOpen(false)
@@ -1860,19 +1759,13 @@ function CanvasInner(): React.JSX.Element {
       setReferencesPanelOpen(false)
       setChangesPanelOpen(false)
       setDetailsPanelNodeId(nodeId)
-      // No-existing-file (or nothing saved yet to resolve one against) is
-      // seeded synchronously right here rather than in the effect below
-      // — nothing asynchronous happens in this branch, so
-      // there's no reason to route it through an effect at all. The
-      // functional-updater guard (not a closure read of noteShadows)
-      // keeps this callback's own identity stable regardless of how often
-      // noteShadows itself changes (every keystroke while editing) —
-      // matters because this callback is threaded through DiagramContext's
-      // memoized value (ADR 0056).
-      // Read the node off the React Flow instance, not a closed-over `nodes`
-      // — keeps this callback stable so it doesn't bust the memoized
-      // DiagramContext value on every node change (ADR 0073), same as
-      // openReferencesFor.
+      // With no existing file (or nothing saved yet to resolve one against), the shadow is seeded
+      // synchronously here, not in the effect below: nothing asynchronous happens in this branch.
+      // The functional-updater guard (no closure read of noteShadows) keeps this callback's
+      // identity stable however often noteShadows changes (every keystroke while editing), which
+      // matters because it goes through DiagramContext's memoized value (ADR 0056).
+      // Reads the node off the React Flow instance, not a closed-over `nodes`, for the same
+      // stability reason (ADR 0073), as in openReferencesFor.
       const node = rfInstance.getNode(nodeId)
       const existingPath = typeof node?.data?.details === 'string' ? node.data.details : undefined
       if (!existingPath || !currentPath) {
@@ -2588,18 +2481,13 @@ function CanvasInner(): React.JSX.Element {
     return [...seen.values()]
   }, [nodes, edges])
 
-  // "Add group" and each existing group's manual resync button both call
-  // this with the same key — ADR 0026. Reconciles against
-  // highlightGroupSourceValues (allowedValues for a required tag, else a
-  // live scan of every node/edge's metadata): a value with no entry gets a
-  // new white one, an entry for a value nothing carries/allows anymore is
-  // dropped, everything else untouched. Also prunes enabledHighlightIds for
-  // whatever got dropped, so a removed row can't leave an orphaned
-  // enabled-id behind. The effect below does the same thing automatically
-  // for every *existing* group whenever its source actually changes — this
-  // stays the explicit "add a group that doesn't exist yet" entry point,
-  // and a manual "resync now" the automatic effect makes mostly redundant
-  // but harmless to keep.
+  // "Add group" and each group's manual resync button both call this with the same key (ADR 0026).
+  // It reconciles against highlightGroupSourceValues (allowedValues for a required tag, else a live
+  // scan of every node/edge's metadata): a value with no entry gets a new white one, an entry whose
+  // value nothing carries or allows anymore is dropped, the rest is untouched. It also prunes
+  // enabledHighlightIds for dropped entries, so a removed row can't leave an orphaned enabled id.
+  // The automatic resync below does this for existing groups; this stays the explicit entry point
+  // for adding a group that doesn't exist yet.
   const addOrResyncHighlightGroup = useCallback(
     (key: string) => {
       const currentValues = highlightGroupSourceValues(key, requiredTags, usedTags)
@@ -2615,24 +2503,17 @@ function CanvasInner(): React.JSX.Element {
     [highlights, requiredTags, usedTags, markDirty]
   )
 
-  // Automatic resync (ADR 0026 addendum, 2026-09-23): every *existing*
-  // group's entries stay in sync with their source as it changes — a new
-  // allowed value added to a required tag, or a new value for a free tag
-  // actually appearing somewhere in the diagram — without needing the
-  // manual ↻ button. Never auto-creates a group for a key that doesn't
-  // have one yet ("Add group" stays the deliberate first step).
+  // Automatic resync (ADR 0026 addendum): every existing group's entries follow their source as it
+  // changes (a new allowed value on a required tag, a new value for a free tag appearing in the
+  // diagram) without the manual ↻ button. It never creates a group for a key that has none; "Add
+  // group" stays the deliberate first step.
   //
-  // Deliberately NOT a useEffect: this is "adjust state as a dependency
-  // changes," which react.dev's own effect guidance (and this project's
-  // lint setup) flags as a synchronous-setState-in-effect anti-pattern —
-  // computed here instead, directly in the render body, React's documented
-  // alternative for this exact case. Cheap and safe to run every render:
-  // reconcileHighlightGroup returns kept entries by the same reference, so
-  // folding it over every existing key either produces the *same* array
-  // (nothing changed, no setState — the overwhelmingly common case, e.g.
-  // every render during an unrelated drag) or a genuinely different one
-  // (setState fires once; React immediately re-renders, that pass finds
-  // nothing changed, and it settles — never a loop).
+  // Computed in the render body, not a useEffect: this is "adjust state as a dependency changes",
+  // which the React docs (and this project's lint setup) flag as a setState-in-effect anti-pattern.
+  // It is cheap to run every render because reconcileHighlightGroup returns kept entries by
+  // reference, so folding it over every key yields either the same array (no setState; the usual
+  // case, e.g. during an unrelated drag) or a different one (setState fires once, the re-render
+  // finds nothing changed, and it settles: never a loop).
   const existingHighlightKeys = [...new Set(highlights.map((h) => h.key))]
   let resyncedHighlights = highlights
   for (const key of existingHighlightKeys) {
@@ -2694,14 +2575,12 @@ function CanvasInner(): React.JSX.Element {
     setSearchRun(true)
   }, [])
 
-  // Every element that satisfies the criteria (ADR 0096, 0097) — free text over
-  // id/label/tags *and* the node's details note, an exact icon, has: facets, all
-  // ANDed. A note is read from its unsaved in-memory copy when the user has one
-  // open, else from disk; reading is cheap, and the search terms (label:, tag:…)
-  // are how the user narrows it. With Deep search on, a node that carries a link
-  // to another diagram also matches when anything in that linked subtree does —
-  // so the match lands on the entity in *this* diagram, cyclable like any other.
-  // Edges carry no icons, references or notes, so those criteria exclude them.
+  // Every element that satisfies the criteria (ADR 0096, 0097): free text over id/label/tags and
+  // the node's details note, an exact icon, has: facets, all ANDed. A note is read from its unsaved
+  // in-memory copy when one is open, else from disk. With Deep search on, a node that links to
+  // another diagram also matches when anything in that linked subtree does, so the match lands on
+  // the entity in this diagram and cycles like any other. Edges carry no icons, references or
+  // notes, so those criteria exclude them.
   const computeMatchIds = useCallback(
     async (criteria: SearchCriteria): Promise<Set<string>> => {
       const matchedIds = new Set<string>()
@@ -2711,16 +2590,12 @@ function CanvasInner(): React.JSX.Element {
           nodes.map((n) => {
             const shadow = noteShadowsRef.current[n.id]
             const searchable = searchableFromData(n.id, n.data)
-            // A note actively open but never yet saved (a brand-new note, or
-            // any note on a diagram that's never been saved at all) has no
-            // stored path yet — data.details stays unset until the first
-            // save (the sync-on-save convention) — but it still has
-            // real, searchable content sitting in its shadow. Without this,
-            // elementMatchesViaDetails' `!el.details` gate would treat an
-            // in-memory-only note as if it didn't exist. The placeholder
-            // value is never actually read as a path below — the shadow
-            // branch always wins first — so its exact contents don't matter,
-            // only that it's truthy.
+            // A note that is open but never saved (a new note, or any note on an unsaved diagram)
+            // has no stored path yet, since data.details stays unset until the first save (the
+            // sync-on-save convention), but its shadow holds real, searchable content. Without
+            // this, elementMatchesViaDetails' `!el.details` gate would treat it as nonexistent. The
+            // placeholder value is never read as a path (the shadow branch wins first); it only has
+            // to be truthy.
             const details = searchable.details ?? (shadow ? '(unsaved note)' : undefined)
             return elementMatchesWithDetails(
               criteria,
@@ -2852,14 +2727,11 @@ function CanvasInner(): React.JSX.Element {
     setSearchUnreadable([])
   }, [])
 
-  // Isolate is its own independent trigger (ADR 0063: available from the start, not gated on
-  // Search having already run) — when off, it runs the same matching
-  // Search does against whatever query is currently typed, then frames
-  // every match at once (fitAllMatches) instead of jumping to one node.
-  // When already on, a second click just turns it off; the underlying
-  // match set (and Search's own next/prev over it) is left alone —
-  // Isolate is a dimming toggle layered on top of it, not a separate
-  // state universe.
+  // Isolate (ADR 0063) is its own trigger, available from the start and not gated on Search having
+  // run. When off, it runs the same matching Search does against the typed query and frames every
+  // match at once (fitAllMatches) instead of jumping to one. When already on, a second click turns
+  // it off and leaves the match set (and Search's next/prev over it) alone: Isolate is a dimming
+  // toggle layered on top of it, not a separate state.
   const runIsolate = useCallback(async () => {
     if (isolateActive) {
       setIsolateActive(false)
@@ -3088,25 +2960,18 @@ function CanvasInner(): React.JSX.Element {
     [preferences.defaultEdgeStyle, edgeDirectionSets, activeEdgeDirectionSetId]
   )
 
-  // Multi-connection-line (xyflow's own documented pattern for this,
-  // reactflow.dev/examples/edges/multi-connection-line, adapted to this
-  // app's own explicit-connection-point-id model rather than xyflow's
-  // plain "leave sourceHandle unset" version): if other connectable nodes
-  // are selected when a drag completes, every one of them gets its own
-  // edge to the same target, not just the node actually dragged from.
-  // Dragging from a node that *isn't* selected still only ever wires that
-  // one node — this only activates via a real prior selection, never as an
-  // accidental side effect of an ordinary single drag.
+  // Multi-connection-line, after xyflow's documented pattern
+  // (reactflow.dev/examples/edges/multi-connection-line) adapted to explicit connection-point ids:
+  // if other connectable nodes are selected when a drag completes, each gets its own edge to the
+  // same target. Dragging from an unselected node wires only that node, so this never happens as a
+  // side effect of an ordinary drag.
   //
-  // The dragged node's own edge keeps the exact handle the user actually
-  // dropped onto (connection.sourceHandle) — every *other* selected node
-  // replicates that same handle's clockwise ordinal on the same side
-  // (pointOrdinal/connectionPointAtOrdinal, connectionPoints.ts), clamped to
-  // however many points that side actually has, rather than each picking
-  // whichever of its own points sits nearest the target (see ADR 0059's
-  // addendum — nearest-to-target looked inconsistent in real use, since
-  // unrelated entities rarely face the target the same way; "the same point"
-  // reads as deliberate regardless of position).
+  // The dragged node's edge keeps the exact handle dropped onto (connection.sourceHandle). Every
+  // other selected node reuses that handle's clockwise ordinal on the same side
+  // (pointOrdinal/connectionPointAtOrdinal in connectionPoints.ts), clamped to the points that side
+  // has, rather than picking its own point nearest the target (ADR 0059 addendum: nearest-to-target
+  // looked inconsistent, since unrelated entities rarely face the target the same way, while "the
+  // same point" reads as deliberate).
   const onConnect = useCallback(
     (connection: Connection) => {
       pushSnapshot()
@@ -3210,22 +3075,15 @@ function CanvasInner(): React.JSX.Element {
     [rfInstance]
   )
 
-  // Drag-and-drop counterpart to the four addXNode callbacks below (see
-  // ADR 0064) — those spawn near the viewport center via spawnPosition above;
-  // this places a node exactly where it was dropped, centered under the
-  // drop point, and reparents it into a container the same way
-  // onNodeDragStop's own intersection check does for an existing node's
-  // drag. It can't reuse rfInstance.getIntersectingNodes for that though —
-  // the new node isn't registered with React Flow yet at drop time — so
-  // this does the equivalent bounds-overlap test manually against the
-  // current containers instead, using drop-point containment (simpler
-  // than full-rectangle overlap, and a closer match to "I dropped it
-  // here" than the drag-existing-node heuristic needs to be). Picks
-  // whichever containing container has the highest zIndex if more than
-  // one contains the point (nested containers), matching what's visually
-  // on top.
-  // `presetId` lets a caller that has to reference the new node right away
-  // (spawnEntityAt, wiring an edge to it) choose the id up front.
+  // Drag-and-drop counterpart to the addXNode callbacks below (ADR 0064): those spawn near the
+  // viewport centre via spawnPosition, this places a node centred under the drop point and
+  // reparents it into a container as onNodeDragStop does. It can't use
+  // rfInstance.getIntersectingNodes because the new node isn't registered with React Flow at drop
+  // time, so it tests drop-point containment against the current containers by hand (simpler than
+  // rectangle overlap, and closer to "I dropped it here"). Of several containing (nested)
+  // containers, the highest zIndex wins, matching what is visually on top.
+  // `presetId` lets a caller that must reference the new node right away (spawnEntityAt, wiring an
+  // edge to it) choose the id up front.
   const addNodeAtPosition = useCallback(
     (type: PaletteItemType, dropPoint: { x: number; y: number }, presetId?: string) => {
       pushSnapshot()
@@ -3335,14 +3193,12 @@ function CanvasInner(): React.JSX.Element {
     ]
   )
 
-  // Shared tail of onConnectEnd/onReconnectEnd once a drop has already been
-  // confirmed as genuine empty canvas (via isVoidDrop): create an Entity
-  // centered on the drop point (same defaults and container reparenting as a
-  // palette drop, ADR 0107), let the caller wire whichever edge end needs it
-  // (the one part that differs between "brand-new edge" and "existing edge's
-  // endpoint"), and drop the new Entity straight into label editing. The
-  // Entity and the edge share one undo step (addNodeAtPosition takes the
-  // snapshot).
+  // Shared tail of onConnectEnd/onReconnectEnd once isVoidDrop has confirmed a drop on genuine
+  // empty canvas: create an Entity centred on the drop point (same defaults and container
+  // reparenting as a palette drop, ADR 0107), let the caller wire whichever edge end needs it (the
+  // one part that differs between a new edge and an existing edge's endpoint), and drop the Entity
+  // straight into label editing. The Entity and the edge share one undo step (addNodeAtPosition
+  // takes the snapshot).
   const spawnEntityAt = useCallback(
     (clientX: number, clientY: number, wireEdge: (entityId: string) => void): void => {
       const id = newNodeId('entity')
@@ -3633,17 +3489,12 @@ function CanvasInner(): React.JSX.Element {
     ])
   }, [setNodes, pushSnapshot, spawnPosition])
 
-  // Alignment guides + snap-to-shape while dragging — see ADR 0019.
-  // Shared by onNodeDrag (live, every tick) and onNodeDragStop (once more
-  // on release — see its own comment for why that second call is
-  // necessary, not redundant). Snap is computed from the lead dragged node
-  // only; a multi-node drag applies the same resulting delta to every node
-  // in the group, so their relative offsets to each other are preserved.
-  //
-  // A dragged node's own descendants move with it, but comparing against
-  // them is meaningless (a container always "aligns" with its own
-  // contents) and would produce distracting guide lines, so they're
-  // excluded from the comparison set.
+  // Alignment guides and snap-to-shape while dragging (ADR 0019), shared by onNodeDrag (every tick)
+  // and onNodeDragStop (once more on release, which is necessary; see there). Snap comes from the
+  // lead dragged node only; a multi-node drag applies the same delta to every node, preserving
+  // their relative offsets. A dragged node's own descendants move with it, and comparing against
+  // them is meaningless (a container always "aligns" with its contents) and draws distracting
+  // guides, so they are excluded.
   const computeGroupSnap = useCallback(
     (
       draggedNode: Node,
@@ -3682,15 +3533,12 @@ function CanvasInner(): React.JSX.Element {
     [nodes, rfInstance]
   )
 
-  // Fires on every drag tick with the *live* (pre-snap) position already
-  // applied to `node`/`draggedNodes` by React Flow's own onNodesChange
-  // pass; this then nudges that position by the computed snap delta via a
-  // follow-up setNodes call, which wins as the tick's final state. React
-  // Flow's own drag math recomputes each tick from the drag's *start*
-  // position plus total pointer movement (not incrementally from the
-  // previous tick), so this correction doesn't get "fought" — it just
-  // holds the snapped position for as long as the pointer stays within the
-  // threshold band, exactly like a Figma/Illustrator smart guide.
+  // Fires every drag tick with the live (pre-snap) position already applied to
+  // `node`/`draggedNodes` by React Flow's onNodesChange pass, then nudges it by the snap delta in a
+  // follow-up setNodes call, which wins as the tick's final state. RF recomputes each tick's drag
+  // position from the drag's start plus total pointer movement, not incrementally, so the
+  // correction isn't fought: it holds the snapped position while the pointer stays within the
+  // threshold, like a Figma or Illustrator smart guide.
   const onNodeDrag = useCallback(
     (_event: unknown, draggedNode: Node, draggedNodes: Node[]) => {
       const nodesToMove = draggedNodes.length > 0 ? draggedNodes : [draggedNode]
@@ -3714,27 +3562,19 @@ function CanvasInner(): React.JSX.Element {
     [computeGroupSnap, setNodes]
   )
 
-  // Drag-into/out-of a container: fires once at the end of a drag gesture,
-  // after the position changes from onNodesChange above have already
-  // applied (so each node's `.position` here reflects its final drop
-  // position). No pushSnapshot here — reparenting is part of the same
-  // gesture whose start already snapshotted via beginContinuousEdit, not a
-  // separate action.
+  // Drag into/out of a container: fires once at the end of a drag, after onNodesChange has applied
+  // the final positions (so each node's `.position` is its drop position). No pushSnapshot:
+  // reparenting belongs to the gesture whose start already snapshotted via beginContinuousEdit.
   //
-  // React Flow's third callback arg is *every* node that moved as part of
-  // this drag, not just the one under the cursor — a multi-selected drag
-  // must reparent each of them independently (each against its own
-  // geometry), or only the grabbed node ends up attached.
+  // React Flow's third callback arg is every node that moved in the drag, not just the one under
+  // the cursor, and a multi-selected drag must reparent each against its own geometry, or only the
+  // grabbed node ends up attached.
   //
-  // Re-applies the same snap correction onNodeDrag already did, recomputed
-  // fresh rather than reused (the pointer may have moved slightly between
-  // the last onNodeDrag tick and release). This is NOT redundant: React
-  // Flow commits one final position update straight from the raw pointer
-  // position internally (XYDrag's drag-end handler calls
-  // updateNodePositions before invoking onNodeDragStop), which silently
-  // overwrites whatever onNodeDrag's per-tick corrections had already
-  // applied — without this, a node visibly snaps while dragging and then
-  // jumps back to the unsnapped position the instant it's released.
+  // Re-applies the snap correction onNodeDrag did, recomputed fresh (the pointer may have moved
+  // since the last tick). This is not redundant: RF commits one final position straight from the
+  // raw pointer (XYDrag's drag-end calls updateNodePositions before onNodeDragStop), overwriting
+  // onNodeDrag's per-tick corrections, so without it a node snaps while dragging and jumps back to
+  // the unsnapped position on release.
   const onNodeDragStop = useCallback(
     (_event: unknown, draggedNode: Node, draggedNodes: Node[]) => {
       setAlignmentGuides(null)
@@ -3964,14 +3804,12 @@ function CanvasInner(): React.JSX.Element {
     }
   }, [setNodes])
 
-  // Modifier+drag duplicate (ADR 0099), called by useModifierDragDuplicate
-  // once the pointer has actually moved. Clones the dragged selection (or just
-  // the grabbed node if it wasn't selected) plus every descendant of a cloned
-  // container, in place, and selects the clones so the replayed drag moves
-  // *them*; the originals keep their ids, edges and position. Edges between
-  // cloned nodes are cloned too (like copy/paste, unlike Ctrl+D). A clone whose
-  // parent wasn't cloned stays inside that same container. Opens the gesture's
-  // one undo step via beginContinuousEdit; the drag's end closes it.
+  // Modifier+drag duplicate (ADR 0099), called by useModifierDragDuplicate once the pointer has
+  // moved. Clones the dragged selection (or just the grabbed node if unselected) plus every
+  // descendant of a cloned container, in place, and selects the clones so the replayed drag moves
+  // them; the originals keep their ids, edges and position. Edges between cloned nodes are cloned
+  // too (like copy/paste, unlike Ctrl+D), and a clone whose parent wasn't cloned stays in that
+  // container. The gesture's one undo step opens via beginContinuousEdit and closes at drag end.
   const duplicateForDrag = useEventCallback((grabbedId: string): string | null => {
     const { nodes: all, edges: allEdges } = graphRef.current
     const grabbed = all.find((n) => n.id === grabbedId)
@@ -4027,22 +3865,16 @@ function CanvasInner(): React.JSX.Element {
     return idMap.get(grabbedId) ?? null
   })
 
-  // Under Edit, via AlignDistributePanel — "Align Vertically" stacks the
-  // selection top-to-bottom (all sharing the leftmost element's left edge,
-  // `gapPx` of clear space between each element's bottom and the next
-  // one's top); "Align Horizontally" is the same arranged left-to-right.
-  // Order along the moving axis follows each element's own current
-  // position (not selection order), so re-running it is idempotent.
+  // Under Edit, via AlignDistributePanel: "Align Vertically" stacks the selection top to bottom,
+  // all sharing the leftmost element's left edge with `gapPx` of clear space between neighbours;
+  // "Align Horizontally" is the same left to right. Order along the moving axis follows each
+  // element's current position, not selection order, so re-running it is idempotent.
   //
-  // Computed in each node's absolute canvas position (absolutePosition),
-  // not its raw — possibly parent-relative — position field, so a
-  // selection spanning nodes inside different containers still measures
-  // real on-screen gaps; the result is converted back to parent-relative
-  // before writing, same pattern already used for reparenting (see
-  // setContainerForNodes above). `n.width`/`n.height` are React Flow's own
-  // measured size (matches the drag-time alignment guides' use of the same
-  // fields, alignment.ts) — set once a node has actually rendered, which
-  // is always true for anything selectable on screen.
+  // Works in absolute canvas positions (absolutePosition), not the possibly parent-relative
+  // `position`, so a selection spanning different containers still measures real on-screen gaps;
+  // results are converted back to parent-relative before writing (as in setContainerForNodes
+  // above). `n.width`/`n.height` are React Flow's measured size, as in the drag-time guides
+  // (alignment.ts); always set for anything selectable on screen.
   const alignSelected = useCallback(
     (axis: 'vertical' | 'horizontal', gapPx: number) => {
       const selected = nodes.filter((n) => n.selected)
@@ -4328,20 +4160,17 @@ function CanvasInner(): React.JSX.Element {
     [setNodes]
   )
 
-  // Saves the diagram AND the detail notes it owns as one operation (ADR 0092)
-  // and syncs canvas state to whatever actually got written — the one place a
-  // diagram is persisted to disk, so every save-adjacent flow (manual save,
-  // link creation, forward link navigation) goes through the same path.
+  // Saves the diagram and the detail notes it owns as one operation (ADR 0092) and syncs canvas
+  // state to what was written. It is the one place a diagram is persisted, so every save-adjacent
+  // flow (manual save, link creation, forward link navigation) goes through it.
   //
-  // The macro flow lives here and hides the detail: build the desired file set
-  // (a note's path follows its label, derived now, never stored) -> plan
-  // (planSave: which files are written/moved, is the diagram itself rewritten?)
-  // -> main verifies every file it would overwrite against the disk and applies
-  // the writes in the crash-safe order. A conflict writes nothing; the user is
-  // asked once and the same request is re-sent with overwrite. Only files with
-  // something to save are touched — editing one note does not rewrite the
-  // diagram file unless a path in it changes. forceHub: the caller changed the
-  // diagram itself outside the normal dirty tracking (link creation).
+  // Flow: build the desired file set (a note's path follows its label, derived now, never stored),
+  // plan (planSave: which files are written or moved, is the diagram itself rewritten), then main
+  // verifies every file it would overwrite against the disk and applies the writes in the
+  // crash-safe order. A conflict writes nothing; the user is asked once and the request is re-sent
+  // with overwrite. Only files with something to save are touched: editing one note doesn't rewrite
+  // the diagram unless a path in it changes. forceHub: the caller changed the diagram outside
+  // normal dirty tracking (link creation).
   const persistDiagram = useCallback(
     async (path: string, nodesToSave: Node[], opts?: { forceHub?: boolean }): Promise<Node[]> => {
       // Apply any staged missing-file removals (ADR 0084) — this is the one
@@ -4656,17 +4485,13 @@ function CanvasInner(): React.JSX.Element {
   const handleSave = useCallback(() => performSave(false), [performSave])
   const handleSaveAs = useCallback(() => performSave(true), [performSave])
 
-  // PNG export (ADR 0051). Selection outlines and resize/
-  // connection-point handles render conditionally inside each node's own
-  // DOM based on node.selected — deselecting everything first (flushSync
-  // so the DOM actually updates before html-to-image reads it, since a
-  // plain setNodes/setEdges wouldn't commit until after this function
-  // returns) keeps them out of the exported image without this function
-  // needing to know how each node type draws its own selected state.
-  // Restored afterward either way, including on failure. choice comes from
-  // ExportPngDialog, not settings directly — the dialog is the actual
-  // place these get edited; preferences.pngExport* only remembers the last
-  // choice so the dialog reopens prefilled.
+  // PNG export (ADR 0051). Selection outlines and resize/connection-point handles render inside
+  // each node based on node.selected, so everything is deselected first (flushSync, so the DOM
+  // updates before html-to-image reads it; a plain setNodes/setEdges would commit only after this
+  // function returns). That keeps them out of the image without knowing how each node type draws
+  // its selected state. Restored afterwards, including on failure. `choice` comes from
+  // ExportPngDialog, which is where these values are edited; preferences.pngExport* only remembers
+  // the last choice so the dialog reopens prefilled.
   const handleExportPng = useCallback(
     async (choice: PngExportChoice) => {
       const viewportEl = flowWrapperRef.current?.querySelector<HTMLElement>('.react-flow__viewport')
@@ -4798,31 +4623,22 @@ function CanvasInner(): React.JSX.Element {
       setPast([])
       setFuture([])
       setHubDirty(false)
-      // React Flow measures every freshly-mounted node's real DOM size via
-      // ResizeObserver and reports it back as a 'dimensions' NodeChange
-      // with resizing left undefined — indistinguishable, by shape alone,
-      // from onNodesChange's own "discrete edit" classification below for
-      // a scripted dimension change. Harmless before dirty-tracking existed
-      // (just an extra no-op undo entry), but now that pushSnapshot also marks the
-      // diagram dirty, that same auto-measurement pass falsely dirtied
-      // every single load. Suppressed for a short window after any load.
+      // React Flow measures every freshly mounted node's DOM size via ResizeObserver and reports a
+      // 'dimensions' NodeChange with resizing undefined, which by shape alone looks like
+      // onNodesChange's "discrete edit" below. That was a harmless extra undo entry until
+      // pushSnapshot also marked the diagram dirty; then the auto-measurement pass falsely dirtied
+      // every load. Suppressed for a short window after any load.
       suppressAutoMeasureUntilRef.current = Date.now() + 500
       setNodes(openedNodes)
       setEdges(openedEdges)
-      // On a large diagram, React Flow's own passive ResizeObserver-driven
-      // measurement of every node's handle bounds can take an unpredictable
-      // number of render passes to fully settle (seen on the Meridian Rail landscape, 82 nodes/84
-      // edges: edges silently failed
-      // to render — no error, since @xyflow/react's EdgeWrapper just
-      // returns null for any edge whose endpoints aren't "initialized" yet
-      // — sometimes never catching up on its own). updateNodeInternals
-      // measures a node's handle bounds synchronously via direct DOM reads
-      // (see @xyflow/system's updateNodeInternals) rather than waiting on
-      // that passive observer, so forcing it for every just-loaded node
-      // makes every edge resolve immediately and deterministically instead
-      // of racing. Deferred one frame (rAF) since the node elements this
-      // targets by data-id don't exist in the DOM until after this render
-      // commits.
+      // On a large diagram, React Flow's passive ResizeObserver measurement of node handle bounds
+      // can take an unpredictable number of render passes to settle. On the Meridian Rail landscape
+      // (82 nodes, 84 edges), edges silently failed to render, with no error because
+      // @xyflow/react's EdgeWrapper returns null for edges whose endpoints aren't initialized, and
+      // sometimes never caught up. updateNodeInternals measures handle bounds synchronously from
+      // the DOM (@xyflow/system), so forcing it for every just-loaded node makes every edge resolve
+      // immediately instead of racing. Deferred one frame (rAF) because the node elements it
+      // targets by data-id don't exist until this render commits.
       requestAnimationFrame(() => updateNodeInternals(openedNodes.map((n) => n.id)))
       setCurrentPath(path)
       setDiagramMetadata(openedMetadata)
@@ -4905,14 +4721,11 @@ function CanvasInner(): React.JSX.Element {
     [setNodes, setEdges, runSync, scanMissingFiles, updateNodeInternals]
   )
 
-  // A window opened with an initial diagram (File -> Open, or either
-  // link-navigation flow) gets it via a ?path= query string on its URL —
-  // read here rather than in main, so this reuses the same tested load
-  // path as everything else instead of duplicating file-read logic
-  // (ADR 0023). Ref-guarded, not an empty deps array, so this survives
-  // React StrictMode's dev-mode double-invoke and doesn't re-fire if
-  // loadDiagramIntoCanvas's identity changes across renders — see ADR 0018
-  // for why this file is careful about effect double-runs.
+  // A window opened with an initial diagram (File -> Open, or either link-navigation flow) gets it
+  // via a ?path= query string, read here rather than in main so it reuses the tested load path (ADR
+  // 0023). Ref-guarded, not an empty deps array, so it survives StrictMode's dev double-invoke and
+  // doesn't re-fire if loadDiagramIntoCanvas's identity changes (ADR 0018 covers why this file is
+  // careful about effect double-runs).
   const initialLoadDone = useRef(false)
   useEffect(() => {
     if (initialLoadDone.current) return
@@ -5049,14 +4862,11 @@ function CanvasInner(): React.JSX.Element {
     closeCheckStateRef.current = { isDirty, currentPath, nodes }
   })
 
-  // Shared by the close-prompt's Save option and the drop-prompt's "Save &
-  // Open Here" option — both need "pick a path if there isn't one yet,
-  // then persist" outside of an interactive Save/Save As click, so this
-  // takes its inputs as plain arguments rather than closing over
-  // possibly-stale `currentPath`/`nodes` the way a normal useCallback
-  // would (both callers already track their own fresh values via refs, for
-  // the same reason persistDiagram itself takes nodesToSave as a param).
-  // Returns the path actually saved to, or null if cancelled/failed.
+  // Shared by the close-prompt's Save and the drop-prompt's "Save & Open Here": both need "pick a
+  // path if there isn't one, then persist" outside an interactive Save click, so it takes its
+  // inputs as arguments instead of closing over possibly stale `currentPath`/`nodes` (callers track
+  // fresh values via refs, as persistDiagram does with nodesToSave). Returns the path saved to, or
+  // null if cancelled or failed.
   const performSaveNow = useCallback(
     async (nodesToSave: Node[], currentPathNow: string | null): Promise<string | null> => {
       let path = currentPathNow
@@ -5242,16 +5052,11 @@ function CanvasInner(): React.JSX.Element {
     updatePreferences({ recentDiagrams: [] })
   }, [updatePreferences])
 
-  // File -> Close — NOT closing the OS window (this app's own
-  // convention: a window is a diagram, not
-  // necessarily disposable). Discards the current diagram back to a blank
-  // one *in this same window*, reusing loadDiagramIntoCanvas — the same
-  // full-state reset every other load path already goes through — rather
-  // than duplicating a scattered set of individual setState(initial) calls.
-  // Now that isDirty exists, the confirm() guard is skipped
-  // whenever there's genuinely nothing to lose, not just when the canvas
-  // happens to be empty (a diagram can be dirty while empty too — add a
-  // entity, delete it again — so this is a real behavior change from before).
+  // File -> Close does not close the OS window: a window is a diagram, not necessarily disposable.
+  // It resets the current diagram to a blank one in the same window through loadDiagramIntoCanvas,
+  // the full-state reset every load path uses, instead of scattered setState(initial) calls. The
+  // confirm() guard is skipped whenever isDirty says there is nothing to lose, not only when the
+  // canvas is empty (a diagram can be dirty while empty: add an entity, delete it).
   const handleClose = useCallback(() => {
     if (isDirty && !confirm('Close this diagram? Any changes since the last save will be lost.'))
       return
@@ -5415,16 +5220,13 @@ function CanvasInner(): React.JSX.Element {
     [nodes, persistDiagram]
   )
 
-  // Ctrl/Cmd+click entry point for linked-diagram navigation, exposed via DiagramContext.
-  // A node with no link yet shows a chooser (create new / link existing) at
-  // the click point using the existing generic ContextMenu; an already-
-  // linked node opens straight into a new window (ADR 0023).
-  // useEventCallback, not useCallback — its body closes over nodes /
-  // currentPath / the link sub-handlers (which in turn depend on the whole
-  // diagram state via persistDiagram), so a useCallback here would get a
-  // new identity on every edit and, through the memoized DiagramContext
-  // value, re-render every node and edge (ADR 0073). It's only ever called
-  // from a Ctrl/Cmd+click, so the always-latest-closure semantics are safe.
+  // Ctrl/Cmd+click entry point for linked-diagram navigation, exposed via DiagramContext. A node
+  // without a link gets a chooser (create new / link existing) at the click point through the
+  // generic ContextMenu; a linked node opens straight into a new window (ADR 0023).
+  // useEventCallback, not useCallback: the body closes over nodes, currentPath and link
+  // sub-handlers that depend on the whole diagram state, so a useCallback would change identity on
+  // every edit and, through the memoized DiagramContext value, re-render every node and edge (ADR
+  // 0073). It is only called from a Ctrl/Cmd+click, so always-latest-closure semantics are safe.
   const handleLinkClick = useEventCallback((nodeId: string, clientX: number, clientY: number) => {
     if (!currentPath) {
       showAlert('Save the diagram before linking to another diagram.')
@@ -5702,43 +5504,28 @@ function CanvasInner(): React.JSX.Element {
   const selectedNodes = useMemo(() => nodes.filter((n) => n.selected), [nodes])
   const selectedEdges = useMemo(() => edges.filter((e) => e.selected), [edges])
 
-  // Each node's persisted stacking order — see ADR 0035. No
-  // type-based special-casing here: the "containers render behind entities"
-  // look most diagrams start with is purely a consequence of the
-  // load-time backfill's starting values (applyZIndexBackfill/nextZIndex),
-  // not a rule enforced at render time — drag a container above an entity in
-  // the layer panel and it genuinely renders above it from then on. React
-  // Flow still adds its own selection elevation on top of whatever's set
-  // here (elevateNodesOnSelect, on by default).
+  // Each node's persisted stacking order (ADR 0035). No type-based special-casing here: the
+  // "containers behind entities" look comes only from the load-time backfill's starting values
+  // (applyZIndexBackfill/nextZIndex), not from a render-time rule, so a container dragged above an
+  // entity in the layer panel renders above it from then on. React Flow still adds its own
+  // selection elevation (elevateNodesOnSelect, on by default).
   //
-  // zIndex/draggable/deletable/line-pointerEvents (deriveNodeFields, module
-  // scope above) are derived from each node's own `data`/`type` — but kept
-  // in sync via this effect rather than recomputed into a fresh wrapper
-  // array on every render. React Flow's own adoptUserNodes (@xyflow/system)
-  // only reuses a node's already-measured internal state (handle bounds,
-  // measured size) when the *exact same* node object is passed to
-  // <ReactFlow nodes={...}> again; a fresh wrapper object every render, for
-  // every node regardless of whether that node actually changed, makes
-  // React Flow treat the *entire diagram* as freshly unmeasured every
-  // render. On a large diagram (found on the 82-node Meridian Rail
-  // landscape, alongside the edges-don't-render bug in known-issues.md)
-  // that showed up as a visible ~300ms stutter on every drag-to-select
-  // boundary crossing: one node's selection toggling produced a new `nodes`
-  // array, which — with a render-time wrapper — rebuilt every *other*
-  // unrelated node's object too, discarding its measured state.
+  // zIndex/draggable/deletable/line-pointerEvents (deriveNodeFields, module scope) come from each
+  // node's `data`/`type`, but are kept in sync by this effect instead of rebuilt into a fresh
+  // wrapper array every render. React Flow's adoptUserNodes (@xyflow/system) reuses a node's
+  // measured internal state (handle bounds, size) only when the exact same node object is passed
+  // again; a new wrapper per node per render makes RF treat the whole diagram as unmeasured every
+  // render. On a large diagram (the 82-node Meridian Rail landscape) that was a ~300ms stutter at
+  // every drag-to-select boundary crossing: one selection toggle produced a new `nodes` array and,
+  // with render-time wrappers, rebuilt every unrelated node too (see also the edges-don't-render
+  // entry in known-issues.md).
   //
-  // deriveNodeFields returns a node's own reference unchanged when nothing
-  // needs to change, so the effect's setNodes call below only replaces the
-  // specific nodes whose derived fields actually drifted (and bails out of
-  // the state update entirely — same array reference — when nothing did),
-  // rather than touching every node on every run. A ref-based cache read
-  // during render would do the same job, but this repo's react-compiler
-  // lint rule (enforced as an error, not just style) disallows reading or
-  // writing a ref's `.current` during render at all — this effect-based
-  // "materialize the derived fields onto state itself, self-correcting"
-  // approach needs no ref, at the cost of one extra render pass whenever a
-  // node's derived fields genuinely change (locking it, moving it between
-  // z-index tiers) rather than applying within the same render.
+  // deriveNodeFields returns a node's own reference when nothing changes, so the setNodes below
+  // replaces only nodes whose derived fields drifted, and bails out entirely (same array) when none
+  // did. A ref-based cache read during render would do the same, but this repo's react-compiler
+  // lint rule (an error) forbids reading or writing a ref's `.current` during render. Materializing
+  // the derived fields onto state, self-correcting, needs no ref, at the cost of one extra render
+  // when a node's derived fields really change (locking it, moving it between z-index tiers).
   useEffect(() => {
     setNodes((prev) => {
       let changed = false
@@ -5759,53 +5546,37 @@ function CanvasInner(): React.JSX.Element {
     [nodes]
   )
 
-  // Stable DOM-order tie-breaker for edges of otherwise-equal zIndex below
-  // — kept from the edge-reconnect-priority work, though live debugging (2026-08-22, see
-  // docs/known-issues.md) found DOM order was never actually the real
-  // mechanism deciding reconnect-handle hit-testing; see SELECTED_EDGE_Z_BOOST
-  // just below for the fix that actually addresses it.
+  // Stable DOM-order tie-breaker for edges of otherwise equal zIndex. It dates from the
+  // reconnect-priority work, but DOM order turned out not to be what decides reconnect-handle
+  // hit-testing (docs/known-issues.md); SELECTED_EDGE_Z_BOOST below is the real fix.
   //
-  // Returns `edges` itself, by reference, unless at least one edge is
-  // selected — only then is the selected-last reorder built. Keeps the
-  // <ReactFlow edges={...}> reference stable in the common case (nothing
-  // selected), so React Flow stops re-syncing its whole edge store on
-  // unrelated CanvasInner renders (ADR 0073). The reorder is only a
-  // tie-breaker for edges of exactly equal computed zIndex anyway — the
-  // real selected-edge priority is SELECTED_EDGE_Z_BOOST below — so
-  // restricting it to "an edge is selected" loses nothing.
+  // Returns `edges` itself, by reference, unless an edge is selected; only then is the
+  // selected-last reorder built. That keeps the <ReactFlow edges> reference stable in the common
+  // case, so React Flow doesn't re-sync its whole edge store on unrelated CanvasInner renders (ADR
+  // 0073). Restricting the reorder to "an edge is selected" loses nothing, since it only breaks
+  // ties.
   const orderedEdges = useMemo(() => {
     if (!edges.some((e) => e.selected)) return edges
     return [...edges.filter((e) => !e.selected), ...edges.filter((e) => e.selected)]
   }, [edges])
 
-  // An edge has no zIndex of its own to control — ADR 0035
-  // deliberately scoped this feature to Entity/Container/Text only. Instead
-  // it always sits at the midpoint of its two endpoints' current stacking,
-  // computed fresh here alongside orderedEdges above, never persisted.
+  // An edge has no zIndex of its own (ADR 0035 scoped that to Entity/Container/Text): it sits at
+  // the midpoint of its endpoints' current stacking, computed here next to orderedEdges and never
+  // persisted.
   //
-  // Selected edges get pushed well above that midpoint range — traced
-  // 2026-08-22 (docs/known-issues.md) after a real, reproduced bug: React
-  // Flow renders each edge inside its own `<svg style={{ zIndex }}>`
-  // wrapper (a real CSS z-index per edge, not shared DOM/paint order at
-  // all), and that zIndex comes from this exact midpoint computation
-  // combined with `elevateEdgesOnSelect` (a React Flow option that
-  // defaults to false and was never enabled here) — so selection had
-  // *zero* effect on which edge's z-index won at a shared connection
-  // point; two converging edges resolved purely by which pair of
-  // endpoints happened to average a higher zIndex, unrelated to which one
-  // was actually selected. The original `orderedEdges`-only fix
-  // (DOM order) coincidentally looked like it worked in that one test
-  // scenario but was never actually the operative mechanism.
+  // Selected edges are pushed well above that range. React Flow renders each edge in its own `<svg
+  // style={{ zIndex }}>` wrapper (a real CSS z-index per edge, not shared paint order), and that
+  // zIndex comes from this midpoint computation plus `elevateEdgesOnSelect`, which defaults to
+  // false and was never enabled here. So selection had no effect on which edge won at a shared
+  // connection point: converging edges resolved by whichever endpoint pair averaged a higher zIndex
+  // (docs/known-issues.md). The earlier orderedEdges-only fix (DOM order) only looked like it
+  // worked in one test scenario.
   const SELECTED_EDGE_Z_BOOST = 1_000_000
-  // Same "materialize onto state, don't rebuild a wrapper every render"
-  // reasoning as the node-fields effect above — an edge's own zIndex isn't
-  // purely a function of the edge itself (it depends on its endpoints'
-  // zIndex), so this recomputes it from current `nodeZIndexById` on every
-  // run rather than using a pure per-edge derive function, but still only
-  // replaces (deriveEdgeFields, module scope above) the specific edges
-  // whose resolved zIndex actually changed, keeping every other edge's
-  // object — and therefore its LabeledEdge instance's React.memo bailout —
-  // stable.
+  // Same "materialize onto state, don't rebuild a wrapper every render" reasoning as the
+  // node-fields effect above. An edge's zIndex depends on its endpoints' zIndex, so it is
+  // recomputed from the current `nodeZIndexById` on each run, but only the edges whose resolved
+  // zIndex changed are replaced (deriveEdgeFields, module scope), keeping every other edge's
+  // object, and so its LabeledEdge React.memo bailout, stable.
   useEffect(() => {
     setEdges((prev) => {
       let changed = false
@@ -5822,21 +5593,16 @@ function CanvasInner(): React.JSX.Element {
     })
   }, [edges, nodeZIndexById, setEdges])
 
-  // Plain-data projection for LayerPanel — keeps that component decoupled
-  // from React Flow's own Node type, same reasoning as passing plain
-  // derived data to other panels elsewhere in this file. Sorted highest
-  // z-index first, matching the panel's own top-of-list-is-frontmost
-  // display convention — see ADR 0035.
-  // Container-nesting analysis for the Layers panel + Diagnostics (ADR 0075):
-  //  - parentLabelById: the immediate parent's label, for the "in: X" badge
-  //  - invertedZIds: nodes React Flow renders *above* their own parent even
-  //    though this app's raw data.zIndex would put them below — the
-  //    parentZ + 1 rule in @xyflow/system's calculateChildXYZ. The Layers
-  //    panel sorts on raw zIndex (the value drag-to-restack edits), so these
-  //    are the rows whose displayed order disagrees with what's clickable.
-  //  - outgrownAdvisories: a child whose bounds escape its parent's — the
-  //    entity that makes the z-inversion visible and confusing (warn only, no
-  //    auto-fix).
+  // Plain-data projection for LayerPanel, keeping it decoupled from React Flow's Node type. Sorted
+  // highest zIndex first, matching the panel's top-is-frontmost convention (ADR 0035).
+  // Container-nesting analysis for the Layers panel and Diagnostics (ADR 0075):
+  // - parentLabelById: the immediate parent's label, for the "in: X" badge
+  // - invertedZIds: nodes React Flow renders above their own parent even though raw data.zIndex
+  //   would put them below (the parentZ + 1 rule in @xyflow/system's calculateChildXYZ). The Layers
+  //   panel sorts on raw zIndex, which is what drag-to-restack edits, so these are the rows whose
+  //   displayed order disagrees with what is clickable.
+  // - outgrownAdvisories: a child whose bounds escape its parent's, which makes the inversion
+  //   visible and confusing (warn only, no auto-fix).
   const hierarchyAnalysis = useMemo(() => {
     const byId = new Map(nodes.map((n) => [n.id, n]))
     const sizeOf = (n: Node): { w: number; h: number } => ({
@@ -5988,14 +5754,11 @@ function CanvasInner(): React.JSX.Element {
           ]
         }
 
-  // Mode-aware menu bar (ADR 0079). The Security Matrix persona is still a
-  // render-only prototype with no Canvas-level actions of its own (its
-  // calculation-mode / manage-matrix controls live inside ThreatMatrixView),
-  // so for now "matrix" just hides what doesn't apply: the whole Edit menu,
-  // the diagram-specific View panels, and Export as PNG. File basics
-  // (New/Open/Recent/Save/Save As/Reload/Close), Preferences and About are
-  // shared. Matrix-specific menus get added back once the matrix has real,
-  // persisted state to act on.
+  // Mode-aware menu bar (ADR 0079). The Security Matrix persona is still a render-only prototype
+  // with no Canvas-level actions (its controls live inside ThreatMatrixView), so "matrix" just
+  // hides what doesn't apply: the Edit menu, the diagram-specific View panels and Export as PNG.
+  // File basics, Preferences and About are shared. Matrix-specific menus come back once the matrix
+  // has persisted state to act on.
   const isDiagramPersona = persona === 'diagram'
   const preferencesItem: MenuBarItem = { label: 'Preferences', onSelect: togglePreferencesPanel }
 
@@ -6254,16 +6017,12 @@ function CanvasInner(): React.JSX.Element {
     [updatePreferences, preferences.defaultStyles]
   )
 
-  // Memoized so a high-frequency state change elsewhere in CanvasInner (e.g.
-  // dragging a native color-input handle, which can fire dozens of onChange
-  // events per second) doesn't force every node/edge to re-render just
-  // because this object got a new identity — every consumer subscribes via
-  // useContext, which bypasses their own React.memo wrapper entirely (that
-  // only guards against prop changes from a parent, not a Context
-  // subscription). See ADR 0056. Every function here is already
-  // useCallback-stable; effectiveGravityPresets() returns its input
-  // reference unchanged when non-empty, so this only recomputes when one of
-  // these values has genuinely, referentially changed.
+  // Memoized so a high-frequency state change elsewhere in CanvasInner (e.g. dragging a native
+  // colour-input handle, dozens of onChange events per second) doesn't re-render every node and
+  // edge just because this object got a new identity: consumers subscribe via useContext, which
+  // bypasses their React.memo wrapper (that only guards parent prop changes). See ADR 0056. Every
+  // function here is useCallback-stable, and effectiveGravityPresets() returns its input reference
+  // when non-empty, so this recomputes only when a value really changed.
   const diagramContextValue: DiagramContextValue = useMemo(
     () => ({
       diagramPath: currentPath,
@@ -6551,17 +6310,12 @@ function CanvasInner(): React.JSX.Element {
                   deleteKeyCode={['Delete', 'Backspace']}
                   multiSelectionKeyCode="Shift" // frees Ctrl/Cmd+click for linked-diagram navigation
                   colorMode={theme}
-                  // Overrides React Flow's own light/dark default background
-                  // — ADR 0048. Setting plain `backgroundColor`
-                  // here does nothing visible: the actual paint comes from
-                  // <Background>'s own absolutely-positioned SVG
-                  // (.react-flow__background), which reads the CSS custom
-                  // property --xy-background-color, not the literal
-                  // background-color, on whichever ancestor defines it — see
-                  // node_modules/@xyflow/react/dist/style.css. undefined
-                  // here is a no-op (React drops it from the style object),
-                  // so this falls back to the theme default exactly like
-                  // today whenever the user hasn't set one.
+                  // Overrides React Flow's light/dark default background (ADR 0048). Plain
+                  // `backgroundColor` does nothing visible: the paint comes from <Background>'s
+                  // absolutely positioned SVG (.react-flow__background), which reads the CSS custom
+                  // property --xy-background-color on whichever ancestor defines it
+                  // (node_modules/@xyflow/react/dist/style.css). `undefined` is a no-op (React
+                  // drops it from the style object), so the theme default applies when none is set.
                   style={
                     {
                       // Theme-adaptive (ADR 0034) like every other
@@ -6573,14 +6327,11 @@ function CanvasInner(): React.JSX.Element {
                         preferences.canvasBackgroundColor,
                         theme
                       ),
-                      // Read directly by LabeledEdge's stroke when selected
-                      // (ADR 0056) — kept off DiagramContext deliberately:
-                      // this value only ever matters to whichever edge is
-                      // currently selected (usually zero or one of many), so
-                      // threading it through Context would re-render every
-                      // edge on every change regardless of selection. A CSS
-                      // var updates the browser's paint directly, with no
-                      // React re-render of any edge at all, selected or not.
+                      // Read directly by LabeledEdge's stroke when selected (ADR 0056), kept off
+                      // DiagramContext on purpose: it matters only to the selected edge (usually
+                      // zero or one of many), so threading it through Context would re-render every
+                      // edge on every change. A CSS variable updates the browser's paint with no
+                      // React re-render of any edge.
                       '--selected-edge-highlight-color': preferences.selectedEdgeHighlightColor
                     } as React.CSSProperties
                   }

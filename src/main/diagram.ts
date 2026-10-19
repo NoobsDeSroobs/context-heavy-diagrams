@@ -64,19 +64,15 @@ export function registerDiagramHandlers(): void {
     return result.filePath
   })
 
-  // Saves the diagram and its notes as one plan (ADR 0092): check for conflicts,
-  // save everything that doesn't conflict in the crash-safe order
-  // (documentSaveExec.ts), and report what was held back so the renderer can ask
-  // the user per file and call again with overwrite: true for just those.
+  // Saves the diagram and its notes as one plan (ADR 0092): check for conflicts, save everything
+  // that doesn't conflict in the crash-safe order (documentSaveExec.ts), and report what was held
+  // back so the renderer can ask per file and call again with overwrite: true for just those.
   //
-  // Registers this window's path in the windows.ts registry so a later
-  // attempt to open the same file elsewhere focuses this window instead
-  // of opening a duplicate (ADR 0023) — covers both Save and the first
-  // Save As, the only two points a window's path becomes known if it
-  // wasn't opened with one already (e.g. File -> New). sessionId is the
-  // window's pre-save recovery identity (see ADR 0040) — a successful save
-  // makes any recovery snapshot under either key (the old session id, or
-  // this same path from a previous save) redundant.
+  // Registers this window's path in the windows.ts registry so opening the same file elsewhere
+  // focuses this window instead of duplicating it (ADR 0023). That covers Save and the first Save
+  // As, the only points where a window's path becomes known if it wasn't opened with one (e.g. File
+  // -> New). sessionId is the window's pre-save recovery identity (ADR 0040): a successful save
+  // makes any recovery snapshot under it, or under this path from an earlier save, redundant.
   ipcMain.handle(
     'document:save',
     async (event, request: SaveDocumentRequest): Promise<SaveOutcome> => {
@@ -131,17 +127,13 @@ export function registerDiagramHandlers(): void {
     }
   )
 
-  // No dialog — used by a window's own initial-load mount effect (path
-  // passed via ?path= query string, ADR 0023). Every open path (File ->
-  // Open, linked-diagram navigation, drag-and-drop) funnels through here
-  // eventually, so this is the one place that updates lastOpenedDirectory
-  // and the recent-diagrams list to cover all of them, rather than
-  // duplicating the update at every dialog/entry point separately.
-  // Returns the file's stamp alongside it — the renderer's baseline for
-  // detecting later outside changes (ADR 0092). Stamped BEFORE reading: if
-  // the file changes in between, the baseline is older than what we hold, so
-  // the next check errs toward "changed" (a harmless extra prompt) rather than
-  // missing an outside edit.
+  // No dialog; used by a window's initial-load mount effect (path from the ?path= query string, ADR
+  // 0023). Every open path (File -> Open, linked-diagram navigation, drag-and-drop) funnels through
+  // here, so this is the one place that updates lastOpenedDirectory and the recent-diagrams list.
+  // Returns the file's stamp, the renderer's baseline for detecting later outside changes (ADR
+  // 0092). Stamped BEFORE reading: if the file changes in between, the baseline is older than what
+  // we hold, so the next check errs toward "changed" (a harmless extra prompt) rather than missing
+  // an outside edit.
   ipcMain.handle(
     'diagram:openPath',
     async (_event, path: string): Promise<{ diagram: DiagramFile; stamp: Stamp }> => {

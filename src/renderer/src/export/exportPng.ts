@@ -32,24 +32,16 @@ const LEGEND_MARGIN = 16
 // blurrier than the on-screen canvas.
 const PIXEL_RATIO = 2
 
-// Walks up from a starting element until it finds a real (non-transparent)
-// computed background-color — the same way a browser visually composites
-// "what color is actually behind this," not a literal CSS-variable lookup.
-// Needed because .react-flow's own background-color rule
-// (node_modules/@xyflow/react/dist/style.css) resolves through
-// var(--xy-background-color, var(--xy-background-color-default)), and its
-// *light-theme* default is literally `transparent` — reading the
-// --xy-background-color custom property directly (an earlier version of
-// this function did) returns an empty string whenever no custom
-// canvasBackgroundColor is set, which is the common case, silently always
-// falling back to a hardcoded white rather than whatever's actually
-// painted behind the canvas (found live, 2026-08-23 — "Use canvas color"
-// exported plain white regardless of the real on-screen color). In light
-// mode with no override, that real color comes from this app's own
-// `body { background: var(--color-background) }` (assets/base.css),
-// several ancestors above .react-flow itself — walking up the DOM and
-// reading the browser's own already-resolved `background-color` at each
-// level sidesteps needing to know which ancestor happens to own it.
+// Walks up from a starting element to the first real (non-transparent) computed background-color,
+// the way a browser composites "what is actually behind this", not a CSS-variable lookup.
+// .react-flow's background resolves through var(--xy-background-color,
+// var(--xy-background-color-default)) (node_modules/@xyflow/react/dist/style.css) and its
+// light-theme default is literally `transparent`, so reading --xy-background-color directly returns
+// an empty string when no canvasBackgroundColor is set (the common case) and silently fell back to
+// white: "Use canvas color" exported white regardless of what was on screen. In light mode that
+// real colour comes from `body { background: var(--color-background) }` (assets/base.css), several
+// ancestors above .react-flow; reading the browser's resolved `background-color` at each level
+// avoids knowing which ancestor owns it.
 export function resolveEffectiveBackgroundColor(start: HTMLElement): string {
   let current: HTMLElement | null = start
   while (current) {
@@ -74,37 +66,22 @@ export function rgbStringToHex(rgb: string): string {
   return `#${toHex(match[1])}${toHex(match[2])}${toHex(match[3])}`
 }
 
-// This app's own edge markers (edgeMarkers.tsx) use the SVG `context-fill`/
-// `context-stroke` paint keywords so one marker def can be referenced by
-// edges of any color, each rendering the marker in its own live stroke
-// color. That works fine on screen but not through html-to-image's toPng():
-// a <marker>'s content is template content, never actually part of the
-// normal painted tree, so the "which element referenced me, and what's its
-// stroke" relationship context-stroke depends on doesn't survive
-// html-to-image's own DOM-to-image conversion — arrowheads render with no
-// visible color at all in the exported PNG (found live, 2026-09-15;
-// swapping which marker got referenced by default, a first attempted fix,
-// didn't help, since both this app's and React Flow's own default marker
-// used to point at the same underlying mechanism once that first change
-// landed — the real gap was context-stroke itself, not which def was used).
+// This app's edge markers (edgeMarkers.tsx) use the SVG `context-fill`/`context-stroke` keywords so
+// one marker def serves edges of any colour. That works on screen but not through html-to-image's
+// toPng(): a <marker>'s content is template content, outside the normal painted tree, so the "which
+// element referenced me, and what's its stroke" relationship context-stroke needs doesn't survive
+// the DOM-to-image conversion, and arrowheads export with no visible colour. (Swapping which marker
+// is referenced by default didn't help; the gap is context-stroke itself.)
 //
-// Selection/hover-driven marker color doesn't need to survive export
-// (selection is already cleared before capture, same as the resize/
-// connection-point handles this function's own doc comment already notes
-// as a separate concern), so this only ever needs each edge's *current*
-// resolved color, not full CSS-var dynamism — resolving that ahead of time
-// into one literal-color marker clone per distinct color actually in use
-// (exactly how React Flow's own built-in markers already work) sidesteps
-// the whole context-* reliability question for export specifically,
-// without touching how markers render live.
+// Selection and hover colours needn't survive export (selection is cleared before capture), so only
+// each edge's current resolved colour is needed. Resolving it ahead of time into one literal-colour
+// marker clone per colour in use, as React Flow's built-in markers work, avoids the context-*
+// question for export without touching live rendering.
 //
-// Operates on viewportEl directly (the live, connected tree) for the
-// duration of the capture, then restores every attribute it touched — same
-// pattern as the marker-defs clone below, chosen for the same reason
-// (moving/mutating the live React-managed edge nodes themselves, rather
-// than a append-only sibling clone, would be riskier; this instead only
-// ever restores exactly what it changed, synchronously, before any
-// re-render could observe the mutated state).
+// Operates on viewportEl directly for the duration of the capture, then restores every attribute it
+// touched, synchronously, before any re-render could observe the mutation. Same pattern as the
+// marker-defs clone below: mutating the live React-managed edge nodes is riskier than an
+// append-only sibling clone, so it restores exactly what it changed.
 function resolveMarkersForExport(viewportEl: HTMLElement): () => void {
   const CHD_MARKER_IDS = new Set(Object.values(MARKER_ID))
   const defs = viewportEl.querySelector('[data-export-role="edge-marker-defs"] defs')
@@ -155,16 +132,11 @@ function resolveMarkersForExport(viewportEl: HTMLElement): () => void {
   return () => restores.forEach((restore) => restore())
 }
 
-// Captures the diagram's own content — cropped to nodes' bounds plus
-// paddingPx, at zoom 1 regardless of the window's current viewport/zoom —
-// as a PNG data URL. viewportEl must be the `.react-flow__viewport`
-// element: it contains only nodes/edges, not Background/Controls/MiniMap
-// (siblings in React Flow's own DOM, positioned outside it), so capturing
-// it directly needs no extra hiding of editor chrome. Selection outlines
-// and resize/connection-point handles are a separate concern the caller
-// handles (deselecting before capture) since they render conditionally
-// inside each node's own DOM, not something this function can see from
-// the outside.
+// Captures the diagram's content, cropped to the nodes' bounds plus paddingPx at zoom 1 regardless
+// of the current viewport, as a PNG data URL. viewportEl must be `.react-flow__viewport`: it holds
+// only nodes and edges, not Background/Controls/MiniMap (its siblings), so no editor chrome needs
+// hiding. Selection outlines and resize/connection-point handles render conditionally inside each
+// node, which this function can't see from outside, so the caller deselects before capture.
 export async function captureDiagramPng(
   nodes: Node[],
   edges: { source: string; target: string }[],
@@ -241,15 +213,12 @@ export async function captureDiagramPng(
     ? undefined
     : (options.backgroundColorOverride ?? resolveEffectiveBackgroundColor(viewportEl))
 
-  // Edge arrow/marker <defs> (EdgeMarkerDefs) live in a separate, zero-size
-  // <svg> outside .react-flow__viewport, so every marker-end="url(#...)"
-  // reference on an edge path would otherwise dangle in this function's
-  // cloned-subtree capture, leaving arrowheads invisible in the exported
-  // PNG (found live, 2026-08-23). Cloning it in for the duration of the
-  // capture (rather than moving the real node) avoids disturbing React's
-  // own DOM bookkeeping for that element. The legend's own 'line'-kind
-  // swatches (exportLegendDom.ts) reference the same marker ids, so this
-  // one clone covers both.
+  // The edge marker <defs> (EdgeMarkerDefs) live in a separate zero-size <svg> outside
+  // .react-flow__viewport, so every marker-end="url(#...)" on an edge path would dangle in this
+  // function's cloned-subtree capture and arrowheads would be invisible in the PNG. Cloning it in
+  // for the capture, rather than moving the real node, avoids disturbing React's DOM bookkeeping.
+  // The legend's 'line' swatches (exportLegendDom.ts) reference the same marker ids, so one clone
+  // covers both.
   const markerDefs = document.querySelector('[data-export-role="edge-marker-defs"]')
   const markerDefsClone = markerDefs?.cloneNode(true) as ChildNode | undefined
   if (markerDefsClone) viewportEl.insertBefore(markerDefsClone, viewportEl.firstChild)

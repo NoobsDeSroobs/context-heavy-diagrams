@@ -35,16 +35,12 @@ function parseValue(raw: string): JsonValue {
 
 type MetadataEntryTuple = [string, MetadataEntry]
 
-// Three groups, in this fixed order (not user-arrangeable — YAGNI until
-// someone actually asks for custom grouping): Required fields
-// (lockedEditable — still needs a human to fill in, so it's the one worth
-// seeing first), User fields (free/unlocked — whatever a human added),
-// External fields (lockedStatic — fixed by the template, never edited here
-// at all, least actionable so it sinks to the bottom). Alphabetical within
-// each group. A `CollapsibleSection` per group, reusing the same component
-// the rest of this panel already groups Fill/Border/Font/Transform with —
-// gives both a visible label and a collapse toggle for free, no new
-// component needed.
+// Three groups in a fixed order (not user-arrangeable; YAGNI until someone asks): Required fields
+// (lockedEditable: still needs a human to fill in, so it goes first), User fields (free and
+// unlocked: whatever a human added), External fields (lockedStatic: fixed by the template, never
+// edited here, so least actionable and last). Alphabetical within each group. One
+// `CollapsibleSection` per group, the component the rest of this panel already uses for
+// Fill/Border/Font/Transform.
 function groupEntries(entries: MetadataEntryTuple[]): {
   required: MetadataEntryTuple[]
   user: MetadataEntryTuple[]
