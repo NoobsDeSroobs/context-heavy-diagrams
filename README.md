@@ -59,6 +59,23 @@ https://github.com/user-attachments/assets/2e63dee5-85f8-4b32-a75a-f986084bd873
 - **Configurable connection points**, straight, step, smooth and curved routing, manual bend points, direction sets, and multi-connection wiring.
 - A full **style panel**, named style palettes you can share, alignment guides, snapping, align/distribute, and multi-select resize.
 
+### And more
+- **Legend and tag-based highlights**, including grouped highlights that combine several tags
+- **Named style palettes** for brand colours, fonts and default styles, shareable between diagrams
+- **Edge direction sets**: show data flow and call direction on the same edge, flippable
+- **Per-element lock** against accidental moves
+- **Format painter**: copy one element's style and apply it to many
+- **Alt+drag to duplicate**, select all of one type, and bulk-create elements from a pasted list
+- **Isolate mode** that dims everything outside your search result
+- **Search by icon**, by tag, or deep across linked diagrams
+- **Peek card**: hold Ctrl to preview an element's notes, tags and link
+- **Required tags** that propagate to child elements
+- **Copy and paste across diagrams** with links and icon paths retargeted
+- **External change detection**, so a file edited by git, an editor or an assistant is never silently overwritten
+- **A version warning** when a diagram was saved by a newer app
+- **Recent diagrams** menu and a keyboard shortcuts reference (Help → Keyboard shortcuts…)
+- **The `chd` command line tool** to validate diagrams
+
 > Advanced features are opt-in. A new diagram behaves like plain boxes and arrows until you reach for more ([ADR 0054](docs/decisions/0054-progressive-disclosure-for-advanced-features.md)).
 
 ## Try it

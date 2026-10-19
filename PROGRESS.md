@@ -15,7 +15,7 @@ The first branch merged on 2026-10-18; the follow-up work is on `epic/0137-relea
 **Git history rewrite (done 2026-10-18):** the history was cleaned of project-specific content and the author's personal address, keeping all commits ([ADR 0121](docs/decisions/0121-history-rewritten-before-first-release.md)), and force-pushed. The hosting repository was then recreated from the rewritten `master` alone, because the old one kept the old commits in its pull-request refs; older `PR #NNN` mentions refer to the former repository.
 
 **Needs the maintainer:**
-- Ask the artist under what terms the icon may be used (ownership, licence, whether it counts as a logo) and record the answer in `docs/licensing.md`; optionally ask for a 1280×640 social preview image.
+- Decide whether forks may reuse the icon or should replace it (the author owns all rights; see `docs/licensing.md`). Optionally ask the artist for a 1280×640 social preview image.
 - Screenshots and animations (shot list in the epic), read the new [getting-started guide](docs/getting-started.md) with the app open (it was written from the code), GitHub repository settings (description, topics), enable private vulnerability reporting, tag the first release.
 - Push once so CI runs for the first time; the Linux job is untested.
 - Live test still pending: opening a couple of the converted gallery examples. (The delete rule, paste centring and the property panel defaults were tested on 2026-10-18.)

@@ -22,4 +22,4 @@ This is not a blocker for the release and changes nothing about how the project 
 
 ## The app icon
 
-The raven icon (`build/icon.svg`, original in `build/icon-artist-original.svg`) was drawn by an artist commissioned by the author. **Open:** the terms it may be used under are not recorded yet: who owns the copyright, what licence it is released under (the code is GPL-3.0-or-later, the artwork need not be), and whether others may use it in forks or must not. Ask the artist, then write the answer here and, if it is a licence that needs attribution, in `THIRD-PARTY-NOTICES.md`'s source (`scripts/generate-notices.mjs`).
+The raven icon (`build/icon.svg`, original in `build/icon-artist-original.svg`) was drawn by an artist commissioned by the author. **Decided 2026-10-19:** the author owns all rights to it; the artist keeps the right to show it in their portfolio and marketing. **Open:** whether the icon is covered by the GPL-3.0-or-later like the rest of the repository (so forks may reuse it), or is reserved so that forks should replace it. The author, as the owner, can decide either way.
