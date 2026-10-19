@@ -408,7 +408,7 @@ export function registerWindowHandlers(): void {
   // stays entirely in the renderer's existing save flow; main only shows
   // the native 3-button dialog and, once told the close is approved,
   // cleans up the recovery file and lets the window actually close.
-  // `detail` (epic 0117, ADR 0102) is a one-line change-count computed
+  // `detail` (ADR 0102) is a one-line change-count computed
   // renderer-side from the same diff engine the Changes panel uses — main
   // only forwards it into the native dialog, same "main owns dialog
   // mechanics, renderer owns what to compute" split as the rest of this

@@ -83,8 +83,8 @@ const api = {
     return ipcRenderer.invoke('diagram:openPath', path)
   },
 
-  // Side-effect-free reread for "changes since last save" (epic 0117,
-  // ADR 0102) — unlike openDiagramAtPath, never records the file as
+  // Side-effect-free reread for "changes since last save" (ADR 0102) —
+  // unlike openDiagramAtPath, never records the file as
   // opened/recent. Resolves null if the path no longer resolves.
   rereadDiagramForDiff(path: string): Promise<DiagramFile | null> {
     return ipcRenderer.invoke('diagram:rereadForDiff', path)
@@ -293,7 +293,7 @@ const api = {
     return () => ipcRenderer.off('window:closeRequested', listener)
   },
 
-  // `detail` (epic 0117, ADR 0102): an optional one-line change-count
+  // `detail` (ADR 0102): an optional one-line change-count
   // ("3 modified, 1 added") shown in the native dialog's detail text.
   requestCloseDecision(detail?: string): Promise<'save' | 'discard' | 'cancel'> {
     return ipcRenderer.invoke('windows:requestCloseDecision', detail)

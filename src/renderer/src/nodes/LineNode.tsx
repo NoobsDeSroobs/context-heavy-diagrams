@@ -39,7 +39,7 @@ const DASH_ARRAY: Record<Exclude<LineStyleKind, undefined>, string | undefined> 
 // Recomputes the padded bounding box from an explicit (node, points) pair
 // and commits position/width/height/data.points in one updateNode call —
 // deliberately not a read-modify-write against the live store (see ADR
-// 0050's implementation notes in this epic's PR): every caller already has
+// 0050's implementation notes): every caller already has
 // both the node and the points it wants applied in hand.
 function normalizeLineBounds(
   rf: ReactFlowInstance,

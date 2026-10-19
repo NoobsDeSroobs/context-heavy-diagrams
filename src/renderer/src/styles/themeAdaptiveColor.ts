@@ -36,7 +36,7 @@ function parseCssColor(color: string): { r: number; g: number; b: number } | nul
 // looks nearly white and blue looks quite dark. Red sits in an awkward
 // middle — it looks noticeably darker than its V suggests — which is
 // exactly what broke the naive mirror for the case that motivated this
-// epic (readable white-on-red flipping to unreadable black-on-red instead
+// flip (readable white-on-red flipping to unreadable black-on-red instead
 // of the equally-readable inverse). Oklab's L tracks actual perceived
 // brightness across every hue, so mirroring *that* instead behaves the way
 // a human expects.

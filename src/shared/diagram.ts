@@ -108,7 +108,7 @@ export interface HighlightDefinition {
 // words — never auto-derived from `highlights` or anything else. `color`
 // only applies to 'line'/'entity' kinds: this app's icons are fixed
 // multi-color bundled/custom assets, not tintable, so an 'icon' entry
-// carries no color at all (see the epic's Decided section for why a
+// carries no color at all (see ADR 0033 for why a
 // background chip was also rejected — same ambiguity as a colored box).
 export type LegendEntryKind = 'line' | 'icon' | 'entity'
 export interface LegendEntry {
@@ -232,7 +232,7 @@ export interface DiagramNode {
   }
 }
 
-// One (entity, threat) risk assessment — unchanged from the epic 0060
+// One (entity, threat) risk assessment — unchanged from the earlier
 // prototype, now part of the persisted schema (ADR 0082). `probability`
 // and `consequence` are values on the diagram's probability/consequence
 // scales (DiagramSecurity below; absent scales mean the app's built-in
@@ -255,8 +255,8 @@ export interface SecurityThreat {
   description?: string
 }
 
-// One level of a probability or consequence scale — supersedes the epic
-// 0060 prototype's `ScaleLevel`.
+// One level of a probability or consequence scale — supersedes the earlier
+// prototype's `ScaleLevel`.
 export interface SecurityScaleLevel {
   value: number
   label: string
@@ -715,8 +715,8 @@ export function serializeDiagram(diagram: DiagramFile): string {
   return JSON.stringify(ordered, null, 2) + '\n'
 }
 
-// Legacy field/value names from before the Shape -> Entity rename (epic
-// 0076) — accepted on load so a file saved before the rename keeps opening
+// Legacy field/value names from before the Shape -> Entity rename — accepted on
+// load so a file saved before the rename keeps opening
 // unmodified, never written. serializeDiagram always emits the current
 // names, so a loaded-then-saved file silently upgrades itself. Remove once
 // no file predating the rename is expected to still be opened. Three spots

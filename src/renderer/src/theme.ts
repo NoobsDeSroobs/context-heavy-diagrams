@@ -30,7 +30,7 @@ function applyTheme(theme: Theme | null): void {
 // Resolved current theme (for React Flow's colorMode, which needs a
 // concrete 'light' | 'dark', never "system") plus a setter that always
 // makes an explicit, persisted choice — there's no UI path back to
-// "follow system" once you've picked one, matching the epic's own
+// "follow system" once you've picked one, matching a plain
 // "theme toggle" framing rather than a three-state picker.
 export function useTheme(): { theme: Theme; setTheme: (theme: Theme) => void } {
   const [stored, setStored] = useState<Theme | null>(readStoredTheme)

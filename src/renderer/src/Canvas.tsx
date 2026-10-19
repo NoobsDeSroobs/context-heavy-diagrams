@@ -1285,7 +1285,7 @@ function CanvasInner(): React.JSX.Element {
   const [stagedFileRemovals, setStagedFileRemovals] = useState<MissingFileEntry[]>([])
   const [dismissedFileKeys, setDismissedFileKeys] = useState<Set<string>>(new Set())
   const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false)
-  // "Changes since last save" (epic 0117, ADR 0102) — v1 scope, nodes/edges
+  // "Changes since last save" (ADR 0102) — v1 scope, nodes/edges
   // only. null means "not computed yet" (opening the panel triggers the
   // async reread), distinct from an empty diff (no changes).
   const [changesPanelOpen, setChangesPanelOpen] = useState(false)
@@ -1978,7 +1978,7 @@ function CanvasInner(): React.JSX.Element {
     setReferencesPanelOpen((open) => !open)
   }, [])
 
-  // Recomputes the disk-vs-memory diff (epic 0117, ADR 0102) — a
+  // Recomputes the disk-vs-memory diff (ADR 0102) — a
   // side-effect-free reread (never recordOpenedOrSaved) via
   // rereadDiagramForDiff, diffed against the same toDiagramFile() shape the
   // real save path uses. A never-saved diagram (currentPath null) diffs
@@ -2715,7 +2715,7 @@ function CanvasInner(): React.JSX.Element {
             // A note actively open but never yet saved (a brand-new note, or
             // any note on a diagram that's never been saved at all) has no
             // stored path yet — data.details stays unset until the first
-            // save (epic 0087's sync-on-save convention) — but it still has
+            // save (the sync-on-save convention) — but it still has
             // real, searchable content sitting in its shadow. Without this,
             // elementMatchesViaDetails' `!el.details` gate would treat an
             // in-memory-only note as if it didn't exist. The placeholder
@@ -4312,8 +4312,8 @@ function CanvasInner(): React.JSX.Element {
     [setNodes]
   )
 
-  // Locked (epic — blocks drag/resize/rotate and accidental delete via the
-  // canvas, see docs/file-format.md's `locked` field). `false` is written
+  // Locked (ADR 0043): blocks drag/resize/rotate and accidental delete via the
+  // canvas, see docs/file-format.md's `locked` field. `false` is written
   // as `undefined`, not stored explicitly — matches every other "absent
   // means off" optional node field (rotation, connectionPoints, etc.),
   // keeps an unlocked node's data free of a lingering `locked: false`.
@@ -5080,8 +5080,8 @@ function CanvasInner(): React.JSX.Element {
     [persistDiagram]
   )
 
-  // One-line change-count for the close-prompt's native dialog (epic 0117,
-  // ADR 0102) — reads the same autosaveStateRef the autosave snapshot uses,
+  // One-line change-count for the close-prompt's native dialog (ADR 0102) —
+  // reads the same autosaveStateRef the autosave snapshot uses,
   // for the same "don't rebind this listener on every nodes/edges change"
   // reason. Best-effort: any failure (e.g. an unreadable file) just omits
   // the detail line rather than blocking the close flow.
@@ -5563,7 +5563,7 @@ function CanvasInner(): React.JSX.Element {
       'search.toggle': toggleSearchOverlay,
       // Command palette (ADR 0100).
       'view.commandPalette': () => setCommandPaletteOpen(true),
-      // "Changes since last save" (epic 0117, ADR 0102).
+      // "Changes since last save" (ADR 0102).
       'view.changesSinceLastSave': toggleChangesPanel,
       'selection.selectAll': selectAll,
       'edit.duplicate': duplicateSelected,
@@ -5948,7 +5948,7 @@ function CanvasInner(): React.JSX.Element {
     [missingFiles, dismissedFileKeys]
   )
 
-  // "Changes since last save" Details bucket (epic 0117, ADR 0102) — reuses
+  // "Changes since last save" Details bucket (ADR 0102) — reuses
   // noteShadows' existing dirty flag (ADR 0092) directly, no new tracking.
   const detailsChangedEntries: DetailsChangedEntry[] = useMemo(
     () =>
@@ -5998,8 +5998,8 @@ function CanvasInner(): React.JSX.Element {
   // so for now "matrix" just hides what doesn't apply: the whole Edit menu,
   // the diagram-specific View panels, and Export as PNG. File basics
   // (New/Open/Recent/Save/Save As/Reload/Close), Preferences and About are
-  // shared. Matrix-specific menus get added back as epic 0079 gives the
-  // matrix real, persisted state to act on.
+  // shared. Matrix-specific menus get added back once the matrix has real,
+  // persisted state to act on.
   const isDiagramPersona = persona === 'diagram'
   const preferencesItem: MenuBarItem = { label: 'Preferences', onSelect: togglePreferencesPanel }
 
@@ -6124,9 +6124,8 @@ function CanvasInner(): React.JSX.Element {
   }
 
   // AI menu (ADR 0103): between View and Help; hidden by the
-  // `aiFeaturesEnabled` preference. Each epic-0133 task group appends its
-  // items here — until the first one lands the menu has nothing to show and
-  // is omitted rather than rendered empty.
+  // `aiFeaturesEnabled` preference, and omitted rather than rendered empty
+  // when it has no items.
   const aiMenuItems: MenuBarItem[] = [
     {
       label: 'Enable AI assistance in a folder…',

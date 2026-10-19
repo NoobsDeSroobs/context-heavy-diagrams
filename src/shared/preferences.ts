@@ -183,7 +183,7 @@ export interface AppPreferences {
   // Whether the top-level AI menu (and everything hanging off it) is shown —
   // see ADR 0103. A pure chrome toggle: nothing in a .chd file depends on it.
   // Default on; a future installer can seed it from its "enable AI features?"
-  // question (epic 0053).
+  // question.
   aiFeaturesEnabled: boolean
 }
 
@@ -242,7 +242,7 @@ export function withRecentDiagram(
 export function normalizePreferences(
   raw: Partial<AppPreferences> & {
     stylePalette?: LegacyStylePalette
-    // Pre-rename field name (Shape -> Entity, see epic 0076) — `defaultStyles`
+    // Pre-rename field name (Shape -> Entity) — `defaultStyles`
     // itself is spread from `rest` below, so this legacy sub-key is read and
     // folded in separately rather than via `rest`.
     defaultStyles?: {

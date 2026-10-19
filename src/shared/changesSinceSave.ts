@@ -1,4 +1,4 @@
-// Pure diff engine behind "changes since last save" (epic 0117, ADR 0102).
+// Pure diff engine behind "changes since last save" (ADR 0102).
 // v1 scope: nodes and edges only, by id — the 8 top-level collections
 // (highlights, legend, requiredTags, gravityPresets, security catalog,
 // edgeDirectionSets, metadata, maxConnectionPointsPerSide) are a deliberate

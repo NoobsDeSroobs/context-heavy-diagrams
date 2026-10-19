@@ -3,8 +3,7 @@
 // is what lets e.g. two shapes with a gap between them still snap into a
 // matching column. Deliberately does NOT include snap-to-grid (no grid
 // concept at all) or connection-aware alignment (positioning relative to
-// what a node is connected to) — both explicitly out of scope, decided
-// with the user when this epic started; see the epic doc.
+// what a node is connected to) — both explicitly out of scope.
 
 export const SNAP_THRESHOLD_PX = 5
 

@@ -8,8 +8,7 @@ import { parseInstallOptions } from '@shared/installOptions'
 // former localStorage-only storage (ADR 0032) with a file under this OS's
 // own conventional per-user app-data location, resolved automatically by
 // Electron's own app.getPath('userData'). The on-disk name stays
-// `settings.json` despite the "Settings" -> "Preferences" rename (epic
-// 0100) — it's what existing installs already have, and renaming it would
+// `settings.json` despite the "Settings" -> "Preferences" rename — it's what existing installs already have, and renaming it would
 // mean a migration for a file no user ever sees.
 function preferencesFile(): string {
   return join(app.getPath('userData'), 'settings.json')

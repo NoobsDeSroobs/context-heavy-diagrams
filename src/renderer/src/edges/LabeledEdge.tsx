@@ -144,8 +144,7 @@ function buildBezierPath(
 // identity across renders and the hooks below that depend on it do not re-run.
 const NO_POINTS: LinePoint[] = []
 
-// Fixed midpoint only, no drag-along-path — deliberately simple for v1, see
-// docs/planning/epics/0012-editable-anchored-labels.md. The label is always
+// Fixed midpoint only, no drag-along-path — deliberately simple for v1 (ADR 0020). The label is always
 // rendered (even empty) so there's something to double-click on to add one.
 //
 // Style (ADR 0014): `style`/`markerEnd` arriving as props are React Flow's
