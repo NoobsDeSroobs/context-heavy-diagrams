@@ -21,10 +21,10 @@ Commercial architecture tools are restrictive, and general box-and-arrow editors
 
 ## Features
 
-### Local, offline, and yours
+### Local and offline
 - **Works fully offline.** No server, no account, no sign-in. The app blocks its own network access, so this is enforced, not just promised ([ADR 0113](docs/decisions/0113-enforced-offline-behaviour.md)).
 - **Autosave and crash recovery**, light and dark themes, native file dialogs, and `.chd` files that open on double-click (Windows installer).
-- **One window per diagram**, with undo/redo, real OS clipboard copy/paste across windows, and a command palette (Ctrl/Cmd+K).
+- **One window per diagram**, with undo/redo, clipboard copy/paste across windows, and a command palette (Ctrl/Cmd+K).
 
 ### Git-friendly
 
@@ -34,18 +34,18 @@ Commercial architecture tools are restrictive, and general box-and-arrow editors
 
 A diagram is a small, deterministic text file, so git can do for it what it does for code:
 
-- **History you can read and rewind.** Every change is a small diff with a commit message saying why, and you can check out any earlier state of a diagram and open it.
+- **History you can rewind.** Every change is a small diff with a commit message saying why, and you can check out any earlier state of a diagram and open it.
 - **Review and branching.** Propose a change to an architecture in a pull request, compare branches, and merge, like any other change.
-- **Diagrams that live with the code.** Keep the diagram, its notes and its images in the same repository as the system and the documentation they describe, so they change in the same commit, get reviewed together and evolve together instead of drifting apart.
+- **Diagrams that live with the code.** Keep the diagram and its notes in the same repository as the code, so they change in the same commit, get reviewed together and evolve together instead of drifting apart.
 
 - **Plain-text `.chd` files:** deterministic JSON with a fixed key order and no embedded binaries, built to diff and merge like source code.
 - **The format is a standalone spec** ([docs/file-format.md](docs/file-format.md)). A third party can read or write it without this codebase.
-- **A "Changes since last save" panel**, and PNG export with an auto-generated legend.
+- **Deterministic generation of renders.** Any `.chd` file can reproduce the identical PNG with an auto-generated legend, saving you from bundling expensive blobs.
 
 ### Drill-down diagrams and hidden context
 - **Linked diagrams.** A node can link to another `.chd`, and Ctrl/Cmd-click opens it. Links only point downward, so any diagram in a tree opens as its own root.
-- **Per-node notes** in Markdown (with tables), shown in a side panel and never as another box on the canvas.
-- **Reference images** pinned to a node, shown in floating zoomable windows, and never part of the diagram or its exports.
+- **Per-node notes** in Markdown, shown in a side panel.
+- **Reference images** pinned to a node, shown in floating zoomable windows.
 - **Search** with a small query language (`tag:env=prod`, `has:details`, and more), optionally drilling into linked diagrams, with an isolate mode that dims everything else.
 
 ### Tags, highlights and views
