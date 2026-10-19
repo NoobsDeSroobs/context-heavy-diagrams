@@ -17,7 +17,7 @@ Commercial architecture tools are restrictive, and general box-and-arrow editors
 - **A node is one thing.** Notes, links, tags and icons are fields *on* the node, never separate objects you have to keep aligned.
 - **Edges are always attached.** They are bound to connection points and re-route when anything moves or resizes.
 - **Context goes behind the box, not on top of it.** Long explanations live in a Markdown notes panel, deeper structure lives in a linked diagram, and the canvas stays a readable overview.
-- **Your files are yours.** Plain, deterministic JSON on disk. No server, no account, no network.
+- **Your files are yours.** Plain, gitable and deterministic JSON on disk; no server, no account, no network.
 
 ## Features
 
