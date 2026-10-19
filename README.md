@@ -32,6 +32,12 @@ Commercial architecture tools are restrictive, and general box-and-arrow editors
 
 *Adding notes to four entities is four changed lines in the diagram, plus the new note files.*
 
+A diagram is a small, deterministic text file, so git can do for it what it does for code:
+
+- **History you can read and rewind.** Every change is a small diff with a commit message saying why, and you can check out any earlier state of a diagram and open it.
+- **Review and branching.** Propose a change to an architecture in a pull request, compare branches, and merge, like any other change.
+- **Diagrams that live with the code.** Keep the diagram, its notes and its images in the same repository as the system and the documentation they describe, so they change in the same commit, get reviewed together and evolve together instead of drifting apart.
+
 - **Plain-text `.chd` files:** deterministic JSON with a fixed key order and no embedded binaries, built to diff and merge like source code.
 - **The format is a standalone spec** ([docs/file-format.md](docs/file-format.md)). A third party can read or write it without this codebase.
 - **A "Changes since last save" panel**, and PNG export with an auto-generated legend.
