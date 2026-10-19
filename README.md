@@ -4,7 +4,7 @@
 
 > **Early open-source release (0.x).** It is built and tested mainly on Windows. Linux and macOS are supported targets but not yet verified, and there are no prebuilt downloads yet, so you build it from source (below). File compatibility is a priority, but expect rough edges. `1.0.0` is reserved for when the tool is feature-complete.
 
-<!-- Hero screenshot goes here (docs/images/). -->
+![Context Heavy Diagrams showing the Meridian Rail landscape in dark mode, with the notes panel open on the Customer Profile Service](docs/images/hero.png)
 
 https://github.com/user-attachments/assets/50d4d6b5-6aeb-47e9-b7b5-9f252e3970c4
 
@@ -27,6 +27,11 @@ Commercial architecture tools are restrictive, and general box-and-arrow editors
 - **One window per diagram**, with undo/redo, real OS clipboard copy/paste across windows, and a command palette (Ctrl/Cmd+K).
 
 ### Git-friendly
+
+![A diff of a .chd file: adding notes to four entities changes four lines in the diagram](docs/images/git-diff.png)
+
+*Adding notes to four entities is four changed lines in the diagram, plus the new note files.*
+
 - **Plain-text `.chd` files:** deterministic JSON with a fixed key order and no embedded binaries, built to diff and merge like source code.
 - **The format is a standalone spec** ([docs/file-format.md](docs/file-format.md)). A third party can read or write it without this codebase.
 - **A "Changes since last save" panel**, and PNG export with an auto-generated legend.
