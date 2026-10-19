@@ -59,8 +59,7 @@ export function backfillZIndex<T extends ZIndexed>(nodes: T[]): T[] {
 // base even when nothing of that tier exists yet. Without the `base`
 // floor, a brand new node in a small or empty diagram fell back to
 // "current max across whatever was passed in, plus one gap" — as low as
-// 10 or 20 in a fresh diagram, nowhere near its intended tier; caught by
-// the user directly, see docs/known-issues.md.
+// 10 or 20 in a fresh diagram, nowhere near its intended tier (see docs/known-issues.md).
 export function nextZIndexAbove(nodes: ZIndexed[], base: number = ENTITY_BASE): number {
   const max = nodes.reduce((m, n) => (n.zIndex != null && n.zIndex > m ? n.zIndex : m), base)
   return max + LAYER_GAP
@@ -77,8 +76,8 @@ export interface ZIndexUpdate {
 // order). Three cases, in order:
 //  1. Both new neighbors exist with room between them (gap >= 2): average.
 //     Only the moved node changes.
-//  2. Both exist with no room (gap <= 1 — e.g. neighbors at 10 and 11, the
-//     user's own worked example: midpoint 11.5 would round into an
+// 2. Both exist with no room (gap <= 1 — e.g. neighbors at 10 and 11: midpoint 11.5 would round into
+// an
 //     already-occupied slot): shift the contiguous saturated run starting
 //     at the upper neighbor up by 1 until a gap opens, then take the freed
 //     slot. Bounded to that run, never a full-diagram renumber.

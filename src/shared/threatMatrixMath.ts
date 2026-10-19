@@ -59,8 +59,7 @@ export function aggregateScores(values: number[], method: AggregateMethod): numb
 }
 
 // A cell's own displayed value — never the raw probability/consequence
-// pair, per the user's own spec ("the cell itself does not show these
-// values, but the result of... combining them").
+// pair: the cell shows the result of combining them.
 export function cellScore(cell: RiskCell, combineMethod: CombineMethod): number {
   return combine(cell.probability, cell.consequence, combineMethod)
 }

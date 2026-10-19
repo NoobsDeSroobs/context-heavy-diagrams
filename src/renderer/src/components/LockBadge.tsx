@@ -1,6 +1,6 @@
 // Small grey lock glyph shown on a locked node — centered horizontally,
-// straddling the top edge of the node's own bounding box, per the user's
-// own placement spec. Shared by EntityNode/ContainerNode/TextNode rather
+// straddling the top edge of the node's own bounding box. Shared by
+// EntityNode/ContainerNode/TextNode rather
 // than duplicated three times; a plain inline SVG (not a builtin icon
 // slot — those are user content, this is a system indicator, and doesn't
 // need asset loading either way).

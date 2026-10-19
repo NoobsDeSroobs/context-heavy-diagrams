@@ -63,9 +63,8 @@ export interface AppPreferences {
   scanForUnsavedRecoveryOnStartup: boolean
   // A selected edge's stroke swaps to this color entirely (overriding its
   // own explicit style and any highlight-match color), so it stays
-  // findable at a glance in a busy diagram — raised after live-testing the
-  // edge z-index fix (docs/known-issues.md) surfaced how hard a selected
-  // edge could be to visually track at a dense connection point.
+  // findable at a glance in a busy diagram, even at a dense connection point (see
+  // docs/known-issues.md).
   // Edges only, not nodes — nodes already get a normal selection outline
   // from React Flow itself.
   selectedEdgeHighlightColor: string
@@ -107,7 +106,7 @@ export interface AppPreferences {
   // style palette). Absent means today's existing theme-based background,
   // unchanged.
   canvasBackgroundColor?: string
-  // PNG export (ADR 0051, revised after live testing) — the
+  // PNG export (ADR 0051) — the
   // *last used* values from the Export as PNG… dialog (ExportPngDialog),
   // remembered here purely so the dialog reopens prefilled next time
   // rather than resetting to defaults on every export. The dialog itself,
@@ -125,9 +124,8 @@ export interface AppPreferences {
   // the dialog's last choice" treatment as the three fields above.
   pngExportLegendCorner: LegendCorner
   // React Flow's own selectionMode prop (SelectionMode.Full/.Partial),
-  // exposed as a Setting rather than hardcoded — raised after the user
-  // started relying on drag-to-select more heavily alongside the
-  // multi-connection-line feature. true (Full, today's only prior behavior):
+  // exposed as a Setting rather than hardcoded, since drag-to-select gets heavy use alongside
+  // multi-connection lines. true (Full, today's only prior behavior):
   // an element must be entirely inside the drag box to be selected.
   // false (Partial): touching the box's edge is enough — usually the more
   // useful mode once you're deliberately drag-selecting a cluster rather

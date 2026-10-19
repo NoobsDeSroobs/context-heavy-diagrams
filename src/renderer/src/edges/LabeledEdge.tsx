@@ -318,10 +318,8 @@ function LabeledEdge({
       : {}),
     // Selection wins over both the edge's own explicit color and any
     // highlight-match color — the whole point is staying findable in a
-    // busy diagram regardless of the edge's own look. Raised after live-
-    // testing the edge z-index fix (docs/known-issues.md) made it obvious
-    // how easy a selected edge still was to lose track of visually, even
-    // once its handle-priority worked correctly.
+    // busy diagram regardless of the edge's own look. A selected edge is otherwise easy to lose
+    // track of visually, even with correct handle priority (docs/known-issues.md).
     //
     // A CSS var (set once on the <ReactFlow> wrapper in Canvas.tsx), not a
     // DiagramContext field (ADR 0056): this value only ever matters to

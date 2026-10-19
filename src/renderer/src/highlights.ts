@@ -53,8 +53,8 @@ export function highlightGroupSourceValues(
 // one key against the values that key currently, actually carries
 // somewhere in the diagram — adds a white entry for a value not yet
 // covered, and *removes* an existing entry whose value nothing carries
-// anymore (a stale row for a retired value is actively misleading, not
-// harmless leftover state — confirmed directly with the user). Existing
+// anymore (a stale row for a retired value is actively misleading, not harmless leftover state).
+// Existing
 // entries for values still in use are returned untouched, keeping
 // whatever color/position they already had. Entries for every other key
 // are left alone. Pure — the caller (Canvas.tsx) supplies currentValues

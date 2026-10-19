@@ -36,7 +36,7 @@ let nextConnectionPointId = 1
 // custom per-side counts already references from its edges, since that's
 // what this app exposed as its 4 always-present, unmovable default
 // handles back then. That was originally kept as a real, permanently separate, immovable
-// concept — the user found two real bugs traced to exactly that split (an
+// concept — that split caused two real bugs (an
 // evenly-spaced *custom* layout can never truly include a point that
 // isn't free to move, and the app's own clockwise/transfer math didn't
 // know the fixed point was there at all) — so this is now purely a
@@ -219,8 +219,8 @@ function evenOffsets(count: number): number[] {
 // on bottom/left, clockwise means *descending* raw offset. Handing the
 // ascending offsets array straight to a clockwise-sorted points array
 // silently mirrored the whole side on bottom/left (the clockwise-first
-// point got the smallest raw offset instead of the largest), which is
-// what the user caught: correct order but visually flipped. Reversing the
+// point got the smallest raw offset instead of the largest), which showed as a correct order that
+// was visually flipped. Reversing the
 // offsets on those two sides before zipping them onto the points keeps
 // "index 0 in the points array" meaning "clockwise-first" for every side.
 function respaceClockwise(points: ConnectionPoint[], side: ConnectionPointSide): ConnectionPoint[] {
@@ -296,7 +296,7 @@ export function setSideCustomPointCount(
 // surviving point on that side evenly. (An earlier version deliberately
 // left survivors' positions untouched, on the theory that manual removal
 // should stay hands-off of everything but the one point being removed —
-// the user found that "broken" in practice: a side's remaining points
+// that proved "broken" in practice: a side's remaining points
 // should always look evenly spread after a removal, the same as after any
 // other count change.) Refuses (returns undefined) when this would leave
 // the side with zero points — every side must always have at least one.

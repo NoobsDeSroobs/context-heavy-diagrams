@@ -4,8 +4,7 @@ import type { IconRef, IconSlot, MetadataEntry } from './diagram'
 // combined query checked against id, label, and every tag key/value,
 // deliberately not split into per-field syntax yet (that's the deferred
 // `metadata:*python*`-style scoping the ADR logs for later). Case-
-// insensitive substring match, same "matches in some way" framing the
-// user gave when this was first raised.
+// insensitive substring match, same "matches in some way" framing.
 export interface SearchableElement {
   id: string
   label?: string
