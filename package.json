@@ -1,7 +1,7 @@
 {
   "name": "context-heavy-diagrams",
   "version": "0.2.1",
-  "description": "Offline desktop diagramming for IT architecture: git-friendly plain-text diagrams, drill-down linked diagrams, and per-node notes and tags. Early open-source release.",
+  "description": "Offline desktop diagramming: git-friendly plain-text diagrams, drill-down linked diagrams, and per-node notes and tags. Early open-source release.",
   "main": "./out/main/index.js",
   "license": "GPL-3.0-or-later",
   "author": "Magnus Elden",

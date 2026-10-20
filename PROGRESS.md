@@ -8,9 +8,7 @@ MVP complete (2026-08-20). **v0.2.1 is the first open-source release** (2026-10-
 
 ## Now
 
-[Epic 0140](docs/planning/epics/0140-legend-line-picker.md) on branch `epic/0140-legend-line-picker`: the Legend's "Line" entry is copied from an edge on the canvas. Built and tested; waiting for a live check in the app, then the maintainer's merge.
-
-Otherwise nothing active. [Epic 0137](docs/planning/epics/0137-open-source-release.md), the release, is shipped; its leftovers are optional or for contributors (SPDX headers, a social preview image, Linux and macOS verification, a line-by-line read of the open epics). Candidates for the next piece of work:
+Nothing active; branch `epic/0140-legend-line-picker` (the legend line picker, live-tested) waits for the maintainer's merge. [Epic 0137](docs/planning/epics/0137-open-source-release.md), the release, is shipped; its leftovers are optional or for contributors (SPDX headers, a social preview image, Linux and macOS verification, a line-by-line read of the open epics). Candidates for the next piece of work:
 
 - [Epic 0139](docs/planning/epics/0139-diagram-default-font-and-available-fonts.md): a diagram-wide default font.
 - The light-mode colour round-trip ([known-issues](docs/known-issues.md)).
