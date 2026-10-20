@@ -3,6 +3,8 @@
 ## Status
 Not Started. Logged 2026-10-20 from a review of the landscape; the research below is a first pass and still has to be checked.
 
+The page is the deliverable of this epic. The gaps it lists (see the notes) will each become a feature epic of their own once the comparison is written; they are not part of this one.
+
 ## Goal
 A standalone page, `docs/comparison.md`, that says honestly how this tool compares with each kind of diagramming tool in use today (general editors, diagram-as-code, software architecture models, enterprise architecture platforms, journey and process tools, notes plus canvas), so a reader can tell when to pick this tool and when to pick something else. The README's "Why another diagramming tool?" section stays as it is, apart from one closing line that links to the page.
 

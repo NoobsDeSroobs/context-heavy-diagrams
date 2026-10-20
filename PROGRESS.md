@@ -14,6 +14,7 @@ Nothing active; branch `epic/0140-legend-line-picker` (the legend line picker, l
 - [Epic 0142](docs/planning/epics/0142-dependabot-alerts-in-build-tooling.md): the four open Dependabot alerts, all in build tooling.
 - The light-mode colour round-trip ([known-issues](docs/known-issues.md)).
 - [Epic 0138](docs/planning/epics/later/0138-architecture-conformance-checks.md).
+- [Epic 0143](docs/planning/epics/0143-package-by-feature-refactor.md): look into organising the code by feature, and splitting `Canvas.tsx`.
 - [Epic 0141](docs/planning/epics/0141-comparison-with-other-tools.md): a page comparing this tool with other diagramming tools, linked from the README.
 
 Merging, pushing, tagging and anything else on the remote is the maintainer's own action.
