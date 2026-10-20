@@ -79,6 +79,33 @@ Facts about other tools were checked on 2026-10-20 against each tool's own docum
 
 **Choose these** when you want an architecture model that several diagrams share, or diagrams published to a team or a wiki. **Choose this tool** when you want a flexible drawing with its context behind it, not a model.
 
+## Enterprise architecture platforms
+
+**Ardoq, SAP LeanIX, Bizzdesign and Archi** keep an organisation's architecture (applications, capabilities, teams, processes, technology and how they depend on each other) as data in a repository, and draw diagrams and reports from it.
+
+| Tool | What it is |
+|---|---|
+| [Ardoq](https://www.ardoq.com/) | A SaaS enterprise architecture platform with a central repository that maps dependencies across applications, teams and processes. Reports and dashboards that update as the data does, future-state scenarios and roadmaps, APIs and integrations, an MCP server, and AI that pulls data from documents and flags duplicate, unused and outdated applications. Aimed at enterprise architects, IT leaders, PMOs and security architects. |
+| [SAP LeanIX](https://www.leanix.net/en/) | An enterprise architecture platform for application portfolio management, technology risk and compliance, and architecture and roadmap planning. Its metamodel is based on industry practice, so there is no taxonomy to design. Connects to CMDBs, Jira, GitHub and custom APIs, and has an AI assistant and an MCP server. |
+| [Bizzdesign](https://bizzdesign.com/) | A SaaS suite covering enterprise architecture, application and strategic portfolio management, business architecture, process management and governance, risk and compliance, with AI features. Aims to give business and IT "a shared language". |
+| [Archi](https://www.archimatetool.com/) | A free, open source (MIT) cross-platform editor for ArchiMate models, written in Java. [ArchiMate](https://www.opengroup.org/archimate-forum/archimate-overview) is an Open Group standard modelling language for enterprise architecture. The coArchi plug-in shares and versions Archi models in a Git repository, and is described as a work in progress ([coArchi](https://github.com/archimatetool/archi-modelrepository-plugin)). |
+
+For a market view, Gartner's 2026 Magic Quadrant for Enterprise Architecture Tools covers Ardoq, Bizzdesign, SAP LeanIX and Sparx Systems, among others ([abstract](https://www.gartner.com/en/documents/8502677)).
+
+**Where they are better**
+- **A real model.** The elements and relationships are data that can be queried, reported on, validated and kept current from other systems (CMDBs, cloud accounts, ticket trackers). A diagram is one view of that data and stays tied to it.
+- **Analysis and governance.** Dependency and lifecycle analysis, dashboards, roadmaps and future-state scenarios, ownership and compliance tracking, and AI over the whole repository.
+- **Many people, one landscape.** They are built for an architecture team and the rest of the organisation to work in the same repository.
+- **A standard notation.** Archi is built around ArchiMate, so models follow a notation that architects and other tools recognise.
+
+**Where this tool is better**
+- **No metamodel to adopt or maintain.** You can start drawing straight away, in any style, for any subject.
+- **Not tied to enterprise architecture.** The same tool draws a process, a customer journey or a system design.
+- **Free, offline and file-based.** Nothing to license, host or connect, and diagrams that live in git next to the code.
+- **Context behind each element and drill-down between files**, with tags and highlights giving a light version of a data view.
+
+**Choose these** when the question is "what do we have, who owns it and what breaks if it changes" across a whole organisation, or when you must follow ArchiMate. **Choose this tool** for architecture diagrams that tell a story, for landscapes documented by hand before an enterprise architecture platform is justified, or next to one. This tool does not try to replace these platforms, and on what they do they are the stronger choice.
+
 ## Getting diagrams into wikis and documentation
 
 Embedding is the weakest part of this tool. The only way out of it today is an exported **PNG**. There is no SVG export, no command-line export (so an image cannot be regenerated in CI), and no wiki plugin.
