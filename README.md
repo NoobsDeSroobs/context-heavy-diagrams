@@ -1,6 +1,6 @@
 # Context Heavy Diagrams
 
-**An offline desktop diagramming tool for IT architecture. Diagrams are plain-text files that diff cleanly in git, and every box can carry notes, tags, images and a link to a deeper diagram. The canvas stays readable while the context lives behind it.**
+**An offline desktop diagramming tool. Diagrams are plain-text files that diff cleanly in git, and every box can carry notes, tags, images and a link to a deeper diagram. The canvas stays readable while the context lives behind it.**
 
 > **Early open-source release (0.x).** It is built and tested mainly on Windows. Linux and macOS are supported targets but not yet verified, and there are no prebuilt downloads yet, so you build it from source (below). File compatibility is a priority, but expect rough edges. `1.0.0` is reserved for when the tool is feature-complete.
 
