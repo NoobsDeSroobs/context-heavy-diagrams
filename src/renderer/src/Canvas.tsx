@@ -6166,7 +6166,7 @@ function CanvasInner(): React.JSX.Element {
             )}
             {legendLinePick && (
               <span className="toolbar-style-brush" role="status">
-                Legend — click an edge to copy its line
+                Legend: click an edge to copy its line
                 <button type="button" onClick={abortLegendLinePick}>
                   Cancel (Esc)
                 </button>
