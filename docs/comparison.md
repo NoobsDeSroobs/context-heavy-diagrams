@@ -133,6 +133,31 @@ For a market view, Gartner's 2026 Magic Quadrant for Enterprise Architecture Too
 
 **Choose the journey tools** when you run a journey programme with personas, research, metrics and a team working in it. **Choose a BPMN tool** when the diagram must follow the standard, be exchanged with other tools or run on a process engine. **Choose this tool** for a quick, flexible journey or process sketch, or when the story behind each step and its link to the system diagrams matter more than the notation.
 
+## Notes and whiteboards
+
+**Obsidian Canvas, Heptabase, Excalidraw and tldraw** are infinite canvases for thinking, where notes and sketches sit side by side. They are the closest to this tool in feel, and the furthest from a formal diagram.
+
+| Tool | What it is |
+|---|---|
+| [Obsidian Canvas](https://obsidian.md/canvas) | An infinite space inside the Obsidian note app. Cards can be text, embedded Markdown notes from your vault (editable in the canvas), images, video, PDFs, web pages and other canvases. Cards can be connected with labelled, coloured connections and grouped. Files are stored locally in the open [JSON Canvas](https://jsoncanvas.org/) format (MIT), and a plugin API extends it. Exports the visible area or the whole canvas to an image. |
+| [Heptabase](https://heptabase.com/) | A visual knowledge base for students and researchers: whiteboards and cards linked to notes in a block editor with two-way links. Lists offline access, real-time collaboration and mobile apps. |
+| [Excalidraw](https://github.com/excalidraw/excalidraw) | A virtual whiteboard with a hand-drawn look, MIT licensed. Drawings are saved as an open `.excalidraw` JSON file and exported as PNG or SVG. The editor is also an npm package for embedding in other apps. Real-time collaboration and end-to-end encryption are in the hosted excalidraw.com app. |
+| [tldraw](https://tldraw.dev/) | An SDK for building infinite canvas apps in React, with a ready-made whiteboard kit. Production use needs a licence key (trial, commercial, or a hobby licence that keeps a "made with tldraw" watermark) ([licence](https://tldraw.dev/community/license)). |
+
+**Where they are better**
+- **Thinking space.** Quick, loose and low-friction: brainstorm, sketch and arrange notes without choosing a notation or a structure first.
+- **Notes as the main content.** In Obsidian and Heptabase the notes are the point, and the canvas is another way to arrange and connect them.
+- **Embeddable.** Excalidraw's editor and tldraw's SDK are made to be built into other products.
+- **Reach.** Excalidraw collaborates in real time in its hosted app, and Obsidian has a plugin ecosystem.
+
+**Where this tool is better**
+- **Diagram structure.** Connections are bound to connection points on elements and re-route when anything moves, and containers hold other elements and move with them.
+- **Notes belong to an element,** as a Markdown file beside the diagram, together with tags, images and a link to a deeper diagram. Tags drive highlights and a legend, and required tags can be defined per diagram.
+- **Drill-down.** A linked diagram opens as its own file, and links only point downward, so any diagram in a tree can be opened as its own root.
+- **A published file format** written to diff cleanly in git, and a legend, search and diagnostics for larger diagrams.
+
+**Choose them** when the work is thinking and note-taking, when your notes already live in Obsidian or Heptabase, or when you want a canvas to embed in your own app. **Choose this tool** when you are drawing a structured diagram that other people will read, and each box needs its own notes and a deeper level behind it.
+
 ## Getting diagrams into wikis and documentation
 
 Embedding is the weakest part of this tool. The only way out of it today is an exported **PNG**. There is no SVG export, no command-line export (so an image cannot be regenerated in CI), and no wiki plugin.
@@ -145,6 +170,8 @@ Embedding is the weakest part of this tool. The only way out of it today is an e
 | Visio | Teams, Power BI, Excel, Word and PowerPoint. |
 | Miro | Embedding in Confluence, and PDF and JPG export. |
 | yEd | PNG, JPG, SVG, PDF and SWF export. |
+| Obsidian Canvas | Image export of the visible area or the whole canvas; canvases can be embedded in Obsidian notes. |
+| Excalidraw | PNG, SVG and clipboard export. |
 | UXPressia | PNG, PDF, CSV and PPTX export. |
 | Bizagi Modeler | Publishing to PDF, Word, Excel, the web and SharePoint. |
 | Mermaid | Native rendering in GitHub, GitLab, Notion, Obsidian and others; Confluence through third-party Marketplace apps, none of them native. |
