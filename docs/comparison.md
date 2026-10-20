@@ -8,7 +8,32 @@ This is an honest map of where this tool fits among the diagramming tools in use
 
 Facts about other tools were checked on 2026-10-20 against each tool's own documentation, linked in each section. Tools change; if something here is out of date, please open an issue. Prices are left out on purpose.
 
-## Diagrams written as code
+## General diagram editors
+
+**draw.io, yEd, Lucidchart, Visio, Miro and FigJam** are drawing tools where you place shapes and connectors by hand, like this tool, but for any purpose and usually with far larger shape libraries.
+
+| Tool | What it is |
+|---|---|
+| [draw.io](https://www.drawio.com/) | Free, with Apache 2.0 licensed source for the web app ([repository](https://github.com/jgraph/drawio)). Runs in the browser, as a desktop app, as a VS Code extension, and inside Confluence, Jira, GitHub repositories and several other tools. Exports SVG, PNG and PDF. The desktop app is GPL-3.0 and is "designed to be completely isolated from the Internet" apart from its update check ([desktop repository](https://github.com/jgraph/drawio-desktop)). Diagrams can be saved as uncompressed XML ([how](https://www.drawio.com/doc/faq/export-to-xml)). |
+| [yEd](https://www.yworks.com/products/yed) | A free Java desktop editor with automatic layout algorithms that arrange large diagrams at the press of a button. Imports Excel and XML; exports PNG, JPG, SVG, PDF and SWF. |
+| [Lucidchart](https://lucid.co/product/lucidchart) | A commercial editor with many diagram types, including enterprise architecture, cloud architecture and user journey maps. Links diagrams to data with conditional formatting, generates diagrams from imports (org charts from spreadsheets, ERDs from SQL, cloud diagrams from cloud account data), supports Mermaid, has AI generation, assisted layout and swimlanes, and lists over 100 integrations including Confluence, Jira and Microsoft and Google apps. |
+| [Visio](https://www.microsoft.com/en-us/microsoft-365/visio/flowchart-software) | Microsoft's diagram editor. Visio for the web comes with Microsoft 365 commercial plans (with limited templates) or Visio Plan 1; the desktop app with offline, local file support is in Plan 2; non-subscription versions also exist. Integrates with Teams, Power BI, Excel, Word and PowerPoint. Data linking is available only in the desktop app. Includes BPMN 2.0, network, floor plan and Azure and AWS architecture shapes in the paid plans. |
+| [Miro](https://miro.com/diagramming/) | A collaborative whiteboard workspace with a diagramming tool. Specialised shape libraries (BPMN, UML, ERD, cloud architecture) are on paid plans, AI generates diagrams from a prompt, and it imports Visio, draw.io and Lucidchart files. Diagrams can be embedded in Confluence. |
+| [FigJam](https://www.figma.com/figjam/) | Figma's collaborative whiteboard, with shapes and connectors, flowchart templates and integrations with Asana, Jira and GitHub. |
+
+**Where they are better**
+- **Reach and polish.** Large shape and icon libraries, hundreds or thousands of templates, standard notations (BPMN, UML, ERD) and mature import and export, including from each other.
+- **Collaboration.** Visio (on the web and in Teams), Miro and FigJam are built around several people working on the same board or diagram at once.
+- **Data and automation.** Lucidchart and Visio link shapes to spreadsheets and databases; Lucidchart builds diagrams from imports; yEd and Lucidchart lay diagrams out automatically.
+- **Where people read.** Confluence, Jira, Microsoft 365 and Google Workspace integrations, and SVG or PDF export, so a diagram can sit inside a document.
+
+**Where this tool is better**
+- **Context behind each element.** Notes, tags, images and a link to a deeper diagram live on the element, and the deeper diagram opens as its own file. This is the core of the design here, not an add-on.
+- **Diagrams as ordinary text files** that are small, stable and meant to be reviewed in git, with the file format published as a standalone specification.
+- **Offline and account-free by design.** The app blocks its own network access. draw.io's desktop app is also isolated apart from update checks, while Miro and FigJam are workspaces built around shared online boards.
+- **A narrow, consistent set of rules** (a node is one thing, edges stay attached) instead of a large toolbox.
+
+**Choose them** when several people edit the same diagram, when you need standard notations and big template libraries, or when the diagram has to appear in Confluence, Office or a slide deck. **draw.io** is the closest free alternative and the one to try first if you only need a flexible editor. **Choose this tool** when the notes and drill-down behind the picture are the point, you want the diagram in git as a readable file, and nothing may leave the computer.
 
 **Mermaid, PlantUML, D2, Graphviz and Eraser** describe a diagram in text and draw it for you.
 
@@ -61,6 +86,11 @@ Embedding is the weakest part of this tool. The only way out of it today is an e
 | Tool | How a diagram reaches a wiki or README |
 |---|---|
 | This tool | PNG export from the app. |
+| draw.io | SVG, PNG and PDF export, plus plugins and integrations for Confluence, Jira, GitHub repositories and Markdown, and Notion through a Chrome extension. |
+| Lucidchart | Integrations listed for Confluence and Jira, and for Microsoft and Google apps. |
+| Visio | Teams, Power BI, Excel, Word and PowerPoint. |
+| Miro | Embedding in Confluence, and PDF and JPG export. |
+| yEd | PNG, JPG, SVG, PDF and SWF export. |
 | Mermaid | Native rendering in GitHub, GitLab, Notion, Obsidian and others; Confluence through third-party Marketplace apps, none of them native. |
 | PlantUML | SVG or PNG output; its site lists editing options for DokuWiki, AsciiDoc and Markdown. |
 | D2 | SVG, PNG, PDF and others from the command line. |
