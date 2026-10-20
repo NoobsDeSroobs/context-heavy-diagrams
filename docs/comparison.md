@@ -106,6 +106,33 @@ For a market view, Gartner's 2026 Magic Quadrant for Enterprise Architecture Too
 
 **Choose these** when the question is "what do we have, who owns it and what breaks if it changes" across a whole organisation, or when you must follow ArchiMate. **Choose this tool** for architecture diagrams that tell a story, for landscapes documented by hand before an enterprise architecture platform is justified, or next to one. This tool does not try to replace these platforms, and on what they do they are the stronger choice.
 
+## Customer journey and process tools
+
+**UXPressia and Smaply** are built for customer journeys. **Camunda Modeler, bpmn.io and Bizagi Modeler** are built for business processes in BPMN.
+
+| Tool | What it is |
+|---|---|
+| [UXPressia](https://uxpressia.com/) | An online customer experience mapping platform: journey maps, personas, service blueprints and impact maps, with real-time collaboration, tags and statuses, team libraries and AI features. Pulls in web analytics and voice-of-the-customer data. Exports PNG, PDF, CSV and PPTX. |
+| [Smaply](https://www.smaply.com/) | Customer journey management software: journey maps, service blueprints and personas, a research hub, journey hierarchies with ownership and governance, a portfolio for prioritising what to fix, and CX metrics shown in the journey. Lists 20+ integrations and commenting and co-editing. |
+| [Camunda Modeler](https://camunda.com/platform/modeler/) | A free and open source desktop BPMN modeller, also available as a collaborative web application in Camunda 8. A diagram can be published to the Camunda platform, where it becomes a running process. |
+| [bpmn.io](https://bpmn.io/) | Web toolkits for BPMN, DMN and forms, built and maintained by Camunda and contributors. `bpmn-js` displays BPMN 2.0 diagrams and can be embedded as a web modeller in other applications. |
+| [Bizagi Modeler](https://www.bizagi.com/en/platform/modeler) | Process modelling with a free tier that publishes to PDF, Word, Excel, the web and SharePoint, imports from Visio, IBM Blueworks, XPDL and BPMN, and simulates processes. A paid tier adds process mining, a shared process library and automation. |
+
+[BPMN](https://www.omg.org/spec/BPMN/2.0.2/About-BPMN) is a standard notation maintained by the Object Management Group; its current formal specification is version 2.0.2. The general editors above cover parts of this too: Lucidchart lists user journey maps among its diagram types, and Visio (in its higher plan) and Miro (on paid plans) include BPMN shapes.
+
+**Where they are better**
+- **Purpose-built structure.** Personas, service blueprints, journey metrics and research on the journey side; correct BPMN notation on the process side, interchangeable between tools.
+- **Linked to data and to running systems.** Journey tools bring in analytics and customer feedback; Camunda turns a BPMN diagram into a process that runs and can be monitored.
+- **Team workflow.** Collaboration, ownership, prioritisation and publishing for people who are not diagram authors.
+
+**Where this tool is better**
+- **Any journey or process, in any shape.** A journey is a sequence of boxes with notes and tags behind each step, with no fixed template to fit. The gallery has one ([customer journey](../examples/gallery/business/customer-journey.chd)).
+- **Links into the rest of the picture.** A step can link to the system diagram behind it, so a business view and a technical view stay connected.
+- **BPMN as a visual vocabulary only.** Process diagrams can use BPMN's recognisable conventions with an icon and a label on ordinary elements, with nothing validated or executed ([ADR 0080](decisions/0080-bpmn-as-adopted-vocabulary-not-metamodel.md)). The tool does not read or write BPMN files.
+- **Free, offline and file-based.**
+
+**Choose the journey tools** when you run a journey programme with personas, research, metrics and a team working in it. **Choose a BPMN tool** when the diagram must follow the standard, be exchanged with other tools or run on a process engine. **Choose this tool** for a quick, flexible journey or process sketch, or when the story behind each step and its link to the system diagrams matter more than the notation.
+
 ## Getting diagrams into wikis and documentation
 
 Embedding is the weakest part of this tool. The only way out of it today is an exported **PNG**. There is no SVG export, no command-line export (so an image cannot be regenerated in CI), and no wiki plugin.
@@ -118,6 +145,8 @@ Embedding is the weakest part of this tool. The only way out of it today is an e
 | Visio | Teams, Power BI, Excel, Word and PowerPoint. |
 | Miro | Embedding in Confluence, and PDF and JPG export. |
 | yEd | PNG, JPG, SVG, PDF and SWF export. |
+| UXPressia | PNG, PDF, CSV and PPTX export. |
+| Bizagi Modeler | Publishing to PDF, Word, Excel, the web and SharePoint. |
 | Mermaid | Native rendering in GitHub, GitLab, Notion, Obsidian and others; Confluence through third-party Marketplace apps, none of them native. |
 | PlantUML | SVG or PNG output; its site lists editing options for DokuWiki, AsciiDoc and Markdown. |
 | D2 | SVG, PNG, PDF and others from the command line. |
