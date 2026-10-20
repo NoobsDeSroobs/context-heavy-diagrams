@@ -184,6 +184,8 @@ import { warnIfSavedWithNewer } from './fileVersionWarning'
 import type { TransformPatch } from './panels/PropertyPanel'
 import { useTheme } from './theme'
 import { useEventCallback } from './hooks/useEventCallback'
+import { legendLineFromEdgeStyle, type LegendLineLook } from './legendLinePick'
+import { EDGE_STYLE_DEFAULTS } from './styles/styleDefaults'
 import { useModifierDragDuplicate } from './hooks/useModifierDragDuplicate'
 import { useDetailsPeek } from './hooks/useDetailsPeek'
 import PeekCard from './components/PeekCard'
@@ -5335,6 +5337,39 @@ function CanvasInner(): React.JSX.Element {
     [applyStyleBrush]
   )
 
+  // Legend "Line" picker (ADR 0123): while the Legend panel waits for an edge to copy, it leaves
+  // its callback here. A click on an edge hands it that edge's look; Esc hands it null. Takes the
+  // click before the style brush, so an active brush never paints the edge being picked.
+  const [legendLinePick, setLegendLinePick] = useState<
+    ((look: LegendLineLook | null) => void) | null
+  >(null)
+  const requestLegendLinePick = useCallback(
+    (onPicked: (look: LegendLineLook | null) => void) => setLegendLinePick(() => onPicked),
+    []
+  )
+  const cancelLegendLinePick = useCallback(() => setLegendLinePick(null), [])
+  // Esc or the toolbar button: ends the mode and tells the panel, which drops its pending entry.
+  const abortLegendLinePick = useEventCallback(() => {
+    legendLinePick?.(null)
+    setLegendLinePick(null)
+  })
+  const onEdgeClick = useEventCallback((event: React.MouseEvent, edge: Edge) => {
+    if (!legendLinePick) {
+      onStyleBrushEdgeClick(event, edge)
+      return
+    }
+    if (event.ctrlKey || event.metaKey || event.shiftKey) return
+    setLegendLinePick(null)
+    legendLinePick(
+      legendLineFromEdgeStyle(
+        edge.data?.style as EdgeStyle | undefined,
+        theme,
+        themeAdaptiveColor,
+        EDGE_STYLE_DEFAULTS
+      )
+    )
+  })
+
   // Global keyboard shortcuts. One handler rather than one useEffect
   // per shortcut, now that there are enough of these to make that
   // unwieldy. Checks both ctrlKey and metaKey throughout (not just on
@@ -5393,6 +5428,8 @@ function CanvasInner(): React.JSX.Element {
           setCommandPaletteOpen(false)
         } else if (shortcutsDialogOpen) {
           setShortcutsDialogOpen(false)
+        } else if (legendLinePick) {
+          abortLegendLinePick()
         } else if (searchIconPicker) {
           // The search overlay's icon-browser popup — close just it, one
           // step before the overlay itself.
@@ -5477,6 +5514,8 @@ function CanvasInner(): React.JSX.Element {
     searchIconPicker,
     shortcutsDialogOpen,
     commandPaletteOpen,
+    legendLinePick,
+    abortLegendLinePick,
     styleBrush,
     toggleStyleBrush,
     pasteStyleToSelection,
@@ -6125,6 +6164,14 @@ function CanvasInner(): React.JSX.Element {
                 </button>
               </span>
             )}
+            {legendLinePick && (
+              <span className="toolbar-style-brush" role="status">
+                Legend — click an edge to copy its line
+                <button type="button" onClick={abortLegendLinePick}>
+                  Cancel (Esc)
+                </button>
+              </span>
+            )}
             {showSavedFlash && (
               <span className="toolbar-saved-flash" role="status">
                 ✓ Saved
@@ -6236,7 +6283,7 @@ function CanvasInner(): React.JSX.Element {
                   styleBrush
                     ? ` style-brush-active style-brush-${styleBrush.kind === 'node' ? styleBrush.nodeType : 'edge'}`
                     : ''
-                }`}
+                }${legendLinePick ? ' legend-line-pick' : ''}`}
                 ref={flowWrapperRef}
                 onDragOver={onCanvasDragOver}
                 onDrop={onCanvasDrop}
@@ -6276,7 +6323,7 @@ function CanvasInner(): React.JSX.Element {
                   onNodeDrag={onNodeDrag}
                   onNodeDragStop={onNodeDragStop}
                   onNodeClick={onStyleBrushNodeClick}
-                  onEdgeClick={onStyleBrushEdgeClick}
+                  onEdgeClick={onEdgeClick}
                   onNodeMouseEnter={peekBindings.onNodeMouseEnter}
                   onNodeMouseLeave={peekBindings.onNodeMouseLeave}
                   onConnect={onConnect}
@@ -6511,6 +6558,8 @@ function CanvasInner(): React.JSX.Element {
               onAdd={addLegendEntry}
               onUpdate={updateLegendEntry}
               onRemove={removeLegendEntry}
+              onRequestLinePick={requestLegendLinePick}
+              onCancelLinePick={cancelLegendLinePick}
               onClose={() => setLegendPanelOpen(false)}
             />
           )}

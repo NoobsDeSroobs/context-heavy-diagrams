@@ -1123,6 +1123,17 @@ body {
   cursor: copy;
 }
 
+/* Legend "Line" picker (ADR 0123): edges are the only thing that can be picked. */
+.legend-line-pick .react-flow__node,
+.legend-line-pick .react-flow__node * {
+  cursor: not-allowed;
+}
+
+.legend-line-pick .react-flow__edge,
+.legend-line-pick .react-flow__edge * {
+  cursor: crosshair;
+}
+
 .style-brush-button {
   cursor: pointer;
   align-self: flex-start;
