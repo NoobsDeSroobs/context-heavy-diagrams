@@ -1,7 +1,7 @@
 # 0142: Clear the open Dependabot alerts in the build tooling
 
 ## Status
-In Progress. Logged 2026-10-20 from four open Dependabot alerts on the repository. The exposure checks are done (see Findings); what is left is the decision on what to change.
+In Progress. Logged 2026-10-20 from open Dependabot alerts on the repository (four at first, a fifth the same day). The exposure checks are done (see Findings); what is left is the decision on what to change.
 
 ## Goal
 Get the open alerts to zero, or dismissed with a recorded reason, without breaking the installer build or the Claude Desktop extension build, and without touching what ships in the app.
@@ -37,6 +37,7 @@ All four are in the **development** scope: none of these packages is in the ship
 - **`sprintf-js`** sits under `roarr`, used by `global-agent` inside `@electron/get` when electron-builder downloads Electron.
 - **`npm audit fix` changes nothing** (dry run: 0 added, 0 removed, 0 changed), although the report says "fix available" for `tmp` and `sprintf-js`.
 - **No patched release exists** for `node-forge` (affected `<=1.4.0`, latest is 1.4.0) or `sprintf-js` (affected `<=1.1.3`, latest is 1.1.3). An override cannot fix either. `tmp` has patched releases (0.2.6 and later; 0.2.7 is already used by `tmp-promise`), so an override of the copy under `external-editor` (pinned `^0.0.33`) is possible, but a parent update would be cleaner (`mcpb` 2.1.2 is the latest and pins `@inquirer/prompts` 6).
+- **Alert #5 (added the same day) is a real fix, now done.** It is titled "launch-editor: escapeCmdArgs() omits % escaping on Windows" but the affected package is `vite` (a direct dev dependency, vulnerable `>= 7.0.0, <= 7.3.6`, patched 7.3.7). The dev server's open-in-editor feature is the affected code, so it matters only for `npm run dev` on Windows. `npm update vite` moved the lockfile from 7.3.6 to 7.3.7 within the existing `^7.2.6` range, with no `package.json` change; typecheck, lint, tests and `npm run build` pass. `npm audit` did not list this advisory at the time, so the GitHub alert is the only place it shows.
 - **Unrelated, noticed on the way:** the packaged `app.asar` contains the whole `docs/` tree, planning documents included. Check whether that is intended.
 
 ## Notes
