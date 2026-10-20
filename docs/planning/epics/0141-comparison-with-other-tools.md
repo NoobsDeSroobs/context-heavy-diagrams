@@ -17,8 +17,9 @@ A standalone page, `docs/comparison.md`, that says honestly how this tool compar
 ## What the page should contain
 1. A short framing: what this tool is (local, git-native, context behind each element) and the job it is for.
 2. One section per category, each with the usual tools, what they do better, what this tool does better, and when to choose which.
-3. What is distinctive here, and an honest list of what is missing (the gaps below).
-4. A "checked on" date and a note that other tools change; corrections welcome through an issue.
+3. A section on getting diagrams into wikis and documentation (Confluence and similar). Today the only way is an exported PNG, so say how that compares (tools with a wiki plugin, native rendering of diagram-as-code, SVG) and that this is a known weakness.
+4. What is distinctive here, and an honest list of what is missing (the gaps below).
+5. A "checked on" date and a note that other tools change; corrections welcome through an issue.
 
 ## Tasks
 - [ ] Check every claim about another tool against its own documentation, not review sites; drop what cannot be confirmed
@@ -47,7 +48,7 @@ Sources were vendor pages and review sites; treat all of it as leads.
 
 **Where this tool is distinctive:** notes, tags, images and a link to a deeper diagram on an ordinary canvas; drill-down across plain files with no model or server; enforced offline operation; a standalone spec with deterministic, diff-friendly files; AI writes guarded by a stale-edit check; free and without lock-in.
 
-**Where it is behind** (candidates for their own epics, in order of leverage): SVG and PDF export (PNG only today); import from draw.io, Mermaid or PlantUML (draw.io import is parked in epic 0052); a narrow auto-layout for new or AI-written elements (parked in epic 0126); shapes and notation stencils (epics 0051 and 0105); no collaboration beyond git and no web view for non-technical readers; no integrations with CMDBs, cloud accounts or ticket systems; no published installers and Linux and macOS unverified.
+**Where it is behind** (candidates for their own epics, in order of leverage): **getting diagrams into wikis and docs (Confluence and similar)**, where only PNG export exists, so SVG export first and, since the PNG is rendered in the app window, a command-line export that can regenerate images from `.chd` files in CI (the `chd` tool only does `spec`, `validate` and `hash` today); SVG and PDF export (PNG only today); import from draw.io, Mermaid or PlantUML (draw.io import is parked in epic 0052); a narrow auto-layout for new or AI-written elements (parked in epic 0126); shapes and notation stencils (epics 0051 and 0105); no collaboration beyond git and no web view for non-technical readers; no integrations with CMDBs, cloud accounts or ticket systems; no published installers and Linux and macOS unverified.
 
 ## Related
 [ADR 0008](../../decisions/0008-tool-scope-includes-ea-adjacent-diagrams.md) (scope: flexibility, not a formal metamodel), [ADR 0080](../../decisions/0080-bpmn-as-adopted-vocabulary-not-metamodel.md), epic 0052 (draw.io import and export), epic 0126 (auto-layout), epic 0105 (notation stencils).
