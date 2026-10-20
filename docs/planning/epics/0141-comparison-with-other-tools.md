@@ -1,7 +1,7 @@
 # 0141: How this tool compares with other diagramming tools
 
 ## Status
-Not Started. Logged 2026-10-20 from a review of the landscape; the research below is a first pass and still has to be checked.
+In Progress. Logged 2026-10-20 from a review of the landscape; the research in the notes below is a first pass. `docs/comparison.md` is drafted for diagram-as-code tools, software architecture models and wiki embedding, checked against each tool's own documentation on 2026-10-20. Still to do: general editors, enterprise architecture platforms, journey and process tools, notes plus canvas, and the closing sections.
 
 The page is the deliverable of this epic. The gaps it lists (see the notes) will each become a feature epic of their own once the comparison is written; they are not part of this one.
 
@@ -24,7 +24,7 @@ A standalone page, `docs/comparison.md`, that says honestly how this tool compar
 ## Tasks
 - [ ] Check every claim about another tool against its own documentation, not review sites; drop what cannot be confirmed
 - [ ] Cover the tools the first pass only knew from memory: Visio, yEd, Excalidraw and tldraw, Camunda Modeler, Sparx, Cloudcraft, Whimsical, Archi's current state
-- [ ] Settle the Structurizr wording against its own current pages (the cloud service ended 2026-09-30; `local`, `pull`/`push`/`export` and an open-core `server` remain)
+- [x] Settle the Structurizr wording against its own current pages (the cloud service ended 2026-09-30; `local`, `pull`/`push`/`export` and an open-core `server` remain)
 - [ ] Write `docs/comparison.md`, without em dashes and with a "checked on" date
 - [ ] Add the closing line to the README's "Why another diagramming tool?" section
 - [ ] Link the page from `docs/getting-started.md` "Where next" and from `docs/architecture/overview.md` if it fits
