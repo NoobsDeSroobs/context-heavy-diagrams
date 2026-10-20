@@ -4,6 +4,9 @@ import type { EdgeStyle, IconRef, LegendEntry, LegendEntryKind } from '@shared/d
 import { loadBuiltinIconSvg, searchBuiltinIconIds } from '../icons/builtinIcons'
 import { markerUrl } from '../edges/markerIds'
 import type { DirectionSetLegendRow } from '../edges/edgeDirectionSets'
+import type { LegendLineLook } from '../legendLinePick'
+import { EDGE_STYLE_DEFAULTS } from '../styles/styleDefaults'
+import { useTheme } from '../theme'
 import IconSlotView from './IconSlotView'
 import StylePicker from './StylePicker'
 
@@ -19,6 +22,11 @@ interface LegendPanelProps {
   onAdd: (entry: Omit<LegendEntry, 'id'>) => void
   onUpdate: (id: string, patch: Partial<Omit<LegendEntry, 'id'>>) => void
   onRemove: (id: string) => void
+  // "Line" copies an edge from the canvas (ADR 0123): the canvas calls `onPicked` with the clicked
+  // edge's look, or null if the pick was cancelled there (Esc). `onCancelLinePick` is for this
+  // panel ending the wait itself, including when it unmounts.
+  onRequestLinePick: (onPicked: (look: LegendLineLook | null) => void) => void
+  onCancelLinePick: () => void
   onClose: () => void
 }
 
@@ -211,12 +219,23 @@ export default function LegendPanel({
   onAdd,
   onUpdate,
   onRemove,
+  onRequestLinePick,
+  onCancelLinePick,
   onClose
 }: LegendPanelProps): React.JSX.Element {
+  const { theme } = useTheme()
   const [pickingKind, setPickingKind] = useState(false)
+  const [pickingLine, setPickingLine] = useState(false)
   const [draft, setDraft] = useState<Draft | null>(null)
   const [label, setLabel] = useState('')
   const [linePickerAnchor, setLinePickerAnchor] = useState<DOMRect | null>(null)
+
+  useEffect(() => onCancelLinePick, [onCancelLinePick])
+
+  // The colour a line entry with no colour of its own is drawn in, so its colour input starts on
+  // what the swatch shows rather than on an unrelated red.
+  const defaultColorFor = (kind: LegendEntryKind): string =>
+    kind === 'line' ? EDGE_STYLE_DEFAULTS.stroke[theme] : DEFAULT_COLOR
 
   const rect = anchorRect ?? new DOMRect(0, 0, 0, 0)
   const left = Math.min(rect.right + 8, window.innerWidth - PANEL_WIDTH - 8)
@@ -229,11 +248,26 @@ export default function LegendPanel({
     setLinePickerAnchor(null)
   }
 
-  const startKind = (kind: LegendEntryKind, event?: MouseEvent<HTMLButtonElement>): void => {
+  const cancelLinePick = (): void => {
+    onCancelLinePick()
+    setPickingLine(false)
+  }
+
+  // The fallback for a diagram with no edge to copy: the named line-style presets.
+  const choosePreset = (event: MouseEvent<HTMLButtonElement>): void => {
+    cancelLinePick()
+    setLinePickerAnchor(event.currentTarget.getBoundingClientRect())
+    setDraft({ kind: 'line', color: DEFAULT_COLOR })
+  }
+
+  const startKind = (kind: LegendEntryKind): void => {
     setPickingKind(false)
     if (kind === 'line') {
-      setLinePickerAnchor(event?.currentTarget.getBoundingClientRect() ?? rect)
-      setDraft({ kind, color: DEFAULT_COLOR })
+      setPickingLine(true)
+      onRequestLinePick((look) => {
+        setPickingLine(false)
+        if (look) setDraft({ kind: 'line', ...look })
+      })
       return
     }
     if (kind === 'entity') {
@@ -259,7 +293,7 @@ export default function LegendPanel({
         </button>
       </div>
       <div className="legend-panel-body">
-        {legend.length === 0 && !directionSetRow && !draft && !pickingKind && (
+        {legend.length === 0 && !directionSetRow && !draft && !pickingKind && !pickingLine && (
           <p className="legend-panel-hint">No legend entries yet.</p>
         )}
         {directionSetRow && (
@@ -293,7 +327,7 @@ export default function LegendPanel({
                 <input
                   type="color"
                   className="legend-swatch-color-overlay"
-                  value={entry.color ?? DEFAULT_COLOR}
+                  value={entry.color ?? defaultColorFor(entry.kind)}
                   onChange={(event) => onUpdate(entry.id, { color: event.target.value })}
                   title="Change color"
                   aria-label="Change color"
@@ -313,21 +347,37 @@ export default function LegendPanel({
           </div>
         ))}
 
-        {!draft && !pickingKind && (
+        {!draft && !pickingKind && !pickingLine && (
           <button type="button" className="legend-add-button" onClick={() => setPickingKind(true)}>
             Add legend entry
           </button>
         )}
 
+        {pickingLine && (
+          <>
+            <p className="legend-panel-hint">
+              Click an edge in the diagram to copy its line. Esc cancels.
+            </p>
+            <div className="legend-kind-picker">
+              <button type="button" onClick={choosePreset}>
+                Choose a preset…
+              </button>
+              <button type="button" onClick={cancelLinePick}>
+                Cancel
+              </button>
+            </div>
+          </>
+        )}
+
         {pickingKind && (
           <div className="legend-kind-picker">
-            <button type="button" onClick={(event) => startKind('line', event)}>
+            <button type="button" onClick={() => startKind('line')}>
               Line
             </button>
             <button type="button" onClick={() => startKind('icon')}>
               Icon
             </button>
-            <button type="button" onClick={(event) => startKind('entity', event)}>
+            <button type="button" onClick={() => startKind('entity')}>
               Color
             </button>
             <button type="button" onClick={resetDraft}>
@@ -358,12 +408,20 @@ export default function LegendPanel({
           (draft.kind !== 'line' || draft.lineStyle !== undefined) &&
           (draft.kind !== 'icon' || draft.icon) && (
             <div className="legend-draft-form">
+              {draft.kind === 'line' && (
+                <span className="legend-swatch-slot">
+                  <LegendSwatch
+                    entry={{ id: '__draft', label: '', ...draft }}
+                    diagramPath={diagramPath}
+                  />
+                </span>
+              )}
               {draft.kind !== 'icon' && (
                 <label className="legend-draft-color">
                   Color
                   <input
                     type="color"
-                    value={draft.color ?? DEFAULT_COLOR}
+                    value={draft.color ?? defaultColorFor(draft.kind)}
                     onChange={(event) =>
                       setDraft((prev) => (prev ? { ...prev, color: event.target.value } : prev))
                     }

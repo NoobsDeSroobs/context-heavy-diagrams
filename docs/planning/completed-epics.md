@@ -411,3 +411,7 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 ### 0136: Associate .chd files with the app (double-click to open)
 
 *Done.* After installing, double-clicking a .chd file in the file manager opens it in this app — in a new window if the app is already running — and .chd files show a recognisable icon. ADR: [0108](../decisions/0108-chd-file-association-and-single-instance.md).
+
+### 0140: Pick a legend line from an edge
+
+*Done.* In the Legend panel, "Line" waits for a click on an edge and copies its line style, markers and colour into the new entry (Esc cancels; the preset picker remains as a fallback). ADR: [0123](../decisions/0123-legend-line-picked-from-an-edge.md).

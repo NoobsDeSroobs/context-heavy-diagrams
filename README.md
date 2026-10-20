@@ -1,6 +1,6 @@
 # Context Heavy Diagrams
 
-**An offline desktop diagramming tool for IT architecture. Diagrams are plain-text files that diff cleanly in git, and every box can carry notes, tags, images and a link to a deeper diagram. The canvas stays readable while the context lives behind it.**
+**An offline desktop diagramming tool. Diagrams are plain-text files that diff cleanly in git, and every box can carry notes, tags, images and a link to a deeper diagram. The canvas stays readable while the context lives behind it.**
 
 > **Early open-source release (0.x).** It is built and tested mainly on Windows. Linux and macOS are supported targets but not yet verified, and there are no prebuilt downloads yet, so you build it from source (below). File compatibility is a priority, but expect rough edges. `1.0.0` is reserved for when the tool is feature-complete.
 
@@ -12,7 +12,7 @@ https://github.com/user-attachments/assets/50d4d6b5-6aeb-47e9-b7b5-9f252e3970c4
 
 ## Why another diagramming tool?
 
-Commercial architecture tools are restrictive, and general box-and-arrow editors make you pay for flexibility with fiddly mechanics: overlapping objects you have to move together, arrows that don't follow when you move a box, groups that fight you when you edit one part. Context Heavy Diagrams is built around a few rules instead:
+Commercial diagramming tools are restrictive, and general box-and-arrow editors make you pay for flexibility with fiddly mechanics: overlapping objects you have to move together, arrows that don't follow when you move a box, groups that fight you when you edit one part. Context Heavy Diagrams is built around a few rules instead:
 
 - **A node is one thing.** Notes, links, tags and icons are fields *on* the node, never separate objects you have to keep aligned.
 - **Edges are always attached.** They are bound to connection points and re-route when anything moves or resizes.
@@ -20,6 +20,8 @@ Commercial architecture tools are restrictive, and general box-and-arrow editors
 - **Your files are yours.** Plain, gitable and deterministic JSON on disk; no server, no account, no network.
 
 ## Features
+
+Suits many kinds of diagrams, such as customer journeys, organisation goals and data models; see the [gallery](examples/gallery/README.md).
 
 ### Local and offline
 - **Works fully offline.** No server, no account, no sign-in. The app blocks its own network access, so this is enforced, not just promised ([ADR 0113](docs/decisions/0113-enforced-offline-behaviour.md)).

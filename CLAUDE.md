@@ -4,7 +4,7 @@ Conventions for AI assistants (and people) working in this repository. They appl
 
 ## Project summary
 
-Offline, local, cross-platform (Linux + Windows) desktop diagramming tool for IT architecture work. Electron + React + TypeScript, React Flow (`@xyflow/react`) as the canvas engine, plain files on disk for persistence (no DB, no server). See [docs/project-brief.md](docs/project-brief.md) for the original requirements and [PROGRESS.md](PROGRESS.md) for current status.
+Offline, local, cross-platform (Linux + Windows) desktop diagramming tool. Electron + React + TypeScript, React Flow (`@xyflow/react`) as the canvas engine, plain files on disk for persistence (no DB, no server). See [docs/project-brief.md](docs/project-brief.md) for the original requirements and [PROGRESS.md](PROGRESS.md) for current status.
 
 Before sending a change, `npm run typecheck`, `npm run lint` and `npm test` must pass.
 
