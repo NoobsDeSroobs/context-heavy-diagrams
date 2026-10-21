@@ -10,7 +10,7 @@ import { deleteRecoverySnapshot } from './recovery'
 import { readPreferences, updatePreferences } from '../preferences/appPreferences'
 import { fileStamp } from './fileStamp'
 import { executeSave } from './documentSaveExec'
-import { resolveLinkPath } from '../linkPaths'
+import { resolveLinkPath } from '../links/linkPaths'
 import { containedPath } from '../containedPath'
 
 // Shared by diagram:openPath and document:save — records `path` in both the

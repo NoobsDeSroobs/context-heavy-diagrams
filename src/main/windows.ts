@@ -5,7 +5,7 @@ import { is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { deleteRecoverySnapshot, newSessionId } from './document/recovery'
 import { readPreferences, updatePreferences } from './preferences/appPreferences'
-import { resolveLinkPath } from './linkPaths'
+import { resolveLinkPath } from './links/linkPaths'
 import { isSafeExternalUrl, isSameDocument } from './navigationGuard'
 
 const FILTERS = [{ name: 'Diagram', extensions: ['chd'] }]

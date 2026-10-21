@@ -1,7 +1,7 @@
 import { dialog, ipcMain } from 'electron'
 import { copyFile, mkdir, readdir, readFile } from 'fs/promises'
 import { basename, dirname, extname, join, relative } from 'path'
-import { resolveLinkPath } from '../linkPaths'
+import { resolveLinkPath } from '../links/linkPaths'
 
 // Custom icons live in a sibling folder named after the diagram file, per
 // ADR 0005's convention and ADR 0006's icon storage model — e.g.

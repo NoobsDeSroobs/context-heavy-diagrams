@@ -8,7 +8,7 @@ import {
   type DiagramFile,
   type RequiredTagDefinition
 } from '@shared/diagram'
-import { resolveLinkPath } from '../linkPaths'
+import { resolveLinkPath } from '../links/linkPaths'
 
 function normalizePath(path: string): string {
   return process.platform === 'win32' ? path.toLowerCase() : path

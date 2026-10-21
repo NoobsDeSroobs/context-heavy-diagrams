@@ -13,7 +13,7 @@ import {
   type SearchCriteria
 } from '@shared/search/search'
 import { openDiagramAtPath } from '../document/diagram'
-import { resolveLinkPath } from '../linkPaths'
+import { resolveLinkPath } from '../links/linkPaths'
 
 // Deep search (ADR 0097). Purely a reader, like security:crawlLinked — it never
 // touches recent-diagrams / last-opened. The renderer sends the open diagram's

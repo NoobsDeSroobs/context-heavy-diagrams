@@ -4,7 +4,7 @@ import { registerDiagramHandlers } from './document/diagram'
 import { registerIconHandlers } from './icons/icons'
 import { registerReferenceHandlers } from './references/references'
 import { registerDetailsHandlers } from './details/details'
-import { registerLinkHandlers } from './links'
+import { registerLinkHandlers } from './links/links'
 import {
   createWindow,
   focusLastUsedWindow,

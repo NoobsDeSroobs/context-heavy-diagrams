@@ -2,7 +2,7 @@ import { ipcMain } from 'electron'
 import { readFile } from 'fs/promises'
 import type { Stamp } from '@shared/document/documentSave'
 import { fileStamp } from '../document/fileStamp'
-import { resolveLinkPath } from '../linkPaths'
+import { resolveLinkPath } from '../links/linkPaths'
 
 // Reading detail notes. *Writing* (and renaming to follow a label) is part of
 // the multi-file save in documentSaveExec.ts / diagram.ts (ADR 0092); the path
