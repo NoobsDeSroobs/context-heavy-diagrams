@@ -8,7 +8,7 @@ import type {
   Stamp
 } from '../../shared/document/documentSave'
 
-// Executes a save plan (see src/shared/documentSave.ts and ADR 0092): checks
+// Executes a save plan (see src/shared/document/documentSave.ts and ADR 0092): checks
 // every file it is about to overwrite against the disk, saves everything that
 // does NOT conflict, and reports what was held back so the caller can ask about
 // it at the end. Writes happen in the crash-safe order — new/changed files,

@@ -4,7 +4,7 @@
 // that subtree match? The answer lands on the *linking node* in the open
 // diagram, which is what gets highlighted. All I/O and the match predicates are
 // injected so this has no runtime imports and can be unit-tested with plain
-// node:test (`npm test`); src/main/linkedSearch.ts wires in the real filesystem
+// node:test (`npm test`); src/main/search/linkedSearch.ts wires in the real filesystem
 // and the shared predicate.
 import type { DiagramFile, DiagramEdge, DiagramNode } from '../diagram'
 

@@ -17,7 +17,7 @@ interface GravityPresetsSectionProps {
 
 // One section of DiagramSettingsPanel — see ADR 0071. A line point's
 // right-click menu offers whichever of these the current diagram defines —
-// see GravityPreset's own comment in shared/diagram.ts for why this is
+// see GravityPreset's own comment in shared/nodes/schema.ts for why this is
 // diagram-level, not a hardcoded app setting: a diagram's own layout may
 // call for its own bend values, and reproducing it reliably (for any
 // reader, not just this app) means those named values need to be in the

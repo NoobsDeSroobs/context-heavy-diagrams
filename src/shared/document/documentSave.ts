@@ -5,12 +5,12 @@
 // an in-memory copy of one real file with its own dirty flag, kept apart from the diagram's data
 // model. The module has no runtime imports and no I/O (a type import only), so it can be
 // unit-tested with plain node:test (`npm test`). The renderer owns the shadows; main executes the
-// plan (src/main/documentSaveExec.ts). Paths are relative to the diagram file's directory,
+// plan (src/main/document/documentSaveExec.ts). Paths are relative to the diagram file's directory,
 // '/'-separated.
 
 import type { DiagramFile } from '../diagram'
 
-// A file's cheap change fingerprint (mtime:size, see src/main/fileStamp.ts).
+// A file's cheap change fingerprint (mtime:size, see src/main/document/fileStamp.ts).
 // null = no baseline / file absent.
 export type Stamp = string | null
 

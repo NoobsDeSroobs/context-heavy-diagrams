@@ -2,7 +2,7 @@ import type { GravityPreset } from '@shared/diagram'
 
 // This app's own starting catalog — used whenever a diagram doesn't define
 // its own (DiagramFile.gravityPresets absent/empty). See GravityPreset's
-// own comment in shared/diagram.ts for why the catalog itself is
+// own comment in shared/nodes/schema.ts for why the catalog itself is
 // diagram-level, not a hardcoded constant baked into every line.
 export const DEFAULT_GRAVITY_PRESETS: GravityPreset[] = [
   { id: 'sharp', label: 'Sharp', value: 0 },

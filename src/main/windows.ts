@@ -104,7 +104,7 @@ export function createWindow(initialPath?: string): BrowserWindow {
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       // Sandboxed preload: it can only use ipcRenderer/contextBridge/webUtils
-      // (ADR 0112). Clipboard access goes through IPC (main/clipboard.ts).
+      // (ADR 0112). Clipboard access goes through IPC (main/canvas/clipboard.ts).
       sandbox: true
     }
   })

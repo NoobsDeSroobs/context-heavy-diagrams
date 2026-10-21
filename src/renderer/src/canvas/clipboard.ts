@@ -5,7 +5,7 @@ import type { IconRef, IconSlot } from '@shared/diagram'
 // React-state clipboard couldn't cross windows (separate renderer processes), while the system
 // clipboard makes cross-window and cross-diagram paste work for free and matches what users expect.
 // Plain JSON text, not a custom native format; Electron's clipboard is reached through two small
-// IPC calls in the sandboxed preload (main/clipboard.ts, ADR 0112). The `chdClipboard` marker tells
+// IPC calls in the sandboxed preload (main/canvas/clipboard.ts, ADR 0112). The `chdClipboard` marker tells
 // our payload from arbitrary copied text; an unmarked or malformed clipboard is a silent no-op on
 // paste, never an error, like duplicateSelected with nothing selected.
 export interface ClipboardPayload {

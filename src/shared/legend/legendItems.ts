@@ -71,7 +71,7 @@ function stringifyValue(value: JsonValue): string {
 // currently-*enabled* highlight (so an exported image explains the GDPR highlights: green for No
 // PII, blue for Pseudonymized, and so on).
 // Highlight enabled/disabled is deliberately session-only, never persisted
-// (see HighlightDefinition's own comment in shared/diagram.ts) — this
+// (see HighlightDefinition's own comment in shared/tagging/schema.ts) — this
 // reads whatever's actually toggled on right now, the same set already
 // visibly recoloring the canvas, not the full catalog regardless of state.
 // A highlight's label mirrors HighlightsPanel's own convention exactly:

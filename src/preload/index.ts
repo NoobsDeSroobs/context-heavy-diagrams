@@ -368,7 +368,7 @@ const api = {
 
   // Copy/paste (see ADR 0049) — the real OS clipboard. The preload is
   // sandboxed (ADR 0112), which has no `clipboard` module, so main does it
-  // (main/clipboard.ts); the read is synchronous because paste is.
+  // (main/canvas/clipboard.ts); the read is synchronous because paste is.
   copyToClipboard(text: string): void {
     ipcRenderer.send('clipboard:writeText', text)
   },

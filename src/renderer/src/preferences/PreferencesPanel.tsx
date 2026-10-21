@@ -159,7 +159,7 @@ export default function PreferencesPanel({
   onChange,
   onClose
 }: PreferencesPanelProps): React.JSX.Element {
-  // Same rAF-coalescing as ColorField (panels/fields.tsx) — see ADR 0056. This
+  // Same rAF-coalescing as ColorField (ui/fields.tsx) — see ADR 0056. This
   // input doesn't go through that shared component (see the comment below),
   // so it needs its own throttle rather than inheriting one.
   const throttledOnChange = useRafThrottledCallback(onChange)
