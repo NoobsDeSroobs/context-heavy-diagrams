@@ -4,7 +4,7 @@
 
 This is an assessment of where this tool fits among the diagramming tools you might need or want to use. It describes my understanding of what each tool does, not which is overall best, as they are built for different jobs.
 
-**What this tool is:** a local, offline desktop editor where you draw the diagram yourself on a canvas, and can attach and structure metadata. Each element can carry Markdown notes, tags, images and a link to a deeper diagram, which opens as its own file. Diagrams are plain, diff-friendly text files. There is no server, no account, and no fixed notation. It was built to be the first tool that is lightweight, private and secure, and gets you most of the way there.
+**What this tool is:** a local, offline desktop editor where you draw the diagram yourself on a canvas, and can attach and structure metadata. Each element can carry Markdown notes, tags, images and a link to a deeper diagram, which opens as its own file. Diagrams are plain, diff-friendly text files. There is no server, no account, and no fixed notation. It was built to be a lightweight, private and secure tool that gets you most of the way there.
 
 I got an AI to check statements made about other tools on 2026-10-20 against each tool's own documentation, linked in each section. If something here is out of date or missing, please open an issue. Prices are left out on purpose.
 
@@ -109,7 +109,7 @@ For a market view, Gartner's 2026 Magic Quadrant for Enterprise Architecture Too
 **Where this tool is better**
 - **Quick to get started.** No metamodel to adopt or maintain. You can start drawing straight away, in any style, for any subject.
 - **Not tied to enterprise architecture.** The same tool draws a process, a customer journey or a system design.
-- **Free, offline and file-based.** Nothing to license, host or connect, and diagrams that live in git next to the code.
+- **Free, offline and file-based.** Nothing to license, host or connect, and diagrams that live in git.
 
 **Choose these** when the question is "what do we have, who owns it and what breaks if it changes" across a whole organisation, or when you must follow ArchiMate. **Choose this tool** for architecture diagrams beyond EA, for when an enterprise architecture platform is not yet justified, or as a supplement to your EA tool of choice. 
 
@@ -205,7 +205,7 @@ There are no or almost no unique features this tool offers. Other tools do them 
 - **Drill-down across plain files.** A linked diagram is just another file that opens on its own, with no model, server or tooling in between, and links only point downward.
 - **Small gitable files** with a published specification ([file-format.md](file-format.md)), written to diff and merge cleanly in git.
 - **Offline by design.** The app blocks its own network access, and there is no account.
-- **AI assistants can work on the files safely.** The file specification and AI tools are built to let your AI tools interact with your diagrams on your behalf. Designed limitations ensure, if used, that your AI tool does not overwrite, garble, or access anything you have not actively given to it.
+- **AI assistants can work on the files safely.** The file specification and AI tools are built to let your AI tools interact with your diagrams on your behalf. Designed limitations ensure, when you use the Claude Desktop (MCP) extension, that your AI tool does not overwrite, garble, or access anything you have not actively given to it. Without it, an assistant can affect anything you give it access to, outside this tool's control.
 - **Free,** with the source under the GPL-3.0-or-later. No hidden costs or licences, not even a donation page. 
 
 ## Where this tool is behind
