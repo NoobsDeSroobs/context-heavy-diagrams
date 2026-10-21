@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { IconRef } from '@shared/diagram'
-import { loadBuiltinIconSvg, searchBuiltinIconIds } from '../icons/builtinIcons'
+import { loadBuiltinIconSvg, searchBuiltinIconIds } from './builtinIcons'
 
 interface IconBrowserProps {
   diagramPath: string | null

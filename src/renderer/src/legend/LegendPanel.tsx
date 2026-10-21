@@ -7,7 +7,7 @@ import type { DirectionSetLegendRow } from '../edges/edgeDirectionSets'
 import type { LegendLineLook } from './legendLinePick'
 import { EDGE_STYLE_DEFAULTS } from '@shared/styleDefaults'
 import { useTheme } from '../theme'
-import IconSlotView from '../components/IconSlotView'
+import IconSlotView from '../icons/IconSlotView'
 import StylePicker from '../components/StylePicker'
 
 interface LegendPanelProps {

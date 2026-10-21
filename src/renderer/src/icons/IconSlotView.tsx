@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { IconRef } from '@shared/diagram'
-import { loadBuiltinIconSvg } from '../icons/builtinIcons'
+import { loadBuiltinIconSvg } from './builtinIcons'
 
 interface IconSlotViewProps {
   icon: IconRef | undefined
