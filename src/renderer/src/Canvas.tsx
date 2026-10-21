@@ -84,7 +84,7 @@ import TextNode, { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from './nodes/TextNode'
 import ContainerNode, { CONTAINER_MIN_WIDTH, CONTAINER_MIN_HEIGHT } from './nodes/ContainerNode'
 import { scaleGroupMembers, type GroupResizeMember } from './groupResize'
 import LineNode, { LINE_BOUNDS_PADDING } from './nodes/LineNode'
-import DiagramSettingsPanel from './components/DiagramSettingsPanel'
+import DiagramSettingsPanel from './diagram-settings/DiagramSettingsPanel'
 import { effectiveGravityPresets } from './lineGravityPresets'
 import LabeledEdge from './edges/LabeledEdge'
 import {

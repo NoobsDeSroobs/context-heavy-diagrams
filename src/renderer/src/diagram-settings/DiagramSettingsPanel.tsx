@@ -8,8 +8,8 @@ import type {
 } from '@shared/diagram'
 import { CollapsibleSection } from '../panels/fields'
 import RequiredTagsSection from '../tagging/RequiredTagsSection'
-import GravityPresetsSection from './GravityPresetsSection'
-import EdgeDirectionSetsSection from './EdgeDirectionSetsSection'
+import GravityPresetsSection from '../components/GravityPresetsSection'
+import EdgeDirectionSetsSection from '../components/EdgeDirectionSetsSection'
 
 interface DiagramSettingsPanelProps {
   // --- Max connection points per side ---
