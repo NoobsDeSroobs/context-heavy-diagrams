@@ -8,7 +8,7 @@
 // plan (src/main/documentSaveExec.ts). Paths are relative to the diagram file's directory,
 // '/'-separated.
 
-import type { DiagramFile } from './diagram'
+import type { DiagramFile } from '../diagram'
 
 // A file's cheap change fingerprint (mtime:size, see src/main/fileStamp.ts).
 // null = no baseline / file absent.

@@ -1,4 +1,4 @@
-import type { Decision } from '@shared/documentSave'
+import type { Decision } from '@shared/document/documentSave'
 
 // Ask the user, per file, what to do about files that have unsaved edits here AND
 // changed on disk (ADR 0092). Promise-based and callable from anywhere — the same

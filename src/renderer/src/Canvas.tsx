@@ -1,7 +1,7 @@
 import { showAlert } from './alerts'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
-import { SaveAbortedError, isSaveAborted } from './saveAborted'
+import { SaveAbortedError, isSaveAborted } from './document/saveAborted'
 import {
   adoptDisk,
   anyNoteDirty,
@@ -24,10 +24,10 @@ import {
   type SaveDocumentRequest,
   type SaveOutcome,
   type Stamp
-} from '@shared/documentSave'
+} from '@shared/document/documentSave'
 import { derivedDetailsPath } from '@shared/details/detailPaths'
-import { askConflictResolution, type ConflictItem } from './conflictDialog'
-import ConflictDialog from './components/ConflictDialog'
+import { askConflictResolution, type ConflictItem } from './document/conflictPrompt'
+import ConflictDialog from './document/ConflictDialog'
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -78,7 +78,11 @@ import {
   type RiskCell
 } from '@shared/diagram'
 import type { SecurityCrawlResult } from '@shared/threat-matrix/threatMatrixMath'
-import { diffDiagrams, summarizeChanges, type ChangesSinceSave } from '@shared/changesSinceSave'
+import {
+  diffDiagrams,
+  summarizeChanges,
+  type ChangesSinceSave
+} from '@shared/document/changesSinceSave'
 import EntityNode, { ENTITY_MIN_WIDTH, ENTITY_MIN_HEIGHT } from './nodes/EntityNode'
 import TextNode, { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from './nodes/TextNode'
 import ContainerNode, { CONTAINER_MIN_WIDTH, CONTAINER_MIN_HEIGHT } from './nodes/ContainerNode'
@@ -103,7 +107,7 @@ import ColorPickerPopup from './styling/ColorPickerPopup'
 import StylePicker from './styling/StylePicker'
 import DetailsPanel from './details/DetailsPanel'
 import DiagnosticsPanel, { type MissingFileEntry } from './components/DiagnosticsPanel'
-import ChangesPanel, { type DetailsChangedEntry } from './components/ChangesPanel'
+import ChangesPanel, { type DetailsChangedEntry } from './document/ChangesPanel'
 import HighlightsPanel from './tagging/HighlightsPanel'
 import SearchOverlay from './search/SearchOverlay'
 import {
@@ -181,7 +185,7 @@ import AlignmentGuides from './components/AlignmentGuides'
 import { SNAP_THRESHOLD_PX, boundsFrom, computeSnap } from './alignment'
 import { buildClipboardPayload, parseClipboardPayload, remapForPaste } from './clipboard'
 import { resolveDeletion } from './containerRemoval'
-import { warnIfSavedWithNewer } from './fileVersionWarning'
+import { warnIfSavedWithNewer } from './document/fileVersionWarning'
 import type { TransformPatch } from './panels/PropertyPanel'
 import { useTheme } from './styling/theme'
 import { useEventCallback } from './hooks/useEventCallback'

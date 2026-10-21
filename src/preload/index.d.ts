@@ -5,7 +5,7 @@ import type {
   SaveDocumentRequest,
   SaveOutcome,
   Stamp
-} from '@shared/documentSave'
+} from '@shared/document/documentSave'
 import type { AiFolderResult, ClaudeExtensionOutcome } from '@shared/aiFolderResult'
 import type { AppPreferences } from '@shared/preferences/preferences'
 import type { SecurityCrawlResult } from '@shared/threat-matrix/threatMatrixMath'

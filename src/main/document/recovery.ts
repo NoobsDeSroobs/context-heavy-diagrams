@@ -3,7 +3,7 @@ import { createHash, randomUUID } from 'crypto'
 import { mkdir, readdir, readFile, rm, stat, writeFile } from 'fs/promises'
 import { join } from 'path'
 import type { DiagramFile } from '@shared/diagram'
-import type { NoteBaseline, RecoverySnapshot } from '@shared/documentSave'
+import type { NoteBaseline, RecoverySnapshot } from '@shared/document/documentSave'
 
 // Crash-recovery snapshots (ADR 0040). Stored centrally under userData, never beside the real .chd:
 // that would clutter the user's project folder, risk an accidental git commit, and has nowhere to

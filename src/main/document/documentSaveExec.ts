@@ -1,6 +1,12 @@
 import { copyFile, mkdir, unlink, writeFile } from 'fs/promises'
 import { dirname } from 'path'
-import type { Conflict, NoteOp, SavedNote, SaveOutcome, Stamp } from '../shared/documentSave'
+import type {
+  Conflict,
+  NoteOp,
+  SavedNote,
+  SaveOutcome,
+  Stamp
+} from '../../shared/document/documentSave'
 
 // Executes a save plan (see src/shared/documentSave.ts and ADR 0092): checks
 // every file it is about to overwrite against the disk, saves everything that

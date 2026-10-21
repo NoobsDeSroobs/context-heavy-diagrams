@@ -6,7 +6,7 @@ import { existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { executeSave } from './documentSaveExec.ts'
-import { containedPath } from './containedPath.ts'
+import { containedPath } from '../containedPath.ts'
 
 let dir
 let diagram

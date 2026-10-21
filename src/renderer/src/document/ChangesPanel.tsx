@@ -1,4 +1,4 @@
-import type { ChangedElement, ChangesSinceSave } from '@shared/changesSinceSave'
+import type { ChangedElement, ChangesSinceSave } from '@shared/document/changesSinceSave'
 
 // An element with unsaved Details content — sourced from noteShadows'
 // existing dirty flag (ADR 0092), not a new tracking mechanism. See ADR 0102.

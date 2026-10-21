@@ -5,7 +5,7 @@
 // fast-follow, not covered here. No I/O — the caller supplies both sides
 // (the file on disk, and the live state via toDiagramFile()).
 
-import type { DiagramEdge, DiagramFile, DiagramNode } from './diagram'
+import type { DiagramEdge, DiagramFile, DiagramNode } from '../diagram'
 
 function deepEqual(a: unknown, b: unknown): boolean {
   if (a === b) return true

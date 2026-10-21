@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain, session } from 'electron'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
-import { registerDiagramHandlers } from './diagram'
+import { registerDiagramHandlers } from './document/diagram'
 import { registerIconHandlers } from './icons/icons'
 import { registerReferenceHandlers } from './references/references'
 import { registerDetailsHandlers } from './details/details'
@@ -13,7 +13,7 @@ import {
 } from './windows'
 import { diagramPathsFromArgs } from './launchArgs'
 import { registerRequiredTagsHandlers } from './tagging/requiredTags'
-import { registerRecoveryHandlers, runStartupOrphanScan } from './recovery'
+import { registerRecoveryHandlers, runStartupOrphanScan } from './document/recovery'
 import {
   readPreferences,
   registerPreferencesHandlers,

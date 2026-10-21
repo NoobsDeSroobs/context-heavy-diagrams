@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { HUB_KEY, type Decision } from '@shared/documentSave'
+import { HUB_KEY, type Decision } from '@shared/document/documentSave'
 import {
   subscribeToConflictDialog,
   type ConflictDecisions,
   type ConflictItem
-} from '../conflictDialog'
+} from './conflictPrompt'
 
 interface Pending {
   items: ConflictItem[]
