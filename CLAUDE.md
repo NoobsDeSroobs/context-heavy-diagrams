@@ -15,7 +15,7 @@ Everything that needs to survive is written to disk in this repo, in git-friendl
 - `docs/project-brief.md` — original project brief. Source of truth for requirements.
 - `docs/decisions/` — one markdown file per significant design decision (ADR-style): what was decided, alternatives considered, why. Numbered sequentially (`0001-...md`, `0002-...md`, ...).
 - `docs/architecture/` — living high-level documentation: purpose, design principles, stack, component overview. Updated as the system evolves, unlike the frozen brief.
-- `docs/file-format.md` — standalone spec of the `.chd` diagram file format, deliberately written so a third party could build a compatible importer/exporter without reading this codebase or its decision history (less lock-in). Update it whenever `src/shared/diagram.ts` changes — it must stay current, not just accurate at the moment it was written.
+- `docs/file-format.md` — standalone spec of the `.chd` diagram file format, deliberately written so a third party could build a compatible importer/exporter without reading this codebase or its decision history (less lock-in). Update it whenever a `schema.ts` under `src/shared/` changes — it must stay current, not just accurate at the moment it was written.
 - `docs/planning/` — epics (`docs/planning/epics/NNNN-title.md`; `…/epics/later/` if parked far out; once an epic is done and confirmed it becomes an entry in [`docs/planning/completed-epics.md`](docs/planning/completed-epics.md) and its file is deleted — [ADR 0120](docs/decisions/0120-completed-epics-collapse-into-an-index.md)) with task checklists inside them. See [docs/planning/README.md](docs/planning/README.md) and [docs/decisions/0002-planning-structure.md](docs/decisions/0002-planning-structure.md).
 - `docs/known-issues.md` — a single-file, symptom-first log of real bugs/hard problems found during development, each marked Solved/Worked around/Open with root cause and resolution. Not a duplicate of ADRs or epics' own Notes — a lookup table for "does this look familiar?" across the whole project. See [docs/decisions/0037-known-issues-log.md](docs/decisions/0037-known-issues-log.md). Add an entry whenever a bug takes real investigation to track down, not for routine fixes.
 - `PROGRESS.md` — short pointer: current epic/task, last updated. Not a duplicate backlog — the full backlog lives in `docs/planning/`. Keep it frugal: it is a work document for the current stretch, so delete items when they finish instead of logging them (the epic and `git log` hold the history).
@@ -27,11 +27,20 @@ Keep these updated as the work happens, not retroactively.
 
 A change that makes a real design choice gets an ADR (what was decided, what else was considered, why), not only the big ones. An ADR never links to or cites epic numbers; it states the trigger directly. ADR-to-ADR and epic-to-ADR links are fine. Do not run Prettier over `docs/**/*.md`: it reformats every table and buries a small edit in a huge diff; format code only.
 
+## Code layout
+
+Code is grouped by feature inside `src/main`, `src/renderer/src` and `src/shared` ([ADR 0125](docs/decisions/0125-code-packaged-by-feature-inside-the-process-folders.md)); a feature uses the same folder name in each tree.
+
+- `src/shared/` is pure: no Node, no DOM, no `electron`. The renderer never imports `main/`. Both are lint rules.
+- A feature's persisted types live in `src/shared/<feature>/schema.ts`; `src/shared/diagram/` composes them into `DiagramFile`. Changing one means updating `docs/file-format.md`.
+- App-frame files stay at the tree root, generic widgets go in `renderer/src/ui/`.
+- Never two files in one folder whose names differ only by case (`Foo.tsx` and `foo.ts`): TypeScript on Windows cannot tell them apart.
+
 ## Cross-platform rule
 
 This tool must work on **Linux and Windows** equally — Linux is a first-class target, not a nice-to-have. The maintainer's main machine is Windows, so Linux-breaking code is easy to write and hard to notice. When writing or reviewing code:
 
-- Never hardcode path separators or assume `\`. Use `path.join`/`path.resolve`; when a path is *stored* in a file, normalize to `/` (see `resolveLinkPath` in `src/main/linkPaths.ts` and the `.split('\\').join('/')` calls in `src/main/links.ts`).
+- Never hardcode path separators or assume `\`. Use `path.join`/`path.resolve`; when a path is *stored* in a file, normalize to `/` (see `resolveLinkPath` in `src/main/links/linkPaths.ts` and the `.split('\\').join('/')` calls in `src/main/links/links.ts`).
 - No Windows-only APIs, shell built-ins, executable names, or `%APPDATA%`/registry assumptions — use Electron's `app.getPath(...)` for per-OS locations.
 - Files are read/written as UTF-8; don't depend on CRLF vs LF.
 - Keyboard shortcuts, fonts, and window-chrome behaviour differ per OS — consider both.

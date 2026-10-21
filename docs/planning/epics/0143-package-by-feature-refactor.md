@@ -9,12 +9,12 @@ Group each feature's files in one named folder per electron-vite tree, and split
 ## Tasks
 - [x] Decide the layout; write the ADR
 - [x] Pilot with the legend: move it in every tree, then check it (typecheck, lint, tests and build pass; app not yet run)
-- [ ] Add the lint rules: `shared` imports neither `main` nor `renderer`; `renderer` never imports `main`
-- [ ] Move the remaining features, one commit per feature (`git mv` first, then the import fixes)
-- [ ] Move generic widgets to `renderer/src/ui/`; decide where the loose top-level files go
-- [ ] Split `shared/diagram.ts` into `shared/<feature>/schema.ts` plus `shared/diagram/`; keep `@shared/diagram` working
-- [ ] Update the current docs and config that name moved paths: `CLAUDE.md` (including the `file-format.md` rule, now "any `schema.ts`"), `CONTRIBUTING.md`, `docs/architecture/`, `scripts/`, the tsconfigs, `.vscode/launch.json`
-- [ ] After each step: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`; at the end a short run of the app (open, linked diagram, panels, save, export) in light and dark
+- [x] Add the lint rules: `shared` imports neither `main` nor `renderer`; `renderer` never imports `main`
+- [x] Move the remaining features, one commit per feature (`git mv` first, then the import fixes)
+- [x] Move generic widgets to `renderer/src/ui/`; decide where the loose top-level files go (`labelFileName.ts` stays at the `shared` root: links and details both use it)
+- [x] Split `shared/diagram.ts` into `shared/<feature>/schema.ts` plus `shared/diagram/`; keep `@shared/diagram` working
+- [x] Update the current docs and config that name moved paths: `CLAUDE.md` (including the `file-format.md` rule, now "any `schema.ts`"), `CONTRIBUTING.md`, `docs/architecture/`, `scripts/`, the tsconfigs, `.vscode/launch.json`
+- [ ] At the end, a manual run of the app (open, linked diagram, panels, save, export) in light and dark. `typecheck`, `lint`, `test` and `build` passed after every step.
 
 ## Notes
 - Keep casing exact in every move: Windows ignores it, Linux does not.

@@ -51,7 +51,7 @@ npm test
 - [`docs/architecture/overview.md`](docs/architecture/overview.md) maps the components, and [`docs/architecture/glossary.md`](docs/architecture/glossary.md) defines the vocabulary used in the UI and the code.
 - Significant design choices are recorded as short decision records in [`docs/decisions/`](docs/decisions/). If your change makes a real design choice, add one (what was decided, what else was considered, why). Skim the existing ones first; the answer to "why is it like that?" is often there.
 - Planned work lives as epics in [`docs/planning/`](docs/planning/README.md), and real bugs in [`docs/known-issues.md`](docs/known-issues.md).
-- The `.chd` file format is specified in [`docs/file-format.md`](docs/file-format.md). If you change `src/shared/diagram.ts`, update that file in the same change. Files from older versions must keep loading without migration ([ADR 0029](docs/decisions/0029-backward-compatible-loading-is-a-standing-rule.md)).
+- The `.chd` file format is specified in [`docs/file-format.md`](docs/file-format.md). If you change a `schema.ts` under `src/shared/`, update that file in the same change. Files from older versions must keep loading without migration ([ADR 0029](docs/decisions/0029-backward-compatible-loading-is-a-standing-rule.md)).
 
 ## Rules that apply to every change
 

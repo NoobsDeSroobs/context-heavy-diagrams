@@ -13,6 +13,7 @@ Working on [epic 0143](docs/planning/epics/0143-package-by-feature-refactor.md) 
 - [Epic 0139](docs/planning/epics/0139-diagram-default-font-and-available-fonts.md): a diagram-wide default font.
 - The light-mode colour round-trip ([known-issues](docs/known-issues.md)).
 - [Epic 0138](docs/planning/epics/later/0138-architecture-conformance-checks.md).
+- Seen 2026-10-21 on the refactor branch: toggling the legend once, then a highlight once, opened a save-or-discard dialog. Not investigated; check whether it also happens on master.
 - **Agreed order (2026-10-21):** [epic 0144](docs/planning/epics/0144-svg-and-command-line-export.md), SVG and command-line export, first. Then imports and exports ([0052](docs/planning/epics/later/0052-drawio-import-export.md) draw.io import, [0145](docs/planning/epics/0145-read-only-html-export.md) HTML export, [0146](docs/planning/epics/0146-json-canvas-export.md) JSON Canvas export, [0147](docs/planning/epics/0147-paste-a-table-bulk-create-with-columns.md) paste a table). Then a new prioritisation. Also logged, sparse: [0148](docs/planning/epics/0148-archimate-flavoured-vocabulary-kit.md) ArchiMate kit, [0149](docs/planning/epics/0149-hollow-triangle-edge-marker.md) hollow triangle marker, [0150](docs/planning/epics/0150-visual-diff-between-versions.md) visual diff.
 
 Merging, pushing, tagging and anything else on the remote is the maintainer's own action.
