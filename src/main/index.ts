@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain, session } from 'electron'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import { registerDiagramHandlers } from './diagram'
 import { registerIconHandlers } from './icons'
-import { registerReferenceHandlers } from './references'
+import { registerReferenceHandlers } from './references/references'
 import { registerDetailsHandlers } from './details'
 import { registerLinkHandlers } from './links'
 import {

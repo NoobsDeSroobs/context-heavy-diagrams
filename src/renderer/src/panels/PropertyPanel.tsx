@@ -31,7 +31,7 @@ import { computeFieldValue } from './fieldValue'
 import { MARKER_OPTIONS } from './edgeStyleOptions'
 import { GROUP_PALETTE, GROUP_SYSTEM, withStoredFonts, type FontOption } from './fontOptions'
 import MetadataSection from './MetadataSection'
-import ReferencesSection from './ReferencesSection'
+import ReferencesSection from '../references/ReferencesSection'
 import { canBrushNodeType } from '../styleBrush'
 
 export interface TransformPatch {

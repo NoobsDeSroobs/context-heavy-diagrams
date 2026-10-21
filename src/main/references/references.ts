@@ -1,7 +1,7 @@
 import { dialog, ipcMain } from 'electron'
 import { copyFile, mkdir, readdir, readFile } from 'fs/promises'
 import { basename, dirname, extname, join, relative } from 'path'
-import { resolveLinkPath } from './linkPaths'
+import { resolveLinkPath } from '../linkPaths'
 
 // Reference images (see ADR 0069) live in a sibling subfolder,
 // assets/references/, next to the assets/ folder custom icons use (ADR
