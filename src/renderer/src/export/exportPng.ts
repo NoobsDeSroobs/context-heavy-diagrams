@@ -1,8 +1,8 @@
 import { toPng } from 'html-to-image'
 import { getNodesBounds, type Node } from '@xyflow/react'
 import { resolveLegendIconMarkup, resolveLegendColors, buildLegendElement } from './exportLegendDom'
-import { placeLegend, type LegendCorner, type Rect } from './exportLegendPlacement'
-import type { ExportLegendItem } from './exportLegendItems'
+import { placeLegend, type LegendCorner, type Rect } from '@shared/svg/legendPlacement'
+import type { ExportLegendItem } from '@shared/svg/legendItems'
 import { MARKER_ID } from '../edges/markerIds'
 
 export interface PngExportOptions {
@@ -54,7 +54,7 @@ export function resolveEffectiveBackgroundColor(start: HTMLElement): string {
 
 // <input type="color"> only accepts #rrggbb — silently ignoring (resetting
 // to black) anything else, notably the rgb()/rgba() strings
-// getComputedStyle actually returns. Needed so ExportPngDialog can preview
+// getComputedStyle actually returns. Needed so ExportImageDialog can preview
 // resolveEffectiveBackgroundColor's real result in its color swatch
 // instead of a hardcoded placeholder (found live, 2026-08-23 — the dialog
 // kept showing white regardless of the diagram's actual background, even
@@ -146,7 +146,7 @@ export async function captureDiagramPng(
   let bounds: Rect = getNodesBounds(nodes)
 
   // Built and measured before touching width/height/translate below — a
-  // legend that needs the canvas extended (placeLegend, exportLegendPlacement.ts)
+  // legend that needs the canvas extended (placeLegend, legendPlacement.ts)
   // changes `bounds` itself, so the export's own dimensions have to be
   // computed after this, not before.
   let legendEl: HTMLDivElement | undefined

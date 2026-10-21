@@ -1,5 +1,5 @@
-import type { EdgeStyle, MarkerKind, NodeStyle } from '@shared/diagram'
-import type { Theme } from '../theme'
+import type { EdgeStyle, MarkerKind, NodeStyle } from './diagram'
+import type { Theme } from './theme.ts'
 
 // The built-in look of an element that has no style of its own, as DATA (ADR 0117).
 //

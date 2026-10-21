@@ -17,7 +17,7 @@ import {
   displayColor,
   styledNodeType,
   type NodeStyleDefaults
-} from '../styles/styleDefaults'
+} from '@shared/styleDefaults'
 import { connectionPointCountForSide } from '../nodes/connectionPoints'
 import {
   CollapsibleSection,

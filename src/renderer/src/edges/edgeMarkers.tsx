@@ -1,25 +1,17 @@
 import { memo } from 'react'
-import { MARKER_ID } from './markerIds'
+import { MARKER_SHAPES, MARKER_STROKE_WIDTH } from '@shared/svg/markerShapes'
 
-// Custom SVG <marker> defs for the full MarkerKind set (ADR 0014). React Flow's MarkerType covers
-// only plain and closed arrows, so circles, diamonds and crow's-foot need hand-drawn markers
-// referenced by id, the mechanism RF's built-ins use.
-//
-// Every shape points toward +x (the node the edge connects to) with its attachment point (where it
-// meets the node boundary) at the marker's refX. orient="auto-start-reverse" handles both ends:
-// forward for markerEnd, flipped 180° for markerStart, so one definition serves both.
+// <marker> defs for the full MarkerKind set (ADR 0014), drawn from the shared shape data
+// (markerShapes.ts), which the SVG export (ADR 0124) draws from too. See that file for the geometry
+// conventions.
 //
 // fill/stroke use the CSS context-fill/context-stroke keywords (Chromium 121+; this project ships
 // Electron 43) to inherit the referencing path's stroke colour, so there is no marker per colour.
-//
-// Deliberately approximate, not pixel-correct ERD/UML notation (ADR 0014's Notes on why the
-// notation question is out of scope): the shapes only need to be recognizably right. markerIds.ts
-// has the id map and the url(#id) helper LabeledEdge uses.
 
 const STROKE = {
   fill: 'none',
   stroke: 'context-stroke',
-  strokeWidth: 1.5,
+  strokeWidth: MARKER_STROKE_WIDTH,
   strokeLinecap: 'round' as const,
   strokeLinejoin: 'round' as const
 }
@@ -43,129 +35,32 @@ function EdgeMarkerDefs(): React.JSX.Element {
       data-export-role="edge-marker-defs"
     >
       <defs>
-        <marker
-          id={MARKER_ID.arrowOpen}
-          viewBox="0 0 10 10"
-          refX="8"
-          refY="5"
-          markerWidth="8"
-          markerHeight="8"
-          orient="auto-start-reverse"
-        >
-          <path d="M1,1 L8,5 L1,9" {...STROKE} />
-        </marker>
-        <marker
-          id={MARKER_ID.arrowClosed}
-          viewBox="0 0 10 10"
-          refX="9"
-          refY="5"
-          markerWidth="8"
-          markerHeight="8"
-          orient="auto-start-reverse"
-        >
-          <path d="M1,1 L9,5 L1,9 Z" {...FILLED} />
-        </marker>
-        <marker
-          id={MARKER_ID.circle}
-          viewBox="0 0 10 10"
-          refX="8"
-          refY="5"
-          markerWidth="8"
-          markerHeight="8"
-          orient="auto-start-reverse"
-        >
-          <circle cx="5" cy="5" r="3" {...STROKE} />
-        </marker>
-        <marker
-          id={MARKER_ID.circleFilled}
-          viewBox="0 0 10 10"
-          refX="8"
-          refY="5"
-          markerWidth="8"
-          markerHeight="8"
-          orient="auto-start-reverse"
-        >
-          <circle cx="5" cy="5" r="3" {...FILLED} />
-        </marker>
-        <marker
-          id={MARKER_ID.diamond}
-          viewBox="0 0 10 10"
-          refX="9"
-          refY="5"
-          markerWidth="9"
-          markerHeight="8"
-          orient="auto-start-reverse"
-        >
-          <path d="M1,5 L5,1 L9,5 L5,9 Z" {...STROKE} />
-        </marker>
-        <marker
-          id={MARKER_ID.diamondFilled}
-          viewBox="0 0 10 10"
-          refX="9"
-          refY="5"
-          markerWidth="9"
-          markerHeight="8"
-          orient="auto-start-reverse"
-        >
-          <path d="M1,5 L5,1 L9,5 L5,9 Z" {...FILLED} />
-        </marker>
-        <marker
-          id={MARKER_ID.crowsFootOne}
-          viewBox="0 0 10 10"
-          refX="6"
-          refY="5"
-          markerWidth="7"
-          markerHeight="8"
-          orient="auto-start-reverse"
-        >
-          <path d="M6,1 L6,9" {...STROKE} />
-        </marker>
-        <marker
-          id={MARKER_ID.crowsFootMany}
-          viewBox="0 0 10 10"
-          refX="9"
-          refY="5"
-          markerWidth="8"
-          markerHeight="8"
-          orient="auto-start-reverse"
-        >
-          <path d="M9,5 L1,1 M9,5 L1,5 M9,5 L1,9" {...STROKE} />
-        </marker>
-        <marker
-          id={MARKER_ID.crowsFootOneOrMany}
-          viewBox="0 0 14 10"
-          refX="13"
-          refY="5"
-          markerWidth="11"
-          markerHeight="8"
-          orient="auto-start-reverse"
-        >
-          <path d="M13,5 L5,1 M13,5 L5,5 M13,5 L5,9 M3,1 L3,9" {...STROKE} />
-        </marker>
-        <marker
-          id={MARKER_ID.crowsFootZeroOrOne}
-          viewBox="0 0 12 10"
-          refX="9"
-          refY="5"
-          markerWidth="9.6"
-          markerHeight="8"
-          orient="auto-start-reverse"
-        >
-          <path d="M9,1 L9,9" {...STROKE} />
-          <circle cx="4.5" cy="5" r="3" {...STROKE} />
-        </marker>
-        <marker
-          id={MARKER_ID.crowsFootZeroOrMany}
-          viewBox="0 0 14 10"
-          refX="13"
-          refY="5"
-          markerWidth="11"
-          markerHeight="8"
-          orient="auto-start-reverse"
-        >
-          <path d="M13,5 L7,1 M13,5 L7,5 M13,5 L7,9" {...STROKE} />
-          <circle cx="3.5" cy="5" r="3" {...STROKE} />
-        </marker>
+        {Object.values(MARKER_SHAPES).map((shape) => (
+          <marker
+            key={shape.id}
+            id={shape.id}
+            viewBox={shape.viewBox}
+            refX={shape.refX}
+            refY={shape.refY}
+            markerWidth={shape.markerWidth}
+            markerHeight={shape.markerHeight}
+            orient="auto-start-reverse"
+          >
+            {shape.elements.map((element, index) =>
+              element.tag === 'path' ? (
+                <path key={index} d={element.d} {...(element.filled ? FILLED : STROKE)} />
+              ) : (
+                <circle
+                  key={index}
+                  cx={element.cx}
+                  cy={element.cy}
+                  r={element.r}
+                  {...(element.filled ? FILLED : STROKE)}
+                />
+              )
+            )}
+          </marker>
+        ))}
       </defs>
     </svg>
   )

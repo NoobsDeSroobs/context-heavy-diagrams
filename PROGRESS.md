@@ -8,10 +8,9 @@ MVP complete (2026-08-20). **v0.2.1 is the first open-source release** (2026-10-
 
 ## Now
 
-Nothing active; branch `epic/0140-legend-line-picker` (the legend line picker, live-tested) waits for the maintainer's merge. [Epic 0137](docs/planning/epics/0137-open-source-release.md), the release, is shipped; its leftovers are optional or for contributors (SPDX headers, a social preview image, Linux and macOS verification, a line-by-line read of the open epics). Candidates for the next piece of work:
+Working on [epic 0144](docs/planning/epics/0144-svg-and-command-line-export.md) (SVG and command-line export) on branch `epic/0144-svg-and-command-line-export`. The open-source release (0137) and AI onboarding (0133) are closed in [completed-epics.md](docs/planning/completed-epics.md); their leftovers (SPDX headers, a social preview image, Linux and macOS verification, `chd` on the PATH) are listed there. SVG export (app and `chd export`) is built and tested, [ADR 0124](docs/decisions/0124-svg-export-from-a-shared-pure-renderer.md); it still needs a live check of the menu item and a look at the output in Inkscape, then the PNG from the command line. Candidates after this one:
 
 - [Epic 0139](docs/planning/epics/0139-diagram-default-font-and-available-fonts.md): a diagram-wide default font.
-- [Epic 0142](docs/planning/epics/0142-dependabot-alerts-in-build-tooling.md): the four open Dependabot alerts, all in build tooling.
 - The light-mode colour round-trip ([known-issues](docs/known-issues.md)).
 - [Epic 0138](docs/planning/epics/later/0138-architecture-conformance-checks.md).
 - [Epic 0143](docs/planning/epics/0143-package-by-feature-refactor.md): look into organising the code by feature, and splitting `Canvas.tsx`.

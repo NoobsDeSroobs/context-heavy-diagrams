@@ -29,6 +29,7 @@ Usage:
   chd spec [fields|authoring|layout|all]   Print the .chd file format reference
   chd validate <file.chd>... [--recursive] Check diagram files for structural problems
   chd hash <file.chd>                      Print the file's fingerprint (SHA-256 of its bytes)
+  chd export <file.chd> [options]          Draw the diagram as an SVG image (see 'chd export --help')
   chd --version
   chd --help
 
@@ -48,6 +49,9 @@ your edit on the fresh content.
   hash       Prints the lowercase-hex SHA-256 of the file's raw bytes — the same
              fingerprint the Claude Desktop extension uses (ADR 0109). Exit code 1 if
              the file can't be read.
+  export     Writes an .svg next to the diagram (or where -o says), so an image in a README
+             or wiki can be regenerated whenever the diagram changes. Needs no display.
+             It only reads the diagram. Exit code 1 if the file can't be read or written.
 `
 
 function readSkillFile(rel) {
@@ -116,7 +120,39 @@ function hash(file) {
   }
 }
 
-export function run(argv) {
+// Tabler's outline icons, the built-in icon set, as they sit in a source checkout or inside the
+// packaged app (same two layouts as appVersion above). Null if this install has none.
+function builtinIconDir() {
+  const root = join(here, '..', '..')
+  const tail = ['node_modules', '@tabler', 'icons', 'icons', 'outline']
+  const candidates = [
+    join(root, ...tail),
+    join(root.replace('app.asar.unpacked', 'app.asar'), ...tail)
+  ]
+  return candidates.find((path) => existsSync(path))
+}
+
+// `export` lives in its own bundle (scripts/build-cli.mjs), loaded only when asked for, so the
+// other commands stay plain Node with nothing to build.
+async function exportCommand(args) {
+  if (args.includes('--help') || args.includes('-h')) {
+    const { EXPORT_USAGE } = await import('./export.mjs')
+    console.log(EXPORT_USAGE)
+    return 0
+  }
+  let bundle
+  try {
+    bundle = await import('./export.mjs')
+  } catch (error) {
+    console.error(
+      `chd: the export command is not built here (run 'npm run build:cli'): ${error instanceof Error ? error.message : error}`
+    )
+    return 1
+  }
+  return bundle.runExport(args, { iconDir: builtinIconDir() })
+}
+
+export async function run(argv) {
   const [command, ...rest] = argv
   switch (command) {
     case undefined:
@@ -143,6 +179,8 @@ export function run(argv) {
         return 2
       }
       return hash(rest[0])
+    case 'export':
+      return exportCommand(rest)
     default:
       console.error(`chd: unknown command '${command}'. Run 'chd --help'.`)
       return 2
@@ -151,5 +189,5 @@ export function run(argv) {
 
 // Only when executed directly, so tests can import `run`.
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  process.exitCode = run(process.argv.slice(2))
+  process.exitCode = await run(process.argv.slice(2))
 }

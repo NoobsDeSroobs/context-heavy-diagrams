@@ -1,7 +1,7 @@
 import type { IconRef } from '@shared/diagram'
 import { loadBuiltinIconSvg } from '../icons/builtinIcons'
 import { markerUrl } from '../edges/markerIds'
-import type { ExportLegendItem } from './exportLegendItems'
+import type { ExportLegendItem } from '@shared/svg/legendItems'
 
 // Same three dash patterns as LabeledEdge.tsx/LegendPanel.tsx's own
 // DASH_ARRAY — small independent copy, matching this codebase's existing

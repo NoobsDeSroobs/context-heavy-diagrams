@@ -11,9 +11,13 @@ import LockBadge from '../components/LockBadge'
 import { useDiagramContext } from '../useDiagramContext'
 import { withOpacity } from '../styles/colorOpacity'
 import { themeAdaptiveColor } from '../styles/themeAdaptiveColor'
-import { LINE_STYLE_DEFAULTS } from '../styles/styleDefaults'
+import { LINE_STYLE_DEFAULTS } from '@shared/styleDefaults'
 import { markerUrl } from '../edges/markerIds'
-import { buildBendablePath, nearestSegmentIndex, pointsBoundingBox } from '../geometry/bendablePath'
+import {
+  buildBendablePath,
+  nearestSegmentIndex,
+  pointsBoundingBox
+} from '@shared/geometry/bendablePath'
 
 // Padding around the raw point bounding box, in flow units — room for the
 // point handles/stroke to render without clipping against the node's own

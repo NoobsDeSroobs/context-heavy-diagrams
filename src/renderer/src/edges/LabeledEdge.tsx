@@ -7,30 +7,20 @@ import {
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent
 } from 'react'
-import {
-  BaseEdge,
-  EdgeLabelRenderer,
-  getBezierPath,
-  getStraightPath,
-  useReactFlow,
-  Position,
-  type EdgeProps
-} from '@xyflow/react'
+import { BaseEdge, EdgeLabelRenderer, useReactFlow, type EdgeProps } from '@xyflow/react'
 import type { EdgeStyle, LinePoint, MetadataEntry } from '@shared/diagram'
-import { buildConnectorPath, type PathPoint } from '../geometry/bendablePath'
+import { buildEdgePath } from '@shared/geometry/edgePath'
 import {
   orthogonalRouteVertices,
-  orthogonalPath,
   orthogonalSegments,
   moveOrthogonalSegment,
-  SMOOTHSTEP_BORDER_RADIUS,
   type OrthoSegment
-} from '../geometry/orthogonalPath'
+} from '@shared/geometry/orthogonalPath'
 import EditableLabel from '../components/EditableLabel'
 import HighlightChips from '../components/HighlightChips'
 import { useDiagramContext } from '../useDiagramContext'
-import { HIGHLIGHT_BORDER_WIDTH } from '../highlights'
-import { EDGE_STYLE_DEFAULTS } from '../styles/styleDefaults'
+import { HIGHLIGHT_BORDER_WIDTH } from '@shared/highlights'
+import { EDGE_STYLE_DEFAULTS } from '@shared/styleDefaults'
 import { isolateStyle } from '../search'
 import { withOpacity } from '../styles/colorOpacity'
 import { themeAdaptiveColor } from '../styles/themeAdaptiveColor'
@@ -82,57 +72,6 @@ function pointAtRatio(pathD: string, ratio: number): { x: number; y: number } {
   const length = path.getTotalLength()
   const point = path.getPointAtLength(length * ratio)
   return { x: point.x, y: point.y }
-}
-
-// Outward from the node at each side — the direction an edge already
-// travels leaving/entering a handle. Used both to place the bezier
-// routing's straight lead-in/out (below) and as every point's fixed
-// tangent direction under catmull-rom routing (see bendablePath.ts's PathPoint).
-const OUTWARD_DIRECTION: Record<Position, { x: number; y: number }> = {
-  [Position.Top]: { x: 0, y: -1 },
-  [Position.Right]: { x: 1, y: 0 },
-  [Position.Bottom]: { x: 0, y: 1 },
-  [Position.Left]: { x: -1, y: 0 }
-}
-
-// Straight lead-in/out before curving: the global edgeStraightSegmentLength setting
-// (settings.ts/PreferencesPanel, ADR 0032). It matters only for the two curvy routing styles
-// (bezier, catmull-rom); straight/step/smoothstep already leave each side perpendicular.
-// getBezierPath has no lead-in, so the curve is run between two points offset straight outward from
-// the real endpoints and a straight `L` segment splices each real endpoint onto that path string.
-// Relies on getBezierPath's path always starting "M<x>,<y> C..." (its actual, stable
-// implementation), the same assumption pointAtRatio above makes. Clamped to half the straight-line
-// distance between the real endpoints so two short segments can't overlap or fold a short edge back
-// on itself.
-function buildBezierPath(
-  sourceX: number,
-  sourceY: number,
-  sourcePosition: Position,
-  targetX: number,
-  targetY: number,
-  targetPosition: Position,
-  straightSegmentLength: number
-): string {
-  if (straightSegmentLength <= 0) {
-    return getBezierPath({ sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition })[0]
-  }
-  const distance = Math.hypot(targetX - sourceX, targetY - sourceY)
-  const length = Math.min(straightSegmentLength, distance / 2)
-  const sourceDir = OUTWARD_DIRECTION[sourcePosition]
-  const targetDir = OUTWARD_DIRECTION[targetPosition]
-  const offsetSourceX = sourceX + sourceDir.x * length
-  const offsetSourceY = sourceY + sourceDir.y * length
-  const offsetTargetX = targetX + targetDir.x * length
-  const offsetTargetY = targetY + targetDir.y * length
-  const [curve] = getBezierPath({
-    sourceX: offsetSourceX,
-    sourceY: offsetSourceY,
-    sourcePosition,
-    targetX: offsetTargetX,
-    targetY: offsetTargetY,
-    targetPosition
-  })
-  return `M${sourceX},${sourceY} L${offsetSourceX},${offsetSourceY} ${curve.slice(curve.indexOf('C'))} L${targetX},${targetY}`
 }
 
 // One shared empty list, so an edge with no bend points has a stable `bendPoints`
@@ -210,52 +149,29 @@ function LabeledEdge({
     [isOrthogonal, sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition, bendPoints]
   )
 
-  // Routing (ADR 0057): 'straight'/'step'/'smoothstep' are React Flow's
-  // own built-in path shapes, wired straight through with no math of our
-  // own. 'catmullRom' reuses bendablePath.ts (originally the freeform-line
-  // curve, ADR 0050) with this edge's own manual bend points.
-  // Absent means today's only historical behavior, a plain bezier.
-  const edgePath = useMemo(() => {
-    switch (routingStyle) {
-      case 'straight':
-        return getStraightPath({ sourceX, sourceY, targetX, targetY })[0]
-      case 'step':
-        // orthoVertices is always non-null here (isOrthogonal is true) — the
-        // fallback keeps the type checker happy without widening the memo.
-        return orthoVertices ? orthogonalPath(orthoVertices, 0) : ''
-      case 'smoothstep':
-        return orthoVertices ? orthogonalPath(orthoVertices, SMOOTHSTEP_BORDER_RADIUS) : ''
-      case 'catmullRom': {
-        const pathPoints: PathPoint[] = [
-          { x: sourceX, y: sourceY, direction: OUTWARD_DIRECTION[sourcePosition] },
-          ...bendPoints,
-          { x: targetX, y: targetY, direction: OUTWARD_DIRECTION[targetPosition] }
-        ]
-        return buildConnectorPath(pathPoints, edgeStraightSegmentLength)
-      }
-      default:
-        return buildBezierPath(
-          sourceX,
-          sourceY,
-          sourcePosition,
-          targetX,
-          targetY,
-          targetPosition,
-          edgeStraightSegmentLength
-        )
-    }
-  }, [
-    routingStyle,
-    orthoVertices,
-    sourceX,
-    sourceY,
-    sourcePosition,
-    targetX,
-    targetY,
-    targetPosition,
-    bendPoints,
-    edgeStraightSegmentLength
-  ])
+  // Routing (ADR 0057) lives in the shared buildEdgePath, which the SVG export calls too (ADR
+  // 0124), so the exported file draws the same geometry.
+  const edgePath = useMemo(
+    () =>
+      buildEdgePath(
+        routingStyle,
+        { x: sourceX, y: sourceY, side: sourcePosition },
+        { x: targetX, y: targetY, side: targetPosition },
+        bendPoints,
+        edgeStraightSegmentLength
+      ),
+    [
+      routingStyle,
+      sourceX,
+      sourceY,
+      sourcePosition,
+      targetX,
+      targetY,
+      targetPosition,
+      bendPoints,
+      edgeStraightSegmentLength
+    ]
+  )
 
   const labelRatio = edgeStyle?.labelPosition
   const { x: labelX, y: labelY } = useMemo(

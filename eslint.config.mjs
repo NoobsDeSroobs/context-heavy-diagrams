@@ -8,7 +8,16 @@ import eslintPluginReactRefresh from 'eslint-plugin-react-refresh'
 export default defineConfig(
   // The skill's scripts ship to users as standalone plain-JS files (ADR 0105),
   // not part of the typed app code; .claude/skills holds a synced copy.
-  { ignores: ['**/node_modules', '**/dist', '**/out', 'resources/ai/skills/**', '.claude/**'] },
+  {
+    ignores: [
+      '**/node_modules',
+      '**/dist',
+      '**/out',
+      'resources/ai/skills/**',
+      'resources/cli/export.mjs',
+      '.claude/**'
+    ]
+  },
   tseslint.configs.recommended,
   eslintPluginReact.configs.flat.recommended,
   eslintPluginReact.configs.flat['jsx-runtime'],
