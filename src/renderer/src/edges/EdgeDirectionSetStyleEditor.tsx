@@ -9,7 +9,7 @@ import {
   SelectField,
   SliderField
 } from '../panels/fields'
-import { LINE_STYLE_OPTIONS, MARKER_OPTIONS } from '../panels/edgeStyleOptions'
+import { LINE_STYLE_OPTIONS, MARKER_OPTIONS } from './edgeStyleOptions'
 
 interface EdgeDirectionSetStyleEditorProps {
   set: EdgeDirectionSet

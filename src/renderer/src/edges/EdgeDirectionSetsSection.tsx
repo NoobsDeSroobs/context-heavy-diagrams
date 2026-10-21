@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { EdgeDirectionSet, EdgeDirectionSetStyle, EdgeStyle } from '@shared/diagram'
-import { markerUrl } from '../edges/markerIds'
-import { DEFAULT_DIRECTION_SET_LEGEND_COLOR } from '../edges/edgeDirectionSets'
+import { markerUrl } from './markerIds'
+import { DEFAULT_DIRECTION_SET_LEGEND_COLOR } from './edgeDirectionSets'
 import EdgeDirectionSetStyleEditor from './EdgeDirectionSetStyleEditor'
 
 interface EdgeDirectionSetsSectionProps {

@@ -28,7 +28,7 @@ import {
   SelectField
 } from './fields'
 import { computeFieldValue } from './fieldValue'
-import { MARKER_OPTIONS } from './edgeStyleOptions'
+import { MARKER_OPTIONS } from '../edges/edgeStyleOptions'
 import {
   GROUP_PALETTE,
   GROUP_SYSTEM,
