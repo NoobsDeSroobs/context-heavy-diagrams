@@ -12,7 +12,7 @@ import {
   registerWindowHandlers
 } from './windows'
 import { diagramPathsFromArgs } from './launchArgs'
-import { registerRequiredTagsHandlers } from './requiredTags'
+import { registerRequiredTagsHandlers } from './tagging/requiredTags'
 import { registerRecoveryHandlers, runStartupOrphanScan } from './recovery'
 import {
   readPreferences,

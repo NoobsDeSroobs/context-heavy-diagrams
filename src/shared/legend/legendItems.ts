@@ -7,7 +7,7 @@ import type {
   LineStyleKind,
   MarkerKind
 } from '../diagram.ts'
-import { highlightId } from '../highlights.ts'
+import { highlightId } from '../tagging/highlights.ts'
 
 // The legend row the active direction set contributes (ADR 0081): its name
 // drawn as an arrow, shown in the Legend panel and prepended to the image

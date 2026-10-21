@@ -7,7 +7,7 @@ import {
 } from 'react'
 import { useReactFlow, type NodeProps, type ReactFlowInstance } from '@xyflow/react'
 import type { LinePoint, LineStyleKind, NodeStyle } from '@shared/diagram'
-import LockBadge from '../components/LockBadge'
+import LockBadge from '../tagging/LockBadge'
 import { useDiagramContext } from '../useDiagramContext'
 import { withOpacity } from '../styles/colorOpacity'
 import { themeAdaptiveColor } from '../styles/themeAdaptiveColor'

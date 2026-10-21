@@ -30,7 +30,7 @@ import {
 import { computeFieldValue } from './fieldValue'
 import { MARKER_OPTIONS } from './edgeStyleOptions'
 import { GROUP_PALETTE, GROUP_SYSTEM, withStoredFonts, type FontOption } from './fontOptions'
-import MetadataSection from './MetadataSection'
+import MetadataSection from '../tagging/MetadataSection'
 import ReferencesSection from '../references/ReferencesSection'
 import { canBrushNodeType } from '../styleBrush'
 

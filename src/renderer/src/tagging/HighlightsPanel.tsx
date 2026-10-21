@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { HighlightDefinition, JsonValue } from '@shared/diagram'
-import { DEFAULT_HIGHLIGHT_COLOR, highlightId } from '@shared/highlights'
+import { DEFAULT_HIGHLIGHT_COLOR, highlightId } from '@shared/tagging/highlights'
 
 interface HighlightsPanelProps {
   highlights: HighlightDefinition[]

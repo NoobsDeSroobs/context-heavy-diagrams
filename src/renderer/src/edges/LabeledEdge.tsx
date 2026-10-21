@@ -17,9 +17,9 @@ import {
   type OrthoSegment
 } from '@shared/geometry/orthogonalPath'
 import EditableLabel from '../components/EditableLabel'
-import HighlightChips from '../components/HighlightChips'
+import HighlightChips from '../tagging/HighlightChips'
 import { useDiagramContext } from '../useDiagramContext'
-import { HIGHLIGHT_BORDER_WIDTH } from '@shared/highlights'
+import { HIGHLIGHT_BORDER_WIDTH } from '@shared/tagging/highlights'
 import { EDGE_STYLE_DEFAULTS } from '@shared/styleDefaults'
 import { isolateStyle } from '../search/search'
 import { withOpacity } from '../styles/colorOpacity'

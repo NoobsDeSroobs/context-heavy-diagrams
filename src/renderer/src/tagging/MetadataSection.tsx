@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { JsonValue, MetadataEntry, RequiredTagDefinition } from '@shared/diagram'
-import { CollapsibleSection } from './fields'
+import { CollapsibleSection } from '../panels/fields'
 import EditableLabel from '../components/EditableLabel'
 
 interface MetadataSectionProps {

@@ -1,5 +1,5 @@
 import type { EdgeStyle, HighlightDefinition, MarkerKind, NodeStyle } from '../diagram.ts'
-import { HIGHLIGHT_BORDER_WIDTH } from '../highlights.ts'
+import { HIGHLIGHT_BORDER_WIDTH } from '../tagging/highlights.ts'
 import {
   EDGE_STYLE_DEFAULTS,
   LINE_STYLE_DEFAULTS,

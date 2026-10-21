@@ -7,7 +7,7 @@ import type {
   RequiredTagDefinition
 } from '@shared/diagram'
 import { CollapsibleSection } from '../panels/fields'
-import RequiredTagsSection from './RequiredTagsSection'
+import RequiredTagsSection from '../tagging/RequiredTagsSection'
 import GravityPresetsSection from './GravityPresetsSection'
 import EdgeDirectionSetsSection from './EdgeDirectionSetsSection'
 

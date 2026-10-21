@@ -3,7 +3,7 @@ import type {
   JsonValue,
   MetadataEntry,
   RequiredTagDefinition
-} from './diagram'
+} from '../diagram'
 
 // A single-match highlight overrides a node's border or an edge's stroke,
 // drawn a bit thicker than the default 1.5px — see ADR 0025.

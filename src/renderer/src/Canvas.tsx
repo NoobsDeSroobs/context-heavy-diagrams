@@ -92,7 +92,7 @@ import {
   highlightId,
   matchingHighlights,
   reconcileHighlightGroup
-} from '@shared/highlights'
+} from '@shared/tagging/highlights'
 import EdgeMarkerDefs from './edges/edgeMarkers'
 import { markerUrl } from './edges/markerIds'
 import DiagramContext, { type DiagramContextValue } from './DiagramContext'
@@ -104,7 +104,7 @@ import StylePicker from './components/StylePicker'
 import DetailsPanel from './details/DetailsPanel'
 import DiagnosticsPanel, { type MissingFileEntry } from './components/DiagnosticsPanel'
 import ChangesPanel, { type DetailsChangedEntry } from './components/ChangesPanel'
-import HighlightsPanel from './components/HighlightsPanel'
+import HighlightsPanel from './tagging/HighlightsPanel'
 import SearchOverlay from './search/SearchOverlay'
 import {
   criteriaFromQuery,
