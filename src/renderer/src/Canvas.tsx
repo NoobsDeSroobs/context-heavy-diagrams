@@ -121,7 +121,7 @@ import {
 } from './search/search'
 import LegendPanel from './legend/LegendPanel'
 import MenuBar, { type MenuBarMenu, type MenuBarItem } from './components/MenuBar'
-import LayerPanel from './components/LayerPanel'
+import LayerPanel from './layers/LayerPanel'
 import {
   CONTAINER_BASE,
   ENTITY_BASE,
