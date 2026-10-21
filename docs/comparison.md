@@ -135,18 +135,15 @@ For a market view, Gartner's 2026 Magic Quadrant for Enterprise Architecture Too
 - **Team workflow.** Collaboration, ownership, prioritisation and publishing for people who are not diagram authors.
 
 **Where this tool is better**
-- **Any journey or process, in any shape.** A journey is a sequence of boxes with notes and tags behind each step, with no fixed template to fit. The gallery has one ([customer journey](../examples/gallery/business/customer-journey.chd)).
+- **Any journey or process, in any shape.** A journey is a sequence of boxes with notes and tags behind each step, with no fixed template to fit.
 - **Links into the rest of the picture.** A step can link to the system diagram behind it, so a business view and a technical view stay connected.
-- **BPMN as a visual vocabulary only.** Process diagrams can use BPMN's recognisable conventions with an icon and a label on ordinary elements, with nothing validated or executed ([ADR 0080](decisions/0080-bpmn-as-adopted-vocabulary-not-metamodel.md)). The tool does not read or write BPMN files.
 - **Free, offline and file-based.**
 
 **Choose the journey tools** when you run a journey programme with personas, research, metrics and a team working in it. **Choose a BPMN tool** when the diagram must follow the standard, be exchanged with other tools or run on a process engine. **Choose this tool** for a quick, flexible journey or process sketch, or when the story behind each step and its link to the system diagrams matter more than the notation.
 
-<!-- Author note: uncomment and fill in, or delete.
-> **From the author:** 
--->
+**From the author:** From my experience, the disconnect between the customer journey, persona, or business process views and any technical system views is a constant drain on productivity. You need to log in to 3 different platforms and manually make links between each different view. This tool joins them together and coallesce multiple perspective-files into one file with toggleable highlights.
 
-## Notes and whiteboards
+# Notes and whiteboards
 
 **Obsidian Canvas, Heptabase, Excalidraw and tldraw** are infinite canvases for thinking, where notes and sketches sit side by side. They are the closest to this tool in feel, and the furthest from a formal diagram.
 
@@ -158,7 +155,7 @@ For a market view, Gartner's 2026 Magic Quadrant for Enterprise Architecture Too
 | [tldraw](https://tldraw.dev/) | An SDK for building infinite canvas apps in React, with a ready-made whiteboard kit. Production use needs a licence key (trial, commercial, or a hobby licence that keeps a "made with tldraw" watermark) ([licence](https://tldraw.dev/community/license)). |
 
 **Where they are better**
-- **Thinking space.** Quick, loose and low-friction: brainstorm, sketch and arrange notes without choosing a notation or a structure first.
+- **Notebook feel.** Quick, loose and manual: brainstorm, sketch and arrange notes without worrying about a notation or a structure first. Flexibility and the ability to draw are key selling points.
 - **Notes as the main content.** In Obsidian and Heptabase the notes are the point, and the canvas is another way to arrange and connect them.
 - **Embeddable.** Excalidraw's editor and tldraw's SDK are made to be built into other products.
 - **Reach.** Excalidraw collaborates in real time in its hosted app, and Obsidian has a plugin ecosystem.
@@ -168,16 +165,15 @@ For a market view, Gartner's 2026 Magic Quadrant for Enterprise Architecture Too
 - **Notes belong to an element,** as a Markdown file beside the diagram, together with tags, images and a link to a deeper diagram. Tags drive highlights and a legend, and required tags can be defined per diagram.
 - **Drill-down.** A linked diagram opens as its own file, and links only point downward, so any diagram in a tree can be opened as its own root.
 - **A published file format** written to diff cleanly in git, and a legend, search and diagnostics for larger diagrams.
+- **Built in smarts** help you create a navigable structure for your processed data. Highlights, tags, and links help you understand it in context.
 
-**Choose them** when the work is thinking and note-taking, when your notes already live in Obsidian or Heptabase, or when you want a canvas to embed in your own app. **Choose this tool** when you are drawing a structured diagram that other people will read, and each box needs its own notes and a deeper level behind it.
+**Choose them** when the work is thinking and note-taking, where minimising friction between thought and paper is important. **Choose this tool** when you need a structured diagram that you and others can later reference.
 
-<!-- Author note: uncomment and fill in, or delete.
-> **From the author:** 
--->
+**From the author:** I rarely feel the need to reach for any of these tools as I have a Remarkable if I need it, but this tool I often use as the next step. After jotting down notes, and forming and filtering the ideas I have, I map them out in a more structured format here in this tool. 
 
 ## Getting diagrams into wikis and documentation
 
-Embedding is the weakest part of this tool. The only way out of it today is an exported **PNG**. There is no SVG export, no command-line export (so an image cannot be regenerated in CI), and no wiki plugin.
+Embedding is the weakest part of this tool. The only way out of it today is an exported **PNG**. There is no SVG export yet, no command-line export (so an image cannot be regenerated in CI), and no wiki plugin.
 
 | Tool | How a diagram reaches a wiki or README |
 |---|---|
