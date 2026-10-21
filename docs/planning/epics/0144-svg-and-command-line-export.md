@@ -7,11 +7,12 @@ In Progress (started 2026-10-21; logged the same day from the [comparison with o
 Export a diagram as SVG from the app, and let a command (`chd export`) produce the same SVG or PNG from a `.chd` file without opening the app, so that images in wikis and READMEs can be regenerated in CI whenever the diagram changes. A PDF export would then be a small follow-up.
 
 ## Why
-PNG is the only export today, which is the weakest point against almost every other tool and the main way a diagram reaches Confluence or a README. A command-line export also makes a diagram a build artefact: commit the `.chd` file, let CI produce the image.
+PNG was the only export, which was the weakest point against almost every other tool and the main way a diagram reaches Confluence or a README. A command-line export also makes a diagram a build artefact: commit the `.chd` file, let CI produce the image.
 
-## What exists today
+## What exists
 - PNG export draws the live canvas to an image with `html-to-image`, with a legend added ([ADR 0051](../../decisions/0051-png-export.md)). It only runs inside the app window.
-- The `chd` command line offers `spec`, `validate` and `hash`. It does not render anything.
+- SVG export, in the app and as `chd export`, built in this epic ([ADR 0124](../../decisions/0124-svg-export-from-a-shared-pure-renderer.md)).
+- The `chd` command line offers `spec`, `validate`, `hash` and `export`.
 
 ## Decided (2026-10-21, [ADR 0124](../../decisions/0124-svg-export-from-a-shared-pure-renderer.md))
 - **Renderer:** a pure function from diagram to native SVG, shared by the app and the command, with the geometry, style defaults, colour flip and marker shapes extracted into shared modules. No spike: a DOM snapshot cannot be editable vector (ADR 0051) and a headless app needs a display on Linux CI.

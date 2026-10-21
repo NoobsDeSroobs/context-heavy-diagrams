@@ -202,6 +202,7 @@ There are no or almost no unique features this tool offers. Other tools do them 
 - **Context as a first-class citizen.** Markdown notes, tags, images and a link to a deeper diagram are native fields on the element, not extra objects on the canvas, so the picture stays readable and nothing needs to be moved together.
 - **Drill-down across plain files.** A linked diagram is just another file that opens on its own, with no model, server or tooling in between, and links only point downward.
 - **Small gitable files** with a published specification ([file-format.md](file-format.md)), written to diff and merge cleanly in git.
+- **Images from a command.** `chd export` turns a `.chd` file into an SVG without opening the app, with the same output every time, so CI can regenerate the images in a README or wiki whenever the diagram changes.
 - **Offline by design.** The app blocks its own network access, and there is no account.
 - **AI assistants can work on the files safely.** The file specification and AI tools are built to let your AI tools interact with your diagrams on your behalf. Designed limitations ensure, when you use the Claude Desktop (MCP) extension, that your AI tool does not overwrite, garble, or access anything you have not actively given to it. Without it, an assistant can affect anything you give it access to, outside this tool's control.
 - **Free,** with the source under the GPL-3.0-or-later. No hidden costs or licences, not even a donation page. 
