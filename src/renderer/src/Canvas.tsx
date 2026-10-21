@@ -168,7 +168,7 @@ import {
   type StyleBrush
 } from './styling/styleBrush'
 import AlertDialog from './components/AlertDialog'
-import ExportImageDialog, { type ImageExportChoice } from './components/ExportImageDialog'
+import ExportImageDialog, { type ImageExportChoice } from './export/ExportImageDialog'
 import { buildDiagramSvg } from './export/exportSvg'
 import BulkCreateDialog from './components/BulkCreateDialog'
 import StylePalettePanel from './styling/StylePalettePanel'

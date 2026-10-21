@@ -1,5 +1,5 @@
 import { memo } from 'react'
-import { MARKER_SHAPES, MARKER_STROKE_WIDTH } from '@shared/svg/markerShapes'
+import { MARKER_SHAPES, MARKER_STROKE_WIDTH } from '@shared/export/markerShapes'
 
 // <marker> defs for the full MarkerKind set (ADR 0014), drawn from the shared shape data
 // (markerShapes.ts), which the SVG export (ADR 0124) draws from too. See that file for the geometry

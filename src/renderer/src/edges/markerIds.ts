@@ -1,5 +1,5 @@
 import type { MarkerKind } from '@shared/diagram'
-import { MARKER_ID } from '@shared/svg/markerShapes'
+import { MARKER_ID } from '@shared/export/markerShapes'
 
 // Split out from edgeMarkers.tsx: react-refresh/only-export-components flags
 // a file exporting both a component and plain values/functions. The marker

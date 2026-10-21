@@ -7,7 +7,7 @@ import {
   iconKey,
   renderDiagramSvg,
   type IconAsset
-} from '@shared/svg/renderDiagram'
+} from '@shared/export/renderDiagram'
 import { loadBuiltinIconSvg } from '../icons/builtinIcons'
 
 export interface SvgExportParams {

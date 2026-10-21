@@ -1,5 +1,5 @@
 import type { Theme } from './theme'
-import { flipRgbLightness } from '@shared/svg/color'
+import { flipRgbLightness } from '@shared/export/color'
 
 // Normalizes an arbitrary CSS color string (hex, rgb()/rgba(), hsl()/hsla(),
 // named colors like "red" — ColorField's free-text input accepts any of
