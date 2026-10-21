@@ -8,7 +8,7 @@ import type {
 } from '@shared/diagram'
 import { CollapsibleSection } from '../panels/fields'
 import RequiredTagsSection from '../tagging/RequiredTagsSection'
-import GravityPresetsSection from '../components/GravityPresetsSection'
+import GravityPresetsSection from '../nodes/GravityPresetsSection'
 import EdgeDirectionSetsSection from '../edges/EdgeDirectionSetsSection'
 
 interface DiagramSettingsPanelProps {

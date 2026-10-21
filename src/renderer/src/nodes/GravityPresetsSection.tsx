@@ -1,5 +1,5 @@
 import type { GravityPreset } from '@shared/diagram'
-import { DEFAULT_GRAVITY_PRESETS, effectiveGravityPresets } from '../lineGravityPresets'
+import { DEFAULT_GRAVITY_PRESETS, effectiveGravityPresets } from './lineGravityPresets'
 
 interface GravityPresetsSectionProps {
   // Raw, possibly-empty diagram value — NOT the resolved list DiagramContext

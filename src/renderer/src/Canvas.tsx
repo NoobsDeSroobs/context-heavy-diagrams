@@ -85,7 +85,7 @@ import ContainerNode, { CONTAINER_MIN_WIDTH, CONTAINER_MIN_HEIGHT } from './node
 import { scaleGroupMembers, type GroupResizeMember } from './groupResize'
 import LineNode, { LINE_BOUNDS_PADDING } from './nodes/LineNode'
 import DiagramSettingsPanel from './diagram-settings/DiagramSettingsPanel'
-import { effectiveGravityPresets } from './lineGravityPresets'
+import { effectiveGravityPresets } from './nodes/lineGravityPresets'
 import LabeledEdge from './edges/LabeledEdge'
 import {
   highlightGroupSourceValues,
@@ -148,7 +148,7 @@ import {
   stripDirectionSets,
   switchActiveDirectionSet
 } from './edges/edgeDirectionSets'
-import { absolutePosition, subtractPosition } from './geometry/nodePosition'
+import { absolutePosition, subtractPosition } from './nodes/nodePosition'
 import MultiConnectionLine from './edges/MultiConnectionLine'
 import PreferencesPanel from './preferences/PreferencesPanel'
 import AlignDistributePanel from './components/AlignDistributePanel'
