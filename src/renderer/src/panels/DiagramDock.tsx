@@ -7,7 +7,7 @@ import type {
   NodeStyle,
   RequiredTagDefinition
 } from '@shared/diagram'
-import ItemPalette from './ItemPalette'
+import ItemPalette from '../palette/ItemPalette'
 import PropertyPanel, { type TransformPatch } from './PropertyPanel'
 
 // The right-side dock that's part of the diagram's own editing surface —
