@@ -186,7 +186,7 @@ import { SNAP_THRESHOLD_PX, boundsFrom, computeSnap } from '../alignment/alignme
 import { buildClipboardPayload, parseClipboardPayload, remapForPaste } from './clipboard'
 import { resolveDeletion } from './containerRemoval'
 import { warnIfSavedWithNewer } from '../document/fileVersionWarning'
-import type { TransformPatch } from '../panels/PropertyPanel'
+import type { TransformPatch } from '../properties/PropertyPanel'
 import { useTheme } from '../styling/theme'
 import { useEventCallback } from './useEventCallback'
 import { legendLineFromEdgeStyle, type LegendLineLook } from '../legend/legendLinePick'
