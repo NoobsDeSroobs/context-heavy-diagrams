@@ -2,9 +2,9 @@
 
 > **Draft for review.** Not linked from the README yet.
 
-This is an assessment of where this tool fits among the diagramming tools you might need or want to use. It describes my understanding of what each tool does, not which is overall best as they are built for different jobs.
+This is an assessment of where this tool fits among the diagramming tools you might need or want to use. It describes my understanding of what each tool does, not which is overall best, as they are built for different jobs.
 
-**What this tool is:** a local, offline desktop editor where you draw the diagram yourself on a canvas, and can attach and structure metadata. Each element can carry Markdown notes, tags, images and a link to a deeper diagram, which opens as its own file. Diagrams are plain, diff-friendly text files. There is no server, no account, and no fixed notation. It was built to be the first tool that is light weight, private and secure, and gets you most of the way there.
+**What this tool is:** a local, offline desktop editor where you draw the diagram yourself on a canvas, and can attach and structure metadata. Each element can carry Markdown notes, tags, images and a link to a deeper diagram, which opens as its own file. Diagrams are plain, diff-friendly text files. There is no server, no account, and no fixed notation. It was built to be the first tool that is lightweight, private and secure, and gets you most of the way there.
 
 I got an AI to check statements made about other tools on 2026-10-20 against each tool's own documentation, linked in each section. If something here is out of date or missing, please open an issue. Prices are left out on purpose.
 
@@ -30,12 +30,12 @@ I got an AI to check statements made about other tools on 2026-10-20 against eac
 **Where this tool is better**
 - **Context behind each element.** Notes, tags, images and a link to a deeper diagram live on the element, and the deeper diagram opens as its own file. This is the core of the design.
 - **Diagrams as ordinary text files** that are small, stable and meant to be reviewed in git, with the file format published as a standalone specification. Git is the collaboration layer.
-- **Offline and account-free by design.** The app blocks its own network access. similar to how draw.io's desktop app is also isolated apart from update checks. In comparison, Miro and FigJam are workspaces built around shared online boards.
+- **Offline and account-free by design.** The app blocks its own network access, similar to how draw.io's desktop app is isolated apart from update checks. In comparison, Miro and FigJam are workspaces built around shared online boards.
 - **A narrow, consistent set of rules** (a node is one thing, edges stay attached) instead of a large toolbox.
 
-**Choose them** when several people edit the same diagram, when you need standard notations and big template libraries, or when the diagram has to appear in Confluence, Office or a slide deck. **Choose this tool** when the context and relationships between different views are the point, you want the diagram in git as a readable file, and privacy and security is key.
+**Choose them** when several people edit the same diagram, when you need standard notations and big template libraries, or when the diagram has to appear in Confluence, Office or a slide deck. **Choose this tool** when the context and relationships between different views are the point, you want the diagram in git as a readable file, and privacy and security are key.
 
-**From the author:** This tool is still quite immature, and have serious shortcommings that can be dealbreakers. Refer to the epics for a roadmap of features. That said, collecting and organizing information as you map out a system, or rediscovering information on demand, has for me never been easier. A quick search, or the press of a button, and the information I needed was right there already in the needed context. No need to dive into wiki pages to reassemble it. That, to me is the main selling point of this tool. 
+**From the author:** This tool is still quite immature, and has serious shortcomings that can be dealbreakers. Refer to the epics for a roadmap of features. That said, collecting and organising information as you map out a system, or rediscovering information on demand, has for me never been easier. A quick search, or the press of a button, and the information I needed was right there already in the needed context. No need to dive into wiki pages to reassemble it. That, to me, is the main selling point of this tool. 
 
 ## Diagrams written as code
 
@@ -61,7 +61,7 @@ I got an AI to check statements made about other tools on 2026-10-20 against eac
 
 **Choose the code tools** when the diagram should render inside a README or wiki from text, be generated from data, or be written fast without caring where each box lands. **Choose this tool** when layout and per-element context matter more than speed of writing.
 
-**From the author:** While these are gitable and light weight, you often end up fighting the engine and writing a lot of verbose control text. The information you care about gets a little lost in the noise, and you are still dependent on outside tooling to hold much of the context for you. They are great tools for cheaply rendering the diagram where you need it outside of dedicated software or services.
+**From the author:** While these are gitable and lightweight, you often end up fighting the engine and writing a lot of verbose control text. The information you care about gets a little lost in the noise, and you are still dependent on outside tooling to hold much of the context for you. They are great tools for cheaply rendering the diagram where you need it outside of dedicated software or services.
 
 ## Software architecture models
 
@@ -85,8 +85,8 @@ I got an AI to check statements made about other tools on 2026-10-20 against eac
 
 **Choose these** when you work with one architecture model that they support, or need your diagrams published to a team or a wiki. **Choose this tool** when you want a flexible drawing with its context behind it.
 
-**From the author:** 
-The tools above are amazing wwhen you are working with just the correct model. If all you do is C4, for example, then Structurizr is better for what C4 does. This tool would then only be suplimentary to give quick highlights, e.g. GDPR or team ownership overviews.
+**From the author:** The tools above are amazing when you are working with just the correct model. If all you do is C4, for example, then Structurizr is better for what C4 does. This tool would then only be supplementary to give quick highlights, e.g. GDPR or team ownership overviews.
+
 ## Enterprise architecture platforms
 
 **Ardoq, SAP LeanIX, Bizzdesign and Archi** keep an organisation's architecture (applications, capabilities, teams, processes, technology and how they depend on each other) as data in a repository, and draw diagrams and reports from it.
@@ -107,13 +107,13 @@ For a market view, Gartner's 2026 Magic Quadrant for Enterprise Architecture Too
 - **A standard notation.** Archi is built around ArchiMate, so models follow a notation that architects and other tools recognise.
 
 **Where this tool is better**
-- **Quick to get started.** No metamodel to adopt or maintain.You can start drawing straight away, in any style, for any subject.
-- **Not tied to enterprise architecture** The same tool draws a process, a customer journey or a system design.
-- **Free, offline and file-based.** Nothing to license, host or connect, and diagrams that live in git next.
+- **Quick to get started.** No metamodel to adopt or maintain. You can start drawing straight away, in any style, for any subject.
+- **Not tied to enterprise architecture.** The same tool draws a process, a customer journey or a system design.
+- **Free, offline and file-based.** Nothing to license, host or connect, and diagrams that live in git next to the code.
 
-**Choose these** when the question is "what do we have, who owns it and what breaks if it changes" across a whole organisation, or when you must follow ArchiMate. **Choose this tool** for architecture diagrams beyond EA, for when an enterprise architecture platform is not yet justified, or as a suppliment to your EA tool of choice. 
+**Choose these** when the question is "what do we have, who owns it and what breaks if it changes" across a whole organisation, or when you must follow ArchiMate. **Choose this tool** for architecture diagrams beyond EA, for when an enterprise architecture platform is not yet justified, or as a supplement to your EA tool of choice. 
 
-**From the author:** If you know you need a proper EA tool, e.g. to maintain an inventory or meet some compliance requirement, then they do they are the stronger choice. This tool does not try to replace these platforms, just offer an alternative where the need does not justify the cost. Developers and architects can use this tool while the enterprise architects use their EA tool of choice.
+**From the author:** If you know you need a proper EA tool, e.g. to maintain an inventory or meet some compliance requirement, then they are the stronger choice. This tool does not try to replace these platforms, just offer an alternative where the need does not justify the cost. Developers and architects can use this tool while the enterprise architects use their EA tool of choice.
 
 ## Customer journey and process tools
 
@@ -141,9 +141,9 @@ For a market view, Gartner's 2026 Magic Quadrant for Enterprise Architecture Too
 
 **Choose the journey tools** when you run a journey programme with personas, research, metrics and a team working in it. **Choose a BPMN tool** when the diagram must follow the standard, be exchanged with other tools or run on a process engine. **Choose this tool** for a quick, flexible journey or process sketch, or when the story behind each step and its link to the system diagrams matter more than the notation.
 
-**From the author:** From my experience, the disconnect between the customer journey, persona, or business process views and any technical system views is a constant drain on productivity. You need to log in to 3 different platforms and manually make links between each different view. This tool joins them together and coallesce multiple perspective-files into one file with toggleable highlights.
+**From the author:** From my experience, the disconnect between the customer journey, persona, or business process views and any technical system views is a constant drain on productivity. You need to log in to 3 different platforms and manually make links between each different view. This tool joins them together and coalesces multiple perspective-files into one file with toggleable highlights.
 
-# Notes and whiteboards
+## Notes and whiteboards
 
 **Obsidian Canvas, Heptabase, Excalidraw and tldraw** are infinite canvases for thinking, where notes and sketches sit side by side. They are the closest to this tool in feel, and the furthest from a formal diagram.
 
@@ -169,7 +169,7 @@ For a market view, Gartner's 2026 Magic Quadrant for Enterprise Architecture Too
 
 **Choose them** when the work is thinking and note-taking, where minimising friction between thought and paper is important. **Choose this tool** when you need a structured diagram that you and others can later reference.
 
-**From the author:** I rarely feel the need to reach for any of these tools as I have a Remarkable if I need it, but this tool I often use as the next step. After jotting down notes, and forming and filtering the ideas I have, I map them out in a more structured format here in this tool. 
+**From the author:** I rarely feel the need to reach for any of these tools as I have a reMarkable if I need it, but this tool I often use as the next step. After jotting down notes, and forming and filtering the ideas I have, I map them out in a more structured format here in this tool. 
 
 ## Getting diagrams into wikis and documentation
 
@@ -199,9 +199,9 @@ SVG export and a command-line export are the natural first steps. The aim is tha
 
 ## Summary
 
-There are no or almost no unique features this tools offers. Other tool do them well and often better. If the other tool is purpose made for what you do, then that tool is the better choice. What this tool offers is the combination of features seen across other solutions, collected into a easy to use and flexible package. Security, privacy and cost are also central to the design and mission statement of this tool.
+There are no or almost no unique features this tool offers. Other tools do them well and often better. If the other tool is purpose-made for what you do, then that tool is the better choice. What this tool offers is the combination of features seen across other solutions, collected into an easy-to-use and flexible package. Security, privacy and cost are also central to the design and mission statement of this tool.
 
-- **Context as a first class citizen.** Markdown notes, tags, images and a link to a deeper diagram are native fields on the element, not extra objects on the canvas, so the picture stays readable and nothing needs to be moved together.
+- **Context as a first-class citizen.** Markdown notes, tags, images and a link to a deeper diagram are native fields on the element, not extra objects on the canvas, so the picture stays readable and nothing needs to be moved together.
 - **Drill-down across plain files.** A linked diagram is just another file that opens on its own, with no model, server or tooling in between, and links only point downward.
 - **Small gitable files** with a published specification ([file-format.md](file-format.md)), written to diff and merge cleanly in git.
 - **Offline by design.** The app blocks its own network access, and there is no account.
@@ -213,11 +213,11 @@ There are no or almost no unique features this tools offers. Other tool do them 
 These are the honest gaps, roughly in the order they are likely to matter.
 
 1. **Getting diagrams into wikis and documentation.** PNG is the only export. SVG and PDF export, a command-line export that can regenerate images in CI, and an export to the open JSON Canvas format (so a diagram can open in Obsidian) would close most of this.
-2. **Importing.** There is no import from other tools, so moving an existing diagram in means redrawing it. This can be eleviated by using AI to redraw things.
-3. **Layout.** Everything is placed by hand, by yours or your AI assistants hand. There is no automatic layout.
+2. **Importing.** There is no import from other tools, so moving an existing diagram in means redrawing it. This can be alleviated by using AI to redraw things.
+3. **Layout.** Everything is placed by hand, by your hand or your AI assistant's. There is no automatic layout.
 4. **Shapes and notation.** Entities, containers, text and lines, with icons, but no large shape or template libraries and no BPMN or ArchiMate stencils.
 5. **Data and integrations.** There is no shared model across diagrams beyond tags and search, and no connection to a CMDB, cloud accounts or ticket trackers. This is a bit by design.
-6. **Collaboration and sharing.** Nothing beyond git, and no web view for a reader who does not have the app. Should be fairly straight forward to implement, but not seen as a priority.
+6. **Collaboration and sharing.** Nothing beyond git, and no web view for a reader who does not have the app. Should be fairly straightforward to implement, but not seen as a priority.
 7. **Release state.** An early open-source release: no installers are published, it is built and tested mainly on Windows, Linux and macOS are not yet verified, and it has one maintainer.
 
 Some of these are planned (see [the planning documents](planning/README.md)). Real-time collaboration and a formal metamodel are deliberate non-goals: the tool stays a flexible drawing tool, and leaves model-driven work to the platforms above.
