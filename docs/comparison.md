@@ -197,27 +197,27 @@ Embedding is the weakest part of this tool. The only way out of it today is an e
 
 SVG export and a command-line export are the natural first steps. The aim is that a repository can hold the `.chd` file and let CI regenerate the image whenever it changes.
 
-## What is distinctive
+## Summary
 
-None of these is unique on its own; other tools do some of them well. The combination is the point.
+There are no or almost no unique features this tools offers. Other tool do them well and often better. If the other tool is purpose made for what you do, then that tool is the better choice. What this tool offers is the combination of features seen across other solutions, collected into a easy to use and flexible package. Security, privacy and cost are also central to the design and mission statement of this tool.
 
-- **Context behind each element.** Markdown notes, tags, images and a link to a deeper diagram are fields on the element, not extra objects on the canvas, so the picture stays readable and nothing needs to be moved together.
+- **Context as a first class citizen.** Markdown notes, tags, images and a link to a deeper diagram are native fields on the element, not extra objects on the canvas, so the picture stays readable and nothing needs to be moved together.
 - **Drill-down across plain files.** A linked diagram is just another file that opens on its own, with no model, server or tooling in between, and links only point downward.
-- **A diagram is a small, stable text file** with a published specification ([file-format.md](file-format.md)), written to diff and merge cleanly in git.
-- **Offline by design,** and enforced: the app blocks its own network access, and there is no account.
-- **AI assistants can work on the files safely.** A write to an existing diagram is refused if the file changed since the assistant read it, and creating a file never overwrites one.
-- **Free,** with the source under the GPL-3.0-or-later.
+- **Small gitable files** with a published specification ([file-format.md](file-format.md)), written to diff and merge cleanly in git.
+- **Offline by design.** The app blocks its own network access, and there is no account.
+- **AI assistants can work on the files safely.** The file specification and AI tools are built to let your AI tools interact with your diagrams on your behalf. Designed limitations ensure, if used, that your AI tool does not overwrite, garble, or access anything you have not actively given to it.
+- **Free,** with the source under the GPL-3.0-or-later. No hidden costs or licences, not even a donation page. 
 
 ## Where this tool is behind
 
 These are the honest gaps, roughly in the order they are likely to matter.
 
 1. **Getting diagrams into wikis and documentation.** PNG is the only export. SVG and PDF export, a command-line export that can regenerate images in CI, and an export to the open JSON Canvas format (so a diagram can open in Obsidian) would close most of this.
-2. **Importing.** There is no import from draw.io, Mermaid or PlantUML, so moving an existing diagram in means redrawing it.
-3. **Layout.** Everything is placed by hand, including diagrams written by an AI assistant. There is no automatic layout.
+2. **Importing.** There is no import from other tools, so moving an existing diagram in means redrawing it. This can be eleviated by using AI to redraw things.
+3. **Layout.** Everything is placed by hand, by yours or your AI assistants hand. There is no automatic layout.
 4. **Shapes and notation.** Entities, containers, text and lines, with icons, but no large shape or template libraries and no BPMN or ArchiMate stencils.
-5. **Data and integrations.** There is no shared model across diagrams beyond tags and search, and no connection to a CMDB, cloud accounts or ticket trackers.
-6. **Collaboration and sharing.** Nothing beyond git, and no web view for a reader who does not have the app.
+5. **Data and integrations.** There is no shared model across diagrams beyond tags and search, and no connection to a CMDB, cloud accounts or ticket trackers. This is a bit by design.
+6. **Collaboration and sharing.** Nothing beyond git, and no web view for a reader who does not have the app. Should be fairly straight forward to implement, but not seen as a priority.
 7. **Release state.** An early open-source release: no installers are published, it is built and tested mainly on Windows, Linux and macOS are not yet verified, and it has one maintainer.
 
 Some of these are planned (see [the planning documents](planning/README.md)). Real-time collaboration and a formal metamodel are deliberate non-goals: the tool stays a flexible drawing tool, and leaves model-driven work to the platforms above.
