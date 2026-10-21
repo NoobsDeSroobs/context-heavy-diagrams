@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import type { EdgeDirectionSet, EdgeDirectionSetStyle } from '@shared/diagram'
-import { useDiagramContext } from '../useDiagramContext'
+import { useDiagramContext } from '../canvas/useDiagramContext'
 import { themeAdaptiveColor } from '../styling/themeAdaptiveColor'
 import { CollapsibleSection, ColorField, NumberField, SelectField, SliderField } from '../ui/fields'
 import { LINE_STYLE_OPTIONS, MARKER_OPTIONS } from './edgeStyleOptions'

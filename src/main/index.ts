@@ -26,7 +26,7 @@ import { registerExportHandlers } from './export/export'
 import { registerSecurityHandlers } from './threat-matrix/security'
 import { registerLinkedSearchHandlers } from './search/linkedSearch'
 import { registerAiHandlers } from './ai/ai'
-import { registerClipboardHandlers } from './clipboard'
+import { registerClipboardHandlers } from './canvas/clipboard'
 import { disableProxyDiscovery, enforceOffline } from './offline'
 
 // One running instance (ADR 0108): settings, crash-recovery snapshots and the

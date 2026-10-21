@@ -1,6 +1,6 @@
 import type { Node } from '@xyflow/react'
 import ReferenceImage from './ReferenceImage'
-import { useDiagramContext } from '../useDiagramContext'
+import { useDiagramContext } from '../canvas/useDiagramContext'
 import { CollapsibleSection } from '../ui/fields'
 
 // Reference-image management for a single selected entity/container (see

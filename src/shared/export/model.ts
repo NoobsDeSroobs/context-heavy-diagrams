@@ -10,7 +10,7 @@ import { effectiveConnectionPoints, pointCoordinates } from '../geometry/connect
 import type { EdgeEnd } from '../geometry/edgePath.ts'
 import { pointsBoundingBox } from '../geometry/bendablePath.ts'
 import { NODE_STYLE_DEFAULTS, styledNodeType } from '../styling/styleDefaults.ts'
-import { backfillZIndex } from '../zIndexOrdering.ts'
+import { backfillZIndex } from '../canvas/zIndexOrdering.ts'
 import { resolveLabelLook } from './appearance.ts'
 import { DEFAULT_FONT_FAMILY } from './appearance.ts'
 import { LINE_HEIGHT_EM, measureText, wrapText } from './textLayout.ts'

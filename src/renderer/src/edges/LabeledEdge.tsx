@@ -18,7 +18,7 @@ import {
 } from '@shared/geometry/orthogonalPath'
 import EditableLabel from '../ui/EditableLabel'
 import HighlightChips from '../tagging/HighlightChips'
-import { useDiagramContext } from '../useDiagramContext'
+import { useDiagramContext } from '../canvas/useDiagramContext'
 import { HIGHLIGHT_BORDER_WIDTH } from '@shared/tagging/highlights'
 import { EDGE_STYLE_DEFAULTS } from '@shared/styling/styleDefaults'
 import { isolateStyle } from '../search/search'

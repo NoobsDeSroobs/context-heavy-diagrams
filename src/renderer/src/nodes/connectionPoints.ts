@@ -8,7 +8,7 @@ import {
   pointCoordinates,
   type RectLike
 } from '@shared/geometry/connectionPoints'
-import { useDiagramContext } from '../useDiagramContext'
+import { useDiagramContext } from '../canvas/useDiagramContext'
 import type { ContextMenuItem } from '../ui/ContextMenu'
 
 // Shared between EntityNode and ContainerNode — both are connectable,

@@ -8,7 +8,7 @@ import type {
   NodeStyle,
   RequiredTagDefinition
 } from '@shared/diagram'
-import { useDiagramContext } from '../useDiagramContext'
+import { useDiagramContext } from '../canvas/useDiagramContext'
 import { themeAdaptiveColor } from '../styling/themeAdaptiveColor'
 import {
   EDGE_STYLE_DEFAULTS,

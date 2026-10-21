@@ -1,7 +1,7 @@
-import { showAlert } from './ui/alerts'
+import { showAlert } from '../ui/alerts'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
-import { SaveAbortedError, isSaveAborted } from './document/saveAborted'
+import { SaveAbortedError, isSaveAborted } from '../document/saveAborted'
 import {
   adoptDisk,
   anyNoteDirty,
@@ -26,8 +26,8 @@ import {
   type Stamp
 } from '@shared/document/documentSave'
 import { derivedDetailsPath } from '@shared/details/detailPaths'
-import { askConflictResolution, type ConflictItem } from './document/conflictPrompt'
-import ConflictDialog from './document/ConflictDialog'
+import { askConflictResolution, type ConflictItem } from '../document/conflictPrompt'
+import ConflictDialog from '../document/ConflictDialog'
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -83,33 +83,33 @@ import {
   summarizeChanges,
   type ChangesSinceSave
 } from '@shared/document/changesSinceSave'
-import EntityNode, { ENTITY_MIN_WIDTH, ENTITY_MIN_HEIGHT } from './nodes/EntityNode'
-import TextNode, { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from './nodes/TextNode'
-import ContainerNode, { CONTAINER_MIN_WIDTH, CONTAINER_MIN_HEIGHT } from './nodes/ContainerNode'
+import EntityNode, { ENTITY_MIN_WIDTH, ENTITY_MIN_HEIGHT } from '../nodes/EntityNode'
+import TextNode, { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from '../nodes/TextNode'
+import ContainerNode, { CONTAINER_MIN_WIDTH, CONTAINER_MIN_HEIGHT } from '../nodes/ContainerNode'
 import { scaleGroupMembers, type GroupResizeMember } from './groupResize'
-import LineNode, { LINE_BOUNDS_PADDING } from './nodes/LineNode'
-import DiagramSettingsPanel from './diagram-settings/DiagramSettingsPanel'
-import { effectiveGravityPresets } from './nodes/lineGravityPresets'
-import LabeledEdge from './edges/LabeledEdge'
+import LineNode, { LINE_BOUNDS_PADDING } from '../nodes/LineNode'
+import DiagramSettingsPanel from '../diagram-settings/DiagramSettingsPanel'
+import { effectiveGravityPresets } from '../nodes/lineGravityPresets'
+import LabeledEdge from '../edges/LabeledEdge'
 import {
   highlightGroupSourceValues,
   highlightId,
   matchingHighlights,
   reconcileHighlightGroup
 } from '@shared/tagging/highlights'
-import EdgeMarkerDefs from './edges/edgeMarkers'
-import { markerUrl } from './edges/markerIds'
+import EdgeMarkerDefs from '../edges/edgeMarkers'
+import { markerUrl } from '../edges/markerIds'
 import DiagramContext, { type DiagramContextValue } from './DiagramContext'
-import ContextMenu, { type ContextMenuItem } from './ui/ContextMenu'
-import IconPicker from './icons/IconPicker'
-import IconBrowser from './icons/IconBrowser'
-import ColorPickerPopup from './styling/ColorPickerPopup'
-import StylePicker from './styling/StylePicker'
-import DetailsPanel from './details/DetailsPanel'
-import DiagnosticsPanel, { type MissingFileEntry } from './diagnostics/DiagnosticsPanel'
-import ChangesPanel, { type DetailsChangedEntry } from './document/ChangesPanel'
-import HighlightsPanel from './tagging/HighlightsPanel'
-import SearchOverlay from './search/SearchOverlay'
+import ContextMenu, { type ContextMenuItem } from '../ui/ContextMenu'
+import IconPicker from '../icons/IconPicker'
+import IconBrowser from '../icons/IconBrowser'
+import ColorPickerPopup from '../styling/ColorPickerPopup'
+import StylePicker from '../styling/StylePicker'
+import DetailsPanel from '../details/DetailsPanel'
+import DiagnosticsPanel, { type MissingFileEntry } from '../diagnostics/DiagnosticsPanel'
+import ChangesPanel, { type DetailsChangedEntry } from '../document/ChangesPanel'
+import HighlightsPanel from '../tagging/HighlightsPanel'
+import SearchOverlay from '../search/SearchOverlay'
 import {
   criteriaFromQuery,
   elementMatchesCriteria,
@@ -118,10 +118,10 @@ import {
   parseSearchQuery,
   searchableFromData,
   type SearchCriteria
-} from './search/search'
-import LegendPanel from './legend/LegendPanel'
-import MenuBar, { type MenuBarMenu, type MenuBarItem } from './components/MenuBar'
-import LayerPanel from './layers/LayerPanel'
+} from '../search/search'
+import LegendPanel from '../legend/LegendPanel'
+import MenuBar, { type MenuBarMenu, type MenuBarItem } from '../components/MenuBar'
+import LayerPanel from '../layers/LayerPanel'
 import {
   CONTAINER_BASE,
   ENTITY_BASE,
@@ -129,14 +129,14 @@ import {
   backfillZIndex,
   nextZIndexAbove,
   reorderZIndex
-} from '@shared/zIndexOrdering'
+} from '@shared/canvas/zIndexOrdering'
 import {
   connectionPointAtOrdinal,
   effectiveConnectionPoints,
   pointOrdinal,
   reassignConnectionPointHandles,
   setSideCustomPointCount
-} from './nodes/connectionPoints'
+} from '../nodes/connectionPoints'
 import { nearestSegmentIndex, type PathPoint } from '@shared/geometry/bendablePath'
 import { nearestWaypointGap } from '@shared/geometry/orthogonalPath'
 import {
@@ -151,18 +151,18 @@ import {
   reverseEdgeDirection,
   stripDirectionSets,
   switchActiveDirectionSet
-} from './edges/edgeDirectionSets'
-import { absolutePosition, subtractPosition } from './nodes/nodePosition'
-import MultiConnectionLine from './edges/MultiConnectionLine'
-import PreferencesPanel from './preferences/PreferencesPanel'
-import AlignDistributePanel from './alignment/AlignDistributePanel'
-import AboutDialog from './components/AboutDialog'
+} from '../edges/edgeDirectionSets'
+import { absolutePosition, subtractPosition } from '../nodes/nodePosition'
+import MultiConnectionLine from '../edges/MultiConnectionLine'
+import PreferencesPanel from '../preferences/PreferencesPanel'
+import AlignDistributePanel from '../alignment/AlignDistributePanel'
+import AboutDialog from '../components/AboutDialog'
 import { AI_INSTRUCTIONS } from '@shared/ai/aiInstructions'
 import { summarizeAiFolderResult } from '@shared/ai/aiFolderResult'
-import ShortcutsDialog from './components/ShortcutsDialog'
-import CommandPalette from './components/CommandPalette'
-import { buildPaletteActions, type ExtraPaletteAction } from './paletteActions'
-import { acceleratorFor, findKeyCommand, type CommandId } from './commands'
+import ShortcutsDialog from '../components/ShortcutsDialog'
+import CommandPalette from '../components/CommandPalette'
+import { buildPaletteActions, type ExtraPaletteAction } from '../paletteActions'
+import { acceleratorFor, findKeyCommand, type CommandId } from '../commands'
 import {
   applyBrushToEdgeData,
   applyBrushToNodeData,
@@ -170,39 +170,39 @@ import {
   captureEdgeBrush,
   captureNodeBrush,
   type StyleBrush
-} from './styling/styleBrush'
-import AlertDialog from './ui/AlertDialog'
-import ExportImageDialog, { type ImageExportChoice } from './export/ExportImageDialog'
-import { buildDiagramSvg } from './export/exportSvg'
-import BulkCreateDialog from './bulk-create/BulkCreateDialog'
-import StylePalettePanel from './styling/StylePalettePanel'
-import ReferenceWindow from './references/ReferenceWindow'
-import ReferencesPanel from './references/ReferencesPanel'
-import DiagramDock from './panels/DiagramDock'
-import { PALETTE_ITEM_DRAG_TYPE, type PaletteItemType } from './panels/ItemPalette'
-import UtilityDock from './panels/UtilityDock'
-import AlignmentGuides from './alignment/AlignmentGuides'
-import { SNAP_THRESHOLD_PX, boundsFrom, computeSnap } from './alignment/alignment'
+} from '../styling/styleBrush'
+import AlertDialog from '../ui/AlertDialog'
+import ExportImageDialog, { type ImageExportChoice } from '../export/ExportImageDialog'
+import { buildDiagramSvg } from '../export/exportSvg'
+import BulkCreateDialog from '../bulk-create/BulkCreateDialog'
+import StylePalettePanel from '../styling/StylePalettePanel'
+import ReferenceWindow from '../references/ReferenceWindow'
+import ReferencesPanel from '../references/ReferencesPanel'
+import DiagramDock from '../panels/DiagramDock'
+import { PALETTE_ITEM_DRAG_TYPE, type PaletteItemType } from '../panels/ItemPalette'
+import UtilityDock from '../panels/UtilityDock'
+import AlignmentGuides from '../alignment/AlignmentGuides'
+import { SNAP_THRESHOLD_PX, boundsFrom, computeSnap } from '../alignment/alignment'
 import { buildClipboardPayload, parseClipboardPayload, remapForPaste } from './clipboard'
 import { resolveDeletion } from './containerRemoval'
-import { warnIfSavedWithNewer } from './document/fileVersionWarning'
-import type { TransformPatch } from './panels/PropertyPanel'
-import { useTheme } from './styling/theme'
-import { useEventCallback } from './hooks/useEventCallback'
-import { legendLineFromEdgeStyle, type LegendLineLook } from './legend/legendLinePick'
+import { warnIfSavedWithNewer } from '../document/fileVersionWarning'
+import type { TransformPatch } from '../panels/PropertyPanel'
+import { useTheme } from '../styling/theme'
+import { useEventCallback } from './useEventCallback'
+import { legendLineFromEdgeStyle, type LegendLineLook } from '../legend/legendLinePick'
 import { EDGE_STYLE_DEFAULTS } from '@shared/styling/styleDefaults'
-import { useModifierDragDuplicate } from './hooks/useModifierDragDuplicate'
-import { useDetailsPeek } from './details/useDetailsPeek'
-import PeekCard from './details/PeekCard'
-import { effectiveStylePalette, usePreferences } from './preferences/preferences'
+import { useModifierDragDuplicate } from './useModifierDragDuplicate'
+import { useDetailsPeek } from '../details/useDetailsPeek'
+import PeekCard from '../details/PeekCard'
+import { effectiveStylePalette, usePreferences } from '../preferences/preferences'
 import {
   captureDiagramPng,
   resolveEffectiveBackgroundColor,
   rgbStringToHex
-} from './export/exportPng'
+} from '../export/exportPng'
 import { buildExportLegendItems } from '@shared/legend/legendItems'
-import ThreatMatrixView from './threat-matrix/ThreatMatrixView'
-import { themeAdaptiveColor } from './styling/themeAdaptiveColor'
+import ThreatMatrixView from '../threat-matrix/ThreatMatrixView'
+import { themeAdaptiveColor } from '../styling/themeAdaptiveColor'
 
 // Defined at module scope so React Flow gets a stable reference — recreating
 // these objects every render triggers a React Flow warning and remounts.
