@@ -1,0 +1,235 @@
+.entity-node {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  /* The default look comes from styleDefaults.ts via CSS variables set at startup
+     (applyDefaultStyleVars, ADR 0117); an element's own style overrides it inline. */
+  border: var(--default-entity-stroke-width) solid var(--default-entity-stroke);
+  border-radius: 6px;
+  background: var(--default-entity-fill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+}
+
+.entity-node-icon {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+}
+
+.entity-node-icon svg {
+  width: 100%;
+  height: 100%;
+  color: var(--color-text);
+}
+
+/* Locked indicator (ADR 0043, docs/file-format.md's `locked` field) —
+   centered horizontally, straddling the node's own top edge (half above,
+   half below). Shared by ShapeNode/
+   ContainerNode/TextNode via LockBadge.tsx; a small round backing so the
+   grey glyph stays legible regardless of the node's own fill color. */
+.node-lock-badge {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-background-soft);
+  border: 1px solid var(--ev-c-gray-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ev-c-text-3);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.entity-node-icon-top-left {
+  top: 2px;
+  left: 2px;
+}
+
+.entity-node-icon-top-right {
+  top: 2px;
+  right: 2px;
+}
+
+.entity-node-icon-bottom-left {
+  bottom: 2px;
+  left: 2px;
+}
+
+.entity-node-icon-bottom-right {
+  bottom: 2px;
+  right: 2px;
+}
+
+.entity-node-label {
+  font-size: var(--default-entity-font-size);
+  color: var(--default-entity-font-color);
+  font-weight: var(--default-entity-font-weight);
+  text-align: var(--default-entity-text-align);
+  overflow-wrap: anywhere;
+}
+
+.container-node {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border: var(--default-container-stroke-width) dashed var(--default-container-stroke);
+  border-radius: 6px;
+  background: var(--default-container-fill);
+  padding: 4px 8px;
+}
+
+.container-node-label {
+  position: absolute;
+  top: 4px;
+  left: 8px;
+  font-size: var(--default-container-font-size);
+  color: var(--default-container-font-color);
+  font-weight: var(--default-container-font-weight);
+  text-align: var(--default-container-text-align);
+}
+
+/* Connection handles stay hidden until the node itself is hovered, then all
+   of them appear together (not just the nearest one) — requested during
+   drag-to-empty-space testing; handles were previously always visible on every node.
+   `:hover` on the wrapper still covers a handle positioned a few px outside
+   its own box (React Flow's default handle offset) because CSS `:hover`
+   cascades to ancestors of whatever's actually under the cursor, not by
+   visual containment — no extra "proximity margin" trick needed. Applies
+   everywhere ConnectionHandles is used: EntityNode and ContainerNode. */
+.entity-node .react-flow__handle,
+.container-node .react-flow__handle {
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+.entity-node:hover .react-flow__handle,
+.container-node:hover .react-flow__handle {
+  opacity: 1;
+}
+
+/* Line node's own point handles (ADR 0050) — plain positioned
+   divs, not React Flow Handles (those are for connections; these just
+   reposition a point), so they get their own hover-reveal rule matching
+   the one above. */
+.line-node-point {
+  border-radius: 50%;
+  background: var(--color-background-soft);
+  border: 1.5px solid var(--ev-c-gray-1);
+  opacity: 0;
+  transition: opacity 0.1s ease;
+  cursor: grab;
+  /* Canvas.tsx sets the line node's own wrapper to pointer-events: none
+     (see its zIndexedNodes comment) so empty space inside the bounding box
+     — e.g. the inside of a U-bend — doesn't intercept clicks/drags. This
+     div is inherited-into that 'none' like everything else in the node
+     unless reset explicitly here. */
+  pointer-events: auto;
+}
+
+.line-node:hover .line-node-point {
+  opacity: 1;
+}
+
+.line-node-point:active {
+  cursor: grabbing;
+}
+
+.text-node {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  /* Neutral base so an optional style.stroke/strokeWidth (ADR 0014 — rare
+     but valid on text nodes) has a border-style to actually render against;
+     border-width 0 keeps it invisible until a style override sets one. */
+  border-style: solid;
+  border-color: var(--default-text-stroke);
+  border-width: var(--default-text-stroke-width);
+  background: var(--default-text-fill);
+}
+
+.text-node.rotating {
+  cursor: grabbing;
+}
+
+.text-node-label {
+  font-size: var(--default-text-font-size);
+  color: var(--default-text-font-color);
+  font-weight: var(--default-text-font-weight);
+  text-align: var(--default-text-text-align);
+  overflow-wrap: anywhere;
+  padding: 8px;
+  box-sizing: border-box;
+  /* .text-node never clips its own content (no overflow rule, and adding
+     one there would also clip NodeResizer's handles, which render as its
+     sibling children and need to sit partly outside the box edge to stay
+     grabbable) — so text long enough to exceed the node's own height was
+     spilling out over whatever sat below/around it on canvas rather than
+     being contained or truncated. Scoped here to the label alone instead:
+     max-height ties it to the same resolved pixel height as .text-node
+     (100% of 100%, both definite once React Flow sizes the node), and
+     overflow: hidden clips at that point. Found 2026-09-05 on a
+     three-paragraph blurb that visibly overlapped shapes below it. */
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.text-node-rotate-handle {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ev-c-gray-1);
+  background: var(--color-background-soft);
+  cursor: grab;
+}
+
+/* Matches .text-node-label's own padding (above) so entering/leaving edit
+   mode on a text node doesn't visibly shift the text. Scoped to text nodes
+   only, not the shared .editable-label-input — entity/container/edge labels
+   keep their existing zero-padding, unaffected. */
+.text-node-label-input {
+  padding: 8px;
+}
+
+/* Canvas-side counterpart of a .layer-row.pointed click — an "entity
+   highlight" (ADR 0035), a different concept from the *property*
+   highlight system (ADR 0025, .highlight-chips/matchHighlights)
+   despite the shared word. A simple outline, deliberately distinct from
+   both the selection outline and the property-highlight border override. */
+.entity-node.entity-highlighted,
+.container-node.entity-highlighted,
+.text-node.entity-highlighted {
+  outline: 2px dashed var(--ev-c-text-1);
+  outline-offset: 2px;
+}
+
+/* Search-result indicator (ADR 0062) — a distinct outline from
+   entity-highlighted just above (different width/offset so the two never
+   look identical if both were somehow true at once) and, unlike the
+   property-highlight border override, never touches the element's own
+   border color — the whole point is coexisting with an active highlight
+   rather than fighting it for the same CSS property. */
+.entity-node.search-match,
+.container-node.search-match,
+.text-node.search-match {
+  outline: 3px dashed var(--search-match-color);
+  outline-offset: 4px;
+}

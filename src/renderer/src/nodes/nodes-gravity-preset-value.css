@@ -1,0 +1,6 @@
+/* Line-bend-presets section (ADR 0050) — reuses .required-tag-value-*
+   row/list shape above, just a narrower second input for the numeric
+   value next to the label. */
+.gravity-preset-value-input {
+  flex: 0 0 64px;
+}

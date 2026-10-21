@@ -1,0 +1,142 @@
+/* "Changes since last save" panel (ADR 0102) — same dock shell
+   as Diagnostics, reuses .diagnostics-panel-toolbar/-title/-empty/
+   -section-title directly (identical treatment), own row styling below
+   since a changed element's row shape (kind badge + label + changed-field
+   list) differs from a missing-file row. */
+.changes-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.changes-section {
+  margin-bottom: 12px;
+}
+
+.changes-row-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.changes-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+
+.changes-row-target {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  border: none;
+  background: none;
+  padding: 0;
+  text-align: left;
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.changes-row-target:hover .changes-row-label {
+  text-decoration: underline;
+}
+
+.changes-row-kind {
+  flex: 0 0 auto;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--ev-c-text-3);
+}
+
+.changes-row-label {
+  font-weight: 600;
+}
+
+.changes-row-fields {
+  font-size: 11px;
+  color: var(--ev-c-text-2);
+  padding-left: 2px;
+}
+
+/* Per-file save-conflict dialog (ConflictDialog.tsx, ADR 0092) — the alert
+   dialog's shell with one row per conflicting file. */
+.conflict-dialog {
+  width: 560px;
+}
+
+.conflict-dialog-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 40vh;
+  overflow: auto;
+}
+
+.conflict-dialog-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+
+.conflict-dialog-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+  user-select: text;
+}
+
+.conflict-dialog-choices {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.conflict-dialog-choices button,
+.conflict-dialog .alert-dialog-actions button {
+  cursor: pointer;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 4px 12px;
+}
+
+.conflict-dialog-choices button:hover,
+.conflict-dialog .alert-dialog-actions button:hover:not(:disabled) {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.conflict-dialog-choices button.selected {
+  border-color: #b7791f;
+  outline: 2px solid #b7791f;
+  outline-offset: -1px;
+  font-weight: 600;
+}
+
+.conflict-dialog .alert-dialog-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.conflict-dialog-hint {
+  flex: 1 1 100%;
+  font-size: 12px;
+  color: #b7791f;
+}
+
+.conflict-dialog-note {
+  font-size: 12px;
+  color: var(--ev-c-text-3);
+}

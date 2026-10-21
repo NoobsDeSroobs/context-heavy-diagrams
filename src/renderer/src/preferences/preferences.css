@@ -1,0 +1,30 @@
+/* Compact "Zoom limit: in [_] out [_]" row — deliberately not
+   two full-width NumberField rows. */
+.preferences-zoom-limit {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.preferences-zoom-limit-label {
+  color: var(--ev-c-text-3);
+}
+
+.preferences-zoom-limit-input {
+  width: 52px;
+  flex: 0 0 auto;
+  text-align: center;
+  /* No native up/down spinner, same reasoning/technique as
+     .property-range-number above — this box is narrow enough that the
+     spinner's own width visibly crowds the digits, and it invites
+     confusion about whether the field shows the real current value or
+     something the spinner just nudged it to. */
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.preferences-zoom-limit-input::-webkit-inner-spin-button,
+.preferences-zoom-limit-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}

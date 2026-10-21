@@ -1,0 +1,431 @@
+/* Metadata section (ADR 0022) — a list-view of key/value rows
+   inside the Properties Panel, single-selection only. Reuses .property-*
+   spacing conventions from the rest of the panel rather than inventing new
+   ones. */
+.metadata-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metadata-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.metadata-key {
+  flex: 0 0 auto;
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ev-c-text-2);
+}
+
+.metadata-key.locked {
+  color: var(--ev-c-text-3);
+}
+
+.metadata-lock-icon {
+  font-size: 10px;
+  margin-right: 2px;
+}
+
+.metadata-value {
+  flex: 1;
+  min-width: 24px;
+  min-height: 1.2em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  color: var(--color-text);
+  /* An empty value is otherwise a zero-content, borderless div — visually
+     indistinguishable from "there's no field here at all." The dashed
+     underline gives it a click target even with no text in it yet. */
+  border-bottom: 1px dashed var(--ev-c-gray-2);
+}
+
+.metadata-value:hover {
+  border-bottom-color: var(--ev-c-text-2);
+}
+
+.metadata-value-static {
+  cursor: default;
+  color: var(--ev-c-text-3);
+}
+
+.metadata-value-select {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 12px;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+
+.metadata-value-input {
+  width: 100%;
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+
+.metadata-remove {
+  cursor: pointer;
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: var(--ev-c-text-3);
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 4px;
+}
+
+.metadata-remove:hover {
+  color: var(--color-text);
+}
+
+.metadata-add-row {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.metadata-add-key,
+.metadata-add-value {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  padding: 3px 5px;
+}
+
+.metadata-add-row button {
+  cursor: pointer;
+  flex: 0 0 auto;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 12px;
+}
+
+.metadata-add-row button:hover:not(:disabled) {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.metadata-add-row button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* One key/lock/default row plus its collapsible allowed-values list below
+   — see .required-tag-values-list. A visible bottom border between
+   entries since each now has real vertical extent once expanded, not
+   just one flat row like before the allowed-values list editor. */
+.required-tag-entry {
+  border-bottom: 1px solid var(--ev-c-gray-2);
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+}
+
+.required-tag-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.required-tag-key,
+.required-tag-lock,
+.required-tag-default {
+  font: inherit;
+  font-size: 12px;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  padding: 3px 5px;
+  min-width: 0;
+}
+
+.required-tag-key {
+  flex: 1 1 25%;
+}
+
+.required-tag-lock {
+  flex: 1 1 30%;
+}
+
+.required-tag-default {
+  flex: 1 1 20%;
+}
+
+.required-tag-remove {
+  cursor: pointer;
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: var(--ev-c-text-3);
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 4px;
+}
+
+/* Allowed-values list editor (ADR 0047) — nested inside the
+   entry's own CollapsibleSection, collapsed by default. */
+.required-tag-values-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.required-tag-value-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.required-tag-value-input {
+  font: inherit;
+  font-size: 12px;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  padding: 3px 5px;
+  min-width: 0;
+  flex: 1;
+}
+
+.required-tag-value-row-new .required-tag-value-input {
+  color: var(--ev-c-text-3);
+}
+
+/* Highlights panel — see ADR 0025. */
+.highlight-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.highlight-row-swatch {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.highlight-row-label {
+  flex: 1;
+  font-size: 12px;
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+.highlight-row-remove {
+  cursor: pointer;
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: var(--ev-c-text-3);
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 4px;
+}
+
+.highlight-add-button {
+  cursor: pointer;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+.highlight-add-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.highlight-add-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.highlight-add-actions .highlight-add-button {
+  flex: 1;
+}
+
+/* Grouped highlights — see ADR 0026. A key with 2+ entries
+   renders as one of these instead of a plain .highlight-row. */
+.highlight-group {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.highlight-group-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  background: var(--color-background-mute);
+}
+
+.highlight-group-collapse {
+  cursor: pointer;
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  padding: 2px;
+  line-height: 1;
+}
+
+.highlight-group-caret {
+  display: inline-block;
+  transition: transform 0.1s ease;
+}
+
+.highlight-group-caret.open {
+  transform: rotate(90deg);
+}
+
+.highlight-group-title {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.highlight-group-resync {
+  cursor: pointer;
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: var(--ev-c-text-3);
+  font-size: 13px;
+  line-height: 1;
+  padding: 2px 4px;
+}
+
+.highlight-group-resync:hover {
+  color: var(--color-text);
+}
+
+.highlight-group-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+}
+
+.highlight-group-rows .highlight-row-label {
+  font-style: italic;
+}
+
+.highlight-add-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.highlight-add-picker-search {
+  font: inherit;
+  font-size: 12px;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  padding: 4px 6px;
+}
+
+.highlight-add-picker-list {
+  max-height: 160px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.highlight-add-picker-item {
+  cursor: pointer;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 12px;
+}
+
+.highlight-add-picker-item:hover {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+/* Small color chips shown on a node/edge when 2+ enabled highlights match
+   it at once (single-match instead overrides the border/stroke directly —
+   see ShapeNode/ContainerNode/LabeledEdge). Positioning (node corner vs.
+   edge midpoint) is set by each caller; these two classes are just the
+   swatch row and its individual dots. */
+.highlight-chips {
+  display: flex;
+  gap: 3px;
+}
+
+.highlight-chip {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--color-background);
+}
+
+.highlight-chips-anchor {
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  pointer-events: none;
+}
+
+.required-tag-remove:hover {
+  color: var(--color-text);
+}
+
+.required-tag-add {
+  cursor: pointer;
+  align-self: flex-start;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.required-tag-add:hover {
+  background: var(--ev-button-alt-hover-bg);
+}

@@ -1,0 +1,48 @@
+/* DiagramSettingsPanel consolidates the diagram-level (per-diagram)
+   surfaces into one dock panel (ADR 0071): a plain field at the top, then
+   Required tags and Line bend presets as CollapsibleSections. The sections
+   bleed to the panel edges (cancelling .required-tags-panel-body's own 12px
+   inset) so their divider borders read as full-width, matching how the same
+   CollapsibleSection looks in the property panel. */
+.diagram-settings-panel .property-section {
+  margin: 0 -12px;
+}
+
+.diagram-settings-panel .property-section-header {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.diagram-settings-panel .property-section-body {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+/* Each section's own actions (Copy to children / Set as my default / …) —
+   used to live far-right in a per-panel toolbar; now a small button row at
+   the top of the section body, right next to the data they act on. */
+.diagram-settings-section-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.diagram-settings-section-actions button {
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 3px 8px;
+}
+
+.diagram-settings-section-actions button:hover:not(:disabled) {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.diagram-settings-section-actions button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

@@ -1,0 +1,420 @@
+/* Threat/risk matrix (see ADR 0055) — render-only prototype, replaces the
+   entire canvas-view-body while the "matrix" persona is active (see
+   Canvas.tsx). Plain <table>, no canvas/SVG involved.
+   .toolbar floats via position: absolute (harmless over the pannable
+   canvas it's designed for) — but this view sits in normal flow, so its
+   content needs enough top padding to clear the toolbar rather than
+   starting underneath it. Centered horizontally too, rather than pinned
+   to the top-left. */
+.threat-matrix-view {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 72px 24px 24px;
+  display: flex;
+  /* flex-start on both axes, explicitly: a bare `display: flex` here
+     defaults align-items to stretch, which was forcing the table to
+     fill this container's entire height and spreading that empty space
+     across every row (found live, 2026-08-23) — not what a plain block
+     layout would have done. Left-aligned rather than centered, per the
+     user's own call: leaves room on the right for more service columns
+     and for future selection/side panels without those ever crowding
+     the table itself. */
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 32px;
+}
+
+.threat-matrix-main {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.threat-matrix-settings {
+  display: flex;
+  gap: 20px;
+}
+
+.threat-matrix-settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12px;
+  color: var(--ev-c-text-3);
+}
+
+.threat-matrix-settings-field select {
+  font-size: 13px;
+  color: var(--color-text);
+  background: var(--ev-button-alt-bg);
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 4px;
+  padding: 4px 6px;
+}
+
+.threat-matrix-table {
+  border-collapse: collapse;
+  font-size: 13px;
+  color: var(--color-text);
+}
+
+.threat-matrix-table th,
+.threat-matrix-table td {
+  border: 1px solid var(--ev-c-gray-2);
+  padding: 6px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.threat-matrix-table thead th {
+  background: var(--color-background-soft);
+  font-weight: 600;
+}
+
+.threat-matrix-table tbody th {
+  background: var(--color-background-soft);
+  font-weight: 600;
+  text-align: left;
+}
+
+.threat-matrix-corner {
+  background: transparent !important;
+  border: none !important;
+}
+
+.threat-matrix-aggregate-header {
+  font-style: italic;
+}
+
+.threat-matrix-aggregate {
+  font-weight: 600;
+  background: var(--color-background-mute);
+}
+
+.threat-matrix-aggregate-row th,
+.threat-matrix-aggregate-row td {
+  font-style: italic;
+}
+
+.threat-matrix-grand-total {
+  font-weight: 700;
+  font-size: 15px;
+  background: var(--ev-c-gray-2);
+}
+
+/* Add threat/service — a plain, unbordered corner
+   cell until clicked, so it doesn't read as part of the actual grid data
+   (matching .threat-matrix-corner's own transparent/borderless look). */
+.threat-matrix-add-button {
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--ev-c-text-3);
+  font-size: 12px;
+  padding: 4px 6px;
+  white-space: nowrap;
+}
+
+.threat-matrix-add-button:hover {
+  color: var(--color-text);
+  background: var(--ev-button-alt-hover-bg);
+  border-radius: 4px;
+}
+
+.threat-matrix-add-form {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.threat-matrix-add-form input {
+  font-size: 12px;
+  color: var(--color-text);
+  background: var(--ev-button-alt-bg);
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 4px;
+  padding: 3px 6px;
+  width: 110px;
+}
+
+.threat-matrix-add-form button {
+  cursor: pointer;
+  font-size: 12px;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 3px 8px;
+}
+
+.threat-matrix-add-form button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+/* Manage-matrix panel — reuses LegendPanel's own
+   .legend-panel/-toolbar/-title/-body/-row/-row-label/-row-remove/-hint
+   classes for the shell and per-item rows; only the two-group layout
+   below is genuinely new. */
+.threat-matrix-manage-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.threat-matrix-manage-title {
+  margin: 0 0 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.threat-matrix-manage-button {
+  cursor: pointer;
+  align-self: flex-end;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.threat-matrix-manage-button:hover {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.threat-matrix-cell {
+  cursor: pointer;
+}
+
+.threat-matrix-cell:hover {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+/* An un-entered assessment (ADR 0082) — a distinct, muted look so gaps in
+   the grid read at a glance, backing the completeness alert. */
+.threat-matrix-cell-unassessed {
+  color: var(--ev-c-text-3);
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 5px,
+    var(--color-background-mute) 5px,
+    var(--color-background-mute) 6px
+  );
+}
+
+/* A derived column (ADR 0088) — rolled up from a linked diagram, read-only.
+   Muted + italic so it reads as "computed, not yours to edit"; click opens
+   a breakdown popup rather than the cell editor. */
+.threat-matrix-cell-derived {
+  font-style: italic;
+  color: var(--ev-c-text-2);
+  background: var(--color-background-mute);
+  cursor: help;
+}
+
+/* A broken linked-diagram column — the link didn't resolve, so nothing can
+   be rolled up. Struck through in red; not clickable. */
+.threat-matrix-cell-broken {
+  cursor: not-allowed;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 6px,
+    var(--color-danger, #c0392b) 6px,
+    var(--color-danger, #c0392b) 7px
+  );
+}
+
+.threat-matrix-col-derived {
+  font-style: italic;
+}
+
+.threat-matrix-col-broken {
+  color: var(--color-danger, #c0392b);
+}
+
+.threat-matrix-refresh-button {
+  cursor: pointer;
+  align-self: flex-end;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.threat-matrix-refresh-button:hover {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.threat-matrix-note {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ev-c-text-2);
+}
+
+.threat-matrix-breakdown p {
+  margin: 0 0 6px;
+  font-size: 12px;
+}
+
+.threat-matrix-completeness {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ev-c-text-2);
+}
+
+.threat-matrix-completeness-warn {
+  color: var(--color-warning, #b7791f);
+  font-weight: 600;
+}
+
+.threat-matrix-empty {
+  font-size: 13px;
+  color: var(--ev-c-text-2);
+  max-width: 42ch;
+}
+
+/* Manage panel — hide toggle + a row that's currently hidden. */
+.threat-matrix-manage-hide {
+  flex: 0 0 auto;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 4px;
+  opacity: 0.7;
+}
+
+.threat-matrix-manage-hide:hover {
+  opacity: 1;
+}
+
+.threat-matrix-manage-row-hidden {
+  opacity: 0.55;
+}
+
+.threat-matrix-add-entity-select {
+  width: 100%;
+  margin-top: 4px;
+  font: inherit;
+  font-size: 12px;
+}
+
+.threat-matrix-confirm-remove {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.threat-matrix-confirm-remove button {
+  font-size: 11px;
+  padding: 1px 6px;
+}
+
+.threat-matrix-cell-editor-unassessed {
+  color: var(--ev-c-text-3);
+  font-weight: normal;
+}
+
+.threat-matrix-cell-editor-clear {
+  margin-top: 4px;
+  font-size: 11px;
+  align-self: flex-start;
+  cursor: pointer;
+}
+
+/* Reference panel — so the meaning of a bare number
+   isn't left to memory while filling the matrix in. Fixed-width, never
+   stretches or wraps the table beside it (.threat-matrix-view's own
+   align-items: flex-start already keeps it pinned to its natural
+   height). */
+.threat-matrix-scale-reference {
+  flex: 0 0 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  font-size: 12px;
+  color: var(--color-text);
+}
+
+.threat-matrix-scale-title {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.threat-matrix-scale-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.threat-matrix-scale-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.threat-matrix-scale-list span {
+  color: var(--ev-c-text-3);
+}
+
+/* Cell editor popup — same anchored-popup idiom as
+   ColorPickerPopup/StylePicker/ContextMenu (click-outside/Escape closes,
+   handled in the component itself). */
+.threat-matrix-cell-editor {
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--color-background-soft);
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  min-width: 220px;
+}
+
+.threat-matrix-cell-editor-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.threat-matrix-cell-editor-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12px;
+  color: var(--ev-c-text-3);
+}
+
+.threat-matrix-cell-editor-field select {
+  font-size: 13px;
+  color: var(--color-text);
+  background: var(--ev-button-alt-bg);
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 4px;
+  padding: 4px 6px;
+}
+
+.threat-matrix-cell-editor-note {
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--ev-button-alt-bg);
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 4px;
+  padding: 4px 6px;
+  resize: vertical;
+  min-height: 40px;
+}

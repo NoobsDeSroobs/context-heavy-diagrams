@@ -1,0 +1,121 @@
+/* Style Palette panel (ADR 0048) — reuses .required-tag-value-*
+   row/list/confirm classes above for its colors/fonts editors and import
+   confirmation, same list-editor shape as the required-tags panel. */
+.style-palette-color-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.style-palette-color-label {
+  font: inherit;
+  font-size: 12px;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  padding: 3px 5px;
+  min-width: 0;
+  flex: 1;
+}
+
+.style-palette-font-preview {
+  flex: 1;
+  font-size: 13px;
+  color: var(--color-text);
+  padding: 3px 5px;
+}
+
+.style-palette-defaults-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.style-palette-defaults-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--color-text);
+}
+
+.style-palette-defaults-row span:first-child {
+  flex: 1;
+}
+
+.style-palette-defaults-status {
+  color: var(--ev-c-text-3);
+}
+
+.style-palette-defaults-row button {
+  cursor: pointer;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
+.style-palette-defaults-row button:hover:not(:disabled) {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.style-palette-defaults-row button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Active-palette picker — see ADR 0068. Sits at the top of the
+   Style Palette panel body, above the Colors/Fonts sections. */
+.style-palette-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.style-palette-select,
+.style-palette-name-input {
+  font: inherit;
+  font-size: 12px;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 3px;
+  padding: 3px 5px;
+}
+
+.style-palette-select {
+  flex: 1 1 120px;
+}
+
+.style-palette-name-input {
+  flex: 1 1 120px;
+}
+
+.style-palette-picker-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.style-palette-picker-actions button {
+  cursor: pointer;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 3px;
+  padding: 3px 8px;
+  font-size: 12px;
+}
+
+.style-palette-picker-actions button:hover:not(:disabled) {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.style-palette-picker-actions button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

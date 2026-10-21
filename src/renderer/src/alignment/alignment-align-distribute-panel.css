@@ -1,0 +1,26 @@
+/* Align/Distribute's own two action buttons, side by side — everything
+   else about this panel reuses the shared dock-shell rules above. */
+.align-distribute-panel-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.align-distribute-panel-actions button {
+  flex: 1;
+  cursor: pointer;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.align-distribute-panel-actions button:hover:not(:disabled) {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.align-distribute-panel-actions button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

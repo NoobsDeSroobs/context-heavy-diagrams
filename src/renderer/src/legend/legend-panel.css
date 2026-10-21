@@ -1,0 +1,61 @@
+/* Legend panel — see ADR 0033. Deliberately NOT the shared
+   .highlights-panel/.preferences-panel UtilityDock shell (that's a fixed-size
+   right-side dock slot) — this is a small floating box positioned next to
+   the canvas's bottom-left <Controls> widget, same `position: fixed`
+   family as .icon-picker but anchored from the bottom instead of the top. */
+.legend-panel {
+  position: fixed;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  max-height: 320px;
+  background: var(--color-background-soft);
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  cursor: default;
+}
+
+.legend-panel-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  border-bottom: 1px solid var(--ev-c-gray-2);
+}
+
+.legend-panel-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.legend-panel-toolbar button {
+  cursor: pointer;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  min-width: 26px;
+}
+
+.legend-panel-toolbar button:hover {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.legend-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.legend-panel-hint {
+  font-size: 12px;
+  color: var(--ev-c-text-3);
+  margin: 0;
+}

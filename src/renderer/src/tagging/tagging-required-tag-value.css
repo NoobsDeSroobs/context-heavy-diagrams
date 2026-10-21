@@ -1,0 +1,65 @@
+.required-tag-value-move,
+.required-tag-value-remove {
+  cursor: pointer;
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: var(--ev-c-text-3);
+  font-size: 11px;
+  line-height: 1;
+  padding: 2px 4px;
+}
+
+.required-tag-value-remove {
+  font-size: 14px;
+}
+
+.required-tag-value-move:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.required-tag-value-move:hover:not(:disabled),
+.required-tag-value-remove:hover {
+  color: var(--color-text);
+}
+
+/* In-panel confirmation for removing/renaming an in-use value — replaces
+   a row in place rather than a native dialog (see AllowedValuesEditor's
+   own comment for why: window.confirm() left this panel's <select>
+   elements unresponsive afterward, a real bug found live). */
+.required-tag-value-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  background: var(--color-background-mute);
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 4px;
+}
+
+.required-tag-value-confirm p {
+  margin: 0;
+  font-size: 11px;
+  color: var(--color-text);
+  line-height: 1.4;
+}
+
+.required-tag-value-confirm-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.required-tag-value-confirm-actions button {
+  cursor: pointer;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
+.required-tag-value-confirm-actions button:hover {
+  background: var(--ev-button-alt-hover-bg);
+}

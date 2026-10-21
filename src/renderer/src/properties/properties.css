@@ -1,0 +1,212 @@
+.property-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.property-panel-empty {
+  padding: 16px 12px;
+  font-size: 12px;
+  color: var(--ev-c-text-3);
+  text-align: center;
+}
+
+.property-section {
+  border-bottom: 1px solid var(--ev-c-gray-2);
+}
+
+/* "Set as default style" (ADR 0048) — a plain button, not a
+   CollapsibleSection row, since it's a one-shot action rather than a
+   field. */
+.property-set-default {
+  cursor: pointer;
+  align-self: flex-start;
+  margin: 4px 0;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.property-set-default:hover {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+/* "Copy style" and "Set as default style" share one row at the top of the panel;
+   wraps onto a second line only if the panel is ever too narrow for both. */
+.property-style-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 8px 0;
+}
+
+.property-style-actions > button {
+  margin: 0;
+  align-self: auto;
+}
+
+.property-section-header {
+  cursor: pointer;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  padding: 8px 10px;
+}
+
+.property-section-header:hover {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.property-section-caret {
+  display: inline-block;
+  font-size: 10px;
+  transition: transform 0.1s ease;
+}
+
+.property-section-caret.open {
+  transform: rotate(90deg);
+}
+
+.property-section-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 2px 10px 10px;
+}
+
+.property-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--ev-c-text-2);
+}
+
+/* Palette quick-pick row (ADR 0048) — drops to its own full-
+   width line below the label+color-input row via flex-wrap above, rather
+   than squeezing into the same row. */
+.property-palette-swatches {
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.property-palette-swatch {
+  cursor: pointer;
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 3px;
+}
+
+.property-field-label {
+  flex: 0 0 auto;
+  min-width: 44px;
+}
+
+.property-number-field,
+.property-select-field,
+.property-color-text {
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  padding: 3px 5px;
+  width: 100%;
+  min-width: 0;
+}
+
+.property-color-field {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.property-color-swatch {
+  cursor: pointer;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  background: none;
+}
+
+.property-color-swatch.mixed {
+  border-style: dashed;
+}
+
+.property-field-clear {
+  cursor: pointer;
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: var(--ev-c-text-3);
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 4px;
+}
+
+.property-field-clear:hover {
+  color: var(--color-text);
+}
+
+.property-slider-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.property-range-slider {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--ev-c-text-1);
+}
+
+.property-range-slider.mixed {
+  opacity: 0.5;
+}
+
+.property-range-number {
+  flex: 0 0 auto;
+  width: 48px;
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  padding: 3px 2px;
+  text-align: center;
+  /* No native up/down spinner — the linked slider already covers that
+     interaction, and the spinner's own width was eating into the space
+     available for the digits, clipping "100" at this field's narrow
+     width. */
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.property-range-number::-webkit-inner-spin-button,
+.property-range-number::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
