@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { PROJECT_URL } from '../projectInfo'
+import { PROJECT_URL } from './projectInfo'
 
 interface AboutDialogProps {
   onClose: () => void

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { COMMANDS, formatKeys, type CommandCategory, type CommandDef } from '../commands'
+import { COMMANDS, formatKeys, type CommandCategory, type CommandDef } from './commands'
 
 interface ShortcutsDialogProps {
   onClose: () => void

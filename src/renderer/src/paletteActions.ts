@@ -1,4 +1,4 @@
-import type { MenuBarMenu } from './components/MenuBar'
+import type { MenuBarMenu } from './MenuBar'
 
 // One row of the command palette (ADR 0100).
 export interface PaletteAction {

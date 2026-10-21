@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { filterPaletteActions, type PaletteAction } from '../paletteActions'
+import { filterPaletteActions, type PaletteAction } from './paletteActions'
 
 interface CommandPaletteProps {
   actions: PaletteAction[]

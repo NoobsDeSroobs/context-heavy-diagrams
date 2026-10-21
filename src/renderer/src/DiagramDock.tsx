@@ -7,8 +7,8 @@ import type {
   NodeStyle,
   RequiredTagDefinition
 } from '@shared/diagram'
-import ItemPalette from '../palette/ItemPalette'
-import PropertyPanel, { type TransformPatch } from '../properties/PropertyPanel'
+import ItemPalette from './palette/ItemPalette'
+import PropertyPanel, { type TransformPatch } from './properties/PropertyPanel'
 
 // The right-side dock that's part of the diagram's own editing surface —
 // see ADR 0013. Item palette when nothing is selected, property panel once
