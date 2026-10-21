@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "savedWith": "0.2.1",
   "nodes": [
     {
       "id": "blurb",
@@ -12,6 +13,7 @@
         "width": 900,
         "height": 190
       },
+      "zIndex": 200010,
       "style": {
         "fill": "#fefcbf",
         "fontColor": "#744210",
@@ -34,6 +36,7 @@
         "width": 180,
         "height": 90
       },
+      "zIndex": 100010,
       "connectionPoints": [
         {
           "id": "cp-2",
@@ -51,7 +54,7 @@
       },
       "data": {
         "label": "Passenger",
-        "details": "details/actor-passenger.md"
+        "details": "c4-container/details/Passenger-passenger.md"
       }
     },
     {
@@ -65,6 +68,7 @@
         "width": 180,
         "height": 90
       },
+      "zIndex": 100020,
       "style": {
         "fill": "#6b46c1",
         "stroke": "#44337a",
@@ -75,7 +79,7 @@
       },
       "data": {
         "label": "Station Staff",
-        "details": "details/actor-station-staff.md"
+        "details": "c4-container/details/Station Staff-station-staff.md"
       }
     },
     {
@@ -89,6 +93,7 @@
         "width": 900,
         "height": 600
       },
+      "zIndex": 20,
       "style": {
         "fill": "#eef4fd",
         "stroke": "#94a3b8",
@@ -100,7 +105,7 @@
       },
       "data": {
         "label": "Ticketing & Booking Platform — system boundary",
-        "details": "details/system-ticketing.md"
+        "details": "c4-container/details/Ticketing & Booking Platform — system boundary-boundary.md"
       }
     },
     {
@@ -114,6 +119,7 @@
         "width": 220,
         "height": 80
       },
+      "zIndex": 100030,
       "parentId": "system-boundary",
       "style": {
         "fill": "#2b6cb0",
@@ -125,7 +131,7 @@
       },
       "data": {
         "label": "Booking Web/Mobile App\n[frontend]",
-        "details": "c4-container/details/booking-web-app.md",
+        "details": "c4-container/details/Booking Web-Mobile App-web-app.md",
         "linkedDiagram": "c4-container/booking-web-app-component.chd"
       }
     },
@@ -140,6 +146,7 @@
         "width": 220,
         "height": 80
       },
+      "zIndex": 100040,
       "parentId": "system-boundary",
       "style": {
         "fill": "#2b6cb0",
@@ -151,7 +158,7 @@
       },
       "data": {
         "label": "Staff Portal\n[frontend]",
-        "details": "c4-container/details/staff-portal.md",
+        "details": "c4-container/details/Staff Portal-portal.md",
         "linkedDiagram": "c4-container/staff-portal-component.chd"
       }
     },
@@ -166,6 +173,7 @@
         "width": 220,
         "height": 80
       },
+      "zIndex": 100050,
       "parentId": "system-boundary",
       "style": {
         "fill": "#1a73e8",
@@ -177,7 +185,7 @@
       },
       "data": {
         "label": "Notification Service\n[backend service]",
-        "details": "c4-container/details/notification-service.md",
+        "details": "c4-container/details/Notification Service-service.md",
         "linkedDiagram": "c4-container/notification-service-component.chd"
       }
     },
@@ -192,6 +200,7 @@
         "width": 300,
         "height": 100
       },
+      "zIndex": 100060,
       "connectionPoints": [
         {
           "id": "cp-1",
@@ -216,7 +225,7 @@
       },
       "data": {
         "label": "Booking API\n[backend service]",
-        "details": "c4-container/details/booking-api.md",
+        "details": "c4-container/details/Booking API-api.md",
         "linkedDiagram": "c4-container/booking-api-component.chd"
       }
     },
@@ -231,6 +240,7 @@
         "width": 230,
         "height": 80
       },
+      "zIndex": 100070,
       "parentId": "system-boundary",
       "style": {
         "fill": "#1a73e8",
@@ -242,7 +252,7 @@
       },
       "data": {
         "label": "Payment Orchestration Service\n[backend service]",
-        "details": "c4-container/details/payment-orchestration.md",
+        "details": "c4-container/details/Payment Orchestration Service-orchestration.md",
         "linkedDiagram": "c4-container/payment-orchestration-component.chd"
       }
     },
@@ -257,6 +267,7 @@
         "width": 230,
         "height": 80
       },
+      "zIndex": 100080,
       "parentId": "system-boundary",
       "style": {
         "fill": "#1a73e8",
@@ -268,7 +279,7 @@
       },
       "data": {
         "label": "Interop Gateway Service\n[backend service]",
-        "details": "c4-container/details/interop-gateway.md",
+        "details": "c4-container/details/Interop Gateway Service-gateway.md",
         "linkedDiagram": "c4-container/interop-gateway-component.chd"
       }
     },
@@ -283,6 +294,7 @@
         "width": 230,
         "height": 80
       },
+      "zIndex": 100090,
       "parentId": "system-boundary",
       "style": {
         "fill": "#1a73e8",
@@ -294,7 +306,7 @@
       },
       "data": {
         "label": "Legacy Sync Service\n[backend service, transitional]",
-        "details": "c4-container/details/legacy-sync.md",
+        "details": "c4-container/details/Legacy Sync Service-sync.md",
         "linkedDiagram": "c4-container/legacy-sync-component.chd"
       }
     },
@@ -309,6 +321,7 @@
         "width": 230,
         "height": 80
       },
+      "zIndex": 100100,
       "parentId": "system-boundary",
       "style": {
         "fill": "#0f766e",
@@ -320,7 +333,7 @@
       },
       "data": {
         "label": "Platform Database\n[data store]",
-        "details": "c4-container/details/platform-database.md"
+        "details": "c4-container/details/Platform Database-database.md"
       }
     },
     {
@@ -334,6 +347,7 @@
         "width": 230,
         "height": 90
       },
+      "zIndex": 100110,
       "style": {
         "fill": "#718096",
         "stroke": "#4a5568",
@@ -344,7 +358,7 @@
       },
       "data": {
         "label": "Payment Gateway\n(external system)",
-        "details": "details/ext-payment-gateway.md"
+        "details": "c4-container/details/Payment Gateway-payment-gateway.md"
       }
     },
     {
@@ -358,6 +372,7 @@
         "width": 230,
         "height": 90
       },
+      "zIndex": 100120,
       "style": {
         "fill": "#718096",
         "stroke": "#4a5568",
@@ -368,7 +383,7 @@
       },
       "data": {
         "label": "National Rail Interop Network\n(external system)",
-        "details": "details/ext-rail-interop.md"
+        "details": "c4-container/details/National Rail Interop Network-rail-interop.md"
       }
     },
     {
@@ -382,6 +397,7 @@
         "width": 230,
         "height": 90
       },
+      "zIndex": 100130,
       "style": {
         "fill": "#718096",
         "stroke": "#4a5568",
@@ -392,7 +408,7 @@
       },
       "data": {
         "label": "Loyalty & CRM System\n(existing system)",
-        "details": "details/ext-loyalty-crm.md"
+        "details": "c4-container/details/Loyalty & CRM System-loyalty-crm.md"
       }
     },
     {
@@ -406,6 +422,7 @@
         "width": 230,
         "height": 90
       },
+      "zIndex": 100140,
       "style": {
         "fill": "#718096",
         "stroke": "#4a5568",
@@ -416,7 +433,7 @@
       },
       "data": {
         "label": "Legacy Reservation Mainframe\n(existing system, being retired)",
-        "details": "details/ext-legacy-mainframe.md"
+        "details": "c4-container/details/Legacy Reservation Mainframe-legacy-mainframe.md"
       }
     }
   ],

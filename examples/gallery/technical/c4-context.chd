@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "savedWith": "0.2.1",
   "nodes": [
     {
       "id": "blurb",
@@ -12,6 +13,7 @@
         "width": 620,
         "height": 150
       },
+      "zIndex": 200010,
       "style": {
         "fill": "#fefcbf",
         "fontColor": "#744210",
@@ -34,26 +36,27 @@
         "width": 240,
         "height": 120
       },
+      "zIndex": 100010,
       "connectionPoints": [
         {
-          "id": "cp-1",
-          "side": "right",
-          "offset": 0.8973982555966786
+          "id": "cp-4",
+          "side": "left",
+          "offset": 0.5
         },
         {
           "id": "cp-2",
           "side": "right",
-          "offset": 0.11222506830150619
+          "offset": 0.3333333333333333
+        },
+        {
+          "id": "cp-1",
+          "side": "right",
+          "offset": 0.6666666666666666
         },
         {
           "id": "cp-3",
           "side": "top",
-          "offset": 0.7916777223388182
-        },
-        {
-          "id": "cp-4",
-          "side": "left",
-          "offset": 0.09781822082820028
+          "offset": 0.5
         }
       ],
       "style": {
@@ -82,6 +85,7 @@
         "width": 180,
         "height": 90
       },
+      "zIndex": 100020,
       "style": {
         "fill": "#6b46c1",
         "stroke": "#44337a",
@@ -106,6 +110,7 @@
         "width": 180,
         "height": 90
       },
+      "zIndex": 100030,
       "style": {
         "fill": "#6b46c1",
         "stroke": "#44337a",
@@ -130,6 +135,7 @@
         "width": 220,
         "height": 90
       },
+      "zIndex": 100040,
       "style": {
         "fill": "#718096",
         "stroke": "#4a5568",
@@ -154,6 +160,7 @@
         "width": 220,
         "height": 90
       },
+      "zIndex": 100050,
       "style": {
         "fill": "#718096",
         "stroke": "#4a5568",
@@ -178,6 +185,7 @@
         "width": 220,
         "height": 90
       },
+      "zIndex": 100060,
       "style": {
         "fill": "#718096",
         "stroke": "#4a5568",
@@ -202,6 +210,7 @@
         "width": 220,
         "height": 90
       },
+      "zIndex": 100070,
       "style": {
         "fill": "#718096",
         "stroke": "#4a5568",
@@ -218,24 +227,6 @@
   ],
   "edges": [
     {
-      "id": "xy-edge__system-ticketingcp-2-ext-rail-interopleft",
-      "type": "labeled",
-      "source": "system-ticketing",
-      "target": "ext-rail-interop",
-      "sourceHandle": "cp-2",
-      "targetHandle": "left",
-      "label": "validates cross-operator tickets via",
-      "style": {
-        "stroke": "#4a5568",
-        "strokeWidth": 2,
-        "lineStyle": "solid",
-        "startMarker": "none",
-        "endMarker": "arrowOpen",
-        "fontSize": 11,
-        "fontColor": "#f2f2f3"
-      }
-    },
-    {
       "id": "xy-edge__system-ticketingright-ext-loyalty-crmleft",
       "type": "labeled",
       "source": "system-ticketing",
@@ -247,24 +238,6 @@
         "stroke": "#4a5568",
         "strokeWidth": 2,
         "lineStyle": "solid",
-        "startMarker": "none",
-        "endMarker": "arrowOpen",
-        "fontSize": 11,
-        "fontColor": "#f2f2f3"
-      }
-    },
-    {
-      "id": "xy-edge__system-ticketingcp-1-ext-legacy-mainframeleft",
-      "type": "labeled",
-      "source": "system-ticketing",
-      "target": "ext-legacy-mainframe",
-      "sourceHandle": "cp-1",
-      "targetHandle": "left",
-      "label": "reads legacy seat inventory from (during migration)",
-      "style": {
-        "stroke": "#4a5568",
-        "strokeWidth": 2,
-        "lineStyle": "dashed",
         "startMarker": "none",
         "endMarker": "arrowOpen",
         "fontSize": 11,
@@ -324,6 +297,42 @@
         "fontSize": 11,
         "fontColor": "#f2f2f3",
         "labelPosition": 0.5
+      }
+    },
+    {
+      "id": "xy-edge__system-ticketingcp-2-ext-rail-interopleft",
+      "type": "labeled",
+      "source": "system-ticketing",
+      "target": "ext-rail-interop",
+      "sourceHandle": "cp-2",
+      "targetHandle": "left",
+      "label": "validates cross-operator tickets via",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
+      }
+    },
+    {
+      "id": "xy-edge__system-ticketingcp-1-ext-legacy-mainframeleft",
+      "type": "labeled",
+      "source": "system-ticketing",
+      "target": "ext-legacy-mainframe",
+      "sourceHandle": "cp-1",
+      "targetHandle": "left",
+      "label": "reads legacy seat inventory from (during migration)",
+      "style": {
+        "stroke": "#4a5568",
+        "strokeWidth": 2,
+        "lineStyle": "dashed",
+        "startMarker": "none",
+        "endMarker": "arrowOpen",
+        "fontSize": 11,
+        "fontColor": "#f2f2f3"
       }
     }
   ]
