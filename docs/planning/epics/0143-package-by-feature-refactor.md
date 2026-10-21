@@ -8,7 +8,7 @@ Group each feature's files in one named folder per electron-vite tree, and split
 
 ## Tasks
 - [x] Decide the layout; write the ADR
-- [ ] Pilot with the legend: move it in every tree, then check it
+- [x] Pilot with the legend: move it in every tree, then check it (typecheck, lint, tests and build pass; app not yet run)
 - [ ] Add the lint rules: `shared` imports neither `main` nor `renderer`; `renderer` never imports `main`
 - [ ] Move the remaining features, one commit per feature (`git mv` first, then the import fixes)
 - [ ] Move generic widgets to `renderer/src/ui/`; decide where the loose top-level files go
