@@ -89,3 +89,5 @@ from the toggleable-sets part.
 The stencil category is the concrete home for the BPMN-vocabulary decision.
 Deliberately light on design here — the interesting choices (category name,
 symbol set, icon sourcing, type-swap UX) want their own pass.
+
+Update 2026-10-21: covers the parallel-flow need (fork, join, choice) raised while writing the [comparison with other tools](../../comparison.md). Related: [epic 0148](0148-archimate-flavoured-vocabulary-kit.md). Sequence diagrams are a different problem and are not part of this epic.

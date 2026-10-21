@@ -19,3 +19,5 @@ Which direction to build first — or whether both are worth it — needs a real
 
 ## Notes
 Not scheduled into the current batch (see [PROGRESS.md](../../../../PROGRESS.md)) — flagged here so it isn't lost, not because it's next up.
+
+Update 2026-10-21: the [comparison with other tools](../../../comparison.md) lists the lack of import as the second gap, and draw.io is the tool most people would be moving from. Agreed to look at imports and exports right after the SVG export ([epic 0144](../0144-svg-and-command-line-export.md)); a candidate to move out of `later/` then.
