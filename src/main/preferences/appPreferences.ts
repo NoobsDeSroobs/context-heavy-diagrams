@@ -6,7 +6,7 @@ import {
   normalizePreferences,
   type AppPreferences
 } from '@shared/preferences/preferences'
-import { parseInstallOptions } from '@shared/installOptions'
+import { parseInstallOptions } from '@shared/ai/installOptions'
 
 // Real per-OS preferences file (see ADR 0053) — replaces the renderer's
 // former localStorage-only storage (ADR 0032) with a file under this OS's

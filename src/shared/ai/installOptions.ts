@@ -1,4 +1,4 @@
-import type { AppPreferences } from './preferences/preferences'
+import type { AppPreferences } from '../preferences/preferences'
 
 // What the Windows installer's options page can seed (ADR 0108): the
 // installer drops `install-options.json` next to the executable and the app

@@ -6,7 +6,7 @@ import type {
   SaveOutcome,
   Stamp
 } from '@shared/document/documentSave'
-import type { AiFolderResult, ClaudeExtensionOutcome } from '@shared/aiFolderResult'
+import type { AiFolderResult, ClaudeExtensionOutcome } from '@shared/ai/aiFolderResult'
 import type { AppPreferences } from '@shared/preferences/preferences'
 import type { SecurityCrawlResult } from '@shared/threat-matrix/threatMatrixMath'
 import type { LinkedSearchLink, LinkedSearchResult } from '@shared/search/linkedSearch'

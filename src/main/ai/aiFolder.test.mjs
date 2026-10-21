@@ -6,10 +6,10 @@ import { mkdtemp, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { installAiFiles } from './aiFolder.ts'
-import { summarizeAiFolderResult } from '../shared/aiFolderResult.ts'
-import { validateFile } from '../../resources/ai/skills/chd-diagrams/scripts/validate_chd.mjs'
+import { summarizeAiFolderResult } from '../../shared/ai/aiFolderResult.ts'
+import { validateFile } from '../../../resources/ai/skills/chd-diagrams/scripts/validate_chd.mjs'
 
-const source = join(import.meta.dirname, '..', '..', 'resources', 'ai')
+const source = join(import.meta.dirname, '..', '..', '..', 'resources', 'ai')
 let dir
 beforeEach(async () => {
   dir = await mkdtemp(join(tmpdir(), 'chd-ai-'))
@@ -130,7 +130,7 @@ async function tree(root, prefix = '') {
 }
 
 test('.claude/skills copy matches resources/ai (run `npm run sync-ai`)', async () => {
-  const root = join(import.meta.dirname, '..', '..')
+  const root = join(import.meta.dirname, '..', '..', '..')
   const a = await tree(join(root, 'resources', 'ai', 'skills', 'chd-diagrams'))
   const b = await tree(join(root, '.claude', 'skills', 'chd-diagrams'))
   assert.deepEqual(b, a)

@@ -25,7 +25,7 @@ import { registerStylePaletteHandlers } from './styling/stylePalette'
 import { registerExportHandlers } from './export/export'
 import { registerSecurityHandlers } from './threat-matrix/security'
 import { registerLinkedSearchHandlers } from './search/linkedSearch'
-import { registerAiHandlers } from './ai'
+import { registerAiHandlers } from './ai/ai'
 import { registerClipboardHandlers } from './clipboard'
 import { disableProxyDiscovery, enforceOffline } from './offline'
 
