@@ -13,7 +13,7 @@ import {
   DEFAULT_DIRECTION_SET_LEGEND_COLOR,
   directionSetLegendRow,
   type DirectionSetLegendRow
-} from '@shared/svg/legendItems'
+} from '@shared/legend/legendItems'
 
 export { DEFAULT_DIRECTION_SET_LEGEND_COLOR, directionSetLegendRow }
 export type { DirectionSetLegendRow }

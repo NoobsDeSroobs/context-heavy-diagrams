@@ -115,7 +115,7 @@ import {
   searchableFromData,
   type SearchCriteria
 } from './search'
-import LegendPanel from './components/LegendPanel'
+import LegendPanel from './legend/LegendPanel'
 import MenuBar, { type MenuBarMenu, type MenuBarItem } from './components/MenuBar'
 import LayerPanel from './components/LayerPanel'
 import {
@@ -185,7 +185,7 @@ import { warnIfSavedWithNewer } from './fileVersionWarning'
 import type { TransformPatch } from './panels/PropertyPanel'
 import { useTheme } from './theme'
 import { useEventCallback } from './hooks/useEventCallback'
-import { legendLineFromEdgeStyle, type LegendLineLook } from './legendLinePick'
+import { legendLineFromEdgeStyle, type LegendLineLook } from './legend/legendLinePick'
 import { EDGE_STYLE_DEFAULTS } from '@shared/styleDefaults'
 import { useModifierDragDuplicate } from './hooks/useModifierDragDuplicate'
 import { useDetailsPeek } from './hooks/useDetailsPeek'
@@ -196,7 +196,7 @@ import {
   resolveEffectiveBackgroundColor,
   rgbStringToHex
 } from './export/exportPng'
-import { buildExportLegendItems } from '@shared/svg/legendItems'
+import { buildExportLegendItems } from '@shared/legend/legendItems'
 import ThreatMatrixView from './security/ThreatMatrixView'
 import { themeAdaptiveColor } from './styles/themeAdaptiveColor'
 

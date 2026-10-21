@@ -108,7 +108,7 @@ export interface AppPreferences {
   pngExportTransparentBackground: boolean
   pngExportBackgroundColorOverride?: string
   // Which corner the auto-placed legend (diagram Legend entries + enabled
-  // highlights) goes in — see svg/legendPlacement.ts. Same "remembers
+  // highlights) goes in — see legend/legendPlacement.ts. Same "remembers
   // the dialog's last choice" treatment as the three fields above.
   pngExportLegendCorner: LegendCorner
   // React Flow's own selectionMode prop (SelectionMode.Full/.Partial),

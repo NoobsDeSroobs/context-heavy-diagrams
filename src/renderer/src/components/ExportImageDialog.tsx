@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { FieldRow, NumberField } from '../panels/fields'
-import type { LegendCorner } from '@shared/svg/legendPlacement'
+import type { LegendCorner } from '@shared/legend/legendPlacement'
 
 export interface ImageExportChoice {
   paddingPx: number

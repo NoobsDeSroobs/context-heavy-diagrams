@@ -23,8 +23,8 @@ import {
   buildExportLegendItems,
   directionSetLegendRow,
   type ExportLegendItem
-} from './legendItems.ts'
-import { placeLegend, type LegendCorner, type Rect } from './legendPlacement.ts'
+} from '../legend/legendItems.ts'
+import { placeLegend, type LegendCorner, type Rect } from '../legend/legendPlacement.ts'
 import { layoutEdges, layoutNodes, orientEdges, type LaidOutNode } from './model.ts'
 import { LINE_HEIGHT_EM, measureText, wrapText, type FontSpec } from './textLayout.ts'
 

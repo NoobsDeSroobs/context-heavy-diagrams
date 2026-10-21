@@ -4,11 +4,11 @@ import type { EdgeStyle, IconRef, LegendEntry, LegendEntryKind } from '@shared/d
 import { loadBuiltinIconSvg, searchBuiltinIconIds } from '../icons/builtinIcons'
 import { markerUrl } from '../edges/markerIds'
 import type { DirectionSetLegendRow } from '../edges/edgeDirectionSets'
-import type { LegendLineLook } from '../legendLinePick'
+import type { LegendLineLook } from './legendLinePick'
 import { EDGE_STYLE_DEFAULTS } from '@shared/styleDefaults'
 import { useTheme } from '../theme'
-import IconSlotView from './IconSlotView'
-import StylePicker from './StylePicker'
+import IconSlotView from '../components/IconSlotView'
+import StylePicker from '../components/StylePicker'
 
 interface LegendPanelProps {
   diagramPath: string | null

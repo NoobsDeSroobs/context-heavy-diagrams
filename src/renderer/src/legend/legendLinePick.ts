@@ -1,5 +1,5 @@
 import type { EdgeStyle, LegendEntry } from '@shared/diagram'
-import type { Theme } from './theme'
+import type { Theme } from '../theme'
 import type { EdgeStyleDefaults } from '@shared/styleDefaults'
 
 // Picking a legend line from an edge on the canvas (ADR 0123). Pure so it can be unit-tested; the

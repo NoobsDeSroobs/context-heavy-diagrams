@@ -1,6 +1,6 @@
 import type { DiagramFile } from '@shared/diagram'
 import type { Theme } from '@shared/theme'
-import type { LegendCorner } from '@shared/svg/legendPlacement'
+import type { LegendCorner } from '@shared/legend/legendPlacement'
 import {
   collectIconRefs,
   defaultLegendItems,
