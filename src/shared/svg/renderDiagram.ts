@@ -128,41 +128,65 @@ function paintAttrs(name: 'fill' | 'stroke', paint: Paint | null): string {
   return ` ${name}="${esc(paint.color)}"${paint.opacity < 1 ? ` ${name}-opacity="${num(paint.opacity)}"` : ''}`
 }
 
-// ---- markers --------------------------------------------------------------------------------
+// ---- arrowheads ------------------------------------------------------------------------------
 
-// SVG 2's `context-stroke`, which the canvas uses, is not understood by most SVG editors and
-// renderers, so each marker is written once per colour in use, with literal colours.
-class MarkerRegistry {
-  private ids = new Map<string, string>()
-  private defs: string[] = []
+// The end markers (ADR 0014) drawn as ordinary shapes placed at the end of the line, not as SVG
+// <marker> elements: editors such as Affinity Designer ignore markers or lose their orientation, and
+// the canvas's `context-stroke` is SVG 2. A shape is scaled by the stroke width and turned to the
+// line's direction, as a marker with markerUnits="strokeWidth" and orient="auto" would be.
+function arrowhead(
+  kind: MarkerKind,
+  at: Point,
+  angleDegrees: number,
+  stroke: Paint,
+  strokeWidth: number
+): string {
+  if (kind === 'none') return ''
+  const shape = MARKER_SHAPES[kind]
+  const [, , viewWidth, viewHeight] = shape.viewBox.split(' ').map(Number)
+  const scale =
+    Math.min(shape.markerWidth / viewWidth, shape.markerHeight / viewHeight) * strokeWidth
+  const body = shape.elements
+    .map((el) => {
+      const own = el.filled
+        ? `${paintAttrs('fill', stroke)} stroke="none"`
+        : `fill="none"${paintAttrs('stroke', stroke)} stroke-width="${MARKER_STROKE_WIDTH}" stroke-linecap="round" stroke-linejoin="round"`
+      return el.tag === 'path'
+        ? `<path d="${el.d}" ${own}/>`
+        : `<circle cx="${el.cx}" cy="${el.cy}" r="${el.r}" ${own}/>`
+    })
+    .join('')
+  return `<g class="chd-arrowhead" transform="translate(${num(at.x)} ${num(at.y)}) rotate(${num(angleDegrees)}) scale(${num(scale)}) translate(${-shape.refX} ${-shape.refY})">${body}</g>`
+}
 
-  reference(kind: MarkerKind, stroke: Paint): string | undefined {
-    if (kind === 'none') return undefined
-    const key = `${kind}|${stroke.color}|${stroke.opacity}`
-    const known = this.ids.get(key)
-    if (known) return `url(#${known})`
-    const shape = MARKER_SHAPES[kind]
-    const id = `${shape.id}-${this.ids.size + 1}`
-    this.ids.set(key, id)
-    const body = shape.elements
-      .map((el) => {
-        const own = el.filled
-          ? `${paintAttrs('fill', stroke)} stroke="none"`
-          : `fill="none"${paintAttrs('stroke', stroke)} stroke-width="${MARKER_STROKE_WIDTH}" stroke-linecap="round" stroke-linejoin="round"`
-        return el.tag === 'path'
-          ? `<path d="${el.d}" ${own}/>`
-          : `<circle cx="${el.cx}" cy="${el.cy}" r="${el.r}" ${own}/>`
-      })
-      .join('')
-    this.defs.push(
-      `<marker id="${id}" viewBox="${shape.viewBox}" refX="${shape.refX}" refY="${shape.refY}" markerWidth="${shape.markerWidth}" markerHeight="${shape.markerHeight}" orient="auto-start-reverse">${body}</marker>`
-    )
-    return `url(#${id})`
+// The direction a path leaves its first point and arrives at its last, from the flattened path.
+function endAngles(d: string): { start: number; end: number } | null {
+  const points = flattenPath(d)
+  const distinct = (a: Point, b: Point): boolean => Math.hypot(a.x - b.x, a.y - b.y) > 0.001
+  const last = points[points.length - 1]
+  const first = points[0]
+  const beforeLast = [...points].reverse().find((p) => distinct(p, last))
+  const afterFirst = points.find((p) => distinct(p, first))
+  if (!beforeLast || !afterFirst) return null
+  const degrees = (from: Point, to: Point): number =>
+    (Math.atan2(to.y - from.y, to.x - from.x) * 180) / Math.PI
+  return {
+    // A start marker points back out of the line, the way orient="auto-start-reverse" turns it.
+    start: degrees(first, afterFirst) + 180,
+    end: degrees(beforeLast, last)
   }
+}
 
-  toDefs(): string {
-    return this.defs.length === 0 ? '' : `<defs>${this.defs.join('')}</defs>`
-  }
+// The start and end markers of a line along path `d`, as shapes.
+function arrowheadsFor(d: string, look: LineLook): string {
+  if (look.startMarker === 'none' && look.endMarker === 'none') return ''
+  const angles = endAngles(d)
+  if (!angles) return ''
+  const points = flattenPath(d)
+  return (
+    arrowhead(look.startMarker, points[0], angles.start, look.stroke, look.strokeWidth) +
+    arrowhead(look.endMarker, points[points.length - 1], angles.end, look.stroke, look.strokeWidth)
+  )
 }
 
 // ---- text -----------------------------------------------------------------------------------
@@ -292,8 +316,7 @@ function drawLegend(
   items: ExportLegendItem[],
   at: Point,
   size: { width: number; height: number },
-  options: SvgExportOptions,
-  markers: MarkerRegistry
+  options: SvgExportOptions
 ): string {
   const tokens = PAGE_TOKENS[options.theme]
   const parts: string[] = [
@@ -322,14 +345,12 @@ function drawLegend(
       const paint = plainColor(swatch.color)
       const dash =
         swatch.lineStyle === 'dashed' ? '8 6' : swatch.lineStyle === 'dotted' ? '2 4' : undefined
-      const start = markers.reference(swatch.startMarker ?? 'none', paint)
-      const end = markers.reference(swatch.endMarker ?? 'none', paint)
       parts.push(
         `<line x1="${num(swatchX + 2)}" y1="${num(cy)}" x2="${num(swatchX + 26)}" y2="${num(cy)}"${paintAttrs('stroke', paint)} stroke-width="2" stroke-linecap="round"` +
           (dash ? ` stroke-dasharray="${dash}"` : '') +
-          (start ? ` marker-start="${start}"` : '') +
-          (end ? ` marker-end="${end}"` : '') +
-          '/>'
+          '/>',
+        arrowhead(swatch.startMarker ?? 'none', { x: swatchX + 2, y: cy }, 180, paint, 2),
+        arrowhead(swatch.endMarker ?? 'none', { x: swatchX + 26, y: cy }, 0, paint, 2)
       )
     }
     parts.push(
@@ -362,14 +383,10 @@ function chips(colors: string[], cx: number, cy: number, ring: string): string {
     .join('')
 }
 
-function applyStroke(look: LineLook, markers: MarkerRegistry): string {
-  const start = markers.reference(look.startMarker, look.stroke)
-  const end = markers.reference(look.endMarker, look.stroke)
+function applyStroke(look: LineLook): string {
   return (
     `${paintAttrs('stroke', look.stroke)} stroke-width="${num(look.strokeWidth)}"` +
-    (look.dasharray ? ` stroke-dasharray="${look.dasharray}"` : '') +
-    (start ? ` marker-start="${start}"` : '') +
-    (end ? ` marker-end="${end}"` : '')
+    (look.dasharray ? ` stroke-dasharray="${look.dasharray}"` : '')
   )
 }
 
@@ -379,7 +396,6 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
   const family = options.fontFamily ?? DEFAULT_FONT_FAMILY
   const enabled = new Set(options.enabledHighlightIds ?? [])
   const highlights = diagram.highlights ?? []
-  const markers = new MarkerRegistry()
   const extent = new Extent()
 
   const nodes = layoutNodes(diagram)
@@ -408,7 +424,7 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
       const d = buildBendablePath(node.data.points ?? [])
       if (d) {
         parts.push(
-          `<path d="${d}" fill="none"${applyStroke(look, markers)} transform="translate(${num(x)} ${num(y)})"/>`
+          `<g transform="translate(${num(x)} ${num(y)})"><path d="${d}" fill="none"${applyStroke(look)}/>${arrowheadsFor(d, look)}</g>`
         )
         const pad =
           look.strokeWidth / 2 +
@@ -548,7 +564,7 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
       z: laid.z,
       layer: 0,
       order: laid.order,
-      svg: `<path class="chd-edge" data-id="${esc(edge.id)}" d="${d}" fill="none"${applyStroke(look, markers)}/>`
+      svg: `<g class="chd-edge" data-id="${esc(edge.id)}"><path d="${d}" fill="none"${applyStroke(look)}/>${arrowheadsFor(d, look)}</g>`
     })
     const flat = flattenPath(d)
     const pad =
@@ -613,7 +629,7 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
     const size = legendSize(legendItems)
     const placement = placeLegend(bounds, size, options.legend.corner, LEGEND_MARGIN, obstacles)
     bounds = placement.bounds
-    legendSvg = drawLegend(legendItems, placement.position, size, options, markers)
+    legendSvg = drawLegend(legendItems, placement.position, size, options)
   }
 
   const padding = options.paddingPx
@@ -627,7 +643,6 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">` +
     (options.title ? `<title>${esc(options.title)}</title>` : '') +
-    markers.toDefs() +
     background +
     `<g transform="translate(${num(padding - bounds.x)} ${num(padding - bounds.y)})">` +
     drawn.map((d) => d.svg).join('') +

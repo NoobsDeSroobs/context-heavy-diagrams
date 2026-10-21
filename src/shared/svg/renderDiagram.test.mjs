@@ -194,17 +194,43 @@ test('labels are escaped and control characters dropped', () => {
   assertBalanced(svg)
 })
 
-test('an edge ends in an arrowhead marker drawn with literal colours', () => {
+test('an arrowhead is a plain shape turned along the line, with no <marker>', () => {
+  const edges = [{ id: 'e', source: 'a', target: 'b', sourceHandle: 'right', targetHandle: 'left' }]
+  const svg = render(diagramOf([entity('a', 0, 0), entity('b', 300, 0)], edges), {
+    paddingPx: 0
+  })
+  assert.ok(!svg.includes('context-stroke') && !svg.includes('<marker') && !svg.includes('marker-'))
+  // The default end is a closed arrow, pointing right (0 degrees) into the left side of b.
+  assert.match(svg, /class="chd-arrowhead" transform="translate\(300 30\) rotate\(0\)/)
+  const upward = render(
+    diagramOf(
+      [entity('a', 0, 0), entity('b', 0, 300)],
+      [{ id: 'e', source: 'b', target: 'a', sourceHandle: 'top', targetHandle: 'bottom' }]
+    ),
+    { paddingPx: 0 }
+  )
+  assert.match(upward, /class="chd-arrowhead" transform="translate\(60 60\) rotate\(-90\)/)
+})
+
+test('a start marker points back out of the line', () => {
   const svg = render(
     diagramOf(
       [entity('a', 0, 0), entity('b', 300, 0)],
-      [{ id: 'e', source: 'a', target: 'b', sourceHandle: 'right', targetHandle: 'left' }]
-    )
+      [
+        {
+          id: 'e',
+          source: 'a',
+          target: 'b',
+          sourceHandle: 'right',
+          targetHandle: 'left',
+          style: { startMarker: 'diamond', endMarker: 'none' }
+        }
+      ]
+    ),
+    { paddingPx: 0 }
   )
-  assert.ok(!svg.includes('context-stroke'))
-  const used = /marker-end="url\(#([^)]+)\)"/.exec(svg)?.[1]
-  assert.ok(used)
-  assert.ok(svg.includes(`<marker id="${used}"`))
+  assert.match(svg, /class="chd-arrowhead" transform="translate\(120 30\) rotate\(180\)/)
+  assert.equal(svg.split('chd-arrowhead').length - 1, 1)
 })
 
 test('an edge to a connection point the node does not have is not drawn, as on the canvas', () => {
@@ -308,7 +334,7 @@ test('background: transparent has no background rectangle; an explicit colour fi
 })
 
 // Every diagram in the gallery and the examples renders to a balanced document with no NaN, and
-// every marker it references is defined.
+// every id it references (clip paths) is defined.
 function chdFiles(dir) {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
     entry.isDirectory()

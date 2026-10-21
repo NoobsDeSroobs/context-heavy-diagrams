@@ -21,7 +21,9 @@ The command line is plain Node run by the app's own executable in `ELECTRON_RUN_
 
 **Text is estimated, not measured.** An SVG `<text>` does not wrap, and there is no layout engine in Node. `textLayout.ts` estimates widths from per-character advances of a typical sans-serif (a little wide, so a label wraps early rather than overflowing) and wraps at spaces, breaking a word that is wider than the line. The font is whatever the element names, else the app's page font stack; the machine that opens the SVG supplies the real font, so text can differ slightly in width from the canvas. This is the main fidelity limit.
 
-**Markers are written once per colour, with literal colours.** The canvas uses SVG 2's `context-stroke`, which most SVG editors and renderers do not understand; the export emits a copy of each marker per stroke colour and opacity in use.
+**Arrowheads are plain shapes, not `<marker>` elements.** The canvas uses SVG 2's `context-stroke`, which most SVG editors and renderers do not understand, and Affinity Designer ignores markers altogether (found when the first version drew lines without arrowheads there). The export draws each end marker from the shared shape data as a group of ordinary paths with literal colours, scaled by the stroke width and turned to the line's direction at that end, the way a marker with `markerUnits="strokeWidth"` is. Each edge is one group holding its line and arrowheads.
+
+**The result is a picture, not a connected diagram.** SVG has no connectors, so in an editor a line is a path that does not follow a shape when the shape moves. The connection lives in the `.chd` file.
 
 **Icons are resolved by the caller.** The renderer takes a map of icon assets and never reads a file. Built-in icons are trusted bundled markup, drawn inline as vector; a custom icon is a data URL drawn as an `<image>` and never inlined, since a user-supplied SVG may contain script (the canvas makes the same split). In the app the assets come from the existing icon readers. In the command, a custom icon path must stay inside the diagram's folder and be a PNG or SVG ([ADR 0115](0115-paths-stored-in-diagrams-are-untrusted.md)); the app's own read-only display still follows outside paths, but an exported file gets shared, so it must not carry another file's bytes away.
 
@@ -38,7 +40,7 @@ The command line is plain Node run by the app's own executable in `ELECTRON_RUN_
 - **Measuring text with a font library in Node.** Exact for one font, but the font on the reader's machine decides the real width anyway, and it adds a dependency and font files. The estimate is deterministic and costs nothing to ship.
 
 ## Consequences
-- A second renderer exists and must follow changes to the canvas; the mirrored list above is where to look. A test renders every diagram under `examples/` in both themes and checks the output is well formed, deterministic, free of `NaN` and that every marker it references is defined; another compares the shared bezier with React Flow's own, so a library change is noticed.
+- A second renderer exists and must follow changes to the canvas; the mirrored list above is where to look. A test renders every diagram under `examples/` in both themes and checks the output is well formed, deterministic, free of `NaN` and that every reference it makes is defined; another compares the shared bezier with React Flow's own, so a library change is noticed.
 - Two small behaviour changes in the canvas came with the extraction: the segment nearest a right-click on a line is found by evaluating the curve instead of sampling a throwaway DOM path, and edge routing for every style now goes through `buildEdgePath`.
 - The `tsconfig` files allow `.ts` import extensions, which the shared modules need so Node can run them directly in tests and esbuild can bundle them for the command.
 - No new dependency.
