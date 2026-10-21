@@ -4,7 +4,7 @@
 // view. RiskCell / CombineMethod / AggregateMethod are schema types from
 // ./diagram; this module just does the arithmetic.
 
-import type { AggregateMethod, CombineMethod, RiskCell } from './diagram'
+import type { AggregateMethod, CombineMethod, RiskCell } from '../diagram'
 
 export type { AggregateMethod, CombineMethod, RiskCell }
 

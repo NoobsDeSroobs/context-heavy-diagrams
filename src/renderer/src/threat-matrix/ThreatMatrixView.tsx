@@ -19,7 +19,7 @@ import {
   BLANK_RISK_CELL,
   type CrawledMatrix,
   type SecurityCrawlResult
-} from '@shared/threatMatrixMath'
+} from '@shared/threat-matrix/threatMatrixMath'
 import { effectiveScales } from './threatMatrixScale'
 import ThreatMatrixCellEditor from './ThreatMatrixCellEditor'
 import ThreatMatrixScaleReference from './ThreatMatrixScaleReference'

@@ -8,9 +8,9 @@ import {
   type CrawledEntity,
   type CrawledColumn,
   type SecurityCrawlResult
-} from '@shared/threatMatrixMath'
-import { openDiagramAtPath } from './diagram'
-import { resolveLinkPath } from './linkPaths'
+} from '@shared/threat-matrix/threatMatrixMath'
+import { openDiagramAtPath } from '../diagram'
+import { resolveLinkPath } from '../linkPaths'
 
 // Recursive security-matrix rollup (ADR 0088). Given the open diagram's path
 // and the linked matrix entities the renderer found, walk each linked subtree

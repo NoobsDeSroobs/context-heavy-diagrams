@@ -77,7 +77,7 @@ import {
   type RequiredTagDefinition,
   type RiskCell
 } from '@shared/diagram'
-import type { SecurityCrawlResult } from '@shared/threatMatrixMath'
+import type { SecurityCrawlResult } from '@shared/threat-matrix/threatMatrixMath'
 import { diffDiagrams, summarizeChanges, type ChangesSinceSave } from '@shared/changesSinceSave'
 import EntityNode, { ENTITY_MIN_WIDTH, ENTITY_MIN_HEIGHT } from './nodes/EntityNode'
 import TextNode, { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from './nodes/TextNode'
@@ -197,7 +197,7 @@ import {
   rgbStringToHex
 } from './export/exportPng'
 import { buildExportLegendItems } from '@shared/legend/legendItems'
-import ThreatMatrixView from './security/ThreatMatrixView'
+import ThreatMatrixView from './threat-matrix/ThreatMatrixView'
 import { themeAdaptiveColor } from './styles/themeAdaptiveColor'
 
 // Defined at module scope so React Flow gets a stable reference — recreating
