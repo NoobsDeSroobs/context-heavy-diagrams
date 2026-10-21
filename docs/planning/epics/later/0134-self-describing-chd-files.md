@@ -1,7 +1,7 @@
 # 0134: Self-describing `.chd` files (a `$comment` pointer in every file)
 
 ## Status
-Not Started — parked, logged 2026-10-15 from [epic 0133](../0133-ai-onboarding.md)'s design discussion. The user likes the problem it solves but isn't sold on the approach yet; deliberately on the back burner.
+Not Started — parked, logged 2026-10-15 from [epic 0133](../../completed-epics.md#0133-ai-onboarding)'s design discussion. The user likes the problem it solves but isn't sold on the approach yet; deliberately on the back burner.
 
 ## Goal
 Make any `.chd` file tell an AI that opens or receives it how to read it, so it works even in a chat with no shell, no skill, and no pasted instructions.

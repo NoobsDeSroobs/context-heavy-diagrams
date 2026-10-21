@@ -1,4 +1,4 @@
-import type { LinePoint } from '@shared/diagram'
+import type { LinePoint } from '../diagram'
 
 const DEFAULT_GRAVITY = 0.5
 
@@ -93,11 +93,9 @@ export function buildConnectorPath(points: PathPoint[], straightSegmentLength: n
 
 // Which segment (index i, between points[i] and points[i+1]) a click point
 // is nearest to — used to insert a new point in the right place when
-// right-clicking the rendered curve. Samples each segment's own bezier via
-// a throwaway (never-inserted) SVG path, same technique LabeledEdge.tsx's
-// pointAtRatio uses — SVG path geometry doesn't depend on DOM attachment,
-// just the presence of the DOM API itself (renderer-only, like this whole
-// module's caller).
+// right-clicking the rendered curve. Evaluates each segment's own cubic
+// directly, so the module needs no DOM (the SVG export runs it in plain
+// Node, ADR 0124).
 export function nearestSegmentIndex(points: PathPoint[], click: { x: number; y: number }): number {
   let bestIndex = 0
   let bestDistance = Infinity
@@ -112,12 +110,12 @@ export function nearestSegmentIndex(points: PathPoint[], click: { x: number; y: 
     const c1y = p0.y + t0.y / 3
     const c2x = p1.x - t1.x / 3
     const c2y = p1.y - t1.y / 3
-    const segment = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-    segment.setAttribute('d', `M${p0.x},${p0.y} C${c1x},${c1y} ${c2x},${c2y} ${p1.x},${p1.y}`)
-    const length = segment.getTotalLength()
     for (let s = 0; s <= SAMPLES_PER_SEGMENT; s++) {
-      const point = segment.getPointAtLength((length * s) / SAMPLES_PER_SEGMENT)
-      const distance = Math.hypot(point.x - click.x, point.y - click.y)
+      const t = s / SAMPLES_PER_SEGMENT
+      const u = 1 - t
+      const x = u * u * u * p0.x + 3 * u * u * t * c1x + 3 * u * t * t * c2x + t * t * t * p1.x
+      const y = u * u * u * p0.y + 3 * u * u * t * c1y + 3 * u * t * t * c2y + t * t * t * p1.y
+      const distance = Math.hypot(x - click.x, y - click.y)
       if (distance < bestDistance) {
         bestDistance = distance
         bestIndex = i

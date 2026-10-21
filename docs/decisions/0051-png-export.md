@@ -39,7 +39,7 @@ Whatever's actually painting the canvas right now (a custom `canvasBackgroundCol
 ## Consequences
 - New dependency: `html-to-image`.
 - New `AppPreferences` fields `pngExportPaddingPx`/`pngExportTransparentBackground`/`pngExportBackgroundColorOverride` — additive, stored with the other preferences (first in `localStorage`, later the settings file, [ADR 0053](0053-os-conventional-settings-storage.md)), no `.chd` schema impact.
-- True vector SVG export remains unscoped, tracked as the remaining half of the export work; whatever serializer eventually gets built there is unrelated code, not a variant of this PNG path.
+- True vector SVG export remains unscoped, tracked as the remaining half of the export work; whatever serializer eventually gets built there is unrelated code, not a variant of this PNG path. (Built since: [ADR 0124](0124-svg-export-from-a-shared-pure-renderer.md).)
 
 ## Addendum (2026-08-23): Decision 4 reversed — a real per-export dialog, not a Settings-panel-only control
 

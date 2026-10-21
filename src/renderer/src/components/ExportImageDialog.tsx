@@ -1,16 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
 import { FieldRow, NumberField } from '../panels/fields'
-import type { LegendCorner } from '../export/exportLegendPlacement'
+import type { LegendCorner } from '@shared/svg/legendPlacement'
 
-export interface PngExportChoice {
+export interface ImageExportChoice {
   paddingPx: number
   transparentBackground: boolean
   backgroundColorOverride?: string
   legendCorner: LegendCorner
 }
 
-interface ExportPngDialogProps {
-  initial: PngExportChoice
+interface ExportImageDialogProps {
+  // Which export this is for; the choices are the same, and remembered together.
+  format: 'png' | 'svg'
+  initial: ImageExportChoice
   // The real, resolved canvas background color (#rrggbb) at the moment
   // this dialog opened — previews what "use canvas color" (no override)
   // will actually export, instead of a hardcoded placeholder. See
@@ -20,22 +22,24 @@ interface ExportPngDialogProps {
   // Legend entries, or any enabled highlight) — hides the corner picker
   // rather than offering a choice that would place nothing.
   hasLegendContent: boolean
-  onConfirm: (choice: PngExportChoice) => void
+  onConfirm: (choice: ImageExportChoice) => void
   onClose: () => void
 }
 
 // See ADR 0051 (padding and transparency live in this dialog, not in the global Preferences panel,
-// because they change from one export to the next). Reuses AboutDialog's centered-
+// because they change from one export to the next); the SVG export (ADR 0124) asks the same
+// questions. Reuses AboutDialog's centered-
 // overlay shell (about-dialog-*) and RequiredTagsPanel's confirm-row
 // button styling (required-tag-value-confirm-actions) rather than
 // introducing new CSS for a shape both already have.
-export default function ExportPngDialog({
+export default function ExportImageDialog({
+  format,
   initial,
   effectiveCanvasColorHex,
   hasLegendContent,
   onConfirm,
   onClose
-}: ExportPngDialogProps): React.JSX.Element {
+}: ExportImageDialogProps): React.JSX.Element {
   const [paddingPx, setPaddingPx] = useState(initial.paddingPx)
   const [transparentBackground, setTransparentBackground] = useState(initial.transparentBackground)
   const [backgroundColorOverride, setBackgroundColorOverride] = useState(
@@ -63,7 +67,7 @@ export default function ExportPngDialog({
     <div className="about-dialog-overlay">
       <div ref={dialogRef} className="about-dialog">
         <div className="about-dialog-toolbar">
-          <span className="about-dialog-title">Export as PNG</span>
+          <span className="about-dialog-title">Export as {format.toUpperCase()}</span>
           <button type="button" title="Close" aria-label="Close" onClick={onClose}>
             ✕
           </button>

@@ -2,6 +2,12 @@ import { showAlert } from '../alerts'
 import { useCallback, type MouseEvent } from 'react'
 import { type Edge, Position, useReactFlow, useUpdateNodeInternals } from '@xyflow/react'
 import type { ConnectionPoint, ConnectionPointSide } from '@shared/diagram'
+import {
+  effectiveConnectionPoints,
+  effectivePointsForSide,
+  pointCoordinates,
+  type RectLike
+} from '@shared/geometry/connectionPoints'
 import { useDiagramContext } from '../useDiagramContext'
 import type { ContextMenuItem } from '../components/ContextMenu'
 
@@ -16,8 +22,6 @@ export const SIDE_POSITION: Record<ConnectionPointSide, Position> = {
   left: Position.Left
 }
 
-const SIDES: ConnectionPointSide[] = ['top', 'right', 'bottom', 'left']
-
 // Percentage, not pixels, so a point survives resize without recomputing.
 export function connectionPointStyle(
   side: ConnectionPointSide,
@@ -27,30 +31,10 @@ export function connectionPointStyle(
   return side === 'top' || side === 'bottom' ? { left: pct } : { top: pct }
 }
 
+export { effectiveConnectionPoints, pointCoordinates }
+export type { RectLike }
+
 let nextConnectionPointId = 1
-
-// Every side always has at least one point. A side with nothing in the node's stored
-// `connectionPoints` implicitly has exactly one, centred (offset 0.5), with the side's own name as
-// a stable id ("top"/"right"/"bottom"/"left"), the id edges in files predating custom per-side
-// counts already reference. That used to be a permanently separate, immovable concept, which caused
-// two real bugs: an evenly spaced custom layout can't include a point that is not free to move, and
-// the clockwise/transfer math didn't know the fixed point existed. It is now only a synthesis for
-// sides never explicitly touched. Once a side's count changes (or a point is added or removed), its
-// full point set, the synthesized entry included, is written back and behaves like any point:
-// movable, reorderable, removable (down to one per side).
-function effectivePointsForSide(
-  storedPoints: ConnectionPoint[],
-  side: ConnectionPointSide
-): ConnectionPoint[] {
-  const onSide = storedPoints.filter((p) => p.side === side)
-  return onSide.length > 0 ? onSide : [{ id: side, side, offset: 0.5 }]
-}
-
-// Whole-node version for rendering — every side represented, synthesized
-// or not.
-export function effectiveConnectionPoints(storedPoints: ConnectionPoint[]): ConnectionPoint[] {
-  return SIDES.flatMap((side) => effectivePointsForSide(storedPoints, side))
-}
 
 // The property panel's count field, and anything else that just needs "how
 // many points does this side have right now" without needing the points
@@ -60,18 +44,6 @@ export function connectionPointCountForSide(
   side: ConnectionPointSide
 ): number {
   return effectivePointsForSide(storedPoints, side).length
-}
-
-// A plain {left, top, width, height} is all nearestConnectionPoint actually
-// needs — a real DOMRect satisfies this too, so widening from DOMRect to
-// this narrower shape doesn't break any existing caller, and lets
-// nearestConnectionPointId below build one straight from a node's absolute
-// canvas position without needing a real DOM measurement.
-export interface RectLike {
-  left: number
-  top: number
-  width: number
-  height: number
 }
 
 // Right-click position -> nearest side + offset along it, both relative to
@@ -95,23 +67,6 @@ export function nearestConnectionPoint(
   )
   const raw = side === 'top' || side === 'bottom' ? localX / rect.width : localY / rect.height
   return { side, offset: Math.min(1, Math.max(0, raw)) }
-}
-
-// A point's own absolute {x, y} on the node's current rect — shared by
-// nearestConnectionPointWithCoordinates below and by the multi-connection-line
-// "same ordinal" resolvers, which both need to turn a resolved ConnectionPoint
-// into real screen coordinates once they already know which point they want.
-export function pointCoordinates(rect: RectLike, point: ConnectionPoint): { x: number; y: number } {
-  switch (point.side) {
-    case 'top':
-      return { x: rect.left + rect.width * point.offset, y: rect.top }
-    case 'bottom':
-      return { x: rect.left + rect.width * point.offset, y: rect.top + rect.height }
-    case 'left':
-      return { x: rect.left, y: rect.top + rect.height * point.offset }
-    case 'right':
-      return { x: rect.left + rect.width, y: rect.top + rect.height * point.offset }
-  }
 }
 
 // Nearest *existing, connectable* point (a real point, not just a side +

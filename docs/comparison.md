@@ -171,11 +171,11 @@ For a market view, Gartner's 2026 Magic Quadrant for Enterprise Architecture Too
 
 ## Getting diagrams into wikis and documentation
 
-Embedding is the weakest part of this tool. The only way out of it today is an exported **PNG**. There is no SVG export yet, no command-line export (so an image cannot be regenerated in CI), and no wiki plugin.
+Embedding is the weakest part of this tool. The ways out today are an exported **PNG** or **SVG** from the app, and `chd export`, which writes the SVG from the command line so CI can regenerate the image whenever the diagram changes. There is no PDF export and no wiki plugin.
 
 | Tool | How a diagram reaches a wiki or README |
 |---|---|
-| This tool | PNG export from the app. |
+| This tool | PNG and SVG export from the app; SVG from the command line (`chd export`). |
 | draw.io | SVG, PNG and PDF export, plus plugins and integrations for Confluence, Jira, GitHub repositories and Markdown, and Notion through a Chrome extension. |
 | Lucidchart | Integrations listed for Confluence and Jira, and for Microsoft and Google apps. |
 | Visio | Teams, Power BI, Excel, Word and PowerPoint. |
@@ -193,7 +193,7 @@ Embedding is the weakest part of this tool. The only way out of it today is an e
 | LikeC4 | Static site, React and Web Components, PNG and JPEG export. |
 | IcePanel | Live embed in Confluence. |
 
-SVG export and a command-line export are the natural first steps. The aim is that a repository can hold the `.chd` file and let CI regenerate the image whenever it changes.
+A repository can hold the `.chd` file and let CI regenerate the SVG whenever it changes. A PNG from the command line and a PDF export are the next steps.
 
 ## Summary
 
@@ -202,6 +202,7 @@ There are no or almost no unique features this tool offers. Other tools do them 
 - **Context as a first-class citizen.** Markdown notes, tags, images and a link to a deeper diagram are native fields on the element, not extra objects on the canvas, so the picture stays readable and nothing needs to be moved together.
 - **Drill-down across plain files.** A linked diagram is just another file that opens on its own, with no model, server or tooling in between, and links only point downward.
 - **Small gitable files** with a published specification ([file-format.md](file-format.md)), written to diff and merge cleanly in git.
+- **Images from a command.** `chd export` turns a `.chd` file into an SVG without opening the app, with the same output every time, so CI can regenerate the images in a README or wiki whenever the diagram changes.
 - **Offline by design.** The app blocks its own network access, and there is no account.
 - **AI assistants can work on the files safely.** The file specification and AI tools are built to let your AI tools interact with your diagrams on your behalf. Designed limitations ensure, when you use the Claude Desktop (MCP) extension, that your AI tool does not overwrite, garble, or access anything you have not actively given to it. Without it, an assistant can affect anything you give it access to, outside this tool's control.
 - **Free,** with the source under the GPL-3.0-or-later. No hidden costs or licences, not even a donation page. 
@@ -210,7 +211,7 @@ There are no or almost no unique features this tool offers. Other tools do them 
 
 These are the honest gaps, roughly in the order they are likely to matter.
 
-1. **Getting diagrams into wikis and documentation.** PNG is the only export. SVG and PDF export, a command-line export that can regenerate images in CI, and an export to the open JSON Canvas format (so a diagram can open in Obsidian) would close most of this.
+1. **Getting diagrams into wikis and documentation.** The exports are PNG and SVG, and SVG can be made from the command line. PDF export, a PNG from the command line, and an export to the open JSON Canvas format (so a diagram can open in Obsidian) would close most of this.
 2. **Importing.** There is no import from other tools, so moving an existing diagram in means redrawing it. This can be alleviated by using AI to redraw things.
 3. **Layout.** Everything is placed by hand, by your hand or your AI assistant's. There is no automatic layout.
 4. **Shapes and notation.** Entities, containers, text and lines, with icons, but no large shape or template libraries and no BPMN or ArchiMate stencils.

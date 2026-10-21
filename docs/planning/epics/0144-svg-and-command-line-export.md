@@ -1,30 +1,41 @@
 # 0144: SVG export and a command-line export
 
 ## Status
-Not Started. Logged 2026-10-21 from the [comparison with other tools](../../comparison.md). **First in line** (agreed 2026-10-21); imports and exports follow, then a new prioritisation.
+In Progress (started 2026-10-21; logged the same day from the [comparison with other tools](../../comparison.md)). SVG export in the app and `chd export` for SVG are built and tested, and the app's export is live-tested on Windows; what is left is the command from an installed build, Linux and macOS, the PNG from the command line and PDF. **First in line** (agreed 2026-10-21); imports and exports follow, then a new prioritisation.
 
 ## Goal
 Export a diagram as SVG from the app, and let a command (`chd export`) produce the same SVG or PNG from a `.chd` file without opening the app, so that images in wikis and READMEs can be regenerated in CI whenever the diagram changes. A PDF export would then be a small follow-up.
 
 ## Why
-PNG is the only export today, which is the weakest point against almost every other tool and the main way a diagram reaches Confluence or a README. A command-line export also makes a diagram a build artefact: commit the `.chd` file, let CI produce the image.
+PNG was the only export, which was the weakest point against almost every other tool and the main way a diagram reaches Confluence or a README. A command-line export also makes a diagram a build artefact: commit the `.chd` file, let CI produce the image.
 
-## What exists today
+## What exists
 - PNG export draws the live canvas to an image with `html-to-image`, with a legend added ([ADR 0051](../../decisions/0051-png-export.md)). It only runs inside the app window.
-- The `chd` command line offers `spec`, `validate` and `hash`. It does not render anything.
+- SVG export, in the app and as `chd export`, built in this epic ([ADR 0124](../../decisions/0124-svg-export-from-a-shared-pure-renderer.md)).
+- The `chd` command line offers `spec`, `validate`, `hash` and `export`.
+
+## Decided (2026-10-21, [ADR 0124](../../decisions/0124-svg-export-from-a-shared-pure-renderer.md))
+- **Renderer:** a pure function from diagram to native SVG, shared by the app and the command, with the geometry, style defaults, colour flip and marker shapes extracted into shared modules. No spike: a DOM snapshot cannot be editable vector (ADR 0051) and a headless app needs a display on Linux CI.
+- **Command PNG:** SVG first, then rasterise it with a small WASM rasteriser; the in-app PNG stays as it is.
+- **Fidelity:** text is estimated, not measured (the reader's machine supplies the real font); icons are inline vector or embedded images; the legend is included and highlights are off unless asked for; the theme is chosen (`--theme`).
+- **Determinism:** the same file gives the same bytes; tests check it for every gallery diagram.
+- **What to export:** the whole diagram, with padding, background and legend corner as in the PNG dialog. Links are not clickable yet.
 
 ## Open questions
-1. **How the command renders.** (a) Convert the live canvas to SVG: matches the screen, but the result is closer to an embedded page than clean vector shapes, and it needs the app. (b) A pure function from diagram to SVG shared by the app and the command: true vector output and no Electron needed, but a second renderer that must stay in step with the node and edge components and the CSS. (c) The command starts the app headless. First guess: a short spike comparing (a) and (b) on three gallery diagrams before choosing.
-2. **Fidelity.** Fonts (the same diagram looks different per machine, see [epic 0139](0139-diagram-default-font-and-available-fonts.md)), icons (inline SVG and raster), text wrapping, the legend and active highlights, and the theme.
-3. **Determinism.** The same file should give a byte-identical image, so CI diffs stay quiet.
-4. **What to export.** The whole diagram or a selection, margins and transparency as in the PNG dialog, and whether links become clickable.
+1. **The WASM rasteriser for a PNG from the command line:** which one, how text gets its fonts without a system font set, and what it adds to the install size.
+2. **Selection export** (only the selected elements) and **clickable links** in the SVG, both skipped for now.
+3. **A shared default font** across machines ([epic 0139](0139-diagram-default-font-and-available-fonts.md)) would narrow the gap between the SVG's text and the canvas.
 
 ## Tasks
-- [ ] Spike on the renderer question; record the choice in an ADR
-- [ ] SVG export in the app (File menu and the export dialog)
-- [ ] `chd export` for SVG and PNG, with the stale-edit rule not applicable (it only reads)
-- [ ] Tests, including a round trip over the gallery diagrams
-- [ ] Update `docs/comparison.md` and the getting-started guide
+- [x] Decide the renderer; record the choice in an ADR ([ADR 0124](../../decisions/0124-svg-export-from-a-shared-pure-renderer.md))
+- [x] SVG export in the app (File menu and the export dialog)
+- [x] `chd export` for SVG, with the stale-edit rule not applicable (it only reads, and refuses a non-.svg output)
+- [x] Tests, including a round trip over the gallery diagrams
+- [x] Update `docs/comparison.md` and the getting-started guide
+- [x] Live-test **File → Export as SVG…** on Windows, in the dev build and an installed build (2026-10-21); the result was as expected in a browser and in Affinity Designer (which exposed the marker problem, now fixed)
+- [ ] `chd export` from the installed build (the launcher; its built-in icons come from `app.asar`)
+- [ ] Linux and macOS check of the app's save dialog and `chd export` (cross-platform rule)
+- [ ] `chd export` for PNG (WASM rasteriser)
 - [ ] Follow-up: PDF export
 
 ## Related

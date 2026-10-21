@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react'
+import type { Theme } from '@shared/theme'
 import { applyDefaultStyleVars } from './styles/applyDefaultStyleVars'
 
-export type Theme = 'light' | 'dark'
+export type { Theme }
 
 const STORAGE_KEY = 'theme'
 

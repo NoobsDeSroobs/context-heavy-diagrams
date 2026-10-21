@@ -361,6 +361,11 @@ const api = {
     return ipcRenderer.invoke('export:pngToFile', dataUrl, suggestedFilename)
   },
 
+  // SVG export (ADR 0124) — the finished document text; same false-on-cancel convention.
+  exportSvgToFile(svg: string, suggestedFilename: string): Promise<boolean> {
+    return ipcRenderer.invoke('export:svgToFile', svg, suggestedFilename)
+  },
+
   // Copy/paste (see ADR 0049) — the real OS clipboard. The preload is
   // sandboxed (ADR 0112), which has no `clipboard` module, so main does it
   // (main/clipboard.ts); the read is synchronous because paste is.

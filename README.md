@@ -44,7 +44,7 @@ A diagram is a small, deterministic text file, so git can do for it what it does
 
 - **Plain-text `.chd` files:** deterministic JSON with a fixed key order and no embedded binaries, built to diff and merge like source code.
 - **The format is a standalone spec** ([docs/file-format.md](docs/file-format.md)). A third party can read or write it without this codebase.
-- **Deterministic generation of renders.** Any `.chd` file can reproduce the identical PNG with an auto-generated legend, saving you from bundling expensive blobs.
+- **Deterministic generation of renders.** Any `.chd` file can reproduce the identical SVG (or PNG) with an auto-generated legend, from the app or with `chd export` in CI, saving you from bundling expensive blobs.
 
 ### Drill-down diagrams and hidden context
 - **Linked diagrams.** A node can link to another `.chd`, and Ctrl/Cmd-click opens it. Links only point downward, so any diagram in a tree opens as its own root.
@@ -84,7 +84,8 @@ https://github.com/user-attachments/assets/2e63dee5-85f8-4b32-a75a-f986084bd873
 - External change detection
 - File-version warning
 - Recent diagrams and shortcuts help
-- The `chd` command line tool
+- SVG export from the File menu, and `chd export` to produce the same SVG from a terminal or CI job
+- The `chd` command line tool (`spec`, `validate`, `hash`, `export`)
 
 > Advanced features are opt-in. A new diagram behaves like plain boxes and arrows until you reach for more ([ADR 0054](docs/decisions/0054-progressive-disclosure-for-advanced-features.md)).
 

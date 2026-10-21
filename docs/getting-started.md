@@ -40,7 +40,7 @@ Right-click an element and choose **Link to diagram…** to point it at another 
 - **Highlights and the legend** colour elements by tag value, so one diagram can answer "what is production?" or "where does personal data live?".
 - **Search with isolate** dims everything that does not match.
 - **Layers**, **Diagnostics** (missing files, an empty legend, and similar) and **Style Palette** are in the **View** menu.
-- **File → Export as PNG…** writes an image with an auto-generated legend.
+- **File → Export as PNG…** and **Export as SVG…** write an image with an auto-generated legend. The SVG is real vector, so it stays sharp and opens in Inkscape or Illustrator. `chd export <file.chd>` writes the same SVG from a terminal or a CI job, without opening the app (`chd export --help` lists the options).
 - The [`security-rollup`](../examples/gallery/technical/security-rollup/README.md) example shows the security matrix view rolling scores up through linked diagrams.
 
 ## 6. Use it with git

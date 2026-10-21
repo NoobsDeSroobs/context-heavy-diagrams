@@ -44,4 +44,4 @@ Let an author choose a font **once per diagram** instead of per element, and mak
 - [ ] Optional: Diagnostics warning for a font that is unavailable here
 
 ## Related
-[ADR 0117](../../decisions/0117-built-in-style-defaults-are-data.md) (defaults as data), [ADR 0052](../../decisions/0052-settings-ownership-tiers.md) (tiers and the fallback pattern), [ADR 0034](../../decisions/0034-theme-adaptive-color-value-flip.md), and the open-source release epic's items on third-party notices and the file version warning ([epic 0137](0137-open-source-release.md)).
+[ADR 0117](../../decisions/0117-built-in-style-defaults-are-data.md) (defaults as data), [ADR 0052](../../decisions/0052-settings-ownership-tiers.md) (tiers and the fallback pattern), [ADR 0034](../../decisions/0034-theme-adaptive-color-value-flip.md), and the open-source release epic's items on third-party notices and the file version warning ([epic 0137](../completed-epics.md#0137-open-source-release)).

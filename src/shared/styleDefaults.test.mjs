@@ -75,10 +75,10 @@ test('every node type gets the same set of CSS variables', () => {
 
 test('React Flow’s fallback edge colour in base.css equals the data (drift guard)', () => {
   // Comments are stripped first: base.css quotes React Flow's own stock colour in one.
-  const css = readFileSync(new URL('../assets/base.css', import.meta.url), 'utf8').replace(
-    /\/\*[\s\S]*?\*\//g,
-    ''
-  )
+  const css = readFileSync(
+    new URL('../renderer/src/assets/base.css', import.meta.url),
+    'utf8'
+  ).replace(/\/\*[\s\S]*?\*\//g, '')
   const colours = [...css.matchAll(/--xy-edge-stroke-default:\s*(#[0-9a-fA-F]{6})/g)].map((m) =>
     m[1].toLowerCase()
   )

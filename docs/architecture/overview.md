@@ -82,6 +82,8 @@ How an assistant gets the format knowledge and a way to check its edits (the AI 
 
 **Shared** (`src/shared/diagram.ts`) — the `.chd` file format's TypeScript types plus `serializeDiagram`/`parseDiagram`, imported by both main (to validate/write) and renderer (to build/read). See [docs/file-format.md](../file-format.md) for the format itself, kept as a standalone spec.
 
+**Rendering rules shared with the SVG export** — `src/shared/geometry/` (edge routing, connection points, curve and right-angle paths), `styleDefaults.ts`, `highlights.ts`, `zIndexOrdering.ts` and `src/shared/svg/` (colour and theme flip, marker shapes, resolved appearance, text estimate, the pure `renderDiagramSvg`). The canvas and the export both import these, so a diagram is routed and coloured the same on screen and in the file. `src/cli/exportCommand.ts` is `chd export`. Which parts are shared and which are mirrored by hand: [ADR 0124](../decisions/0124-svg-export-from-a-shared-pure-renderer.md).
+
 ## Building a distributable
 
 `npm run dev` for development. For a real installable Windows build (unsigned, Phase 1), see [docs/architecture/packaging.md](packaging.md).

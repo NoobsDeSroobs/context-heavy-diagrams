@@ -1,5 +1,5 @@
-import { Position } from '@xyflow/react'
-import type { LinePoint } from '@shared/diagram'
+import type { LinePoint } from '../diagram'
+import type { Side } from './side'
 
 // Right-angled ("step" / "smoothstep") edge routing with manual, draggable
 // segments — ADR 0077. Deliberately self-contained and with NO dependency on
@@ -44,8 +44,8 @@ const EPS = 0.5
 // snaps clean instead of leaving a barely-visible jog.
 const COLLAPSE_TOLERANCE = 5
 
-function axisForSide(side: Position): Axis {
-  return side === Position.Left || side === Position.Right ? 'h' : 'v'
+function axisForSide(side: Side): Axis {
+  return side === 'left' || side === 'right' ? 'h' : 'v'
 }
 
 function near(a: OrthoPoint, b: OrthoPoint): boolean {
@@ -77,9 +77,9 @@ function towards(from: OrthoPoint, to: OrthoPoint, r: number): OrthoPoint {
 // otherwise. Mirrors getSmoothStepPath's common-case output.
 function defaultVertices(
   s: OrthoPoint,
-  sourceSide: Position,
+  sourceSide: Side,
   t: OrthoPoint,
-  targetSide: Position
+  targetSide: Side
 ): OrthoPoint[] {
   if (near(s, t)) return [s, t]
   if (alignedH(s, t) || alignedV(s, t)) return [s, t]
@@ -103,10 +103,10 @@ function defaultVertices(
 // corners are never persisted — only `waypoints` is.
 export function orthogonalRouteVertices(
   source: OrthoPoint,
-  sourceSide: Position,
+  sourceSide: Side,
   waypoints: OrthoPoint[],
   target: OrthoPoint,
-  targetSide: Position
+  targetSide: Side
 ): OrthoPoint[] {
   if (waypoints.length === 0) return defaultVertices(source, sourceSide, target, targetSide)
 

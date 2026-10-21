@@ -87,7 +87,7 @@ The AI menu's "Install Claude Desktop extension…" (Windows and macOS) shows a 
 
 ## The `chd` command-line launcher
 
-Windows and Linux builds also carry a small `chd` launcher next to the app executable (`chd.cmd` on Windows, `chd` on Linux; `electron-builder.yml` `extraFiles`, sources in `build/launchers/`). It runs the app's own exe as plain Node (`ELECTRON_RUN_AS_NODE`) on `resources/cli/chd.mjs` — no second binary. It is **not on PATH**; see [ADR 0106](../decisions/0106-chd-command-line-tool.md) for why and what is unverified. To check a build: `dist\win-unpacked\chd.cmd --version` (after `npm run build:unpack`), or on Linux `dist/linux-unpacked/chd --version`.
+Windows and Linux builds also carry a small `chd` launcher next to the app executable (`chd.cmd` on Windows, `chd` on Linux; `electron-builder.yml` `extraFiles`, sources in `build/launchers/`). It runs the app's own exe as plain Node (`ELECTRON_RUN_AS_NODE`) on `resources/cli/chd.mjs` — no second binary. `chd export` lives in its own bundle, `resources/cli/export.mjs`, built from `src/cli/exportCommand.ts` by `npm run build:cli` (part of `npm run build`, git-ignored, [ADR 0124](../decisions/0124-svg-export-from-a-shared-pure-renderer.md)); it reads the built-in icons from the bundled Tabler package. It is **not on PATH**; see [ADR 0106](../decisions/0106-chd-command-line-tool.md) for why and what is unverified. To check a build: `dist\win-unpacked\chd.cmd --version` (after `npm run build:unpack`), or on Linux `dist/linux-unpacked/chd --version`.
 
 ## Mac
 

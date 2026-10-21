@@ -1,15 +1,46 @@
 import type {
+  EdgeDirectionSet,
   HighlightDefinition,
   IconRef,
   JsonValue,
   LegendEntry,
   LineStyleKind,
   MarkerKind
-} from '@shared/diagram'
-import { highlightId } from '../highlights'
-import type { DirectionSetLegendRow } from '../edges/edgeDirectionSets'
+} from '../diagram.ts'
+import { highlightId } from '../highlights.ts'
 
-export type { DirectionSetLegendRow }
+// The legend row the active direction set contributes (ADR 0081): its name
+// drawn as an arrow, shown in the Legend panel and prepended to the image
+// exports' legend. `null` when the diagram has no direction set.
+export interface DirectionSetLegendRow {
+  label: string
+  color: string
+  lineStyle?: LineStyleKind
+  startMarker?: MarkerKind
+  endMarker?: MarkerKind
+}
+
+// Seed / fallback colour for a direction set's legend swatch — same value
+// as LegendPanel's own DEFAULT_COLOR so a fresh set's row looks like a
+// fresh authored 'line' entry.
+export const DEFAULT_DIRECTION_SET_LEGEND_COLOR = '#e6194b'
+
+export function directionSetLegendRow(
+  sets: EdgeDirectionSet[],
+  activeId: string | undefined
+): DirectionSetLegendRow | null {
+  const active = sets.find((s) => s.id === activeId) ?? sets[0]
+  if (!active) return null
+  return {
+    label: active.name,
+    // The legend row shows the set's own default edge style (ADR 0083).
+    // `strokeWidth` is deliberately not reflected in the swatch in v1.
+    color: active.style?.stroke ?? DEFAULT_DIRECTION_SET_LEGEND_COLOR,
+    lineStyle: active.style?.lineStyle,
+    startMarker: active.style?.startMarker,
+    endMarker: active.style?.endMarker
+  }
+}
 
 export type ExportLegendSwatch =
   | {

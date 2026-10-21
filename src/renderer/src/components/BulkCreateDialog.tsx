@@ -15,7 +15,7 @@ function parseLabels(text: string): string[] {
 }
 
 // Right-click entry point on ItemPalette's Entity/Container buttons — see
-// ADR 0089. Styled after ExportPngDialog's centered-overlay shell rather
+// ADR 0089. Styled after ExportImageDialog's centered-overlay shell rather
 // than the click-anchored popups (ColorPickerPopup/IconPicker); a
 // multi-line paste target reads better centered than pinned to a small
 // button's corner.
