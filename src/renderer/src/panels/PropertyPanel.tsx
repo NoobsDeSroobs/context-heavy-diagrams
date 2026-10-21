@@ -9,7 +9,7 @@ import type {
   RequiredTagDefinition
 } from '@shared/diagram'
 import { useDiagramContext } from '../useDiagramContext'
-import { themeAdaptiveColor } from '../styles/themeAdaptiveColor'
+import { themeAdaptiveColor } from '../styling/themeAdaptiveColor'
 import {
   EDGE_STYLE_DEFAULTS,
   LINE_STYLE_DEFAULTS,
@@ -17,7 +17,7 @@ import {
   displayColor,
   styledNodeType,
   type NodeStyleDefaults
-} from '@shared/styleDefaults'
+} from '@shared/styling/styleDefaults'
 import { connectionPointCountForSide } from '../nodes/connectionPoints'
 import {
   CollapsibleSection,
@@ -29,10 +29,15 @@ import {
 } from './fields'
 import { computeFieldValue } from './fieldValue'
 import { MARKER_OPTIONS } from './edgeStyleOptions'
-import { GROUP_PALETTE, GROUP_SYSTEM, withStoredFonts, type FontOption } from './fontOptions'
+import {
+  GROUP_PALETTE,
+  GROUP_SYSTEM,
+  withStoredFonts,
+  type FontOption
+} from '../styling/fontOptions'
 import MetadataSection from '../tagging/MetadataSection'
 import ReferencesSection from '../references/ReferencesSection'
-import { canBrushNodeType } from '../styleBrush'
+import { canBrushNodeType } from '../styling/styleBrush'
 
 export interface TransformPatch {
   x?: number

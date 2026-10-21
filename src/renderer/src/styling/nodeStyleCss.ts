@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 import type { NodeStyle } from '@shared/diagram'
-import type { Theme } from '../theme'
+import type { Theme } from './theme'
 import { withOpacity } from './colorOpacity'
 import { themeAdaptiveColor } from './themeAdaptiveColor'
 

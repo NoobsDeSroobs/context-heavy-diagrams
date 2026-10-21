@@ -20,10 +20,10 @@ import EditableLabel from '../components/EditableLabel'
 import HighlightChips from '../tagging/HighlightChips'
 import { useDiagramContext } from '../useDiagramContext'
 import { HIGHLIGHT_BORDER_WIDTH } from '@shared/tagging/highlights'
-import { EDGE_STYLE_DEFAULTS } from '@shared/styleDefaults'
+import { EDGE_STYLE_DEFAULTS } from '@shared/styling/styleDefaults'
 import { isolateStyle } from '../search/search'
-import { withOpacity } from '../styles/colorOpacity'
-import { themeAdaptiveColor } from '../styles/themeAdaptiveColor'
+import { withOpacity } from '../styling/colorOpacity'
+import { themeAdaptiveColor } from '../styling/themeAdaptiveColor'
 import { markerUrl } from './markerIds'
 
 // solid has no dasharray at all (undefined, not '0'), matching a plain

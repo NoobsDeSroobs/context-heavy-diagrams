@@ -5,10 +5,10 @@ import { loadBuiltinIconSvg, searchBuiltinIconIds } from '../icons/builtinIcons'
 import { markerUrl } from '../edges/markerIds'
 import type { DirectionSetLegendRow } from '../edges/edgeDirectionSets'
 import type { LegendLineLook } from './legendLinePick'
-import { EDGE_STYLE_DEFAULTS } from '@shared/styleDefaults'
-import { useTheme } from '../theme'
+import { EDGE_STYLE_DEFAULTS } from '@shared/styling/styleDefaults'
+import { useTheme } from '../styling/theme'
 import IconSlotView from '../icons/IconSlotView'
-import StylePicker from '../components/StylePicker'
+import StylePicker from '../styling/StylePicker'
 
 interface LegendPanelProps {
   diagramPath: string | null

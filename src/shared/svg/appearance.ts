@@ -5,8 +5,8 @@ import {
   LINE_STYLE_DEFAULTS,
   NODE_STYLE_DEFAULTS,
   type StyledNodeType
-} from '../styleDefaults.ts'
-import type { Theme } from '../theme.ts'
+} from '../styling/styleDefaults.ts'
+import type { Theme } from '../styling/theme.ts'
 import { paintColor, plainColor } from './color.ts'
 import type { FontSpec } from './textLayout.ts'
 

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react'
-import type { Theme } from '@shared/theme'
-import { applyDefaultStyleVars } from './styles/applyDefaultStyleVars'
+import type { Theme } from '@shared/styling/theme'
+import { applyDefaultStyleVars } from './applyDefaultStyleVars'
 
 export type { Theme }
 

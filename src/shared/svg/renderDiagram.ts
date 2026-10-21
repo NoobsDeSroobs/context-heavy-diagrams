@@ -3,8 +3,8 @@ import { buildEdgePath } from '../geometry/edgePath.ts'
 import { buildBendablePath } from '../geometry/bendablePath.ts'
 import { flattenPath, pointAtRatio, type Point } from '../geometry/pathSampling.ts'
 import { highlightId, matchingHighlights } from '../tagging/highlights.ts'
-import { styledNodeType } from '../styleDefaults.ts'
-import type { Theme } from '../theme.ts'
+import { styledNodeType } from '../styling/styleDefaults.ts'
+import type { Theme } from '../styling/theme.ts'
 import {
   DEFAULT_FONT_FAMILY,
   PAGE_TOKENS,

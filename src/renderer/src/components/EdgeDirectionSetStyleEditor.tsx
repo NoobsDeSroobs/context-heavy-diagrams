@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import type { EdgeDirectionSet, EdgeDirectionSetStyle } from '@shared/diagram'
 import { useDiagramContext } from '../useDiagramContext'
-import { themeAdaptiveColor } from '../styles/themeAdaptiveColor'
+import { themeAdaptiveColor } from '../styling/themeAdaptiveColor'
 import {
   CollapsibleSection,
   ColorField,

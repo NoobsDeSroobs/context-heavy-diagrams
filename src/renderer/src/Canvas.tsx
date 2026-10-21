@@ -99,8 +99,8 @@ import DiagramContext, { type DiagramContextValue } from './DiagramContext'
 import ContextMenu, { type ContextMenuItem } from './components/ContextMenu'
 import IconPicker from './icons/IconPicker'
 import IconBrowser from './icons/IconBrowser'
-import ColorPickerPopup from './components/ColorPickerPopup'
-import StylePicker from './components/StylePicker'
+import ColorPickerPopup from './styling/ColorPickerPopup'
+import StylePicker from './styling/StylePicker'
 import DetailsPanel from './details/DetailsPanel'
 import DiagnosticsPanel, { type MissingFileEntry } from './components/DiagnosticsPanel'
 import ChangesPanel, { type DetailsChangedEntry } from './components/ChangesPanel'
@@ -166,12 +166,12 @@ import {
   captureEdgeBrush,
   captureNodeBrush,
   type StyleBrush
-} from './styleBrush'
+} from './styling/styleBrush'
 import AlertDialog from './components/AlertDialog'
 import ExportImageDialog, { type ImageExportChoice } from './components/ExportImageDialog'
 import { buildDiagramSvg } from './export/exportSvg'
 import BulkCreateDialog from './components/BulkCreateDialog'
-import StylePalettePanel from './components/StylePalettePanel'
+import StylePalettePanel from './styling/StylePalettePanel'
 import ReferenceWindow from './references/ReferenceWindow'
 import ReferencesPanel from './references/ReferencesPanel'
 import DiagramDock from './panels/DiagramDock'
@@ -183,10 +183,10 @@ import { buildClipboardPayload, parseClipboardPayload, remapForPaste } from './c
 import { resolveDeletion } from './containerRemoval'
 import { warnIfSavedWithNewer } from './fileVersionWarning'
 import type { TransformPatch } from './panels/PropertyPanel'
-import { useTheme } from './theme'
+import { useTheme } from './styling/theme'
 import { useEventCallback } from './hooks/useEventCallback'
 import { legendLineFromEdgeStyle, type LegendLineLook } from './legend/legendLinePick'
-import { EDGE_STYLE_DEFAULTS } from '@shared/styleDefaults'
+import { EDGE_STYLE_DEFAULTS } from '@shared/styling/styleDefaults'
 import { useModifierDragDuplicate } from './hooks/useModifierDragDuplicate'
 import { useDetailsPeek } from './details/useDetailsPeek'
 import PeekCard from './details/PeekCard'
@@ -198,7 +198,7 @@ import {
 } from './export/exportPng'
 import { buildExportLegendItems } from '@shared/legend/legendItems'
 import ThreatMatrixView from './threat-matrix/ThreatMatrixView'
-import { themeAdaptiveColor } from './styles/themeAdaptiveColor'
+import { themeAdaptiveColor } from './styling/themeAdaptiveColor'
 
 // Defined at module scope so React Flow gets a stable reference — recreating
 // these objects every render triggers a React Flow warning and remounts.

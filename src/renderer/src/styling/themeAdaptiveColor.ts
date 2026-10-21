@@ -1,4 +1,4 @@
-import type { Theme } from '../theme'
+import type { Theme } from './theme'
 import { flipRgbLightness } from '@shared/svg/color'
 
 // Normalizes an arbitrary CSS color string (hex, rgb()/rgba(), hsl()/hsla(),

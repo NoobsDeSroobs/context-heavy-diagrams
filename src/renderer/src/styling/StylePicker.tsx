@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { EdgeStyle } from '@shared/diagram'
-import { searchLineStylePresets } from '../styles/builtinLineStylePresets'
+import { searchLineStylePresets } from './builtinLineStylePresets'
 
 interface StylePickerProps {
   anchorRect: DOMRect

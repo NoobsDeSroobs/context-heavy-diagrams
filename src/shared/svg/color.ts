@@ -1,4 +1,4 @@
-import type { Theme } from '../theme.ts'
+import type { Theme } from '../styling/theme.ts'
 
 // Colour handling without a browser: the SVG export runs in plain Node (ADR 0124), where there is
 // no CSS engine to resolve a colour string or to blend an opacity into it. The canvas still lets

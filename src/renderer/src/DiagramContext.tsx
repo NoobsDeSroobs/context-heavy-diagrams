@@ -2,7 +2,7 @@ import { createContext } from 'react'
 import type { ResizeParams } from '@xyflow/react'
 import type { GravityPreset, HighlightDefinition, MetadataEntry } from '@shared/diagram'
 import type { ContextMenuItem } from './components/ContextMenu'
-import type { Theme } from './theme'
+import type { Theme } from './styling/theme'
 
 export interface DiagramContextValue {
   // Current file path, or null for an unsaved diagram — nodes need this to

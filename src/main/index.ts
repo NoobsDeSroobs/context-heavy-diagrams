@@ -21,7 +21,7 @@ import {
 } from './appPreferences'
 import { DEFAULT_PREFERENCES } from '@shared/preferences'
 import { registerAppInfoHandlers } from './appInfo'
-import { registerStylePaletteHandlers } from './stylePalette'
+import { registerStylePaletteHandlers } from './styling/stylePalette'
 import { registerExportHandlers } from './export'
 import { registerSecurityHandlers } from './threat-matrix/security'
 import { registerLinkedSearchHandlers } from './search/linkedSearch'

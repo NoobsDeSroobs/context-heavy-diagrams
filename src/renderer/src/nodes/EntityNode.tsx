@@ -8,7 +8,7 @@ import LockBadge from '../tagging/LockBadge'
 import { useDiagramContext } from '../useDiagramContext'
 import { HIGHLIGHT_BORDER_WIDTH } from '@shared/tagging/highlights'
 import { isolateStyle } from '../search/search'
-import { nodeContainerCss, nodeLabelCss } from '../styles/nodeStyleCss'
+import { nodeContainerCss, nodeLabelCss } from '../styling/nodeStyleCss'
 import { ConnectionHandles } from './ConnectionHandles'
 import { useConnectionPointMenu } from './connectionPoints'
 
