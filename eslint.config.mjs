@@ -40,6 +40,41 @@ export default defineConfig(
     }
   },
   {
+    // Process boundaries (ADR 0125): shared/ is pure and runs in every context (also the CLI and
+    // the extension), and the sandboxed renderer never reaches into main/.
+    files: ['src/shared/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/main/**', '**/renderer/**', '@renderer/**', 'electron'],
+              message: 'shared/ must not import main, renderer or electron (ADR 0125).'
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    files: ['src/renderer/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/main/**', 'electron'],
+              message:
+                'The renderer must not import main or electron; use the preload bridge (ADR 0125).'
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
     // Plain-JS node:test files, the standalone `chd` CLI (ADR 0106), the Claude
     // Desktop extension (ADR 0110) and its build script — the return-type rule
     // is for app code.

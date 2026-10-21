@@ -4,7 +4,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readdirSync, readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
-import { parseDiagram, serializeDiagram } from './diagram.ts'
+import { parseDiagram, serializeDiagram } from './diagram/index.ts'
 
 const minimal = (extra = {}) => JSON.stringify({ version: 1, nodes: [], edges: [], ...extra })
 

@@ -3,9 +3,9 @@ import { access } from 'fs/promises'
 import { basename, join } from 'path'
 import { is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import { deleteRecoverySnapshot, newSessionId } from './recovery'
-import { readPreferences, updatePreferences } from './appPreferences'
-import { resolveLinkPath } from './linkPaths'
+import { deleteRecoverySnapshot, newSessionId } from './document/recovery'
+import { readPreferences, updatePreferences } from './preferences/appPreferences'
+import { resolveLinkPath } from './links/linkPaths'
 import { isSafeExternalUrl, isSameDocument } from './navigationGuard'
 
 const FILTERS = [{ name: 'Diagram', extensions: ['chd'] }]
@@ -104,7 +104,7 @@ export function createWindow(initialPath?: string): BrowserWindow {
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       // Sandboxed preload: it can only use ipcRenderer/contextBridge/webUtils
-      // (ADR 0112). Clipboard access goes through IPC (main/clipboard.ts).
+      // (ADR 0112). Clipboard access goes through IPC (main/canvas/clipboard.ts).
       sandbox: true
     }
   })

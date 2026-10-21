@@ -1,10 +1,10 @@
 import { app, BrowserWindow, ipcMain, session } from 'electron'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
-import { registerDiagramHandlers } from './diagram'
-import { registerIconHandlers } from './icons'
-import { registerReferenceHandlers } from './references'
-import { registerDetailsHandlers } from './details'
-import { registerLinkHandlers } from './links'
+import { registerDiagramHandlers } from './document/diagram'
+import { registerIconHandlers } from './icons/icons'
+import { registerReferenceHandlers } from './references/references'
+import { registerDetailsHandlers } from './details/details'
+import { registerLinkHandlers } from './links/links'
 import {
   createWindow,
   focusLastUsedWindow,
@@ -12,21 +12,21 @@ import {
   registerWindowHandlers
 } from './windows'
 import { diagramPathsFromArgs } from './launchArgs'
-import { registerRequiredTagsHandlers } from './requiredTags'
-import { registerRecoveryHandlers, runStartupOrphanScan } from './recovery'
+import { registerRequiredTagsHandlers } from './tagging/requiredTags'
+import { registerRecoveryHandlers, runStartupOrphanScan } from './document/recovery'
 import {
   readPreferences,
   registerPreferencesHandlers,
   seedPreferencesFromInstallOptions
-} from './appPreferences'
-import { DEFAULT_PREFERENCES } from '@shared/preferences'
+} from './preferences/appPreferences'
+import { DEFAULT_PREFERENCES } from '@shared/preferences/preferences'
 import { registerAppInfoHandlers } from './appInfo'
-import { registerStylePaletteHandlers } from './stylePalette'
-import { registerExportHandlers } from './export'
-import { registerSecurityHandlers } from './security'
-import { registerLinkedSearchHandlers } from './linkedSearch'
-import { registerAiHandlers } from './ai'
-import { registerClipboardHandlers } from './clipboard'
+import { registerStylePaletteHandlers } from './styling/stylePalette'
+import { registerExportHandlers } from './export/export'
+import { registerSecurityHandlers } from './threat-matrix/security'
+import { registerLinkedSearchHandlers } from './search/linkedSearch'
+import { registerAiHandlers } from './ai/ai'
+import { registerClipboardHandlers } from './canvas/clipboard'
 import { disableProxyDiscovery, enforceOffline } from './offline'
 
 // One running instance (ADR 0108): settings, crash-recovery snapshots and the

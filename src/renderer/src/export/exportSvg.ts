@@ -1,13 +1,13 @@
 import type { DiagramFile } from '@shared/diagram'
-import type { Theme } from '@shared/theme'
-import type { LegendCorner } from '@shared/svg/legendPlacement'
+import type { Theme } from '@shared/styling/theme'
+import type { LegendCorner } from '@shared/legend/legendPlacement'
 import {
   collectIconRefs,
   defaultLegendItems,
   iconKey,
   renderDiagramSvg,
   type IconAsset
-} from '@shared/svg/renderDiagram'
+} from '@shared/export/renderDiagram'
 import { loadBuiltinIconSvg } from '../icons/builtinIcons'
 
 export interface SvgExportParams {

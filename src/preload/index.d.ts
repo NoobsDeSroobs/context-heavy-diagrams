@@ -5,12 +5,12 @@ import type {
   SaveDocumentRequest,
   SaveOutcome,
   Stamp
-} from '@shared/documentSave'
-import type { AiFolderResult, ClaudeExtensionOutcome } from '@shared/aiFolderResult'
-import type { AppPreferences } from '@shared/preferences'
-import type { SecurityCrawlResult } from '@shared/threatMatrixMath'
-import type { LinkedSearchLink, LinkedSearchResult } from '@shared/linkedSearch'
-import type { SearchCriteria } from '@shared/search'
+} from '@shared/document/documentSave'
+import type { AiFolderResult, ClaudeExtensionOutcome } from '@shared/ai/aiFolderResult'
+import type { AppPreferences } from '@shared/preferences/preferences'
+import type { SecurityCrawlResult } from '@shared/threat-matrix/threatMatrixMath'
+import type { LinkedSearchLink, LinkedSearchResult } from '@shared/search/linkedSearch'
+import type { SearchCriteria } from '@shared/search/search'
 
 export interface RequiredTagsWalkResult {
   reached: string[]

@@ -1,11 +1,11 @@
 import { memo, useCallback, useRef, useState } from 'react'
 import { NodeResizer, useReactFlow, type NodeProps } from '@xyflow/react'
 import type { NodeStyle } from '@shared/diagram'
-import EditableLabel from '../components/EditableLabel'
-import LockBadge from '../components/LockBadge'
-import { useDiagramContext } from '../useDiagramContext'
-import { isolateStyle } from '../search'
-import { nodeContainerCss, nodeLabelCss } from '../styles/nodeStyleCss'
+import EditableLabel from '../ui/EditableLabel'
+import LockBadge from '../tagging/LockBadge'
+import { useDiagramContext } from '../canvas/useDiagramContext'
+import { isolateStyle } from '../search/search'
+import { nodeContainerCss, nodeLabelCss } from '../styling/nodeStyleCss'
 
 export const TEXT_MIN_WIDTH = 40
 export const TEXT_MIN_HEIGHT = 24

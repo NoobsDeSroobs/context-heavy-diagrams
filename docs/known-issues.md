@@ -29,9 +29,9 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **Deliberately not fixed yet:** the author would rather not have OS-dependent hotkeys, so Alt ships on all platforms and this is logged as a potential problem to verify on a Linux machine.
 
-**If it bites:** switch `DUPLICATE_DRAG_MODIFIER` in `src/renderer/src/hooks/useModifierDragDuplicate.ts` to `'ctrlKey'` (one line; also update the `create.duplicateDrag` label in `commands.ts`) — Ctrl+drag is not grabbed by those window managers and nothing else in the app uses it. Choosing the modifier per OS is the alternative the author wants to avoid. Also verify on Linux that `setMenuBarVisibility(false)` in `src/main/windows.ts` keeps Alt from revealing the native menu.
+**If it bites:** switch `DUPLICATE_DRAG_MODIFIER` in `src/renderer/src/canvas/useModifierDragDuplicate.ts` to `'ctrlKey'` (one line; also update the `create.duplicateDrag` label in `commands.ts`) — Ctrl+drag is not grabbed by those window managers and nothing else in the app uses it. Choosing the modifier per OS is the alternative the author wants to avoid. Also verify on Linux that `setMenuBarVisibility(false)` in `src/main/windows.ts` keeps Alt from revealing the native menu.
 
-**References:** [ADR 0099](decisions/0099-modifier-drag-duplicate.md), `src/renderer/src/hooks/useModifierDragDuplicate.ts`
+**References:** [ADR 0099](decisions/0099-modifier-drag-duplicate.md), `src/renderer/src/canvas/useModifierDragDuplicate.ts`
 
 ---
 
@@ -47,7 +47,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **Direction (not decided):** solve for the baseline instead of flipping the typed value, e.g. search the stored-form colour whose light-mode conversion is closest to what was typed (hue and chroma fixed, lightness found numerically), or accept the typed value exactly in the current theme and store the nearest baseline. Needs a decision on how close is close enough, and a test over a grid of colours.
 
-**References:** `src/renderer/src/styles/themeAdaptiveColor.ts`, `src/renderer/src/panels/PropertyPanel.tsx` (the `onChange` of each `ColorField`), [ADR 0034](decisions/0034-theme-adaptive-color-value-flip.md)
+**References:** `src/renderer/src/styling/themeAdaptiveColor.ts`, `src/renderer/src/properties/PropertyPanel.tsx` (the `onChange` of each `ColorField`), [ADR 0034](decisions/0034-theme-adaptive-color-value-flip.md)
 
 ---
 
@@ -62,7 +62,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **Workaround:** replaced the native `confirm()` with an in-panel confirmation (the row being removed becomes an inline message plus Confirm/Cancel buttons). **Any feature that shows a native `confirm()`/`alert()` and then expects the user to keep using `<select>` elements in the same view should watch for this and prefer an in-app confirmation.**
 
-**References:** [ADR 0047](decisions/0047-allowed-values-list-editor.md), `src/renderer/src/components/RequiredTagsPanel.tsx`
+**References:** [ADR 0047](decisions/0047-allowed-values-list-editor.md), `src/renderer/src/tagging/RequiredTagsSection.tsx`
 
 ---
 
@@ -77,7 +77,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **What was done (ADR 0075):** a standing Diagnostics advisory names both containers when a child extends outside its parent; the Layers panel keeps sorting on raw `data.zIndex` (that is what drag-to-restack edits) but marks rows where raw and effective order disagree (`in: <parent>` with a warning icon); a right-click **Detach from parent** is available on any nested node. Auto-un-parenting was declined (the child may overflow deliberately); load-time healing covers only dangling or cyclic `parentId`.
 
-**References:** [ADR 0035](decisions/0035-layer-order-control.md), [ADR 0075](decisions/0075-container-hierarchy-integrity.md), `src/renderer/src/layers/zIndexOrdering.ts`, `src/renderer/src/components/LayerPanel.tsx`
+**References:** [ADR 0035](decisions/0035-layer-order-control.md), [ADR 0075](decisions/0075-container-hierarchy-integrity.md), `src/shared/canvas/zIndexOrdering.ts`, `src/renderer/src/layers/LayerPanel.tsx`
 
 ---
 
@@ -91,7 +91,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **Fix:** `remark-gfm` added to the Details panel's `ReactMarkdown`, plus `.details-panel-preview table/th/td` styling (otherwise a correctly parsed table would have no visible grid and look like the same bug).
 
-**References:** `src/renderer/src/components/DetailsPanel.tsx`, `src/renderer/src/assets/main.css`
+**References:** `src/renderer/src/details/DetailsPanel.tsx`, `src/renderer/src/assets/main.css`
 
 ---
 
@@ -174,7 +174,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **Lesson:** never put an optional key on an object as `key: undefined` when a later spread is meant to fill it from defaults.
 
-**References:** `src/renderer/src/Canvas.tsx` (`fromDiagramFile`, `DEFAULT_EDGE_OPTIONS`), `@xyflow/react`'s `EdgeWrapper`
+**References:** `src/renderer/src/canvas/Canvas.tsx` (`fromDiagramFile`, `DEFAULT_EDGE_OPTIONS`), `@xyflow/react`'s `EdgeWrapper`
 
 ---
 
@@ -189,7 +189,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **Reopen with** the diagram and a listing of its folder; first confirm the path really does not resolve before touching scan code.
 
-**References:** [ADR 0084](decisions/0084-diagnostics-missing-files.md), `src/main/linkPaths.ts`
+**References:** [ADR 0084](decisions/0084-diagnostics-missing-files.md), `src/main/links/linkPaths.ts`
 
 ---
 
@@ -233,7 +233,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **Lesson:** a memoised context value is only as stable as the *callbacks* inside it; look at their dependencies, not just the value's own dependency list. Counting renders from outside has diminishing returns; reading identity chains is faster.
 
-**References:** [ADR 0056](decisions/0056-diagram-context-rerender-performance.md), [ADR 0073](decisions/0073-react-flow-render-performance-round-2.md), `src/renderer/src/hooks/useEventCallback.ts`
+**References:** [ADR 0056](decisions/0056-diagram-context-rerender-performance.md), [ADR 0073](decisions/0073-react-flow-render-performance-round-2.md), `src/renderer/src/canvas/useEventCallback.ts`
 
 ---
 
@@ -247,7 +247,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **Fix:** after load, call `updateNodeInternals` for every node, deferred one animation frame so the DOM exists; it measures synchronously.
 
-**References:** `src/renderer/src/Canvas.tsx` (`loadDiagramIntoCanvas`), `@xyflow/react`'s `EdgeWrapper`
+**References:** `src/renderer/src/canvas/Canvas.tsx` (`loadDiagramIntoCanvas`), `@xyflow/react`'s `EdgeWrapper`
 
 ---
 
@@ -261,7 +261,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **Fix:** raised to `2_000_000` with headroom, and the rule's comment now names the source constants (`TEXT_BASE`, `SELECTED_EDGE_Z_BOOST`) and says it is a manually maintained ceiling. First thing to re-check if this class of bug returns.
 
-**References:** [ADR 0030](decisions/0030-edge-label-z-index-override.md), `src/renderer/src/layers/zIndexOrdering.ts`
+**References:** [ADR 0030](decisions/0030-edge-label-z-index-override.md), `src/shared/canvas/zIndexOrdering.ts`
 
 ---
 
@@ -277,7 +277,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **Lesson:** a new persisted field is not done until a save-and-reload round trip shows it survives.
 
-**References:** `src/shared/diagram.ts`, `src/shared/savedWith.test.mjs`
+**References:** `src/shared/diagram/`, `src/shared/savedWith.test.mjs`
 
 ---
 
@@ -293,7 +293,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **Lesson:** the browser automation's cursor movement did not reproduce real pointer sequences reliably; temporary `console.log` on every `mouseenter`/`click` gave the ground truth.
 
-**References:** [ADR 0039](decisions/0039-top-menu-bar.md), `src/renderer/src/components/MenuBar.tsx`
+**References:** [ADR 0039](decisions/0039-top-menu-bar.md), `src/renderer/src/MenuBar.tsx`
 
 ---
 
@@ -317,7 +317,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **Fix:** always scope to the node's own type and pass that type's base floor; text now seeds above entities.
 
-**References:** `src/renderer/src/layers/zIndexOrdering.ts`
+**References:** `src/shared/canvas/zIndexOrdering.ts`
 
 ---
 
@@ -368,7 +368,7 @@ The richest bug chain so far; the full story is in [ADR 0036](decisions/0036-con
 
 **Fix:** a visible insertion line computed from the cursor position, and drag-over/drop handled on the whole list container with the slot computed geometrically, since the gaps had no handler at all.
 
-**References:** [ADR 0035](decisions/0035-layer-order-control.md), `src/renderer/src/components/LayerPanel.tsx`
+**References:** [ADR 0035](decisions/0035-layer-order-control.md), `src/renderer/src/layers/LayerPanel.tsx`
 
 ---
 
@@ -384,7 +384,7 @@ The richest bug chain so far; the full story is in [ADR 0036](decisions/0036-con
 
 **Lesson:** verify a fix against the real mechanism, not just the one scenario that happened to pass.
 
-**References:** `src/renderer/src/Canvas.tsx` (`zIndexedEdges`), `@xyflow/react`'s `getElevatedEdgeZIndex`
+**References:** `src/renderer/src/canvas/Canvas.tsx` (`zIndexedEdges`), `@xyflow/react`'s `getElevatedEdgeZIndex`
 
 ---
 
@@ -404,7 +404,7 @@ The richest bug chain so far; the full story is in [ADR 0036](decisions/0036-con
 
 **Fix:** mirror Oklab Lightness instead (`flip(L) = 1 - L`, hue and chroma held).
 
-**References:** [ADR 0034](decisions/0034-theme-adaptive-color-value-flip.md), `src/renderer/src/styles/themeAdaptiveColor.ts`
+**References:** [ADR 0034](decisions/0034-theme-adaptive-color-value-flip.md), `src/renderer/src/styling/themeAdaptiveColor.ts`
 
 ---
 
@@ -444,7 +444,7 @@ The richest bug chain so far; the full story is in [ADR 0036](decisions/0036-con
 
 **Fix:** the already-created initial window is passed as the owner.
 
-**References:** `src/main/recovery.ts`
+**References:** `src/main/document/recovery.ts`
 
 ---
 
@@ -560,7 +560,7 @@ The richest bug chain so far; the full story is in [ADR 0036](decisions/0036-con
 
 **Fix:** a new tag starts with a blank key and `seedMetadata`/`syncElementMetadata` skip entries with an empty key, so nothing is stamped until the tag is named. No key-name heuristics.
 
-**References:** [ADR 0022](decisions/0022-unified-tag-and-metadata-system.md), `src/renderer/src/components/RequiredTagsSection.tsx`
+**References:** [ADR 0022](decisions/0022-unified-tag-and-metadata-system.md), `src/renderer/src/tagging/RequiredTagsSection.tsx`
 
 ---
 
@@ -572,7 +572,7 @@ The richest bug chain so far; the full story is in [ADR 0036](decisions/0036-con
 
 **Fix:** if the parent is in the payload, `parentId` is remapped through the same id map and the relative position is kept; otherwise `parentId` is stripped and the node pastes top-level. The centroid uses top-level nodes only, and a load-time `healHierarchy` pass drops dangling `parentId`s from files saved in this state. Copy/paste with containers confirmed working by the author (2026-10-17).
 
-**References:** [ADR 0075](decisions/0075-container-hierarchy-integrity.md), [ADR 0049](decisions/0049-clipboard-copy-paste.md), `src/renderer/src/clipboard.ts`
+**References:** [ADR 0075](decisions/0075-container-hierarchy-integrity.md), [ADR 0049](decisions/0049-clipboard-copy-paste.md), `src/renderer/src/canvas/clipboard.ts`
 
 ---
 
@@ -640,9 +640,9 @@ Fixed by the paste rework described under "Pasting a copied child-of-a-container
 
 **Cause:** `elementMatchesViaDetails` gates on the node's stored details path, but a brand-new note has no path until its first save even though its text already exists in the renderer's in-memory shadow, so it looked like "no note".
 
-**Fix:** `computeMatchIds` sets a truthy placeholder `details` whenever a live shadow exists for the node. "Deep search" being greyed out in the same session was unrelated and by design (it needs a saved path). Also noted in the same pass: `src/main/details.ts` joined paths itself instead of using the shared `resolveLinkPath`; fixed there, with a milder gap in `icons.ts`/`references.ts` left for later.
+**Fix:** `computeMatchIds` sets a truthy placeholder `details` whenever a live shadow exists for the node. "Deep search" being greyed out in the same session was unrelated and by design (it needs a saved path). Also noted in the same pass: `src/main/details/details.ts` joined paths itself instead of using the shared `resolveLinkPath`; fixed there, with a milder gap in `icons.ts`/`references.ts` left for later.
 
-**References:** [ADR 0097](decisions/0097-deep-search-across-linked-diagrams.md), `src/shared/search.ts`
+**References:** [ADR 0097](decisions/0097-deep-search-across-linked-diagrams.md), `src/shared/search/search.ts`
 
 ---
 
@@ -702,4 +702,4 @@ Fixed by the paste rework described under "Pasting a copied child-of-a-container
 
 **Fix:** `remapForPaste` centres the group's bounding box; the point is the centre of the canvas as it will be with the properties panel open (`visibleCanvasCenter`, reading the width from `--dock-properties-width`). Measured in the packaged build: offset 0, 0.
 
-**References:** `src/renderer/src/clipboard.ts`, `src/renderer/src/Canvas.tsx` (`visibleCanvasCenter`)
+**References:** `src/renderer/src/canvas/clipboard.ts`, `src/renderer/src/canvas/Canvas.tsx` (`visibleCanvasCenter`)

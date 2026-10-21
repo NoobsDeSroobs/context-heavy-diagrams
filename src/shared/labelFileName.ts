@@ -1,6 +1,6 @@
 // Turns an element's label into a filesystem-safe, human-recognizable
 // filename stem — used for both newly-created linked diagrams
-// (src/main/links.ts) and detail files (src/main/details.ts). Previously
+// (src/main/links/links.ts) and detail files (src/main/details/details.ts). Previously
 // each had its own near-identical sanitizer that had already drifted apart
 // (one replaced forbidden chars, the other deleted them; only one had a
 // length cap and a reserved-name guard); consolidated here so they can't

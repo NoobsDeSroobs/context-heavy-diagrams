@@ -431,3 +431,7 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 ### 0141: How this tool compares with other diagramming tools
 
 *Done.* [`docs/comparison.md`](../comparison.md) compares this tool with general editors, diagram-as-code tools, software architecture models, enterprise architecture platforms, journey and process tools, notes and whiteboards, and the ways a diagram reaches a wiki, checked against each tool's own documentation on 2026-10-20 and linked from the README and the getting-started guide. The gaps it lists became their own epics (SVG and command-line export, imports and exports, an ArchiMate kit). Left open: Sparx, whose site refused automated reads. The page is kept current as features land (the SVG export, 2026-10-21).
+
+### 0143: Package the code by feature
+
+*Done* (confirmed 2026-10-21). Code is grouped by feature inside the electron-vite folders, with the same folder name in `main`, `renderer/src` and `shared`; `shared/diagram.ts` is split into per-feature `schema.ts` files; lint rules keep `shared/` pure and the renderer out of `main/`. No behaviour or file-format change. ADR: [0125](../decisions/0125-code-packaged-by-feature-inside-the-process-folders.md). Follow-ups: 0151 (style types), 0152 (split the large files).

@@ -1,8 +1,12 @@
 import { toPng } from 'html-to-image'
 import { getNodesBounds, type Node } from '@xyflow/react'
-import { resolveLegendIconMarkup, resolveLegendColors, buildLegendElement } from './exportLegendDom'
-import { placeLegend, type LegendCorner, type Rect } from '@shared/svg/legendPlacement'
-import type { ExportLegendItem } from '@shared/svg/legendItems'
+import {
+  resolveLegendIconMarkup,
+  resolveLegendColors,
+  buildLegendElement
+} from '../legend/exportLegendDom'
+import { placeLegend, type LegendCorner, type Rect } from '@shared/legend/legendPlacement'
+import type { ExportLegendItem } from '@shared/legend/legendItems'
 import { MARKER_ID } from '../edges/markerIds'
 
 export interface PngExportOptions {

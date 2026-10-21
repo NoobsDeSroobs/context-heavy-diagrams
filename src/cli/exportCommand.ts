@@ -1,9 +1,9 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { basename, dirname, extname, join, resolve } from 'node:path'
-import { parseDiagram, type DiagramFile } from '../shared/diagram.ts'
+import { parseDiagram, type DiagramFile } from '../shared/diagram/index.ts'
 import { containedPath } from '../main/containedPath.ts'
-import { highlightId } from '../shared/highlights.ts'
-import type { LegendCorner } from '../shared/preferences.ts'
+import { highlightId } from '../shared/tagging/highlights.ts'
+import type { LegendCorner } from '../shared/preferences/preferences.ts'
 import {
   collectIconRefs,
   DEFAULT_SVG_EXPORT_OPTIONS,
@@ -12,7 +12,7 @@ import {
   renderDiagramSvg,
   type IconAsset,
   type SvgExportOptions
-} from '../shared/svg/renderDiagram.ts'
+} from '../shared/export/renderDiagram.ts'
 
 // `chd export` (ADR 0124): a .chd file to an SVG image without opening the app, so a README or a
 // wiki image can be regenerated whenever the diagram changes. Bundled into resources/cli/export.mjs

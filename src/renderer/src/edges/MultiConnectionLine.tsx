@@ -1,6 +1,6 @@
 import { useNodes, type Node } from '@xyflow/react'
 import type { ConnectionPoint } from '@shared/diagram'
-import { absolutePosition } from '../geometry/nodePosition'
+import { absolutePosition } from '../nodes/nodePosition'
 import { connectionPointAtOrdinal, pointCoordinates, pointOrdinal } from '../nodes/connectionPoints'
 
 // Same two types as Canvas.tsx's isConnectableNodeType — kept as its own

@@ -20,10 +20,10 @@ One chain, from the spec outward. When the file format changes, every link has t
 
 | Piece | What it is | How it stays current |
 |---|---|---|
-| [`docs/file-format.md`](../file-format.md) | The authoritative, standalone spec | Edited with `src/shared/diagram.ts` (standing rule) |
+| [`docs/file-format.md`](../file-format.md) | The authoritative, standalone spec | Edited with the `schema.ts` files under `src/shared/` (standing rule) |
 | `resources/ai/skills/chd-diagrams/` | The skill: core rules (`SKILL.md`), `references/` (field reference, authoring guide, layout guide) and `scripts/validate_chd.mjs` | Edited by hand to mirror the spec. The single source of truth for everything below |
 | `.claude/skills/chd-diagrams/` | A synced copy so this repository's own agents use the same skill | `npm run sync-ai`; a test fails if it drifts |
-| `src/shared/aiInstructions.ts` | The short copy-paste primer | Edited by hand; a test guards its key rules and its size |
+| `src/shared/ai/aiInstructions.ts` | The short copy-paste primer | Edited by hand; a test guards its key rules and its size |
 | `chd spec`, `chd validate` | The command line reads the skill files and runs the validator | Nothing to do — it reads the skill |
 | The Claude Desktop extension | A bundle with the skill text and the validator baked in | Rebuilt by every app build (`npm run build:extension`), so it always matches the version that shipped it |
 
@@ -38,6 +38,6 @@ So a format change means: update `docs/file-format.md`, the skill's `SKILL.md` a
 
 ## Where things live
 
-- Menu items: `src/renderer/src/Canvas.tsx` (the AI menu); main-process handlers in `src/main/ai.ts` and `src/main/aiFolder.ts`.
+- Menu items: `src/renderer/src/canvas/Canvas.tsx` (the AI menu); main-process handlers in `src/main/ai/ai.ts` and `src/main/ai/aiFolder.ts`.
 - Bundled material: `resources/ai/` (skill, `AGENTS.md`/`CLAUDE.md` templates) and `resources/cli/chd.mjs`.
 - The extension: source in `extension/`, built by `scripts/build-extension.mjs` into `resources/extension/` (see [packaging](packaging.md#the-claude-desktop-extension)).
