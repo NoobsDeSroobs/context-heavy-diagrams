@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { JsonValue, MetadataLock, RequiredTagDefinition } from '@shared/diagram'
-import { CollapsibleSection } from '../panels/fields'
+import { CollapsibleSection } from '../ui/fields'
 
 interface RequiredTagsSectionProps {
   requiredTags: RequiredTagDefinition[]

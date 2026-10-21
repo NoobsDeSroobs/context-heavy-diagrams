@@ -1,4 +1,4 @@
-import { showAlert } from '../alerts'
+import { showAlert } from '../ui/alerts'
 import { useState } from 'react'
 import type { IconRef, IconSlot } from '@shared/diagram'
 import IconBrowser from './IconBrowser'

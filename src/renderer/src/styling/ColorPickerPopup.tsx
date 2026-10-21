@@ -1,4 +1,4 @@
-import { ColorField, NumberField, SliderField } from '../panels/fields'
+import { ColorField, NumberField, SliderField } from '../ui/fields'
 import { useDiagramContext } from '../useDiagramContext'
 
 interface ColorPickerPopupProps {

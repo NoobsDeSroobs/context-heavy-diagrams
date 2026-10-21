@@ -1,9 +1,9 @@
-import { showAlert } from '../alerts'
+import { showAlert } from '../ui/alerts'
 import { useState } from 'react'
 import type { EdgeStyle, NodeStyle } from '@shared/diagram'
 import type { NamedStylePalette, PaletteColor } from '../preferences/preferences'
 import type { Theme } from './theme'
-import { CollapsibleSection, ColorField } from '../panels/fields'
+import { CollapsibleSection, ColorField } from '../ui/fields'
 import { themeAdaptiveColor } from './themeAdaptiveColor'
 
 interface StylePalettePanelProps {

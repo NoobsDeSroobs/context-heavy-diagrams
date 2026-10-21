@@ -1,4 +1,4 @@
-import { showAlert } from '../alerts'
+import { showAlert } from '../ui/alerts'
 import { useEffect, useMemo, useState, type MouseEvent } from 'react'
 import type { EdgeStyle, IconRef, LegendEntry, LegendEntryKind } from '@shared/diagram'
 import { loadBuiltinIconSvg, searchBuiltinIconIds } from '../icons/builtinIcons'

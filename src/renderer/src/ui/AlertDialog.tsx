@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { subscribeToAlerts, type AlertContent } from '../alerts'
+import { subscribeToAlerts, type AlertContent } from './alerts'
 
 // Renders whatever showAlert() (alerts.ts) receives. Mounted once, by Canvas.
 // Messages queue rather than replace each other, so two errors fired in a

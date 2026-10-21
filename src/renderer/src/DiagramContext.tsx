@@ -1,7 +1,7 @@
 import { createContext } from 'react'
 import type { ResizeParams } from '@xyflow/react'
 import type { GravityPreset, HighlightDefinition, MetadataEntry } from '@shared/diagram'
-import type { ContextMenuItem } from './components/ContextMenu'
+import type { ContextMenuItem } from './ui/ContextMenu'
 import type { Theme } from './styling/theme'
 
 export interface DiagramContextValue {

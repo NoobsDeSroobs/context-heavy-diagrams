@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import type { EdgeStyle } from '@shared/diagram'
 import type { AppPreferences } from './preferences'
 import { MIN_RECENT_DIAGRAMS_LIMIT } from '@shared/preferences/preferences'
-import { FieldRow, NumberField, SelectField } from '../panels/fields'
-import { useRafThrottledCallback } from '../hooks/useRafThrottledCallback'
+import { FieldRow, NumberField, SelectField } from '../ui/fields'
+import { useRafThrottledCallback } from '../ui/useRafThrottledCallback'
 
 // '' means the field is absent (bezier, today's only historical behavior)
 // — see PropertyPanel.tsx's identical ROUTING_STYLE_OPTIONS/own comment on

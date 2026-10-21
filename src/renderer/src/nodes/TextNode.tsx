@@ -1,7 +1,7 @@
 import { memo, useCallback, useRef, useState } from 'react'
 import { NodeResizer, useReactFlow, type NodeProps } from '@xyflow/react'
 import type { NodeStyle } from '@shared/diagram'
-import EditableLabel from '../components/EditableLabel'
+import EditableLabel from '../ui/EditableLabel'
 import LockBadge from '../tagging/LockBadge'
 import { useDiagramContext } from '../useDiagramContext'
 import { isolateStyle } from '../search/search'

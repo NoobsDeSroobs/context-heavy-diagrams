@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { FieldRow, NumberField } from '../panels/fields'
+import { FieldRow, NumberField } from '../ui/fields'
 import type { LegendCorner } from '@shared/legend/legendPlacement'
 
 export interface ImageExportChoice {

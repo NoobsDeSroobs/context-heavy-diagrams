@@ -16,7 +16,7 @@ import {
   moveOrthogonalSegment,
   type OrthoSegment
 } from '@shared/geometry/orthogonalPath'
-import EditableLabel from '../components/EditableLabel'
+import EditableLabel from '../ui/EditableLabel'
 import HighlightChips from '../tagging/HighlightChips'
 import { useDiagramContext } from '../useDiagramContext'
 import { HIGHLIGHT_BORDER_WIDTH } from '@shared/tagging/highlights'

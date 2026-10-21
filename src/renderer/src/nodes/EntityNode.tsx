@@ -1,7 +1,7 @@
 import { memo, useCallback, type CSSProperties, type MouseEvent } from 'react'
 import { NodeResizer, useReactFlow, type NodeProps } from '@xyflow/react'
 import type { ConnectionPoint, IconRef, IconSlot, MetadataEntry, NodeStyle } from '@shared/diagram'
-import EditableLabel from '../components/EditableLabel'
+import EditableLabel from '../ui/EditableLabel'
 import HighlightChips from '../tagging/HighlightChips'
 import IconSlotView from '../icons/IconSlotView'
 import LockBadge from '../tagging/LockBadge'

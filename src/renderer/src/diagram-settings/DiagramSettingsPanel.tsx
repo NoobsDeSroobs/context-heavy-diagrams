@@ -6,7 +6,7 @@ import type {
   JsonValue,
   RequiredTagDefinition
 } from '@shared/diagram'
-import { CollapsibleSection } from '../panels/fields'
+import { CollapsibleSection } from '../ui/fields'
 import RequiredTagsSection from '../tagging/RequiredTagsSection'
 import GravityPresetsSection from '../nodes/GravityPresetsSection'
 import EdgeDirectionSetsSection from '../edges/EdgeDirectionSetsSection'

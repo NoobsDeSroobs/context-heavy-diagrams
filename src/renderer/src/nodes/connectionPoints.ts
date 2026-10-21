@@ -1,4 +1,4 @@
-import { showAlert } from '../alerts'
+import { showAlert } from '../ui/alerts'
 import { useCallback, type MouseEvent } from 'react'
 import { type Edge, Position, useReactFlow, useUpdateNodeInternals } from '@xyflow/react'
 import type { ConnectionPoint, ConnectionPointSide } from '@shared/diagram'
@@ -9,7 +9,7 @@ import {
   type RectLike
 } from '@shared/geometry/connectionPoints'
 import { useDiagramContext } from '../useDiagramContext'
-import type { ContextMenuItem } from '../components/ContextMenu'
+import type { ContextMenuItem } from '../ui/ContextMenu'
 
 // Shared between EntityNode and ContainerNode — both are connectable,
 // non-rotatable node types with the same connection point model (see ADR

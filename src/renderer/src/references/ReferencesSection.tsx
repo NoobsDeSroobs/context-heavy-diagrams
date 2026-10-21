@@ -1,7 +1,7 @@
 import type { Node } from '@xyflow/react'
 import ReferenceImage from './ReferenceImage'
 import { useDiagramContext } from '../useDiagramContext'
-import { CollapsibleSection } from '../panels/fields'
+import { CollapsibleSection } from '../ui/fields'
 
 // Reference-image management for a single selected entity/container (see
 // ADR 0069). Viewing happens in the floating windows; this is where

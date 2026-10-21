@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NumberField } from '../panels/fields'
+import { NumberField } from '../ui/fields'
 
 interface AlignDistributePanelProps {
   disabled: boolean

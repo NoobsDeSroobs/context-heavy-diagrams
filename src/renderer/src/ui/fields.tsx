@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { useRafThrottledCallback } from '../hooks/useRafThrottledCallback'
+import { useRafThrottledCallback } from './useRafThrottledCallback'
 
 // Shared, dumb field primitives for the property panel: generic value-in/onChange-out controls with
 // no knowledge of NodeStyle/EdgeStyle or the diagram model, plus the "mixed across selection"

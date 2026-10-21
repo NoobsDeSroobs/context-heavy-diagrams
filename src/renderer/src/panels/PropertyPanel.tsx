@@ -26,7 +26,7 @@ import {
   NumberField,
   SliderField,
   SelectField
-} from './fields'
+} from '../ui/fields'
 import { computeFieldValue } from './fieldValue'
 import { MARKER_OPTIONS } from '../edges/edgeStyleOptions'
 import {

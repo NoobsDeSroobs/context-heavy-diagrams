@@ -1,4 +1,4 @@
-import { showAlert } from './alerts'
+import { showAlert } from './ui/alerts'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { SaveAbortedError, isSaveAborted } from './document/saveAborted'
@@ -100,7 +100,7 @@ import {
 import EdgeMarkerDefs from './edges/edgeMarkers'
 import { markerUrl } from './edges/markerIds'
 import DiagramContext, { type DiagramContextValue } from './DiagramContext'
-import ContextMenu, { type ContextMenuItem } from './components/ContextMenu'
+import ContextMenu, { type ContextMenuItem } from './ui/ContextMenu'
 import IconPicker from './icons/IconPicker'
 import IconBrowser from './icons/IconBrowser'
 import ColorPickerPopup from './styling/ColorPickerPopup'
@@ -171,7 +171,7 @@ import {
   captureNodeBrush,
   type StyleBrush
 } from './styling/styleBrush'
-import AlertDialog from './components/AlertDialog'
+import AlertDialog from './ui/AlertDialog'
 import ExportImageDialog, { type ImageExportChoice } from './export/ExportImageDialog'
 import { buildDiagramSvg } from './export/exportSvg'
 import BulkCreateDialog from './bulk-create/BulkCreateDialog'

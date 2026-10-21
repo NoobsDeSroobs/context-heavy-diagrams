@@ -1,5 +1,5 @@
 import { isNewerThanApp, newerFileMessage } from '@shared/appVersion'
-import { showAlert } from '../alerts'
+import { showAlert } from '../ui/alerts'
 import { PROJECT_URL } from '../projectInfo'
 
 // Warns when a diagram was saved by a NEWER app than the one opening it, because
