@@ -1,7 +1,7 @@
 # 0151: Style types as sister interfaces
 
 ## Status
-Not Started. Follows [0143](0143-package-by-feature-refactor.md).
+Not Started. Follows [0143](../completed-epics.md#0143-package-the-code-by-feature).
 
 ## Goal
 `NodeStyle` and `EdgeStyle` both `extend FontStyle`, which reads as a parent type and is named after one of its parts (and collides with CSS `font-style`). Make the parts sisters, `TextStyle`, `FillStyle`, `StrokeStyle` and `LineEndsStyle`, and compose the two styles from them by intersection. Names are provisional; check each field's real use first.

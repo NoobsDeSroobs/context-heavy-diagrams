@@ -1,7 +1,7 @@
 # 0152: Split the large files
 
 ## Status
-Not Started. Follows [0143](0143-package-by-feature-refactor.md).
+Not Started. Follows [0143](../completed-epics.md#0143-package-the-code-by-feature).
 
 ## Goal
 Break up the files that are too big to navigate, so a feature's logic sits in its own feature folder.
