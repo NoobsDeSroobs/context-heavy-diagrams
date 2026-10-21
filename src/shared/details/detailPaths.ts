@@ -1,4 +1,4 @@
-import { labelToFileStem } from './labelFileName'
+import { labelToFileStem } from '../labelFileName'
 
 // Where a detail note belongs, derived from its element's label + id — the one
 // definition, used by the save planner (ADR 0092: derived at save, never

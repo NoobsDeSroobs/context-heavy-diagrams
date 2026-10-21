@@ -4,7 +4,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { MetadataEntry } from '@shared/diagram'
 import { isMac } from '../commands'
-import type { PeekTarget } from '../hooks/useDetailsPeek'
+import type { PeekTarget } from './useDetailsPeek'
 
 const CARD_WIDTH = 340
 const CARD_MAX_HEIGHT = 260

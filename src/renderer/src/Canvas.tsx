@@ -25,7 +25,7 @@ import {
   type SaveOutcome,
   type Stamp
 } from '@shared/documentSave'
-import { derivedDetailsPath } from '@shared/detailPaths'
+import { derivedDetailsPath } from '@shared/details/detailPaths'
 import { askConflictResolution, type ConflictItem } from './conflictDialog'
 import ConflictDialog from './components/ConflictDialog'
 import {
@@ -101,7 +101,7 @@ import IconPicker from './components/IconPicker'
 import IconBrowser from './components/IconBrowser'
 import ColorPickerPopup from './components/ColorPickerPopup'
 import StylePicker from './components/StylePicker'
-import DetailsPanel from './components/DetailsPanel'
+import DetailsPanel from './details/DetailsPanel'
 import DiagnosticsPanel, { type MissingFileEntry } from './components/DiagnosticsPanel'
 import ChangesPanel, { type DetailsChangedEntry } from './components/ChangesPanel'
 import HighlightsPanel from './components/HighlightsPanel'
@@ -188,8 +188,8 @@ import { useEventCallback } from './hooks/useEventCallback'
 import { legendLineFromEdgeStyle, type LegendLineLook } from './legend/legendLinePick'
 import { EDGE_STYLE_DEFAULTS } from '@shared/styleDefaults'
 import { useModifierDragDuplicate } from './hooks/useModifierDragDuplicate'
-import { useDetailsPeek } from './hooks/useDetailsPeek'
-import PeekCard from './components/PeekCard'
+import { useDetailsPeek } from './details/useDetailsPeek'
+import PeekCard from './details/PeekCard'
 import { effectiveStylePalette, usePreferences } from './preferences'
 import {
   captureDiagramPng,
