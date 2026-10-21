@@ -6,7 +6,7 @@ import type {
   LegendEntry,
   LineStyleKind,
   MarkerKind
-} from '../diagram.ts'
+} from '../diagram/index.ts'
 import { highlightId } from '../tagging/highlights.ts'
 
 // The legend row the active direction set contributes (ADR 0081): its name

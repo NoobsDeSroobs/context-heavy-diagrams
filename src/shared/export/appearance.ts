@@ -1,4 +1,4 @@
-import type { EdgeStyle, HighlightDefinition, MarkerKind, NodeStyle } from '../diagram.ts'
+import type { EdgeStyle, HighlightDefinition, MarkerKind, NodeStyle } from '../diagram/index.ts'
 import { HIGHLIGHT_BORDER_WIDTH } from '../tagging/highlights.ts'
 import {
   EDGE_STYLE_DEFAULTS,

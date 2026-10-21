@@ -5,7 +5,7 @@ import type {
   DiagramNode,
   EdgeDirection,
   EdgeStyle
-} from '../diagram.ts'
+} from '../diagram/index.ts'
 import { effectiveConnectionPoints, pointCoordinates } from '../geometry/connectionPoints.ts'
 import type { EdgeEnd } from '../geometry/edgePath.ts'
 import { pointsBoundingBox } from '../geometry/bendablePath.ts'

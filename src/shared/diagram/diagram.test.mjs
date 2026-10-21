@@ -3,7 +3,7 @@
 // itself, not unit-tested here.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { parseDiagram, serializeDiagram } from './diagram.ts'
+import { parseDiagram, serializeDiagram } from './index.ts'
 
 const minimal = (extra = {}) => JSON.stringify({ version: 1, nodes: [], edges: [], ...extra })
 

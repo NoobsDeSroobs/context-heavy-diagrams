@@ -1,4 +1,4 @@
-import type { DiagramFile, IconRef, IconSlot, MarkerKind } from '../diagram.ts'
+import type { DiagramFile, IconRef, IconSlot, MarkerKind } from '../diagram/index.ts'
 import { buildEdgePath } from '../geometry/edgePath.ts'
 import { buildBendablePath } from '../geometry/bendablePath.ts'
 import { flattenPath, pointAtRatio, type Point } from '../geometry/pathSampling.ts'
