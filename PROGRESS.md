@@ -8,7 +8,7 @@ MVP complete (2026-08-20). **v0.2.1 is the first open-source release** (2026-10-
 
 ## Now
 
-Working on [epic 0144](docs/planning/epics/0144-svg-and-command-line-export.md) (SVG and command-line export) on branch `epic/0144-svg-and-command-line-export`. The open-source release (0137) and AI onboarding (0133) are closed in [completed-epics.md](docs/planning/completed-epics.md); their leftovers (SPDX headers, a social preview image, Linux and macOS verification, `chd` on the PATH) are listed there. SVG export (app and `chd export`) is built and tested, [ADR 0124](docs/decisions/0124-svg-export-from-a-shared-pure-renderer.md); it still needs a live check of the menu item and a look at the output in Inkscape, then the PNG from the command line. Candidates after this one:
+Working on [epic 0144](docs/planning/epics/0144-svg-and-command-line-export.md) (SVG and command-line export) on branch `epic/0144-svg-and-command-line-export`. The open-source release (0137) and AI onboarding (0133) are closed in [completed-epics.md](docs/planning/completed-epics.md); their leftovers (SPDX headers, a social preview image, Linux and macOS verification, `chd` on the PATH) are listed there. SVG export (app and `chd export`) is built and tested, [ADR 0124](docs/decisions/0124-svg-export-from-a-shared-pure-renderer.md); the app's export is live-tested on Windows (dev and installed build). Still open: `chd export` from an installed build, Linux and macOS, then the PNG from the command line. Candidates after this one:
 
 - [Epic 0139](docs/planning/epics/0139-diagram-default-font-and-available-fonts.md): a diagram-wide default font.
 - The light-mode colour round-trip ([known-issues](docs/known-issues.md)).

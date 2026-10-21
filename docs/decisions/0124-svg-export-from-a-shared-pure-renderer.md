@@ -45,7 +45,8 @@ The command line is plain Node run by the app's own executable in `ELECTRON_RUN_
 - The `tsconfig` files allow `.ts` import extensions, which the shared modules need so Node can run them directly in tests and esbuild can bundle them for the command.
 - No new dependency.
 - The SVG's text can differ slightly from the canvas in width; an icon is drawn only if it could be read; a node with no stored size is sized from an estimate of its label.
-- **Not verified:** the app's menu item and save dialog in a live run, the command in a packaged build (the built-in icons are read from the bundled Tabler package in `app.asar`), and everything on Linux and macOS.
+- **Verified (2026-10-21):** the app's menu item, dialog and save on Windows, in the dev build and an installed build, with the result opened in a browser and in Affinity Designer.
+- **Not verified:** the command from an installed build (its built-in icons are read from the bundled Tabler package in `app.asar`), and everything on Linux and macOS.
 
 ## Not decided yet
 A PNG from the command line needs a rasteriser, since the command has no Chromium. The plan is to rasterise this SVG with a small WASM build (offline, no native binaries, the same on Windows and Linux), which also needs font files for text; the in-app PNG stays on `html-to-image`, so the two PNGs can differ slightly. PDF export follows from the SVG.

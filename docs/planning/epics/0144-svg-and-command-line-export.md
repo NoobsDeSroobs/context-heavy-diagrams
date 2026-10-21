@@ -1,7 +1,7 @@
 # 0144: SVG export and a command-line export
 
 ## Status
-In Progress (started 2026-10-21; logged the same day from the [comparison with other tools](../../comparison.md)). SVG export in the app and `chd export` for SVG are built and tested; what is left is a live check of the app's menu item, the PNG from the command line and PDF. **First in line** (agreed 2026-10-21); imports and exports follow, then a new prioritisation.
+In Progress (started 2026-10-21; logged the same day from the [comparison with other tools](../../comparison.md)). SVG export in the app and `chd export` for SVG are built and tested, and the app's export is live-tested on Windows; what is left is the command from an installed build, Linux and macOS, the PNG from the command line and PDF. **First in line** (agreed 2026-10-21); imports and exports follow, then a new prioritisation.
 
 ## Goal
 Export a diagram as SVG from the app, and let a command (`chd export`) produce the same SVG or PNG from a `.chd` file without opening the app, so that images in wikis and READMEs can be regenerated in CI whenever the diagram changes. A PDF export would then be a small follow-up.
@@ -32,7 +32,8 @@ PNG was the only export, which was the weakest point against almost every other 
 - [x] `chd export` for SVG, with the stale-edit rule not applicable (it only reads, and refuses a non-.svg output)
 - [x] Tests, including a round trip over the gallery diagrams
 - [x] Update `docs/comparison.md` and the getting-started guide
-- [ ] Live-test **File → Export as SVG…** in the app (dev build, then a packaged build: the command's built-in icons come from `app.asar`) and open the result in a browser and in Inkscape
+- [x] Live-test **File → Export as SVG…** on Windows, in the dev build and an installed build (2026-10-21); the result was as expected in a browser and in Affinity Designer (which exposed the marker problem, now fixed)
+- [ ] `chd export` from the installed build (the launcher; its built-in icons come from `app.asar`)
 - [ ] Linux and macOS check of the app's save dialog and `chd export` (cross-platform rule)
 - [ ] `chd export` for PNG (WASM rasteriser)
 - [ ] Follow-up: PDF export
