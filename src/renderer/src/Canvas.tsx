@@ -174,7 +174,7 @@ import {
 import AlertDialog from './components/AlertDialog'
 import ExportImageDialog, { type ImageExportChoice } from './export/ExportImageDialog'
 import { buildDiagramSvg } from './export/exportSvg'
-import BulkCreateDialog from './components/BulkCreateDialog'
+import BulkCreateDialog from './bulk-create/BulkCreateDialog'
 import StylePalettePanel from './styling/StylePalettePanel'
 import ReferenceWindow from './references/ReferenceWindow'
 import ReferencesPanel from './references/ReferencesPanel'
