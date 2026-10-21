@@ -6,7 +6,7 @@
 // injected so this has no runtime imports and can be unit-tested with plain
 // node:test (`npm test`); src/main/linkedSearch.ts wires in the real filesystem
 // and the shared predicate.
-import type { DiagramFile, DiagramEdge, DiagramNode } from './diagram'
+import type { DiagramFile, DiagramEdge, DiagramNode } from '../diagram'
 
 export interface LinkedSearchLink {
   // The open diagram's node that carries the link.

@@ -3,7 +3,7 @@ import type { CSSProperties } from 'react'
 // The pure search model lives in src/shared/search.ts so the main process can
 // run the same predicate over linked diagrams (ADR 0097); only the React-facing
 // helper stays here.
-export * from '@shared/search'
+export * from '@shared/search/search'
 
 // "Isolate" (see ADR 0063) — every node/edge component computes its
 // own dimmed-or-not state the same way, so this is the one shared spot for

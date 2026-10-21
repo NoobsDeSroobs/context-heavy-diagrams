@@ -10,8 +10,8 @@ import type {
 import type { AiFolderResult, ClaudeExtensionOutcome } from '@shared/aiFolderResult'
 import type { AppPreferences } from '@shared/preferences'
 import type { SecurityCrawlResult } from '@shared/threatMatrixMath'
-import type { LinkedSearchLink, LinkedSearchResult } from '@shared/linkedSearch'
-import type { SearchCriteria } from '@shared/search'
+import type { LinkedSearchLink, LinkedSearchResult } from '@shared/search/linkedSearch'
+import type { SearchCriteria } from '@shared/search/search'
 
 interface RequiredTagsWalkResult {
   reached: string[]

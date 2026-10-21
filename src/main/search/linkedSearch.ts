@@ -5,15 +5,15 @@ import {
   searchLinkedDiagrams,
   type LinkedSearchLink,
   type LinkedSearchResult
-} from '@shared/linkedSearch'
+} from '@shared/search/linkedSearch'
 import {
   elementMatchesCriteria,
   elementMatchesViaDetails,
   searchableFromData,
   type SearchCriteria
-} from '@shared/search'
-import { openDiagramAtPath } from './diagram'
-import { resolveLinkPath } from './linkPaths'
+} from '@shared/search/search'
+import { openDiagramAtPath } from '../diagram'
+import { resolveLinkPath } from '../linkPaths'
 
 // Deep search (ADR 0097). Purely a reader, like security:crawlLinked — it never
 // touches recent-diagrams / last-opened. The renderer sends the open diagram's

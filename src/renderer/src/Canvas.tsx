@@ -105,7 +105,7 @@ import DetailsPanel from './components/DetailsPanel'
 import DiagnosticsPanel, { type MissingFileEntry } from './components/DiagnosticsPanel'
 import ChangesPanel, { type DetailsChangedEntry } from './components/ChangesPanel'
 import HighlightsPanel from './components/HighlightsPanel'
-import SearchOverlay from './components/SearchOverlay'
+import SearchOverlay from './search/SearchOverlay'
 import {
   criteriaFromQuery,
   elementMatchesCriteria,
@@ -114,7 +114,7 @@ import {
   parseSearchQuery,
   searchableFromData,
   type SearchCriteria
-} from './search'
+} from './search/search'
 import LegendPanel from './legend/LegendPanel'
 import MenuBar, { type MenuBarMenu, type MenuBarItem } from './components/MenuBar'
 import LayerPanel from './components/LayerPanel'

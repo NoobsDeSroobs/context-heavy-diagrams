@@ -1,4 +1,4 @@
-import type { IconRef, IconSlot, MetadataEntry } from './diagram'
+import type { IconRef, IconSlot, MetadataEntry } from '../diagram'
 
 // Pure free-text matcher behind ADR 0062's V1 search — one
 // combined query checked against id, label, and every tag key/value,

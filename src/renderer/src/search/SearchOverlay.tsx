@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import type { IconRef } from '@shared/diagram'
 import { loadBuiltinIconSvg } from '../icons/builtinIcons'
-import { iconRefKey } from '../search'
+import { iconRefKey } from './search'
 
 interface SearchOverlayProps {
   query: string

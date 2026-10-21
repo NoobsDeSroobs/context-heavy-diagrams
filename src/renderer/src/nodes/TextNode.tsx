@@ -4,7 +4,7 @@ import type { NodeStyle } from '@shared/diagram'
 import EditableLabel from '../components/EditableLabel'
 import LockBadge from '../components/LockBadge'
 import { useDiagramContext } from '../useDiagramContext'
-import { isolateStyle } from '../search'
+import { isolateStyle } from '../search/search'
 import { nodeContainerCss, nodeLabelCss } from '../styles/nodeStyleCss'
 
 export const TEXT_MIN_WIDTH = 40
