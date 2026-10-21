@@ -29,3 +29,5 @@ editing the `.chd` directly) don't need hand-arranging.
 Container hierarchies; edges routed with waypoints; connection-point sides;
 new dependency weight (elk is large; dagre is small but old); results that are
 "correct" but not what the author wanted.
+
+Update 2026-10-21: the [comparison with other tools](../../../comparison.md) lists the lack of automatic layout as a gap, against the diagram-as-code tools in particular. The narrow scope here (new or AI-written elements only) still stands.

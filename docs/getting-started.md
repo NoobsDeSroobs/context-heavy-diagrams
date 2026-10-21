@@ -56,4 +56,5 @@ The **AI** menu sets up a folder so an assistant such as Claude can read and edi
 - [`examples/`](../examples/README.md) for more diagrams to open and take apart.
 - [`docs/architecture/`](architecture/overview.md) for the design principles.
 - [`docs/decisions/`](decisions/) for why things work the way they do.
+- [`comparison.md`](comparison.md) for how this tool compares with other diagramming tools.
 - Something missing or wrong here? Open an issue; see [CONTRIBUTING.md](../CONTRIBUTING.md).

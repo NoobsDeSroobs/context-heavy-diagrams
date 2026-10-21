@@ -1,7 +1,5 @@
 # How Context Heavy Diagrams compares with other tools
 
-> **Draft for review.** Not linked from the README yet.
-
 This is an assessment of where this tool fits among the diagramming tools you might need or want to use. It describes my understanding of what each tool does, not which is overall best, as they are built for different jobs.
 
 **What this tool is:** a local, offline desktop editor where you draw the diagram yourself on a canvas, and can attach and structure metadata. Each element can carry Markdown notes, tags, images and a link to a deeper diagram, which opens as its own file. Diagrams are plain, diff-friendly text files. There is no server, no account, and no fixed notation. It was built to be a lightweight, private and secure tool that gets you most of the way there.

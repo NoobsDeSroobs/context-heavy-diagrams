@@ -19,6 +19,8 @@ Commercial diagramming tools are restrictive, and general box-and-arrow editors 
 - **Context goes behind the box, not on top of it.** Long explanations live in a Markdown notes panel, deeper structure lives in a linked diagram, and the canvas stays a readable overview.
 - **Your files are yours.** Plain, gitable and deterministic JSON on disk; no server, no account, no network.
 
+For a comparison with other diagram tools, see [the comparison](docs/comparison.md).
+
 ## Features
 
 Suits many kinds of diagrams, such as customer journeys, organisation goals and data models; see the [gallery](examples/gallery/README.md).
