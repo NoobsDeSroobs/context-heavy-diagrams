@@ -7,8 +7,8 @@ Not Started. Follows [0143](../completed-epics.md#0143-package-the-code-by-featu
 Take the pure, low-risk pieces out of the big files: `Canvas.tsx`'s module-level helpers (about 850 lines), `main.css` (4,160 lines) and `PropertyPanel.tsx` (949 lines).
 
 ## Tasks
-- [ ] Move the `Canvas.tsx` helpers into modules next to their feature, verbatim: `toDiagramFile` / `fromDiagramFile`, the hierarchy healing, `syncElementMetadata` and the tag helpers, the z-index helpers, `collectResourceRefs` / `applyMissingFileRemoval`
-- [ ] Characterization tests for them, pinning today's behaviour (round trip, hierarchy, metadata sync, z-index). Where a module imports `@shared` at runtime, `node --test` cannot resolve the alias: use relative imports there or wait for Vitest in 0153
+- [x] Move the `Canvas.tsx` helpers into modules next to their feature, verbatim: `nodeFields`, `hierarchy`, `screenGeometry` (canvas), `diagramConversion`, `noteShadows` (document), `metadataSync` (tagging), `resourceRefs` (diagnostics), `endpointPosition` (edges), `detailsLabels` (details); `Canvas.tsx` 6,914 to 6,096 lines
+- [x] Characterization tests for the modules `node --test` can load: `metadataSync`, `resourceRefs`, `detailsLabels`. The rest need Vitest and move to 0153: `nodeFields`, `hierarchy`, `screenGeometry`, `endpointPosition`, `noteShadows` and `diagramConversion` (the `toDiagramFile` / `fromDiagramFile` round trip), which import `@shared` or extensionless paths at runtime
 - [ ] `main.css`: one stylesheet per feature beside its components; `main.css` becomes a list of `@import`s in the original order so the cascade is unchanged; rules shared by several panels go in one shared file
 - [ ] `PropertyPanel.tsx`: one file per component (`NodeStyleFields`, `EdgeFields`, `LineStyleFields`, `ConnectionPointFields`)
 - [ ] `typecheck`, `lint`, `test` and `build` after each step; the maintainer checks the app after the helpers and after the CSS (both themes)

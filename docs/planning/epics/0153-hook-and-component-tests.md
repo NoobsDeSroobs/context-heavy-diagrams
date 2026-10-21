@@ -10,7 +10,7 @@ Automated tests for the renderer's core behaviour, so the `Canvas.tsx` hook extr
 - [ ] Add Vitest, jsdom and Testing Library as dev dependencies (reusing the Vite config's aliases); run `npm run notices`; write the ADR
 - [ ] Wire it into `npm test` and CI beside the existing `node --test` suite
 - [ ] Core behaviour tests: undo/redo, dirty tracking (toggling the legend and then a highlight must not mark the diagram dirty or open the save dialog), search, add/connect/delete nodes, load and save round trip
-- [ ] Move the alias-bound tests from 0152 here if they could not run under `node --test`
+- [ ] Tests for the modules `node --test` cannot load (alias or extensionless runtime imports): `nodeFields`, `hierarchy`, `screenGeometry`, `endpointPosition`, `noteShadows`, and the `toDiagramFile` / `fromDiagramFile` round trip in `diagramConversion`
 
 ## Notes
 The legend-then-highlight dialog seen on 2026-10-21 (see `PROGRESS.md`) is the first test to write: reproduce it before fixing anything.
