@@ -150,7 +150,7 @@ import {
 } from './edges/edgeDirectionSets'
 import { absolutePosition, subtractPosition } from './geometry/nodePosition'
 import MultiConnectionLine from './edges/MultiConnectionLine'
-import PreferencesPanel from './components/PreferencesPanel'
+import PreferencesPanel from './preferences/PreferencesPanel'
 import AlignDistributePanel from './components/AlignDistributePanel'
 import AboutDialog from './components/AboutDialog'
 import { AI_INSTRUCTIONS } from '@shared/aiInstructions'
@@ -190,7 +190,7 @@ import { EDGE_STYLE_DEFAULTS } from '@shared/styling/styleDefaults'
 import { useModifierDragDuplicate } from './hooks/useModifierDragDuplicate'
 import { useDetailsPeek } from './details/useDetailsPeek'
 import PeekCard from './details/PeekCard'
-import { effectiveStylePalette, usePreferences } from './preferences'
+import { effectiveStylePalette, usePreferences } from './preferences/preferences'
 import {
   captureDiagramPng,
   resolveEffectiveBackgroundColor,

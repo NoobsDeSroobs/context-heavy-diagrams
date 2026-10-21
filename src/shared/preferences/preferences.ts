@@ -1,4 +1,4 @@
-import type { EdgeStyle, GravityPreset, NodeStyle } from './diagram'
+import type { EdgeStyle, GravityPreset, NodeStyle } from '../diagram'
 
 // The app-wide Preferences tier — per-installation, every-diagram (see the
 // glossary and ADR 0052's addendum for the "Settings" -> "Preferences"

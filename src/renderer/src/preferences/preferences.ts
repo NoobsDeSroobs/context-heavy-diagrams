@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { DEFAULT_PREFERENCES, normalizePreferences, type AppPreferences } from '@shared/preferences'
+import {
+  DEFAULT_PREFERENCES,
+  normalizePreferences,
+  type AppPreferences
+} from '@shared/preferences/preferences'
 
 // A rapid-fire source (a native color-input drag firing many onChange
 // events per second — see ADR 0056) shouldn't mean that many IPC round-
@@ -15,8 +19,8 @@ export type {
   PaletteColor,
   LegendCorner,
   NamedStylePalette
-} from '@shared/preferences'
-export { DEFAULT_PREFERENCES, effectiveStylePalette } from '@shared/preferences'
+} from '@shared/preferences/preferences'
+export { DEFAULT_PREFERENCES, effectiveStylePalette } from '@shared/preferences/preferences'
 
 // The pre-ADR-0053 localStorage key. Unchanged despite the "Settings" ->
 // "Preferences" rename — it's what old data was written under,

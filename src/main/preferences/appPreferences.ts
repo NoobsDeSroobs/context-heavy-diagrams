@@ -1,7 +1,11 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import { access, readFile, writeFile } from 'fs/promises'
 import { dirname, join } from 'path'
-import { DEFAULT_PREFERENCES, normalizePreferences, type AppPreferences } from '@shared/preferences'
+import {
+  DEFAULT_PREFERENCES,
+  normalizePreferences,
+  type AppPreferences
+} from '@shared/preferences/preferences'
 import { parseInstallOptions } from '@shared/installOptions'
 
 // Real per-OS preferences file (see ADR 0053) — replaces the renderer's

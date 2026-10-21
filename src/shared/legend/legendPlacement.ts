@@ -1,4 +1,4 @@
-import type { LegendCorner } from '../preferences.ts'
+import type { LegendCorner } from '../preferences/preferences.ts'
 export type { LegendCorner }
 
 export interface Rect {

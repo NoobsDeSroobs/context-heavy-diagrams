@@ -2,7 +2,7 @@ import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { existsSync } from 'fs'
 import { dirname, join, sep } from 'path'
 import type { AiFolderResult, ClaudeExtensionOutcome } from '../shared/aiFolderResult'
-import { readPreferences } from './appPreferences'
+import { readPreferences } from './preferences/appPreferences'
 import { installAiFiles } from './aiFolder'
 
 // AI -> "Enable AI assistance in a folder…" (ADR 0105). The OS folder picker is

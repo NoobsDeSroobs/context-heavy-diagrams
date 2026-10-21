@@ -3,7 +3,7 @@ import { basename, dirname, extname, join, resolve } from 'node:path'
 import { parseDiagram, type DiagramFile } from '../shared/diagram.ts'
 import { containedPath } from '../main/containedPath.ts'
 import { highlightId } from '../shared/tagging/highlights.ts'
-import type { LegendCorner } from '../shared/preferences.ts'
+import type { LegendCorner } from '../shared/preferences/preferences.ts'
 import {
   collectIconRefs,
   DEFAULT_SVG_EXPORT_OPTIONS,

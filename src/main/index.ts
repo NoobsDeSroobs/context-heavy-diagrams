@@ -18,8 +18,8 @@ import {
   readPreferences,
   registerPreferencesHandlers,
   seedPreferencesFromInstallOptions
-} from './appPreferences'
-import { DEFAULT_PREFERENCES } from '@shared/preferences'
+} from './preferences/appPreferences'
+import { DEFAULT_PREFERENCES } from '@shared/preferences/preferences'
 import { registerAppInfoHandlers } from './appInfo'
 import { registerStylePaletteHandlers } from './styling/stylePalette'
 import { registerExportHandlers } from './export/export'

@@ -7,7 +7,7 @@ import type {
   Stamp
 } from '@shared/documentSave'
 import type { AiFolderResult, ClaudeExtensionOutcome } from '@shared/aiFolderResult'
-import type { AppPreferences } from '@shared/preferences'
+import type { AppPreferences } from '@shared/preferences/preferences'
 import type { SecurityCrawlResult } from '@shared/threat-matrix/threatMatrixMath'
 import type { LinkedSearchLink, LinkedSearchResult } from '@shared/search/linkedSearch'
 import type { SearchCriteria } from '@shared/search/search'

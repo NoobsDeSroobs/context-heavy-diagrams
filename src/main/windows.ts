@@ -4,7 +4,7 @@ import { basename, join } from 'path'
 import { is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { deleteRecoverySnapshot, newSessionId } from './recovery'
-import { readPreferences, updatePreferences } from './appPreferences'
+import { readPreferences, updatePreferences } from './preferences/appPreferences'
 import { resolveLinkPath } from './linkPaths'
 import { isSafeExternalUrl, isSameDocument } from './navigationGuard'
 
