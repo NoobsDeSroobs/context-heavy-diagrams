@@ -718,3 +718,13 @@ Fixed by the paste rework described under "Pasting a copied child-of-a-container
 **Fix:** `remapForPaste` centres the group's bounding box; the point is the centre of the canvas as it will be with the properties panel open (`visibleCanvasCenter`, reading the width from `--dock-properties-width`). Measured in the packaged build: offset 0, 0.
 
 **References:** `src/renderer/src/canvas/clipboard.ts`, `src/renderer/src/canvas/Canvas.tsx` (`visibleCanvasCenter`)
+
+---
+
+## The Property panel is drawn over the menu bar
+
+**Status:** Open (reported 2026-10-22)
+
+**Symptom:** the Properties panel on the right overlaps the menu bar instead of sitting below it, so the menu bar is partly covered (and, in a narrow window, the panel also covers nodes). Expected: the panel starts under the menu bar.
+
+**Cause:** not investigated; probably the panel's stacking order or its top offset in the dock layout.
