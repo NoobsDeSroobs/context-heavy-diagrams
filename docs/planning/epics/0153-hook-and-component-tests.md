@@ -1,7 +1,7 @@
 # 0153: Hook and component tests
 
 ## Status
-Done, awaiting the maintainer's check and merge (2026-10-22). Follows [0152](../completed-epics.md#0152-split-the-large-files-helpers-css-property-panel); must land before [0154](0154-canvas-feature-hooks.md).
+Done, awaiting the maintainer's check and merge (2026-10-22). Follows [0152](../completed-epics.md#0152-split-the-large-files-helpers-css-property-panel); must land before [0154](../completed-epics.md#0154-canvas-feature-hooks).
 
 ## Goal
 Automated tests for the renderer's core behaviour, so the `Canvas.tsx` hook extraction is checked by more than a manual run. [ADR 0127](../../decisions/0127-vitest-for-renderer-tests.md).
