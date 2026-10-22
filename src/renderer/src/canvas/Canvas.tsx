@@ -164,6 +164,7 @@ import { useSearch } from '../search/useSearch'
 import { useReferences } from '../references/useReferences'
 import { useStyleBrush } from '../styling/useStyleBrush'
 import { useLegendLinePick } from '../legend/useLegendLinePick'
+import { useLegend } from '../legend/useLegend'
 import { useDirtyState } from '../document/useDirtyState'
 import { useModifierDragDuplicate } from './useModifierDragDuplicate'
 import { useDetailsPeek } from '../details/useDetailsPeek'
@@ -292,12 +293,6 @@ function CanvasInner(): React.JSX.Element {
   // reset on every load, never included in toDiagramFile's payload.
   const [highlights, setHighlights] = useState<HighlightDefinition[]>([])
   const [enabledHighlightIds, setEnabledHighlightIds] = useState<Set<string>>(new Set())
-  // Legend catalog (ADR 0033) — same file-scoped, persisted
-  // treatment as highlights above. Unlike highlights, there's no per-entry
-  // enabled state; the whole panel's shown/hidden state below is what's
-  // session-local instead.
-  const [legend, setLegend] = useState<LegendEntry[]>([])
-  const [legendPanelOpen, setLegendPanelOpen] = useState(false)
   // Line bend preset catalog (ADR 0050) — same file-scoped,
   // persisted treatment as highlights/legend above. Raw/possibly-empty;
   // effectiveGravityPresets resolves "empty" to this app's own built-in
@@ -331,9 +326,6 @@ function CanvasInner(): React.JSX.Element {
   const [securityCombineMethod, setSecurityCombineMethod] = useState<CombineMethod>('multiply')
   const [securityAggregateMethod, setSecurityAggregateMethod] = useState<AggregateMethod>('average')
   const [diagramSettingsPanelOpen, setDiagramSettingsPanelOpen] = useState(false)
-  // Anchors the floating panel next to whichever <ControlButton> opened it —
-  // same convention as iconPicker/colorPicker/linePicker's own anchorRect.
-  const [legendPanelAnchor, setLegendPanelAnchor] = useState<DOMRect | null>(null)
   // Layer panel (ADR 0035) — same UtilityDock family as
   // Highlights/Required tags/Diagnostics. No catalog of its own: it reads
   // straight off `nodes`' own zIndex, there's nothing separate to persist.
@@ -557,6 +549,18 @@ function CanvasInner(): React.JSX.Element {
     markDirty,
     currentPath
   }
+
+  const {
+    legend,
+    setLegend,
+    legendPanelOpen,
+    setLegendPanelOpen,
+    legendPanelAnchor,
+    addLegendEntry,
+    updateLegendEntry,
+    removeLegendEntry,
+    toggleLegendPanel
+  } = useLegend(canvasApi)
 
   // Wraps the raw onNodesChange from useNodesState to snapshot at the right
   // granularity: once per discrete change (remove/add/replace, or a
@@ -1411,41 +1415,6 @@ function CanvasInner(): React.JSX.Element {
       }
       return next
     })
-  }, [])
-
-  // Legend CRUD — no uniqueness constraint (unlike highlights, two entries
-  // can legitimately look identical, e.g. two red dots explaining two
-  // different unrelated conventions) and no undo/redo integration, same
-  // treatment as the highlight catalog above.
-  const addLegendEntry = useCallback(
-    (entry: Omit<LegendEntry, 'id'>) => {
-      setLegend((prev) => [...prev, { ...entry, id: newNodeId('legend') }])
-      markDirty()
-    },
-    [markDirty]
-  )
-
-  const updateLegendEntry = useCallback(
-    (id: string, patch: Partial<Omit<LegendEntry, 'id'>>) => {
-      setLegend((prev) => prev.map((entry) => (entry.id === id ? { ...entry, ...patch } : entry)))
-      markDirty()
-    },
-    [markDirty]
-  )
-
-  const removeLegendEntry = useCallback(
-    (id: string) => {
-      setLegend((prev) => prev.filter((entry) => entry.id !== id))
-      markDirty()
-    },
-    [markDirty]
-  )
-
-  // Anchors the floating panel to whichever element opened it — same
-  // convention as iconPicker/colorPicker/linePicker's own anchorRect.
-  const toggleLegendPanel = useCallback((anchorRect: DOMRect) => {
-    setLegendPanelAnchor(anchorRect)
-    setLegendPanelOpen((open) => !open)
   }, [])
 
   // Every distinct key/value pair currently tagged somewhere in the
@@ -3564,6 +3533,8 @@ function CanvasInner(): React.JSX.Element {
       scanMissingFiles,
       updateNodeInternals,
       resetSearch,
+      setLegend,
+      setLegendPanelOpen,
       setPast,
       setFuture,
       setHubDirty,
