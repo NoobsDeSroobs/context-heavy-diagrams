@@ -1,0 +1,91 @@
+/* Layer panel — see ADR 0035. */
+.layer-row {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+
+.layer-row:hover {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+/* A row currently being pointed at from the panel — see the
+   .entity-highlighted node/container/text rule below for its canvas-side
+   counterpart. */
+.layer-row.pointed {
+  background: var(--ev-button-alt-hover-bg);
+  border-color: var(--ev-c-text-2);
+}
+
+/* A visible insertion line between rows while dragging — replaces an
+   earlier "drop onto a row" version that left which side it'd land on as
+   a hidden implementation detail (layer-panel follow-up feedback). */
+.layer-drop-indicator {
+  height: 2px;
+  margin: -1px 6px;
+  border-radius: 1px;
+  background: var(--ev-c-text-1);
+}
+
+.layer-row-badge {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: var(--color-background-mute);
+  color: var(--ev-c-text-2);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.layer-row-label {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.layer-row-zindex {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ev-c-text-3);
+}
+
+/* "in: <container>" badge on a nested row — ADR 0075. A button (not a span):
+   clicking it points the panel at the parent row. */
+.layer-row-parent {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 1px 5px;
+  border: 1px solid var(--ev-c-divider, var(--color-border));
+  border-radius: 4px;
+  background: transparent;
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--ev-c-text-3);
+  cursor: pointer;
+}
+
+.layer-row-parent:hover {
+  background: var(--ev-button-alt-hover-bg);
+  color: var(--color-text);
+}
+
+.layer-row-parent-warn {
+  color: var(--ev-c-yellow, #c48a00);
+}

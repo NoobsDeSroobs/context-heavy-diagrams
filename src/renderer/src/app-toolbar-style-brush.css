@@ -1,0 +1,16 @@
+/* Toolbar reminder while the mode is on — same amber-free, accent-blue idea as
+   Isolate/search's pressed state; nothing is at risk, it's just a mode. */
+.toolbar-style-brush {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #2e7fd6;
+}
+
+.toolbar-style-brush button {
+  cursor: pointer;
+  font-size: 12px;
+  padding: 1px 6px;
+}

@@ -1,0 +1,20 @@
+/* Legend "Line" picker (ADR 0123): edges are the only thing that can be picked. */
+.legend-line-pick .react-flow__node,
+.legend-line-pick .react-flow__node * {
+  cursor: not-allowed;
+}
+
+.legend-line-pick .react-flow__edge,
+.legend-line-pick .react-flow__edge * {
+  cursor: crosshair;
+}
+
+/* The active direction set's pinned row at the top of the Legend panel —
+   an authored-row shape, faintly set apart since it's not hand-editable
+   here (its label is the set name, its swatch is styled in Diagram
+   settings). */
+.legend-row-pinned {
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+  border-bottom: 1px dashed var(--ev-c-gray-1);
+}

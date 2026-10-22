@@ -1,0 +1,84 @@
+/* Diagram-settings panel, diagnostics panel, and preferences panel —
+   same fixed right-side dock shell as .details-panel (toolbar + scrollable
+   body), different body content. Highlights panel used to be part of this
+   family too; moved to its own floating-popup treatment near .legend-panel
+   below (fix/highlights-free-tags-and-toggle). */
+.required-tags-panel,
+.diagnostics-panel,
+.changes-panel,
+.layer-panel,
+.preferences-panel,
+.align-distribute-panel {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-background-soft);
+}
+
+.required-tags-panel-toolbar,
+.diagnostics-panel-toolbar,
+.layer-panel-toolbar,
+.preferences-panel-toolbar,
+.align-distribute-panel-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  border-bottom: 1px solid var(--ev-c-gray-2);
+}
+
+.required-tags-panel-title,
+.diagnostics-panel-title,
+.layer-panel-title,
+.preferences-panel-title,
+.align-distribute-panel-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.required-tags-panel-toolbar button,
+.diagnostics-panel-toolbar button,
+.layer-panel-toolbar button,
+.preferences-panel-toolbar button,
+.align-distribute-panel-toolbar button {
+  cursor: pointer;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  min-width: 26px;
+}
+
+.required-tags-panel-toolbar button:hover,
+.diagnostics-panel-toolbar button:hover,
+.layer-panel-toolbar button:hover,
+.preferences-panel-toolbar button:hover,
+.align-distribute-panel-toolbar button:hover {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.required-tags-panel-body,
+.layer-panel-body,
+.preferences-panel-body,
+.align-distribute-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.required-tags-panel-hint,
+.layer-panel-hint,
+.preferences-panel-hint,
+.align-distribute-panel-hint {
+  font-size: 12px;
+  color: var(--ev-c-text-3);
+  margin: 0 0 4px;
+  line-height: 1.4;
+}

@@ -1,0 +1,7 @@
+.required-tags-panel-hint code {
+  font-family: 'Menlo', 'Lucida Console', monospace;
+  background: var(--color-background-mute);
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-size: 11px;
+}

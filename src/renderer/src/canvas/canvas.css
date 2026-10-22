@@ -1,0 +1,67 @@
+.canvas-view {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.canvas-view-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: row;
+}
+
+.canvas-view-flow {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
+
+/* See ADR 0038: React Flow's default resize handles/lines are too small to
+   reliably grab (5x5px corner dots, a 1px-wide invisible grab corridor
+   along each edge). Scoped under .canvas-view-flow so this cleanly beats
+   the library's own same-specificity `.react-flow__resize-control...`
+   rules regardless of CSS bundling order, rather than relying on source
+   order or `!important`.
+
+   Corner handles: the handle div IS the visible dot AND the entire hit
+   target, so a bigger grab area unavoidably means a bigger dot — no way
+   to split the two here. Same tradeoff the edge-reconnection work already went through
+   for edge reconnect points (tried a smaller-visible/larger-invisible
+   split, walked it back because it felt like an approximation,
+   landed on "the visible size is the real grab size"); same call here,
+   roughly doubled rather than a token bump. Border/radius scaled to
+   match the larger box, same proportions as the library's own default.
+
+   Edge lines: free improvement, no visual tradeoff — the invisible grab
+   corridor (this rule) is a separate box from the always-1px visible
+   border the library draws inside it, so widening the corridor doesn't
+   thicken the line at all. */
+.canvas-view-flow .react-flow__resize-control.handle {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.canvas-view-flow .react-flow__resize-control.line.left,
+.canvas-view-flow .react-flow__resize-control.line.right {
+  width: 8px;
+}
+
+.canvas-view-flow .react-flow__resize-control.line.top,
+.canvas-view-flow .react-flow__resize-control.line.bottom {
+  height: 8px;
+}
+
+/* React Flow draws a box over a multi-selection once it's made. It's noise here
+   (each node already shows its own selection + resize handles) and it sat on top
+   of those handles. The rubber-band box *while* selecting is a different element
+   (.react-flow__selection) and is unaffected. */
+.react-flow__nodesselection-rect {
+  display: none;
+}

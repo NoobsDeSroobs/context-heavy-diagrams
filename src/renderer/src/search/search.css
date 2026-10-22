@@ -1,0 +1,136 @@
+/* Search overlay (ADR 0062) — Ctrl+F-triggered, fixed top-right,
+   not anchored to any toolbar button since there isn't one yet in V1
+   (deliberately provisional, see the ADR). Same panel visual language
+   (background/border/shadow) as .legend-panel/.highlights-panel below,
+   laid out as a single row instead of their column-with-body shape since
+   this is one input plus a few controls, not a scrollable list. */
+.search-overlay {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: var(--color-background-soft);
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  cursor: default;
+}
+
+.search-overlay-input {
+  width: 220px;
+}
+
+/* Read-only in icon mode (ADR 0072) — kept focusable so Enter still
+   cycles matches, but visibly not a text field you can type into. */
+.search-overlay-input:read-only {
+  background: var(--color-background-mute);
+  cursor: default;
+}
+
+/* "Search by icon" button (ADR 0072) — sits between the query field and
+   the Search button. Shows the picked icon once one is chosen, with a
+   small ✕ to drop back to a plain text search. */
+.search-overlay-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.search-overlay button.search-overlay-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 3px;
+}
+
+.search-overlay button.search-overlay-icon.active {
+  background: var(--search-match-color);
+  border-color: var(--search-match-color);
+  color: var(--ev-c-black);
+}
+
+.search-overlay-icon-glyph {
+  display: inline-flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.search-overlay-icon-glyph svg,
+.search-overlay button.search-overlay-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.search-overlay button.search-overlay-icon-clear {
+  padding: 2px 5px;
+  font-size: 11px;
+  line-height: 1;
+}
+
+/* Same button-ish look as .toolbar button — every button in the overlay
+   (Search, Isolate, prev/next, close) shares this rather than each
+   picking up bare browser defaults. */
+.search-overlay button {
+  cursor: pointer;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+.search-overlay button:hover:not(:disabled) {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.search-overlay button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Isolate's pressed state (ADR 0063) — same accent color as a
+   search-match outline/glow, since the two are directly related (Isolate
+   dims everything search *didn't* match). */
+.search-overlay-isolate.active {
+  background: var(--search-match-color);
+  border-color: var(--search-match-color);
+  color: var(--ev-c-black);
+}
+
+.search-overlay-deep {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--ev-c-text-2);
+  white-space: nowrap;
+}
+
+.search-overlay-problem {
+  color: #d9822b;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-overlay-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--ev-c-text-2);
+  white-space: nowrap;
+  min-width: 90px;
+}

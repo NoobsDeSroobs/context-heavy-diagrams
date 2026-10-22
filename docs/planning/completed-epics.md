@@ -435,3 +435,7 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 ### 0143: Package the code by feature
 
 *Done* (confirmed 2026-10-21). Code is grouped by feature inside the electron-vite folders, with the same folder name in `main`, `renderer/src` and `shared`; `shared/diagram.ts` is split into per-feature `schema.ts` files; lint rules keep `shared/` pure and the renderer out of `main/`. No behaviour or file-format change. ADR: [0125](../decisions/0125-code-packaged-by-feature-inside-the-process-folders.md). Follow-ups: 0151 (style types), 0152 (split the large files).
+
+### 0152: Split the large files (helpers, CSS, property panel)
+
+*Done* (confirmed 2026-10-22). The module-level helpers of `Canvas.tsx` moved to feature modules (6,914 to 6,096 lines, three with tests), `main.css` (4,160 lines) became 34 stylesheets beside their features, and `PropertyPanel.tsx` (949 lines) was split into one file per component. All moves are verbatim; the built CSS has the same rules. Design: [ADR 0126](../decisions/0126-canvas-features-are-hooks-that-own-their-state.md) (for the follow-up hooks). Follow-ups: 0153 to 0156.

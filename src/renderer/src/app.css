@@ -1,0 +1,287 @@
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+}
+
+/* Two-slot dock layout — see ADR 0013. Nested, not flat:
+   [canvas-view [diagram-dock]] [utility-dock]. Both docks are real flex
+   layout (React Flow auto-resizes via ResizeObserver), zero-width when
+   empty. */
+.app-shell {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+}
+
+.diagram-dock {
+  flex: 0 0 auto;
+  height: 100%;
+  overflow-y: auto;
+  background: var(--color-background-soft);
+  border-left: 1px solid var(--ev-c-gray-2);
+}
+
+/* Per-mode width, not one fixed value for the dock as a whole — a palette
+   of a few icons needs less room than a property panel with several
+   sections. Neither is user-resizable in v1. */
+.diagram-dock-palette {
+  width: 96px;
+}
+
+/* A variable (not a bare number) so Canvas.tsx can ask how wide the canvas will be
+   once a selection swaps the palette for this panel (see visibleCanvasCenter). */
+:root {
+  --dock-properties-width: 260px;
+}
+
+.diagram-dock-properties {
+  width: var(--dock-properties-width);
+}
+
+.toolbar {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 10;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: var(--color-background-soft);
+  padding: 6px 8px;
+  border-radius: 8px;
+}
+
+.toolbar button {
+  cursor: pointer;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+/* Persona switch (see ADR 0055) — same button-ish look as the rest of the
+   toolbar, styled directly since a native <select> doesn't pick up the
+   `.toolbar button` rule above. */
+.toolbar-persona-select {
+  cursor: pointer;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+
+.toolbar button:hover {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+/* Top menu bar (see ADR 0039) — flat File/Edit/View labels, not the toolbar's
+   own pill-button look, so this reads as a menu bar rather than another
+   row of toolbar buttons. Scoped under .toolbar so these beat `.toolbar
+   button`'s higher-specificity 1-class-plus-tag selector rather than
+   losing to it by cascade order. */
+.menu-bar {
+  display: flex;
+  gap: 2px;
+}
+
+.menu-bar-item {
+  position: relative;
+}
+
+.toolbar .menu-bar-label {
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-text);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+.toolbar .menu-bar-label:hover,
+.toolbar .menu-bar-label.open {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.menu-bar-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-background-soft);
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 6px;
+  padding: 4px;
+  margin-top: 4px;
+  min-width: 200px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.toolbar .menu-bar-dropdown-item {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+.toolbar .menu-bar-dropdown-item:hover:not(:disabled) {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.toolbar .menu-bar-dropdown-item:disabled {
+  color: var(--ev-c-text-3);
+  cursor: default;
+}
+
+.menu-bar-accelerator {
+  font-size: 11px;
+  color: var(--ev-c-text-3);
+}
+
+/* Submenu flyout (ADR 0078) — one level deep. The anchor is the positioned
+   parent the flyout hangs off; it must fill the row so hovering anywhere on
+   the item keeps the flyout open. */
+.menu-bar-submenu-anchor {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-bar-submenu-anchor > .menu-bar-dropdown-item {
+  width: 100%;
+}
+
+.menu-bar-submenu {
+  top: -5px; /* line the first flyout item up with its parent row */
+  left: 100%;
+  margin-top: 0;
+  margin-left: 2px;
+}
+
+.menu-bar-submenu-caret {
+  font-size: 10px;
+  color: var(--ev-c-text-3);
+  margin-left: auto;
+}
+
+/* Non-interactive warning line at the top of a dropdown (MenuBarMenu.notice). */
+.menu-bar-notice {
+  max-width: 260px;
+  padding: 6px 8px 8px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--ev-c-gray-2);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--color-warning-text);
+  cursor: default;
+  user-select: none;
+}
+
+.menu-bar-separator {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--ev-c-gray-2);
+}
+
+.toolbar-path {
+  font-size: 12px;
+  color: var(--ev-c-text-3);
+  margin-left: 4px;
+  font-family: 'Menlo', 'Lucida Console', monospace;
+}
+
+/* Default-edge-style "current pen style" indicator (ADR 0045) —
+   a persistently visible preview, not a setting you have to open a dialog
+   to even see the current value of. */
+.toolbar-edge-style-swatch {
+  cursor: pointer;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--color-text);
+  border-radius: 4px;
+  padding: 2px 5px;
+  display: flex;
+  align-items: center;
+  margin-left: 6px;
+}
+
+.toolbar-edge-style-swatch:hover {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+/* Brief post-save confirmation — appears next to Save/Save As, fades in
+   rather than popping, and is removed from the DOM (by its parent's
+   conditional render) after ~2s rather than just fading to invisible. */
+.toolbar-saved-flash {
+  font-size: 12px;
+  font-weight: 600;
+  color: #2e9e44;
+  animation: toolbar-saved-flash-in 0.15s ease-out;
+}
+
+/* "Changed outside the app" notice (ADR 0091) — sits beside the filename in
+   the toolbar; amber, not red, because nothing is lost until the user saves. */
+.toolbar-external-change {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #b7791f;
+}
+
+.toolbar-external-change button {
+  font-size: 12px;
+  padding: 1px 8px;
+  cursor: pointer;
+}
+
+@keyframes toolbar-saved-flash-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Retrofitted from a position:fixed overlay into a flex child of
+   .utility-dock — see ADR 0013. Internal layout (toolbar + body) unchanged,
+   just its outer positioning. .utility-dock owns the width. */
+.utility-dock {
+  flex: 0 0 auto;
+  height: 100%;
+  width: 360px;
+  border-left: 1px solid var(--ev-c-gray-2);
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.4);
+}
+
+.about-dialog-overlay:has(.alert-dialog) {
+  z-index: 200;
+}
+
+.about-dialog-overlay:has(.conflict-dialog) {
+  z-index: 200;
+}

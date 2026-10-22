@@ -1,0 +1,124 @@
+.icon-picker {
+  position: fixed;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--color-background-soft);
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 6px;
+  padding: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  cursor: default;
+}
+
+/* Shell for the standalone icon search popup (ADR 0072) — the SearchOverlay's
+   "search by icon" button opens this, wrapping the same IconBrowser that
+   IconPicker uses. Same fixed-floating-box treatment as .icon-picker, minus
+   the corner selector and actions row. */
+.icon-search-popup {
+  position: fixed;
+  z-index: 30;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--color-background-soft);
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 6px;
+  padding: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  cursor: default;
+}
+
+/* Only the grid scrolls — the search box (and, in IconPicker, the corner
+   selector and actions row) always stay visible. Capped to ~3 rows. */
+.icon-browser-scroll {
+  max-height: 112px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  /* Reserves the scrollbar's own width as a permanent gutter, so it never
+     paints on top of the grid's rightmost column — this app's
+     Electron/Chromium target supports it, so no need to hardcode a guessed
+     scrollbar width instead. */
+  scrollbar-gutter: stable;
+  /* Explicit, not left to default: setting only overflow-y auto-computes
+     overflow-x to auto too (CSS Overflow spec), which is exactly what was
+     producing the unwanted horizontal scrollbar — now that
+     .icon-browser-grid button's min-width: 0 lets the grid actually fit,
+     there's nothing left that should ever need horizontal scrolling here. */
+  overflow-x: hidden;
+}
+
+.icon-browser-search {
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 12px;
+}
+
+.icon-browser-label {
+  font-size: 11px;
+  color: var(--ev-c-text-3);
+}
+
+.icon-browser-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+}
+
+.icon-browser-grid button {
+  cursor: pointer;
+  aspect-ratio: 1;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  border-radius: 4px;
+  padding: 3px;
+  color: var(--color-text);
+  /* The real cause of the scrollbar overlap/overflow: a grid
+     item's default min-width is auto, which factors in its content's own
+     intrinsic size — each button holds a raw <svg> with its own baked-in
+     size, so the 6 columns refused to shrink below that regardless of the
+     width:100% on the svg/img below, forcing horizontal overflow inside
+     this app's fixed 220px-wide picker. min-width: 0 lets a column
+     actually shrink to fit. */
+  min-width: 0;
+}
+
+.icon-browser-grid button:hover {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.icon-browser-grid button svg,
+.icon-browser-grid button img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.icon-picker-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.icon-picker-actions button {
+  cursor: pointer;
+  flex: 1;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 12px;
+}
+
+.icon-picker-actions button:hover {
+  background: var(--ev-button-alt-hover-bg);
+}
