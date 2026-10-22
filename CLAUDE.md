@@ -35,6 +35,7 @@ Code is grouped by feature inside `src/main`, `src/renderer/src` and `src/shared
 - A feature's persisted types live in `src/shared/<feature>/schema.ts`; `src/shared/diagram/` composes them into `DiagramFile`. Changing one means updating `docs/file-format.md`.
 - App-frame files stay at the tree root, generic widgets go in `renderer/src/ui/`.
 - Never two files in one folder whose names differ only by case (`Foo.tsx` and `foo.ts`): TypeScript on Windows cannot tell them apart.
+- Tests sit beside the code: `*.test.mjs` run on `node --test` (pure code with no aliases), `*.test.ts` / `*.test.tsx` on Vitest ([ADR 0127](docs/decisions/0127-vitest-for-renderer-tests.md)); `npm test` runs both.
 
 ## Cross-platform rule
 

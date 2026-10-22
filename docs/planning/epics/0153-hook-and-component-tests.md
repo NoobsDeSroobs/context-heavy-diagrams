@@ -1,16 +1,18 @@
 # 0153: Hook and component tests
 
 ## Status
-Not Started. Follows [0152](../completed-epics.md#0152-split-the-large-files-helpers-css-property-panel); must land before [0154](0154-canvas-feature-hooks.md).
+Done, awaiting the maintainer's check and merge (2026-10-22). Follows [0152](../completed-epics.md#0152-split-the-large-files-helpers-css-property-panel); must land before [0154](0154-canvas-feature-hooks.md).
 
 ## Goal
-Automated tests for the renderer's core behaviour, so the `Canvas.tsx` hook extraction is checked by more than a manual run. The renderer has almost no tests today; `node --test` cannot load `.tsx` or the `@shared` / `@renderer` aliases.
+Automated tests for the renderer's core behaviour, so the `Canvas.tsx` hook extraction is checked by more than a manual run. [ADR 0127](../../decisions/0127-vitest-for-renderer-tests.md).
 
 ## Tasks
-- [ ] Add Vitest, jsdom and Testing Library as dev dependencies (reusing the Vite config's aliases); run `npm run notices`; write the ADR
-- [ ] Wire it into `npm test` and CI beside the existing `node --test` suite
-- [ ] Core behaviour tests: undo/redo, dirty tracking (toggling the legend and then a highlight must not mark the diagram dirty or open the save dialog), search, add/connect/delete nodes, load and save round trip
-- [ ] Tests for the modules `node --test` cannot load (alias or extensionless runtime imports): `nodeFields`, `hierarchy`, `screenGeometry`, `endpointPosition`, `noteShadows`, and the `toDiagramFile` / `fromDiagramFile` round trip in `diagramConversion`
+- [x] Vitest, jsdom and Testing Library as dev dependencies; `vitest.config.ts` with the renderer's aliases; `npm run notices`; the ADR
+- [x] `npm test` runs `node --test` and `vitest run` (`test:node`, `test:renderer`); CI runs `npm test`
+- [x] Tests for the helper modules `node --test` could not load: `nodeFields`, `hierarchy`, `screenGeometry`, `endpointPosition`, `noteShadows`, and the `toDiagramFile` / `fromDiagramFile` round trip (a diagram using every feature, plus every example diagram)
+- [x] A harness that renders the real `Canvas` with a fake preload bridge (`canvasHarness.tsx`), and tests for closing with and without changes, add, undo and redo, delete, save, and search
+- [x] The legend-then-highlight dialog, reproduced and pinned (see Notes)
 
 ## Notes
-The legend-then-highlight dialog seen on 2026-10-21 (see `PROGRESS.md`) is the first test to write: reproduce it before fixing anything.
+- Toggling the legend, the highlights panel or a highlight does not mark the diagram changed (tested). The dialog came from opening a diagram whose highlight groups are out of date: the automatic resync marks it changed on load. Logged in [known-issues](../../known-issues.md#opening-a-diagram-with-highlight-groups-asks-to-save-when-it-is-closed) and pinned with an `it.fails` test, to be flipped when it is fixed.
+- Not covered: dragging a connection between two handles, and anything that depends on layout or CSS (jsdom has neither); that is for [0155](0155-end-to-end-smoke-test.md).

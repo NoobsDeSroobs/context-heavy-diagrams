@@ -13,10 +13,26 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 ## Open and worked-around at a glance
 
+- [Opening a diagram with highlight groups asks to save when it is closed](#opening-a-diagram-with-highlight-groups-asks-to-save-when-it-is-closed) — Open, reproduced by a test.
 - [Alt+drag duplicate may be swallowed by Linux window managers](#alt-drag-duplicate-may-be-swallowed-by-linux-window-managers) — Open, untested on Linux.
 - [A colour typed in light mode comes back changed (the theme flip is not exactly reversible)](#a-colour-typed-in-light-mode-comes-back-changed-the-theme-flip-is-not-exactly-reversible) — Open, needs a design decision.
 - [A native confirm() dialog left `<select>` elements unresponsive afterward](#a-native-confirm-dialog-left-select-elements-unresponsive-afterward) — Worked around.
 - [Clicking a container selects a different container that visually encloses it](#clicking-a-container-selects-a-different-container-that-visually-encloses-it) — Worked around.
+
+---
+
+## Opening a diagram with highlight groups asks to save when it is closed
+
+**Status:** Open, reproduced by an expected-failure test (`Canvas.test.tsx`)
+**Found:** 2026-10-21 (a save-or-discard dialog after toggling the legend and a highlight); root cause found 2026-10-22
+
+**Symptom:** open an older diagram that has highlight groups (the three gallery examples with highlights do), change nothing, close the window: the app asks whether to save.
+
+**Cause:** the automatic highlight resync (ADR 0026 addendum) runs in the render body of `Canvas.tsx` and calls `markDirty()` whenever it changes the catalog. For older files it adds the implicit "None" (`null`) entry, or a newly allowed value, to each required-tag group as soon as the file loads. Toggling the legend, the highlights panel or a highlight does not mark anything dirty (tested).
+
+**Deliberately not fixed yet:** either the resync at load should not count as a change (as the hierarchy repair does not) or the example files should be saved in sync. The test is `it.fails` until one of them is done.
+
+**References:** `src/renderer/src/canvas/Canvas.tsx` (`resyncedHighlights`), `src/renderer/src/canvas/Canvas.test.tsx`, [ADR 0026](decisions/0026-grouped-highlights.md)
 
 ---
 
