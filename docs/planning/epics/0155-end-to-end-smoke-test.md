@@ -12,4 +12,4 @@ One automated test that launches the built app and walks the basic path, so a br
 - [ ] Run it in CI on Linux and Windows
 
 ## Notes
-Covers what the unit and component tests (0153) cannot: the real main process, the preload bridge and the packaged files. The app itself stays offline ([ADR 0113](../../decisions/0113-enforced-offline-behaviour.md)); check that the driver needs no download at run time.
+Covers what the unit and component tests ([0153](../completed-epics.md#0153-hook-and-component-tests)) cannot: the real main process, the preload bridge and the packaged files. The app itself stays offline ([ADR 0113](../../decisions/0113-enforced-offline-behaviour.md)); check that the driver needs no download at run time.
