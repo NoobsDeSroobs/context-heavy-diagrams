@@ -8,6 +8,7 @@ import {
 import { placeLegend, type LegendCorner, type Rect } from '@shared/legend/legendPlacement'
 import type { ExportLegendItem } from '@shared/legend/legendItems'
 import { MARKER_ID } from '../edges/markerIds'
+import { MARKER_SHAPES } from '@shared/export/markerShapes'
 
 export interface PngExportOptions {
   paddingPx: number
@@ -136,7 +137,56 @@ function resolveMarkersForExport(viewportEl: HTMLElement): () => void {
   return () => restores.forEach((restore) => restore())
 }
 
-// Captures the diagram's content, cropped to the nodes' bounds plus paddingPx at zoom 1 regardless
+// How far an arrowhead can reach to the side of the line it sits on, in stroke widths (markers are
+// sized in stroke-width units).
+const MARKER_HALF_SPAN = Math.max(
+  ...Object.values(MARKER_SHAPES).map((m) => Math.max(m.markerWidth, m.markerHeight) / 2)
+)
+
+// Grows `base` to also contain every drawn edge and edge label under viewportEl, so an edge whose
+// route runs past the outermost node is not cropped out of the export. The edge paths are measured
+// as drawn (getBBox is in flow coordinates, inside the viewport's pan/zoom transform), not
+// rebuilt from the stored points: a curved or orthogonal route can bulge beyond its bend points.
+// A path's stroke and any arrowhead are not part of getBBox, so a margin for them is added.
+// Labels are positioned HTML, so they are measured on screen and converted to flow coordinates.
+export function includeEdgesInBounds(base: Rect, viewportEl: HTMLElement): Rect {
+  let minX = base.x
+  let minY = base.y
+  let maxX = base.x + base.width
+  let maxY = base.y + base.height
+  const add = (x1: number, y1: number, x2: number, y2: number): void => {
+    minX = Math.min(minX, x1)
+    minY = Math.min(minY, y1)
+    maxX = Math.max(maxX, x2)
+    maxY = Math.max(maxY, y2)
+  }
+
+  viewportEl.querySelectorAll<SVGPathElement>('path.react-flow__edge-path').forEach((path) => {
+    if (!path.getAttribute('d')) return
+    const box = path.getBBox()
+    const strokeWidth = parseFloat(getComputedStyle(path).strokeWidth) || 1
+    const hasMarker = path.hasAttribute('marker-start') || path.hasAttribute('marker-end')
+    const margin = strokeWidth / 2 + (hasMarker ? MARKER_HALF_SPAN * strokeWidth : 0)
+    add(box.x - margin, box.y - margin, box.x + box.width + margin, box.y + box.height + margin)
+  })
+
+  const viewportBox = viewportEl.getBoundingClientRect()
+  const scale = new DOMMatrixReadOnly(getComputedStyle(viewportEl).transform).a || 1
+  viewportEl.querySelectorAll<HTMLElement>('.edge-label').forEach((label) => {
+    if (!label.textContent?.trim()) return
+    const box = label.getBoundingClientRect()
+    add(
+      (box.left - viewportBox.left) / scale,
+      (box.top - viewportBox.top) / scale,
+      (box.right - viewportBox.left) / scale,
+      (box.bottom - viewportBox.top) / scale
+    )
+  })
+
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
+}
+
+// Captures the diagram's content, cropped to the nodes' and edges' bounds plus paddingPx at zoom 1 regardless
 // of the current viewport, as a PNG data URL. viewportEl must be `.react-flow__viewport`: it holds
 // only nodes and edges, not Background/Controls/MiniMap (its siblings), so no editor chrome needs
 // hiding. Selection outlines and resize/connection-point handles render conditionally inside each
@@ -147,7 +197,7 @@ export async function captureDiagramPng(
   viewportEl: HTMLElement,
   options: PngExportOptions
 ): Promise<string> {
-  let bounds: Rect = getNodesBounds(nodes)
+  let bounds: Rect = includeEdgesInBounds(getNodesBounds(nodes), viewportEl)
 
   // Built and measured before touching width/height/translate below — a
   // legend that needs the canvas extended (placeLegend, legendPlacement.ts)
