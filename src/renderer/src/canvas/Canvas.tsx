@@ -4,7 +4,6 @@ import { flushSync } from 'react-dom'
 import { SaveAbortedError, isSaveAborted } from '../document/saveAborted'
 import {
   adoptDisk,
-  anyNoteDirty,
   dirtyBaselines,
   dirtyDrafts,
   editNote,
@@ -176,6 +175,8 @@ import { warnIfSavedWithNewer } from '../document/fileVersionWarning'
 import type { TransformPatch } from '../properties/transformPatch'
 import { useTheme } from '../styling/theme'
 import { useEventCallback } from './useEventCallback'
+import { useHistory } from './useHistory'
+import { useDirtyState } from '../document/useDirtyState'
 import { legendLineFromEdgeStyle, type LegendLineLook } from '../legend/legendLinePick'
 import { EDGE_STYLE_DEFAULTS } from '@shared/styling/styleDefaults'
 import { useModifierDragDuplicate } from './useModifierDragDuplicate'
@@ -231,14 +232,6 @@ const DEFAULT_EDGE_OPTIONS = {
   markerEnd: markerUrl('arrowClosed')
 }
 
-// Undo/redo — see ADR 0018. Deliberately just {nodes, edges}, not
-// viewport: panning/zooming isn't a content edit worth undoing.
-interface HistorySnapshot {
-  nodes: Node[]
-  edges: Edge[]
-}
-const MAX_HISTORY = 50
-
 // Toolbar default-edge-style swatch preview only — deliberately a scaled-
 // down echo of LabeledEdge.tsx's own DASH_ARRAY, not a shared import; the
 // swatch is a small honest preview, not a real edge render.
@@ -262,29 +255,11 @@ function CanvasInner(): React.JSX.Element {
   const sessionIdRef = useRef(
     new URLSearchParams(window.location.search).get('session') ?? crypto.randomUUID()
   )
-  // Unsaved-changes tracking (ADR 0040): set at every site that mutates something toDiagramFile()
-  // serializes, not derived from the undo stack, which covers only nodes/edges and not
-  // requiredTags/highlights/legend/noteShadows. Session-only state (enabledHighlightIds, panel-open
-  // flags, ...) never touches it.
-  // Dirty state is per file (ADR 0092): the diagram, the "hub", has its own flag and each detail
-  // note has one inside its shadow. `isDirty` (close prompt, autosave, reload confirms) is "any of
-  // them".
-  const [hubDirty, setHubDirty] = useState(false)
-  // In-memory copies ("shadows") of the detail notes that are open or have
-  // unsaved edits — content, baseline and dirty flag per note (documentSave.ts).
-  // A note nobody has touched has no entry: it is just a file on disk.
-  const [noteShadows, setNoteShadows] = useState<Record<string, NoteShadow>>({})
-  const isDirty = hubDirty || anyNoteDirty(noteShadows)
-  // The latest shadows, readable from callbacks that must not depend on them
-  // (a diagram reload needs to know which notes have unsaved edits).
-  const noteShadowsRef = useRef(noteShadows)
-  useEffect(() => {
-    noteShadowsRef.current = noteShadows
-  })
+  const { hubDirty, setHubDirty, noteShadows, setNoteShadows, noteShadowsRef, isDirty, markDirty } =
+    useDirtyState()
   // Reloads the diagram file from disk keeping unsaved note edits — set once
   // loadDiagramIntoCanvas exists (it is declared after persistDiagram).
   const reloadHubRef = useRef<((path: string) => Promise<void>) | null>(null)
-  const markDirty = useCallback(() => setHubDirty(true), [])
   // What we last read/wrote of the diagram file — the baseline the window-focus
   // check and the save-time conflict check compare against.
   const hubBaselineRef = useRef<{ path: string | null; stamp: Stamp }>({
@@ -520,20 +495,6 @@ function CanvasInner(): React.JSX.Element {
   // relying on that staying true.
   const flowWrapperRef = useRef<HTMLDivElement>(null)
 
-  // Undo/redo history (ADR 0018): explicit pushSnapshot calls at each mutation site, not an effect
-  // reacting to nodes/edges changes. The effect version broke under React StrictMode's dev
-  // double-invoke: its only output was a ref mutation (lastSettledRef), and an effect whose side
-  // effect isn't safe to run twice is what StrictMode catches. StrictMode doesn't double-invoke
-  // event-handler callbacks.
-  const [past, setPast] = useState<HistorySnapshot[]>([])
-  const [future, setFuture] = useState<HistorySnapshot[]>([])
-  // Mid-drag/resize/rotate: don't split one continuous gesture into many
-  // undo steps. Only beginContinuousEdit/endContinuousEdit touch this —
-  // once from the onNodesChange wrapper below (position/dimension changes
-  // carry their own dragging/resizing flag), once from TextNode's rotation
-  // handler (no such flag there — it's just repeated updateNodeData calls).
-  const interactionInProgressRef = useRef(false)
-
   // Latest nodes/edges mirrored into a ref (from an effect), so callbacks that only read the
   // current graph (pushSnapshot, undo/redo, openDetailsPanel) needn't list nodes/edges in their
   // useCallback deps. Those callbacks go through the memoized DiagramContext value (ADR 0056);
@@ -625,45 +586,17 @@ function CanvasInner(): React.JSX.Element {
     []
   )
 
-  const pushSnapshot = useCallback(() => {
-    setPast((prev) => {
-      const next = [...prev, { ...graphRef.current }]
-      return next.length > MAX_HISTORY ? next.slice(next.length - MAX_HISTORY) : next
-    })
-    setFuture([])
-    markDirty()
-  }, [markDirty])
-
-  // Push once at the start of a continuous gesture (guarded so a mid-drag
-  // call is a no-op, not a fresh snapshot), never at the end.
-  const beginContinuousEdit = useCallback(() => {
-    if (!interactionInProgressRef.current) {
-      pushSnapshot()
-      interactionInProgressRef.current = true
-    }
-  }, [pushSnapshot])
-
-  const endContinuousEdit = useCallback(() => {
-    interactionInProgressRef.current = false
-  }, [])
-
-  const undo = useCallback(() => {
-    if (past.length === 0) return
-    const previous = past[past.length - 1]
-    setFuture((prev) => [...prev, { ...graphRef.current }])
-    setPast((prev) => prev.slice(0, -1))
-    setNodes(previous.nodes)
-    setEdges(previous.edges)
-  }, [past, setNodes, setEdges])
-
-  const redo = useCallback(() => {
-    if (future.length === 0) return
-    const next = future[future.length - 1]
-    setPast((prev) => [...prev, { ...graphRef.current }])
-    setFuture((prev) => prev.slice(0, -1))
-    setNodes(next.nodes)
-    setEdges(next.edges)
-  }, [future, setNodes, setEdges])
+  const {
+    past,
+    future,
+    setPast,
+    setFuture,
+    pushSnapshot,
+    beginContinuousEdit,
+    endContinuousEdit,
+    undo,
+    redo
+  } = useHistory({ graphRef, setNodes, setEdges, markDirty })
 
   // Wraps the raw onNodesChange from useNodesState to snapshot at the right
   // granularity: once per discrete change (remove/add/replace, or a
@@ -943,7 +876,7 @@ function CanvasInner(): React.JSX.Element {
         )
       }
     },
-    [rfInstance, currentPath]
+    [rfInstance, currentPath, setNoteShadows]
   )
 
   const toggleDiagnosticsPanel = useCallback(() => {
@@ -1292,10 +1225,13 @@ function CanvasInner(): React.JSX.Element {
   // (so a later undo doesn't restore a stale orientation); it is not itself
   // an undo step. Set create/duplicate/delete/rename likewise just mutate
   // state and mark the diagram dirty, no snapshot.
-  const rewriteHistoryEdges = useCallback((transform: (edges: Edge[]) => Edge[]) => {
-    setPast((p) => p.map((s) => ({ ...s, edges: transform(s.edges) })))
-    setFuture((f) => f.map((s) => ({ ...s, edges: transform(s.edges) })))
-  }, [])
+  const rewriteHistoryEdges = useCallback(
+    (transform: (edges: Edge[]) => Edge[]) => {
+      setPast((p) => p.map((s) => ({ ...s, edges: transform(s.edges) })))
+      setFuture((f) => f.map((s) => ({ ...s, edges: transform(s.edges) })))
+    },
+    [setPast, setFuture]
+  )
 
   const switchEdgeDirectionSet = useCallback(
     (toId: string) => {
@@ -1500,7 +1436,7 @@ function CanvasInner(): React.JSX.Element {
       }))
       markDirty()
     },
-    [setNodes, markDirty]
+    [setNodes, markDirty, setPast, setFuture]
   )
 
   const removeSecurityEntity = useCallback(
@@ -1522,7 +1458,7 @@ function CanvasInner(): React.JSX.Element {
       }))
       markDirty()
     },
-    [setNodes, markDirty]
+    [setNodes, markDirty, setPast, setFuture]
   )
 
   const updateRequiredTags = useCallback(
@@ -1808,7 +1744,7 @@ function CanvasInner(): React.JSX.Element {
       }
       return matchedIds
     },
-    [nodes, edges, currentPath, deepSearchEnabled]
+    [nodes, edges, currentPath, deepSearchEnabled, noteShadowsRef]
   )
 
   // The stable next/prev order: nodes in their current array order, then edges.
@@ -2052,7 +1988,7 @@ function CanvasInner(): React.JSX.Element {
           : { ...prev, [nodeId]: loadedNoteShadow(nodeId, existingPath, stamp, content) }
       )
     })
-  }, [detailsPanelNodeId, noteShadows, nodes, currentPath])
+  }, [detailsPanelNodeId, noteShadows, nodes, currentPath, setNoteShadows])
 
   // Outside-the-app edit to the note shown in the open Details panel (ADR 0092,
   // same detector as the diagram's focus check). Runs when the panel opens on an
@@ -3611,7 +3547,9 @@ function CanvasInner(): React.JSX.Element {
       activeEdgeDirectionSetId,
       security,
       hubDirty,
-      noteShadows
+      noteShadows,
+      setHubDirty,
+      setNoteShadows
     ]
   )
 
@@ -3977,7 +3915,18 @@ function CanvasInner(): React.JSX.Element {
       // ADR 0084 — surface missing referenced files in Diagnostics.
       void scanMissingFiles(openedNodes, openedLegend, path)
     },
-    [setNodes, setEdges, runSync, scanMissingFiles, updateNodeInternals]
+    [
+      setNodes,
+      setEdges,
+      runSync,
+      scanMissingFiles,
+      updateNodeInternals,
+      setPast,
+      setFuture,
+      setHubDirty,
+      setNoteShadows,
+      noteShadowsRef
+    ]
   )
 
   // A window opened with an initial diagram (File -> Open, or either link-navigation flow) gets it
@@ -4018,7 +3967,7 @@ function CanvasInner(): React.JSX.Element {
           `Couldn't open ${path}: ${error instanceof Error ? error.message : String(error)}`
         )
       })
-  }, [loadDiagramIntoCanvas, markDirty])
+  }, [loadDiagramIntoCanvas, markDirty, setNoteShadows])
 
   // A window created by the startup orphan scan (recovery.ts) — a diagram
   // that crashed before ever being saved, so there's no path for the
@@ -4031,7 +3980,7 @@ function CanvasInner(): React.JSX.Element {
       setNoteShadows(shadowsFromSnapshot(snapshot))
       markDirty()
     })
-  }, [loadDiagramIntoCanvas, markDirty])
+  }, [loadDiagramIntoCanvas, markDirty, setNoteShadows])
 
   // Periodic autosave (ADR 0040) — every 5 s (was 60 s; an edit made and then
   // killed within the minute was simply lost), but only while isDirty AND only if
