@@ -22,6 +22,12 @@
   height: 100%;
 }
 
+/* The diagram's font (ADR 0130). Set on the viewport, not the canvas, so the zoom controls and the
+   minimap keep the app's own font; an element's own fontFamily still wins, being set on the element. */
+.canvas-view-flow .react-flow__viewport {
+  font-family: var(--diagram-font-family, inherit);
+}
+
 /* See ADR 0038: React Flow's default resize handles/lines are too small to
    reliably grab (5x5px corner dots, a 1px-wide invisible grab corridor
    along each edge). Scoped under .canvas-view-flow so this cleanly beats

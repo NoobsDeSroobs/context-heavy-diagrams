@@ -56,7 +56,11 @@ function kindOf(type: string | undefined): LaidOutKind {
 // A node without a stored size is "sized to content" by the canvas. There is no layout engine
 // here, so the content is measured with the same estimate the wrapping uses (textLayout.ts); a
 // diagram written by this app always carries sizes, so this only serves hand-written files.
-function estimateSize(node: DiagramNode, kind: LaidOutKind): { width: number; height: number } {
+function estimateSize(
+  node: DiagramNode,
+  kind: LaidOutKind,
+  defaultFontFamily: string
+): { width: number; height: number } {
   if (kind === 'line') {
     const points = node.data.points ?? []
     if (points.length === 0)
@@ -68,7 +72,7 @@ function estimateSize(node: DiagramNode, kind: LaidOutKind): { width: number; he
     }
   }
   const type = styledNodeType(node.type)
-  const look = resolveLabelLook(type, node.style, 'light', DEFAULT_FONT_FAMILY)
+  const look = resolveLabelLook(type, node.style, 'light', defaultFontFamily)
   const lines = wrapText(node.data.label ?? '', 0, look.font)
   const textWidth = Math.max(0, ...lines.map((line) => measureText(line, look.font)))
   const textHeight = lines.length * look.font.size * LINE_HEIGHT_EM
@@ -117,7 +121,7 @@ export function layoutNodes(diagram: DiagramFile): Map<string, LaidOutNode> {
   diagram.nodes.forEach((node, order) => {
     const kind = kindOf(node.type)
     const { x, y, z } = resolve(node)
-    const size = node.size ?? estimateSize(node, kind)
+    const size = node.size ?? estimateSize(node, kind, diagram.fontFamily ?? DEFAULT_FONT_FAMILY)
     laid.set(node.id, { node, kind, x, y, width: size.width, height: size.height, z, order })
   })
   return laid

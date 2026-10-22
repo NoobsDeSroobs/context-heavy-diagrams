@@ -4,6 +4,7 @@ import type { AppPreferences } from './preferences'
 import { MIN_RECENT_DIAGRAMS_LIMIT } from '@shared/preferences/preferences'
 import { FieldRow, NumberField, SelectField } from '../ui/fields'
 import { useRafThrottledCallback } from '../ui/useRafThrottledCallback'
+import { useFontOptions } from '../styling/useFontOptions'
 
 // '' means the field is absent (bezier, today's only historical behavior)
 // — see PropertyPanel.tsx's identical ROUTING_STYLE_OPTIONS/own comment on
@@ -163,6 +164,8 @@ export default function PreferencesPanel({
   // input doesn't go through that shared component (see the comment below),
   // so it needs its own throttle rather than inheriting one.
   const throttledOnChange = useRafThrottledCallback(onChange)
+  // For a diagram that sets no font of its own (ADR 0130).
+  const defaultFontOptions = useFontOptions([preferences.defaultFontFamily], 'Built-in font')
   return (
     <div className="preferences-panel">
       <div className="preferences-panel-toolbar">
@@ -207,6 +210,14 @@ export default function PreferencesPanel({
               }
             })
           }
+          pushSnapshot={() => {}}
+        />
+        <SelectField
+          label="Default font"
+          value={preferences.defaultFontFamily ?? ''}
+          mixed={false}
+          options={defaultFontOptions}
+          onChange={(v) => onChange({ defaultFontFamily: v === '' ? undefined : v })}
           pushSnapshot={() => {}}
         />
         <FieldRow label="Scan for unsaved diagrams on startup">

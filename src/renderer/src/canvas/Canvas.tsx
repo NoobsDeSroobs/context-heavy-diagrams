@@ -1,5 +1,6 @@
 import { showAlert } from '../ui/alerts'
 import { useZoomedConnectionHandles } from './useZoomedConnectionHandles'
+import { effectiveDiagramFont } from '@shared/styling/fontStack'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   adoptDisk,
@@ -248,6 +249,8 @@ function CanvasInner(): React.JSX.Element {
   const [diagramMaxConnectionPointsPerSide, setDiagramMaxConnectionPointsPerSide] = useState<
     number | undefined
   >(undefined)
+  // The diagram's own font (ADR 0130), same file-scoped treatment as the override above.
+  const [diagramFontFamily, setDiagramFontFamily] = useState<string | undefined>(undefined)
   // Edge hover (the hover-revealed bend-point handles of catmull-rom edges, ADR 0057) is tracked
   // per edge inside LabeledEdge, not here (ADR 0073): one shared hoveredEdgeId materialized onto
   // edge.data rebuilt the whole edges array on every hover.
@@ -266,6 +269,8 @@ function CanvasInner(): React.JSX.Element {
   // Deliberately not reset by loadDiagramIntoCanvas below; only the panel's
   // open/closed UI state is.
   const { preferences, updatePreferences } = usePreferences()
+  // What is drawn: the diagram's font, else the personal default (ADR 0130).
+  const effectiveFontFamily = effectiveDiagramFont(diagramFontFamily, preferences.defaultFontFamily)
   const [contextMenu, setContextMenu] = useState<{
     x: number
     y: number
@@ -727,7 +732,8 @@ function CanvasInner(): React.JSX.Element {
       diagramMaxConnectionPointsPerSide,
       edgeDirectionSets,
       activeEdgeDirectionSetId,
-      security
+      security,
+      diagramFontFamily
     )
     setChangesDiff(diffDiagrams(saved, current))
   }, [
@@ -740,6 +746,7 @@ function CanvasInner(): React.JSX.Element {
     legend,
     gravityPresets,
     diagramMaxConnectionPointsPerSide,
+    diagramFontFamily,
     edgeDirectionSets,
     activeEdgeDirectionSetId,
     security,
@@ -785,6 +792,14 @@ function CanvasInner(): React.JSX.Element {
   const updateDiagramMaxConnectionPointsPerSide = useCallback(
     (value: number | undefined) => {
       setDiagramMaxConnectionPointsPerSide(value)
+      markDirty()
+    },
+    [markDirty]
+  )
+
+  const updateDiagramFontFamily = useCallback(
+    (value: string | undefined) => {
+      setDiagramFontFamily(value)
       markDirty()
     },
     [markDirty]
@@ -2202,6 +2217,7 @@ function CanvasInner(): React.JSX.Element {
       setLegend,
       gravityPresets,
       diagramMaxConnectionPointsPerSide,
+      diagramFontFamily,
       edgeDirectionSets,
       activeEdgeDirectionSetId,
       security,
@@ -2238,6 +2254,7 @@ function CanvasInner(): React.JSX.Element {
     legend,
     gravityPresets,
     diagramMaxConnectionPointsPerSide,
+    diagramFontFamily,
     edgeDirectionSets,
     activeEdgeDirectionSetId,
     security,
@@ -2275,6 +2292,7 @@ function CanvasInner(): React.JSX.Element {
         legend: openedLegend,
         gravityPresets: openedGravityPresets,
         maxConnectionPointsPerSide: openedMaxConnectionPointsPerSide,
+        fontFamily: openedFontFamily,
         edgeDirectionSets: openedEdgeDirectionSets,
         activeEdgeDirectionSetId: openedActiveEdgeDirectionSetId,
         security: openedSecurity,
@@ -2295,7 +2313,8 @@ function CanvasInner(): React.JSX.Element {
         openedMaxConnectionPointsPerSide,
         openedEdgeDirectionSets,
         openedActiveEdgeDirectionSetId,
-        openedSecurity
+        openedSecurity,
+        openedFontFamily
       )
       // savedWith is stamped by the save itself, and a zIndex the file leaves out is a default (ADR
       // 0035) that never changes how the diagram looks (diagrams written by hand or by an assistant
@@ -2345,6 +2364,7 @@ function CanvasInner(): React.JSX.Element {
       setLegendPanelOpen(false)
       setGravityPresets(openedGravityPresets)
       setDiagramMaxConnectionPointsPerSide(openedMaxConnectionPointsPerSide)
+      setDiagramFontFamily(openedFontFamily)
       setEdgeDirectionSets(openedEdgeDirectionSets)
       setActiveEdgeDirectionSetId(openedActiveEdgeDirectionSetId)
       setSecurity(openedSecurity)
@@ -2446,6 +2466,7 @@ function CanvasInner(): React.JSX.Element {
     legend,
     gravityPresets,
     diagramMaxConnectionPointsPerSide,
+    diagramFontFamily,
     edgeDirectionSets,
     activeEdgeDirectionSetId,
     security,
@@ -2988,6 +3009,7 @@ function CanvasInner(): React.JSX.Element {
       entityHighlightNodeId,
       paletteColors: activeStylePalette.colors,
       paletteFonts: activeStylePalette.fonts,
+      diagramFontFamily: effectiveFontFamily,
       gravityPresets: effectiveGravityPresets(
         gravityPresets,
         preferences.gravityPresetsUserDefault
@@ -3023,6 +3045,7 @@ function CanvasInner(): React.JSX.Element {
       theme,
       entityHighlightNodeId,
       activeStylePalette,
+      effectiveFontFamily,
       gravityPresets,
       preferences.gravityPresetsUserDefault,
       searchMatchIds,
@@ -3185,6 +3208,9 @@ function CanvasInner(): React.JSX.Element {
                     : ''
                 }${legendLinePick ? ' legend-line-pick' : ''}`}
                 ref={flowWrapperRef}
+                // Read by canvas.css for everything drawn in the diagram (ADR 0130); a CSS variable
+                // so a font change re-renders no node. undefined leaves the built-in font.
+                style={{ '--diagram-font-family': effectiveFontFamily } as React.CSSProperties}
                 onDragOver={onCanvasDragOver}
                 onDrop={onCanvasDrop}
               >
@@ -3637,6 +3663,9 @@ function CanvasInner(): React.JSX.Element {
               maxConnectionPointsPerSide={diagramMaxConnectionPointsPerSide}
               preferencesDefault={preferences.maxConnectionPointsPerSide}
               onChangeMaxConnectionPoints={updateDiagramMaxConnectionPointsPerSide}
+              fontFamily={diagramFontFamily}
+              preferencesFontFamily={preferences.defaultFontFamily}
+              onChangeFontFamily={updateDiagramFontFamily}
               requiredTags={requiredTags}
               usedTags={usedTags}
               onChangeRequiredTags={updateRequiredTags}

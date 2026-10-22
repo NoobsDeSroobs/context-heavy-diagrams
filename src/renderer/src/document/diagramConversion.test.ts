@@ -19,7 +19,8 @@ const roundTrip = (file: DiagramFile): DiagramFile => {
     r.maxConnectionPointsPerSide,
     r.edgeDirectionSets,
     r.activeEdgeDirectionSetId,
-    r.security
+    r.security,
+    r.fontFamily
   )
 }
 
@@ -31,6 +32,7 @@ const fixture = (): DiagramFile => ({
   legend: [{ id: 'l1', kind: 'line', label: 'Calls', color: '#336699', lineStyle: 'dashed' }],
   gravityPresets: [{ id: 'g1', label: 'Tight', value: 0.2 }],
   maxConnectionPointsPerSide: 3,
+  fontFamily: "'Georgia', serif",
   security: {
     threats: [{ id: 't1', name: 'Spoofing' }],
     matrixEntityIds: ['a'],

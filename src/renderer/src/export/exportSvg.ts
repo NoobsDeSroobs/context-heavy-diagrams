@@ -22,6 +22,8 @@ export interface SvgExportParams {
   edgeStraightSegmentLength: number
   diagramPath: string | null
   title?: string
+  // The font the app draws this diagram in, when the diagram has none of its own (ADR 0130).
+  fontFamily?: string
 }
 
 // Resolves every icon the diagram draws, then renders. Built-in icons are bundled markup, drawn
@@ -57,6 +59,7 @@ export async function buildDiagramSvg(
     enabledHighlightIds: params.enabledHighlightIds,
     edgeStraightSegmentLength: params.edgeStraightSegmentLength,
     icons,
+    fontFamily: params.fontFamily,
     title: params.title
   })
 }

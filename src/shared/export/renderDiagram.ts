@@ -55,7 +55,7 @@ export interface SvgExportOptions {
   edgeStraightSegmentLength: number
   // Icons by iconKey; an icon missing from here is left out.
   icons: Map<string, IconAsset>
-  // Falls back to the app's page font.
+  // Falls back to the diagram's own font, then the app's page font.
   fontFamily?: string
   // Written as the document <title>, for accessibility.
   title?: string
@@ -393,7 +393,7 @@ function applyStroke(look: LineLook): string {
 export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions): string {
   const theme = options.theme
   const tokens = PAGE_TOKENS[theme]
-  const family = options.fontFamily ?? DEFAULT_FONT_FAMILY
+  const family = options.fontFamily ?? diagram.fontFamily ?? DEFAULT_FONT_FAMILY
   const enabled = new Set(options.enabledHighlightIds ?? [])
   const highlights = diagram.highlights ?? []
   const extent = new Extent()

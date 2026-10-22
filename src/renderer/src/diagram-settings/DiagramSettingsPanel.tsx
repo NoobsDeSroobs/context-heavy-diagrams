@@ -6,7 +6,9 @@ import type {
   JsonValue,
   RequiredTagDefinition
 } from '@shared/diagram'
-import { CollapsibleSection } from '../ui/fields'
+import { primaryFamily } from '@shared/styling/fontStack'
+import { CollapsibleSection, SelectField } from '../ui/fields'
+import { useFontOptions } from '../styling/useFontOptions'
 import RequiredTagsSection from '../tagging/RequiredTagsSection'
 import GravityPresetsSection from '../nodes/GravityPresetsSection'
 import EdgeDirectionSetsSection from '../edges/EdgeDirectionSetsSection'
@@ -19,6 +21,11 @@ interface DiagramSettingsPanelProps {
   maxConnectionPointsPerSide: number | undefined
   preferencesDefault: number
   onChangeMaxConnectionPoints: (value: number | undefined) => void
+  // --- Font (ADR 0130) ---
+  // Raw diagram value, like the field above; the Preferences default is what undefined falls back to.
+  fontFamily: string | undefined
+  preferencesFontFamily: string | undefined
+  onChangeFontFamily: (value: string | undefined) => void
   // --- Required tags section ---
   requiredTags: RequiredTagDefinition[]
   usedTags: { key: string; value: JsonValue }[]
@@ -76,6 +83,9 @@ export default function DiagramSettingsPanel({
   maxConnectionPointsPerSide,
   preferencesDefault,
   onChangeMaxConnectionPoints,
+  fontFamily,
+  preferencesFontFamily,
+  onChangeFontFamily,
   requiredTags,
   usedTags,
   onChangeRequiredTags,
@@ -98,6 +108,10 @@ export default function DiagramSettingsPanel({
   const isOverridden = maxConnectionPointsPerSide !== undefined
   const [draft, setDraft, onFocus, onBlur] = useDraft(
     String(maxConnectionPointsPerSide ?? preferencesDefault)
+  )
+  const fontOptions = useFontOptions(
+    [fontFamily],
+    preferencesFontFamily ? `My default (${primaryFamily(preferencesFontFamily)})` : 'Built-in font'
   )
 
   return (
@@ -142,6 +156,20 @@ export default function DiagramSettingsPanel({
         >
           Revert to Preferences default
         </button>
+
+        <SelectField
+          label="Font"
+          value={fontFamily ?? ''}
+          mixed={false}
+          options={fontOptions}
+          onChange={(v) => onChangeFontFamily(v === '' ? undefined : v)}
+          pushSnapshot={() => {}}
+        />
+        <p className="required-tags-panel-hint">
+          Used for every label in this diagram unless an element sets its own. A font installed on
+          your computer may look different on another one; the fallback after the name keeps it
+          close.
+        </p>
 
         <CollapsibleSection title="Required tags" sectionKey="diagram-settings-required-tags">
           <RequiredTagsSection

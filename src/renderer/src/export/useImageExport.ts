@@ -11,6 +11,7 @@ import type {
   RequiredTagDefinition
 } from '@shared/diagram'
 import { buildExportLegendItems } from '@shared/legend/legendItems'
+import { effectiveDiagramFont } from '@shared/styling/fontStack'
 import { directionSetLegendRow } from '../edges/edgeDirectionSets'
 import { toDiagramFile } from '../document/diagramConversion'
 import { showAlert } from '../ui/alerts'
@@ -30,12 +31,13 @@ export interface ImageExportInputs {
   legend: LegendEntry[]
   gravityPresets: GravityPreset[]
   diagramMaxConnectionPointsPerSide: number | undefined
+  diagramFontFamily: string | undefined
   edgeDirectionSets: EdgeDirectionSet[]
   activeEdgeDirectionSetId: string | undefined
   security: DiagramSecurity
   enabledHighlightIds: Set<string>
   theme: Theme
-  preferences: Pick<AppPreferences, 'edgeStraightSegmentLength'>
+  preferences: Pick<AppPreferences, 'edgeStraightSegmentLength' | 'defaultFontFamily'>
   flowWrapperRef: React.RefObject<HTMLDivElement | null>
   updateNodeInternals: (nodeIds: string[]) => void
 }
@@ -61,6 +63,7 @@ export function useImageExport(
     legend,
     gravityPresets,
     diagramMaxConnectionPointsPerSide,
+    diagramFontFamily,
     edgeDirectionSets,
     activeEdgeDirectionSetId,
     security,
@@ -192,7 +195,8 @@ export function useImageExport(
           diagramMaxConnectionPointsPerSide,
           edgeDirectionSets,
           activeEdgeDirectionSetId,
-          security
+          security,
+          diagramFontFamily
         )
         const fileName = currentPath ? currentPath.split(/[\\/]/).pop()! : 'diagram.chd'
         const svg = await buildDiagramSvg(diagram, {
@@ -204,6 +208,7 @@ export function useImageExport(
           enabledHighlightIds: [...enabledHighlightIds],
           edgeStraightSegmentLength: preferences.edgeStraightSegmentLength,
           diagramPath: currentPath,
+          fontFamily: effectiveDiagramFont(diagramFontFamily, preferences.defaultFontFamily),
           title: fileName.replace(/\.chd$/, '')
         })
         await window.api.exportSvgToFile(svg, fileName.replace(/\.chd$/, '') + '.svg')
@@ -220,6 +225,7 @@ export function useImageExport(
       legend,
       gravityPresets,
       diagramMaxConnectionPointsPerSide,
+      diagramFontFamily,
       edgeDirectionSets,
       activeEdgeDirectionSetId,
       security,
@@ -227,7 +233,8 @@ export function useImageExport(
       theme,
       exportPngEffectiveColorHex,
       enabledHighlightIds,
-      preferences.edgeStraightSegmentLength
+      preferences.edgeStraightSegmentLength,
+      preferences.defaultFontFamily
     ]
   )
 

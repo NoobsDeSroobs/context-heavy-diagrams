@@ -38,7 +38,8 @@ export function toDiagramFile(
   maxConnectionPointsPerSide: number | undefined,
   edgeDirectionSets: EdgeDirectionSet[],
   activeEdgeDirectionSetId: string | undefined,
-  security: DiagramSecurity
+  security: DiagramSecurity,
+  fontFamily: string | undefined
 ): DiagramFile {
   // Edge direction sets (ADR 0081): on disk, every edge is stored in the
   // *base* (first) set's orientation regardless of which set is active, so
@@ -69,6 +70,7 @@ export function toDiagramFile(
     legend: legend.length > 0 ? legend : undefined,
     gravityPresets: gravityPresets.length > 0 ? gravityPresets : undefined,
     maxConnectionPointsPerSide,
+    fontFamily,
     // serializeDiagram drops these below 2 sets — pass them through as-is.
     edgeDirectionSets: edgeDirectionSets.length > 0 ? edgeDirectionSets : undefined,
     activeEdgeDirectionSetId,
@@ -137,6 +139,7 @@ export function fromDiagramFile(diagram: DiagramFile): {
   legend: LegendEntry[]
   gravityPresets: GravityPreset[]
   maxConnectionPointsPerSide: number | undefined
+  fontFamily: string | undefined
   edgeDirectionSets: EdgeDirectionSet[]
   activeEdgeDirectionSetId: string | undefined
   security: DiagramSecurity
@@ -288,6 +291,7 @@ export function fromDiagramFile(diagram: DiagramFile): {
     legend: diagram.legend ?? [],
     gravityPresets: diagram.gravityPresets ?? [],
     maxConnectionPointsPerSide: diagram.maxConnectionPointsPerSide,
+    fontFamily: diagram.fontFamily || undefined,
     edgeDirectionSets: directionSets.length >= 1 ? directionSets : [],
     activeEdgeDirectionSetId,
     security,
