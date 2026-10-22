@@ -52,6 +52,7 @@ import {
 import '@xyflow/react/dist/style.css'
 import {
   createEmptyDiagram,
+  serializeDiagram,
   type AggregateMethod,
   type CombineMethod,
   type ConnectionPoint,
@@ -194,7 +195,6 @@ import {
   deriveEdgeFields,
   newNodeId,
   nextZIndex,
-  nodeMetadataEligible,
   isConnectableNodeType
 } from './nodeFields'
 import { isVoidDrop, pointFromEvent, visibleCanvasCenter } from './screenGeometry'
@@ -203,7 +203,8 @@ import { resolveEndpointPosition } from '../edges/endpointPosition'
 import { detailsPanelTitle, detailsNoteName } from '../details/detailsLabels'
 import { shadowsFromSnapshot } from '../document/noteShadows'
 import { toDiagramFile, fromDiagramFile } from '../document/diagramConversion'
-import { seedMetadata, syncElementMetadata } from '../tagging/metadataSync'
+import { seedMetadata } from '../tagging/metadataSync'
+import { syncEdgeMetadata, syncNodeMetadata } from '../tagging/syncElements'
 import { collectResourceRefs, applyMissingFileRemoval } from '../diagnostics/resourceRefs'
 
 // Defined at module scope so React Flow gets a stable reference — recreating
@@ -574,31 +575,8 @@ function CanvasInner(): React.JSX.Element {
   const runSync = useCallback(
     (tags: RequiredTagDefinition[]) => {
       const notices: string[] = []
-      setNodes((nds) =>
-        nds.map((n) => {
-          if (!nodeMetadataEligible(n.type)) return n
-          const label = `${n.type === 'entity' ? 'Entity' : 'Container'} "${String(n.data?.label ?? n.id)}"`
-          const metadata = syncElementMetadata(
-            n.data?.metadata as Record<string, MetadataEntry> | undefined,
-            tags,
-            label,
-            notices
-          )
-          return { ...n, data: { ...n.data, metadata } }
-        })
-      )
-      setEdges((eds) =>
-        eds.map((e) => {
-          const label = `Edge "${(typeof e.data?.label === 'string' && e.data.label) || e.id}"`
-          const metadata = syncElementMetadata(
-            e.data?.metadata as Record<string, MetadataEntry> | undefined,
-            tags,
-            label,
-            notices
-          )
-          return { ...e, data: { ...e.data, metadata } }
-        })
-      )
+      setNodes((nds) => syncNodeMetadata(nds, tags, notices))
+      setEdges((eds) => syncEdgeMetadata(eds, tags, notices))
       setDiagnostics(notices)
     },
     [setNodes, setEdges]
@@ -3869,12 +3847,41 @@ function CanvasInner(): React.JSX.Element {
         security: openedSecurity,
         hierarchyNotes: openedHierarchyNotes
       } = fromDiagramFile(diagram)
+      // Anything the load repaired by itself (a dangling container reference, a missing zIndex, a
+      // required tag reset, a stale security reference, ...) makes the file differ from what is on
+      // disk, so it counts as a change to save (ADR 0128): compare what a save would write with
+      // what was read.
+      const wouldSave = toDiagramFile(
+        syncNodeMetadata(openedNodes, openedRequiredTags, []),
+        syncEdgeMetadata(openedEdges, openedRequiredTags, []),
+        openedMetadata,
+        openedRequiredTags,
+        openedHighlights,
+        openedLegend,
+        openedGravityPresets,
+        openedMaxConnectionPointsPerSide,
+        openedEdgeDirectionSets,
+        openedActiveEdgeDirectionSetId,
+        openedSecurity
+      )
+      // savedWith is stamped by the save itself, and a zIndex the file leaves out is a default (ADR
+      // 0035) that never changes how the diagram looks (diagrams written by hand or by an assistant
+      // usually omit it), so neither counts.
+      const filledZIndex = new Map(wouldSave.nodes.map((n) => [n.id, n.zIndex]))
+      const asRead: DiagramFile = {
+        ...diagram,
+        savedWith: undefined,
+        nodes: diagram.nodes.map((n) =>
+          n.zIndex === undefined ? { ...n, zIndex: filledZIndex.get(n.id) } : n
+        )
+      }
+      const repairedOnLoad = serializeDiagram(wouldSave) !== serializeDiagram(asRead)
       // A different diagram entirely — old undo history doesn't apply to
       // it (and, worse, undoing across a load boundary would try to
       // restore a previous diagram's nodes into the wrong file context).
       setPast([])
       setFuture([])
-      setHubDirty(false)
+      setHubDirty(repairedOnLoad)
       // React Flow measures every freshly mounted node's DOM size via ResizeObserver and reports a
       // 'dimensions' NodeChange with resizing undefined, which by shape alone looks like
       // onNodesChange's "discrete edit" below. That was a harmless extra undo entry until

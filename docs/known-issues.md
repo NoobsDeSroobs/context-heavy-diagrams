@@ -13,7 +13,6 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 ## Open and worked-around at a glance
 
-- [Opening a diagram with highlight groups asks to save when it is closed](#opening-a-diagram-with-highlight-groups-asks-to-save-when-it-is-closed) — Open, reproduced by a test.
 - [Alt+drag duplicate may be swallowed by Linux window managers](#alt-drag-duplicate-may-be-swallowed-by-linux-window-managers) — Open, untested on Linux.
 - [A colour typed in light mode comes back changed (the theme flip is not exactly reversible)](#a-colour-typed-in-light-mode-comes-back-changed-the-theme-flip-is-not-exactly-reversible) — Open, needs a design decision.
 - [A native confirm() dialog left `<select>` elements unresponsive afterward](#a-native-confirm-dialog-left-select-elements-unresponsive-afterward) — Worked around.
@@ -23,16 +22,16 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 ## Opening a diagram with highlight groups asks to save when it is closed
 
-**Status:** Open, reproduced by an expected-failure test (`Canvas.test.tsx`)
-**Found:** 2026-10-21 (a save-or-discard dialog after toggling the legend and a highlight); root cause found 2026-10-22
+**Status:** Solved (2026-10-22, [ADR 0128](decisions/0128-a-diagram-repaired-on-load-counts-as-changed.md))
+**Found:** 2026-10-21 (a save-or-discard dialog after toggling the legend and a highlight)
 
-**Symptom:** open an older diagram that has highlight groups (the three gallery examples with highlights do), change nothing, close the window: the app asks whether to save.
+**Symptom:** open an older diagram that has highlight groups (the gallery examples with highlights did), change nothing, close the window: the app asks whether to save. Toggling the legend, the highlights panel or a highlight was never the cause.
 
-**Cause:** the automatic highlight resync (ADR 0026 addendum) runs in the render body of `Canvas.tsx` and calls `markDirty()` whenever it changes the catalog. For older files it adds the implicit "None" (`null`) entry, or a newly allowed value, to each required-tag group as soon as the file loads. Toggling the legend, the highlights panel or a highlight does not mark anything dirty (tested).
+**Cause:** the automatic highlight resync (ADR 0026 addendum) runs while `Canvas.tsx` renders and calls `markDirty()` when it changes the catalog; for older files it adds the implicit "None" (`null`) entry or a newly allowed value. Every other repair at load (container references, required tags, security references) was silent, so the same kind of change sometimes asked to save and usually did not.
 
-**Deliberately not fixed yet:** either the resync at load should not count as a change (as the hierarchy repair does not) or the example files should be saved in sync. The test is `it.fails` until one of them is done.
+**Fix:** a diagram the load had to repair now always counts as changed (a comparison of what a save would write with what was read, in `loadDiagramIntoCanvas`), and the four example files that needed repairs were saved in sync. `Canvas.test.tsx` opens every example and fails if one would ask to save.
 
-**References:** `src/renderer/src/canvas/Canvas.tsx` (`resyncedHighlights`), `src/renderer/src/canvas/Canvas.test.tsx`, [ADR 0026](decisions/0026-grouped-highlights.md)
+**References:** `src/renderer/src/canvas/Canvas.tsx` (`repairedOnLoad`), `src/renderer/src/canvas/Canvas.test.tsx`
 
 ---
 
