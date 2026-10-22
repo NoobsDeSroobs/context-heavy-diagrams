@@ -65,7 +65,6 @@ import {
   type IconRef,
   type IconSlot,
   type JsonValue,
-  type LegendEntry,
   type LinePoint,
   type MetadataEntry,
   type NodeStyle,
@@ -95,7 +94,7 @@ import IconBrowser from '../icons/IconBrowser'
 import ColorPickerPopup from '../styling/ColorPickerPopup'
 import StylePicker from '../styling/StylePicker'
 import DetailsPanel from '../details/DetailsPanel'
-import DiagnosticsPanel, { type MissingFileEntry } from '../diagnostics/DiagnosticsPanel'
+import DiagnosticsPanel from '../diagnostics/DiagnosticsPanel'
 import ChangesPanel, { type DetailsChangedEntry } from '../document/ChangesPanel'
 import HighlightsPanel from '../tagging/HighlightsPanel'
 import SearchOverlay from '../search/SearchOverlay'
@@ -159,6 +158,7 @@ import { useStyleBrush } from '../styling/useStyleBrush'
 import { useLegendLinePick } from '../legend/useLegendLinePick'
 import { useLegend } from '../legend/useLegend'
 import { useHighlights } from '../tagging/useHighlights'
+import { useDiagnostics } from '../diagnostics/useDiagnostics'
 import { useDirtyState } from '../document/useDirtyState'
 import { useModifierDragDuplicate } from './useModifierDragDuplicate'
 import { useDetailsPeek } from '../details/useDetailsPeek'
@@ -187,7 +187,7 @@ import { shadowsFromSnapshot } from '../document/noteShadows'
 import { toDiagramFile, fromDiagramFile } from '../document/diagramConversion'
 import { seedMetadata } from '../tagging/metadataSync'
 import { syncEdgeMetadata, syncNodeMetadata } from '../tagging/syncElements'
-import { collectResourceRefs, applyMissingFileRemoval } from '../diagnostics/resourceRefs'
+import { applyMissingFileRemoval } from '../diagnostics/resourceRefs'
 
 // Defined at module scope so React Flow gets a stable reference — recreating
 // these objects every render triggers a React Flow warning and remounts.
@@ -327,25 +327,6 @@ function CanvasInner(): React.JSX.Element {
   // Edge hover (the hover-revealed bend-point handles of catmull-rom edges, ADR 0057) is tracked
   // per edge inside LabeledEdge, not here (ADR 0073): one shared hoveredEdgeId materialized onto
   // edge.data rebuilt the whole edges array on every hover.
-  // Non-blocking notices from the most recent syncElementMetadata pass, *replaced* on every sync,
-  // not appended: they show what the last backfill had to correct, not a history log. A file with
-  // nothing to correct clears the list.
-  const [diagnostics, setDiagnostics] = useState<string[]>([])
-  // Notices from healHierarchy at load time (ADR 0075) — a dangling or cyclic
-  // parentId that was silently repaired. Session-only, replaced on every load,
-  // kept separate from `diagnostics` so a later required-tags sync doesn't
-  // wipe it; combined for display in `displayedDiagnostics`.
-  const [hierarchyLoadNotes, setHierarchyLoadNotes] = useState<string[]>([])
-  // Elements referencing a file that no longer resolves: a linked diagram, custom icon, reference
-  // image or details `.md` (ADR 0084). Refreshed by scanMissingFiles on load and by the Diagnostics
-  // "Recheck" button; it is an async fs check, so it can't be derived during render. Session-only.
-  //
-  // "Remove" in the panel doesn't mutate anything: it moves the entry into `stagedFileRemovals`,
-  // applied to nodes/legend only on save (persistDiagram). `dismissedFileKeys` hides a row for the
-  // session. Both reset on the next scan.
-  const [missingFiles, setMissingFiles] = useState<MissingFileEntry[]>([])
-  const [stagedFileRemovals, setStagedFileRemovals] = useState<MissingFileEntry[]>([])
-  const [dismissedFileKeys, setDismissedFileKeys] = useState<Set<string>>(new Set())
   const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false)
   // "Changes since last save" (ADR 0102) — v1 scope, nodes/edges
   // only. null means "not computed yet" (opening the panel triggers the
@@ -451,65 +432,6 @@ function CanvasInner(): React.JSX.Element {
   // onReconnectEnd already owns, reset in onReconnectEnd when the gesture ends.
   const isReconnectingRef = useRef(false)
 
-  // Reconciles every eligible node/edge's metadata against `tags` via syncElementMetadata (see its
-  // comment for the rules). Runs on file open, in case of hand-edited drift, and whenever the
-  // requiredTags template is edited. Deliberately not wrapped in pushSnapshot: this is a
-  // diagram-level settings change, not a canvas gesture, and requiredTags isn't part of the {nodes,
-  // edges} snapshot, so undoing the metadata edits without the template change would leave the two
-  // out of sync.
-  const runSync = useCallback(
-    (tags: RequiredTagDefinition[]) => {
-      const notices: string[] = []
-      setNodes((nds) => syncNodeMetadata(nds, tags, notices))
-      setEdges((eds) => syncEdgeMetadata(eds, tags, notices))
-      setDiagnostics(notices)
-    },
-    [setNodes, setEdges]
-  )
-
-  // Missing-file scan for the Diagnostics panel (ADR 0084): collect every
-  // on-disk resource a diagram element references — linked diagrams, custom
-  // icons, reference images, details files — ask main which don't resolve,
-  // and keep those. Takes the node/legend lists + diagram path explicitly
-  // so it can run against a freshly-loaded diagram before that state has
-  // committed. An unsaved diagram (no path) can't have resolvable
-  // references — reports none.
-  const missingFileScanRef = useRef(0)
-  const scanMissingFiles = useCallback(
-    async (nodeList: Node[], legendList: LegendEntry[], diagramPath: string | null) => {
-      // Guard against a stale async result stomping a newer scan (load A
-      // then quickly reload B in the same window).
-      const scanId = ++missingFileScanRef.current
-      // A fresh scan supersedes any pending per-row decisions.
-      setStagedFileRemovals([])
-      setDismissedFileKeys(new Set())
-      const refs = collectResourceRefs(nodeList, legendList)
-      if (!diagramPath || refs.length === 0) {
-        setMissingFiles([])
-        return
-      }
-      const uniquePaths = [...new Set(refs.map((r) => r.relativePath))]
-      let results: { relativePath: string; resolvedPath: string; found: boolean }[]
-      try {
-        results = await window.api.checkResourceFiles(diagramPath, uniquePaths)
-      } catch {
-        return
-      }
-      if (scanId !== missingFileScanRef.current) return
-      const missing = new Set(results.filter((r) => !r.found).map((r) => r.relativePath))
-      const resolvedByPath = new Map(results.map((r) => [r.relativePath, r.resolvedPath]))
-      setMissingFiles(
-        refs
-          .filter((r) => missing.has(r.relativePath))
-          .map((r) => ({
-            ...r,
-            resolvedPath: resolvedByPath.get(r.relativePath) ?? r.relativePath
-          }))
-      )
-    },
-    []
-  )
-
   const {
     past,
     future,
@@ -562,6 +484,21 @@ function CanvasInner(): React.JSX.Element {
     addOrResyncHighlightGroup,
     matchHighlights
   } = useHighlights(canvasApi, nodes, edges, requiredTags)
+
+  const {
+    diagnostics,
+    hierarchyLoadNotes,
+    setHierarchyLoadNotes,
+    stagedFileRemovals,
+    setStagedFileRemovals,
+    visibleMissingFiles,
+    runSync,
+    scanMissingFiles,
+    stageMissingFileRemoval,
+    unstageMissingFileRemoval,
+    dismissMissingFile,
+    relinkMissingFile
+  } = useDiagnostics(canvasApi)
 
   // Wraps the raw onNodesChange from useNodesState to snapshot at the right
   // granularity: once per discrete change (remove/add/replace, or a
@@ -1026,59 +963,6 @@ function CanvasInner(): React.JSX.Element {
       rfInstance.fitView({ nodes: [{ id: nodeId }], duration: 300, padding: 0.5 })
     },
     [setNodes, rfInstance]
-  )
-
-  // Diagnostics missing-file row actions (ADR 0084). None of these touch a
-  // file on disk. A removal is *staged* — moved into stagedFileRemovals —
-  // and only applied (to nodes/legend) when the diagram is saved, in
-  // persistDiagram. "Dismiss" hides a row for the session. "Relink" is an
-  // in-memory edit like any other (undoable, dirties, needs a save).
-  const stageMissingFileRemoval = useCallback(
-    (entry: MissingFileEntry) => {
-      setMissingFiles((prev) => prev.filter((m) => m.key !== entry.key))
-      setStagedFileRemovals((prev) => [...prev, entry])
-      markDirty()
-    },
-    [markDirty]
-  )
-
-  const unstageMissingFileRemoval = useCallback((entry: MissingFileEntry) => {
-    setStagedFileRemovals((prev) => prev.filter((m) => m.key !== entry.key))
-    setMissingFiles((prev) => [...prev, entry])
-  }, [])
-
-  const dismissMissingFile = useCallback((entry: MissingFileEntry) => {
-    setDismissedFileKeys((prev) => new Set(prev).add(entry.key))
-  }, [])
-
-  const relinkMissingFile = useCallback(
-    async (entry: MissingFileEntry) => {
-      if (!currentPath || entry.ownerKind !== 'node') return
-      let newPath: string | null = null
-      if (entry.resourceKind === 'linkedDiagram') {
-        newPath = await window.api.pickExistingLinkedDiagram(currentPath)
-      } else if (entry.resourceKind === 'icon') {
-        newPath = await window.api.pickAndCopyCustomIcon(currentPath)
-      }
-      if (!newPath) return
-      pushSnapshot()
-      setNodes((nds) =>
-        nds.map((n) => {
-          if (n.id !== entry.ownerId) return n
-          const d: Record<string, unknown> = { ...n.data }
-          if (entry.resourceKind === 'linkedDiagram') {
-            d.linkedDiagram = newPath
-          } else if (entry.resourceKind === 'icon' && entry.iconSlot) {
-            const icons = { ...(d.icons as Partial<Record<IconSlot, IconRef>> | undefined) }
-            icons[entry.iconSlot as IconSlot] = { source: 'custom', path: newPath! }
-            d.icons = icons
-          }
-          return { ...n, data: d }
-        })
-      )
-      setMissingFiles((prev) => prev.filter((m) => m.key !== entry.key))
-    },
-    [currentPath, pushSnapshot, setNodes]
   )
 
   const updateGravityPresets = useCallback(
@@ -3021,6 +2905,7 @@ function CanvasInner(): React.JSX.Element {
       security,
       hubDirty,
       noteShadows,
+      setStagedFileRemovals,
       setHubDirty,
       setNoteShadows,
       setReferenceWindows
@@ -3391,6 +3276,7 @@ function CanvasInner(): React.JSX.Element {
       setHighlights,
       setEnabledHighlightIds,
       setHighlightsPanelOpen,
+      setHierarchyLoadNotes,
       setPast,
       setFuture,
       setHubDirty,
@@ -4328,12 +4214,6 @@ function CanvasInner(): React.JSX.Element {
       ...legendEmptyAdvisory
     ]
   }, [diagnostics, hierarchyLoadNotes, hierarchyAnalysis, legend.length, edges.length])
-
-  // Missing-file rows still awaiting a decision (dismissed ones hidden).
-  const visibleMissingFiles = useMemo(
-    () => missingFiles.filter((m) => !dismissedFileKeys.has(m.key)),
-    [missingFiles, dismissedFileKeys]
-  )
 
   // "Changes since last save" Details bucket (ADR 0102) — reuses
   // noteShadows' existing dirty flag (ADR 0092) directly, no new tracking.
