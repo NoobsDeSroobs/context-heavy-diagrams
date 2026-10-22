@@ -1,7 +1,7 @@
 # 0154: Canvas feature hooks
 
 ## Status
-In Progress, branch `epic/0154-canvas-feature-hooks`. Follows [0153](0153-hook-and-component-tests.md). Design: [ADR 0126](../../decisions/0126-canvas-features-are-hooks-that-own-their-state.md). `Canvas.tsx` 6,103 → 3,890 lines (`wc -l`).
+In Progress, branch `epic/0154-canvas-feature-hooks`. Follows [0153](0153-hook-and-component-tests.md). Design: [ADR 0126](../../decisions/0126-canvas-features-are-hooks-that-own-their-state.md). `Canvas.tsx` 6,103 → 3,739 lines (`wc -l`).
 
 ## Goal
 Take the features out of `CanvasInner` into hooks that own their state, so `Canvas.tsx` shrinks from about 5,000 lines of logic to the core (roughly 2,500 to 3,000 lines in total).
@@ -14,6 +14,7 @@ Take the features out of `CanvasInner` into hooks that own their state, so `Canv
 - [x] Document I/O as five hooks: `useExternalChange`, `useSave`, `useWindowLifecycle` (initial load, recovery, autosave, close prompt, drop), `useDocumentCommands`, `useLinks`. `loadDiagramIntoCanvas` stays in `Canvas`: it is the one place that sets every piece of canvas state, so moving it would only relocate that list
 - [x] Maintainer smoke test of document I/O: passed
 - [x] Move the menu and palette-action builders out of `Canvas.tsx` (`useMenus.ts`; named `use*` only so the React lint accepts ref-backed handlers being passed in)
+- [x] PNG and SVG export as `export/useImageExport.ts`
 - [x] Bring the `canvas`, `links` and `document` rows of `docs/architecture/overview.md` up to date (the "not split further" sentence no longer existed)
 - [ ] Decide whether node creation and the connect/drag handlers (the most entangled part) are split too
 
