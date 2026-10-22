@@ -9,7 +9,7 @@ Take the features out of `CanvasInner` into hooks that own their state, so `Canv
 ## Tasks
 - [x] Define `CanvasApi` and extract the core hooks: undo/redo (`useHistory`) and dirty tracking (`useDirtyState`)
 - [ ] Leaf feature hooks, one commit each: ~~search~~, ~~references~~, ~~style brush and legend line pick~~, legend, highlights, missing files and diagnostics, edge direction sets, threat matrix, panel open/close state
-- [ ] Smoke test by the maintainer after the first four hooks (done: history/dirty, search, references, brush/line pick)
+- [x] Smoke test by the maintainer after the first four hooks (history/dirty, search, references, brush/line pick): passed, after a clean dev-server restart
 - [ ] Document I/O (save, load, open, close, autosave, recovery, external change; about 1,100 lines), last of the heavy pieces
 - [ ] Move the menu and palette-action builders (about 530 lines) out of `Canvas.tsx`
 - [ ] Update the "not split further" sentence in `docs/architecture/overview.md`
