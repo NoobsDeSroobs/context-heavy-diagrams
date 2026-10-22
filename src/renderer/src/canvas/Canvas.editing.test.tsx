@@ -126,3 +126,26 @@ describe('deleting', () => {
     await waitFor(() => expect(entityCount(container)).toBe(2))
   })
 })
+
+describe('copy style', () => {
+  it('applies the copied style to the next entity that is clicked', async () => {
+    const diagram = twoEntities()
+    diagram.nodes[0].style = { strokeWidth: 7 }
+    const { container } = renderCanvas(diagram)
+    await screen.findByText('Billing')
+    const nodes = container.querySelectorAll('.react-flow__node')
+    fireEvent.click(nodes[0])
+    await waitFor(() =>
+      expect(container.querySelectorAll('.react-flow__node.selected')).toHaveLength(1)
+    )
+
+    key('c', { shiftKey: true })
+    await waitFor(() => expect(container.querySelector('.style-brush-active')).not.toBeNull())
+    fireEvent.click(nodes[1])
+
+    await waitFor(() => {
+      const target = nodes[1].querySelector('.entity-node') as HTMLElement
+      expect(target.style.borderWidth).toBe('7px')
+    })
+  })
+})

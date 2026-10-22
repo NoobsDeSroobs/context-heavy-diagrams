@@ -1,29 +1,13 @@
 import { showAlert } from '../ui/alerts'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { flushSync } from 'react-dom'
-import { SaveAbortedError, isSaveAborted } from '../document/saveAborted'
 import {
   adoptDisk,
-  anyNoteDirty,
-  dirtyBaselines,
-  dirtyDrafts,
   editNote,
-  HUB_KEY,
   loadedNoteShadow,
-  markSaved,
   newNoteShadow,
-  planSave,
-  resolveConflicts,
-  type NoteBaseline,
   type NoteShadow,
-  type PlanNoteInput,
-  type SavedNote,
-  type SaveDocumentRequest,
-  type SaveOutcome,
   type Stamp
 } from '@shared/document/documentSave'
-import { derivedDetailsPath } from '@shared/details/detailPaths'
-import { askConflictResolution, type ConflictItem } from '../document/conflictPrompt'
 import ConflictDialog from '../document/ConflictDialog'
 import {
   ReactFlow,
@@ -53,33 +37,20 @@ import '@xyflow/react/dist/style.css'
 import {
   createEmptyDiagram,
   serializeDiagram,
-  type AggregateMethod,
-  type CombineMethod,
   type ConnectionPoint,
   type ConnectionPointSide,
   type DiagramFile,
-  type DiagramSecurity,
-  type EdgeDirectionSet,
-  type EdgeDirectionSetStyle,
   type EdgeStyle,
   type GravityPreset,
-  type HighlightDefinition,
   type IconRef,
   type IconSlot,
   type JsonValue,
-  type LegendEntry,
   type LinePoint,
   type MetadataEntry,
   type NodeStyle,
-  type RequiredTagDefinition,
-  type RiskCell
+  type RequiredTagDefinition
 } from '@shared/diagram'
-import type { SecurityCrawlResult } from '@shared/threat-matrix/threatMatrixMath'
-import {
-  diffDiagrams,
-  summarizeChanges,
-  type ChangesSinceSave
-} from '@shared/document/changesSinceSave'
+import { diffDiagrams } from '@shared/document/changesSinceSave'
 import EntityNode, { ENTITY_MIN_WIDTH, ENTITY_MIN_HEIGHT } from '../nodes/EntityNode'
 import TextNode, { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from '../nodes/TextNode'
 import ContainerNode, { CONTAINER_MIN_WIDTH, CONTAINER_MIN_HEIGHT } from '../nodes/ContainerNode'
@@ -88,12 +59,6 @@ import LineNode, { LINE_BOUNDS_PADDING } from '../nodes/LineNode'
 import DiagramSettingsPanel from '../diagram-settings/DiagramSettingsPanel'
 import { effectiveGravityPresets } from '../nodes/lineGravityPresets'
 import LabeledEdge from '../edges/LabeledEdge'
-import {
-  highlightGroupSourceValues,
-  highlightId,
-  matchingHighlights,
-  reconcileHighlightGroup
-} from '@shared/tagging/highlights'
 import EdgeMarkerDefs from '../edges/edgeMarkers'
 import { markerUrl } from '../edges/markerIds'
 import DiagramContext, { type DiagramContextValue } from './DiagramContext'
@@ -103,21 +68,12 @@ import IconBrowser from '../icons/IconBrowser'
 import ColorPickerPopup from '../styling/ColorPickerPopup'
 import StylePicker from '../styling/StylePicker'
 import DetailsPanel from '../details/DetailsPanel'
-import DiagnosticsPanel, { type MissingFileEntry } from '../diagnostics/DiagnosticsPanel'
+import DiagnosticsPanel from '../diagnostics/DiagnosticsPanel'
 import ChangesPanel, { type DetailsChangedEntry } from '../document/ChangesPanel'
 import HighlightsPanel from '../tagging/HighlightsPanel'
 import SearchOverlay from '../search/SearchOverlay'
-import {
-  criteriaFromQuery,
-  elementMatchesCriteria,
-  elementMatchesWithDetails,
-  hasSearchCriteria,
-  parseSearchQuery,
-  searchableFromData,
-  type SearchCriteria
-} from '../search/search'
 import LegendPanel from '../legend/LegendPanel'
-import MenuBar, { type MenuBarMenu, type MenuBarItem } from '../MenuBar'
+import MenuBar from '../MenuBar'
 import LayerPanel from '../layers/LayerPanel'
 import { reorderZIndex } from '@shared/canvas/zIndexOrdering'
 import {
@@ -130,37 +86,20 @@ import { nearestSegmentIndex, type PathPoint } from '@shared/geometry/bendablePa
 import { nearestWaypointGap } from '@shared/geometry/orthogonalPath'
 import {
   activeDirectionSetStyle,
-  addDirectionSetFrom,
-  DEFAULT_DIRECTION_SET_LEGEND_COLOR,
   directionSetLegendRow,
   ensureDirectionSets,
-  removeDirectionSetKey,
-  reverseEdgeDirection,
-  stripDirectionSets,
-  switchActiveDirectionSet
+  reverseEdgeDirection
 } from '../edges/edgeDirectionSets'
 import { absolutePosition, subtractPosition } from '../nodes/nodePosition'
 import MultiConnectionLine from '../edges/MultiConnectionLine'
 import PreferencesPanel from '../preferences/PreferencesPanel'
 import AlignDistributePanel from '../alignment/AlignDistributePanel'
 import AboutDialog from '../AboutDialog'
-import { AI_INSTRUCTIONS } from '@shared/ai/aiInstructions'
-import { summarizeAiFolderResult } from '@shared/ai/aiFolderResult'
 import ShortcutsDialog from '../ShortcutsDialog'
 import CommandPalette from '../CommandPalette'
-import { buildPaletteActions, type ExtraPaletteAction } from '../paletteActions'
-import { acceleratorFor, findKeyCommand, type CommandId } from '../commands'
-import {
-  applyBrushToEdgeData,
-  applyBrushToNodeData,
-  brushAppliesToNode,
-  captureEdgeBrush,
-  captureNodeBrush,
-  type StyleBrush
-} from '../styling/styleBrush'
+import { findKeyCommand, type CommandId } from '../commands'
 import AlertDialog from '../ui/AlertDialog'
 import ExportImageDialog, { type ImageExportChoice } from '../export/ExportImageDialog'
-import { buildDiagramSvg } from '../export/exportSvg'
 import BulkCreateDialog from '../bulk-create/BulkCreateDialog'
 import StylePalettePanel from '../styling/StylePalettePanel'
 import ReferenceWindow from '../references/ReferenceWindow'
@@ -176,18 +115,30 @@ import { warnIfSavedWithNewer } from '../document/fileVersionWarning'
 import type { TransformPatch } from '../properties/transformPatch'
 import { useTheme } from '../styling/theme'
 import { useEventCallback } from './useEventCallback'
-import { legendLineFromEdgeStyle, type LegendLineLook } from '../legend/legendLinePick'
-import { EDGE_STYLE_DEFAULTS } from '@shared/styling/styleDefaults'
+import { useHistory } from './useHistory'
+import { usePanels } from './usePanels'
+import type { CanvasApi } from './canvasApi'
+import { useSearch } from '../search/useSearch'
+import { useReferences } from '../references/useReferences'
+import { useStyleBrush } from '../styling/useStyleBrush'
+import { useLegendLinePick } from '../legend/useLegendLinePick'
+import { useLegend } from '../legend/useLegend'
+import { useHighlights } from '../tagging/useHighlights'
+import { useDiagnostics } from '../diagnostics/useDiagnostics'
+import { useEdgeDirectionSets } from '../edges/useEdgeDirectionSets'
+import { useThreatMatrix } from '../threat-matrix/useThreatMatrix'
+import { useDirtyState } from '../document/useDirtyState'
+import { useExternalChange } from '../document/useExternalChange'
+import { useSave } from '../document/useSave'
+import { useWindowLifecycle } from '../document/useWindowLifecycle'
+import { useDocumentCommands } from '../document/useDocumentCommands'
+import { useLinks } from '../links/useLinks'
+import { useImageExport } from '../export/useImageExport'
+import { useMenus } from '../useMenus'
 import { useModifierDragDuplicate } from './useModifierDragDuplicate'
 import { useDetailsPeek } from '../details/useDetailsPeek'
 import PeekCard from '../details/PeekCard'
 import { effectiveStylePalette, usePreferences } from '../preferences/preferences'
-import {
-  captureDiagramPng,
-  resolveEffectiveBackgroundColor,
-  rgbStringToHex
-} from '../export/exportPng'
-import { buildExportLegendItems } from '@shared/legend/legendItems'
 import ThreatMatrixView from '../threat-matrix/ThreatMatrixView'
 import { themeAdaptiveColor } from '../styling/themeAdaptiveColor'
 import {
@@ -201,11 +152,9 @@ import { isVoidDrop, pointFromEvent, visibleCanvasCenter } from './screenGeometr
 import { sortNodesForHierarchy, removeContainerReparenting } from './hierarchy'
 import { resolveEndpointPosition } from '../edges/endpointPosition'
 import { detailsPanelTitle, detailsNoteName } from '../details/detailsLabels'
-import { shadowsFromSnapshot } from '../document/noteShadows'
 import { toDiagramFile, fromDiagramFile } from '../document/diagramConversion'
 import { seedMetadata } from '../tagging/metadataSync'
 import { syncEdgeMetadata, syncNodeMetadata } from '../tagging/syncElements'
-import { collectResourceRefs, applyMissingFileRemoval } from '../diagnostics/resourceRefs'
 
 // Defined at module scope so React Flow gets a stable reference — recreating
 // these objects every render triggers a React Flow warning and remounts.
@@ -231,14 +180,6 @@ const DEFAULT_EDGE_OPTIONS = {
   markerEnd: markerUrl('arrowClosed')
 }
 
-// Undo/redo — see ADR 0018. Deliberately just {nodes, edges}, not
-// viewport: panning/zooming isn't a content edit worth undoing.
-interface HistorySnapshot {
-  nodes: Node[]
-  edges: Edge[]
-}
-const MAX_HISTORY = 50
-
 // Toolbar default-edge-style swatch preview only — deliberately a scaled-
 // down echo of LabeledEdge.tsx's own DASH_ARRAY, not a shared import; the
 // swatch is a small honest preview, not a real edge render.
@@ -262,42 +203,18 @@ function CanvasInner(): React.JSX.Element {
   const sessionIdRef = useRef(
     new URLSearchParams(window.location.search).get('session') ?? crypto.randomUUID()
   )
-  // Unsaved-changes tracking (ADR 0040): set at every site that mutates something toDiagramFile()
-  // serializes, not derived from the undo stack, which covers only nodes/edges and not
-  // requiredTags/highlights/legend/noteShadows. Session-only state (enabledHighlightIds, panel-open
-  // flags, ...) never touches it.
-  // Dirty state is per file (ADR 0092): the diagram, the "hub", has its own flag and each detail
-  // note has one inside its shadow. `isDirty` (close prompt, autosave, reload confirms) is "any of
-  // them".
-  const [hubDirty, setHubDirty] = useState(false)
-  // In-memory copies ("shadows") of the detail notes that are open or have
-  // unsaved edits — content, baseline and dirty flag per note (documentSave.ts).
-  // A note nobody has touched has no entry: it is just a file on disk.
-  const [noteShadows, setNoteShadows] = useState<Record<string, NoteShadow>>({})
-  const isDirty = hubDirty || anyNoteDirty(noteShadows)
-  // The latest shadows, readable from callbacks that must not depend on them
-  // (a diagram reload needs to know which notes have unsaved edits).
-  const noteShadowsRef = useRef(noteShadows)
-  useEffect(() => {
-    noteShadowsRef.current = noteShadows
-  })
+  const { hubDirty, setHubDirty, noteShadows, setNoteShadows, noteShadowsRef, isDirty, markDirty } =
+    useDirtyState()
   // Reloads the diagram file from disk keeping unsaved note edits — set once
   // loadDiagramIntoCanvas exists (it is declared after persistDiagram).
   const reloadHubRef = useRef<((path: string) => Promise<void>) | null>(null)
-  const markDirty = useCallback(() => setHubDirty(true), [])
-  // What we last read/wrote of the diagram file — the baseline the window-focus
-  // check and the save-time conflict check compare against.
-  const hubBaselineRef = useRef<{ path: string | null; stamp: Stamp }>({
-    path: null,
-    stamp: null
-  })
-  // Outside-the-app change notice for the diagram file: externalChangeStamp is
-  // non-null while the "changed on disk" banner shows; dismissedStampRef
-  // remembers which specific change the user ignored so a later focus doesn't
-  // re-show it (the save-time check still fires — dismissing never touches the
-  // baseline).
-  const [externalChangeStamp, setExternalChangeStamp] = useState<string | null>(null)
-  const dismissedStampRef = useRef<string | null>(null)
+  const {
+    hubBaselineRef,
+    externalChangeStamp,
+    setExternalChangeStamp,
+    dismissedStampRef,
+    dismissExternalChange
+  } = useExternalChange(currentPath)
   // What the open Details panel says about an outside change to its note:
   // 'refreshed' = it was unedited, so it was silently re-read from disk;
   // 'conflict' = the note has unsaved edits AND the file changed. The
@@ -311,12 +228,6 @@ function CanvasInner(): React.JSX.Element {
   // grace window after any load during which React Flow's own automatic
   // post-mount dimension measurement doesn't count as a discrete edit.
   const suppressAutoMeasureUntilRef = useRef(0)
-  // Brief post-save confirmation next to the toolbar's Save button — see
-  // flashSaved below. Purely transient UI state, not persisted, not reset
-  // on load (nothing to reset — it's already false by the time any load
-  // finishes).
-  const [showSavedFlash, setShowSavedFlash] = useState(false)
-  const savedFlashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Diagram-level metadata/requiredTags (ADR 0022) — analogous to
   // currentPath: file-scoped state with no React Flow home of its own,
   // reset on every load, carried into every save via toDiagramFile.
@@ -325,18 +236,6 @@ function CanvasInner(): React.JSX.Element {
   const loadedSavedWithRef = useRef<string | undefined>(undefined)
   const [diagramMetadata, setDiagramMetadata] = useState<Record<string, JsonValue>>({})
   const [requiredTags, setRequiredTags] = useState<RequiredTagDefinition[]>([])
-  // Highlight catalog (ADR 0025) — persisted, same file-scoped
-  // treatment as diagramMetadata/requiredTags above. Which highlights are
-  // currently *enabled* is a separate, deliberately volatile Set below —
-  // reset on every load, never included in toDiagramFile's payload.
-  const [highlights, setHighlights] = useState<HighlightDefinition[]>([])
-  const [enabledHighlightIds, setEnabledHighlightIds] = useState<Set<string>>(new Set())
-  // Legend catalog (ADR 0033) — same file-scoped, persisted
-  // treatment as highlights above. Unlike highlights, there's no per-entry
-  // enabled state; the whole panel's shown/hidden state below is what's
-  // session-local instead.
-  const [legend, setLegend] = useState<LegendEntry[]>([])
-  const [legendPanelOpen, setLegendPanelOpen] = useState(false)
   // Line bend preset catalog (ADR 0050) — same file-scoped,
   // persisted treatment as highlights/legend above. Raw/possibly-empty;
   // effectiveGravityPresets resolves "empty" to this app's own built-in
@@ -348,137 +247,15 @@ function CanvasInner(): React.JSX.Element {
   const [diagramMaxConnectionPointsPerSide, setDiagramMaxConnectionPointsPerSide] = useState<
     number | undefined
   >(undefined)
-  // Flippable edge direction sets (ADR 0081) — same file-scoped/reset-on-
-  // load treatment as gravityPresets above. `[]` (or a single set) means
-  // the feature is dormant: an edge's direction is just its own
-  // source/target/handles. When >= 2 sets exist, [0] is the "base" set the
-  // edges are stored in on disk, and `activeEdgeDirectionSetId` picks which
-  // reading the live edges currently show.
-  const [edgeDirectionSets, setEdgeDirectionSets] = useState<EdgeDirectionSet[]>([])
-  const [activeEdgeDirectionSetId, setActiveEdgeDirectionSetId] = useState<string | undefined>(
-    undefined
-  )
-  // Threat/risk model (ADR 0082) — same file-scoped / reset-on-load
-  // treatment as the catalogs above. Kept as a non-null object with empty
-  // arrays when the Security Matrix has never been used; serialization
-  // drops it when empty. Per-element assessment cells live on
-  // node.data.security, not here.
-  const [security, setSecurity] = useState<DiagramSecurity>({ threats: [], matrixEntityIds: [] })
-  // Matrix calculation modes are session-only, not persisted (ADR 0088) —
-  // deliberately NOT reset on file open, so they behave as a property of
-  // the active matrix view and flow uniformly down a linked-diagram tree.
-  const [securityCombineMethod, setSecurityCombineMethod] = useState<CombineMethod>('multiply')
-  const [securityAggregateMethod, setSecurityAggregateMethod] = useState<AggregateMethod>('average')
-  const [diagramSettingsPanelOpen, setDiagramSettingsPanelOpen] = useState(false)
-  // Anchors the floating panel next to whichever <ControlButton> opened it —
-  // same convention as iconPicker/colorPicker/linePicker's own anchorRect.
-  const [legendPanelAnchor, setLegendPanelAnchor] = useState<DOMRect | null>(null)
-  // Layer panel (ADR 0035) — same UtilityDock family as
-  // Highlights/Required tags/Diagnostics. No catalog of its own: it reads
-  // straight off `nodes`' own zIndex, there's nothing separate to persist.
-  const [layerPanelOpen, setLayerPanelOpen] = useState(false)
-  // Which node the panel currently points at — an "entity highlight," see
-  // DiagramContext's own comment on this field. Session-only, reset on load.
-  const [entityHighlightNodeId, setEntityHighlightNodeId] = useState<string | null>(null)
-  // Reference images (ADR 0069). `referencesPanelOpen` is the
-  // diagram-wide inventory View (same UtilityDock family as Layers).
-  // `referenceWindows` is the set of open floating viewer windows — pure
-  // session state, one entry per (entity, image path), gone on reload.
-  const [referencesPanelOpen, setReferencesPanelOpen] = useState(false)
-  const [referenceWindows, setReferenceWindows] = useState<{ nodeId: string; path: string }[]>([])
   // Edge hover (the hover-revealed bend-point handles of catmull-rom edges, ADR 0057) is tracked
   // per edge inside LabeledEdge, not here (ADR 0073): one shared hoveredEdgeId materialized onto
   // edge.data rebuilt the whole edges array on every hover.
-  // Non-blocking notices from the most recent syncElementMetadata pass, *replaced* on every sync,
-  // not appended: they show what the last backfill had to correct, not a history log. A file with
-  // nothing to correct clears the list.
-  const [diagnostics, setDiagnostics] = useState<string[]>([])
-  // Notices from healHierarchy at load time (ADR 0075) — a dangling or cyclic
-  // parentId that was silently repaired. Session-only, replaced on every load,
-  // kept separate from `diagnostics` so a later required-tags sync doesn't
-  // wipe it; combined for display in `displayedDiagnostics`.
-  const [hierarchyLoadNotes, setHierarchyLoadNotes] = useState<string[]>([])
-  // Elements referencing a file that no longer resolves: a linked diagram, custom icon, reference
-  // image or details `.md` (ADR 0084). Refreshed by scanMissingFiles on load and by the Diagnostics
-  // "Recheck" button; it is an async fs check, so it can't be derived during render. Session-only.
-  //
-  // "Remove" in the panel doesn't mutate anything: it moves the entry into `stagedFileRemovals`,
-  // applied to nodes/legend only on save (persistDiagram). `dismissedFileKeys` hides a row for the
-  // session. Both reset on the next scan.
-  const [missingFiles, setMissingFiles] = useState<MissingFileEntry[]>([])
-  const [stagedFileRemovals, setStagedFileRemovals] = useState<MissingFileEntry[]>([])
-  const [dismissedFileKeys, setDismissedFileKeys] = useState<Set<string>>(new Set())
-  const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false)
-  // "Changes since last save" (ADR 0102) — v1 scope, nodes/edges
-  // only. null means "not computed yet" (opening the panel triggers the
-  // async reread), distinct from an empty diff (no changes).
-  const [changesPanelOpen, setChangesPanelOpen] = useState(false)
-  const [changesDiff, setChangesDiff] = useState<ChangesSinceSave | null>(null)
-  const [highlightsPanelOpen, setHighlightsPanelOpen] = useState(false)
-  // Floating popup next to Legend's, in the bottom-left <Controls> cluster
-  // (fix/highlights-free-tags-and-toggle) — same anchorRect convention as
-  // legendPanelAnchor above, no longer the fixed-position UtilityDock shell
-  // it used to be.
-  const [highlightsPanelAnchor, setHighlightsPanelAnchor] = useState<DOMRect | null>(null)
-  const [preferencesPanelOpen, setPreferencesPanelOpen] = useState(false)
-  const [stylePalettePanelOpen, setStylePalettePanelOpen] = useState(false)
-  const [alignDistributePanelOpen, setAlignDistributePanelOpen] = useState(false)
-  // Search overlay (ADR 0062) — Ctrl+F. All session-only, reset
-  // on load like every other panel's open/enabled state above. searchRun
-  // distinguishes "haven't searched yet" from "searched, zero results";
-  // matchOrder is the stable id ordering next/prev cycles through
-  // (recomputed each run — nodes first, then edges, insertion order).
-  const [searchOverlayOpen, setSearchOverlayOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [deepSearchEnabled, setDeepSearchEnabled] = useState(false)
-  const [deepSearchLoading, setDeepSearchLoading] = useState(false)
-  const [searchRun, setSearchRun] = useState(false)
-  const [searchMatchIds, setSearchMatchIds] = useState<Set<string>>(new Set())
-  const [searchMatchOrder, setSearchMatchOrder] = useState<string[]>([])
-  const [searchMatchCursor, setSearchMatchCursor] = useState(0)
-  // Icon-identity search (ADR 0072) — when set, the query is "every node
-  // carrying this exact icon" and the free-text box is disabled; the two
-  // are deliberately not combined (ADR 0062 defers all criteria-combining
-  // to a future query language). searchIconPicker holds the anchor rect of
-  // the overlay's icon button while its IconBrowser popup is open.
-  const [searchIcon, setSearchIcon] = useState<IconRef | null>(null)
-  const [searchIconPicker, setSearchIconPicker] = useState<DOMRect | null>(null)
-  // Query-token problems (unknown `has:` value, empty `tag:`) shown in the
-  // overlay so a typo isn't silently "no matches" (ADR 0096).
-  const searchQueryProblems = useMemo(() => parseSearchQuery(searchQuery).problems, [searchQuery])
-  // Linked diagrams that couldn't be read during the last deep search — shown
-  // in the overlay so a broken link is never silently "no match" (ADR 0097).
-  const [searchUnreadable, setSearchUnreadable] = useState<string[]>([])
-  // "Isolate" (ADR 0063) — search-driven only: a separate explicit toggle next to Search, not folded
-  // into
-  // running a search itself, so turning it on/off doesn't require
-  // re-searching. Always cleared alongside search results (see
-  // clearSearchResults below) since it's meaningless without a live match
-  // set to isolate down to.
-  const [isolateActive, setIsolateActive] = useState(false)
-  // Persona switch (see ADR 0055) — akin to FreeCAD's workbench
-  // switcher/Affinity's persona tabs: swaps the entire main view, not a
-  // split or overlay. Render-only prototype for now (ThreatMatrixView),
-  // purely to validate whether a mode swap like this feels right at all —
-  // no data flows between personas yet, and diagram state (nodes/edges,
-  // panels, etc.) is untouched underneath while 'matrix' is shown, same
-  // as switching tabs never destroys the other tab's content.
-  const [persona, setPersona] = useState<'diagram' | 'matrix'>('diagram')
   const [aboutDialogOpen, setAboutDialogOpen] = useState(false)
   const [shortcutsDialogOpen, setShortcutsDialogOpen] = useState(false)
   // Command palette (ADR 0100).
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
-  // Which image export the dialog is open for, if any (PNG, ADR 0051; SVG, ADR 0124).
-  const [exportDialogFormat, setExportDialogFormat] = useState<'png' | 'svg' | null>(null)
-  const [exportPngEffectiveColorHex, setExportPngEffectiveColorHex] = useState('#ffffff')
   // See ADR 0089 — right-click on the ItemPalette Entity/Container button.
   const [bulkCreateType, setBulkCreateType] = useState<'entity' | 'container' | null>(null)
-  // onlyRenderVisibleElements (ADR 0073) keeps React Flow from mounting
-  // off-screen nodes/edges — a large win on big diagrams, but PNG export
-  // (handleExportPng) clones the .react-flow__viewport DOM subtree, so
-  // every off-screen element would be missing from the capture. Flipped
-  // true for the duration of a capture so the whole diagram is in the DOM.
-  const [isExportingPng, setIsExportingPng] = useState(false)
   // Toolbar's own "current pen style" swatch (ADR 0045) — reuses
   // StylePicker (ADR 0010) unchanged, same anchorRect convention as
   // linePicker above, just targeting preferences.defaultEdgeStyle instead of
@@ -507,7 +284,6 @@ function CanvasInner(): React.JSX.Element {
   // guide line(s) currently matched, or null when nothing's being dragged/
   // nothing's in snap range. Set from onNodeDrag, cleared on drag stop.
   const [alignmentGuides, setAlignmentGuides] = useState<{ x: number[]; y: number[] } | null>(null)
-  const [detailsPanelNodeId, setDetailsPanelNodeId] = useState<string | null>(null)
   // Editing a node's details doesn't write to disk immediately — it's just
   // draft state here, flushed as part of the main save flow.
   const rfInstance = useReactFlow()
@@ -519,20 +295,6 @@ function CanvasInner(): React.JSX.Element {
   // functional difference today (one ReactFlow per window), just avoids
   // relying on that staying true.
   const flowWrapperRef = useRef<HTMLDivElement>(null)
-
-  // Undo/redo history (ADR 0018): explicit pushSnapshot calls at each mutation site, not an effect
-  // reacting to nodes/edges changes. The effect version broke under React StrictMode's dev
-  // double-invoke: its only output was a ref mutation (lastSettledRef), and an effect whose side
-  // effect isn't safe to run twice is what StrictMode catches. StrictMode doesn't double-invoke
-  // event-handler callbacks.
-  const [past, setPast] = useState<HistorySnapshot[]>([])
-  const [future, setFuture] = useState<HistorySnapshot[]>([])
-  // Mid-drag/resize/rotate: don't split one continuous gesture into many
-  // undo steps. Only beginContinuousEdit/endContinuousEdit touch this —
-  // once from the onNodesChange wrapper below (position/dimension changes
-  // carry their own dragging/resizing flag), once from TextNode's rotation
-  // handler (no such flag there — it's just repeated updateNodeData calls).
-  const interactionInProgressRef = useRef(false)
 
   // Latest nodes/edges mirrored into a ref (from an effect), so callbacks that only read the
   // current graph (pushSnapshot, undo/redo, openDetailsPanel) needn't list nodes/edges in their
@@ -566,104 +328,136 @@ function CanvasInner(): React.JSX.Element {
   // onReconnectEnd already owns, reset in onReconnectEnd when the gesture ends.
   const isReconnectingRef = useRef(false)
 
-  // Reconciles every eligible node/edge's metadata against `tags` via syncElementMetadata (see its
-  // comment for the rules). Runs on file open, in case of hand-edited drift, and whenever the
-  // requiredTags template is edited. Deliberately not wrapped in pushSnapshot: this is a
-  // diagram-level settings change, not a canvas gesture, and requiredTags isn't part of the {nodes,
-  // edges} snapshot, so undoing the metadata edits without the template change would leave the two
-  // out of sync.
-  const runSync = useCallback(
-    (tags: RequiredTagDefinition[]) => {
-      const notices: string[] = []
-      setNodes((nds) => syncNodeMetadata(nds, tags, notices))
-      setEdges((eds) => syncEdgeMetadata(eds, tags, notices))
-      setDiagnostics(notices)
-    },
-    [setNodes, setEdges]
-  )
+  const {
+    past,
+    future,
+    setPast,
+    setFuture,
+    pushSnapshot,
+    beginContinuousEdit,
+    endContinuousEdit,
+    undo,
+    redo
+  } = useHistory({ graphRef, setNodes, setEdges, markDirty })
 
-  // Missing-file scan for the Diagnostics panel (ADR 0084): collect every
-  // on-disk resource a diagram element references — linked diagrams, custom
-  // icons, reference images, details files — ask main which don't resolve,
-  // and keep those. Takes the node/legend lists + diagram path explicitly
-  // so it can run against a freshly-loaded diagram before that state has
-  // committed. An unsaved diagram (no path) can't have resolvable
-  // references — reports none.
-  const missingFileScanRef = useRef(0)
-  const scanMissingFiles = useCallback(
-    async (nodeList: Node[], legendList: LegendEntry[], diagramPath: string | null) => {
-      // Guard against a stale async result stomping a newer scan (load A
-      // then quickly reload B in the same window).
-      const scanId = ++missingFileScanRef.current
-      // A fresh scan supersedes any pending per-row decisions.
-      setStagedFileRemovals([])
-      setDismissedFileKeys(new Set())
-      const refs = collectResourceRefs(nodeList, legendList)
-      if (!diagramPath || refs.length === 0) {
-        setMissingFiles([])
-        return
-      }
-      const uniquePaths = [...new Set(refs.map((r) => r.relativePath))]
-      let results: { relativePath: string; resolvedPath: string; found: boolean }[]
-      try {
-        results = await window.api.checkResourceFiles(diagramPath, uniquePaths)
-      } catch {
-        return
-      }
-      if (scanId !== missingFileScanRef.current) return
-      const missing = new Set(results.filter((r) => !r.found).map((r) => r.relativePath))
-      const resolvedByPath = new Map(results.map((r) => [r.relativePath, r.resolvedPath]))
-      setMissingFiles(
-        refs
-          .filter((r) => missing.has(r.relativePath))
-          .map((r) => ({
-            ...r,
-            resolvedPath: resolvedByPath.get(r.relativePath) ?? r.relativePath
-          }))
-      )
-    },
-    []
-  )
+  const canvasApi: CanvasApi = {
+    rfInstance,
+    graphRef,
+    setNodes,
+    setEdges,
+    pushSnapshot,
+    markDirty,
+    currentPath
+  }
 
-  const pushSnapshot = useCallback(() => {
-    setPast((prev) => {
-      const next = [...prev, { ...graphRef.current }]
-      return next.length > MAX_HISTORY ? next.slice(next.length - MAX_HISTORY) : next
-    })
-    setFuture([])
-    markDirty()
-  }, [markDirty])
+  const {
+    legend,
+    setLegend,
+    legendPanelOpen,
+    setLegendPanelOpen,
+    legendPanelAnchor,
+    addLegendEntry,
+    updateLegendEntry,
+    removeLegendEntry,
+    toggleLegendPanel
+  } = useLegend(canvasApi)
 
-  // Push once at the start of a continuous gesture (guarded so a mid-drag
-  // call is a no-op, not a fresh snapshot), never at the end.
-  const beginContinuousEdit = useCallback(() => {
-    if (!interactionInProgressRef.current) {
-      pushSnapshot()
-      interactionInProgressRef.current = true
-    }
-  }, [pushSnapshot])
+  const {
+    highlights,
+    setHighlights,
+    enabledHighlightIds,
+    setEnabledHighlightIds,
+    highlightsPanelOpen,
+    setHighlightsPanelOpen,
+    highlightsPanelAnchor,
+    toggleHighlightsPanel,
+    addHighlight,
+    updateHighlightColor,
+    removeHighlight,
+    toggleHighlightEnabled,
+    toggleHighlightGroup,
+    usedTags,
+    addOrResyncHighlightGroup,
+    matchHighlights
+  } = useHighlights(canvasApi, nodes, edges, requiredTags)
 
-  const endContinuousEdit = useCallback(() => {
-    interactionInProgressRef.current = false
-  }, [])
+  const {
+    diagnostics,
+    hierarchyLoadNotes,
+    setHierarchyLoadNotes,
+    stagedFileRemovals,
+    setStagedFileRemovals,
+    visibleMissingFiles,
+    runSync,
+    scanMissingFiles,
+    stageMissingFileRemoval,
+    unstageMissingFileRemoval,
+    dismissMissingFile,
+    relinkMissingFile
+  } = useDiagnostics(canvasApi)
 
-  const undo = useCallback(() => {
-    if (past.length === 0) return
-    const previous = past[past.length - 1]
-    setFuture((prev) => [...prev, { ...graphRef.current }])
-    setPast((prev) => prev.slice(0, -1))
-    setNodes(previous.nodes)
-    setEdges(previous.edges)
-  }, [past, setNodes, setEdges])
+  const {
+    edgeDirectionSets,
+    setEdgeDirectionSets,
+    activeEdgeDirectionSetId,
+    setActiveEdgeDirectionSetId,
+    switchEdgeDirectionSet,
+    addEdgeDirectionSet,
+    renameEdgeDirectionSet,
+    updateEdgeDirectionSetStyle,
+    deleteEdgeDirectionSet
+  } = useEdgeDirectionSets(canvasApi, { setPast, setFuture })
 
-  const redo = useCallback(() => {
-    if (future.length === 0) return
-    const next = future[future.length - 1]
-    setPast((prev) => [...prev, { ...graphRef.current }])
-    setFuture((prev) => prev.slice(0, -1))
-    setNodes(next.nodes)
-    setEdges(next.edges)
-  }, [future, setNodes, setEdges])
+  const {
+    detailsPanelNodeId,
+    setDetailsPanelNodeId,
+    diagnosticsPanelOpen,
+    setDiagnosticsPanelOpen,
+    preferencesPanelOpen,
+    setPreferencesPanelOpen,
+    layerPanelOpen,
+    setLayerPanelOpen,
+    entityHighlightNodeId,
+    setEntityHighlightNodeId,
+    stylePalettePanelOpen,
+    setStylePalettePanelOpen,
+    alignDistributePanelOpen,
+    setAlignDistributePanelOpen,
+    diagramSettingsPanelOpen,
+    setDiagramSettingsPanelOpen,
+    referencesPanelOpen,
+    setReferencesPanelOpen,
+    changesPanelOpen,
+    setChangesPanelOpen,
+    changesDiff,
+    setChangesDiff,
+    persona,
+    openDetailsPanel,
+    toggleDiagnosticsPanel,
+    togglePreferencesPanel,
+    toggleStylePalettePanel,
+    toggleAlignDistributePanel,
+    toggleLayerPanel,
+    toggleDiagramSettingsPanel,
+    toggleReferencesPanel,
+    toggleChangesPanelWith,
+    handlePersonaChange
+  } = usePanels(canvasApi, { setNoteShadows, setDefaultEdgeStylePicker })
+
+  const {
+    security,
+    setSecurity,
+    securityCombineMethod,
+    setSecurityCombineMethod,
+    securityAggregateMethod,
+    setSecurityAggregateMethod,
+    securityCrawl,
+    updateSecurity,
+    refreshSecurityCrawl,
+    updateNodeSecurityCell,
+    removeSecurityThreat,
+    removeSecurityEntity
+  } = useThreatMatrix(canvasApi, persona, { setPast, setFuture })
 
   // Wraps the raw onNodesChange from useNodesState to snapshot at the right
   // granularity: once per discrete change (remove/add/replace, or a
@@ -911,134 +705,6 @@ function CanvasInner(): React.JSX.Element {
     ]
   )
 
-  // The utility dock shows one surface at a time (ADR 0013): opening any panel in the family closes
-  // the others, so each toggle names every sibling. The repetition is deliberate and low-risk, not
-  // worth a generic exclusive-panel abstraction. Highlights and Legend are not in this family: both
-  // are floating popups near the bottom-left <Controls>, independent of the dock. Required tags and
-  // line bend presets are collapsible sections of DiagramSettingsPanel (ADR 0071), so one toggle
-  // covers all three.
-  const openDetailsPanel = useCallback(
-    (nodeId: string) => {
-      setDiagnosticsPanelOpen(false)
-      setPreferencesPanelOpen(false)
-      setLayerPanelOpen(false)
-      setStylePalettePanelOpen(false)
-      setAlignDistributePanelOpen(false)
-      setDiagramSettingsPanelOpen(false)
-      setReferencesPanelOpen(false)
-      setChangesPanelOpen(false)
-      setDetailsPanelNodeId(nodeId)
-      // With no existing file (or nothing saved yet to resolve one against), the shadow is seeded
-      // synchronously here, not in the effect below: nothing asynchronous happens in this branch.
-      // The functional-updater guard (no closure read of noteShadows) keeps this callback's
-      // identity stable however often noteShadows changes (every keystroke while editing), which
-      // matters because it goes through DiagramContext's memoized value (ADR 0056).
-      // Reads the node off the React Flow instance, not a closed-over `nodes`, for the same
-      // stability reason (ADR 0073), as in openReferencesFor.
-      const node = rfInstance.getNode(nodeId)
-      const existingPath = typeof node?.data?.details === 'string' ? node.data.details : undefined
-      if (!existingPath || !currentPath) {
-        setNoteShadows((prev) =>
-          nodeId in prev ? prev : { ...prev, [nodeId]: newNoteShadow(nodeId) }
-        )
-      }
-    },
-    [rfInstance, currentPath]
-  )
-
-  const toggleDiagnosticsPanel = useCallback(() => {
-    setDetailsPanelNodeId(null)
-    setPreferencesPanelOpen(false)
-    setLayerPanelOpen(false)
-    setStylePalettePanelOpen(false)
-    setAlignDistributePanelOpen(false)
-    setDiagramSettingsPanelOpen(false)
-    setReferencesPanelOpen(false)
-    setChangesPanelOpen(false)
-    setDiagnosticsPanelOpen((open) => !open)
-  }, [])
-
-  const togglePreferencesPanel = useCallback(() => {
-    setDetailsPanelNodeId(null)
-    setDiagnosticsPanelOpen(false)
-    setLayerPanelOpen(false)
-    setStylePalettePanelOpen(false)
-    setAlignDistributePanelOpen(false)
-    setDiagramSettingsPanelOpen(false)
-    setReferencesPanelOpen(false)
-    setChangesPanelOpen(false)
-    setPreferencesPanelOpen((open) => !open)
-  }, [])
-
-  const toggleStylePalettePanel = useCallback(() => {
-    setDetailsPanelNodeId(null)
-    setDiagnosticsPanelOpen(false)
-    setPreferencesPanelOpen(false)
-    setLayerPanelOpen(false)
-    setAlignDistributePanelOpen(false)
-    setDiagramSettingsPanelOpen(false)
-    setReferencesPanelOpen(false)
-    setChangesPanelOpen(false)
-    setStylePalettePanelOpen((open) => !open)
-  }, [])
-
-  const toggleAlignDistributePanel = useCallback(() => {
-    setDetailsPanelNodeId(null)
-    setDiagnosticsPanelOpen(false)
-    setPreferencesPanelOpen(false)
-    setLayerPanelOpen(false)
-    setStylePalettePanelOpen(false)
-    setDiagramSettingsPanelOpen(false)
-    setReferencesPanelOpen(false)
-    setChangesPanelOpen(false)
-    setAlignDistributePanelOpen((open) => !open)
-  }, [])
-
-  // Anchors the floating panel to whichever element opened it — same
-  // convention as toggleLegendPanel/iconPicker/colorPicker/linePicker's own
-  // anchorRect.
-  const toggleHighlightsPanel = useCallback((anchorRect: DOMRect) => {
-    setHighlightsPanelAnchor(anchorRect)
-    setHighlightsPanelOpen((open) => !open)
-  }, [])
-
-  const toggleLayerPanel = useCallback(() => {
-    setDetailsPanelNodeId(null)
-    setDiagnosticsPanelOpen(false)
-    setPreferencesPanelOpen(false)
-    setStylePalettePanelOpen(false)
-    setAlignDistributePanelOpen(false)
-    setDiagramSettingsPanelOpen(false)
-    setEntityHighlightNodeId(null)
-    setReferencesPanelOpen(false)
-    setChangesPanelOpen(false)
-    setLayerPanelOpen((open) => !open)
-  }, [])
-
-  const toggleDiagramSettingsPanel = useCallback(() => {
-    setDetailsPanelNodeId(null)
-    setDiagnosticsPanelOpen(false)
-    setPreferencesPanelOpen(false)
-    setLayerPanelOpen(false)
-    setStylePalettePanelOpen(false)
-    setAlignDistributePanelOpen(false)
-    setReferencesPanelOpen(false)
-    setChangesPanelOpen(false)
-    setDiagramSettingsPanelOpen((open) => !open)
-  }, [])
-
-  const toggleReferencesPanel = useCallback(() => {
-    setDetailsPanelNodeId(null)
-    setDiagnosticsPanelOpen(false)
-    setPreferencesPanelOpen(false)
-    setLayerPanelOpen(false)
-    setStylePalettePanelOpen(false)
-    setAlignDistributePanelOpen(false)
-    setDiagramSettingsPanelOpen(false)
-    setChangesPanelOpen(false)
-    setReferencesPanelOpen((open) => !open)
-  }, [])
-
   // Recomputes the disk-vs-memory diff (ADR 0102) — a
   // side-effect-free reread (never recordOpenedOrSaved) via
   // rereadDiagramForDiff, diffed against the same toDiagramFile() shape the
@@ -1074,136 +740,24 @@ function CanvasInner(): React.JSX.Element {
     diagramMaxConnectionPointsPerSide,
     edgeDirectionSets,
     activeEdgeDirectionSetId,
-    security
+    security,
+    setChangesDiff
   ])
 
-  const toggleChangesPanel = useCallback(() => {
-    setDetailsPanelNodeId(null)
-    setDiagnosticsPanelOpen(false)
-    setPreferencesPanelOpen(false)
-    setLayerPanelOpen(false)
-    setStylePalettePanelOpen(false)
-    setAlignDistributePanelOpen(false)
-    setDiagramSettingsPanelOpen(false)
-    setReferencesPanelOpen(false)
-    setChangesPanelOpen((open) => {
-      const next = !open
-      if (next) {
-        setChangesDiff(null)
-        void computeChangesDiff()
-      }
-      return next
-    })
-  }, [computeChangesDiff])
-
-  // Persona switch (ADR 0079). Switching to the Security Matrix closes the
-  // diagram-only utility-dock panels so a stale Layers/Diagnostics/etc.
-  // surface isn't left floating over a view whose menu no longer offers to
-  // open it. Preferences stays — it's global, valid in both personas.
-  const handlePersonaChange = useCallback((next: 'diagram' | 'matrix') => {
-    setPersona(next)
-    if (next === 'matrix') {
-      setDetailsPanelNodeId(null)
-      setDiagnosticsPanelOpen(false)
-      setLayerPanelOpen(false)
-      setStylePalettePanelOpen(false)
-      setAlignDistributePanelOpen(false)
-      setDiagramSettingsPanelOpen(false)
-      setReferencesPanelOpen(false)
-      setChangesPanelOpen(false)
-      setDefaultEdgeStylePicker(null)
-    }
-  }, [])
-
-  // --- Reference images (ADR 0069) ---
-  // The floating viewer windows are pure session state; the paths on
-  // node.data.references are the only persisted part.
-  const openReferenceWindow = useCallback((nodeId: string, path: string) => {
-    setReferenceWindows((prev) =>
-      prev.some((w) => w.nodeId === nodeId && w.path === path) ? prev : [...prev, { nodeId, path }]
-    )
-  }, [])
-
-  const closeReferenceWindow = useCallback((nodeId: string, path: string) => {
-    setReferenceWindows((prev) => prev.filter((w) => !(w.nodeId === nodeId && w.path === path)))
-  }, [])
-
-  const addReferencesToNode = useCallback(
-    async (nodeId: string) => {
-      if (!currentPath) {
-        showAlert('Save the diagram before adding reference images.')
-        return
-      }
-      let added: string[] | null
-      try {
-        added = await window.api.pickAndCopyReferences(currentPath)
-      } catch (err) {
-        // Surface it rather than failing silently — most often a stale
-        // preload bundle after adding this API (needs a full app restart),
-        // occasionally a real copy/permissions error.
-        showAlert(
-          `Could not add reference images: ${err instanceof Error ? err.message : String(err)}`
-        )
-        return
-      }
-      if (!added || added.length === 0) return
-      pushSnapshot()
-      setNodes((nds) =>
-        nds.map((n) => {
-          if (n.id !== nodeId) return n
-          const existing = Array.isArray(n.data?.references) ? (n.data.references as string[]) : []
-          return { ...n, data: { ...n.data, references: [...existing, ...added] } }
-        })
-      )
-      setReferenceWindows((prev) => [
-        ...prev,
-        ...added
-          .filter((path) => !prev.some((w) => w.nodeId === nodeId && w.path === path))
-          .map((path) => ({ nodeId, path }))
-      ])
-    },
-    [currentPath, pushSnapshot, setNodes]
+  const toggleChangesPanel = useCallback(
+    () => toggleChangesPanelWith(() => void computeChangesDiff()),
+    [toggleChangesPanelWith, computeChangesDiff]
   )
 
-  const removeReferenceFromNode = useCallback(
-    (nodeId: string, path: string) => {
-      pushSnapshot()
-      setNodes((nds) =>
-        nds.map((n) => {
-          if (n.id !== nodeId) return n
-          const existing = Array.isArray(n.data?.references) ? (n.data.references as string[]) : []
-          const next = existing.filter((p) => p !== path)
-          return { ...n, data: { ...n.data, references: next.length > 0 ? next : undefined } }
-        })
-      )
-      setReferenceWindows((prev) => prev.filter((w) => !(w.nodeId === nodeId && w.path === path)))
-    },
-    [pushSnapshot, setNodes]
-  )
-
-  // DiagramContext entry point — entity/container right-click "Reference
-  // images…": open a window for each of the node's references, or jump
-  // straight to the file picker when it has none yet.
-  const openReferencesFor = useCallback(
-    (nodeId: string) => {
-      // Read live node data off the React Flow instance rather than closing
-      // over `nodes` — keeps this callback stable so it doesn't bust the
-      // memoized DiagramContext value on every node change (ADR 0056).
-      const node = rfInstance.getNode(nodeId)
-      const refs = Array.isArray(node?.data?.references) ? (node.data.references as string[]) : []
-      if (refs.length === 0) {
-        void addReferencesToNode(nodeId)
-        return
-      }
-      setReferenceWindows((prev) => [
-        ...prev,
-        ...refs
-          .filter((path) => !prev.some((w) => w.nodeId === nodeId && w.path === path))
-          .map((path) => ({ nodeId, path }))
-      ])
-    },
-    [rfInstance, addReferencesToNode]
-  )
+  const {
+    referenceWindows,
+    setReferenceWindows,
+    openReferenceWindow,
+    closeReferenceWindow,
+    addReferencesToNode,
+    removeReferenceFromNode,
+    openReferencesFor
+  } = useReferences(canvasApi)
 
   // Select just this node and frame the viewport on it. Used by the
   // References inventory panel and the Diagnostics broken-links section
@@ -1216,59 +770,6 @@ function CanvasInner(): React.JSX.Element {
       rfInstance.fitView({ nodes: [{ id: nodeId }], duration: 300, padding: 0.5 })
     },
     [setNodes, rfInstance]
-  )
-
-  // Diagnostics missing-file row actions (ADR 0084). None of these touch a
-  // file on disk. A removal is *staged* — moved into stagedFileRemovals —
-  // and only applied (to nodes/legend) when the diagram is saved, in
-  // persistDiagram. "Dismiss" hides a row for the session. "Relink" is an
-  // in-memory edit like any other (undoable, dirties, needs a save).
-  const stageMissingFileRemoval = useCallback(
-    (entry: MissingFileEntry) => {
-      setMissingFiles((prev) => prev.filter((m) => m.key !== entry.key))
-      setStagedFileRemovals((prev) => [...prev, entry])
-      markDirty()
-    },
-    [markDirty]
-  )
-
-  const unstageMissingFileRemoval = useCallback((entry: MissingFileEntry) => {
-    setStagedFileRemovals((prev) => prev.filter((m) => m.key !== entry.key))
-    setMissingFiles((prev) => [...prev, entry])
-  }, [])
-
-  const dismissMissingFile = useCallback((entry: MissingFileEntry) => {
-    setDismissedFileKeys((prev) => new Set(prev).add(entry.key))
-  }, [])
-
-  const relinkMissingFile = useCallback(
-    async (entry: MissingFileEntry) => {
-      if (!currentPath || entry.ownerKind !== 'node') return
-      let newPath: string | null = null
-      if (entry.resourceKind === 'linkedDiagram') {
-        newPath = await window.api.pickExistingLinkedDiagram(currentPath)
-      } else if (entry.resourceKind === 'icon') {
-        newPath = await window.api.pickAndCopyCustomIcon(currentPath)
-      }
-      if (!newPath) return
-      pushSnapshot()
-      setNodes((nds) =>
-        nds.map((n) => {
-          if (n.id !== entry.ownerId) return n
-          const d: Record<string, unknown> = { ...n.data }
-          if (entry.resourceKind === 'linkedDiagram') {
-            d.linkedDiagram = newPath
-          } else if (entry.resourceKind === 'icon' && entry.iconSlot) {
-            const icons = { ...(d.icons as Partial<Record<IconSlot, IconRef>> | undefined) }
-            icons[entry.iconSlot as IconSlot] = { source: 'custom', path: newPath! }
-            d.icons = icons
-          }
-          return { ...n, data: d }
-        })
-      )
-      setMissingFiles((prev) => prev.filter((m) => m.key !== entry.key))
-    },
-    [currentPath, pushSnapshot, setNodes]
   )
 
   const updateGravityPresets = useCallback(
@@ -1287,244 +788,6 @@ function CanvasInner(): React.JSX.Element {
     [markDirty]
   )
 
-  // --- Flippable edge direction sets (ADR 0081) ---
-  // A switch re-orients the live edges AND every history snapshot's edges
-  // (so a later undo doesn't restore a stale orientation); it is not itself
-  // an undo step. Set create/duplicate/delete/rename likewise just mutate
-  // state and mark the diagram dirty, no snapshot.
-  const rewriteHistoryEdges = useCallback((transform: (edges: Edge[]) => Edge[]) => {
-    setPast((p) => p.map((s) => ({ ...s, edges: transform(s.edges) })))
-    setFuture((f) => f.map((s) => ({ ...s, edges: transform(s.edges) })))
-  }, [])
-
-  const switchEdgeDirectionSet = useCallback(
-    (toId: string) => {
-      const fromId = activeEdgeDirectionSetId ?? edgeDirectionSets[0]?.id
-      const setIds = edgeDirectionSets.map((s) => s.id)
-      if (!fromId || fromId === toId || !setIds.includes(toId)) return
-      const nodesById = new Map(graphRef.current.nodes.map((n) => [n.id, n]))
-      const transform = (eds: Edge[]): Edge[] =>
-        switchActiveDirectionSet(eds, setIds, fromId, toId, nodesById)
-      setEdges(transform)
-      rewriteHistoryEdges(transform)
-      setActiveEdgeDirectionSetId(toId)
-      markDirty()
-    },
-    [activeEdgeDirectionSetId, edgeDirectionSets, setEdges, rewriteHistoryEdges, markDirty]
-  )
-
-  const addEdgeDirectionSet = useCallback(
-    (copyFromId?: string) => {
-      const existing = edgeDirectionSets
-      const source = copyFromId ? existing.find((s) => s.id === copyFromId) : undefined
-      const used = new Set(existing.map((s) => s.name))
-      let name: string
-      if (existing.length === 0) {
-        name = 'Data flow'
-      } else if (source) {
-        name = `${source.name} copy`
-        for (let n = 2; used.has(name); n++) name = `${source.name} copy ${n}`
-      } else {
-        name = 'Trigger direction'
-        for (let n = 2; used.has(name); n++) name = `Direction ${n}`
-      }
-      const newSet: EdgeDirectionSet = {
-        id: `dirset-${crypto.randomUUID()}`,
-        name,
-        // ADR 0083: `style` is the reading's default edge style — seeds new
-        // edges + drives the legend row. A fresh set gets a plain arrow.
-        style: source?.style
-          ? { ...source.style }
-          : { stroke: DEFAULT_DIRECTION_SET_LEGEND_COLOR, endMarker: 'arrowClosed' }
-      }
-      const next = [...existing, newSet]
-      // Per-edge records only exist at 2+ sets — seed the new set (and
-      // materialise the base set's records) only once we cross that line.
-      if (next.length >= 2) {
-        const setIds = next.map((s) => s.id)
-        const fromId = copyFromId ?? activeEdgeDirectionSetId ?? next[0].id
-        const transform = (eds: Edge[]): Edge[] =>
-          addDirectionSetFrom(eds, setIds, newSet.id, fromId)
-        setEdges(transform)
-        rewriteHistoryEdges(transform)
-      }
-      setEdgeDirectionSets(next)
-      if (!activeEdgeDirectionSetId) setActiveEdgeDirectionSetId(next[0].id)
-      markDirty()
-    },
-    [edgeDirectionSets, activeEdgeDirectionSetId, setEdges, rewriteHistoryEdges, markDirty]
-  )
-
-  const renameEdgeDirectionSet = useCallback(
-    (id: string, name: string) => {
-      setEdgeDirectionSets((prev) => prev.map((s) => (s.id === id ? { ...s, name } : s)))
-      markDirty()
-    },
-    [markDirty]
-  )
-
-  // The set's default edge style (ADR 0083) — seeds new edges drawn while
-  // this reading is active, and drives its legend row. Does not restyle
-  // existing edges.
-  const updateEdgeDirectionSetStyle = useCallback(
-    (id: string, patch: Partial<EdgeDirectionSetStyle>) => {
-      setEdgeDirectionSets((prev) =>
-        prev.map((s) => (s.id === id ? { ...s, style: { ...s.style, ...patch } } : s))
-      )
-      markDirty()
-    },
-    [markDirty]
-  )
-
-  const deleteEdgeDirectionSet = useCallback(
-    (id: string) => {
-      const sets = edgeDirectionSets
-      if (!sets.some((s) => s.id === id)) return
-      const setIds = sets.map((s) => s.id)
-      const fromActive = activeEdgeDirectionSetId ?? sets[0]?.id
-      const remaining = sets.filter((s) => s.id !== id)
-      const targetActive =
-        remaining.length === 0 ? undefined : id === fromActive ? remaining[0].id : fromActive
-      // Per-edge records only exist at 2+ sets. Below that there's nothing
-      // on the edges to touch — just drop the registry entry.
-      if (sets.length >= 2) {
-        const nodesById = new Map(graphRef.current.nodes.map((n) => [n.id, n]))
-        const transform = (eds: Edge[]): Edge[] => {
-          const reoriented =
-            targetActive && fromActive && targetActive !== fromActive
-              ? switchActiveDirectionSet(eds, setIds, fromActive, targetActive, nodesById)
-              : eds
-          return remaining.length <= 1
-            ? stripDirectionSets(reoriented)
-            : removeDirectionSetKey(reoriented, id)
-        }
-        setEdges(transform)
-        rewriteHistoryEdges(transform)
-      }
-      setEdgeDirectionSets(remaining)
-      setActiveEdgeDirectionSetId(targetActive)
-      markDirty()
-    },
-    [edgeDirectionSets, activeEdgeDirectionSetId, setEdges, rewriteHistoryEdges, markDirty]
-  )
-
-  // --- Security matrix (ADR 0082) ---
-
-  // Diagram-level config: threat catalog, matrix membership, hide lists,
-  // scales, methods. Not part of undo history (like the other catalogs).
-  const updateSecurity = useCallback(
-    (next: DiagramSecurity) => {
-      setSecurity(next)
-      markDirty()
-    },
-    [markDirty]
-  )
-
-  // Recursive rollup (ADR 0088). The crawl walks each linked matrix entity's
-  // subtree in the main process; the result is cached here for the session
-  // and only re-fetched on entering the matrix persona or an explicit
-  // Refresh — never persisted, so a derived value can't go stale.
-  const [securityCrawl, setSecurityCrawl] = useState<SecurityCrawlResult | null>(null)
-  const refreshSecurityCrawl = useEventCallback(() => {
-    if (!currentPath) {
-      setSecurityCrawl(null)
-      return
-    }
-    const nodeById = new Map(graphRef.current.nodes.map((n) => [n.id, n]))
-    const links = security.matrixEntityIds.flatMap((entityId) => {
-      const link = nodeById.get(entityId)?.data?.linkedDiagram
-      return typeof link === 'string' && link.trim() !== ''
-        ? [{ entityId, relativePath: link }]
-        : []
-    })
-    if (links.length === 0) {
-      setSecurityCrawl({ columns: {}, warnings: [] })
-      return
-    }
-    void window.api.crawlLinkedSecurity(currentPath, links).then(setSecurityCrawl)
-  })
-
-  // Crawl on entering the matrix persona (ADR 0088). No cooldown throttle
-  // yet — that's a follow-up; today it's this + the explicit Refresh button.
-  useEffect(() => {
-    if (persona === 'matrix') refreshSecurityCrawl()
-  }, [persona, refreshSecurityCrawl])
-
-  // One assessment cell on an entity (`null` clears it). Routed through the
-  // node history — a cell edit is undoable.
-  const updateNodeSecurityCell = useCallback(
-    (nodeId: string, threatId: string, cell: RiskCell | null) => {
-      pushSnapshot()
-      setNodes((nds) =>
-        nds.map((n) => {
-          if (n.id !== nodeId) return n
-          const existing = (n.data?.security as Record<string, RiskCell> | undefined) ?? {}
-          const nextSec = { ...existing }
-          if (cell === null) delete nextSec[threatId]
-          else nextSec[threatId] = cell
-          const data = { ...n.data }
-          if (Object.keys(nextSec).length > 0) data.security = nextSec
-          else delete data.security
-          return { ...n, data }
-        })
-      )
-      markDirty()
-    },
-    [setNodes, pushSnapshot, markDirty]
-  )
-
-  // Removing a threat / an entity from the matrix is destructive and deliberately NOT an undo step;
-  // it also
-  // strips the affected cells from every history snapshot so an unrelated
-  // undo can't resurrect orphan `data.security` entries.
-  const removeSecurityThreat = useCallback(
-    (threatId: string) => {
-      const strip = (nds: Node[]): Node[] =>
-        nds.map((n) => {
-          const cells = n.data?.security as Record<string, RiskCell> | undefined
-          if (!cells || !(threatId in cells)) return n
-          const nextSec = { ...cells }
-          delete nextSec[threatId]
-          const data = { ...n.data }
-          if (Object.keys(nextSec).length > 0) data.security = nextSec
-          else delete data.security
-          return { ...n, data }
-        })
-      setNodes(strip)
-      setPast((p) => p.map((s) => ({ ...s, nodes: strip(s.nodes) })))
-      setFuture((f) => f.map((s) => ({ ...s, nodes: strip(s.nodes) })))
-      setSecurity((cur) => ({
-        ...cur,
-        threats: cur.threats.filter((t) => t.id !== threatId),
-        hiddenThreatIds: cur.hiddenThreatIds?.filter((id) => id !== threatId)
-      }))
-      markDirty()
-    },
-    [setNodes, markDirty]
-  )
-
-  const removeSecurityEntity = useCallback(
-    (nodeId: string) => {
-      const strip = (nds: Node[]): Node[] =>
-        nds.map((n) => {
-          if (n.id !== nodeId || !n.data?.security) return n
-          const data = { ...n.data }
-          delete data.security
-          return { ...n, data }
-        })
-      setNodes(strip)
-      setPast((p) => p.map((s) => ({ ...s, nodes: strip(s.nodes) })))
-      setFuture((f) => f.map((s) => ({ ...s, nodes: strip(s.nodes) })))
-      setSecurity((cur) => ({
-        ...cur,
-        matrixEntityIds: cur.matrixEntityIds.filter((id) => id !== nodeId),
-        hiddenEntityIds: cur.hiddenEntityIds?.filter((id) => id !== nodeId)
-      }))
-      markDirty()
-    },
-    [setNodes, markDirty]
-  )
-
   const updateRequiredTags = useCallback(
     (tags: RequiredTagDefinition[]) => {
       setRequiredTags(tags)
@@ -1534,439 +797,35 @@ function CanvasInner(): React.JSX.Element {
     [runSync, markDirty]
   )
 
-  // Add: enforces key+value uniqueness in the catalog (two highlights for
-  // the same exact match would be ambiguous — which color applies?), same
-  // reasoning as highlightId's own doc comment. Silently no-ops on a
-  // duplicate rather than erroring — the picker only ever offers tags
-  // already in use, so a duplicate attempt means the same tag was already
-  // added, not a real error condition worth interrupting the user for.
-  const addHighlight = useCallback(
-    (key: string, value: JsonValue, color: string) => {
-      setHighlights((prev) =>
-        prev.some((h) => h.key === key && JSON.stringify(h.value) === JSON.stringify(value))
-          ? prev
-          : [...prev, { key, value, color }]
-      )
-      markDirty()
-    },
-    [markDirty]
-  )
-
-  const updateHighlightColor = useCallback(
-    (id: string, color: string) => {
-      setHighlights((prev) => prev.map((h) => (highlightId(h) === id ? { ...h, color } : h)))
-      markDirty()
-    },
-    [markDirty]
-  )
-
-  const removeHighlight = useCallback(
-    (id: string) => {
-      setHighlights((prev) => prev.filter((h) => highlightId(h) !== id))
-      setEnabledHighlightIds((prev) => {
-        if (!prev.has(id)) return prev
-        const next = new Set(prev)
-        next.delete(id)
-        return next
-      })
-      markDirty()
-    },
-    [markDirty]
-  )
-
-  const toggleHighlightEnabled = useCallback((id: string) => {
-    setEnabledHighlightIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }, [])
-
-  // Bulk set (not toggle) — used by a group's tri-state "select all"
-  // checkbox, ADR 0026: enabling/disabling every member at
-  // once needs a uniform target state, not per-id toggling.
-  const toggleHighlightGroup = useCallback((ids: string[], enable: boolean) => {
-    setEnabledHighlightIds((prev) => {
-      const next = new Set(prev)
-      for (const id of ids) {
-        if (enable) next.add(id)
-        else next.delete(id)
-      }
-      return next
-    })
-  }, [])
-
-  // Legend CRUD — no uniqueness constraint (unlike highlights, two entries
-  // can legitimately look identical, e.g. two red dots explaining two
-  // different unrelated conventions) and no undo/redo integration, same
-  // treatment as the highlight catalog above.
-  const addLegendEntry = useCallback(
-    (entry: Omit<LegendEntry, 'id'>) => {
-      setLegend((prev) => [...prev, { ...entry, id: newNodeId('legend') }])
-      markDirty()
-    },
-    [markDirty]
-  )
-
-  const updateLegendEntry = useCallback(
-    (id: string, patch: Partial<Omit<LegendEntry, 'id'>>) => {
-      setLegend((prev) => prev.map((entry) => (entry.id === id ? { ...entry, ...patch } : entry)))
-      markDirty()
-    },
-    [markDirty]
-  )
-
-  const removeLegendEntry = useCallback(
-    (id: string) => {
-      setLegend((prev) => prev.filter((entry) => entry.id !== id))
-      markDirty()
-    },
-    [markDirty]
-  )
-
-  // Anchors the floating panel to whichever element opened it — same
-  // convention as iconPicker/colorPicker/linePicker's own anchorRect.
-  const toggleLegendPanel = useCallback((anchorRect: DOMRect) => {
-    setLegendPanelAnchor(anchorRect)
-    setLegendPanelOpen((open) => !open)
-  }, [])
-
-  // Every distinct key/value pair currently tagged somewhere in the
-  // diagram — the "Add highlight" picker only ever offers a tag that's
-  // actually in use, not a blank freeform entry (a highlight for a tag
-  // nothing carries yet would never match anything).
-  const usedTags = useMemo(() => {
-    const seen = new Map<string, { key: string; value: JsonValue }>()
-    const collect = (metadata: Record<string, MetadataEntry> | undefined): void => {
-      if (!metadata) return
-      for (const [key, entry] of Object.entries(metadata)) {
-        const id = `${key}::${JSON.stringify(entry.value)}`
-        if (!seen.has(id)) seen.set(id, { key, value: entry.value })
-      }
-    }
-    for (const n of nodes) collect(n.data?.metadata as Record<string, MetadataEntry> | undefined)
-    for (const e of edges) collect(e.data?.metadata as Record<string, MetadataEntry> | undefined)
-    return [...seen.values()]
-  }, [nodes, edges])
-
-  // "Add group" and each group's manual resync button both call this with the same key (ADR 0026).
-  // It reconciles against highlightGroupSourceValues (allowedValues for a required tag, else a live
-  // scan of every node/edge's metadata): a value with no entry gets a new white one, an entry whose
-  // value nothing carries or allows anymore is dropped, the rest is untouched. It also prunes
-  // enabledHighlightIds for dropped entries, so a removed row can't leave an orphaned enabled id.
-  // The automatic resync below does this for existing groups; this stays the explicit entry point
-  // for adding a group that doesn't exist yet.
-  const addOrResyncHighlightGroup = useCallback(
-    (key: string) => {
-      const currentValues = highlightGroupSourceValues(key, requiredTags, usedTags)
-      const next = reconcileHighlightGroup(highlights, key, currentValues)
-      const nextIds = new Set(next.map(highlightId))
-      setHighlights(next)
-      setEnabledHighlightIds((prev) => {
-        const filtered = new Set([...prev].filter((id) => nextIds.has(id)))
-        return filtered.size === prev.size ? prev : filtered
-      })
-      markDirty()
-    },
-    [highlights, requiredTags, usedTags, markDirty]
-  )
-
-  // Automatic resync (ADR 0026 addendum): every existing group's entries follow their source as it
-  // changes (a new allowed value on a required tag, a new value for a free tag appearing in the
-  // diagram) without the manual ↻ button. It never creates a group for a key that has none; "Add
-  // group" stays the deliberate first step.
-  //
-  // Computed in the render body, not a useEffect: this is "adjust state as a dependency changes",
-  // which the React docs (and this project's lint setup) flag as a setState-in-effect anti-pattern.
-  // It is cheap to run every render because reconcileHighlightGroup returns kept entries by
-  // reference, so folding it over every key yields either the same array (no setState; the usual
-  // case, e.g. during an unrelated drag) or a different one (setState fires once, the re-render
-  // finds nothing changed, and it settles: never a loop).
-  const existingHighlightKeys = [...new Set(highlights.map((h) => h.key))]
-  let resyncedHighlights = highlights
-  for (const key of existingHighlightKeys) {
-    const currentValues = highlightGroupSourceValues(key, requiredTags, usedTags)
-    const candidate = reconcileHighlightGroup(resyncedHighlights, key, currentValues)
-    const unchanged =
-      candidate.length === resyncedHighlights.length &&
-      candidate.every((h, i) => h === resyncedHighlights[i])
-    if (!unchanged) resyncedHighlights = candidate
-  }
-  if (resyncedHighlights !== highlights) {
-    const nextIds = new Set(resyncedHighlights.map(highlightId))
-    setHighlights(resyncedHighlights)
-    setEnabledHighlightIds((prev) => {
-      const filtered = new Set([...prev].filter((id) => nextIds.has(id)))
-      return filtered.size === prev.size ? prev : filtered
-    })
-    markDirty()
-  }
-
-  const matchHighlights = useCallback(
-    (metadata: Record<string, MetadataEntry> | undefined) =>
-      matchingHighlights(metadata, highlights, enabledHighlightIds),
-    [highlights, enabledHighlightIds]
-  )
-
-  // Search overlay (ADR 0062). Selects exactly the one matched
-  // element and frames the viewport on it — the "fit-to-node/selection"
-  // piece folded into search's scope. An edge has no bounding box of
-  // its own to fit on, so it fits on its two endpoint nodes instead.
-  const focusSearchMatch = useCallback(
-    (id: string) => {
-      setNodes((nds) =>
-        nds.map((n) => (n.selected === (n.id === id) ? n : { ...n, selected: n.id === id }))
-      )
-      setEdges((eds) =>
-        eds.map((e) => (e.selected === (e.id === id) ? e : { ...e, selected: e.id === id }))
-      )
-      const edge = edges.find((e) => e.id === id)
-      if (edge) {
-        rfInstance.fitView({
-          nodes: [{ id: edge.source }, { id: edge.target }],
-          duration: 300,
-          padding: 0.5
-        })
-      } else {
-        rfInstance.fitView({ nodes: [{ id }], duration: 300, padding: 0.5 })
-      }
-    },
-    [edges, setNodes, setEdges, rfInstance]
-  )
-
-  // Shared "commit this match list" step — the text/deep path in
-  // computeAndSetMatches and the icon path in applyIconMatches both end here.
-  const applyMatchOrder = useCallback((matchedIds: Set<string>, order: string[]) => {
-    setSearchMatchIds(matchedIds)
-    setSearchMatchOrder(order)
-    setSearchMatchCursor(0)
-    setSearchRun(true)
-  }, [])
-
-  // Every element that satisfies the criteria (ADR 0096, 0097): free text over id/label/tags and
-  // the node's details note, an exact icon, has: facets, all ANDed. A note is read from its unsaved
-  // in-memory copy when one is open, else from disk. With Deep search on, a node that links to
-  // another diagram also matches when anything in that linked subtree does, so the match lands on
-  // the entity in this diagram and cycles like any other. Edges carry no icons, references or
-  // notes, so those criteria exclude them.
-  const computeMatchIds = useCallback(
-    async (criteria: SearchCriteria): Promise<Set<string>> => {
-      const matchedIds = new Set<string>()
-      setDeepSearchLoading(true)
-      try {
-        const nodeHits = await Promise.all(
-          nodes.map((n) => {
-            const shadow = noteShadowsRef.current[n.id]
-            const searchable = searchableFromData(n.id, n.data)
-            // A note that is open but never saved (a new note, or any note on an unsaved diagram)
-            // has no stored path yet, since data.details stays unset until the first save (the
-            // sync-on-save convention), but its shadow holds real, searchable content. Without
-            // this, elementMatchesViaDetails' `!el.details` gate would treat it as nonexistent. The
-            // placeholder value is never read as a path (the shadow branch wins first); it only has
-            // to be truthy.
-            const details = searchable.details ?? (shadow ? '(unsaved note)' : undefined)
-            return elementMatchesWithDetails(
-              criteria,
-              { ...searchable, details },
-              async (relativePath) => {
-                if (shadow) return shadow.content
-                return currentPath ? window.api.readDetails(currentPath, relativePath) : ''
-              }
-            )
-          })
-        )
-        nodes.forEach((n, i) => {
-          if (nodeHits[i]) matchedIds.add(n.id)
-        })
-        for (const e of edges) {
-          if (elementMatchesCriteria(criteria, searchableFromData(e.id, e.data))) {
-            matchedIds.add(e.id)
-          }
-        }
-
-        if (deepSearchEnabled && currentPath && hasSearchCriteria(criteria)) {
-          // The in-memory links, so a link added since the last save is searched.
-          const links = nodes.flatMap((n) => {
-            const link = n.data?.linkedDiagram
-            return typeof link === 'string' && link.trim() !== '' && !matchedIds.has(n.id)
-              ? [{ nodeId: n.id, relativePath: link }]
-              : []
-          })
-          try {
-            const linked = await window.api.searchLinkedDiagrams(currentPath, links, criteria)
-            for (const id of linked.matchedNodeIds) matchedIds.add(id)
-            setSearchUnreadable(linked.unreadable)
-          } catch (error) {
-            showAlert(
-              `Couldn't search linked diagrams: ${error instanceof Error ? error.message : String(error)}`
-            )
-          }
-        }
-      } finally {
-        setDeepSearchLoading(false)
-      }
-      return matchedIds
-    },
-    [nodes, edges, currentPath, deepSearchEnabled]
-  )
-
-  // The stable next/prev order: nodes in their current array order, then edges.
-  const orderMatches = useCallback(
-    (matchedIds: Set<string>): string[] =>
-      [...nodes, ...edges].filter((el) => matchedIds.has(el.id)).map((el) => el.id),
-    [nodes, edges]
-  )
-
-  // Shared by both trigger buttons (ADR 0063 split Search and
-  // Isolate into two independent actions over the same underlying match
-  // computation — only what happens *after* matching differs). Returns the
-  // match order, empty when no criterion is set.
-  const computeAndSetMatches = useCallback(async (): Promise<string[]> => {
-    const criteria: SearchCriteria = criteriaFromQuery(searchQuery, searchIcon)
-    if (!hasSearchCriteria(criteria)) return []
-    setSearchUnreadable([])
-    const matchedIds = await computeMatchIds(criteria)
-    const order = orderMatches(matchedIds)
-    applyMatchOrder(matchedIds, order)
-    return order
-  }, [searchIcon, searchQuery, computeMatchIds, orderMatches, applyMatchOrder])
-
-  const runSearch = useCallback(async () => {
-    const order = await computeAndSetMatches()
-    if (order.length > 0) focusSearchMatch(order[0])
-  }, [computeAndSetMatches, focusSearchMatch])
-
-  // Isolate's own viewport action (ADR 0063) — frames every
-  // match at once rather than jumping to one, the whole point of the
-  // "scope the view down to a working set" framing. rfInstance.fitView
-  // already computes the union bounding box for however many node ids
-  // it's given, so no manual bbox math is needed here — an edge match
-  // just contributes its two endpoint nodes to that set, same reasoning
-  // as focusSearchMatch's single-match case above.
-  const fitAllMatches = useCallback(
-    (order: string[]) => {
-      if (order.length === 0) return
-      const nodeIds = new Set<string>()
-      for (const id of order) {
-        const edge = edges.find((e) => e.id === id)
-        if (edge) {
-          nodeIds.add(edge.source)
-          nodeIds.add(edge.target)
-        } else {
-          nodeIds.add(id)
-        }
-      }
-      rfInstance.fitView({
-        nodes: [...nodeIds].map((id) => ({ id })),
-        duration: 300,
-        padding: 0.5
-      })
-    },
-    [edges, rfInstance]
-  )
-
-  const nextSearchMatch = useCallback(() => {
-    if (searchMatchOrder.length === 0) return
-    const next = (searchMatchCursor + 1) % searchMatchOrder.length
-    setSearchMatchCursor(next)
-    focusSearchMatch(searchMatchOrder[next])
-  }, [searchMatchOrder, searchMatchCursor, focusSearchMatch])
-
-  const prevSearchMatch = useCallback(() => {
-    if (searchMatchOrder.length === 0) return
-    const prev = (searchMatchCursor - 1 + searchMatchOrder.length) % searchMatchOrder.length
-    setSearchMatchCursor(prev)
-    focusSearchMatch(searchMatchOrder[prev])
-  }, [searchMatchOrder, searchMatchCursor, focusSearchMatch])
-
-  // Shared by the query-changing (stale results shouldn't stay highlighted
-  // once the query no longer matches what's on screen) and close paths.
-  const clearSearchResults = useCallback(() => {
-    setSearchMatchIds(new Set())
-    setSearchMatchOrder([])
-    setSearchMatchCursor(0)
-    setSearchRun(false)
-    // Isolate has no meaning without a live match set — see its own state
-    // comment above.
-    setIsolateActive(false)
-    // Any query change or close drops icon mode too (ADR 0072) — the icon
-    // and free-text searches never coexist.
-    setSearchIcon(null)
-    setSearchUnreadable([])
-  }, [])
-
-  // Isolate (ADR 0063) is its own trigger, available from the start and not gated on Search having
-  // run. When off, it runs the same matching Search does against the typed query and frames every
-  // match at once (fitAllMatches) instead of jumping to one. When already on, a second click turns
-  // it off and leaves the match set (and Search's next/prev over it) alone: Isolate is a dimming
-  // toggle layered on top of it, not a separate state.
-  const runIsolate = useCallback(async () => {
-    if (isolateActive) {
-      setIsolateActive(false)
-      return
-    }
-    const order = await computeAndSetMatches()
-    if (order.length === 0) return
-    setIsolateActive(true)
-    fitAllMatches(order)
-  }, [isolateActive, computeAndSetMatches, fitAllMatches])
-
-  const onSearchQueryChange = useCallback(
-    (value: string) => {
-      setSearchQuery(value)
-      clearSearchResults()
-    },
-    [clearSearchResults]
-  )
-
-  const closeSearchOverlay = useCallback(() => {
-    setSearchOverlayOpen(false)
-    setSearchIconPicker(null)
-    clearSearchResults()
-  }, [clearSearchResults])
-
-  // Shared by the Ctrl+F keydown handler and the command palette's "Open or
-  // close search" row (ADR 0100) — one place for the toggle logic instead of
-  // two copies drifting.
-  const toggleSearchOverlay = useCallback(() => {
-    if (searchOverlayOpen) closeSearchOverlay()
-    else setSearchOverlayOpen(true)
-  }, [searchOverlayOpen, closeSearchOverlay])
-
-  // Auto-run on pick (ADR 0072) — same as IconPicker's own pick-and-close
-  // flow: choosing an icon replaces whatever's in the text box, closes the
-  // popup, and immediately runs the search + frames the first hit.
-  const pickSearchIcon = useCallback(
-    async (icon: IconRef) => {
-      setSearchQuery('')
-      setSearchIcon(icon)
-      setSearchIconPicker(null)
-      setIsolateActive(false)
-      setSearchUnreadable([])
-      const matchedIds = await computeMatchIds({
-        any: [],
-        labels: [],
-        ids: [],
-        tags: [],
-        has: [],
-        icon
-      })
-      const order = orderMatches(matchedIds)
-      applyMatchOrder(matchedIds, order)
-      if (order.length > 0) focusSearchMatch(order[0])
-    },
-    [computeMatchIds, orderMatches, applyMatchOrder, focusSearchMatch]
-  )
-
-  const toggleSearchIconPicker = useCallback((anchorRect: DOMRect) => {
-    setSearchIconPicker((cur) => (cur ? null : anchorRect))
-  }, [])
-
-  const clearSearchIcon = useCallback(() => {
-    setSearchIconPicker(null)
-    clearSearchResults()
-  }, [clearSearchResults])
+  const {
+    searchOverlayOpen,
+    searchQuery,
+    deepSearchEnabled,
+    setDeepSearchEnabled,
+    deepSearchLoading,
+    searchRun,
+    searchMatchIds,
+    searchMatchOrder,
+    searchMatchCursor,
+    searchIcon,
+    searchIconPicker,
+    setSearchIconPicker,
+    searchQueryProblems,
+    searchUnreadable,
+    isolateActive,
+    focusSearchMatch,
+    runSearch,
+    nextSearchMatch,
+    prevSearchMatch,
+    runIsolate,
+    onSearchQueryChange,
+    closeSearchOverlay,
+    toggleSearchOverlay,
+    pickSearchIcon,
+    toggleSearchIconPicker,
+    clearSearchIcon,
+    resetSearch
+  } = useSearch(canvasApi, nodes, edges, noteShadowsRef)
 
   // Gathers this diagram's own direct linked-node relative paths (deeper
   // levels are discovered from disk during the walk — see ADR 0024),
@@ -2052,7 +911,7 @@ function CanvasInner(): React.JSX.Element {
           : { ...prev, [nodeId]: loadedNoteShadow(nodeId, existingPath, stamp, content) }
       )
     })
-  }, [detailsPanelNodeId, noteShadows, nodes, currentPath])
+  }, [detailsPanelNodeId, noteShadows, nodes, currentPath, setNoteShadows])
 
   // Outside-the-app edit to the note shown in the open Details panel (ADR 0092,
   // same detector as the diagram's focus check). Runs when the panel opens on an
@@ -3329,491 +2188,63 @@ function CanvasInner(): React.JSX.Element {
     [setNodes]
   )
 
-  // Saves the diagram and the detail notes it owns as one operation (ADR 0092) and syncs canvas
-  // state to what was written. It is the one place a diagram is persisted, so every save-adjacent
-  // flow (manual save, link creation, forward link navigation) goes through it.
-  //
-  // Flow: build the desired file set (a note's path follows its label, derived now, never stored),
-  // plan (planSave: which files are written or moved, is the diagram itself rewritten), then main
-  // verifies every file it would overwrite against the disk and applies the writes in the
-  // crash-safe order. A conflict writes nothing; the user is asked once and the request is re-sent
-  // with overwrite. Only files with something to save are touched: editing one note doesn't rewrite
-  // the diagram unless a path in it changes. forceHub: the caller changed the diagram outside
-  // normal dirty tracking (link creation).
-  const persistDiagram = useCallback(
-    async (path: string, nodesToSave: Node[], opts?: { forceHub?: boolean }): Promise<Node[]> => {
-      // Apply any staged missing-file removals (ADR 0084) — this is the one
-      // point they reach disk. Also drop them from `legend` and close any
-      // now-orphaned reference windows.
-      let savedNodes = nodesToSave
-      let legendToSave = legend
-      for (const entry of stagedFileRemovals) {
-        const r = applyMissingFileRemoval(savedNodes, legendToSave, entry)
-        savedNodes = r.nodes
-        legendToSave = r.legend
-      }
-
-      // Save As / first save: paths relative to the old location are meaningless.
-      const baseline = hubBaselineRef.current
-      const newLocation = baseline.path !== path
-      const notes: PlanNoteInput[] = []
-      for (const n of savedNodes) {
-        const nodeDetailsPath = typeof n.data?.details === 'string' ? n.data.details : null
-        const shadow = noteShadows[n.id]
-        if (nodeDetailsPath === null && !shadow) continue
-        const label = typeof n.data?.label === 'string' ? n.data.label : ''
-        notes.push({
-          nodeId: n.id,
-          desiredPath: derivedDetailsPath(path, n.id, label),
-          nodeDetailsPath,
-          shadow
-        })
-      }
-      const plan = planSave({
-        hubDirty: hubDirty || !!opts?.forceHub || newLocation || stagedFileRemovals.length > 0,
-        newLocation,
-        notes
-      })
-
-      // Sets (or, for null, removes) each listed node's note path.
-      const withPaths = (list: Node[], paths: Record<string, string | null>): Node[] =>
-        list.map((n) => {
-          const p = paths[n.id]
-          if (p === undefined || (n.data?.details ?? null) === p) return n
-          const data = { ...n.data }
-          if (p === null) delete data.details
-          else data.details = p
-          return { ...n, data }
-        })
-      savedNodes = withPaths(savedNodes, plan.finalPaths)
-
-      // Where each note's node points if that note does not reach its new path
-      // (held back by a conflict, or nothing to move): its old path, or none.
-      const fallbackPaths: Record<string, string | null> = {}
-      const sentContent: Record<string, string> = {}
-      for (const op of plan.ops) {
-        fallbackPaths[op.nodeId] = op.from
-        if (op.kind === 'write') sentContent[op.nodeId] = op.content
-      }
-      const buildDiagram = (list: Node[]): DiagramFile => ({
-        ...toDiagramFile(
-          list,
-          edges,
-          diagramMetadata,
-          requiredTags,
-          highlights,
-          legendToSave,
-          gravityPresets,
-          diagramMaxConnectionPointsPerSide,
-          edgeDirectionSets,
-          activeEdgeDirectionSetId,
-          security
-        ),
-        savedWith: loadedSavedWithRef.current
-      })
-      const request: SaveDocumentRequest = {
-        diagramPath: path,
-        sessionId: sessionIdRef.current,
-        diagram: buildDiagram(savedNodes),
-        writeHub: plan.writeHub,
-        expectedHubStamp: newLocation ? null : baseline.stamp,
-        ops: plan.ops,
-        fallbackPaths,
-        overwrite: false
-      }
-
-      // Records what actually reached disk on each note's shadow; text typed
-      // while the save was in flight stays dirty (markSaved).
-      const applyNoteResults = (results: Record<string, SavedNote>): void => {
-        setNoteShadows((prev) => {
-          const next = { ...prev }
-          for (const [id, r] of Object.entries(results)) {
-            const shadow = next[id]
-            if (shadow) {
-              next[id] = markSaved(
-                shadow,
-                r.path,
-                r.stamp,
-                sentContent[id] ?? shadow.baselineContent
-              )
-            }
-          }
-          return next
-        })
-      }
-      const completed = new Set<string>()
-      let hubWrittenEver = false
-      const applySaved = (o: Extract<SaveOutcome, { status: 'saved' }>): void => {
-        applyNoteResults(o.notes)
-        for (const id of Object.keys(o.notes)) completed.add(id)
-        if (o.hubWritten) {
-          hubBaselineRef.current = { path, stamp: o.hubStamp }
-          hubWrittenEver = true
-        }
-        if (o.warnings.length > 0) showAlert(o.warnings.join('\n'))
-      }
-      const failure = (o: Extract<SaveOutcome, { status: 'failed' }>): Error => {
-        applyNoteResults(o.notes)
-        if (o.hubWritten) hubBaselineRef.current = { path, stamp: o.hubStamp }
-        return new Error(
-          `${o.error} (${Object.keys(o.notes).length} note file(s) had already been written; the diagram file ${o.hubWritten ? 'was' : 'was not'} written)`
-        )
-      }
-
-      // Save everything that can be saved first; conflicts (edited here AND
-      // changed on disk) are held back by main and handled at the end.
-      const first = await window.api.saveDocument(request)
-      if (first.status === 'failed') throw failure(first)
-      applySaved(first)
-      let aborted = false
-      let hubToReload = false
-      if (first.conflicts.length > 0) {
-        // What is left unsaved now exists only in memory until the user decides,
-        // so snapshot it BEFORE asking: a crash during the popup or after Cancel
-        // must still be recoverable. The periodic autosave can't be relied on
-        // here — it may not have run yet, and an older snapshot predates the
-        // diagram file just written, so recovery would ignore it.
-        try {
-          const heldPaths: Record<string, string | null> = {}
-          const drafts: Record<string, string> = {}
-          const baselines: Record<string, NoteBaseline> = {}
-          for (const op of plan.ops) {
-            if (completed.has(op.nodeId)) continue
-            heldPaths[op.nodeId] = fallbackPaths[op.nodeId]
-            const shadow = noteShadows[op.nodeId]
-            if (op.kind === 'write' && shadow) {
-              drafts[op.nodeId] = op.content
-              baselines[op.nodeId] = {
-                originalPath: shadow.originalPath,
-                stamp: shadow.baselineStamp,
-                baselineContent: shadow.baselineContent
-              }
-            }
-          }
-          await window.api.writeRecoverySnapshot(
-            path,
-            sessionIdRef.current,
-            buildDiagram(withPaths(savedNodes, heldPaths)),
-            drafts,
-            baselines
-          )
-        } catch {
-          // Best effort — never let the safety net block the save flow.
-        }
-        const items: ConflictItem[] = first.conflicts.map((c) =>
-          c.kind === 'hub'
-            ? { key: HUB_KEY, kind: 'hub', label: 'The diagram file' }
-            : {
-                key: c.nodeId ?? '',
-                kind: 'note',
-                label: detailsNoteName(savedNodes.find((n) => n.id === c.nodeId))
-              }
-        )
-        const decisions = await askConflictResolution(items)
-        if (decisions === null) {
-          aborted = true
-        } else {
-          // Per-file resolution (ADR 0092): what to overwrite, what to take from disk.
-          const pendingOps = plan.ops.filter((op) => first.remaining.nodeIds.includes(op.nodeId))
-          const resolution = resolveConflicts(pendingOps, decisions)
-          for (const id of resolution.adoptDiskNodeIds) {
-            delete sentContent[id] // my text is being discarded, never recorded as saved
-            const shadow = noteShadows[id]
-            if (!shadow || shadow.originalPath === null) continue
-            const disk = await window.api.readDetailsWithStamp(path, shadow.originalPath)
-            setNoteShadows((prev) =>
-              prev[id] ? { ...prev, [id]: adoptDisk(prev[id], disk.content, disk.stamp) } : prev
-            )
-          }
-          if (resolution.runOps.length > 0 || resolution.writeHub) {
-            const second = await window.api.saveDocument({
-              ...request,
-              ops: resolution.runOps,
-              writeHub: resolution.writeHub,
-              overwrite: true
-            })
-            if (second.status === 'failed') throw failure(second)
-            applySaved(second)
-          }
-          hubToReload = resolution.reloadHub
-          // Everything is resolved now, so the snapshot taken before asking is stale
-          // (it would offer to "recover" edits that were just saved or discarded). If
-          // the diagram is being reloaded, autosave re-snapshots any kept note edits.
-          await window.api.deleteRecoverySnapshot(path, sessionIdRef.current)
-          await window.api.deleteRecoverySnapshot(null, sessionIdRef.current)
-        }
-      }
-
-      // The user took the disk's version of the diagram: reload it (unsaved notes
-      // are kept) and stop — the plan above was built from state that just changed.
-      if (hubToReload) {
-        await reloadHubRef.current?.(path)
-        showAlert(
-          'The diagram was reloaded from disk. Your unsaved note edits were kept — review, then save again.'
-        )
-        throw new SaveAbortedError()
-      }
-
-      // A note that did not complete (missing source, or still held back) leaves
-      // its node pointing at the old path.
-      const notDone: Record<string, string | null> = {}
-      for (const op of plan.ops)
-        if (!completed.has(op.nodeId)) notDone[op.nodeId] = fallbackPaths[op.nodeId]
-      savedNodes = withPaths(savedNodes, notDone)
-
-      // Notes of elements that no longer exist have nothing left to save.
-      const liveIds = new Set(savedNodes.map((n) => n.id))
-      setNoteShadows((prev) =>
-        Object.keys(prev).every((id) => liveIds.has(id))
-          ? prev
-          : Object.fromEntries(Object.entries(prev).filter(([id]) => liveIds.has(id)))
-      )
-
-      // The diagram's own state is only finalised if it was actually written (or
-      // there was nothing to write). If it was held back it stays dirty and
-      // staged removals stay staged, so the next save retries them.
-      if (hubWrittenEver || !plan.writeHub) {
-        setNodes(savedNodes)
-        if (legendToSave !== legend) setLegend(legendToSave)
-        if (stagedFileRemovals.length > 0) {
-          const removedRefs = new Set(
-            stagedFileRemovals
-              .filter((e) => e.resourceKind === 'reference')
-              .map((e) => `${e.ownerId}::${e.relativePath}`)
-          )
-          if (removedRefs.size > 0) {
-            setReferenceWindows((prev) =>
-              prev.filter((w) => !removedRefs.has(`${w.nodeId}::${w.path}`))
-            )
-          }
-          setStagedFileRemovals([])
-        }
-        setHubDirty(false)
-        setExternalChangeStamp(null)
-        dismissedStampRef.current = null
-      }
-      // Something stayed unsaved (the user cancelled): not a "Saved" moment.
-      if (aborted) throw new SaveAbortedError()
-      return savedNodes
-    },
-    [
+  const { showSavedFlash, persistDiagram, handleSave, handleSaveAs, performSaveNow } = useSave(
+    canvasApi,
+    {
+      nodes,
       edges,
-      setNodes,
+      diagramMetadata,
+      requiredTags,
+      highlights,
+      legend,
       setLegend,
-      diagramMetadata,
-      requiredTags,
-      highlights,
-      legend,
+      gravityPresets,
+      diagramMaxConnectionPointsPerSide,
+      edgeDirectionSets,
+      activeEdgeDirectionSetId,
+      security,
       stagedFileRemovals,
-      gravityPresets,
-      diagramMaxConnectionPointsPerSide,
-      edgeDirectionSets,
-      activeEdgeDirectionSetId,
-      security,
+      setStagedFileRemovals,
       hubDirty,
-      noteShadows
-    ]
-  )
-
-  // Brief "Saved" confirmation next to the toolbar's Save button — without it a successful save gave
-  // no feedback at all (there was only ever an alert on *failure*). Re-triggering the
-  // timeout on every successful save (not just the first) means rapid
-  // successive saves each restart the same visible flash rather than the
-  // indicator disappearing mid-flash.
-  const flashSaved = useCallback(() => {
-    if (savedFlashTimeoutRef.current != null) clearTimeout(savedFlashTimeoutRef.current)
-    setShowSavedFlash(true)
-    savedFlashTimeoutRef.current = setTimeout(() => setShowSavedFlash(false), 2000)
-  }, [])
-
-  useEffect(() => {
-    return () => {
-      if (savedFlashTimeoutRef.current != null) clearTimeout(savedFlashTimeoutRef.current)
+      setHubDirty,
+      noteShadows,
+      setNoteShadows,
+      setReferenceWindows,
+      setCurrentPath,
+      sessionIdRef,
+      loadedSavedWithRef,
+      reloadHubRef,
+      hubBaselineRef,
+      dismissedStampRef,
+      setExternalChangeStamp
     }
-  }, [])
-
-  const performSave = useCallback(
-    async (forceNewPath: boolean) => {
-      try {
-        let path = forceNewPath ? null : currentPath
-        if (!path) {
-          path = await window.api.pickSavePath()
-          if (!path) return
-        }
-        await persistDiagram(path, nodes)
-        setCurrentPath(path)
-        flashSaved()
-      } catch (error) {
-        if (isSaveAborted(error)) return
-        showAlert(`Save failed: ${error instanceof Error ? error.message : String(error)}`)
-      }
-    },
-    [currentPath, nodes, persistDiagram, flashSaved]
   )
 
-  const handleSave = useCallback(() => performSave(false), [performSave])
-  const handleSaveAs = useCallback(() => performSave(true), [performSave])
-
-  // PNG export (ADR 0051). Selection outlines and resize/connection-point handles render inside
-  // each node based on node.selected, so everything is deselected first (flushSync, so the DOM
-  // updates before html-to-image reads it; a plain setNodes/setEdges would commit only after this
-  // function returns). That keeps them out of the image without knowing how each node type draws
-  // its selected state. Restored afterwards, including on failure. `choice` comes from
-  // ExportImageDialog, which is where these values are edited; preferences.pngExport* only remembers
-  // the last choice so the dialog reopens prefilled.
-  const handleExportPng = useCallback(
-    async (choice: ImageExportChoice) => {
-      const viewportEl = flowWrapperRef.current?.querySelector<HTMLElement>('.react-flow__viewport')
-      if (!viewportEl) return
-      const previouslySelectedNodeIds = nodes.filter((n) => n.selected).map((n) => n.id)
-      const previouslySelectedEdgeIds = edges.filter((e) => e.selected).map((e) => e.id)
-      try {
-        flushSync(() => {
-          // Mount every node/edge (onlyRenderVisibleElements, ADR 0073) so
-          // the .react-flow__viewport clone below isn't missing off-screen
-          // content.
-          setIsExportingPng(true)
-          setNodes((current) => current.map((n) => (n.selected ? { ...n, selected: false } : n)))
-          setEdges((current) => current.map((e) => (e.selected ? { ...e, selected: false } : e)))
-        })
-        // Just-mounted off-screen nodes need their handle bounds measured
-        // before their edges will render (EdgeWrapper returns null for an
-        // edge whose endpoints aren't initialized — see loadDiagramIntoCanvas)
-        // — same synchronous-measure fix, then wait a frame for the commit.
-        updateNodeInternals(nodes.map((n) => n.id))
-        await new Promise<void>((resolve) =>
-          requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
-        )
-        const legendItems = buildExportLegendItems(
-          legend,
-          highlights,
-          enabledHighlightIds,
-          directionSetLegendRow(edgeDirectionSets, activeEdgeDirectionSetId)
-        )
-        const dataUrl = await captureDiagramPng(
-          nodes,
-          edges.map((e) => ({ source: e.source, target: e.target })),
-          viewportEl,
-          {
-            paddingPx: choice.paddingPx,
-            transparentBackground: choice.transparentBackground,
-            backgroundColorOverride: choice.backgroundColorOverride,
-            legend:
-              legendItems.length > 0
-                ? { items: legendItems, corner: choice.legendCorner, diagramPath: currentPath }
-                : undefined
-          }
-        )
-        const suggestedFilename = currentPath
-          ? currentPath
-              .split(/[\\/]/)
-              .pop()!
-              .replace(/\.chd$/, '.png')
-          : 'diagram.png'
-        await window.api.exportPngToFile(dataUrl, suggestedFilename)
-      } catch (error) {
-        showAlert(`PNG export failed: ${error instanceof Error ? error.message : String(error)}`)
-      } finally {
-        setIsExportingPng(false)
-        setNodes((current) =>
-          current.map((n) =>
-            previouslySelectedNodeIds.includes(n.id) ? { ...n, selected: true } : n
-          )
-        )
-        setEdges((current) =>
-          current.map((e) =>
-            previouslySelectedEdgeIds.includes(e.id) ? { ...e, selected: true } : e
-          )
-        )
-      }
-    },
-    [
-      nodes,
-      edges,
-      setNodes,
-      setEdges,
-      currentPath,
-      legend,
-      highlights,
-      enabledHighlightIds,
-      edgeDirectionSets,
-      activeEdgeDirectionSetId,
-      updateNodeInternals
-    ]
-  )
-
-  // SVG export (ADR 0124): rendered from the diagram's data, not from the DOM, so unlike the PNG
-  // export it needs no deselecting, no mounting of off-screen elements and no waiting for a frame.
-  // A node that has no stored size is given the size React Flow measured for it.
-  const handleExportSvg = useCallback(
-    async (choice: ImageExportChoice) => {
-      try {
-        const sized = nodes.map((n) =>
-          n.width == null && n.measured?.width != null && n.measured.height != null
-            ? { ...n, width: n.measured.width, height: n.measured.height }
-            : n
-        )
-        const diagram = toDiagramFile(
-          sized,
-          edges,
-          diagramMetadata,
-          requiredTags,
-          highlights,
-          legend,
-          gravityPresets,
-          diagramMaxConnectionPointsPerSide,
-          edgeDirectionSets,
-          activeEdgeDirectionSetId,
-          security
-        )
-        const fileName = currentPath ? currentPath.split(/[\\/]/).pop()! : 'diagram.chd'
-        const svg = await buildDiagramSvg(diagram, {
-          theme,
-          paddingPx: choice.paddingPx,
-          transparentBackground: choice.transparentBackground,
-          backgroundColorHex: choice.backgroundColorOverride ?? exportPngEffectiveColorHex,
-          legendCorner: choice.legendCorner,
-          enabledHighlightIds: [...enabledHighlightIds],
-          edgeStraightSegmentLength: preferences.edgeStraightSegmentLength,
-          diagramPath: currentPath,
-          title: fileName.replace(/\.chd$/, '')
-        })
-        await window.api.exportSvgToFile(svg, fileName.replace(/\.chd$/, '') + '.svg')
-      } catch (error) {
-        showAlert(`SVG export failed: ${error instanceof Error ? error.message : String(error)}`)
-      }
-    },
-    [
-      nodes,
-      edges,
-      diagramMetadata,
-      requiredTags,
-      highlights,
-      legend,
-      gravityPresets,
-      diagramMaxConnectionPointsPerSide,
-      edgeDirectionSets,
-      activeEdgeDirectionSetId,
-      security,
-      currentPath,
-      theme,
-      exportPngEffectiveColorHex,
-      enabledHighlightIds,
-      preferences.edgeStraightSegmentLength
-    ]
-  )
-
-  // Refs can't be read during render (React lint rule, and genuinely
-  // unsafe under concurrent rendering) — so ExportImageDialog's color-swatch
-  // preview is computed here, once, right as the dialog opens, rather than
-  // inline in JSX on every render.
-  useEffect(() => {
-    if (!exportDialogFormat) return
-    const viewportEl = flowWrapperRef.current?.querySelector<HTMLElement>('.react-flow__viewport')
-    setExportPngEffectiveColorHex(
-      viewportEl ? rgbStringToHex(resolveEffectiveBackgroundColor(viewportEl)) : '#ffffff'
-    )
-  }, [exportDialogFormat])
+  const {
+    exportDialogFormat,
+    setExportDialogFormat,
+    exportPngEffectiveColorHex,
+    isExportingPng,
+    handleExportPng,
+    handleExportSvg
+  } = useImageExport(canvasApi, {
+    nodes,
+    edges,
+    diagramMetadata,
+    requiredTags,
+    highlights,
+    legend,
+    gravityPresets,
+    diagramMaxConnectionPointsPerSide,
+    edgeDirectionSets,
+    activeEdgeDirectionSetId,
+    security,
+    enabledHighlightIds,
+    theme,
+    preferences,
+    flowWrapperRef,
+    updateNodeInternals
+  })
 
   // The one place that applies a loaded DiagramFile to all canvas state —
   // called by this window's own initial-load mount effect below (a window
@@ -3960,89 +2391,51 @@ function CanvasInner(): React.JSX.Element {
       setChangesPanelOpen(false)
       setChangesDiff(null)
       setReferenceWindows([])
-      setSearchOverlayOpen(false)
-      setSearchQuery('')
-      setDeepSearchEnabled(false)
-      setSearchMatchIds(new Set())
-      setSearchMatchOrder([])
-      setSearchMatchCursor(0)
-      setSearchRun(false)
-      setIsolateActive(false)
-      setSearchIcon(null)
-      setSearchIconPicker(null)
-      setSearchUnreadable([])
+      resetSearch()
       // Defensive, per ADR 0022 — reconcile against hand-edited drift on
       // every load, not just when the template is edited from within the app.
       runSync(openedRequiredTags)
       // ADR 0084 — surface missing referenced files in Diagnostics.
       void scanMissingFiles(openedNodes, openedLegend, path)
     },
-    [setNodes, setEdges, runSync, scanMissingFiles, updateNodeInternals]
+    [
+      setNodes,
+      setEdges,
+      runSync,
+      scanMissingFiles,
+      updateNodeInternals,
+      resetSearch,
+      setLegend,
+      setLegendPanelOpen,
+      setHighlights,
+      setEnabledHighlightIds,
+      setHighlightsPanelOpen,
+      setHierarchyLoadNotes,
+      setEdgeDirectionSets,
+      setActiveEdgeDirectionSetId,
+      setSecurity,
+      setAlignDistributePanelOpen,
+      setChangesDiff,
+      setChangesPanelOpen,
+      setDetailsPanelNodeId,
+      setDiagnosticsPanelOpen,
+      setDiagramSettingsPanelOpen,
+      setPreferencesPanelOpen,
+      setReferencesPanelOpen,
+      setPast,
+      setFuture,
+      setHubDirty,
+      setNoteShadows,
+      noteShadowsRef,
+      setReferenceWindows,
+      hubBaselineRef,
+      dismissedStampRef,
+      setExternalChangeStamp
+    ]
   )
 
-  // A window opened with an initial diagram (File -> Open, or either link-navigation flow) gets it
-  // via a ?path= query string, read here rather than in main so it reuses the tested load path (ADR
-  // 0023). Ref-guarded, not an empty deps array, so it survives StrictMode's dev double-invoke and
-  // doesn't re-fire if loadDiagramIntoCanvas's identity changes (ADR 0018 covers why this file is
-  // careful about effect double-runs).
-  const initialLoadDone = useRef(false)
-  useEffect(() => {
-    if (initialLoadDone.current) return
-    initialLoadDone.current = true
-    const path = new URLSearchParams(window.location.search).get('path')
-    if (!path) return
-    window.api
-      .openDiagramAtPath(path)
-      .then(async ({ diagram, stamp }) => {
-        loadDiagramIntoCanvas(path, diagram, stamp)
-        // Crash recovery (ADR 0040) — a snapshot newer than the
-        // real file means the last session ended without saving (crash or
-        // force-quit). Prompted, not silently preferred, so a stale
-        // recovery snapshot can never clobber a real out-of-app edit.
-        const recovered = await window.api.checkRecoveryForPath(path)
-        if (!recovered) return
-        if (
-          confirm(
-            'Unsaved changes from an unexpected close were found for this diagram. Recover them?'
-          )
-        ) {
-          loadDiagramIntoCanvas(path, recovered.diagram)
-          setNoteShadows(shadowsFromSnapshot(recovered))
-          markDirty()
-        } else {
-          window.api.deleteRecoverySnapshot(path, sessionIdRef.current)
-        }
-      })
-      .catch((error) => {
-        showAlert(
-          `Couldn't open ${path}: ${error instanceof Error ? error.message : String(error)}`
-        )
-      })
-  }, [loadDiagramIntoCanvas, markDirty])
-
-  // A window created by the startup orphan scan (recovery.ts) — a diagram
-  // that crashed before ever being saved, so there's no path for the
-  // effect above to key a lookup against. Main pushes the content directly
-  // once this fresh window's finished loading. Loaded as unsaved (no
-  // path, marked dirty) rather than treated as already-saved content.
-  useEffect(() => {
-    return window.api.onRecoveredOrphan((snapshot) => {
-      loadDiagramIntoCanvas(null, snapshot.diagram)
-      setNoteShadows(shadowsFromSnapshot(snapshot))
-      markDirty()
-    })
-  }, [loadDiagramIntoCanvas, markDirty])
-
-  // Periodic autosave (ADR 0040) — every 5 s (was 60 s; an edit made and then
-  // killed within the minute was simply lost), but only while isDirty AND only if
-  // something changed since the last snapshot (same object references = nothing
-  // to write), so an idle dirty window costs nothing. Refs, not effect deps, carry the
-  // latest values into the interval callback: re-creating the interval on
-  // every nodes/edges change (which is most renders) would mean it almost
-  // never actually reaches its own timeout.
-  const autosaveStateRef = useRef({
+  useWindowLifecycle(canvasApi, {
     isDirty,
-    currentPath,
     nodes,
     edges,
     diagramMetadata,
@@ -4054,578 +2447,49 @@ function CanvasInner(): React.JSX.Element {
     edgeDirectionSets,
     activeEdgeDirectionSetId,
     security,
-    noteShadows
+    noteShadows,
+    setNoteShadows,
+    sessionIdRef,
+    loadedSavedWithRef,
+    loadDiagramIntoCanvas,
+    performSaveNow
   })
-  useEffect(() => {
-    autosaveStateRef.current = {
-      isDirty,
-      currentPath,
+
+  const { handleOpen, handleNew, handleOpenRecent, handleClearRecent, handleClose, handleReload } =
+    useDocumentCommands({
       nodes,
       edges,
-      diagramMetadata,
-      requiredTags,
-      highlights,
-      legend,
-      gravityPresets,
-      diagramMaxConnectionPointsPerSide,
-      edgeDirectionSets,
-      activeEdgeDirectionSetId,
-      security,
-      noteShadows
-    }
-  })
-  const lastSnapshotStateRef = useRef<typeof autosaveStateRef.current | null>(null)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const s = autosaveStateRef.current
-      if (!s.isDirty) return
-      const last = lastSnapshotStateRef.current
-      if (last && (Object.keys(s) as (keyof typeof s)[]).every((k) => last[k] === s[k])) return
-      lastSnapshotStateRef.current = s
-      const diagram: DiagramFile = {
-        ...toDiagramFile(
-          s.nodes,
-          s.edges,
-          s.diagramMetadata,
-          s.requiredTags,
-          s.highlights,
-          s.legend,
-          s.gravityPresets,
-          s.diagramMaxConnectionPointsPerSide,
-          s.edgeDirectionSets,
-          s.activeEdgeDirectionSetId,
-          s.security
-        ),
-        savedWith: loadedSavedWithRef.current
-      }
-      window.api.writeRecoverySnapshot(
-        s.currentPath,
-        sessionIdRef.current,
-        diagram,
-        dirtyDrafts(s.noteShadows),
-        dirtyBaselines(s.noteShadows)
-      )
-    }, 5_000)
-    return () => clearInterval(interval)
-  }, [rfInstance])
-
-  // Real OS window close (close button, Alt+F4) — main intercepts it and
-  // asks the renderer whether it's safe to proceed (ADR 0040).
-  // A clean window approves immediately; a dirty one drives the native
-  // Save/Discard/Cancel dialog, reusing this window's own existing save
-  // flow (performSave) rather than duplicating "how to actually save" in
-  // main. Refs for the same reason as the autosave timer above — this
-  // subscribes once, not on every isDirty/currentPath change.
-  const closeCheckStateRef = useRef({ isDirty, currentPath, nodes })
-  useEffect(() => {
-    closeCheckStateRef.current = { isDirty, currentPath, nodes }
-  })
-
-  // Shared by the close-prompt's Save and the drop-prompt's "Save & Open Here": both need "pick a
-  // path if there isn't one, then persist" outside an interactive Save click, so it takes its
-  // inputs as arguments instead of closing over possibly stale `currentPath`/`nodes` (callers track
-  // fresh values via refs, as persistDiagram does with nodesToSave). Returns the path saved to, or
-  // null if cancelled or failed.
-  const performSaveNow = useCallback(
-    async (nodesToSave: Node[], currentPathNow: string | null): Promise<string | null> => {
-      let path = currentPathNow
-      if (!path) {
-        path = await window.api.pickSavePath()
-        if (!path) return null
-      }
-      try {
-        await persistDiagram(path, nodesToSave)
-        setCurrentPath(path)
-        return path
-      } catch (error) {
-        if (isSaveAborted(error)) return null
-        showAlert(`Save failed: ${error instanceof Error ? error.message : String(error)}`)
-        return null
-      }
-    },
-    [persistDiagram]
-  )
-
-  // One-line change-count for the close-prompt's native dialog (ADR 0102) —
-  // reads the same autosaveStateRef the autosave snapshot uses,
-  // for the same "don't rebind this listener on every nodes/edges change"
-  // reason. Best-effort: any failure (e.g. an unreadable file) just omits
-  // the detail line rather than blocking the close flow.
-  const buildCloseChangesSummary = useCallback(async (): Promise<string | undefined> => {
-    const s = autosaveStateRef.current
-    try {
-      const saved = s.currentPath
-        ? ((await window.api.rereadDiagramForDiff(s.currentPath)) ?? createEmptyDiagram())
-        : createEmptyDiagram()
-      const current = toDiagramFile(
-        s.nodes,
-        s.edges,
-        s.diagramMetadata,
-        s.requiredTags,
-        s.highlights,
-        s.legend,
-        s.gravityPresets,
-        s.diagramMaxConnectionPointsPerSide,
-        s.edgeDirectionSets,
-        s.activeEdgeDirectionSetId,
-        s.security
-      )
-      return summarizeChanges(diffDiagrams(saved, current)) || undefined
-    } catch {
-      return undefined
-    }
-  }, [])
-
-  useEffect(() => {
-    return window.api.onCloseRequested(async () => {
-      const {
-        isDirty: dirtyNow,
-        currentPath: pathNow,
-        nodes: nodesNow
-      } = closeCheckStateRef.current
-      if (!dirtyNow) {
-        window.api.closeApproved(pathNow, sessionIdRef.current)
-        return
-      }
-      const decision = await window.api.requestCloseDecision(await buildCloseChangesSummary())
-      if (decision === 'cancel') return
-      if (decision === 'discard') {
-        window.api.closeApproved(pathNow, sessionIdRef.current)
-        return
-      }
-      const savedPath = await performSaveNow(nodesNow, pathNow)
-      if (savedPath) window.api.closeApproved(savedPath, sessionIdRef.current)
+      currentPath,
+      isDirty,
+      hubDirty,
+      loadDiagramIntoCanvas,
+      reloadHubRef,
+      updatePreferences
     })
-  }, [performSaveNow, buildCloseChangesSummary])
 
-  // "Save changes, Open Here" (drop onto a dirty window) —
-  // main shows the dialog and asks back here since it can't perform the
-  // save itself; once done, confirmSavedThenOpen tells main it's safe to
-  // navigate this window to the dropped path. A cancelled/failed save
-  // just leaves this window as-is, same as the close-prompt's own Cancel.
-  useEffect(() => {
-    return window.api.onPerformSaveThenOpenDropped(async (path) => {
-      const { nodes: nodesNow, currentPath: pathNow } = closeCheckStateRef.current
-      const savedPath = await performSaveNow(nodesNow, pathNow)
-      if (savedPath) window.api.confirmSavedThenOpen(path)
-    })
-  }, [performSaveNow])
+  const { handleLinkClick } = useLinks({ nodes, currentPath, persistDiagram, openContextMenu })
 
-  // Drag-and-drop a .chd onto this window — attached to the
-  // whole window, not a specific drop zone: React Flow's own node dragging
-  // uses pointer events, not the HTML5 Drag-and-Drop API, so the two never
-  // compete for the same gesture. Refs, not effect deps, for the same
-  // reason as the autosave/close-check state above — this subscribes once.
-  const dropStateRef = useRef({ isDirty, currentPath, nodes, edges })
-  useEffect(() => {
-    dropStateRef.current = { isDirty, currentPath, nodes, edges }
-  })
-  useEffect(() => {
-    // Both dragenter and dragover need preventDefault — Chromium only
-    // treats a drop target as valid once both agree, even though in
-    // practice dragover alone is enough in most builds.
-    const onDragEnter = (event: DragEvent): void => {
-      event.preventDefault()
-    }
-    const onDragOver = (event: DragEvent): void => {
-      event.preventDefault()
-    }
-    const onDrop = (event: DragEvent): void => {
-      event.preventDefault()
-      const files = event.dataTransfer?.files
-      if (!files || files.length === 0) return
-      // Rejected upfront by extension, matching the file dialog's own
-      // filter — no attempt to read a non-.chd file and fail gracefully.
-      const paths = Array.from(files)
-        .map((file) => window.api.getPathForFile(file))
-        .filter((path) => path.toLowerCase().endsWith('.chd'))
-      if (paths.length === 0) {
-        showAlert('Only .chd diagram files can be opened this way.')
-        return
-      }
-      const s = dropStateRef.current
-      window.api.handleDroppedFiles(
-        paths,
-        s.nodes.length === 0 && s.edges.length === 0,
-        s.isDirty,
-        s.currentPath,
-        sessionIdRef.current
-      )
-    }
-    window.addEventListener('dragenter', onDragEnter)
-    window.addEventListener('dragover', onDragOver)
-    window.addEventListener('drop', onDrop)
-    return () => {
-      window.removeEventListener('dragenter', onDragEnter)
-      window.removeEventListener('dragover', onDragOver)
-      window.removeEventListener('drop', onDrop)
-    }
-  }, [])
-
-  // Opens (or focuses, if already open elsewhere) a new window — except
-  // when this window's own diagram is currently empty, in which case that
-  // empty window is reused instead of leaving it around unused (see
-  // ADR 0023's window-reuse addendum).
-  const handleOpen = useCallback(async () => {
-    try {
-      // A window with nothing in it yet has nothing to lose by being
-      // reused, rather than leaving it sitting there empty next to the
-      // diagram you actually meant to open.
-      await window.api.openInNewWindow(nodes.length === 0 && edges.length === 0)
-    } catch (error) {
-      showAlert(`Open failed: ${error instanceof Error ? error.message : String(error)}`)
-    }
-  }, [nodes, edges])
-
-  // Always opens a new window, never replaces the current one — see
-  // ADR 0023. No file is written, nothing is linked from anywhere.
-  const handleNew = useCallback(() => {
-    window.api.newWindow()
-  }, [])
-
-  // File -> Recent Diagrams -> (an entry). Opens/focuses a window for the
-  // path exactly like following a link, except this window is reused
-  // in-place if its own diagram is currently empty — same "nothing to
-  // lose" rule as handleOpen/drag-and-drop. On a file that's since been
-  // moved/deleted, main prunes it from the list and reports found:false —
-  // the list re-renders without it once the preferences broadcast lands.
-  const handleOpenRecent = useCallback(
-    async (path: string) => {
-      try {
-        const result = await window.api.openRecentDiagram(
-          path,
-          nodes.length === 0 && edges.length === 0
-        )
-        if (!result.found)
-          showAlert(`Diagram not found — it may have been moved or deleted:\n${path}`)
-      } catch (error) {
-        showAlert(
-          `Couldn't open ${path}: ${error instanceof Error ? error.message : String(error)}`
-        )
-      }
-    },
-    [nodes, edges]
-  )
-
-  const handleClearRecent = useCallback(() => {
-    updatePreferences({ recentDiagrams: [] })
-  }, [updatePreferences])
-
-  // File -> Close does not close the OS window: a window is a diagram, not necessarily disposable.
-  // It resets the current diagram to a blank one in the same window through loadDiagramIntoCanvas,
-  // the full-state reset every load path uses, instead of scattered setState(initial) calls. The
-  // confirm() guard is skipped whenever isDirty says there is nothing to lose, not only when the
-  // canvas is empty (a diagram can be dirty while empty: add an entity, delete it).
-  const handleClose = useCallback(() => {
-    if (isDirty && !confirm('Close this diagram? Any changes since the last save will be lost.'))
-      return
-    loadDiagramIntoCanvas(null, {
-      version: 1,
-      nodes: [],
-      edges: []
-    })
-    // This is an in-place reset, not a page navigation — main's window
-    // registry (windows.ts) otherwise never learns this window stopped
-    // showing its old path, and a later attempt to open that same file
-    // would just focus this (now blank) window instead of reloading it.
-    window.api.clearWindowPath()
-  }, [isDirty, loadDiagramIntoCanvas])
-
-  // Re-reads this window's own file from disk and reloads it in place,
-  // reusing the same loadDiagramIntoCanvas the initial mount effect uses
-  // — for picking up changes made outside the app (hand-edited, or
-  // written by other tooling) without quitting and relaunching. Now
-  // dirty-aware — a clean window reloads without prompting.
-  const handleReload = useCallback(async () => {
-    if (!currentPath) return
-    if (
-      hubDirty &&
-      !confirm(
-        'Reload from disk? Unsaved changes to the diagram itself will be lost (unsaved note edits are kept).'
-      )
-    )
-      return
-    try {
-      const { diagram, stamp } = await window.api.openDiagramAtPath(currentPath)
-      loadDiagramIntoCanvas(currentPath, diagram, stamp, { keepNoteShadows: true })
-    } catch (error) {
-      showAlert(`Couldn't reload: ${error instanceof Error ? error.message : String(error)}`)
-    }
-  }, [currentPath, hubDirty, loadDiagramIntoCanvas])
-
-  // Used by the save-conflict dialog's "Take disk" for the diagram — the user has
-  // already chosen, so no second confirm (unlike handleReload).
-  useEffect(() => {
-    reloadHubRef.current = async (path: string) => {
-      try {
-        const { diagram, stamp } = await window.api.openDiagramAtPath(path)
-        loadDiagramIntoCanvas(path, diagram, stamp, { keepNoteShadows: true })
-      } catch (error) {
-        showAlert(`Couldn't reload: ${error instanceof Error ? error.message : String(error)}`)
-      }
-    }
-  }, [loadDiagramIntoCanvas])
-
-  // Window focus is when an outside edit (another editor, git, Claude) is
-  // most likely to have just happened — a cheap stat, no watcher/polling
-  // (ADR 0091). Shows the toolbar banner; dismissing remembers this specific
-  // change but the save-time guard still fires.
-  useEffect(() => {
-    if (!currentPath) return undefined
-    let cancelled = false
-    const check = async (): Promise<void> => {
-      const baseline = hubBaselineRef.current
-      if (baseline.path !== currentPath) return
-      const [result] = await window.api.checkFiles(currentPath, [
-        { relPath: null, stamp: baseline.stamp }
-      ])
-      if (cancelled) return
-      setExternalChangeStamp(
-        result.changed && result.stamp !== dismissedStampRef.current ? result.stamp : null
-      )
-    }
-    window.addEventListener('focus', check)
-    return () => {
-      cancelled = true
-      window.removeEventListener('focus', check)
-    }
-  }, [currentPath])
-
-  const dismissExternalChange = useCallback(() => {
-    dismissedStampRef.current = externalChangeStamp
-    setExternalChangeStamp(null)
-  }, [externalChangeStamp])
-
-  // Opens (or focuses, if already open elsewhere) a linked diagram in its
-  // own window — used by both link-navigation flows below. Never mutates
-  // current state on failure — a missing or unreadable link must leave the
-  // diagram containing it fully intact (ADR 0005). Does NOT save anything
-  // itself — callers persist first if the parent needs it.
-  const openLinkedWindow = useCallback(async (parentPath: string, relativePath: string) => {
-    try {
-      const result = await window.api.openLinkedInNewWindow(parentPath, relativePath)
-      if (!result.found) {
-        showAlert(`Linked diagram not found at ${result.resolvedPath}`)
-      }
-    } catch (error) {
-      showAlert(
-        `Linked diagram at ${relativePath} couldn't be read: ${error instanceof Error ? error.message : String(error)}`
-      )
-    }
-  }, [])
-
-  // Ctrl/Cmd+click on an already-linked node: persist the parent first —
-  // forward link navigation is a natural save point, and skipping this was
-  // exactly the bug where a just-created link never survived navigating
-  // away from the diagram that holds it (nothing else was ever going to
-  // write it to disk once in-memory state gets replaced by the target).
-  // Opens the child in a new window rather than replacing this one — see
-  // ADR 0023.
-  const navigateExistingLink = useCallback(
-    async (parentPath: string, relativePath: string) => {
-      try {
-        await persistDiagram(parentPath, nodes)
-      } catch (error) {
-        if (isSaveAborted(error)) return
-        throw error
-      }
-      await openLinkedWindow(parentPath, relativePath)
-    },
-    [nodes, persistDiagram, openLinkedWindow]
-  )
-
-  // Creating a new linked diagram: link the node (computed directly, not via
-  // updateNodeData + re-reading state later — that update wouldn't have been
-  // visible to a synchronous save call in the same tick), persist, then
-  // open it in a new window — this window stays exactly as it was (ADR 0023).
-  const createAndLink = useCallback(
-    async (nodeId: string, parentPath: string, label: string) => {
-      try {
-        const relativePath = await window.api.createLinkedDiagram(parentPath, label)
-        const updatedNodes = nodes.map((n) =>
-          n.id === nodeId ? { ...n, data: { ...n.data, linkedDiagram: relativePath } } : n
-        )
-        await persistDiagram(parentPath, updatedNodes, { forceHub: true })
-        await openLinkedWindow(parentPath, relativePath)
-      } catch (error) {
-        if (isSaveAborted(error)) return
-        showAlert(
-          `Couldn't create linked diagram: ${error instanceof Error ? error.message : String(error)}`
-        )
-      }
-    },
-    [nodes, persistDiagram, openLinkedWindow]
-  )
-
-  // Linking to an existing diagram: link and persist, but deliberately stay
-  // put — unlike "create new," pointing at something that already exists
-  // doesn't imply wanting to jump into it right now.
-  const pickAndLink = useCallback(
-    async (nodeId: string, parentPath: string) => {
-      const relativePath = await window.api.pickExistingLinkedDiagram(parentPath)
-      if (!relativePath) return
-      try {
-        const updatedNodes = nodes.map((n) =>
-          n.id === nodeId ? { ...n, data: { ...n.data, linkedDiagram: relativePath } } : n
-        )
-        await persistDiagram(parentPath, updatedNodes, { forceHub: true })
-      } catch (error) {
-        if (isSaveAborted(error)) return
-        showAlert(
-          `Couldn't save the link: ${error instanceof Error ? error.message : String(error)}`
-        )
-      }
-    },
-    [nodes, persistDiagram]
-  )
-
-  // Ctrl/Cmd+click entry point for linked-diagram navigation, exposed via DiagramContext. A node
-  // without a link gets a chooser (create new / link existing) at the click point through the
-  // generic ContextMenu; a linked node opens straight into a new window (ADR 0023).
-  // useEventCallback, not useCallback: the body closes over nodes, currentPath and link
-  // sub-handlers that depend on the whole diagram state, so a useCallback would change identity on
-  // every edit and, through the memoized DiagramContext value, re-render every node and edge (ADR
-  // 0073). It is only called from a Ctrl/Cmd+click, so always-latest-closure semantics are safe.
-  const handleLinkClick = useEventCallback((nodeId: string, clientX: number, clientY: number) => {
-    if (!currentPath) {
-      showAlert('Save the diagram before linking to another diagram.')
-      return
-    }
-    const node = nodes.find((n) => n.id === nodeId)
-    const linkedPath =
-      typeof node?.data?.linkedDiagram === 'string'
-        ? (node.data.linkedDiagram as string)
-        : undefined
-    if (linkedPath) {
-      navigateExistingLink(currentPath, linkedPath)
-      return
-    }
-    const label = String(node?.data?.label ?? 'diagram')
-    openContextMenu(clientX, clientY, [
-      {
-        label: 'Create new linked diagram…',
-        onSelect: () => createAndLink(nodeId, currentPath, label)
-      },
-      { label: 'Link to existing diagram…', onSelect: () => pickAndLink(nodeId, currentPath) }
-    ])
-  })
-
-  // Copy style / "format painter" (ADR 0095). The brush is a snapshot of the
-  // source's stored style taken on entry, not a live reference to the
-  // selection — clicking a target changes the selection. Session-only.
-  // Everything here reads the latest state through useEventCallback and the
-  // React Flow instance, so none of it churns the DiagramContext value.
-  const [styleBrush, setStyleBrush] = useState<StyleBrush | null>(null)
+  const {
+    styleBrush,
+    setStyleBrush,
+    toggleStyleBrush,
+    pasteStyleToSelection,
+    onStyleBrushNodeClick,
+    onStyleBrushEdgeClick
+  } = useStyleBrush(canvasApi)
   useModifierDragDuplicate({
     enabled: !styleBrush,
     duplicate: duplicateForDrag,
     cancelGesture: endContinuousEdit
   })
 
-  const toggleStyleBrush = useEventCallback(() => {
-    if (styleBrush) {
-      setStyleBrush(null)
-      return
-    }
-    const selNodes = rfInstance.getNodes().filter((n) => n.selected)
-    const selEdges = rfInstance.getEdges().filter((e) => e.selected)
-    if (selNodes.length + selEdges.length !== 1) return
-    const brush =
-      selNodes.length === 1 ? captureNodeBrush(selNodes[0]) : captureEdgeBrush(selEdges[0])
-    if (brush) setStyleBrush(brush)
-  })
-
-  // Applies the brush to whichever of the given elements accept it (same
-  // type only; a mismatch is silently skipped). One undo step for the batch.
-  const applyStyleBrush = useEventCallback((nodeIds: string[], edgeIds: string[]) => {
-    if (!styleBrush) return
-    const nodeTargets = new Set(
-      rfInstance
-        .getNodes()
-        .filter((n) => nodeIds.includes(n.id) && brushAppliesToNode(styleBrush, n))
-        .map((n) => n.id)
-    )
-    const edgeTargets = new Set(styleBrush.kind === 'edge' ? edgeIds : [])
-    if (nodeTargets.size + edgeTargets.size === 0) return
-    pushSnapshot()
-    if (nodeTargets.size > 0) {
-      setNodes((nds) =>
-        nds.map((n) =>
-          nodeTargets.has(n.id) ? { ...n, data: applyBrushToNodeData(styleBrush, n.data) } : n
-        )
-      )
-    }
-    if (edgeTargets.size > 0) {
-      setEdges((eds) =>
-        eds.map((e) =>
-          edgeTargets.has(e.id) ? { ...e, data: applyBrushToEdgeData(styleBrush, e.data) } : e
-        )
-      )
-    }
-  })
-
-  const pasteStyleToSelection = useEventCallback(() => {
-    applyStyleBrush(
-      rfInstance
-        .getNodes()
-        .filter((n) => n.selected)
-        .map((n) => n.id),
-      rfInstance
-        .getEdges()
-        .filter((e) => e.selected)
-        .map((e) => e.id)
-    )
-  })
-
-  // Plain clicks only — Ctrl/Cmd+click follows a link and Shift+click edits
-  // the selection, neither should also paint.
-  const onStyleBrushNodeClick = useCallback(
-    (event: React.MouseEvent, node: Node) => {
-      if (event.ctrlKey || event.metaKey || event.shiftKey) return
-      applyStyleBrush([node.id], [])
-    },
-    [applyStyleBrush]
-  )
-  const onStyleBrushEdgeClick = useCallback(
-    (event: React.MouseEvent, edge: Edge) => {
-      if (event.ctrlKey || event.metaKey || event.shiftKey) return
-      applyStyleBrush([], [edge.id])
-    },
-    [applyStyleBrush]
-  )
-
-  // Legend "Line" picker (ADR 0123): while the Legend panel waits for an edge to copy, it leaves
-  // its callback here. A click on an edge hands it that edge's look; Esc hands it null. Takes the
-  // click before the style brush, so an active brush never paints the edge being picked.
-  const [legendLinePick, setLegendLinePick] = useState<
-    ((look: LegendLineLook | null) => void) | null
-  >(null)
-  const requestLegendLinePick = useCallback(
-    (onPicked: (look: LegendLineLook | null) => void) => setLegendLinePick(() => onPicked),
-    []
-  )
-  const cancelLegendLinePick = useCallback(() => setLegendLinePick(null), [])
-  // Esc or the toolbar button: ends the mode and tells the panel, which drops its pending entry.
-  const abortLegendLinePick = useEventCallback(() => {
-    legendLinePick?.(null)
-    setLegendLinePick(null)
-  })
-  const onEdgeClick = useEventCallback((event: React.MouseEvent, edge: Edge) => {
-    if (!legendLinePick) {
-      onStyleBrushEdgeClick(event, edge)
-      return
-    }
-    if (event.ctrlKey || event.metaKey || event.shiftKey) return
-    setLegendLinePick(null)
-    legendLinePick(
-      legendLineFromEdgeStyle(
-        edge.data?.style as EdgeStyle | undefined,
-        theme,
-        themeAdaptiveColor,
-        EDGE_STYLE_DEFAULTS
-      )
-    )
-  })
+  const {
+    legendLinePick,
+    requestLegendLinePick,
+    cancelLegendLinePick,
+    abortLegendLinePick,
+    onEdgeClick
+  } = useLegendLinePick(theme, onStyleBrushEdgeClick)
 
   // Global keyboard shortcuts. One handler rather than one useEffect
   // per shortcut, now that there are enough of these to make that
@@ -4769,16 +2633,27 @@ function CanvasInner(): React.JSX.Element {
     searchOverlayOpen,
     toggleSearchOverlay,
     searchIconPicker,
+    setSearchIconPicker,
     shortcutsDialogOpen,
     commandPaletteOpen,
     legendLinePick,
     abortLegendLinePick,
     styleBrush,
+    setStyleBrush,
     toggleStyleBrush,
     pasteStyleToSelection,
     closeSearchOverlay,
     diagnosticsPanelOpen,
+    setAlignDistributePanelOpen,
+    setChangesPanelOpen,
+    setDetailsPanelNodeId,
+    setDiagnosticsPanelOpen,
+    setDiagramSettingsPanelOpen,
+    setPreferencesPanelOpen,
+    setReferencesPanelOpen,
+    setStylePalettePanelOpen,
     highlightsPanelOpen,
+    setHighlightsPanelOpen,
     preferencesPanelOpen,
     stylePalettePanelOpen,
     alignDistributePanelOpen,
@@ -4787,6 +2662,7 @@ function CanvasInner(): React.JSX.Element {
     changesPanelOpen,
     toggleChangesPanel,
     referenceWindows,
+    setReferenceWindows,
     iconPicker,
     colorPicker,
     linePicker,
@@ -4970,14 +2846,6 @@ function CanvasInner(): React.JSX.Element {
     [nodes]
   )
 
-  // Top menu bar (ADR 0039) — File/Edit/View, an explicit information-
-  // architecture split: file-level actions here, per-diagram
-  // inspection panels also here for now (View), Highlights already moved
-  // to its own floating popup next to Legend beforehand. Every item reuses an existing
-  // handler unchanged — this menu is purely a new way to reach them, not a
-  // new set of actions.
-  const hasSelectedNodes = selectedNodes.length > 0
-
   // Standing advisories — distinct from `diagnostics` state itself
   // (required-tags backfill notices, only updated at actual sync points;
   // see DiagnosticsPanel's own comment on why `entries` is deliberately
@@ -5000,12 +2868,6 @@ function CanvasInner(): React.JSX.Element {
     ]
   }, [diagnostics, hierarchyLoadNotes, hierarchyAnalysis, legend.length, edges.length])
 
-  // Missing-file rows still awaiting a decision (dismissed ones hidden).
-  const visibleMissingFiles = useMemo(
-    () => missingFiles.filter((m) => !dismissedFileKeys.has(m.key)),
-    [missingFiles, dismissedFileKeys]
-  )
-
   // "Changes since last save" Details bucket (ADR 0102) — reuses
   // noteShadows' existing dirty flag (ADR 0092) directly, no new tracking.
   const detailsChangedEntries: DetailsChangedEntry[] = useMemo(
@@ -5023,284 +2885,58 @@ function CanvasInner(): React.JSX.Element {
   const diagnosticsCount =
     displayedDiagnostics.length + visibleMissingFiles.length + stagedFileRemovals.length
 
-  // File -> Recent Diagrams submenu — labelled with the last two path
-  // segments (…/parent/name.chd), enough to tell two same-named diagrams in
-  // different folders apart without the full path. Empty list -> the parent
-  // item is present but disabled, so its absence never reads as a bug.
-  // Sliced here too, not just in normalizePreferences — lowering the limit
-  // in Preferences should shorten the menu immediately, before the next
-  // full preferences reload normalizes the stored list.
-  const recentDiagrams = (preferences.recentDiagrams ?? []).slice(
-    0,
-    Math.max(1, preferences.recentDiagramsLimit)
-  )
-  const recentDiagramsItem: MenuBarItem =
-    recentDiagrams.length === 0
-      ? { label: 'Recent Diagrams', disabled: true }
-      : {
-          label: 'Recent Diagrams',
-          submenu: [
-            ...recentDiagrams.map((path) => ({
-              label: path.split(/[\\/]/).slice(-2).join('/') || path,
-              title: path,
-              disabled: path === currentPath,
-              onSelect: () => handleOpenRecent(path)
-            })),
-            { label: 'Clear Recent', separatorBefore: true, onSelect: handleClearRecent }
-          ]
-        }
-
-  // Mode-aware menu bar (ADR 0079). The Security Matrix persona is still a render-only prototype
-  // with no Canvas-level actions (its controls live inside ThreatMatrixView), so "matrix" just
-  // hides what doesn't apply: the Edit menu, the diagram-specific View panels and Export as PNG.
-  // File basics, Preferences and About are shared. Matrix-specific menus come back once the matrix
-  // has persisted state to act on.
+  // Mode-aware menu bar (ADR 0079): what the Security Matrix persona hides is decided in
+  // buildMenus.
   const isDiagramPersona = persona === 'diagram'
-  const preferencesItem: MenuBarItem = { label: 'Preferences', onSelect: togglePreferencesPanel }
-
   // The legend row the active edge direction set contributes (ADR 0081) —
   // shown in the Legend panel and prepended to the PNG export legend
   // whenever any direction set exists. `null` when the feature is dormant.
   const directionSetRow = directionSetLegendRow(edgeDirectionSets, activeEdgeDirectionSetId)
 
-  const fileMenu: MenuBarMenu = {
-    label: 'File',
-    items: [
-      { label: 'New', accelerator: acceleratorFor('file.new'), onSelect: handleNew },
-      { label: 'Open…', accelerator: acceleratorFor('file.open'), onSelect: handleOpen },
-      recentDiagramsItem,
-      { label: 'Save', accelerator: acceleratorFor('file.save'), onSelect: handleSave },
-      { label: 'Save As…', accelerator: acceleratorFor('file.saveAs'), onSelect: handleSaveAs },
-      // Diagram-only for now — a "export the matrix as PNG" may make sense
-      // later but isn't built.
-      ...(isDiagramPersona
-        ? [
-            {
-              label: 'Export as PNG…',
-              disabled: nodes.length === 0,
-              onSelect: () => setExportDialogFormat('png')
-            },
-            {
-              label: 'Export as SVG…',
-              disabled: nodes.length === 0,
-              onSelect: () => setExportDialogFormat('svg')
-            }
-          ]
-        : []),
-      { label: 'Reload', disabled: !currentPath, onSelect: handleReload },
-      { label: 'Close', accelerator: acceleratorFor('file.close'), onSelect: handleClose }
-    ]
-  }
-
-  const editMenu: MenuBarMenu = {
-    label: 'Edit',
-    items: [
-      {
-        label: 'Undo',
-        accelerator: acceleratorFor('edit.undo'),
-        disabled: past.length === 0,
-        onSelect: undo
-      },
-      {
-        label: 'Redo',
-        accelerator: acceleratorFor('edit.redo'),
-        disabled: future.length === 0,
-        onSelect: redo
-      },
-      {
-        label: 'Cut',
-        accelerator: acceleratorFor('edit.cut'),
-        disabled: !hasSelectedNodes,
-        onSelect: cutSelection
-      },
-      {
-        label: 'Copy',
-        accelerator: acceleratorFor('edit.copy'),
-        disabled: !hasSelectedNodes,
-        onSelect: copySelection
-      },
-      // Not disabled on an empty/invalid clipboard — same silent no-op
-      // as the keyboard shortcut, avoids a synchronous clipboard read on
-      // every render just to compute this menu's enabled state.
-      { label: 'Paste', accelerator: acceleratorFor('edit.paste'), onSelect: pasteFromClipboard },
-      {
-        label: 'Align / Distribute…',
-        disabled: selectedNodes.length < 2,
-        onSelect: toggleAlignDistributePanel
-      },
-      {
-        // Reaches the same action as the edge context menu's "Reverse
-        // direction" (ADR 0087), for a selection made by box-select or
-        // "Select all edges" where a right-click on one edge isn't the
-        // natural gesture.
-        label:
-          selectedEdges.length > 1
-            ? `Reverse edge direction (${selectedEdges.length})`
-            : 'Reverse edge direction',
-        disabled: selectedEdges.length === 0,
-        onSelect: () => reverseEdges(selectedEdges.map((e) => e.id))
-      }
-    ]
-  }
-
-  const commandPaletteItem: MenuBarItem = {
-    label: 'Command palette…',
-    accelerator: acceleratorFor('view.commandPalette'),
-    onSelect: () => setCommandPaletteOpen(true)
-  }
-
-  const viewMenu: MenuBarMenu = {
-    label: 'View',
-    items: isDiagramPersona
-      ? [
-          commandPaletteItem,
-          {
-            label: `Diagnostics${diagnosticsCount > 0 ? ` (${diagnosticsCount})` : ''}`,
-            onSelect: toggleDiagnosticsPanel
-          },
-          {
-            label: 'Changes since last save…',
-            accelerator: acceleratorFor('view.changesSinceLastSave'),
-            onSelect: toggleChangesPanel
-          },
-          { label: 'Layers', onSelect: toggleLayerPanel },
-          {
-            label: `References${referenceRows.length > 0 ? ` (${referenceRows.length})` : ''}`,
-            onSelect: toggleReferencesPanel
-          },
-          { label: 'Style Palette', onSelect: toggleStylePalettePanel },
-          { label: 'Diagram settings', onSelect: toggleDiagramSettingsPanel },
-          preferencesItem
-        ]
-      : [commandPaletteItem, preferencesItem]
-  }
-
-  const helpMenu: MenuBarMenu = {
-    label: 'Help',
-    items: [
-      { label: 'Keyboard shortcuts…', onSelect: () => setShortcutsDialogOpen(true) },
-      { label: 'About', onSelect: () => setAboutDialogOpen(true) }
-    ]
-  }
-
-  // AI menu (ADR 0103): between View and Help; hidden by the
-  // `aiFeaturesEnabled` preference, and omitted rather than rendered empty
-  // when it has no items.
-  const aiMenuItems: MenuBarItem[] = [
-    {
-      label: 'Enable AI assistance in a folder…',
-      onSelect: () => {
-        window.api
-          .enableAiInFolder()
-          .then((result) => {
-            if (result) showAlert(summarizeAiFolderResult(result))
-          })
-          .catch((err) =>
-            showAlert(
-              `Could not set up AI assistance: ${err instanceof Error ? err.message : String(err)}`
-            )
-          )
-      }
-    },
-    // Claude Desktop exists for Windows and macOS only (ADR 0110).
-    ...(window.api.platform === 'win32' || window.api.platform === 'darwin'
-      ? [
-          {
-            label: 'Install Claude Desktop extension…',
-            onSelect: () => {
-              window.api
-                .installClaudeExtension()
-                .catch((err) =>
-                  showAlert(
-                    `Could not install the Claude Desktop extension: ${err instanceof Error ? err.message : String(err)}`
-                  )
-                )
-            }
-          }
-        ]
-      : []),
-    {
-      label: 'Copy AI instructions',
-      onSelect: () => {
-        window.api.copyToClipboard(AI_INSTRUCTIONS)
-        // The dialog's Copy button re-copies the instructions, not this
-        // confirmation text (ADR 0104).
-        showAlert(
-          'Copied the AI instructions to your clipboard. Paste them into a chat with Claude (or another AI assistant), then attach or paste your .chd file.',
-          AI_INSTRUCTIONS
-        )
-      }
-    }
-  ]
-  const aiMenu: MenuBarMenu | null =
-    preferences.aiFeaturesEnabled && aiMenuItems.length > 0
-      ? {
-          label: 'AI',
-          // Always visible when the menu is open (ADR 0103): anything an assistant
-          // reads is sent to its provider.
-          notice: 'Could cause data leaks: what an AI assistant reads is sent to its provider.',
-          items: aiMenuItems
-        }
-      : null
-
-  const menus: MenuBarMenu[] = [
-    fileMenu,
-    ...(isDiagramPersona ? [editMenu] : []),
-    viewMenu,
-    ...(aiMenu ? [aiMenu] : []),
-    helpMenu
-  ]
-
-  // Command palette (ADR 0100): every menu leaf above, flattened, plus the
-  // few keyboard-only actions that have a real handler but no menu item of
-  // their own (see the ADR for why exactly these six).
-  const extraPaletteActions: ExtraPaletteAction[] = isDiagramPersona
-    ? [
-        {
-          id: 'edit.duplicate',
-          title: 'Duplicate selection',
-          category: 'Edit',
-          shortcut: acceleratorFor('edit.duplicate'),
-          run: duplicateSelected
-        },
-        {
-          id: 'selection.selectAll',
-          title: 'Select everything',
-          category: 'Selection',
-          shortcut: acceleratorFor('selection.selectAll'),
-          run: selectAll
-        },
-        {
-          id: 'style.copy',
-          title: 'Copy style',
-          category: 'Style',
-          shortcut: acceleratorFor('style.copy'),
-          run: toggleStyleBrush
-        },
-        {
-          id: 'style.paste',
-          title: 'Apply copied style to selection',
-          category: 'Style',
-          shortcut: acceleratorFor('style.paste'),
-          run: pasteStyleToSelection
-        },
-        {
-          id: 'view.fit',
-          title: 'Fit the whole diagram in view',
-          category: 'View',
-          shortcut: acceleratorFor('view.fit'),
-          run: () => rfInstance.fitView()
-        },
-        {
-          id: 'search.toggle',
-          title: 'Open or close search',
-          category: 'Search',
-          shortcut: acceleratorFor('search.toggle'),
-          run: toggleSearchOverlay
-        }
-      ]
-    : []
-  const paletteActions = buildPaletteActions(menus, extraPaletteActions)
+  const { menus, paletteActions } = useMenus({
+    preferences,
+    currentPath,
+    isDiagramPersona,
+    nodes,
+    selectedNodes,
+    selectedEdges,
+    canUndo: past.length > 0,
+    canRedo: future.length > 0,
+    diagnosticsCount,
+    referenceCount: referenceRows.length,
+    fitView: () => rfInstance.fitView(),
+    handleNew,
+    handleOpen,
+    handleOpenRecent,
+    handleClearRecent,
+    handleSave,
+    handleSaveAs,
+    handleReload,
+    handleClose,
+    setExportDialogFormat,
+    undo,
+    redo,
+    cutSelection,
+    copySelection,
+    pasteFromClipboard,
+    duplicateSelected,
+    selectAll,
+    reverseEdges,
+    toggleStyleBrush,
+    pasteStyleToSelection,
+    toggleSearchOverlay,
+    toggleAlignDistributePanel,
+    toggleDiagnosticsPanel,
+    toggleChangesPanel,
+    toggleLayerPanel,
+    toggleReferencesPanel,
+    toggleStylePalettePanel,
+    toggleDiagramSettingsPanel,
+    togglePreferencesPanel,
+    setCommandPaletteOpen,
+    setShortcutsDialogOpen,
+    setAboutDialogOpen
+  })
 
   // Whichever named palette is active (ADR 0068), resolved live —
   // memoized on the two fields it depends on so the Context value below

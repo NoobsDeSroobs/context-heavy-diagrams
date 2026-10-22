@@ -718,3 +718,35 @@ Fixed by the paste rework described under "Pasting a copied child-of-a-container
 **Fix:** `remapForPaste` centres the group's bounding box; the point is the centre of the canvas as it will be with the properties panel open (`visibleCanvasCenter`, reading the width from `--dock-properties-width`). Measured in the packaged build: offset 0, 0.
 
 **References:** `src/renderer/src/canvas/clipboard.ts`, `src/renderer/src/canvas/Canvas.tsx` (`visibleCanvasCenter`)
+
+---
+
+## The Property panel is drawn over the menu bar
+
+**Status:** Open (reported 2026-10-22)
+
+**Symptom:** the Properties panel on the right overlaps the menu bar instead of sitting below it, so the menu bar is partly covered (and, in a narrow window, the panel also covers nodes). Expected: the panel starts under the menu bar.
+
+**Cause:** not investigated; probably the panel's stacking order or its top offset in the dock layout.
+
+---
+
+## A new edge showed no arrowhead until the end marker was changed and changed back
+
+**Status:** Open, not reproduced (reported 2026-10-22)
+
+**Symptom:** two entities and a new edge between them: the Properties panel said the end marker was a closed arrow, but the edge drew as a plain line. Switching it to the open arrow and back made the head appear.
+
+**Notes:** it happened in a long-running dev session after hot reloads and did not recur after a restart. A fresh start draws the head of a new edge correctly (checked in the running app over the DevTools protocol). The marker `<defs>` are one global element ([edgeMarkers.tsx](../src/renderer/src/edges/edgeMarkers.tsx)); the likely cause is an edge created while those defs were being replaced by a hot reload. If it appears in a fresh or packaged session, this entry needs a real investigation.
+
+---
+
+## Connection handles are hard to hit when zoomed far out
+
+**Status:** Open (reported 2026-10-22)
+
+**Symptom:** on a large diagram zoomed far out, the point to start an edge drag from is too small to click.
+
+**Cause:** the handles are React Flow's default size in flow units, so on screen they shrink with the zoom (at 0.2 a 6 px handle is about 1 px).
+
+**Idea:** size handles in screen pixels with a lower bound (a zoom custom property on the canvas, handle size divided by it), and check `connectionRadius` for the drop side.
