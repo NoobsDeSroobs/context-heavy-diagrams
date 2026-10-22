@@ -1,7 +1,7 @@
 # 0153: Hook and component tests
 
 ## Status
-Not Started. Follows [0152](0152-split-the-large-files.md); must land before [0154](0154-canvas-feature-hooks.md).
+Not Started. Follows [0152](../completed-epics.md#0152-split-the-large-files-helpers-css-property-panel); must land before [0154](0154-canvas-feature-hooks.md).
 
 ## Goal
 Automated tests for the renderer's core behaviour, so the `Canvas.tsx` hook extraction is checked by more than a manual run. The renderer has almost no tests today; `node --test` cannot load `.tsx` or the `@shared` / `@renderer` aliases.

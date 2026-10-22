@@ -12,4 +12,4 @@ Not Started.
 - [ ] ADR, then implement
 
 ## Notes
-Not part of the mechanical splits in [0152](0152-split-the-large-files.md) and [0154](0154-canvas-feature-hooks.md); the threat-matrix hook from 0154 should be done first so the redesign starts from a clean boundary.
+Not part of the mechanical splits in [0152](../completed-epics.md#0152-split-the-large-files-helpers-css-property-panel) and [0154](0154-canvas-feature-hooks.md); the threat-matrix hook from 0154 should be done first so the redesign starts from a clean boundary.
