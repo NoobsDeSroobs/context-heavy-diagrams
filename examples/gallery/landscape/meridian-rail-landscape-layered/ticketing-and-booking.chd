@@ -89,6 +89,16 @@
       "key": "gdpr",
       "value": "No PII",
       "color": "#e60f0f"
+    },
+    {
+      "key": "gdpr",
+      "value": "Sensitive PII",
+      "color": "#ffffff"
+    },
+    {
+      "key": "gdpr",
+      "value": null,
+      "color": "#ffffff"
     }
   ],
   "legend": [

@@ -63,7 +63,13 @@
       "target": "shape-1",
       "sourceHandle": "right",
       "targetHandle": "left",
-      "label": "reads from"
+      "label": "reads from",
+      "metadata": {
+        "environment": {
+          "value": "dev",
+          "lock": "lockedEditable"
+        }
+      }
     }
   ]
 }

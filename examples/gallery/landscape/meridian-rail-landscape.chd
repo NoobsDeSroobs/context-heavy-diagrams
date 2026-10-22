@@ -265,8 +265,28 @@
       "color": "#a0aec0"
     },
     {
+      "key": "gdpr",
+      "value": null,
+      "color": "#ffffff"
+    },
+    {
+      "key": "nis2",
+      "value": null,
+      "color": "#ffffff"
+    },
+    {
       "key": "owningTeam",
-      "value": "None",
+      "value": null,
+      "color": "#ffffff"
+    },
+    {
+      "key": "businessDomain",
+      "value": null,
+      "color": "#ffffff"
+    },
+    {
+      "key": "serviceState",
+      "value": null,
       "color": "#ffffff"
     }
   ],

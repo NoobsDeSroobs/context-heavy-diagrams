@@ -23,6 +23,21 @@
       "key": "gdpr",
       "value": "Pseudonymized",
       "color": "#d8e619"
+    },
+    {
+      "key": "gdpr",
+      "value": "PII",
+      "color": "#ffffff"
+    },
+    {
+      "key": "gdpr",
+      "value": "Sensitive PII",
+      "color": "#ffffff"
+    },
+    {
+      "key": "gdpr",
+      "value": null,
+      "color": "#ffffff"
     }
   ],
   "legend": [

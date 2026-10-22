@@ -75,6 +75,15 @@ export default defineConfig(
     }
   },
   {
+    // Renderer test code (ADR 0127): stubs are often empty on purpose.
+    files: [
+      '**/*.test.{ts,tsx}',
+      'src/renderer/src/testSetup.ts',
+      'src/renderer/src/**/*Harness.tsx'
+    ],
+    rules: { '@typescript-eslint/no-empty-function': 'off' }
+  },
+  {
     // Plain-JS node:test files, the standalone `chd` CLI (ADR 0106), the Claude
     // Desktop extension (ADR 0110) and its build script — the return-type rule
     // is for app code.
