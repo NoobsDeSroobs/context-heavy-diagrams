@@ -1,7 +1,7 @@
 # 0155: End-to-end smoke test
 
 ## Status
-Not Started. Follows [0154](0154-canvas-feature-hooks.md).
+Not Started. Follows [0154](../completed-epics.md#0154-canvas-feature-hooks).
 
 ## Goal
 One automated test that launches the built app and walks the basic path, so a broken bundle, preload bridge or main-process handler shows up in CI instead of in a manual run.
