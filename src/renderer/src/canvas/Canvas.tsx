@@ -1,6 +1,5 @@
 import { showAlert } from '../ui/alerts'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { flushSync } from 'react-dom'
 import {
   adoptDisk,
   editNote,
@@ -101,7 +100,6 @@ import CommandPalette from '../CommandPalette'
 import { findKeyCommand, type CommandId } from '../commands'
 import AlertDialog from '../ui/AlertDialog'
 import ExportImageDialog, { type ImageExportChoice } from '../export/ExportImageDialog'
-import { buildDiagramSvg } from '../export/exportSvg'
 import BulkCreateDialog from '../bulk-create/BulkCreateDialog'
 import StylePalettePanel from '../styling/StylePalettePanel'
 import ReferenceWindow from '../references/ReferenceWindow'
@@ -135,17 +133,12 @@ import { useSave } from '../document/useSave'
 import { useWindowLifecycle } from '../document/useWindowLifecycle'
 import { useDocumentCommands } from '../document/useDocumentCommands'
 import { useLinks } from '../links/useLinks'
+import { useImageExport } from '../export/useImageExport'
 import { useMenus } from '../useMenus'
 import { useModifierDragDuplicate } from './useModifierDragDuplicate'
 import { useDetailsPeek } from '../details/useDetailsPeek'
 import PeekCard from '../details/PeekCard'
 import { effectiveStylePalette, usePreferences } from '../preferences/preferences'
-import {
-  captureDiagramPng,
-  resolveEffectiveBackgroundColor,
-  rgbStringToHex
-} from '../export/exportPng'
-import { buildExportLegendItems } from '@shared/legend/legendItems'
 import ThreatMatrixView from '../threat-matrix/ThreatMatrixView'
 import { themeAdaptiveColor } from '../styling/themeAdaptiveColor'
 import {
@@ -261,17 +254,8 @@ function CanvasInner(): React.JSX.Element {
   const [shortcutsDialogOpen, setShortcutsDialogOpen] = useState(false)
   // Command palette (ADR 0100).
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
-  // Which image export the dialog is open for, if any (PNG, ADR 0051; SVG, ADR 0124).
-  const [exportDialogFormat, setExportDialogFormat] = useState<'png' | 'svg' | null>(null)
-  const [exportPngEffectiveColorHex, setExportPngEffectiveColorHex] = useState('#ffffff')
   // See ADR 0089 — right-click on the ItemPalette Entity/Container button.
   const [bulkCreateType, setBulkCreateType] = useState<'entity' | 'container' | null>(null)
-  // onlyRenderVisibleElements (ADR 0073) keeps React Flow from mounting
-  // off-screen nodes/edges — a large win on big diagrams, but PNG export
-  // (handleExportPng) clones the .react-flow__viewport DOM subtree, so
-  // every off-screen element would be missing from the capture. Flipped
-  // true for the duration of a capture so the whole diagram is in the DOM.
-  const [isExportingPng, setIsExportingPng] = useState(false)
   // Toolbar's own "current pen style" swatch (ADR 0045) — reuses
   // StylePicker (ADR 0010) unchanged, same anchorRect convention as
   // linePicker above, just targeting preferences.defaultEdgeStyle instead of
@@ -2236,166 +2220,31 @@ function CanvasInner(): React.JSX.Element {
     }
   )
 
-  // PNG export (ADR 0051). Selection outlines and resize/connection-point handles render inside
-  // each node based on node.selected, so everything is deselected first (flushSync, so the DOM
-  // updates before html-to-image reads it; a plain setNodes/setEdges would commit only after this
-  // function returns). That keeps them out of the image without knowing how each node type draws
-  // its selected state. Restored afterwards, including on failure. `choice` comes from
-  // ExportImageDialog, which is where these values are edited; preferences.pngExport* only remembers
-  // the last choice so the dialog reopens prefilled.
-  const handleExportPng = useCallback(
-    async (choice: ImageExportChoice) => {
-      const viewportEl = flowWrapperRef.current?.querySelector<HTMLElement>('.react-flow__viewport')
-      if (!viewportEl) return
-      const previouslySelectedNodeIds = nodes.filter((n) => n.selected).map((n) => n.id)
-      const previouslySelectedEdgeIds = edges.filter((e) => e.selected).map((e) => e.id)
-      try {
-        flushSync(() => {
-          // Mount every node/edge (onlyRenderVisibleElements, ADR 0073) so
-          // the .react-flow__viewport clone below isn't missing off-screen
-          // content.
-          setIsExportingPng(true)
-          setNodes((current) => current.map((n) => (n.selected ? { ...n, selected: false } : n)))
-          setEdges((current) => current.map((e) => (e.selected ? { ...e, selected: false } : e)))
-        })
-        // Just-mounted off-screen nodes need their handle bounds measured
-        // before their edges will render (EdgeWrapper returns null for an
-        // edge whose endpoints aren't initialized — see loadDiagramIntoCanvas)
-        // — same synchronous-measure fix, then wait a frame for the commit.
-        updateNodeInternals(nodes.map((n) => n.id))
-        await new Promise<void>((resolve) =>
-          requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
-        )
-        const legendItems = buildExportLegendItems(
-          legend,
-          highlights,
-          enabledHighlightIds,
-          directionSetLegendRow(edgeDirectionSets, activeEdgeDirectionSetId)
-        )
-        const dataUrl = await captureDiagramPng(
-          nodes,
-          edges.map((e) => ({ source: e.source, target: e.target })),
-          viewportEl,
-          {
-            paddingPx: choice.paddingPx,
-            transparentBackground: choice.transparentBackground,
-            backgroundColorOverride: choice.backgroundColorOverride,
-            legend:
-              legendItems.length > 0
-                ? { items: legendItems, corner: choice.legendCorner, diagramPath: currentPath }
-                : undefined
-          }
-        )
-        const suggestedFilename = currentPath
-          ? currentPath
-              .split(/[\\/]/)
-              .pop()!
-              .replace(/\.chd$/, '.png')
-          : 'diagram.png'
-        await window.api.exportPngToFile(dataUrl, suggestedFilename)
-      } catch (error) {
-        showAlert(`PNG export failed: ${error instanceof Error ? error.message : String(error)}`)
-      } finally {
-        setIsExportingPng(false)
-        setNodes((current) =>
-          current.map((n) =>
-            previouslySelectedNodeIds.includes(n.id) ? { ...n, selected: true } : n
-          )
-        )
-        setEdges((current) =>
-          current.map((e) =>
-            previouslySelectedEdgeIds.includes(e.id) ? { ...e, selected: true } : e
-          )
-        )
-      }
-    },
-    [
-      nodes,
-      edges,
-      setNodes,
-      setEdges,
-      currentPath,
-      legend,
-      highlights,
-      enabledHighlightIds,
-      edgeDirectionSets,
-      activeEdgeDirectionSetId,
-      updateNodeInternals
-    ]
-  )
-
-  // SVG export (ADR 0124): rendered from the diagram's data, not from the DOM, so unlike the PNG
-  // export it needs no deselecting, no mounting of off-screen elements and no waiting for a frame.
-  // A node that has no stored size is given the size React Flow measured for it.
-  const handleExportSvg = useCallback(
-    async (choice: ImageExportChoice) => {
-      try {
-        const sized = nodes.map((n) =>
-          n.width == null && n.measured?.width != null && n.measured.height != null
-            ? { ...n, width: n.measured.width, height: n.measured.height }
-            : n
-        )
-        const diagram = toDiagramFile(
-          sized,
-          edges,
-          diagramMetadata,
-          requiredTags,
-          highlights,
-          legend,
-          gravityPresets,
-          diagramMaxConnectionPointsPerSide,
-          edgeDirectionSets,
-          activeEdgeDirectionSetId,
-          security
-        )
-        const fileName = currentPath ? currentPath.split(/[\\/]/).pop()! : 'diagram.chd'
-        const svg = await buildDiagramSvg(diagram, {
-          theme,
-          paddingPx: choice.paddingPx,
-          transparentBackground: choice.transparentBackground,
-          backgroundColorHex: choice.backgroundColorOverride ?? exportPngEffectiveColorHex,
-          legendCorner: choice.legendCorner,
-          enabledHighlightIds: [...enabledHighlightIds],
-          edgeStraightSegmentLength: preferences.edgeStraightSegmentLength,
-          diagramPath: currentPath,
-          title: fileName.replace(/\.chd$/, '')
-        })
-        await window.api.exportSvgToFile(svg, fileName.replace(/\.chd$/, '') + '.svg')
-      } catch (error) {
-        showAlert(`SVG export failed: ${error instanceof Error ? error.message : String(error)}`)
-      }
-    },
-    [
-      nodes,
-      edges,
-      diagramMetadata,
-      requiredTags,
-      highlights,
-      legend,
-      gravityPresets,
-      diagramMaxConnectionPointsPerSide,
-      edgeDirectionSets,
-      activeEdgeDirectionSetId,
-      security,
-      currentPath,
-      theme,
-      exportPngEffectiveColorHex,
-      enabledHighlightIds,
-      preferences.edgeStraightSegmentLength
-    ]
-  )
-
-  // Refs can't be read during render (React lint rule, and genuinely
-  // unsafe under concurrent rendering) — so ExportImageDialog's color-swatch
-  // preview is computed here, once, right as the dialog opens, rather than
-  // inline in JSX on every render.
-  useEffect(() => {
-    if (!exportDialogFormat) return
-    const viewportEl = flowWrapperRef.current?.querySelector<HTMLElement>('.react-flow__viewport')
-    setExportPngEffectiveColorHex(
-      viewportEl ? rgbStringToHex(resolveEffectiveBackgroundColor(viewportEl)) : '#ffffff'
-    )
-  }, [exportDialogFormat])
+  const {
+    exportDialogFormat,
+    setExportDialogFormat,
+    exportPngEffectiveColorHex,
+    isExportingPng,
+    handleExportPng,
+    handleExportSvg
+  } = useImageExport(canvasApi, {
+    nodes,
+    edges,
+    diagramMetadata,
+    requiredTags,
+    highlights,
+    legend,
+    gravityPresets,
+    diagramMaxConnectionPointsPerSide,
+    edgeDirectionSets,
+    activeEdgeDirectionSetId,
+    security,
+    enabledHighlightIds,
+    theme,
+    preferences,
+    flowWrapperRef,
+    updateNodeInternals
+  })
 
   // The one place that applies a loaded DiagramFile to all canvas state —
   // called by this window's own initial-load mount effect below (a window
