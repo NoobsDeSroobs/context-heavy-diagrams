@@ -118,6 +118,14 @@
   opacity: 1;
 }
 
+/* Handles are in flow units, so they shrink with the zoom; below a zoom of about 0.6 they grow
+   to stay 10 screen px (--canvas-zoom is set by useZoomedConnectionHandles). */
+.entity-node .react-flow__handle,
+.container-node .react-flow__handle {
+  width: max(6px, calc(10px / var(--canvas-zoom, 1)));
+  height: max(6px, calc(10px / var(--canvas-zoom, 1)));
+}
+
 /* Line node's own point handles (ADR 0050) — plain positioned
    divs, not React Flow Handles (those are for connections; these just
    reposition a point), so they get their own hover-reveal rule matching

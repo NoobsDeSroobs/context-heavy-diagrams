@@ -1,4 +1,5 @@
 import { showAlert } from '../ui/alerts'
+import { useZoomedConnectionHandles } from './useZoomedConnectionHandles'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   adoptDisk,
@@ -287,6 +288,7 @@ function CanvasInner(): React.JSX.Element {
   // Editing a node's details doesn't write to disk immediately — it's just
   // draft state here, flushed as part of the main save flow.
   const rfInstance = useReactFlow()
+  const connectionRadius = useZoomedConnectionHandles()
   const { peek, bindings: peekBindings } = useDetailsPeek()
   const peekNode = peek ? rfInstance.getNode(peek.nodeId) : undefined
   const updateNodeInternals = useUpdateNodeInternals()
@@ -3237,6 +3239,7 @@ function CanvasInner(): React.JSX.Element {
                   // matches the actual grabbable area exactly rather than
                   // over- or under-promising it.
                   reconnectRadius={8}
+                  connectionRadius={connectionRadius}
                   // Previously never set at all (silently React Flow's own
                   // 0.5/2 library defaults) until a large diagram made
                   // "zoom out further" a real ask — now a real Setting

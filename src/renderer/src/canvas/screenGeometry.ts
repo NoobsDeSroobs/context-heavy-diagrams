@@ -16,6 +16,17 @@ export function isVoidDrop(
   return target instanceof Element && target.classList.contains('react-flow__pane')
 }
 
+// React Flow's `connectionRadius` is in flow units, so the 20px default shrinks to a few screen
+// pixels when zoomed out. Doubling it per halving of the zoom keeps the screen radius between about
+// 14 and 28 px, and moves in few enough steps that the prop rarely changes while zooming. Zoomed in,
+// the default stays.
+export const DEFAULT_CONNECTION_RADIUS = 20
+
+export function connectionRadiusForZoom(zoom: number): number {
+  if (!(zoom > 0) || zoom >= 1) return DEFAULT_CONNECTION_RADIUS
+  return DEFAULT_CONNECTION_RADIUS * 2 ** Math.round(Math.log2(1 / zoom))
+}
+
 // MouseEvent and TouchEvent expose the release coordinates differently.
 export function pointFromEvent(event: MouseEvent | TouchEvent): {
   clientX: number

@@ -743,10 +743,10 @@ Fixed by the paste rework described under "Pasting a copied child-of-a-container
 
 ## Connection handles are hard to hit when zoomed far out
 
-**Status:** Open (reported 2026-10-22)
+**Status:** Solved (2026-10-22), [ADR 0129](decisions/0129-connection-handles-keep-a-minimum-screen-size.md)
 
 **Symptom:** on a large diagram zoomed far out, the point to start an edge drag from is too small to click.
 
-**Cause:** the handles are React Flow's default size in flow units, so on screen they shrink with the zoom (at 0.2 a 6 px handle is about 1 px).
+**Cause:** the handles are React Flow's default size in flow units, so on screen they shrink with the zoom (at 0.2 a 6 px handle is about 1 px). `connectionRadius` is in flow units too, so the snap radius shrank the same way.
 
-**Idea:** size handles in screen pixels with a lower bound (a zoom custom property on the canvas, handle size divided by it), and check `connectionRadius` for the drop side.
+**Resolution:** the handle size is `max(6px, 10px / zoom)` from a `--canvas-zoom` CSS variable, and `connectionRadius` grows in steps as the zoom falls.
