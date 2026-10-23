@@ -1,7 +1,7 @@
 # 0138: Architecture conformance checks ("does this diagram follow the architecture it claims?")
 
 ## Status
-Not Started — idea only, logged 2026-10-16 for a later design and feasibility conversation. Nothing is decided; the sketch and questions below are starting points, not commitments.
+In Progress, design phase (2026-10-23). The first version is scoped under "Decided so far"; the sketch and the questions further down are the original notes, partly superseded by it.
 
 ## Goal
 Let a diagram be checked against a named architectural style or rule set — for example hexagonal (ports and adapters), layered/onion, or a project's own house rules — and report violations the way the Diagnostics panel reports other problems. In other words, architectural fitness functions for diagrams.
@@ -10,6 +10,25 @@ Let a diagram be checked against a named architectural style or rule set — for
 "Write unit tests for diagrams. Some architectures have rules, like hexagonal architecture, and maybe ArchUnit or something can check for adherence to those rules?"
 
 **On ArchUnit specifically:** it is a Java library that checks Java code (bytecode) against rules such as "classes in the domain package must not depend on the adapter package", written as readable assertions inside ordinary unit tests. It cannot read a `.chd`. What carries over is the *style*: rules as small, readable, runnable tests that fail a build. The same idea exists for other code (dependency-cruiser for JavaScript, for example), always for code, not diagrams.
+
+## Decided so far (2026-10-23)
+- **Shape:** a declarative profile (a rules file) evaluated by one pure function in `src/shared`, shown in a Conformance section of Diagnostics and run from `chd check`.
+- **A profile is applied to a diagram, never stored in it.** Built-in profiles ship with the app and CLI; house rules live outside the diagram, in the repository or the installation. Where they are found, and how a team shares rules that live outside a repository with CI, is still open. The CLI stays offline, so it can only read local paths.
+- **Edge meaning is declared, never guessed.** Every profile declares what an arrow means, with no default; an unset value makes the profile itself invalid. v1 knows `dependsOn` and `flowsTo`. The diagram must have an edge direction set whose name, with spaces removed and lower-cased, equals the declared meaning ("Depends On" matches `dependsOn`); the rules are then evaluated in that set's orientation. A diagram without that set (or with two that match) is non-compliant, a violation like any other.
+- **Edges are declared in two required fields, with no defaults.** `meaning`: `dependsOn`, `flowsTo` or `irrelevant`. `presence`: `required`, `optional` or `forbidden`. The starting value of each is `none`, which is not valid: a profile that leaves either at `none` (or omits it) is rejected until its author picks a real value. `forbidden` requires `irrelevant`, and `dependsOn` or `flowsTo` cannot be `forbidden`. The edge set check applies only when the meaning is `dependsOn` or `flowsTo`.
+- **A diagram missing the required edge set is reported as a violation ("Missing required edge set")**, so the result is never clean. The rules that need a direction cannot run and are listed as not evaluated; rules that do not need one still run.
+- **v1 targets:** hexagonal (`dependsOn`) and the data-flow diagram (`flowsTo`), one diagram at a time. Rule kinds: forbidden edge, required edge, containment, and "must have property".
+- **CLI (v1):** `chd check <file> --profile <file-or-built-in-name>`. Shared house rules that live outside a repository reach CI by the team's own means (a rules repository fetched by the pipeline, or a zip kept in step with the pipeline definition); the tool only reads local paths.
+- **Everything else is parked** in [epic 0157](later/0157-conformance-checks-beyond-v1.md): C4 and levels, supplementary diagrams, layered and cycle rules, waivers, linked-diagram scope, profile pointers.
+
+## Tasks
+- [ ] ADR for the profile format and the edge declaration; spec of the profile file (`docs/` page, written so a third party could author one)
+- [ ] Profile validation (the `none` sentinel, the consistency rules between `meaning` and `presence`)
+- [ ] Pure evaluator in `src/shared`: roles via the search match predicate, the edge set lookup, forbidden edge, required edge, containment, must-have-property
+- [ ] Built-in profiles: hexagonal, data-flow diagram, with example diagrams that pass and that fail
+- [ ] Conformance section in Diagnostics (select and frame the offender)
+- [ ] `chd check` command with `--profile`, and its exit code for CI
+- [ ] Tests over the example diagrams; docs and AI instructions
 
 ## Two shapes this could take (open)
 - **Declarative profile:** a rules file (see the sketch below), evaluated by the app, the CLI and the Claude extension. Easiest for non-programmers; needs a rule language designed and documented.
