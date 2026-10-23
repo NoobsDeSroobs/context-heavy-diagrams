@@ -192,6 +192,7 @@ export function serializeDiagram(diagram: DiagramFile): string {
         ? diagram.gravityPresets
         : undefined,
     maxConnectionPointsPerSide: diagram.maxConnectionPointsPerSide,
+    fontFamily: diagram.fontFamily || undefined,
     edgeDirectionSets: hasDirectionSets
       ? diagram.edgeDirectionSets!.map((s) => ({
           id: s.id,

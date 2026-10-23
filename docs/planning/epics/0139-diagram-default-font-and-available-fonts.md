@@ -1,7 +1,7 @@
 # 0139: A diagram-wide default font, and which fonts are available
 
 ## Status
-Not Started — logged 2026-10-17 from a design conversation. Nothing here is decided; the sketch and questions are starting points.
+Built 2026-10-23, awaiting the maintainer's live check and merge; design in [ADR 0130](../../decisions/0130-diagram-default-font-and-installed-fonts.md). Decided: one font for the whole diagram, stored in the diagram with a personal default in Preferences behind it, installed fonts offered first (a bundled set is left out), picked fonts stored as a stack.
 
 ## Goal
 Let an author choose a font **once per diagram** instead of per element, and make choosing a font easy by offering a sensible set: fonts that ship with the app, and (optionally) the fonts installed on the computer.
@@ -34,13 +34,13 @@ Let an author choose a font **once per diagram** instead of per element, and mak
 **Leaning (not decided):** do both. Ship a small curated set as the dependable group that the app can guarantee, and offer an "Installed on this computer" group, clearly marked as possibly missing elsewhere. This also settles the portability problem the bundled set solves for the app's own default look.
 
 ## Tasks
-- [ ] Decide the questions above, in particular scope and where the default is stored
-- [ ] ADR for the chosen design; update `docs/file-format.md` and the AI instructions if a field is added
-- [ ] Add the diagram-wide default font, shown in the Diagram settings panel, with the three-step fallback
-- [ ] Extend the effective-style chain (ADR 0117) with the diagram layer and show it in the property panel
-- [ ] Choose and ship the curated fonts (license check per font, notices file, size budget, subset to the scripts the app needs)
-- [ ] "Installed on this computer" group via `queryLocalFonts`, loaded lazily, searchable, grouped by family; verify on Linux and macOS
-- [ ] Decide stack vs name when picking from a list
+- [x] Decide the questions above, in particular scope and where the default is stored
+- [x] ADR for the chosen design; update `docs/file-format.md` and the AI instructions if a field is added
+- [x] Add the diagram-wide default font, shown in the Diagram settings panel, with the three-step fallback
+- [x] Extend the effective-style chain (ADR 0117) with the diagram layer and show it in the property panel
+- [ ] Choose and ship the curated fonts (license check per font, notices file, size budget, subset to the scripts the app needs). Not in this epic; see the ADR
+- [x] "Installed on this computer" group via `queryLocalFonts`, loaded once, grouped by family (a native select, so typing jumps to a font). Checked on Windows; still to verify on Linux and macOS
+- [x] Decide stack vs name when picking from a list: a stack
 - [ ] Optional: Diagnostics warning for a font that is unavailable here
 
 ## Related

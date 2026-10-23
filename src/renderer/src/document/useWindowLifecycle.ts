@@ -33,6 +33,7 @@ export interface WindowLifecycleInputs {
   legend: LegendEntry[]
   gravityPresets: GravityPreset[]
   diagramMaxConnectionPointsPerSide: number | undefined
+  diagramFontFamily: string | undefined
   edgeDirectionSets: EdgeDirectionSet[]
   activeEdgeDirectionSetId: string | undefined
   security: DiagramSecurity
@@ -63,6 +64,7 @@ export function useWindowLifecycle(
     legend,
     gravityPresets,
     diagramMaxConnectionPointsPerSide,
+    diagramFontFamily,
     edgeDirectionSets,
     activeEdgeDirectionSetId,
     security,
@@ -145,6 +147,7 @@ export function useWindowLifecycle(
     legend,
     gravityPresets,
     diagramMaxConnectionPointsPerSide,
+    diagramFontFamily,
     edgeDirectionSets,
     activeEdgeDirectionSetId,
     security,
@@ -162,6 +165,7 @@ export function useWindowLifecycle(
       legend,
       gravityPresets,
       diagramMaxConnectionPointsPerSide,
+      diagramFontFamily,
       edgeDirectionSets,
       activeEdgeDirectionSetId,
       security,
@@ -188,7 +192,8 @@ export function useWindowLifecycle(
           s.diagramMaxConnectionPointsPerSide,
           s.edgeDirectionSets,
           s.activeEdgeDirectionSetId,
-          s.security
+          s.security,
+          s.diagramFontFamily
         ),
         savedWith: loadedSavedWithRef.current
       }
@@ -237,7 +242,8 @@ export function useWindowLifecycle(
         s.diagramMaxConnectionPointsPerSide,
         s.edgeDirectionSets,
         s.activeEdgeDirectionSetId,
-        s.security
+        s.security,
+        s.diagramFontFamily
       )
       return summarizeChanges(diffDiagrams(saved, current)) || undefined
     } catch {

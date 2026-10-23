@@ -44,6 +44,10 @@ export interface DiagramFile {
   // *adding* more points, same "never silently destroy data" convention
   // as the rest of this format.
   maxConnectionPointsPerSide?: number
+  // The font every label in the diagram is drawn in unless the element sets its own (ADR 0130).
+  // A raw CSS font-family value, like NodeStyle.fontFamily. Absent means the opening app's own
+  // personal default, then the built-in font.
+  fontFamily?: string
   // Named readings of the diagram's edges that differ only in arrow
   // direction — see ADR 0081 and EdgeDirectionSet above. Absent/empty means
   // the feature is unused. A single set names the current reading, adds a

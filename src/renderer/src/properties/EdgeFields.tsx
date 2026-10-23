@@ -6,9 +6,8 @@ import { EDGE_STYLE_DEFAULTS, displayColor } from '@shared/styling/styleDefaults
 import { CollapsibleSection, ColorField, NumberField, SliderField, SelectField } from '../ui/fields'
 import { computeFieldValue } from './fieldValue'
 import { MARKER_OPTIONS } from '../edges/edgeStyleOptions'
-import { GROUP_PALETTE, withStoredFonts } from '../styling/fontOptions'
+import { defaultFontLabel, useFontOptions } from '../styling/useFontOptions'
 import { edgeStyleOf } from './styleAccess'
-import { FONT_FAMILY_OPTIONS } from './fontFamilyOptions'
 
 // '' means the field is absent: a real style.routingStyle value, not a placeholder (the same '' ===
 // "no override" pattern as fontFamily below). 'straight'/'step'/'smoothstep' are React Flow's
@@ -40,13 +39,10 @@ export function EdgeFields({
   endContinuousEdit: () => void
   pushSnapshot: () => void
 }): React.JSX.Element {
-  const { theme, paletteColors, paletteFonts } = useDiagramContext()
-  const fontFamilyOptions = withStoredFonts(
-    [
-      ...FONT_FAMILY_OPTIONS,
-      ...paletteFonts.map((f) => ({ value: f, label: f, group: GROUP_PALETTE }))
-    ],
-    edges.map((e) => edgeStyleOf(e).fontFamily)
+  const { theme, paletteColors, diagramFontFamily } = useDiagramContext()
+  const fontFamilyOptions = useFontOptions(
+    edges.map((e) => edgeStyleOf(e).fontFamily),
+    defaultFontLabel(diagramFontFamily)
   )
   const D = EDGE_STYLE_DEFAULTS
   const startMarker = computeFieldValue(edges, (e) => edgeStyleOf(e).startMarker ?? D.startMarker)

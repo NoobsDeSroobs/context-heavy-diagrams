@@ -155,6 +155,10 @@ export interface AppPreferences {
   // everywhere else. It applies live to any open diagram without its own override, resolved
   // reactively and not baked in at load; a diagram with its own override always wins.
   gravityPresetsUserDefault?: GravityPreset[]
+  // User default tier for the font of a diagram that sets none (ADR 0130; ADR 0052's pattern). A
+  // raw CSS font-family value. Absent means the built-in font. Applies live to any open diagram
+  // without its own font.
+  defaultFontFamily?: string
   // Whether the top-level AI menu (and everything hanging off it) is shown —
   // see ADR 0103. A pure chrome toggle: nothing in a .chd file depends on it.
   // Default on; a future installer can seed it from its "enable AI features?"

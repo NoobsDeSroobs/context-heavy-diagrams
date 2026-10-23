@@ -35,6 +35,7 @@ Complete field-by-field reference. Read the relevant section rather than the who
   "legend": [ { "id": "legend-1", "kind": "line", "label": "Sensitive data transfer", "color": "#e6194b", "lineStyle": "solid", "startMarker": "none", "endMarker": "arrowClosed" } ],
   "gravityPresets": [ { "id": "sharp", "label": "Sharp", "value": 0 }, { "id": "acute", "label": "Acute", "value": 0.2 }, { "id": "smooth", "label": "Smooth", "value": 0.5 }, { "id": "curvy", "label": "Curvy", "value": 1 } ],
   "maxConnectionPointsPerSide": 12,
+  "fontFamily": "'Georgia', serif",
   "edgeDirectionSets": [ { "id": "set-1", "name": "Data flow" }, { "id": "set-2", "name": "Trigger direction" } ],
   "activeEdgeDirectionSetId": "set-1",
   "nodes": [ /* Node objects */ ],
@@ -53,6 +54,7 @@ Complete field-by-field reference. Read the relevant section rather than the who
 | `legend` | array of LegendEntry | Catalog of manually-authored legend entries — see [Legend](#legend). Absent means none. Shown/hidden state is never stored here. |
 | `gravityPresets` | array of GravityPreset | Named bend values for line-node/catmull-rom-edge points — see [Gravity presets](#gravity-presets). Absent/empty means the built-in four shown above. |
 | `maxConnectionPointsPerSide` | number | Per-diagram cap on connection points per side. Absent means "use the opening app's own preference." Lowering it never removes existing points, only stops adding more. |
+| `fontFamily` | string | Font for every label unless the element sets its own `style.fontFamily`. A CSS font-family stack with a generic fallback, e.g. `"'Georgia', serif"`. Absent means "use the opening app's own default font." |
 | `edgeDirectionSets` | array of EdgeDirectionSet | Named readings of edge direction — see [Edge direction sets](#edge-direction-sets). Absent/empty means unused. |
 | `activeEdgeDirectionSetId` | string | Which `edgeDirectionSets` entry is currently displayed. Absent means the first set. Edges on disk are always written in the *first* set's orientation regardless of this value once there are 2+ sets. |
 | `security` | object | Threat/risk model — see [Security](#security). Absent means unused (no node has `data.security` either). |

@@ -13,9 +13,8 @@ import {
   SelectField
 } from '../ui/fields'
 import { computeFieldValue } from './fieldValue'
-import { GROUP_PALETTE, withStoredFonts } from '../styling/fontOptions'
+import { defaultFontLabel, useFontOptions } from '../styling/useFontOptions'
 import { nodeStyleOf, nodeDefaultsOf } from './styleAccess'
-import { FONT_FAMILY_OPTIONS } from './fontFamilyOptions'
 
 // Fill/Border/Font/Transform — shared between entity and container nodes per
 // ADR 0014's grouping (container fill is customizable now, deliberately no
@@ -44,13 +43,10 @@ export function NodeStyleFields({
   endContinuousEdit: () => void
   pushSnapshot: () => void
 }): React.JSX.Element {
-  const { theme, paletteColors, paletteFonts } = useDiagramContext()
-  const fontFamilyOptions = withStoredFonts(
-    [
-      ...FONT_FAMILY_OPTIONS,
-      ...paletteFonts.map((f) => ({ value: f, label: f, group: GROUP_PALETTE }))
-    ],
-    nodes.map((n) => nodeStyleOf(n).fontFamily)
+  const { theme, paletteColors, diagramFontFamily } = useDiagramContext()
+  const fontFamilyOptions = useFontOptions(
+    nodes.map((n) => nodeStyleOf(n).fontFamily),
+    defaultFontLabel(diagramFontFamily)
   )
   const shownColor = (n: Node, field: 'fill' | 'stroke' | 'fontColor'): string =>
     displayColor(nodeStyleOf(n)[field], nodeDefaultsOf(n)[field], theme, themeAdaptiveColor)

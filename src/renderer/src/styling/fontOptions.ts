@@ -14,6 +14,7 @@ export interface FontOption {
 
 export const GROUP_SYSTEM = 'System defaults'
 export const GROUP_PALETTE = 'Palette fonts'
+export const GROUP_INSTALLED = 'Installed on this computer'
 export const GROUP_IN_USE = 'In use, not in your palette'
 
 export function withStoredFonts(

@@ -90,6 +90,10 @@ export interface DiagramContextValue {
   // component.
   paletteColors: { label: string; value: string }[]
   paletteFonts: string[]
+  // The font this diagram is drawn in unless an element sets its own: the diagram's, else the
+  // personal default (ADR 0130). undefined means the built-in font. The property panel shows it
+  // for an element with no font of its own.
+  diagramFontFamily: string | undefined
   // Diagram-level catalog (see ADR 0050), already resolved to this
   // app's built-in four if the diagram hasn't defined its own — see
   // lineGravityPresets.ts's effectiveGravityPresets. LineNode's point

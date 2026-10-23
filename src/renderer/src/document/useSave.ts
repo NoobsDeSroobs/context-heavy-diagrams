@@ -45,6 +45,7 @@ export interface SaveInputs {
   setLegend: React.Dispatch<React.SetStateAction<LegendEntry[]>>
   gravityPresets: GravityPreset[]
   diagramMaxConnectionPointsPerSide: number | undefined
+  diagramFontFamily: string | undefined
   edgeDirectionSets: EdgeDirectionSet[]
   activeEdgeDirectionSetId: string | undefined
   security: DiagramSecurity
@@ -91,6 +92,7 @@ export function useSave(
     setLegend,
     gravityPresets,
     diagramMaxConnectionPointsPerSide,
+    diagramFontFamily,
     edgeDirectionSets,
     activeEdgeDirectionSetId,
     security,
@@ -195,7 +197,8 @@ export function useSave(
           diagramMaxConnectionPointsPerSide,
           edgeDirectionSets,
           activeEdgeDirectionSetId,
-          security
+          security,
+          diagramFontFamily
         ),
         savedWith: loadedSavedWithRef.current
       })
@@ -395,6 +398,7 @@ export function useSave(
       stagedFileRemovals,
       gravityPresets,
       diagramMaxConnectionPointsPerSide,
+      diagramFontFamily,
       edgeDirectionSets,
       activeEdgeDirectionSetId,
       security,
