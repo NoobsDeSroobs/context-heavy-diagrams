@@ -8,7 +8,11 @@ import type {
   Stamp
 } from '@shared/document/documentSave'
 import type { AiFolderResult, ClaudeExtensionOutcome } from '@shared/ai/aiFolderResult'
-import type { NewProfileResult, ProfilesFolderInfo } from '@shared/conformance/profilesFolder'
+import type {
+  NewProfileResult,
+  ProfileListing,
+  ProfilesFolderInfo
+} from '@shared/conformance/profilesFolder'
 import type { AppPreferences } from '@shared/preferences/preferences'
 import type { SecurityCrawlResult } from '@shared/threat-matrix/threatMatrixMath'
 import type { LinkedSearchLink, LinkedSearchResult } from '@shared/search/linkedSearch'
@@ -348,6 +352,14 @@ const api = {
   // from the template (a save dialog; the file is never overwritten).
   getProfilesFolder(): Promise<ProfilesFolderInfo> {
     return ipcRenderer.invoke('profiles:getFolder')
+  },
+
+  listProfiles(): Promise<ProfileListing[]> {
+    return ipcRenderer.invoke('profiles:list')
+  },
+
+  loadProfile(id: string): Promise<string | null> {
+    return ipcRenderer.invoke('profiles:load', id)
   },
 
   chooseProfilesFolder(): Promise<string | null> {

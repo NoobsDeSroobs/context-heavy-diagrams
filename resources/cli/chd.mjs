@@ -20,13 +20,14 @@ const skillDir = join(here, '..', 'ai', 'skills', 'chd-diagrams')
 const SPEC_TOPICS = {
   fields: { title: 'Field reference', file: 'references/field-reference.md' },
   authoring: { title: 'Authoring guide', file: 'references/authoring-guide.md' },
-  layout: { title: 'Layout guide', file: 'references/layout-guide.md' }
+  layout: { title: 'Layout guide', file: 'references/layout-guide.md' },
+  conformance: { title: 'Architecture checks', file: 'references/conformance.md' }
 }
 
 const HELP = `chd — command-line companion to Context Heavy Diagrams
 
 Usage:
-  chd spec [fields|authoring|layout|all]   Print the .chd file format reference
+  chd spec [fields|authoring|layout|conformance|all] Print the .chd file format reference
   chd validate <file.chd>... [--recursive] Check diagram files for structural problems
   chd hash <file.chd>                      Print the file's fingerprint (SHA-256 of its bytes)
   chd export <file.chd> [options]          Draw the diagram as an SVG image (see 'chd export --help')
@@ -42,7 +43,7 @@ your edit on the fresh content.
 
   spec       Default: the core rules and traps. 'fields' is the exact field-by-field
              reference, 'authoring' covers linking/tags/git, 'layout' covers spacing
-             and archetypes, 'all' prints everything.
+             and archetypes, 'conformance' covers architecture checks, 'all' prints everything.
   validate   Reports duplicate ids, dangling edge endpoints, parent-before-child
              ordering, and relative paths (icons, notes, linked diagrams) that don't
              resolve. --recursive also follows linked diagrams. Exit code 1 if any
@@ -68,14 +69,16 @@ function stripFrontmatter(text) {
 }
 
 const SPEC_PREAMBLE = `(Output of \`chd spec\`. File links below such as references/field-reference.md are the
-topics of the same command (\`chd spec fields\`, \`authoring\`, \`layout\`); wherever it says to
+topics of the same command (\`chd spec fields\`, \`authoring\`, \`layout\`, \`conformance\`); wherever it says to
 run \`node scripts/validate_chd.mjs <file>\`, run \`chd validate <file>\` instead.)
 
 `
 
 function spec(topic) {
   if (topic !== undefined && topic !== 'all' && !(topic in SPEC_TOPICS)) {
-    console.error(`chd: unknown spec topic '${topic}' (expected fields, authoring, layout or all)`)
+    console.error(
+      `chd: unknown spec topic '${topic}' (expected fields, authoring, layout, conformance or all)`
+    )
     return 2
   }
   const parts = []
@@ -87,7 +90,7 @@ function spec(topic) {
   }
   if (topic === undefined) {
     parts.push(
-      'More detail: `chd spec fields`, `chd spec authoring`, `chd spec layout`, `chd spec all`.'
+      'More detail: `chd spec fields`, `chd spec authoring`, `chd spec layout`, `chd spec conformance`, `chd spec all`.'
     )
   }
   console.log(parts.join('\n\n---\n\n').trimEnd())

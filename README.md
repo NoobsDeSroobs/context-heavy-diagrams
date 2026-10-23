@@ -85,7 +85,8 @@ https://github.com/user-attachments/assets/2e63dee5-85f8-4b32-a75a-f986084bd873
 - File-version warning
 - Recent diagrams and shortcuts help
 - SVG export from the File menu, and `chd export` to produce the same SVG from a terminal or CI job
-- The `chd` command line tool (`spec`, `validate`, `hash`, `export`)
+- Architecture checks: a diagram can be checked against the rules of a style (hexagonal and data-flow diagrams ship with the app, and you can write your own profiles), from Diagnostics or with `chd check` in CI
+- The `chd` command line tool (`spec`, `validate`, `hash`, `export`, `check`)
 
 > Advanced features are opt-in. A new diagram behaves like plain boxes and arrows until you reach for more ([ADR 0054](docs/decisions/0054-progressive-disclosure-for-advanced-features.md)).
 

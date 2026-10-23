@@ -32,6 +32,8 @@ Zero-trust or network zones (relates to cross-container edge detection, [epic 00
 - A configurable rules location, and what multiple repositories mean for it. Per-repository house rules may be unnecessary, since a standard is usually universal.
 - A way for a diagram to name its profile (a pointer in the diagram or its metadata), so a check needs no argument. This touches the file format and treats the stored path as untrusted ([ADR 0115](../../../decisions/0115-paths-stored-in-diagrams-are-untrusted.md)).
 - A search path of rules folders (an environment variable), if `--profile <file>` proves too clumsy.
+- For people who live in a terminal: `chd check` taking a profile from stdin, or by name from a profiles folder. CI has no standard profiles folder (the pipeline provides the rules), so this is only a convenience.
+- Diagnostics: remembering the chosen profile per diagram, and counting findings in the View menu's Diagnostics number.
 - Accepted aliases for the edge set name a profile requires (a diagram's "Data flow" for `flowsTo`), if renaming sets proves too much to ask.
 
 ### Other shapes

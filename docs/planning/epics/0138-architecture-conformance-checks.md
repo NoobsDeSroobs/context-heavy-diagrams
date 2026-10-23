@@ -1,7 +1,7 @@
 # 0138: Architecture conformance checks ("does this diagram follow the architecture it claims?")
 
 ## Status
-In Progress, design phase (2026-10-23). The first version is scoped under "Decided so far"; the sketch and the questions further down are the original notes, partly superseded by it.
+Built 2026-10-23, awaiting the maintainer's live check (the New profile save dialog, the Diagnostics section) and merge. The first version is what "Decided so far" says; the sketch and the questions further down are the original notes, partly superseded by it. Left for later: see the parked epic 0157. Also not done: `chd check` from an installed build, and Linux and macOS.
 
 ## Goal
 Let a diagram be checked against a named architectural style or rule set — for example hexagonal (ports and adapters), layered/onion, or a project's own house rules — and report violations the way the Diagnostics panel reports other problems. In other words, architectural fitness functions for diagrams.
@@ -27,9 +27,9 @@ Let a diagram be checked against a named architectural style or rule set — for
 - [x] Profile validation (the `none` sentinel, the consistency rules between `meaning` and `presence`)
 - [x] Pure evaluator in `src/shared`: roles by exact tag, type and containment, the edge set lookup, forbidden edge, required edge, containment, must-have-property, maximum element count
 - [x] Built-in profiles: hexagonal, data-flow diagram, with example diagrams that pass and that fail (`examples/conformance/`)
-- [ ] Conformance section in Diagnostics (select and frame the offender)
+- [x] Conformance section in Diagnostics ("Architecture check": pick a profile, click a finding to select and frame the element; the chosen profile is per window and not remembered)
 - [x] `chd check` command with `--profile`, and its exit code for CI
-- [ ] Tests over the example diagrams; docs and AI instructions
+- [x] Tests over the example diagrams; docs and AI instructions (the skill reference `conformance.md`, `chd spec conformance`; the copy-paste primer is unchanged, since a chat has no way to run the check)
 
 ## Two shapes this could take (open)
 - **Declarative profile:** a rules file (see the sketch below), evaluated by the app, the CLI and the Claude extension. Easiest for non-programmers; needs a rule language designed and documented.

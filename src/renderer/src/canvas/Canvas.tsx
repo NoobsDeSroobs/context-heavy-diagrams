@@ -1,6 +1,8 @@
 import { showAlert } from '../ui/alerts'
 import { useZoomedConnectionHandles } from './useZoomedConnectionHandles'
 import { effectiveDiagramFont } from '@shared/styling/fontStack'
+import { checkDiagram } from '@shared/conformance/check'
+import { useConformance } from '../conformance/useConformance'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   adoptDisk,
@@ -2903,6 +2905,47 @@ function CanvasInner(): React.JSX.Element {
         })),
     [noteShadows, nodes]
   )
+  // The architecture check (ADR 0131): the profile chosen in Diagnostics, run on the diagram as a
+  // save would write it. Only while the panel is open, so it costs nothing otherwise.
+  const conformance = useConformance(diagnosticsPanelOpen)
+  const conformanceResult = useMemo(
+    () =>
+      diagnosticsPanelOpen && conformance.profile
+        ? checkDiagram(
+            toDiagramFile(
+              nodes,
+              edges,
+              diagramMetadata,
+              requiredTags,
+              highlights,
+              legend,
+              gravityPresets,
+              diagramMaxConnectionPointsPerSide,
+              edgeDirectionSets,
+              activeEdgeDirectionSetId,
+              security,
+              diagramFontFamily
+            ),
+            conformance.profile
+          )
+        : null,
+    [
+      diagnosticsPanelOpen,
+      conformance.profile,
+      nodes,
+      edges,
+      diagramMetadata,
+      requiredTags,
+      highlights,
+      legend,
+      gravityPresets,
+      diagramMaxConnectionPointsPerSide,
+      edgeDirectionSets,
+      activeEdgeDirectionSetId,
+      security,
+      diagramFontFamily
+    ]
+  )
   // Count on the View-menu "Diagnostics (N)" label — undecided missing
   // files + staged removals (a nudge to save), never dismissed ones.
   const diagnosticsCount =
@@ -3586,6 +3629,8 @@ function CanvasInner(): React.JSX.Element {
               onDismiss={dismissMissingFile}
               onStageRemoval={stageMissingFileRemoval}
               onUnstageRemoval={unstageMissingFileRemoval}
+              conformance={conformance}
+              conformanceResult={conformanceResult}
               onClose={() => setDiagnosticsPanelOpen(false)}
             />
           )}

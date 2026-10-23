@@ -1,3 +1,7 @@
+import type { CheckResult } from '@shared/conformance/check'
+import ConformanceSection from '../conformance/ConformanceSection'
+import type { ConformanceState } from '../conformance/useConformance'
+
 // One diagram element (node, or a legend entry) that references a file on
 // disk which no longer resolves — a linked diagram, a custom icon, a
 // reference image, or a details `.md`. See ADR 0084. Computed in Canvas
@@ -49,6 +53,9 @@ interface DiagnosticsPanelProps {
   // Stage / unstage the reference for removal-on-save.
   onStageRemoval: (entry: MissingFileEntry) => void
   onUnstageRemoval: (entry: MissingFileEntry) => void
+  // The architecture check (ADR 0131): the chosen profile and what it found in the open diagram.
+  conformance: ConformanceState
+  conformanceResult: CheckResult | null
   onClose: () => void
 }
 
@@ -82,6 +89,8 @@ export default function DiagnosticsPanel({
   onDismiss,
   onStageRemoval,
   onUnstageRemoval,
+  conformance,
+  conformanceResult,
   onClose
 }: DiagnosticsPanelProps): React.JSX.Element {
   const empty = entries.length === 0 && missingFiles.length === 0 && stagedRemovals.length === 0
@@ -178,6 +187,12 @@ export default function DiagnosticsPanel({
             )}
           </div>
         )}
+
+        <ConformanceSection
+          conformance={conformance}
+          result={conformanceResult}
+          onRevealNode={onRevealNode}
+        />
 
         {entries.length > 0 && (
           <ul className="diagnostics-panel-list">

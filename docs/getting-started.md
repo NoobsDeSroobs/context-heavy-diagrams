@@ -41,6 +41,7 @@ Right-click an element and choose **Link to diagram…** to point it at another 
 - **Search with isolate** dims everything that does not match.
 - **Layers**, **Diagnostics** (missing files, an empty legend, and similar) and **Style Palette** are in the **View** menu.
 - **File → Export as PNG…** and **Export as SVG…** write an image with an auto-generated legend. The SVG is real vector, so it stays sharp and opens in Inkscape or Illustrator. `chd export <file.chd>` writes the same SVG from a terminal or a CI job, without opening the app (`chd export --help` lists the options).
+- **Architecture checks.** In **Diagnostics**, pick a profile (hexagonal and data-flow diagram are built in) to see where the diagram breaks that style's rules; click a finding to find the element. `chd check <file.chd> --profile hexagonal` does the same in CI and exits non-zero on errors. A diagram needs a `role` tag on its elements and an edge direction set named for what its arrows mean ("Depends On", "Flows To"); [`examples/conformance/`](../examples/conformance) has diagrams that pass and that fail, and **File → New conformance profile…** starts a profile of your own ([the format](conformance-profile-format.md)).
 - The [`security-rollup`](../examples/gallery/technical/security-rollup/README.md) example shows the security matrix view rolling scores up through linked diagrams.
 
 ## 6. Use it with git

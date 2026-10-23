@@ -6,6 +6,14 @@ export interface ProfilesFolderInfo {
   isDefault: boolean
 }
 
+// A profile the Diagnostics panel can check against. `id` is what `profiles:load` takes, so the
+// renderer never names a path: "builtin:<name>" or "folder:<file name>".
+export interface ProfileListing {
+  id: string
+  name: string
+  source: 'built-in' | 'folder'
+}
+
 export type NewProfileResult =
   { status: 'created'; path: string } | { status: 'exists'; path: string } | { status: 'cancelled' }
 
