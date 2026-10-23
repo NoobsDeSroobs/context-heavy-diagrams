@@ -159,6 +159,9 @@ export interface AppPreferences {
   // raw CSS font-family value. Absent means the built-in font. Applies live to any open diagram
   // without its own font.
   defaultFontFamily?: string
+  // Where the user's conformance profiles live and where "New profile" starts (ADR 0131). Absent
+  // means a `profiles` folder in the app's user-data folder.
+  profilesFolder?: string
   // Whether the top-level AI menu (and everything hanging off it) is shown —
   // see ADR 0103. A pure chrome toggle: nothing in a .chd file depends on it.
   // Default on; a future installer can seed it from its "enable AI features?"

@@ -26,6 +26,7 @@ import { registerExportHandlers } from './export/export'
 import { registerSecurityHandlers } from './threat-matrix/security'
 import { registerLinkedSearchHandlers } from './search/linkedSearch'
 import { registerAiHandlers } from './ai/ai'
+import { registerProfileHandlers } from './conformance/profiles'
 import { registerClipboardHandlers } from './canvas/clipboard'
 import { disableProxyDiscovery, enforceOffline } from './offline'
 
@@ -91,6 +92,7 @@ app.whenReady().then(async () => {
   registerSecurityHandlers()
   registerLinkedSearchHandlers()
   registerAiHandlers()
+  registerProfileHandlers()
   registerClipboardHandlers()
 
   // The renderer never needs camera, microphone, geolocation, notifications or

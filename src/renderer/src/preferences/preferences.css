@@ -1,3 +1,22 @@
+/* The profiles folder (ADR 0131): a long path shows its start and ends in an ellipsis; the full
+   path is the tooltip. */
+.preferences-folder-path {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;
+  text-align: left;
+  color: var(--ev-c-text-2);
+}
+
+.preferences-folder-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
 /* Compact "Zoom limit: in [_] out [_]" row — deliberately not
    two full-width NumberField rows. */
 .preferences-zoom-limit {

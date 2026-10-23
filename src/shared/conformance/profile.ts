@@ -71,6 +71,9 @@ export interface Profile {
   rules: Rule[]
 }
 
+// A profile file is named <name>.chdprofile.json.
+export const PROFILE_FILE_SUFFIX = '.chdprofile.json'
+
 export const ANY_ROLE = '*'
 export const EDGES_TARGET = '@edges'
 

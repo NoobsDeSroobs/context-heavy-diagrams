@@ -8,6 +8,7 @@ import type {
   Stamp
 } from '@shared/document/documentSave'
 import type { AiFolderResult, ClaudeExtensionOutcome } from '@shared/ai/aiFolderResult'
+import type { NewProfileResult, ProfilesFolderInfo } from '@shared/conformance/profilesFolder'
 import type { AppPreferences } from '@shared/preferences/preferences'
 import type { SecurityCrawlResult } from '@shared/threat-matrix/threatMatrixMath'
 import type { LinkedSearchLink, LinkedSearchResult } from '@shared/search/linkedSearch'
@@ -341,6 +342,20 @@ const api = {
   // and asks the OS to open the bundled .mcpb.
   installClaudeExtension(): Promise<ClaudeExtensionOutcome> {
     return ipcRenderer.invoke('ai:installExtension')
+  },
+
+  // Conformance profiles (ADR 0131): where they live, choosing that folder, and making a new one
+  // from the template (a save dialog; the file is never overwritten).
+  getProfilesFolder(): Promise<ProfilesFolderInfo> {
+    return ipcRenderer.invoke('profiles:getFolder')
+  },
+
+  chooseProfilesFolder(): Promise<string | null> {
+    return ipcRenderer.invoke('profiles:chooseFolder')
+  },
+
+  createProfile(): Promise<NewProfileResult> {
+    return ipcRenderer.invoke('profiles:create')
   },
 
   // Style palette export/import (see ADR 0048) — returns false/null

@@ -7,6 +7,7 @@ import type {
   Stamp
 } from '@shared/document/documentSave'
 import type { AiFolderResult, ClaudeExtensionOutcome } from '@shared/ai/aiFolderResult'
+import type { NewProfileResult, ProfilesFolderInfo } from '@shared/conformance/profilesFolder'
 import type { AppPreferences } from '@shared/preferences/preferences'
 import type { SecurityCrawlResult } from '@shared/threat-matrix/threatMatrixMath'
 import type { LinkedSearchLink, LinkedSearchResult } from '@shared/search/linkedSearch'
@@ -100,6 +101,9 @@ export interface DiagramApi {
   getAppVersion(): Promise<string>
   enableAiInFolder(): Promise<AiFolderResult | null>
   installClaudeExtension(): Promise<ClaudeExtensionOutcome>
+  getProfilesFolder(): Promise<ProfilesFolderInfo>
+  chooseProfilesFolder(): Promise<string | null>
+  createProfile(): Promise<NewProfileResult>
   exportStylePalette(json: string): Promise<boolean>
   importStylePalette(): Promise<{ name: string; content: string } | null>
   exportPngToFile(dataUrl: string, suggestedFilename: string): Promise<boolean>

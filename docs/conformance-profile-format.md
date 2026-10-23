@@ -2,7 +2,7 @@
 
 A **conformance profile** is a plain JSON file that describes the rules of one architectural style, such as hexagonal architecture or a data-flow diagram. A checker applies a profile to a diagram (`.chd`, see [file-format.md](file-format.md)) and lists where the diagram breaks the rules.
 
-This page is the whole specification, written so that anyone can author a profile, or build a checker for one, without reading this project's code. A copy of the file to start from is [`resources/profiles/template.chdprofile.json`](../resources/profiles/template.chdprofile.json); two finished examples sit beside it.
+This page is the whole specification, written so that anyone can author a profile, or build a checker for one, without reading this project's code. A copy of the file to start from is [`resources/profiles/template.chdprofile.json`](../resources/profiles/template.chdprofile.json); two finished examples sit beside it. In the app, **File → New conformance profile…** copies the template into your profiles folder (a setting in Preferences) under the name you choose.
 
 A profile is **applied to** a diagram and is never stored inside one. A profile checks the diagram, not the code the diagram describes: a diagram can conform while the implementation does not.
 

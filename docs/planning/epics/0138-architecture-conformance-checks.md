@@ -23,7 +23,7 @@ Let a diagram be checked against a named architectural style or rule set — for
 
 ## Tasks
 - [x] ADR for the profile format and the edge declaration ([ADR 0131](../../decisions/0131-conformance-profiles.md)); spec of the profile file ([conformance-profile-format.md](../../conformance-profile-format.md)); template and two draft profiles in `resources/profiles/`
-- [ ] Profiles folder (a Preferences setting, default in the user-data folder) and a "New profile" command that copies the template there, failing if the file exists
+- [x] Profiles folder (a Preferences setting, default in the user-data folder) and a "New profile" command that copies the template there, failing if the file exists. The save dialog itself is still to be tried by hand
 - [x] Profile validation (the `none` sentinel, the consistency rules between `meaning` and `presence`)
 - [x] Pure evaluator in `src/shared`: roles by exact tag, type and containment, the edge set lookup, forbidden edge, required edge, containment, must-have-property, maximum element count
 - [x] Built-in profiles: hexagonal, data-flow diagram, with example diagrams that pass and that fail (`examples/conformance/`)
