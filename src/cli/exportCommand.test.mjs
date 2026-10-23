@@ -159,3 +159,10 @@ test('a custom icon outside the diagram folder is left out with a warning', asyn
 test('the bundle exists after the build step', async () => {
   assert.ok((await stat(join(root, 'resources', 'cli', 'export.mjs'))).size > 1000)
 })
+
+test('help export is the same as export --help', () => {
+  const r = run('help', 'export')
+  assert.equal(r.status, 0)
+  assert.equal(r.stdout, run('export', '--help').stdout)
+  assert.match(r.stdout, /Exit codes:/)
+})

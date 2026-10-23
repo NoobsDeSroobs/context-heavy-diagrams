@@ -25,6 +25,7 @@ One chain, from the spec outward. When the file format changes, every link has t
 | `.claude/skills/chd-diagrams/` | A synced copy so this repository's own agents use the same skill | `npm run sync-ai`; a test fails if it drifts |
 | `src/shared/ai/aiInstructions.ts` | The short copy-paste primer | Edited by hand; a test guards its key rules and its size |
 | `chd spec`, `chd validate` | The command line reads the skill files and runs the validator | Nothing to do — it reads the skill |
+| `chd check` | Applies a conformance profile (an architecture style's rules) to a diagram; the skill's `references/conformance.md` (also `chd spec conformance`) tells an assistant what a diagram needs and how to report findings ([ADR 0131](../decisions/0131-conformance-profiles.md)) | Edited with the profile format ([conformance-profile-format.md](../conformance-profile-format.md)) |
 | The Claude Desktop extension | A bundle with the skill text and the validator baked in | Rebuilt by every app build (`npm run build:extension`), so it always matches the version that shipped it |
 
 So a format change means: update `docs/file-format.md`, the skill's `SKILL.md` and `references/field-reference.md`, the primer if a trap changed, then `npm run sync-ai`. The rest follows from the build.

@@ -1,0 +1,101 @@
+{
+  "profileVersion": 1,
+  "name": "Hexagonal architecture (ports and adapters)",
+  "description": "Dependencies point inward: adapters depend on ports, ports belong to the application core, and the core depends on nothing outside it. Prepare the diagram with an edge direction set named \"Depends On\" (an arrow from A to B means A depends on B) and a tag \"role\" on the elements: hexagon (the container drawn around the core), domain (core elements, inside the hexagon), port-in or port-out (the interfaces on the boundary), adapter-in or adapter-out (outside the hexagon).",
+  "edges": {
+    "meaning": "dependsOn",
+    "presence": "required"
+  },
+  "roles": {
+    "anyEntity": {
+      "description": "Every entity, whatever its role.",
+      "match": { "type": "entity" }
+    },
+    "hexagon": {
+      "description": "The container drawn around the application core.",
+      "match": { "type": "container", "tag": { "key": "role", "value": "hexagon" } }
+    },
+    "domain": {
+      "description": "Application core elements.",
+      "match": { "tag": { "key": "role", "value": "domain" } }
+    },
+    "port": {
+      "description": "The interfaces on the boundary of the core.",
+      "match": { "tag": { "key": "role", "value": ["port-in", "port-out"] } }
+    },
+    "adapter": {
+      "description": "Everything that connects the core to the outside world.",
+      "match": { "tag": { "key": "role", "value": ["adapter-in", "adapter-out"] } }
+    }
+  },
+  "rules": [
+    {
+      "id": "domain-inside-hexagon",
+      "kind": "containment",
+      "each": "domain",
+      "mustBeInside": "hexagon",
+      "message": "Domain elements belong inside the hexagon."
+    },
+    {
+      "id": "adapter-outside-hexagon",
+      "kind": "containment",
+      "each": "adapter",
+      "mustNotBeInside": "hexagon",
+      "message": "Adapters belong outside the hexagon."
+    },
+    {
+      "id": "no-adapter-to-adapter",
+      "kind": "forbiddenEdge",
+      "from": "adapter",
+      "to": "adapter",
+      "message": "Adapters must not depend on each other; go through a port and the core."
+    },
+    {
+      "id": "domain-not-on-adapter",
+      "kind": "forbiddenEdge",
+      "from": "domain",
+      "to": "adapter",
+      "message": "The core must not depend on an adapter; depend on a port instead."
+    },
+    {
+      "id": "port-not-on-adapter",
+      "kind": "forbiddenEdge",
+      "from": "port",
+      "to": "adapter",
+      "message": "A port is part of the core and must not depend on an adapter."
+    },
+    {
+      "id": "adapter-uses-port",
+      "kind": "requiredEdge",
+      "each": "adapter",
+      "edge": "outgoing",
+      "with": "port",
+      "message": "An adapter must depend on a port; it is how it reaches the core."
+    },
+    {
+      "id": "port-has-adapter",
+      "kind": "requiredEdge",
+      "each": "port",
+      "edge": "incoming",
+      "with": "adapter",
+      "severity": "warning",
+      "message": "No adapter depends on this port yet."
+    },
+    {
+      "id": "entity-has-role",
+      "kind": "requiredProperty",
+      "each": "anyEntity",
+      "property": { "tag": "role" },
+      "severity": "warning",
+      "message": "Set the \"role\" tag so the element is checked."
+    },
+    {
+      "id": "diagram-size",
+      "kind": "maxElements",
+      "of": "*",
+      "max": 40,
+      "severity": "info",
+      "message": "The diagram is getting large; consider splitting it into linked diagrams."
+    }
+  ]
+}

@@ -8,3 +8,4 @@ resources/ai
 .claude
 THIRD-PARTY-NOTICES.md
 resources/cli/export.mjs
+resources/cli/check.mjs

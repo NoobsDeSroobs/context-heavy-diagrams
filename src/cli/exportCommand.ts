@@ -30,6 +30,12 @@ export const EXPORT_USAGE = `Usage: chd export <file.chd> [options]
   --legend-corner <corner>  bottom-left (default), bottom-right, top-left or top-right
   --highlight <key[=value]> Draw a highlight as if it were switched on (repeatable); 'key' alone
                             switches on every value of that key
+
+Writes an .svg next to the diagram (or where -o says), so an image in a README or wiki can be
+regenerated whenever the diagram changes. It needs no display and only reads the diagram; it never
+overwrites a diagram.
+
+Exit codes: 0 ok, 1 if the file can't be read or written, 2 usage error.
 `
 
 const CORNERS: LegendCorner[] = ['bottom-left', 'bottom-right', 'top-left', 'top-right']

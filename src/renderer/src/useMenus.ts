@@ -2,6 +2,7 @@ import type { Edge, Node } from '@xyflow/react'
 import { AI_INSTRUCTIONS } from '@shared/ai/aiInstructions'
 import { summarizeAiFolderResult } from '@shared/ai/aiFolderResult'
 import { showAlert } from './ui/alerts'
+import { createProfile } from './conformance/createProfile'
 import { acceleratorFor } from './commands'
 import type { MenuBarItem, MenuBarMenu } from './MenuBar'
 import { buildPaletteActions, type ExtraPaletteAction, type PaletteAction } from './paletteActions'
@@ -167,6 +168,11 @@ export function useMenus(inputs: MenuInputs): {
             }
           ]
         : []),
+      {
+        label: 'New conformance profile…',
+        separatorBefore: true,
+        onSelect: () => void createProfile()
+      },
       { label: 'Reload', disabled: !currentPath, onSelect: handleReload },
       { label: 'Close', accelerator: acceleratorFor('file.close'), onSelect: handleClose }
     ]

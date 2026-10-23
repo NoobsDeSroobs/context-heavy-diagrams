@@ -1,0 +1,96 @@
+{
+  "profileVersion": 1,
+  "name": "Data-flow diagram",
+  "description": "Classic data-flow rules: data moves only between a process and something else, never straight between stores or external entities, and every process takes input and gives output. Prepare the diagram with an edge direction set named \"Flows To\" (an arrow from A to B means data flows from A to B) and a tag \"role\" on the elements: external-entity, process or data-store.",
+  "edges": {
+    "meaning": "flowsTo",
+    "presence": "required"
+  },
+  "roles": {
+    "anyEntity": {
+      "description": "Every entity, whatever its role.",
+      "match": { "type": "entity" }
+    },
+    "external": {
+      "description": "A source or destination outside the system.",
+      "match": { "tag": { "key": "role", "value": "external-entity" } }
+    },
+    "process": {
+      "description": "Something that transforms data.",
+      "match": { "tag": { "key": "role", "value": "process" } }
+    },
+    "store": {
+      "description": "Data at rest.",
+      "match": { "tag": { "key": "role", "value": "data-store" } }
+    }
+  },
+  "rules": [
+    {
+      "id": "no-store-to-store",
+      "kind": "forbiddenEdge",
+      "from": "store",
+      "to": "store",
+      "message": "Data cannot move between two stores without a process."
+    },
+    {
+      "id": "no-store-to-external",
+      "kind": "forbiddenEdge",
+      "from": "store",
+      "to": "external",
+      "message": "A store cannot send data straight to an external entity; a process must read it."
+    },
+    {
+      "id": "no-external-to-store",
+      "kind": "forbiddenEdge",
+      "from": "external",
+      "to": "store",
+      "message": "An external entity cannot write to a store directly; a process must do it."
+    },
+    {
+      "id": "no-external-to-external",
+      "kind": "forbiddenEdge",
+      "from": "external",
+      "to": "external",
+      "message": "Two external entities do not exchange data inside this system."
+    },
+    {
+      "id": "process-has-input",
+      "kind": "requiredEdge",
+      "each": "process",
+      "edge": "incoming",
+      "with": "*",
+      "message": "A process with no input cannot produce anything (a \"miracle\")."
+    },
+    {
+      "id": "process-has-output",
+      "kind": "requiredEdge",
+      "each": "process",
+      "edge": "outgoing",
+      "with": "*",
+      "message": "A process with no output consumes data for nothing (a \"black hole\")."
+    },
+    {
+      "id": "flow-is-labelled",
+      "kind": "requiredProperty",
+      "each": "@edges",
+      "property": "label",
+      "message": "Name the data that flows."
+    },
+    {
+      "id": "entity-has-role",
+      "kind": "requiredProperty",
+      "each": "anyEntity",
+      "property": { "tag": "role" },
+      "severity": "warning",
+      "message": "Set the \"role\" tag so the element is checked."
+    },
+    {
+      "id": "diagram-size",
+      "kind": "maxElements",
+      "of": "*",
+      "max": 30,
+      "severity": "info",
+      "message": "The diagram is getting large; consider splitting it into a lower level of linked diagrams."
+    }
+  ]
+}

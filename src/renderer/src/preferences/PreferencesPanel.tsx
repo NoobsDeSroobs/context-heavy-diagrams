@@ -5,6 +5,7 @@ import { MIN_RECENT_DIAGRAMS_LIMIT } from '@shared/preferences/preferences'
 import { FieldRow, NumberField, SelectField } from '../ui/fields'
 import { useRafThrottledCallback } from '../ui/useRafThrottledCallback'
 import { useFontOptions } from '../styling/useFontOptions'
+import ProfilesFolderSection from '../conformance/ProfilesFolderSection'
 
 // '' means the field is absent (bezier, today's only historical behavior)
 // — see PropertyPanel.tsx's identical ROUTING_STYLE_OPTIONS/own comment on
@@ -219,6 +220,10 @@ export default function PreferencesPanel({
           options={defaultFontOptions}
           onChange={(v) => onChange({ defaultFontFamily: v === '' ? undefined : v })}
           pushSnapshot={() => {}}
+        />
+        <ProfilesFolderSection
+          chosen={preferences.profilesFolder}
+          onReset={() => onChange({ profilesFolder: undefined })}
         />
         <FieldRow label="Scan for unsaved diagrams on startup">
           <input
