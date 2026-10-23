@@ -14,7 +14,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 ## Open and worked-around at a glance
 
 - [Alt+drag duplicate may be swallowed by Linux window managers](#alt-drag-duplicate-may-be-swallowed-by-linux-window-managers) — Open, untested on Linux.
-- [A colour typed in light mode comes back changed (the theme flip is not exactly reversible)](#a-colour-typed-in-light-mode-comes-back-changed-the-theme-flip-is-not-exactly-reversible) — Open, needs a design decision.
+- [A colour typed in light mode comes back changed (the theme flip is not exactly reversible)](#a-colour-typed-in-light-mode-comes-back-changed-the-theme-flip-is-not-exactly-reversible) — Won't fix.
 - [A native confirm() dialog left `<select>` elements unresponsive afterward](#a-native-confirm-dialog-left-select-elements-unresponsive-afterward) — Worked around.
 - [Clicking a container selects a different container that visually encloses it](#clicking-a-container-selects-a-different-container-that-visually-encloses-it) — Worked around.
 
@@ -52,7 +52,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 ## A colour typed in light mode comes back changed (the theme flip is not exactly reversible)
 
-**Status:** Open, measured 2026-10-17 (pre-existing; found while verifying ADR 0117). Decided 2026-10-18 not to block the first release; to be fixed later
+**Status:** Won't fix (decided 2026-10-23). Measured 2026-10-17 (pre-existing; found while verifying ADR 0117). It is cosmetic, only slightly off for saturated colours typed in light mode, the panel and the drawing agree, and nobody has been bothered by it; solving for the baseline would add colour-search code for no real gain. Revisit only if someone reports a colour that matters coming back wrong.
 
 **Symptom:** in light mode, select an element, type `#ff0000` into a colour field, and the field settles on `#c83a2d`; the element is drawn that colour, not the red that was typed. Switching to dark mode shows `#9f0000` for the same stored value, and back to light shows `#c83a2d` again, so the panel and the drawing always agree with each other, just not with what was typed.
 
@@ -60,7 +60,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **Why it matters:** stored values are the dark baseline and light mode is a conversion of it, which is right, but the *edit* path in light mode must then find a baseline whose conversion equals what was typed, and today it only applies the forward flip.
 
-**Direction (not decided):** solve for the baseline instead of flipping the typed value, e.g. search the stored-form colour whose light-mode conversion is closest to what was typed (hue and chroma fixed, lightness found numerically), or accept the typed value exactly in the current theme and store the nearest baseline. Needs a decision on how close is close enough, and a test over a grid of colours.
+**Direction considered:** solve for the baseline instead of flipping the typed value, e.g. search the stored-form colour whose light-mode conversion is closest to what was typed (hue and chroma fixed, lightness found numerically), or accept the typed value exactly in the current theme and store the nearest baseline. Needs a decision on how close is close enough, and a test over a grid of colours.
 
 **References:** `src/renderer/src/styling/themeAdaptiveColor.ts`, `src/renderer/src/properties/PropertyPanel.tsx` (the `onChange` of each `ColorField`), [ADR 0034](decisions/0034-theme-adaptive-color-value-flip.md)
 

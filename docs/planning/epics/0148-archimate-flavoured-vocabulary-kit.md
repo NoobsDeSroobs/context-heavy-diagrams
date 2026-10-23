@@ -17,7 +17,7 @@ This follows the same line as the BPMN decision ([ADR 0080](../../decisions/0080
 ## Open questions
 - **Licence.** Whether the notation and its icons can be reused, and under what terms. This is the same question that blocks vendor icon packs ([epic 0019](0019-installable-icon-packs.md)).
 - Which subset: strategy, business, application, technology, motivation layers and the core relationships.
-- Whether a later conformance profile ([epic 0138](later/0138-architecture-conformance-checks.md)) could use ArchiMate's table of allowed relationships.
+- Whether a later conformance profile ([epic 0138](0138-architecture-conformance-checks.md)) could use ArchiMate's table of allowed relationships.
 
 ## Related
-[Epic 0105](0105-semantic-notation-stencils.md), [epic 0149](0149-hollow-triangle-edge-marker.md), [epic 0138](later/0138-architecture-conformance-checks.md), `docs/diagram-and-architecture-types.md`.
+[Epic 0105](0105-semantic-notation-stencils.md), [epic 0149](0149-hollow-triangle-edge-marker.md), [epic 0138](0138-architecture-conformance-checks.md), `docs/diagram-and-architecture-types.md`.
