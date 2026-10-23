@@ -30,6 +30,7 @@ Usage:
   chd validate <file.chd>... [--recursive] Check diagram files for structural problems
   chd hash <file.chd>                      Print the file's fingerprint (SHA-256 of its bytes)
   chd export <file.chd> [options]          Draw the diagram as an SVG image (see 'chd export --help')
+  chd check <file.chd>... --profile <p>    Check diagrams against an architecture profile (see 'chd check --help')
   chd --version
   chd --help
 
@@ -52,6 +53,9 @@ your edit on the fresh content.
   export     Writes an .svg next to the diagram (or where -o says), so an image in a README
              or wiki can be regenerated whenever the diagram changes. Needs no display.
              It only reads the diagram. Exit code 1 if the file can't be read or written.
+  check      Reports where a diagram breaks the rules of an architectural style (a profile: a
+             file, or a built-in such as 'hexagonal'). It only reads the diagram. Exit code 1 if a
+             diagram has an error, 2 if the command or the profile can't be used.
 `
 
 function readSkillFile(rel) {
@@ -152,6 +156,26 @@ async function exportCommand(args) {
   return bundle.runExport(args, { iconDir: builtinIconDir() })
 }
 
+// `check` is bundled the same way as `export`. The built-in profiles sit in resources/profiles,
+// next to this folder, in a source checkout and in the packaged app alike.
+async function checkCommand(args) {
+  let bundle
+  try {
+    bundle = await import('./check.mjs')
+  } catch (error) {
+    console.error(
+      `chd: the check command is not built here (run 'npm run build:cli'): ${error instanceof Error ? error.message : error}`
+    )
+    return 1
+  }
+  if (args.includes('--help') || args.includes('-h')) {
+    const dir = join(here, '..', 'profiles')
+    console.log(bundle.usage({ profilesDir: dir }))
+    return 0
+  }
+  return bundle.runCheck(args, { profilesDir: join(here, '..', 'profiles') })
+}
+
 export async function run(argv) {
   const [command, ...rest] = argv
   switch (command) {
@@ -181,6 +205,8 @@ export async function run(argv) {
       return hash(rest[0])
     case 'export':
       return exportCommand(rest)
+    case 'check':
+      return checkCommand(rest)
     default:
       console.error(`chd: unknown command '${command}'. Run 'chd --help'.`)
       return 2

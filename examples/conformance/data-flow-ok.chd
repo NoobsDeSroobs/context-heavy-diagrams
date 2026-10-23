@@ -1,0 +1,130 @@
+{
+  "version": 1,
+  "edgeDirectionSets": [
+    {
+      "id": "flows-to",
+      "name": "Flows To"
+    }
+  ],
+  "activeEdgeDirectionSetId": "flows-to",
+  "nodes": [
+    {
+      "id": "customer",
+      "type": "entity",
+      "position": {
+        "x": 0,
+        "y": 120
+      },
+      "size": {
+        "width": 140,
+        "height": 60
+      },
+      "metadata": {
+        "role": {
+          "value": "external-entity"
+        }
+      },
+      "data": {
+        "label": "Customer"
+      }
+    },
+    {
+      "id": "take-order",
+      "type": "entity",
+      "position": {
+        "x": 260,
+        "y": 120
+      },
+      "size": {
+        "width": 140,
+        "height": 60
+      },
+      "metadata": {
+        "role": {
+          "value": "process"
+        }
+      },
+      "data": {
+        "label": "Take order"
+      }
+    },
+    {
+      "id": "orders",
+      "type": "entity",
+      "position": {
+        "x": 520,
+        "y": 120
+      },
+      "size": {
+        "width": 140,
+        "height": 60
+      },
+      "metadata": {
+        "role": {
+          "value": "data-store"
+        }
+      },
+      "data": {
+        "label": "Orders"
+      }
+    },
+    {
+      "id": "send-receipt",
+      "type": "entity",
+      "position": {
+        "x": 260,
+        "y": 300
+      },
+      "size": {
+        "width": 140,
+        "height": 60
+      },
+      "metadata": {
+        "role": {
+          "value": "process"
+        }
+      },
+      "data": {
+        "label": "Send receipt"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "xy-edge__customerright-take-orderleft",
+      "type": "labeled",
+      "source": "customer",
+      "target": "take-order",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "order details"
+    },
+    {
+      "id": "xy-edge__take-orderright-ordersleft",
+      "type": "labeled",
+      "source": "take-order",
+      "target": "orders",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "new order"
+    },
+    {
+      "id": "xy-edge__ordersbottom-send-receiptright",
+      "type": "labeled",
+      "source": "orders",
+      "target": "send-receipt",
+      "sourceHandle": "bottom",
+      "targetHandle": "right",
+      "label": "order"
+    },
+    {
+      "id": "xy-edge__send-receiptleft-customerbottom",
+      "type": "labeled",
+      "source": "send-receipt",
+      "target": "customer",
+      "sourceHandle": "left",
+      "targetHandle": "bottom",
+      "label": "receipt"
+    }
+  ]
+}

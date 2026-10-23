@@ -1,0 +1,268 @@
+{
+  "version": 1,
+  "edgeDirectionSets": [
+    {
+      "id": "depends-on",
+      "name": "Depends On"
+    }
+  ],
+  "activeEdgeDirectionSetId": "depends-on",
+  "nodes": [
+    {
+      "id": "hexagon",
+      "type": "container",
+      "position": {
+        "x": 200,
+        "y": 40
+      },
+      "size": {
+        "width": 440,
+        "height": 320
+      },
+      "metadata": {
+        "role": {
+          "value": "hexagon"
+        }
+      },
+      "data": {
+        "label": "Application core"
+      }
+    },
+    {
+      "id": "place-order",
+      "type": "entity",
+      "position": {
+        "x": 30,
+        "y": 40
+      },
+      "size": {
+        "width": 140,
+        "height": 60
+      },
+      "parentId": "hexagon",
+      "metadata": {
+        "role": {
+          "value": "port-in"
+        }
+      },
+      "data": {
+        "label": "Place order (port)"
+      }
+    },
+    {
+      "id": "order-service",
+      "type": "entity",
+      "position": {
+        "x": 150,
+        "y": 130
+      },
+      "size": {
+        "width": 140,
+        "height": 60
+      },
+      "parentId": "hexagon",
+      "metadata": {
+        "role": {
+          "value": "domain"
+        }
+      },
+      "data": {
+        "label": "Order service"
+      }
+    },
+    {
+      "id": "order-store",
+      "type": "entity",
+      "position": {
+        "x": 270,
+        "y": 220
+      },
+      "size": {
+        "width": 140,
+        "height": 60
+      },
+      "parentId": "hexagon",
+      "metadata": {
+        "role": {
+          "value": "port-out"
+        }
+      },
+      "data": {
+        "label": "Order store (port)"
+      }
+    },
+    {
+      "id": "rest",
+      "type": "entity",
+      "position": {
+        "x": 0,
+        "y": 80
+      },
+      "size": {
+        "width": 140,
+        "height": 60
+      },
+      "metadata": {
+        "role": {
+          "value": "adapter-in"
+        }
+      },
+      "data": {
+        "label": "REST controller"
+      }
+    },
+    {
+      "id": "sql",
+      "type": "entity",
+      "position": {
+        "x": 700,
+        "y": 260
+      },
+      "size": {
+        "width": 140,
+        "height": 60
+      },
+      "metadata": {
+        "role": {
+          "value": "adapter-out"
+        }
+      },
+      "data": {
+        "label": "SQL repository"
+      }
+    },
+    {
+      "id": "audit-log",
+      "type": "entity",
+      "position": {
+        "x": 30,
+        "y": 220
+      },
+      "size": {
+        "width": 140,
+        "height": 60
+      },
+      "parentId": "hexagon",
+      "metadata": {
+        "role": {
+          "value": "port-out"
+        }
+      },
+      "data": {
+        "label": "Audit log (port)"
+      }
+    },
+    {
+      "id": "cache",
+      "type": "entity",
+      "position": {
+        "x": 330,
+        "y": 270
+      },
+      "size": {
+        "width": 140,
+        "height": 60
+      },
+      "parentId": "hexagon",
+      "metadata": {
+        "role": {
+          "value": "adapter-out"
+        }
+      },
+      "data": {
+        "label": "Cache adapter"
+      }
+    },
+    {
+      "id": "pricing",
+      "type": "entity",
+      "position": {
+        "x": 330,
+        "y": 420
+      },
+      "size": {
+        "width": 140,
+        "height": 60
+      },
+      "metadata": {
+        "role": {
+          "value": "domain"
+        }
+      },
+      "data": {
+        "label": "Pricing rules"
+      }
+    },
+    {
+      "id": "notes",
+      "type": "entity",
+      "position": {
+        "x": 700,
+        "y": 40
+      },
+      "size": {
+        "width": 140,
+        "height": 60
+      },
+      "data": {
+        "label": "Team notes"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "xy-edge__restright-place-orderleft",
+      "type": "labeled",
+      "source": "rest",
+      "target": "place-order",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "uses"
+    },
+    {
+      "id": "xy-edge__order-serviceleft-place-orderbottom",
+      "type": "labeled",
+      "source": "order-service",
+      "target": "place-order",
+      "sourceHandle": "left",
+      "targetHandle": "bottom",
+      "label": "implements"
+    },
+    {
+      "id": "xy-edge__order-servicebottom-order-storetop",
+      "type": "labeled",
+      "source": "order-service",
+      "target": "order-store",
+      "sourceHandle": "bottom",
+      "targetHandle": "top",
+      "label": "uses"
+    },
+    {
+      "id": "xy-edge__sqlleft-order-storeright",
+      "type": "labeled",
+      "source": "sql",
+      "target": "order-store",
+      "sourceHandle": "left",
+      "targetHandle": "right",
+      "label": "implements"
+    },
+    {
+      "id": "xy-edge__restbottom-sqltop",
+      "type": "labeled",
+      "source": "rest",
+      "target": "sql",
+      "sourceHandle": "bottom",
+      "targetHandle": "top",
+      "label": "calls directly"
+    },
+    {
+      "id": "xy-edge__order-serviceright-sqltop",
+      "type": "labeled",
+      "source": "order-service",
+      "target": "sql",
+      "sourceHandle": "right",
+      "targetHandle": "top",
+      "label": "saves"
+    }
+  ]
+}

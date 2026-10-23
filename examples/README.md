@@ -12,6 +12,17 @@ Real, working diagram files. Open any of them with **File → Open** (or drop it
 
 These three also serve as round-trip fixtures: the app must open and re-save them without changing their meaning.
 
+## Architecture checks
+
+[`conformance/`](conformance) has a pair of diagrams for each built-in profile, one that follows the style and one that breaks it, to try `chd check` on (see [the profile format](../docs/conformance-profile-format.md)):
+
+| File | Check it with |
+|---|---|
+| `conformance/hexagonal-ok.chd`, `hexagonal-broken.chd` | `chd check <file> --profile hexagonal` |
+| `conformance/data-flow-ok.chd`, `data-flow-broken.chd` | `chd check <file> --profile data-flow-diagram` |
+
+Each diagram has an edge direction set named after what its arrows mean ("Depends On", "Flows To") and a `role` tag on its elements, which is how a profile knows what each element is.
+
 ## The gallery
 
 [`gallery/`](gallery/README.md) is a broader set built around one fictional rail operator, "Meridian Rail", showing how the tool holds up for different kinds of architecture work:

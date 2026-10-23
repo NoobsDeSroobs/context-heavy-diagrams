@@ -15,6 +15,7 @@ export default defineConfig(
       '**/out',
       'resources/ai/skills/**',
       'resources/cli/export.mjs',
+      'resources/cli/check.mjs',
       '.claude/**'
     ]
   },
