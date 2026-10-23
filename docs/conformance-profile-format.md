@@ -10,7 +10,7 @@ A profile is **applied to** a diagram and is never stored inside one. A profile 
 
 - UTF-8 JSON. The file name ends in `.chdprofile.json`, for example `hexagonal.chdprofile.json`.
 - Every key is spelled exactly as below. **An unknown key is an error**, so that a typo cannot silently disable a rule.
-- Names and values that are compared (tag keys, tag values, role names) are compared **exactly but ignoring case**. This is deliberately not the substring matching of the app's search box: `role=port` must not match `support`.
+- Names and values that are compared (tag keys, tag values, role names, the edge set name) are first **normalised**, by lower-casing and removing all whitespace, and then must be **equal**. Nothing else is forgiven: `Data Store` equals `datastore`, but `port` does not equal `support` or `ports`. This is deliberately not the substring matching of the app's search box.
 
 ## Top level
 
@@ -60,7 +60,7 @@ Consistency (a profile that breaks these is invalid):
 - `dependsOn` and `flowsTo` cannot be combined with `forbidden`.
 - With `irrelevant` or `forbidden`, the rules `forbiddenEdge` and `requiredEdge` are not allowed, because they need a direction. With `forbidden`, a `requiredProperty` rule on `@edges` is not allowed either.
 
-**How a diagram states its arrow meaning.** With `dependsOn` or `flowsTo`, the diagram must have an *edge direction set* (see [Edge direction sets](file-format.md#edge-direction-sets)) whose name matches the meaning once spaces are removed and the text is lower-cased: a set named `Depends On`, `depends on` or `DependsOn` matches `dependsOn`. The rules are then evaluated in that set's orientation (`from` is the end that is the set's `source`). If the diagram has no matching set, or more than one, that is a violation of the profile (`edge-set`), and the rules that need a direction are reported as not evaluated.
+**How a diagram states its arrow meaning.** With `dependsOn` or `flowsTo`, the diagram must have an *edge direction set* (see [Edge direction sets](file-format.md#edge-direction-sets)) whose name matches the meaning once normalised as above: a set named `Depends On`, `depends on` or `DependsOn` matches `dependsOn`. The rules are then evaluated in that set's orientation (`from` is the end that is the set's `source`). If the diagram has no matching set, or more than one, that is a violation of the profile (`edge-set`), and the rules that need a direction are reported as not evaluated.
 
 ## Roles
 
@@ -98,11 +98,17 @@ Every rule has:
 | Field | |
 |---|---|
 | `id` | A short name, unique in the profile; letters, digits, `-`, `_`. Appears in results. |
-| `kind` | One of the four kinds below. |
-| `severity` | `"error"` or `"warning"`. Optional; `"error"`. |
+| `kind` | One of the five kinds below. |
+| `severity` | How serious a finding is: `"error"`, `"warning"` or `"info"`. Optional; `"error"`. See below. |
 | `message` | Text shown with each finding. Optional; a checker writes one from the rule. |
 
-Anywhere a rule takes a role, `"*"` means any element.
+Severity says what kind of thing a finding is:
+
+- `error`: the diagram breaks a rule of the style.
+- `warning`: the diagram breaks a best practice or diagram hygiene, but not a rule of the style.
+- `info`: worth knowing, nothing is wrong (for example, the diagram is getting large).
+
+Anywhere a rule takes a role, `"*"` means any entity, container or text node.
 
 ### `forbiddenEdge`
 
@@ -128,9 +134,15 @@ Every element with role `each` (or every edge, for `"@edges"`) must have the pro
 
 `{ "kind": "requiredProperty", "each": "@edges", "property": "label" }`
 
+### `maxElements`
+
+The diagram may hold at most `max` elements with role `of`. `max` is a whole number of at least 1. One finding for the diagram as a whole, when the count is above it, naming the count. Usually written with severity `info` or `warning`, as a prompt to split a diagram that has grown too large.
+
+`{ "kind": "maxElements", "of": "*", "max": 40, "severity": "info" }`
+
 ## Results
 
-A checker produces a list of findings and a verdict. A finding has the profile's `name`, the `id` of the rule (or `edge-set` / `edge-presence` for the edge declaration), its severity, a message, and the ids of the nodes or edges concerned. The diagram **conforms** when there is no finding of severity `error`. Warnings are reported but do not fail the check.
+A checker produces a list of findings and a verdict. A finding has the profile's `name`, the `id` of the rule (or `edge-set` / `edge-presence` for the edge declaration), its severity, a message, and the ids of the nodes or edges concerned. The diagram **conforms** when there is no finding of severity `error`. Warnings and information are reported but do not fail the check.
 
 If a finding means some rules could not run (the missing edge set), the checker lists those rules as *not evaluated*, so a short result is never read as a pass.
 
@@ -146,7 +158,7 @@ A checker must reject a profile, with a message naming the problem, when:
 - `profileVersion` is not `1`, `name` is missing or blank, or a key is unknown;
 - `edges.meaning` or `edges.presence` is missing, `"none"`, or not a listed value, or the consistency rules above are broken;
 - a role has no `match` keys, an unknown `type`, an unknown or cyclic `insideRole`, or an invalid name;
-- a rule has a duplicate or invalid `id`, an unknown `kind`, a missing field for its kind, or names a role that does not exist;
+- a rule has a duplicate or invalid `id`, an unknown `kind`, an unknown `severity`, a missing field for its kind (or a `max` that is not a whole number of at least 1), or names a role that does not exist;
 - a rule's kind is not allowed by `edges` (see above).
 
 A profile that fails validation checks nothing.

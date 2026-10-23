@@ -83,6 +83,14 @@
       "property": { "tag": "role" },
       "severity": "warning",
       "message": "Set the \"role\" tag so the element is checked."
+    },
+    {
+      "id": "diagram-size",
+      "kind": "maxElements",
+      "of": "*",
+      "max": 30,
+      "severity": "info",
+      "message": "The diagram is getting large; consider splitting it into a lower level of linked diagrams."
     }
   ]
 }

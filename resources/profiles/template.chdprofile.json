@@ -50,6 +50,14 @@
       "property": "label",
       "severity": "warning",
       "message": "Replace: every edge should say what it carries. property can also be { \"tag\": \"key\" }."
+    },
+    {
+      "id": "diagram-size",
+      "kind": "maxElements",
+      "of": "*",
+      "max": 40,
+      "severity": "info",
+      "message": "Replace: say what to do when the diagram grows past max elements. severity is error, warning or info."
     }
   ]
 }
