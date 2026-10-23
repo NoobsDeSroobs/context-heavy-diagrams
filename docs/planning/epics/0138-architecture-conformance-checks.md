@@ -22,7 +22,8 @@ Let a diagram be checked against a named architectural style or rule set — for
 - **Everything else is parked** in [epic 0157](later/0157-conformance-checks-beyond-v1.md): C4 and levels, supplementary diagrams, layered and cycle rules, waivers, linked-diagram scope, profile pointers.
 
 ## Tasks
-- [ ] ADR for the profile format and the edge declaration; spec of the profile file (`docs/` page, written so a third party could author one)
+- [x] ADR for the profile format and the edge declaration ([ADR 0131](../../decisions/0131-conformance-profiles.md)); spec of the profile file ([conformance-profile-format.md](../../conformance-profile-format.md)); template and two draft profiles in `resources/profiles/`
+- [ ] Profiles folder (a Preferences setting, default in the user-data folder) and a "New profile" command that copies the template there, failing if the file exists
 - [ ] Profile validation (the `none` sentinel, the consistency rules between `meaning` and `presence`)
 - [ ] Pure evaluator in `src/shared`: roles via the search match predicate, the edge set lookup, forbidden edge, required edge, containment, must-have-property
 - [ ] Built-in profiles: hexagonal, data-flow diagram, with example diagrams that pass and that fail

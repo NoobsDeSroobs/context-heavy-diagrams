@@ -1,0 +1,55 @@
+{
+  "profileVersion": 1,
+  "name": "My architecture style",
+  "description": "TEMPLATE. Describe the style and how a diagram must be prepared for it (which tags to set on which elements). Work through the file top to bottom; the full specification is docs/conformance-profile-format.md. The file stays invalid until both values under \"edges\" are chosen.",
+  "edges": {
+    "meaning": "none",
+    "presence": "none"
+  },
+  "roles": {
+    "roleA": {
+      "description": "Replace: a kind of element in this style. Recognised by a tag, e.g. role=roleA, and optionally by its type (entity, container, text).",
+      "match": { "tag": { "key": "role", "value": "roleA" } }
+    },
+    "roleB": {
+      "description": "Replace: another kind of element. Several values can match one role: \"value\": [\"b1\", \"b2\"].",
+      "match": { "tag": { "key": "role", "value": "roleB" } }
+    },
+    "boundary": {
+      "description": "Replace or delete: a container that other elements must be inside (or outside).",
+      "match": { "type": "container", "tag": { "key": "role", "value": "boundary" } }
+    }
+  },
+  "rules": [
+    {
+      "id": "a-must-not-use-b",
+      "kind": "forbiddenEdge",
+      "from": "roleA",
+      "to": "roleB",
+      "message": "Replace: say why a roleA element must not have an edge to a roleB element, and what to do instead."
+    },
+    {
+      "id": "a-needs-b",
+      "kind": "requiredEdge",
+      "each": "roleA",
+      "edge": "outgoing",
+      "with": "roleB",
+      "message": "Replace: say what a roleA element must be connected to. edge is outgoing, incoming or either."
+    },
+    {
+      "id": "a-inside-boundary",
+      "kind": "containment",
+      "each": "roleA",
+      "mustBeInside": "boundary",
+      "message": "Replace: use mustNotBeInside instead of mustBeInside to say the opposite."
+    },
+    {
+      "id": "edges-are-labelled",
+      "kind": "requiredProperty",
+      "each": "@edges",
+      "property": "label",
+      "severity": "warning",
+      "message": "Replace: every edge should say what it carries. property can also be { \"tag\": \"key\" }."
+    }
+  ]
+}
