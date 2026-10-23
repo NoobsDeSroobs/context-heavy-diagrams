@@ -24,8 +24,8 @@ Let a diagram be checked against a named architectural style or rule set — for
 ## Tasks
 - [x] ADR for the profile format and the edge declaration ([ADR 0131](../../decisions/0131-conformance-profiles.md)); spec of the profile file ([conformance-profile-format.md](../../conformance-profile-format.md)); template and two draft profiles in `resources/profiles/`
 - [ ] Profiles folder (a Preferences setting, default in the user-data folder) and a "New profile" command that copies the template there, failing if the file exists
-- [ ] Profile validation (the `none` sentinel, the consistency rules between `meaning` and `presence`)
-- [ ] Pure evaluator in `src/shared`: roles via the search match predicate, the edge set lookup, forbidden edge, required edge, containment, must-have-property
+- [x] Profile validation (the `none` sentinel, the consistency rules between `meaning` and `presence`)
+- [x] Pure evaluator in `src/shared`: roles via the search match predicate, the edge set lookup, forbidden edge, required edge, containment, must-have-property
 - [ ] Built-in profiles: hexagonal, data-flow diagram, with example diagrams that pass and that fail
 - [ ] Conformance section in Diagnostics (select and frame the offender)
 - [ ] `chd check` command with `--profile`, and its exit code for CI
