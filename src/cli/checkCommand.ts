@@ -19,9 +19,11 @@ export const CHECK_USAGE = `Usage: chd check <file.chd>... --profile <profile> [
 
 Built-in profiles: {BUILT_INS}
 
-Reports where a diagram breaks the rules of an architectural style. Errors make the exit code 1;
-warnings and information are listed but do not. Exit code 2 means the command or the profile
-could not be used.
+Reports where a diagram breaks the rules of an architectural style. It only reads the diagram.
+Errors fail the check; warnings and information are listed but do not.
+
+Exit codes: 0 every diagram conforms, 1 a diagram has an error or cannot be read, 2 the command or
+the profile cannot be used.
 `
 
 // The text `chd check --help` prints, with the built-in profiles of this install filled in.

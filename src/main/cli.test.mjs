@@ -102,3 +102,37 @@ test('an unknown command is a usage error', () => {
   assert.equal(r.status, 2)
   assert.match(r.stderr, /unknown command/)
 })
+
+test('every command answers --help with its own usage and exits 0', () => {
+  for (const command of ['spec', 'validate', 'hash']) {
+    const r = run(command, '--help')
+    assert.equal(r.status, 0, command)
+    assert.match(r.stdout, new RegExp(`^Usage: chd ${command}`), command)
+    assert.match(r.stdout, /Exit codes:/, command)
+    assert.equal(run(command, '-h').stdout, r.stdout, command)
+    assert.equal(run('help', command).stdout, r.stdout, command)
+  }
+})
+
+test('--help does not treat the flag as a file or a topic', () => {
+  assert.doesNotMatch(run('hash', '--help').stderr, /can't read/)
+  assert.doesNotMatch(run('spec', '--help').stderr, /unknown spec topic/)
+})
+
+test('spec --help lists every topic that spec accepts', () => {
+  const help = run('spec', '--help').stdout
+  for (const topic of ['fields', 'authoring', 'layout', 'conformance', 'all']) {
+    assert.match(help, new RegExp(`\\b${topic}\\b`), topic)
+    if (topic !== 'all') assert.equal(run('spec', topic).status, 0, topic)
+  }
+})
+
+test('help with no command is the overview, and an unknown command is a usage error', () => {
+  const overview = run('help')
+  assert.equal(overview.status, 0)
+  assert.equal(overview.stdout, run('--help').stdout)
+  assert.match(overview.stdout, /chd help <command>/)
+  const unknown = run('help', 'nope')
+  assert.equal(unknown.status, 2)
+  assert.match(unknown.stderr, /no help for 'nope'.*spec, validate, hash, export, check/)
+})

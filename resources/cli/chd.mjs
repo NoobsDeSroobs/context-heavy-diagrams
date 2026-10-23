@@ -16,48 +16,86 @@ const skillDir = join(here, '..', 'ai', 'skills', 'chd-diagrams')
 
 // What each `chd spec <topic>` prints. The default topic is only the skill
 // itself (the core rules) — the references are tens of KB, too much to pour
-// into an AI's context unasked, so they are opt-in.
+// into an AI's context unasked, so they are opt-in. `about` is the line
+// `chd spec --help` shows; every other list of topics is made from this table.
 const SPEC_TOPICS = {
-  fields: { title: 'Field reference', file: 'references/field-reference.md' },
-  authoring: { title: 'Authoring guide', file: 'references/authoring-guide.md' },
-  layout: { title: 'Layout guide', file: 'references/layout-guide.md' },
-  conformance: { title: 'Architecture checks', file: 'references/conformance.md' }
+  fields: {
+    title: 'Field reference',
+    file: 'references/field-reference.md',
+    about: 'The exact field-by-field reference.'
+  },
+  authoring: {
+    title: 'Authoring guide',
+    file: 'references/authoring-guide.md',
+    about: 'Linking diagrams, tags, git.'
+  },
+  layout: {
+    title: 'Layout guide',
+    file: 'references/layout-guide.md',
+    about: 'Spacing and archetypes for laying a diagram out.'
+  },
+  conformance: {
+    title: 'Architecture checks',
+    file: 'references/conformance.md',
+    about: 'Checking a diagram against an architecture style (chd check).'
+  }
 }
+const SPEC_TOPIC_NAMES = Object.keys(SPEC_TOPICS)
 
 const HELP = `chd — command-line companion to Context Heavy Diagrams
 
 Usage:
-  chd spec [fields|authoring|layout|conformance|all] Print the .chd file format reference
+  chd spec [topic]                         Print the .chd file format reference
   chd validate <file.chd>... [--recursive] Check diagram files for structural problems
   chd hash <file.chd>                      Print the file's fingerprint (SHA-256 of its bytes)
-  chd export <file.chd> [options]          Draw the diagram as an SVG image (see 'chd export --help')
-  chd check <file.chd>... --profile <p>    Check diagrams against an architecture profile (see 'chd check --help')
+  chd export <file.chd> [options]          Draw the diagram as an SVG image
+  chd check <file.chd>... --profile <p>    Check diagrams against an architecture profile
+  chd help <command>                       Details, options and exit codes of one command
   chd --version
   chd --help
+
+Every command also takes --help.
 
 If you are an AI assistant: run \`chd spec\` first to learn the .chd format, then
 run \`chd validate <file>\` after every edit you make to a diagram. Before you write an
 edited file back, run \`chd hash <file>\` again and compare it with the value from when
 you read it: if it differs, someone changed the file meanwhile, so re-read it and redo
 your edit on the fresh content.
-
-  spec       Default: the core rules and traps. 'fields' is the exact field-by-field
-             reference, 'authoring' covers linking/tags/git, 'layout' covers spacing
-             and archetypes, 'conformance' covers architecture checks, 'all' prints everything.
-  validate   Reports duplicate ids, dangling edge endpoints, parent-before-child
-             ordering, and relative paths (icons, notes, linked diagrams) that don't
-             resolve. --recursive also follows linked diagrams. Exit code 1 if any
-             ERROR was found (warnings alone don't fail).
-  hash       Prints the lowercase-hex SHA-256 of the file's raw bytes — the same
-             fingerprint the Claude Desktop extension uses (ADR 0109). Exit code 1 if
-             the file can't be read.
-  export     Writes an .svg next to the diagram (or where -o says), so an image in a README
-             or wiki can be regenerated whenever the diagram changes. Needs no display.
-             It only reads the diagram. Exit code 1 if the file can't be read or written.
-  check      Reports where a diagram breaks the rules of an architectural style (a profile: a
-             file, or a built-in such as 'hexagonal'). It only reads the diagram. Exit code 1 if a
-             diagram has an error, 2 if the command or the profile can't be used.
 `
+
+// The help of the commands implemented in this file. `export` and `check` print their own, from
+// their bundles (scripts/build-cli.mjs), next to the code that parses their options.
+const COMMAND_HELP = {
+  spec: `Usage: chd spec [${SPEC_TOPIC_NAMES.join('|')}|all]
+
+Prints the .chd file format reference, so an assistant can read and write diagrams correctly.
+
+  (no topic)   The core rules and traps. Start here.
+${SPEC_TOPIC_NAMES.map((name) => `  ${name.padEnd(12)} ${SPEC_TOPICS[name].about}`).join('\n')}
+  all          Everything above.
+
+Exit codes: 0 ok, 2 unknown topic.
+`,
+  validate: `Usage: chd validate <file.chd>... [--recursive]
+
+Reports duplicate ids, dangling edge endpoints, parent-before-child ordering, and relative paths
+(icons, notes, linked diagrams) that don't resolve. Run it after every edit to a diagram.
+
+  --recursive   Also follow linked diagrams
+
+Exit codes: 0 ok (warnings alone don't fail), 1 if any ERROR was found, 2 usage error.
+`,
+  hash: `Usage: chd hash <file.chd>
+
+Prints the lowercase-hex SHA-256 of the file's raw bytes: the fingerprint for the stale-edit
+check, the same one the Claude Desktop extension uses (ADR 0109). Compare it with the value from
+when you read the file before you write an edit back.
+
+Exit codes: 0 ok, 1 if the file can't be read, 2 usage error.
+`
+}
+const COMMANDS = ['spec', 'validate', 'hash', 'export', 'check']
+const wantsHelp = (args) => args.includes('--help') || args.includes('-h')
 
 function readSkillFile(rel) {
   return readFileSync(join(skillDir, ...rel.split('/')), 'utf-8')
@@ -69,7 +107,7 @@ function stripFrontmatter(text) {
 }
 
 const SPEC_PREAMBLE = `(Output of \`chd spec\`. File links below such as references/field-reference.md are the
-topics of the same command (\`chd spec fields\`, \`authoring\`, \`layout\`, \`conformance\`); wherever it says to
+topics of the same command (${SPEC_TOPIC_NAMES.map((name, i) => (i === 0 ? `\`chd spec ${name}\`` : `\`${name}\``)).join(', ')}); wherever it says to
 run \`node scripts/validate_chd.mjs <file>\`, run \`chd validate <file>\` instead.)
 
 `
@@ -77,7 +115,7 @@ run \`node scripts/validate_chd.mjs <file>\`, run \`chd validate <file>\` instea
 function spec(topic) {
   if (topic !== undefined && topic !== 'all' && !(topic in SPEC_TOPICS)) {
     console.error(
-      `chd: unknown spec topic '${topic}' (expected fields, authoring, layout, conformance or all)`
+      `chd: unknown spec topic '${topic}' (expected ${SPEC_TOPIC_NAMES.join(', ')} or all)`
     )
     return 2
   }
@@ -90,7 +128,7 @@ function spec(topic) {
   }
   if (topic === undefined) {
     parts.push(
-      'More detail: `chd spec fields`, `chd spec authoring`, `chd spec layout`, `chd spec conformance`, `chd spec all`.'
+      `More detail: ${[...SPEC_TOPIC_NAMES, 'all'].map((name) => `\`chd spec ${name}\``).join(', ')}.`
     )
   }
   console.log(parts.join('\n\n---\n\n').trimEnd())
@@ -142,11 +180,6 @@ function builtinIconDir() {
 // `export` lives in its own bundle (scripts/build-cli.mjs), loaded only when asked for, so the
 // other commands stay plain Node with nothing to build.
 async function exportCommand(args) {
-  if (args.includes('--help') || args.includes('-h')) {
-    const { EXPORT_USAGE } = await import('./export.mjs')
-    console.log(EXPORT_USAGE)
-    return 0
-  }
   let bundle
   try {
     bundle = await import('./export.mjs')
@@ -155,6 +188,10 @@ async function exportCommand(args) {
       `chd: the export command is not built here (run 'npm run build:cli'): ${error instanceof Error ? error.message : error}`
     )
     return 1
+  }
+  if (wantsHelp(args)) {
+    console.log(bundle.EXPORT_USAGE)
+    return 0
   }
   return bundle.runExport(args, { iconDir: builtinIconDir() })
 }
@@ -171,12 +208,12 @@ async function checkCommand(args) {
     )
     return 1
   }
-  if (args.includes('--help') || args.includes('-h')) {
-    const dir = join(here, '..', 'profiles')
-    console.log(bundle.usage({ profilesDir: dir }))
+  const env = { profilesDir: join(here, '..', 'profiles') }
+  if (wantsHelp(args)) {
+    console.log(bundle.usage(env))
     return 0
   }
-  return bundle.runCheck(args, { profilesDir: join(here, '..', 'profiles') })
+  return bundle.runCheck(args, env)
 }
 
 export async function run(argv) {
@@ -185,22 +222,45 @@ export async function run(argv) {
     case undefined:
     case '--help':
     case '-h':
-    case 'help':
       console.log(HELP)
       return command === undefined ? 2 : 0
+    case 'help': {
+      // `chd help` is the overview; `chd help <command>` is `chd <command> --help`.
+      if (rest.length === 0) {
+        console.log(HELP)
+        return 0
+      }
+      if (!COMMANDS.includes(rest[0])) {
+        console.error(`chd: no help for '${rest[0]}'. The commands are: ${COMMANDS.join(', ')}.`)
+        return 2
+      }
+      return run([rest[0], '--help'])
+    }
     case '--version':
     case '-v':
       console.log(appVersion())
       return 0
     case 'spec':
+      if (wantsHelp(rest)) {
+        console.log(COMMAND_HELP.spec)
+        return 0
+      }
       return spec(rest[0])
     case 'validate':
+      if (wantsHelp(rest)) {
+        console.log(COMMAND_HELP.validate)
+        return 0
+      }
       if (rest.filter((a) => !a.startsWith('--')).length === 0) {
         console.error('Usage: chd validate <file.chd>... [--recursive]')
         return 2
       }
       return validateMain(rest)
     case 'hash':
+      if (wantsHelp(rest)) {
+        console.log(COMMAND_HELP.hash)
+        return 0
+      }
       if (rest.length !== 1) {
         console.error('Usage: chd hash <file.chd>')
         return 2

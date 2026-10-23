@@ -168,3 +168,10 @@ test('usage problems and unusable profiles exit 2, apart from a failing diagram'
   assert.equal(bad.status, 2)
   assert.match(bad.stderr, /can't read the profile/)
 })
+
+test('help check is the same as check --help', () => {
+  const r = run('help', 'check')
+  assert.equal(r.status, 0)
+  assert.equal(r.stdout, run('check', '--help').stdout)
+  assert.match(r.stdout, /Exit codes:/)
+})
