@@ -76,6 +76,31 @@ function useReadOnlyContext(diagramPath: string | null): DiagramContextValue {
   )
 }
 
+// What the canvas cannot show: catalog and setting changes, and edges that could not be drawn as
+// the file has them.
+function diagramLevelNotices(c: Classification): string[] {
+  const notices = c.diagramLevel.map((change) => {
+    if (change.setting) return `${change.name}: ${change.setting.before} → ${change.setting.after}`
+    const parts = [
+      change.added.length > 0 && `+${change.added.join(', ')}`,
+      change.removed.length > 0 && `−${change.removed.join(', ')}`,
+      change.changed.length > 0 && `~${change.changed.join(', ')}`
+    ].filter(Boolean)
+    return `${change.name}: ${parts.join(' ')}`
+  })
+  if (c.repairedEdges.size > 0) {
+    notices.push(
+      `${c.repairedEdges.size} edge(s) name a connection point their node does not have; drawn to the nearest one`
+    )
+  }
+  if (c.danglingEdges.length > 0) {
+    notices.push(
+      `${c.danglingEdges.length} edge(s) lead to a node that does not exist and cannot be drawn`
+    )
+  }
+  return notices
+}
+
 function statusClass(change: ElementChange | undefined): string {
   return change ? `cmp-${change.status}` : 'cmp-dim'
 }
@@ -103,20 +128,15 @@ function CompareCanvas({
   const { peek, bindings } = useDetailsPeek()
 
   const { nodes, edges } = useMemo(() => {
-    const flow = fromDiagramFile(classification.merged)
+    const flow = fromDiagramFile(classification.view)
     return {
       nodes: flow.nodes.map((n) => decorateNode(n, classification.nodes.get(n.id))),
       edges: flow.edges.map((e) => decorateEdge(e, classification.edges.get(e.id)))
     }
   }, [classification])
 
-  const counts = useMemo(() => {
-    const tally: Record<CompareStatus, number> = { added: 0, removed: 0, links: 0, content: 0 }
-    for (const c of [...classification.nodes.values(), ...classification.edges.values()]) {
-      tally[c.status] += 1
-    }
-    return tally
-  }, [classification])
+  const counts = classification.counts
+  const notices = diagramLevelNotices(classification)
 
   const peekNode = peek ? nodes.find((n) => n.id === peek.nodeId) : undefined
   const peekChange = peek ? classification.nodes.get(peek.nodeId) : undefined
@@ -136,6 +156,14 @@ function CompareCanvas({
             Unchanged or only moved or restyled
           </span>
         </div>
+        {notices.length > 0 && (
+          <div className="compare-diagram-level" role="status">
+            <strong>Diagram-level changes</strong>
+            {notices.map((text) => (
+              <span key={text}>{text}</span>
+            ))}
+          </div>
+        )}
         <div
           className="compare-canvas"
           // The same dimming strength as the editor's Isolate mode (ADR 0063).
@@ -177,9 +205,11 @@ function CompareCanvas({
               </div>
               <div className="compare-peek-body">
                 {peekChange ? STATUS_LABEL[peekChange.status] : 'Unchanged or only moved'}
-                {peekChange && peekChange.fields.length > 0 && (
-                  <div>{peekChange.fields.join(', ')}</div>
-                )}
+                {peekChange?.fields
+                  .flatMap((f) => f.lines)
+                  .map((line) => (
+                    <div key={line}>{line}</div>
+                  ))}
               </div>
             </div>,
             document.body

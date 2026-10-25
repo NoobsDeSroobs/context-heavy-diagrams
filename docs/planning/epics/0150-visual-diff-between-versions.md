@@ -54,7 +54,7 @@ A compare window on the real canvas works. `?compare=<later>&base=<earlier>` (fi
 - **Main process:** a separate `createCompareWindow`, not registered under a path, with no close guard.
 - **Needed in shared code:** `nodeTypes`, `edgeTypes` and the default edge options moved to `canvas/flowTypes.ts`; the diff engine's field specs exported; `LabeledEdge` puts `data.compareClass` on its label chip, since the chip is drawn outside the edge's own element and would not dim otherwise.
 - **Trap:** without `connectionMode={ConnectionMode.Loose}` every edge is silently dropped (all handles are `source`).
-- **An edge whose handle ids do not exist on its node is not drawn**, in the editor or here, so it cannot be coloured. The gallery's `c4-context.chd` has two such edges (`right`/`left` on a node whose sides only hold custom points), and a hand-made edge with no handle ids has the same problem. The changes list should name edges the canvas cannot draw.
+- **An edge whose handle ids do not exist on its node is not drawn**, in the editor or here ([known-issues](../../known-issues.md)). Decided with the maintainer: the review must show every edge, or the overview is lost. The engine builds a drawable copy for the window (`drawable.ts`, an end moved to the nearest point the node has, the comparison itself untouched) and the window says how many it moved. Only an edge whose end node does not exist cannot be drawn; the window counts those.
 - Dimming strength follows the existing Isolate opacity preference ([ADR 0063](../../decisions/0063-isolate-mode.md)).
 - **Not checked yet:** a removed container whose children survive, big diagrams, Linux, any revert.
 - **Spike code to keep:** `src/shared/compare/classify.ts` (tested), `CompareView.tsx`, `compare.css`, `flowTypes.ts`, `createCompareWindow`. **To replace:** the `?base=` file path as the baseline, the hover card (field names only, no old/new values), and the launch (an IPC call, no menu entry).
@@ -66,7 +66,8 @@ A compare window on the real canvas works. `?compare=<later>&base=<earlier>` (fi
 
 ## Tasks
 - [x] Spike: the real canvas runs read-only in its own window (see above)
-- [ ] Classification engine: old and new values per field (the spike has the four buckets and field names), absolute positions for containers, edges the canvas cannot draw
+- [x] Classification engine (`src/shared/compare/`): the four colours, what changed in words per field (tags, label, security cells, links, edge ends), a review order (security, links, content, removed, added), counts, the diagram-level collections, every edge drawable, an input for Details files the caller found changed. 12 tests, and a check that its field list matches "changes since last save". Absolute container positions are not needed while position is not tracked.
+- [ ] Restricted preload for the compare window: it needs only reading a diagram and opening a window, not the editor's whole bridge ([ADR 0112](../../decisions/0112-electron-hardening-sandbox-and-navigation.md)). The real separation between the read-only view and the diagram and its files, since the window has the same `window.api` as the editor today. Needs a second preload entry in the build.
 - [ ] Compare window plumbing (main process: no path registration, no recovery, no close prompt)
 - [ ] Colours, badges, dimming, legend, summary, hover details
 - [ ] Diagram-level changes strip

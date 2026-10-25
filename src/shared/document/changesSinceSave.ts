@@ -21,7 +21,7 @@ export function deepEqual(a: unknown, b: unknown): boolean {
   return aKeys.length === bKeys.length && aKeys.every((k) => deepEqual(aRec[k], bRec[k]))
 }
 
-export interface FieldSpec<T> {
+interface FieldSpec<T> {
   name: string
   get: (el: T) => unknown
 }
@@ -62,7 +62,7 @@ export const EDGE_FIELDS: FieldSpec<DiagramEdge>[] = [
   { name: 'points', get: (e) => e.points }
 ]
 
-export function diffFields<T>(specs: FieldSpec<T>[], saved: T, current: T): string[] {
+function diffFields<T>(specs: FieldSpec<T>[], saved: T, current: T): string[] {
   return specs.filter((s) => !deepEqual(s.get(saved), s.get(current))).map((s) => s.name)
 }
 

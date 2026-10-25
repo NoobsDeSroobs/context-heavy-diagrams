@@ -130,3 +130,15 @@
 .compare-peek-body {
   padding: 4px 12px 10px;
 }
+
+/* Changes the canvas cannot colour (catalogs, settings): loud on purpose, since nothing on the
+   diagram itself points at them. */
+.compare-diagram-level {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  padding: 8px 12px;
+  border-bottom: 2px solid var(--cmp-links);
+  background: color-mix(in srgb, var(--cmp-links) 18%, transparent);
+  font-size: 13px;
+}
