@@ -374,7 +374,7 @@ function LabeledEdge({
       />
       <EdgeLabelRenderer>
         <div
-          className="edge-label"
+          className={`edge-label${data?.compareClass ? ` ${data.compareClass}` : ''}`}
           style={{
             position: 'absolute',
             transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,

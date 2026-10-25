@@ -1,0 +1,132 @@
+/* The compare window: the real node and edge components, read-only, with a review colour per
+   element. Unchanged elements dim; an outline and a badge mark the rest, so colour is never the
+   only cue. */
+.compare-window {
+  --cmp-added: #2da44e;
+  --cmp-removed: #e5484d;
+  --cmp-links: #f97316;
+  --cmp-content: #facc15;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.compare-message {
+  padding: 24px;
+}
+
+.compare-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--color-border, var(--ev-c-gray-2));
+  background: var(--color-background-soft);
+  font-size: 13px;
+}
+
+.compare-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.compare-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  box-sizing: border-box;
+}
+
+.compare-swatch.cmp-added {
+  background: var(--cmp-added);
+}
+.compare-swatch.cmp-removed {
+  background: transparent;
+  border: 2px dashed var(--cmp-removed);
+}
+.compare-swatch.cmp-links {
+  background: var(--cmp-links);
+}
+.compare-swatch.cmp-content {
+  background: var(--cmp-content);
+}
+.compare-swatch.cmp-dim {
+  background: var(--color-text);
+  opacity: 0.25;
+}
+
+.compare-canvas {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Read-only: nothing inside an element takes the pointer, so labels cannot be edited and
+   handles, resizers and context menus never fire. The wrapper still gets the hover for the card. */
+.compare-canvas .react-flow__node > * {
+  pointer-events: none;
+}
+.compare-canvas .react-flow__edge {
+  pointer-events: none;
+}
+
+.compare-canvas .cmp-dim {
+  opacity: var(--cmp-dim-opacity, 0.25);
+}
+
+.compare-canvas .react-flow__node.cmp {
+  border-radius: 6px;
+}
+.compare-canvas .react-flow__node.cmp:not(.cmp-dim) {
+  outline: 3px solid var(--cmp-color);
+  outline-offset: 3px;
+}
+.compare-canvas .react-flow__node.cmp:not(.cmp-dim)::after {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--cmp-color);
+  color: #000;
+  font: bold 13px/1 sans-serif;
+  content: var(--cmp-badge);
+}
+
+.compare-canvas .cmp-added {
+  --cmp-color: var(--cmp-added);
+  --cmp-badge: '+';
+}
+.compare-canvas .cmp-removed {
+  --cmp-color: var(--cmp-removed);
+  --cmp-badge: '\2212';
+  opacity: 0.75;
+}
+.compare-canvas .react-flow__node.cmp-removed {
+  outline-style: dashed;
+}
+.compare-canvas .cmp-links {
+  --cmp-color: var(--cmp-links);
+  --cmp-badge: '\1F517';
+}
+.compare-canvas .cmp-content {
+  --cmp-color: var(--cmp-content);
+  --cmp-badge: '~';
+}
+
+/* An edge has no box to outline, so its line is recoloured and thickened. */
+.compare-canvas .react-flow__edge.cmp:not(.cmp-dim) .react-flow__edge-path {
+  stroke: var(--cmp-color) !important;
+  stroke-width: 4px !important;
+}
+.compare-canvas .react-flow__edge.cmp-removed .react-flow__edge-path {
+  stroke-dasharray: 6 4 !important;
+}
+
+.compare-peek-body {
+  padding: 4px 12px 10px;
+}

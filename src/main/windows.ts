@@ -145,6 +145,38 @@ export function createWindow(initialPath?: string): BrowserWindow {
   return win
 }
 
+// A window that only shows a comparison of two versions of a diagram. It is not a document window:
+// never registered under a path (opening the diagram must not focus it), no close guard (there is
+// nothing to save), and the renderer never starts recovery for it because it never loads a diagram
+// into the editor.
+export function createCompareWindow(path: string, basePath: string): BrowserWindow {
+  const win = new BrowserWindow({
+    width: 1100,
+    height: 760,
+    show: false,
+    ...(process.platform === 'linux' || (is.dev && process.platform !== 'darwin') ? { icon } : {}),
+    webPreferences: { preload: join(__dirname, '../preload/index.js'), sandbox: true }
+  })
+  win.setMenuBarVisibility(false)
+  win.on('ready-to-show', () => win.show())
+  win.webContents.setWindowOpenHandler((details) => {
+    if (isSafeExternalUrl(details.url)) shell.openExternal(details.url)
+    return { action: 'deny' }
+  })
+  win.webContents.on('will-navigate', (event, url) => {
+    if (isSameDocument(url, win.webContents.getURL())) return
+    event.preventDefault()
+    if (isSafeExternalUrl(url)) shell.openExternal(url)
+  })
+  const query = { compare: path, base: basePath }
+  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+    win.loadURL(`${process.env['ELECTRON_RENDERER_URL']}?${new URLSearchParams(query)}`)
+  } else {
+    win.loadFile(join(__dirname, '../renderer/index.html'), { query })
+  }
+  return win
+}
+
 // Focuses an existing window already showing this path; otherwise, if the calling window was passed
 // in and is empty (nothing to lose; File -> Open and File -> Recent Diagrams both pass one),
 // navigates it to the path; otherwise opens a new window. Drill-down link navigation
@@ -261,6 +293,10 @@ async function openDroppedFileForWindow(
 export function registerWindowHandlers(): void {
   ipcMain.handle('windows:openNew', () => {
     createWindow()
+  })
+
+  ipcMain.handle('windows:openCompare', (_event, path: string, basePath: string) => {
+    createCompareWindow(path, basePath)
   })
 
   // callingWindowEmpty: the renderer's own nodes.length === 0 &&

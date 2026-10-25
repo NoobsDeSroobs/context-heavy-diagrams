@@ -61,6 +61,7 @@ export interface DiagramApi {
 
   newWindow(): Promise<void>
   openInNewWindow(isCurrentWindowEmpty: boolean): Promise<void>
+  openCompareWindow(path: string, basePath: string): Promise<void>
   openLinkedInNewWindow(
     diagramPath: string,
     relativePath: string

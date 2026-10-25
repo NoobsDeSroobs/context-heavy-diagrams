@@ -55,16 +55,15 @@ import {
   type RequiredTagDefinition
 } from '@shared/diagram'
 import { diffDiagrams } from '@shared/document/changesSinceSave'
-import EntityNode, { ENTITY_MIN_WIDTH, ENTITY_MIN_HEIGHT } from '../nodes/EntityNode'
-import TextNode, { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from '../nodes/TextNode'
-import ContainerNode, { CONTAINER_MIN_WIDTH, CONTAINER_MIN_HEIGHT } from '../nodes/ContainerNode'
+import { ENTITY_MIN_WIDTH, ENTITY_MIN_HEIGHT } from '../nodes/EntityNode'
+import { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from '../nodes/TextNode'
+import { CONTAINER_MIN_WIDTH, CONTAINER_MIN_HEIGHT } from '../nodes/ContainerNode'
 import { scaleGroupMembers, type GroupResizeMember } from './groupResize'
-import LineNode, { LINE_BOUNDS_PADDING } from '../nodes/LineNode'
+import { LINE_BOUNDS_PADDING } from '../nodes/LineNode'
+import { nodeTypes, edgeTypes, DEFAULT_EDGE_OPTIONS } from './flowTypes'
 import DiagramSettingsPanel from '../diagram-settings/DiagramSettingsPanel'
 import { effectiveGravityPresets } from '../nodes/lineGravityPresets'
-import LabeledEdge from '../edges/LabeledEdge'
 import EdgeMarkerDefs from '../edges/edgeMarkers'
-import { markerUrl } from '../edges/markerIds'
 import DiagramContext, { type DiagramContextValue } from './DiagramContext'
 import ContextMenu, { type ContextMenuItem } from '../ui/ContextMenu'
 import IconPicker from '../icons/IconPicker'
@@ -159,30 +158,6 @@ import { detailsPanelTitle, detailsNoteName } from '../details/detailsLabels'
 import { toDiagramFile, fromDiagramFile } from '../document/diagramConversion'
 import { seedMetadata } from '../tagging/metadataSync'
 import { syncEdgeMetadata, syncNodeMetadata } from '../tagging/syncElements'
-
-// Defined at module scope so React Flow gets a stable reference — recreating
-// these objects every render triggers a React Flow warning and remounts.
-const nodeTypes = {
-  entity: EntityNode,
-  text: TextNode,
-  container: ContainerNode,
-  line: LineNode
-}
-const edgeTypes = { labeled: LabeledEdge }
-
-// Static, at module scope, so React Flow gets a stable reference (same reason as
-// nodeTypes/edgeTypes above): EdgeWrapper reads defaultEdgeOptions through its own unguarded
-// useStore selector, so a fresh object per render would re-render every edge.
-//
-// markerEnd is a raw 'url(#id)' string pointing at this app's context-stroke marker
-// (edgeMarkers.tsx), not RF's { type: MarkerType.ArrowClosed }. RF colours that one from a
-// `defaultColor` this app never sets, so it stayed stock grey and washed out on a light PNG export.
-// RF passes a string through untouched (createMarkerIds only acts on object markers), and the
-// arrowhead then inherits whatever colour the edge draws in, live or exported.
-const DEFAULT_EDGE_OPTIONS = {
-  type: 'labeled',
-  markerEnd: markerUrl('arrowClosed')
-}
 
 // Toolbar default-edge-style swatch preview only — deliberately a scaled-
 // down echo of LabeledEdge.tsx's own DASH_ARRAY, not a shared import; the

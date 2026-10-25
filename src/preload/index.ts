@@ -163,6 +163,10 @@ const api = {
     return ipcRenderer.invoke('windows:pickAndOpen', isCurrentWindowEmpty)
   },
 
+  openCompareWindow(path: string, basePath: string): Promise<void> {
+    return ipcRenderer.invoke('windows:openCompare', path, basePath)
+  },
+
   openLinkedInNewWindow(
     diagramPath: string,
     relativePath: string

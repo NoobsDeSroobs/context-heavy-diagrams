@@ -7,7 +7,7 @@
 
 import type { DiagramEdge, DiagramFile, DiagramNode } from '../diagram'
 
-function deepEqual(a: unknown, b: unknown): boolean {
+export function deepEqual(a: unknown, b: unknown): boolean {
   if (a === b) return true
   if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false
   if (Array.isArray(a) !== Array.isArray(b)) return false
@@ -21,7 +21,7 @@ function deepEqual(a: unknown, b: unknown): boolean {
   return aKeys.length === bKeys.length && aKeys.every((k) => deepEqual(aRec[k], bRec[k]))
 }
 
-interface FieldSpec<T> {
+export interface FieldSpec<T> {
   name: string
   get: (el: T) => unknown
 }
@@ -29,7 +29,7 @@ interface FieldSpec<T> {
 // Human-readable names, shown in the Modified row's field list — not the
 // schema's own property names, since "data.details" means nothing to a user
 // deciding whether a change matters.
-const NODE_FIELDS: FieldSpec<DiagramNode>[] = [
+export const NODE_FIELDS: FieldSpec<DiagramNode>[] = [
   { name: 'type', get: (n) => n.type },
   { name: 'position', get: (n) => n.position },
   { name: 'size', get: (n) => n.size },
@@ -49,7 +49,7 @@ const NODE_FIELDS: FieldSpec<DiagramNode>[] = [
   { name: 'security', get: (n) => n.data.security }
 ]
 
-const EDGE_FIELDS: FieldSpec<DiagramEdge>[] = [
+export const EDGE_FIELDS: FieldSpec<DiagramEdge>[] = [
   { name: 'type', get: (e) => e.type },
   { name: 'source', get: (e) => e.source },
   { name: 'target', get: (e) => e.target },
@@ -62,7 +62,7 @@ const EDGE_FIELDS: FieldSpec<DiagramEdge>[] = [
   { name: 'points', get: (e) => e.points }
 ]
 
-function diffFields<T>(specs: FieldSpec<T>[], saved: T, current: T): string[] {
+export function diffFields<T>(specs: FieldSpec<T>[], saved: T, current: T): string[] {
   return specs.filter((s) => !deepEqual(s.get(saved), s.get(current))).map((s) => s.name)
 }
 
