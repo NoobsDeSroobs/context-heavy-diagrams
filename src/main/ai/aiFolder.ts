@@ -44,7 +44,10 @@ function cliNote(cliPath: string | undefined): string {
 \`\`\`bash
 "${cliPath}" validate path/to/diagram.chd
 "${cliPath}" spec
+"${cliPath}" diff path/to/diagram.chd
 \`\`\`
+
+\`diff\` lists what you changed in a diagram since its last git commit (security, links and notes, modified, removed, added); use it to tell the user what you changed.
 
 (In PowerShell, put \`&\` in front of the quoted path. If the app has been moved or reinstalled, the path may have changed — the user can re-run "Enable AI assistance" in the app to refresh this file.)
 

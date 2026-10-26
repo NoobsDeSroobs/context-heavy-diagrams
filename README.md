@@ -86,6 +86,7 @@ https://github.com/user-attachments/assets/2e63dee5-85f8-4b32-a75a-f986084bd873
 - Recent diagrams and shortcuts help
 - SVG export from the File menu, and `chd export` to produce the same SVG from a terminal or CI job
 - Architecture checks: a diagram can be checked against the rules of a style (hexagonal and data-flow diagrams ship with the app, and you can write your own profiles), from Diagnostics or with `chd check` in CI
+- Review what changed between two versions of a diagram, most of all after an AI assistant edited it: a compare window draws the later version with added, removed, link-or-note-changed and modified elements coloured and everything else dimmed, with a list to step through and per-change revert (View → Compare with git revision…, or **Review changes** when the file changes on disk); `chd diff` prints the same review for a terminal or CI
 - The `chd` command line tool (`spec`, `validate`, `hash`, `export`, `check`)
 
 > Advanced features are opt-in. A new diagram behaves like plain boxes and arrows until you reach for more ([ADR 0054](docs/decisions/0054-progressive-disclosure-for-advanced-features.md)).

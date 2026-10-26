@@ -28,6 +28,7 @@ I got an AI to check statements made about other tools on 2026-10-20 against eac
 **Where this tool is better**
 - **Context behind each element.** Notes, tags, images and a link to a deeper diagram live on the element, and the deeper diagram opens as its own file. This is the core of the design.
 - **Diagrams as ordinary text files** that are small, stable and meant to be reviewed in git, with the file format published as a standalone specification. Git is the collaboration layer.
+- **Reviewing a change to a diagram, offline and from git.** A compare window shows what changed between two versions (or the file and a git revision) on the real canvas: added, removed, changed links or notes and modified elements coloured, the rest dimmed, with what changed in words, a list to step through and per-change revert. `chd diff` prints the same review for a terminal or CI. Several tools compare diagram versions inside their own cloud product (iGrafx, LeanIX and Camunda do, as does Figma for design files), and for draw.io the common route is rendering two revisions to images and comparing the pixels; this works on the plain file and on its meaning (tags, security, links, notes), not on pictures.
 - **Offline and account-free by design.** The app blocks its own network access, similar to how draw.io's desktop app is isolated apart from update checks. In comparison, Miro and FigJam are workspaces built around shared online boards.
 - **A narrow, consistent set of rules** (a node is one thing, edges stay attached) instead of a large toolbox.
 
