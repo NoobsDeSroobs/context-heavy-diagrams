@@ -220,7 +220,8 @@ test('every edge is drawable: a connection point the node lacks is moved to one 
     [system, other],
     [
       edge('named', 'sys', 'other', { sourceHandle: 'right', targetHandle: 'left' }),
-      edge('none', 'sys', 'other'),
+      edge('unnamed', 'sys', 'other'),
+      edge('unknown', 'sys', 'other', { sourceHandle: 'cp-9', targetHandle: 'left' }),
       edge('fine', 'sys', 'other', { sourceHandle: 'cp-1', targetHandle: 'left' }),
       edge('lost', 'sys', 'ghost')
     ]
@@ -229,9 +230,10 @@ test('every edge is drawable: a connection point the node lacks is moved to one 
   const by = Object.fromEntries(fixed.edges.map((e) => [e.id, e]))
   assert.equal(by.named.sourceHandle, 'cp-2') // nearest the middle of the right side
   assert.equal(by.named.targetHandle, 'left')
-  assert.equal(by.none.sourceHandle, 'cp-2') // the side facing the other node
-  assert.equal(by.none.targetHandle, 'left')
-  assert.deepEqual([...repaired].sort(), ['named', 'none'])
+  assert.equal(by.unknown.sourceHandle, 'cp-2') // the side facing the other node
+  // No point named is drawable as it is: the canvas uses the node's first point.
+  assert.equal(by.unnamed.sourceHandle, undefined)
+  assert.deepEqual([...repaired].sort(), ['named', 'unknown'])
   assert.deepEqual(dangling, ['lost'])
   // The input is untouched: the comparison itself runs on the files as they are.
   assert.equal(d.edges[0].sourceHandle, 'right')

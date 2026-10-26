@@ -49,11 +49,12 @@ function resolveHandle(
   other: DiagramNode,
   byId: Map<string, DiagramNode>
 ): string | undefined {
-  if (!CONNECTABLE.has(node.type ?? 'entity')) return handle
+  // No point named: the canvas uses the node's first point, so the edge is already drawable.
+  if (!handle || !CONNECTABLE.has(node.type ?? 'entity')) return handle
   const points = effectiveConnectionPoints(node.connectionPoints ?? [])
-  if (handle && points.some((p) => p.id === handle)) return handle
+  if (points.some((p) => p.id === handle)) return handle
   const side = (
-    SIDES.includes(handle ?? '') ? handle : facing(centre(node, byId), centre(other, byId))
+    SIDES.includes(handle) ? handle : facing(centre(node, byId), centre(other, byId))
   ) as Side
   const onSide = points.filter((p) => p.side === side)
   const nearest = [...onSide].sort((a, b) => Math.abs(a.offset - 0.5) - Math.abs(b.offset - 0.5))[0]
