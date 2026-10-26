@@ -21,6 +21,21 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 ---
 
+## Putting nodes back outside a load adds a stray undo step
+
+**Status:** Solved (2026-10-26)
+**Found:** 2026-10-26, building "Reset to saved" in the changes panel
+
+**Symptom:** after a reset, Ctrl+Z seemed to do nothing the first time, and Redo stayed off.
+
+**Cause:** nodes built from a file have no measured size. React Flow measures them after they are set, and the editor counts that measuring as a discrete edit (`onNodesChange`), which pushes an extra undo snapshot and clears Redo. A load already silences this for 500 ms (`suppressAutoMeasureUntilRef`).
+
+**Fix:** a reset sets the same grace window before it applies, and keeps a replaced node's measured size. Anything else that puts unmeasured nodes into the canvas outside a load needs the same.
+
+**References:** `src/renderer/src/canvas/Canvas.tsx` (`resetChangedElement`, `suppressAutoMeasureUntilRef`)
+
+---
+
 ## An edge that names a connection point its node does not have is not drawn
 
 **Status:** Open (found 2026-10-25, while building the compare window)

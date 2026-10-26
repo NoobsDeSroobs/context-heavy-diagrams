@@ -54,7 +54,8 @@ import {
   type NodeStyle,
   type RequiredTagDefinition
 } from '@shared/diagram'
-import { diffDiagrams } from '@shared/document/changesSinceSave'
+import { diffDiagrams, type ChangedElement } from '@shared/document/changesSinceSave'
+import { resetElement } from './resetElement'
 import { ENTITY_MIN_WIDTH, ENTITY_MIN_HEIGHT } from '../nodes/EntityNode'
 import { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from '../nodes/TextNode'
 import { CONTAINER_MIN_WIDTH, CONTAINER_MIN_HEIGHT } from '../nodes/ContainerNode'
@@ -736,6 +737,46 @@ function CanvasInner(): React.JSX.Element {
       : createEmptyDiagram()
     setChangesDiff(diffDiagrams(saved, buildCurrentDiagram()))
   }, [currentPath, buildCurrentDiagram, setChangesDiff])
+
+  // "Reset to saved" on a row of the changes panel: puts that one element back as the saved file
+  // has it, as one undoable edit, and refreshes the list. The saved file is read again so the
+  // reset never works from a list gone stale; it is read the way a load reads it, so the element
+  // is the same shape the canvas holds.
+  const refreshChanges = useEventCallback(() => void computeChangesDiff())
+  // Bumped by a reset; the effect below then recomputes the list once React has applied it.
+  const [changesRefreshTick, setChangesRefreshTick] = useState(0)
+  useEffect(() => {
+    if (changesRefreshTick > 0) refreshChanges()
+  }, [changesRefreshTick, refreshChanges])
+  const resetChangedElement = useEventCallback(async (element: ChangedElement) => {
+    const savedFile = currentPath
+      ? await window.api.rereadDiagramForDiff(currentPath)
+      : createEmptyDiagram()
+    if (!savedFile) {
+      showAlert('The saved file could not be read, so nothing was reset.')
+      return
+    }
+    // Edges are shown in the active reading's orientation (ADR 0081); the saved one must be too.
+    const savedGraph = fromDiagramFile({ ...savedFile, activeEdgeDirectionSetId })
+    const result = resetElement(
+      graphRef.current,
+      { nodes: savedGraph.nodes, edges: savedGraph.edges },
+      element.kind,
+      element.id,
+      element.changeType
+    )
+    if (!result.ok) {
+      showAlert(result.message)
+      return
+    }
+    pushSnapshot()
+    // The nodes a reset puts back have not been measured yet; React Flow's own measuring pass
+    // must not count as a second edit (an extra undo step), as after a load.
+    suppressAutoMeasureUntilRef.current = Date.now() + 500
+    setNodes(result.nodes)
+    setEdges(result.edges)
+    setChangesRefreshTick((tick) => tick + 1)
+  })
 
   // Compare the file on disk with the same file at a git revision (epic 0150). Whatever stops it
   // (no git, not a repository, an unknown revision) comes back as a sentence to show.
@@ -3657,6 +3698,7 @@ function CanvasInner(): React.JSX.Element {
               neverSaved={currentPath === null}
               onRefresh={() => void computeChangesDiff()}
               onReveal={focusSearchMatch}
+              onReset={(element) => void resetChangedElement(element)}
               onClose={() => setChangesPanelOpen(false)}
             />
           )}

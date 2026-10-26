@@ -84,7 +84,8 @@ Seven random edits to the Meridian Rail landscape diagram (81 nodes, 83 edges), 
 - [x] A **Review changes on disk** command beside it, for the same action as the banner button
 - [ ] Next/previous navigation and reviewed ticks
 - [ ] Id-churn banner and the button-triggered matching
-- [ ] Revert per change from the overview
+- [x] Revert per change in the existing "changes since last save" panel: **Reset** (modified), **Remove** (added) and **Restore** (removed) on each row. One whole element, put back as the saved file has it, through the normal edit path, so Ctrl+Z undoes it in one step. Restoring a node also brings back the connections it lost whose other end exists; a connection whose end node is gone says which node to restore first; a node whose saved container is gone (or would now enclose it) goes top level where it was drawn; an added container's contents stay (ADR 0012). The saved file is read again at click time. Pure logic with 11 tests (`resetElement.ts`); tried live on a scratch diagram: guard message, restore with its connection, remove, reset, undo. Rows for a changed Details note have no reset (a file operation, not built).
+- [ ] Revert from the compare window: the same action sent to the editor window, enabled once that window has taken the later version (Reload)
 - [ ] Conformance and diagnostics delta (tentative)
 - [ ] `chd diff`
 - [ ] ADR(s) for what was decided and tested; `docs/` updates (getting-started, comparison)

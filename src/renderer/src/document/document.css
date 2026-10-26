@@ -31,6 +31,19 @@
   border-radius: 4px;
 }
 
+.changes-row-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.changes-row-reset {
+  flex: 0 0 auto;
+  padding: 0 8px;
+  font-size: 11px;
+}
+
 .changes-row-target {
   display: flex;
   align-items: baseline;

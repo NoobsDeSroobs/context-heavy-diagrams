@@ -18,27 +18,59 @@ interface ChangesPanelProps {
   // Select + frame the element on canvas — works for both a node and an
   // edge id (see Canvas.tsx's focusSearchMatch).
   onReveal: (id: string) => void
+  // Put one element back as the saved file has it (undoable like any edit).
+  onReset: (element: ChangedElement) => void
   onClose: () => void
+}
+
+// What the reset button says and promises, by what happened to the element since the save.
+const RESET: Record<ChangedElement['changeType'], { label: string; title: string }> = {
+  modified: {
+    label: 'Reset',
+    title: 'Put this element back as it is in the saved file (Ctrl+Z undoes it)'
+  },
+  added: {
+    label: 'Remove',
+    title: 'Remove this element; it is not in the saved file (Ctrl+Z undoes it)'
+  },
+  removed: {
+    label: 'Restore',
+    title:
+      'Bring this element back, with its connections where they can be drawn (Ctrl+Z undoes it)'
+  }
 }
 
 function ElementRow({
   el,
-  onReveal
+  onReveal,
+  onReset
 }: {
   el: ChangedElement
   onReveal: (id: string) => void
+  onReset: (element: ChangedElement) => void
 }): React.JSX.Element {
+  const reset = RESET[el.changeType]
   return (
     <li className="changes-row">
-      <button
-        type="button"
-        className="changes-row-target"
-        title="Find this element on the canvas"
-        onClick={() => onReveal(el.id)}
-      >
-        <span className="changes-row-kind">{el.kind}</span>
-        <span className="changes-row-label">{el.label}</span>
-      </button>
+      <div className="changes-row-head">
+        <button
+          type="button"
+          className="changes-row-target"
+          title="Find this element on the canvas"
+          onClick={() => onReveal(el.id)}
+        >
+          <span className="changes-row-kind">{el.kind}</span>
+          <span className="changes-row-label">{el.label}</span>
+        </button>
+        <button
+          type="button"
+          className="changes-row-reset"
+          title={reset.title}
+          onClick={() => onReset(el)}
+        >
+          {reset.label}
+        </button>
+      </div>
       {el.changedFields && el.changedFields.length > 0 && (
         <span className="changes-row-fields">{el.changedFields.join(', ')}</span>
       )}
@@ -49,11 +81,13 @@ function ElementRow({
 function Section({
   title,
   elements,
-  onReveal
+  onReveal,
+  onReset
 }: {
   title: string
   elements: ChangedElement[]
   onReveal: (id: string) => void
+  onReset: (element: ChangedElement) => void
 }): React.JSX.Element | null {
   if (elements.length === 0) return null
   return (
@@ -63,7 +97,7 @@ function Section({
       </p>
       <ul className="changes-row-list">
         {elements.map((el) => (
-          <ElementRow key={`${el.kind}-${el.id}`} el={el} onReveal={onReveal} />
+          <ElementRow key={`${el.kind}-${el.id}`} el={el} onReveal={onReveal} onReset={onReset} />
         ))}
       </ul>
     </div>
@@ -80,6 +114,7 @@ export default function ChangesPanel({
   neverSaved,
   onRefresh,
   onReveal,
+  onReset,
   onClose
 }: ChangesPanelProps): React.JSX.Element {
   const empty =
@@ -115,9 +150,19 @@ export default function ChangesPanel({
         )}
         {diff && (
           <>
-            <Section title="Modified" elements={diff.modified} onReveal={onReveal} />
-            <Section title="Added" elements={diff.added} onReveal={onReveal} />
-            <Section title="Removed" elements={diff.removed} onReveal={onReveal} />
+            <Section
+              title="Modified"
+              elements={diff.modified}
+              onReveal={onReveal}
+              onReset={onReset}
+            />
+            <Section title="Added" elements={diff.added} onReveal={onReveal} onReset={onReset} />
+            <Section
+              title="Removed"
+              elements={diff.removed}
+              onReveal={onReveal}
+              onReset={onReset}
+            />
           </>
         )}
         {detailsChanged.length > 0 && (
