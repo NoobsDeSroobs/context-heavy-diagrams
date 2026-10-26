@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import {
   describeCount,
+  flattenReview,
   reviewKey,
   type CompareStatus,
   type ReviewItem
@@ -28,7 +29,11 @@ function summary(item: ReviewItem): string {
   const { change } = item
   if (change.status === 'added') return item.kind === 'node' ? 'Added' : 'Added connection'
   if (change.status === 'removed') return item.kind === 'node' ? 'Removed' : 'Removed connection'
-  const first = change.fields[0]?.lines[0] ?? STATUS_TITLE[change.status]
+  const lines = change.fields[0]?.lines ?? []
+  // A line that only introduces the next ("label, further lines:") is no summary on its own.
+  const first =
+    (lines[0]?.endsWith(':') && lines[1] ? `${lines[0]} ${lines[1]}` : lines[0]) ??
+    STATUS_TITLE[change.status]
   const more = change.fields.length - 1
   return more > 0 ? `${first} (+${more} more)` : first
 }
@@ -51,13 +56,17 @@ export default function CompareList({
     if (currentKey === null) return
     const rows = listRef.current?.querySelectorAll<HTMLElement>('[data-key]') ?? []
     for (const row of rows) {
-      if (row.dataset.key === currentKey) row.scrollIntoView({ block: 'nearest' })
+      if (row.dataset.key !== currentKey) continue
+      // A connection inside a closed group is shown by opening the group.
+      row.closest('details')?.setAttribute('open', '')
+      row.scrollIntoView({ block: 'nearest' })
     }
   }, [currentKey])
 
   const done = items.filter((item) => reviewed.has(reviewKey(item))).length
-  const elements = items.filter((i) => i.kind === 'node').length
-  const connections = items.length - elements
+  const everything = flattenReview(items)
+  const elements = everything.filter((i) => i.kind === 'node').length
+  const connections = everything.length - elements
 
   return (
     <aside className="compare-list" aria-label="Changes">
@@ -104,33 +113,65 @@ export default function CompareList({
               <li
                 key={key}
                 data-key={key}
-                className={`compare-row cmp-row-${item.change.status}${
+                className={`compare-row-item cmp-row-${item.change.status}${
                   key === currentKey ? ' compare-row-current' : ''
                 }${isReviewed ? ' compare-row-reviewed' : ''}`}
               >
-                <input
-                  type="checkbox"
-                  checked={isReviewed}
-                  onChange={() => onToggleReviewed(item)}
-                  aria-label={`Reviewed: ${item.label}`}
-                  title="Mark as reviewed (Space on the selected change)"
-                />
-                <button
-                  type="button"
-                  className="compare-row-target"
-                  title={STATUS_TITLE[item.change.status]}
-                  onClick={() => onSelect(item)}
-                >
-                  <span className="compare-row-head">
-                    <span className="compare-row-dot" aria-hidden="true" />
-                    <span className="compare-row-kind">
-                      {item.kind === 'node' ? 'element' : 'connection'}
+                <div className="compare-row">
+                  <input
+                    type="checkbox"
+                    checked={isReviewed}
+                    onChange={() => onToggleReviewed(item)}
+                    aria-label={`Reviewed: ${item.label}`}
+                    title="Mark as reviewed (Space on the selected change)"
+                  />
+                  <button
+                    type="button"
+                    className="compare-row-target"
+                    title={STATUS_TITLE[item.change.status]}
+                    onClick={() => onSelect(item)}
+                  >
+                    <span className="compare-row-head">
+                      <span className="compare-row-dot" aria-hidden="true" />
+                      <span className="compare-row-kind">
+                        {item.kind === 'node' ? 'element' : 'connection'}
+                      </span>
+                      {item.change.security && (
+                        <span className="compare-row-security">security</span>
+                      )}
+                      <span className="compare-row-label">{item.label}</span>
                     </span>
-                    {item.change.security && <span className="compare-row-security">security</span>}
-                    <span className="compare-row-label">{item.label}</span>
-                  </span>
-                  <span className="compare-row-summary">{summary(item)}</span>
-                </button>
+                    <span className="compare-row-summary">{summary(item)}</span>
+                  </button>
+                </div>
+                {item.connections && item.connections.length > 0 && (
+                  <details className="compare-row-connections">
+                    <summary>
+                      {describeCount({ nodes: 0, edges: item.connections.length })}{' '}
+                      {item.change.status === 'removed' ? 'removed with it' : 'added with it'}
+                    </summary>
+                    <ul>
+                      {item.connections.map((connection) => {
+                        const connectionKey = reviewKey(connection)
+                        return (
+                          <li
+                            key={connectionKey}
+                            data-key={connectionKey}
+                            className={connectionKey === currentKey ? 'compare-row-current' : ''}
+                          >
+                            <button
+                              type="button"
+                              className="compare-row-target"
+                              onClick={() => onSelect(connection)}
+                            >
+                              {connection.label}
+                            </button>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </details>
+                )}
               </li>
             )
           })}

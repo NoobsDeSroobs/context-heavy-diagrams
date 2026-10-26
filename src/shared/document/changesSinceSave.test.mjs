@@ -1,7 +1,7 @@
 // Run with `npm test` (Node's built-in runner; TypeScript is type-stripped).
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { diffDiagrams, hasChanges, summarizeChanges } from './changesSinceSave.ts'
+import { diffDiagrams, groupConnections, hasChanges, summarizeChanges } from './changesSinceSave.ts'
 
 const node = (id, over = {}) => ({
   id,
@@ -83,4 +83,29 @@ test('summarizeChanges: omits empty buckets, order modified/added/removed', () =
     '2 modified, 1 added'
   )
   assert.equal(summarizeChanges({ added: [], removed: [], modified: [] }), '')
+})
+
+test('groupConnections: connections that went with an element are listed under it', () => {
+  const saved = diagram(
+    [node('a'), node('gone'), node('b')],
+    [edge('e1', 'a', 'gone'), edge('e2', 'gone', 'b'), edge('lone', 'a', 'b')]
+  )
+  const current = diagram([node('a'), node('b')], [])
+  const diff = diffDiagrams(saved, current)
+  const groups = groupConnections(diff.removed)
+  const gone = groups.find((g) => g.element.id === 'gone')
+  assert.deepEqual(gone.connections.map((c) => c.id).sort(), ['e1', 'e2'])
+  // A connection whose ends both survive is a decision of its own.
+  const lone = groups.find((g) => g.element.id === 'lone')
+  assert.deepEqual(lone.connections, [])
+  assert.equal(
+    groups.some((g) => g.element.id === 'e1'),
+    false
+  )
+  // Modified rows are never grouped.
+  const modified = groupConnections([
+    { kind: 'node', id: 'n', label: 'n', changeType: 'modified' },
+    { kind: 'edge', id: 'e', label: 'e', changeType: 'modified', source: 'n', target: 'x' }
+  ])
+  assert.equal(modified.length, 2)
 })

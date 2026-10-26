@@ -46,6 +46,44 @@ export interface ReviewItem {
   id: string
   label: string
   change: ElementChange
+  // A connection's two ends.
+  source?: string
+  target?: string
+  // On an added or removed element: the connections that went with it. One decision, not several.
+  connections?: ReviewItem[]
+}
+
+// Every item, the grouped connections included, in list order.
+export function flattenReview(items: ReviewItem[]): ReviewItem[] {
+  return items.flatMap((item) => [item, ...(item.connections ?? [])])
+}
+
+// A connection added or removed together with an element it touches is that element's
+// consequence: ten connections around one deleted element mean the element was not wanted, not
+// that ten connections were. They are listed under the element. A connection whose ends both
+// survive, or that changed rather than came or went, is a decision of its own.
+function groupConnections(items: ReviewItem[]): ReviewItem[] {
+  const owners = new Map<string, ReviewItem>()
+  for (const item of items) {
+    const { status } = item.change
+    if (item.kind === 'node' && (status === 'added' || status === 'removed')) {
+      owners.set(item.id, { ...item, connections: [] })
+    }
+  }
+  const top: ReviewItem[] = []
+  for (const item of items) {
+    if (item.kind === 'node') {
+      top.push(owners.get(item.id) ?? item)
+      continue
+    }
+    const { status } = item.change
+    const owner = [item.source, item.target]
+      .map((end) => (end === undefined ? undefined : owners.get(end)))
+      .find((candidate) => candidate !== undefined && candidate.change.status === status)
+    if ((status === 'added' || status === 'removed') && owner) owner.connections?.push(item)
+    else top.push(item)
+  }
+  return top
 }
 
 // What happened to an element's Details file, which only the caller can read.
@@ -79,7 +117,9 @@ export interface CompareOptions {
 export interface Classification {
   nodes: Map<string, ElementChange>
   edges: Map<string, ElementChange>
-  // Every changed element, most important first: security, links, content, removed, added.
+  // Every change worth a decision, most important first: security, links, content, removed,
+  // added. A connection that came or went with an element sits under that element
+  // (`connections`); `flattenReview` lists them all.
   review: ReviewItem[]
   // Per colour, elements and connections apart: deleting one entity also removes its edges, and
   // "5 removed" would read as five things gone.
@@ -244,16 +284,28 @@ export function classifyDiagrams(
   const labels = new Map(merged.nodes.map((n) => [n.id, nodeLabel(n)]))
   const edgeLabel = (e: DiagramEdge): string =>
     e.label?.trim() || `${labels.get(e.source) ?? e.source} → ${labels.get(e.target) ?? e.target}`
-  const review: ReviewItem[] = [
+  const changed: ReviewItem[] = [
     ...merged.nodes.flatMap((n) => {
       const change = nodes.changes.get(n.id)
       return change ? [{ kind: 'node' as const, id: n.id, label: nodeLabel(n), change }] : []
     }),
     ...merged.edges.flatMap((e) => {
       const change = edges.changes.get(e.id)
-      return change ? [{ kind: 'edge' as const, id: e.id, label: edgeLabel(e), change }] : []
+      return change
+        ? [
+            {
+              kind: 'edge' as const,
+              id: e.id,
+              label: edgeLabel(e),
+              change,
+              source: e.source,
+              target: e.target
+            }
+          ]
+        : []
     })
   ].sort((a, b) => rank(a.change) - rank(b.change))
+  const review = groupConnections(changed)
 
   const empty = (): ElementCount => ({ nodes: 0, edges: 0 })
   const counts: Record<CompareStatus, ElementCount> = {
@@ -262,8 +314,9 @@ export function classifyDiagrams(
     links: empty(),
     content: empty()
   }
-  for (const item of review)
+  for (const item of changed) {
     counts[item.change.status][item.kind === 'node' ? 'nodes' : 'edges'] += 1
+  }
 
   return {
     nodes: nodes.changes,

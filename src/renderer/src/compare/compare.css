@@ -237,12 +237,15 @@ label.compare-legend-item {
   list-style: none;
 }
 
+.compare-row-item {
+  border-top: 1px solid var(--color-border, var(--ev-c-gray-2));
+}
+
 .compare-row {
   display: flex;
   gap: 6px;
   align-items: flex-start;
   padding: 6px 10px;
-  border-top: 1px solid var(--color-border, var(--ev-c-gray-2));
 }
 
 .compare-row input[type='checkbox'] {
@@ -344,4 +347,36 @@ label.compare-legend-item {
 }
 .compare-canvas .edge-label.cmp-current {
   outline: 3px solid var(--cmp-color);
+}
+
+/* The connections that came or went with an element, under its row. */
+.compare-row-connections {
+  padding: 0 10px 6px 30px;
+  color: var(--ev-c-text-2);
+}
+
+.compare-row-connections summary {
+  cursor: pointer;
+}
+
+.compare-row-connections ul {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.compare-row-connections li {
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.compare-row-connections .compare-row-target {
+  flex-direction: row;
+  color: var(--ev-c-text-2);
+  font-size: 11px;
+}
+
+.compare-row-connections li.compare-row-current {
+  background: color-mix(in srgb, var(--cmp-row-color) 25%, transparent);
+  box-shadow: none;
 }

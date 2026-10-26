@@ -1,4 +1,8 @@
-import type { ChangedElement, ChangesSinceSave } from '@shared/document/changesSinceSave'
+import {
+  groupConnections,
+  type ChangedElement,
+  type ChangesSinceSave
+} from '@shared/document/changesSinceSave'
 
 // An element with unsaved Details content — sourced from noteShadows'
 // existing dirty flag (ADR 0092), not a new tracking mechanism. See ADR 0102.
@@ -42,10 +46,13 @@ const RESET: Record<ChangedElement['changeType'], { label: string; title: string
 
 function ElementRow({
   el,
+  connections,
   onReveal,
   onReset
 }: {
   el: ChangedElement
+  // The connections that came or went with this element: one decision, listed under it.
+  connections: ChangedElement[]
   onReveal: (id: string) => void
   onReset: (element: ChangedElement) => void
 }): React.JSX.Element {
@@ -74,6 +81,36 @@ function ElementRow({
       {el.changedFields && el.changedFields.length > 0 && (
         <span className="changes-row-fields">{el.changedFields.join(', ')}</span>
       )}
+      {connections.length > 0 && (
+        <details className="changes-row-connections">
+          <summary>
+            {connections.length} connection{connections.length === 1 ? '' : 's'}{' '}
+            {el.changeType === 'removed' ? 'removed' : 'added'} with it
+            {el.changeType === 'removed'
+              ? ' (Restore brings them back)'
+              : ' (Remove takes them too)'}
+          </summary>
+          <ul>
+            {connections.map((connection) => (
+              <li key={connection.id}>
+                {el.changeType === 'removed' ? (
+                  connection.label
+                ) : (
+                  // An added connection is on the canvas, so it can be found; a removed one is not.
+                  <button
+                    type="button"
+                    className="changes-row-target"
+                    title="Find this connection on the canvas"
+                    onClick={() => onReveal(connection.id)}
+                  >
+                    {connection.label}
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
     </li>
   )
 }
@@ -96,8 +133,14 @@ function Section({
         {title} ({elements.length})
       </p>
       <ul className="changes-row-list">
-        {elements.map((el) => (
-          <ElementRow key={`${el.kind}-${el.id}`} el={el} onReveal={onReveal} onReset={onReset} />
+        {groupConnections(elements).map(({ element, connections }) => (
+          <ElementRow
+            key={`${element.kind}-${element.id}`}
+            el={element}
+            connections={connections}
+            onReveal={onReveal}
+            onReset={onReset}
+          />
         ))}
       </ul>
     </div>

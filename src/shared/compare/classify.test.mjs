@@ -1,7 +1,7 @@
 // Run with `npm test` (Node's built-in runner; TypeScript is type-stripped).
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { classifyDiagrams, describeCount } from './classify.ts'
+import { classifyDiagrams, describeCount, flattenReview } from './classify.ts'
 import { diffCollections } from './collections.ts'
 import { makeEdgesDrawable } from './drawable.ts'
 import { EDGE_FIELDS, NODE_FIELDS } from './fields.ts'
@@ -286,4 +286,37 @@ test('a label whose first line is the same shows the lines that changed', () => 
   const next = diagram([node('t', { data: { label: 'Title\nfirst note\nNOTE: under review' } })])
   const c = classifyDiagrams(base, next)
   assert.deepEqual(lines(c, 't', 'label'), ['label, further lines:', '+ NOTE: under review'])
+})
+
+test('connections that came or went with an element sit under it, others stay their own rows', () => {
+  const base = diagram(
+    [node('a'), node('gone'), node('b'), node('c')],
+    [
+      edge('e1', 'a', 'gone'),
+      edge('e2', 'gone', 'b'),
+      edge('lone', 'a', 'b'),
+      edge('changed', 'b', 'c')
+    ]
+  )
+  const next = diagram(
+    [node('a'), node('b'), node('c'), node('fresh')],
+    [edge('changed', 'b', 'a'), edge('e3', 'fresh', 'a'), edge('e4', 'b', 'c')]
+  )
+  const c = classifyDiagrams(base, next)
+  const gone = c.review.find((r) => r.id === 'gone')
+  assert.deepEqual(gone.connections.map((r) => r.id).sort(), ['e1', 'e2'])
+  const fresh = c.review.find((r) => r.id === 'fresh')
+  assert.deepEqual(
+    fresh.connections.map((r) => r.id),
+    ['e3']
+  )
+  // Not folded in: a connection whose ends both survive, and one that only changed.
+  const top = c.review.map((r) => r.id)
+  assert.ok(top.includes('lone'))
+  assert.ok(top.includes('changed'))
+  assert.ok(!top.includes('e1') && !top.includes('e3'))
+  // The totals still count every connection, and flattenReview lists them all.
+  assert.equal(c.counts.removed.edges, 3)
+  assert.equal(c.counts.added.edges, 2)
+  assert.ok(flattenReview(c.review).some((r) => r.id === 'e2'))
 })

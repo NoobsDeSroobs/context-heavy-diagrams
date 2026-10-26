@@ -113,6 +113,14 @@ function diagramLevelNotices(c: Classification): string[] {
   return notices
 }
 
+// Is `key` this item, or one of the connections listed under it?
+function ownsKey(item: ReviewItem, key: string | null): boolean {
+  return (
+    key !== null &&
+    (reviewKey(item) === key || (item.connections ?? []).some((c) => reviewKey(c) === key))
+  )
+}
+
 function statusClass(change: ElementChange | undefined): string {
   return change ? `cmp-${change.status}` : 'cmp-dim'
 }
@@ -251,7 +259,8 @@ function CompareCanvas({
   const step = useCallback(
     (direction: 1 | -1) => {
       if (items.length === 0) return
-      const index = items.findIndex((i) => reviewKey(i) === currentKey)
+      // A connection inside a group counts as its element's step.
+      const index = items.findIndex((i) => ownsKey(i, currentKey))
       const next =
         index === -1
           ? direction === 1
@@ -287,7 +296,7 @@ function CompareCanvas({
         step(-1)
       } else if (event.key === ' ' && target === document.body && currentKey !== null) {
         event.preventDefault()
-        const item = items.find((i) => reviewKey(i) === currentKey)
+        const item = items.find((i) => ownsKey(i, currentKey))
         if (item) toggleReviewed(item)
       }
     }
