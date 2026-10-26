@@ -6,6 +6,7 @@ import icon from '../../../resources/icon.png?asset'
 import { parseDiagram, type DiagramFile } from '@shared/diagram'
 import type { CompareSession } from '@shared/compare/session'
 import { isSafeExternalUrl, isSameDocument } from '../navigationGuard'
+import { buildGitSession } from './gitCompare'
 
 // The versions each open compare window shows, by the id in its URL. Dropped when it closes.
 const sessions = new Map<string, CompareSession>()
@@ -69,6 +70,24 @@ export function registerCompareHandlers(): void {
   ipcMain.handle('compare:open', (_event, raw: unknown) => {
     createCompareWindow(readSession(raw))
   })
+  // The file on disk against the same file at a git revision. The answer says why it could not be
+  // done, in words for the person who asked, instead of throwing.
+  ipcMain.handle(
+    'compare:openGit',
+    async (
+      _event,
+      diagramPath: unknown,
+      revision: unknown
+    ): Promise<{ ok: boolean; message?: string }> => {
+      if (typeof diagramPath !== 'string' || typeof revision !== 'string') {
+        return { ok: false, message: 'Not a diagram and a revision.' }
+      }
+      const result = await buildGitSession(diagramPath, revision.trim())
+      if (!result.ok) return { ok: false, message: result.message }
+      createCompareWindow(result.session)
+      return { ok: true }
+    }
+  )
   ipcMain.handle('compare:getSession', (_event, id: string): CompareSession | null => {
     return sessions.get(id) ?? null
   })

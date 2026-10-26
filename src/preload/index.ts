@@ -169,6 +169,12 @@ const api = {
   openCompareWindow(session: CompareSession): Promise<void> {
     return ipcRenderer.invoke('compare:open', session)
   },
+  compareWithGit(
+    diagramPath: string,
+    revision: string
+  ): Promise<{ ok: boolean; message?: string }> {
+    return ipcRenderer.invoke('compare:openGit', diagramPath, revision)
+  },
   getCompareSession(id: string): Promise<CompareSession | null> {
     return ipcRenderer.invoke('compare:getSession', id)
   },

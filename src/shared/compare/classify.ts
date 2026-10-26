@@ -46,6 +46,12 @@ export interface ReviewItem {
 // What happened to an element's Details file, which only the caller can read.
 export type DetailsContentChange = 'changed' | 'added' | 'removed'
 
+export interface DetailsContent {
+  state: DetailsContentChange
+  // A few lines of what changed, for the hover card (textPreview.ts).
+  preview: string[]
+}
+
 export interface ElementCount {
   nodes: number
   edges: number
@@ -62,7 +68,7 @@ export function describeCount(count: ElementCount): string {
 }
 
 export interface CompareOptions {
-  detailsContent?: ReadonlyMap<string, DetailsContentChange>
+  detailsContent?: ReadonlyMap<string, DetailsContent>
 }
 
 export interface Classification {
@@ -201,12 +207,15 @@ export function classifyDiagrams(
 ): Classification {
   const ctx = contextFor(base, next)
   const detailsField = (id: string): FieldChange | undefined => {
-    const state = options.detailsContent?.get(id)
-    if (!state) return undefined
+    const content = options.detailsContent?.get(id)
+    if (!content) return undefined
     return {
       field: 'Details file content',
       link: true,
-      lines: [`Details file: ${state === 'changed' ? 'content changed' : state}`],
+      lines: [
+        `Details file: ${content.state === 'changed' ? 'content changed' : content.state}`,
+        ...content.preview
+      ],
       before: undefined,
       after: undefined
     }

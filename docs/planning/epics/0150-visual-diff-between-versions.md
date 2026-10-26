@@ -67,7 +67,7 @@ Seven random edits to the Meridian Rail landscape diagram (81 nodes, 83 edges), 
 - **A restyle is invisible in the view but visible in the editor**, so a reviewer may find it unprompted. Whether a faint marker (off by default) for moved, resized and restyled elements earns its place is still open; moves stay untracked either way.
 
 ## Open questions
-- Can the old Details content be had for the "window's own version" baseline? The window only holds notes it has opened. Git has them; the window does not necessarily.
+- The banner baseline cannot say a note's *content* changed (the window only holds notes it has opened); it still flags a changed note *link*. Git covers the content, so this stays as it is unless it is missed.
 - Does the changes overview in the compare window and the existing "changes since last save" panel become one thing, with the revert action in both?
 - How a revert of an element interacts with its edges, its container and a Details file.
 
@@ -80,7 +80,8 @@ Seven random edits to the Meridian Rail landscape diagram (81 nodes, 83 edges), 
 - [ ] Summary and next/previous navigation (the review order exists in the engine)
 - [x] Diagram-level changes strip (plain list for now)
 - [x] Baseline from the "changed on disk" banner: **Review changes** opens the window with this window's version as the earlier one and the file on disk as the later one. The editor hands both versions to the main process, which holds them under the id in the window's URL (`src/main/compare/compareWindow.ts`, checked with `parseDiagram` on the way in). Tried live on a scratch copy of the Meridian diagram: banner, button, window, counts and hover. Still open: the old Details content for this baseline, and a menu command and palette entry.
-- [ ] Git baseline (`git show`), with a missing-`git` message; check on Linux
+- [x] Git baseline: **Compare with git revision…** (View menu and command palette) asks for a revision (default `HEAD`) and compares the file on disk with the file at that revision. Only `git show <revision>:./<path>`, no shell, a revision that could be an option refused, `core.fsmonitor` off, a Windows fallback for git's default folder. A changed note (Details file) turns its element orange with a few lines of what changed (`textPreview.ts`; line endings alone are not a change). Notes are read a few at a time; a note path that leaves the diagram's folder is never read. Tests: a real temporary repository, end to end. Tried live through the real menu and palette on a scratch repository. Not checked: Linux and macOS, a very large number of notes (one `git` process each).
+- [x] A **Review changes on disk** command beside it, for the same action as the banner button
 - [ ] Next/previous navigation and reviewed ticks
 - [ ] Id-churn banner and the button-triggered matching
 - [ ] Revert per change from the overview

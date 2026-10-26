@@ -63,6 +63,7 @@ export interface DiagramApi {
   newWindow(): Promise<void>
   openInNewWindow(isCurrentWindowEmpty: boolean): Promise<void>
   openCompareWindow(session: CompareSession): Promise<void>
+  compareWithGit(diagramPath: string, revision: string): Promise<{ ok: boolean; message?: string }>
   getCompareSession(id: string): Promise<CompareSession | null>
   openLinkedInNewWindow(
     diagramPath: string,

@@ -46,6 +46,8 @@ export interface MenuInputs {
   toggleAlignDistributePanel: () => void
   toggleDiagnosticsPanel: () => void
   toggleChangesPanel: () => void
+  reviewDiskChanges: () => void
+  openRevisionDialog: () => void
   toggleLayerPanel: () => void
   toggleReferencesPanel: () => void
   toggleStylePalettePanel: () => void
@@ -104,6 +106,8 @@ export function useMenus(inputs: MenuInputs): {
     toggleAlignDistributePanel,
     toggleDiagnosticsPanel,
     toggleChangesPanel,
+    reviewDiskChanges,
+    openRevisionDialog,
     toggleLayerPanel,
     toggleReferencesPanel,
     toggleStylePalettePanel,
@@ -248,6 +252,16 @@ export function useMenus(inputs: MenuInputs): {
             label: 'Changes since last save…',
             accelerator: acceleratorFor('view.changesSinceLastSave'),
             onSelect: toggleChangesPanel
+          },
+          {
+            label: 'Review changes on disk',
+            disabled: currentPath === null,
+            onSelect: reviewDiskChanges
+          },
+          {
+            label: 'Compare with git revision…',
+            disabled: currentPath === null,
+            onSelect: openRevisionDialog
           },
           { label: 'Layers', onSelect: toggleLayerPanel },
           {

@@ -141,6 +141,7 @@ import { useMenus } from '../useMenus'
 import { useModifierDragDuplicate } from './useModifierDragDuplicate'
 import { useDetailsPeek } from '../details/useDetailsPeek'
 import PeekCard from '../details/PeekCard'
+import RevisionDialog from '../compare/RevisionDialog'
 import { effectiveStylePalette, usePreferences } from '../preferences/preferences'
 import ThreatMatrixView from '../threat-matrix/ThreatMatrixView'
 import { themeAdaptiveColor } from '../styling/themeAdaptiveColor'
@@ -235,6 +236,8 @@ function CanvasInner(): React.JSX.Element {
   const [shortcutsDialogOpen, setShortcutsDialogOpen] = useState(false)
   // Command palette (ADR 0100).
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
+  // Which git revision to compare with (epic 0150): the dialog that asks.
+  const [revisionDialogOpen, setRevisionDialogOpen] = useState(false)
   // See ADR 0089 — right-click on the ItemPalette Entity/Container button.
   const [bulkCreateType, setBulkCreateType] = useState<'entity' | 'container' | null>(null)
   // Toolbar's own "current pen style" swatch (ADR 0045) — reuses
@@ -733,6 +736,17 @@ function CanvasInner(): React.JSX.Element {
       : createEmptyDiagram()
     setChangesDiff(diffDiagrams(saved, buildCurrentDiagram()))
   }, [currentPath, buildCurrentDiagram, setChangesDiff])
+
+  // Compare the file on disk with the same file at a git revision (epic 0150). Whatever stops it
+  // (no git, not a repository, an unknown revision) comes back as a sentence to show.
+  const compareWithGit = useCallback(
+    async (revision: string) => {
+      if (!currentPath) return
+      const result = await window.api.compareWithGit(currentPath, revision)
+      if (!result.ok) showAlert(result.message ?? 'The comparison could not be made.')
+    },
+    [currentPath]
+  )
 
   // "Review changes" on the changed-on-disk banner: opens the compare window with this window's
   // version as the earlier one and the file as it is on disk now as the later one, so the
@@ -2991,6 +3005,8 @@ function CanvasInner(): React.JSX.Element {
     toggleAlignDistributePanel,
     toggleDiagnosticsPanel,
     toggleChangesPanel,
+    reviewDiskChanges,
+    openRevisionDialog: () => setRevisionDialogOpen(true),
     toggleLayerPanel,
     toggleReferencesPanel,
     toggleStylePalettePanel,
@@ -3762,6 +3778,16 @@ function CanvasInner(): React.JSX.Element {
         {shortcutsDialogOpen && <ShortcutsDialog onClose={() => setShortcutsDialogOpen(false)} />}
         {commandPaletteOpen && (
           <CommandPalette actions={paletteActions} onClose={() => setCommandPaletteOpen(false)} />
+        )}
+        {revisionDialogOpen && (
+          <RevisionDialog
+            hasUnsavedChanges={isDirty}
+            onClose={() => setRevisionDialogOpen(false)}
+            onCompare={(revision) => {
+              setRevisionDialogOpen(false)
+              void compareWithGit(revision)
+            }}
+          />
         )}
         <AlertDialog />
         <ConflictDialog />

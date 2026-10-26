@@ -3,6 +3,7 @@
 // asks for it by id.
 
 import type { DiagramFile } from '../diagram'
+import type { DetailsContent } from './classify.ts'
 
 export interface CompareSession {
   // The earlier and the later version.
@@ -13,4 +14,7 @@ export interface CompareSession {
   diagramPath: string | null
   // What the window is called.
   title: string
+  // Details notes whose content differs between the two versions, by node id. Only a baseline
+  // that can read the old notes (a git revision) has this.
+  detailsContent?: Record<string, DetailsContent>
 }

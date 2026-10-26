@@ -143,9 +143,15 @@ test('a link or Details path added, changed or removed is orange, and beats yell
 
 test('a changed Details file the caller found turns an otherwise unchanged element orange', () => {
   const d = diagram([node('a'), node('b')])
-  const c = classifyDiagrams(d, d, { detailsContent: new Map([['a', 'changed']]) })
+  const c = classifyDiagrams(d, d, {
+    detailsContent: new Map([['a', { state: 'changed', preview: ['− owner: a', '+ owner: b'] }]])
+  })
   assert.equal(statusOf(c, 'a'), 'links')
-  assert.deepEqual(lines(c, 'a', 'Details file content'), ['Details file: content changed'])
+  assert.deepEqual(lines(c, 'a', 'Details file content'), [
+    'Details file: content changed',
+    '− owner: a',
+    '+ owner: b'
+  ])
   assert.equal(statusOf(c, 'b'), undefined)
 })
 

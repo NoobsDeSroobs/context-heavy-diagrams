@@ -316,7 +316,9 @@ export default function CompareView(): React.JSX.Element {
       setState({
         kind: 'ready',
         session,
-        classification: classifyDiagrams(session.base, session.next)
+        classification: classifyDiagrams(session.base, session.next, {
+          detailsContent: new Map(Object.entries(session.detailsContent ?? {}))
+        })
       })
     })
     return () => {
