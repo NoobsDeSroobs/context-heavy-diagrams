@@ -15,6 +15,15 @@ export default defineConfig({
       alias: {
         '@shared': resolve('src/shared')
       }
+    },
+    build: {
+      rollupOptions: {
+        // Two bridges: the editor's, and the much smaller one of the compare window (ADR 0112).
+        input: {
+          index: resolve('src/preload/index.ts'),
+          compare: resolve('src/preload/compare.ts')
+        }
+      }
     }
   },
   renderer: {

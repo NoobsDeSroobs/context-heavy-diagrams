@@ -38,7 +38,8 @@ function createCompareWindow(session: CompareSession): BrowserWindow {
     show: false,
     title: session.title,
     ...(process.platform === 'linux' || (is.dev && process.platform !== 'darwin') ? { icon } : {}),
-    webPreferences: { preload: join(__dirname, '../preload/index.js'), sandbox: true }
+    // Its own, smaller bridge (src/preload/compare.ts): this window never writes anything.
+    webPreferences: { preload: join(__dirname, '../preload/compare.js'), sandbox: true }
   })
   win.setMenuBarVisibility(false)
   win.on('ready-to-show', () => win.show())

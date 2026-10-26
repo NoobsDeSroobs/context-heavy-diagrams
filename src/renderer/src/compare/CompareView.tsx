@@ -33,7 +33,8 @@ import { DEFAULT_EDGE_OPTIONS, edgeTypes, nodeTypes } from '../canvas/flowTypes'
 import { useDetailsPeek } from '../details/useDetailsPeek'
 import { fromDiagramFile } from '../document/diagramConversion'
 import EdgeMarkerDefs from '../edges/edgeMarkers'
-import { effectiveStylePalette, usePreferences } from '../preferences/preferences'
+import { effectiveStylePalette } from '@shared/preferences/preferences'
+import { useReadOnlyPreferences } from '../preferences/useReadOnlyPreferences'
 import { useTheme } from '../styling/theme'
 import CompareList, { type RevertState } from './CompareList'
 import './compare.css'
@@ -52,7 +53,7 @@ const STATUS_ORDER: CompareStatus[] = ['added', 'removed', 'links', 'content']
 // no-op: this window draws a diagram, it never changes one.
 function useReadOnlyContext(diagramPath: string | null): DiagramContextValue {
   const { theme } = useTheme()
-  const { preferences } = usePreferences()
+  const { preferences } = useReadOnlyPreferences()
   const palette = useMemo(
     () => effectiveStylePalette(preferences.stylePalettes, preferences.activeStylePaletteId),
     [preferences.stylePalettes, preferences.activeStylePaletteId]
@@ -241,7 +242,7 @@ function CompareCanvas({
   churn: ChurnProps
 }): React.JSX.Element {
   const { theme } = useTheme()
-  const { preferences } = usePreferences()
+  const { preferences } = useReadOnlyPreferences()
   const context = useReadOnlyContext(session.diagramPath)
   const { peek, bindings } = useDetailsPeek()
   const [showRestyled, setShowRestyled] = useState(true)
