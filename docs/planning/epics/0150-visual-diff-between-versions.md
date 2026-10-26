@@ -59,6 +59,13 @@ A compare window on the real canvas works. `?compare=<later>&base=<earlier>` (fi
 - **Not checked yet:** a removed container whose children survive, big diagrams, Linux, any revert.
 - **Spike code to keep:** `src/shared/compare/classify.ts` (tested), `CompareView.tsx`, `compare.css`, `flowTypes.ts`, `createCompareWindow`. **To replace:** the `?base=` file path as the baseline, the hover card (field names only, no old/new values), and the launch (an IPC call, no menu entry).
 
+## Blind test (2026-10-26)
+Seven random edits to the Meridian Rail landscape diagram (81 nodes, 83 edges), made without telling the maintainer, who then reviewed them in the compare window. All six changes the view tracks were found (a deleted entity, an edge label, an edited required tag, a removed tag, a renamed entity, a changed tag value), with the old and new tag values read from the hover card. The seventh item, layout-only (four moved entities, one restyled), is dimmed by design; the maintainer reported the restyle (as a move) and missed the four moves. Findings:
+- The engine's colour for every checkable edit matched the log, and the first run showed the drawable repair was too broad (54 edges, all with no point named, which the canvas already draws); it now moves only an end that names a point the node lacks.
+- **Edge changes have no hover detail** (the card is node-only), so the reviewer knew an edge changed but not how. Add it.
+- **"Removed (5)" for one deleted entity** counts its four connections as separate removals. Count elements and connections apart.
+- **A restyle is invisible in the view but visible in the editor**, so a reviewer may find it unprompted. Whether a faint marker (off by default) for moved, resized and restyled elements earns its place is still open; moves stay untracked either way.
+
 ## Open questions
 - Can the old Details content be had for the "window's own version" baseline? The window only holds notes it has opened. Git has them; the window does not necessarily.
 - Does the changes overview in the compare window and the existing "changes since last save" panel become one thing, with the revert action in both?
@@ -69,7 +76,7 @@ A compare window on the real canvas works. `?compare=<later>&base=<earlier>` (fi
 - [x] Classification engine (`src/shared/compare/`): the four colours, what changed in words per field (tags, label, security cells, links, edge ends), a review order (security, links, content, removed, added), counts, the diagram-level collections, every edge drawable, an input for Details files the caller found changed. 12 tests, and a check that its field list matches "changes since last save". Absolute container positions are not needed while position is not tracked.
 - [ ] Restricted preload for the compare window: it needs only reading a diagram and opening a window, not the editor's whole bridge ([ADR 0112](../../decisions/0112-electron-hardening-sandbox-and-navigation.md)). The real separation between the read-only view and the diagram and its files, since the window has the same `window.api` as the editor today. Needs a second preload entry in the build.
 - [ ] Compare window plumbing (main process: no path registration, no recovery, no close prompt)
-- [ ] Colours, badges, dimming, legend, summary, hover details
+- [ ] Colours, badges, dimming, legend, summary, hover details (nodes done in the spike; add edge hover, and count elements and connections apart)
 - [ ] Diagram-level changes strip
 - [ ] Baseline from the "changed on disk" banner
 - [ ] Git baseline (`git show`), with a missing-`git` message; check on Linux
