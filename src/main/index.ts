@@ -28,6 +28,7 @@ import { registerLinkedSearchHandlers } from './search/linkedSearch'
 import { registerAiHandlers } from './ai/ai'
 import { registerProfileHandlers } from './conformance/profiles'
 import { registerClipboardHandlers } from './canvas/clipboard'
+import { registerCompareHandlers } from './compare/compareWindow'
 import { disableProxyDiscovery, enforceOffline } from './offline'
 
 // One running instance (ADR 0108): settings, crash-recovery snapshots and the
@@ -94,6 +95,7 @@ app.whenReady().then(async () => {
   registerAiHandlers()
   registerProfileHandlers()
   registerClipboardHandlers()
+  registerCompareHandlers()
 
   // The renderer never needs camera, microphone, geolocation, notifications or
   // any other permission-gated capability (ADR 0112), so refuse every request.

@@ -1,4 +1,5 @@
 import type { DiagramFile, RequiredTagDefinition } from '@shared/diagram'
+import type { CompareSession } from '@shared/compare/session'
 import type {
   NoteBaseline,
   RecoverySnapshot,
@@ -61,7 +62,8 @@ export interface DiagramApi {
 
   newWindow(): Promise<void>
   openInNewWindow(isCurrentWindowEmpty: boolean): Promise<void>
-  openCompareWindow(path: string, basePath: string): Promise<void>
+  openCompareWindow(session: CompareSession): Promise<void>
+  getCompareSession(id: string): Promise<CompareSession | null>
   openLinkedInNewWindow(
     diagramPath: string,
     relativePath: string

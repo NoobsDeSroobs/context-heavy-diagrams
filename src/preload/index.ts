@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
 import type { DiagramFile, RequiredTagDefinition } from '@shared/diagram'
+import type { CompareSession } from '@shared/compare/session'
 import type {
   NoteBaseline,
   RecoverySnapshot,
@@ -163,8 +164,13 @@ const api = {
     return ipcRenderer.invoke('windows:pickAndOpen', isCurrentWindowEmpty)
   },
 
-  openCompareWindow(path: string, basePath: string): Promise<void> {
-    return ipcRenderer.invoke('windows:openCompare', path, basePath)
+  // The compare window (epic 0150): the editor hands over two whole versions, and the window asks
+  // for them by the id in its URL.
+  openCompareWindow(session: CompareSession): Promise<void> {
+    return ipcRenderer.invoke('compare:open', session)
+  },
+  getCompareSession(id: string): Promise<CompareSession | null> {
+    return ipcRenderer.invoke('compare:getSession', id)
   },
 
   openLinkedInNewWindow(

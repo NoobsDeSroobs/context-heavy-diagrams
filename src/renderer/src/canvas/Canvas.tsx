@@ -694,11 +694,24 @@ function CanvasInner(): React.JSX.Element {
   // rereadDiagramForDiff, diffed against the same toDiagramFile() shape the
   // real save path uses. A never-saved diagram (currentPath null) diffs
   // against createEmptyDiagram().
-  const computeChangesDiff = useCallback(async () => {
-    const saved = currentPath
-      ? ((await window.api.rereadDiagramForDiff(currentPath)) ?? createEmptyDiagram())
-      : createEmptyDiagram()
-    const current = toDiagramFile(
+  // What a save would write right now: the window's own version of the diagram.
+  const buildCurrentDiagram = useCallback(
+    () =>
+      toDiagramFile(
+        nodes,
+        edges,
+        diagramMetadata,
+        requiredTags,
+        highlights,
+        legend,
+        gravityPresets,
+        diagramMaxConnectionPointsPerSide,
+        edgeDirectionSets,
+        activeEdgeDirectionSetId,
+        security,
+        diagramFontFamily
+      ),
+    [
       nodes,
       edges,
       diagramMetadata,
@@ -707,28 +720,37 @@ function CanvasInner(): React.JSX.Element {
       legend,
       gravityPresets,
       diagramMaxConnectionPointsPerSide,
+      diagramFontFamily,
       edgeDirectionSets,
       activeEdgeDirectionSetId,
-      security,
-      diagramFontFamily
-    )
-    setChangesDiff(diffDiagrams(saved, current))
-  }, [
-    currentPath,
-    nodes,
-    edges,
-    diagramMetadata,
-    requiredTags,
-    highlights,
-    legend,
-    gravityPresets,
-    diagramMaxConnectionPointsPerSide,
-    diagramFontFamily,
-    edgeDirectionSets,
-    activeEdgeDirectionSetId,
-    security,
-    setChangesDiff
-  ])
+      security
+    ]
+  )
+
+  const computeChangesDiff = useCallback(async () => {
+    const saved = currentPath
+      ? ((await window.api.rereadDiagramForDiff(currentPath)) ?? createEmptyDiagram())
+      : createEmptyDiagram()
+    setChangesDiff(diffDiagrams(saved, buildCurrentDiagram()))
+  }, [currentPath, buildCurrentDiagram, setChangesDiff])
+
+  // "Review changes" on the changed-on-disk banner: opens the compare window with this window's
+  // version as the earlier one and the file as it is on disk now as the later one, so the
+  // reviewer sees what the outside edit did without leaving for git.
+  const reviewDiskChanges = useCallback(async () => {
+    if (!currentPath) return
+    const onDisk = await window.api.rereadDiagramForDiff(currentPath)
+    if (!onDisk) {
+      showAlert('The file on disk could not be read, so there is nothing to compare.')
+      return
+    }
+    await window.api.openCompareWindow({
+      base: buildCurrentDiagram(),
+      next: onDisk,
+      diagramPath: currentPath,
+      title: `Review changes: ${currentPath.split(/[/\\]/).pop()} (this window → file on disk)`
+    })
+  }, [currentPath, buildCurrentDiagram])
 
   const toggleChangesPanel = useCallback(
     () => toggleChangesPanelWith(() => void computeChangesDiff()),
@@ -3150,6 +3172,9 @@ function CanvasInner(): React.JSX.Element {
                 {isDirty
                   ? 'Changed outside the app — and you have unsaved changes.'
                   : 'Changed outside the app.'}
+                <button type="button" onClick={() => void reviewDiskChanges()}>
+                  Review changes
+                </button>
                 <button type="button" onClick={handleReload}>
                   Reload
                 </button>

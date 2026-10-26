@@ -74,11 +74,12 @@ Seven random edits to the Meridian Rail landscape diagram (81 nodes, 83 edges), 
 ## Tasks
 - [x] Spike: the real canvas runs read-only in its own window (see above)
 - [x] Classification engine (`src/shared/compare/`): the four colours, what changed in words per field (tags, label, security cells, links, edge ends), a review order (security, links, content, removed, added), counts, the diagram-level collections, every edge drawable, an input for Details files the caller found changed. 12 tests, and a check that its field list matches "changes since last save". Absolute container positions are not needed while position is not tracked.
-- [ ] Restricted preload for the compare window: it needs only reading a diagram and opening a window, not the editor's whole bridge ([ADR 0112](../../decisions/0112-electron-hardening-sandbox-and-navigation.md)). The real separation between the read-only view and the diagram and its files, since the window has the same `window.api` as the editor today. Needs a second preload entry in the build.
+- [ ] Restricted preload for the compare window: it needs `getCompareSession` and the icon readers, not the editor's whole bridge ([ADR 0112](../../decisions/0112-electron-hardening-sandbox-and-navigation.md)). The real separation between the read-only view and the diagram and its files, since the window has the same `window.api` as the editor today. Needs a second preload entry in the build.
 - [ ] Compare window plumbing (main process: no path registration, no recovery, no close prompt)
-- [ ] Colours, badges, dimming, legend, summary, hover details (nodes done in the spike; add edge hover, and count elements and connections apart)
-- [ ] Diagram-level changes strip
-- [ ] Baseline from the "changed on disk" banner
+- [x] Colours, badges, dimming, legend with counts (elements and connections apart), hover details for nodes and edges, a paint-brush marker for restyled elements (a legend toggle, on by default), the editor's zoom limits so a big diagram fits
+- [ ] Summary and next/previous navigation (the review order exists in the engine)
+- [x] Diagram-level changes strip (plain list for now)
+- [x] Baseline from the "changed on disk" banner: **Review changes** opens the window with this window's version as the earlier one and the file on disk as the later one. The editor hands both versions to the main process, which holds them under the id in the window's URL (`src/main/compare/compareWindow.ts`, checked with `parseDiagram` on the way in). Tried live on a scratch copy of the Meridian diagram: banner, button, window, counts and hover. Still open: the old Details content for this baseline, and a menu command and palette entry.
 - [ ] Git baseline (`git show`), with a missing-`git` message; check on Linux
 - [ ] Next/previous navigation and reviewed ticks
 - [ ] Id-churn banner and the button-triggered matching

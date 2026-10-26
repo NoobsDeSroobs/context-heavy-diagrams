@@ -46,6 +46,21 @@ export interface ReviewItem {
 // What happened to an element's Details file, which only the caller can read.
 export type DetailsContentChange = 'changed' | 'added' | 'removed'
 
+export interface ElementCount {
+  nodes: number
+  edges: number
+}
+
+// "1 element, 4 connections"; "0" when there are none.
+export function describeCount(count: ElementCount): string {
+  const plural = (n: number, one: string, many: string): string => `${n} ${n === 1 ? one : many}`
+  const parts = [
+    count.nodes > 0 && plural(count.nodes, 'element', 'elements'),
+    count.edges > 0 && plural(count.edges, 'connection', 'connections')
+  ].filter(Boolean)
+  return parts.length > 0 ? parts.join(', ') : '0'
+}
+
 export interface CompareOptions {
   detailsContent?: ReadonlyMap<string, DetailsContentChange>
 }
@@ -55,7 +70,13 @@ export interface Classification {
   edges: Map<string, ElementChange>
   // Every changed element, most important first: security, links, content, removed, added.
   review: ReviewItem[]
-  counts: Record<CompareStatus, number>
+  // Per colour, elements and connections apart: deleting one entity also removes its edges, and
+  // "5 removed" would read as five things gone.
+  counts: Record<CompareStatus, ElementCount>
+  // Elements present in both versions whose own look changed (fill, border, font, icons), whatever
+  // else changed. Not a colour: the window marks them with a paint brush, if asked to.
+  restyledNodes: Set<string>
+  restyledEdges: Set<string>
   diagramLevel: CollectionChange[]
   // The later version plus the removed elements in their old state, exactly as the files say.
   merged: DiagramFile
@@ -146,6 +167,24 @@ function classifyElements<T extends { id: string }>(
   return { changes, removed }
 }
 
+// The look-only fields: what a restyle changes. Position, size and the rest stay untracked.
+const LOOK_FIELDS = new Set(['style', 'icons'])
+
+function restyled<T extends { id: string }>(
+  base: T[],
+  next: T[],
+  specs: FieldSpec<T>[]
+): Set<string> {
+  const looks = specs.filter((s) => LOOK_FIELDS.has(s.name))
+  const baseById = new Map(base.map((el) => [el.id, el]))
+  const ids = new Set<string>()
+  for (const el of next) {
+    const prior = baseById.get(el.id)
+    if (prior && looks.some((s) => !deepEqual(s.get(prior), s.get(el)))) ids.add(el.id)
+  }
+  return ids
+}
+
 function rank(change: ElementChange): number {
   if (change.security) return 0
   return { links: 1, content: 2, removed: 3, added: 4 }[change.status]
@@ -202,14 +241,23 @@ export function classifyDiagrams(
     })
   ].sort((a, b) => rank(a.change) - rank(b.change))
 
-  const counts: Record<CompareStatus, number> = { added: 0, removed: 0, links: 0, content: 0 }
-  for (const item of review) counts[item.change.status] += 1
+  const empty = (): ElementCount => ({ nodes: 0, edges: 0 })
+  const counts: Record<CompareStatus, ElementCount> = {
+    added: empty(),
+    removed: empty(),
+    links: empty(),
+    content: empty()
+  }
+  for (const item of review)
+    counts[item.change.status][item.kind === 'node' ? 'nodes' : 'edges'] += 1
 
   return {
     nodes: nodes.changes,
     edges: edges.changes,
     review,
     counts,
+    restyledNodes: restyled(base.nodes, next.nodes, NODE_FIELDS),
+    restyledEdges: restyled(base.edges, next.edges, EDGE_FIELDS),
     diagramLevel: diffCollections(base, next),
     merged,
     view: drawable.diagram,

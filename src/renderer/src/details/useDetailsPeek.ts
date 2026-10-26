@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react'
-import type { Node } from '@xyflow/react'
 
 export interface PeekTarget {
   nodeId: string
@@ -7,9 +6,10 @@ export interface PeekTarget {
   rect: { left: number; top: number; right: number; bottom: number }
 }
 
+// Only the id is read, so the compare window can hover an edge the same way.
 export interface DetailsPeekBindings {
-  onNodeMouseEnter: (event: MouseEvent, node: Node) => void
-  onNodeMouseLeave: (event: MouseEvent, node: Node) => void
+  onNodeMouseEnter: (event: MouseEvent, node: { id: string }) => void
+  onNodeMouseLeave: (event: MouseEvent, node: { id: string }) => void
 }
 
 // Tracks "a node is hovered AND Ctrl/Cmd is held" (ADR 0093). Both inputs
@@ -91,7 +91,7 @@ export function useDetailsPeek(): { peek: PeekTarget | null; bindings: DetailsPe
   }, [recompute])
 
   const onNodeMouseEnter = useCallback(
-    (event: MouseEvent, node: Node) => {
+    (event: MouseEvent, node: { id: string }) => {
       hoverRef.current = { nodeId: node.id, el: event.currentTarget as HTMLElement }
       // The event itself says whether Ctrl/Cmd is down right now — covers a
       // keydown this window never saw.
@@ -103,7 +103,7 @@ export function useDetailsPeek(): { peek: PeekTarget | null; bindings: DetailsPe
   )
 
   const onNodeMouseLeave = useCallback(
-    (_event: MouseEvent, node: Node) => {
+    (_event: MouseEvent, node: { id: string }) => {
       if (hoverRef.current?.nodeId !== node.id) return
       hoverRef.current = null
       recompute()

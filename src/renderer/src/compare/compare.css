@@ -142,3 +142,30 @@
   background: color-mix(in srgb, var(--cmp-links) 18%, transparent);
   font-size: 13px;
 }
+
+/* Restyled marker: a paint brush at the top-left corner (the status badge is top-right), so a
+   changed look is findable although the element is otherwise unchanged and dimmed. */
+.compare-brush,
+.compare-canvas .react-flow__node.cmp-restyled::before {
+  background: #6475e8
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 21v-4a4 4 0 1 1 4 4h-4'/><path d='M21 3a16 16 0 0 0 -12.8 10.2'/><path d='M21 3a16 16 0 0 1 -10.2 12.8'/><path d='M10.6 9a9 9 0 0 1 4.4 4.4'/></svg>")
+    center / 14px 14px no-repeat;
+  border-radius: 50%;
+}
+.compare-brush {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+}
+.compare-canvas .react-flow__node.cmp-restyled::before {
+  position: absolute;
+  top: -12px;
+  left: -12px;
+  width: 22px;
+  height: 22px;
+  content: '';
+}
+.compare-legend-toggle {
+  margin-left: auto;
+  cursor: pointer;
+}

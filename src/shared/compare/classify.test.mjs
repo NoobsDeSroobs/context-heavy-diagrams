@@ -1,7 +1,7 @@
 // Run with `npm test` (Node's built-in runner; TypeScript is type-stripped).
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { classifyDiagrams } from './classify.ts'
+import { classifyDiagrams, describeCount } from './classify.ts'
 import { diffCollections } from './collections.ts'
 import { makeEdgesDrawable } from './drawable.ts'
 import { EDGE_FIELDS, NODE_FIELDS } from './fields.ts'
@@ -58,7 +58,14 @@ test('added and removed elements; the removed one is kept in the merged diagram'
     c.merged.edges.map((e) => e.id),
     ['e-gone']
   )
-  assert.deepEqual(c.counts, { added: 1, removed: 2, links: 0, content: 0 })
+  assert.deepEqual(c.counts, {
+    added: { nodes: 1, edges: 0 },
+    removed: { nodes: 1, edges: 1 },
+    links: { nodes: 0, edges: 0 },
+    content: { nodes: 0, edges: 0 }
+  })
+  assert.equal(describeCount(c.counts.removed), '1 element, 1 connection')
+  assert.equal(describeCount(c.counts.links), '0')
 })
 
 test('label, tags, security and parent changes are yellow, and say what changed', () => {
@@ -248,4 +255,22 @@ test('the view repairs edges, the merged diagram and the classification do not',
   assert.equal(c.view.edges[0].sourceHandle, 'cp-1')
   assert.deepEqual([...c.repairedEdges], ['e'])
   assert.equal(c.edges.size, 0)
+})
+
+test('restyled elements are recorded apart from the colours', () => {
+  const base = diagram([node('a'), node('b'), node('c')], [edge('e', 'a', 'b')])
+  const next = diagram(
+    [
+      node('a', { style: { fill: '#112233' } }),
+      node('b', { data: { label: 'Renamed' }, style: { fill: '#445566' } }),
+      node('c', { position: { x: 90, y: 90 } })
+    ],
+    [edge('e', 'a', 'b', { style: { stroke: '#ff0000' } })]
+  )
+  const c = classifyDiagrams(base, next)
+  assert.deepEqual([...c.restyledNodes].sort(), ['a', 'b'])
+  assert.deepEqual([...c.restyledEdges], ['e'])
+  // Restyling alone is not a colour; the rename still is.
+  assert.equal(statusOf(c, 'a'), undefined)
+  assert.equal(statusOf(c, 'b'), 'content')
 })

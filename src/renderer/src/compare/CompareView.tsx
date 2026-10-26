@@ -6,10 +6,12 @@ import '@xyflow/react/dist/style.css'
 import { effectiveGravityPresets } from '../nodes/lineGravityPresets'
 import {
   classifyDiagrams,
+  describeCount,
   type Classification,
   type CompareStatus,
   type ElementChange
 } from '@shared/compare/classify'
+import type { CompareSession } from '@shared/compare/session'
 import DiagramContext, { type DiagramContextValue } from '../canvas/DiagramContext'
 import { DEFAULT_EDGE_OPTIONS, edgeTypes, nodeTypes } from '../canvas/flowTypes'
 import { useDetailsPeek } from '../details/useDetailsPeek'
@@ -105,8 +107,8 @@ function statusClass(change: ElementChange | undefined): string {
   return change ? `cmp-${change.status}` : 'cmp-dim'
 }
 
-function decorateNode(node: Node, change: ElementChange | undefined): Node {
-  return { ...node, className: `cmp ${statusClass(change)}` }
+function decorateNode(node: Node, change: ElementChange | undefined, restyled: boolean): Node {
+  return { ...node, className: `cmp ${statusClass(change)}${restyled ? ' cmp-restyled' : ''}` }
 }
 
 // The label is drawn outside the edge's own element (EdgeLabelRenderer), so it needs the class too.
@@ -115,31 +117,91 @@ function decorateEdge(edge: Edge, change: ElementChange | undefined): Edge {
   return { ...edge, className: `cmp ${cls}`, data: { ...edge.data, compareClass: cls } }
 }
 
+interface HoverCard {
+  edge: boolean
+  title: string
+  status: string
+  lines: string[]
+}
+
+function hoverCard(c: Classification, id: string, nodes: Node[], edges: Edge[]): HoverCard | null {
+  const node = nodes.find((n) => n.id === id)
+  const edge = node ? undefined : edges.find((e) => e.id === id)
+  if (!node && !edge) return null
+  const change = node ? c.nodes.get(id) : c.edges.get(id)
+  const lines = (change?.fields ?? []).flatMap((f) => f.lines)
+  if (node ? c.restyledNodes.has(id) : c.restyledEdges.has(id))
+    lines.push('restyled (look changed)')
+  if (edge && c.repairedEdges.has(id)) {
+    lines.push('names a connection point its node lacks; drawn to the nearest one')
+  }
+  const nodeTitle = String(node?.data?.label ?? '').split('\n')[0]
+  const title = node
+    ? nodeTitle || '(unlabeled)'
+    : String(edge?.data?.label ?? '') ||
+      `${labelOf(nodes, edge?.source)} → ${labelOf(nodes, edge?.target)}`
+  return {
+    edge: edge !== undefined,
+    title,
+    status: change ? STATUS_LABEL[change.status] : 'Unchanged or only moved',
+    lines
+  }
+}
+
+const CARD_WIDTH = 320
+const CARD_HEIGHT_GUESS = 180
+
+// Under a node, or beside the pointer for an edge, and always inside the window.
+function cardPosition(
+  edge: boolean,
+  rect: { left: number; bottom: number },
+  pointer: { x: number; y: number }
+): React.CSSProperties {
+  const left = edge ? pointer.x + 12 : rect.left
+  const top = edge ? pointer.y + 16 : rect.bottom + 8
+  return {
+    left: Math.max(8, Math.min(left, window.innerWidth - CARD_WIDTH - 8)),
+    top: Math.max(8, Math.min(top, window.innerHeight - CARD_HEIGHT_GUESS)),
+    width: CARD_WIDTH
+  }
+}
+
+function labelOf(nodes: Node[], id: string | undefined): string {
+  const label = String(nodes.find((n) => n.id === id)?.data?.label ?? '').split('\n')[0]
+  return label || id || '?'
+}
+
 function CompareCanvas({
-  path,
+  session,
   classification
 }: {
-  path: string
+  session: CompareSession
   classification: Classification
 }): React.JSX.Element {
   const { theme } = useTheme()
   const { preferences } = usePreferences()
-  const context = useReadOnlyContext(path)
+  const context = useReadOnlyContext(session.diagramPath)
   const { peek, bindings } = useDetailsPeek()
+  const [showRestyled, setShowRestyled] = useState(true)
+  // Where the pointer entered an edge: a long edge's own box is no place to anchor its card.
+  const [edgePointer, setEdgePointer] = useState({ x: 0, y: 0 })
 
   const { nodes, edges } = useMemo(() => {
     const flow = fromDiagramFile(classification.view)
     return {
-      nodes: flow.nodes.map((n) => decorateNode(n, classification.nodes.get(n.id))),
+      nodes: flow.nodes.map((n) =>
+        decorateNode(
+          n,
+          classification.nodes.get(n.id),
+          showRestyled && classification.restyledNodes.has(n.id)
+        )
+      ),
       edges: flow.edges.map((e) => decorateEdge(e, classification.edges.get(e.id)))
     }
-  }, [classification])
+  }, [classification, showRestyled])
 
-  const counts = classification.counts
   const notices = diagramLevelNotices(classification)
-
-  const peekNode = peek ? nodes.find((n) => n.id === peek.nodeId) : undefined
-  const peekChange = peek ? classification.nodes.get(peek.nodeId) : undefined
+  const card = peek ? hoverCard(classification, peek.nodeId, nodes, edges) : null
 
   return (
     <DiagramContext.Provider value={context}>
@@ -148,13 +210,22 @@ function CompareCanvas({
           {STATUS_ORDER.map((status) => (
             <span key={status} className="compare-legend-item">
               <span className={`compare-swatch cmp-${status}`} />
-              {STATUS_LABEL[status]} ({counts[status]})
+              {STATUS_LABEL[status]} ({describeCount(classification.counts[status])})
             </span>
           ))}
           <span className="compare-legend-item">
             <span className="compare-swatch cmp-dim" />
             Unchanged or only moved or restyled
           </span>
+          <label className="compare-legend-item compare-legend-toggle">
+            <input
+              type="checkbox"
+              checked={showRestyled}
+              onChange={(event) => setShowRestyled(event.target.checked)}
+            />
+            <span className="compare-brush" aria-hidden="true" />
+            Mark restyled ({classification.restyledNodes.size})
+          </label>
         </div>
         {notices.length > 0 && (
           <div className="compare-diagram-level" role="status">
@@ -184,7 +255,15 @@ function CompareCanvas({
             zoomOnDoubleClick={false}
             onNodeMouseEnter={bindings.onNodeMouseEnter}
             onNodeMouseLeave={bindings.onNodeMouseLeave}
+            onEdgeMouseEnter={(event, edge) => {
+              setEdgePointer({ x: event.clientX, y: event.clientY })
+              bindings.onNodeMouseEnter(event, edge)
+            }}
+            onEdgeMouseLeave={bindings.onNodeMouseLeave}
             connectionMode={ConnectionMode.Loose}
+            // The editor's zoom limits (Preferences), so a big diagram fits the window.
+            minZoom={preferences.minZoom}
+            maxZoom={preferences.maxZoom}
             onlyRenderVisibleElements
             colorMode={theme}
             fitView
@@ -194,22 +273,18 @@ function CompareCanvas({
           </ReactFlow>
         </div>
         {peek &&
-          peekNode &&
+          card &&
           createPortal(
             <div
               className="peek-card compare-peek"
-              style={{ left: peek.rect.left, top: peek.rect.bottom + 8, width: 300 }}
+              style={cardPosition(card.edge, peek.rect, edgePointer)}
             >
-              <div className="peek-card-title">
-                {String(peekNode.data?.label ?? '').split('\n')[0] || '(unlabeled)'}
-              </div>
+              <div className="peek-card-title">{card.title}</div>
               <div className="compare-peek-body">
-                {peekChange ? STATUS_LABEL[peekChange.status] : 'Unchanged or only moved'}
-                {peekChange?.fields
-                  .flatMap((f) => f.lines)
-                  .map((line) => (
-                    <div key={line}>{line}</div>
-                  ))}
+                <div>{card.status}</div>
+                {card.lines.map((line) => (
+                  <div key={line}>{line}</div>
+                ))}
               </div>
             </div>,
             document.body
@@ -219,38 +294,41 @@ function CompareCanvas({
   )
 }
 
-// The compare window (?compare=<later file>&base=<earlier file>). Spike: both versions are files.
+type LoadState =
+  | { kind: 'loading' }
+  | { kind: 'error'; message: string }
+  | { kind: 'ready'; session: CompareSession; classification: Classification }
+
+// The compare window (?compare=<session id>). The two versions are held by the main process.
 export default function CompareView(): React.JSX.Element {
-  const params = new URLSearchParams(window.location.search)
-  const path = params.get('compare') ?? ''
-  const basePath = params.get('base') ?? ''
-  const [state, setState] = useState<
-    { kind: 'loading' } | { kind: 'error'; message: string } | { kind: 'ready'; c: Classification }
-  >({ kind: 'loading' })
+  const id = new URLSearchParams(window.location.search).get('compare') ?? ''
+  const [state, setState] = useState<LoadState>({ kind: 'loading' })
 
   useEffect(() => {
     let cancelled = false
-    Promise.all([
-      window.api.rereadDiagramForDiff(basePath),
-      window.api.rereadDiagramForDiff(path)
-    ]).then(([base, next]) => {
+    window.api.getCompareSession(id).then((session) => {
       if (cancelled) return
-      if (!base || !next) {
-        setState({ kind: 'error', message: 'Could not read both versions of the diagram.' })
+      if (!session) {
+        setState({ kind: 'error', message: 'This comparison is no longer available.' })
         return
       }
-      setState({ kind: 'ready', c: classifyDiagrams(base, next) })
+      document.title = session.title
+      setState({
+        kind: 'ready',
+        session,
+        classification: classifyDiagrams(session.base, session.next)
+      })
     })
     return () => {
       cancelled = true
     }
-  }, [path, basePath])
+  }, [id])
 
   if (state.kind === 'loading') return <p className="compare-message">Comparing…</p>
   if (state.kind === 'error') return <p className="compare-message">{state.message}</p>
   return (
     <ReactFlowProvider>
-      <CompareCanvas path={path} classification={state.c} />
+      <CompareCanvas session={state.session} classification={state.classification} />
     </ReactFlowProvider>
   )
 }
