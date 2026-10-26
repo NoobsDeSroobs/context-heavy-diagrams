@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
 import type { DiagramFile, RequiredTagDefinition } from '@shared/diagram'
 import type { CompareSession } from '@shared/compare/session'
+import type { RevertChange, RevertKind, RevertRequest, RevertResult } from '@shared/compare/revert'
 import type {
   NoteBaseline,
   RecoverySnapshot,
@@ -174,6 +175,24 @@ const api = {
     revision: string
   ): Promise<{ ok: boolean; message?: string }> {
     return ipcRenderer.invoke('compare:openGit', diagramPath, revision)
+  },
+  // Put one element back as the earlier version has it: asked for here, done in the editor window
+  // of the same diagram (compare:revert), which answers with answerCompareRevert.
+  revertFromCompare(
+    sessionId: string,
+    kind: RevertKind,
+    id: string,
+    change: RevertChange
+  ): Promise<RevertResult> {
+    return ipcRenderer.invoke('compare:revert', sessionId, kind, id, change)
+  },
+  onCompareRevertRequest(callback: (request: RevertRequest) => void): () => void {
+    const listener = (_event: unknown, request: RevertRequest): void => callback(request)
+    ipcRenderer.on('compare:revertRequest', listener)
+    return () => ipcRenderer.off('compare:revertRequest', listener)
+  },
+  answerCompareRevert(requestId: string, result: RevertResult): Promise<void> {
+    return ipcRenderer.invoke('compare:revertResult', requestId, result)
   },
   getCompareSession(id: string): Promise<CompareSession | null> {
     return ipcRenderer.invoke('compare:getSession', id)

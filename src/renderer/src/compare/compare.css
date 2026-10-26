@@ -380,3 +380,29 @@ label.compare-legend-item {
   background: color-mix(in srgb, var(--cmp-row-color) 25%, transparent);
   box-shadow: none;
 }
+
+/* Revert, made in the editor window: the button on a row, what came of it, and the hint. */
+.compare-row-revert {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  padding: 0 8px;
+  font-size: 11px;
+}
+
+.compare-row-revert-note {
+  margin: 0;
+  padding: 0 10px 6px 30px;
+  color: var(--ev-c-text-2);
+  font-size: 11px;
+}
+
+.compare-row-revert-error {
+  color: var(--cmp-removed);
+}
+
+.compare-list-hint {
+  margin: 0;
+  padding: 0 10px 8px;
+  color: var(--ev-c-text-2);
+  font-size: 11px;
+}

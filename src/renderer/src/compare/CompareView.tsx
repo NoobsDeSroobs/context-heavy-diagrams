@@ -28,7 +28,7 @@ import { fromDiagramFile } from '../document/diagramConversion'
 import EdgeMarkerDefs from '../edges/edgeMarkers'
 import { effectiveStylePalette, usePreferences } from '../preferences/preferences'
 import { useTheme } from '../styling/theme'
-import CompareList from './CompareList'
+import CompareList, { type RevertState } from './CompareList'
 import './compare.css'
 
 const noop = (): void => {}
@@ -199,9 +199,11 @@ function labelOf(nodes: Node[], id: string | undefined): string {
 }
 
 function CompareCanvas({
+  sessionId,
   session,
   classification
 }: {
+  sessionId: string
   session: CompareSession
   classification: Classification
 }): React.JSX.Element {
@@ -219,6 +221,8 @@ function CompareCanvas({
   // ticked off. Both last only as long as this window.
   const [currentKey, setCurrentKey] = useState<string | null>(null)
   const [reviewed, setReviewed] = useState<ReadonlySet<string>>(new Set())
+  // What came of each revert asked for ("node:<id>" / "edge:<id>").
+  const [revertStates, setRevertStates] = useState<ReadonlyMap<string, RevertState>>(new Map())
 
   // Converting the diagram is the costly part, so it happens once; marking is cheap and follows
   // the toggle and the selected change.
@@ -280,6 +284,20 @@ function CompareCanvas({
       return next
     })
   }, [])
+
+  // Asks the editor window of this diagram to put the element back as the earlier version has it.
+  // A revert is a decision made, so it also ticks the change off.
+  const revertItem = useCallback(
+    async (item: ReviewItem) => {
+      const key = reviewKey(item)
+      const { status } = item.change
+      const change = status === 'added' || status === 'removed' ? status : 'modified'
+      const result = await window.api.revertFromCompare(sessionId, item.kind, item.id, change)
+      setRevertStates((prev) => new Map(prev).set(key, result))
+      if (result.ok) setReviewed((prev) => new Set(prev).add(key))
+    },
+    [sessionId]
+  )
 
   // N / P or the arrow keys walk the list; Space ticks the selected change off. Typing in a field
   // and shortcuts with a modifier are left alone.
@@ -390,8 +408,11 @@ function CompareCanvas({
               items={items}
               currentKey={currentKey}
               reviewed={reviewed}
+              canRevert={session.diagramPath !== null}
+              revertStates={revertStates}
               onSelect={focusItem}
               onToggleReviewed={toggleReviewed}
+              onRevert={(item) => void revertItem(item)}
               onPrevious={() => step(-1)}
               onNext={() => step(1)}
             />
@@ -455,7 +476,7 @@ export default function CompareView(): React.JSX.Element {
   if (state.kind === 'error') return <p className="compare-message">{state.message}</p>
   return (
     <ReactFlowProvider>
-      <CompareCanvas session={state.session} classification={state.classification} />
+      <CompareCanvas sessionId={id} session={state.session} classification={state.classification} />
     </ReactFlowProvider>
   )
 }

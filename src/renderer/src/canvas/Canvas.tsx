@@ -748,6 +748,34 @@ function CanvasInner(): React.JSX.Element {
   useEffect(() => {
     if (changesRefreshTick > 0) refreshChanges()
   }, [changesRefreshTick, refreshChanges])
+  // Puts one element back as "earlier" (a version of this diagram) has it, as one undoable edit.
+  // Returns why it could not, or null when it was done. Shared by the changes panel (earlier = the
+  // saved file) and the compare window (earlier = the version it shows).
+  const putElementBack = useEventCallback(
+    (
+      earlier: DiagramFile,
+      element: { kind: 'node' | 'edge'; id: string; changeType: ChangedElement['changeType'] }
+    ): string | null => {
+      // Edges are shown in the active reading's orientation (ADR 0081); the earlier one must be too.
+      const earlierGraph = fromDiagramFile({ ...earlier, activeEdgeDirectionSetId })
+      const result = resetElement(
+        graphRef.current,
+        { nodes: earlierGraph.nodes, edges: earlierGraph.edges },
+        element.kind,
+        element.id,
+        element.changeType
+      )
+      if (!result.ok) return result.message
+      pushSnapshot()
+      // The nodes a reset puts back have not been measured yet; React Flow's own measuring pass
+      // must not count as a second edit (an extra undo step), as after a load.
+      suppressAutoMeasureUntilRef.current = Date.now() + 500
+      setNodes(result.nodes)
+      setEdges(result.edges)
+      setChangesRefreshTick((tick) => tick + 1)
+      return null
+    }
+  )
   const resetChangedElement = useEventCallback(async (element: ChangedElement) => {
     const savedFile = currentPath
       ? await window.api.rereadDiagramForDiff(currentPath)
@@ -756,27 +784,27 @@ function CanvasInner(): React.JSX.Element {
       showAlert('The saved file could not be read, so nothing was reset.')
       return
     }
-    // Edges are shown in the active reading's orientation (ADR 0081); the saved one must be too.
-    const savedGraph = fromDiagramFile({ ...savedFile, activeEdgeDirectionSetId })
-    const result = resetElement(
-      graphRef.current,
-      { nodes: savedGraph.nodes, edges: savedGraph.edges },
-      element.kind,
-      element.id,
-      element.changeType
-    )
-    if (!result.ok) {
-      showAlert(result.message)
-      return
-    }
-    pushSnapshot()
-    // The nodes a reset puts back have not been measured yet; React Flow's own measuring pass
-    // must not count as a second edit (an extra undo step), as after a load.
-    suppressAutoMeasureUntilRef.current = Date.now() + 500
-    setNodes(result.nodes)
-    setEdges(result.edges)
-    setChangesRefreshTick((tick) => tick + 1)
+    const problem = putElementBack(savedFile, element)
+    if (problem) showAlert(problem)
   })
+
+  // A revert asked for in a compare window of this diagram (epic 0150): the same action, with the
+  // earlier version that window shows.
+  useEffect(
+    () =>
+      window.api.onCompareRevertRequest((request) => {
+        const problem = putElementBack(request.base, {
+          kind: request.kind,
+          id: request.id,
+          changeType: request.change
+        })
+        void window.api.answerCompareRevert(
+          request.requestId,
+          problem === null ? { ok: true } : { ok: false, message: problem }
+        )
+      }),
+    [putElementBack]
+  )
 
   // Compare the file on disk with the same file at a git revision (epic 0150). Whatever stops it
   // (no git, not a repository, an unknown revision) comes back as a sentence to show.

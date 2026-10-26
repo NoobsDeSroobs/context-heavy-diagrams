@@ -44,7 +44,8 @@ export function registerWindowPath(win: BrowserWindow, path: string): void {
   windowsByPath.set(normalizePath(path), win)
 }
 
-function findWindowForPath(path: string): BrowserWindow | undefined {
+// The editor window showing this diagram, if one is open (the compare window sends reverts there).
+export function findWindowForPath(path: string): BrowserWindow | undefined {
   return windowsByPath.get(normalizePath(path))
 }
 

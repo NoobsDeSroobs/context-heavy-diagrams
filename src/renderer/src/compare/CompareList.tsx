@@ -7,14 +7,56 @@ import {
   type ReviewItem
 } from '@shared/compare/classify'
 
+// What came of a revert asked for in the editor window.
+export interface RevertState {
+  ok: boolean
+  message?: string
+}
+
 interface CompareListProps {
   items: ReviewItem[]
   currentKey: string | null
   reviewed: ReadonlySet<string>
+  // A revert is made in the editor window of the same file, so a comparison of an unsaved diagram
+  // has none to offer.
+  canRevert: boolean
+  revertStates: ReadonlyMap<string, RevertState>
   onSelect: (item: ReviewItem) => void
   onToggleReviewed: (item: ReviewItem) => void
+  onRevert: (item: ReviewItem) => void
   onPrevious: () => void
   onNext: () => void
+}
+
+const REVERT_LABEL: Record<CompareStatus, string> = {
+  added: 'Remove',
+  removed: 'Restore',
+  links: 'Revert',
+  content: 'Revert'
+}
+
+// A note's text is a file, not part of the element, so a revert cannot put it back.
+function touchesNoteText(item: ReviewItem): boolean {
+  return item.change.fields.some((f) => f.field === 'Details file content')
+}
+
+function revertTitle(item: ReviewItem): string {
+  const where = 'in the editor window (Ctrl+Z there undoes it)'
+  const note = touchesNoteText(item) ? " The note's text is not restored." : ''
+  switch (item.change.status) {
+    case 'added':
+      return `Remove this ${where}; it is not in the earlier version.${note}`
+    case 'removed':
+      return `Bring this back ${where}, with its connections where they can be drawn.${note}`
+    default:
+      return `Put this back as it was in the earlier version, ${where}.${note}`
+  }
+}
+
+function revertDoneNote(item: ReviewItem): string {
+  return touchesNoteText(item)
+    ? "Done in the editor window. The note's text was not restored."
+    : 'Done in the editor window.'
 }
 
 const STATUS_TITLE: Record<CompareStatus, string> = {
@@ -45,8 +87,11 @@ export default function CompareList({
   items,
   currentKey,
   reviewed,
+  canRevert,
+  revertStates,
   onSelect,
   onToggleReviewed,
+  onRevert,
   onPrevious,
   onNext
 }: CompareListProps): React.JSX.Element {
@@ -102,6 +147,12 @@ export default function CompareList({
           <progress max={items.length} value={done} />
         </div>
       )}
+      {canRevert && items.length > 0 && (
+        <p className="compare-list-hint">
+          A revert is made in the editor window of this diagram. If that window still shows the
+          earlier version, reload it first.
+        </p>
+      )}
       {items.length === 0 ? (
         <p className="compare-list-empty">No element or connection changed.</p>
       ) : (
@@ -143,7 +194,31 @@ export default function CompareList({
                     </span>
                     <span className="compare-row-summary">{summary(item)}</span>
                   </button>
+                  {canRevert && (
+                    <button
+                      type="button"
+                      className="compare-row-revert"
+                      title={revertTitle(item)}
+                      disabled={revertStates.get(key)?.ok === true}
+                      onClick={() => onRevert(item)}
+                    >
+                      {revertStates.get(key)?.ok === true
+                        ? 'Done'
+                        : REVERT_LABEL[item.change.status]}
+                    </button>
+                  )}
                 </div>
+                {revertStates.get(key) && (
+                  <p
+                    className={`compare-row-revert-note${
+                      revertStates.get(key)?.ok ? '' : ' compare-row-revert-error'
+                    }`}
+                  >
+                    {revertStates.get(key)?.ok
+                      ? revertDoneNote(item)
+                      : (revertStates.get(key)?.message ?? 'It could not be reverted.')}
+                  </p>
+                )}
                 {item.connections && item.connections.length > 0 && (
                   <details className="compare-row-connections">
                     <summary>

@@ -5,11 +5,24 @@ import { is } from '@electron-toolkit/utils'
 import icon from '../../../resources/icon.png?asset'
 import { parseDiagram, type DiagramFile } from '@shared/diagram'
 import type { CompareSession } from '@shared/compare/session'
+import {
+  REVERT_CHANGES,
+  REVERT_KINDS,
+  type RevertChange,
+  type RevertKind,
+  type RevertRequest,
+  type RevertResult
+} from '@shared/compare/revert'
 import { isSafeExternalUrl, isSameDocument } from '../navigationGuard'
+import { findWindowForPath } from '../windows'
 import { buildGitSession } from './gitCompare'
 
 // The versions each open compare window shows, by the id in its URL. Dropped when it closes.
 const sessions = new Map<string, CompareSession>()
+
+// Reverts sent to an editor window and not yet answered, by request id.
+const pendingReverts = new Map<string, (result: RevertResult) => void>()
+const REVERT_TIMEOUT_MS = 10_000
 
 // A window that only shows a comparison of two versions of a diagram. It is not a document window:
 // never registered under a path (opening the diagram must not focus it), no close guard (there is
@@ -90,5 +103,66 @@ export function registerCompareHandlers(): void {
   )
   ipcMain.handle('compare:getSession', (_event, id: string): CompareSession | null => {
     return sessions.get(id) ?? null
+  })
+
+  // Put one element back as the earlier version has it. The compare window never changes a
+  // diagram: this goes to the editor window showing the same file, which does it as one undoable
+  // edit and answers. Without such a window there is nothing to revert in.
+  ipcMain.handle(
+    'compare:revert',
+    (
+      _event,
+      sessionId: unknown,
+      kind: unknown,
+      id: unknown,
+      change: unknown
+    ): Promise<RevertResult> => {
+      const session = typeof sessionId === 'string' ? sessions.get(sessionId) : undefined
+      if (
+        !session ||
+        typeof id !== 'string' ||
+        typeof kind !== 'string' ||
+        !REVERT_KINDS.includes(kind) ||
+        typeof change !== 'string' ||
+        !REVERT_CHANGES.includes(change)
+      ) {
+        return Promise.resolve({ ok: false, message: 'This comparison is no longer available.' })
+      }
+      if (session.diagramPath === null) {
+        return Promise.resolve({ ok: false, message: 'This diagram has never been saved.' })
+      }
+      const editor = findWindowForPath(session.diagramPath)
+      if (!editor || editor.isDestroyed()) {
+        return Promise.resolve({
+          ok: false,
+          message: 'Open this diagram in the editor first: a revert is made there.'
+        })
+      }
+      const requestId = randomUUID()
+      const request: RevertRequest = {
+        requestId,
+        base: session.base,
+        kind: kind as RevertKind,
+        id,
+        change: change as RevertChange
+      }
+      return new Promise<RevertResult>((resolve) => {
+        const timer = setTimeout(() => {
+          pendingReverts.delete(requestId)
+          resolve({ ok: false, message: 'The editor window did not answer.' })
+        }, REVERT_TIMEOUT_MS)
+        pendingReverts.set(requestId, (result) => {
+          clearTimeout(timer)
+          resolve(result)
+        })
+        editor.webContents.send('compare:revertRequest', request)
+      })
+    }
+  )
+  ipcMain.handle('compare:revertResult', (_event, requestId: unknown, result: RevertResult) => {
+    if (typeof requestId !== 'string') return
+    const answer = pendingReverts.get(requestId)
+    pendingReverts.delete(requestId)
+    answer?.({ ok: result?.ok === true, message: result?.message })
   })
 }
