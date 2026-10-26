@@ -15,6 +15,7 @@ import {
   matchReplaced,
   type IdMatches
 } from '../shared/compare/match.ts'
+import { diagramLevelText, itemLines, reviewSection } from '../shared/compare/format.ts'
 import { previewTextChange, sameText } from '../shared/compare/textPreview.ts'
 import { containedPath } from '../main/containedPath.ts'
 import { buildGitSession } from '../main/compare/gitCompare.ts'
@@ -178,44 +179,6 @@ function hasChanges(c: Classification): boolean {
   return c.review.length > 0 || c.diagramLevel.length > 0
 }
 
-// Which heading an item sits under; the review order already keeps each heading together.
-function section(item: ReviewItem): string {
-  if (item.change.security) return 'SECURITY'
-  switch (item.change.status) {
-    case 'links':
-      return 'LINKS AND NOTES'
-    case 'content':
-      return 'MODIFIED'
-    case 'removed':
-      return 'REMOVED'
-    default:
-      return 'ADDED'
-  }
-}
-
-const MAX_CONNECTIONS_LISTED = 8
-
-function formatItem(item: ReviewItem): string[] {
-  const kind = item.kind === 'node' ? 'element' : 'connection'
-  const lines: string[] = []
-  const connections = item.connections ?? []
-  const withIt =
-    connections.length > 0
-      ? ` (${describeCount({ nodes: 0, edges: connections.length })} ${item.change.status === 'removed' ? 'removed' : 'added'} with it)`
-      : ''
-  lines.push(`  ${kind} "${item.label}"${withIt}`)
-  for (const field of item.change.fields) {
-    for (const line of field.lines) lines.push(`    ${line}`)
-  }
-  for (const connection of connections.slice(0, MAX_CONNECTIONS_LISTED)) {
-    lines.push(`    - ${connection.label}`)
-  }
-  if (connections.length > MAX_CONNECTIONS_LISTED) {
-    lines.push(`    - …and ${connections.length - MAX_CONNECTIONS_LISTED} more`)
-  }
-  return lines
-}
-
 function formatText(result: Compared): string {
   const { classification: c } = result
   const lines: string[] = [`${result.newerName} against ${result.olderName}`]
@@ -240,27 +203,16 @@ function formatText(result: Compared): string {
     )
     let current = ''
     for (const item of c.review) {
-      const heading = section(item)
+      const heading = reviewSection(item)
       if (heading !== current) {
         lines.push('', heading)
         current = heading
       }
-      lines.push(...formatItem(item))
+      lines.push(...itemLines(item))
     }
     if (c.diagramLevel.length > 0) {
       lines.push('', 'DIAGRAM-LEVEL CHANGES')
-      for (const change of c.diagramLevel) {
-        if (change.setting) {
-          lines.push(`  ${change.name}: ${change.setting.before} → ${change.setting.after}`)
-          continue
-        }
-        const parts = [
-          change.added.length > 0 && `+${change.added.join(', ')}`,
-          change.removed.length > 0 && `-${change.removed.join(', ')}`,
-          change.changed.length > 0 && `~${change.changed.join(', ')}`
-        ].filter(Boolean)
-        lines.push(`  ${change.name}: ${parts.join(' ')}`)
-      }
+      for (const change of c.diagramLevel) lines.push(`  ${diagramLevelText(change)}`)
     }
   }
   if (!result.matches && result.churnSuspected) {

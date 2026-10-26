@@ -6,6 +6,7 @@ import {
   type CompareStatus,
   type ReviewItem
 } from '@shared/compare/classify'
+import { STATUS_LABEL, kindName, summarizeItem, withItNote } from '@shared/compare/format'
 
 // What came of a revert asked for in the editor window.
 export interface RevertState {
@@ -57,27 +58,6 @@ function revertDoneNote(item: ReviewItem): string {
   return touchesNoteText(item)
     ? "Done in the editor window. The note's text was not restored."
     : 'Done in the editor window.'
-}
-
-const STATUS_TITLE: Record<CompareStatus, string> = {
-  added: 'Added',
-  removed: 'Removed',
-  links: 'Link or Details changed',
-  content: 'Modified'
-}
-
-// One line on what changed: the first of the lines the hover card would show.
-function summary(item: ReviewItem): string {
-  const { change } = item
-  if (change.status === 'added') return item.kind === 'node' ? 'Added' : 'Added connection'
-  if (change.status === 'removed') return item.kind === 'node' ? 'Removed' : 'Removed connection'
-  const lines = change.fields[0]?.lines ?? []
-  // A line that only introduces the next ("label, further lines:") is no summary on its own.
-  const first =
-    (lines[0]?.endsWith(':') && lines[1] ? `${lines[0]} ${lines[1]}` : lines[0]) ??
-    STATUS_TITLE[change.status]
-  const more = change.fields.length - 1
-  return more > 0 ? `${first} (+${more} more)` : first
 }
 
 // Everything that changed, most important first (security, links, content, removed, added): a
@@ -179,20 +159,18 @@ export default function CompareList({
                   <button
                     type="button"
                     className="compare-row-target"
-                    title={STATUS_TITLE[item.change.status]}
+                    title={STATUS_LABEL[item.change.status]}
                     onClick={() => onSelect(item)}
                   >
                     <span className="compare-row-head">
                       <span className="compare-row-dot" aria-hidden="true" />
-                      <span className="compare-row-kind">
-                        {item.kind === 'node' ? 'element' : 'connection'}
-                      </span>
+                      <span className="compare-row-kind">{kindName(item)}</span>
                       {item.change.security && (
                         <span className="compare-row-security">security</span>
                       )}
                       <span className="compare-row-label">{item.label}</span>
                     </span>
-                    <span className="compare-row-summary">{summary(item)}</span>
+                    <span className="compare-row-summary">{summarizeItem(item)}</span>
                   </button>
                   {canRevert && (
                     <button
@@ -221,10 +199,7 @@ export default function CompareList({
                 )}
                 {item.connections && item.connections.length > 0 && (
                   <details className="compare-row-connections">
-                    <summary>
-                      {describeCount({ nodes: 0, edges: item.connections.length })}{' '}
-                      {item.change.status === 'removed' ? 'removed with it' : 'added with it'}
-                    </summary>
+                    <summary>{withItNote(item)}</summary>
                     <ul>
                       {item.connections.map((connection) => {
                         const connectionKey = reviewKey(connection)

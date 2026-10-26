@@ -1,25 +1,16 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { createPortal } from 'react-dom'
-import {
-  Background,
-  ConnectionMode,
-  Controls,
-  ReactFlow,
-  ReactFlowProvider,
-  useReactFlow
-} from '@xyflow/react'
+import { useEffect, useMemo, useState } from 'react'
+import { Background, ConnectionMode, Controls, ReactFlow, ReactFlowProvider } from '@xyflow/react'
 import type { Edge, Node } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { effectiveGravityPresets } from '../nodes/lineGravityPresets'
 import {
   classifyDiagrams,
   describeCount,
-  reviewKey,
   type Classification,
   type CompareStatus,
-  type ElementChange,
-  type ReviewItem
+  type ElementChange
 } from '@shared/compare/classify'
+import { STATUS_LABEL, diagramLevelText } from '@shared/compare/format'
 import type { CompareSession } from '@shared/compare/session'
 import {
   applyIdMatches,
@@ -36,17 +27,14 @@ import EdgeMarkerDefs from '../edges/edgeMarkers'
 import { effectiveStylePalette } from '@shared/preferences/preferences'
 import { useReadOnlyPreferences } from '../preferences/useReadOnlyPreferences'
 import { useTheme } from '../styling/theme'
-import CompareList, { type RevertState } from './CompareList'
+import CompareList from './CompareList'
+import HoverCard from './HoverCard'
+import { describeHover, type MatchedIds } from './hoverContent'
+import { useCompareReview } from './useCompareReview'
 import './compare.css'
 
 const noop = (): void => {}
 
-const STATUS_LABEL: Record<CompareStatus, string> = {
-  added: 'Added',
-  removed: 'Removed',
-  links: 'Links or Details changed',
-  content: 'Modified'
-}
 const STATUS_ORDER: CompareStatus[] = ['added', 'removed', 'links', 'content']
 
 // Everything the node and edge components read from the editing canvas, with every action a
@@ -99,15 +87,7 @@ function useReadOnlyContext(diagramPath: string | null): DiagramContextValue {
 // What the canvas cannot show: catalog and setting changes, and edges that could not be drawn as
 // the file has them.
 function diagramLevelNotices(c: Classification): string[] {
-  const notices = c.diagramLevel.map((change) => {
-    if (change.setting) return `${change.name}: ${change.setting.before} → ${change.setting.after}`
-    const parts = [
-      change.added.length > 0 && `+${change.added.join(', ')}`,
-      change.removed.length > 0 && `−${change.removed.join(', ')}`,
-      change.changed.length > 0 && `~${change.changed.join(', ')}`
-    ].filter(Boolean)
-    return `${change.name}: ${parts.join(' ')}`
-  })
+  const notices = c.diagramLevel.map(diagramLevelText)
   if (c.repairedEdges.size > 0) {
     notices.push(
       `${c.repairedEdges.size} edge(s) name a connection point their node does not have; drawn to the nearest one`
@@ -119,14 +99,6 @@ function diagramLevelNotices(c: Classification): string[] {
     )
   }
   return notices
-}
-
-// Is `key` this item, or one of the connections listed under it?
-function ownsKey(item: ReviewItem, key: string | null): boolean {
-  return (
-    key !== null &&
-    (reviewKey(item) === key || (item.connections ?? []).some((c) => reviewKey(c) === key))
-  )
 }
 
 function statusClass(change: ElementChange | undefined): string {
@@ -150,75 +122,6 @@ function decorateNode(
 function decorateEdge(edge: Edge, change: ElementChange | undefined, current: boolean): Edge {
   const cls = `${statusClass(change)}${current ? CURRENT : ''}`
   return { ...edge, className: `cmp ${cls}`, data: { ...edge.data, compareClass: cls } }
-}
-
-interface HoverCard {
-  edge: boolean
-  title: string
-  status: string
-  lines: string[]
-}
-
-// The later ids of elements the reviewer asked to be matched with an earlier one (see match.ts).
-interface MatchedIds {
-  nodes: ReadonlySet<string>
-  edges: ReadonlySet<string>
-}
-
-function hoverCard(
-  c: Classification,
-  id: string,
-  nodes: Node[],
-  edges: Edge[],
-  matched: MatchedIds
-): HoverCard | null {
-  const node = nodes.find((n) => n.id === id)
-  const edge = node ? undefined : edges.find((e) => e.id === id)
-  if (!node && !edge) return null
-  const change = node ? c.nodes.get(id) : c.edges.get(id)
-  const lines = (change?.fields ?? []).flatMap((f) => f.lines)
-  if (node ? matched.nodes.has(id) : matched.edges.has(id)) {
-    lines.push('id differs from the earlier version; matched by name and place (a guess)')
-  }
-  if (node ? c.restyledNodes.has(id) : c.restyledEdges.has(id))
-    lines.push('restyled (look changed)')
-  if (edge && c.repairedEdges.has(id)) {
-    lines.push('names a connection point its node lacks; drawn to the nearest one')
-  }
-  const nodeTitle = String(node?.data?.label ?? '').split('\n')[0]
-  const title = node
-    ? nodeTitle || '(unlabeled)'
-    : String(edge?.data?.label ?? '') ||
-      `${labelOf(nodes, edge?.source)} → ${labelOf(nodes, edge?.target)}`
-  return {
-    edge: edge !== undefined,
-    title,
-    status: change ? STATUS_LABEL[change.status] : 'Unchanged or only moved',
-    lines
-  }
-}
-
-const CARD_WIDTH = 320
-const CARD_HEIGHT_GUESS = 180
-
-// Under a node, or beside the pointer for an edge, and always inside the window.
-function cardPosition(
-  edge: boolean,
-  rect: { left: number; bottom: number },
-  pointer: { x: number; y: number }
-): React.CSSProperties {
-  const left = edge ? pointer.x + 12 : rect.left
-  const top = edge ? pointer.y + 16 : rect.bottom + 8
-  return {
-    left: Math.max(8, Math.min(left, window.innerWidth - CARD_WIDTH - 8)),
-    top: Math.max(8, Math.min(top, window.innerHeight - CARD_HEIGHT_GUESS)),
-    width: CARD_WIDTH
-  }
-}
-
-function labelOf(nodes: Node[], id: string | undefined): string {
-  const label = String(nodes.find((n) => n.id === id)?.data?.label ?? '').split('\n')[0]
-  return label || id || '?'
 }
 
 // What the matching banner needs: whether to suggest it, what it found, and the two actions.
@@ -246,21 +149,15 @@ function CompareCanvas({
   const context = useReadOnlyContext(session.diagramPath)
   const { peek, bindings } = useDetailsPeek()
   const [showRestyled, setShowRestyled] = useState(true)
-  // Where the pointer entered an edge: a long edge's own box is no place to anchor its card.
   const [edgePointer, setEdgePointer] = useState({ x: 0, y: 0 })
-
-  const rf = useReactFlow()
   const [showList, setShowList] = useState(true)
-  // The change the list has selected ("node:<id>" / "edge:<id>"), and the ones the reviewer has
-  // ticked off. Both last only as long as this window.
-  const [currentKey, setCurrentKey] = useState<string | null>(null)
-  const [reviewed, setReviewed] = useState<ReadonlySet<string>>(new Set())
-  // What came of each revert asked for ("node:<id>" / "edge:<id>").
-  const [revertStates, setRevertStates] = useState<ReadonlyMap<string, RevertState>>(new Map())
 
   // Converting the diagram is the costly part, so it happens once; marking is cheap and follows
   // the toggle and the selected change.
   const flow = useMemo(() => fromDiagramFile(classification.view), [classification])
+  const items = classification.review
+  const { currentKey, reviewed, revertStates, focusItem, step, toggleReviewed, revertItem } =
+    useCompareReview(sessionId, items, flow, churn.matches)
   const { nodes, edges } = useMemo(
     () => ({
       nodes: flow.nodes.map((n) =>
@@ -278,73 +175,6 @@ function CompareCanvas({
     [flow, classification, showRestyled, currentKey]
   )
 
-  const items = classification.review
-  const focusItem = useCallback(
-    (item: ReviewItem) => {
-      setCurrentKey(reviewKey(item))
-      // A connection is framed by the two elements it joins.
-      const ids =
-        item.kind === 'node'
-          ? [item.id]
-          : flow.edges.filter((e) => e.id === item.id).flatMap((e) => [e.source, e.target])
-      const targets = flow.nodes.filter((n) => ids.includes(n.id)).map((n) => ({ id: n.id }))
-      if (targets.length > 0) {
-        void rf.fitView({ nodes: targets, duration: 300, padding: 0.6, maxZoom: 1.5 })
-      }
-    },
-    [flow, rf]
-  )
-  const step = useCallback(
-    (direction: 1 | -1) => {
-      if (items.length === 0) return
-      // A connection inside a group counts as its element's step.
-      const index = items.findIndex((i) => ownsKey(i, currentKey))
-      const next =
-        index === -1
-          ? direction === 1
-            ? 0
-            : items.length - 1
-          : (index + direction + items.length) % items.length
-      focusItem(items[next])
-    },
-    [items, currentKey, focusItem]
-  )
-  const toggleReviewed = useCallback((item: ReviewItem) => {
-    const key = reviewKey(item)
-    setReviewed((prev) => {
-      const next = new Set(prev)
-      if (next.has(key)) next.delete(key)
-      else next.add(key)
-      return next
-    })
-  }, [])
-
-  // Asks the editor window of this diagram to put the element back as the earlier version has it.
-  // A revert is a decision made, so it also ticks the change off.
-  const revertItem = useCallback(
-    async (item: ReviewItem) => {
-      const key = reviewKey(item)
-      const { status } = item.change
-      const change = status === 'added' || status === 'removed' ? status : 'modified'
-      // The editor must see the earlier version as this window does, matched elements included.
-      const result = await window.api.revertFromCompare(
-        sessionId,
-        item.kind,
-        item.id,
-        change,
-        churn.matches
-          ? {
-              nodes: Object.fromEntries(churn.matches.nodes),
-              edges: Object.fromEntries(churn.matches.edges)
-            }
-          : undefined
-      )
-      setRevertStates((prev) => new Map(prev).set(key, result))
-      if (result.ok) setReviewed((prev) => new Set(prev).add(key))
-    },
-    [sessionId, churn.matches]
-  )
-
   const matchedIds = useMemo<MatchedIds>(
     () => ({
       nodes: new Set(churn.matches?.nodes.values() ?? []),
@@ -353,31 +183,8 @@ function CompareCanvas({
     [churn.matches]
   )
 
-  // N / P or the arrow keys walk the list; Space ticks the selected change off. Typing in a field
-  // and shortcuts with a modifier are left alone.
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.ctrlKey || event.metaKey || event.altKey) return
-      const target = event.target as HTMLElement | null
-      if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return
-      if (event.key === 'n' || event.key === 'ArrowDown') {
-        event.preventDefault()
-        step(1)
-      } else if (event.key === 'p' || event.key === 'ArrowUp') {
-        event.preventDefault()
-        step(-1)
-      } else if (event.key === ' ' && target === document.body && currentKey !== null) {
-        event.preventDefault()
-        const item = items.find((i) => ownsKey(i, currentKey))
-        if (item) toggleReviewed(item)
-      }
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [step, items, currentKey, toggleReviewed])
-
   const notices = diagramLevelNotices(classification)
-  const card = peek ? hoverCard(classification, peek.nodeId, nodes, edges, matchedIds) : null
+  const card = peek ? describeHover(classification, peek.nodeId, nodes, edges, matchedIds) : null
 
   return (
     <DiagramContext.Provider value={context}>
@@ -498,23 +305,7 @@ function CompareCanvas({
             />
           )}
         </div>
-        {peek &&
-          card &&
-          createPortal(
-            <div
-              className="peek-card compare-peek"
-              style={cardPosition(card.edge, peek.rect, edgePointer)}
-            >
-              <div className="peek-card-title">{card.title}</div>
-              <div className="compare-peek-body">
-                <div>{card.status}</div>
-                {card.lines.map((line) => (
-                  <div key={line}>{line}</div>
-                ))}
-              </div>
-            </div>,
-            document.body
-          )}
+        {peek && card && <HoverCard card={card} rect={peek.rect} pointer={edgePointer} />}
       </div>
     </DiagramContext.Provider>
   )
