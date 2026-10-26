@@ -406,3 +406,19 @@ label.compare-legend-item {
   color: var(--ev-c-text-2);
   font-size: 11px;
 }
+
+/* The offer to match the elements of a rewrite (new ids), and what came of it. */
+.compare-churn {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--color-border, var(--ev-c-gray-2));
+  background: color-mix(in srgb, var(--cmp-content) 16%, transparent);
+  font-size: 13px;
+}
+
+.compare-churn-done {
+  background: color-mix(in srgb, var(--cmp-added) 14%, transparent);
+}

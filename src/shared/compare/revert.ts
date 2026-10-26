@@ -11,6 +11,13 @@ export type RevertChange = 'added' | 'removed' | 'modified'
 export const REVERT_KINDS: readonly string[] = ['node', 'edge']
 export const REVERT_CHANGES: readonly string[] = ['added', 'removed', 'modified']
 
+// Pairs of earlier id -> later id the reviewer asked the comparison to treat as the same element
+// (the ids of an assistant's rewrite). A revert has to see the earlier version the same way.
+export interface RevertIdMatches {
+  nodes: Record<string, string>
+  edges: Record<string, string>
+}
+
 // What main sends to the editor window.
 export interface RevertRequest {
   requestId: string

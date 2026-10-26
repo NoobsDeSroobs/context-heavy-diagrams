@@ -1,6 +1,12 @@
 import type { DiagramFile, RequiredTagDefinition } from '@shared/diagram'
 import type { CompareSession } from '@shared/compare/session'
-import type { RevertChange, RevertKind, RevertRequest, RevertResult } from '@shared/compare/revert'
+import type {
+  RevertChange,
+  RevertIdMatches,
+  RevertKind,
+  RevertRequest,
+  RevertResult
+} from '@shared/compare/revert'
 import type {
   NoteBaseline,
   RecoverySnapshot,
@@ -69,7 +75,8 @@ export interface DiagramApi {
     sessionId: string,
     kind: RevertKind,
     id: string,
-    change: RevertChange
+    change: RevertChange,
+    matches?: RevertIdMatches
   ): Promise<RevertResult>
   onCompareRevertRequest(callback: (request: RevertRequest) => void): () => void
   answerCompareRevert(requestId: string, result: RevertResult): Promise<void>

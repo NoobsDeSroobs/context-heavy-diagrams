@@ -21,6 +21,13 @@ import {
   type ReviewItem
 } from '@shared/compare/classify'
 import type { CompareSession } from '@shared/compare/session'
+import {
+  applyIdMatches,
+  detectIdChurn,
+  matchReplaced,
+  type ChurnSuspicion,
+  type IdMatches
+} from '@shared/compare/match'
 import DiagramContext, { type DiagramContextValue } from '../canvas/DiagramContext'
 import { DEFAULT_EDGE_OPTIONS, edgeTypes, nodeTypes } from '../canvas/flowTypes'
 import { useDetailsPeek } from '../details/useDetailsPeek'
@@ -151,12 +158,27 @@ interface HoverCard {
   lines: string[]
 }
 
-function hoverCard(c: Classification, id: string, nodes: Node[], edges: Edge[]): HoverCard | null {
+// The later ids of elements the reviewer asked to be matched with an earlier one (see match.ts).
+interface MatchedIds {
+  nodes: ReadonlySet<string>
+  edges: ReadonlySet<string>
+}
+
+function hoverCard(
+  c: Classification,
+  id: string,
+  nodes: Node[],
+  edges: Edge[],
+  matched: MatchedIds
+): HoverCard | null {
   const node = nodes.find((n) => n.id === id)
   const edge = node ? undefined : edges.find((e) => e.id === id)
   if (!node && !edge) return null
   const change = node ? c.nodes.get(id) : c.edges.get(id)
   const lines = (change?.fields ?? []).flatMap((f) => f.lines)
+  if (node ? matched.nodes.has(id) : matched.edges.has(id)) {
+    lines.push('id differs from the earlier version; matched by name and place (a guess)')
+  }
   if (node ? c.restyledNodes.has(id) : c.restyledEdges.has(id))
     lines.push('restyled (look changed)')
   if (edge && c.repairedEdges.has(id)) {
@@ -198,14 +220,25 @@ function labelOf(nodes: Node[], id: string | undefined): string {
   return label || id || '?'
 }
 
+// What the matching banner needs: whether to suggest it, what it found, and the two actions.
+interface ChurnProps {
+  suspicion: ChurnSuspicion
+  matches: IdMatches | null
+  matching: boolean
+  onMatch: () => void
+  onUndo: () => void
+}
+
 function CompareCanvas({
   sessionId,
   session,
-  classification
+  classification,
+  churn
 }: {
   sessionId: string
   session: CompareSession
   classification: Classification
+  churn: ChurnProps
 }): React.JSX.Element {
   const { theme } = useTheme()
   const { preferences } = usePreferences()
@@ -292,11 +325,31 @@ function CompareCanvas({
       const key = reviewKey(item)
       const { status } = item.change
       const change = status === 'added' || status === 'removed' ? status : 'modified'
-      const result = await window.api.revertFromCompare(sessionId, item.kind, item.id, change)
+      // The editor must see the earlier version as this window does, matched elements included.
+      const result = await window.api.revertFromCompare(
+        sessionId,
+        item.kind,
+        item.id,
+        change,
+        churn.matches
+          ? {
+              nodes: Object.fromEntries(churn.matches.nodes),
+              edges: Object.fromEntries(churn.matches.edges)
+            }
+          : undefined
+      )
       setRevertStates((prev) => new Map(prev).set(key, result))
       if (result.ok) setReviewed((prev) => new Set(prev).add(key))
     },
-    [sessionId]
+    [sessionId, churn.matches]
+  )
+
+  const matchedIds = useMemo<MatchedIds>(
+    () => ({
+      nodes: new Set(churn.matches?.nodes.values() ?? []),
+      edges: new Set(churn.matches?.edges.values() ?? [])
+    }),
+    [churn.matches]
   )
 
   // N / P or the arrow keys walk the list; Space ticks the selected change off. Typing in a field
@@ -323,7 +376,7 @@ function CompareCanvas({
   }, [step, items, currentKey, toggleReviewed])
 
   const notices = diagramLevelNotices(classification)
-  const card = peek ? hoverCard(classification, peek.nodeId, nodes, edges) : null
+  const card = peek ? hoverCard(classification, peek.nodeId, nodes, edges, matchedIds) : null
 
   return (
     <DiagramContext.Provider value={context}>
@@ -357,6 +410,32 @@ function CompareCanvas({
             Mark restyled ({classification.restyledNodes.size})
           </label>
         </div>
+        {!churn.matches && churn.suspicion.suspected && (
+          <div className="compare-churn" role="status">
+            <strong>Many elements look replaced, not edited.</strong>
+            <span>
+              {churn.suspicion.twins} of {churn.suspicion.removed} removed elements have an added
+              element with the same name and type, so the ids probably changed.
+            </span>
+            <button type="button" onClick={churn.onMatch} disabled={churn.matching}>
+              {churn.matching ? 'Matching…' : 'Match them up'}
+            </button>
+          </div>
+        )}
+        {churn.matches && (
+          <div className="compare-churn compare-churn-done" role="status">
+            <span>
+              Matched {churn.matches.nodes.size} elements and {churn.matches.edges.size} connections
+              by name and place. This is a guess: check the ones marked as matched.
+              {churn.matches.fuzzySkipped
+                ? ' The diagram is large, so the similarity pass was cut short and only closer matches were paired.'
+                : ''}
+            </span>
+            <button type="button" onClick={churn.onUndo}>
+              Undo matching
+            </button>
+          </div>
+        )}
         {notices.length > 0 && (
           <div className="compare-diagram-level" role="status">
             <strong>Diagram-level changes</strong>
@@ -443,12 +522,15 @@ function CompareCanvas({
 type LoadState =
   | { kind: 'loading' }
   | { kind: 'error'; message: string }
-  | { kind: 'ready'; session: CompareSession; classification: Classification }
+  | { kind: 'ready'; session: CompareSession; suspicion: ChurnSuspicion }
 
 // The compare window (?compare=<session id>). The two versions are held by the main process.
 export default function CompareView(): React.JSX.Element {
   const id = new URLSearchParams(window.location.search).get('compare') ?? ''
   const [state, setState] = useState<LoadState>({ kind: 'loading' })
+  // The pairs found when the reviewer asked for the elements of a rewrite to be matched, or none.
+  const [matches, setMatches] = useState<IdMatches | null>(null)
+  const [matching, setMatching] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -459,24 +541,62 @@ export default function CompareView(): React.JSX.Element {
         return
       }
       document.title = session.title
-      setState({
-        kind: 'ready',
-        session,
-        classification: classifyDiagrams(session.base, session.next, {
-          detailsContent: new Map(Object.entries(session.detailsContent ?? {}))
-        })
-      })
+      setState({ kind: 'ready', session, suspicion: detectIdChurn(session.base, session.next) })
     })
     return () => {
       cancelled = true
     }
   }, [id])
 
+  const session = state.kind === 'ready' ? state.session : null
+  const classification = useMemo(
+    () =>
+      session
+        ? classifyDiagrams(
+            matches ? applyIdMatches(session.base, matches) : session.base,
+            session.next,
+            {
+              detailsContent: new Map(Object.entries(session.detailsContent ?? {}))
+            }
+          )
+        : null,
+    [session, matches]
+  )
+
+  // Matching is the quadratic part, so it runs when asked, after the button has shown "Matching…".
+  const match = (): void => {
+    if (!session) return
+    setMatching(true)
+    setTimeout(() => {
+      setMatches(matchReplaced(session.base, session.next))
+      setMatching(false)
+    }, 30)
+  }
+
   if (state.kind === 'loading') return <p className="compare-message">Comparing…</p>
-  if (state.kind === 'error') return <p className="compare-message">{state.message}</p>
+  if (state.kind === 'error' || !session || !classification) {
+    return (
+      <p className="compare-message">
+        {state.kind === 'error' ? state.message : 'This comparison is no longer available.'}
+      </p>
+    )
+  }
   return (
     <ReactFlowProvider>
-      <CompareCanvas sessionId={id} session={state.session} classification={state.classification} />
+      <CompareCanvas
+        // A different pairing is a different comparison: the ticks and reverts start afresh.
+        key={matches ? 'matched' : 'plain'}
+        sessionId={id}
+        session={session}
+        classification={classification}
+        churn={{
+          suspicion: state.suspicion,
+          matches,
+          matching,
+          onMatch: match,
+          onUndo: () => setMatches(null)
+        }}
+      />
     </ReactFlowProvider>
   )
 }

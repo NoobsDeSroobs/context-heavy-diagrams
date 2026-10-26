@@ -5,10 +5,12 @@ import { is } from '@electron-toolkit/utils'
 import icon from '../../../resources/icon.png?asset'
 import { parseDiagram, type DiagramFile } from '@shared/diagram'
 import type { CompareSession } from '@shared/compare/session'
+import { applyIdMatches } from '@shared/compare/match'
 import {
   REVERT_CHANGES,
   REVERT_KINDS,
   type RevertChange,
+  type RevertIdMatches,
   type RevertKind,
   type RevertRequest,
   type RevertResult
@@ -79,6 +81,23 @@ function readSession(raw: unknown): CompareSession {
   }
 }
 
+function isStringRecord(value: unknown): value is Record<string, string> {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    Object.values(value).every((v) => typeof v === 'string')
+  )
+}
+
+// The matched ids a revert carries: none, or a checked pair of records.
+function readMatches(raw: unknown): RevertIdMatches | undefined | 'invalid' {
+  if (raw === undefined || raw === null) return undefined
+  const value = raw as Partial<RevertIdMatches>
+  if (!isStringRecord(value.nodes) || !isStringRecord(value.edges)) return 'invalid'
+  return { nodes: value.nodes, edges: value.edges }
+}
+
 export function registerCompareHandlers(): void {
   ipcMain.handle('compare:open', (_event, raw: unknown) => {
     createCompareWindow(readSession(raw))
@@ -115,7 +134,8 @@ export function registerCompareHandlers(): void {
       sessionId: unknown,
       kind: unknown,
       id: unknown,
-      change: unknown
+      change: unknown,
+      matches: unknown
     ): Promise<RevertResult> => {
       const session = typeof sessionId === 'string' ? sessions.get(sessionId) : undefined
       if (
@@ -138,10 +158,20 @@ export function registerCompareHandlers(): void {
           message: 'Open this diagram in the editor first: a revert is made there.'
         })
       }
+      const pairs = readMatches(matches)
+      if (pairs === 'invalid') {
+        return Promise.resolve({ ok: false, message: 'The matched elements are not readable.' })
+      }
       const requestId = randomUUID()
       const request: RevertRequest = {
         requestId,
-        base: session.base,
+        // The earlier version as the reviewer sees it: matched elements carry the later ids.
+        base: pairs
+          ? applyIdMatches(session.base, {
+              nodes: new Map(Object.entries(pairs.nodes)),
+              edges: new Map(Object.entries(pairs.edges))
+            })
+          : session.base,
         kind: kind as RevertKind,
         id,
         change: change as RevertChange
