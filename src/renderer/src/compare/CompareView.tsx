@@ -1,15 +1,24 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Background, ConnectionMode, Controls, ReactFlow, ReactFlowProvider } from '@xyflow/react'
+import {
+  Background,
+  ConnectionMode,
+  Controls,
+  ReactFlow,
+  ReactFlowProvider,
+  useReactFlow
+} from '@xyflow/react'
 import type { Edge, Node } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { effectiveGravityPresets } from '../nodes/lineGravityPresets'
 import {
   classifyDiagrams,
   describeCount,
+  reviewKey,
   type Classification,
   type CompareStatus,
-  type ElementChange
+  type ElementChange,
+  type ReviewItem
 } from '@shared/compare/classify'
 import type { CompareSession } from '@shared/compare/session'
 import DiagramContext, { type DiagramContextValue } from '../canvas/DiagramContext'
@@ -19,6 +28,7 @@ import { fromDiagramFile } from '../document/diagramConversion'
 import EdgeMarkerDefs from '../edges/edgeMarkers'
 import { effectiveStylePalette, usePreferences } from '../preferences/preferences'
 import { useTheme } from '../styling/theme'
+import CompareList from './CompareList'
 import './compare.css'
 
 const noop = (): void => {}
@@ -107,13 +117,22 @@ function statusClass(change: ElementChange | undefined): string {
   return change ? `cmp-${change.status}` : 'cmp-dim'
 }
 
-function decorateNode(node: Node, change: ElementChange | undefined, restyled: boolean): Node {
-  return { ...node, className: `cmp ${statusClass(change)}${restyled ? ' cmp-restyled' : ''}` }
+// The element the list has selected gets a halo, so it can be found among the dimmed ones.
+const CURRENT = ' cmp-current'
+
+function decorateNode(
+  node: Node,
+  change: ElementChange | undefined,
+  restyled: boolean,
+  current: boolean
+): Node {
+  const marks = `${restyled ? ' cmp-restyled' : ''}${current ? CURRENT : ''}`
+  return { ...node, className: `cmp ${statusClass(change)}${marks}` }
 }
 
 // The label is drawn outside the edge's own element (EdgeLabelRenderer), so it needs the class too.
-function decorateEdge(edge: Edge, change: ElementChange | undefined): Edge {
-  const cls = statusClass(change)
+function decorateEdge(edge: Edge, change: ElementChange | undefined, current: boolean): Edge {
+  const cls = `${statusClass(change)}${current ? CURRENT : ''}`
   return { ...edge, className: `cmp ${cls}`, data: { ...edge.data, compareClass: cls } }
 }
 
@@ -186,19 +205,95 @@ function CompareCanvas({
   // Where the pointer entered an edge: a long edge's own box is no place to anchor its card.
   const [edgePointer, setEdgePointer] = useState({ x: 0, y: 0 })
 
-  const { nodes, edges } = useMemo(() => {
-    const flow = fromDiagramFile(classification.view)
-    return {
+  const rf = useReactFlow()
+  const [showList, setShowList] = useState(true)
+  // The change the list has selected ("node:<id>" / "edge:<id>"), and the ones the reviewer has
+  // ticked off. Both last only as long as this window.
+  const [currentKey, setCurrentKey] = useState<string | null>(null)
+  const [reviewed, setReviewed] = useState<ReadonlySet<string>>(new Set())
+
+  // Converting the diagram is the costly part, so it happens once; marking is cheap and follows
+  // the toggle and the selected change.
+  const flow = useMemo(() => fromDiagramFile(classification.view), [classification])
+  const { nodes, edges } = useMemo(
+    () => ({
       nodes: flow.nodes.map((n) =>
         decorateNode(
           n,
           classification.nodes.get(n.id),
-          showRestyled && classification.restyledNodes.has(n.id)
+          showRestyled && classification.restyledNodes.has(n.id),
+          currentKey === `node:${n.id}`
         )
       ),
-      edges: flow.edges.map((e) => decorateEdge(e, classification.edges.get(e.id)))
+      edges: flow.edges.map((e) =>
+        decorateEdge(e, classification.edges.get(e.id), currentKey === `edge:${e.id}`)
+      )
+    }),
+    [flow, classification, showRestyled, currentKey]
+  )
+
+  const items = classification.review
+  const focusItem = useCallback(
+    (item: ReviewItem) => {
+      setCurrentKey(reviewKey(item))
+      // A connection is framed by the two elements it joins.
+      const ids =
+        item.kind === 'node'
+          ? [item.id]
+          : flow.edges.filter((e) => e.id === item.id).flatMap((e) => [e.source, e.target])
+      const targets = flow.nodes.filter((n) => ids.includes(n.id)).map((n) => ({ id: n.id }))
+      if (targets.length > 0) {
+        void rf.fitView({ nodes: targets, duration: 300, padding: 0.6, maxZoom: 1.5 })
+      }
+    },
+    [flow, rf]
+  )
+  const step = useCallback(
+    (direction: 1 | -1) => {
+      if (items.length === 0) return
+      const index = items.findIndex((i) => reviewKey(i) === currentKey)
+      const next =
+        index === -1
+          ? direction === 1
+            ? 0
+            : items.length - 1
+          : (index + direction + items.length) % items.length
+      focusItem(items[next])
+    },
+    [items, currentKey, focusItem]
+  )
+  const toggleReviewed = useCallback((item: ReviewItem) => {
+    const key = reviewKey(item)
+    setReviewed((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }, [])
+
+  // N / P or the arrow keys walk the list; Space ticks the selected change off. Typing in a field
+  // and shortcuts with a modifier are left alone.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.ctrlKey || event.metaKey || event.altKey) return
+      const target = event.target as HTMLElement | null
+      if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return
+      if (event.key === 'n' || event.key === 'ArrowDown') {
+        event.preventDefault()
+        step(1)
+      } else if (event.key === 'p' || event.key === 'ArrowUp') {
+        event.preventDefault()
+        step(-1)
+      } else if (event.key === ' ' && target === document.body && currentKey !== null) {
+        event.preventDefault()
+        const item = items.find((i) => reviewKey(i) === currentKey)
+        if (item) toggleReviewed(item)
+      }
     }
-  }, [classification, showRestyled])
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [step, items, currentKey, toggleReviewed])
 
   const notices = diagramLevelNotices(classification)
   const card = peek ? hoverCard(classification, peek.nodeId, nodes, edges) : null
@@ -220,6 +315,14 @@ function CompareCanvas({
           <label className="compare-legend-item compare-legend-toggle">
             <input
               type="checkbox"
+              checked={showList}
+              onChange={(event) => setShowList(event.target.checked)}
+            />
+            Changes list
+          </label>
+          <label className="compare-legend-item">
+            <input
+              type="checkbox"
               checked={showRestyled}
               onChange={(event) => setShowRestyled(event.target.checked)}
             />
@@ -235,42 +338,55 @@ function CompareCanvas({
             ))}
           </div>
         )}
-        <div
-          className="compare-canvas"
-          // The same dimming strength as the editor's Isolate mode (ADR 0063).
-          style={{ '--cmp-dim-opacity': preferences.isolateOpacity } as React.CSSProperties}
-        >
-          <EdgeMarkerDefs />
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            nodeTypes={nodeTypes}
-            edgeTypes={edgeTypes}
-            defaultEdgeOptions={DEFAULT_EDGE_OPTIONS}
-            nodesDraggable={false}
-            nodesConnectable={false}
-            edgesReconnectable={false}
-            elementsSelectable={false}
-            deleteKeyCode={null}
-            zoomOnDoubleClick={false}
-            onNodeMouseEnter={bindings.onNodeMouseEnter}
-            onNodeMouseLeave={bindings.onNodeMouseLeave}
-            onEdgeMouseEnter={(event, edge) => {
-              setEdgePointer({ x: event.clientX, y: event.clientY })
-              bindings.onNodeMouseEnter(event, edge)
-            }}
-            onEdgeMouseLeave={bindings.onNodeMouseLeave}
-            connectionMode={ConnectionMode.Loose}
-            // The editor's zoom limits (Preferences), so a big diagram fits the window.
-            minZoom={preferences.minZoom}
-            maxZoom={preferences.maxZoom}
-            onlyRenderVisibleElements
-            colorMode={theme}
-            fitView
+        <div className="compare-body">
+          <div
+            className="compare-canvas"
+            // The same dimming strength as the editor's Isolate mode (ADR 0063).
+            style={{ '--cmp-dim-opacity': preferences.isolateOpacity } as React.CSSProperties}
           >
-            <Background />
-            <Controls showInteractive={false} />
-          </ReactFlow>
+            <EdgeMarkerDefs />
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              nodeTypes={nodeTypes}
+              edgeTypes={edgeTypes}
+              defaultEdgeOptions={DEFAULT_EDGE_OPTIONS}
+              nodesDraggable={false}
+              nodesConnectable={false}
+              edgesReconnectable={false}
+              elementsSelectable={false}
+              deleteKeyCode={null}
+              zoomOnDoubleClick={false}
+              onNodeMouseEnter={bindings.onNodeMouseEnter}
+              onNodeMouseLeave={bindings.onNodeMouseLeave}
+              onEdgeMouseEnter={(event, edge) => {
+                setEdgePointer({ x: event.clientX, y: event.clientY })
+                bindings.onNodeMouseEnter(event, edge)
+              }}
+              onEdgeMouseLeave={bindings.onNodeMouseLeave}
+              connectionMode={ConnectionMode.Loose}
+              // The editor's zoom limits (Preferences), so a big diagram fits the window.
+              minZoom={preferences.minZoom}
+              maxZoom={preferences.maxZoom}
+              onlyRenderVisibleElements
+              colorMode={theme}
+              fitView
+            >
+              <Background />
+              <Controls showInteractive={false} />
+            </ReactFlow>
+          </div>
+          {showList && (
+            <CompareList
+              items={items}
+              currentKey={currentKey}
+              reviewed={reviewed}
+              onSelect={focusItem}
+              onToggleReviewed={toggleReviewed}
+              onPrevious={() => step(-1)}
+              onNext={() => step(1)}
+            />
+          )}
         </div>
         {peek &&
           card &&

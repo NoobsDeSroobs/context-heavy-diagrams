@@ -280,3 +280,10 @@ test('restyled elements are recorded apart from the colours', () => {
   assert.equal(statusOf(c, 'a'), undefined)
   assert.equal(statusOf(c, 'b'), 'content')
 })
+
+test('a label whose first line is the same shows the lines that changed', () => {
+  const base = diagram([node('t', { data: { label: 'Title\nfirst note' } })])
+  const next = diagram([node('t', { data: { label: 'Title\nfirst note\nNOTE: under review' } })])
+  const c = classifyDiagrams(base, next)
+  assert.deepEqual(lines(c, 't', 'label'), ['label, further lines:', '+ NOTE: under review'])
+})

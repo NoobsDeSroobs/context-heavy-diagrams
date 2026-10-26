@@ -36,6 +36,11 @@ export interface ElementChange {
 
 export type ElementKind = 'node' | 'edge'
 
+// How a review item is told apart in the window's state: nodes and edges may share an id.
+export function reviewKey(item: { kind: ElementKind; id: string }): string {
+  return `${item.kind}:${item.id}`
+}
+
 export interface ReviewItem {
   kind: ElementKind
   id: string

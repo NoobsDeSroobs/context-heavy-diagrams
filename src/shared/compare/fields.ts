@@ -3,6 +3,7 @@
 // engine says on purpose that it does not track them.
 
 import type { DiagramEdge, DiagramNode, MetadataEntry, RiskCell } from '../diagram'
+import { previewTextChange } from './textPreview.ts'
 
 // 'link' is a path or file reference (orange); 'content' is what an element says or connects to
 // (yellow); 'layout' only moves or restyles it (not tracked, the element stays dimmed).
@@ -41,6 +42,15 @@ function show(value: unknown): string {
 
 function change(name: string, before: unknown, after: unknown): string[] {
   return [`${name}: ${show(before)} → ${show(after)}`]
+}
+
+// A label can run to several lines (a text note is all label). When the first line is the same,
+// "old → new" of that line would read as no change, so show the lines that did change.
+function describeLabel(before: unknown, after: unknown): string[] {
+  const was = String(before ?? '')
+  const now = String(after ?? '')
+  if (was.split('\n')[0] !== now.split('\n')[0]) return change('label', before, after)
+  return ['label, further lines:', ...previewTextChange(was, now, 4)]
 }
 
 // A path that was added, replaced or removed.
@@ -147,7 +157,7 @@ export const NODE_FIELDS: FieldSpec<DiagramNode>[] = [
     name: 'label',
     category: 'content',
     get: (n) => n.data.label,
-    describe: (b, a) => change('label', b, a)
+    describe: describeLabel
   },
   { name: 'icons', category: 'layout', get: (n) => n.data.icons },
   {
@@ -192,7 +202,7 @@ export const EDGE_FIELDS: FieldSpec<DiagramEdge>[] = [
     name: 'label',
     category: 'content',
     get: (e) => e.label,
-    describe: (b, a) => change('label', b, a)
+    describe: describeLabel
   },
   { name: 'style', category: 'layout', get: (e) => e.style },
   { name: 'tags', category: 'content', get: (e) => e.metadata, describe: describeTags },
