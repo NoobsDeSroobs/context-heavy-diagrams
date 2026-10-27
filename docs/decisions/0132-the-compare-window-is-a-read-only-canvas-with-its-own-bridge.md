@@ -24,6 +24,8 @@ A person reviewing what changed in a diagram, most of all after an AI assistant 
 - **A picture diff** (pixels or an exported image). Noisy, and says nothing about which element changed.
 
 ## Consequences
+- **Security, better:** a compromised compare window can do much less than a compromised editor window. It has no write method of its own: its bridge reads preferences, one icon file and its own comparison, and can request a revert. A revert is accepted only for a comparison the main process holds, with a kind and a change from fixed lists, and the editor applies it as an ordinary undoable edit ([ADR 0135](0135-a-revert-from-a-review-is-made-in-the-editor-window.md)).
+- **Security, unchanged:** the icon read follows the path a diagram names, as the editor's own display does ([ADR 0124](0124-svg-export-from-a-shared-pure-renderer.md)), so a diagram that names a file outside its folder is read as if it were an icon. This window did not add that exposure and does not close it.
 - The node and edge components must keep working with a no-op context (25 fields); a new context field needs a no-op here.
 - There is a second preload to build and keep equal to what the window uses; the guard test does the checking.
 - The window can show an edge the editor does not draw. That difference is deliberate, and goes away if the editor is fixed.

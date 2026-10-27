@@ -27,5 +27,7 @@ Both are in **View → Changes**, with "Changes since last save" ([ADR 0102](010
 - **Parse `git diff` output.** A diff of the JSON text says nothing about elements and breaks on formatting; two whole files compared by id does not.
 
 ## Consequences
+- **Security:** the git reader is the one place the app starts another program, so it is the feature's main exposure. It runs one read-only command with fixed options and a validated revision, and never a shell. Git still reads the repository's own configuration; the command and options are chosen so that this operation does not run a configured program (`core.fsmonitor` is off and the index is not refreshed). Nothing beyond that is promised.
+- **Network:** the app makes no network request for this. Whether git does is up to the repository (for example a partial clone fetching a missing object).
 - The app depends on `git` being installed for one feature; without it the menu item says so and the other baseline still works.
 - Each note compared costs one `git` process, hence the limit of six at a time.

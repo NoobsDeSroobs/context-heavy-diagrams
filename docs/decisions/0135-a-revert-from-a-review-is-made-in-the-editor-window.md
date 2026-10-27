@@ -27,5 +27,7 @@ The compare window works whether or not the editor has reloaded the outside edit
 - **A toggle to restore a removed element without its connections.** Not built; a small addition if someone wants it.
 
 ## Consequences
-- A revert needs the diagram open in an editor window. That is the price of keeping the compare window read-only.
+- **Security:** the compare window gains no way to write. The version that is restored comes from the main process's copy of the comparison, not from the requesting window; the window supplies only which element, the kind of change and, if the reviewer matched ids ([ADR 0136](0136-id-matching-is-a-guess-offered-on-request.md)), the id pairs. The result reaches the file only through the editor's normal save.
+- **Better:** a revert is one undoable step, and the editor's own checks apply to it as to any edit.
+- **Worse:** a revert needs the diagram open in an editor window, the price of keeping the compare window read-only. Restoring a node also restores connections, which can surprise someone who wanted the element alone.
 - A note's text cannot be reverted from a review; git is the way back for it.

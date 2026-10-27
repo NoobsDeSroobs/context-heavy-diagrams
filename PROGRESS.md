@@ -18,7 +18,7 @@ Merging, pushing, tagging and anything else on the remote is the maintainer's ow
 
 Built, tested, tried live and documented: ADRs [0132](docs/decisions/0132-the-compare-window-is-a-read-only-canvas-with-its-own-bridge.md) to [0137](docs/decisions/0137-chd-diff-the-same-review-without-the-app.md). Branch `epic/0150-visual-diff-between-versions`, clean at the last commit (`git log --oneline master..HEAD`). `npm run typecheck`, `npm run lint` and `npm test` pass (455 of 456 node tests; the skipped one cannot create symlinks on this Windows machine). The View menu groups the three review commands under **Changes**. A blind test and a simulated assistant edit of the Meridian diagram (scratch copy) were reviewed by the maintainer; the conformance delta is left out on purpose (ADR 0133).
 
-Left for the maintainer: accept the epic, then the epic collapses into [completed-epics.md](docs/planning/completed-epics.md) and its file is deleted. Not verified, listed in the epic's "Verification status": a real AI edit through the whole flow, Linux and macOS, many notes at once. The version is bumped to 0.3.0 on this branch; the tag and the release are the maintainer's.
+Left for the maintainer: accept the epic, then the epic collapses into [completed-epics.md](docs/planning/completed-epics.md) and its file is deleted. Not verified, listed in the epic's "Verification status": a real AI edit through the whole flow, Linux and macOS, many notes at once. The version is bumped to 0.3.0 on this branch and `CHANGELOG.md` has its entry (mark it with the date when tagged). After the merge, tag the merge commit on master `v0.3.0` (annotated; never a branch commit, since PRs are squash-merged). No builds or installers yet.
 
 ## Notes for the next task
 

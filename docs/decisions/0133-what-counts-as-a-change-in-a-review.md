@@ -38,5 +38,7 @@ A review is only useful if what it marks is what a reviewer must look at. A diag
 - **A text diff of Details notes in the app.** Git does it; the orange mark says where to look. The compare window shows a few changed lines ([ADR 0134](0134-baselines-for-a-review-the-windows-own-copy-or-git.md)).
 
 ## Consequences
+- **Better:** an assistant's changes to meaning are not buried under layout noise, and one engine means the window, the list and `chd diff` agree.
+- **Worse:** a review is an aid, not proof that nothing else changed. A moved box, a restyle (apart from the marker), the contents of a linked diagram and, on the window's own baseline, the text of a note are not shown as changes.
 - Whether something is a layout field is decided in one place, `fields.ts`; a new stored field must be classed there or it is silently not a change.
 - A reviewer who wants to know about a move or a restyle has to look in the editor; the marker covers restyles only.

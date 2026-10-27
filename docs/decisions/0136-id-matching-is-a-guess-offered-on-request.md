@@ -20,5 +20,6 @@ The comparison pairs elements by id ([ADR 0133](0133-what-counts-as-a-change-in-
 - **A three-way match** (the version before, the assistant's, the current). Would sit behind the same button; not built.
 
 ## Consequences
-- A wrong pair shows as a modification, not as a removal and an addition. The reviewer can see that on hover and undo it.
+- **Better:** an assistant's rewrite becomes reviewable, and the cost is paid only by someone who asks and only up to a fixed bound.
+- **Worse:** a wrong pair shows as a modification, not as a removal and an addition, so it can hide a real replacement. The reviewer can see that on hover and undo it, but only if they look.
 - Matching is per comparison and never saved: closing the window drops the pairs.
