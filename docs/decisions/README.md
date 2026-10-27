@@ -12,7 +12,9 @@ Each file: `NNNN-short-title.md`, numbered sequentially in decision order (not n
 # NNNN: Title
 
 ## Status
-Accepted | Superseded by NNNN
+Accepted (date)
+Supersedes: NNNN, or none
+Superseded by: NNNN, or none
 
 ## Context
 What problem/question forced this decision.
@@ -24,5 +26,7 @@ What we chose.
 What else was on the table, and why they lost out.
 
 ## Consequences
-What this makes easier/harder going forward.
+What this makes better and worse going forward: security, performance, maintenance and the people who use or build on it, not only the design.
 ```
+
+An ADR holds the decision and the reasoning for it, and which decisions it replaces or is replaced by. It does not hold test results or a list of what is and is not verified: that is the state of the work, and lives in the epic and `PROGRESS.md` while the work is in progress.

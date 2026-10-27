@@ -7,7 +7,7 @@
 
 import type { DiagramEdge, DiagramFile, DiagramNode } from '../diagram'
 
-function deepEqual(a: unknown, b: unknown): boolean {
+export function deepEqual(a: unknown, b: unknown): boolean {
   if (a === b) return true
   if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false
   if (Array.isArray(a) !== Array.isArray(b)) return false
@@ -29,7 +29,7 @@ interface FieldSpec<T> {
 // Human-readable names, shown in the Modified row's field list — not the
 // schema's own property names, since "data.details" means nothing to a user
 // deciding whether a change matters.
-const NODE_FIELDS: FieldSpec<DiagramNode>[] = [
+export const NODE_FIELDS: FieldSpec<DiagramNode>[] = [
   { name: 'type', get: (n) => n.type },
   { name: 'position', get: (n) => n.position },
   { name: 'size', get: (n) => n.size },
@@ -49,7 +49,7 @@ const NODE_FIELDS: FieldSpec<DiagramNode>[] = [
   { name: 'security', get: (n) => n.data.security }
 ]
 
-const EDGE_FIELDS: FieldSpec<DiagramEdge>[] = [
+export const EDGE_FIELDS: FieldSpec<DiagramEdge>[] = [
   { name: 'type', get: (e) => e.type },
   { name: 'source', get: (e) => e.source },
   { name: 'target', get: (e) => e.target },
@@ -76,6 +76,42 @@ export interface ChangedElement {
   changeType: ChangeType
   // Only present for 'modified' — human-readable field names that differ.
   changedFields?: string[]
+  // A connection added or removed: the two elements it joins, so it can be listed under the one
+  // that came or went with it.
+  source?: string
+  target?: string
+}
+
+export interface ChangedGroup {
+  element: ChangedElement
+  // The connections that came or went with this element (empty for anything else).
+  connections: ChangedElement[]
+}
+
+// Connections added or removed together with an element they touch are that element's
+// consequence: ten gone with one deleted element mean the element was not wanted, not that ten
+// connections were. Only an added or removed list is grouped; a changed connection, or one whose
+// both ends survive, stays a row of its own.
+export function groupConnections(elements: ChangedElement[]): ChangedGroup[] {
+  const owners = new Map<string, ChangedGroup>()
+  for (const element of elements) {
+    if (element.kind === 'node' && element.changeType !== 'modified') {
+      owners.set(element.id, { element, connections: [] })
+    }
+  }
+  const groups: ChangedGroup[] = []
+  for (const element of elements) {
+    if (element.kind === 'node') {
+      groups.push(owners.get(element.id) ?? { element, connections: [] })
+      continue
+    }
+    const owner = [element.source, element.target]
+      .map((end) => (end === undefined ? undefined : owners.get(end)))
+      .find((candidate) => candidate !== undefined)
+    if (element.changeType !== 'modified' && owner) owner.connections.push(element)
+    else groups.push({ element, connections: [] })
+  }
+  return groups
 }
 
 export interface ChangesSinceSave {
@@ -157,7 +193,9 @@ export function diffDiagrams(saved: DiagramFile, current: DiagramFile): ChangesS
         kind: 'edge',
         id: e.id,
         label: edgeLabel(e, currentLabelsById),
-        changeType: 'added'
+        changeType: 'added',
+        source: e.source,
+        target: e.target
       })
     }
   }
@@ -167,7 +205,9 @@ export function diffDiagrams(saved: DiagramFile, current: DiagramFile): ChangesS
         kind: 'edge',
         id: e.id,
         label: edgeLabel(e, savedLabelsById),
-        changeType: 'removed'
+        changeType: 'removed',
+        source: e.source,
+        target: e.target
       })
     }
   }

@@ -18,6 +18,7 @@ Everything that needs to survive is written to disk in this repo, in git-friendl
 - `docs/file-format.md` — standalone spec of the `.chd` diagram file format, deliberately written so a third party could build a compatible importer/exporter without reading this codebase or its decision history (less lock-in). Update it whenever a `schema.ts` under `src/shared/` changes — it must stay current, not just accurate at the moment it was written.
 - `docs/planning/` — epics (`docs/planning/epics/NNNN-title.md`; `…/epics/later/` if parked far out; once an epic is done and confirmed it becomes an entry in [`docs/planning/completed-epics.md`](docs/planning/completed-epics.md) and its file is deleted — [ADR 0120](docs/decisions/0120-completed-epics-collapse-into-an-index.md)) with task checklists inside them. See [docs/planning/README.md](docs/planning/README.md) and [docs/decisions/0002-planning-structure.md](docs/decisions/0002-planning-structure.md).
 - `docs/known-issues.md` — a single-file, symptom-first log of real bugs/hard problems found during development, each marked Solved/Worked around/Open with root cause and resolution. Not a duplicate of ADRs or epics' own Notes — a lookup table for "does this look familiar?" across the whole project. See [docs/decisions/0037-known-issues-log.md](docs/decisions/0037-known-issues-log.md). Add an entry whenever a bug takes real investigation to track down, not for routine fixes.
+- `CHANGELOG.md` — what changed for users, one entry per minor or major release (see Releases below).
 - `PROGRESS.md` — short pointer: current epic/task, last updated. Not a duplicate backlog — the full backlog lives in `docs/planning/`. Keep it frugal: it is a work document for the current stretch, so delete items when they finish instead of logging them (the epic and `git log` hold the history).
 - `THIRD-PARTY-NOTICES.md` — generated; after adding or updating a dependency run `npm run notices` ([ADR 0119](docs/decisions/0119-generated-third-party-notices.md)).
 
@@ -25,7 +26,7 @@ Keep these updated as the work happens, not retroactively.
 
 ## Decision records
 
-A change that makes a real design choice gets an ADR (what was decided, what else was considered, why), not only the big ones. An ADR never refers to temporary working documentation in any way: no epics, no `PROGRESS.md`, no planning notes, no links, no numbers, no mention of a "parked" or "later" epic. Those are deleted or rewritten as the work moves on, and the ADR would be wrong the moment they are. It states the trigger and the scope directly ("not covered in the first version"). ADR-to-ADR links are fine, and an epic or planning note may link to an ADR. Do not run Prettier over `docs/**/*.md`: it reformats every table and buries a small edit in a huge diff; format code only.
+A change that makes a real design choice gets an ADR (what was decided, what else was considered, why), not only the big ones. An ADR states the decision, what it supersedes or is superseded by, and the reasoning; it carries no test results and no verified or not-verified lists (that is work status, kept in the epic and `PROGRESS.md`). An ADR never refers to temporary working documentation in any way: no epics, no `PROGRESS.md`, no planning notes, no links, no numbers, no mention of a "parked" or "later" epic. Those are deleted or rewritten as the work moves on, and the ADR would be wrong the moment they are. It states the trigger and the scope directly ("not covered in the first version"). ADR-to-ADR links are fine, and an epic or planning note may link to an ADR. Do not run Prettier over `docs/**/*.md`: it reformats every table and buries a small edit in a huge diff; format code only.
 
 ## Code layout
 
@@ -54,6 +55,12 @@ Flag anything that can only be verified on one OS so someone can test it there.
 - **The app stays offline.** Nothing may make a network request; a test fails if a network API appears in `src/`, `extension/` or the CLI ([ADR 0113](docs/decisions/0113-enforced-offline-behaviour.md)).
 - **Paths stored inside a `.chd` file are untrusted.** Resolve them against the diagram's folder and keep them inside it ([ADR 0115](docs/decisions/0115-paths-stored-in-diagrams-are-untrusted.md)).
 - The renderer is sandboxed with a narrow bridge to the main process ([ADR 0112](docs/decisions/0112-electron-hardening-sandbox-and-navigation.md)); don't widen it without a design pass.
+
+## Releases
+
+- **Version numbers** follow semantic versioning: PATCH for fixes, MINOR for a new feature people will notice or an additive file-format change, MAJOR for an incompatible change to the file format, the command line or saved preferences. When an epic is done, decide whether it warrants a new MINOR or MAJOR, say so before the merge, and bump `package.json` and `package-lock.json` on the epic's branch.
+- **`CHANGELOG.md`** gets an entry for every MINOR or MAJOR release: short, written for the people who use the tool (added, changed, file format), linking to the ADRs for the reasons. A PATCH release needs an entry only if people must know something.
+- **Tags:** each release gets an annotated `vMAJOR.MINOR.PATCH` tag on master, on the commit that brings the release in. Pull requests are squash-merged, so never tag a commit on a feature branch. No release builds or installers are made yet.
 
 ## Documentation conventions
 

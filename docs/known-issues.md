@@ -13,10 +13,40 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 ## Open and worked-around at a glance
 
+- [An edge that names a connection point its node does not have is not drawn](#an-edge-that-names-a-connection-point-its-node-does-not-have-is-not-drawn) — Open (the compare window works around it for its own copy).
 - [Alt+drag duplicate may be swallowed by Linux window managers](#alt-drag-duplicate-may-be-swallowed-by-linux-window-managers) — Open, untested on Linux.
 - [A colour typed in light mode comes back changed (the theme flip is not exactly reversible)](#a-colour-typed-in-light-mode-comes-back-changed-the-theme-flip-is-not-exactly-reversible) — Won't fix.
 - [A native confirm() dialog left `<select>` elements unresponsive afterward](#a-native-confirm-dialog-left-select-elements-unresponsive-afterward) — Worked around.
 - [Clicking a container selects a different container that visually encloses it](#clicking-a-container-selects-a-different-container-that-visually-encloses-it) — Worked around.
+
+---
+
+## Putting nodes back outside a load adds a stray undo step
+
+**Status:** Solved (2026-10-26)
+**Found:** 2026-10-26, building "Reset to saved" in the changes panel
+
+**Symptom:** after a reset, Ctrl+Z seemed to do nothing the first time, and Redo stayed off.
+
+**Cause:** nodes built from a file have no measured size. React Flow measures them after they are set, and the editor counts that measuring as a discrete edit (`onNodesChange`), which pushes an extra undo snapshot and clears Redo. A load already silences this for 500 ms (`suppressAutoMeasureUntilRef`).
+
+**Fix:** a reset sets the same grace window before it applies, and keeps a replaced node's measured size. Anything else that puts unmeasured nodes into the canvas outside a load needs the same.
+
+**References:** `src/renderer/src/canvas/Canvas.tsx` (`resetChangedElement`, `suppressAutoMeasureUntilRef`)
+
+---
+
+## An edge that names a connection point its node does not have is not drawn
+
+**Status:** Open (found 2026-10-25, while building the compare window)
+
+**Symptom:** an edge is in the file and in the diagram's data but nothing is drawn, with only a console warning from React Flow (`Couldn't create edge for source handle id: "right"`, error 008). The gallery's `examples/gallery/technical/c4-context.chd` has two such edges. A hand-written or assistant-written edge with no `sourceHandle`/`targetHandle` fails the same way.
+
+**Cause:** every connection point is a handle with an id. A side with no stored points implicitly has one, named after the side (`right`); once a side has stored points (`cp-1`, `cp-2`) that implicit `right` handle is gone. An edge still saying `right` then points at nothing, and React Flow drops it silently. Nothing at load repairs this.
+
+**Worked around** in the compare window only: its copy moves such an end to the nearest point the node has (`src/shared/compare/drawable.ts`), and says so, so the review never loses an edge. The editor and the exports still do not draw it.
+
+**If it bites:** repair at load, as the container references are healed ([ADR 0075](decisions/0075-container-hierarchy-integrity.md)), reusing `makeEdgesDrawable`; a repair would count as a change to save ([ADR 0128](decisions/0128-a-diagram-repaired-on-load-counts-as-changed.md)).
 
 ---
 

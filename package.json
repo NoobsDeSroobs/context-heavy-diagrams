@@ -1,6 +1,6 @@
 {
   "name": "context-heavy-diagrams",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Offline desktop diagramming: git-friendly plain-text diagrams, drill-down linked diagrams, and per-node notes and tags. Early open-source release.",
   "main": "./out/main/index.js",
   "license": "GPL-3.0-or-later",
@@ -56,7 +56,7 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
-    "electron": "^43.4.0",
+    "electron": "^43.8.4",
     "electron-builder": "^26.0.12",
     "electron-vite": "^5.0.0",
     "esbuild": "^0.28.2",

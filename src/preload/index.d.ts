@@ -1,4 +1,12 @@
 import type { DiagramFile, RequiredTagDefinition } from '@shared/diagram'
+import type { CompareSession } from '@shared/compare/session'
+import type {
+  RevertChange,
+  RevertIdMatches,
+  RevertKind,
+  RevertRequest,
+  RevertResult
+} from '@shared/compare/revert'
 import type {
   NoteBaseline,
   RecoverySnapshot,
@@ -61,6 +69,18 @@ export interface DiagramApi {
 
   newWindow(): Promise<void>
   openInNewWindow(isCurrentWindowEmpty: boolean): Promise<void>
+  openCompareWindow(session: CompareSession): Promise<void>
+  compareWithGit(diagramPath: string, revision: string): Promise<{ ok: boolean; message?: string }>
+  revertFromCompare(
+    sessionId: string,
+    kind: RevertKind,
+    id: string,
+    change: RevertChange,
+    matches?: RevertIdMatches
+  ): Promise<RevertResult>
+  onCompareRevertRequest(callback: (request: RevertRequest) => void): () => void
+  answerCompareRevert(requestId: string, result: RevertResult): Promise<void>
+  getCompareSession(id: string): Promise<CompareSession | null>
   openLinkedInNewWindow(
     diagramPath: string,
     relativePath: string

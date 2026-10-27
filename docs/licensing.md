@@ -22,4 +22,4 @@ This is not a blocker for the release and changes nothing about how the project 
 
 ## The app icon
 
-The raven icon (`build/icon.svg`, original in `build/icon-artist-original.svg`) was drawn by an artist commissioned by the author. **Decided 2026-10-19:** the author owns all rights to it; the artist keeps the right to show it in their portfolio and marketing. **Decided 2026-10-19:** the icon is covered by the GPL-3.0-or-later like the rest of the repository, so forks may reuse it.
+The raven icon (`build/icon.svg`, original in `build/icon-artist-original.svg`) shows Huginn and Muninn, Odin's two ravens, who fly out and bring back what he needs to know. It was drawn by an artist commissioned by the author. **Decided 2026-10-19:** the author owns all rights to it; the artist keeps the right to show it in their portfolio and marketing. **Decided 2026-10-19:** the icon is covered by the GPL-3.0-or-later like the rest of the repository, so forks may reuse it.

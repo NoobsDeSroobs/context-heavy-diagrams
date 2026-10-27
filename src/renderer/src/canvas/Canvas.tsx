@@ -54,17 +54,17 @@ import {
   type NodeStyle,
   type RequiredTagDefinition
 } from '@shared/diagram'
-import { diffDiagrams } from '@shared/document/changesSinceSave'
-import EntityNode, { ENTITY_MIN_WIDTH, ENTITY_MIN_HEIGHT } from '../nodes/EntityNode'
-import TextNode, { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from '../nodes/TextNode'
-import ContainerNode, { CONTAINER_MIN_WIDTH, CONTAINER_MIN_HEIGHT } from '../nodes/ContainerNode'
+import { diffDiagrams, type ChangedElement } from '@shared/document/changesSinceSave'
+import { resetElement } from './resetElement'
+import { ENTITY_MIN_WIDTH, ENTITY_MIN_HEIGHT } from '../nodes/EntityNode'
+import { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from '../nodes/TextNode'
+import { CONTAINER_MIN_WIDTH, CONTAINER_MIN_HEIGHT } from '../nodes/ContainerNode'
 import { scaleGroupMembers, type GroupResizeMember } from './groupResize'
-import LineNode, { LINE_BOUNDS_PADDING } from '../nodes/LineNode'
+import { LINE_BOUNDS_PADDING } from '../nodes/LineNode'
+import { nodeTypes, edgeTypes, DEFAULT_EDGE_OPTIONS } from './flowTypes'
 import DiagramSettingsPanel from '../diagram-settings/DiagramSettingsPanel'
 import { effectiveGravityPresets } from '../nodes/lineGravityPresets'
-import LabeledEdge from '../edges/LabeledEdge'
 import EdgeMarkerDefs from '../edges/edgeMarkers'
-import { markerUrl } from '../edges/markerIds'
 import DiagramContext, { type DiagramContextValue } from './DiagramContext'
 import ContextMenu, { type ContextMenuItem } from '../ui/ContextMenu'
 import IconPicker from '../icons/IconPicker'
@@ -142,6 +142,7 @@ import { useMenus } from '../useMenus'
 import { useModifierDragDuplicate } from './useModifierDragDuplicate'
 import { useDetailsPeek } from '../details/useDetailsPeek'
 import PeekCard from '../details/PeekCard'
+import RevisionDialog from '../compare/RevisionDialog'
 import { effectiveStylePalette, usePreferences } from '../preferences/preferences'
 import ThreatMatrixView from '../threat-matrix/ThreatMatrixView'
 import { themeAdaptiveColor } from '../styling/themeAdaptiveColor'
@@ -159,30 +160,6 @@ import { detailsPanelTitle, detailsNoteName } from '../details/detailsLabels'
 import { toDiagramFile, fromDiagramFile } from '../document/diagramConversion'
 import { seedMetadata } from '../tagging/metadataSync'
 import { syncEdgeMetadata, syncNodeMetadata } from '../tagging/syncElements'
-
-// Defined at module scope so React Flow gets a stable reference — recreating
-// these objects every render triggers a React Flow warning and remounts.
-const nodeTypes = {
-  entity: EntityNode,
-  text: TextNode,
-  container: ContainerNode,
-  line: LineNode
-}
-const edgeTypes = { labeled: LabeledEdge }
-
-// Static, at module scope, so React Flow gets a stable reference (same reason as
-// nodeTypes/edgeTypes above): EdgeWrapper reads defaultEdgeOptions through its own unguarded
-// useStore selector, so a fresh object per render would re-render every edge.
-//
-// markerEnd is a raw 'url(#id)' string pointing at this app's context-stroke marker
-// (edgeMarkers.tsx), not RF's { type: MarkerType.ArrowClosed }. RF colours that one from a
-// `defaultColor` this app never sets, so it stayed stock grey and washed out on a light PNG export.
-// RF passes a string through untouched (createMarkerIds only acts on object markers), and the
-// arrowhead then inherits whatever colour the edge draws in, live or exported.
-const DEFAULT_EDGE_OPTIONS = {
-  type: 'labeled',
-  markerEnd: markerUrl('arrowClosed')
-}
 
 // Toolbar default-edge-style swatch preview only — deliberately a scaled-
 // down echo of LabeledEdge.tsx's own DASH_ARRAY, not a shared import; the
@@ -260,6 +237,8 @@ function CanvasInner(): React.JSX.Element {
   const [shortcutsDialogOpen, setShortcutsDialogOpen] = useState(false)
   // Command palette (ADR 0100).
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
+  // Which git revision to compare with (epic 0150): the dialog that asks.
+  const [revisionDialogOpen, setRevisionDialogOpen] = useState(false)
   // See ADR 0089 — right-click on the ItemPalette Entity/Container button.
   const [bulkCreateType, setBulkCreateType] = useState<'entity' | 'container' | null>(null)
   // Toolbar's own "current pen style" swatch (ADR 0045) — reuses
@@ -719,11 +698,24 @@ function CanvasInner(): React.JSX.Element {
   // rereadDiagramForDiff, diffed against the same toDiagramFile() shape the
   // real save path uses. A never-saved diagram (currentPath null) diffs
   // against createEmptyDiagram().
-  const computeChangesDiff = useCallback(async () => {
-    const saved = currentPath
-      ? ((await window.api.rereadDiagramForDiff(currentPath)) ?? createEmptyDiagram())
-      : createEmptyDiagram()
-    const current = toDiagramFile(
+  // What a save would write right now: the window's own version of the diagram.
+  const buildCurrentDiagram = useCallback(
+    () =>
+      toDiagramFile(
+        nodes,
+        edges,
+        diagramMetadata,
+        requiredTags,
+        highlights,
+        legend,
+        gravityPresets,
+        diagramMaxConnectionPointsPerSide,
+        edgeDirectionSets,
+        activeEdgeDirectionSetId,
+        security,
+        diagramFontFamily
+      ),
+    [
       nodes,
       edges,
       diagramMetadata,
@@ -732,28 +724,116 @@ function CanvasInner(): React.JSX.Element {
       legend,
       gravityPresets,
       diagramMaxConnectionPointsPerSide,
+      diagramFontFamily,
       edgeDirectionSets,
       activeEdgeDirectionSetId,
-      security,
-      diagramFontFamily
-    )
-    setChangesDiff(diffDiagrams(saved, current))
-  }, [
-    currentPath,
-    nodes,
-    edges,
-    diagramMetadata,
-    requiredTags,
-    highlights,
-    legend,
-    gravityPresets,
-    diagramMaxConnectionPointsPerSide,
-    diagramFontFamily,
-    edgeDirectionSets,
-    activeEdgeDirectionSetId,
-    security,
-    setChangesDiff
-  ])
+      security
+    ]
+  )
+
+  const computeChangesDiff = useCallback(async () => {
+    const saved = currentPath
+      ? ((await window.api.rereadDiagramForDiff(currentPath)) ?? createEmptyDiagram())
+      : createEmptyDiagram()
+    setChangesDiff(diffDiagrams(saved, buildCurrentDiagram()))
+  }, [currentPath, buildCurrentDiagram, setChangesDiff])
+
+  // "Reset to saved" on a row of the changes panel: puts that one element back as the saved file
+  // has it, as one undoable edit, and refreshes the list. The saved file is read again so the
+  // reset never works from a list gone stale; it is read the way a load reads it, so the element
+  // is the same shape the canvas holds.
+  const refreshChanges = useEventCallback(() => void computeChangesDiff())
+  // Bumped by a reset; the effect below then recomputes the list once React has applied it.
+  const [changesRefreshTick, setChangesRefreshTick] = useState(0)
+  useEffect(() => {
+    if (changesRefreshTick > 0) refreshChanges()
+  }, [changesRefreshTick, refreshChanges])
+  // Puts one element back as "earlier" (a version of this diagram) has it, as one undoable edit.
+  // Returns why it could not, or null when it was done. Shared by the changes panel (earlier = the
+  // saved file) and the compare window (earlier = the version it shows).
+  const putElementBack = useEventCallback(
+    (
+      earlier: DiagramFile,
+      element: { kind: 'node' | 'edge'; id: string; changeType: ChangedElement['changeType'] }
+    ): string | null => {
+      // Edges are shown in the active reading's orientation (ADR 0081); the earlier one must be too.
+      const earlierGraph = fromDiagramFile({ ...earlier, activeEdgeDirectionSetId })
+      const result = resetElement(
+        graphRef.current,
+        { nodes: earlierGraph.nodes, edges: earlierGraph.edges },
+        element.kind,
+        element.id,
+        element.changeType
+      )
+      if (!result.ok) return result.message
+      pushSnapshot()
+      // The nodes a reset puts back have not been measured yet; React Flow's own measuring pass
+      // must not count as a second edit (an extra undo step), as after a load.
+      suppressAutoMeasureUntilRef.current = Date.now() + 500
+      setNodes(result.nodes)
+      setEdges(result.edges)
+      setChangesRefreshTick((tick) => tick + 1)
+      return null
+    }
+  )
+  const resetChangedElement = useEventCallback(async (element: ChangedElement) => {
+    const savedFile = currentPath
+      ? await window.api.rereadDiagramForDiff(currentPath)
+      : createEmptyDiagram()
+    if (!savedFile) {
+      showAlert('The saved file could not be read, so nothing was reset.')
+      return
+    }
+    const problem = putElementBack(savedFile, element)
+    if (problem) showAlert(problem)
+  })
+
+  // A revert asked for in a compare window of this diagram (epic 0150): the same action, with the
+  // earlier version that window shows.
+  useEffect(
+    () =>
+      window.api.onCompareRevertRequest((request) => {
+        const problem = putElementBack(request.base, {
+          kind: request.kind,
+          id: request.id,
+          changeType: request.change
+        })
+        void window.api.answerCompareRevert(
+          request.requestId,
+          problem === null ? { ok: true } : { ok: false, message: problem }
+        )
+      }),
+    [putElementBack]
+  )
+
+  // Compare the file on disk with the same file at a git revision (epic 0150). Whatever stops it
+  // (no git, not a repository, an unknown revision) comes back as a sentence to show.
+  const compareWithGit = useCallback(
+    async (revision: string) => {
+      if (!currentPath) return
+      const result = await window.api.compareWithGit(currentPath, revision)
+      if (!result.ok) showAlert(result.message ?? 'The comparison could not be made.')
+    },
+    [currentPath]
+  )
+
+  // "Review changes" on the changed-on-disk banner: opens the compare window with this window's
+  // version as the earlier one and the file as it is on disk now as the later one, so the
+  // reviewer sees what the outside edit did without leaving for git.
+  const reviewDiskChanges = useCallback(async () => {
+    if (!currentPath) return
+    const onDisk = await window.api.rereadDiagramForDiff(currentPath)
+    if (!onDisk) {
+      showAlert('The file on disk could not be read, so there is nothing to compare.')
+      return
+    }
+    await window.api.openCompareWindow({
+      base: buildCurrentDiagram(),
+      next: onDisk,
+      diagramPath: currentPath,
+      title: `Review changes: ${currentPath.split(/[/\\]/).pop()} (this window → file on disk)`
+    })
+  }, [currentPath, buildCurrentDiagram])
 
   const toggleChangesPanel = useCallback(
     () => toggleChangesPanelWith(() => void computeChangesDiff()),
@@ -2994,6 +3074,8 @@ function CanvasInner(): React.JSX.Element {
     toggleAlignDistributePanel,
     toggleDiagnosticsPanel,
     toggleChangesPanel,
+    reviewDiskChanges,
+    openRevisionDialog: () => setRevisionDialogOpen(true),
     toggleLayerPanel,
     toggleReferencesPanel,
     toggleStylePalettePanel,
@@ -3175,6 +3257,9 @@ function CanvasInner(): React.JSX.Element {
                 {isDirty
                   ? 'Changed outside the app — and you have unsaved changes.'
                   : 'Changed outside the app.'}
+                <button type="button" onClick={() => void reviewDiskChanges()}>
+                  Review changes
+                </button>
                 <button type="button" onClick={handleReload}>
                   Reload
                 </button>
@@ -3641,6 +3726,7 @@ function CanvasInner(): React.JSX.Element {
               neverSaved={currentPath === null}
               onRefresh={() => void computeChangesDiff()}
               onReveal={focusSearchMatch}
+              onReset={(element) => void resetChangedElement(element)}
               onClose={() => setChangesPanelOpen(false)}
             />
           )}
@@ -3762,6 +3848,16 @@ function CanvasInner(): React.JSX.Element {
         {shortcutsDialogOpen && <ShortcutsDialog onClose={() => setShortcutsDialogOpen(false)} />}
         {commandPaletteOpen && (
           <CommandPalette actions={paletteActions} onClose={() => setCommandPaletteOpen(false)} />
+        )}
+        {revisionDialogOpen && (
+          <RevisionDialog
+            hasUnsavedChanges={isDirty}
+            onClose={() => setRevisionDialogOpen(false)}
+            onCompare={(revision) => {
+              setRevisionDialogOpen(false)
+              void compareWithGit(revision)
+            }}
+          />
         )}
         <AlertDialog />
         <ConflictDialog />

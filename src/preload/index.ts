@@ -1,5 +1,13 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
 import type { DiagramFile, RequiredTagDefinition } from '@shared/diagram'
+import type { CompareSession } from '@shared/compare/session'
+import type {
+  RevertChange,
+  RevertIdMatches,
+  RevertKind,
+  RevertRequest,
+  RevertResult
+} from '@shared/compare/revert'
 import type {
   NoteBaseline,
   RecoverySnapshot,
@@ -161,6 +169,40 @@ const api = {
   // reuses it if the picked path isn't already open elsewhere).
   openInNewWindow(isCurrentWindowEmpty: boolean): Promise<void> {
     return ipcRenderer.invoke('windows:pickAndOpen', isCurrentWindowEmpty)
+  },
+
+  // The compare window (epic 0150): the editor hands over two whole versions, and the window asks
+  // for them by the id in its URL.
+  openCompareWindow(session: CompareSession): Promise<void> {
+    return ipcRenderer.invoke('compare:open', session)
+  },
+  compareWithGit(
+    diagramPath: string,
+    revision: string
+  ): Promise<{ ok: boolean; message?: string }> {
+    return ipcRenderer.invoke('compare:openGit', diagramPath, revision)
+  },
+  // Put one element back as the earlier version has it: asked for here, done in the editor window
+  // of the same diagram (compare:revert), which answers with answerCompareRevert.
+  revertFromCompare(
+    sessionId: string,
+    kind: RevertKind,
+    id: string,
+    change: RevertChange,
+    matches?: RevertIdMatches
+  ): Promise<RevertResult> {
+    return ipcRenderer.invoke('compare:revert', sessionId, kind, id, change, matches)
+  },
+  onCompareRevertRequest(callback: (request: RevertRequest) => void): () => void {
+    const listener = (_event: unknown, request: RevertRequest): void => callback(request)
+    ipcRenderer.on('compare:revertRequest', listener)
+    return () => ipcRenderer.off('compare:revertRequest', listener)
+  },
+  answerCompareRevert(requestId: string, result: RevertResult): Promise<void> {
+    return ipcRenderer.invoke('compare:revertResult', requestId, result)
+  },
+  getCompareSession(id: string): Promise<CompareSession | null> {
+    return ipcRenderer.invoke('compare:getSession', id)
   },
 
   openLinkedInNewWindow(

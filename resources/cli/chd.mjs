@@ -50,6 +50,7 @@ Usage:
   chd hash <file.chd>                      Print the file's fingerprint (SHA-256 of its bytes)
   chd export <file.chd> [options]          Draw the diagram as an SVG image
   chd check <file.chd>... --profile <p>    Check diagrams against an architecture profile
+  chd diff <old.chd> <new.chd>             What changed between two versions (or against git)
   chd help <command>                       Details, options and exit codes of one command
   chd --version
   chd --help
@@ -60,10 +61,11 @@ If you are an AI assistant: run \`chd spec\` first to learn the .chd format, the
 run \`chd validate <file>\` after every edit you make to a diagram. Before you write an
 edited file back, run \`chd hash <file>\` again and compare it with the value from when
 you read it: if it differs, someone changed the file meanwhile, so re-read it and redo
-your edit on the fresh content.
+your edit on the fresh content. When you are done, run \`chd diff <file>\` (it compares with
+git at HEAD) and use it to tell the person what you changed.
 `
 
-// The help of the commands implemented in this file. `export` and `check` print their own, from
+// The help of the commands implemented in this file. `export`, `check` and `diff` print their own, from
 // their bundles (scripts/build-cli.mjs), next to the code that parses their options.
 const COMMAND_HELP = {
   spec: `Usage: chd spec [${SPEC_TOPIC_NAMES.join('|')}|all]
@@ -94,7 +96,7 @@ when you read the file before you write an edit back.
 Exit codes: 0 ok, 1 if the file can't be read, 2 usage error.
 `
 }
-const COMMANDS = ['spec', 'validate', 'hash', 'export', 'check']
+const COMMANDS = ['spec', 'validate', 'hash', 'export', 'check', 'diff']
 const wantsHelp = (args) => args.includes('--help') || args.includes('-h')
 
 function readSkillFile(rel) {
@@ -216,6 +218,25 @@ async function checkCommand(args) {
   return bundle.runCheck(args, env)
 }
 
+// `diff` is bundled the same way. It reads two versions of a diagram (two files, or a file and its
+// git revision) and says what changed, so a person can review an edit instead of trusting it.
+async function diffCommand(args) {
+  let bundle
+  try {
+    bundle = await import('./diff.mjs')
+  } catch (error) {
+    console.error(
+      `chd: the diff command is not built here (run 'npm run build:cli'): ${error instanceof Error ? error.message : error}`
+    )
+    return 1
+  }
+  if (wantsHelp(args)) {
+    console.log(bundle.DIFF_USAGE)
+    return 0
+  }
+  return bundle.runDiff(args)
+}
+
 export async function run(argv) {
   const [command, ...rest] = argv
   switch (command) {
@@ -270,6 +291,8 @@ export async function run(argv) {
       return exportCommand(rest)
     case 'check':
       return checkCommand(rest)
+    case 'diff':
+      return diffCommand(rest)
     default:
       console.error(`chd: unknown command '${command}'. Run 'chd --help'.`)
       return 2

@@ -1,23 +1,103 @@
-# 0150: Visual diff between two versions of a diagram
+# 0150: Review changes between two versions of a diagram
 
 ## Status
-Not Started. Logged 2026-10-21 from the [comparison with other tools](../../comparison.md). Sparse on purpose: a possible differentiator, to be reviewed and discussed before any decision to build it.
+In Progress (design started 2026-10-25, branch `epic/0150-visual-diff-between-versions`). Logged 2026-10-21 from the [comparison with other tools](../../comparison.md). Decisions are recorded in ADRs 0132 to 0137; the test status stays here.
 
 ## Goal
-Show what changed between two versions of a diagram (for example the working file against an earlier git revision) visually, so a change can be reviewed without reading JSON.
+Let a human review what changed in a diagram, most of all after an AI assistant edited it, so they check the change instead of gambling on it. A new window shows the later version on the real canvas, dims everything that did not change and colours what did. Version-control history is the usual source of the older version; the window's own pre-change version is the other.
 
 ## Why
-A `.chd` file diffs cleanly as text, but a reviewer cares how the picture changed. GitHub cannot show that for a custom format. A tool built around git is well placed to.
+A `.chd` file diffs as text, but the JSON diff of an AI edit is hard to read, and the picture is not in it. Several tools compare diagram versions (iGrafx, LeanIX, Camunda, Figma branches), all inside their own cloud or proprietary product. A plain-file, offline, git-native review, with a command for CI, is what this tool can add. The semantic side (tags, security, links, conformance) is the part a picture of moved boxes cannot give.
 
-## Two approaches (not exclusive)
-1. **Structural diff drawn on the canvas.** Elements have stable ids, so added, removed, moved, restyled and relabelled elements can be told apart and drawn as an overlay (added, removed as a ghost, changed). Part of this exists: "changes since last save" ([ADR 0102](../../decisions/0102-changes-since-last-save-scope.md)). Precise, selectable and needs no image comparison, but it is only as good as the rules for what counts as a change.
-2. **Pixel diff of two rendered images.** Render both versions to PNG in memory over the same bounds and show a swipe, blink or difference view. Catches any visual change without knowing the structure; but says nothing about which element changed, and one moved box makes much of the image differ. Best suited to CI: with a command-line export ([epic 0144](0144-svg-and-command-line-export.md)) a job can render the old and the new revision and attach a difference image to a pull request.
+## Design (hypotheses, to be tested)
+
+### Colours
+Classification is per element, one colour each, strongest first:
+
+| Colour | Meaning |
+|---|---|
+| Green | Added |
+| Red | Removed (a dashed ghost at its old place) |
+| Orange | A link string changed, was added or removed (`linkedDiagram`, `details`, reference images), or the Details file's content changed, was added or removed. Easy to miss, often important context: check it in git |
+| Yellow | Label, tags, security, edge source or target, connection points, parent container, direction sets or type changed |
+| Dimmed, uncoloured | Only position, size, rotation, layer order or style changed (not tracked for now; position can carry meaning in a map, so keep it in mind) |
+
+Each coloured element also gets a badge (+, −, ~, link glyph), because red/green and yellow/orange are easy to confuse. A legend in the window says what the colours mean.
+
+### The window
+- A new window, one per diagram path, opened from a menu command and the command palette, and from the "changed on disk" banner.
+- Real canvas, read-only. It reuses the node and edge components, the focus-search dimming ([ADR 0063](../../decisions/0063-isolate-mode.md)) and the Ctrl/Cmd-hover peek card pattern for the field-level details (tags added/removed, label old → new, edge target old → new, security).
+- It never saves, autosaves, writes recovery files or asks to save on close, and it is not registered as the window for that path.
+- Removed elements are not in the later file, so the window loads a merged model: the later elements plus ghosts of the removed ones. Safe only because the window cannot save.
+- A "diagram-level changes" strip, styled to stand out, for what the canvas cannot colour: legend, highlights, required tags, gravity presets, security catalog, direction sets, metadata, max connection points. Coarse: which collection changed and what was added or removed.
+- A summary ("2 orange · 3 yellow · 4 green · 1 red"), next/previous navigation (security first), a list of changes and a session-only "reviewed" tick.
+- **Revert this change** per row of the changes overview: the compare window sends the revert to the editor window, which applies it as an ordinary undoable edit (so the stale-edit rule and Ctrl+Z behave as for any edit). Details files are the hard case.
+
+### Where the older version comes from
+- **The window's own version before the change**, offered from the "changed on disk" banner: the version this window loaded against the file on disk now. Needs no git and is exact for "what did the assistant just change", where `HEAD` is wrong when there was uncommitted work first. Only while the window has no unsaved edits of its own.
+- **A git revision** (default `HEAD`, a typed revision such as `main` for review). Git only supplies the older bytes, with `git show <rev>:./file.chd` in the diagram's folder (and the same for a Details file); the comparison is the id-keyed diff over two whole files, never a parse of a unified diff. `execFile` with an argument array, no shell, a revision starting with `-` refused, and only `show`/`cat-file` (commands that refresh the index can run a repository's `core.fsmonitor`).
+- A link is compared by its stored string only. Whether the linked diagram itself changed is found when it is opened or closed, not here.
+
+### Guarding against bad matches
+- **Id churn:** if many elements are removed and re-added with the same type and label, a banner says N elements look replaced, not edited. The matching that pairs them runs only when the user presses a button (it is quadratic, and only worth it when the user does not already know). A later three-way merge would sit behind the same trigger.
+
+### Later in the epic
+- **Conformance and diagnostics delta (decided against, 2026-10-26):** run the conformance check on both versions and report findings the change introduced or resolved. A nice to have, not built: in CI the check runs on the checked-out version, not in the change view, and a reviewer can fetch the change and run the check locally. Revisit if it is missed in real use.
+- **`chd diff old.chd new.chd`:** the same classification as text or `--json`, with an exit-code option. For CI, a PR comment, and an AI skill that ends by reporting what it changed. An SVG image is a possible follow-up.
+
+### Left out on purpose
+Pixel diff (noisy, says nothing about which element changed); diffing inside linked diagrams; a text diff of Details notes in the app (git does it, orange points there); auto-opening a window after an AI write; a file-picker baseline; moved/resized/restyled tracking.
+
+## Spike result (2026-10-25)
+A compare window on the real canvas works. `?compare=<later>&base=<earlier>` (files, for now) opens a window that classifies both versions, builds the merged model and draws it with the editor's own node and edge components. Checked in the dev app on Windows with a modified copy of the C4 gallery diagram: green, red, orange and yellow outlines with badges, unchanged elements dimmed, a Ctrl-hover card, a legend with counts; double-click, right-click and selection do nothing.
+- **Read-only was cheap.** The window mounts no `Canvas`, so there is no save, autosave, recovery, close prompt, menu or keyboard shortcut to switch off. What is left is a `DiagramContext` with every action a no-op (25 fields), React Flow's own interaction props, and `pointer-events: none` on everything inside a node, which stops label editing, handles, resizers and context menus while the node still gets the hover.
+- **Main process:** a separate `createCompareWindow`, not registered under a path, with no close guard.
+- **Needed in shared code:** `nodeTypes`, `edgeTypes` and the default edge options moved to `canvas/flowTypes.ts`; the diff engine's field specs exported; `LabeledEdge` puts `data.compareClass` on its label chip, since the chip is drawn outside the edge's own element and would not dim otherwise.
+- **Trap:** without `connectionMode={ConnectionMode.Loose}` every edge is silently dropped (all handles are `source`).
+- **An edge whose handle ids do not exist on its node is not drawn**, in the editor or here ([known-issues](../../known-issues.md)). Decided with the maintainer: the review must show every edge, or the overview is lost. The engine builds a drawable copy for the window (`drawable.ts`, an end moved to the nearest point the node has, the comparison itself untouched) and the window says how many it moved. Only an edge whose end node does not exist cannot be drawn; the window counts those.
+- Dimming strength follows the existing Isolate opacity preference ([ADR 0063](../../decisions/0063-isolate-mode.md)).
+- **Not checked yet:** a removed container whose children survive, big diagrams, Linux, any revert.
+- **Spike code to keep:** `src/shared/compare/classify.ts` (tested), `CompareView.tsx`, `compare.css`, `flowTypes.ts`, `createCompareWindow`. **To replace:** the `?base=` file path as the baseline, the hover card (field names only, no old/new values), and the launch (an IPC call, no menu entry).
+
+## Blind test (2026-10-26)
+Seven random edits to the Meridian Rail landscape diagram (81 nodes, 83 edges), made without telling the maintainer, who then reviewed them in the compare window. All six changes the view tracks were found (a deleted entity, an edge label, an edited required tag, a removed tag, a renamed entity, a changed tag value), with the old and new tag values read from the hover card. The seventh item, layout-only (four moved entities, one restyled), is dimmed by design; the maintainer reported the restyle (as a move) and missed the four moves. Findings:
+- The engine's colour for every checkable edit matched the log, and the first run showed the drawable repair was too broad (54 edges, all with no point named, which the canvas already draws); it now moves only an end that names a point the node lacks.
+- **Edge changes have no hover detail** (the card is node-only), so the reviewer knew an edge changed but not how. Add it.
+- **"Removed (5)" for one deleted entity** counts its four connections as separate removals. Count elements and connections apart.
+- **A restyle is invisible in the view but visible in the editor**, so a reviewer may find it unprompted. Whether a faint marker (off by default) for moved, resized and restyled elements earns its place is still open; moves stay untracked either way.
 
 ## Open questions
-- Where the old version comes from: the git history (needs the `git` program, which is offline but an assumption), or a file the user picks.
-- Whether the two approaches ship together or the structural one first (first guess).
-- How notes (the Markdown files) and linked diagrams take part.
-- Alignment: both images need the same bounds, or the pixels will not line up.
+- The banner baseline cannot say a note's *content* changed (the window only holds notes it has opened); it still flags a changed note *link*. Git covers the content, so this stays as it is unless it is missed.
+- Does the changes overview in the compare window and the existing "changes since last save" panel become one thing, with the revert action in both?
+- How a revert of an element interacts with its edges, its container and a Details file.
+
+## Verification status (2026-10-27)
+Tried live on Windows (dev build): the compare window and its restricted bridge, the banner and git baselines, the changes list and keys, hover cards, revert from both windows, id matching, `chd diff` (8 tests with the real bundle and a temporary git repository), the View → Changes submenu, and a blind test of seven edits (see above). **Not verified:**
+- a real AI edit through the whole flow (every live run used scratch copies and edits made by hand or by script);
+- Linux and macOS: the git reader and the `PATH` of an app started from a dock, `chd diff` from an installed build, the second preload in a packaged build;
+- many notes changed at once (one `git show` each, six in parallel, not measured), a removed container whose children survive, diagrams where many elements share a name and type (id matching);
+- reverting an element while the editor has unsaved edits of its own.
+
+## Tasks
+- [x] Spike: the real canvas runs read-only in its own window (see above)
+- [x] Classification engine (`src/shared/compare/`): the four colours, what changed in words per field (tags, label, security cells, links, edge ends), a review order (security, links, content, removed, added), counts, the diagram-level collections, every edge drawable, an input for Details files the caller found changed. 12 tests, and a check that its field list matches "changes since last save". Absolute container positions are not needed while position is not tracked.
+- [x] Restricted preload for the compare window (`src/preload/compare.ts`, a second preload entry in `electron.vite.config.ts`): the editor's bridge has 58 methods, many of which write to disk; the compare window now gets 5 (`getCompareSession`, `revertFromCompare`, `readPreferences`, `onPreferencesChanged`, `readIconAsDataUrl`) and no raw IPC. Found by tracing the window's import tree (74 files): its preferences hook could save and migrate preferences, so it got a read-only twin (`useReadOnlyPreferences`); and a first trace missed `readIconAsDataUrl` because Prettier breaks the line after `window.api`. A guard test (`compare.test.mjs`) keeps the bridge exactly equal to what the window's code can reach, on the same channels as the editor's, with no write-style names; it fails if a write method is added or a needed one removed (both tried). Tried live: the compare window has 5 methods against the editor's 59 entries, `saveDocument`, `writePreferences`, `exportSvgToFile` and `openRecentDiagram` are undefined there, and rendering, dimming from preferences, a custom icon and all three reverts still work.
+- [x] Compare window plumbing (main process: no path registration, no recovery, no close prompt)
+- [x] Colours, badges, dimming, legend with counts (elements and connections apart), hover details for nodes and edges, a paint-brush marker for restyled elements (a legend toggle, on by default), the editor's zoom limits so a big diagram fits
+- [x] The changes list in the compare window: every changed element and connection in review order (security, links, content, removed, added), a coloured dot and the first line of what changed, a click frames it on the canvas (a connection by the two elements it joins) and puts a halo on it, N/P or the arrow keys step through with wraparound, session-only ticks (Space on the selected change) with a progress bar, a toggle to hide it. Tried live on the git comparison of the Meridian diagram (15 changes). Found by using it: a label whose first line is unchanged (a text note with a line added) read as "A → A"; it now shows the changed lines.
+- [x] Diagram-level changes strip (plain list for now)
+- [x] Baseline from the "changed on disk" banner: **Review changes** opens the window with this window's version as the earlier one and the file on disk as the later one. The editor hands both versions to the main process, which holds them under the id in the window's URL (`src/main/compare/compareWindow.ts`, checked with `parseDiagram` on the way in). Tried live on a scratch copy of the Meridian diagram: banner, button, window, counts and hover. Still open: the old Details content for this baseline, and a menu command and palette entry.
+- [x] Git baseline: **Compare with git revision…** (View menu and command palette) asks for a revision (default `HEAD`) and compares the file on disk with the file at that revision. Only `git show <revision>:./<path>`, no shell, a revision that could be an option refused, `core.fsmonitor` off, a Windows fallback for git's default folder. A changed note (Details file) turns its element orange with a few lines of what changed (`textPreview.ts`; line endings alone are not a change). Notes are read a few at a time; a note path that leaves the diagram's folder is never read. Tests: a real temporary repository, end to end. Tried live through the real menu and palette on a scratch repository. Not checked: Linux and macOS, a very large number of notes (one `git` process each).
+- [x] A **Review changes on disk** command beside it, for the same action as the banner button
+- [x] Next/previous navigation and reviewed ticks
+- [x] Id churn (`src/shared/compare/match.ts`, 6 tests): a cheap check (one pass with a map) suspects a rewrite when at least three removed elements, and a quarter of them, have an added element of the same type and name; the window then offers **Match them up**, and only that button runs the matching. Pass 1 pairs the same type and name (duplicates by nearest place); pass 2, the quadratic one, scores what is left on name similarity (edit distance, with a containment rule so "Passenger" matches "Passenger (mobile app user)") and nearness, best pair first; connections follow by their mapped ends and label. Bounded: skipped above 4 million pairs and stopped after 2.5 s with a note. Measured: 200 by 200 takes about 0.2 s, 800 by 800 hits the time limit and still pairs 727 of 800. A matched element says so on hover; **Undo matching** returns to the plain comparison; the earlier version is rewritten with the matched ids so the comparison, and a revert (the pairs travel with the request), see the same elements. Tried live: an outside rewrite of every id plus one rename and one deletion read as 15 changes, matching reduced it to the 2 real ones, and after reverting both the saved file equalled the original apart from ids. A three-way match would sit behind the same button; not built.
+- [x] Revert per change in the existing "changes since last save" panel: **Reset** (modified), **Remove** (added) and **Restore** (removed) on each row. One whole element, put back as the saved file has it, through the normal edit path, so Ctrl+Z undoes it in one step. Restoring a node also brings back the connections it lost whose other end exists; a connection whose end node is gone says which node to restore first; a node whose saved container is gone (or would now enclose it) goes top level where it was drawn; an added container's contents stay (ADR 0012). The saved file is read again at click time. Pure logic with 11 tests (`resetElement.ts`); tried live on a scratch diagram: guard message, restore with its connection, remove, reset, undo. Rows for a changed Details note have no reset (a file operation, not built).
+- [x] Connections that came or went with an element are listed under it, in the compare window and in the editor's changes panel ("5 connections removed with it"): ten connections around one deleted element mean the element was not wanted, not that ten connections were. A connection whose ends both survive, or one that only changed, stays a row of its own. Restore on a removed element already brings its connections back (where the other end exists), so no separate toggle; a toggle is a small addition if someone wants the element alone. In the Meridian git comparison the list went from 15 rows to 8.
+- [x] Revert from the compare window: **Revert** / **Restore** / **Remove** on each row. The compare window never changes a diagram: it asks the main process, which forwards the earlier version and the element to the editor window showing the same file (found through the window registry, 10 s timeout, kinds and changes validated), and that window does it through the same `putElementBack` as the changes panel, as one undoable edit. A revert also ticks the change off; a failure shows why under the row. Works whether or not the editor has reloaded, but the hint says to reload first, since reverting an outside edit only makes sense once the editor holds it. A note's text is a file and is not restored (the row says so). Tried live: banner, Review changes, Reload, then Revert, Restore and Remove from the compare window; the editor's saved file then equalled the original diagram (no differences, same 8 elements and 6 connections).
+- [x] Conformance and diagnostics delta: decided against, see above
+- [x] `chd diff <old> <new>` and `chd diff <file> [--rev <revision>]` (`src/cli/diffCommand.ts`, bundled to `resources/cli/diff.mjs`; the build gained a `@shared` alias because it reuses the app's git reader): the same review as the compare window as text or `--json`, sections in review order, connections under the element that took them along, notes compared (two files: the note files beside each; git: the note at the revision), `--match` for replaced ids with a hint when it looks needed, `--exit-code` like `git diff`. Exit codes 0 ok, 1 changed (only with `--exit-code`), 2 usage, 3 a version could not be read. 8 tests (the real bundle as a child process, including a temporary git repository). The skill, the CLI note in the folder instructions and `chd`'s own text tell an assistant to run it and report what it changed.
+- [x] `docs/` updates: README, getting-started, comparison, the architecture overview and AI-integration pages
+- [x] ADRs for what was decided and tested: [0132](../../decisions/0132-the-compare-window-is-a-read-only-canvas-with-its-own-bridge.md) to [0137](../../decisions/0137-chd-diff-the-same-review-without-the-app.md)
 
 ## Related
-[ADR 0102](../../decisions/0102-changes-since-last-save-scope.md), [epic 0117](0117-changes-since-last-save.md), [epic 0144](0144-svg-and-command-line-export.md).
+[ADR 0102](../../decisions/0102-changes-since-last-save-scope.md), [epic 0117](../completed-epics.md), [ADR 0109](../../decisions/0109-stale-edit-check-for-every-ai-write-path.md), [ADR 0131](../../decisions/0131-conformance-profiles.md), [epic 0144](0144-svg-and-command-line-export.md).
