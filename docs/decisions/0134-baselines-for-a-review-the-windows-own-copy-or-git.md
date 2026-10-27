@@ -1,7 +1,9 @@
 # 0134: Baselines for a review: the window's own copy, or git
 
 ## Status
-Decided (2026-10-27). Built and tried on Windows; not on Linux or macOS.
+Accepted (2026-10-27)
+Supersedes: none
+Superseded by: none
 
 ## Context
 A review compares a later version with an earlier one, and this tool keeps no history. Two sources are useful: the version the editor window loaded (for "what did the assistant just change"), and version control (for "what changed since the last commit or on this branch").
@@ -25,6 +27,5 @@ Both are in **View → Changes**, with "Changes since last save" ([ADR 0102](010
 - **Parse `git diff` output.** A diff of the JSON text says nothing about elements and breaks on formatting; two whole files compared by id does not.
 
 ## Consequences
-- **Verified:** tests against a real temporary repository, end to end; live through the real menu and palette on a scratch repository; the banner path on a scratch copy of the Meridian diagram.
-- **Not verified:** Linux and macOS (`PATH` of an app started from a dock, the Windows fallback is the only one), and a very large number of notes at once (six parallel `git show` processes, not measured).
-- The app now depends on `git` being installed for one feature; without it the menu item says so and the other baseline still works.
+- The app depends on `git` being installed for one feature; without it the menu item says so and the other baseline still works.
+- Each note compared costs one `git` process, hence the limit of six at a time.

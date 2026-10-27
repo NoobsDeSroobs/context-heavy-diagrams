@@ -25,7 +25,7 @@ Keep these updated as the work happens, not retroactively.
 
 ## Decision records
 
-A change that makes a real design choice gets an ADR (what was decided, what else was considered, why), not only the big ones. An ADR never refers to temporary working documentation in any way: no epics, no `PROGRESS.md`, no planning notes, no links, no numbers, no mention of a "parked" or "later" epic. Those are deleted or rewritten as the work moves on, and the ADR would be wrong the moment they are. It states the trigger and the scope directly ("not covered in the first version"). ADR-to-ADR links are fine, and an epic or planning note may link to an ADR. Do not run Prettier over `docs/**/*.md`: it reformats every table and buries a small edit in a huge diff; format code only.
+A change that makes a real design choice gets an ADR (what was decided, what else was considered, why), not only the big ones. An ADR states the decision, what it supersedes or is superseded by, and the reasoning; it carries no test results and no verified or not-verified lists (that is work status, kept in the epic and `PROGRESS.md`). An ADR never refers to temporary working documentation in any way: no epics, no `PROGRESS.md`, no planning notes, no links, no numbers, no mention of a "parked" or "later" epic. Those are deleted or rewritten as the work moves on, and the ADR would be wrong the moment they are. It states the trigger and the scope directly ("not covered in the first version"). ADR-to-ADR links are fine, and an epic or planning note may link to an ADR. Do not run Prettier over `docs/**/*.md`: it reformats every table and buries a small edit in a huge diff; format code only.
 
 ## Code layout
 

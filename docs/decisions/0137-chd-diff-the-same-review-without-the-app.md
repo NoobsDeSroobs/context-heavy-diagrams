@@ -1,7 +1,9 @@
 # 0137: `chd diff`, the same review without the app
 
 ## Status
-Decided (2026-10-27). Built and tested with the real bundle; not run from an installed build.
+Accepted (2026-10-27)
+Supersedes: none
+Superseded by: none
 
 ## Context
 The review is most needed after an AI assistant edited a diagram, and the assistant is not in the app. A terminal, a CI job and an assistant that wants to tell the person what it changed need the same answer as the compare window, as text.
@@ -25,6 +27,5 @@ The review is most needed after an AI assistant edited a diagram, and the assist
 - **An image of the change.** A possible follow-up on top of the SVG renderer; not built.
 
 ## Consequences
-- **Verified:** 8 tests that run the real bundle as a child process, including a temporary git repository (usage errors, exit codes, `--json`, `--match`, a revision git does not know).
-- **Not verified:** the command from an installed build; Linux and macOS (the git reader and the `PATH` the command runs with); a real AI edit followed through the whole flow, since every live run used scratch copies and edits made by hand or by script.
+- The command needs a build step before it exists, like `chd export`.
 - The skill is mirrored under `.claude/skills`; `npm run sync-ai` keeps the copy equal, and a test fails if it drifts.

@@ -1,7 +1,7 @@
 # 0150: Review changes between two versions of a diagram
 
 ## Status
-In Progress (design started 2026-10-25, branch `epic/0150-visual-diff-between-versions`). Logged 2026-10-21 from the [comparison with other tools](../../comparison.md). ADRs 0132 to 0137 record the tested results.
+In Progress (design started 2026-10-25, branch `epic/0150-visual-diff-between-versions`). Logged 2026-10-21 from the [comparison with other tools](../../comparison.md). Decisions are recorded in ADRs 0132 to 0137; the test status stays here.
 
 ## Goal
 Let a human review what changed in a diagram, most of all after an AI assistant edited it, so they check the change instead of gambling on it. A new window shows the later version on the real canvas, dims everything that did not change and colours what did. Version-control history is the usual source of the older version; the window's own pre-change version is the other.
@@ -70,6 +70,13 @@ Seven random edits to the Meridian Rail landscape diagram (81 nodes, 83 edges), 
 - The banner baseline cannot say a note's *content* changed (the window only holds notes it has opened); it still flags a changed note *link*. Git covers the content, so this stays as it is unless it is missed.
 - Does the changes overview in the compare window and the existing "changes since last save" panel become one thing, with the revert action in both?
 - How a revert of an element interacts with its edges, its container and a Details file.
+
+## Verification status (2026-10-27)
+Tried live on Windows (dev build): the compare window and its restricted bridge, the banner and git baselines, the changes list and keys, hover cards, revert from both windows, id matching, `chd diff` (8 tests with the real bundle and a temporary git repository), the View → Changes submenu, and a blind test of seven edits (see above). **Not verified:**
+- a real AI edit through the whole flow (every live run used scratch copies and edits made by hand or by script);
+- Linux and macOS: the git reader and the `PATH` of an app started from a dock, `chd diff` from an installed build, the second preload in a packaged build;
+- many notes changed at once (one `git show` each, six in parallel, not measured), a removed container whose children survive, diagrams where many elements share a name and type (id matching);
+- reverting an element while the editor has unsaved edits of its own.
 
 ## Tasks
 - [x] Spike: the real canvas runs read-only in its own window (see above)
