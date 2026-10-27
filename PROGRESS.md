@@ -1,6 +1,6 @@
 # Progress
 
-Where we are right now: a short pointer, not a log. The backlog is in [docs/planning/](docs/planning/README.md), finished epics in [docs/planning/completed-epics.md](docs/planning/completed-epics.md), decisions in [docs/decisions/](docs/decisions/), hard bugs in [docs/known-issues.md](docs/known-issues.md). History is in `git log`. Last updated 2026-10-26.
+Where we are right now: a short pointer, not a log. The backlog is in [docs/planning/](docs/planning/README.md), finished epics in [docs/planning/completed-epics.md](docs/planning/completed-epics.md), decisions in [docs/decisions/](docs/decisions/), hard bugs in [docs/known-issues.md](docs/known-issues.md). History is in `git log`. Last updated 2026-10-27.
 
 ## Status
 
@@ -14,15 +14,11 @@ MVP complete (2026-08-20). **v0.2.1 is the first open-source release** (2026-10-
 
 Merging, pushing, tagging and anything else on the remote is the maintainer's own action.
 
-## Restart point: epic 0150 (2026-10-26)
+## Restart point: epic 0150 (2026-10-27)
 
-Everything in the epic's task list is built, tested and tried live except its ADRs. Branch `epic/0150-visual-diff-between-versions`, clean at the last commit (`git log --oneline master..HEAD`). `npm run typecheck`, `npm run lint` and `npm test` pass (455 of 456 node tests; the one skipped is the symlink test, which cannot create symlinks on this Windows machine). What exists: the compare window (banner and git baselines, colours and badges, hover detail, changes list with navigation and ticks, connections grouped under their element, revert in the editor window, id matching on request, a restricted preload with 5 methods), Reset/Remove/Restore in the changes panel, and `chd diff`.
+Built, tested, tried live and documented: ADRs [0132](docs/decisions/0132-the-compare-window-is-a-read-only-canvas-with-its-own-bridge.md) to [0137](docs/decisions/0137-chd-diff-the-same-review-without-the-app.md). Branch `epic/0150-visual-diff-between-versions`, clean at the last commit (`git log --oneline master..HEAD`). `npm run typecheck`, `npm run lint` and `npm test` pass (455 of 456 node tests; the skipped one cannot create symlinks on this Windows machine). The View menu groups the three review commands under **Changes**. A blind test and a simulated assistant edit of the Meridian diagram (scratch copy) were reviewed by the maintainer; the conformance delta is left out on purpose (ADR 0133).
 
-Pick up in this order:
-1. **Sync with the maintainer: done (2026-10-26).** The conformance and diagnostics delta is left out (see the epic).
-2. **Cleanup before the merge: done**, and tried live in the dev app after the split (legend, list, N/P/arrows/Space, a click on a grouped connection, hover cards for an unchanged, modified, removed and edge target, the changed-on-disk banner's Review changes, then Reload and Revert, Restore and Remove from the compare window against the editor). `CompareView.tsx` is 394 lines: the review state is `useCompareReview.ts`, the hover card `HoverCard.tsx` and `hoverContent.ts`. The change wording shared by `chd diff` and the compare window is `src/shared/compare/format.ts` (tested). It removed two drifts: the diagram-level change line used `-` in the terminal and `−` in the window (now `−` in both), and the status title said "Link or Details changed" in the list and "Links or Details changed" in the legend (now the latter).
-3. **Not verified, flag to the maintainer:** a real AI edit through the whole flow (every live run used scratch copies and simulated outside edits); Linux and macOS (the git reader and PATH, `chd diff` from an installed build, the second preload in a packaged build); many notes at once (one `git show` each, six in parallel, not measured).
-4. **ADRs last**, once the maintainer accepts the epic, only from what was tested (project rule: results, not hypotheses). Likely topics: the compare window as a read-only canvas with a restricted bridge; the colour classification and what counts as a change; baselines and the git reader's safety rules; reverting through the editor window; id matching as a user-triggered guess; `chd diff`. Then collapse the epic into `completed-epics.md`.
+Left for the maintainer: accept the epic, then the epic collapses into [completed-epics.md](docs/planning/completed-epics.md) and its file is deleted. Not verified, listed in the ADRs: a real AI edit through the whole flow, Linux and macOS (the git reader and PATH, `chd diff` from an installed build, the second preload in a packaged build), many notes at once. Open: the version number for the next release (0.3.0 proposed).
 
 ## Notes for the next task
 
