@@ -90,7 +90,7 @@
       ${EndIf}
       WriteRegStr SHELL_CONTEXT "Software\Classes\.chd" "" "${CHD_PROGID}"
       WriteRegNone SHELL_CONTEXT "Software\Classes\.chd\OpenWithProgids" "${CHD_PROGID}"
-      WriteRegStr SHELL_CONTEXT "Software\Classes\${CHD_PROGID}" "" "Context Heavy Diagram"
+      WriteRegStr SHELL_CONTEXT "Software\Classes\${CHD_PROGID}" "" "Context-Heavy Diagram"
       WriteRegStr SHELL_CONTEXT "Software\Classes\${CHD_PROGID}\DefaultIcon" "" "$INSTDIR\${APP_EXECUTABLE_FILENAME},0"
       WriteRegStr SHELL_CONTEXT "Software\Classes\${CHD_PROGID}\shell" "" "open"
       WriteRegStr SHELL_CONTEXT "Software\Classes\${CHD_PROGID}\shell\open" "" "Open"
