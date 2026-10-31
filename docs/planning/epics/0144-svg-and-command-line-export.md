@@ -39,4 +39,4 @@ PNG was the only export, which was the weakest point against almost every other 
 - [ ] Follow-up: PDF export
 
 ## Related
-[ADR 0051](../../decisions/0051-png-export.md), [epic 0145](0145-read-only-html-export.md) (likely to share the renderer), [epic 0150](0150-visual-diff-between-versions.md) (the CI image diff needs this).
+[ADR 0051](../../decisions/0051-png-export.md), [epic 0145](0145-read-only-html-export.md) (likely to share the renderer), [epic 0150](../completed-epics.md) (the CI image diff needs this).
