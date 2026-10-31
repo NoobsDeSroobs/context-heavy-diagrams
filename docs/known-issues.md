@@ -40,7 +40,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **Status:** Open (found 2026-10-25, while building the compare window)
 
-**Symptom:** an edge is in the file and in the diagram's data but nothing is drawn, with only a console warning from React Flow (`Couldn't create edge for source handle id: "right"`, error 008). The gallery's `examples/gallery/technical/c4-context.chd` has two such edges. A hand-written or assistant-written edge with no `sourceHandle`/`targetHandle` fails the same way.
+**Symptom:** an edge is in the file and in the diagram's data but nothing is drawn, with only a console warning from React Flow (`Couldn't create edge for source handle id: "right"`, error 008). Eight edges in the gallery had this (repaired in the files since). A hand-written or assistant-written edge with no `sourceHandle`/`targetHandle` fails the same way.
 
 **Cause:** every connection point is a handle with an id. A side with no stored points implicitly has one, named after the side (`right`); once a side has stored points (`cp-1`, `cp-2`) that implicit `right` handle is gone. An edge still saying `right` then points at nothing, and React Flow drops it silently. Nothing at load repairs this.
 

@@ -443,7 +443,7 @@
       "type": "labeled",
       "source": "actor-passenger",
       "target": "booking-web-app",
-      "sourceHandle": "right",
+      "sourceHandle": "cp-2",
       "targetHandle": "left",
       "label": "uses",
       "style": {

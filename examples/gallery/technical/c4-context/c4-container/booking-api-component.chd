@@ -366,7 +366,7 @@
       "type": "labeled",
       "source": "staff-portal",
       "target": "booking-controller",
-      "targetHandle": "left",
+      "targetHandle": "cp-3",
       "label": "calls",
       "style": {
         "stroke": "#4a5568",
@@ -509,7 +509,7 @@
       "type": "labeled",
       "source": "orchestration-service",
       "target": "legacy-sync",
-      "sourceHandle": "right",
+      "sourceHandle": "cp-1",
       "targetHandle": "left",
       "label": "requests seat inventory via (during migration)",
       "style": {

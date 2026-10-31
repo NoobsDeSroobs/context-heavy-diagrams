@@ -191,7 +191,7 @@ Every field optional; absent = current hardcoded look, same as `style` being abs
 | `id` | string | yes | Unique within the file. |
 | `type` | string | no | Only `"labeled"` is currently meaningful (carries a `label`). Absent/unrecognized → treat as an unlabeled connector per the format's own semantics. **Always write it explicitly as `"labeled"` anyway when authoring a new edge** — this app had a real bug (fixed 2026-09-05) where an edge with a genuinely-absent `type` could silently render via a generic fallback with no styling, no highlight support, and no custom routing, on a build that predates the fix. Costs nothing, removes the risk entirely. |
 | `source` / `target` | string | yes | Node `id`s this edge connects. |
-| `sourceHandle` / `targetHandle` | string | no | Which connection point when a node has more than one. `"entity"`/`"container"` always expose `"top"`/`"right"`/`"bottom"`/`"left"` plus any custom `connectionPoints` ids. Absent = "renderer picks." |
+| `sourceHandle` / `targetHandle` | string | no | Which connection point when a node has more than one. A side with no stored `connectionPoints` has one implicit point named after the side (`"top"`/`"right"`/`"bottom"`/`"left"`); once a side has stored points only those ids exist on it, and an edge naming the side name is not drawn. Absent = "renderer picks." |
 | `label` | string | no | Text shown on the edge. |
 | `style` | object | no | See [Edge style](#edge-style). |
 | `metadata` | object | no | Same shape/rules as Node metadata — see [Metadata](#metadata). |
