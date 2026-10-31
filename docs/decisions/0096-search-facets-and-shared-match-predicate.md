@@ -11,7 +11,7 @@ A first cut added a "Has reference images" checkbox; that was rejected because e
 
 ## Decision
 
-**One search box, whitespace-separated terms, all ANDed.** An element must satisfy every term. There is deliberately **no OR, NOT or grouping** — that is what turns a search box into an expression evaluator; "X or Y" is two searches for now.
+**One search box, whitespace-separated terms, all ANDed.** An element must satisfy every term. There is deliberately **no OR or grouping** — that is what turns a search box into an expression evaluator; "X or Y" is two searches for now. A term can be negated with a leading `-` (below), which stays inside the all-ANDed model.
 
 | Term | Meaning |
 |---|---|
@@ -19,12 +19,16 @@ A first cut added a "Has reference images" checkbox; that was rejected because e
 | `label:text` / `id:text` | that field only |
 | `tag:text` | a tag's key **or** value contains it |
 | `tag:key=value` | one tag whose key contains `key` **and** value contains `value` |
+| `tag:key==value` | one tag whose key **equals** `key` and value **equals** `value` (whole strings, still case-insensitive) |
 | `has:references`, `has:icon`, `has:details`, `has:link` | the element carries one (aliases such as `has:refs`, `has:notes`) |
+| `-label:x`, `-id:x`, `-tag:…`, `-has:…` | a leading `-` negates the term: the element must **not** match it (`-has:details` = no note yet, `-tag:gdpr==pii` = not exactly PII) |
 
 - **Free text is unchanged for the plain case.** A run of consecutive bare words is *one* `any` term matched as a single substring — `web server` is a phrase, as before. A `name:value` term ends the run, so `customer label:x db` is three terms (`any:customer`, `label:x`, `any:db`).
 - Values may be quoted to contain spaces (`tag:"data class"=pii`). Names are case-insensitive.
 - **Unknown `word:` prefixes stay plain text** (a label like "Note: x" still searches). An empty value (`tag:`, `label:""`) or an unknown `has:` value is reported as a problem in the overlay instead of silently matching nothing.
-- Substring, case-insensitive matching throughout — including `tag:`. Exact key=value matching stays highlights' job.
+- Substring, case-insensitive matching by default — including `tag:`; `==` asks for the whole key and value (`tag:gdpr=pii` also finds "No PII", `tag:gdpr==pii` does not).
+- **Free text is not negated:** `-web` and `-any:web` are plain text, so a label such as "-5 degrees" still searches, and deep search never has to decide what "the note does not mention it" means.
+- **Negated `has:` applies to nodes only.** An edge never carries a note, link, icon or reference, so "lacks one" would otherwise select every connection. Text elements are nodes and do match `-has:details` when they have no note.
 - The picked icon (ADR 0072) is still its own control and ANDs with the terms; `has:icon` is the separate "carries any icon".
 - Edges have no icons, references, details or links, so `has:` terms and icon criteria exclude them; `tag:`, `label:`, `id:` and free text apply to them.
 

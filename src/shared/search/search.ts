@@ -15,6 +15,8 @@ export interface SearchableElement {
   references?: string[]
   details?: string
   linkedDiagram?: string
+  // Set for a connection, so a negated `has:` term can leave it out.
+  edge?: boolean
 }
 
 function stringifyMetadataValue(entry: MetadataEntry): string {
@@ -77,8 +79,11 @@ export function searchableFromData(
 //   id:web                    the element id contains it
 //   tag:gdpr                  a tag's key or value contains it
 //   tag:owner=alice           one tag whose key contains "owner" AND value contains "alice"
+//   tag:gdpr==PII             one tag whose key is "gdpr" AND value is "PII" (whole key and value, not substring)
 //   has:references | has:icon | has:details | has:link   the element carries one
-// Each run of consecutive bare words is ONE `any` term, matched as a single
+//   -label:x -id:x -tag:... -has:details   a leading "-" negates a term: the element must NOT match it
+// A negated has: term applies to nodes only (an edge never carries these, so "lacks notes" is
+// not true of every edge). Free text cannot be negated: `-foo` is just text. Each run of consecutive bare words is ONE `any` term, matched as a single
 // substring ("web server" is a phrase); a `name:value` term ends the run, so
 // "customer label:x db" is three terms. Values may be quoted to contain
 // spaces (tag:"data class"=pii). An unrecognised `word:` prefix stays plain
@@ -103,6 +108,16 @@ const HAS_ALIASES: Record<string, HasFacet> = {
 export interface TagTerm {
   key?: string
   value: string
+  // `key==value`: the whole key and the whole value must equal these, not contain them.
+  exact?: boolean
+}
+
+// The `-name:value` terms: an element must match none of them.
+export interface NegatedTerms {
+  labels: string[]
+  ids: string[]
+  tags: TagTerm[]
+  has: HasFacet[]
 }
 
 export interface ParsedQuery {
@@ -111,13 +126,33 @@ export interface ParsedQuery {
   ids: string[]
   tags: TagTerm[]
   has: HasFacet[]
+  not: NegatedTerms
   problems: string[]
 }
 
 const stripQuotes = (s: string): string => s.replace(/"/g, '')
 
+function parseTagTerm(value: string): TagTerm {
+  const eq = value.indexOf('=')
+  if (eq <= 0) return { value: value.toLowerCase() }
+  const exact = value[eq + 1] === '='
+  const term: TagTerm = {
+    key: value.slice(0, eq).toLowerCase(),
+    value: value.slice(eq + (exact ? 2 : 1)).toLowerCase()
+  }
+  return exact ? { ...term, exact } : term
+}
+
 export function parseSearchQuery(raw: string): ParsedQuery {
-  const parsed: ParsedQuery = { any: [], labels: [], ids: [], tags: [], has: [], problems: [] }
+  const parsed: ParsedQuery = {
+    any: [],
+    labels: [],
+    ids: [],
+    tags: [],
+    has: [],
+    not: { labels: [], ids: [], tags: [], has: [] },
+    problems: []
+  }
   let run: string[] = []
   const flushRun = (): void => {
     if (run.length > 0) parsed.any.push(run.join(' '))
@@ -126,31 +161,29 @@ export function parseSearchQuery(raw: string): ParsedQuery {
   // A term is a run of non-space characters, where a quoted section may
   // contain spaces.
   for (const term of raw.match(/(?:[^\s"]+|"[^"]*")+/g) ?? []) {
-    const m = /^(any|label|id|tag|has):(.*)$/is.exec(term)
-    if (!m) {
+    const m = /^(-?)(any|label|id|tag|has):(.*)$/is.exec(term)
+    // Free text has no negation: `-any:x` and `-x` stay plain text.
+    if (!m || (m[1] && m[2].toLowerCase() === 'any')) {
       run.push(stripQuotes(term))
       continue
     }
     flushRun()
-    const name = m[1].toLowerCase()
-    const value = stripQuotes(m[2]).trim()
+    const negated = m[1] === '-'
+    const name = m[2].toLowerCase()
+    const value = stripQuotes(m[3]).trim()
+    const into = negated ? parsed.not : parsed
     if (!value) {
-      parsed.problems.push(`${name}: needs a value`)
+      parsed.problems.push(`${m[1]}${name}: needs a value`)
     } else if (name === 'has') {
       const facet = HAS_ALIASES[value.toLowerCase()]
       if (!facet) parsed.problems.push(`has:${value} — try has:${HAS_FACETS.join(', has:')}`)
-      else if (!parsed.has.includes(facet)) parsed.has.push(facet)
+      else if (!into.has.includes(facet)) into.has.push(facet)
     } else if (name === 'tag') {
-      const eq = value.indexOf('=')
-      parsed.tags.push(
-        eq > 0
-          ? { key: value.slice(0, eq).toLowerCase(), value: value.slice(eq + 1).toLowerCase() }
-          : { value: value.toLowerCase() }
-      )
+      into.tags.push(parseTagTerm(value))
     } else if (name === 'label') {
-      parsed.labels.push(value)
+      into.labels.push(value)
     } else if (name === 'id') {
-      parsed.ids.push(value)
+      into.ids.push(value)
     } else {
       parsed.any.push(value)
     }
@@ -169,12 +202,13 @@ export interface SearchCriteria {
   ids: string[]
   tags: TagTerm[]
   has: HasFacet[]
+  not: NegatedTerms
   icon: IconRef | null
 }
 
 export function criteriaFromQuery(raw: string, icon: IconRef | null): SearchCriteria {
-  const { any, labels, ids, tags, has } = parseSearchQuery(raw)
-  return { any, labels, ids, tags, has, icon }
+  const { any, labels, ids, tags, has, not } = parseSearchQuery(raw)
+  return { any, labels, ids, tags, has, not, icon }
 }
 
 export function hasSearchCriteria(c: SearchCriteria): boolean {
@@ -184,6 +218,10 @@ export function hasSearchCriteria(c: SearchCriteria): boolean {
     c.ids.length > 0 ||
     c.tags.length > 0 ||
     c.has.length > 0 ||
+    c.not.labels.length > 0 ||
+    c.not.ids.length > 0 ||
+    c.not.tags.length > 0 ||
+    c.not.has.length > 0 ||
     c.icon !== null
   )
 }
@@ -196,6 +234,7 @@ function matchesTagTerm(
   return Object.entries(metadata).some(([key, entry]) => {
     const k = key.toLowerCase()
     const v = stringifyMetadataValue(entry).toLowerCase()
+    if (term.exact) return k === term.key && v === term.value
     return term.key !== undefined
       ? k.includes(term.key) && v.includes(term.value)
       : k.includes(term.value) || v.includes(term.value)
@@ -226,6 +265,14 @@ export function matchesStructuredCriteria(c: SearchCriteria, el: SearchableEleme
     return false
   }
   if (!c.ids.every((i) => el.id.toLowerCase().includes(i.toLowerCase()))) return false
+  // An edge never carries a note, link, icon or reference, so "lacks one" must not select every edge.
+  if (el.edge && c.not.has.length > 0) return false
+  if (c.not.has.some((f) => hasFacet(f, el))) return false
+  if (c.not.tags.some((t) => matchesTagTerm(t, el.metadata))) return false
+  if (c.not.labels.some((l) => !!el.label && el.label.toLowerCase().includes(l.toLowerCase()))) {
+    return false
+  }
+  if (c.not.ids.some((i) => el.id.toLowerCase().includes(i.toLowerCase()))) return false
   return true
 }
 

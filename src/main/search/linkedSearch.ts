@@ -57,7 +57,8 @@ export function registerLinkedSearchHandlers(): void {
           elementMatchesCriteria(criteria, {
             id: edge.id,
             label: edge.label,
-            metadata: edge.metadata
+            metadata: edge.metadata,
+            edge: true
           })
       })
     }

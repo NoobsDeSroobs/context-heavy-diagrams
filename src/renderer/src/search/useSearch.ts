@@ -155,9 +155,8 @@ export function useSearch(
           if (nodeHits[i]) matchedIds.add(n.id)
         })
         for (const e of edges) {
-          if (elementMatchesCriteria(criteria, searchableFromData(e.id, e.data))) {
-            matchedIds.add(e.id)
-          }
+          const edgeEl = { ...searchableFromData(e.id, e.data), edge: true }
+          if (elementMatchesCriteria(criteria, edgeEl)) matchedIds.add(e.id)
         }
 
         if (deepSearchEnabled && currentPath && hasSearchCriteria(criteria)) {
@@ -325,6 +324,7 @@ export function useSearch(
         ids: [],
         tags: [],
         has: [],
+        not: { labels: [], ids: [], tags: [], has: [] },
         icon
       })
       const order = orderMatches(matchedIds)
