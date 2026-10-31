@@ -50,7 +50,7 @@ A diagram is a small, deterministic text file, so git can do for it what it does
 - **Linked diagrams.** A node can link to another `.chd`, and Ctrl/Cmd-click opens it. Links only point downward, so any diagram in a tree opens as its own root.
 - **Per-node notes** in Markdown, shown in a side panel.
 - **Reference images** pinned to a node, shown in floating zoomable windows.
-- **Search** with a small query language (`tag:env=prod`, `has:details`, `-has:details` for what lacks notes, and more), optionally drilling into linked diagrams, with an isolate mode that dims everything else.
+- **Search** with a small query language (`tag:env=prod`, `has:notes`, `-has:notes` for what lacks notes, and more), optionally drilling into linked diagrams, with an isolate mode that dims everything else.
 
 ### Tags, highlights and views
 

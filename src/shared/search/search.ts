@@ -80,8 +80,8 @@ export function searchableFromData(
 //   tag:gdpr                  a tag's key or value contains it
 //   tag:owner=alice           one tag whose key contains "owner" AND value contains "alice"
 //   tag:gdpr==PII             one tag whose key is "gdpr" AND value is "PII" (whole key and value, not substring)
-//   has:references | has:icon | has:details | has:link   the element carries one
-//   -label:x -id:x -tag:... -has:details   a leading "-" negates a term: the element must NOT match it
+//   has:references | has:icon | has:notes | has:link   the element carries one
+//   -label:x -id:x -tag:... -has:notes   a leading "-" negates a term: the element must NOT match it
 // A negated has: term applies to nodes only (an edge never carries these, so "lacks notes" is
 // not true of every edge). Free text cannot be negated: `-foo` is just text. Each run of consecutive bare words is ONE `any` term, matched as a single
 // substring ("web server" is a phrase); a `name:value` term ends the run, so
@@ -89,7 +89,7 @@ export function searchableFromData(
 // spaces (tag:"data class"=pii). An unrecognised `word:` prefix stays plain
 // text (labels like "Note: x" keep working); an empty value or an unknown
 // `has:` value is reported as a problem instead of silently matching nothing.
-export const HAS_FACETS = ['references', 'icon', 'details', 'link'] as const
+export const HAS_FACETS = ['references', 'icon', 'notes', 'link'] as const
 export type HasFacet = (typeof HAS_FACETS)[number]
 
 const HAS_ALIASES: Record<string, HasFacet> = {
@@ -99,8 +99,8 @@ const HAS_ALIASES: Record<string, HasFacet> = {
   images: 'references',
   icon: 'icon',
   icons: 'icon',
-  details: 'details',
-  notes: 'details',
+  details: 'notes',
+  notes: 'notes',
   link: 'link',
   links: 'link'
 }
@@ -247,7 +247,7 @@ function hasFacet(facet: HasFacet, el: SearchableElement): boolean {
       return !!el.references && el.references.length > 0
     case 'icon':
       return !!el.icons && Object.values(el.icons).some((ref) => ref !== undefined)
-    case 'details':
+    case 'notes':
       return !!el.details
     case 'link':
       return !!el.linkedDiagram

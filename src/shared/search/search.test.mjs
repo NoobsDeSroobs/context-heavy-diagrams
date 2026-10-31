@@ -56,7 +56,8 @@ test('parsing: mixed terms', () => {
 
 test('parsing: names are case-insensitive, has: aliases and duplicates collapse', () => {
   assert.deepEqual(parseSearchQuery('HAS:Refs has:references has:images').has, ['references'])
-  assert.deepEqual(parseSearchQuery('has:notes').has, ['details'])
+  assert.deepEqual(parseSearchQuery('has:notes').has, ['notes'])
+  assert.deepEqual(parseSearchQuery('has:details has:notes').has, ['notes']) // details is the older name
   assert.deepEqual(parseSearchQuery('ANY:foo').any, ['foo'])
 })
 
@@ -138,8 +139,8 @@ test('has: facets', () => {
   assert.equal(matches('has:references', edge), false) // edges never carry references
   assert.equal(matches('has:icon', customerDb), true)
   assert.equal(matches('has:icon', cache), false)
-  assert.equal(matches('has:details', customerDb), true)
-  assert.equal(matches('has:details', cache), false)
+  assert.equal(matches('has:notes', customerDb), true)
+  assert.equal(matches('has:notes', cache), false)
   assert.equal(matches('has:link', customerDb), true)
   assert.equal(matches('has:link', cache), false)
 })
@@ -211,7 +212,7 @@ const pii = gdpr('PII')
 const sensitivePii = gdpr('Sensitive PII')
 
 test('a leading - negates label, id, tag and has terms', () => {
-  const p = parseSearchQuery('-has:details -label:x -id:y -tag:gdpr==pii -tag:env=prod')
+  const p = parseSearchQuery('-has:notes -label:x -id:y -tag:gdpr==pii -tag:env=prod')
   assert.deepEqual(p.not, {
     labels: ['x'],
     ids: ['y'],
@@ -219,10 +220,10 @@ test('a leading - negates label, id, tag and has terms', () => {
       { key: 'gdpr', value: 'pii', exact: true },
       { key: 'env', value: 'prod' }
     ],
-    has: ['details']
+    has: ['notes']
   })
   assert.deepEqual(p.has, [])
-  assert.equal(hasSearchCriteria(q('-has:details')), true)
+  assert.equal(hasSearchCriteria(q('-has:notes')), true)
 })
 
 test('free text cannot be negated: -word and -any: stay plain text', () => {
@@ -234,15 +235,15 @@ test('a negated term needs a value, like a positive one', () => {
   assert.deepEqual(parseSearchQuery('-tag: -has:banana').problems.length, 2)
 })
 
-test('-has:details finds nodes without a note, never edges', () => {
-  assert.equal(matches('-has:details', cache), true)
-  assert.equal(matches('-has:details', customerDb), false)
-  assert.equal(matches('-has:details', { ...edge, edge: true }), false)
+test('-has:notes finds nodes without a note, never edges', () => {
+  assert.equal(matches('-has:notes', cache), true)
+  assert.equal(matches('-has:notes', customerDb), false)
+  assert.equal(matches('-has:notes', { ...edge, edge: true }), false)
 })
 
 test('negated terms combine with positive ones', () => {
-  assert.equal(matches('has:references -has:details', cache), true)
-  assert.equal(matches('has:references -has:details', customerDb), false)
+  assert.equal(matches('has:references -has:notes', cache), true)
+  assert.equal(matches('has:references -has:notes', customerDb), false)
   assert.equal(matches('-label:customer', cache), true)
   assert.equal(matches('-label:customer', customerDb), false)
   assert.equal(matches('-id:n1', customerDb), false)
