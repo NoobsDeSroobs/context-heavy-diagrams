@@ -65,6 +65,7 @@ Let a diagram be checked against a named architectural style or rule set — for
 Medium-sized. The evaluation can be a pure function in `src/shared` over a parsed diagram plus a profile, in the style of `changesSinceSave.ts`: unit-testable, and reusable by the Diagnostics panel, the CLI and the Claude Desktop extension. The hard parts are the design questions above, not the code.
 
 ## Related
+- [Diagram types and architecture types](../../diagram-and-architecture-types.md): a reference list of what people draw and which rules each architecture style implies, with the rule shapes they need.
 - [Epic 0088](later/0088-cross-container-edge-detection.md) — container-crossing edges, a likely building block.
 - [Epic 0134](later/0134-self-describing-chd-files.md) — a `.chd` that tells an AI how to read it; a profile pointer could ride along.
 - [ADR 0096](../../decisions/0096-search-facets-and-shared-match-predicate.md) — the shared match predicate rules could reuse.
