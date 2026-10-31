@@ -13,7 +13,7 @@ The project is at an early 0.x stage. Only the latest commit on `master` is supp
 
 ## What is in scope
 
-Context Heavy Diagrams is an offline desktop app. Its design promises are the places to look:
+Context-Heavy Diagrams is an offline desktop app. Its design promises are the places to look:
 
 - **It makes no network connections.** Every non-local request from the app's windows is blocked and a test fails if a network API appears in the source ([ADR 0113](docs/decisions/0113-enforced-offline-behaviour.md)). Anything that makes it talk to the network, or lets content reach a remote host, is in scope.
 - **A `.chd` file is untrusted input.** People will open diagrams shared by others. A file must not be able to read, write, copy or delete anything outside its own folder, run code, or take over the app window ([ADR 0115](docs/decisions/0115-paths-stored-in-diagrams-are-untrusted.md)).

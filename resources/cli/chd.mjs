@@ -42,7 +42,7 @@ const SPEC_TOPICS = {
 }
 const SPEC_TOPIC_NAMES = Object.keys(SPEC_TOPICS)
 
-const HELP = `chd — command-line companion to Context Heavy Diagrams
+const HELP = `chd — command-line companion to Context-Heavy Diagrams
 
 Usage:
   chd spec [topic]                         Print the .chd file format reference

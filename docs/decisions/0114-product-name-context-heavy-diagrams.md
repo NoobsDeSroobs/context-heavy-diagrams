@@ -1,4 +1,4 @@
-# 0114: Product name — Context Heavy Diagrams
+# 0114: Product name — Context-Heavy Diagrams
 
 ## Status
 Accepted
@@ -7,7 +7,7 @@ Accepted
 The project had only placeholder names: "context-heavy-diagram-tool" (the repository and package), "electron-scaffold" before that, and "Context-Heavy Diagram Tool (Preview)" in the installer, window title and extension. Naming had been left open while the project's scope was unclear. With the open-source release ([ADR 0111](0111-open-source-release-approach.md)) it needed a real name, and a name that ends in "Tool (Preview)" did not fit a public project.
 
 ## Decision
-- **The product is called Context Heavy Diagrams** — no hyphens, no "Tool", no "Preview" (the 0.x version already says "early"). The file extension stays `.chd`, and a file is a "Context Heavy Diagram".
+- **The product is called Context-Heavy Diagrams** (hyphenated: "context-heavy" modifies "diagrams"), with no "Tool", no "Preview" (the 0.x version already says "early"). The file extension stays `.chd`, and a file is a "Context-Heavy Diagram".
 - **Technical identifiers follow the name,** so nothing visible still says "diagram tool":
   - package name, executable (`context-heavy-diagrams`), installer file name and the `chd` launchers;
   - `appId` `com.contextheavydiagrams.app`, also used as the Windows app user model id (it was still the scaffold's `com.electron`);

@@ -1,4 +1,4 @@
-# How Context Heavy Diagrams compares with other tools
+# How Context-Heavy Diagrams compares with other tools
 
 This is an assessment of where this tool fits among the diagramming tools you might need or want to use. It describes my understanding of what each tool does, not which is overall best, as they are built for different jobs.
 

@@ -1,10 +1,10 @@
-# Context Heavy Diagrams
+# Context-Heavy Diagrams
 
 **An offline desktop diagramming tool. Diagrams are plain-text files that diff cleanly in git, and every box can carry notes, tags, images and a link to a deeper diagram. The canvas stays readable while the context lives behind it.**
 
 > **Early open-source release (0.x).** It is built and tested mainly on Windows. Linux and macOS are supported targets but not yet verified, and there are no prebuilt downloads yet, so you build it from source (below). File compatibility is a priority, but expect rough edges. `1.0.0` is reserved for when the tool is feature-complete.
 
-![Context Heavy Diagrams showing the Meridian Rail landscape in dark mode, with the notes panel open on the Customer Profile Service](docs/images/hero.png)
+![Context-Heavy Diagrams showing the Meridian Rail landscape in dark mode, with the notes panel open on the Customer Profile Service](docs/images/hero.png)
 
 https://github.com/user-attachments/assets/50d4d6b5-6aeb-47e9-b7b5-9f252e3970c4
 
@@ -12,7 +12,7 @@ https://github.com/user-attachments/assets/50d4d6b5-6aeb-47e9-b7b5-9f252e3970c4
 
 ## Why another diagramming tool?
 
-Commercial diagramming tools are restrictive, and general box-and-arrow editors make you pay for flexibility with fiddly mechanics: overlapping objects you have to move together, arrows that don't follow when you move a box, groups that fight you when you edit one part. Context Heavy Diagrams is built around a few rules instead:
+Commercial diagramming tools are restrictive, and general box-and-arrow editors make you pay for flexibility with fiddly mechanics: overlapping objects you have to move together, arrows that don't follow when you move a box, groups that fight you when you edit one part. Context-Heavy Diagrams is built around a few rules instead:
 
 - **A node is one thing.** Notes, links, tags and icons are fields *on* the node, never separate objects you have to keep aligned.
 - **Edges are always attached.** They are bound to connection points and re-route when anything moves or resizes.
