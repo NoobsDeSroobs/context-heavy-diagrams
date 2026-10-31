@@ -17,6 +17,7 @@ Holding Ctrl (Cmd on Mac) while the pointer rests on a node shows a small read-o
 - **Modifier arrives independently of the pointer:** the key can go down while already hovering (no mouseenter), so key state is tracked on the window and the mouseenter event's own `ctrlKey`/`metaKey` re-seeds it. Window blur clears everything so a missed keyup can't leave the card stuck.
 - **Suppression:** the card hides while any pointer button is down (drag, box-select, pan) and, until the modifier is released, after any other key is pressed with the modifier held (Ctrl+A/C/V/Z…) or after a Ctrl+click (link navigation) — it never flashes over those gestures. A wheel event re-measures the node rect (Ctrl+wheel zooms).
 - **Content source:** the note's in-memory shadow if it has been opened this session (so unsaved edits show), else the file is read **when the peek starts** — no load-time reads, never stale. The card component is keyed by node id, so its fetch state resets per node.
+- **Link glyph:** a node that links to a sub-diagram also gets a small link icon in the card's top-right corner, so the link reads at a glance before the footer text.
 - **Non-interactive:** `pointer-events: none`; it can never intercept a click.
 
 ## Alternatives considered

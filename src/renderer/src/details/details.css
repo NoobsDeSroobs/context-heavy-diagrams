@@ -139,6 +139,19 @@
   font-weight: bold;
 }
 
+/* Link glyph in the top-right corner when the node opens a sub-diagram; the
+   title keeps clear of it. */
+.peek-card-link-icon {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  opacity: 0.7;
+}
+
+.peek-card-linked .peek-card-title {
+  padding-right: 32px;
+}
+
 .peek-card-tags {
   display: flex;
   flex-wrap: wrap;
