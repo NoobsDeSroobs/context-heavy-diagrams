@@ -28,7 +28,8 @@ Change the README, the website copy and the docs so that a first-time reader see
 - [ ] Add the short regulated-settings list
 - [ ] Check each new sentence against the software before it goes in
 - [ ] Reuse the wording for the website
-- [ ] Revisit the README's install section when the installers exist
+- [ ] Revisit the README's install section when the installers exist ([0161](0161-published-windows-installers-built-by-ci.md))
+- [ ] Link the manual-layout stance to the parked [auto-layout](later/0126-auto-layout.md) epic, so the two do not contradict each other
 
 ## Notes
 Raised after a reader's overview of the tool. Its claims about C4 checks, automated migration and "enterprise" use did not match the software and are listed above as things not to say. The reader knew installers are planned; the missing installer is the largest barrier for the non-technical audience and is tracked outside this epic.
