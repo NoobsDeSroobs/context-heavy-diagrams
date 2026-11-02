@@ -25,14 +25,14 @@ AI
 Named entries for further apps are added one at a time, once each has been tested; their config formats change and cannot be assumed.
 
 ## What "copy server settings" needs
-- The server shipped unpacked beside the `chd` command line (today it exists only inside the zipped `.mcpb`).
+- A `chd mcp` command that runs the server over stdio in a chosen folder, as decided in [ADR 0138](../../decisions/0138-the-mcp-server-carries-the-guidance-the-cli-carries-the-checks.md). Today the server exists only inside the zipped `.mcpb`, so it has to ship unpacked beside the `chd` command line.
 - A way to run it without a system Node: the launcher that runs the app's own executable as Node, as the `chd` command line does ([ADR 0106](../../decisions/0106-chd-command-line-tool.md)).
-- A snippet with the launcher path, the server file, the chosen folder and the update setting (read-only by default). The AI-provider data warning stays.
+- A snippet that points a client at `chd mcp` with the chosen folder and the update setting (read-only by default). The AI-provider data warning stays.
 - Not limited to Windows and macOS, which gives Linux a route to the server for the first time.
 
 ## Tasks
 - [ ] Restructure the AI menu as above; the label and dialog text say "MCP server", not "extension", except for the Claude Desktop entry
-- [ ] Ship the server unpacked and add the launcher
+- [ ] Ship the server unpacked, add the launcher and the `chd mcp` command; the Claude Desktop package runs the same server
 - [ ] "Other apps: copy server settings…": folder picker, update choice, snippet, warning
 - [ ] Reword the folder-setup label and docs so they say which parts serve any agent (`AGENTS.md`) and which serve Claude Code
 - [ ] Update ADR 0110 ("Getting it to the user") and ADR 0105 in place; no new ADR, the delivery routes are the same
