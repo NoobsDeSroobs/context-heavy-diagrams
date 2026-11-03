@@ -1,0 +1,76 @@
+# Builds the Windows installer when a version tag is pushed and publishes it as a
+# GitHub Release (ADR 0139). The maintainer creates and pushes the tag; this only
+# reacts to it. The release job is the only one holding a write token, so the
+# actions it uses are pinned by commit hash.
+name: Release
+
+on:
+  push:
+    tags: ['v*.*.*']
+  # Re-run for an existing tag (for example after a failed publish).
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to build and publish, e.g. v0.4.0
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.event.inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  windows:
+    name: Windows installer
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        shell: bash
+    env:
+      TAG: ${{ github.event.inputs.tag || github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: refs/tags/${{ github.event.inputs.tag || github.ref_name }}
+          fetch-depth: 0
+      - name: Check the tag
+        run: |
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Not a version tag: $TAG"; exit 1; }
+          version=$(node -p "require('./package.json').version")
+          [ "$TAG" = "v$version" ] || { echo "Tag $TAG does not match package.json version $version"; exit 1; }
+          git merge-base --is-ancestor HEAD origin/master || { echo "The tagged commit is not on master"; exit 1; }
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      # --publish never: electron-builder must not upload anything itself.
+      - run: npm run build:win -- --publish never
+      - name: Checksums and release notes
+        run: |
+          version=$(node -p "require('./package.json').version")
+          (cd dist && sha256sum "context-heavy-diagrams-$version-setup.exe" > SHA256SUMS)
+          node scripts/changelog-section.mjs "$version" > notes.md || echo "Fixes; see the commit history." > notes.md
+          {
+            cat notes.md
+            printf '\n### Installing\n\nThe installer is not signed yet. Windows shows "Windows protected your PC": choose **More info**, then **Run anyway**. The SHA-256 of the installer is in `SHA256SUMS`.\n'
+          } > release-notes.md
+      - name: Publish the release
+        run: |
+          version=$(node -p "require('./package.json').version")
+          file="dist/context-heavy-diagrams-$version-setup.exe"
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" "$file" dist/SHA256SUMS --clobber
+          else
+            flag=""
+            case "$version" in 0.*) flag="--prerelease" ;; esac
+            gh release create "$TAG" "$file" dist/SHA256SUMS --verify-tag --title "Context-Heavy Diagrams $version" --notes-file release-notes.md $flag
+          fi

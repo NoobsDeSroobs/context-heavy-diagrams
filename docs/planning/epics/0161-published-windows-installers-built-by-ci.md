@@ -1,7 +1,7 @@
 # 0161: Published Windows installers, built by CI on a version tag
 
 ## Status
-Not Started.
+In Progress. The workflow, ADR 0139, the README Download section and the 0.4.0 changelog entry are written; the epic is done when the first tag has produced a release and the installer passes a clean-machine test.
 
 ## Goal
 Anyone can download a Windows installer for each released version from the repository's releases page, without Node, git or a build. The installer is built by a GitHub Actions workflow when the maintainer pushes a version tag, so the file on the page is the one built from that tagged commit.
@@ -31,17 +31,17 @@ Permissions: the workflow gets `contents: write` only in the release job, and no
 - **Attestation.** GitHub can attach a build-provenance attestation to the installer. Cheap to add; decide whether it is worth the extra concept for a first release.
 
 ## Tasks
-- [ ] Decide the scope of the first release (Windows only, or also the Linux and Mac builds as unverified)
-- [ ] ADR: GitHub Releases built by CI as the distribution channel, unsigned at first, no auto-update
-- [ ] `release.yml`: tag trigger, version and branch guard, tests, build, checksums, release with notes from the changelog
-- [ ] `workflow_dispatch` for an existing tag; use it to publish `v0.3.0`
-- [ ] Pin the actions in the release workflow by commit hash
+- [x] Decide the scope of the first release: Windows only
+- [x] ADR: GitHub Releases built by CI as the distribution channel, unsigned at first, no auto-update ([ADR 0139](../../decisions/0139-releases-built-by-ci-from-a-version-tag.md))
+- [x] `release.yml`: tag trigger, version and branch guard, tests, build, checksums, release with notes from the changelog
+- [x] `workflow_dispatch` for an existing tag. It cannot publish `v0.3.0` unchanged: that tag lacks the changelog script the workflow runs, and it has no release notes to take
+- [x] Pin the actions in the release workflow by commit hash
+- [ ] First tag: watch the first run of the workflow (it cannot be tested before)
 - [ ] Silent-install smoke test on the runner (`/S`), then run the app's `chd --version`
 - [ ] Research signing options and record the outcome in the ADR
 - [ ] Check the licence and notices are inside the installer and the release notes point to the tagged source
-- [ ] README: a Download section above build-from-source; first-run SmartScreen steps and the checksum
-- [ ] Update `docs/architecture/packaging.md` (Phase 1 now ships; add the CI path) and the stale line in `CLAUDE.md` that says no installers are made yet
-- [ ] Fix the packaging doc's Mac paragraph: the camera and microphone entries it warns about are no longer in `electron-builder.yml`
+- [x] README: a Download section above build-from-source; first-run SmartScreen steps and the checksum
+- [x] Update `docs/architecture/packaging.md` (the CI path) and the stale line in `CLAUDE.md` that said no installers are made yet
 - [ ] Put the first installer through a clean-machine test (no Node, no repo) before announcing it
 
 ## Notes

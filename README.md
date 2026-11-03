@@ -91,6 +91,12 @@ https://github.com/user-attachments/assets/2e63dee5-85f8-4b32-a75a-f986084bd873
 
 > Advanced features are opt-in. A new diagram behaves like plain boxes and arrows until you reach for more ([ADR 0054](docs/decisions/0054-progressive-disclosure-for-advanced-features.md)).
 
+## Download
+
+**Windows:** get `context-heavy-diagrams-<version>-setup.exe` from the [releases page](https://github.com/NoobsDeSroobs/context-heavy-diagrams/releases), together with `SHA256SUMS`. The installer is **not signed yet**, so Windows shows "Windows protected your PC": choose **More info**, then **Run anyway**. You have to accept the install this way until the installers are signed. To check the download, compare `Get-FileHash <file>` in PowerShell with `SHA256SUMS`.
+
+**Linux and macOS:** no installer is published yet; build from source below.
+
 ## Try it
 
 You need [Node.js](https://nodejs.org/) (a recent LTS or current release, developed on Node 24) and git. There is no database, no external service and no native compile step.

@@ -60,7 +60,7 @@ Flag anything that can only be verified on one OS so someone can test it there.
 
 - **Version numbers** follow semantic versioning: PATCH for fixes, MINOR for a new feature people will notice or an additive file-format change, MAJOR for an incompatible change to the file format, the command line or saved preferences. Before 1.0.0 such an incompatible change is a MINOR bump, listed in the changelog (under File format or Changed); 1.0.0 is a deliberate decision to call those interfaces stable, after which the MAJOR rule applies. When an epic is done, decide whether it warrants a new MINOR or MAJOR, say so before the merge, and bump `package.json` and `package-lock.json` on the epic's branch.
 - **`CHANGELOG.md`** gets an entry for every MINOR or MAJOR release: short, written for the people who use the tool (added, changed, file format), linking to the ADRs for the reasons. A PATCH release needs an entry only if people must know something.
-- **Tags:** each release gets an annotated `vMAJOR.MINOR.PATCH` tag on master, on the commit that brings the release in. Pull requests are squash-merged, so never tag a commit on a feature branch. No release builds or installers are made yet.
+- **Tags:** each release gets an annotated `vMAJOR.MINOR.PATCH` tag on master, on the commit that brings the release in. Pull requests are squash-merged, so never tag a commit on a feature branch. Pushing the tag makes CI build and publish the Windows installer ([ADR 0139](docs/decisions/0139-releases-built-by-ci-from-a-version-tag.md)), so the version bump and the changelog entry must already be on master.
 
 ## Documentation conventions
 
