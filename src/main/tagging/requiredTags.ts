@@ -14,7 +14,7 @@ function normalizePath(path: string): string {
   return process.platform === 'win32' ? path.toLowerCase() : path
 }
 
-// A diagram's own children/assets/details colocate in a same-named
+// A diagram's own children/assets/notes colocate in a same-named
 // sibling folder (ADR 0005/0006) — e.g. main.chd's children live in
 // main/, not directly next to main.chd itself. Mirrors
 // linkedDiagramDirFor in links.ts.

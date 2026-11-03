@@ -45,7 +45,7 @@ export function useDiagnostics({
   // wipe it; combined for display in `displayedDiagnostics`.
   const [hierarchyLoadNotes, setHierarchyLoadNotes] = useState<string[]>([])
   // Elements referencing a file that no longer resolves: a linked diagram, custom icon, reference
-  // image or details `.md` (ADR 0084). Refreshed by scanMissingFiles on load and by the Diagnostics
+  // image or note `.md` (ADR 0084). Refreshed by scanMissingFiles on load and by the Diagnostics
   // "Recheck" button; it is an async fs check, so it can't be derived during render. Session-only.
   //
   // "Remove" in the panel doesn't mutate anything: it moves the entry into `stagedFileRemovals`,
@@ -73,7 +73,7 @@ export function useDiagnostics({
 
   // Missing-file scan for the Diagnostics panel (ADR 0084): collect every
   // on-disk resource a diagram element references — linked diagrams, custom
-  // icons, reference images, details files — ask main which don't resolve,
+  // icons, reference images, notes — ask main which don't resolve,
   // and keep those. Takes the node/legend lists + diagram path explicitly
   // so it can run against a freshly-loaded diagram before that state has
   // committed. An unsaved diagram (no path) can't have resolvable

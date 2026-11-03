@@ -1,5 +1,5 @@
 /* Diagram-settings panel, diagnostics panel, and preferences panel —
-   same fixed right-side dock shell as .details-panel (toolbar + scrollable
+   same fixed right-side dock shell as .notes-panel (toolbar + scrollable
    body), different body content. Highlights panel used to be part of this
    family too; moved to its own floating-popup treatment near .legend-panel
    below (fix/highlights-free-tags-and-toggle). */

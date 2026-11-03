@@ -15,7 +15,7 @@ import {
   type Side
 } from './fields.ts'
 
-// green / red / orange (a link or a Details file) / yellow (what the element says or connects to)
+// green / red / orange (a link or a Note) / yellow (what the element says or connects to)
 export type CompareStatus = 'added' | 'removed' | 'links' | 'content'
 
 export interface FieldChange {
@@ -86,11 +86,11 @@ function groupConnections(items: ReviewItem[]): ReviewItem[] {
   return top
 }
 
-// What happened to an element's Details file, which only the caller can read.
-export type DetailsContentChange = 'changed' | 'added' | 'removed'
+// What happened to an element's Note, which only the caller can read.
+export type NotesContentChange = 'changed' | 'added' | 'removed'
 
-export interface DetailsContent {
-  state: DetailsContentChange
+export interface NotesContent {
+  state: NotesContentChange
   // A few lines of what changed, for the hover card (textPreview.ts).
   preview: string[]
 }
@@ -111,7 +111,7 @@ export function describeCount(count: ElementCount): string {
 }
 
 export interface CompareOptions {
-  detailsContent?: ReadonlyMap<string, DetailsContent>
+  notesContent?: ReadonlyMap<string, NotesContent>
 }
 
 export interface Classification {
@@ -251,8 +251,8 @@ export function classifyDiagrams(
   options: CompareOptions = {}
 ): Classification {
   const ctx = contextFor(base, next)
-  const detailsField = (id: string): FieldChange | undefined => {
-    const content = options.detailsContent?.get(id)
+  const notesField = (id: string): FieldChange | undefined => {
+    const content = options.notesContent?.get(id)
     if (!content) return undefined
     return {
       field: 'Note file content',
@@ -265,13 +265,7 @@ export function classifyDiagrams(
       after: undefined
     }
   }
-  const nodes = classifyElements<DiagramNode>(
-    base.nodes,
-    next.nodes,
-    NODE_FIELDS,
-    ctx,
-    detailsField
-  )
+  const nodes = classifyElements<DiagramNode>(base.nodes, next.nodes, NODE_FIELDS, ctx, notesField)
   const edges = classifyElements<DiagramEdge>(base.edges, next.edges, EDGE_FIELDS, ctx)
 
   const merged: DiagramFile = {

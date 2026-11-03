@@ -33,7 +33,7 @@ Tags and other key-value metadata are in the **Metadata** section of the propert
 
 ## 4. Link a deeper diagram
 
-Right-click an element and choose **Link to diagram…** to point it at another `.chd` file. Ctrl-click the element to follow the link; if it has none, Ctrl-click offers to create and link a new diagram. Links point downward only, so any diagram in a tree can be opened on its own as a root. Hold Ctrl while hovering an element to peek at its details, tags and link without opening anything.
+Right-click an element and choose **Link to diagram…** to point it at another `.chd` file. Ctrl-click the element to follow the link; if it has none, Ctrl-click offers to create and link a new diagram. Links point downward only, so any diagram in a tree can be opened on its own as a root. Hold Ctrl while hovering an element to peek at its note, tags and link without opening anything.
 
 ## 5. See the picture from different angles
 

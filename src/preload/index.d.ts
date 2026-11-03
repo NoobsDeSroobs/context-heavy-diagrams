@@ -41,8 +41,8 @@ export interface DiagramApi {
   readIconAsDataUrl(diagramPath: string, relativePath: string): Promise<string>
   pickAndCopyReferences(diagramPath: string): Promise<string[] | null>
   readReferenceAsDataUrl(diagramPath: string, relativePath: string): Promise<string>
-  readDetails(diagramPath: string, relativePath: string): Promise<string>
-  readDetailsWithStamp(
+  readNotes(diagramPath: string, relativePath: string): Promise<string>
+  readNotesWithStamp(
     diagramPath: string,
     relativePath: string
   ): Promise<{ content: string; stamp: Stamp }>
@@ -110,7 +110,7 @@ export interface DiagramApi {
     path: string | null,
     sessionId: string,
     diagram: DiagramFile,
-    detailsDrafts: Record<string, string>,
+    noteDrafts: Record<string, string>,
     noteBaselines?: Record<string, NoteBaseline>
   ): Promise<void>
   deleteRecoverySnapshot(path: string | null, sessionId: string): Promise<void>

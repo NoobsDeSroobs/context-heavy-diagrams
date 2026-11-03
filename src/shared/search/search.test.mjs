@@ -4,7 +4,7 @@ import assert from 'node:assert/strict'
 import {
   criteriaFromQuery,
   elementMatchesCriteria,
-  elementMatchesWithDetails,
+  elementMatchesWithNotes,
   hasSearchCriteria,
   matchesStructuredCriteria,
   parseSearchQuery
@@ -19,14 +19,14 @@ const customerDb = {
   metadata: { classification: { value: 'GDPR.PII' }, owner: { value: 'Alice' } },
   icons: { topLeft: { source: 'builtin', id: 'database' } },
   references: ['assets/references/a.png'],
-  details: 'details/customer-db.md',
+  notes: 'notes/customer-db.md',
   linkedDiagram: 'customer/customer.chd'
 }
 const gdprNoPic = { ...customerDb, id: 'n2', references: [] }
 const cache = { id: 'n3', label: 'Cache', references: ['assets/references/b.png'] }
 const edge = { id: 'e1', label: 'GDPR link', metadata: { classification: { value: 'GDPR.PII' } } }
 // An entity *named* Integration, with no integration tag — what tag: must not match.
-const integrationShape = { id: 'n4', label: 'Integration gateway', details: 'details/i.md' }
+const integrationShape = { id: 'n4', label: 'Integration gateway', notes: 'notes/i.md' }
 const taggedIntegration = {
   id: 'n5',
   label: 'Orders sync',
@@ -108,7 +108,7 @@ test('every term must match (AND)', () => {
   assert.equal(matches('tag:gdpr tag:owner=bob', customerDb), false)
 })
 
-test('tag: matches only tags — a label or details file mentioning it is ignored', () => {
+test('tag: matches only tags — a label or note mentioning it is ignored', () => {
   assert.equal(matches('tag:integration', taggedIntegration), true)
   assert.equal(matches('tag:integration', integrationShape), false) // named Integration
   assert.equal(matches('integration', integrationShape), true) // free text still finds it
@@ -162,30 +162,30 @@ test('icon criterion is exact and combines with the terms', () => {
 })
 
 test('structured criteria exclude the any terms and are vacuously true when none is set', () => {
-  // deep search relies on this: it only reads a details file for nodes that already pass these
+  // deep search relies on this: it only reads a note for nodes that already pass these
   assert.equal(matchesStructuredCriteria(q('missing'), gdprNoPic), true)
   assert.equal(matchesStructuredCriteria(q('missing has:references'), gdprNoPic), false)
   assert.equal(matchesStructuredCriteria(q('missing label:customer'), customerDb), true)
 })
 
-// A details note may satisfy an `any` term the in-memory fields don't (ADR 0097).
+// A note may satisfy an `any` term the in-memory fields don't (ADR 0097).
 const withNote = (raw, el, note) => {
   const reads = []
-  return elementMatchesWithDetails(q(raw), el, async (rel) => {
+  return elementMatchesWithNotes(q(raw), el, async (rel) => {
     reads.push(rel)
     return note
   }).then((result) => ({ result, reads }))
 }
-const server = { id: 's1', label: 'Server', details: 'notes/server.md', metadata: {} }
+const server = { id: 's1', label: 'Server', notes: 'notes/server.md', metadata: {} }
 
-test('details: a term found only in the note matches, and every missing term must be there', async () => {
+test('notes: a term found only in the note matches, and every missing term must be there', async () => {
   assert.equal((await withNote('oauth', server, 'Uses OAuth 2')).result, true)
   assert.equal((await withNote('oauth', server, 'nothing relevant')).result, false)
   assert.equal((await withNote('server oauth', server, 'Uses OAuth')).result, false) // one phrase, not in the note
   assert.equal((await withNote('label:server oauth', server, 'Uses OAuth')).result, true)
 })
 
-test('details: the note is only read when it could change the answer', async () => {
+test('notes: the note is only read when it could change the answer', async () => {
   // already matches in memory
   assert.deepEqual((await withNote('server', server, 'x')).reads, [])
   // no note path
@@ -196,7 +196,7 @@ test('details: the note is only read when it could change the answer', async () 
   assert.deepEqual((await withNote('oauth', server, 'x')).reads, ['notes/server.md'])
 })
 
-test('details: an empty criteria set still matches nothing', async () => {
+test('notes: an empty criteria set still matches nothing', async () => {
   assert.equal((await withNote('', server, 'anything')).result, false)
 })
 

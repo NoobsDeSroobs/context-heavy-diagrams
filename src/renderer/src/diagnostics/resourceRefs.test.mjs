@@ -10,7 +10,7 @@ test('collects every on-disk path an element or legend entry points at', () => {
     node('a', {
       label: 'A',
       linkedDiagram: 'a/child.chd',
-      details: 'details/a.md',
+      notes: 'notes/a.md',
       icons: {
         topLeft: { source: 'custom', path: 'assets/x.svg' },
         topRight: { source: 'builtin', id: 'user' }
@@ -33,7 +33,7 @@ test('collects every on-disk path an element or legend entry points at', () => {
     refs.map((r) => [r.key, r.resourceKind, r.relativePath]),
     [
       ['a:linkedDiagram', 'linkedDiagram', 'a/child.chd'],
-      ['a:details', 'details', 'details/a.md'],
+      ['a:notes', 'notes', 'notes/a.md'],
       ['a:icon:topLeft', 'icon', 'assets/x.svg'],
       ['a:reference:0', 'reference', 'assets/references/one.png'],
       ['legend:l1', 'icon', 'assets/cloud.svg']
@@ -48,7 +48,7 @@ test('removing a missing file clears just that reference from its node', () => {
     node('a', {
       label: 'A',
       linkedDiagram: 'a/child.chd',
-      details: 'details/a.md',
+      notes: 'notes/a.md',
       icons: { topLeft: { source: 'custom', path: 'assets/x.svg' } },
       references: ['one.png', 'two.png']
     })
@@ -68,7 +68,7 @@ test('removing a missing file clears just that reference from its node', () => {
     applyMissingFileRemoval(nodes, [], entry(kind, extra)).nodes[0].data
 
   assert.equal(dataOf('linkedDiagram').linkedDiagram, undefined)
-  assert.equal(dataOf('details').details, undefined)
+  assert.equal(dataOf('notes').notes, undefined)
   assert.equal(dataOf('icon', { iconSlot: 'topLeft' }).icons, undefined)
   assert.deepEqual(dataOf('reference', { relativePath: 'one.png' }).references, ['two.png'])
   assert.equal(nodes[0].data.linkedDiagram, 'a/child.chd', 'the input is not mutated')

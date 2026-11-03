@@ -31,7 +31,7 @@ export default function ReferencesPanel({
     <div className="layer-panel">
       <div className="layer-panel-toolbar">
         <span className="layer-panel-title">References</span>
-        <div className="details-panel-spacer" />
+        <div className="notes-panel-spacer" />
         <button type="button" title="Close" aria-label="Close" onClick={onClose}>
           ✕
         </button>

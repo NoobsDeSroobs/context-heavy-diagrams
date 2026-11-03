@@ -1,4 +1,5 @@
 import type { DiagramSecurity } from '../threat-matrix/schema.ts'
+import type { DiagramNode } from '../nodes/schema.ts'
 import type { DiagramFile } from './file.ts'
 
 // Legacy field/value names from before the Shape -> Entity rename — accepted on
@@ -8,13 +9,24 @@ import type { DiagramFile } from './file.ts'
 // no file predating the rename is expected to still be opened. Three spots
 // carried 'shape': a node's own `type`, a legend entry's `kind`, and
 // DiagramSecurity's matrix-membership id lists.
-function normalizeLegacyFields(diagram: DiagramFile): DiagramFile {
-  const hasLegacyNodeType = diagram.nodes.some((n) => (n.type as string | undefined) === 'shape')
+export function normalizeLegacyFields(diagram: DiagramFile): DiagramFile {
+  // A node's note path was stored as `data.details` until ADR 0140 renamed it to `notes`. When
+  // both are present `notes` wins.
+  const hasLegacyNotesKey = diagram.nodes.some((n) => 'details' in n.data)
+  const withNotes = hasLegacyNotesKey
+    ? diagram.nodes.map((n) => {
+        if (!('details' in n.data)) return n
+        const { details, ...data } = n.data as DiagramNode['data'] & { details?: string }
+        return { ...n, data: { ...data, notes: data.notes ?? details } }
+      })
+    : diagram.nodes
+
+  const hasLegacyNodeType = withNotes.some((n) => (n.type as string | undefined) === 'shape')
   const nodes = hasLegacyNodeType
-    ? diagram.nodes.map((n) =>
+    ? withNotes.map((n) =>
         (n.type as string | undefined) === 'shape' ? { ...n, type: 'entity' } : n
       )
-    : diagram.nodes
+    : withNotes
 
   const hasLegacyLegendKind = diagram.legend?.some((entry) => (entry.kind as string) === 'shape')
   const legend = hasLegacyLegendKind
@@ -40,7 +52,9 @@ function normalizeLegacyFields(diagram: DiagramFile): DiagramFile {
       })()
     : diagram.security
 
-  if (!hasLegacyNodeType && !hasLegacyLegendKind && !hasLegacySecurityIds) return diagram
+  if (!hasLegacyNotesKey && !hasLegacyNodeType && !hasLegacyLegendKind && !hasLegacySecurityIds) {
+    return diagram
+  }
   return {
     ...diagram,
     nodes,

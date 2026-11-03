@@ -4,11 +4,11 @@ import type { Stamp } from '@shared/document/documentSave'
 import { fileStamp } from '../document/fileStamp'
 import { resolveLinkPath } from '../links/linkPaths'
 
-// Reading detail notes. *Writing* (and renaming to follow a label) is part of
+// Reading notes. *Writing* (and renaming to follow a label) is part of
 // the multi-file save in documentSaveExec.ts / diagram.ts (ADR 0092); the path
-// a note belongs at is derived in @shared/detailPaths.
-export function registerDetailsHandlers(): void {
-  ipcMain.handle('details:read', async (_event, diagramPath: string, relativePath: string) => {
+// a note belongs at is derived in @shared/notePaths.
+export function registerNotesHandlers(): void {
+  ipcMain.handle('notes:read', async (_event, diagramPath: string, relativePath: string) => {
     try {
       return await readFile(resolveLinkPath(diagramPath, relativePath), 'utf-8')
     } catch {
@@ -20,7 +20,7 @@ export function registerDetailsHandlers(): void {
   // Stamped BEFORE reading so a change in between is caught, not missed (see
   // diagram:openPath). The renderer keeps it as the note's baseline.
   ipcMain.handle(
-    'details:readWithStamp',
+    'notes:readWithStamp',
     async (
       _event,
       diagramPath: string,

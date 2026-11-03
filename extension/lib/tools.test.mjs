@@ -106,9 +106,9 @@ test('read_file refuses non-UTF-8 content and oversize files', () => {
 
 test('create_file writes a new file, creates folders, and never overwrites', () => {
   const tools = make()
-  const created = tools.create_file({ path: 'details/new-note.md', content: '# Hi' })
+  const created = tools.create_file({ path: 'notes/new-note.md', content: '# Hi' })
   assert.equal(created.fingerprint, sha('# Hi'))
-  assert.equal(readFileSync(join(folder, 'details', 'new-note.md'), 'utf-8'), '# Hi')
+  assert.equal(readFileSync(join(folder, 'notes', 'new-note.md'), 'utf-8'), '# Hi')
   refusal(() => tools.create_file({ path: 'a.chd', content: VALID }), /already exists/)
   assert.equal(readFileSync(join(folder, 'a.chd'), 'utf-8'), VALID)
 })

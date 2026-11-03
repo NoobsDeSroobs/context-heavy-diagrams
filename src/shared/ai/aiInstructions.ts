@@ -19,7 +19,7 @@ Coordinates — easy to get wrong:
 - An edge's "points" (bend waypoints) are absolute canvas coordinates.
 - Space things generously: roughly 20px between siblings inside a container, 60px between separate groups.
 
-Relative paths: any file path in the diagram (icons, "data.details" notes, "data.linkedDiagram" links to other diagrams) is relative to the .chd file that contains it. If you copy a node into a diagram in a different folder, rewrite its paths. Don't move or rename files that other diagrams link to.
+Relative paths: any file path in the diagram (icons, "data.notes" notes, "data.linkedDiagram" links to other diagrams) is relative to the .chd file that contains it. If you copy a node into a diagram in a different folder, rewrite its paths. Don't move or rename files that other diagrams link to.
 
 Always work from the newest version of the file I have shown you; if I paste a newer one, start again from that instead of from your earlier copy.
 

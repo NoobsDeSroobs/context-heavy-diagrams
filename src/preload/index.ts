@@ -74,19 +74,19 @@ const api = {
     return ipcRenderer.invoke('references:readAsDataUrl', diagramPath, relativePath)
   },
 
-  // Detail files — see ADR 0060 for the label+uuid naming convention.
+  // Note files — see ADR 0060 for the label+uuid naming convention.
   // Reading only: notes are *written* (and renamed to follow a label) as part
   // of saveDocument (ADR 0092).
-  readDetails(diagramPath: string, relativePath: string): Promise<string> {
-    return ipcRenderer.invoke('details:read', diagramPath, relativePath)
+  readNotes(diagramPath: string, relativePath: string): Promise<string> {
+    return ipcRenderer.invoke('notes:read', diagramPath, relativePath)
   },
 
   // Content plus the file's change fingerprint — the note's baseline (ADR 0092).
-  readDetailsWithStamp(
+  readNotesWithStamp(
     diagramPath: string,
     relativePath: string
   ): Promise<{ content: string; stamp: Stamp }> {
-    return ipcRenderer.invoke('details:readWithStamp', diagramPath, relativePath)
+    return ipcRenderer.invoke('notes:readWithStamp', diagramPath, relativePath)
   },
 
   // No dialog — used by a window's own initial-load mount effect, given
@@ -115,7 +115,7 @@ const api = {
   // Linked diagrams — see docs/decisions/0005-diagram-identity-and-linking.md.
   // createLinkedDiagram/pickExistingLinkedDiagram both return a relative
   // path (relative to diagramPath's own directory) to store on the node,
-  // same convention as custom icon/detail paths.
+  // same convention as custom icon/note paths.
   createLinkedDiagram(diagramPath: string, label: string): Promise<string> {
     return ipcRenderer.invoke('links:createNew', diagramPath, label)
   },
@@ -125,7 +125,7 @@ const api = {
   },
 
   // Bulk existence check for the Diagnostics "missing files" section
-  // (ADR 0084) — linked diagrams, custom icons, reference images, details
+  // (ADR 0084) — linked diagrams, custom icons, reference images, notes
   // files. One result per input relative path, in input order.
   checkResourceFiles(
     diagramPath: string,
@@ -293,24 +293,17 @@ const api = {
 
   // Crash recovery — see ADR 0040. path is null for a diagram
   // that hasn't been saved yet, in which case sessionId is what actually
-  // keys the recovery snapshot (see recovery.ts's keyFor). detailsDrafts
+  // keys the recovery snapshot (see recovery.ts's keyFor). noteDrafts
   // rides alongside diagram, not inside it — see recovery.ts's own comment
   // on RecoveryEnvelope for why.
   writeRecoverySnapshot(
     path: string | null,
     sessionId: string,
     diagram: DiagramFile,
-    detailsDrafts: Record<string, string>,
+    noteDrafts: Record<string, string>,
     noteBaselines?: Record<string, NoteBaseline>
   ): Promise<void> {
-    return ipcRenderer.invoke(
-      'recovery:write',
-      path,
-      sessionId,
-      diagram,
-      detailsDrafts,
-      noteBaselines
-    )
+    return ipcRenderer.invoke('recovery:write', path, sessionId, diagram, noteDrafts, noteBaselines)
   },
 
   deleteRecoverySnapshot(path: string | null, sessionId: string): Promise<void> {

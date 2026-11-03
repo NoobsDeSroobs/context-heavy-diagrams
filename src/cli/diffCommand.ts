@@ -6,7 +6,7 @@ import {
   describeCount,
   flattenReview,
   type Classification,
-  type DetailsContent,
+  type NotesContent,
   type ReviewItem
 } from '../shared/compare/classify.ts'
 import {
@@ -98,19 +98,19 @@ function readNote(path: string | null): string | null {
   }
 }
 
-// Notes (Details files) whose text differs between two diagrams on disk, for the elements that
+// Notes whose text differs between two diagrams on disk, for the elements that
 // have the same note path in both. A path leaving the diagram's folder is never read (ADR 0115).
 function notesBetweenFiles(
   olderPath: string,
   newerPath: string,
   older: DiagramFile,
   newer: DiagramFile
-): Record<string, DetailsContent> {
-  const olderDetails = new Map(older.nodes.map((n) => [n.id, n.data.details]))
-  const found: Record<string, DetailsContent> = {}
+): Record<string, NotesContent> {
+  const olderNotes = new Map(older.nodes.map((n) => [n.id, n.data.notes]))
+  const found: Record<string, NotesContent> = {}
   for (const node of newer.nodes) {
-    const stored = node.data.details
-    if (!stored || stored !== olderDetails.get(node.id)) continue
+    const stored = node.data.notes
+    if (!stored || stored !== olderNotes.get(node.id)) continue
     const before = readNote(containedPath(dirname(olderPath), stored))
     const after = readNote(containedPath(dirname(newerPath), stored))
     if (before === null && after === null) continue
@@ -140,7 +140,7 @@ async function compare(parsed: Parsed): Promise<Compared> {
   let newer: DiagramFile
   let olderName: string
   let newerName: string
-  let notes: Record<string, DetailsContent>
+  let notes: Record<string, NotesContent>
   if (parsed.files.length === 2) {
     const [olderPath, newerPath] = parsed.files.map((f) => resolve(f))
     older = readDiagram(olderPath)
@@ -157,12 +157,12 @@ async function compare(parsed: Parsed): Promise<Compared> {
     newer = result.session.next
     olderName = `${basename(path)} at ${revision}`
     newerName = `${basename(path)} on disk`
-    notes = result.session.detailsContent ?? {}
+    notes = result.session.notesContent ?? {}
   }
   const suspicion = detectIdChurn(older, newer)
   const matches = parsed.match ? matchReplaced(older, newer) : null
   const classification = classifyDiagrams(matches ? applyIdMatches(older, matches) : older, newer, {
-    detailsContent: new Map(Object.entries(notes))
+    notesContent: new Map(Object.entries(notes))
   })
   return {
     olderName,

@@ -5,8 +5,8 @@ import { createEmptyDiagram, serializeDiagram } from '@shared/diagram'
 import { labelToFileStem } from '@shared/labelFileName'
 import { resolveLinkPath } from './linkPaths'
 
-// Linked diagrams colocate in the same sibling folder as assets/details
-// (ADR 0005/0006, see assetsDirFor/detailsDirFor in icons.ts/details.ts) —
+// Linked diagrams colocate in the same sibling folder as assets/notes
+// (ADR 0005/0006, see assetsDirFor/notesDirFor in icons.ts/notes.ts) —
 // e.g. my-diagram.chd -> my-diagram/child.chd, not a nested subfolder.
 function linkedDiagramDirFor(diagramPath: string): string {
   const diagramBase = basename(diagramPath, extname(diagramPath))
@@ -48,7 +48,7 @@ export function registerLinkHandlers(): void {
 
   // Bulk existence check for the Diagnostics "missing files" section
   // (ADR 0084) — linked diagrams, custom icons, reference images and
-  // details files all resolve the same way (resolveLinkPath). Same
+  // notes all resolve the same way (resolveLinkPath). Same
   // resolve + fs.access as windows:openLinked, over a (deduped) list.
   // Returns one entry per input path, in input order.
   ipcMain.handle(

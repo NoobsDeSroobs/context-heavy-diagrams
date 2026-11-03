@@ -14,18 +14,18 @@ const shape = (style, extra = {}) => ({
   data: { label: 'A', style, ...extra }
 })
 
-test('only visual style crosses over; label, tags and details stay the target’s', () => {
-  const brush = captureNodeBrush(shape({ fill: '#f00', strokeWidth: 3 }, { details: 'x.md' }))
+test('only visual style crosses over; label, tags and notes stay the target’s', () => {
+  const brush = captureNodeBrush(shape({ fill: '#f00', strokeWidth: 3 }, { notes: 'x.md' }))
   const target = {
     label: 'B',
-    details: 'y.md',
+    notes: 'y.md',
     metadata: { k: { value: 1 } },
     style: { fill: '#0f0' }
   }
   const next = applyBrushToNodeData(brush, target)
   assert.deepEqual(next.style, { fill: '#f00', strokeWidth: 3 })
   assert.equal(next.label, 'B')
-  assert.equal(next.details, 'y.md')
+  assert.equal(next.notes, 'y.md')
   assert.deepEqual(next.metadata, { k: { value: 1 } })
 })
 

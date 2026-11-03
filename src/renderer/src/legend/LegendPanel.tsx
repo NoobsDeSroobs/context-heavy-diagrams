@@ -287,7 +287,7 @@ export default function LegendPanel({
     <div className="legend-panel nodrag nopan" style={{ left, bottom, width: PANEL_WIDTH }}>
       <div className="legend-panel-toolbar">
         <span className="legend-panel-title">Legend</span>
-        <div className="details-panel-spacer" />
+        <div className="notes-panel-spacer" />
         <button type="button" title="Close" aria-label="Close" onClick={onClose}>
           ✕
         </button>

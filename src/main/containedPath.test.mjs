@@ -8,15 +8,15 @@ import { containedPath } from './containedPath.ts'
 const base = resolve('work', 'diagrams')
 
 test('resolves an ordinary relative path inside the folder', () => {
-  assert.equal(containedPath(base, 'd/details/A.md'), join(base, 'd', 'details', 'A.md'))
+  assert.equal(containedPath(base, 'd/notes/A.md'), join(base, 'd', 'notes', 'A.md'))
 })
 
 test('accepts backslash separators on any OS', () => {
-  assert.equal(containedPath(base, 'd\\details\\A.md'), join(base, 'd', 'details', 'A.md'))
+  assert.equal(containedPath(base, 'd\\notes\\A.md'), join(base, 'd', 'notes', 'A.md'))
 })
 
 test('allows ".." as long as the result stays inside', () => {
-  assert.equal(containedPath(base, 'd/details/../details/A.md'), join(base, 'd', 'details', 'A.md'))
+  assert.equal(containedPath(base, 'd/notes/../notes/A.md'), join(base, 'd', 'notes', 'A.md'))
 })
 
 test('refuses a path that climbs out of the folder', () => {

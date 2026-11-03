@@ -16,7 +16,7 @@
 //
 //   WARNINGS (recoverable at runtime, but almost always a mistake):
 //     - a parentId that doesn't resolve to any node in the file
-//     - a relative path (custom icon, data.details, data.linkedDiagram,
+//     - a relative path (custom icon, data.notes, data.linkedDiagram,
 //       data.references entry) that doesn't resolve to a file on disk,
 //       resolved relative to THIS FILE'S OWN DIRECTORY -- the most common
 //       class of bug when a node is hand-edited or copied between diagrams
@@ -158,6 +158,8 @@ export function validateFile(path, recursive = false, visited = new Set()) {
         checkPath(`node '${nid}' icons.${slot}`, icon.path)
       }
     }
+    if (d.notes) checkPath(`node '${nid}' data.notes`, d.notes)
+    // `details` is the older name of `notes`; the app still reads it.
     if (d.details) checkPath(`node '${nid}' data.details`, d.details)
     if (d.linkedDiagram) {
       const target = checkPath(`node '${nid}' data.linkedDiagram`, d.linkedDiagram)

@@ -161,9 +161,9 @@ export const NODE_FIELDS: FieldSpec<DiagramNode>[] = [
   },
   { name: 'icons', category: 'layout', get: (n) => n.data.icons },
   {
-    name: 'details link',
+    name: 'note link',
     category: 'link',
-    get: (n) => n.data.details,
+    get: (n) => n.data.notes,
     describe: describePath('Note file')
   },
   {

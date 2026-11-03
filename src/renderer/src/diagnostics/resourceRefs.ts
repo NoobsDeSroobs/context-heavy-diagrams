@@ -23,12 +23,12 @@ export function collectResourceRefs(
         relativePath: d.linkedDiagram
       })
     }
-    if (typeof d.details === 'string' && d.details) {
+    if (typeof d.notes === 'string' && d.notes) {
       refs.push({
         ...base,
-        key: `${n.id}:details`,
-        resourceKind: 'details',
-        relativePath: d.details
+        key: `${n.id}:notes`,
+        resourceKind: 'notes',
+        relativePath: d.notes
       })
     }
     const icons = d.icons as Partial<Record<IconSlot, IconRef>> | undefined
@@ -91,8 +91,8 @@ export function applyMissingFileRemoval(
         case 'linkedDiagram':
           d.linkedDiagram = undefined
           break
-        case 'details':
-          d.details = undefined
+        case 'notes':
+          d.notes = undefined
           break
         case 'icon': {
           const icons = { ...(d.icons as Partial<Record<IconSlot, IconRef>> | undefined) }

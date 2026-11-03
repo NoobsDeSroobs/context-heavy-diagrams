@@ -4,7 +4,7 @@ This covers what happens *between* files — how multiple `.chd` files relate to
 
 ## The relative-path rule, in full
 
-Every relative path in the format — `data.icons.*.path` (custom icons), `data.details`, `data.linkedDiagram`, `data.references` entries — resolves **relative to the directory containing the `.chd` file that holds the reference**. Not the project root. Not the diagram that originally "owned" the node. Not wherever the value happens to look like it came from.
+Every relative path in the format — `data.icons.*.path` (custom icons), `data.notes`, `data.linkedDiagram`, `data.references` entries — resolves **relative to the directory containing the `.chd` file that holds the reference**. Not the project root. Not the diagram that originally "owned" the node. Not wherever the value happens to look like it came from.
 
 Stored paths use forward slashes; a writer should always emit forward slashes (for portability across host OSes), and a reader should tolerate backslashes in older or hand-edited files but never write them.
 
@@ -38,7 +38,7 @@ That node then gets copied into `Sub.chd` (a common step when splitting a growin
 ```
 or, if the child diagram should have its own colocated copy of the asset instead of sharing the parent's, copy the file too and point at `Sub/assets/icon.svg` (relative to `Sub.chd`'s own location).
 
-**The general rule when moving or copying a node between files**: never trust a path string that was written for a different file's location. Recompute it — take the target's real absolute location, take the *new* file's real absolute location, and derive the relative path between them fresh. `data.details` and `data.linkedDiagram` are exactly as vulnerable to this as icon paths; check all three whenever a node crosses files.
+**The general rule when moving or copying a node between files**: never trust a path string that was written for a different file's location. Recompute it — take the target's real absolute location, take the *new* file's real absolute location, and derive the relative path between them fresh. `data.notes` and `data.linkedDiagram` are exactly as vulnerable to this as icon paths; check all three whenever a node crosses files.
 
 ### How to check for this
 
@@ -46,7 +46,7 @@ The bundled `scripts/validate_chd.mjs` resolves every relative path in a file ag
 
 ## Colocation folders
 
-By default, this app puts a diagram's own custom icons, reference images, notes, and newly-created linked diagrams into a sibling folder named after the diagram file: `my-diagram.chd` gets `my-diagram/assets/logo.svg`, `my-diagram/assets/references/screenshot.png`, `my-diagram/details/<label>-<uuid>.md`, and `my-diagram/<label>.chd` for a freshly-created child link.
+By default, this app puts a diagram's own custom icons, reference images, notes, and newly-created linked diagrams into a sibling folder named after the diagram file: `my-diagram.chd` gets `my-diagram/assets/logo.svg`, `my-diagram/assets/references/screenshot.png`, `my-diagram/notes/<label>-<uuid>.md`, and `my-diagram/<label>.chd` for a freshly-created child link.
 
 This folder is a **convention for creating new assets**, never a requirement and never detected by name — the stored path on the node is what actually matters. A diagram with no custom icons/notes/references/links has no such folder at all. Nothing stops a `linkedDiagram` from pointing anywhere on disk: outside the colocation folder, outside the parent diagram's directory tree entirely, or on another drive — the format has no notion of an enclosing project or repo boundary.
 

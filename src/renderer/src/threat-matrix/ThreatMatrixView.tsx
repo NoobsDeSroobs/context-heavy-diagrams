@@ -517,7 +517,7 @@ export default function ThreatMatrixView({
         >
           <div className="legend-panel-toolbar">
             <span className="legend-panel-title">Derived score</span>
-            <div className="details-panel-spacer" />
+            <div className="notes-panel-spacer" />
             <button
               type="button"
               title="Close"

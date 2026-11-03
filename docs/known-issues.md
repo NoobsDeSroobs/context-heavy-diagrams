@@ -130,13 +130,13 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **Status:** Solved (2026-09-05)
 
-**Symptom:** a pipe table in a node's details `.md` showed as plain text in the preview.
+**Symptom:** a pipe table in a node's note `.md` showed as plain text in the preview.
 
 **Cause:** pipe tables, strikethrough and `- [ ]` task lists are GitHub-Flavored Markdown extensions; `react-markdown` is CommonMark-only without `remark-gfm`, which was never wired in.
 
-**Fix:** `remark-gfm` added to the Details panel's `ReactMarkdown`, plus `.details-panel-preview table/th/td` styling (otherwise a correctly parsed table would have no visible grid and look like the same bug).
+**Fix:** `remark-gfm` added to the notes panel's `ReactMarkdown`, plus `.notes-panel-preview table/th/td` styling (otherwise a correctly parsed table would have no visible grid and look like the same bug).
 
-**References:** `src/renderer/src/details/DetailsPanel.tsx`, `src/renderer/src/assets/main.css`
+**References:** `src/renderer/src/notes/NotesPanel.tsx`, `src/renderer/src/assets/main.css`
 
 ---
 

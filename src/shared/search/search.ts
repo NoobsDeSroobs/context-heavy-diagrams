@@ -13,7 +13,7 @@ export interface SearchableElement {
   // fails the matching `has:` / icon criterion.
   icons?: Partial<Record<IconSlot, IconRef>>
   references?: string[]
-  details?: string
+  notes?: string
   linkedDiagram?: string
   // Set for a connection, so a negated `has:` term can leave it out.
   edge?: boolean
@@ -66,7 +66,7 @@ export function searchableFromData(
     metadata: data?.metadata as Record<string, MetadataEntry> | undefined,
     icons: data?.icons as Partial<Record<IconSlot, IconRef>> | undefined,
     references: Array.isArray(data?.references) ? (data.references as string[]) : undefined,
-    details: typeof data?.details === 'string' ? data.details : undefined,
+    notes: typeof data?.notes === 'string' ? data.notes : undefined,
     linkedDiagram: typeof data?.linkedDiagram === 'string' ? data.linkedDiagram : undefined
   }
 }
@@ -248,14 +248,14 @@ function hasFacet(facet: HasFacet, el: SearchableElement): boolean {
     case 'icon':
       return !!el.icons && Object.values(el.icons).some((ref) => ref !== undefined)
     case 'notes':
-      return !!el.details
+      return !!el.notes
     case 'link':
       return !!el.linkedDiagram
   }
 }
 
 // Every term except the bare/`any:` ones — vacuously true when none is set.
-// Split out so deep search can skip reading a details file for an element that
+// Split out so deep search can skip reading a note for an element that
 // already fails these in-memory terms.
 export function matchesStructuredCriteria(c: SearchCriteria, el: SearchableElement): boolean {
   if (c.icon && !nodeHasIcon(c.icon, el.icons)) return false
@@ -284,29 +284,29 @@ export function elementMatchesCriteria(c: SearchCriteria, el: SearchableElement)
 }
 
 // The second, costlier tier of a match (ADR 0097): a bare/`any:` term the
-// in-memory fields don't satisfy may be satisfied by the element's details file.
+// in-memory fields don't satisfy may be satisfied by the element's note.
 // Only meaningful for an element that fails elementMatchesCriteria; the file is
 // read only when it already passes every other term and is missing some `any`
-// term, and it matches when the file supplies each missing one. `readDetails`
-// resolves the element's stored details path (it must not throw — an
+// term, and it matches when the file supplies each missing one. `readNotes`
+// resolves the element's stored note path (it must not throw — an
 // unreadable file is just empty text). Callers run the in-memory tier for
 // everything first and this only for what's left.
-export async function elementMatchesViaDetails(
+export async function elementMatchesViaNotes(
   c: SearchCriteria,
   el: SearchableElement,
-  readDetails: (relativePath: string) => Promise<string>
+  readNotes: (relativePath: string) => Promise<string>
 ): Promise<boolean> {
-  if (!hasSearchCriteria(c) || !el.details || !matchesStructuredCriteria(c, el)) return false
+  if (!hasSearchCriteria(c) || !el.notes || !matchesStructuredCriteria(c, el)) return false
   const missing = c.any.filter((term) => !matchesSearchQuery(term, el))
   if (missing.length === 0) return false
-  const content = (await readDetails(el.details)).toLowerCase()
+  const content = (await readNotes(el.notes)).toLowerCase()
   return missing.every((term) => content.includes(term.toLowerCase()))
 }
 
-export async function elementMatchesWithDetails(
+export async function elementMatchesWithNotes(
   c: SearchCriteria,
   el: SearchableElement,
-  readDetails: (relativePath: string) => Promise<string>
+  readNotes: (relativePath: string) => Promise<string>
 ): Promise<boolean> {
-  return elementMatchesCriteria(c, el) || (await elementMatchesViaDetails(c, el, readDetails))
+  return elementMatchesCriteria(c, el) || (await elementMatchesViaNotes(c, el, readNotes))
 }

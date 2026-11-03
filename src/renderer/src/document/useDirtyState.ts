@@ -18,7 +18,7 @@ export function useDirtyState(): {
   markDirty: () => void
 } {
   const [hubDirty, setHubDirty] = useState(false)
-  // In-memory copies ("shadows") of the detail notes that are open or have
+  // In-memory copies ("shadows") of the notes that are open or have
   // unsaved edits — content, baseline and dirty flag per note (documentSave.ts).
   // A note nobody has touched has no entry: it is just a file on disk.
   const [noteShadows, setNoteShadows] = useState<Record<string, NoteShadow>>({})

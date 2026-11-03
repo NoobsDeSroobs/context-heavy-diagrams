@@ -1,6 +1,6 @@
 import { isAbsolute, join, relative, sep } from 'path'
 
-// Resolves a path stored in a diagram (a note's `details` path) against the
+// Resolves a path stored in a diagram (a note's `notes` path) against the
 // diagram's folder, but only if the result is still inside that folder (ADR 0115).
 // Returns null for anything that would reach outside: an absolute path, a `..`
 // that climbs out, or (on Windows) a drive-relative or stream path such as

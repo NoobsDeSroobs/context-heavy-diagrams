@@ -7,7 +7,7 @@ export interface PeekTarget {
 }
 
 // Only the id is read, so the compare window can hover an edge the same way.
-export interface DetailsPeekBindings {
+export interface NotesPeekBindings {
   onNodeMouseEnter: (event: MouseEvent, node: { id: string }) => void
   onNodeMouseLeave: (event: MouseEvent, node: { id: string }) => void
 }
@@ -16,7 +16,7 @@ export interface DetailsPeekBindings {
 // arrive independently — the key can go down while the pointer is already
 // resting on a node, so no mouseenter fires — hence refs for each plus one
 // recompute() that derives the visible target from all of them.
-export function useDetailsPeek(): { peek: PeekTarget | null; bindings: DetailsPeekBindings } {
+export function useNotesPeek(): { peek: PeekTarget | null; bindings: NotesPeekBindings } {
   const [peek, setPeek] = useState<PeekTarget | null>(null)
   const hoverRef = useRef<{ nodeId: string; el: HTMLElement } | null>(null)
   const modifierHeldRef = useRef(false)

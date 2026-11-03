@@ -4,7 +4,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { MetadataEntry } from '@shared/diagram'
 import { isMac } from '../commands'
-import type { PeekTarget } from './useDetailsPeek'
+import type { PeekTarget } from './useNotesPeek'
 
 const CARD_WIDTH = 340
 const CARD_MAX_HEIGHT = 260
@@ -16,7 +16,7 @@ const MAX_CHARS = 1200
 interface PeekCardProps {
   target: PeekTarget
   label: string
-  detailsPath: string | undefined
+  notesPath: string | undefined
   linkedPath: string | undefined
   metadata: Record<string, MetadataEntry> | undefined
   diagramPath: string | null
@@ -31,12 +31,12 @@ function formatTagValue(value: unknown): string {
 
 // Read-only, non-interactive card shown while Ctrl/Cmd is held over a node
 // (ADR 0093). Mounted only while a peek is active (keyed by node id by the
-// caller), so the details file is read on peek rather than for every node at
+// caller), so the note is read on peek rather than for every node at
 // load, and never goes stale.
 export default function PeekCard({
   target,
   label,
-  detailsPath,
+  notesPath,
   linkedPath,
   metadata,
   diagramPath,
@@ -45,15 +45,15 @@ export default function PeekCard({
   const [fileContent, setFileContent] = useState<string | null>(null)
 
   useEffect(() => {
-    if (shadowContent !== undefined || !diagramPath || !detailsPath) return undefined
+    if (shadowContent !== undefined || !diagramPath || !notesPath) return undefined
     let cancelled = false
-    window.api.readDetails(diagramPath, detailsPath).then((content) => {
+    window.api.readNotes(diagramPath, notesPath).then((content) => {
       if (!cancelled) setFileContent(content)
     })
     return () => {
       cancelled = true
     }
-  }, [shadowContent, diagramPath, detailsPath])
+  }, [shadowContent, diagramPath, notesPath])
 
   const text = (shadowContent ?? fileContent ?? '').trim()
   const tags = Object.entries(metadata ?? {})
@@ -107,7 +107,7 @@ export default function PeekCard({
         </div>
       )}
       {text && (
-        <div className="peek-card-body details-panel-preview" dir="auto">
+        <div className="peek-card-body notes-panel-preview" dir="auto">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{text.slice(0, MAX_CHARS)}</ReactMarkdown>
         </div>
       )}
