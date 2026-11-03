@@ -16,7 +16,7 @@ selects and frames the element (same reveal mechanism as Diagnostics). Answers
 - Strictly read-only/navigational in v1; editable cells would make it a second
   editor to maintain.
 - Could share its row component with the "Changes since last save" panel
-  ([epic 0117](../0117-changes-since-last-save.md)).
+  ([epic 0117](../../completed-epics.md#0117-changes-since-last-save-overview)).
 
 ## Note: use case to validate before building
 Note what real question this answers that search (0062) + highlights +

@@ -1,7 +1,7 @@
 # 0157: Conformance checks beyond the first version
 
 ## Status
-Not Started, parked. Collects what was discussed while scoping [epic 0138](../0138-architecture-conformance-checks.md) and deliberately left out of its first version (hexagonal and the data-flow diagram, one diagram at a time).
+Not Started, parked. Collects what was discussed while scoping [epic 0138](../../completed-epics.md#0138-architecture-conformance-checks) and deliberately left out of its first version (hexagonal and the data-flow diagram, one diagram at a time).
 
 ## Goal
 Grow the conformance checker from "one diagram against one profile" to the architecture styles and workflows that need more.

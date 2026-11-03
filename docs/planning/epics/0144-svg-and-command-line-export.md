@@ -24,7 +24,7 @@ PNG was the only export, which was the weakest point against almost every other 
 ## Open questions
 1. **The WASM rasteriser for a PNG from the command line:** which one, how text gets its fonts without a system font set, and what it adds to the install size.
 2. **Selection export** (only the selected elements) and **clickable links** in the SVG, both skipped for now.
-3. **A shared default font** across machines ([epic 0139](0139-diagram-default-font-and-available-fonts.md)) would narrow the gap between the SVG's text and the canvas.
+3. **A shared default font** across machines ([epic 0139](../completed-epics.md#0139-a-diagram-wide-default-font-and-which-fonts-are-available)) would narrow the gap between the SVG's text and the canvas.
 
 ## Tasks
 - [x] Decide the renderer; record the choice in an ADR ([ADR 0124](../../decisions/0124-svg-export-from-a-shared-pure-renderer.md))
