@@ -1,7 +1,7 @@
 # 0161: Published Windows installers, built by CI on a version tag
 
 ## Status
-In Progress. The workflow, ADR 0139, the README Download section and the 0.4.0 changelog entry are written; the epic is done when the first tag has produced a release and the installer passes a clean-machine test.
+In Progress. v0.4.0 was tagged and the workflow built and published its release. The epic is done when the installer passes a clean-machine test; the other open tasks below are follow-ups.
 
 ## Goal
 Anyone can download a Windows installer for each released version from the repository's releases page, without Node, git or a build. The installer is built by a GitHub Actions workflow when the maintainer pushes a version tag, so the file on the page is the one built from that tagged commit.
@@ -9,7 +9,7 @@ Anyone can download a Windows installer for each released version from the repos
 ## Where it stands
 - `npm run build:win` produces `dist/context-heavy-diagrams-<version>-setup.exe`, a per-user NSIS wizard. It is live-tested on Windows ([packaging](../../architecture/packaging.md)). It is unsigned, so SmartScreen shows "Windows protected your PC".
 - `.github/workflows/ci.yml` runs lint, build and tests on Linux and Windows for every push and pull request. Nothing publishes anything and no secrets are used.
-- The tags `v0.2.1` and `v0.3.0` exist. No installer is published; the README says to build from source.
+- The tags `v0.2.1`, `v0.3.0` and `v0.4.0` exist. `v0.4.0` is the first with a published installer; the earlier two have none.
 - The app has no auto-update and makes no network requests ([ADR 0113](../../decisions/0113-enforced-offline-behaviour.md)), so a new version means downloading a new installer. There is no `publish` block in `electron-builder.yml`, on purpose.
 
 ## Can CI do it on tag creation?
@@ -36,7 +36,7 @@ Permissions: the workflow gets `contents: write` only in the release job, and no
 - [x] `release.yml`: tag trigger, version and branch guard, tests, build, checksums, release with notes from the changelog
 - [x] `workflow_dispatch` for an existing tag. It cannot publish `v0.3.0` unchanged: that tag lacks the changelog script the workflow runs, and it has no release notes to take
 - [x] Pin the actions in the release workflow by commit hash
-- [ ] First tag: watch the first run of the workflow (it cannot be tested before)
+- [x] First tag: watch the first run of the workflow (`v0.4.0` built and published a release)
 - [ ] Silent-install smoke test on the runner (`/S`), then run the app's `chd --version`
 - [ ] Research signing options and record the outcome in the ADR
 - [ ] Check the licence and notices are inside the installer and the release notes point to the tagged source
