@@ -463,7 +463,3 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 ### 0139: A diagram-wide default font, and which fonts are available
 
 *Done* (merged; released in v0.3.0). One default font per diagram, stored in the file, with a personal default in Preferences behind it, and the fonts installed on the computer offered first in the font lists; picked fonts are stored as a stack. A bundled curated set was left out on purpose. ADR: [0130](../decisions/0130-diagram-default-font-and-installed-fonts.md). Leftovers: the installed-font list on Linux and macOS, and an optional Diagnostics warning for a font that is not available on the machine.
-
-### 0158: A name for the Markdown files behind an element
-
-*Done* (released in v0.4.0). The files are called **notes**; the free-text canvas element is the **textbox**. The UI, search (`has:notes`, with `has:details` as an alias), docs, AI instructions and the Claude Desktop extension use the new words; the stored `details` key and folder are unchanged, so there is no file-format change. ADR: [0140](../decisions/0140-the-markdown-files-behind-an-element-are-called-notes.md). Left open: use the word on the website, once there is one.
