@@ -10,7 +10,7 @@ One word, "notes", from the file on disk to the interface. The key is `data.note
 - [x] Decide the word and write the ADR
 - [x] Interface, search facet, docs, AI instructions and the extension say notes; the canvas Text element is the textbox (v0.4.0)
 - [x] `parseDiagram` reads `details` as `notes` in the one normalising function that already handles the Shape-to-Entity rename; the serializer writes `notes`; recovery snapshots from an older build are normalised on read, including their `detailsDrafts`
-- [x] Notes go in `<diagram>/notes/`; a note still in `details/` is moved there on the next save (seen when the `c4-context` example was saved in the new build); stored paths keep working wherever they are
+- [x] Notes go in `<diagram>/notes/`; a note still in `details/` is moved there on the next save (seen when the `c4-context` example was saved in the new build), and the emptied folder is removed (it was left behind at first); stored paths keep working wherever they are
 - [x] The `details` feature folders in `main`, `renderer/src` and `shared`, and the identifiers, IPC channels (`notes:read`, `notes:readWithStamp`) and CSS classes in them, renamed
 - [x] The bundled skill (and the repo's copy, via `npm run sync:ai`), its validator and the format spec read and write `notes`; the MCP extension takes its spec from the skill
 - [x] `docs/file-format.md`: the field, the alias, the folder

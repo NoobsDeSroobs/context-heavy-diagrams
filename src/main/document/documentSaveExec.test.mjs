@@ -375,3 +375,40 @@ test('".." that stays inside the folder still works', async () => {
   assert.equal(await read('d/notes/new.md'), 'kept')
   assert.equal(has('d/notes/old.md'), false)
 })
+
+test('a folder emptied by moving its notes out is removed', async () => {
+  await put('d/details/A-1.md', 'one')
+  await put('d/details/B-2.md', 'two')
+  const r = await executeSave(
+    req({
+      writeHub: true,
+      ops: [
+        move('n1', 'd/details/A-1.md', 'd/notes/A-1.md'),
+        move('n2', 'd/details/B-2.md', 'd/notes/B-2.md')
+      ]
+    }),
+    deps()
+  )
+  assert.equal(r.status, 'saved')
+  assert.equal(await read('d/notes/A-1.md'), 'one')
+  assert.equal(has('d/details'), false)
+})
+
+test('a folder that still has something in it is left alone', async () => {
+  await put('d/details/A-1.md', 'one')
+  await put('d/details/other.txt', 'not a note of this diagram')
+  await executeSave(
+    req({ writeHub: true, ops: [move('n1', 'd/details/A-1.md', 'd/notes/A-1.md')] }),
+    deps()
+  )
+  assert.equal(has('d/details/A-1.md'), false)
+  assert.equal(await read('d/details/other.txt'), 'not a note of this diagram')
+})
+
+test('the diagram folder itself is never removed, even when it ends up empty', async () => {
+  await put('A-1.md', 'one')
+  await executeSave(req({ writeHub: true, ops: [move('n1', 'A-1.md', 'notes/A-1.md')] }), deps())
+  assert.equal(has('A-1.md'), false)
+  assert.equal(has('notes/A-1.md'), true)
+  assert.equal(existsSync(dir), true)
+})

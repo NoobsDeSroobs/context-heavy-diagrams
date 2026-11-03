@@ -1,4 +1,4 @@
-import { copyFile, mkdir, unlink, writeFile } from 'fs/promises'
+import { copyFile, mkdir, rmdir, unlink, writeFile } from 'fs/promises'
 import { dirname } from 'path'
 import type {
   Conflict,
@@ -144,17 +144,27 @@ export async function executeSave(req: SaveRequest, deps: ExecDeps): Promise<Sav
 
   // 4. Old names last. Best effort: a leftover file is a warning, not a
   //    failed save — the new state is already fully in place.
+  const emptied = new Set<string>()
   for (const op of runNow) {
     if (op.from === null || op.from === op.to || !(op.nodeId in notes)) continue
     const from = inside(op.from)
     if (from === null) continue
     try {
       await unlink(from)
+      emptied.add(dirname(from))
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
         warnings.push(`Couldn't remove the old file ${op.from}`)
       }
     }
+  }
+
+  // 5. A folder the moves left empty goes too (notes moving from details/ to notes/ would
+  //    otherwise leave the old folder behind). rmdir refuses a folder that still has anything
+  //    in it, so this never removes content; the diagram's own folder is never a candidate.
+  for (const folder of emptied) {
+    if (folder === baseDir) continue
+    await rmdir(folder).catch(() => undefined)
   }
 
   // What is still to do if the caller resolves the conflicts (a second request
