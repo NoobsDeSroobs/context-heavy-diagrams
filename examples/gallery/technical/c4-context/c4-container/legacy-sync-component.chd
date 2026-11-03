@@ -45,7 +45,7 @@
       },
       "data": {
         "label": "Booking API\n[backend service]",
-        "details": "details/booking-api.md"
+        "details": "details/Booking API-api.md"
       }
     },
     {
@@ -70,7 +70,7 @@
       },
       "data": {
         "label": "Legacy Sync Service — component boundary",
-        "details": "details/legacy-sync.md"
+        "details": "details/Legacy Sync Service-sync.md"
       }
     },
     {

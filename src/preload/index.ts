@@ -171,7 +171,7 @@ const api = {
     return ipcRenderer.invoke('windows:pickAndOpen', isCurrentWindowEmpty)
   },
 
-  // The compare window (epic 0150): the editor hands over two whole versions, and the window asks
+  // The compare window (ADR 0132): the editor hands over two whole versions, and the window asks
   // for them by the id in its URL.
   openCompareWindow(session: CompareSession): Promise<void> {
     return ipcRenderer.invoke('compare:open', session)

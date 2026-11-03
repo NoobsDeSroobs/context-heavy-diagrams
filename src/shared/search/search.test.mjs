@@ -56,7 +56,8 @@ test('parsing: mixed terms', () => {
 
 test('parsing: names are case-insensitive, has: aliases and duplicates collapse', () => {
   assert.deepEqual(parseSearchQuery('HAS:Refs has:references has:images').has, ['references'])
-  assert.deepEqual(parseSearchQuery('has:notes').has, ['details'])
+  assert.deepEqual(parseSearchQuery('has:notes').has, ['notes'])
+  assert.deepEqual(parseSearchQuery('has:details has:notes').has, ['notes']) // details is the older name
   assert.deepEqual(parseSearchQuery('ANY:foo').any, ['foo'])
 })
 
@@ -138,8 +139,8 @@ test('has: facets', () => {
   assert.equal(matches('has:references', edge), false) // edges never carry references
   assert.equal(matches('has:icon', customerDb), true)
   assert.equal(matches('has:icon', cache), false)
-  assert.equal(matches('has:details', customerDb), true)
-  assert.equal(matches('has:details', cache), false)
+  assert.equal(matches('has:notes', customerDb), true)
+  assert.equal(matches('has:notes', cache), false)
   assert.equal(matches('has:link', customerDb), true)
   assert.equal(matches('has:link', cache), false)
 })
@@ -197,4 +198,73 @@ test('details: the note is only read when it could change the answer', async () 
 
 test('details: an empty criteria set still matches nothing', async () => {
   assert.equal((await withNote('', server, 'anything')).result, false)
+})
+
+// Negation and exact tag match (ADR 0096).
+const gdpr = (value, extra = {}) => ({
+  id: `g-${value}`,
+  label: value,
+  metadata: { gdpr: { value } },
+  ...extra
+})
+const noPii = gdpr('No PII')
+const pii = gdpr('PII')
+const sensitivePii = gdpr('Sensitive PII')
+
+test('a leading - negates label, id, tag and has terms', () => {
+  const p = parseSearchQuery('-has:notes -label:x -id:y -tag:gdpr==pii -tag:env=prod')
+  assert.deepEqual(p.not, {
+    labels: ['x'],
+    ids: ['y'],
+    tags: [
+      { key: 'gdpr', value: 'pii', exact: true },
+      { key: 'env', value: 'prod' }
+    ],
+    has: ['notes']
+  })
+  assert.deepEqual(p.has, [])
+  assert.equal(hasSearchCriteria(q('-has:notes')), true)
+})
+
+test('free text cannot be negated: -word and -any: stay plain text', () => {
+  assert.deepEqual(parseSearchQuery('-5 degrees').any, ['-5 degrees'])
+  assert.deepEqual(parseSearchQuery('-any:foo').any, ['-any:foo'])
+})
+
+test('a negated term needs a value, like a positive one', () => {
+  assert.deepEqual(parseSearchQuery('-tag: -has:banana').problems.length, 2)
+})
+
+test('-has:notes finds nodes without a note, never edges', () => {
+  assert.equal(matches('-has:notes', cache), true)
+  assert.equal(matches('-has:notes', customerDb), false)
+  assert.equal(matches('-has:notes', { ...edge, edge: true }), false)
+})
+
+test('negated terms combine with positive ones', () => {
+  assert.equal(matches('has:references -has:notes', cache), true)
+  assert.equal(matches('has:references -has:notes', customerDb), false)
+  assert.equal(matches('-label:customer', cache), true)
+  assert.equal(matches('-label:customer', customerDb), false)
+  assert.equal(matches('-id:n1', customerDb), false)
+  assert.equal(matches('-tag:owner=alice', customerDb), false)
+  assert.equal(matches('-tag:owner=alice', gdprNoPic), false)
+  assert.equal(matches('-tag:owner=bob', customerDb), true)
+  assert.equal(matches('-tag:owner', cache), true)
+})
+
+test('tag:key==value matches the whole key and value, not substrings', () => {
+  assert.equal(matches('tag:gdpr=pii', noPii), true) // substring: also catches "No PII"
+  assert.equal(matches('tag:gdpr==pii', noPii), false)
+  assert.equal(matches('tag:gdpr==pii', pii), true)
+  assert.equal(matches('tag:gdpr==pii', sensitivePii), false)
+  assert.equal(matches('tag:GDPR==Sensitive PII', sensitivePii), false) // unquoted: split at the space
+  assert.equal(matches('tag:gdpr=="sensitive pii"', sensitivePii), true)
+  assert.equal(matches('tag:gd==pii', pii), false) // the key is whole too
+})
+
+test('-tag:key==value excludes only the exact value', () => {
+  assert.equal(matches('tag:gdpr=pii -tag:gdpr=="no pii"', noPii), false)
+  assert.equal(matches('tag:gdpr=pii -tag:gdpr=="no pii"', pii), true)
+  assert.equal(matches('tag:gdpr=pii -tag:gdpr=="no pii"', sensitivePii), true)
 })

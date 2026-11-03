@@ -2,6 +2,20 @@
 
 What changed for people using the tool, one entry per minor or major release. The reasons are in [docs/decisions/](docs/decisions/); the full history is in `git log`.
 
+## 0.4.0 (2026-11-03)
+
+### Added
+- **A Windows installer on the releases page**, built by CI from the tagged commit, with a checksum file. It is not signed yet, so Windows asks you to confirm the install; see the README. ([ADR 0139](docs/decisions/0139-releases-built-by-ci-from-a-version-tag.md))
+- **Search can exclude and match exactly.** A leading `-` negates a term (`-has:notes`, `-tag:state=draft`), and `tag:key==value` matches a tag exactly. ([ADR 0096](docs/decisions/0096-search-facets-and-shared-match-predicate.md))
+- **A link icon on the peek card** of an element that links to a sub-diagram. ([ADR 0093](docs/decisions/0093-details-peek-card-on-modifier-hold.md))
+
+### Changed
+- **The Markdown files behind an element are now called notes.** The context menu says **Open note**, search uses `has:notes` (`has:details` still works), and the free-text element is the **Textbox**. The AI instructions and the Claude Desktop extension use the same words.
+- The product name is spelled **Context-Heavy Diagrams** again. ([ADR 0114](docs/decisions/0114-product-name-context-heavy-diagrams.md))
+
+### File format
+- No change. The note path is still stored in the `details` field.
+
 ## 0.3.0 (2026-10-26)
 
 ### Added

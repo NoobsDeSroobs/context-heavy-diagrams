@@ -38,7 +38,7 @@ const REVERT_LABEL: Record<CompareStatus, string> = {
 
 // A note's text is a file, not part of the element, so a revert cannot put it back.
 function touchesNoteText(item: ReviewItem): boolean {
-  return item.change.fields.some((f) => f.field === 'Details file content')
+  return item.change.fields.some((f) => f.field === 'Note file content')
 }
 
 function revertTitle(item: ReviewItem): string {

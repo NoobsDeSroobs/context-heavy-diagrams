@@ -46,11 +46,11 @@ The bundled `scripts/validate_chd.mjs` resolves every relative path in a file ag
 
 ## Colocation folders
 
-By default, this app puts a diagram's own custom icons, reference images, detail notes, and newly-created linked diagrams into a sibling folder named after the diagram file: `my-diagram.chd` gets `my-diagram/assets/logo.svg`, `my-diagram/assets/references/screenshot.png`, `my-diagram/details/<label>-<uuid>.md`, and `my-diagram/<label>.chd` for a freshly-created child link.
+By default, this app puts a diagram's own custom icons, reference images, notes, and newly-created linked diagrams into a sibling folder named after the diagram file: `my-diagram.chd` gets `my-diagram/assets/logo.svg`, `my-diagram/assets/references/screenshot.png`, `my-diagram/details/<label>-<uuid>.md`, and `my-diagram/<label>.chd` for a freshly-created child link.
 
-This folder is a **convention for creating new assets**, never a requirement and never detected by name — the stored path on the node is what actually matters. A diagram with no custom icons/details/references/links has no such folder at all. Nothing stops a `linkedDiagram` from pointing anywhere on disk: outside the colocation folder, outside the parent diagram's directory tree entirely, or on another drive — the format has no notion of an enclosing project or repo boundary.
+This folder is a **convention for creating new assets**, never a requirement and never detected by name — the stored path on the node is what actually matters. A diagram with no custom icons/notes/references/links has no such folder at all. Nothing stops a `linkedDiagram` from pointing anywhere on disk: outside the colocation folder, outside the parent diagram's directory tree entirely, or on another drive — the format has no notion of an enclosing project or repo boundary.
 
-Filenames within the folder follow conventions too (`<label>-<uuid-suffix>.md` for details, `<label>.chd` for a newly-created link) but a reader should never rely on the naming pattern to *find* a reference — only the stored path is authoritative.
+Filenames within the folder follow conventions too (`<label>-<uuid-suffix>.md` for notes, `<label>.chd` for a newly-created link) but a reader should never rely on the naming pattern to *find* a reference — only the stored path is authoritative.
 
 ## Linked diagrams: directionality and missing targets
 

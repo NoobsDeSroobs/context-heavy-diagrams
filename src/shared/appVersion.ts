@@ -40,7 +40,7 @@ export function newerFileMessage(
   projectUrl: string
 ): string {
   return [
-    `This diagram was saved with a newer version of Context Heavy Diagrams (${fileVersion}). You are using ${appVersion}.`,
+    `This diagram was saved with a newer version of Context-Heavy Diagrams (${fileVersion}). You are using ${appVersion}.`,
     'It may contain things this version does not understand. If you save it here, those parts can be lost.',
     `To be safe, update the app (${projectUrl}), or use Save As to keep a copy and leave the original untouched.`
   ].join('\n\n')

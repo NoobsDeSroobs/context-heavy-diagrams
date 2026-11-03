@@ -310,7 +310,7 @@
       "source": "driver-legacy-risk",
       "target": "goal-modernize-platform",
       "sourceHandle": "right",
-      "targetHandle": "left",
+      "targetHandle": "cp-3",
       "label": "motivates",
       "style": {
         "stroke": "#4a5568",
@@ -400,7 +400,7 @@
       "source": "driver-declining-ridership",
       "target": "goal-grow-ridership",
       "sourceHandle": "right",
-      "targetHandle": "left",
+      "targetHandle": "cp-1",
       "label": "motivates",
       "style": {
         "stroke": "#4a5568",
@@ -417,7 +417,7 @@
       "type": "labeled",
       "source": "driver-customer-expectations",
       "target": "goal-grow-ridership",
-      "sourceHandle": "right",
+      "sourceHandle": "cp-2",
       "targetHandle": "cp-1",
       "label": "motivates",
       "style": {

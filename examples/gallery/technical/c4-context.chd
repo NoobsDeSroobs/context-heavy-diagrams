@@ -1,6 +1,44 @@
 {
   "version": 1,
-  "savedWith": "0.2.1",
+  "savedWith": "0.3.0",
+  "legend": [
+    {
+      "id": "legend-1",
+      "kind": "entity",
+      "label": "System in scope",
+      "color": "#1a73e8"
+    },
+    {
+      "id": "legend-2",
+      "kind": "entity",
+      "label": "Person",
+      "color": "#6b46c1"
+    },
+    {
+      "id": "legend-3",
+      "kind": "entity",
+      "label": "External or existing system",
+      "color": "#718096"
+    },
+    {
+      "id": "legend-4",
+      "kind": "line",
+      "label": "A → B: A uses B (the arrow points at what is used)",
+      "color": "#4a5568",
+      "lineStyle": "solid",
+      "startMarker": "none",
+      "endMarker": "arrowOpen"
+    },
+    {
+      "id": "legend-5",
+      "kind": "line",
+      "label": "Transitional: used during the migration, then retired",
+      "color": "#4a5568",
+      "lineStyle": "dashed",
+      "startMarker": "none",
+      "endMarker": "arrowOpen"
+    }
+  ],
   "nodes": [
     {
       "id": "blurb",
@@ -10,8 +48,8 @@
         "y": -430
       },
       "size": {
-        "width": 620,
-        "height": 150
+        "width": 560,
+        "height": 120
       },
       "zIndex": 200010,
       "style": {
@@ -22,7 +60,7 @@
         "fontFamily": "sans-serif"
       },
       "data": {
-        "label": "EXAMPLE — C4 Context: Ticketing & Booking Platform\n\nIllustrates: the top level of a C4 drill-down (Context → Container → Component), using linked-diagram navigation.\nPersona: a technical/solution architect on Meridian Rail's modernization task force, scoping the new booking platform.\n\nReading this diagram: blue = the system in scope. Purple = human actors. Grey = external/existing systems. Solid edges are ongoing relationships; the dashed edge is transitional (being retired during migration). Click any shape for a fuller description — a real legend feature is tracked as epic 0037, not built yet.\n\nPart of the Meridian Rail example gallery — epic 0022 (docs/planning/epics/0022-example-diagram-gallery.md)."
+        "label": "C4 level 1: System context\nWho uses the Ticketing & Booking Platform, and which other systems it depends on.\nThe platform links down to its containers (level 2), which link to their components (level 3).\nShow the legend for what the colours and arrows mean."
       }
     },
     {
@@ -41,17 +79,27 @@
         {
           "id": "cp-4",
           "side": "left",
-          "offset": 0.5
+          "offset": 0.3
+        },
+        {
+          "id": "cp-5",
+          "side": "left",
+          "offset": 0.7
         },
         {
           "id": "cp-2",
           "side": "right",
-          "offset": 0.3333333333333333
+          "offset": 0.2
+        },
+        {
+          "id": "cp-6",
+          "side": "right",
+          "offset": 0.5
         },
         {
           "id": "cp-1",
           "side": "right",
-          "offset": 0.6666666666666666
+          "offset": 0.8
         },
         {
           "id": "cp-3",
@@ -69,8 +117,8 @@
         "fontWeight": "bold"
       },
       "data": {
-        "label": "Ticketing & Booking Platform\n(system in scope)",
-        "details": "c4-context/details/system-ticketing.md",
+        "label": "Ticketing & Booking Platform",
+        "details": "c4-context/details/Ticketing & Booking Platform-ticketing.md",
         "linkedDiagram": "c4-context/c4-container.chd"
       }
     },
@@ -96,7 +144,7 @@
       },
       "data": {
         "label": "Passenger",
-        "details": "c4-context/details/actor-passenger.md"
+        "details": "c4-context/details/Passenger-passenger.md"
       }
     },
     {
@@ -121,7 +169,7 @@
       },
       "data": {
         "label": "Station Staff",
-        "details": "c4-context/details/actor-station-staff.md"
+        "details": "c4-context/details/Station Staff-station-staff.md"
       }
     },
     {
@@ -146,7 +194,7 @@
       },
       "data": {
         "label": "Payment Gateway\n(external system)",
-        "details": "c4-context/details/ext-payment-gateway.md"
+        "details": "c4-context/details/Payment Gateway-payment-gateway.md"
       }
     },
     {
@@ -171,7 +219,7 @@
       },
       "data": {
         "label": "National Rail Interop Network\n(external system)",
-        "details": "c4-context/details/ext-rail-interop.md"
+        "details": "c4-context/details/National Rail Interop Network-rail-interop.md"
       }
     },
     {
@@ -196,7 +244,7 @@
       },
       "data": {
         "label": "Loyalty & CRM System\n(existing system)",
-        "details": "c4-context/details/ext-loyalty-crm.md"
+        "details": "c4-context/details/Loyalty & CRM System-loyalty-crm.md"
       }
     },
     {
@@ -221,7 +269,7 @@
       },
       "data": {
         "label": "Legacy Reservation Mainframe\n(existing system, being retired)",
-        "details": "c4-context/details/ext-legacy-mainframe.md"
+        "details": "c4-context/details/Legacy Reservation Mainframe-legacy-mainframe.md"
       }
     }
   ],
@@ -231,7 +279,7 @@
       "type": "labeled",
       "source": "system-ticketing",
       "target": "ext-loyalty-crm",
-      "sourceHandle": "right",
+      "sourceHandle": "cp-6",
       "targetHandle": "left",
       "label": "syncs customer profile & loyalty points with",
       "style": {
@@ -250,7 +298,7 @@
       "source": "actor-station-staff",
       "target": "system-ticketing",
       "sourceHandle": "right",
-      "targetHandle": "left",
+      "targetHandle": "cp-5",
       "label": "issues tickets & assists passengers via",
       "style": {
         "stroke": "#4a5568",
@@ -326,7 +374,7 @@
       "targetHandle": "left",
       "label": "reads legacy seat inventory from (during migration)",
       "style": {
-        "stroke": "#4a5568",
+        "stroke": "#704242",
         "strokeWidth": 2,
         "lineStyle": "dashed",
         "startMarker": "none",

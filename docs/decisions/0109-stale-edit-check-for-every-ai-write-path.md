@@ -55,6 +55,12 @@ refused and the writer must re-read and redo its change on the fresh content.
   allowed to write (for example supporting documents). Files the app generates only for its own setup (the
   `AGENTS.md` and skill copy written by "Enable AI assistance") keep their
   existing never-overwrite-what-we-didn't-write marker rule.
+- **The protection runs one way.** It keeps an assistant from overwriting the
+  person's work, because the person decides and must be informed; the assistant
+  cannot be trusted with that. Protecting an assistant's work from the person is
+  not required: someone who edits a file while an assistant works on it is
+  responsible for what that does, and the review tools show it. A notice that an
+  assistant is working on the file would be a courtesy and can be added later.
 - **A known gap:** a fingerprint of the file on disk cannot see unsaved edits in
   an open window. The app's existing external-change warning is what covers that
   case, and it triggers when an AI write lands.

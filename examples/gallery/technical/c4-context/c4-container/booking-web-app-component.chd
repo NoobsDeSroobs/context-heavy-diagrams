@@ -69,7 +69,7 @@
       },
       "data": {
         "label": "Booking Web/Mobile App — component boundary",
-        "details": "details/booking-web-app.md"
+        "details": "details/Booking Web-Mobile App-web-app.md"
       }
     },
     {
@@ -169,7 +169,7 @@
       },
       "data": {
         "label": "Booking API\n[backend service]",
-        "details": "details/booking-api.md"
+        "details": "details/Booking API-api.md"
       }
     }
   ],

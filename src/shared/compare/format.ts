@@ -7,7 +7,7 @@ import type { CollectionChange } from './collections.ts'
 export const STATUS_LABEL: Record<CompareStatus, string> = {
   added: 'Added',
   removed: 'Removed',
-  links: 'Links or Details changed',
+  links: 'Links or Notes changed',
   content: 'Modified'
 }
 

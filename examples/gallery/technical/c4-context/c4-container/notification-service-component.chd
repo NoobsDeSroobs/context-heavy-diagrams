@@ -45,7 +45,7 @@
       },
       "data": {
         "label": "Booking API\n[backend service]",
-        "details": "details/booking-api.md"
+        "details": "details/Booking API-api.md"
       }
     },
     {
@@ -70,7 +70,7 @@
       },
       "data": {
         "label": "Notification Service — component boundary",
-        "details": "details/notification-service.md"
+        "details": "details/Notification Service-service.md"
       }
     },
     {

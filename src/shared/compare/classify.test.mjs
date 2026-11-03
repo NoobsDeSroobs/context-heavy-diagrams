@@ -118,7 +118,7 @@ test('an edge changing its ends or its connection points is yellow, named by lab
   assert.equal(c.edges.get('e2').status, 'content')
 })
 
-test('a link or Details path added, changed or removed is orange, and beats yellow', () => {
+test('a link or note path added, changed or removed is orange, and beats yellow', () => {
   const base = diagram([
     node('a'),
     node('b', { data: { label: 'B', linkedDiagram: 'old.chd' } }),
@@ -134,21 +134,21 @@ test('a link or Details path added, changed or removed is orange, and beats yell
   assert.deepEqual(lines(c, 'a', 'linked diagram'), ['linked diagram: added "new.chd"'])
   assert.deepEqual(lines(c, 'b', 'linked diagram'), ['linked diagram: "old.chd" → "other.chd"'])
   assert.equal(statusOf(c, 'c'), 'links')
-  assert.deepEqual(lines(c, 'c', 'details link'), ['Details file: removed (was "c/notes.md")'])
+  assert.deepEqual(lines(c, 'c', 'details link'), ['Note file: removed (was "c/notes.md")'])
   assert.deepEqual(lines(c, 'c', 'reference images'), [
     'reference image: added "y.png"',
     'reference image: removed "x.png"'
   ])
 })
 
-test('a changed Details file the caller found turns an otherwise unchanged element orange', () => {
+test('a changed Note file the caller found turns an otherwise unchanged element orange', () => {
   const d = diagram([node('a'), node('b')])
   const c = classifyDiagrams(d, d, {
     detailsContent: new Map([['a', { state: 'changed', preview: ['− owner: a', '+ owner: b'] }]])
   })
   assert.equal(statusOf(c, 'a'), 'links')
-  assert.deepEqual(lines(c, 'a', 'Details file content'), [
-    'Details file: content changed',
+  assert.deepEqual(lines(c, 'a', 'Note file content'), [
+    'Note file: content changed',
     '− owner: a',
     '+ owner: b'
   ])

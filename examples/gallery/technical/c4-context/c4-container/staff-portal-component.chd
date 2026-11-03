@@ -69,7 +69,7 @@
       },
       "data": {
         "label": "Staff Portal — component boundary",
-        "details": "details/staff-portal.md"
+        "details": "details/Staff Portal-portal.md"
       }
     },
     {
@@ -168,7 +168,7 @@
       },
       "data": {
         "label": "Booking API\n[backend service]",
-        "details": "details/booking-api.md"
+        "details": "details/Booking API-api.md"
       }
     }
   ],

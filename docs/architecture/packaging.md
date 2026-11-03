@@ -16,6 +16,10 @@ Only needed on the machine doing the *build* — whoever receives the finished i
 2. Run the platform-specific script below.
 3. All three scripts run `npm run build` first (typecheck + `electron-vite build`), then `electron-builder` for that platform — no manual steps in between. (`build:mac`/`build:linux` originally skipped the typecheck step, unlike `build:win` — fixed for consistency alongside writing this doc, since a build silently shipping with type errors on two platforms but not the third was clearly an oversight, not a deliberate difference.)
 
+## Releases built by CI
+
+Pushing a tag `vMAJOR.MINOR.PATCH` on a commit that is on `master` runs `.github/workflows/release.yml` ([ADR 0139](../decisions/0139-releases-built-by-ci-from-a-version-tag.md)): it checks that the tag matches the `package.json` version, runs lint and the tests, builds the Windows installer, writes `SHA256SUMS`, and creates a GitHub Release with the changelog section as notes (a pre-release below 1.0.0). Before tagging, the version bump and the `CHANGELOG.md` entry must be on `master`. The workflow can be re-run for an existing tag from the Actions tab. Windows only; the installer is unsigned.
+
 ## Windows
 
 ```bash

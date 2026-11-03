@@ -3,12 +3,12 @@
 // shown. Deliberately small — the essentials plus the traps that corrupt files.
 // The full reference is docs/file-format.md, which stays the source of truth:
 // when a rule below changes there, change it here too.
-export const AI_INSTRUCTIONS = `You are helping me with a diagram saved as a ".chd" file (from Context Heavy Diagrams). A .chd file is plain JSON — one file is one diagram. Read and edit it as JSON, and keep the file valid JSON.
+export const AI_INSTRUCTIONS = `You are helping me with a diagram saved as a ".chd" file (from Context-Heavy Diagrams). A .chd file is plain JSON — one file is one diagram. Read and edit it as JSON, and keep the file valid JSON.
 
 Top level: { "version": 1, "nodes": [...], "edges": [...] } plus optional metadata, tags and legend sections. Keep every field you don't understand exactly as it is. If there is a "savedWith" field (the app version that last saved the file), leave it untouched and never add one.
 
 Nodes: each has a unique "id", a "type", a "position" {x, y}, an optional "size" {width, height}, and "data.label" (the visible text).
-- type "entity": a box. "container": a box that can hold others. "text": a free text note. "line": a freeform line.
+- type "entity": a box. "container": a box that can hold others. "text": a free textbox. "line": a freeform line.
 - A node with "parentId" lives inside that container. The parent must appear EARLIER in the "nodes" array than its children.
 
 Edges: each has a unique "id", "source" and "target" (node ids), and optionally "sourceHandle"/"targetHandle" (connection point ids). Never point an edge at an id that doesn't exist.

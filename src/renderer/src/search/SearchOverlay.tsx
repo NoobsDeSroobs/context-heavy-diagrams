@@ -137,7 +137,7 @@ export default function SearchOverlay({
             : 'Search labels, ids, tags, notes…  (has:references, tag:…)'
         }
         title={
-          'Free text (or any:) matches id, label, tags and the element\'s notes. All terms must match. Narrow with label:x, id:x, tag:value, tag:key=value, has:references, has:icon, has:details, has:link. Quote values with spaces: tag:"data class"=pii'
+          'Free text (or any:) matches id, label, tags and the element\'s notes. All terms must match. Narrow with label:x, id:x, tag:value, tag:key=value (tag:key==value for the whole value), has:references, has:icon, has:notes, has:link. A leading - excludes: -has:notes, -tag:gdpr==pii. Quote values with spaces: tag:"data class"=pii'
         }
         value={iconMode ? '' : query}
         readOnly={iconMode}

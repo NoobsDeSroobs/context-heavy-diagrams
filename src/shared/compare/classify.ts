@@ -255,10 +255,10 @@ export function classifyDiagrams(
     const content = options.detailsContent?.get(id)
     if (!content) return undefined
     return {
-      field: 'Details file content',
+      field: 'Note file content',
       link: true,
       lines: [
-        `Details file: ${content.state === 'changed' ? 'content changed' : content.state}`,
+        `Note file: ${content.state === 'changed' ? 'content changed' : content.state}`,
         ...content.preview
       ],
       before: undefined,

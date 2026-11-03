@@ -1,10 +1,10 @@
-# Context Heavy Diagrams
+# Context-Heavy Diagrams
 
 **An offline desktop diagramming tool. Diagrams are plain-text files that diff cleanly in git, and every box can carry notes, tags, images and a link to a deeper diagram. The canvas stays readable while the context lives behind it.**
 
 > **Early open-source release (0.x).** It is built and tested mainly on Windows. Linux and macOS are supported targets but not yet verified, and there are no prebuilt downloads yet, so you build it from source (below). File compatibility is a priority, but expect rough edges. `1.0.0` is reserved for when the tool is feature-complete.
 
-![Context Heavy Diagrams showing the Meridian Rail landscape in dark mode, with the notes panel open on the Customer Profile Service](docs/images/hero.png)
+![Context-Heavy Diagrams showing the Meridian Rail landscape in dark mode, with the notes panel open on the Customer Profile Service](docs/images/hero.png)
 
 https://github.com/user-attachments/assets/50d4d6b5-6aeb-47e9-b7b5-9f252e3970c4
 
@@ -12,7 +12,7 @@ https://github.com/user-attachments/assets/50d4d6b5-6aeb-47e9-b7b5-9f252e3970c4
 
 ## Why another diagramming tool?
 
-Commercial diagramming tools are restrictive, and general box-and-arrow editors make you pay for flexibility with fiddly mechanics: overlapping objects you have to move together, arrows that don't follow when you move a box, groups that fight you when you edit one part. Context Heavy Diagrams is built around a few rules instead:
+Commercial diagramming tools are restrictive, and general box-and-arrow editors make you pay for flexibility with fiddly mechanics: overlapping objects you have to move together, arrows that don't follow when you move a box, groups that fight you when you edit one part. Context-Heavy Diagrams is built around a few rules instead:
 
 - **A node is one thing.** Notes, links, tags and icons are fields *on* the node, never separate objects you have to keep aligned.
 - **Edges are always attached.** They are bound to connection points and re-route when anything moves or resizes.
@@ -50,7 +50,7 @@ A diagram is a small, deterministic text file, so git can do for it what it does
 - **Linked diagrams.** A node can link to another `.chd`, and Ctrl/Cmd-click opens it. Links only point downward, so any diagram in a tree opens as its own root.
 - **Per-node notes** in Markdown, shown in a side panel.
 - **Reference images** pinned to a node, shown in floating zoomable windows.
-- **Search** with a small query language (`tag:env=prod`, `has:details`, and more), optionally drilling into linked diagrams, with an isolate mode that dims everything else.
+- **Search** with a small query language (`tag:env=prod`, `has:notes`, `-has:notes` for what lacks notes, and more), optionally drilling into linked diagrams, with an isolate mode that dims everything else.
 
 ### Tags, highlights and views
 
@@ -90,6 +90,12 @@ https://github.com/user-attachments/assets/2e63dee5-85f8-4b32-a75a-f986084bd873
 - The `chd` command line tool (`spec`, `validate`, `hash`, `export`, `check`)
 
 > Advanced features are opt-in. A new diagram behaves like plain boxes and arrows until you reach for more ([ADR 0054](docs/decisions/0054-progressive-disclosure-for-advanced-features.md)).
+
+## Download
+
+**Windows:** get `context-heavy-diagrams-<version>-setup.exe` from the [releases page](https://github.com/NoobsDeSroobs/context-heavy-diagrams/releases), together with `SHA256SUMS`. The installer is **not signed yet**, so Windows shows "Windows protected your PC": choose **More info**, then **Run anyway**. You have to accept the install this way until the installers are signed. To check the download, compare `Get-FileHash <file>` in PowerShell with `SHA256SUMS`.
+
+**Linux and macOS:** no installer is published yet; build from source below.
 
 ## Try it
 

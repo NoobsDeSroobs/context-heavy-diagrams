@@ -187,7 +187,7 @@ test(
     const r = run(['diff', 'doc.chd'], dir)
     assert.equal(r.status, 0, r.stderr)
     assert.match(r.stdout, /doc\.chd on disk against doc\.chd at HEAD/)
-    assert.match(r.stdout, /Details file: content changed/)
+    assert.match(r.stdout, /Note file: content changed/)
     assert.match(r.stdout, /− owner: team a/)
     assert.match(r.stdout, /\+ owner: team b/)
 

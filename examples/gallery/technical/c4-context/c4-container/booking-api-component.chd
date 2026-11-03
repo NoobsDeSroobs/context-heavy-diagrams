@@ -44,7 +44,7 @@
       },
       "data": {
         "label": "Booking Web/Mobile App\n[frontend]",
-        "details": "details/booking-web-app.md"
+        "details": "details/Booking Web-Mobile App-web-app.md"
       }
     },
     {
@@ -68,7 +68,7 @@
       },
       "data": {
         "label": "Staff Portal\n[frontend]",
-        "details": "details/staff-portal.md"
+        "details": "details/Staff Portal-portal.md"
       }
     },
     {
@@ -93,7 +93,7 @@
       },
       "data": {
         "label": "Booking API — component boundary",
-        "details": "details/booking-api.md"
+        "details": "details/Booking API-api.md"
       }
     },
     {
@@ -236,7 +236,7 @@
       },
       "data": {
         "label": "Platform Database\n[data store]",
-        "details": "details/platform-database.md"
+        "details": "details/Platform Database-database.md"
       }
     },
     {
@@ -260,7 +260,7 @@
       },
       "data": {
         "label": "Payment Orchestration Service\n[backend service]",
-        "details": "details/payment-orchestration.md"
+        "details": "details/Payment Orchestration Service-orchestration.md"
       }
     },
     {
@@ -284,7 +284,7 @@
       },
       "data": {
         "label": "Interop Gateway Service\n[backend service]",
-        "details": "details/interop-gateway.md"
+        "details": "details/Interop Gateway Service-gateway.md"
       }
     },
     {
@@ -308,7 +308,7 @@
       },
       "data": {
         "label": "Legacy Sync Service\n[backend service, transitional]",
-        "details": "details/legacy-sync.md"
+        "details": "details/Legacy Sync Service-sync.md"
       }
     },
     {
@@ -332,7 +332,7 @@
       },
       "data": {
         "label": "Notification Service\n[backend service]",
-        "details": "details/notification-service.md"
+        "details": "details/Notification Service-service.md"
       }
     },
     {
@@ -366,7 +366,7 @@
       "type": "labeled",
       "source": "staff-portal",
       "target": "booking-controller",
-      "targetHandle": "left",
+      "targetHandle": "cp-3",
       "label": "calls",
       "style": {
         "stroke": "#4a5568",
@@ -509,7 +509,7 @@
       "type": "labeled",
       "source": "orchestration-service",
       "target": "legacy-sync",
-      "sourceHandle": "right",
+      "sourceHandle": "cp-1",
       "targetHandle": "left",
       "label": "requests seat inventory via (during migration)",
       "style": {

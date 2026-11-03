@@ -18,7 +18,7 @@ interface ContextMenuProps {
 }
 
 // Generic, reusable — introduced for the first context-menu need
-// (right-click "Add icon"); later menu items ("See details", "Add
+// (right-click "Add icon"); later menu items ("Open note", "Add
 // connection point", …) extend the same menu rather than building their own.
 export default function ContextMenu({ x, y, items, onClose }: ContextMenuProps): React.JSX.Element {
   const ref = useRef<HTMLDivElement>(null)

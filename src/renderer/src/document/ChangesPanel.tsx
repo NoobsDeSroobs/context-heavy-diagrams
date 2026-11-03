@@ -210,7 +210,7 @@ export default function ChangesPanel({
         )}
         {detailsChanged.length > 0 && (
           <div className="changes-section">
-            <p className="diagnostics-section-title">Details changed ({detailsChanged.length})</p>
+            <p className="diagnostics-section-title">Notes changed ({detailsChanged.length})</p>
             <ul className="changes-row-list">
               {detailsChanged.map((d) => (
                 <li key={d.nodeId} className="changes-row">
