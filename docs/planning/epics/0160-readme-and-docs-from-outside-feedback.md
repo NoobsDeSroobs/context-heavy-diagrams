@@ -1,7 +1,7 @@
 # 0160: README and documentation changes from outside feedback
 
 ## Status
-Not Started. Do it when the first installers are close, since the target audience below cannot use the tool before then.
+Built on the branch `epic/0158-notes` (2026-11-04); waiting for the maintainer's read-through. Only the website wording is left, and the repository holds no website.
 
 ## Goal
 Change the README, the website copy and the docs so that a first-time reader sees what sets the tool apart, in claims that match the software. The points come from a reader's overview of the tool, vetted against what it actually does.
@@ -22,14 +22,14 @@ Change the README, the website copy and the docs so that a first-time reader see
 - "Enterprise-grade" while the release is 0.x, built mainly on Windows, unsigned and without an installer.
 
 ## Tasks
-- [ ] Rewrite the README intro and move the opt-in line and the tag-perspective demo up
-- [ ] Add the "AI draft, then review" section with a sample prompt, and point `docs/architecture/ai-integration.md` and the getting-started guide at it
-- [ ] Add the manual-layout stance to the README or the comparison page
-- [ ] Add the short regulated-settings list
-- [ ] Check each new sentence against the software before it goes in
-- [ ] Reuse the wording for the website
-- [ ] Revisit the README's install section when the installers exist ([0161](0161-published-windows-installers-built-by-ci.md))
-- [ ] Link the manual-layout stance to the parked [auto-layout](later/0126-auto-layout.md) epic, so the two do not contradict each other
+- [x] Rewrite the README intro and move the opt-in line and the tag-perspective demo up
+- [x] Add the "AI draft, then review" section with a sample prompt, and point `docs/architecture/ai-integration.md` and the getting-started guide at it
+- [x] Add the manual-layout stance to the README or the comparison page
+- [x] Add the short regulated-settings list
+- [x] Check each new sentence against the software before it goes in
+- [ ] Reuse the wording for the website (the repository holds no website; do it where it lives)
+- [x] Revisit the README's install section when the installers exist ([0161](0161-published-windows-installers-built-by-ci.md)): it already links the Windows installer; the comparison page's "no installers" line is corrected
+- [x] Link the manual-layout stance to the parked [auto-layout](later/0126-auto-layout.md) epic, so the two do not contradict each other
 
 ## Notes
 Raised after a reader's overview of the tool. Its claims about C4 checks, automated migration and "enterprise" use did not match the software and are listed above as things not to say. The reader knew installers are planned; the missing installer is the largest barrier for the non-technical audience and is tracked outside this epic.

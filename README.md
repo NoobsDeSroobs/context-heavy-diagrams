@@ -10,6 +10,8 @@ https://github.com/user-attachments/assets/50d4d6b5-6aeb-47e9-b7b5-9f252e3970c4
 
 *Drill down through linked diagrams, then add a highlight from the tags that are shown. The same rules apply as the features interact.*
 
+A new diagram is plain boxes and arrows, and someone who only wants to draw a flow never has to touch the rest: tags, links, notes and the command line are opt-in ([ADR 0054](docs/decisions/0054-progressive-disclosure-for-advanced-features.md)). When you want more, one diagram can be recoloured by GDPR scope, owning team or state, one highlight at a time, and an AI assistant can draft or edit the file while you review exactly what it changed.
+
 ## Why another diagramming tool?
 
 Commercial diagramming tools are built for a specific purpose, making them restrictive. General box-and-arrow editors make you pay for flexibility with fiddly mechanics: flat boxes that must multiply and grow to contain the required context, and a lot of manual tweaking to get it to work out somehow. Context-Heavy Diagrams is built around a few rules instead:
@@ -20,6 +22,14 @@ Commercial diagramming tools are built for a specific purpose, making them restr
 - **Your files are private and yours.** Plain, gitable, reviewable and deterministic JSON on disk; no server, no account, no network.
 
 For a comparison with other diagram tools, see [the comparison](docs/comparison.md).
+
+## One diagram, several perspectives
+
+Tag the elements once (GDPR scope, NIS2 relevance, owning team, lifecycle state), then pick a highlight to colour the same diagram by one of those tags. A highlight recolours the elements and adds a legend; it does not switch layouts or hide anything, so the picture you drew stays the picture everyone discusses. The tool shows what the tags say; it does not certify anything.
+
+https://github.com/user-attachments/assets/2e63dee5-85f8-4b32-a75a-f986084bd873
+
+*Highlighting by tag: metadata fields such as GDPR and owning team colour the elements.*
 
 ## Features
 
@@ -53,11 +63,6 @@ A diagram is a small, deterministic text file, so git can do for it what it does
 - **Search** with a small query language (`tag:env=prod`, `has:notes`, `-has:notes` for what lacks notes, and more), optionally drilling into linked diagrams, with an isolate mode that dims everything else.
 
 ### Tags, highlights and views
-
-https://github.com/user-attachments/assets/2e63dee5-85f8-4b32-a75a-f986084bd873
-
-*Highlighting by tag: metadata fields such as GDPR and owning team colour the elements.*
-
 - **A unified tag system** with free tags and diagram-defined *required* tags that have allowed values.
 - **Highlights and a legend.** Colour elements by tag value, group them, and keep several sets side by side.
 - **A security matrix view,** a threat/risk matrix over your entities whose scores roll up through linked diagrams (try [`security-rollup`](examples/gallery/technical/security-rollup/README.md)).
@@ -89,8 +94,6 @@ https://github.com/user-attachments/assets/2e63dee5-85f8-4b32-a75a-f986084bd873
 - Review what changed between two versions of a diagram, most of all after an AI assistant edited it: a compare window draws the later version with added, removed, link-or-note-changed and modified elements coloured and everything else dimmed, with a list to step through and per-change revert (View → Changes → Compare with git revision…, or **Review changes** when the file changes on disk); `chd diff` prints the same review for a terminal or CI
 - The `chd` command line tool (`spec`, `validate`, `hash`, `export`, `check`)
 
-> Advanced features are opt-in. A new diagram behaves like plain boxes and arrows until you reach for more ([ADR 0054](docs/decisions/0054-progressive-disclosure-for-advanced-features.md)).
-
 ## Download
 
 **Windows:** get `context-heavy-diagrams-<version>-setup.exe` from the [releases page](https://github.com/NoobsDeSroobs/context-heavy-diagrams/releases), together with `SHA256SUMS`. The installer is **not signed yet**, so Windows shows "Windows protected your PC": choose **More info**, then **Run anyway**. You have to accept the install this way until the installers are signed. To check the download, compare `Get-FileHash <file>` in PowerShell with `SHA256SUMS`.
@@ -114,7 +117,29 @@ Other scripts: `npm test`, `npm run typecheck`, `npm run lint`. To build an inst
 
 ## Working with AI assistants
 
-An **AI** menu helps an assistant (Claude or another) read and write your diagrams safely: copy-paste instructions for a plain chat, a skill and `AGENTS.md` for agents working in a folder, a `chd` command-line tool to validate files, and a local extension for Claude Desktop. Everything runs locally and writes are guarded by a stale-edit check, but whatever an assistant reads is sent to its provider. Details are in [docs/architecture/ai-integration.md](docs/architecture/ai-integration.md). The menu can be switched off in Preferences.
+An **AI** menu helps an assistant (Claude or another) read and write your diagrams safely: copy-paste instructions for a plain chat, a skill and `AGENTS.md` for agents working in a folder, a `chd` command-line tool to validate files, and a local extension for Claude Desktop. Everything runs locally and writes are guarded by a stale-edit check, but **whatever an assistant reads is sent to its provider**. Details are in [docs/architecture/ai-integration.md](docs/architecture/ai-integration.md). The menu can be switched off in Preferences.
+
+### Draft with an assistant, then review
+
+Treat what an assistant produces as a draft. Give it the material and ask for a diagram, for example:
+
+> Read `docs/payments-overview.md` and `docs/integrations.md` and draw the systems and how they connect as a diagram in `payments.chd`. Tag each system with its owning team, add a note to every system with what the text says about it, and tell me what you were unsure of.
+
+The Claude Desktop extension reads text files only (Markdown, plain text, CSV, JSON, YAML, XML, HTML and the like), not images or PDFs, so convert other sources first; an agent in a folder reads whatever its own tools can. Then review the result instead of trusting it: the compare window (View → Changes → Compare with git revision…, or **Review changes** when the open file changes on disk) colours what was added, removed and modified, and `chd diff` prints the same review in a terminal or CI.
+
+### Why the layout is manual
+
+You place the elements, and the file keeps the positions stable, so a small edit stays a small diff in git and the arrangement you chose does not shift under you. A diagram an assistant generates will need a person to tidy the layout. There is no automatic layout yet; see [the comparison](docs/comparison.md#where-this-tool-is-behind).
+
+### For regulated settings
+
+Facts, not promises:
+
+- Offline, enforced: a test fails if a network API appears in the source ([ADR 0113](docs/decisions/0113-enforced-offline-behaviour.md)).
+- The file format is a standalone specification ([docs/file-format.md](docs/file-format.md)), so there is no lock-in.
+- `chd diff` and `chd check` run in CI, and the compare window reviews a change before it is committed.
+- Architecture checks ship for hexagonal and data-flow diagrams; other styles need a profile of your own.
+- GPL-3.0-or-later, with third-party licences listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
 ## Documentation
 

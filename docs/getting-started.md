@@ -51,7 +51,7 @@ Right-click an element and choose **Link to diagram…** to point it at another 
 
 ## 7. Working with an AI assistant
 
-The **AI** menu sets up a folder so an assistant such as Claude can read and edit diagrams safely: copy-paste instructions for a plain chat, a skill and `AGENTS.md` for agents working in a folder, and a local extension for Claude Desktop. Anything an assistant reads is sent to its provider. See [ai-integration.md](architecture/ai-integration.md).
+The **AI** menu sets up a folder so an assistant such as Claude can read and edit diagrams safely: copy-paste instructions for a plain chat, a skill and `AGENTS.md` for agents working in a folder, and a local extension for Claude Desktop. Anything an assistant reads is sent to its provider. Treat what it produces as a draft: ask it to tell you what it changed, then review with **View → Changes → Compare with git revision…** or `chd diff`, and expect to tidy the layout yourself. A sample prompt for turning existing text into a diagram is in the [README](../README.md#draft-with-an-assistant-then-review). See [ai-integration.md](architecture/ai-integration.md).
 
 ## Where next
 
