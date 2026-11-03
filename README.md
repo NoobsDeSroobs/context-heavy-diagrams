@@ -10,7 +10,7 @@ https://github.com/user-attachments/assets/50d4d6b5-6aeb-47e9-b7b5-9f252e3970c4
 
 *Drill down through linked diagrams, then add a highlight from the tags that are shown. The same rules apply as the features interact.*
 
-A new diagram is plain boxes and arrows, and someone who only wants to draw a flow never has to touch the rest: tags, links, notes and the command line are opt-in ([ADR 0054](docs/decisions/0054-progressive-disclosure-for-advanced-features.md)). When you want more, one diagram can be recoloured by GDPR scope, owning team or state, one highlight at a time, and an AI assistant can draft or edit the file while you review exactly what it changed.
+A new diagram is just boxes and edges, and it stays that way until you take advantage of the more advanced features, such as tags, notes, links to deeper diagrams and the command line. Someone who only wants to draw a flow never has to touch them ([ADR 0054](docs/decisions/0054-progressive-disclosure-for-advanced-features.md)). When you want more, one diagram can be recoloured by GDPR scope, owning team or state, one highlight at a time, and an AI assistant can draft or edit the file while you review exactly what it changed.
 
 ## Why another diagramming tool?
 
@@ -25,7 +25,9 @@ For a comparison with other diagram tools, see [the comparison](docs/comparison.
 
 ## One diagram, several perspectives
 
-Tag the elements once (GDPR scope, NIS2 relevance, owning team, lifecycle state), then pick a highlight to colour the same diagram by one of those tags. A highlight recolours the elements and adds a legend; it does not switch layouts or hide anything, so the picture you drew stays the picture everyone discusses. The tool shows what the tags say; it does not certify anything.
+Tag the elements once (GDPR scope, NIS2 relevance, owning team, lifecycle state), then pick a highlight to colour the same diagram by one of those tags. A highlight recolours the elements and adds a legend; it does not switch layouts or hide anything, so the picture you drew stays the picture everyone discusses.
+
+The tool cannot prove that a tag is true; it shows what someone wrote. What it gives a compliance check is evidence to work with: the diagram is a file in git, so you can see who changed a tag and when, or who left it unchanged, and an AI assistant can check the diagram against your source material. That is one part of a compliance review, not a certificate on its own.
 
 https://github.com/user-attachments/assets/2e63dee5-85f8-4b32-a75a-f986084bd873
 
