@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "savedWith": "0.2.1",
+  "savedWith": "0.5.0",
   "legend": [
     {
       "id": "legend-1",
@@ -698,8 +698,15 @@
         "startMarker": "none",
         "endMarker": "arrowOpen",
         "fontSize": 11,
-        "fontColor": "#f2f2f3"
-      }
+        "fontColor": "#f2f2f3",
+        "routingStyle": "catmullRom"
+      },
+      "points": [
+        {
+          "x": 57.119127343986925,
+          "y": 394.14840879372076
+        }
+      ]
     },
     {
       "id": "xy-edge__booking-apiright-ext-loyalty-crmleft",
