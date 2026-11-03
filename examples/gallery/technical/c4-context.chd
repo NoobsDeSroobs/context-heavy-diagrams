@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "savedWith": "0.3.0",
+  "savedWith": "0.5.0",
   "legend": [
     {
       "id": "legend-1",
@@ -118,7 +118,7 @@
       },
       "data": {
         "label": "Ticketing & Booking Platform",
-        "details": "c4-context/details/Ticketing & Booking Platform-ticketing.md",
+        "notes": "c4-context/notes/Ticketing & Booking Platform-ticketing.md",
         "linkedDiagram": "c4-context/c4-container.chd"
       }
     },
@@ -144,7 +144,7 @@
       },
       "data": {
         "label": "Passenger",
-        "details": "c4-context/details/Passenger-passenger.md"
+        "notes": "c4-context/notes/Passenger-passenger.md"
       }
     },
     {
@@ -169,7 +169,7 @@
       },
       "data": {
         "label": "Station Staff",
-        "details": "c4-context/details/Station Staff-station-staff.md"
+        "notes": "c4-context/notes/Station Staff-station-staff.md"
       }
     },
     {
@@ -194,7 +194,7 @@
       },
       "data": {
         "label": "Payment Gateway\n(external system)",
-        "details": "c4-context/details/Payment Gateway-payment-gateway.md"
+        "notes": "c4-context/notes/Payment Gateway-payment-gateway.md"
       }
     },
     {
@@ -219,7 +219,7 @@
       },
       "data": {
         "label": "National Rail Interop Network\n(external system)",
-        "details": "c4-context/details/National Rail Interop Network-rail-interop.md"
+        "notes": "c4-context/notes/National Rail Interop Network-rail-interop.md"
       }
     },
     {
@@ -244,7 +244,7 @@
       },
       "data": {
         "label": "Loyalty & CRM System\n(existing system)",
-        "details": "c4-context/details/Loyalty & CRM System-loyalty-crm.md"
+        "notes": "c4-context/notes/Loyalty & CRM System-loyalty-crm.md"
       }
     },
     {
@@ -269,7 +269,7 @@
       },
       "data": {
         "label": "Legacy Reservation Mainframe\n(existing system, being retired)",
-        "details": "c4-context/details/Legacy Reservation Mainframe-legacy-mainframe.md"
+        "notes": "c4-context/notes/Legacy Reservation Mainframe-legacy-mainframe.md"
       }
     }
   ],

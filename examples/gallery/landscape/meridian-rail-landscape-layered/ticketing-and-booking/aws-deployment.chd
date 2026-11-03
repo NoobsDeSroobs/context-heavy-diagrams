@@ -60,7 +60,7 @@
       },
       "size": {
         "width": 750,
-        "height": 340
+        "height": 200
       },
       "zIndex": 200010,
       "style": {
@@ -71,7 +71,7 @@
         "fontColor": "#744210"
       },
       "data": {
-        "label": "Booking Session Manager — target-state AWS deployment\n\nA cloud/infrastructure architect's proposal for where Booking Session Manager (currently \"In Development\" per the domain view one level up) would actually run: a standard 3-tier AWS deployment behind CloudFront. Doubles as a real test of the chd-diagrams skill's layout-guide.md conventions — nested boundary containers (Region > VPC > subnet), a layered tier stack, and the 20px/60px gap convention throughout.\n\nTags at this layer, deliberately: only GDPR is re-declared here, and only on the components that actually differ (ALB/NAT Gateway route traffic, No PII; the app tier, RDS, and ElastiCache handle the same session data as the service above, Pseudonymized). NIS2, owning team, business domain, and lifecycle state are properties of the whole service, not of any one AWS component inside it — they're not repeated at this depth. See epic 0112 (docs/planning/epics/later/0112-per-tag-cascade-scope-to-linked-children.md) for the open question this raises: today that's just an authoring convention, not something the app enforces or checks for drift.\n\nPart of the Meridian Rail example gallery — epic 0022 (docs/planning/epics/0022-example-diagram-gallery.md)."
+        "label": "Booking Session Manager: target-state AWS deployment\nA proposal for where Booking Session Manager (in development, per the domain diagram one level up) would run: a standard three-tier AWS deployment behind CloudFront, with nested boundaries (Region > VPC > subnet).\nTags at this level: only GDPR is re-declared, and only on the components that differ (the ALB and NAT Gateway only route traffic, No PII; the app tier, RDS and ElastiCache handle the same session data as the service above, Pseudonymized). NIS2, owning team, business domain and lifecycle state belong to the whole service and are not repeated here."
       }
     },
     {
@@ -471,6 +471,7 @@
   "edges": [
     {
       "id": "xy-edge__client-route53",
+      "type": "labeled",
       "source": "client",
       "target": "route53",
       "sourceHandle": "right",
@@ -481,11 +482,11 @@
           "value": "No PII",
           "lock": "lockedEditable"
         }
-      },
-      "type": "labeled"
+      }
     },
     {
       "id": "xy-edge__route53-cloudfront",
+      "type": "labeled",
       "source": "route53",
       "target": "cloudfront",
       "sourceHandle": "right",
@@ -496,11 +497,11 @@
           "value": "No PII",
           "lock": "lockedEditable"
         }
-      },
-      "type": "labeled"
+      }
     },
     {
       "id": "xy-edge__cloudfront-s3-static",
+      "type": "labeled",
       "source": "cloudfront",
       "target": "s3-static",
       "sourceHandle": "right",
@@ -511,29 +512,29 @@
           "value": "No PII",
           "lock": "lockedEditable"
         }
-      },
-      "type": "labeled"
+      }
     },
     {
       "id": "xy-edge__cloudfront-alb",
+      "type": "labeled",
       "source": "cloudfront",
       "target": "alb",
       "sourceHandle": "bottom",
       "targetHandle": "top",
       "label": "forwards dynamic requests to",
+      "style": {
+        "labelPosition": 0.3
+      },
       "metadata": {
         "gdpr": {
           "value": "Pseudonymized",
           "lock": "lockedEditable"
         }
-      },
-      "type": "labeled",
-      "style": {
-        "labelPosition": 0.3
       }
     },
     {
       "id": "xy-edge__alb-app-tier",
+      "type": "labeled",
       "source": "alb",
       "target": "app-tier",
       "sourceHandle": "bottom",
@@ -544,47 +545,47 @@
           "value": "Pseudonymized",
           "lock": "lockedEditable"
         }
-      },
-      "type": "labeled"
+      }
     },
     {
       "id": "xy-edge__app-tier-rds",
+      "type": "labeled",
       "source": "app-tier",
       "target": "rds",
       "sourceHandle": "bottom-rds",
       "targetHandle": "top",
       "label": "reads/writes session data",
+      "style": {
+        "labelPosition": 0.6
+      },
       "metadata": {
         "gdpr": {
           "value": "Pseudonymized",
           "lock": "lockedEditable"
         }
-      },
-      "type": "labeled",
-      "style": {
-        "labelPosition": 0.6
       }
     },
     {
       "id": "xy-edge__app-tier-elasticache",
+      "type": "labeled",
       "source": "app-tier",
       "target": "elasticache",
       "sourceHandle": "bottom-cache",
       "targetHandle": "top",
       "label": "session cache read/write",
+      "style": {
+        "labelPosition": 0.6
+      },
       "metadata": {
         "gdpr": {
           "value": "Pseudonymized",
           "lock": "lockedEditable"
         }
-      },
-      "type": "labeled",
-      "style": {
-        "labelPosition": 0.6
       }
     },
     {
       "id": "xy-edge__app-tier-nat-gateway",
+      "type": "labeled",
       "source": "app-tier",
       "target": "nat-gateway",
       "sourceHandle": "top-nat",
@@ -595,8 +596,7 @@
           "value": "No PII",
           "lock": "lockedEditable"
         }
-      },
-      "type": "labeled"
+      }
     }
   ]
 }

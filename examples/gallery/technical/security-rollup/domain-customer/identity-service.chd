@@ -52,7 +52,7 @@
         "fontFamily": "sans-serif"
       },
       "data": {
-        "label": "EXAMPLE (leaf) — Identity Service internals. Layer 3 of the security-rollup demo.\nThese three components carry the real, hand-entered probability/consequence assessments. Their rolled-up \"Threat score\" per threat is what the Services layer (domain-customer.chd) shows for the linked \"Identity Service\" column.\n\"Insider misuse\" is assessed here but NOT in the parent catalog — the Services matrix surfaces it as a note rather than a row."
+        "label": "Identity Service internals (layer 3 of the security rollup demo).\nThese three components carry the real, hand-entered probability/consequence assessments. Their rolled-up \"Threat score\" per threat is what the Services layer (domain-customer.chd) shows for the linked \"Identity Service\" column.\n\"Insider misuse\" is assessed here but NOT in the parent catalog — the Services matrix surfaces it as a note rather than a row."
       }
     },
     {

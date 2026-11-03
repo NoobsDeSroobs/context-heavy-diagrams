@@ -1,6 +1,6 @@
 # Examples
 
-Real, working diagram files. Open any of them with **File → Open** (or drop it onto the window). Each is a single `.chd` file, which is plain JSON (see [`docs/file-format.md`](../docs/file-format.md)). A diagram that uses a feature needing extra files (notes, linked diagrams, images) keeps them in a sibling folder named after it (`<name>/details/`, `<name>/assets/`).
+Real, working diagram files. Open any of them with **File → Open** (or drop it onto the window). Each is a single `.chd` file, which is plain JSON (see [`docs/file-format.md`](../docs/file-format.md)). A diagram that uses a feature needing extra files (notes, linked diagrams, images) keeps them in a sibling folder named after it (`<name>/notes/`, `<name>/assets/`).
 
 ## Start here
 
@@ -30,7 +30,7 @@ Each diagram has an edge direction set named after what its arrows mean ("Depend
 | Open this | To see |
 |---|---|
 | [`gallery/landscape/meridian-rail-landscape.chd`](gallery/landscape/meridian-rail-landscape.chd) | A full as-is IT landscape of about 70 services, tagged for GDPR and NIS2 so you can switch highlight overlays on and off. |
-| [`gallery/landscape/meridian-rail-landscape-layered.chd`](gallery/landscape/meridian-rail-landscape-layered.chd) | A prototype of the same estate as a drill-down: Ctrl/Cmd-click the Ticketing & Booking domain to open its services, then one service's AWS deployment. |
+| [`gallery/landscape/meridian-rail-landscape-layered.chd`](gallery/landscape/meridian-rail-landscape-layered.chd) | The same estate as a drill-down: Ctrl/Cmd-click the Ticketing & Booking domain to open its services, then one service's AWS deployment. |
 | [`gallery/technical/c4-context.chd`](gallery/technical/c4-context.chd) | A C4 drill-down: Context, then Container, then seven Component diagrams, all linked. |
 | [`gallery/technical/security-rollup.chd`](gallery/technical/security-rollup/README.md) | A security matrix whose scores roll up through three layers of linked diagrams. |
 | [`gallery/business/customer-journey.chd`](gallery/business/customer-journey.chd) | Edges as a sequence rather than a hierarchy. |

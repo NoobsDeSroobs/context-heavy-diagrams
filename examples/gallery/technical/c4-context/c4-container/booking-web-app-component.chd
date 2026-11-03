@@ -1,5 +1,34 @@
 {
   "version": 1,
+  "legend": [
+    {
+      "id": "legend-1",
+      "kind": "entity",
+      "label": "Person",
+      "color": "#6b46c1"
+    },
+    {
+      "id": "legend-2",
+      "kind": "entity",
+      "label": "Component of this container",
+      "color": "#2b6cb0"
+    },
+    {
+      "id": "legend-3",
+      "kind": "entity",
+      "label": "Another container (for context)",
+      "color": "#1a73e8"
+    },
+    {
+      "id": "legend-4",
+      "kind": "line",
+      "label": "A → B: A uses B (the arrow points at what is used)",
+      "color": "#4a5568",
+      "lineStyle": "solid",
+      "startMarker": "none",
+      "endMarker": "arrowOpen"
+    }
+  ],
   "nodes": [
     {
       "id": "blurb",
@@ -10,7 +39,7 @@
       },
       "size": {
         "width": 1100,
-        "height": 180
+        "height": 90
       },
       "style": {
         "fill": "#fefcbf",
@@ -20,7 +49,7 @@
         "fontFamily": "sans-serif"
       },
       "data": {
-        "label": "EXAMPLE — C4 Component: Booking Web/Mobile App\n\nIllustrates: the third and final level of the C4 drill-down (Context → Container → Component) — this container's own internal structure, one level deeper than the Container diagram.\nPersona: the same technical/solution architect on the modernization task force.\n\nColor key: light blue = internal components (matches this container's own color at Container level). Purple = the human actor. Darker blue = another container, shown here only as the thing this app calls, not decomposed on this diagram.\n\nPart of the Meridian Rail example gallery — epic 0022 (docs/planning/epics/0022-example-diagram-gallery.md)."
+        "label": "C4 level 3: Components of the Booking Web/Mobile App\nThe internal structure of the passenger app. The Booking API it calls is shown for context only.\nShow the legend for what the colours and arrows mean."
       }
     },
     {
@@ -44,7 +73,7 @@
       },
       "data": {
         "label": "Passenger",
-        "details": "../details/actor-passenger.md"
+        "notes": "notes/Passenger-passenger.md"
       }
     },
     {
@@ -69,7 +98,7 @@
       },
       "data": {
         "label": "Booking Web/Mobile App — component boundary",
-        "details": "details/Booking Web-Mobile App-web-app.md"
+        "notes": "notes/Booking Web-Mobile App-web-app.md"
       }
     },
     {
@@ -94,7 +123,7 @@
       },
       "data": {
         "label": "UI Layer",
-        "details": "booking-web-app-component/details/ui-layer.md"
+        "notes": "booking-web-app-component/notes/ui-layer.md"
       }
     },
     {
@@ -119,7 +148,7 @@
       },
       "data": {
         "label": "Local State Store",
-        "details": "booking-web-app-component/details/local-state-store.md"
+        "notes": "booking-web-app-component/notes/local-state-store.md"
       }
     },
     {
@@ -144,7 +173,7 @@
       },
       "data": {
         "label": "Booking Client",
-        "details": "booking-web-app-component/details/booking-client.md"
+        "notes": "booking-web-app-component/notes/booking-client.md"
       }
     },
     {
@@ -169,7 +198,7 @@
       },
       "data": {
         "label": "Booking API\n[backend service]",
-        "details": "details/Booking API-api.md"
+        "notes": "notes/Booking API-api.md"
       }
     }
   ],

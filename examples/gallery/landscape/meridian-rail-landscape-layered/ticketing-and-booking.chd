@@ -121,7 +121,7 @@
       },
       "size": {
         "width": 750,
-        "height": 213
+        "height": 120
       },
       "zIndex": 200010,
       "style": {
@@ -132,7 +132,7 @@
         "fontColor": "#744210"
       },
       "data": {
-        "label": "Ticketing & Booking — domain drill-down\n\nThe 7 services the flat landscape (#1) tags businessDomain=\"Ticketing & Booking\", re-hosted here as this domain's own sub-diagram, same tag values as #1. Cross-domain integration edges from #1 (e.g. to Payment Gateway Integration, Customer Profile Service) are omitted here for now — they'll come back once sibling domain sub-diagrams exist to connect to. Booking Session Manager links further down to a target-state AWS deployment view, testing the chd-diagrams skill's layout-guide.md conventions on a real diagram."
+        "label": "Ticketing & Booking: domain drill-down\nThe seven services tagged businessDomain=\"Ticketing & Booking\" in the full landscape. Integration edges to other domains are left out until those domains have diagrams of their own. Booking Session Manager links down to a target-state AWS deployment."
       }
     },
     {
@@ -435,6 +435,7 @@
   "edges": [
     {
       "id": "xy-edge__svc-ticket-issuance-api-svc-booking-session-manager",
+      "type": "labeled",
       "source": "svc-ticket-issuance-api",
       "target": "svc-booking-session-manager",
       "sourceHandle": "right",
@@ -461,11 +462,11 @@
           "value": null,
           "lock": "lockedEditable"
         }
-      },
-      "type": "labeled"
+      }
     },
     {
       "id": "xy-edge__svc-booking-session-manager-svc-seat-reservation",
+      "type": "labeled",
       "source": "svc-booking-session-manager",
       "target": "svc-seat-reservation",
       "sourceHandle": "right-seat",
@@ -492,11 +493,11 @@
           "value": null,
           "lock": "lockedEditable"
         }
-      },
-      "type": "labeled"
+      }
     },
     {
       "id": "xy-edge__svc-multi-leg-journey-planner-svc-fare-calculation-engine",
+      "type": "labeled",
       "source": "svc-multi-leg-journey-planner",
       "target": "svc-fare-calculation-engine",
       "sourceHandle": "right",
@@ -523,11 +524,11 @@
           "value": null,
           "lock": "lockedEditable"
         }
-      },
-      "type": "labeled"
+      }
     },
     {
       "id": "xy-edge__svc-promotions-discountsright-svc-fare-calculation-engineleft-booking",
+      "type": "labeled",
       "source": "svc-promotions-discounts",
       "target": "svc-fare-calculation-engine",
       "sourceHandle": "right",
@@ -554,11 +555,11 @@
           "value": null,
           "lock": "lockedEditable"
         }
-      },
-      "type": "labeled"
+      }
     },
     {
       "id": "xy-edge__svc-booking-session-managerright-fare-svc-fare-calculation-engineleft-promo",
+      "type": "labeled",
       "source": "svc-booking-session-manager",
       "target": "svc-fare-calculation-engine",
       "sourceHandle": "right-fare",
@@ -585,8 +586,7 @@
           "value": null,
           "lock": "lockedEditable"
         }
-      },
-      "type": "labeled"
+      }
     }
   ]
 }

@@ -1,5 +1,49 @@
 {
   "version": 1,
+  "legend": [
+    {
+      "id": "legend-1",
+      "kind": "entity",
+      "label": "Component of this container",
+      "color": "#1a73e8"
+    },
+    {
+      "id": "legend-2",
+      "kind": "entity",
+      "label": "Frontend application (container, for context)",
+      "color": "#2b6cb0"
+    },
+    {
+      "id": "legend-3",
+      "kind": "entity",
+      "label": "Data store (container, for context)",
+      "color": "#0f766e"
+    },
+    {
+      "id": "legend-4",
+      "kind": "entity",
+      "label": "External system (for context)",
+      "color": "#718096"
+    },
+    {
+      "id": "legend-5",
+      "kind": "line",
+      "label": "A → B: A uses B (the arrow points at what is used)",
+      "color": "#4a5568",
+      "lineStyle": "solid",
+      "startMarker": "none",
+      "endMarker": "arrowOpen"
+    },
+    {
+      "id": "legend-6",
+      "kind": "line",
+      "label": "Transitional: used during the migration, then retired",
+      "color": "#4a5568",
+      "lineStyle": "dashed",
+      "startMarker": "none",
+      "endMarker": "arrowOpen"
+    }
+  ],
   "nodes": [
     {
       "id": "blurb",
@@ -10,7 +54,7 @@
       },
       "size": {
         "width": 1450,
-        "height": 150
+        "height": 90
       },
       "style": {
         "fill": "#fefcbf",
@@ -20,7 +64,7 @@
         "fontFamily": "sans-serif"
       },
       "data": {
-        "label": "EXAMPLE — C4 Component: Booking API\n\nIllustrates: the third and final level of the C4 drill-down (Context → Container → Component) — the hub container's own internal structure, deliberately the busiest of the seven component diagrams since Booking API is the busiest container. Persona: the same technical/solution architect on the modernization task force.\n\nColor key: blue = internal components (matches this container's own color at Container level). Purple = human actors (shown here only via the frontends that mediate them). Other colors = other containers/external systems, all shown for context only — none are decomposed on this diagram.\n\nPart of the Meridian Rail example gallery — epic 0022 (docs/planning/epics/0022-example-diagram-gallery.md)."
+        "label": "C4 level 3: Components of the Booking API\nThe internal structure of the Booking API, the busiest of the seven containers and so the busiest component diagram. The other containers and systems it talks to are shown for context only.\nShow the legend for what the colours and arrows mean."
       }
     },
     {
@@ -44,7 +88,7 @@
       },
       "data": {
         "label": "Booking Web/Mobile App\n[frontend]",
-        "details": "details/Booking Web-Mobile App-web-app.md"
+        "notes": "notes/Booking Web-Mobile App-web-app.md"
       }
     },
     {
@@ -68,7 +112,7 @@
       },
       "data": {
         "label": "Staff Portal\n[frontend]",
-        "details": "details/Staff Portal-portal.md"
+        "notes": "notes/Staff Portal-portal.md"
       }
     },
     {
@@ -93,7 +137,7 @@
       },
       "data": {
         "label": "Booking API — component boundary",
-        "details": "details/Booking API-api.md"
+        "notes": "notes/Booking API-api.md"
       }
     },
     {
@@ -125,7 +169,7 @@
       },
       "data": {
         "label": "Booking Controller",
-        "details": "booking-api-component/details/booking-controller.md"
+        "notes": "booking-api-component/notes/booking-controller.md"
       }
     },
     {
@@ -150,7 +194,7 @@
       },
       "data": {
         "label": "Search & Reservation Service",
-        "details": "booking-api-component/details/search-reservation-service.md"
+        "notes": "booking-api-component/notes/search-reservation-service.md"
       }
     },
     {
@@ -187,7 +231,7 @@
       },
       "data": {
         "label": "Orchestration Service",
-        "details": "booking-api-component/details/orchestration-service.md"
+        "notes": "booking-api-component/notes/orchestration-service.md"
       }
     },
     {
@@ -212,7 +256,7 @@
       },
       "data": {
         "label": "Profile Sync Service",
-        "details": "booking-api-component/details/profile-sync-service.md"
+        "notes": "booking-api-component/notes/profile-sync-service.md"
       }
     },
     {
@@ -236,7 +280,7 @@
       },
       "data": {
         "label": "Platform Database\n[data store]",
-        "details": "details/Platform Database-database.md"
+        "notes": "notes/Platform Database-database.md"
       }
     },
     {
@@ -260,7 +304,7 @@
       },
       "data": {
         "label": "Payment Orchestration Service\n[backend service]",
-        "details": "details/Payment Orchestration Service-orchestration.md"
+        "notes": "notes/Payment Orchestration Service-orchestration.md"
       }
     },
     {
@@ -284,7 +328,7 @@
       },
       "data": {
         "label": "Interop Gateway Service\n[backend service]",
-        "details": "details/Interop Gateway Service-gateway.md"
+        "notes": "notes/Interop Gateway Service-gateway.md"
       }
     },
     {
@@ -308,7 +352,7 @@
       },
       "data": {
         "label": "Legacy Sync Service\n[backend service, transitional]",
-        "details": "details/Legacy Sync Service-sync.md"
+        "notes": "notes/Legacy Sync Service-sync.md"
       }
     },
     {
@@ -332,7 +376,7 @@
       },
       "data": {
         "label": "Notification Service\n[backend service]",
-        "details": "details/Notification Service-service.md"
+        "notes": "notes/Notification Service-service.md"
       }
     },
     {
@@ -356,7 +400,7 @@
       },
       "data": {
         "label": "Loyalty & CRM System\n(existing system)",
-        "details": "../details/ext-loyalty-crm.md"
+        "notes": "notes/Loyalty & CRM System-loyalty-crm.md"
       }
     }
   ],

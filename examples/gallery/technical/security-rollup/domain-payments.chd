@@ -46,7 +46,7 @@
         "fontFamily": "sans-serif"
       },
       "data": {
-        "label": "EXAMPLE (mid) — Payments services. Layer 2 of the security-rollup demo.\nBoth Payment Gateway and Ledger Service are fully derived columns. Try Cell score = Multiply vs Average, and Threat score = Average vs Max: the numbers here and in the parent (security-rollup.chd) all move together, because the modes flow down from the matrix you're viewing."
+        "label": "Payments services (layer 2 of the security rollup demo).\nBoth Payment Gateway and Ledger Service are fully derived columns. Try Cell score = Multiply vs Average, and Threat score = Average vs Max: the numbers here and in the parent (security-rollup.chd) all move together, because the modes flow down from the matrix you're viewing."
       }
     },
     {

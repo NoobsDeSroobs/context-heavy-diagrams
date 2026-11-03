@@ -1,5 +1,28 @@
 {
   "version": 1,
+  "legend": [
+    {
+      "id": "legend-1",
+      "kind": "entity",
+      "label": "Component, or the calling container (for context)",
+      "color": "#1a73e8"
+    },
+    {
+      "id": "legend-2",
+      "kind": "entity",
+      "label": "External system",
+      "color": "#718096"
+    },
+    {
+      "id": "legend-3",
+      "kind": "line",
+      "label": "Transitional: used during the migration, then retired",
+      "color": "#4a5568",
+      "lineStyle": "dashed",
+      "startMarker": "none",
+      "endMarker": "arrowOpen"
+    }
+  ],
   "nodes": [
     {
       "id": "blurb",
@@ -10,7 +33,7 @@
       },
       "size": {
         "width": 1100,
-        "height": 150
+        "height": 110
       },
       "style": {
         "fill": "#fefcbf",
@@ -20,7 +43,7 @@
         "fontFamily": "sans-serif"
       },
       "data": {
-        "label": "EXAMPLE — C4 Component: Legacy Sync Service\n\nIllustrates: the third and final level of the C4 drill-down (Context → Container → Component) — deliberately the thinnest of the seven component diagrams. This service is transitional (see its own Container-level details), so it isn't built with the same layered structure as the services meant to last — two components, not three or four.\nPersona: the same technical/solution architect on the modernization task force.\n\nColor key: blue = internal components. Grey = the external system. All edges are dashed, same transitional convention as the Context and Container diagrams.\n\nPart of the Meridian Rail example gallery — epic 0022 (docs/planning/epics/0022-example-diagram-gallery.md)."
+        "label": "C4 level 3: Components of the Legacy Sync Service\nThe thinnest of the seven component diagrams: the service is transitional (see its note on the container diagram), so it has two components, not the layered structure of the services meant to last. All edges are dashed, the transitional convention used throughout.\nShow the legend for what the colours and arrows mean."
       }
     },
     {
@@ -45,7 +68,7 @@
       },
       "data": {
         "label": "Booking API\n[backend service]",
-        "details": "details/Booking API-api.md"
+        "notes": "notes/Booking API-api.md"
       }
     },
     {
@@ -70,7 +93,7 @@
       },
       "data": {
         "label": "Legacy Sync Service — component boundary",
-        "details": "details/Legacy Sync Service-sync.md"
+        "notes": "notes/Legacy Sync Service-sync.md"
       }
     },
     {
@@ -95,7 +118,7 @@
       },
       "data": {
         "label": "Inventory Request Handler",
-        "details": "legacy-sync-component/details/inventory-request-handler.md"
+        "notes": "legacy-sync-component/notes/inventory-request-handler.md"
       }
     },
     {
@@ -120,7 +143,7 @@
       },
       "data": {
         "label": "Legacy Protocol Adapter",
-        "details": "legacy-sync-component/details/legacy-protocol-adapter.md"
+        "notes": "legacy-sync-component/notes/legacy-protocol-adapter.md"
       }
     },
     {
@@ -144,7 +167,7 @@
       },
       "data": {
         "label": "Legacy Reservation Mainframe\n(existing system, being retired)",
-        "details": "../details/ext-legacy-mainframe.md"
+        "notes": "notes/Legacy Reservation Mainframe-legacy-mainframe.md"
       }
     }
   ],

@@ -9,7 +9,7 @@ The free-form Markdown file an element opens was called "details" in the file fo
 ## Decision
 - **The word is "notes"**, everywhere: the app, the docs, the AI material, the website and the file itself. "Open note", the notes panel, "add a note", the search facet `has:notes`. A note is a person's own record: what is known, what is open, and where the long documentation lives. It is the landing page for an element, not the complete documentation of anything.
 - **The stored key becomes `data.notes`.** The reader accepts `data.details` as an alias and the writer always writes `notes`, so older files open unchanged and are upgraded on their next save. The alias stays for now; dropping it is a separate decision. `has:details` stays as an alias of `has:notes` ([ADR 0096](0096-search-facets-and-shared-match-predicate.md)).
-- **New notes are stored in a `notes/` folder** next to the diagram, where they were in `details/`. A stored path is authoritative wherever the file lives, so notes already in a `details/` folder keep working and are not moved.
+- **Notes are stored in a `notes/` folder** next to the diagram, where they were in `details/`. A note still in a `details/` folder is moved into `notes/` the next time the diagram is saved, by the same move the app already makes when a label changes, and its stored path is updated. The emptied `details/` folder is left in place. A stored path is authoritative wherever the file lives, so a diagram whose notes have not been moved yet still opens.
 - **The code follows:** the `details` feature folders in `main`, `renderer/src` and `shared` become `notes`, since the three trees use the same folder name for a feature.
 - **The free-text canvas element is a "textbox"** in the UI and docs and is never called a note. The code keeps calling it `text`.
 
@@ -23,4 +23,5 @@ The free-form Markdown file an element opens was called "details" in the file fo
 ## Consequences
 - **An incompatible file-format change, in one direction:** a build from before it ignores `notes`, and drops the link when it saves a file that carries it. Below 1.0.0 that is a MINOR version with a "File format" entry in the changelog.
 - Assistants, the CLI and the Claude Desktop extension write `notes`. Files they wrote with `details` still open.
+- In a repository, the first save of an older diagram shows its note files as renames and the diagram file as changed.
 - "Humble" is the word's weakness; the README and the website describe usage and are free to say more than the interface does.

@@ -10,7 +10,7 @@
       },
       "size": {
         "width": 2700,
-        "height": 150
+        "height": 70
       },
       "zIndex": 200010,
       "style": {
@@ -21,7 +21,7 @@
         "fontFamily": "sans-serif"
       },
       "data": {
-        "label": "EXAMPLE — Customer Journey: Booking a Ticket\n\nIllustrates: edges-as-sequence rather than hierarchy — a business architect (or a PO, this isn't architect-exclusive) walking through the passenger's experience end to end, not a system diagram. Deliberately the \"simple\" pick of the gallery's starting trio: one straight line of steps, no containers, no linking, no highlights.\n\nPersona: a business architect on Meridian Rail's modernization task force, mapping the current passenger experience.\n\nPart of the Meridian Rail example gallery — epic 0022 (docs/planning/epics/0022-example-diagram-gallery.md)."
+        "label": "Customer journey: booking a ticket\nThe passenger's experience of booking a ticket today, from realising the need to travel to the loyalty points after the trip. The arrows show the order of the steps, not dependencies between systems."
       }
     },
     {
@@ -46,7 +46,7 @@
       },
       "data": {
         "label": "Realizes need to travel",
-        "details": "customer-journey/details/Realizes need to travel-1-realize.md"
+        "notes": "customer-journey/notes/Realizes need to travel-1-realize.md"
       }
     },
     {
@@ -71,7 +71,7 @@
       },
       "data": {
         "label": "Searches routes & times",
-        "details": "customer-journey/details/Searches routes & times-2-search.md"
+        "notes": "customer-journey/notes/Searches routes & times-2-search.md"
       }
     },
     {
@@ -96,7 +96,7 @@
       },
       "data": {
         "label": "Compares fares & options",
-        "details": "customer-journey/details/Compares fares & options-3-compare.md"
+        "notes": "customer-journey/notes/Compares fares & options-3-compare.md"
       }
     },
     {
@@ -121,7 +121,7 @@
       },
       "data": {
         "label": "Selects journey & seat",
-        "details": "customer-journey/details/Selects journey & seat-4-select.md"
+        "notes": "customer-journey/notes/Selects journey & seat-4-select.md"
       }
     },
     {
@@ -146,7 +146,7 @@
       },
       "data": {
         "label": "Enters passenger & loyalty details",
-        "details": "customer-journey/details/Enters passenger & loyalty details-5-details.md"
+        "notes": "customer-journey/notes/Enters passenger & loyalty details-5-details.md"
       }
     },
     {
@@ -171,7 +171,7 @@
       },
       "data": {
         "label": "Pays for ticket",
-        "details": "customer-journey/details/Pays for ticket-6-pay.md"
+        "notes": "customer-journey/notes/Pays for ticket-6-pay.md"
       }
     },
     {
@@ -196,7 +196,7 @@
       },
       "data": {
         "label": "Receives e-ticket & confirmation",
-        "details": "customer-journey/details/Receives e-ticket & confirmation-7-confirm.md"
+        "notes": "customer-journey/notes/Receives e-ticket & confirmation-7-confirm.md"
       }
     },
     {
@@ -221,7 +221,7 @@
       },
       "data": {
         "label": "Travels: boards & validates ticket",
-        "details": "customer-journey/details/Travels- boards & validates ticket-8-travel.md"
+        "notes": "customer-journey/notes/Travels- boards & validates ticket-8-travel.md"
       }
     },
     {
@@ -246,7 +246,7 @@
       },
       "data": {
         "label": "Post-trip: earns loyalty points",
-        "details": "customer-journey/details/Post-trip- earns loyalty points-9-loyalty.md"
+        "notes": "customer-journey/notes/Post-trip- earns loyalty points-9-loyalty.md"
       }
     }
   ],

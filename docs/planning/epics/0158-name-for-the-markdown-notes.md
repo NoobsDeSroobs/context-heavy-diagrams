@@ -10,12 +10,12 @@ One word, "notes", from the file on disk to the interface. The key is `data.note
 - [x] Decide the word and write the ADR
 - [x] Interface, search facet, docs, AI instructions and the extension say notes; the canvas Text element is the textbox (v0.4.0)
 - [x] `parseDiagram` reads `details` as `notes` in the one normalising function that already handles the Shape-to-Entity rename; the serializer writes `notes`; recovery snapshots from an older build are normalised on read, including their `detailsDrafts`
-- [x] New notes go in `<diagram>/notes/`; stored paths keep working wherever they are
+- [x] Notes go in `<diagram>/notes/`; a note still in `details/` is moved there on the next save (seen when the `c4-context` example was saved in the new build); stored paths keep working wherever they are
 - [x] The `details` feature folders in `main`, `renderer/src` and `shared`, and the identifiers, IPC channels (`notes:read`, `notes:readWithStamp`) and CSS classes in them, renamed
 - [x] The bundled skill (and the repo's copy, via `npm run sync:ai`), its validator and the format spec read and write `notes`; the MCP extension takes its spec from the skill
 - [x] `docs/file-format.md`: the field, the alias, the folder
 - [x] Tests: a file with `details` opens as `notes`, wins on both keys, and saves with `notes` only; the fixtures use the new key
-- [x] The gallery examples stay as they are: they still use `details`, which exercises the alias, and become `notes` when saved from the app
+- [x] The gallery examples are migrated: the key, the folders and the paths; a text key that explained the colours became a legend; epic mentions and unbuilt-work notes removed from the diagrams, notes and READMEs
 - [x] Changelog "File format" entry and the version bump to 0.5.0 (an older build drops the link in a file saved by a newer one)
 - [ ] Live check in the app: open a gallery diagram, open a note, edit and save; a new note lands in `notes/`; save a diagram that had `details` and read the file; a diagram with notes opened in the compare window
 - [ ] Release 0.5.0

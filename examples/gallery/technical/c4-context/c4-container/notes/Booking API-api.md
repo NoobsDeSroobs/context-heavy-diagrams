@@ -13,7 +13,7 @@ The core backend service — the actual "brain" of the Ticketing & Booking Platf
 
 ## Why it's drawn as a hub
 
-Every other internal container either serves this one (the two frontends) or is called by this one (the backend services and the database) — deliberately centralized rather than choreographed, which keeps the failure modes easier to reason about at this stage of the platform's design, at the cost of this service carrying a great deal of responsibility. Worth revisiting if/when a Component-level diagram (epic 0022 entry #6) shows this needs splitting further.
+Every other internal container either serves this one (the two frontends) or is called by this one (the backend services and the database) — deliberately centralized rather than choreographed, which keeps the failure modes easier to reason about at this stage of the platform's design, at the cost of this service carrying a great deal of responsibility. The Component-level diagram this container links to shows what it carries, and whether it needs splitting further.
 
 ## See also
 

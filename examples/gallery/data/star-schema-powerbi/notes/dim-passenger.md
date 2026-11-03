@@ -14,4 +14,4 @@ under GDPR scope for passenger data).
 
 This is the dimension most likely to grow into a snowflake later (a
 `Dim Loyalty Programme` behind `LoyaltyTier`), which is why it's worth its
-own detail note.
+own note.

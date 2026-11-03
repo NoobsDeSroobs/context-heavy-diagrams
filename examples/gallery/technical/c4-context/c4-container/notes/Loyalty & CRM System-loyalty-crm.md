@@ -8,4 +8,4 @@ Holds passenger profiles, contact preferences, and the loyalty points program (p
 
 ## Why it matters here
 
-The "syncs customer profile & loyalty points with" relationship is why passenger personal data (profile, journey history) flows beyond the ticketing platform itself — relevant to the GDPR highlight overlay (epic 0022 entry #2, not yet built).
+The "syncs customer profile & loyalty points with" relationship is why passenger personal data (profile, journey history) flows beyond the ticketing platform itself — relevant to the GDPR highlight overlay (see the GDPR highlight in the landscape diagram).
