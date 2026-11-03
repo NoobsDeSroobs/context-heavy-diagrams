@@ -2,7 +2,7 @@
 
 **An offline desktop diagramming tool. Diagrams are plain-text files that diff cleanly in git, and every box can carry notes, tags, images and a link to a deeper diagram. The canvas stays readable while the context lives behind it.**
 
-> **Early open-source release (0.x).** It is built and tested mainly on Windows. Linux and macOS are supported targets but not yet verified. A Windows installer is on the [releases page](https://github.com/NoobsDeSroobs/context-heavy-diagrams/releases) ([download](#download)); on other systems you build it from source (below). File compatibility is a priority, but expect rough edges. `1.0.0` is reserved for when the tool is feature-complete.
+> **Early open-source release (0.x).** It is built and tested mainly on Windows. Linux and macOS are supported targets, but not yet verified. A Windows installer is on the [releases page](https://github.com/NoobsDeSroobs/context-heavy-diagrams/releases) ([download](#download)); on other systems you build it from source (below). File compatibility is a priority, but expect rough edges. `1.0.0` is reserved for when the tool is feature-complete.
 
 ![Context-Heavy Diagrams showing the Meridian Rail landscape in dark mode, with the notes panel open on the Customer Profile Service](docs/images/hero.png)
 
@@ -12,12 +12,12 @@ https://github.com/user-attachments/assets/50d4d6b5-6aeb-47e9-b7b5-9f252e3970c4
 
 ## Why another diagramming tool?
 
-Commercial diagramming tools are restrictive, and general box-and-arrow editors make you pay for flexibility with fiddly mechanics: overlapping objects you have to move together, arrows that don't follow when you move a box, groups that fight you when you edit one part. Context-Heavy Diagrams is built around a few rules instead:
+Commercial diagramming tools are built for a specific purpose, making them restrictive. General box-and-arrow editors make you pay for flexibility with fiddly mechanics: flat boxes that must multiply and grow to contain the required context, and a lot of manual tweaking to get it to work out somehow. Context-Heavy Diagrams is built around a few rules instead:
 
-- **A node is one thing.** Notes, links, tags and icons are fields *on* the node, never separate objects you have to keep aligned.
-- **Edges are always attached.** They are bound to connection points and re-route when anything moves or resizes.
-- **Context goes behind the box, not on top of it.** Long explanations live in a Markdown notes panel, deeper structure lives in a linked diagram, and the canvas stays a readable overview.
-- **Your files are yours.** Plain, gitable and deterministic JSON on disk; no server, no account, no network.
+- **An entity is a concept in the domain the diagram lives in.** Notes, links, tags and icons are fields *on* the entity, never separate objects you have to keep aligned.
+- **Edges convey one or more relationships,** which you can swap between if required.
+- **Context goes behind the box, pulled forth when needed.** Long explanations live in a Markdown notes panel, deeper structure lives in a linked diagram, and the diagram stays a readable overview.
+- **Your files are private and yours.** Plain, gitable, reviewable and deterministic JSON on disk; no server, no account, no network.
 
 For a comparison with other diagram tools, see [the comparison](docs/comparison.md).
 
