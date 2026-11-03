@@ -2,7 +2,7 @@
 
 **An offline desktop diagramming tool. Diagrams are plain-text files that diff cleanly in git, and every box can carry notes, tags, images and a link to a deeper diagram. The canvas stays readable while the context lives behind it.**
 
-> **Early open-source release (0.x).** It is built and tested mainly on Windows. Linux and macOS are supported targets but not yet verified, and there are no prebuilt downloads yet, so you build it from source (below). File compatibility is a priority, but expect rough edges. `1.0.0` is reserved for when the tool is feature-complete.
+> **Early open-source release (0.x).** It is built and tested mainly on Windows. Linux and macOS are supported targets but not yet verified. A Windows installer is on the [releases page](https://github.com/NoobsDeSroobs/context-heavy-diagrams/releases) ([download](#download)); on other systems you build it from source (below). File compatibility is a priority, but expect rough edges. `1.0.0` is reserved for when the tool is feature-complete.
 
 ![Context-Heavy Diagrams showing the Meridian Rail landscape in dark mode, with the notes panel open on the Customer Profile Service](docs/images/hero.png)
 
