@@ -1,7 +1,7 @@
 # 0158: A name for the Markdown files behind an element
 
 ## Status
-Not Started. Pinned on 2026-11-01 with **Factsheet** as the front-runner; the maintainer is sleeping on it. Nothing is renamed before the decision (task 1). Search already says `has:notes` (`has:details` is an alias); that follows whatever is chosen.
+Not Started. Pinned on 2026-11-01 with Factsheet as the front-runner; on 2026-11-03 the maintainer moved back to **Notes**, on how the files are used (see Candidates). Nothing is renamed before the decision (task 1). Search already says `has:notes` (`has:details` is an alias).
 
 ## Goal
 One word for the free-form Markdown file an element opens, used the same way in the app, the docs, the AI material and the website. Today it is "details" in the file format, the folder and the menu, and "notes" in the README and the getting-started guide.
@@ -17,8 +17,8 @@ Tags, links, images and the Markdown file are all context, documentation and det
 
 ## Candidates
 Tests: distinct from tags and links, weight enough not to sound humble, works as "Add …" and as a `has:` facet.
-- **Factsheet (front-runner).** A concise, skimmable page about one subject; open questions and risks still count as essential information. Reads well next to the tags (the standardised facts) as the custom part, and fits the peek card. Weaknesses: "facts" leans settled and structured, and the peek card (label, tags and prose) is arguably the whole factsheet. Enterprise-architecture tools use the word for the page behind each element.
-- **Notes.** No collision with tags, but humble, and the maintainer reads a note as smaller than these files. Also close to the yellow text element.
+- **Notes (front-runner).** It matches how the files are used: a person jots down facts and thoughts as they go, comes back to tidy them, adds more, and may end with a link to the long documentation or a comparison. They are not the complete documentation of anything; they are the landing page for an element and the jumping-off point that holds or leads to everything relevant, wherever it lives. That is also how an assistant's notes read (what was read, what was not, what conflicts). It makes the search facet short (`has:notes`) and the verbs natural ("add a note"). The concerns, with answers: the canvas element the code calls Text is called a **textbox** in the UI and docs and is never called a note; "humble" matters little because the README and website describe usage and are free to differ from the code's vocabulary (for example "tags and links give the structure, notes hold everything else").
+- **Factsheet (runner-up).** A concise, skimmable page about one subject; open questions and risks still count as essential information. Reads well next to the tags (the standardised facts) as the custom part, and fits the peek card. Weaknesses: "facts" leans settled and structured, and it describes a finished page, not one that grows as people work. Enterprise-architecture tools use the word for the page behind each element.
 - **Documentation.** Dropped: everything in a diagram is documentation, the same test "details" failed.
 - **Description, Page, Readme, Dossier, Profile, Overview.** Too short, too structured, or the wrong audience.
 - **Brief.** Complements the tags, but "Add brief" parses as an adjective and a brief feels one-off.
@@ -27,12 +27,12 @@ Tests: distinct from tags and links, weight enough not to sound humble, works as
 - **"Add markdown".** Names the format, not the purpose.
 
 ## Constraints
-- The `details` field can be renamed with a read alias (the reader accepts both keys, the writer uses the new one), and a stored note path stays valid wherever the file lives, so only new notes need a new folder. A build from before the change drops the link in a file saved after it, so the version bump is MAJOR; with no installer out yet, now is the cheap moment. The `details` feature folders in the code stay.
+- The `details` field can be renamed with a read alias (the reader accepts both keys, the writer uses the new one), and a stored note path stays valid wherever the file lives, so only new notes need a new folder. A build from before the change drops the link in a file saved after it, which is an incompatible change: below 1.0.0 that is a MINOR bump with a "File format" entry in the changelog. The cheaper option, recommended, is to rename the word in the app, docs and AI material and keep the stored `details` key and folder, so there is no format change at all; the format spec then says the `details` field holds the path to the element's note, and the key can be revisited at 1.0.0. The `details` feature folders in the code stay.
 - The `details` feature folder is the same name in three trees by rule; renaming it is a large diff with no user-visible effect, so it can wait or never happen.
 - Older ADRs keep the vocabulary of their time.
 
 ## Tasks
-- [ ] Think-through: confirm the word, decide how far the rename goes (UI and docs only, or folder and code too), and check the collision with the `text` node and any future sticky notes
+- [ ] Think-through: confirm Notes, decide how far the rename goes (UI, docs and AI material only, or the stored key, folder and code too), and settle "textbox" as the name of the canvas Text element in the UI and docs
 - [ ] Settle the wording of the verb and panel ("Open notes", "Notes panel", "add a note"), the peek card and the Diagnostics label
 - [ ] ADR for the decision, including that the `details` key and folder are kept (or not)
 - [ ] Change the UI strings, the docs, the extension instructions, the AI material and the example text to match
