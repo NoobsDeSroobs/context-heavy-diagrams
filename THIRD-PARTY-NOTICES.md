@@ -63,7 +63,7 @@ The built-in icon set is [Tabler Icons](https://tabler.io/icons) (`@tabler/icons
 | estree-util-is-identifier-name | 3.0.0 | MIT |
 | extend | 3.0.2 | MIT |
 | fast-deep-equal (extension only) | 3.1.3 | MIT |
-| fast-uri (extension only) | 3.1.8 | BSD-3-Clause |
+| fast-uri (extension only) | 3.1.9 | BSD-3-Clause |
 | hast-util-to-jsx-runtime | 2.3.6 | MIT |
 | hast-util-whitespace | 3.0.0 | MIT |
 | html-to-image | 1.11.13 | MIT |
@@ -1471,7 +1471,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### fast-uri 3.1.8
+### fast-uri 3.1.9
 
 License: BSD-3-Clause  
 Author: Vincent Le Goff <vince.legoff@gmail.com> (https://github.com/zekth)  
