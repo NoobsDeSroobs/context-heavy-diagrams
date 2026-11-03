@@ -18,7 +18,7 @@ export type CommandCategory =
   | 'Selection'
   | 'Connections & creation'
   | 'Labels'
-  | 'Links & details'
+  | 'Links & notes'
   | 'Search'
 
 // Matching is per-modifier tri-state: `true` = must be held, `false` = must
@@ -203,19 +203,19 @@ export const COMMANDS = [
   {
     id: 'links.follow',
     title: "Follow a node's linked diagram (or create/link one if it has none)",
-    category: 'Links & details',
+    category: 'Links & notes',
     keys: 'Mod+Click'
   },
   {
     id: 'links.peek',
-    title: "Peek at an element's details, tags and link while hovering it",
-    category: 'Links & details',
+    title: "Peek at an element's note, tags and link while hovering it",
+    category: 'Links & notes',
     keys: 'Hold Mod'
   },
   {
     id: 'links.menu',
-    title: 'Open an element’s context menu (details, links, icons, …)',
-    category: 'Links & details',
+    title: 'Open an element’s context menu (note, links, icons, …)',
+    category: 'Links & notes',
     keys: 'Right-click'
   },
 

@@ -25,7 +25,7 @@ Selection works as in most editors: click, Shift+click to add, Shift+drag to box
 
 Right-click an element for its menu:
 
-- **See details** opens a Markdown notes panel for the element. The notes are saved next to the diagram as a separate `.md` file, so they diff and review like any other text.
+- **Open note** opens a Markdown panel for the element's note. The note is saved next to the diagram as a separate `.md` file, so it diffs and reviews like any other text.
 - **Add icon** picks from the bundled icons or your own SVG/PNG files.
 - **Reference images…** pins pictures to the element. They show in floating windows and never become part of the diagram or its exports.
 

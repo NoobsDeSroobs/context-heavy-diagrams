@@ -111,7 +111,7 @@ function EntityNode({ id, data, selected }: NodeProps): React.JSX.Element {
         : []
       openContextMenu(event.clientX, event.clientY, [
         { label: 'Add icon', onSelect: () => openIconPicker(id, rect) },
-        { label: 'See details', onSelect: () => openDetailsPanel(id) },
+        { label: 'Open note', onSelect: () => openDetailsPanel(id) },
         { label: 'Reference images…', onSelect: () => openReferencesFor(id) },
         ...linkItems,
         ...detachItem,

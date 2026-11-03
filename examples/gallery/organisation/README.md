@@ -9,7 +9,7 @@ People, accountability, and process content — new folder as of the 2026-08-20 
 
 ## Deferred (not dropped, just not in this round)
 
-- Incident/runbook checklist (GFM checkboxes via the details sublayer, minimal diagram) — a strong "useful to non-architects" example (an operations person, not an architect), held back for a later round rather than this trimmed first pass. Risk register/heat map — same tabular caveats as the RACI matrix, redundant with it for now.
+- Incident/runbook checklist (GFM checkboxes via the notes, minimal diagram) — a strong "useful to non-architects" example (an operations person, not an architect), held back for a later round rather than this trimmed first pass. Risk register/heat map — same tabular caveats as the RACI matrix, redundant with it for now.
 
 ## Status
 

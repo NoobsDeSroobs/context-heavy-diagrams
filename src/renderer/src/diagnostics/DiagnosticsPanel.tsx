@@ -28,7 +28,7 @@ const RESOURCE_LABEL: Record<MissingFileEntry['resourceKind'], string> = {
   linkedDiagram: 'Linked diagram',
   icon: 'Icon',
   reference: 'Reference image',
-  details: 'Details file'
+  details: 'Note file'
 }
 
 // Which kinds have a "pick a replacement" flow (a file dialog). The others

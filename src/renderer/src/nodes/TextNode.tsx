@@ -68,7 +68,7 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
         ? [{ label: 'Detach from parent', onSelect: () => detachFromParent(id) }]
         : []
       openContextMenu(event.clientX, event.clientY, [
-        { label: 'See details', onSelect: () => openDetailsPanel(id) },
+        { label: 'Open note', onSelect: () => openDetailsPanel(id) },
         ...linkItems,
         ...detachItem,
         { label: 'Select all text', separatorBefore: true, onSelect: () => selectAllOfType('text') }

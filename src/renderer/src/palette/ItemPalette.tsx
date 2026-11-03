@@ -77,7 +77,7 @@ export default function ItemPalette({
         onClick={onAddText}
       >
         <span className="item-palette-icon item-palette-icon-text" />
-        Text
+        Textbox
       </button>
       <button
         type="button"

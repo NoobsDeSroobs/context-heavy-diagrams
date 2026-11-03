@@ -10,7 +10,7 @@ The general flow for creating or modifying a diagram, loosely (this is a shape t
 
 1. Create the required shapes and containers.
 2. Add the edges, with their labels.
-3. Fill in metadata and any other content (tags, icons, details).
+3. Fill in metadata and any other content (tags, icons, notes).
 4. **Only then**, do a geometry pass: reposition/resize to eliminate overlap and bleeding, uncross edges where reasonably possible, and use empty space well.
 
 The reason step 4 comes last, not first: **an edge's label consumes real visual space that a bounding-box-only layout doesn't account for.** Positioning shapes and routing edges as if a label were free — then adding the label text afterward — routinely leaves the label overlapping the edge itself, a neighboring shape, or another edge's label, even when the shapes and edge paths themselves looked perfectly spaced. (Found 2026-09-05: exactly this, in `examples/gallery/landscape/meridian-rail-landscape-layered/ticketing-and-booking.chd` — edges were positioned and spaced *before* their labels were written, and the spacing stopped making sense once the labels existed.) A label sits at `labelPosition` (default the edge's midpoint, see [field-reference.md](field-reference.md#edge-style)) — when doing the geometry pass, treat that point as needing roughly as much clearance as the label text itself (rough rule of thumb: 100–160px of horizontal breathing room at a typical 12px font, more for a longer label), not just a bare point on a path.

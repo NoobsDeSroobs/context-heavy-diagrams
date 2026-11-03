@@ -41,7 +41,7 @@ element is not a change; a changed note, link, label, tag or connection is.
   --json                Print the result as JSON instead of text.
   --exit-code           Exit 1 when anything changed (like git diff --exit-code).
 
-It only reads the diagrams. A changed note (a Details file) is found by comparing the note files
+It only reads the diagrams. A changed note (a note file) is found by comparing the note files
 beside the two diagrams, or the note at the revision.
 
 Exit codes: 0 ok, 1 something changed (only with --exit-code), 2 usage error, 3 a version could
