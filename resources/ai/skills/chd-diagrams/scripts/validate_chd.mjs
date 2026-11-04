@@ -75,15 +75,46 @@ export function validateFile(path, recursive = false, visited = new Set()) {
   const nodes = Array.isArray(data?.nodes) ? data.nodes : []
   const edges = Array.isArray(data?.edges) ? data.edges : []
 
-  // --- legacy node type ---
-  // The app reads 'shape' as 'entity', so it works, but new files should say 'entity'.
-  // One line for all of them: a file written wholesale can have dozens.
-  const legacyShapes = nodes.filter((n) => n?.type === 'shape').map((n) => n.id ?? '<no id>')
-  if (legacyShapes.length > 0) {
-    const shown = legacyShapes.slice(0, 5).map((id) => `'${id}'`).join(', ')
-    const more = legacyShapes.length > 5 ? `, and ${legacyShapes.length - 5} more` : ''
+  // --- legacy names ---
+  // Names the app still reads but never writes. They work, but new files should use the
+  // current name. One line per legacy name: a file written wholesale can have dozens.
+  const legend = Array.isArray(data?.legend) ? data.legend : []
+  const security = data?.security && typeof data.security === 'object' ? data.security : {}
+  const idOf = (x) => x?.id ?? '<no id>'
+  for (const { what, ids, old, current } of [
+    {
+      what: 'node(s)',
+      ids: nodes.filter((n) => n?.type === 'shape').map(idOf),
+      old: "type 'shape'",
+      current: "type 'entity'"
+    },
+    {
+      what: 'node(s)',
+      ids: nodes.filter((n) => n?.data && 'details' in n.data).map(idOf),
+      old: 'data.details',
+      current: 'data.notes'
+    },
+    {
+      what: 'legend entry(ies)',
+      ids: legend.filter((e) => e?.kind === 'shape').map(idOf),
+      old: "kind 'shape'",
+      current: "kind 'entity'"
+    },
+    {
+      what: 'security key(s)',
+      ids: ['matrixShapeIds', 'hiddenShapeIds'].filter((k) => k in security),
+      old: 'matrixShapeIds / hiddenShapeIds',
+      current: 'matrixEntityIds / hiddenEntityIds'
+    }
+  ]) {
+    if (ids.length === 0) continue
+    const shown = ids
+      .slice(0, 5)
+      .map((id) => `'${id}'`)
+      .join(', ')
+    const more = ids.length > 5 ? `, and ${ids.length - 5} more` : ''
     warnings.push(
-      `${prefix} ${legacyShapes.length} node(s) have type 'shape' (${shown}${more}): that is the legacy name; write type 'entity'`
+      `${prefix} ${ids.length} ${what} use the legacy ${old} (${shown}${more}); write ${current}`
     )
   }
 

@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
-import { validateProfile } from './validate.ts'
+import { KINDS, validateProfile } from './validate.ts'
 
 const profilesDir = join(import.meta.dirname, '..', '..', '..', 'resources', 'profiles')
 const load = (name) => JSON.parse(readFileSync(join(profilesDir, name), 'utf8'))
@@ -40,6 +40,32 @@ test('the template is invalid until both edge values are chosen, and nothing els
   const chosen = load('template.chdprofile.json')
   chosen.edges = { meaning: 'flowsTo', presence: 'required' }
   assert.deepEqual(validateProfile(chosen).errors, [])
+})
+
+test('the profile guide in the skill has a valid example and names every rule kind', () => {
+  const guide = readFileSync(
+    join(
+      import.meta.dirname,
+      '..',
+      '..',
+      '..',
+      'resources',
+      'ai',
+      'skills',
+      'chd-diagrams',
+      'references',
+      'conformance.md'
+    ),
+    'utf8'
+  )
+  const example = guide.match(/```json\r?\n([\s\S]*?)\r?\n```/)
+  assert.ok(example, 'the guide has a json example')
+  const { errors } = validateProfile(JSON.parse(example[1]))
+  assert.deepEqual(errors, [])
+  for (const kind of KINDS) assert.ok(guide.includes(`\`${kind}\``), `the guide names ${kind}`)
+  for (const key of ['type', 'tag', 'insideRole']) {
+    assert.ok(guide.includes(`\`${key}`), `the guide names the match key ${key}`)
+  }
 })
 
 test('a valid profile is returned as it is', () => {

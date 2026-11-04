@@ -108,7 +108,40 @@ test('a shape node still has its connection points checked', async () => {
   assert.equal(errors.length, 1)
 })
 
-test('entity nodes raise no shape warning', async () => {
+test('entity nodes raise no legacy warning', async () => {
   const { warnings } = await check([node('a'), node('b')], [])
   assert.deepEqual(warnings, [])
+})
+
+test('data.details is a legacy-name warning, once for all nodes', async () => {
+  const { errors, warnings } = await check(
+    [
+      node('a', { data: { details: 'notes/a.md' } }),
+      node('b', { data: { details: 'notes/b.md' } })
+    ],
+    []
+  )
+  assert.deepEqual(errors, [])
+  const legacy = warnings.filter((w) => w.includes('legacy data.details'))
+  assert.equal(legacy.length, 1)
+  assert.match(legacy[0], /2 node\(s\).*write data\.notes/)
+})
+
+test('a legend kind shape and the old security id lists are legacy-name warnings', async () => {
+  const file = join(dir, 'd.chd')
+  await writeFile(
+    file,
+    JSON.stringify({
+      version: 1,
+      nodes: [node('a')],
+      edges: [],
+      legend: [{ id: 'l1', kind: 'shape', label: 'x' }],
+      security: { threats: [], matrixShapeIds: ['a'], hiddenShapeIds: [] }
+    })
+  )
+  const { warnings } = validateFile(file)
+  assert.ok(warnings.some((w) => /legend entry.*legacy kind 'shape'.*write kind 'entity'/.test(w)))
+  assert.ok(
+    warnings.some((w) => /legacy matrixShapeIds \/ hiddenShapeIds.*write matrixEntityIds/.test(w))
+  )
 })
