@@ -7,6 +7,8 @@ export interface MenuBarItem {
   // shortened Recent Diagrams label.
   title?: string
   disabled?: boolean
+  // A toggle: set (true or false) it shows a check mark while true, and is announced as a checkbox.
+  checked?: boolean
   // A thin rule rendered above this item — for grouping within a menu, same
   // idea as ContextMenu's own `separatorBefore`.
   separatorBefore?: boolean
@@ -57,6 +59,8 @@ function DropdownItem({
           className="menu-bar-dropdown-item"
           title={item.title}
           disabled={item.disabled}
+          role={item.checked !== undefined ? 'menuitemcheckbox' : undefined}
+          aria-checked={item.checked}
           aria-haspopup={hasSubmenu || undefined}
           aria-expanded={hasSubmenu ? open : undefined}
           onClick={() => {
@@ -68,7 +72,14 @@ function DropdownItem({
             item.onSelect?.()
           }}
         >
-          <span>{item.label}</span>
+          <span>
+            {item.checked !== undefined && (
+              <span className="menu-bar-check" aria-hidden="true">
+                {item.checked ? '✓' : ''}
+              </span>
+            )}
+            {item.label}
+          </span>
           {item.accelerator && <span className="menu-bar-accelerator">{item.accelerator}</span>}
           {hasSubmenu && <span className="menu-bar-submenu-caret">▸</span>}
         </button>

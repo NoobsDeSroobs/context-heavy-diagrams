@@ -4,6 +4,7 @@ import { useDiagramContext } from '../canvas/useDiagramContext'
 import { themeAdaptiveColor } from '../styling/themeAdaptiveColor'
 import { EDGE_STYLE_DEFAULTS, displayColor } from '@shared/styling/styleDefaults'
 import { MAX_ANIMATION_SPEED, MIN_ANIMATION_SPEED, knownSpeed } from '@shared/styling/edgeAnimation'
+import { MAX_DASH_PART, MIN_DASH_PART, dashPattern, knownDashPart } from '@shared/styling/edgeDash'
 import { CollapsibleSection, ColorField, NumberField, SliderField, SelectField } from '../ui/fields'
 import { computeFieldValue } from './fieldValue'
 import { MARKER_OPTIONS } from '../edges/edgeStyleOptions'
@@ -82,6 +83,21 @@ export function EdgeFields({
   const animationDirection = computeFieldValue(edges, (e) => edgeStyleOf(e).animationDirection)
   // Speed and direction mean something only while an edge is animated.
   const animated = animation.mixed || animation.value !== undefined
+  const pulsing = edges.some((e) => edgeStyleOf(e).animation === 'pulse')
+  const pulseDistance = computeFieldValue(edges, (e) =>
+    Math.max(0, edgeStyleOf(e).pulseDistance ?? 0)
+  )
+  // The dash length and gap are shown for a dashed, dotted or flowing line, with what it draws now.
+  const dashed = edges.some((e) => {
+    const s = edgeStyleOf(e)
+    return (s.lineStyle ?? D.lineStyle) !== 'solid' || s.animation === 'flow'
+  })
+  const drawnDash = (e: Edge): ReturnType<typeof dashPattern> => {
+    const s = edgeStyleOf(e)
+    return dashPattern(s, s.animation === 'flow')
+  }
+  const dashLength = computeFieldValue(edges, (e) => drawnDash(e)?.dash)
+  const dashGap = computeFieldValue(edges, (e) => drawnDash(e)?.gap)
   const fontSize = computeFieldValue(edges, (e) => edgeStyleOf(e).fontSize ?? D.fontSize)
   const fontColor = computeFieldValue(edges, (e) =>
     displayColor(edgeStyleOf(e).fontColor, D.fontColor, theme, themeAdaptiveColor)
@@ -153,16 +169,50 @@ export function EdgeFields({
           onChange={(v) => updateStyle({ lineStyle: v })}
           pushSnapshot={pushSnapshot}
         />
+        {dashed && (
+          <>
+            <NumberField
+              label="Dash length"
+              value={dashLength.value}
+              mixed={dashLength.mixed}
+              min={MIN_DASH_PART}
+              max={MAX_DASH_PART}
+              onChange={(v) =>
+                updateStyle({ dashLength: v === undefined ? undefined : knownDashPart(v) })
+              }
+              onSessionStart={beginContinuousEdit}
+              onSessionEnd={endContinuousEdit}
+            />
+            <NumberField
+              label="Dash gap"
+              value={dashGap.value}
+              mixed={dashGap.mixed}
+              min={MIN_DASH_PART}
+              max={MAX_DASH_PART}
+              onChange={(v) =>
+                updateStyle({ dashGap: v === undefined ? undefined : knownDashPart(v) })
+              }
+              onSessionStart={beginContinuousEdit}
+              onSessionEnd={endContinuousEdit}
+            />
+          </>
+        )}
         <SelectField
           label="Animation"
           value={animation.value ?? ''}
           mixed={animation.mixed}
           options={ANIMATION_OPTIONS}
-          // None also drops the speed and direction, so no stale values are left in the file.
+          // None also drops the speed, direction and pulse distance, so no stale values are left in
+          // the file.
           onChange={(v) =>
             updateStyle(
               v === ''
-                ? { animation: undefined, animationSpeed: undefined, animationDirection: undefined }
+                ? {
+                    animation: undefined,
+                    animationSpeed: undefined,
+                    animationDirection: undefined,
+                    pulseDistance: undefined
+                  }
                 : { animation: v }
             )
           }
@@ -193,6 +243,21 @@ export function EdgeFields({
               onChange={(v) => updateStyle({ animationDirection: v === '' ? undefined : v })}
               pushSnapshot={pushSnapshot}
             />
+            {pulsing && (
+              <NumberField
+                label="Pulse distance"
+                value={pulseDistance.value}
+                mixed={pulseDistance.mixed}
+                min={0}
+                step={10}
+                // 0 is one pulse at a time, and so is a negative value; neither is stored.
+                onChange={(v) =>
+                  updateStyle({ pulseDistance: v === undefined || v <= 0 ? undefined : v })
+                }
+                onSessionStart={beginContinuousEdit}
+                onSessionEnd={endContinuousEdit}
+              />
+            )}
           </>
         )}
       </CollapsibleSection>

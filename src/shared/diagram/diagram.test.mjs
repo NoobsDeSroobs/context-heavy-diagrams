@@ -101,21 +101,21 @@ test('a node without a note gets neither key', () => {
   assert.ok(!('notes' in file.nodes[0].data))
 })
 
-test('an edge animation survives a save and a load, and no animation writes no key', () => {
+test('an edge animation and its settings survive a save and a load, and no animation writes no key', () => {
   const edge = (id, style) => ({ id, source: 'a', target: 'b', style })
-  const file = parseDiagram(
-    minimal({
-      edges: [
-        edge('e1', { animation: 'pulse', animationSpeed: 2, animationDirection: 'reverse' }),
-        edge('e2', { stroke: '#f00' })
-      ]
-    })
-  )
-  const out = JSON.parse(serializeDiagram(file))
-  assert.deepEqual(out.edges[0].style, {
+  const settings = {
     animation: 'pulse',
     animationSpeed: 2,
-    animationDirection: 'reverse'
-  })
-  assert.equal('animation' in out.edges[1].style, false)
+    animationDirection: 'reverse',
+    pulseDistance: 40,
+    lineStyle: 'dotted',
+    dashLength: 3,
+    dashGap: 9
+  }
+  const file = parseDiagram(
+    minimal({ edges: [edge('e1', settings), edge('e2', { stroke: '#f00' })] })
+  )
+  const out = JSON.parse(serializeDiagram(file))
+  assert.deepEqual(out.edges[0].style, settings)
+  for (const key of Object.keys(settings)) assert.equal(key in out.edges[1].style, false, key)
 })

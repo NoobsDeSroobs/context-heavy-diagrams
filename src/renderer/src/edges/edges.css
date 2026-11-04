@@ -85,12 +85,14 @@
   stroke-width: 1;
 }
 
-/* Animated edges (ADR 0141). 'flow': LabeledEdge.tsx sets the dash pattern,
-   --edge-flow-period (one repeat of it, in user units), --edge-flow-duration (which carries the
-   speed) and --edge-flow-direction; the dashes move by exactly one period per loop, from the
-   path's start (source) to its end (target) unless reversed, so the loop is seamless. 'pulse': a
-   dot moved along the path by SVG motion, in LabeledEdge.tsx. */
-.edge-flow {
+/* Animated edges (ADR 0141). LabeledEdge.tsx sets the dash pattern, --edge-flow-period (one repeat
+   of it, in user units), --edge-flow-duration (which carries the speed) and --edge-flow-direction.
+   'flow' animates the edge's own dashes; 'pulse' animates a second stroke of round, zero-length
+   dashes laid over it. Either way the dashes move by exactly one period per loop, from the path's
+   start (source) to its end (target) unless reversed, so the loop is seamless. The legend swatches
+   use the same classes. */
+.edge-flow,
+.edge-pulse {
   animation: edge-flow var(--edge-flow-duration) linear infinite var(--edge-flow-direction, normal);
 }
 
@@ -100,11 +102,12 @@
   }
 }
 
-/* Nothing moves for people who asked their system for less motion, with "Animate edges" off in
-   Preferences (Canvas.tsx puts .edges-still on the canvas), or in the compare window, which is a
-   still review of two versions. The line stays dashed or plain; a pulse is hidden. */
+/* Nothing moves for people who asked their system for less motion, with Animate edges off (View
+   menu or Preferences; Canvas.tsx puts .edges-still on the canvas), or in the compare window, which
+   is a still review of two versions. The line stays dashed or plain; a pulse is hidden. */
 @media (prefers-reduced-motion: reduce) {
-  .edge-flow {
+  .edge-flow,
+  .edge-pulse {
     animation: none;
   }
   .edge-pulse {
@@ -113,13 +116,38 @@
 }
 
 .compare-canvas .edge-flow,
-.edges-still .edge-flow {
+.compare-canvas .edge-pulse,
+.edges-still .edge-flow,
+.edges-still .edge-pulse {
   animation: none;
 }
 
 .compare-canvas .edge-pulse,
 .edges-still .edge-pulse {
   display: none;
+}
+
+/* With Animate edges off, holding Ctrl (Cmd on a Mac) over an edge still shows it moving, the way
+   holding it over an element shows its note (ADR 0093). useModifierHeldClass puts .mod-held on the
+   page while the key is down; the edge is the hovered <g class="react-flow__edge">, whose hit path
+   is part of it. Reduced motion still wins: it is the system's request, not a preference of ours. */
+.mod-held .edges-still .react-flow__edge:hover .edge-flow,
+.mod-held .edges-still .react-flow__edge:hover .edge-pulse {
+  animation: edge-flow var(--edge-flow-duration) linear infinite var(--edge-flow-direction, normal);
+}
+
+.mod-held .edges-still .react-flow__edge:hover .edge-pulse {
+  display: inline;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mod-held .edges-still .react-flow__edge:hover .edge-flow,
+  .mod-held .edges-still .react-flow__edge:hover .edge-pulse {
+    animation: none;
+  }
+  .mod-held .edges-still .react-flow__edge:hover .edge-pulse {
+    display: none;
+  }
 }
 
 .edge-label-text {

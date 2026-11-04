@@ -78,6 +78,13 @@ export interface EdgeStyle extends FontStyle {
   // as fast. Absent means 1; a stored value outside 0.1 to 10 is drawn at the nearest end of it.
   animationSpeed?: number
   animationDirection?: EdgeAnimationDirection
+  // 'pulse' only: the distance between pulses, in pixels, so a stream of them runs along the edge.
+  // Absent or 0 means one pulse at a time; a negative value is read as 0.
+  pulseDistance?: number
+  // The length of a dash and of the gap after it, in pixels, for a dashed, dotted or flowing line;
+  // absent means what the line style draws (ADR 0141).
+  dashLength?: number
+  dashGap?: number
   // 0-1 fraction along the rendered path, same convention as
   // ConnectionPoint's `offset` — stays meaningful if the edge's endpoints
   // move, unlike a fixed pixel offset. Absent means 0.5 (today's only

@@ -77,3 +77,12 @@ test('formatting: bindings and display-only entries', () => {
 test('Ctrl+K opens the command palette', () => {
   assert.equal(findKeyCommand(key('k', { ctrlKey: true }), false)?.id, 'view.commandPalette')
 })
+
+test('Ctrl+Shift+A toggles edge animation and Ctrl+A still selects everything', () => {
+  assert.equal(
+    findKeyCommand(key('a', { ctrlKey: true, shiftKey: true }), false)?.id,
+    'view.toggleEdgeAnimation'
+  )
+  assert.equal(findKeyCommand(key('a', { ctrlKey: true }), false)?.id, 'selection.selectAll')
+  assert.equal(acceleratorFor('view.toggleEdgeAnimation'), 'Ctrl+Shift+A')
+})

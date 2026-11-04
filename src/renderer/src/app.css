@@ -285,3 +285,9 @@ body {
 .about-dialog-overlay:has(.conflict-dialog) {
   z-index: 200;
 }
+
+/* The check mark of a toggle item in a menu (View -> Animate edges). */
+.menu-bar-check {
+  display: inline-block;
+  width: 1.3em;
+}
