@@ -16,7 +16,11 @@ Let an edge be animated (movement along the line, from the source end to the tar
 - [x] Round trip through save and load (test); the helper for the dash, timing and dot size (tests)
 - [x] Controls: `animationSpeed` (a multiplier, 0.1 to 10) and `animationDirection` (forward or reverse) per edge, shown in the panel only while an edge is animated, copied by the brush; setting None removes both
 - [x] One global switch: the **Animate edges** preference (on by default) draws every animated edge still; a class on the canvas, so no edge re-renders
-- [ ] Not done, to decide: a View-menu toggle or shortcut for the switch, animating only the selected or hovered edge, a per-pulse count or size, speed in the legend
+- [ ] **View → Animate edges** toggle (checked while on) with a shortcut, bound in the command registry; with it off, holding Ctrl/Cmd over an edge still animates that edge, the same hover-with-modifier idea as the note peek on a node
+- [ ] **Pulse distance** (`pulseDistance`): 0 or absent is one pulse repeating; a positive number is the distance between pulses in a stream; negative is read as 0
+- [ ] **Dash length and gap** (`dashLength`, `dashGap`) for a dashed, dotted or flowing line, so the pattern can be set; used by the canvas, the SVG export and the flow
+- [ ] **Animated legend line**: a legend entry can carry the animation, speed, direction, pulse distance and dash settings, so the legend arrow moves; picking a legend line from an edge copies them; image exports stay still
+- Decided against: animating only the selected edges, and showing the speed in the legend
 - [x] Looked at in the running app (2026-11-04, over the DevTools protocol): flow and pulse draw, the loop times match the speed (flow 0.49 s at speed 1, 0.98 s at 0.5; pulse halves at 2), reverse runs the other way, and an unstyled edge draws its arrowhead
 - [ ] Still to look at by eye: the pulse dot on step and curved routing, a selected edge, a dotted line, switching the direction set, light and dark theme, and that the `flow` loop has no visible jump
 - [ ] Measure a diagram with many animated edges
