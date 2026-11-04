@@ -13,6 +13,8 @@
 //       LATER in the `nodes` array (violates the parent-before-child ordering
 //       React Flow requires)
 //     - a parentId cycle (A inside B inside A)
+//     - an edge sourceHandle/targetHandle (also inside directionSets) that is not one of
+//       its node's connection points: the edge is not drawn
 //
 //   WARNINGS (recoverable at runtime, but almost always a mistake):
 //     - a parentId that doesn't resolve to any node in the file
@@ -32,6 +34,10 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { basename, dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+
+const SIDES = ['top', 'right', 'bottom', 'left']
+// Only these carry connection points; 'shape' is the legacy name the app still reads as 'entity'.
+const HANDLE_NODE_TYPES = new Set(['entity', 'container', 'shape'])
 
 function load(path) {
   let text
@@ -68,6 +74,18 @@ export function validateFile(path, recursive = false, visited = new Set()) {
   const baseDir = dirname(abs)
   const nodes = Array.isArray(data?.nodes) ? data.nodes : []
   const edges = Array.isArray(data?.edges) ? data.edges : []
+
+  // --- legacy node type ---
+  // The app reads 'shape' as 'entity', so it works, but new files should say 'entity'.
+  // One line for all of them: a file written wholesale can have dozens.
+  const legacyShapes = nodes.filter((n) => n?.type === 'shape').map((n) => n.id ?? '<no id>')
+  if (legacyShapes.length > 0) {
+    const shown = legacyShapes.slice(0, 5).map((id) => `'${id}'`).join(', ')
+    const more = legacyShapes.length > 5 ? `, and ${legacyShapes.length - 5} more` : ''
+    warnings.push(
+      `${prefix} ${legacyShapes.length} node(s) have type 'shape' (${shown}${more}): that is the legacy name; write type 'entity'`
+    )
+  }
 
   // --- id uniqueness ---
   const nodeIds = new Map()
@@ -136,6 +154,41 @@ export function validateFile(path, recursive = false, visited = new Set()) {
           `${prefix} edge '${eid}' has ${field}='${endpoint}' which doesn't match any node id in this file`
         )
       }
+    }
+  }
+
+  // --- edge connection points (handles) ---
+  // An edge that names a connection point its node lacks is not drawn, and nothing else says so.
+  // A side with no stored points has one implicit point named after the side; once a side has
+  // stored points only those ids exist on it, so the side name stops being valid there.
+  const handleIds = (node) => {
+    const stored = Array.isArray(node?.connectionPoints) ? node.connectionPoints : []
+    const ids = new Set()
+    for (const side of SIDES) {
+      const onSide = stored.filter((p) => p?.side === side)
+      if (onSide.length === 0) ids.add(side)
+      for (const p of onSide) ids.add(p?.id)
+    }
+    return ids
+  }
+  const checkHandle = (eid, where, nodeId, handle) => {
+    if (handle === undefined || handle === null) return
+    const node = nodeIds.has(nodeId) ? nodes[nodeIds.get(nodeId)] : undefined
+    if (!node || !HANDLE_NODE_TYPES.has(node.type)) return
+    const ids = handleIds(node)
+    if (!ids.has(handle)) {
+      errors.push(
+        `${prefix} edge '${eid}' ${where}='${handle}' is not a connection point of node '${nodeId}' (it has: ${[...ids].join(', ')}); the edge will not be drawn`
+      )
+    }
+  }
+  for (const edge of edges) {
+    const eid = edge?.id ?? '<no id>'
+    checkHandle(eid, 'sourceHandle', edge?.source, edge?.sourceHandle)
+    checkHandle(eid, 'targetHandle', edge?.target, edge?.targetHandle)
+    for (const [setId, dir] of Object.entries(edge?.directionSets ?? {})) {
+      checkHandle(eid, `directionSets.${setId}.sourceHandle`, dir?.source, dir?.sourceHandle)
+      checkHandle(eid, `directionSets.${setId}.targetHandle`, dir?.target, dir?.targetHandle)
     }
   }
 

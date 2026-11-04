@@ -8,12 +8,12 @@ This is about *composition*, not structure — where to put things and what to l
 
 The general flow for creating or modifying a diagram, loosely (this is a shape to reach for, not a rigid recipe to follow lockstep):
 
-1. Create the required shapes and containers.
+1. Create the required entities and containers.
 2. Add the edges, with their labels.
 3. Fill in metadata and any other content (tags, icons, notes).
 4. **Only then**, do a geometry pass: reposition/resize to eliminate overlap and bleeding, uncross edges where reasonably possible, and use empty space well.
 
-The reason step 4 comes last, not first: **an edge's label consumes real visual space that a bounding-box-only layout doesn't account for.** Positioning shapes and routing edges as if a label were free — then adding the label text afterward — routinely leaves the label overlapping the edge itself, a neighboring shape, or another edge's label, even when the shapes and edge paths themselves looked perfectly spaced. (Found 2026-09-05: exactly this, in `examples/gallery/landscape/meridian-rail-landscape-layered/ticketing-and-booking.chd` — edges were positioned and spaced *before* their labels were written, and the spacing stopped making sense once the labels existed.) A label sits at `labelPosition` (default the edge's midpoint, see [field-reference.md](field-reference.md#edge-style)) — when doing the geometry pass, treat that point as needing roughly as much clearance as the label text itself (rough rule of thumb: 100–160px of horizontal breathing room at a typical 12px font, more for a longer label), not just a bare point on a path.
+The reason step 4 comes last, not first: **an edge's label consumes real visual space that a bounding-box-only layout doesn't account for.** Positioning entities and routing edges as if a label were free — then adding the label text afterward — routinely leaves the label overlapping the edge itself, a neighboring entity, or another edge's label, even when the entities and edge paths themselves looked perfectly spaced. (Found 2026-09-05: exactly this, in `examples/gallery/landscape/meridian-rail-landscape-layered/ticketing-and-booking.chd` — edges were positioned and spaced *before* their labels were written, and the spacing stopped making sense once the labels existed.) A label sits at `labelPosition` (default the edge's midpoint, see [field-reference.md](field-reference.md#edge-style)) — when doing the geometry pass, treat that point as needing roughly as much clearance as the label text itself (rough rule of thumb: 100–160px of horizontal breathing room at a typical 12px font, more for a longer label), not just a bare point on a path.
 
 This doesn't mean re-deriving geometry from nothing every time — a small content edit (one more tag, a renamed label) doesn't need a full re-layout. It means: when geometry is actually being decided (a first draft, or a deliberate restructure), decide it after the content that occupies visual space actually exists, not before.
 
@@ -23,12 +23,12 @@ These are this app's actual default sizes for a freshly created node (what you g
 
 | Node type | Default size |
 |---|---|
-| Shape (entity) | 120 × 80 |
+| Entity | 120 × 80 |
 | Container (grouping) | 320 × 180 — this is only the *empty* default; size a real container to fit its children, see below |
 | Text label | 120 × 48 |
 | Anchor | 14 × 14 — rarely placed deliberately, normally the result of dragging an edge into empty space |
 
-Deviate freely when a label needs more room or a shape represents something that reads better wider/taller — these are starting sizes, not a constraint.
+Deviate freely when a label needs more room or an entity represents something that reads better wider/taller — these are starting sizes, not a constraint.
 
 ## Spacing: there is no grid — pick a consistent gap instead
 
@@ -36,10 +36,10 @@ Deviate freely when a label needs more room or a shape represents something that
 
 Two gap sizes cover most layouts:
 
-- **Baseline gap — 20px edge-to-edge.** This matches the app's own Align/Distribute feature's default gap. Use it between closely related elements in the same row/column/group (e.g. shapes inside the same container, steps in one pipeline).
+- **Baseline gap — 20px edge-to-edge.** This matches the app's own Align/Distribute feature's default gap. Use it between closely related elements in the same row/column/group (e.g. entities inside the same container, steps in one pipeline).
 - **Loose gap — ~60px edge-to-edge (3× baseline).** Use it between distinct groups or sections — separate layers, separate swimlanes, separate subsystems — so the grouping reads visually even before or without a container drawn around it.
 
-"Edge-to-edge" means clear space between bounding boxes, not anchor-to-anchor distance — measure from one node's `position + size` to the next node's `position`, not center-to-center, otherwise a size mix (e.g. a 320-wide container next to a 120-wide shape) reads as uneven even with a "matching" gap.
+"Edge-to-edge" means clear space between bounding boxes, not anchor-to-anchor distance — measure from one node's `position + size` to the next node's `position`, not center-to-center, otherwise a size mix (e.g. a 320-wide container next to a 120-wide entity) reads as uneven even with a "matching" gap.
 
 **Container sizing has no auto-fit** — this app never resizes a container to hug its children, and there's no stored padding/inset field. When you size a container by hand around its children, leave roughly **24–40px of clear space** between the container's own edge and its nearest child on every side. Remember the coordinate system: a child's `position` is relative to *its container's* top-left corner, not the canvas — so if the container's top-left sits at canvas `(x, y)` and you want 30px of inset, the first child's `position` is `{ x: 30, y: 30 }` regardless of where the container itself sits on the canvas.
 
@@ -61,8 +61,8 @@ Named starting layouts for common diagram shapes. Each is a description plus the
 Horizontal bands stacked top-to-bottom (presentation → application → data, or similar), each band a Container spanning the full width.
 
 - Stack containers vertically with the **loose gap (60px)** between one container's bottom edge and the next one's top edge, all sharing the same `x` and `width`.
-- Inside each container, lay out its shapes left-to-right with the **baseline gap (20px)**, inset **30px** from the container's own edges (per the container-sizing note above).
-- Cross-layer edges (a shape in one band connecting to a shape in the band below) usually want `sourceHandle: "bottom"` / `targetHandle: "top"`.
+- Inside each container, lay out its entities left-to-right with the **baseline gap (20px)**, inset **30px** from the container's own edges (per the container-sizing note above).
+- Cross-layer edges (an entity in one band connecting to an entity in the band below) usually want `sourceHandle: "bottom"` / `targetHandle: "top"`.
 
 ### Hub-and-spoke
 One central Entity with several others arranged around it, each connected directly to the hub.
@@ -73,20 +73,20 @@ One central Entity with several others arranged around it, each connected direct
 ### Request/response pipeline
 A left-to-right (or top-to-bottom) sequence of steps, each connected to the next.
 
-- One row of shapes, each **baseline gap (20px)** from the previous one's right edge, all sharing the same `y`.
+- One row of entities, each **baseline gap (20px)** from the previous one's right edge, all sharing the same `y`.
 - `sourceHandle: "right"` / `targetHandle: "left"` on every edge (or `"bottom"`/`"top"` for a vertical pipeline) unless a step branches.
-- A return/response path (if drawn as a separate edge rather than implied) usually routes as a second edge between the same two shapes, offset with a couple of manual `points` or a different `routingStyle` so it doesn't overlap the forward-path edge.
+- A return/response path (if drawn as a separate edge rather than implied) usually routes as a second edge between the same two entities, offset with a couple of manual `points` or a different `routingStyle` so it doesn't overlap the forward-path edge.
 
 ### Swimlane
 Rows (or columns) by responsibility — one lane per actor/system — with steps placed into whichever lane owns them.
 
 - One Container per lane, full diagram width (or height, for vertical lanes), stacked with the **loose gap (60px)** between lanes, all sharing `x`/`width` (or `y`/`height`).
-- Shapes representing a step go inside the lane Container that owns that step, positioned left-to-right (or top-to-bottom) in call order with the **baseline gap** — this is what makes "which lane is this in" read at a glance instead of needing a label lookup.
-- Cross-lane edges connect shapes that have different `parentId`s directly by their node `id`s — the format doesn't require same-parent for an edge, only that both endpoint ids exist.
+- Entities representing a step go inside the lane Container that owns that step, positioned left-to-right (or top-to-bottom) in call order with the **baseline gap** — this is what makes "which lane is this in" read at a glance instead of needing a label lookup.
+- Cross-lane edges connect entities that have different `parentId`s directly by their node `id`s — the format doesn't require same-parent for an edge, only that both endpoint ids exist.
 
 ### Boundary / zone nesting
 Security zones, trust boundaries, or any "this lives inside that" containment (e.g. a VPC containing subnets containing services).
 
 - Nested Containers, one level of `parentId` per boundary. Each level insets its children by the **24–40px** container margin from the note above, remembering each nesting level's `position` is relative to *its own immediate parent*, not the canvas or the outermost container.
 - Don't flatten this into sibling containers with matching colors as a substitute for real nesting — the point of `parentId` nesting here is that "is this inside the boundary" becomes a structural fact (draggable as a unit, filterable by ancestry) rather than just a visual implication.
-- An edge crossing a boundary (e.g. external traffic entering a VPC) is a normal edge between two node ids regardless of nesting depth — connect it to the actual entry-point shape, not to the boundary Container itself, unless the diagram genuinely means "traffic enters the zone as a whole" rather than a specific component.
+- An edge crossing a boundary (e.g. external traffic entering a VPC) is a normal edge between two node ids regardless of nesting depth — connect it to the actual entry-point entity, not to the boundary Container itself, unless the diagram genuinely means "traffic enters the zone as a whole" rather than a specific component.

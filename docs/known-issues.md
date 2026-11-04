@@ -13,7 +13,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 ## Open and worked-around at a glance
 
-- [An edge that names a connection point its node does not have is not drawn](#an-edge-that-names-a-connection-point-its-node-does-not-have-is-not-drawn) — Open (the compare window works around it for its own copy).
+- [An edge that names a connection point its node does not have is not drawn](#an-edge-that-names-a-connection-point-its-node-does-not-have-is-not-drawn) — Worked around (the validator reports it; the compare window works around it for its own copy).
 - [Alt+drag duplicate may be swallowed by Linux window managers](#alt-drag-duplicate-may-be-swallowed-by-linux-window-managers) — Open, untested on Linux.
 - [A colour typed in light mode comes back changed (the theme flip is not exactly reversible)](#a-colour-typed-in-light-mode-comes-back-changed-the-theme-flip-is-not-exactly-reversible) — Won't fix.
 - [A native confirm() dialog left `<select>` elements unresponsive afterward](#a-native-confirm-dialog-left-select-elements-unresponsive-afterward) — Worked around.
@@ -38,13 +38,15 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 ## An edge that names a connection point its node does not have is not drawn
 
-**Status:** Open (found 2026-10-25, while building the compare window)
+**Status:** Worked around (found 2026-10-25, while building the compare window; the validator reports it since 2026-11-04)
 
 **Symptom:** an edge is in the file and in the diagram's data but nothing is drawn, with only a console warning from React Flow (`Couldn't create edge for source handle id: "right"`, error 008). Eight edges in the gallery had this (repaired in the files since). A hand-written or assistant-written edge with no `sourceHandle`/`targetHandle` fails the same way.
 
 **Cause:** every connection point is a handle with an id. A side with no stored points implicitly has one, named after the side (`right`); once a side has stored points (`cp-1`, `cp-2`) that implicit `right` handle is gone. An edge still saying `right` then points at nothing, and React Flow drops it silently. Nothing at load repairs this.
 
-**Worked around** in the compare window only: its copy moves such an end to the nearest point the node has (`src/shared/compare/drawable.ts`), and says so, so the review never loses an edge. The editor and the exports still do not draw it.
+**Reported** as an error by the validator (the skill's script, `chd validate` and the MCP `validate_diagram` share one implementation), for an edge's own handles and for those inside its `directionSets`, so an assistant hears about it before the edge is lost. A trial run of an assistant had written such edges with nothing to say so.
+
+**Worked around** in the compare window: its copy moves such an end to the nearest point the node has (`src/shared/compare/drawable.ts`), and says so, so the review never loses an edge. The editor and the exports still do not draw it.
 
 **If it bites:** repair at load, as the container references are healed ([ADR 0075](decisions/0075-container-hierarchy-integrity.md)), reusing `makeEdgesDrawable`; a repair would count as a change to save ([ADR 0128](decisions/0128-a-diagram-repaired-on-load-counts-as-changed.md)).
 

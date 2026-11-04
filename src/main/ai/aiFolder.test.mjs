@@ -31,10 +31,12 @@ test('fresh folder gets AGENTS.md, CLAUDE.md and the stamped skill', async () =>
   )
 })
 
-test('AGENTS.md names the chd launcher only when its path is known', async () => {
+test('AGENTS.md names the chd launcher when its path is known and says chd is unavailable otherwise', async () => {
   await installAiFiles(source, dir, '1.0.0')
   const without = await readFile(join(dir, 'AGENTS.md'), 'utf-8')
   assert.doesNotMatch(without, /CLI_NOTE|command-line tool/)
+  assert.match(without, /`chd` command .* is not set up for this folder/)
+  assert.match(without, /re-read the file/)
   assert.doesNotMatch(without, /\n\n\n/)
 
   await installAiFiles(source, dir, '1.0.0', 'C:\\Apps\\My App\\chd.cmd')

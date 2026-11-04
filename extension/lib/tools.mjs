@@ -12,7 +12,7 @@ import {
   writeFileSync
 } from 'node:fs'
 import { randomUUID } from 'node:crypto'
-import { dirname, extname, join, sep } from 'node:path'
+import { basename, dirname, extname, join, sep } from 'node:path'
 import { validateFile } from '../../resources/ai/skills/chd-diagrams/scripts/validate_chd.mjs'
 import {
   MAX_FILE_BYTES,
@@ -110,7 +110,9 @@ export function createTools({ root, allowUpdate, specSources }) {
     }
     walk(root, 0)
     files.sort((a, b) => a.path.localeCompare(b.path))
-    return { files, truncated, updatesEnabled: allowUpdate }
+    // The folder's name only, never its full path (which would go to the provider): enough for an
+    // assistant to notice that the server points at the wrong folder.
+    return { folder: basename(root), files, truncated, updatesEnabled: allowUpdate }
   }
 
   function getFormatSpec({ topic } = {}) {

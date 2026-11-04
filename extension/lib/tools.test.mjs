@@ -65,6 +65,12 @@ test('list_files shows readable files, flags writable ones, and skips dot-files 
   assert.equal(truncated, false)
 })
 
+test('list_files names the folder by its name only, never its path', () => {
+  const listing = make().list_files()
+  assert.equal(listing.folder, 'diagrams')
+  assert.ok(!JSON.stringify(listing).includes(base))
+})
+
 test('read_file returns the content and the SHA-256 of the raw bytes', () => {
   const result = make().read_file({ path: 'a.chd' })
   assert.equal(result.content, VALID)
@@ -215,4 +221,17 @@ test('get_format_spec returns the core rules by default and rejects unknown topi
   assert.match(tools.get_format_spec({ topic: 'fields' }), /# Field reference/)
   assert.doesNotMatch(tools.get_format_spec({}), /# Field reference/)
   refusal(() => tools.get_format_spec({ topic: 'nope' }), /unknown topic/)
+})
+
+test('get_format_spec "all" is the core rules plus an index, small enough for one result', () => {
+  const tools = make()
+  const all = tools.get_format_spec({ topic: 'all' })
+  assert.match(all, /# \.chd diagram format/)
+  assert.match(all, /# Topics/)
+  for (const name of ['fields', 'authoring', 'layout'])
+    assert.match(all, new RegExp(`"${name}" \\(\\d+ KB\\)`))
+  assert.doesNotMatch(all, /# Field reference/)
+  assert.ok(Buffer.byteLength(all, 'utf-8') < 25 * 1024)
+  // Each topic is still available on its own.
+  assert.match(tools.get_format_spec({ topic: 'layout' }), /# Layout guide/)
 })
