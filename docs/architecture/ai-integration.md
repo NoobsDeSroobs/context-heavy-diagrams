@@ -10,7 +10,7 @@ All of it sits behind one switch: **AI features** (the `aiFeaturesEnabled` prefe
 |---|---|---|---|
 | A **chat with no tools** (any assistant, any OS) | AI → **Copy AI instructions**, paste it into the chat, then paste or attach the `.chd` ([ADR 0104](../decisions/0104-copy-ai-instructions.md)) | A short, hand-kept primer: the structure and the traps that corrupt files | No validation, and the person moves the file by hand. Works everywhere, including Linux. |
 | An **agent in a folder with a shell** (Claude Code, Cursor, Codex, …) | AI → **Enable AI assistance in a folder…** and choose the folder ([ADR 0105](../decisions/0105-bundled-ai-material-and-folder-setup.md)) | `AGENTS.md` and `CLAUDE.md` pointing at a copy of the **skill** (core rules, field reference, authoring and layout guides, a validator script); the **`chd` command line** ([ADR 0106](../decisions/0106-chd-command-line-tool.md)) for `spec`, `validate` and `hash` | The agent edits files with its own tools. Windows, macOS and Linux. |
-| **Claude Desktop** (chat, no shell) | AI → **Install Claude Desktop extension…**, then choose a folder in Claude Desktop ([ADR 0110](../decisions/0110-claude-desktop-extension.md)) | A local MCP server limited to that folder: `list_files` (which also names the folder it serves), `get_format_spec` (core rules by default, the references one topic at a time), `validate_diagram`, `read_file`, `create_file`, and `update_file` only if the person turns it on | Windows and macOS only (Claude Desktop does not exist on Linux). Runs locally, no network of its own. |
+| **Claude Desktop** (chat, no shell) | AI → **Install Claude Desktop extension…**, then choose a folder in Claude Desktop ([ADR 0110](../decisions/0110-claude-desktop-extension.md)) | A local MCP server limited to that folder: `list_files` (which also names the folder it serves), `get_format_spec` (core rules by default, the references one topic at a time), `validate_diagram`, `check_diagram` (an architecture profile applied to a diagram), `diff_diagrams` (what changed between two files), `read_file`, `create_file`, and `update_file` only if the person turns it on | Windows and macOS only (Claude Desktop does not exist on Linux). Runs locally, no network of its own. |
 
 What the setups share is deliberately small: the format knowledge, a validator, and one safety rule.
 
@@ -30,6 +30,21 @@ One chain, from the spec outward. When the file format changes, every link has t
 | The Claude Desktop extension | A bundle with the skill text and the validator baked in | Rebuilt by every app build (`npm run build:extension`), so it always matches the version that shipped it |
 
 So a format change means: update `docs/file-format.md`, the skill's `SKILL.md` and `references/field-reference.md`, the primer if a trap changed, then `npm run sync-ai`. The rest follows from the build.
+
+## One implementation, two front doors
+
+The command line and the MCP server give the same answers ([ADR 0138](../decisions/0138-the-mcp-server-carries-the-guidance-the-cli-carries-the-checks.md)). Every check is written once in shared code, and each front door only reads its inputs and passes them in:
+
+| Capability | `chd` | MCP tool | Shared code |
+|---|---|---|---|
+| Format rules | `chd spec [topic]` | `get_format_spec` | the skill files |
+| Validate | `chd validate` | `validate_diagram`, and on every write | `resources/ai/skills/chd-diagrams/scripts/validate_chd.mjs` |
+| Fingerprint | `chd hash` | returned by `read_file` | SHA-256 of the bytes |
+| Conformance check | `chd check` | `check_diagram` | `src/shared/conformance/report.ts` |
+| Review of changes | `chd diff` | `diff_diagrams` | `src/shared/compare/report.ts` |
+| SVG export | `chd export` | none (an assistant needs to see the result) | `src/shared/export/` |
+
+`src/cli/parity.test.mjs` runs the real command line and the server's tools over the same diagrams and compares what each returns, and fails if a `chd` command is in neither the table above nor the test's list of commands that are command-line only. Three differences are intended: the server leaves the folder's own path out of its messages so it does not go to the provider, `diff_diagrams` compares two files in the folder (the git form of `chd diff` needs git and stays with the command line), and the server reads a profile only from its built-in ones or a `.chdprofile.json` file in the folder. A pass in an assistant session is advice and a guard against writing a broken file; a pipeline relies on `chd`, which exits with a status.
 
 ## Draft, then review
 

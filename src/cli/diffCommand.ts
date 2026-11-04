@@ -1,22 +1,15 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { basename, dirname, resolve } from 'node:path'
 import { parseDiagram, type DiagramFile } from '../shared/diagram/index.ts'
+import type { NotesContent } from '../shared/compare/classify.ts'
 import {
-  classifyDiagrams,
-  describeCount,
-  flattenReview,
-  type Classification,
-  type NotesContent,
-  type ReviewItem
-} from '../shared/compare/classify.ts'
-import {
-  applyIdMatches,
-  detectIdChurn,
-  matchReplaced,
-  type IdMatches
-} from '../shared/compare/match.ts'
-import { diagramLevelText, itemLines, reviewSection } from '../shared/compare/format.ts'
-import { previewTextChange, sameText } from '../shared/compare/textPreview.ts'
+  compareDiagrams,
+  diffToJson,
+  formatDiffText,
+  hasChanges,
+  notesBetween,
+  type Compared
+} from '../shared/compare/report.ts'
 import { containedPath } from '../main/containedPath.ts'
 import { buildGitSession } from '../main/compare/gitCompare.ts'
 
@@ -106,33 +99,10 @@ function notesBetweenFiles(
   older: DiagramFile,
   newer: DiagramFile
 ): Record<string, NotesContent> {
-  const olderNotes = new Map(older.nodes.map((n) => [n.id, n.data.notes]))
-  const found: Record<string, NotesContent> = {}
-  for (const node of newer.nodes) {
-    const stored = node.data.notes
-    if (!stored || stored !== olderNotes.get(node.id)) continue
-    const before = readNote(containedPath(dirname(olderPath), stored))
-    const after = readNote(containedPath(dirname(newerPath), stored))
-    if (before === null && after === null) continue
-    if (before === null && after !== null) {
-      found[node.id] = { state: 'added', preview: previewTextChange('', after) }
-    } else if (before !== null && after === null) {
-      found[node.id] = { state: 'removed', preview: previewTextChange(before, '') }
-    } else if (before !== null && after !== null && !sameText(before, after)) {
-      found[node.id] = { state: 'changed', preview: previewTextChange(before, after) }
-    }
-  }
-  return found
-}
-
-interface Compared {
-  olderName: string
-  newerName: string
-  classification: Classification
-  matches: IdMatches | null
-  churnSuspected: boolean
-  churnTwins: number
-  churnRemoved: number
+  return notesBetween(older, newer, {
+    before: (stored) => readNote(containedPath(dirname(olderPath), stored)),
+    after: (stored) => readNote(containedPath(dirname(newerPath), stored))
+  })
 }
 
 async function compare(parsed: Parsed): Promise<Compared> {
@@ -159,104 +129,7 @@ async function compare(parsed: Parsed): Promise<Compared> {
     newerName = `${basename(path)} on disk`
     notes = result.session.notesContent ?? {}
   }
-  const suspicion = detectIdChurn(older, newer)
-  const matches = parsed.match ? matchReplaced(older, newer) : null
-  const classification = classifyDiagrams(matches ? applyIdMatches(older, matches) : older, newer, {
-    notesContent: new Map(Object.entries(notes))
-  })
-  return {
-    olderName,
-    newerName,
-    classification,
-    matches,
-    churnSuspected: suspicion.suspected,
-    churnTwins: suspicion.twins,
-    churnRemoved: suspicion.removed
-  }
-}
-
-function hasChanges(c: Classification): boolean {
-  return c.review.length > 0 || c.diagramLevel.length > 0
-}
-
-function formatText(result: Compared): string {
-  const { classification: c } = result
-  const lines: string[] = [`${result.newerName} against ${result.olderName}`]
-  if (result.matches) {
-    lines.push(
-      `Matched ${result.matches.nodes.size} elements and ${result.matches.edges.size} connections by name and place (a guess).` +
-        (result.matches.fuzzySkipped
-          ? ' The similarity pass was cut short: the diagram is large.'
-          : '')
-    )
-  }
-  if (!hasChanges(c)) {
-    lines.push('No changes.')
-  } else {
-    const all = flattenReview(c.review)
-    const elements = all.filter((i) => i.kind === 'node').length
-    const connections = all.length - elements
-    const restyled = c.restyledNodes.size
-    lines.push(
-      `${describeCount({ nodes: elements, edges: connections })} changed` +
-        (restyled > 0 ? `; ${restyled} restyled` : '')
-    )
-    let current = ''
-    for (const item of c.review) {
-      const heading = reviewSection(item)
-      if (heading !== current) {
-        lines.push('', heading)
-        current = heading
-      }
-      lines.push(...itemLines(item))
-    }
-    if (c.diagramLevel.length > 0) {
-      lines.push('', 'DIAGRAM-LEVEL CHANGES')
-      for (const change of c.diagramLevel) lines.push(`  ${diagramLevelText(change)}`)
-    }
-  }
-  if (!result.matches && result.churnSuspected) {
-    lines.push(
-      '',
-      `Note: ${result.churnTwins} of ${result.churnRemoved} removed elements have an added element with the same name and type, so the ids probably changed. Run again with --match to pair them.`
-    )
-  }
-  return lines.join('\n')
-}
-
-function itemToJson(item: ReviewItem): Record<string, unknown> {
-  return {
-    kind: item.kind,
-    id: item.id,
-    label: item.label,
-    status: item.change.status,
-    security: item.change.security,
-    fields: item.change.fields.map((f) => ({ field: f.field, lines: f.lines })),
-    ...(item.connections && item.connections.length > 0
-      ? { connections: item.connections.map(itemToJson) }
-      : {})
-  }
-}
-
-function toJson(result: Compared): unknown {
-  const { classification: c } = result
-  return {
-    older: result.olderName,
-    newer: result.newerName,
-    changed: hasChanges(c),
-    counts: c.counts,
-    restyled: { elements: c.restyledNodes.size, connections: c.restyledEdges.size },
-    changes: c.review.map(itemToJson),
-    diagramLevel: c.diagramLevel,
-    matched: result.matches
-      ? {
-          elements: result.matches.nodes.size,
-          connections: result.matches.edges.size,
-          similarityCutShort: result.matches.fuzzySkipped
-        }
-      : null,
-    idsProbablyChanged: !result.matches && result.churnSuspected
-  }
+  return compareDiagrams(older, newer, { olderName, newerName, match: parsed.match, notes })
 }
 
 export async function runDiff(args: string[]): Promise<number> {
@@ -276,6 +149,6 @@ export async function runDiff(args: string[]): Promise<number> {
     console.error(`chd: ${error.message}`)
     return 3
   }
-  console.log(parsed.json ? JSON.stringify(toJson(result), null, 2) : formatText(result))
+  console.log(parsed.json ? JSON.stringify(diffToJson(result), null, 2) : formatDiffText(result))
   return parsed.exitCode && hasChanges(result.classification) ? 1 : 0
 }

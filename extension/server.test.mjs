@@ -40,7 +40,9 @@ async function exercise(entry) {
     await withServer(entry, false, folder, async (client) => {
       const names = (await client.listTools()).tools.map((t) => t.name).sort()
       assert.deepEqual(names, [
+        'check_diagram',
         'create_file',
+        'diff_diagrams',
         'get_format_spec',
         'list_files',
         'read_file',

@@ -1,9 +1,12 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { basename, join, resolve } from 'node:path'
-import { parseDiagram } from '../shared/diagram/index.ts'
-import { checkDiagram, type CheckResult } from '../shared/conformance/check.ts'
-import { validateProfile } from '../shared/conformance/validate.ts'
-import type { Profile, Severity } from '../shared/conformance/profile.ts'
+import type { CheckResult } from '../shared/conformance/check.ts'
+import {
+  checkDiagramText,
+  formatCheckText,
+  parseProfileText
+} from '../shared/conformance/report.ts'
+import type { Profile } from '../shared/conformance/profile.ts'
 
 // `chd check` (ADR 0131): diagrams against a conformance profile, for CI and for an AI assistant.
 // Bundled into resources/cli/check.mjs by scripts/build-cli.mjs; chd.mjs loads it only for this
@@ -89,49 +92,17 @@ function profilePath(value: string, env: CheckEnv): string {
 
 function loadProfile(value: string, env: CheckEnv): Profile {
   const path = profilePath(value, env)
-  let raw: unknown
+  let text: string
   try {
-    raw = JSON.parse(readFileSync(path, 'utf-8'))
+    text = readFileSync(path, 'utf-8')
   } catch (error) {
     throw new UsageError(
       `can't read the profile '${basename(path)}': ${error instanceof Error ? error.message : error}`
     )
   }
-  const { profile, errors } = validateProfile(raw)
-  if (!profile) {
-    throw new UsageError(
-      `the profile '${basename(path)}' is not valid:\n${errors.map((e) => `  ${e}`).join('\n')}`
-    )
-  }
-  return profile
-}
-
-const SEVERITY_ORDER: Severity[] = ['error', 'warning', 'info']
-
-function counts(result: CheckResult): string {
-  const parts = SEVERITY_ORDER.map((severity) => {
-    const n = result.findings.filter((f) => f.severity === severity).length
-    return `${n} ${severity === 'info' ? 'info' : severity + (n === 1 ? '' : 's')}`
-  })
-  return parts.join(', ')
-}
-
-function formatText(file: string, result: CheckResult): string {
-  const lines = [
-    `${file}: ${result.conforms ? 'conforms' : 'does not conform'} to ${result.profileName} (${counts(result)})`
-  ]
-  const sorted = [...result.findings].sort(
-    (a, b) => SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity)
-  )
-  for (const f of sorted) {
-    lines.push(
-      `  ${f.severity.padEnd(7)} ${f.ruleId}: ${f.message}${f.detail ? ` [${f.detail}]` : ''}`
-    )
-  }
-  if (result.notEvaluated.length > 0) {
-    lines.push(`  not evaluated (they need the edge set): ${result.notEvaluated.join(', ')}`)
-  }
-  return lines.join('\n')
+  const parsed = parseProfileText(text, basename(path))
+  if ('message' in parsed) throw new UsageError(parsed.message)
+  return parsed.profile
 }
 
 export function runCheck(args: string[], env: CheckEnv = {}): number {
@@ -150,8 +121,7 @@ export function runCheck(args: string[], env: CheckEnv = {}): number {
   const out: { file: string; result?: CheckResult; error?: string }[] = []
   for (const file of parsed.inputs) {
     try {
-      const diagram = parseDiagram(readFileSync(resolve(file), 'utf-8'))
-      const result = checkDiagram(diagram, profile)
+      const result = checkDiagramText(readFileSync(resolve(file), 'utf-8'), profile)
       out.push({ file, result })
       if (!result.conforms) status = 1
     } catch (error) {
@@ -164,7 +134,7 @@ export function runCheck(args: string[], env: CheckEnv = {}): number {
     console.log(JSON.stringify(out, null, 2))
   } else {
     for (const { file, result, error } of out) {
-      if (result) console.log(formatText(file, result))
+      if (result) console.log(formatCheckText(file, result))
       else console.error(`chd: can't read '${file}': ${error}`)
     }
   }

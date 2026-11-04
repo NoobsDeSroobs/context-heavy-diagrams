@@ -4,6 +4,9 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 ## 0.6.0 (unreleased)
 
+### Added
+- **The Claude Desktop extension can check a diagram against an architecture style and show what changed.** `check_diagram` applies a built-in profile or a `.chdprofile.json` file in the folder, and `diff_diagrams` compares two diagrams in the folder, with the same results as `chd check` and `chd diff`. The `conformance` topic of `get_format_spec` explains the checks. The command line stays what a build pipeline relies on. ([ADR 0138](docs/decisions/0138-the-mcp-server-carries-the-guidance-the-cli-carries-the-checks.md))
+
 ## 0.5.1 (2026-11-04)
 
 ### Fixed

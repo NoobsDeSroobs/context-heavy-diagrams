@@ -13,6 +13,11 @@ import {
 } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import { basename, dirname, extname, join, sep } from 'node:path'
+import { parseDiagram } from '../../src/shared/diagram/index.ts'
+import { checkDiagramText, parseProfileText } from '../../src/shared/conformance/report.ts'
+import { compareDiagrams, diffToJson, notesBetween } from '../../src/shared/compare/report.ts'
+// The same containment rule the command line applies to a stored note path (ADR 0115).
+import { containedPath } from '../../src/main/containedPath.ts'
 import { validateFile } from '../../resources/ai/skills/chd-diagrams/scripts/validate_chd.mjs'
 import {
   MAX_FILE_BYTES,
@@ -24,6 +29,9 @@ import {
 } from './fileRules.mjs'
 import { FINGERPRINT_PATTERN, fingerprint } from './fingerprint.mjs'
 import { formatSpec } from './formatSpec.mjs'
+import { loadBuiltinProfiles } from './profilesText.mjs'
+
+const PROFILE_SUFFIX = '.chdprofile.json'
 
 const LIST_LIMIT = 300
 const LIST_MAX_DEPTH = 8
@@ -79,6 +87,38 @@ function refuseInvalid(rel, validation) {
 }
 
 export function createTools({ root, allowUpdate, specSources }) {
+  const builtinProfiles = loadBuiltinProfiles()
+
+  // The text of a file the assistant named, refused if it is too large or not UTF-8 text.
+  function textOf(absolute, rel) {
+    assertFile(absolute, rel)
+    if (statSync(absolute).size > MAX_FILE_BYTES) {
+      throw new ToolError(`"${rel}" is larger than the ${MAX_FILE_BYTES / (1024 * 1024)} MB limit`)
+    }
+    try {
+      return new TextDecoder('utf-8', { fatal: true }).decode(readFileSync(absolute))
+    } catch {
+      throw new ToolError(`"${rel}" is not valid UTF-8 text`)
+    }
+  }
+
+  // A .chd the assistant named, as { absolute, rel, text }.
+  function diagramFile(path, tool) {
+    const { absolute, relative: rel } = resolveInFolder(root, path, 'read', { mustExist: true })
+    if (extname(absolute).toLowerCase() !== '.chd') {
+      throw new ToolError(`${tool} only works on .chd diagram files`)
+    }
+    return { absolute, rel, text: textOf(absolute, rel) }
+  }
+
+  function parsed(file) {
+    try {
+      return parseDiagram(file.text)
+    } catch (error) {
+      throw new ToolError(`can't read '${file.rel}': ${error?.message ?? error}`)
+    }
+  }
+
   function listFiles() {
     const files = []
     let truncated = false
@@ -130,6 +170,75 @@ export function createTools({ root, allowUpdate, specSources }) {
     }
     assertFile(absolute, rel)
     return tidyValidation(root, validateFile(absolute, false), absolute, rel)
+  }
+
+  // `chd check` (ADR 0131): the same shared code, so the same result as `chd check --json` for one
+  // file. A profile is a built-in one by name, or a .chdprofile.json file in the folder.
+  function checkDiagram({ path, profile }) {
+    const file = diagramFile(path, 'check_diagram')
+    const builtIn = Object.keys(builtinProfiles)
+    if (typeof profile !== 'string' || profile.trim() === '') {
+      throw new ToolError(
+        `profile is required: the name of a built-in profile (${builtIn.join(', ')}) or the path of a ${PROFILE_SUFFIX} file in the folder`
+      )
+    }
+    let profileText
+    let profileName
+    if (Object.hasOwn(builtinProfiles, profile)) {
+      profileText = builtinProfiles[profile]
+      profileName = profile + PROFILE_SUFFIX
+    } else {
+      const unknown = new ToolError(
+        `no profile called '${profile}': use a built-in profile (${builtIn.join(', ')}) or the path of a ${PROFILE_SUFFIX} file in the folder`
+      )
+      let found
+      try {
+        found = resolveInFolder(root, profile, 'read', { mustExist: false })
+      } catch {
+        throw unknown
+      }
+      if (!found.relative.endsWith(PROFILE_SUFFIX) || !existsSync(found.absolute)) throw unknown
+      profileText = textOf(found.absolute, found.relative)
+      profileName = basename(found.relative)
+    }
+    const loaded = parseProfileText(profileText, profileName)
+    if ('message' in loaded) throw new ToolError(loaded.message)
+    parsed(file)
+    return { file: file.rel, result: checkDiagramText(file.text, loaded.profile) }
+  }
+
+  // The text of a note beside a diagram, or null if it is not there or may not be read: a stored
+  // path leaving the diagram's folder is never read (ADR 0115), and the folder rules still apply.
+  function noteBeside(diagramAbsolute, stored) {
+    const full = containedPath(dirname(diagramAbsolute), stored)
+    if (full === null) return null
+    try {
+      const { absolute, relative: rel } = resolveInFolder(root, full, 'read', { mustExist: true })
+      return textOf(absolute, rel)
+    } catch {
+      return null
+    }
+  }
+
+  // `chd diff <old> <new>` (ADR 0137): the same shared code, so the same result as `chd diff --json`.
+  // Two files in the folder; the git form of the command needs git and stays with the command line.
+  function diffDiagrams({ old_path: oldPath, new_path: newPath, match }) {
+    const older = diagramFile(oldPath, 'diff_diagrams')
+    const newer = diagramFile(newPath, 'diff_diagrams')
+    const olderDiagram = parsed(older)
+    const newerDiagram = parsed(newer)
+    const notes = notesBetween(olderDiagram, newerDiagram, {
+      before: (stored) => noteBeside(older.absolute, stored),
+      after: (stored) => noteBeside(newer.absolute, stored)
+    })
+    return diffToJson(
+      compareDiagrams(olderDiagram, newerDiagram, {
+        olderName: older.rel,
+        newerName: newer.rel,
+        match: match === true,
+        notes
+      })
+    )
   }
 
   function readFile({ path }) {
@@ -226,6 +335,8 @@ export function createTools({ root, allowUpdate, specSources }) {
     list_files: listFiles,
     get_format_spec: getFormatSpec,
     validate_diagram: validateDiagram,
+    check_diagram: checkDiagram,
+    diff_diagrams: diffDiagrams,
     read_file: readFile,
     create_file: createFile,
     update_file: updateFile

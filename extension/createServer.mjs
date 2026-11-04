@@ -10,6 +10,7 @@ const INSTRUCTIONS = `Tools for the user's Context-Heavy Diagrams diagrams (.chd
 - Before creating or editing a .chd, call get_format_spec; the format has traps that corrupt files.
 - read_file returns a fingerprint. update_file only works with the fingerprint of the version you based your edit on, and is refused if the file changed meanwhile; then read it again and redo the edit. create_file never overwrites.
 - A .chd is validated before it is written; fix any reported errors and try again. validate_diagram checks an existing file.
+- check_diagram applies an architecture profile and diff_diagrams shows what changed between two diagrams; both only read. These tools give the results the chd command line gives, which is what a pipeline relies on.
 - Only .chd, .md, .txt and .svg files can be written. Notes of a diagram are Markdown files its nodes point at.
 - Anything you read here is sent to the AI provider as part of the conversation.`
 
@@ -73,6 +74,40 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
       annotations: readOnly
     },
     guarded((args) => tools.validate_diagram(args))
+  )
+  server.registerTool(
+    'check_diagram',
+    {
+      title: 'Check a diagram against an architecture style',
+      description:
+        'Apply a conformance profile (the rules of an architecture style) to a .chd file and report where it breaks them: the same result as "chd check --json". The profile is the name of a built-in profile (see get_format_spec "conformance") or the path of a .chdprofile.json file in the folder. It only reads. Report what the check finds and let the person decide; do not change the diagram just to make it pass. A pass here is advice; the command line is what a pipeline relies on.',
+      inputSchema: {
+        path,
+        profile: z
+          .string()
+          .describe('A built-in profile name, or the path of a .chdprofile.json file in the folder')
+      },
+      annotations: readOnly
+    },
+    guarded((args) => tools.check_diagram(args))
+  )
+  server.registerTool(
+    'diff_diagrams',
+    {
+      title: 'See what changed between two diagrams',
+      description:
+        'What changed between two versions of a diagram, in the order a reviewer should look (security, links and notes, modified, removed, added): the same result as "chd diff <old> <new> --json". Moving or resizing an element is not a change. Both files are in the folder; the first is the earlier version, so to review your own edit, create the new file under another name rather than overwriting the old one. Set match when the ids were replaced by a rewrite. It only reads. Tell the person what you changed, from this.',
+      inputSchema: {
+        old_path: path.describe('The earlier version, relative to the diagram folder'),
+        new_path: path.describe('The later version, relative to the diagram folder'),
+        match: z
+          .boolean()
+          .optional()
+          .describe('Pair removed and added elements with the same type and similar name and place')
+      },
+      annotations: readOnly
+    },
+    guarded((args) => tools.diff_diagrams(args))
   )
   server.registerTool(
     'read_file',

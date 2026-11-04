@@ -25,6 +25,8 @@
     { "name": "list_files", "description": "List the diagrams, notes and supporting documents in the folder." },
     { "name": "get_format_spec", "description": "The rules of the .chd diagram format." },
     { "name": "validate_diagram", "description": "Check a .chd file for structural problems." },
+    { "name": "check_diagram", "description": "Check a .chd file against an architecture style (a conformance profile)." },
+    { "name": "diff_diagrams", "description": "See what changed between two versions of a diagram." },
     { "name": "read_file", "description": "Read a text file and get its fingerprint." },
     { "name": "create_file", "description": "Create a new .chd, .md, .txt or .svg file." },
     { "name": "update_file", "description": "Replace an existing file (only if you allow modifying files)." }

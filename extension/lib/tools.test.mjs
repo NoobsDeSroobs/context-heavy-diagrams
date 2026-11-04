@@ -235,3 +235,153 @@ test('get_format_spec "all" is the core rules plus an index, small enough for on
   // Each topic is still available on its own.
   assert.match(tools.get_format_spec({ topic: 'layout' }), /# Layout guide/)
 })
+
+// --- check_diagram and diff_diagrams (ADR 0138): the same shared code as `chd check` and `chd diff`.
+// The two are compared over the same inputs in src/cli/parity.test.mjs.
+
+const examples = join(import.meta.dirname, '..', '..', 'examples', 'conformance')
+const copyExample = (name) => writeFileSync(join(folder, name), readFileSync(join(examples, name)))
+
+test('check_diagram applies a built-in profile by name', () => {
+  copyExample('hexagonal-ok.chd')
+  copyExample('hexagonal-broken.chd')
+  const ok = make().check_diagram({ path: 'hexagonal-ok.chd', profile: 'hexagonal' })
+  assert.equal(ok.file, 'hexagonal-ok.chd')
+  assert.equal(ok.result.conforms, true)
+  const broken = make().check_diagram({ path: 'hexagonal-broken.chd', profile: 'hexagonal' })
+  assert.equal(broken.result.conforms, false)
+  assert.ok(broken.result.findings.some((f) => f.severity === 'error'))
+})
+
+test('check_diagram takes a profile file from the folder, and says what is wrong with one', () => {
+  copyExample('hexagonal-ok.chd')
+  const profile = readFileSync(
+    join(import.meta.dirname, '..', '..', 'resources', 'profiles', 'hexagonal.chdprofile.json'),
+    'utf8'
+  )
+  mkdirSync(join(folder, 'rules'))
+  writeFileSync(join(folder, 'rules', 'mine.chdprofile.json'), profile)
+  const result = make().check_diagram({
+    path: 'hexagonal-ok.chd',
+    profile: 'rules/mine.chdprofile.json'
+  })
+  assert.equal(result.result.conforms, true)
+
+  writeFileSync(join(folder, 'rules', 'bad.chdprofile.json'), '{ "profileVersion": 1 }')
+  assert.throws(
+    () => make().check_diagram({ path: 'hexagonal-ok.chd', profile: 'rules/bad.chdprofile.json' }),
+    /the profile 'bad\.chdprofile\.json' is not valid/
+  )
+  writeFileSync(join(folder, 'rules', 'junk.chdprofile.json'), 'not json')
+  assert.throws(
+    () => make().check_diagram({ path: 'hexagonal-ok.chd', profile: 'rules/junk.chdprofile.json' }),
+    /can't read the profile 'junk\.chdprofile\.json'/
+  )
+})
+
+test('check_diagram refuses an unknown profile, a profile outside the folder and a non-diagram', () => {
+  copyExample('hexagonal-ok.chd')
+  assert.throws(
+    () => make().check_diagram({ path: 'hexagonal-ok.chd', profile: 'nope' }),
+    /no profile called 'nope'.*data-flow-diagram.*hexagonal/
+  )
+  assert.throws(
+    () => make().check_diagram({ path: 'hexagonal-ok.chd', profile: '../outside.md' }),
+    /no profile called/
+  )
+  assert.throws(() => make().check_diagram({ path: 'hexagonal-ok.chd' }), /profile is required/)
+  assert.throws(
+    () => make().check_diagram({ path: 'notes/readme.md', profile: 'hexagonal' }),
+    /only works on \.chd/
+  )
+  writeFileSync(join(folder, 'junk.chd'), 'not a diagram')
+  assert.throws(
+    () => make().check_diagram({ path: 'junk.chd', profile: 'hexagonal' }),
+    /can't read 'junk\.chd'/
+  )
+})
+
+test('the template is not offered as a built-in profile', () => {
+  copyExample('hexagonal-ok.chd')
+  assert.throws(
+    () => make().check_diagram({ path: 'hexagonal-ok.chd', profile: 'template' }),
+    /no profile called 'template'/
+  )
+})
+
+const diagramJson = (nodes, edges = []) => JSON.stringify({ version: 1, nodes, edges }, null, 2)
+const entity = (id, label, extra = {}) => ({
+  id,
+  type: 'entity',
+  position: { x: 0, y: 0 },
+  data: { label, ...extra }
+})
+
+test('diff_diagrams reports what changed between two files, notes included', () => {
+  mkdirSync(join(folder, 'v1', 'notes'), { recursive: true })
+  mkdirSync(join(folder, 'v2', 'notes'), { recursive: true })
+  writeFileSync(
+    join(folder, 'v1', 'd.chd'),
+    diagramJson([entity('a', 'Billing', { notes: 'notes/a.md' }), entity('b', 'Orders')])
+  )
+  writeFileSync(
+    join(folder, 'v2', 'd.chd'),
+    diagramJson([entity('a', 'Billing', { notes: 'notes/a.md' }), entity('b', 'Orders (EU)')])
+  )
+  writeFileSync(join(folder, 'v1', 'notes', 'a.md'), 'Handles invoices.')
+  writeFileSync(join(folder, 'v2', 'notes', 'a.md'), 'Handles invoices and refunds.')
+  const diff = make().diff_diagrams({ old_path: 'v1/d.chd', new_path: 'v2/d.chd' })
+  assert.equal(diff.changed, true)
+  assert.equal(diff.older, 'v1/d.chd')
+  const byId = Object.fromEntries(diff.changes.map((c) => [c.id, c]))
+  assert.ok(byId.a, 'the changed note is a change')
+  assert.ok(byId.b, 'the renamed element is a change')
+  const same = make().diff_diagrams({ old_path: 'v1/d.chd', new_path: 'v1/d.chd' })
+  assert.equal(same.changed, false)
+})
+
+test('diff_diagrams never reads a note path that leaves the diagram’s folder', () => {
+  mkdirSync(join(folder, 'v1'))
+  mkdirSync(join(folder, 'v2'))
+  const withNote = (label) => diagramJson([entity('a', label, { notes: '../secret.md' })])
+  writeFileSync(join(folder, 'v1', 'd.chd'), withNote('A'))
+  writeFileSync(join(folder, 'v2', 'd.chd'), withNote('A'))
+  writeFileSync(join(folder, 'secret.md'), 'one')
+  const diff = make().diff_diagrams({ old_path: 'v1/d.chd', new_path: 'v2/d.chd' })
+  assert.equal(diff.changed, false)
+})
+
+test('diff_diagrams pairs elements whose ids were replaced when asked to', () => {
+  writeFileSync(
+    join(folder, 'old.chd'),
+    diagramJson([entity('a', 'Billing'), entity('b', 'Orders'), entity('c', 'Payments')])
+  )
+  writeFileSync(
+    join(folder, 'new.chd'),
+    diagramJson([entity('x', 'Billing'), entity('y', 'Orders'), entity('z', 'Payments')])
+  )
+  const plain = make().diff_diagrams({ old_path: 'old.chd', new_path: 'new.chd' })
+  assert.equal(plain.idsProbablyChanged, true)
+  const matched = make().diff_diagrams({ old_path: 'old.chd', new_path: 'new.chd', match: true })
+  assert.equal(matched.matched.elements, 3)
+})
+
+test('the diff and check tools only read', () => {
+  assert.equal(typeof make(false).check_diagram, 'function')
+  assert.throws(
+    () => make().diff_diagrams({ old_path: 'missing.chd', new_path: 'a.chd' }),
+    /file not found/
+  )
+  assert.throws(
+    () => make().diff_diagrams({ old_path: '../outside.md', new_path: 'a.chd' }),
+    /outside/
+  )
+})
+
+test('get_format_spec serves the conformance topic with the tool names for the commands', () => {
+  const spec = make().get_format_spec({ topic: 'conformance' })
+  assert.match(spec, /chd check/)
+  const core = make().get_format_spec({})
+  assert.match(core, /diff_diagrams/)
+  assert.match(core, /check_diagram/)
+})

@@ -10,7 +10,8 @@ export const SPEC_FILES = {
   skill: 'SKILL.md',
   fields: 'references/field-reference.md',
   authoring: 'references/authoring-guide.md',
-  layout: 'references/layout-guide.md'
+  layout: 'references/layout-guide.md',
+  conformance: 'references/conformance.md'
 }
 
 const skillDir = join(
