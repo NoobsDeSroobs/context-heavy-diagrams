@@ -10,8 +10,8 @@ const INSTRUCTIONS = `Tools for the user's Context-Heavy Diagrams diagrams (.chd
 - Before creating or editing a .chd, call get_format_spec; the format has traps that corrupt files.
 - read_file returns a fingerprint. update_file only works with the fingerprint of the version you based your edit on, and is refused if the file changed meanwhile; then read it again and redo the edit. create_file never overwrites.
 - A .chd is validated before it is written; fix any reported errors and try again. validate_diagram checks an existing file.
-- check_diagram applies an architecture profile and diff_diagrams shows what changed between two diagrams; both only read. These tools give the results the chd command line gives, which is what a pipeline relies on.
-- Only .chd, .md, .txt and .svg files can be written. Notes of a diagram are Markdown files its nodes point at.
+- check_diagram applies an architecture profile and diff_diagrams shows what changed, between two diagrams or between a diagram and its last commit in git; both only read. These tools give the results the chd command line gives, which is what a pipeline relies on.
+- Only .chd, .md, .txt, .svg and .chdprofile.json (an architecture profile, validated before it is written) files can be written. Notes of a diagram are Markdown files its nodes point at.
 - Anything you read here is sent to the AI provider as part of the conversation.`
 
 const text = (value) => ({
@@ -25,7 +25,7 @@ const text = (value) => ({
 function guarded(run) {
   return async (args) => {
     try {
-      return text(run(args ?? {}))
+      return text(await run(args ?? {}))
     } catch (error) {
       const message =
         error instanceof ToolError ? error.message : `internal error: ${error?.message ?? error}`
@@ -94,12 +94,22 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
   server.registerTool(
     'diff_diagrams',
     {
-      title: 'See what changed between two diagrams',
+      title: 'See what changed in a diagram',
       description:
-        'What changed between two versions of a diagram, in the order a reviewer should look (security, links and notes, modified, removed, added): the same result as "chd diff <old> <new> --json". Moving or resizing an element is not a change. Both files are in the folder; the first is the earlier version, so to review your own edit, create the new file under another name rather than overwriting the old one. Set match when the ids were replaced by a rewrite. It only reads. Tell the person what you changed, from this.',
+        'What changed between two versions of a diagram, in the order a reviewer should look (security, links and notes, modified, removed, added): the same result as "chd diff --json". Moving or resizing an element is not a change. new_path is the later version. The earlier version is either a second file in the folder (old_path) or the same file as git has it (revision, default HEAD, the last commit; needs git and a diagram inside a git repository). Give one of them. To review your own edit of a file kept in git, call it with new_path alone after writing: it shows what differs from the last commit. Otherwise create the new file under another name and give both. Set match when the ids were replaced by a rewrite. It only reads. Tell the person what you changed, from this.',
       inputSchema: {
-        old_path: path.describe('The earlier version, relative to the diagram folder'),
-        new_path: path.describe('The later version, relative to the diagram folder'),
+        new_path: path.describe(
+          'The later version, relative to the diagram folder (the file on disk when comparing with git)'
+        ),
+        old_path: path
+          .optional()
+          .describe('The earlier version as a second file, relative to the diagram folder'),
+        revision: z
+          .string()
+          .optional()
+          .describe(
+            'A git branch, tag, commit or HEAD~2: compare new_path with the same file at that revision (default HEAD)'
+          ),
         match: z
           .boolean()
           .optional()
@@ -125,7 +135,7 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
     {
       title: 'Create a file',
       description:
-        'Create a new .chd, .md, .txt or .svg file. Fails if the name already exists. A .chd is validated first and refused if it has errors. Missing folders are created.',
+        'Create a new .chd, .md, .txt, .svg or .chdprofile.json (architecture profile) file. Fails if the name already exists. A .chd or a profile is validated first and refused if it has errors. Missing folders are created.',
       inputSchema: { path, content: z.string().describe('The complete file content') },
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false }
     },
@@ -137,7 +147,7 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
       {
         title: 'Update a file',
         description:
-          'Replace an existing .chd, .md, .txt or .svg file with new complete content. Requires the fingerprint from the read that your edit is based on; refused if the file changed since. A .chd is validated first.',
+          'Replace an existing .chd, .md, .txt, .svg or .chdprofile.json file with new complete content. Requires the fingerprint from the read that your edit is based on; refused if the file changed since. A .chd or a profile is validated first.',
         inputSchema: {
           path,
           content: z.string().describe('The complete new file content'),

@@ -13,6 +13,7 @@ import {
   writeFileSync,
   existsSync
 } from 'node:fs'
+import { execFileSync } from 'node:child_process'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { openFolder, ToolError } from './fileRules.mjs'
@@ -317,7 +318,7 @@ const entity = (id, label, extra = {}) => ({
   data: { label, ...extra }
 })
 
-test('diff_diagrams reports what changed between two files, notes included', () => {
+test('diff_diagrams reports what changed between two files, notes included', async () => {
   mkdirSync(join(folder, 'v1', 'notes'), { recursive: true })
   mkdirSync(join(folder, 'v2', 'notes'), { recursive: true })
   writeFileSync(
@@ -330,28 +331,28 @@ test('diff_diagrams reports what changed between two files, notes included', () 
   )
   writeFileSync(join(folder, 'v1', 'notes', 'a.md'), 'Handles invoices.')
   writeFileSync(join(folder, 'v2', 'notes', 'a.md'), 'Handles invoices and refunds.')
-  const diff = make().diff_diagrams({ old_path: 'v1/d.chd', new_path: 'v2/d.chd' })
+  const diff = await make().diff_diagrams({ old_path: 'v1/d.chd', new_path: 'v2/d.chd' })
   assert.equal(diff.changed, true)
   assert.equal(diff.older, 'v1/d.chd')
   const byId = Object.fromEntries(diff.changes.map((c) => [c.id, c]))
   assert.ok(byId.a, 'the changed note is a change')
   assert.ok(byId.b, 'the renamed element is a change')
-  const same = make().diff_diagrams({ old_path: 'v1/d.chd', new_path: 'v1/d.chd' })
+  const same = await make().diff_diagrams({ old_path: 'v1/d.chd', new_path: 'v1/d.chd' })
   assert.equal(same.changed, false)
 })
 
-test('diff_diagrams never reads a note path that leaves the diagram’s folder', () => {
+test('diff_diagrams never reads a note path that leaves the diagram’s folder', async () => {
   mkdirSync(join(folder, 'v1'))
   mkdirSync(join(folder, 'v2'))
   const withNote = (label) => diagramJson([entity('a', label, { notes: '../secret.md' })])
   writeFileSync(join(folder, 'v1', 'd.chd'), withNote('A'))
   writeFileSync(join(folder, 'v2', 'd.chd'), withNote('A'))
   writeFileSync(join(folder, 'secret.md'), 'one')
-  const diff = make().diff_diagrams({ old_path: 'v1/d.chd', new_path: 'v2/d.chd' })
+  const diff = await make().diff_diagrams({ old_path: 'v1/d.chd', new_path: 'v2/d.chd' })
   assert.equal(diff.changed, false)
 })
 
-test('diff_diagrams pairs elements whose ids were replaced when asked to', () => {
+test('diff_diagrams pairs elements whose ids were replaced when asked to', async () => {
   writeFileSync(
     join(folder, 'old.chd'),
     diagramJson([entity('a', 'Billing'), entity('b', 'Orders'), entity('c', 'Payments')])
@@ -360,22 +361,238 @@ test('diff_diagrams pairs elements whose ids were replaced when asked to', () =>
     join(folder, 'new.chd'),
     diagramJson([entity('x', 'Billing'), entity('y', 'Orders'), entity('z', 'Payments')])
   )
-  const plain = make().diff_diagrams({ old_path: 'old.chd', new_path: 'new.chd' })
+  const plain = await make().diff_diagrams({ old_path: 'old.chd', new_path: 'new.chd' })
   assert.equal(plain.idsProbablyChanged, true)
-  const matched = make().diff_diagrams({ old_path: 'old.chd', new_path: 'new.chd', match: true })
+  const matched = await make().diff_diagrams({
+    old_path: 'old.chd',
+    new_path: 'new.chd',
+    match: true
+  })
   assert.equal(matched.matched.elements, 3)
 })
 
-test('the diff and check tools only read', () => {
+test('the diff and check tools only read', async () => {
   assert.equal(typeof make(false).check_diagram, 'function')
-  assert.throws(
+  await assert.rejects(
     () => make().diff_diagrams({ old_path: 'missing.chd', new_path: 'a.chd' }),
     /file not found/
   )
-  assert.throws(
+  await assert.rejects(
     () => make().diff_diagrams({ old_path: '../outside.md', new_path: 'a.chd' }),
     /outside/
   )
+})
+
+// --- diff_diagrams against git (ADR 0142)
+
+let git = true
+try {
+  execFileSync('git', ['--version'], { stdio: 'ignore' })
+} catch {
+  git = false
+}
+
+// A repository at the top, a diagram folder one level down: the folder the extension serves is
+// inside the repository, as it often is. Returns tools for that folder and a way to run git.
+function gitFolder() {
+  const top = mkdtempSync(join(tmpdir(), 'chd-ext-git-'))
+  const docs = join(top, 'docs')
+  mkdirSync(join(docs, 'notes'), { recursive: true })
+  mkdirSync(join(docs, '.private'))
+  const sh = (...args) =>
+    execFileSync(
+      'git',
+      [
+        '-c',
+        'user.name=t',
+        '-c',
+        'user.email=t@example.com',
+        '-c',
+        'commit.gpgsign=false',
+        ...args
+      ],
+      { cwd: top, stdio: 'ignore' }
+    )
+  const tools = createTools({
+    root: openFolder(docs),
+    allowUpdate: false,
+    specSources: loadSpecSources()
+  })
+  return { top, docs, sh, tools }
+}
+
+test('diff_diagrams compares a file with git, notes included', { skip: !git }, async (t) => {
+  const { top, docs, sh, tools } = gitFolder()
+  t.after(() => rmSync(top, { recursive: true, force: true }))
+  writeFileSync(
+    join(docs, 'd.chd'),
+    diagramJson([entity('a', 'Billing', { notes: 'notes/a.md' }), entity('b', 'Orders')])
+  )
+  writeFileSync(join(docs, 'notes', 'a.md'), 'Handles invoices.')
+  sh('init', '-q')
+  sh('add', '.')
+  sh('commit', '-q', '-m', 'one')
+  writeFileSync(
+    join(docs, 'd.chd'),
+    diagramJson([entity('a', 'Billing', { notes: 'notes/a.md' }), entity('b', 'Orders (EU)')])
+  )
+  writeFileSync(join(docs, 'notes', 'a.md'), 'Handles invoices and refunds.')
+
+  const diff = await tools.diff_diagrams({ new_path: 'd.chd' })
+  assert.equal(diff.changed, true)
+  assert.equal(diff.older, 'd.chd at HEAD')
+  assert.equal(diff.newer, 'd.chd on disk')
+  const byId = Object.fromEntries(diff.changes.map((c) => [c.id, c]))
+  assert.ok(byId.a, 'the changed note is a change')
+  assert.ok(byId.b, 'the renamed element is a change')
+  assert.ok(!JSON.stringify(diff).includes(top), 'no path of the computer in the result')
+
+  const same = await tools.diff_diagrams({ new_path: 'd.chd', revision: 'HEAD' })
+  assert.deepEqual(same, diff)
+})
+
+test('diff_diagrams with git refuses what it should', { skip: !git }, async (t) => {
+  const { top, docs, sh, tools } = gitFolder()
+  t.after(() => rmSync(top, { recursive: true, force: true }))
+  writeFileSync(join(docs, 'd.chd'), diagramJson([entity('a', 'A')]))
+  writeFileSync(join(docs, 'new.chd'), diagramJson([entity('a', 'A')]))
+  sh('init', '-q')
+  sh('add', 'docs/d.chd')
+  sh('commit', '-q', '-m', 'one')
+
+  await assert.rejects(
+    () => tools.diff_diagrams({ new_path: 'd.chd', revision: 'nosuchrevision' }),
+    /does not know the revision/
+  )
+  // an option, not a revision: never handed to git
+  await assert.rejects(
+    () => tools.diff_diagrams({ new_path: 'd.chd', revision: '--output=out.txt' }),
+    /not a usable git revision/
+  )
+  await assert.rejects(() => tools.diff_diagrams({ new_path: 'new.chd' }), /not in git at "HEAD"/)
+  await assert.rejects(
+    () => tools.diff_diagrams({ new_path: 'd.chd', old_path: 'new.chd', revision: 'HEAD' }),
+    /not both/
+  )
+  await assert.rejects(() => tools.diff_diagrams({ old_path: 'd.chd' }), /new_path is required/)
+  await assert.rejects(
+    () => tools.diff_diagrams({ new_path: '../outside.chd' }),
+    /outside the folder/
+  )
+})
+
+test(
+  'diff_diagrams with git never reads a note the folder rules keep closed',
+  { skip: !git },
+  async (t) => {
+    const { top, docs, sh, tools } = gitFolder()
+    t.after(() => rmSync(top, { recursive: true, force: true }))
+    const withNote = (label) => diagramJson([entity('a', label, { notes: '.private/n.md' })])
+    writeFileSync(join(docs, 'd.chd'), withNote('A'))
+    writeFileSync(join(docs, '.private', 'n.md'), 'old secret')
+    sh('init', '-q')
+    sh('add', '-A')
+    sh('commit', '-q', '-m', 'one')
+    writeFileSync(join(docs, '.private', 'n.md'), 'new secret')
+    const diff = await tools.diff_diagrams({ new_path: 'd.chd' })
+    assert.equal(diff.changed, false)
+    assert.ok(!JSON.stringify(diff).includes('secret'))
+  }
+)
+
+test(
+  'diff_diagrams with git says so when the folder is not in a repository',
+  { skip: !git },
+  async (t) => {
+    const { top, docs, tools } = gitFolder()
+    t.after(() => rmSync(top, { recursive: true, force: true }))
+    writeFileSync(join(docs, 'd.chd'), diagramJson([entity('a', 'A')]))
+    await assert.rejects(
+      () => tools.diff_diagrams({ new_path: 'd.chd' }),
+      /not inside a git repository/
+    )
+  }
+)
+
+// --- profiles are written like diagrams, and only profiles (ADR 0143)
+
+const PROFILE = readFileSync(
+  join(import.meta.dirname, '..', '..', 'resources', 'profiles', 'hexagonal.chdprofile.json'),
+  'utf8'
+)
+
+test('a profile can be created, validated first, and used by check_diagram', () => {
+  const tools = make(true)
+  refusal(
+    () =>
+      tools.create_file({ path: 'rules/bad.chdprofile.json', content: '{ "profileVersion": 1 }' }),
+    /was not written.*is not valid/s
+  )
+  refusal(
+    () => tools.create_file({ path: 'rules/junk.chdprofile.json', content: 'not json' }),
+    /was not written.*can't read the profile/s
+  )
+  assert.equal(existsSync(join(folder, 'rules')), false, 'a refused create leaves no folder behind')
+
+  const created = tools.create_file({ path: 'rules/mine.chdprofile.json', content: PROFILE })
+  assert.equal(created.fingerprint, sha(PROFILE))
+  assert.equal(readFileSync(join(folder, 'rules', 'mine.chdprofile.json'), 'utf8'), PROFILE)
+  refusal(
+    () => tools.create_file({ path: 'rules/mine.chdprofile.json', content: PROFILE }),
+    /already exists/
+  )
+
+  writeFileSync(join(folder, 'ok.chd'), readFileSync(join(examples, 'hexagonal-ok.chd')))
+  const checked = tools.check_diagram({ path: 'ok.chd', profile: 'rules/mine.chdprofile.json' })
+  assert.equal(checked.result.conforms, true)
+})
+
+test('a profile is updated only from the version the edit was based on, and validated', () => {
+  const tools = make(true)
+  const { fingerprint } = tools.create_file({ path: 'p.chdprofile.json', content: PROFILE })
+  const edited = PROFILE.replace('"name": "Hexagonal', '"name": "Edited hexagonal')
+  assert.notEqual(edited, PROFILE)
+  refusal(
+    () =>
+      tools.update_file({ path: 'p.chdprofile.json', content: edited, base_fingerprint: sha('x') }),
+    /has changed since you read it/
+  )
+  refusal(
+    () =>
+      tools.update_file({
+        path: 'p.chdprofile.json',
+        content: '{}',
+        base_fingerprint: fingerprint
+      }),
+    /was not written/
+  )
+  assert.equal(readFileSync(join(folder, 'p.chdprofile.json'), 'utf8'), PROFILE)
+  const updated = tools.update_file({
+    path: 'p.chdprofile.json',
+    content: edited,
+    base_fingerprint: fingerprint
+  })
+  assert.equal(updated.fingerprint, sha(edited))
+  assert.deepEqual(
+    readdirSync(folder).filter((n) => n.startsWith('.chd-')),
+    []
+  )
+})
+
+test('no other JSON file can be written, and list_files flags profiles as writable', () => {
+  const tools = make(true)
+  refusal(() => tools.create_file({ path: 'settings.json', content: '{}' }), /cannot be written/)
+  refusal(
+    () => tools.create_file({ path: 'x.chdprofile.json.bat', content: '{}' }),
+    /cannot be written/
+  )
+  refusal(() => tools.create_file({ path: 'chdprofile.json', content: '{}' }), /cannot be written/)
+  writeFileSync(join(folder, 'settings.json'), '{}')
+  writeFileSync(join(folder, 'p.chdprofile.json'), PROFILE)
+  const { files } = tools.list_files()
+  const writable = Object.fromEntries(files.map((f) => [f.path, f.writable]))
+  assert.equal(writable['p.chdprofile.json'], true)
+  assert.equal(writable['settings.json'], false)
 })
 
 test('get_format_spec serves the conformance topic with the tool names for the commands', () => {

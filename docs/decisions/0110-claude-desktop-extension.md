@@ -1,7 +1,7 @@
 # 0110: Claude Desktop extension (MCPB) — a local, folder-scoped server shipped inside the app
 
 ## Status
-Accepted (2026-10-16).
+Accepted (2026-10-16). Widened by [ADR 0142](0142-the-extension-may-run-git-show-to-read-an-earlier-version.md) (it may run `git show`) and [ADR 0143](0143-the-extension-writes-architecture-profiles.md) (it may write `.chdprofile.json` files).
 
 ## Context
 The folder route ([ADR 0105](0105-bundled-ai-material-and-folder-setup.md)) and
@@ -96,7 +96,8 @@ writing is narrower:
   server writes the candidate to a temporary file beside the target, validates that file
   (so relative paths resolve exactly as they will for the real one), then
   publishes it and removes the temporary file whatever happens.
-- **No network, no telemetry, no spawning of other programs.** Dependencies are
+- **No network, no telemetry, no spawning of other programs** (apart from the read-only
+  `git show` of ADR 0142). Dependencies are
   bundled into the single file. The extension's description and the install text
   say plainly that diagram contents the assistant reads are sent to the AI
   provider.

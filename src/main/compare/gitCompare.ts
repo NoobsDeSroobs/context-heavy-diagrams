@@ -1,11 +1,13 @@
 import { readFile } from 'fs/promises'
 import { basename, dirname, isAbsolute, relative, sep } from 'path'
-import { parseDiagram, type DiagramFile } from '@shared/diagram'
-import type { NotesContent } from '@shared/compare/classify'
-import type { CompareSession } from '@shared/compare/session'
-import { previewTextChange, sameText } from '@shared/compare/textPreview'
-import { resolveLinkPath } from '../links/linkPaths'
-import { gitShow, isSafeRevision, type GitFailure } from './git'
+// Relative imports with extensions, not aliases: the Claude Desktop extension and its node tests
+// load this file without a bundler's alias (ADR 0142).
+import { parseDiagram, type DiagramFile } from '../../shared/diagram/index.ts'
+import type { NotesContent } from '../../shared/compare/classify.ts'
+import type { CompareSession } from '../../shared/compare/session.ts'
+import { previewTextChange, sameText } from '../../shared/compare/textPreview.ts'
+import { resolveLinkPath } from '../links/linkPaths.ts'
+import { gitShow, isSafeRevision, type GitFailure } from './git.ts'
 
 export type GitCompareResult =
   { ok: true; session: CompareSession } | { ok: false; message: string }
@@ -63,7 +65,8 @@ async function changedNotes(
   diagramPath: string,
   revision: string,
   base: DiagramFile,
-  next: DiagramFile
+  next: DiagramFile,
+  access: NoteAccess
 ): Promise<Record<string, NotesContent>> {
   const folder = dirname(diagramPath)
   const baseNotes = new Map(base.nodes.map((n) => [n.id, n.data.notes]))
@@ -71,10 +74,13 @@ async function changedNotes(
   const found: Record<string, NotesContent> = {}
   await mapLimit(candidates, NOTE_PARALLELISM, async (node) => {
     const stored = node.data.notes as string
-    const path = insideFolder(folder, resolveLinkPath(diagramPath, stored))
+    const absolute = resolveLinkPath(diagramPath, stored)
+    const path = insideFolder(folder, absolute)
     if (!path) return
+    // A note the caller keeps closed is skipped in git as well as on disk.
+    if (access.allowed && !access.allowed(absolute)) return
     const [now, then] = await Promise.all([
-      readText(resolveLinkPath(diagramPath, stored)),
+      (access.read ?? readText)(absolute),
       gitShow(folder, revision, path)
     ])
     // Any failure other than "not in that revision" says nothing about this note.
@@ -92,10 +98,19 @@ async function changedNotes(
   return found
 }
 
+// Which notes may be read, and how the one on disk is read, both by absolute path. The app uses the
+// defaults; the Claude Desktop extension passes its folder rules, so a note it keeps closed (a
+// dot-folder, a link leading out of the folder) is not read from disk or from git (ADR 0142).
+export interface NoteAccess {
+  allowed?: (absolutePath: string) => boolean
+  read?: (absolutePath: string) => Promise<string | null> | string | null
+}
+
 // The file on disk against the same file at a git revision, with the notes compared too.
 export async function buildGitSession(
   diagramPath: string,
-  revision: string
+  revision: string,
+  access: NoteAccess = {}
 ): Promise<GitCompareResult> {
   if (!isSafeRevision(revision)) {
     return { ok: false, message: `"${revision}" is not a usable git revision.` }
@@ -124,7 +139,7 @@ export async function buildGitSession(
       next,
       diagramPath,
       title: `Compare with ${revision}: ${name} (git revision → file on disk)`,
-      notesContent: await changedNotes(diagramPath, revision, base, next)
+      notesContent: await changedNotes(diagramPath, revision, base, next, access)
     }
   }
 }

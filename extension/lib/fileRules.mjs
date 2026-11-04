@@ -27,7 +27,18 @@ export const READ_EXTENSIONS = new Set([
   '.ini'
 ])
 export const WRITE_EXTENSIONS = new Set(['.chd', '.md', '.txt', '.svg'])
+// The one JSON file that can be written: an architecture profile, validated before it is written
+// (ADR 0143). Any other .json stays read-only.
+export const PROFILE_SUFFIX = '.chdprofile.json'
 export const MAX_FILE_BYTES = 5 * 1024 * 1024
+
+export function isProfileName(name) {
+  return name.toLowerCase().endsWith(PROFILE_SUFFIX)
+}
+
+export function isWritableName(name) {
+  return WRITE_EXTENSIONS.has(extname(name).toLowerCase()) || isProfileName(name)
+}
 
 function isInside(root, target) {
   const rel = relative(root, target)
@@ -77,10 +88,11 @@ export function resolveInFolder(root, input, kind, { mustExist }) {
   }
 
   const ext = extname(target).toLowerCase()
-  const allowed = kind === 'write' ? WRITE_EXTENSIONS : READ_EXTENSIONS
-  if (!allowed.has(ext)) {
+  const writing = kind === 'write'
+  if (writing ? !isWritableName(target) : !READ_EXTENSIONS.has(ext)) {
+    const allowed = writing ? [...WRITE_EXTENSIONS, PROFILE_SUFFIX] : [...READ_EXTENSIONS]
     throw new ToolError(
-      `${ext === '' ? 'files without an extension' : `${ext} files`} cannot be ${kind === 'write' ? 'written' : 'read'} here; allowed: ${[...allowed].join(', ')}`
+      `${ext === '' ? 'files without an extension' : `${ext} files`} cannot be ${writing ? 'written' : 'read'} here; allowed: ${allowed.join(', ')}`
     )
   }
 

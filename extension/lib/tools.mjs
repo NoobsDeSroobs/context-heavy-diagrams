@@ -18,20 +18,23 @@ import { checkDiagramText, parseProfileText } from '../../src/shared/conformance
 import { compareDiagrams, diffToJson, notesBetween } from '../../src/shared/compare/report.ts'
 // The same containment rule the command line applies to a stored note path (ADR 0115).
 import { containedPath } from '../../src/main/containedPath.ts'
+// The one place the extension starts another program: `git show <revision>:<file>`, read-only
+// (ADR 0142).
+import { buildGitSession } from '../../src/main/compare/gitCompare.ts'
 import { validateFile } from '../../resources/ai/skills/chd-diagrams/scripts/validate_chd.mjs'
 import {
   MAX_FILE_BYTES,
+  PROFILE_SUFFIX,
   READ_EXTENSIONS,
   ToolError,
-  WRITE_EXTENSIONS,
   isDotOrIgnoredEntry,
+  isProfileName,
+  isWritableName,
   resolveInFolder
 } from './fileRules.mjs'
 import { FINGERPRINT_PATTERN, fingerprint } from './fingerprint.mjs'
 import { formatSpec } from './formatSpec.mjs'
 import { loadBuiltinProfiles } from './profilesText.mjs'
-
-const PROFILE_SUFFIX = '.chdprofile.json'
 
 const LIST_LIMIT = 300
 const LIST_MAX_DEPTH = 8
@@ -84,6 +87,15 @@ function refuseInvalid(rel, validation) {
   return new ToolError(
     `"${rel}" was not written because it has structural errors:\n${validation.errors.join('\n')}`
   )
+}
+
+// A profile is checked from its text, with the same reader `chd check` uses; it holds no relative
+// paths, so unlike a diagram it needs no temporary file (ADR 0143).
+function refuseInvalidProfile(rel, content) {
+  const loaded = parseProfileText(content, basename(rel))
+  if ('message' in loaded) {
+    throw new ToolError(`"${rel}" was not written. ${loaded.message}`)
+  }
 }
 
 export function createTools({ root, allowUpdate, specSources }) {
@@ -144,7 +156,7 @@ export function createTools({ root, allowUpdate, specSources }) {
             .join('/'),
           bytes: stats.size,
           modified: stats.mtime.toISOString(),
-          writable: WRITE_EXTENSIONS.has(ext)
+          writable: isWritableName(entry.name)
         })
       }
     }
@@ -211,20 +223,25 @@ export function createTools({ root, allowUpdate, specSources }) {
   // path leaving the diagram's folder is never read (ADR 0115), and the folder rules still apply.
   function noteBeside(diagramAbsolute, stored) {
     const full = containedPath(dirname(diagramAbsolute), stored)
-    if (full === null) return null
-    try {
-      const { absolute, relative: rel } = resolveInFolder(root, full, 'read', { mustExist: true })
-      return textOf(absolute, rel)
-    } catch {
-      return null
-    }
+    return full === null ? null : noteOnDisk(full)
   }
 
-  // `chd diff <old> <new>` (ADR 0137): the same shared code, so the same result as `chd diff --json`.
-  // Two files in the folder; the git form of the command needs git and stays with the command line.
-  function diffDiagrams({ old_path: oldPath, new_path: newPath, match }) {
-    const older = diagramFile(oldPath, 'diff_diagrams')
+  // `chd diff` (ADR 0137): the same shared code, so the same result as `chd diff --json`. The
+  // earlier version is a second file in the folder, or the same file in git at a revision
+  // (`chd diff <file> --rev`, ADR 0142).
+  async function diffDiagrams({ old_path: oldPath, new_path: newPath, revision, match }) {
+    if (typeof newPath !== 'string' || newPath.trim() === '') {
+      throw new ToolError(
+        'new_path is required: the later version, or the file on disk when comparing with git'
+      )
+    }
+    const hasOld = typeof oldPath === 'string' && oldPath.trim() !== ''
+    if (hasOld && revision !== undefined) {
+      throw new ToolError('give old_path (a second file) or revision (the file in git), not both')
+    }
     const newer = diagramFile(newPath, 'diff_diagrams')
+    if (!hasOld) return diffWithGit(newer, revision ?? 'HEAD', match === true)
+    const older = diagramFile(oldPath, 'diff_diagrams')
     const olderDiagram = parsed(older)
     const newerDiagram = parsed(newer)
     const notes = notesBetween(olderDiagram, newerDiagram, {
@@ -239,6 +256,48 @@ export function createTools({ root, allowUpdate, specSources }) {
         notes
       })
     )
+  }
+
+  // The file on disk against the same file at a git revision. Git is asked for that one file only,
+  // and the note files on disk are read under the folder rules (ADR 0142).
+  async function diffWithGit(newer, revision, match) {
+    if (typeof revision !== 'string') throw new ToolError('revision must be text')
+    const result = await buildGitSession(newer.absolute, revision, {
+      allowed: noteMayBeRead,
+      read: noteOnDisk
+    })
+    if (!result.ok) throw new ToolError(result.message)
+    const { base, next, notesContent } = result.session
+    const name = basename(newer.rel)
+    return diffToJson(
+      compareDiagrams(base, next, {
+        olderName: `${name} at ${revision}`,
+        newerName: `${name} on disk`,
+        match,
+        notes: notesContent ?? {}
+      })
+    )
+  }
+
+  // Whether the folder rules allow reading a note at all, whether or not it exists now (git may
+  // still have it).
+  function noteMayBeRead(absolute) {
+    try {
+      resolveInFolder(root, absolute, 'read', { mustExist: false })
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  // A note on disk under the folder rules, or null.
+  function noteOnDisk(absolute) {
+    try {
+      const found = resolveInFolder(root, absolute, 'read', { mustExist: true })
+      return textOf(found.absolute, found.relative)
+    } catch {
+      return null
+    }
   }
 
   function readFile({ path }) {
@@ -273,6 +332,8 @@ export function createTools({ root, allowUpdate, specSources }) {
         const validation = validateCandidate(root, absolute, rel, content)
         if (!validation.ok) throw refuseInvalid(rel, validation)
         warnings = validation.warnings
+      } else if (isProfileName(absolute)) {
+        refuseInvalidProfile(rel, content)
       }
       try {
         // 'wx' is an exclusive create: it fails if the file appeared meanwhile.
@@ -320,6 +381,8 @@ export function createTools({ root, allowUpdate, specSources }) {
         const validation = tidyValidation(root, validateFile(temp, false), temp, rel)
         if (!validation.ok) throw refuseInvalid(rel, validation)
         warnings = validation.warnings
+      } else if (isProfileName(absolute)) {
+        refuseInvalidProfile(rel, content)
       }
       // Checked again right before replacing; the instant between this and the
       // rename is the one race left (ADR 0110).

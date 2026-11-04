@@ -29,7 +29,7 @@ Only when asked. A profile is a JSON file named `<name>.chdprofile.json`. Ask th
 2. **How is each kind of element recognised?** Usually a tag such as `role` or `layer`, sometimes the element's `type` (`entity`, `container`, `text`) or being inside a container of another role. Each kind of element is a named **role**.
 3. **Which rules?** Only the ones the person states. Do not invent rules for a style you are guessing at.
 
-Where to save it: next to the diagrams (for example `rules/`), so it is in version control and CI can run it. In the app, a profile in the profiles folder (Preferences) also shows up in the Diagnostics panel. Writing over an existing profile follows the same stale-edit rule as a diagram (`chd hash` first).
+Where to save it: next to the diagrams (for example `rules/`), so it is in version control and CI can run it. In the app, a profile in the profiles folder (Preferences) also shows up in the Diagnostics panel. Writing over an existing profile follows the same stale-edit rule as a diagram (`chd hash` first). In the Claude Desktop extension, `create_file` and `update_file` write a `.chdprofile.json` file the same way, refuse one that is not valid, and `check_diagram` tests it.
 
 **Top level:** `profileVersion` (always `1`), `name`, `description` (say how a diagram must be prepared: which tags, which edge set), `edges`, `roles` (may be `{}`), `rules` (may be `[]`). An unknown key anywhere is an error.
 

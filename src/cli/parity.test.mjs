@@ -4,7 +4,7 @@
 // code cannot reach one front door and not the other without this failing.
 import { test, before, beforeEach, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
-import { spawnSync } from 'node:child_process'
+import { execFileSync, spawnSync } from 'node:child_process'
 import { copyFileSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, sep } from 'node:path'
@@ -122,7 +122,7 @@ const node = (id, label, extra = {}) => ({
 })
 const diagram = (nodes, edges = []) => JSON.stringify({ version: 1, nodes, edges }, null, 2)
 
-test('chd diff and diff_diagrams give the same review, with and without --match', () => {
+test('chd diff and diff_diagrams give the same review, with and without --match', async () => {
   mkdirSync(join(dir, 'v1', 'notes'), { recursive: true })
   mkdirSync(join(dir, 'v2', 'notes'), { recursive: true })
   writeFileSync(
@@ -155,7 +155,9 @@ test('chd diff and diff_diagrams give the same review, with and without --match'
   writeFileSync(join(dir, 'v2', 'notes', 'a.md'), 'Handles invoices and refunds.')
 
   const fromCli = JSON.parse(run('diff', 'v1/d.chd', 'v2/d.chd', '--json').stdout)
-  const fromServer = asJson(tools.diff_diagrams({ old_path: 'v1/d.chd', new_path: 'v2/d.chd' }))
+  const fromServer = asJson(
+    await tools.diff_diagrams({ old_path: 'v1/d.chd', new_path: 'v2/d.chd' })
+  )
   assert.deepEqual(fromServer, fromCli)
   assert.equal(fromServer.changed, true)
 
@@ -172,11 +174,56 @@ test('chd diff and diff_diagrams give the same review, with and without --match'
     const args = ['diff', 'r1.chd', 'r2.chd', '--json', ...(match ? ['--match'] : [])]
     const cliJson = JSON.parse(run(...args).stdout)
     const serverJson = asJson(
-      tools.diff_diagrams({ old_path: 'r1.chd', new_path: 'r2.chd', match })
+      await tools.diff_diagrams({ old_path: 'r1.chd', new_path: 'r2.chd', match })
     )
     assert.deepEqual(serverJson, cliJson, `match=${match}`)
   }
 })
+
+let git = true
+try {
+  execFileSync('git', ['--version'], { stdio: 'ignore' })
+} catch {
+  git = false
+}
+
+test(
+  'chd diff --rev and diff_diagrams with a revision give the same review, notes included',
+  { skip: !git },
+  async () => {
+    mkdirSync(join(dir, 'notes'))
+    writeFileSync(join(dir, 'd.chd'), diagram([node('a', 'Billing', { notes: 'notes/a.md' })]))
+    writeFileSync(join(dir, 'notes', 'a.md'), 'Handles invoices.')
+    const sh = (...args) =>
+      execFileSync(
+        'git',
+        [
+          '-c',
+          'user.name=t',
+          '-c',
+          'user.email=t@example.com',
+          '-c',
+          'commit.gpgsign=false',
+          ...args
+        ],
+        { cwd: dir, stdio: 'ignore' }
+      )
+    sh('init', '-q')
+    sh('add', 'd.chd', 'notes')
+    sh('commit', '-q', '-m', 'one')
+    writeFileSync(
+      join(dir, 'd.chd'),
+      diagram([node('a', 'Billing (EU)', { notes: 'notes/a.md' }), node('b', 'Orders')])
+    )
+    writeFileSync(join(dir, 'notes', 'a.md'), 'Handles invoices and refunds.')
+
+    const fromCli = JSON.parse(run('diff', 'd.chd', '--rev', 'HEAD', '--json').stdout)
+    const fromServer = asJson(await tools.diff_diagrams({ new_path: 'd.chd', revision: 'HEAD' }))
+    assert.deepEqual(fromServer, fromCli)
+    assert.equal(fromServer.changed, true)
+    assert.ok(fromServer.changes.length >= 2)
+  }
+)
 
 test('chd hash and the fingerprint read_file returns are the same', () => {
   const fromCli = run('hash', 'hexagonal-ok.chd').stdout.trim()
