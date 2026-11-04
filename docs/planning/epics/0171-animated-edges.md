@@ -22,6 +22,7 @@ Let an edge be animated (movement along the line, from the source end to the tar
 - [x] **Animated legend line**: a legend entry can carry the animation, speed, direction, pulse distance and dash settings, so the legend arrow moves; picking a legend line from an edge copies them; image exports stay still (Made by picking an animated edge when adding a legend "Line"; an existing entry is changed by removing it and picking again, since the panel has no style editor for an entry.)
 - Decided against: animating only the selected edges, and showing the speed in the legend
 - [x] Looked at in the running app (2026-11-04, over the DevTools protocol): flow and pulse draw, the loop times match the speed (flow 0.49 s at speed 1, 0.98 s at 0.5; pulse halves at 2), reverse runs the other way, and an unstyled edge draws its arrowhead
+- [x] Looked at in the running app a second time: the pulse stream is evenly spaced (`0 60`, 0.5 s a loop), a single pulse repeats once it is out of sight, a custom dotted pattern draws as set, Ctrl+Shift+A stops every animation and puts the canvas in its still state, holding Ctrl over an edge while it is off animates only that edge and stops on release, and the legend arrows (a flow and a pulse stream) move
 - [ ] Still to look at by eye: the pulse dot on step and curved routing, a selected edge, a dotted line, switching the direction set, light and dark theme, and that the `flow` loop has no visible jump
 - [ ] Measure a diagram with many animated edges
 
