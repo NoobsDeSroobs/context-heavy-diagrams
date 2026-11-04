@@ -1,11 +1,16 @@
 import type { EdgeStyle, LegendEntry } from '@shared/diagram'
 import type { Theme } from '../styling/theme'
 import type { EdgeStyleDefaults } from '@shared/styling/styleDefaults'
+import { lineMotionOf, type LineMotion } from '../../../shared/styling/edgeAnimation.ts'
 
 // Picking a legend line from an edge on the canvas (ADR 0123). Pure so it can be unit-tested; the
 // theme flip and the built-in defaults are passed in, like displayColor in styleDefaults.ts.
 
-export type LegendLineLook = Pick<LegendEntry, 'color' | 'lineStyle' | 'startMarker' | 'endMarker'>
+export type LegendLineLook = Pick<
+  LegendEntry,
+  'color' | 'lineStyle' | 'startMarker' | 'endMarker'
+> &
+  LineMotion
 
 // What the edge looks like, as a legend entry. Line style and markers are written out in full
 // (an unset field means the built-in default, which the legend cannot know about); the colour is
@@ -22,6 +27,8 @@ export function legendLineFromEdgeStyle(
     ...(style?.stroke !== undefined ? { color: flip(style.stroke, theme) } : {}),
     lineStyle: style?.lineStyle ?? defaults.lineStyle,
     startMarker: style?.startMarker ?? defaults.startMarker,
-    endMarker: style?.endMarker ?? defaults.endMarker
+    endMarker: style?.endMarker ?? defaults.endMarker,
+    // The animation and the dash settings only when the edge sets them.
+    ...lineMotionOf(style)
   }
 }

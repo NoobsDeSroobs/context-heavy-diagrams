@@ -4,6 +4,7 @@ import { buildBendablePath } from '../geometry/bendablePath.ts'
 import { flattenPath, pointAtRatio, type Point } from '../geometry/pathSampling.ts'
 import { highlightId, matchingHighlights } from '../tagging/highlights.ts'
 import { styledNodeType } from '../styling/styleDefaults.ts'
+import { dasharrayOf, dashPattern } from '../styling/edgeDash.ts'
 import type { Theme } from '../styling/theme.ts'
 import {
   DEFAULT_FONT_FAMILY,
@@ -343,8 +344,7 @@ function drawLegend(
       if (asset) parts.push(iconElement(asset, swatchX + 4, cy - 10, 20, tokens.text))
     } else {
       const paint = plainColor(swatch.color)
-      const dash =
-        swatch.lineStyle === 'dashed' ? '8 6' : swatch.lineStyle === 'dotted' ? '2 4' : undefined
+      const dash = dasharrayOf(dashPattern(swatch))
       parts.push(
         `<line x1="${num(swatchX + 2)}" y1="${num(cy)}" x2="${num(swatchX + 26)}" y2="${num(cy)}"${paintAttrs('stroke', paint)} stroke-width="2" stroke-linecap="round"` +
           (dash ? ` stroke-dasharray="${dash}"` : '') +

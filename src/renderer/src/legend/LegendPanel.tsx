@@ -1,11 +1,21 @@
 import { showAlert } from '../ui/alerts'
-import { useEffect, useMemo, useState, type MouseEvent } from 'react'
-import type { EdgeStyle, IconRef, LegendEntry, LegendEntryKind } from '@shared/diagram'
+import { useEffect, useMemo, useState, type CSSProperties, type MouseEvent } from 'react'
+import type { IconRef, LegendEntry, LegendEntryKind } from '@shared/diagram'
 import { loadBuiltinIconSvg, searchBuiltinIconIds } from '../icons/builtinIcons'
 import { markerUrl } from '../edges/markerIds'
 import type { DirectionSetLegendRow } from '../edges/edgeDirectionSets'
 import type { LegendLineLook } from './legendLinePick'
 import { EDGE_STYLE_DEFAULTS } from '@shared/styling/styleDefaults'
+import {
+  flowLoop,
+  knownAnimation,
+  knownDirection,
+  knownPulseDistance,
+  knownSpeed,
+  pulseLoop,
+  pulseRadius
+} from '@shared/styling/edgeAnimation'
+import { dasharrayOf, dashPattern } from '@shared/styling/edgeDash'
 import { useTheme } from '../styling/theme'
 import IconSlotView from '../icons/IconSlotView'
 import StylePicker from '../styling/StylePicker'
@@ -33,16 +43,11 @@ interface LegendPanelProps {
 const PANEL_WIDTH = 300
 const DEFAULT_COLOR = '#e6194b'
 
-// Same three dash patterns as LabeledEdge.tsx's own DASH_ARRAY — small
-// independent copy, not a shared import, matching this codebase's existing
-// precedent for this exact one-liner (see HighlightsPanel's stringifyValue).
-const DASH_ARRAY: Record<Exclude<EdgeStyle['lineStyle'], undefined>, string | undefined> = {
-  solid: undefined,
-  dashed: '8 6',
-  dotted: '2 4'
-}
-
 const MAX_ICON_RESULTS = 24
+
+// The line swatch: its stroke and the length of the line, for the pulse.
+const SWATCH_STROKE_WIDTH = 2
+const SWATCH_LENGTH = 40
 
 // Small swatch previewing what a legend entry actually looks like on
 // canvas — a short marked line for 'line', the real icon for 'icon', a
@@ -73,9 +78,24 @@ function LegendSwatch({
       />
     )
   }
+  // The same classes and variables as an animated edge (edges.css), so the arrow moves exactly as
+  // the edge it stands for would, and stands still when edge animation is off (ADR 0141).
+  const animation = knownAnimation(entry.animation)
+  const speed = knownSpeed(entry.animationSpeed)
+  const direction = knownDirection(entry.animationDirection) === 'reverse' ? 'reverse' : 'normal'
+  const flowPattern = animation === 'flow' ? dashPattern(entry, true) : undefined
+  const flow = flowPattern ? flowLoop(flowPattern, speed) : null
+  const linePattern = flowPattern ?? dashPattern(entry)
+  const dots = pulseRadius(SWATCH_STROKE_WIDTH)
+  const pulse =
+    animation === 'pulse'
+      ? pulseLoop(SWATCH_LENGTH, knownPulseDistance(entry.pulseDistance, dots), dots, speed)
+      : null
+  const stroke = entry.color ?? 'var(--xy-edge-stroke-default)'
   return (
     <svg className="legend-swatch legend-swatch-line" viewBox="0 0 48 16" width="48" height="16">
       <line
+        className={flow ? 'edge-flow' : undefined}
         x1="3"
         y1="8"
         x2="43"
@@ -88,13 +108,43 @@ function LegendSwatch({
         // hand-authored legend entry that deliberately omitted color (the
         // in-app "add entry" flow always seeds one, so this never surfaced
         // before) rendered completely blank.
-        stroke={entry.color ?? 'var(--xy-edge-stroke-default)'}
-        strokeWidth={2}
+        stroke={stroke}
+        strokeWidth={SWATCH_STROKE_WIDTH}
         strokeLinecap="round"
-        strokeDasharray={entry.lineStyle ? DASH_ARRAY[entry.lineStyle] : undefined}
+        strokeDasharray={dasharrayOf(linePattern)}
         markerStart={markerUrl(entry.startMarker)}
         markerEnd={markerUrl(entry.endMarker)}
+        style={
+          flow
+            ? ({
+                '--edge-flow-period': flow.period,
+                '--edge-flow-duration': `${flow.durationMs}ms`,
+                '--edge-flow-direction': direction
+              } as CSSProperties)
+            : undefined
+        }
       />
+      {pulse && (
+        <line
+          className="edge-pulse"
+          x1="3"
+          y1="8"
+          x2="43"
+          y2="8"
+          stroke={stroke}
+          strokeWidth={dots * 2}
+          strokeLinecap="round"
+          strokeDasharray={pulse.dasharray}
+          style={
+            {
+              pointerEvents: 'none',
+              '--edge-flow-period': pulse.period,
+              '--edge-flow-duration': `${pulse.durationMs}ms`,
+              '--edge-flow-direction': direction
+            } as CSSProperties
+          }
+        />
+      )}
     </svg>
   )
 }

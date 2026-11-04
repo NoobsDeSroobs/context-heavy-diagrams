@@ -1,4 +1,4 @@
-import type { EdgeAnimation, EdgeAnimationDirection } from './schema.ts'
+import type { EdgeAnimation, EdgeAnimationDirection, EdgeStyle } from './schema.ts'
 import { dashPeriod, type DashPattern } from './edgeDash.ts'
 
 // The numbers behind an animated edge (ADR 0141), kept pure so they can be tested.
@@ -79,4 +79,26 @@ export function pulseLoop(
   const period = Math.max(1, pathLength) + radius * 2
   const seconds = Math.min(8, Math.max(1.5, pathLength / PULSE_UNITS_PER_SECOND))
   return { dasharray: `0 ${period}`, period, durationMs: (seconds / factor) * 1000 }
+}
+
+// The style fields that make a line move or set its dash pattern. A legend line carries the same
+// ones as an edge (ADR 0141), so picking a legend line from an edge copies them.
+export const LINE_MOTION_KEYS = [
+  'animation',
+  'animationSpeed',
+  'animationDirection',
+  'pulseDistance',
+  'dashLength',
+  'dashGap'
+] as const
+
+export type LineMotion = Pick<EdgeStyle, (typeof LINE_MOTION_KEYS)[number]>
+
+// Only the motion and dash fields that are set, so an entry without them stays without them.
+export function lineMotionOf(style: LineMotion | undefined): LineMotion {
+  const motion: Record<string, unknown> = {}
+  for (const key of LINE_MOTION_KEYS) {
+    if (style?.[key] !== undefined) motion[key] = style[key]
+  }
+  return motion as LineMotion
 }

@@ -47,6 +47,8 @@ export type ExportLegendSwatch =
       kind: 'line'
       color: string
       lineStyle?: LineStyleKind
+      dashLength?: number
+      dashGap?: number
       startMarker?: MarkerKind
       endMarker?: MarkerKind
     }
@@ -107,6 +109,8 @@ export function buildExportLegendItems(
             kind: entry.kind,
             color: entry.color ?? '#000000',
             lineStyle: entry.lineStyle,
+            dashLength: entry.dashLength,
+            dashGap: entry.dashGap,
             startMarker: entry.startMarker,
             endMarker: entry.endMarker
           },
