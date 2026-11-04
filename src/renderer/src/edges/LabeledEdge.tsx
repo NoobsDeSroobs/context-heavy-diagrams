@@ -21,6 +21,13 @@ import HighlightChips from '../tagging/HighlightChips'
 import { useDiagramContext } from '../canvas/useDiagramContext'
 import { HIGHLIGHT_BORDER_WIDTH } from '@shared/tagging/highlights'
 import { EDGE_STYLE_DEFAULTS } from '@shared/styling/styleDefaults'
+import {
+  FLOW_MS_PER_UNIT,
+  flowDash,
+  knownAnimation,
+  pulseRadius,
+  pulseSeconds
+} from '@shared/styling/edgeAnimation'
 import { isolateStyle } from '../search/search'
 import { withOpacity } from '../styling/colorOpacity'
 import { themeAdaptiveColor } from '../styling/themeAdaptiveColor'
@@ -72,6 +79,12 @@ function pointAtRatio(pathD: string, ratio: number): { x: number; y: number } {
   const length = path.getTotalLength()
   const point = path.getPointAtLength(length * ratio)
   return { x: point.x, y: point.y }
+}
+
+function pathLengthOf(pathD: string): number {
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+  path.setAttribute('d', pathD)
+  return path.getTotalLength()
 }
 
 // One shared empty list, so an edge with no bend points has a stable `bendPoints`
@@ -173,6 +186,14 @@ function LabeledEdge({
     ]
   )
 
+  // Animation (ADR 0141) runs from the source end to the target end, so it follows the arrow of the
+  // active edge direction set. Only a 'pulse' needs the path's length, for its speed.
+  const animation = knownAnimation(edgeStyle?.animation)
+  const pulseDuration = useMemo(
+    () => (animation === 'pulse' ? pulseSeconds(pathLengthOf(edgePath)) : 0),
+    [animation, edgePath]
+  )
+
   const labelRatio = edgeStyle?.labelPosition
   const { x: labelX, y: labelY } = useMemo(
     () => pointAtRatio(edgePath, labelRatio ?? 0.5),
@@ -206,6 +227,16 @@ function LabeledEdge({
     ),
     strokeWidth: selected ? baseStrokeWidth + SELECTED_STROKE_WIDTH_DELTA : baseStrokeWidth,
     ...(edgeStyle?.lineStyle ? { strokeDasharray: DASH_ARRAY[edgeStyle.lineStyle] } : {}),
+    // A flowing line is dashed, whatever its line style; the period is how far one repeat of the
+    // pattern is, which the CSS animation (edges.css) moves the dashes by per loop, and how long a
+    // loop takes.
+    ...(animation === 'flow'
+      ? ({
+          strokeDasharray: flowDash(edgeStyle?.lineStyle).dasharray,
+          '--edge-flow-period': flowDash(edgeStyle?.lineStyle).period,
+          '--edge-flow-duration': `${flowDash(edgeStyle?.lineStyle).period * FLOW_MS_PER_UNIT}ms`
+        } as CSSProperties)
+      : {}),
     // A single matching highlight overrides the stroke color, same
     // treatment as EntityNode/ContainerNode's border override — see
     // ADR 0025. Width is handled by baseStrokeWidth above instead of
@@ -361,7 +392,24 @@ function LabeledEdge({
         style={computedStyle}
         markerEnd={computedMarkerEnd}
         markerStart={computedMarkerStart}
+        className={animation === 'flow' ? 'edge-flow' : undefined}
       />
+      {animation === 'pulse' && (
+        // A dot riding the path, drawn in the line's own colour. SVG motion rather than CSS
+        // offset-path, so it needs no coordinate conversion; edges.css hides it for reduced motion
+        // and in the compare window.
+        <circle
+          className="edge-pulse"
+          r={pulseRadius(baseStrokeWidth)}
+          style={{
+            fill: computedStyle.stroke,
+            opacity: computedStyle.opacity,
+            pointerEvents: 'none'
+          }}
+        >
+          <animateMotion dur={`${pulseDuration}s`} repeatCount="indefinite" path={edgePath} />
+        </circle>
+      )}
       {/* Invisible hover surface — see HOVER_HIT_WIDTH. */}
       <path
         d={edgePath}

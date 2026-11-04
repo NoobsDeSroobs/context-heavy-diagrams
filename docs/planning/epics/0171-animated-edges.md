@@ -1,20 +1,23 @@
 # 0171: Animated edges
 
 ## Status
-Not Started. Logged 2026-11-04; for later.
+Built on the branch `epic/0171-animated-edges` (2026-11-04); not merged. Decision: [ADR 0141](../../decisions/0141-animated-edges-are-an-edge-style-field.md).
 
 ## Goal
-Let an edge be animated (a flow moving along the line, in the arrow's direction) to mark something live, such as a running integration or an active data flow, as opposed to a planned or dormant one. It is a style of the edge, like its line style, so it can also be part of a legend line.
+Let an edge be animated (movement along the line, from the source end to the target end) to mark something live, such as a running integration or an active data flow, as opposed to a planned or dormant one. It is an edge style field, none by default, so the copy-style brush carries it from one edge to another and it is stored in the file.
 
 ## Tasks
-- [ ] Decide what animates: a moving dash pattern along the path (React Flow's own `animated` edge is the cheap first thing to try), or moving dots; check what the library offers before building anything
-- [ ] An `animated` flag in the edge style, set in the edge properties and by a style preset; additive file-format change, so `docs/file-format.md`, the skill's field reference and the validator follow
-- [ ] Direction: follow the arrow, and the active edge direction set when the arrow is reversed or two-way
-- [ ] Respect the system's reduced-motion setting (no animation, the line stays as a dashed or marked line), and a way to pause all animation for a diagram
-- [ ] Cost on large diagrams: measure many animated edges at once, and animate only what is on screen
-- [ ] Static output: SVG export and the compare window draw the edge still; decide whether the export marks it (for example a dash) so the meaning is not lost
-- [ ] A legend line can carry it
-- [ ] Tests for the style round trip and for the static export
+- [x] Decide what animates: React Flow's own animated edge is a dash flow with no way to choose a kind, so two kinds of our own: `flow` (dashes travel along the line) and `pulse` (a dot travels along it)
+- [x] `animation` in the edge style (`"flow"` | `"pulse"`, absent = none); an unknown value draws the edge still; `docs/file-format.md` and the skill's field reference
+- [x] Properties panel: Line, Animation (None / Flow / Pulse), works on a multi-selection
+- [x] Direction follows source to target, so it follows the arrow of the active edge direction set; nothing to transform when the reading changes
+- [x] Respect the system's reduced-motion setting; the compare window shows the edge still
+- [x] The copy-style brush copies the animation, and painting from an edge with none clears the target's (tests)
+- [x] Round trip through save and load (test); the helper for the dash, timing and dot size (tests)
+- [ ] Look at it in the app (see Notes): speed, the dot's size and colour, a selected edge, step and curved routing, a dashed and a dotted line, switching the direction set, light and dark theme
+- [ ] Measure a diagram with many animated edges
 
 ## Notes
-Animation must not be the only carrier of the meaning: it vanishes in an export and for anyone with reduced motion, so a tag on the edge (or a legend entry) is what says "live". Not wanted: animation as decoration on every edge by default.
+Not verified by eye: the animation could not be run here, so the checks are the unit tests, the type check and the lint. The two things most worth a look are that the `pulse` dot rides the path on every routing kind (it uses SVG motion along the same path the line is drawn with) and that the `flow` loop has no visible jump.
+
+Not in the first version, by decision: the legend (a legend row does not animate, so there is no way to show "live" there yet), the SVG export (still) and the per-edge-direction-set default style. A rule or tag that sets the field automatically ("status=live" animates) was considered and left for later.

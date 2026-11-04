@@ -99,6 +99,18 @@ test('edges: look is copied, label position and routing stay the target’s', ()
   assert.deepEqual(next.points, [{ x: 1, y: 2 }])
 })
 
+test('edges: the animation is copied, and a source with none clears the target’s', () => {
+  const animated = captureEdgeBrush({ data: { style: { stroke: '#f00', animation: 'flow' } } })
+  assert.equal(animated.style.animation, 'flow')
+  const target = { style: { stroke: '#0f0', animation: 'pulse' } }
+  assert.equal(applyBrushToEdgeData(animated, target).style.animation, 'flow')
+
+  const still = captureEdgeBrush({ data: { style: { stroke: '#f00' } } })
+  assert.equal('animation' in applyBrushToEdgeData(still, target).style, false)
+  // a target that had none gets the source's
+  assert.equal(applyBrushToEdgeData(animated, { style: {} }).style.animation, 'flow')
+})
+
 test('an edge with no data of its own still takes the style', () => {
   const brush = captureEdgeBrush({ data: { style: { stroke: '#f00' } } })
   assert.deepEqual(applyBrushToEdgeData(brush, undefined), { style: { stroke: '#f00' } })

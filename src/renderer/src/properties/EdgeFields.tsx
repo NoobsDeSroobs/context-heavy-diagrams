@@ -26,6 +26,16 @@ const ROUTING_STYLE_OPTIONS: {
   { value: 'catmullRom', label: 'Catmull-Rom (gravity)' }
 ]
 
+// '' is no animation: the field is absent in the file (ADR 0141).
+const ANIMATION_OPTIONS: {
+  value: Exclude<EdgeStyle['animation'], undefined> | ''
+  label: string
+}[] = [
+  { value: '', label: 'None' },
+  { value: 'flow', label: 'Flow (dashes move along the line)' },
+  { value: 'pulse', label: 'Pulse (a dot moves along the line)' }
+]
+
 export function EdgeFields({
   edges,
   updateStyle,
@@ -57,6 +67,7 @@ export function EdgeFields({
   const strokeWidth = computeFieldValue(edges, (e) => edgeStyleOf(e).strokeWidth ?? D.strokeWidth)
   const lineStyle = computeFieldValue(edges, (e) => edgeStyleOf(e).lineStyle ?? D.lineStyle)
   const routingStyle = computeFieldValue(edges, (e) => edgeStyleOf(e).routingStyle)
+  const animation = computeFieldValue(edges, (e) => edgeStyleOf(e).animation)
   const fontSize = computeFieldValue(edges, (e) => edgeStyleOf(e).fontSize ?? D.fontSize)
   const fontColor = computeFieldValue(edges, (e) =>
     displayColor(edgeStyleOf(e).fontColor, D.fontColor, theme, themeAdaptiveColor)
@@ -126,6 +137,14 @@ export function EdgeFields({
             { value: 'dotted', label: 'Dotted' }
           ]}
           onChange={(v) => updateStyle({ lineStyle: v })}
+          pushSnapshot={pushSnapshot}
+        />
+        <SelectField
+          label="Animation"
+          value={animation.value ?? ''}
+          mixed={animation.mixed}
+          options={ANIMATION_OPTIONS}
+          onChange={(v) => updateStyle({ animation: v === '' ? undefined : v })}
           pushSnapshot={pushSnapshot}
         />
       </CollapsibleSection>

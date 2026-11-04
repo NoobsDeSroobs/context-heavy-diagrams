@@ -59,6 +59,11 @@ export type MarkerKind =
   | 'crowsFootZeroOrOne'
   | 'crowsFootZeroOrMany'
 
+// How an edge moves, to mark something live (ADR 0141). Absent means none, the
+// only look before this field existed. 'flow': the line's dashes travel from the
+// source end towards the target end. 'pulse': a dot travels the same way along it.
+export type EdgeAnimation = 'flow' | 'pulse'
+
 export interface EdgeStyle extends FontStyle {
   stroke?: string
   strokeOpacity?: number
@@ -66,6 +71,7 @@ export interface EdgeStyle extends FontStyle {
   lineStyle?: LineStyleKind
   startMarker?: MarkerKind
   endMarker?: MarkerKind
+  animation?: EdgeAnimation
   // 0-1 fraction along the rendered path, same convention as
   // ConnectionPoint's `offset` — stays meaningful if the edge's endpoints
   // move, unlike a fixed pixel offset. Absent means 0.5 (today's only

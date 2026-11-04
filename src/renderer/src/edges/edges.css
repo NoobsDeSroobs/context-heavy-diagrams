@@ -85,6 +85,39 @@
   stroke-width: 1;
 }
 
+/* Animated edges (ADR 0141). 'flow': LabeledEdge.tsx sets the dash pattern,
+   --edge-flow-period (one repeat of it, in user units) and --edge-flow-duration; the dashes
+   move by exactly one period per loop, from the path's start (source) to its end (target), so
+   the loop is seamless. 'pulse': a dot moved along the path by SVG motion, in LabeledEdge.tsx. */
+.edge-flow {
+  animation: edge-flow var(--edge-flow-duration) linear infinite;
+}
+
+@keyframes edge-flow {
+  to {
+    stroke-dashoffset: calc(var(--edge-flow-period) * -1px);
+  }
+}
+
+/* Nothing moves for people who asked their system for less motion, or in the compare window,
+   which is a still review of two versions. The line stays dashed or plain; a pulse is hidden. */
+@media (prefers-reduced-motion: reduce) {
+  .edge-flow {
+    animation: none;
+  }
+  .edge-pulse {
+    display: none;
+  }
+}
+
+.compare-canvas .edge-flow {
+  animation: none;
+}
+
+.compare-canvas .edge-pulse {
+  display: none;
+}
+
 .edge-label-text {
   font-size: var(--default-edge-label-font-size);
   color: var(--default-edge-label-font-color);
