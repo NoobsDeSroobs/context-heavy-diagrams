@@ -10,24 +10,24 @@ https://github.com/user-attachments/assets/50d4d6b5-6aeb-47e9-b7b5-9f252e3970c4
 
 *Drill down through linked diagrams, then add a highlight from the tags that are shown. The same rules apply as the features interact.*
 
-A new diagram is just boxes and edges, and it stays that way until you take advantage of the more advanced features, such as tags, notes, links to deeper diagrams and the command line. Someone who only wants to draw a flow never has to touch them ([ADR 0054](docs/decisions/0054-progressive-disclosure-for-advanced-features.md)). When you want more, one diagram can be recoloured by GDPR scope, owning team or state, one highlight at a time, and an AI assistant can draft or edit the file while you review exactly what it changed.
+A new diagram starts as just boxes and edges until you take advantage of the more advanced features, such as tags, notes, links to deeper diagrams, and the command line. Someone who only wants to draw a flow never has to touch them ([ADR 0054](docs/decisions/0054-progressive-disclosure-for-advanced-features.md)). When you want more, one diagram can be recoloured by GDPR scope, owning team or state, one highlight at a time, and an AI assistant can draft or edit the file while you review exactly what it changed.
 
 ## Why another diagramming tool?
 
 Commercial diagramming tools are built for a specific purpose, making them restrictive. General box-and-arrow editors make you pay for flexibility with fiddly mechanics: flat boxes that must multiply and grow to contain the required context, and a lot of manual tweaking to get it to work out somehow. Context-Heavy Diagrams is built around a few rules instead:
 
-- **An entity is a concept in the domain the diagram lives in.** Notes, links, tags and icons are fields *on* the entity, never separate objects you have to keep aligned.
+- **An entity is a concept in the domain the diagram lives in.** Notes, links, tags and icons are fields *baked into* the entity, never separate objects you have to keep aligned.
 - **Edges convey one or more relationships,** which you can swap between if required.
-- **Context goes behind the box, pulled forth when needed.** Long explanations live in a Markdown notes panel, deeper structure lives in a linked diagram, and the diagram stays a readable overview.
-- **Your files are private and yours.** Plain, gitable, reviewable and deterministic JSON on disk; no server, no account, no network.
+- **Context starts hidden behind the box, pulled forth when needed.** Metadata is baked in, long explanations live in a Markdown notes panel, deeper structure lives in a linked diagram, and the diagram stays a readable overview.
+- **Your files are private and yours.** Plain, gitable, reviewable and deterministic JSON on disk; no server, no account, no network. The default case should be privacy.
 
 For a comparison with other diagram tools, see [the comparison](docs/comparison.md).
 
 ## One diagram, several perspectives
 
-Tag the elements once (GDPR scope, NIS2 relevance, owning team, lifecycle state), then pick a highlight to colour the same diagram by one of those tags. A highlight recolours the elements and adds a legend; it does not switch layouts or hide anything, so the picture you drew stays the picture everyone discusses.
+Tag the elements once (GDPR scope, NIS2 relevance, owning team, lifecycle state), then pick a highlight to colour the same diagram to suit your needs in the moment. A highlight recolours the elements and adds a legend; it does not switch layouts or hide anything, so the picture you drew stays the picture everyone discusses.
 
-The tool cannot prove that a tag is true; it shows what someone wrote. What it gives a compliance check is evidence to work with: the diagram is a file in git, so you can see who changed a tag and when, or who left it unchanged, and an AI assistant can check the diagram against your source material. That is one part of a compliance review, not a certificate on its own.
+The tool cannot prove that a tag is true; it shows what someone wrote. What it gives a compliance check is evidence to work with: the diagram is a file in git, so you can see who changed a tag and when, or who left it unchanged, and an AI assistant can check the diagram against your source material. That is just one part of a compliance review, not a certificate on its own.
 
 https://github.com/user-attachments/assets/2e63dee5-85f8-4b32-a75a-f986084bd873
 
@@ -39,7 +39,7 @@ Suits many kinds of diagrams, such as customer journeys, organisation goals and 
 
 ### Local and offline
 - **Works fully offline.** No server, no account, no sign-in. The app blocks its own network access, so this is enforced, not just promised ([ADR 0113](docs/decisions/0113-enforced-offline-behaviour.md)).
-- **Autosave and crash recovery**, light and dark themes, native file dialogs, and `.chd` files that open on double-click (Windows installer).
+- **Quality of Life** Autosave and crash recovery, light and dark themes, native file dialogs, and `.chd` files that open on double-click (Windows installer).
 - **One window per diagram**, with undo/redo, clipboard copy/paste across windows, and a command palette (Ctrl/Cmd+K).
 
 ### Git-friendly
@@ -51,10 +51,10 @@ Suits many kinds of diagrams, such as customer journeys, organisation goals and 
 A diagram is a small, deterministic text file, so git can do for it what it does for code:
 
 - **History you can rewind.** Every change is a small diff with a commit message saying why, and you can check out any earlier state of a diagram and open it.
-- **Review and branching.** Propose a change to an architecture in a pull request, compare branches, and merge, like any other change.
-- **Diagrams that live with the code.** Keep the diagram and its notes in the same repository as the code, so they change in the same commit, get reviewed together and evolve together instead of drifting apart.
+- **Review and branching.** Propose a change to an architecture in a pull request, compare branches, and merge, like any other change. The built-in change visualizer makes this a breeze.
+- **Diagrams that live with the code.** Keep the diagram and its notes in the same repository as the code, so they change in the same commit, get reviewed together and evolve together instead of drifting apart. This also enables CI/CD pipeline checks, such as diagram validation that can update documentation automatically and fail the deploy if it is non-compliant or does not match the code.
 
-- **Plain-text `.chd` files:** deterministic JSON with a fixed key order and no embedded binaries, built to diff and merge like source code.
+- **Plain-text `.chd` files:** deterministic JSON with a fixed key order and no embedded binaries, built to be both human readable and easy to diff and merge.
 - **The format is a standalone spec** ([docs/file-format.md](docs/file-format.md)). A third party can read or write it without this codebase.
 - **Deterministic generation of renders.** Any `.chd` file can reproduce the identical SVG (or PNG) with an auto-generated legend, from the app or with `chd export` in CI, saving you from bundling expensive blobs.
 
@@ -66,34 +66,32 @@ A diagram is a small, deterministic text file, so git can do for it what it does
 
 ### Tags, highlights and views
 - **A unified tag system** with free tags and diagram-defined *required* tags that have allowed values.
-- **Highlights and a legend.** Colour elements by tag value, group them, and keep several sets side by side.
+- **Highlights and a legend.** Colour elements by tag value, group them, and keep several perspectives but a click away.
 - **A security matrix view,** a threat/risk matrix over your entities whose scores roll up through linked diagrams (try [`security-rollup`](examples/gallery/technical/security-rollup/README.md)).
 - **Diagnostics** that flag problems such as missing files or an empty legend, plus a **layer panel** and a **minimap** for big diagrams.
 
 ### Elements, connections and styling
 - Entities, nestable **containers**, rotatable **text**, and freeform **curved lines**.
-- About 5,800 bundled [Tabler](https://tabler.io/icons) icons (MIT) plus your own SVG/PNG icons, in up to four corner slots per entity.
-- **Configurable connection points**, straight, step, smooth and curved routing, manual bend points, direction sets, and multi-connection wiring.
-- A full **style panel**, named style palettes you can share, alignment guides, snapping, align/distribute, and multi-select resize.
+- About 5,800 bundled [Tabler](https://tabler.io/icons) icons (MIT) plus your own SVG/PNG icons, in up to four corner slots per entity. Protected icon packs like AWS/Azure/GCP are sadly not bundled.
+- **Configurable edges.** Straight, step, smooth and curved routing, manual bend points, direction sets, and multi-connection wiring. Try moving the label if the 
+- A full **style panel**, named style palettes you can share, alignment guides, snapping, align/distribute, and multi-select resize. It even has profiles to match the branding of your company or your clients.
 
 ### And more
-- Legend and tag-based highlights (including grouped ones)
-- Named style palettes for brand colours, fonts and default styles
+- Legend
 - Edge direction sets
 - Per-element lock
 - Format painter
-- Alt+drag duplicate and bulk create
+- Alt+drag duplicate and bulk create (right click on an entity or container)
 - Isolate mode
-- Search by tag, string, metadata, and icon, with a deep search toggle
-- Peek card
+- Peek card (hold ctrl on hover)
 - Required tags that propagate to children
 - Paste with retargeted paths
-- External change detection
+- External change detection and change visualiser
 - File-version warning
 - Recent diagrams and shortcuts help
-- SVG export from the File menu, and `chd export` to produce the same SVG from a terminal or CI job
+- SVG/PNG export from the File menu, and `chd export` to produce the same SVG from a terminal or CI job
 - Architecture checks: a diagram can be checked against the rules of a style (hexagonal and data-flow diagrams ship with the app, and you can write your own profiles), from Diagnostics or with `chd check` in CI
-- Review what changed between two versions of a diagram, most of all after an AI assistant edited it: a compare window draws the later version with added, removed, link-or-note-changed and modified elements coloured and everything else dimmed, with a list to step through and per-change revert (View → Changes → Compare with git revision…, or **Review changes** when the file changes on disk); `chd diff` prints the same review for a terminal or CI
+- Review what changed between two versions of a diagram, e.g. after an AI assistant edited it: a compare window draws the later version with added, removed, link-or-note-changed and modified elements coloured and everything else dimmed. You also get a list of changes to step through and a per-change revert (View → Changes → Compare with git revision…, or **Review changes** when the file changes on disk); `chd diff` prints the same review for a terminal or CI
 - The `chd` command line tool (`spec`, `validate`, `hash`, `export`, `check`)
 
 ## Download
@@ -119,7 +117,9 @@ Other scripts: `npm test`, `npm run typecheck`, `npm run lint`. To build an inst
 
 ## Working with AI assistants
 
-An **AI** menu helps an assistant (Claude or another) read and write your diagrams safely: copy-paste instructions for a plain chat, a skill and `AGENTS.md` for agents working in a folder, a `chd` command-line tool to validate files, and a local extension for Claude Desktop. Everything runs locally and writes are guarded by a stale-edit check, but **whatever an assistant reads is sent to its provider**. Details are in [docs/architecture/ai-integration.md](docs/architecture/ai-integration.md). The menu can be switched off in Preferences.
+**Make sure you toggle the AI features on during installation or enable it in Preferences if you want to use the AI native features!**
+
+An **AI** menu helps an assistant (Claude or another) read and write your diagrams safely: copy-paste instructions for a plain chat, a skill and `AGENTS.md` for agents working in a folder, a `chd` command-line tool to validate files, and a local extension for Claude Desktop. Everything runs locally and writes are guarded by a stale-edit check, but **whatever an assistant reads is sent to its provider**. Details are in [docs/architecture/ai-integration.md](docs/architecture/ai-integration.md). The Windows installer asks whether to enable the menu; either way you can switch it on or off at any time in Preferences, and it is on by default in a build from source.
 
 ### Draft with an assistant, then review
 
@@ -131,15 +131,13 @@ The Claude Desktop extension reads text files only (Markdown, plain text, CSV, J
 
 ### Why the layout is manual
 
-You place the elements, and the file keeps the positions stable, so a small edit stays a small diff in git and the arrangement you chose does not shift under you. A diagram an assistant generates will need a person to tidy the layout. There is no automatic layout yet; see [the comparison](docs/comparison.md#where-this-tool-is-behind).
+You place the elements, and the file keeps the positions stable, so a small edit stays a small diff in git and the arrangement you chose does not shift under you. A diagram an assistant generates will usually need a person to tidy the layout. There is no automatic layout feature yet; see [the comparison](docs/comparison.md#where-this-tool-is-behind).
 
 ### For regulated settings
 
-Facts, not promises:
-
 - Offline, enforced: a test fails if a network API appears in the source ([ADR 0113](docs/decisions/0113-enforced-offline-behaviour.md)).
 - The file format is a standalone specification ([docs/file-format.md](docs/file-format.md)), so there is no lock-in.
-- `chd diff` and `chd check` run in CI, and the compare window reviews a change before it is committed.
+- `chd diff` and `chd check` run in CI, and the compare window lets you reviews a change before it is committed.
 - Architecture checks ship for hexagonal and data-flow diagrams; other styles need a profile of your own.
 - GPL-3.0-or-later, with third-party licences listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
@@ -154,7 +152,7 @@ Facts, not promises:
 
 ## Project status
 
-This is the first open-source release of a project that was developed privately until now. The decision records and epics in `docs/` are the real history of how it got here, and they are published as they were written, on purpose, so the backlog is candid. The `.chd` format is at version 1 and changes are additive. Each file records the app version that last saved it, and the app warns when it opens a file saved by a newer version ([ADR 0118](docs/decisions/0118-saved-with-version-marker.md)).
+This is the open-source release of a project that was developed privately until now. The decision records and epics in `docs/` are the real history of how it got here, and they are published as they were written, on purpose, so the backlog is candid. The `.chd` format is at version 1 and changes are additive. Each file records the app version that last saved it, and the app warns when it opens a file saved by a newer version ([ADR 0118](docs/decisions/0118-saved-with-version-marker.md)).
 
 ## AI-assisted development
 
