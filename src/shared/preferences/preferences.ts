@@ -167,9 +167,29 @@ export interface AppPreferences {
   // Default on; a future installer can seed it from its "enable AI features?"
   // question.
   aiFeaturesEnabled: boolean
-  // Whether edges set to Flow or Pulse move (ADR 0141). A viewing choice only: off draws them
-  // still, and the diagram is not changed. Applies live to every open diagram.
-  animateEdges: boolean
+  // Whether edges set to Flow or Pulse move (ADR 0141). A viewing choice only: still draws them
+  // still, and the diagram is not changed. Applies live to every open diagram. 'system' follows the
+  // operating system's reduced-motion setting, which is what a fresh install does; 'on' and 'off'
+  // are the person's own choice and win over it.
+  animateEdges: EdgeAnimationMode
+}
+
+export type EdgeAnimationMode = 'system' | 'on' | 'off'
+
+// Whether animated edges move, from the preference and whether the system asks for reduced motion.
+export function edgeAnimationIsOn(mode: EdgeAnimationMode, systemReducesMotion: boolean): boolean {
+  if (mode === 'on') return true
+  if (mode === 'off') return false
+  return !systemReducesMotion
+}
+
+// A stored value, read as a mode. Until 0.5.1 this was a boolean that defaulted to true and was
+// written back with every other preference, so a stored true says nothing about what the person
+// chose and is read as 'system'; a stored false was always a choice. Anything else is 'system'.
+export function readEdgeAnimationMode(value: unknown): EdgeAnimationMode {
+  if (value === 'on' || value === 'off') return value
+  if (value === false) return 'off'
+  return 'system'
 }
 
 export const DEFAULT_PREFERENCES: AppPreferences = {
@@ -193,7 +213,7 @@ export const DEFAULT_PREFERENCES: AppPreferences = {
   isolateOpacity: 0.5,
   recentDiagramsLimit: 10,
   aiFeaturesEnabled: true,
-  animateEdges: true
+  animateEdges: 'system'
 }
 
 // Standard desktop convention; also a floor for the user-facing limit input
@@ -223,7 +243,9 @@ export function withRecentDiagram(
 // `stylePalette: { colors, fonts }` and no `stylePalettes`, and is folded into the collection as
 // one "Default" palette. Idempotent: a migrated blob has `stylePalettes`, so the branch is skipped.
 export function normalizePreferences(
-  raw: Partial<AppPreferences> & {
+  raw: Omit<Partial<AppPreferences>, 'animateEdges'> & {
+    // A boolean before 0.5.1 (see readEdgeAnimationMode).
+    animateEdges?: unknown
     stylePalette?: LegacyStylePalette
     // Pre-rename field name (Shape -> Entity) — `defaultStyles`
     // itself is spread from `rest` below, so this legacy sub-key is read and
@@ -237,7 +259,11 @@ export function normalizePreferences(
   }
 ): AppPreferences {
   const { stylePalette: legacy, ...rest } = raw
-  const merged: AppPreferences = { ...DEFAULT_PREFERENCES, ...rest }
+  const merged: AppPreferences = {
+    ...DEFAULT_PREFERENCES,
+    ...rest,
+    animateEdges: readEdgeAnimationMode(raw.animateEdges)
+  }
   if (raw.defaultStyles?.shape && !raw.defaultStyles.entity) {
     merged.defaultStyles = { ...merged.defaultStyles, entity: raw.defaultStyles.shape }
   }

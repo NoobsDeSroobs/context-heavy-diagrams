@@ -12,10 +12,7 @@ import type { AppPreferences } from './preferences/preferences'
 // they run. Every item reuses an existing handler unchanged — the menus are a way to reach
 // actions, not a set of actions (ADR 0039).
 export interface MenuInputs {
-  preferences: Pick<
-    AppPreferences,
-    'recentDiagrams' | 'recentDiagramsLimit' | 'aiFeaturesEnabled' | 'animateEdges'
-  >
+  preferences: Pick<AppPreferences, 'recentDiagrams' | 'recentDiagramsLimit' | 'aiFeaturesEnabled'>
   currentPath: string | null
   isDiagramPersona: boolean
   nodes: Node[]
@@ -55,6 +52,8 @@ export interface MenuInputs {
   toggleReferencesPanel: () => void
   toggleStylePalettePanel: () => void
   toggleEdgeAnimation: () => void
+  // Whether animated edges move now (ADR 0141), which is what the menu item's check mark shows.
+  edgeAnimationOn: boolean
   toggleDiagramSettingsPanel: () => void
   togglePreferencesPanel: () => void
   setCommandPaletteOpen: (open: boolean) => void
@@ -116,6 +115,7 @@ export function useMenus(inputs: MenuInputs): {
     toggleReferencesPanel,
     toggleStylePalettePanel,
     toggleEdgeAnimation,
+    edgeAnimationOn,
     toggleDiagramSettingsPanel,
     togglePreferencesPanel,
     setCommandPaletteOpen,
@@ -246,7 +246,7 @@ export function useMenus(inputs: MenuInputs): {
 
   const animateEdgesItem: MenuBarItem = {
     label: 'Animate edges',
-    checked: preferences.animateEdges,
+    checked: edgeAnimationOn,
     accelerator: acceleratorFor('view.toggleEdgeAnimation'),
     title:
       'Turn the movement of animated edges on or off. Off, hold Ctrl (Cmd) over an edge to see it move',

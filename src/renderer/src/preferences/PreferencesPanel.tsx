@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { EdgeStyle } from '@shared/diagram'
 import type { AppPreferences } from './preferences'
-import { MIN_RECENT_DIAGRAMS_LIMIT } from '@shared/preferences/preferences'
+import { MIN_RECENT_DIAGRAMS_LIMIT, type EdgeAnimationMode } from '@shared/preferences/preferences'
 import { FieldRow, NumberField, SelectField } from '../ui/fields'
 import { useRafThrottledCallback } from '../ui/useRafThrottledCallback'
 import { useFontOptions } from '../styling/useFontOptions'
@@ -20,6 +20,15 @@ const ROUTING_STYLE_OPTIONS: {
   { value: 'step', label: 'Step' },
   { value: 'smoothstep', label: 'Smoothstep' },
   { value: 'catmullRom', label: 'Catmull-Rom (gravity)' }
+]
+
+// Whether edges set to Flow or Pulse move (ADR 0141). 'system' follows the operating system's
+// reduced-motion setting (Windows "Animation effects", which is also off in a Remote Desktop
+// session); the other two are the person's own choice and win over it.
+const ANIMATE_EDGES_OPTIONS: { value: EdgeAnimationMode; label: string }[] = [
+  { value: 'system', label: 'Follow the system (default)' },
+  { value: 'on', label: 'Always on' },
+  { value: 'off', label: 'Always off' }
 ]
 
 interface PreferencesPanelProps {
@@ -213,14 +222,14 @@ export default function PreferencesPanel({
           }
           pushSnapshot={() => {}}
         />
-        <FieldRow label="Animate edges">
-          <input
-            type="checkbox"
-            checked={preferences.animateEdges}
-            onChange={(e) => onChange({ animateEdges: e.target.checked })}
-            title="Let edges set to Flow or Pulse move. Off draws them still, which is easier on the eyes and on a large diagram; the diagram itself is not changed"
-          />
-        </FieldRow>
+        <SelectField
+          label="Animate edges"
+          value={preferences.animateEdges}
+          mixed={false}
+          options={ANIMATE_EDGES_OPTIONS}
+          onChange={(v) => onChange({ animateEdges: v })}
+          pushSnapshot={() => {}}
+        />
         <SelectField
           label="Default font"
           value={preferences.defaultFontFamily ?? ''}
