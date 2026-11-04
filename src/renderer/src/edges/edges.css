@@ -86,11 +86,12 @@
 }
 
 /* Animated edges (ADR 0141). 'flow': LabeledEdge.tsx sets the dash pattern,
-   --edge-flow-period (one repeat of it, in user units) and --edge-flow-duration; the dashes
-   move by exactly one period per loop, from the path's start (source) to its end (target), so
-   the loop is seamless. 'pulse': a dot moved along the path by SVG motion, in LabeledEdge.tsx. */
+   --edge-flow-period (one repeat of it, in user units), --edge-flow-duration (which carries the
+   speed) and --edge-flow-direction; the dashes move by exactly one period per loop, from the
+   path's start (source) to its end (target) unless reversed, so the loop is seamless. 'pulse': a
+   dot moved along the path by SVG motion, in LabeledEdge.tsx. */
 .edge-flow {
-  animation: edge-flow var(--edge-flow-duration) linear infinite;
+  animation: edge-flow var(--edge-flow-duration) linear infinite var(--edge-flow-direction, normal);
 }
 
 @keyframes edge-flow {
@@ -99,8 +100,9 @@
   }
 }
 
-/* Nothing moves for people who asked their system for less motion, or in the compare window,
-   which is a still review of two versions. The line stays dashed or plain; a pulse is hidden. */
+/* Nothing moves for people who asked their system for less motion, with "Animate edges" off in
+   Preferences (Canvas.tsx puts .edges-still on the canvas), or in the compare window, which is a
+   still review of two versions. The line stays dashed or plain; a pulse is hidden. */
 @media (prefers-reduced-motion: reduce) {
   .edge-flow {
     animation: none;
@@ -110,11 +112,13 @@
   }
 }
 
-.compare-canvas .edge-flow {
+.compare-canvas .edge-flow,
+.edges-still .edge-flow {
   animation: none;
 }
 
-.compare-canvas .edge-pulse {
+.compare-canvas .edge-pulse,
+.edges-still .edge-pulse {
   display: none;
 }
 

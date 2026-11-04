@@ -22,9 +22,11 @@ import { useDiagramContext } from '../canvas/useDiagramContext'
 import { HIGHLIGHT_BORDER_WIDTH } from '@shared/tagging/highlights'
 import { EDGE_STYLE_DEFAULTS } from '@shared/styling/styleDefaults'
 import {
-  FLOW_MS_PER_UNIT,
   flowDash,
+  flowDurationMs,
   knownAnimation,
+  knownDirection,
+  knownSpeed,
   pulseRadius,
   pulseSeconds
 } from '@shared/styling/edgeAnimation'
@@ -186,12 +188,15 @@ function LabeledEdge({
     ]
   )
 
-  // Animation (ADR 0141) runs from the source end to the target end, so it follows the arrow of the
-  // active edge direction set. Only a 'pulse' needs the path's length, for its speed.
+  // Animation (ADR 0141) runs from the source end to the target end unless reversed, so it follows
+  // the arrow of the active edge direction set. Only a 'pulse' needs the path's length, for its
+  // speed.
   const animation = knownAnimation(edgeStyle?.animation)
+  const animationSpeed = knownSpeed(edgeStyle?.animationSpeed)
+  const animationReversed = knownDirection(edgeStyle?.animationDirection) === 'reverse'
   const pulseDuration = useMemo(
-    () => (animation === 'pulse' ? pulseSeconds(pathLengthOf(edgePath)) : 0),
-    [animation, edgePath]
+    () => (animation === 'pulse' ? pulseSeconds(pathLengthOf(edgePath), animationSpeed) : 0),
+    [animation, edgePath, animationSpeed]
   )
 
   const labelRatio = edgeStyle?.labelPosition
@@ -228,13 +233,14 @@ function LabeledEdge({
     strokeWidth: selected ? baseStrokeWidth + SELECTED_STROKE_WIDTH_DELTA : baseStrokeWidth,
     ...(edgeStyle?.lineStyle ? { strokeDasharray: DASH_ARRAY[edgeStyle.lineStyle] } : {}),
     // A flowing line is dashed, whatever its line style; the period is how far one repeat of the
-    // pattern is, which the CSS animation (edges.css) moves the dashes by per loop, and how long a
-    // loop takes.
+    // pattern is, which the CSS animation (edges.css) moves the dashes by per loop, how long a loop
+    // takes, and which way it runs.
     ...(animation === 'flow'
       ? ({
           strokeDasharray: flowDash(edgeStyle?.lineStyle).dasharray,
           '--edge-flow-period': flowDash(edgeStyle?.lineStyle).period,
-          '--edge-flow-duration': `${flowDash(edgeStyle?.lineStyle).period * FLOW_MS_PER_UNIT}ms`
+          '--edge-flow-duration': `${flowDurationMs(flowDash(edgeStyle?.lineStyle).period, animationSpeed)}ms`,
+          '--edge-flow-direction': animationReversed ? 'reverse' : 'normal'
         } as CSSProperties)
       : {}),
     // A single matching highlight overrides the stroke color, same
@@ -407,7 +413,15 @@ function LabeledEdge({
             pointerEvents: 'none'
           }}
         >
-          <animateMotion dur={`${pulseDuration}s`} repeatCount="indefinite" path={edgePath} />
+          {/* keyPoints only count with calcMode linear; reverse runs the path from 1 back to 0. */}
+          <animateMotion
+            dur={`${pulseDuration}s`}
+            repeatCount="indefinite"
+            path={edgePath}
+            {...(animationReversed
+              ? { calcMode: 'linear', keyPoints: '1;0', keyTimes: '0;1' }
+              : {})}
+          />
         </circle>
       )}
       {/* Invisible hover surface — see HOVER_HIT_WIDTH. */}

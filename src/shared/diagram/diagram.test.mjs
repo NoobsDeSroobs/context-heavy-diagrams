@@ -104,9 +104,18 @@ test('a node without a note gets neither key', () => {
 test('an edge animation survives a save and a load, and no animation writes no key', () => {
   const edge = (id, style) => ({ id, source: 'a', target: 'b', style })
   const file = parseDiagram(
-    minimal({ edges: [edge('e1', { animation: 'flow' }), edge('e2', { stroke: '#f00' })] })
+    minimal({
+      edges: [
+        edge('e1', { animation: 'pulse', animationSpeed: 2, animationDirection: 'reverse' }),
+        edge('e2', { stroke: '#f00' })
+      ]
+    })
   )
   const out = JSON.parse(serializeDiagram(file))
-  assert.equal(out.edges[0].style.animation, 'flow')
+  assert.deepEqual(out.edges[0].style, {
+    animation: 'pulse',
+    animationSpeed: 2,
+    animationDirection: 'reverse'
+  })
   assert.equal('animation' in out.edges[1].style, false)
 })

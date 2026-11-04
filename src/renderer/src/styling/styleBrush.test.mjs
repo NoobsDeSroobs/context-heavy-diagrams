@@ -100,13 +100,27 @@ test('edges: look is copied, label position and routing stay the target’s', ()
 })
 
 test('edges: the animation is copied, and a source with none clears the target’s', () => {
-  const animated = captureEdgeBrush({ data: { style: { stroke: '#f00', animation: 'flow' } } })
+  const animated = captureEdgeBrush({
+    data: {
+      style: { stroke: '#f00', animation: 'flow', animationSpeed: 2, animationDirection: 'reverse' }
+    }
+  })
   assert.equal(animated.style.animation, 'flow')
-  const target = { style: { stroke: '#0f0', animation: 'pulse' } }
-  assert.equal(applyBrushToEdgeData(animated, target).style.animation, 'flow')
+  const target = {
+    style: { stroke: '#0f0', animation: 'pulse', animationSpeed: 0.5 }
+  }
+  const painted = applyBrushToEdgeData(animated, target).style
+  assert.deepEqual(
+    [painted.animation, painted.animationSpeed, painted.animationDirection],
+    ['flow', 2, 'reverse']
+  )
 
+  // a source with no animation takes the target's animation, speed and direction away
   const still = captureEdgeBrush({ data: { style: { stroke: '#f00' } } })
-  assert.equal('animation' in applyBrushToEdgeData(still, target).style, false)
+  const cleared = applyBrushToEdgeData(still, target).style
+  for (const key of ['animation', 'animationSpeed', 'animationDirection']) {
+    assert.equal(key in cleared, false, key)
+  }
   // a target that had none gets the source's
   assert.equal(applyBrushToEdgeData(animated, { style: {} }).style.animation, 'flow')
 })

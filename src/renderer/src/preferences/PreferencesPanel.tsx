@@ -213,6 +213,14 @@ export default function PreferencesPanel({
           }
           pushSnapshot={() => {}}
         />
+        <FieldRow label="Animate edges">
+          <input
+            type="checkbox"
+            checked={preferences.animateEdges}
+            onChange={(e) => onChange({ animateEdges: e.target.checked })}
+            title="Let edges set to Flow or Pulse move. Off draws them still, which is easier on the eyes and on a large diagram; the diagram itself is not changed"
+          />
+        </FieldRow>
         <SelectField
           label="Default font"
           value={preferences.defaultFontFamily ?? ''}

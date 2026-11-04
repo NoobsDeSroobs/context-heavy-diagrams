@@ -3,6 +3,7 @@ import type { EdgeStyle } from '@shared/diagram'
 import { useDiagramContext } from '../canvas/useDiagramContext'
 import { themeAdaptiveColor } from '../styling/themeAdaptiveColor'
 import { EDGE_STYLE_DEFAULTS, displayColor } from '@shared/styling/styleDefaults'
+import { MAX_ANIMATION_SPEED, MIN_ANIMATION_SPEED, knownSpeed } from '@shared/styling/edgeAnimation'
 import { CollapsibleSection, ColorField, NumberField, SliderField, SelectField } from '../ui/fields'
 import { computeFieldValue } from './fieldValue'
 import { MARKER_OPTIONS } from '../edges/edgeStyleOptions'
@@ -34,6 +35,15 @@ const ANIMATION_OPTIONS: {
   { value: '', label: 'None' },
   { value: 'flow', label: 'Flow (dashes move along the line)' },
   { value: 'pulse', label: 'Pulse (a dot moves along the line)' }
+]
+
+// '' is forward, the field absent in the file.
+const ANIMATION_DIRECTION_OPTIONS: {
+  value: Exclude<EdgeStyle['animationDirection'], undefined> | ''
+  label: string
+}[] = [
+  { value: '', label: 'Forward (source to target)' },
+  { value: 'reverse', label: 'Reverse (target to source)' }
 ]
 
 export function EdgeFields({
@@ -68,6 +78,10 @@ export function EdgeFields({
   const lineStyle = computeFieldValue(edges, (e) => edgeStyleOf(e).lineStyle ?? D.lineStyle)
   const routingStyle = computeFieldValue(edges, (e) => edgeStyleOf(e).routingStyle)
   const animation = computeFieldValue(edges, (e) => edgeStyleOf(e).animation)
+  const animationSpeed = computeFieldValue(edges, (e) => edgeStyleOf(e).animationSpeed ?? 1)
+  const animationDirection = computeFieldValue(edges, (e) => edgeStyleOf(e).animationDirection)
+  // Speed and direction mean something only while an edge is animated.
+  const animated = animation.mixed || animation.value !== undefined
   const fontSize = computeFieldValue(edges, (e) => edgeStyleOf(e).fontSize ?? D.fontSize)
   const fontColor = computeFieldValue(edges, (e) =>
     displayColor(edgeStyleOf(e).fontColor, D.fontColor, theme, themeAdaptiveColor)
@@ -144,9 +158,43 @@ export function EdgeFields({
           value={animation.value ?? ''}
           mixed={animation.mixed}
           options={ANIMATION_OPTIONS}
-          onChange={(v) => updateStyle({ animation: v === '' ? undefined : v })}
+          // None also drops the speed and direction, so no stale values are left in the file.
+          onChange={(v) =>
+            updateStyle(
+              v === ''
+                ? { animation: undefined, animationSpeed: undefined, animationDirection: undefined }
+                : { animation: v }
+            )
+          }
           pushSnapshot={pushSnapshot}
         />
+        {animated && (
+          <>
+            <NumberField
+              label="Speed"
+              value={animationSpeed.value}
+              mixed={animationSpeed.mixed}
+              min={MIN_ANIMATION_SPEED}
+              max={MAX_ANIMATION_SPEED}
+              step={0.25}
+              onChange={(v) =>
+                updateStyle({
+                  animationSpeed: v === undefined || knownSpeed(v) === 1 ? undefined : knownSpeed(v)
+                })
+              }
+              onSessionStart={beginContinuousEdit}
+              onSessionEnd={endContinuousEdit}
+            />
+            <SelectField
+              label="Direction"
+              value={animationDirection.value ?? ''}
+              mixed={animationDirection.mixed}
+              options={ANIMATION_DIRECTION_OPTIONS}
+              onChange={(v) => updateStyle({ animationDirection: v === '' ? undefined : v })}
+              pushSnapshot={pushSnapshot}
+            />
+          </>
+        )}
       </CollapsibleSection>
       <CollapsibleSection title="End">
         <SelectField

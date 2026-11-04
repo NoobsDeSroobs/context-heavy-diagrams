@@ -167,6 +167,9 @@ export interface AppPreferences {
   // Default on; a future installer can seed it from its "enable AI features?"
   // question.
   aiFeaturesEnabled: boolean
+  // Whether edges set to Flow or Pulse move (ADR 0141). A viewing choice only: off draws them
+  // still, and the diagram is not changed. Applies live to every open diagram.
+  animateEdges: boolean
 }
 
 export const DEFAULT_PREFERENCES: AppPreferences = {
@@ -189,7 +192,8 @@ export const DEFAULT_PREFERENCES: AppPreferences = {
   maxZoom: 2,
   isolateOpacity: 0.5,
   recentDiagramsLimit: 10,
-  aiFeaturesEnabled: true
+  aiFeaturesEnabled: true,
+  animateEdges: true
 }
 
 // Standard desktop convention; also a floor for the user-facing limit input

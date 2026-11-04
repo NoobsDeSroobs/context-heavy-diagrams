@@ -14,6 +14,9 @@ Let an edge be animated (movement along the line, from the source end to the tar
 - [x] Respect the system's reduced-motion setting; the compare window shows the edge still
 - [x] The copy-style brush copies the animation, and painting from an edge with none clears the target's (tests)
 - [x] Round trip through save and load (test); the helper for the dash, timing and dot size (tests)
+- [x] Controls: `animationSpeed` (a multiplier, 0.1 to 10) and `animationDirection` (forward or reverse) per edge, shown in the panel only while an edge is animated, copied by the brush; setting None removes both
+- [x] One global switch: the **Animate edges** preference (on by default) draws every animated edge still; a class on the canvas, so no edge re-renders
+- [ ] Not done, to decide: a View-menu toggle or shortcut for the switch, animating only the selected or hovered edge, a per-pulse count or size, speed in the legend
 - [ ] Look at it in the app (see Notes): speed, the dot's size and colour, a selected edge, step and curved routing, a dashed and a dotted line, switching the direction set, light and dark theme
 - [ ] Measure a diagram with many animated edges
 

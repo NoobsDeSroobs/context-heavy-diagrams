@@ -206,6 +206,7 @@ export function NumberField({
   mixed,
   min,
   max,
+  step,
   onChange,
   onSessionStart,
   onSessionEnd
@@ -215,6 +216,9 @@ export function NumberField({
   mixed: boolean
   min?: number
   max?: number
+  // The arrow keys' and spinner's step; the browser's own default is 1, which suits a size or a
+  // width and not a field that is a fraction or a multiplier.
+  step?: number
   onChange: (value: number | undefined) => void
   onSessionStart: () => void
   onSessionEnd: () => void
@@ -231,6 +235,7 @@ export function NumberField({
         placeholder={mixed ? 'Mixed' : undefined}
         min={min}
         max={max}
+        step={step}
         value={draft}
         onFocus={() => {
           onDraftFocus()
