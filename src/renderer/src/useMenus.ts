@@ -12,7 +12,10 @@ import type { AppPreferences } from './preferences/preferences'
 // they run. Every item reuses an existing handler unchanged — the menus are a way to reach
 // actions, not a set of actions (ADR 0039).
 export interface MenuInputs {
-  preferences: Pick<AppPreferences, 'recentDiagrams' | 'recentDiagramsLimit' | 'aiFeaturesEnabled'>
+  preferences: Pick<
+    AppPreferences,
+    'recentDiagrams' | 'recentDiagramsLimit' | 'aiFeaturesEnabled' | 'animateEdges'
+  >
   currentPath: string | null
   isDiagramPersona: boolean
   nodes: Node[]
@@ -51,6 +54,7 @@ export interface MenuInputs {
   toggleLayerPanel: () => void
   toggleReferencesPanel: () => void
   toggleStylePalettePanel: () => void
+  toggleEdgeAnimation: () => void
   toggleDiagramSettingsPanel: () => void
   togglePreferencesPanel: () => void
   setCommandPaletteOpen: (open: boolean) => void
@@ -111,6 +115,7 @@ export function useMenus(inputs: MenuInputs): {
     toggleLayerPanel,
     toggleReferencesPanel,
     toggleStylePalettePanel,
+    toggleEdgeAnimation,
     toggleDiagramSettingsPanel,
     togglePreferencesPanel,
     setCommandPaletteOpen,
@@ -239,6 +244,15 @@ export function useMenus(inputs: MenuInputs): {
     onSelect: () => setCommandPaletteOpen(true)
   }
 
+  const animateEdgesItem: MenuBarItem = {
+    label: 'Animate edges',
+    checked: preferences.animateEdges,
+    accelerator: acceleratorFor('view.toggleEdgeAnimation'),
+    title:
+      'Turn the movement of animated edges on or off. Off, hold Ctrl (Cmd) over an edge to see it move',
+    onSelect: toggleEdgeAnimation
+  }
+
   const viewMenu: MenuBarMenu = {
     label: 'View',
     items: isDiagramPersona
@@ -274,10 +288,11 @@ export function useMenus(inputs: MenuInputs): {
             onSelect: toggleReferencesPanel
           },
           { label: 'Style Palette', onSelect: toggleStylePalettePanel },
+          animateEdgesItem,
           { label: 'Diagram settings', onSelect: toggleDiagramSettingsPanel },
           preferencesItem
         ]
-      : [commandPaletteItem, preferencesItem]
+      : [commandPaletteItem, animateEdgesItem, preferencesItem]
   }
 
   const helpMenu: MenuBarMenu = {

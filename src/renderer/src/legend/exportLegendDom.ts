@@ -2,15 +2,7 @@ import type { IconRef } from '@shared/diagram'
 import { loadBuiltinIconSvg } from '../icons/builtinIcons'
 import { markerUrl } from '../edges/markerIds'
 import type { ExportLegendItem } from '@shared/legend/legendItems'
-
-// Same three dash patterns as LabeledEdge.tsx/LegendPanel.tsx's own
-// DASH_ARRAY — small independent copy, matching this codebase's existing
-// precedent for this exact one-liner.
-const DASH_ARRAY: Record<string, string | undefined> = {
-  solid: undefined,
-  dashed: '8 6',
-  dotted: '2 4'
-}
+import { dasharrayOf, dashPattern } from '@shared/styling/edgeDash'
 
 type ResolvedIcon = { type: 'svg'; markup: string } | { type: 'img'; dataUrl: string }
 
@@ -124,7 +116,7 @@ function buildSwatch(item: ExportLegendItem, iconMarkup: Map<string, ResolvedIco
   line.setAttribute('stroke', swatch.color)
   line.setAttribute('stroke-width', '2')
   line.setAttribute('stroke-linecap', 'round')
-  const dash = swatch.lineStyle ? DASH_ARRAY[swatch.lineStyle] : undefined
+  const dash = dasharrayOf(dashPattern(swatch))
   if (dash) line.setAttribute('stroke-dasharray', dash)
   const startMarker = markerUrl(swatch.startMarker)
   const endMarker = markerUrl(swatch.endMarker)

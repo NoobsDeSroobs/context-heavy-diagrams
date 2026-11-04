@@ -6,6 +6,7 @@ import {
   NODE_STYLE_DEFAULTS,
   type StyledNodeType
 } from '../styling/styleDefaults.ts'
+import { dasharrayOf, dashPattern } from '../styling/edgeDash.ts'
 import type { Theme } from '../styling/theme.ts'
 import { paintColor, plainColor } from './color.ts'
 import type { FontSpec } from './textLayout.ts'
@@ -144,7 +145,7 @@ export function resolveEdgeLook(
     strokeWidth: highlight
       ? HIGHLIGHT_BORDER_WIDTH
       : (style?.strokeWidth ?? EDGE_STYLE_DEFAULTS.strokeWidth),
-    dasharray: style?.lineStyle ? DASH_ARRAY[style.lineStyle] : undefined,
+    dasharray: dasharrayOf(dashPattern(style ?? {})),
     startMarker: style?.startMarker ?? 'none',
     // An edge with no style of its own ends in the default arrow (the canvas's defaultEdgeOptions).
     endMarker: style?.endMarker ?? EDGE_STYLE_DEFAULTS.endMarker

@@ -765,11 +765,15 @@ Fixed by the paste rework described under "Pasting a copied child-of-a-container
 
 ## A new edge showed no arrowhead until the end marker was changed and changed back
 
-**Status:** Open, not reproduced (reported 2026-10-22)
+**Status:** Solved (reported 2026-10-22, came back 2026-11-04)
 
 **Symptom:** two entities and a new edge between them: the Properties panel said the end marker was a closed arrow, but the edge drew as a plain line. Switching it to the open arrow and back made the head appear.
 
-**Notes:** it happened in a long-running dev session after hot reloads and did not recur after a restart. A fresh start draws the head of a new edge correctly (checked in the running app over the DevTools protocol). The marker `<defs>` are one global element ([edgeMarkers.tsx](../src/renderer/src/edges/edgeMarkers.tsx)); the likely cause is an edge created while those defs were being replaced by a hot reload. If it appears in a fresh or packaged session, this entry needs a real investigation.
+**Cause:** the default end marker, which an edge uses when its own style names none, was given to React Flow as `url(#chd-marker-arrow-closed)`. React Flow wraps whatever string it is given in `url('#…')` before handing it to the edge, so the edge received `url('#url(#chd-marker-arrow-closed)')`, which names no element, and drew no head. Setting the marker in the panel writes an explicit `style.endMarker`, which the edge draws itself with the correct reference, so that "fixed" it. The panel was right: it shows the default (a closed arrow) when nothing is stored. A comment claimed React Flow passes a string through untouched; it does for its own marker definitions, not for this reference.
+
+**Fix:** the default is the bare marker id (`DEFAULT_EDGE_MARKER_END` in [markerIds.ts](../src/renderer/src/edges/markerIds.ts)), so React Flow's wrapping gives the right reference. A test pins the shape.
+
+**Notes:** the earlier guess (an edge created while the marker defs were replaced by a hot reload) was wrong, and the "fresh start draws it correctly" check had probably used an edge with an explicit marker. It covers any edge with no stored `endMarker`: a new edge drawn with no default style set, a hand-written or assistant-written edge with no `style`, and an edge painted from one that had none.
 
 ---
 

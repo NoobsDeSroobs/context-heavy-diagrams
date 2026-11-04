@@ -65,6 +65,7 @@ import { nodeTypes, edgeTypes, DEFAULT_EDGE_OPTIONS } from './flowTypes'
 import DiagramSettingsPanel from '../diagram-settings/DiagramSettingsPanel'
 import { effectiveGravityPresets } from '../nodes/lineGravityPresets'
 import EdgeMarkerDefs from '../edges/edgeMarkers'
+import { useModifierHeldClass } from '../edges/useModifierHeldClass'
 import DiagramContext, { type DiagramContextValue } from './DiagramContext'
 import ContextMenu, { type ContextMenuItem } from '../ui/ContextMenu'
 import IconPicker from '../icons/IconPicker'
@@ -250,6 +251,12 @@ function CanvasInner(): React.JSX.Element {
   // Deliberately not reset by loadDiagramIntoCanvas below; only the panel's
   // open/closed UI state is.
   const { preferences, updatePreferences } = usePreferences()
+  // View -> Animate edges and its shortcut (ADR 0141): the Animate edges preference, flipped.
+  const toggleEdgeAnimation = useCallback(
+    () => updatePreferences({ animateEdges: !preferences.animateEdges }),
+    [updatePreferences, preferences.animateEdges]
+  )
+  useModifierHeldClass()
   // What is drawn: the diagram's font, else the personal default (ADR 0130).
   const effectiveFontFamily = effectiveDiagramFont(diagramFontFamily, preferences.defaultFontFamily)
   const [contextMenu, setContextMenu] = useState<{
@@ -2622,6 +2629,7 @@ function CanvasInner(): React.JSX.Element {
       'view.commandPalette': () => setCommandPaletteOpen(true),
       // "Changes since last save" (ADR 0102).
       'view.changesSinceLastSave': toggleChangesPanel,
+      'view.toggleEdgeAnimation': toggleEdgeAnimation,
       'selection.selectAll': selectAll,
       'edit.duplicate': duplicateSelected,
       // Ctrl+C defers to a live text selection (window.getSelection()) even
@@ -2763,6 +2771,7 @@ function CanvasInner(): React.JSX.Element {
     referencesPanelOpen,
     changesPanelOpen,
     toggleChangesPanel,
+    toggleEdgeAnimation,
     referenceWindows,
     setReferenceWindows,
     iconPicker,
@@ -3076,6 +3085,7 @@ function CanvasInner(): React.JSX.Element {
     toggleLayerPanel,
     toggleReferencesPanel,
     toggleStylePalettePanel,
+    toggleEdgeAnimation,
     toggleDiagramSettingsPanel,
     togglePreferencesPanel,
     setCommandPaletteOpen,
@@ -3184,7 +3194,7 @@ function CanvasInner(): React.JSX.Element {
       {/* Outer app shell: [canvas view [diagram dock]] [utility dock], nested
           not flat — see ADR 0013. */}
       <div className="app-shell">
-        <div className="canvas-view">
+        <div className={`canvas-view${preferences.animateEdges ? '' : ' edges-still'}`}>
           <div className="toolbar">
             <MenuBar menus={menus} />
             {/* Persona selector sits after the File/Edit/View/Help menus, not

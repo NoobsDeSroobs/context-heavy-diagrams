@@ -99,6 +99,43 @@ test('edges: look is copied, label position and routing stay the target’s', ()
   assert.deepEqual(next.points, [{ x: 1, y: 2 }])
 })
 
+test('edges: the animation is copied, and a source with none clears the target’s', () => {
+  const animated = captureEdgeBrush({
+    data: {
+      style: {
+        stroke: '#f00',
+        animation: 'pulse',
+        animationSpeed: 2,
+        animationDirection: 'reverse',
+        pulseDistance: 40,
+        lineStyle: 'dotted',
+        dashLength: 3,
+        dashGap: 9
+      }
+    }
+  })
+  assert.equal(animated.style.animation, 'pulse')
+  const target = {
+    style: { stroke: '#0f0', animation: 'pulse', animationSpeed: 0.5 }
+  }
+  const painted = applyBrushToEdgeData(animated, target).style
+  assert.deepEqual(
+    [painted.animation, painted.animationSpeed, painted.animationDirection],
+    ['pulse', 2, 'reverse']
+  )
+  // the pulse distance and the dash settings are part of the look too
+  assert.deepEqual([painted.pulseDistance, painted.dashLength, painted.dashGap], [40, 3, 9])
+
+  // a source with no animation takes the target's animation, speed and direction away
+  const still = captureEdgeBrush({ data: { style: { stroke: '#f00' } } })
+  const cleared = applyBrushToEdgeData(still, target).style
+  for (const key of ['animation', 'animationSpeed', 'animationDirection', 'pulseDistance']) {
+    assert.equal(key in cleared, false, key)
+  }
+  // a target that had none gets the source's
+  assert.equal(applyBrushToEdgeData(animated, { style: {} }).style.animation, 'pulse')
+})
+
 test('an edge with no data of its own still takes the style', () => {
   const brush = captureEdgeBrush({ data: { style: { stroke: '#f00' } } })
   assert.deepEqual(applyBrushToEdgeData(brush, undefined), { style: { stroke: '#f00' } })

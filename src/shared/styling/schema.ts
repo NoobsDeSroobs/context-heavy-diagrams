@@ -59,6 +59,13 @@ export type MarkerKind =
   | 'crowsFootZeroOrOne'
   | 'crowsFootZeroOrMany'
 
+// How an edge moves, to mark something live (ADR 0141). Absent means none, the
+// only look before this field existed. 'flow': the line's dashes travel from the
+// source end towards the target end. 'pulse': a dot travels the same way along it.
+export type EdgeAnimation = 'flow' | 'pulse'
+// 'forward' runs from the source end to the target end; 'reverse' the other way. Absent means forward.
+export type EdgeAnimationDirection = 'forward' | 'reverse'
+
 export interface EdgeStyle extends FontStyle {
   stroke?: string
   strokeOpacity?: number
@@ -66,6 +73,18 @@ export interface EdgeStyle extends FontStyle {
   lineStyle?: LineStyleKind
   startMarker?: MarkerKind
   endMarker?: MarkerKind
+  animation?: EdgeAnimation
+  // Meaningful only with `animation`. A multiplier on the normal speed: 2 is twice as fast, 0.5 half
+  // as fast. Absent means 1; a stored value outside 0.1 to 10 is drawn at the nearest end of it.
+  animationSpeed?: number
+  animationDirection?: EdgeAnimationDirection
+  // 'pulse' only: the distance between pulses, in pixels, so a stream of them runs along the edge.
+  // Absent or 0 means one pulse at a time; a negative value is read as 0.
+  pulseDistance?: number
+  // The length of a dash and of the gap after it, in pixels, for a dashed, dotted or flowing line;
+  // absent means what the line style draws (ADR 0141).
+  dashLength?: number
+  dashGap?: number
   // 0-1 fraction along the rendered path, same convention as
   // ConnectionPoint's `offset` — stays meaningful if the edge's endpoints
   // move, unlike a fixed pixel offset. Absent means 0.5 (today's only

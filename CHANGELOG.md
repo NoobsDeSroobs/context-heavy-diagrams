@@ -2,17 +2,23 @@
 
 What changed for people using the tool, one entry per minor or major release. The reasons are in [docs/decisions/](docs/decisions/); the full history is in `git log`.
 
-## 0.5.0 (2026-11-03)
+## 0.5.0 (2026-11-04)
 
 ### Added
+- **An edge can be animated, to mark something live.** **Animation** in an edge's Line properties is None (the default), Flow (the dashes travel from the source end to the target end) or Pulse (a dot does), with a **Speed**, a **Direction** (forward or reverse) and, for a pulse, a **Pulse distance** that turns it into an evenly spaced stream. The copy-style brush carries all of it to other edges, and a legend line picked from an animated edge moves too. **View → Animate edges** (Ctrl+Shift+A, also in Preferences) switches every animation off; with it off, hold Ctrl (Cmd) over an edge to see it move. The system's reduced-motion setting also stops the movement. An SVG or PNG export and the compare window show it still, so say what "live" means in a tag, label or the legend as well.
+- **A dashed, dotted or flowing line can set its dash length and gap** (**Dash length** and **Dash gap** in the edge's Line properties). ([ADR 0141](docs/decisions/0141-animated-edges-are-an-edge-style-field.md))
 - **The validator reports an edge that names a connection point its element does not have.** Such an edge is not drawn; `chd validate`, the skill's script and the Claude Desktop extension now say so as an error, and warn about names the app still reads but no longer writes (node type `shape`, `data.details`, legend kind `shape`, `matrixShapeIds`/`hiddenShapeIds`). ([known issues](docs/known-issues.md))
 - **An assistant can write an architecture profile for you.** The skill now explains what to ask you, the format, and how to test the result with `chd check`. ([ADR 0131](docs/decisions/0131-conformance-profiles.md))
 - **The Claude Desktop extension names the folder it serves** in its file listing, and `get_format_spec` with `all` returns the core rules and an index of topics instead of 66 KB at once.
+
+### Fixed
+- **An edge with no stored end marker was drawn as a plain line,** although the properties panel said it had the default closed arrow. This hit a new edge drawn with no default style set, an edge written by hand or by an assistant without a `style`, and an edge painted from one that had none; changing the marker and back hid it. ([known issues](docs/known-issues.md))
 
 ### Changed
 - **A note is called a note all the way down.** The Markdown file behind an element was already **Open note** in the menus; the file, the folder and the command line now use the same word. New notes are created in a `notes` folder next to the diagram, and the AI instructions, the skill and the Claude Desktop extension write `notes`. ([ADR 0140](docs/decisions/0140-the-markdown-files-behind-an-element-are-called-notes.md))
 
 ### File format
+- **An edge's `style` may carry `animation`** (`"flow"` or `"pulse"`; absent means none), `animationSpeed` (a multiplier, absent means 1) `animationDirection` (`"reverse"`; absent means forward), `pulseDistance`, and `dashLength` and `dashGap`, and a legend entry of kind `"line"` may carry the same fields. Older files open unchanged, and an older version draws such an edge still and keeps the field on save. ([docs/file-format.md](docs/file-format.md))
 - **`data.details` is now `data.notes`.** Older files open unchanged: `details` is read as `notes` and becomes `notes` on the next save, which also moves the note files from the `details` folder into `notes` and removes the folder once it is empty. In a repository that save shows as renames. The reverse does not hold: a version before 0.5.0 ignores `notes` and drops the link to a note when it saves a file that has one, so update before opening such files in an older version. ([docs/file-format.md](docs/file-format.md))
 
 ## 0.4.0 (2026-11-03)

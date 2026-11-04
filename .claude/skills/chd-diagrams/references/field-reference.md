@@ -210,6 +210,11 @@ Every field optional; absent = current hardcoded look, same as `style` being abs
 | `strokeOpacity` | 0–100 | Line + marker opacity. Absent = 100. Independent from `fontOpacity`. |
 | `strokeWidth` | number | Line width, px. |
 | `lineStyle` | `"solid"` \| `"dashed"` \| `"dotted"` | Dash pattern. |
+| `animation` | `"flow"` \| `"pulse"` | Marks the edge as live: `"flow"` = the dashes travel from the source end to the target end (a solid line is drawn dashed), `"pulse"` = a dot travels the same way. Absent = none; omit the key for none, never write `"none"`. A look only (not drawn in an SVG export), so also say what it means in a tag, label or legend. Set it only when asked. |
+| `animationSpeed` | 0.1–10 | With `animation` only: multiplier on the normal speed (`2` = twice as fast). Absent = `1`. |
+| `animationDirection` | `"forward"` \| `"reverse"` | With `animation` only: `"reverse"` runs it target to source. Absent = forward; omit the key rather than write `"forward"`. |
+| `pulseDistance` | pixels | With `"pulse"` only: distance between pulses in a stream. Absent, `0` or negative = one pulse at a time. |
+| `dashLength` / `dashGap` | pixels, 0.5–200 | Dash and gap length for `"dashed"`, `"dotted"` or a `"flow"` animation, in place of the line style's own (dashed 8/6, dotted 2/4). Either may be given alone. |
 | `startMarker` / `endMarker` | marker kind | One of `"none"`, `"arrowOpen"`, `"arrowClosed"`, `"circle"`, `"circleFilled"`, `"diamond"`, `"diamondFilled"`, `"crowsFootOne"`, `"crowsFootMany"`, `"crowsFootOneOrMany"`, `"crowsFootZeroOrOne"`, `"crowsFootZeroOrMany"`. Shape-described, not tied to UML/ERD/BPMN semantics — don't infer meaning beyond what's drawn. |
 | `labelPosition` | 0–1 | Fraction of arc length from source (`0`) to target (`1`). Absent = `0.5`. |
 | `routingStyle` | `"straight"` \| `"step"` \| `"smoothstep"` \| `"catmullRom"` | `"straight"` = direct line. `"step"`/`"smoothstep"` = right-angled (rounded corners for the latter), optionally through `points` as orthogonal waypoints. `"catmullRom"` = smooth curve through the two endpoints plus `points`, each leaving perpendicular to its shape's side. Absent = plain bezier (the format's original/default behavior) — unrecognized values also fall back to this. |
@@ -311,6 +316,7 @@ Top-level `legend` — manually-authored entries explaining the diagram's own vi
 | `kind` | `"line"` \| `"icon"` \| `"entity"` | yes | `"line"` renders a sample line/arrow; `"icon"` renders the icon as-is; `"entity"` renders a plain colored **circle** (deliberately not a box — implying the meaning isn't limited to rectangular shapes). |
 | `label` | string | yes | Free-text explanation. |
 | `color` | CSS color | no | `"line"`/`"entity"` only — never set for `"icon"` (icons are fixed multi-color assets, not tintable; ignore if present). |
+| `animation`, `animationSpeed`, `animationDirection`, `pulseDistance`, `dashLength`, `dashGap` | as in Edge style | no | `"line"` kind only; the legend arrow moves like the edge it stands for. Not drawn in an image export. |
 | `lineStyle` | `"solid"` \| `"dashed"` \| `"dotted"` | no | `"line"` kind only. |
 | `startMarker` / `endMarker` | marker kind | no | `"line"` kind only. |
 | `icon` | IconRef | conditionally | Required for `"icon"` kind — same shape as `data.icons.*` (see [Icon reference](#icon-reference)). |

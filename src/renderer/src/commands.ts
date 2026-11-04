@@ -134,7 +134,7 @@ export const COMMANDS = [
     id: 'selection.selectAll',
     title: 'Select everything',
     category: 'Selection',
-    binding: { key: 'a', mod: true },
+    binding: { key: 'a', mod: true, shift: false },
     deferToTextField: true
   },
   {
@@ -183,6 +183,13 @@ export const COMMANDS = [
     id: 'view.changesSinceLastSave',
     title: 'Show changes since last save',
     category: 'View'
+  },
+  // Animated edges (ADR 0141). Off, an edge still moves while Mod is held over it.
+  {
+    id: 'view.toggleEdgeAnimation',
+    title: 'Turn edge animation on or off (off, hold Mod over an edge to see it move)',
+    category: 'View',
+    binding: { key: 'a', mod: true, shift: true }
   },
   { id: 'view.pan', title: 'Pan the canvas', category: 'View', keys: 'Drag empty canvas' },
   { id: 'view.zoom', title: 'Zoom the canvas', category: 'View', keys: 'Mouse wheel' },

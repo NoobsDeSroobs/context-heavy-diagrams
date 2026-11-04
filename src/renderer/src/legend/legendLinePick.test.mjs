@@ -43,3 +43,32 @@ test('width and opacity are not part of a legend entry', () => {
   )
   assert.deepEqual(Object.keys(look).sort(), ['endMarker', 'lineStyle', 'startMarker'])
 })
+
+test('an edge’s animation and dash settings are copied, and an edge without them adds none', () => {
+  const motion = {
+    animation: 'pulse',
+    animationSpeed: 2,
+    animationDirection: 'reverse',
+    pulseDistance: 40,
+    dashLength: 3,
+    dashGap: 9
+  }
+  const look = legendLineFromEdgeStyle(
+    { stroke: '#f00', lineStyle: 'dotted', ...motion },
+    'dark',
+    flip,
+    defaults
+  )
+  assert.deepEqual(
+    { ...look },
+    {
+      color: '#f00@dark',
+      lineStyle: 'dotted',
+      startMarker: 'none',
+      endMarker: 'arrowClosed',
+      ...motion
+    }
+  )
+  const still = legendLineFromEdgeStyle({ stroke: '#f00' }, 'dark', flip, defaults)
+  for (const key of Object.keys(motion)) assert.equal(key in still, false, key)
+})

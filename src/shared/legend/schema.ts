@@ -1,5 +1,6 @@
 import type { IconRef } from '../icons/schema.ts'
 import type { LineStyleKind, MarkerKind } from '../styling/schema.ts'
+import type { LineMotion } from '../styling/edgeAnimation.ts'
 
 // Legend catalog — see ADR 0033. Each entry explains one visual
 // convention the diagram author deliberately used, in the author's own
@@ -9,7 +10,9 @@ import type { LineStyleKind, MarkerKind } from '../styling/schema.ts'
 // carries no color at all (see ADR 0033 for why a
 // background chip was also rejected — same ambiguity as a colored box).
 export type LegendEntryKind = 'line' | 'icon' | 'entity'
-export interface LegendEntry {
+// A 'line' entry also carries an edge's animation, speed, direction, pulse distance and dash length
+// and gap (ADR 0141), so the legend arrow moves like the edge it stands for.
+export interface LegendEntry extends LineMotion {
   id: string
   kind: LegendEntryKind
   label: string

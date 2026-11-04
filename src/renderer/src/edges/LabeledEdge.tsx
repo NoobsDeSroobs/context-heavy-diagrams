@@ -21,19 +21,20 @@ import HighlightChips from '../tagging/HighlightChips'
 import { useDiagramContext } from '../canvas/useDiagramContext'
 import { HIGHLIGHT_BORDER_WIDTH } from '@shared/tagging/highlights'
 import { EDGE_STYLE_DEFAULTS } from '@shared/styling/styleDefaults'
+import {
+  flowLoop,
+  knownAnimation,
+  knownDirection,
+  knownPulseDistance,
+  knownSpeed,
+  pulseLoop,
+  pulseRadius
+} from '@shared/styling/edgeAnimation'
+import { dasharrayOf, dashPattern } from '@shared/styling/edgeDash'
 import { isolateStyle } from '../search/search'
 import { withOpacity } from '../styling/colorOpacity'
 import { themeAdaptiveColor } from '../styling/themeAdaptiveColor'
 import { markerUrl } from './markerIds'
-
-// solid has no dasharray at all (undefined, not '0'), matching a plain
-// BaseEdge — the other two are chosen to look distinct at typical zoom
-// levels without being so fine they alias into a blur when zoomed out.
-const DASH_ARRAY: Record<Exclude<EdgeStyle['lineStyle'], undefined>, string | undefined> = {
-  solid: undefined,
-  dashed: '8 6',
-  dotted: '2 4'
-}
 
 // The default stroke width and colour (a little thicker than React Flow's stock
 // 1px, and a concrete colour so a PNG export has something to copy) are data in
@@ -72,6 +73,12 @@ function pointAtRatio(pathD: string, ratio: number): { x: number; y: number } {
   const length = path.getTotalLength()
   const point = path.getPointAtLength(length * ratio)
   return { x: point.x, y: point.y }
+}
+
+function pathLengthOf(pathD: string): number {
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+  path.setAttribute('d', pathD)
+  return path.getTotalLength()
 }
 
 // One shared empty list, so an edge with no bend points has a stable `bendPoints`
@@ -173,6 +180,34 @@ function LabeledEdge({
     ]
   )
 
+  // Animation (ADR 0141) runs from the source end to the target end unless reversed, so it follows
+  // the arrow of the active edge direction set. Only a 'pulse' with a single dot needs the path's
+  // length, for its speed.
+  const animation = knownAnimation(edgeStyle?.animation)
+  const animationSpeed = knownSpeed(edgeStyle?.animationSpeed)
+  const animationReversed = knownDirection(edgeStyle?.animationDirection) === 'reverse'
+  const pulseDots = pulseRadius(
+    highlightMatches.length === 1
+      ? HIGHLIGHT_BORDER_WIDTH
+      : (edgeStyle?.strokeWidth ?? DEFAULT_STROKE_WIDTH)
+  )
+  const storedPulseDistance = edgeStyle?.pulseDistance
+  const pulse = useMemo(
+    () =>
+      animation === 'pulse'
+        ? pulseLoop(
+            pathLengthOf(edgePath),
+            knownPulseDistance(storedPulseDistance, pulseDots),
+            pulseDots,
+            animationSpeed
+          )
+        : null,
+    [animation, edgePath, storedPulseDistance, pulseDots, animationSpeed]
+  )
+  const linePattern = dashPattern(edgeStyle ?? {})
+  const flowPattern = animation === 'flow' ? dashPattern(edgeStyle ?? {}, true) : undefined
+  const flow = flowPattern ? flowLoop(flowPattern, animationSpeed) : null
+
   const labelRatio = edgeStyle?.labelPosition
   const { x: labelX, y: labelY } = useMemo(
     () => pointAtRatio(edgePath, labelRatio ?? 0.5),
@@ -205,7 +240,20 @@ function LabeledEdge({
       edgeStyle?.strokeOpacity
     ),
     strokeWidth: selected ? baseStrokeWidth + SELECTED_STROKE_WIDTH_DELTA : baseStrokeWidth,
-    ...(edgeStyle?.lineStyle ? { strokeDasharray: DASH_ARRAY[edgeStyle.lineStyle] } : {}),
+    // The dash pattern of the line style, with the stored length and gap on top; a solid line has
+    // none. A flowing line is dashed whatever its line style, and the period is how far one repeat
+    // of the pattern is, which the CSS animation (edges.css) moves the dashes by per loop, with how
+    // long a loop takes and which way it runs.
+    ...(flowPattern
+      ? ({
+          strokeDasharray: dasharrayOf(flowPattern),
+          '--edge-flow-period': flow!.period,
+          '--edge-flow-duration': `${flow!.durationMs}ms`,
+          '--edge-flow-direction': animationReversed ? 'reverse' : 'normal'
+        } as CSSProperties)
+      : linePattern
+        ? { strokeDasharray: dasharrayOf(linePattern) }
+        : {}),
     // A single matching highlight overrides the stroke color, same
     // treatment as EntityNode/ContainerNode's border override — see
     // ADR 0025. Width is handled by baseStrokeWidth above instead of
@@ -361,7 +409,31 @@ function LabeledEdge({
         style={computedStyle}
         markerEnd={computedMarkerEnd}
         markerStart={computedMarkerStart}
+        className={animation === 'flow' ? 'edge-flow' : undefined}
       />
+      {pulse && (
+        // The pulses: zero-length dashes with round caps along a copy of the path, in the line's
+        // own colour, moved by the same dash animation as a flow (edges.css), which also hides
+        // them for reduced motion and in the compare window.
+        <path
+          d={edgePath}
+          className="edge-pulse"
+          fill="none"
+          strokeLinecap="round"
+          style={
+            {
+              stroke: computedStyle.stroke,
+              strokeWidth: pulseDots * 2,
+              strokeDasharray: pulse.dasharray,
+              opacity: computedStyle.opacity,
+              pointerEvents: 'none',
+              '--edge-flow-period': pulse.period,
+              '--edge-flow-duration': `${pulse.durationMs}ms`,
+              '--edge-flow-direction': animationReversed ? 'reverse' : 'normal'
+            } as CSSProperties
+          }
+        />
+      )}
       {/* Invisible hover surface — see HOVER_HIT_WIDTH. */}
       <path
         d={edgePath}
