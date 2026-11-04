@@ -206,7 +206,7 @@ export function focusLastUsedWindow(): void {
 // inferred from which buttons appear. Dirty adds a Save option, matching the close prompt's
 // Save/Discard/Cancel shape (discard alone would be asymmetric). "Save changes, Open Here" hands
 // off to the renderer's save flow via window:performSaveThenOpenDropped, since main can't save
-// (path-picking and detail-draft flushing live in Canvas.tsx). "Discard changes, Open Here" first
+// (path-picking and note-draft flushing live in Canvas.tsx). "Discard changes, Open Here" first
 // removes any pending recovery snapshot for the old identity, like the close prompt's Discard, so a
 // stale orphan isn't offered back by a later startup scan.
 async function openDroppedFileForWindow(

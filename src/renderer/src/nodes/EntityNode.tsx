@@ -38,14 +38,14 @@ function iconSlotKey(slot: IconSlot, icon: IconRef | undefined): string {
 // Icon slots deliberately render at the true corners with no special
 // handling to dodge NodeResizer's corner handles — same stacking order the
 // entity's own body already has under them.
-// The icon *picker* and details panel are NOT rendered here — see
+// The icon *picker* and notes panel are NOT rendered here — see
 // DiagramContext for why.
 function EntityNode({ id, data, selected }: NodeProps): React.JSX.Element {
   const {
     diagramPath,
     openContextMenu,
     openIconPicker,
-    openDetailsPanel,
+    openNotesPanel,
     openReferencesFor,
     detachFromParent,
     handleLinkClick,
@@ -111,7 +111,7 @@ function EntityNode({ id, data, selected }: NodeProps): React.JSX.Element {
         : []
       openContextMenu(event.clientX, event.clientY, [
         { label: 'Add icon', onSelect: () => openIconPicker(id, rect) },
-        { label: 'Open note', onSelect: () => openDetailsPanel(id) },
+        { label: 'Open note', onSelect: () => openNotesPanel(id) },
         { label: 'Reference images…', onSelect: () => openReferencesFor(id) },
         ...linkItems,
         ...detachItem,
@@ -127,7 +127,7 @@ function EntityNode({ id, data, selected }: NodeProps): React.JSX.Element {
       id,
       openContextMenu,
       openIconPicker,
-      openDetailsPanel,
+      openNotesPanel,
       openReferencesFor,
       detachFromParent,
       getNode,

@@ -122,7 +122,7 @@ test('a link or note path added, changed or removed is orange, and beats yellow'
   const base = diagram([
     node('a'),
     node('b', { data: { label: 'B', linkedDiagram: 'old.chd' } }),
-    node('c', { data: { label: 'C', details: 'c/notes.md', references: ['x.png'] } })
+    node('c', { data: { label: 'C', notes: 'c/notes.md', references: ['x.png'] } })
   ])
   const next = diagram([
     node('a', { data: { label: 'A', linkedDiagram: 'new.chd' } }),
@@ -134,7 +134,7 @@ test('a link or note path added, changed or removed is orange, and beats yellow'
   assert.deepEqual(lines(c, 'a', 'linked diagram'), ['linked diagram: added "new.chd"'])
   assert.deepEqual(lines(c, 'b', 'linked diagram'), ['linked diagram: "old.chd" → "other.chd"'])
   assert.equal(statusOf(c, 'c'), 'links')
-  assert.deepEqual(lines(c, 'c', 'details link'), ['Note file: removed (was "c/notes.md")'])
+  assert.deepEqual(lines(c, 'c', 'note link'), ['Note file: removed (was "c/notes.md")'])
   assert.deepEqual(lines(c, 'c', 'reference images'), [
     'reference image: added "y.png"',
     'reference image: removed "x.png"'
@@ -144,7 +144,7 @@ test('a link or note path added, changed or removed is orange, and beats yellow'
 test('a changed Note file the caller found turns an otherwise unchanged element orange', () => {
   const d = diagram([node('a'), node('b')])
   const c = classifyDiagrams(d, d, {
-    detailsContent: new Map([['a', { state: 'changed', preview: ['− owner: a', '+ owner: b'] }]])
+    notesContent: new Map([['a', { state: 'changed', preview: ['− owner: a', '+ owner: b'] }]])
   })
   assert.equal(statusOf(c, 'a'), 'links')
   assert.deepEqual(lines(c, 'a', 'Note file content'), [

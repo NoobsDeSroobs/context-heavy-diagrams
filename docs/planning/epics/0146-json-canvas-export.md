@@ -16,4 +16,4 @@ Obsidian Canvas is the closest tool in feel, and its format is open and small. A
 - **Direction.** Export only at first.
 
 ## Related
-[Epic 0144](0144-svg-and-command-line-export.md) (the first export to build; this is its small sibling), [epic 0052](later/0052-drawio-import-export.md).
+[Epic 0144](../completed-epics.md#0144-svg-export-and-a-command-line-export) (the first export to build; this is its small sibling), [epic 0052](later/0052-drawio-import-export.md).

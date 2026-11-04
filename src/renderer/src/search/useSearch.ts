@@ -7,7 +7,7 @@ import type { CanvasApi } from '../canvas/canvasApi'
 import {
   criteriaFromQuery,
   elementMatchesCriteria,
-  elementMatchesWithDetails,
+  elementMatchesWithNotes,
   hasSearchCriteria,
   parseSearchQuery,
   searchableFromData,
@@ -120,7 +120,7 @@ export function useSearch(
   }, [])
 
   // Every element that satisfies the criteria (ADR 0096, 0097): free text over id/label/tags and
-  // the node's details note, an exact icon, has: facets, all ANDed. A note is read from its unsaved
+  // the node's note, an exact icon, has: facets, all ANDed. A note is read from its unsaved
   // in-memory copy when one is open, else from disk. With Deep search on, a node that links to
   // another diagram also matches when anything in that linked subtree does, so the match lands on
   // the entity in this diagram and cycles like any other. Edges carry no icons, references or
@@ -135,18 +135,18 @@ export function useSearch(
             const shadow = noteShadowsRef.current[n.id]
             const searchable = searchableFromData(n.id, n.data)
             // A note that is open but never saved (a new note, or any note on an unsaved diagram)
-            // has no stored path yet, since data.details stays unset until the first save (the
+            // has no stored path yet, since data.notes stays unset until the first save (the
             // sync-on-save convention), but its shadow holds real, searchable content. Without
-            // this, elementMatchesViaDetails' `!el.details` gate would treat it as nonexistent. The
+            // this, elementMatchesViaNotes' `!el.notes` gate would treat it as nonexistent. The
             // placeholder value is never read as a path (the shadow branch wins first); it only has
             // to be truthy.
-            const details = searchable.details ?? (shadow ? '(unsaved note)' : undefined)
-            return elementMatchesWithDetails(
+            const notes = searchable.notes ?? (shadow ? '(unsaved note)' : undefined)
+            return elementMatchesWithNotes(
               criteria,
-              { ...searchable, details },
+              { ...searchable, notes },
               async (relativePath) => {
                 if (shadow) return shadow.content
-                return currentPath ? window.api.readDetails(currentPath, relativePath) : ''
+                return currentPath ? window.api.readNotes(currentPath, relativePath) : ''
               }
             )
           })

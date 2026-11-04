@@ -1,6 +1,6 @@
 # Diagram types and architecture types
 
-A reference list, written to support the idea of checking a diagram against the architecture it claims to follow ([epic 0138](planning/epics/later/0138-architecture-conformance-checks.md)). Nothing here is built or decided; it is a map of what people draw and which rules each architecture implies, so a future rule format can be tested against real cases.
+A reference list, written to support the idea of checking a diagram against the architecture it claims to follow ([epic 0138](planning/completed-epics.md#0138-architecture-conformance-checks)). Nothing here is built or decided; it is a map of what people draw and which rules each architecture implies, so a future rule format can be tested against real cases.
 
 The tool is notation-agnostic by design ([ADR 0008](decisions/0008-tool-scope-includes-ea-adjacent-diagrams.md)): it has entities, containers, text, lines, edges, tags, notes and links, and no built-in metamodel. Both lists below are about what can be drawn with those, and what could be checked about it.
 

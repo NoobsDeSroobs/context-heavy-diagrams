@@ -8,7 +8,7 @@ import {
 } from '@shared/search/linkedSearch'
 import {
   elementMatchesCriteria,
-  elementMatchesViaDetails,
+  elementMatchesViaNotes,
   searchableFromData,
   type SearchCriteria
 } from '@shared/search/search'
@@ -45,11 +45,11 @@ export function registerLinkedSearchHandlers(): void {
         matchNode: (node) =>
           elementMatchesCriteria(criteria, searchableFromData(node.id, node.data)),
         matchNodeNote: (node, path) =>
-          elementMatchesViaDetails(
+          elementMatchesViaNotes(
             criteria,
             searchableFromData(node.id, node.data),
-            // A details path resolves from the diagram it lives in; a missing
-            // file is just empty text, same as details:read.
+            // A note path resolves from the diagram it lives in; a missing
+            // file is just empty text, same as notes:read.
             (relativePath) => readFile(resolveLinkPath(path, relativePath), 'utf-8').catch(() => '')
           ),
         // On disk an edge's label/tags are top-level, not under `data`.

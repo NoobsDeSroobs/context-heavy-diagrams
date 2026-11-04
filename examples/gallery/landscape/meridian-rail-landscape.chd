@@ -1,7 +1,6 @@
 {
   "version": 1,
   "metadata": {
-    "epic": "0022 candidate #1",
     "scenario": "Meridian Rail"
   },
   "requiredTags": [
@@ -311,7 +310,7 @@
       },
       "size": {
         "width": 1200,
-        "height": 130
+        "height": 120
       },
       "zIndex": 200010,
       "style": {
@@ -322,7 +321,7 @@
         "fontColor": "#744210"
       },
       "data": {
-        "label": "Meridian Rail — full IT landscape (as-is)\n\nAn enterprise architect's survey of the whole estate, before the modernization program. ~70 services across 10 business domains (grouped spatially, by label, not by container), each tagged for GDPR data sensitivity, NIS2 regulatory scope, owning team, business domain, and lifecycle state — plus real integration edges between them. Toggle highlights (bottom-left) to overlay any tag dimension, e.g. owning team, over the integration structure below — this is the base landscape that #2 (GDPR overlay) and #3 (NIS2 overlay) are built on."
+        "label": "Meridian Rail: full IT landscape (as-is)\nThe whole estate before the modernization program: about 70 services across 10 business domains, each tagged for GDPR data sensitivity, NIS2 scope, owning team, business domain and lifecycle state, with the integration edges between them. Toggle highlights (bottom-left) to overlay any tag dimension, such as owning team, on the structure below."
       }
     },
     {
@@ -877,7 +876,7 @@
       },
       "data": {
         "label": "Customer Profile Service",
-        "details": "meridian-rail-landscape/details/customer-profile-service.md"
+        "notes": "meridian-rail-landscape/notes/customer-profile-service.md"
       }
     },
     {
@@ -2063,7 +2062,7 @@
       },
       "data": {
         "label": "Payment Gateway Integration",
-        "details": "meridian-rail-landscape/details/payment-gateway-integration.md"
+        "notes": "meridian-rail-landscape/notes/payment-gateway-integration.md"
       }
     },
     {
@@ -2240,7 +2239,7 @@
       },
       "data": {
         "label": "Fraud Detection Service",
-        "details": "meridian-rail-landscape/details/fraud-detection-service.md"
+        "notes": "meridian-rail-landscape/notes/fraud-detection-service.md"
       }
     },
     {
@@ -3516,7 +3515,7 @@
       },
       "data": {
         "label": "Identity & Access Management",
-        "details": "meridian-rail-landscape/details/identity-and-access-management.md"
+        "notes": "meridian-rail-landscape/notes/identity-and-access-management.md"
       }
     },
     {

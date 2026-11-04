@@ -18,7 +18,7 @@ Context-Heavy Diagrams is an offline desktop app. Its design promises are the pl
 - **It makes no network connections.** Every non-local request from the app's windows is blocked and a test fails if a network API appears in the source ([ADR 0113](docs/decisions/0113-enforced-offline-behaviour.md)). Anything that makes it talk to the network, or lets content reach a remote host, is in scope.
 - **A `.chd` file is untrusted input.** People will open diagrams shared by others. A file must not be able to read, write, copy or delete anything outside its own folder, run code, or take over the app window ([ADR 0115](docs/decisions/0115-paths-stored-in-diagrams-are-untrusted.md)).
 - **The renderer is sandboxed** and has only a narrow, purpose-built bridge to the main process; navigation away from the app and all permission requests are refused ([ADR 0112](docs/decisions/0112-electron-hardening-sandbox-and-navigation.md)). A way around that is in scope.
-- **Notes and linked content** (Markdown details, SVG/PNG icons and reference images, linked diagrams) are rendered from files on disk and must not execute script or load remote content.
+- **Notes and linked content** (Markdown notes, SVG/PNG icons and reference images, linked diagrams) are rendered from files on disk and must not execute script or load remote content.
 - **The AI integration** (the `chd` command-line tool, the bundled skill and the Claude Desktop extension) is built so that writes refuse to overwrite a file that changed since it was read ([ADR 0109](docs/decisions/0109-stale-edit-check-for-every-ai-write-path.md)) and stay inside the chosen folder. Escaping either is in scope.
 
 ## What is out of scope

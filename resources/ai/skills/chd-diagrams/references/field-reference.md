@@ -82,7 +82,7 @@ Complete field-by-field reference. Read the relevant section rather than the who
   "data": {
     "label": "Web App",
     "icons": { "topRight": { "source": "builtin", "id": "server" } },
-    "details": "web-app/details/Web App-1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d.md",
+    "notes": "web-app/notes/Web App-1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d.md",
     "linkedDiagram": "web-app/Database.chd"
   }
 }
@@ -103,10 +103,10 @@ Complete field-by-field reference. Read the relevant section rather than the who
 | `metadata` | object | no | Only on `"entity"`/`"container"` — never on `"text"`. See [Metadata](#metadata). |
 | `data.label` | string | yes | Display text. May be empty. |
 | `data.icons` | object | no | Only on `"entity"`/`"container"`. Up to 4 keys: `topLeft`, `topRight`, `bottomLeft`, `bottomRight` — each an [icon reference](#icon-reference). |
-| `data.details` | string | no | The element's note (the field keeps its original name): relative path (from **this diagram file's own directory**) to a Markdown notes file, shown as a side panel. This app names it `<label>-<uuid-suffix>.md` and keeps it in sync on relabel, but treat the stored value as an opaque path — never parse/reconstruct it. |
+| `data.notes` | string | no | The element's note: relative path (from **this diagram file's own directory**) to a Markdown notes file, shown as a side panel. This app names it `<label>-<uuid-suffix>.md` and keeps it in sync on relabel, but treat the stored value as an opaque path — never parse/reconstruct it. Files from older versions call this field `data.details`: read it as `data.notes`, and always write `notes`. |
 | `data.linkedDiagram` | string | no | Relative path (from **this diagram file's own directory**) to another `.chd` file — a drill-down link, resolved on demand, never eagerly. See [authoring-guide.md](authoring-guide.md) for directionality/missing-target rules. |
 | `data.points` | array of LinePoint | `"line"` only | See [Line points](#line-points). Meaningless on other types. |
-| `data.references` | array of string | no | Only on `"entity"`/`"container"`. Ordered relative paths (same convention as `data.details`) to reference images, conventionally under a sibling `assets/references/` folder. Shown only in floating viewers — **never drawn on canvas, never in image exports.** A rendering-only reader can ignore this field. |
+| `data.references` | array of string | no | Only on `"entity"`/`"container"`. Ordered relative paths (same convention as `data.notes`) to reference images, conventionally under a sibling `assets/references/` folder. Shown only in floating viewers — **never drawn on canvas, never in image exports.** A rendering-only reader can ignore this field. |
 | `data.security` | object | `"entity"` only | Sparse map keyed by threat `id` (from top-level `security.threats`) → `RiskCell` (`{probability, consequence, probabilityNote?, consequenceNote?}`). Present only on entities listed in `security.matrixEntityIds`; a missing cell = "not yet assessed." Purely analytical, doesn't affect rendering. See [Security](#security). |
 
 ### Line points

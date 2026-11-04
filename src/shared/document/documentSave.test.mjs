@@ -18,8 +18,8 @@ import {
 
 const note = (over = {}) => ({
   nodeId: 'entity-1',
-  desiredPath: 'd/details/A-1.md',
-  nodeDetailsPath: 'd/details/A-1.md',
+  desiredPath: 'd/notes/A-1.md',
+  nodeNotesPath: 'd/notes/A-1.md',
   shadow: undefined,
   ...over
 })
@@ -77,7 +77,7 @@ test('recoveredNoteShadow is dirty with no baseline to conflict-check', () => {
 })
 
 test('a snapshot round-trip keeps the baseline, so an outside edit is still detectable', () => {
-  const dirty = editNote(loadedNoteShadow('n', 'd/details/A-1.md', 'stamp-7', 'orig'), 'mine')
+  const dirty = editNote(loadedNoteShadow('n', 'd/notes/A-1.md', 'stamp-7', 'orig'), 'mine')
   const clean = loadedNoteShadow('c', 'c.md', 's', 'x')
   const baselines = dirtyBaselines({ n: dirty, c: clean })
   assert.deepEqual(Object.keys(baselines), ['n'])
@@ -85,7 +85,7 @@ test('a snapshot round-trip keeps the baseline, so an outside edit is still dete
   assert.equal(restored.content, 'mine')
   assert.equal(restored.dirty, true)
   assert.equal(restored.baselineStamp, 'stamp-7')
-  assert.equal(restored.originalPath, 'd/details/A-1.md')
+  assert.equal(restored.originalPath, 'd/notes/A-1.md')
   // and planning from it checks against the recorded stamp
   const p = planSave({
     hubDirty: false,
@@ -93,8 +93,8 @@ test('a snapshot round-trip keeps the baseline, so an outside edit is still dete
     notes: [
       {
         nodeId: 'n',
-        desiredPath: 'd/details/A-1.md',
-        nodeDetailsPath: 'd/details/A-1.md',
+        desiredPath: 'd/notes/A-1.md',
+        nodeNotesPath: 'd/notes/A-1.md',
         shadow: restored
       }
     ]
@@ -108,18 +108,18 @@ test('nothing dirty, nothing moved: no ops and the hub is not rewritten', () => 
   const p = plan([note()])
   assert.deepEqual(p.ops, [])
   assert.equal(p.writeHub, false)
-  assert.deepEqual(p.finalPaths, { 'entity-1': 'd/details/A-1.md' })
+  assert.deepEqual(p.finalPaths, { 'entity-1': 'd/notes/A-1.md' })
 })
 
 test('a dirty existing note is written in place; editing it alone does not dirty the hub', () => {
-  const shadow = editNote(loadedNoteShadow('entity-1', 'd/details/A-1.md', 's1', 'a'), 'b')
+  const shadow = editNote(loadedNoteShadow('entity-1', 'd/notes/A-1.md', 's1', 'a'), 'b')
   const p = plan([note({ shadow })])
   assert.deepEqual(p.ops, [
     {
       kind: 'write',
       nodeId: 'entity-1',
-      from: 'd/details/A-1.md',
-      to: 'd/details/A-1.md',
+      from: 'd/notes/A-1.md',
+      to: 'd/notes/A-1.md',
       content: 'b',
       expectedStamp: 's1'
     }
@@ -129,36 +129,36 @@ test('a dirty existing note is written in place; editing it alone does not dirty
 
 test('a brand-new dirty note is created and the hub is rewritten to point at it', () => {
   const shadow = editNote(newNoteShadow('entity-1'), 'first words')
-  const p = plan([note({ nodeDetailsPath: null, shadow })])
+  const p = plan([note({ nodeNotesPath: null, shadow })])
   assert.equal(p.ops.length, 1)
   assert.equal(p.ops[0].from, null)
   assert.equal(p.ops[0].expectedStamp, null)
   assert.equal(p.writeHub, true)
-  assert.deepEqual(p.finalPaths, { 'entity-1': 'd/details/A-1.md' })
+  assert.deepEqual(p.finalPaths, { 'entity-1': 'd/notes/A-1.md' })
 })
 
 test('an unedited note whose label changed is moved, and the hub is rewritten', () => {
-  const p = plan([note({ desiredPath: 'd/details/Renamed-1.md' })])
+  const p = plan([note({ desiredPath: 'd/notes/Renamed-1.md' })])
   assert.deepEqual(p.ops, [
-    { kind: 'move', nodeId: 'entity-1', from: 'd/details/A-1.md', to: 'd/details/Renamed-1.md' }
+    { kind: 'move', nodeId: 'entity-1', from: 'd/notes/A-1.md', to: 'd/notes/Renamed-1.md' }
   ])
   assert.equal(p.writeHub, true)
-  assert.equal(p.finalPaths['entity-1'], 'd/details/Renamed-1.md')
+  assert.equal(p.finalPaths['entity-1'], 'd/notes/Renamed-1.md')
 })
 
 test('a dirty note whose label changed is written to the new name; the old is its `from`', () => {
-  const shadow = editNote(loadedNoteShadow('entity-1', 'd/details/A-1.md', 's1', 'a'), 'b')
-  const p = plan([note({ desiredPath: 'd/details/Renamed-1.md', shadow })])
+  const shadow = editNote(loadedNoteShadow('entity-1', 'd/notes/A-1.md', 's1', 'a'), 'b')
+  const p = plan([note({ desiredPath: 'd/notes/Renamed-1.md', shadow })])
   assert.equal(p.ops[0].kind, 'write')
-  assert.equal(p.ops[0].from, 'd/details/A-1.md')
-  assert.equal(p.ops[0].to, 'd/details/Renamed-1.md')
+  assert.equal(p.ops[0].from, 'd/notes/A-1.md')
+  assert.equal(p.ops[0].to, 'd/notes/Renamed-1.md')
   assert.equal(p.writeHub, true)
 })
 
 test("the shadow's original path wins over the diagram's (the real file is the identity)", () => {
-  const shadow = loadedNoteShadow('entity-1', 'd/details/Actual-1.md', 's1', 'a')
-  const p = plan([note({ nodeDetailsPath: 'd/details/A-1.md', shadow })])
-  assert.equal(p.ops[0].from, 'd/details/Actual-1.md')
+  const shadow = loadedNoteShadow('entity-1', 'd/notes/Actual-1.md', 's1', 'a')
+  const p = plan([note({ nodeNotesPath: 'd/notes/A-1.md', shadow })])
+  assert.equal(p.ops[0].from, 'd/notes/Actual-1.md')
 })
 
 test('hub-only edits write the hub with no note ops', () => {
@@ -168,14 +168,14 @@ test('hub-only edits write the hub with no note ops', () => {
 })
 
 test('Save As / first save: dirty notes go to the new location unchecked; others untouched', () => {
-  const dirty = editNote(loadedNoteShadow('entity-1', 'old/details/A-1.md', 's1', 'a'), 'b')
+  const dirty = editNote(loadedNoteShadow('entity-1', 'old/notes/A-1.md', 's1', 'a'), 'b')
   const p = plan(
     [
-      note({ shadow: dirty, nodeDetailsPath: 'old/details/A-1.md' }),
+      note({ shadow: dirty, nodeNotesPath: 'old/notes/A-1.md' }),
       note({
         nodeId: 'entity-2',
-        nodeDetailsPath: 'old/details/B-2.md',
-        desiredPath: 'new/details/B-2.md'
+        nodeNotesPath: 'old/notes/B-2.md',
+        desiredPath: 'new/notes/B-2.md'
       })
     ],
     { newLocation: true, hubDirty: true }
@@ -183,12 +183,12 @@ test('Save As / first save: dirty notes go to the new location unchecked; others
   assert.equal(p.ops.length, 1)
   assert.equal(p.ops[0].from, null)
   assert.equal(p.ops[0].expectedStamp, null)
-  assert.equal(p.finalPaths['entity-2'], 'old/details/B-2.md')
+  assert.equal(p.finalPaths['entity-2'], 'old/notes/B-2.md')
 })
 
 test('many untouched notes produce no work at all', () => {
   const notes = Array.from({ length: 100 }, (_, i) =>
-    note({ nodeId: `entity-${i}`, desiredPath: `d/${i}.md`, nodeDetailsPath: `d/${i}.md` })
+    note({ nodeId: `entity-${i}`, desiredPath: `d/${i}.md`, nodeNotesPath: `d/${i}.md` })
   )
   const p = plan(notes)
   assert.equal(p.ops.length, 0)

@@ -1,4 +1,4 @@
-// A few lines showing what changed between two versions of a text (a Details note): the lines
+// A few lines showing what changed between two versions of a text (a Note): the lines
 // that differ once the shared start and end are set aside. A preview to see that something
 // changed and roughly what, not a diff; git does the real one.
 

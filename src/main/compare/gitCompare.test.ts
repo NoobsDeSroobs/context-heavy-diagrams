@@ -13,11 +13,11 @@ try {
   git = false
 }
 
-const node = (id: string, label: string, details?: string): object => ({
+const node = (id: string, label: string, notes?: string): object => ({
   id,
   type: 'entity',
   position: { x: 0, y: 0 },
-  data: { label, ...(details ? { details } : {}) }
+  data: { label, ...(notes ? { notes } : {}) }
 })
 const diagram = (...nodes: object[]): string =>
   JSON.stringify({ version: 1, nodes, edges: [] }, null, 2)
@@ -46,14 +46,14 @@ describe.skipIf(!git)('buildGitSession', () => {
     repo = mkdtempSync(join(tmpdir(), 'chd-session-'))
     folder = join(repo, 'diagrams')
     file = join(folder, 'd.chd')
-    mkdirSync(join(folder, 'd', 'details'), { recursive: true })
-    writeFileSync(join(folder, 'd', 'details', 'a.md'), '# A\nowner: team a\n')
-    writeFileSync(join(folder, 'd', 'details', 'b.md'), '# B\nunchanged\n')
+    mkdirSync(join(folder, 'd', 'notes'), { recursive: true })
+    writeFileSync(join(folder, 'd', 'notes', 'a.md'), '# A\nowner: team a\n')
+    writeFileSync(join(folder, 'd', 'notes', 'b.md'), '# B\nunchanged\n')
     writeFileSync(
       file,
       diagram(
-        node('a', 'Alpha', 'd/details/a.md'),
-        node('b', 'Beta', 'd/details/b.md'),
+        node('a', 'Alpha', 'd/notes/a.md'),
+        node('b', 'Beta', 'd/notes/b.md'),
         node('c', 'Gamma', '../outside.md')
       )
     )
@@ -62,12 +62,12 @@ describe.skipIf(!git)('buildGitSession', () => {
     run('commit', '-q', '-m', 'one')
     // After the commit: Alpha is renamed and its note edited, Beta is left alone, and Gamma's
     // note path leaves the folder (never read).
-    writeFileSync(join(folder, 'd', 'details', 'a.md'), '# A\nowner: team b\n')
+    writeFileSync(join(folder, 'd', 'notes', 'a.md'), '# A\nowner: team b\n')
     writeFileSync(
       file,
       diagram(
-        node('a', 'Alpha 2', 'd/details/a.md'),
-        node('b', 'Beta', 'd/details/b.md'),
+        node('a', 'Alpha 2', 'd/notes/a.md'),
+        node('b', 'Beta', 'd/notes/b.md'),
         node('c', 'Gamma', '../outside.md')
       )
     )
@@ -79,11 +79,11 @@ describe.skipIf(!git)('buildGitSession', () => {
     const result = await buildGitSession(file, 'HEAD')
     expect(result.ok).toBe(true)
     if (!result.ok) return
-    expect(result.session.detailsContent).toEqual({
+    expect(result.session.notesContent).toEqual({
       a: { state: 'changed', preview: ['− owner: team a', '+ owner: team b'] }
     })
     const c = classifyDiagrams(result.session.base, result.session.next, {
-      detailsContent: new Map(Object.entries(result.session.detailsContent ?? {}))
+      notesContent: new Map(Object.entries(result.session.notesContent ?? {}))
     })
     // Alpha was renamed (yellow) and its note changed (orange beats yellow).
     expect(c.nodes.get('a')?.status).toBe('links')

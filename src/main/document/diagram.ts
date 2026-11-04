@@ -96,8 +96,8 @@ export function registerDiagramHandlers(): void {
               const node = diagram.nodes.find((n) => n.id === id)
               const fallback = fallbackPaths[id]
               if (!node?.data || fallback === undefined) continue
-              if (fallback === null) delete node.data.details
-              else node.data.details = fallback
+              if (fallback === null) delete node.data.notes
+              else node.data.notes = fallback
             }
             // Record this app's version, but only if it is newer than what the file
             // already says (ADR 0118): an older app never lowers it, and the same

@@ -20,7 +20,7 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
   const { updateNodeData, getNode } = useReactFlow()
   const {
     openContextMenu,
-    openDetailsPanel,
+    openNotesPanel,
     detachFromParent,
     handleLinkClick,
     beginContinuousEdit,
@@ -68,7 +68,7 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
         ? [{ label: 'Detach from parent', onSelect: () => detachFromParent(id) }]
         : []
       openContextMenu(event.clientX, event.clientY, [
-        { label: 'Open note', onSelect: () => openDetailsPanel(id) },
+        { label: 'Open note', onSelect: () => openNotesPanel(id) },
         ...linkItems,
         ...detachItem,
         { label: 'Select all text', separatorBefore: true, onSelect: () => selectAllOfType('text') }
@@ -77,7 +77,7 @@ function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
     [
       id,
       openContextMenu,
-      openDetailsPanel,
+      openNotesPanel,
       detachFromParent,
       getNode,
       linkedPath,

@@ -1,5 +1,28 @@
 {
   "version": 1,
+  "legend": [
+    {
+      "id": "legend-1",
+      "kind": "entity",
+      "label": "Component, or the calling container (for context)",
+      "color": "#1a73e8"
+    },
+    {
+      "id": "legend-2",
+      "kind": "entity",
+      "label": "Person (who the service sends to)",
+      "color": "#6b46c1"
+    },
+    {
+      "id": "legend-3",
+      "kind": "line",
+      "label": "A → B: A uses B (the arrow points at what is used)",
+      "color": "#4a5568",
+      "lineStyle": "solid",
+      "startMarker": "none",
+      "endMarker": "arrowOpen"
+    }
+  ],
   "nodes": [
     {
       "id": "blurb",
@@ -10,7 +33,7 @@
       },
       "size": {
         "width": 1100,
-        "height": 180
+        "height": 90
       },
       "style": {
         "fill": "#fefcbf",
@@ -20,7 +43,7 @@
         "fontFamily": "sans-serif"
       },
       "data": {
-        "label": "EXAMPLE — C4 Component: Notification Service\n\nIllustrates: the third and final level of the C4 drill-down (Context → Container → Component) — this container's own internal structure, one level deeper than the Container diagram.\nPersona: the same technical/solution architect on the modernization task force.\n\nColor key: blue = internal components (matches this container's own color at Container level). Purple = the human actor this service ultimately sends to. Also-blue box on the left = the container that calls this one, shown for context only.\n\nPart of the Meridian Rail example gallery — epic 0022 (docs/planning/epics/0022-example-diagram-gallery.md)."
+        "label": "C4 level 3: Components of the Notification Service\nThe internal structure of the service that sends notifications to passengers. The Booking API that calls it is shown for context only.\nShow the legend for what the colours and arrows mean."
       }
     },
     {
@@ -45,7 +68,7 @@
       },
       "data": {
         "label": "Booking API\n[backend service]",
-        "details": "details/Booking API-api.md"
+        "notes": "notes/Booking API-api.md"
       }
     },
     {
@@ -70,7 +93,7 @@
       },
       "data": {
         "label": "Notification Service — component boundary",
-        "details": "details/Notification Service-service.md"
+        "notes": "notes/Notification Service-service.md"
       }
     },
     {
@@ -95,7 +118,7 @@
       },
       "data": {
         "label": "Trigger Listener",
-        "details": "notification-service-component/details/trigger-listener.md"
+        "notes": "notification-service-component/notes/trigger-listener.md"
       }
     },
     {
@@ -120,7 +143,7 @@
       },
       "data": {
         "label": "Template Renderer",
-        "details": "notification-service-component/details/template-renderer.md"
+        "notes": "notification-service-component/notes/template-renderer.md"
       }
     },
     {
@@ -145,7 +168,7 @@
       },
       "data": {
         "label": "Delivery Dispatcher",
-        "details": "notification-service-component/details/delivery-dispatcher.md"
+        "notes": "notification-service-component/notes/delivery-dispatcher.md"
       }
     },
     {
@@ -169,7 +192,7 @@
       },
       "data": {
         "label": "Passenger",
-        "details": "../details/actor-passenger.md"
+        "notes": "notes/Passenger-passenger.md"
       }
     }
   ],

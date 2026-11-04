@@ -97,7 +97,7 @@ export function toDiagramFile(
       data: {
         label: String(n.data?.label ?? ''),
         icons: n.data?.icons as Partial<Record<IconSlot, IconRef>> | undefined,
-        details: typeof n.data?.details === 'string' ? (n.data.details as string) : undefined,
+        notes: typeof n.data?.notes === 'string' ? (n.data.notes as string) : undefined,
         linkedDiagram:
           typeof n.data?.linkedDiagram === 'string' ? (n.data.linkedDiagram as string) : undefined,
         points: Array.isArray(n.data?.points) ? (n.data.points as LinePoint[]) : undefined,
@@ -168,7 +168,7 @@ export function fromDiagramFile(diagram: DiagramFile): {
           ? { connectionPoints: n.connectionPoints }
           : {}),
         ...(n.data.icons ? { icons: n.data.icons } : {}),
-        ...(n.data.details ? { details: n.data.details } : {}),
+        ...(n.data.notes ? { notes: n.data.notes } : {}),
         ...(n.data.linkedDiagram ? { linkedDiagram: n.data.linkedDiagram } : {}),
         ...(n.data.points && n.data.points.length > 0 ? { points: n.data.points } : {}),
         ...(Array.isArray(n.data.references) && n.data.references.length > 0

@@ -1,7 +1,7 @@
 // Pure model behind saving a diagram and the files it owns as one operation
 // (docs/decisions/0092-unified-multi-file-save-and-change-detection.md).
 //
-// The diagram file is the "hub"; each detail note the user has touched is a "shadow" (NoteShadow):
+// The diagram file is the "hub"; each note the user has touched is a "shadow" (NoteShadow):
 // an in-memory copy of one real file with its own dirty flag, kept apart from the diagram's data
 // model. The module has no runtime imports and no I/O (a type import only), so it can be
 // unit-tested with plain node:test (`npm test`). The renderer owns the shadows; main executes the
@@ -112,7 +112,7 @@ export interface NoteBaseline {
 
 export interface RecoverySnapshot {
   diagram: DiagramFile
-  detailsDrafts: Record<string, string>
+  noteDrafts: Record<string, string>
   // Absent in snapshots written by older builds.
   noteBaselines?: Record<string, NoteBaseline>
 }
@@ -168,8 +168,8 @@ export interface PlanNoteInput {
   nodeId: string
   // Where the note belongs, derived from the label at save time (never stored).
   desiredPath: string
-  // The diagram's current `data.details` for this node, or null.
-  nodeDetailsPath: string | null
+  // The diagram's current `data.notes` for this node, or null.
+  nodeNotesPath: string | null
   shadow: NoteShadow | undefined
 }
 
@@ -202,7 +202,7 @@ export type NoteOp =
 export interface SavePlan {
   writeHub: boolean
   ops: NoteOp[]
-  // nodeId -> the path the diagram's `data.details` should hold once saved.
+  // nodeId -> the path the diagram's `data.notes` should hold once saved.
   finalPaths: Record<string, string>
 }
 
@@ -212,9 +212,9 @@ export function planSave(input: PlanInput): SavePlan {
   let referencesChanged = false
 
   for (const note of input.notes) {
-    const { shadow, desiredPath, nodeDetailsPath } = note
-    const current = input.newLocation ? null : (shadow?.originalPath ?? nodeDetailsPath)
-    let finalPath = nodeDetailsPath
+    const { shadow, desiredPath, nodeNotesPath } = note
+    const current = input.newLocation ? null : (shadow?.originalPath ?? nodeNotesPath)
+    let finalPath = nodeNotesPath
 
     if (shadow?.dirty) {
       ops.push({
@@ -232,7 +232,7 @@ export function planSave(input: PlanInput): SavePlan {
     }
 
     if (finalPath !== null) finalPaths[note.nodeId] = finalPath
-    if (finalPath !== nodeDetailsPath) referencesChanged = true
+    if (finalPath !== nodeNotesPath) referencesChanged = true
   }
 
   return { writeHub: input.hubDirty || referencesChanged, ops, finalPaths }
@@ -281,7 +281,7 @@ export interface SaveDocumentRequest {
   writeHub: boolean
   expectedHubStamp: Stamp
   ops: NoteOp[]
-  // nodeId -> the path `data.details` keeps (null = none) if that node's note
+  // nodeId -> the path `data.notes` keeps (null = none) if that node's note
   // did not reach its new path: a move with no source file, or an op held back
   // by a conflict.
   fallbackPaths: Record<string, string | null>

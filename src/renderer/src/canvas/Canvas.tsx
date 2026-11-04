@@ -71,9 +71,9 @@ import IconPicker from '../icons/IconPicker'
 import IconBrowser from '../icons/IconBrowser'
 import ColorPickerPopup from '../styling/ColorPickerPopup'
 import StylePicker from '../styling/StylePicker'
-import DetailsPanel from '../details/DetailsPanel'
+import NotesPanel from '../notes/NotesPanel'
 import DiagnosticsPanel from '../diagnostics/DiagnosticsPanel'
-import ChangesPanel, { type DetailsChangedEntry } from '../document/ChangesPanel'
+import ChangesPanel, { type NotesChangedEntry } from '../document/ChangesPanel'
 import HighlightsPanel from '../tagging/HighlightsPanel'
 import SearchOverlay from '../search/SearchOverlay'
 import LegendPanel from '../legend/LegendPanel'
@@ -140,8 +140,8 @@ import { useLinks } from '../links/useLinks'
 import { useImageExport } from '../export/useImageExport'
 import { useMenus } from '../useMenus'
 import { useModifierDragDuplicate } from './useModifierDragDuplicate'
-import { useDetailsPeek } from '../details/useDetailsPeek'
-import PeekCard from '../details/PeekCard'
+import { useNotesPeek } from '../notes/useNotesPeek'
+import PeekCard from '../notes/PeekCard'
 import RevisionDialog from '../compare/RevisionDialog'
 import { effectiveStylePalette, usePreferences } from '../preferences/preferences'
 import ThreatMatrixView from '../threat-matrix/ThreatMatrixView'
@@ -156,7 +156,7 @@ import {
 import { isVoidDrop, pointFromEvent, visibleCanvasCenter } from './screenGeometry'
 import { sortNodesForHierarchy, removeContainerReparenting } from './hierarchy'
 import { resolveEndpointPosition } from '../edges/endpointPosition'
-import { detailsPanelTitle, detailsNoteName } from '../details/detailsLabels'
+import { notesPanelTitle, noteName } from '../notes/notesLabels'
 import { toDiagramFile, fromDiagramFile } from '../document/diagramConversion'
 import { seedMetadata } from '../tagging/metadataSync'
 import { syncEdgeMetadata, syncNodeMetadata } from '../tagging/syncElements'
@@ -196,15 +196,15 @@ function CanvasInner(): React.JSX.Element {
     dismissedStampRef,
     dismissExternalChange
   } = useExternalChange(currentPath)
-  // What the open Details panel says about an outside change to its note:
+  // What the open Notes panel says about an outside change to its note:
   // 'refreshed' = it was unedited, so it was silently re-read from disk;
   // 'conflict' = the note has unsaved edits AND the file changed. The
   // dismissed map remembers the stamp the user chose to ignore, per note.
-  const [detailsNotice, setDetailsNotice] = useState<{
+  const [notesNotice, setNotesNotice] = useState<{
     nodeId: string
     kind: 'refreshed' | 'conflict'
   } | null>(null)
-  const detailsDismissedStampRef = useRef<Record<string, string>>({})
+  const notesDismissedStampRef = useRef<Record<string, string>>({})
   // See loadDiagramIntoCanvas's own comment on why this exists — a short
   // grace window after any load during which React Flow's own automatic
   // post-mount dimension measurement doesn't count as a discrete edit.
@@ -271,11 +271,11 @@ function CanvasInner(): React.JSX.Element {
   // guide line(s) currently matched, or null when nothing's being dragged/
   // nothing's in snap range. Set from onNodeDrag, cleared on drag stop.
   const [alignmentGuides, setAlignmentGuides] = useState<{ x: number[]; y: number[] } | null>(null)
-  // Editing a node's details doesn't write to disk immediately — it's just
+  // Editing a node's note doesn't write to disk immediately — it's just
   // draft state here, flushed as part of the main save flow.
   const rfInstance = useReactFlow()
   const connectionRadius = useZoomedConnectionHandles()
-  const { peek, bindings: peekBindings } = useDetailsPeek()
+  const { peek, bindings: peekBindings } = useNotesPeek()
   const peekNode = peek ? rfInstance.getNode(peek.nodeId) : undefined
   const updateNodeInternals = useUpdateNodeInternals()
   // Scopes the PNG export (ADR 0051) capture to this window's own
@@ -285,11 +285,11 @@ function CanvasInner(): React.JSX.Element {
   const flowWrapperRef = useRef<HTMLDivElement>(null)
 
   // Latest nodes/edges mirrored into a ref (from an effect), so callbacks that only read the
-  // current graph (pushSnapshot, undo/redo, openDetailsPanel) needn't list nodes/edges in their
+  // current graph (pushSnapshot, undo/redo, openNotesPanel) needn't list nodes/edges in their
   // useCallback deps. Those callbacks go through the memoized DiagramContext value (ADR 0056);
   // churning their identity on every change re-rendered every node and edge on every edit, drag and
   // hover (ADR 0073). Reading a ref inside a callback, not during render, is allowed by the
-  // react-hooks lint rules; same pattern as useDetailsPeek and openReferencesFor.
+  // react-hooks lint rules; same pattern as useNotesPeek and openReferencesFor.
   const graphRef = useRef<{ nodes: Node[]; edges: Edge[] }>({ nodes: [], edges: [] })
   useEffect(() => {
     graphRef.current = { nodes, edges }
@@ -397,8 +397,8 @@ function CanvasInner(): React.JSX.Element {
   } = useEdgeDirectionSets(canvasApi, { setPast, setFuture })
 
   const {
-    detailsPanelNodeId,
-    setDetailsPanelNodeId,
+    notesPanelNodeId,
+    setNotesPanelNodeId,
     diagnosticsPanelOpen,
     setDiagnosticsPanelOpen,
     preferencesPanelOpen,
@@ -420,7 +420,7 @@ function CanvasInner(): React.JSX.Element {
     changesDiff,
     setChangesDiff,
     persona,
-    openDetailsPanel,
+    openNotesPanel,
     toggleDiagnosticsPanel,
     togglePreferencesPanel,
     toggleStylePalettePanel,
@@ -995,32 +995,32 @@ function CanvasInner(): React.JSX.Element {
 
   // Load a note's shadow from its file the first time its panel is opened this
   // session (a note with no file yet is seeded synchronously in
-  // openDetailsPanel). Stamped before reading (see details:readWithStamp) so a
+  // openNotesPanel). Stamped before reading (see notes:readWithStamp) so a
   // change in between is caught, not missed.
   useEffect(() => {
-    if (!detailsPanelNodeId || detailsPanelNodeId in noteShadows) return
-    const node = nodes.find((n) => n.id === detailsPanelNodeId)
-    const existingPath = typeof node?.data?.details === 'string' ? node.data.details : undefined
+    if (!notesPanelNodeId || notesPanelNodeId in noteShadows) return
+    const node = nodes.find((n) => n.id === notesPanelNodeId)
+    const existingPath = typeof node?.data?.notes === 'string' ? node.data.notes : undefined
     if (!existingPath || !currentPath) return
-    const nodeId = detailsPanelNodeId
-    window.api.readDetailsWithStamp(currentPath, existingPath).then(({ content, stamp }) => {
+    const nodeId = notesPanelNodeId
+    window.api.readNotesWithStamp(currentPath, existingPath).then(({ content, stamp }) => {
       setNoteShadows((prev) =>
         nodeId in prev
           ? prev
           : { ...prev, [nodeId]: loadedNoteShadow(nodeId, existingPath, stamp, content) }
       )
     })
-  }, [detailsPanelNodeId, noteShadows, nodes, currentPath, setNoteShadows])
+  }, [notesPanelNodeId, noteShadows, nodes, currentPath, setNoteShadows])
 
-  // Outside-the-app edit to the note shown in the open Details panel (ADR 0092,
+  // Outside-the-app edit to the note shown in the open Notes panel (ADR 0092,
   // same detector as the diagram's focus check). Runs when the panel opens on an
   // already-loaded shadow (which would otherwise hide the change) and whenever
   // the window regains focus. Unedited -> adopt the disk text and say so; edited
   // -> a conflict notice with Reload / Keep mine (the save-time check still
   // guards the actual overwrite either way). Never marks anything dirty — the
   // shadow now equals the disk.
-  const checkOpenDetailsForChange = useEventCallback(async () => {
-    const nodeId = detailsPanelNodeId
+  const checkOpenNotesForChange = useEventCallback(async () => {
+    const nodeId = notesPanelNodeId
     const shadow = nodeId ? noteShadows[nodeId] : undefined
     if (!nodeId || !currentPath || !shadow || shadow.originalPath === null) return
     const [result] = await window.api.checkFiles(currentPath, [
@@ -1028,50 +1028,47 @@ function CanvasInner(): React.JSX.Element {
     ])
     if (!result.changed) return
     if (!shadow.dirty) {
-      const { content, stamp } = await window.api.readDetailsWithStamp(
+      const { content, stamp } = await window.api.readNotesWithStamp(
         currentPath,
         shadow.originalPath
       )
       setNoteShadows((prev) =>
         prev[nodeId] ? { ...prev, [nodeId]: adoptDisk(prev[nodeId], content, stamp) } : prev
       )
-      setDetailsNotice({ nodeId, kind: 'refreshed' })
-    } else if (detailsDismissedStampRef.current[nodeId] !== result.stamp) {
-      setDetailsNotice({ nodeId, kind: 'conflict' })
+      setNotesNotice({ nodeId, kind: 'refreshed' })
+    } else if (notesDismissedStampRef.current[nodeId] !== result.stamp) {
+      setNotesNotice({ nodeId, kind: 'conflict' })
     }
   })
 
   useEffect(() => {
-    if (!detailsPanelNodeId) return undefined
-    void checkOpenDetailsForChange()
-    const onFocus = (): void => void checkOpenDetailsForChange()
+    if (!notesPanelNodeId) return undefined
+    void checkOpenNotesForChange()
+    const onFocus = (): void => void checkOpenNotesForChange()
     window.addEventListener('focus', onFocus)
     return () => window.removeEventListener('focus', onFocus)
-  }, [detailsPanelNodeId, checkOpenDetailsForChange])
+  }, [notesPanelNodeId, checkOpenNotesForChange])
 
-  const reloadOpenDetailsFromDisk = useEventCallback(async () => {
-    const nodeId = detailsPanelNodeId
+  const reloadOpenNotesFromDisk = useEventCallback(async () => {
+    const nodeId = notesPanelNodeId
     const shadow = nodeId ? noteShadows[nodeId] : undefined
     if (!nodeId || !currentPath || !shadow || shadow.originalPath === null) return
-    const { content, stamp } = await window.api.readDetailsWithStamp(
-      currentPath,
-      shadow.originalPath
-    )
+    const { content, stamp } = await window.api.readNotesWithStamp(currentPath, shadow.originalPath)
     setNoteShadows((prev) =>
       prev[nodeId] ? { ...prev, [nodeId]: adoptDisk(prev[nodeId], content, stamp) } : prev
     )
-    setDetailsNotice(null)
+    setNotesNotice(null)
   })
 
-  const keepMyDetailsEdits = useEventCallback(async () => {
-    const nodeId = detailsPanelNodeId
+  const keepMyNotesEdits = useEventCallback(async () => {
+    const nodeId = notesPanelNodeId
     const shadow = nodeId ? noteShadows[nodeId] : undefined
     if (!nodeId || !currentPath || !shadow || shadow.originalPath === null) return
     const [result] = await window.api.checkFiles(currentPath, [
       { relPath: shadow.originalPath, stamp: shadow.baselineStamp }
     ])
-    if (result.stamp !== null) detailsDismissedStampRef.current[nodeId] = result.stamp
-    setDetailsNotice(null)
+    if (result.stamp !== null) notesDismissedStampRef.current[nodeId] = result.stamp
+    setNotesNotice(null)
   })
 
   // Style seeded onto a brand-new edge (ADR 0045 / ADR 0083): the global
@@ -2098,7 +2095,7 @@ function CanvasInner(): React.JSX.Element {
       ...eds.map((e) => (e.selected ? { ...e, selected: false } : e)),
       ...pastedEdges
     ])
-    // A cross-diagram paste can introduce a resource path (icon/details/
+    // A cross-diagram paste can introduce a resource path (icon/notes/
     // linkedDiagram/reference) that doesn't resolve at the new location —
     // rescan immediately rather than waiting for the next load or manual
     // Recheck, same "surface it the moment it happens" reasoning as a
@@ -2477,15 +2474,15 @@ function CanvasInner(): React.JSX.Element {
       } else {
         setNoteShadows({})
       }
-      detailsDismissedStampRef.current = {}
-      setDetailsNotice(null)
+      notesDismissedStampRef.current = {}
+      setNotesNotice(null)
       setExternalChangeStamp(null)
       dismissedStampRef.current = null
       setContextMenu(null)
       setIconPicker(null)
       setColorPicker(null)
       setLinePicker(null)
-      setDetailsPanelNodeId(null)
+      setNotesPanelNodeId(null)
       setDiagnosticsPanelOpen(false)
       setHighlightsPanelOpen(false)
       setPreferencesPanelOpen(false)
@@ -2521,7 +2518,7 @@ function CanvasInner(): React.JSX.Element {
       setAlignDistributePanelOpen,
       setChangesDiff,
       setChangesPanelOpen,
-      setDetailsPanelNodeId,
+      setNotesPanelNodeId,
       setDiagnosticsPanelOpen,
       setDiagramSettingsPanelOpen,
       setPreferencesPanelOpen,
@@ -2660,8 +2657,8 @@ function CanvasInner(): React.JSX.Element {
           // The search overlay's icon-browser popup — close just it, one
           // step before the overlay itself.
           setSearchIconPicker(null)
-        } else if (detailsPanelNodeId) {
-          setDetailsPanelNodeId(null)
+        } else if (notesPanelNodeId) {
+          setNotesPanelNodeId(null)
         } else if (searchOverlayOpen) {
           closeSearchOverlay()
         } else if (diagnosticsPanelOpen) {
@@ -2734,7 +2731,7 @@ function CanvasInner(): React.JSX.Element {
     undo,
     redo,
     rfInstance,
-    detailsPanelNodeId,
+    notesPanelNodeId,
     searchOverlayOpen,
     toggleSearchOverlay,
     searchIconPicker,
@@ -2751,7 +2748,7 @@ function CanvasInner(): React.JSX.Element {
     diagnosticsPanelOpen,
     setAlignDistributePanelOpen,
     setChangesPanelOpen,
-    setDetailsPanelNodeId,
+    setNotesPanelNodeId,
     setDiagnosticsPanelOpen,
     setDiagramSettingsPanelOpen,
     setPreferencesPanelOpen,
@@ -2973,9 +2970,9 @@ function CanvasInner(): React.JSX.Element {
     ]
   }, [diagnostics, hierarchyLoadNotes, hierarchyAnalysis, legend.length, edges.length])
 
-  // "Changes since last save" Details bucket (ADR 0102) — reuses
+  // "Changes since last save" Notes bucket (ADR 0102) — reuses
   // noteShadows' existing dirty flag (ADR 0092) directly, no new tracking.
-  const detailsChangedEntries: DetailsChangedEntry[] = useMemo(
+  const notesChangedEntries: NotesChangedEntry[] = useMemo(
     () =>
       Object.values(noteShadows)
         .filter((s) => s.dirty)
@@ -3114,7 +3111,7 @@ function CanvasInner(): React.JSX.Element {
       openContextMenu,
       openIconPicker,
       openColorPicker,
-      openDetailsPanel,
+      openNotesPanel,
       openReferencesFor,
       openReferenceWindow,
       addReferencesToNode,
@@ -3151,7 +3148,7 @@ function CanvasInner(): React.JSX.Element {
       openContextMenu,
       openIconPicker,
       openColorPicker,
-      openDetailsPanel,
+      openNotesPanel,
       openReferencesFor,
       openReferenceWindow,
       addReferencesToNode,
@@ -3230,22 +3227,22 @@ function CanvasInner(): React.JSX.Element {
                 {currentPath.split(/[\\/]/).pop()}
               </span>
             )}
-            {detailsNotice && detailsNotice.nodeId === detailsPanelNodeId && (
+            {notesNotice && notesNotice.nodeId === notesPanelNodeId && (
               <span className="toolbar-external-change" role="status">
-                {detailsNoteName(nodes.find((n) => n.id === detailsNotice.nodeId))}
-                {detailsNotice.kind === 'refreshed'
+                {noteName(nodes.find((n) => n.id === notesNotice.nodeId))}
+                {notesNotice.kind === 'refreshed'
                   ? ' — updated from disk (changed outside the app).'
                   : ' — changed outside the app, and you have unsaved edits.'}
-                {detailsNotice.kind === 'refreshed' ? (
-                  <button type="button" onClick={() => setDetailsNotice(null)}>
+                {notesNotice.kind === 'refreshed' ? (
+                  <button type="button" onClick={() => setNotesNotice(null)}>
                     OK
                   </button>
                 ) : (
                   <>
-                    <button type="button" onClick={() => void reloadOpenDetailsFromDisk()}>
+                    <button type="button" onClick={() => void reloadOpenNotesFromDisk()}>
                       Reload (discard mine)
                     </button>
-                    <button type="button" onClick={() => void keepMyDetailsEdits()}>
+                    <button type="button" onClick={() => void keepMyNotesEdits()}>
                       Keep mine
                     </button>
                   </>
@@ -3348,8 +3345,8 @@ function CanvasInner(): React.JSX.Element {
                     key={peek.nodeId}
                     target={peek}
                     label={typeof peekNode.data?.label === 'string' ? peekNode.data.label : ''}
-                    detailsPath={
-                      typeof peekNode.data?.details === 'string' ? peekNode.data.details : undefined
+                    notesPath={
+                      typeof peekNode.data?.notes === 'string' ? peekNode.data.notes : undefined
                     }
                     linkedPath={
                       typeof peekNode.data?.linkedDiagram === 'string'
@@ -3672,24 +3669,24 @@ function CanvasInner(): React.JSX.Element {
           )}
         </div>
         <UtilityDock>
-          {detailsPanelNodeId && (
-            <DetailsPanel
-              title={detailsPanelTitle(nodes.find((n) => n.id === detailsPanelNodeId))}
-              content={noteShadows[detailsPanelNodeId]?.content ?? ''}
+          {notesPanelNodeId && (
+            <NotesPanel
+              title={notesPanelTitle(nodes.find((n) => n.id === notesPanelNodeId))}
+              content={noteShadows[notesPanelNodeId]?.content ?? ''}
               onChange={(content) => {
                 // The one edit site: the note's own dirty flag, not the diagram's.
                 setNoteShadows((prev) => ({
                   ...prev,
-                  [detailsPanelNodeId]: editNote(
-                    prev[detailsPanelNodeId] ?? newNoteShadow(detailsPanelNodeId),
+                  [notesPanelNodeId]: editNote(
+                    prev[notesPanelNodeId] ?? newNoteShadow(notesPanelNodeId),
                     content
                   )
                 }))
               }}
               onClose={() => {
-                const closingId = detailsPanelNodeId
-                setDetailsPanelNodeId(null)
-                setDetailsNotice(null)
+                const closingId = notesPanelNodeId
+                setNotesPanelNodeId(null)
+                setNotesNotice(null)
                 // A note nobody edited needs no in-memory copy: next open reads it fresh.
                 setNoteShadows((prev) => {
                   if (!prev[closingId] || prev[closingId].dirty) return prev
@@ -3722,7 +3719,7 @@ function CanvasInner(): React.JSX.Element {
           {changesPanelOpen && (
             <ChangesPanel
               diff={changesDiff}
-              detailsChanged={detailsChangedEntries}
+              notesChanged={notesChangedEntries}
               neverSaved={currentPath === null}
               onRefresh={() => void computeChangesDiff()}
               onReveal={focusSearchMatch}

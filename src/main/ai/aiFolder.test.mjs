@@ -104,7 +104,7 @@ test('validator accepts a sound diagram and flags the classic mistakes', async (
         { id: 'c', parentId: 'p' },
         { id: 'p' },
         { id: 'p' },
-        { id: 'n', data: { details: 'missing.md' } }
+        { id: 'n', data: { notes: 'missing.md' } }
       ],
       edges: [{ id: 'e', source: 'c', target: 'ghost' }]
     })

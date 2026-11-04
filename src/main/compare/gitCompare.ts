@@ -1,7 +1,7 @@
 import { readFile } from 'fs/promises'
 import { basename, dirname, isAbsolute, relative, sep } from 'path'
 import { parseDiagram, type DiagramFile } from '@shared/diagram'
-import type { DetailsContent } from '@shared/compare/classify'
+import type { NotesContent } from '@shared/compare/classify'
 import type { CompareSession } from '@shared/compare/session'
 import { previewTextChange, sameText } from '@shared/compare/textPreview'
 import { resolveLinkPath } from '../links/linkPaths'
@@ -57,22 +57,20 @@ async function mapLimit<T, R>(
   return results
 }
 
-// Which notes (Details files) changed content, for the elements that have the same note path in
+// Which notes changed content, for the elements that have the same note path in
 // both versions. A changed path is already a link change; only the text needs reading here.
 async function changedNotes(
   diagramPath: string,
   revision: string,
   base: DiagramFile,
   next: DiagramFile
-): Promise<Record<string, DetailsContent>> {
+): Promise<Record<string, NotesContent>> {
   const folder = dirname(diagramPath)
-  const baseDetails = new Map(base.nodes.map((n) => [n.id, n.data.details]))
-  const candidates = next.nodes.filter(
-    (n) => n.data.details && n.data.details === baseDetails.get(n.id)
-  )
-  const found: Record<string, DetailsContent> = {}
+  const baseNotes = new Map(base.nodes.map((n) => [n.id, n.data.notes]))
+  const candidates = next.nodes.filter((n) => n.data.notes && n.data.notes === baseNotes.get(n.id))
+  const found: Record<string, NotesContent> = {}
   await mapLimit(candidates, NOTE_PARALLELISM, async (node) => {
-    const stored = node.data.details as string
+    const stored = node.data.notes as string
     const path = insideFolder(folder, resolveLinkPath(diagramPath, stored))
     if (!path) return
     const [now, then] = await Promise.all([
@@ -126,7 +124,7 @@ export async function buildGitSession(
       next,
       diagramPath,
       title: `Compare with ${revision}: ${name} (git revision → file on disk)`,
-      detailsContent: await changedNotes(diagramPath, revision, base, next)
+      notesContent: await changedNotes(diagramPath, revision, base, next)
     }
   }
 }

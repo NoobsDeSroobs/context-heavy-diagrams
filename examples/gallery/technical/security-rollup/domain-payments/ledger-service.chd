@@ -46,7 +46,7 @@
         "fontFamily": "sans-serif"
       },
       "data": {
-        "label": "EXAMPLE (leaf) — Ledger Service internals. Layer 3 of the security-rollup demo.\nThe Ledger DB is the system of record: both 'Data breach' and 'Service outage' carry consequence 5."
+        "label": "Ledger Service internals (layer 3 of the security rollup demo).\nThe Ledger DB is the system of record: both 'Data breach' and 'Service outage' carry consequence 5."
       }
     },
     {

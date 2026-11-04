@@ -173,16 +173,16 @@ test(
         ],
         { cwd: dir, stdio: 'ignore' }
       )
-    await mkdir(join(dir, 'd', 'details'), { recursive: true })
-    await writeFile(join(dir, 'd', 'details', 'a.md'), '# A\nowner: team a\n')
+    await mkdir(join(dir, 'd', 'notes'), { recursive: true })
+    await writeFile(join(dir, 'd', 'notes', 'a.md'), '# A\nowner: team a\n')
     await writeFile(
       join(dir, 'doc.chd'),
-      diagram([node('a', 'Alpha', 0, 0, { data: { label: 'Alpha', details: 'd/details/a.md' } })])
+      diagram([node('a', 'Alpha', 0, 0, { data: { label: 'Alpha', notes: 'd/notes/a.md' } })])
     )
     sh('init', '-q')
     sh('add', 'doc.chd', 'd')
     sh('commit', '-q', '-m', 'one')
-    await writeFile(join(dir, 'd', 'details', 'a.md'), '# A\nowner: team b\n')
+    await writeFile(join(dir, 'd', 'notes', 'a.md'), '# A\nowner: team b\n')
 
     const r = run(['diff', 'doc.chd'], dir)
     assert.equal(r.status, 0, r.stderr)

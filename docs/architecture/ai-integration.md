@@ -31,6 +31,10 @@ One chain, from the spec outward. When the file format changes, every link has t
 
 So a format change means: update `docs/file-format.md`, the skill's `SKILL.md` and `references/field-reference.md`, the primer if a trap changed, then `npm run sync-ai`. The rest follows from the build.
 
+## Draft, then review
+
+What an assistant writes is a draft. The skill tells it to run `chd diff` after an edit and say what changed, and the person reviews the same result in the app's compare window. The extension reads text files only (not images or PDFs); layout is left to a person, because there is no automatic layout. A sample prompt is in the [README](../../README.md#draft-with-an-assistant-then-review).
+
 ## Rules every path follows
 
 - **Stale-edit check** ([ADR 0109](../decisions/0109-stale-edit-check-for-every-ai-write-path.md)). A write to an existing file is conditional on it being unchanged since the version the edit was based on, using the SHA-256 of the file's bytes; a create fails if the file exists. The extension enforces it; the skill, `AGENTS.md` and the primer instruct it; `chd hash` prints the fingerprint. Any new way of letting an assistant write a diagram must carry it.

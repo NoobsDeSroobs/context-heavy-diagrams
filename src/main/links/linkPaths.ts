@@ -1,7 +1,7 @@
 import { dirname, isAbsolute, join } from 'path'
 
 // Resolve a relative resource path (a `linkedDiagram`, a custom icon, a
-// reference image, a details `.md`) stored on a diagram element to an
+// reference image, a note `.md`) stored on a diagram element to an
 // absolute filesystem path. All of them share the same convention: a path
 // relative to the diagram *file's own directory*.
 //
@@ -15,7 +15,7 @@ import { dirname, isAbsolute, join } from 'path'
 //
 // Single source of truth: link following (windows.ts), required-tag
 // propagation (requiredTags.ts), the missing-file check (links.ts) and the
-// icon/details readers must all resolve a stored path the same way.
+// icon/notes readers must all resolve a stored path the same way.
 export function resolveLinkPath(diagramPath: string, relativePath: string): string {
   return isAbsolute(relativePath)
     ? relativePath

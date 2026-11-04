@@ -8,4 +8,4 @@ Validates that a ticket issued by Meridian Rail is recognized as legitimate by w
 
 ## Why it matters here
 
-This is part of why NIS2 (critical-infrastructure/essential-service regulation) applies to Meridian Rail at all — participation in shared national transport infrastructure, not just running its own network. See the NIS2 highlight overlay (epic 0022 entry #3, not yet built) once it exists.
+This is part of why NIS2 (critical-infrastructure/essential-service regulation) applies to Meridian Rail at all — participation in shared national transport infrastructure, not just running its own network. See the NIS2 highlight in the landscape diagram.

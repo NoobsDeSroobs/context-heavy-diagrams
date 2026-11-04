@@ -5,8 +5,8 @@ import { newNoteShadow } from '@shared/document/documentSave'
 import type { CanvasApi } from './canvasApi'
 
 export interface PanelsState {
-  detailsPanelNodeId: string | null
-  setDetailsPanelNodeId: React.Dispatch<React.SetStateAction<string | null>>
+  notesPanelNodeId: string | null
+  setNotesPanelNodeId: React.Dispatch<React.SetStateAction<string | null>>
   diagnosticsPanelOpen: boolean
   setDiagnosticsPanelOpen: React.Dispatch<React.SetStateAction<boolean>>
   preferencesPanelOpen: boolean
@@ -28,7 +28,7 @@ export interface PanelsState {
   changesDiff: ChangesSinceSave | null
   setChangesDiff: React.Dispatch<React.SetStateAction<ChangesSinceSave | null>>
   persona: 'diagram' | 'matrix'
-  openDetailsPanel: (nodeId: string) => void
+  openNotesPanel: (nodeId: string) => void
   toggleDiagnosticsPanel: () => void
   togglePreferencesPanel: () => void
   toggleStylePalettePanel: () => void
@@ -58,7 +58,7 @@ export function usePanels(
   const [stylePalettePanelOpen, setStylePalettePanelOpen] = useState(false)
   const [alignDistributePanelOpen, setAlignDistributePanelOpen] = useState(false)
   const [diagramSettingsPanelOpen, setDiagramSettingsPanelOpen] = useState(false)
-  const [detailsPanelNodeId, setDetailsPanelNodeId] = useState<string | null>(null)
+  const [notesPanelNodeId, setNotesPanelNodeId] = useState<string | null>(null)
   // Layer panel (ADR 0035) — same UtilityDock family as
   // Highlights/Required tags/Diagnostics. No catalog of its own: it reads
   // straight off `nodes`' own zIndex, there's nothing separate to persist.
@@ -89,7 +89,7 @@ export function usePanels(
   // are floating popups near the bottom-left <Controls>, independent of the dock. Required tags and
   // line bend presets are collapsible sections of DiagramSettingsPanel (ADR 0071), so one toggle
   // covers all three.
-  const openDetailsPanel = useCallback(
+  const openNotesPanel = useCallback(
     (nodeId: string) => {
       setDiagnosticsPanelOpen(false)
       setPreferencesPanelOpen(false)
@@ -99,7 +99,7 @@ export function usePanels(
       setDiagramSettingsPanelOpen(false)
       setReferencesPanelOpen(false)
       setChangesPanelOpen(false)
-      setDetailsPanelNodeId(nodeId)
+      setNotesPanelNodeId(nodeId)
       // With no existing file (or nothing saved yet to resolve one against), the shadow is seeded
       // synchronously here, not in the effect below: nothing asynchronous happens in this branch.
       // The functional-updater guard (no closure read of noteShadows) keeps this callback's
@@ -108,7 +108,7 @@ export function usePanels(
       // Reads the node off the React Flow instance, not a closed-over `nodes`, for the same
       // stability reason (ADR 0073), as in openReferencesFor.
       const node = rfInstance.getNode(nodeId)
-      const existingPath = typeof node?.data?.details === 'string' ? node.data.details : undefined
+      const existingPath = typeof node?.data?.notes === 'string' ? node.data.notes : undefined
       if (!existingPath || !currentPath) {
         setNoteShadows((prev) =>
           nodeId in prev ? prev : { ...prev, [nodeId]: newNoteShadow(nodeId) }
@@ -119,7 +119,7 @@ export function usePanels(
   )
 
   const toggleDiagnosticsPanel = useCallback(() => {
-    setDetailsPanelNodeId(null)
+    setNotesPanelNodeId(null)
     setPreferencesPanelOpen(false)
     setLayerPanelOpen(false)
     setStylePalettePanelOpen(false)
@@ -131,7 +131,7 @@ export function usePanels(
   }, [])
 
   const togglePreferencesPanel = useCallback(() => {
-    setDetailsPanelNodeId(null)
+    setNotesPanelNodeId(null)
     setDiagnosticsPanelOpen(false)
     setLayerPanelOpen(false)
     setStylePalettePanelOpen(false)
@@ -143,7 +143,7 @@ export function usePanels(
   }, [])
 
   const toggleStylePalettePanel = useCallback(() => {
-    setDetailsPanelNodeId(null)
+    setNotesPanelNodeId(null)
     setDiagnosticsPanelOpen(false)
     setPreferencesPanelOpen(false)
     setLayerPanelOpen(false)
@@ -155,7 +155,7 @@ export function usePanels(
   }, [])
 
   const toggleAlignDistributePanel = useCallback(() => {
-    setDetailsPanelNodeId(null)
+    setNotesPanelNodeId(null)
     setDiagnosticsPanelOpen(false)
     setPreferencesPanelOpen(false)
     setLayerPanelOpen(false)
@@ -167,7 +167,7 @@ export function usePanels(
   }, [])
 
   const toggleLayerPanel = useCallback(() => {
-    setDetailsPanelNodeId(null)
+    setNotesPanelNodeId(null)
     setDiagnosticsPanelOpen(false)
     setPreferencesPanelOpen(false)
     setStylePalettePanelOpen(false)
@@ -180,7 +180,7 @@ export function usePanels(
   }, [])
 
   const toggleDiagramSettingsPanel = useCallback(() => {
-    setDetailsPanelNodeId(null)
+    setNotesPanelNodeId(null)
     setDiagnosticsPanelOpen(false)
     setPreferencesPanelOpen(false)
     setLayerPanelOpen(false)
@@ -192,7 +192,7 @@ export function usePanels(
   }, [])
 
   const toggleReferencesPanel = useCallback(() => {
-    setDetailsPanelNodeId(null)
+    setNotesPanelNodeId(null)
     setDiagnosticsPanelOpen(false)
     setPreferencesPanelOpen(false)
     setLayerPanelOpen(false)
@@ -204,7 +204,7 @@ export function usePanels(
   }, [])
 
   const toggleChangesPanelWith = useCallback((computeChangesDiff: () => void) => {
-    setDetailsPanelNodeId(null)
+    setNotesPanelNodeId(null)
     setDiagnosticsPanelOpen(false)
     setPreferencesPanelOpen(false)
     setLayerPanelOpen(false)
@@ -230,7 +230,7 @@ export function usePanels(
     (next: 'diagram' | 'matrix') => {
       setPersona(next)
       if (next === 'matrix') {
-        setDetailsPanelNodeId(null)
+        setNotesPanelNodeId(null)
         setDiagnosticsPanelOpen(false)
         setLayerPanelOpen(false)
         setStylePalettePanelOpen(false)
@@ -245,8 +245,8 @@ export function usePanels(
   )
 
   return {
-    detailsPanelNodeId,
-    setDetailsPanelNodeId,
+    notesPanelNodeId,
+    setNotesPanelNodeId,
     diagnosticsPanelOpen,
     setDiagnosticsPanelOpen,
     preferencesPanelOpen,
@@ -268,7 +268,7 @@ export function usePanels(
     changesDiff,
     setChangesDiff,
     persona,
-    openDetailsPanel,
+    openNotesPanel,
     toggleDiagnosticsPanel,
     togglePreferencesPanel,
     toggleStylePalettePanel,

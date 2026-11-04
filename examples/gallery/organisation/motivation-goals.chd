@@ -1,5 +1,34 @@
 {
   "version": 1,
+  "legend": [
+    {
+      "id": "legend-1",
+      "kind": "entity",
+      "label": "Driver (a pressure from outside or inside)",
+      "color": "#b91c1c"
+    },
+    {
+      "id": "legend-2",
+      "kind": "entity",
+      "label": "Goal (what the program aims to achieve)",
+      "color": "#b45309"
+    },
+    {
+      "id": "legend-3",
+      "kind": "entity",
+      "label": "Objective (a measurable target under a goal)",
+      "color": "#15803d"
+    },
+    {
+      "id": "legend-4",
+      "kind": "line",
+      "label": "A → B: the label says how A relates to B",
+      "color": "#4a5568",
+      "lineStyle": "solid",
+      "startMarker": "none",
+      "endMarker": "arrowOpen"
+    }
+  ],
   "nodes": [
     {
       "id": "blurb",
@@ -10,7 +39,7 @@
       },
       "size": {
         "width": 1550,
-        "height": 160
+        "height": 90
       },
       "style": {
         "fill": "#fefcbf",
@@ -20,7 +49,7 @@
         "fontFamily": "sans-serif"
       },
       "data": {
-        "label": "EXAMPLE — Modernization Drivers & Goals\n\nIllustrates: a motivation view (drivers → goals → objectives), labeled edges rather than a sequence or hierarchy of systems — deliberately markdown-heavy, this gallery's flagship use of the details sublayer. Every node has real, substantial detail behind it; the diagram itself is deliberately just the map.\n\nPersona: the modernization task force itself, working through why the program exists.\n\nColor key: red = drivers (external/internal pressures). Amber = goals (what the program aims to achieve). Green = objectives (measurable targets under each goal).\n\nPart of the Meridian Rail example gallery — epic 0022 (docs/planning/epics/0022-example-diagram-gallery.md)."
+        "label": "Modernization drivers and goals\nWhy the program exists: drivers (pressures from outside and inside) lead to goals, and goals to measurable objectives. Every element has a note behind it; the diagram is only the map.\nShow the legend for what the colours mean."
       }
     },
     {
@@ -44,7 +73,7 @@
       },
       "data": {
         "label": "Declining Ridership",
-        "details": "motivation-goals/details/driver-declining-ridership.md"
+        "notes": "motivation-goals/notes/driver-declining-ridership.md"
       }
     },
     {
@@ -68,7 +97,7 @@
       },
       "data": {
         "label": "Legacy System Risk",
-        "details": "motivation-goals/details/driver-legacy-risk.md"
+        "notes": "motivation-goals/notes/driver-legacy-risk.md"
       }
     },
     {
@@ -92,7 +121,7 @@
       },
       "data": {
         "label": "Regulatory Pressure",
-        "details": "motivation-goals/details/driver-regulatory-pressure.md"
+        "notes": "motivation-goals/notes/driver-regulatory-pressure.md"
       }
     },
     {
@@ -123,7 +152,7 @@
       },
       "data": {
         "label": "Rising Customer Expectations",
-        "details": "motivation-goals/details/driver-customer-expectations.md"
+        "notes": "motivation-goals/notes/driver-customer-expectations.md"
       }
     },
     {
@@ -154,7 +183,7 @@
       },
       "data": {
         "label": "Modernize Ticketing Platform",
-        "details": "motivation-goals/details/goal-modernize-platform.md"
+        "notes": "motivation-goals/notes/goal-modernize-platform.md"
       }
     },
     {
@@ -178,7 +207,7 @@
       },
       "data": {
         "label": "Improve Regulatory Compliance",
-        "details": "motivation-goals/details/goal-improve-compliance.md"
+        "notes": "motivation-goals/notes/goal-improve-compliance.md"
       }
     },
     {
@@ -209,7 +238,7 @@
       },
       "data": {
         "label": "Grow Ridership",
-        "details": "motivation-goals/details/goal-grow-ridership.md"
+        "notes": "motivation-goals/notes/goal-grow-ridership.md"
       }
     },
     {
@@ -233,7 +262,7 @@
       },
       "data": {
         "label": "Decommission Legacy Mainframe by Q4 2027",
-        "details": "motivation-goals/details/objective-decommission-mainframe.md"
+        "notes": "motivation-goals/notes/objective-decommission-mainframe.md"
       }
     },
     {
@@ -257,7 +286,7 @@
       },
       "data": {
         "label": "Achieve NIS2 Essential-Service Readiness",
-        "details": "motivation-goals/details/objective-nis2-readiness.md"
+        "notes": "motivation-goals/notes/objective-nis2-readiness.md"
       }
     },
     {
@@ -281,7 +310,7 @@
       },
       "data": {
         "label": "Increase Online Bookings 30% YoY",
-        "details": "motivation-goals/details/objective-increase-bookings.md"
+        "notes": "motivation-goals/notes/objective-increase-bookings.md"
       }
     }
   ],

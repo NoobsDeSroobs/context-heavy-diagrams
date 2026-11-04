@@ -46,7 +46,7 @@
         "fontFamily": "sans-serif"
       },
       "data": {
-        "label": "EXAMPLE (leaf) — Profile Service internals. Layer 3 of the security-rollup demo.\nAll three threats are assessed on both components; the parent \"Profile Service\" column is fully green in the completeness banner."
+        "label": "Profile Service internals (layer 3 of the security rollup demo).\nAll three threats are assessed on both components; the parent \"Profile Service\" column is fully green in the completeness banner."
       }
     },
     {

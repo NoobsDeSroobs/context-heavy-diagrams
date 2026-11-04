@@ -1,5 +1,5 @@
 // v1 diagram file schema. See docs/decisions/0003-diagram-persistence-v1.md —
-// later work adds fields here (style, details, linkedDiagram) additively,
+// later work adds fields here (style, notes, linkedDiagram) additively,
 // not as a rewrite. `size`/`rotation` (see ADR 0004), `icons` (see ADR 0006).
 
 import type { EdgeDirectionSet, DiagramEdge } from '../edges/schema.ts'

@@ -3,7 +3,7 @@ import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import { registerDiagramHandlers } from './document/diagram'
 import { registerIconHandlers } from './icons/icons'
 import { registerReferenceHandlers } from './references/references'
-import { registerDetailsHandlers } from './details/details'
+import { registerNotesHandlers } from './notes/notes'
 import { registerLinkHandlers } from './links/links'
 import {
   createWindow,
@@ -81,7 +81,7 @@ app.whenReady().then(async () => {
   registerDiagramHandlers()
   registerIconHandlers()
   registerReferenceHandlers()
-  registerDetailsHandlers()
+  registerNotesHandlers()
   registerLinkHandlers()
   registerWindowHandlers()
   registerRequiredTagsHandlers()

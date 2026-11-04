@@ -10,11 +10,11 @@ The system in scope for Meridian Rail's modernization program — the target rep
 - Payment orchestration (fare charges, refunds) — see Payment Gateway
 - Passenger profile and loyalty point sync — see Loyalty & CRM System
 - Cross-operator ticket validation for journeys that leave Meridian Rail's own network — see National Rail Interop Network
-- During the migration window: reads seat inventory from the Legacy Reservation Mainframe until the platform's own inventory is authoritative (see that system's own details for the cutover plan)
+- During the migration window: reads seat inventory from the Legacy Reservation Mainframe until the platform's own inventory is authoritative (see that system's own note for the cutover plan)
 
 ## Boundary
 
-Everything *inside* this box is out of scope at the Context level — that's what the container diagram this box links to shows: the platform's own internal services (booking API, payment orchestration service, notification service, its own database) and how they talk to each other.
+Everything *inside* this box is out of scope at the Context level — that's what this Container-level diagram shows: the platform's own internal services (booking API, payment orchestration service, notification service, its own database) and how they talk to each other.
 
 ## Non-functional notes
 

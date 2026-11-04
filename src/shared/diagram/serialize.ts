@@ -218,7 +218,7 @@ export function serializeDiagram(diagram: DiagramFile): string {
       data: {
         label: n.data.label,
         icons: n.data.icons && Object.keys(n.data.icons).length > 0 ? n.data.icons : undefined,
-        details: n.data.details,
+        notes: n.data.notes,
         linkedDiagram: n.data.linkedDiagram,
         points: n.data.points && n.data.points.length > 0 ? n.data.points : undefined,
         // NB: `references` was missing here until 2026-09-01 — a 5th

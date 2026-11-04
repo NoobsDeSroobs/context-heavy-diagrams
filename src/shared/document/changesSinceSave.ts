@@ -27,7 +27,7 @@ interface FieldSpec<T> {
 }
 
 // Human-readable names, shown in the Modified row's field list — not the
-// schema's own property names, since "data.details" means nothing to a user
+// schema's own property names, since "data.notes" means nothing to a user
 // deciding whether a change matters.
 export const NODE_FIELDS: FieldSpec<DiagramNode>[] = [
   { name: 'type', get: (n) => n.type },
@@ -42,7 +42,7 @@ export const NODE_FIELDS: FieldSpec<DiagramNode>[] = [
   { name: 'tags', get: (n) => n.metadata },
   { name: 'label', get: (n) => n.data.label },
   { name: 'icons', get: (n) => n.data.icons },
-  { name: 'details link', get: (n) => n.data.details },
+  { name: 'note link', get: (n) => n.data.notes },
   { name: 'linked diagram', get: (n) => n.data.linkedDiagram },
   { name: 'points', get: (n) => n.data.points },
   { name: 'reference images', get: (n) => n.data.references },

@@ -146,7 +146,7 @@ function IsolateOpacityField({
   )
 }
 
-// Same fixed right-side dock shell as DetailsPanel/DiagnosticsPanel (ADR 0013). Global, app-wide
+// Same fixed right-side dock shell as NotesPanel/DiagnosticsPanel (ADR 0013). Global, app-wide
 // preferences (the per-installation, every-diagram tier; see the glossary), not diagram content:
 // nothing here goes through pushSnapshot/undo, and a different diagram loading doesn't reset it.
 // See ADR 0032 for why this panel exists and ADR 0052's addendum for the "Settings" ->
@@ -171,7 +171,7 @@ export default function PreferencesPanel({
     <div className="preferences-panel">
       <div className="preferences-panel-toolbar">
         <span className="preferences-panel-title">Preferences</span>
-        <div className="details-panel-spacer" />
+        <div className="notes-panel-spacer" />
         <button type="button" title="Close" aria-label="Close" onClick={onClose}>
           ✕
         </button>

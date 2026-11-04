@@ -1,6 +1,56 @@
 {
   "version": 1,
-  "savedWith": "0.2.1",
+  "savedWith": "0.5.0",
+  "legend": [
+    {
+      "id": "legend-1",
+      "kind": "entity",
+      "label": "Backend service",
+      "color": "#1a73e8"
+    },
+    {
+      "id": "legend-2",
+      "kind": "entity",
+      "label": "Frontend application",
+      "color": "#2b6cb0"
+    },
+    {
+      "id": "legend-3",
+      "kind": "entity",
+      "label": "Data store",
+      "color": "#0f766e"
+    },
+    {
+      "id": "legend-4",
+      "kind": "entity",
+      "label": "Person",
+      "color": "#6b46c1"
+    },
+    {
+      "id": "legend-5",
+      "kind": "entity",
+      "label": "External or existing system",
+      "color": "#718096"
+    },
+    {
+      "id": "legend-6",
+      "kind": "line",
+      "label": "A → B: A uses B (the arrow points at what is used)",
+      "color": "#4a5568",
+      "lineStyle": "solid",
+      "startMarker": "none",
+      "endMarker": "arrowOpen"
+    },
+    {
+      "id": "legend-7",
+      "kind": "line",
+      "label": "Transitional: used during the migration, then retired",
+      "color": "#4a5568",
+      "lineStyle": "dashed",
+      "startMarker": "none",
+      "endMarker": "arrowOpen"
+    }
+  ],
   "nodes": [
     {
       "id": "blurb",
@@ -11,7 +61,7 @@
       },
       "size": {
         "width": 900,
-        "height": 190
+        "height": 110
       },
       "zIndex": 200010,
       "style": {
@@ -22,7 +72,7 @@
         "fontFamily": "sans-serif"
       },
       "data": {
-        "label": "EXAMPLE — C4 Container: Ticketing & Booking Platform\n\nIllustrates: the second level of the C4 drill-down (Context → Container → Component) — decomposing the system in scope from the Context diagram into its own internal deployable units, using this tool's container/grouping feature (epic 0004) for the system boundary itself.\nPersona: the same technical/solution architect on the modernization task force, one level deeper.\n\nReading this diagram: darker blue = backend services (in scope). Lighter blue = frontend applications (in scope). Teal = the data store (in scope). Purple = human actors (same as Context level). Grey = external/existing systems (same as Context level). The dashed edge is transitional, same convention as the Context diagram.\n\nPart of the Meridian Rail example gallery — epic 0022 (docs/planning/epics/0022-example-diagram-gallery.md). Linked from the Context diagram's \"Ticketing & Booking Platform\" shape."
+        "label": "C4 level 2: Containers\nThe Ticketing & Booking Platform split into its deployable units: backend services, frontend applications and the database, with the people and external systems around it. Each service and application links down to its components (level 3).\nShow the legend for what the colours and arrows mean."
       }
     },
     {
@@ -54,7 +104,7 @@
       },
       "data": {
         "label": "Passenger",
-        "details": "c4-container/details/Passenger-passenger.md"
+        "notes": "c4-container/notes/Passenger-passenger.md"
       }
     },
     {
@@ -79,7 +129,7 @@
       },
       "data": {
         "label": "Station Staff",
-        "details": "c4-container/details/Station Staff-station-staff.md"
+        "notes": "c4-container/notes/Station Staff-station-staff.md"
       }
     },
     {
@@ -105,7 +155,7 @@
       },
       "data": {
         "label": "Ticketing & Booking Platform — system boundary",
-        "details": "c4-container/details/Ticketing & Booking Platform — system boundary-boundary.md"
+        "notes": "c4-container/notes/Ticketing & Booking Platform — system boundary-boundary.md"
       }
     },
     {
@@ -131,7 +181,7 @@
       },
       "data": {
         "label": "Booking Web/Mobile App\n[frontend]",
-        "details": "c4-container/details/Booking Web-Mobile App-web-app.md",
+        "notes": "c4-container/notes/Booking Web-Mobile App-web-app.md",
         "linkedDiagram": "c4-container/booking-web-app-component.chd"
       }
     },
@@ -158,7 +208,7 @@
       },
       "data": {
         "label": "Staff Portal\n[frontend]",
-        "details": "c4-container/details/Staff Portal-portal.md",
+        "notes": "c4-container/notes/Staff Portal-portal.md",
         "linkedDiagram": "c4-container/staff-portal-component.chd"
       }
     },
@@ -185,7 +235,7 @@
       },
       "data": {
         "label": "Notification Service\n[backend service]",
-        "details": "c4-container/details/Notification Service-service.md",
+        "notes": "c4-container/notes/Notification Service-service.md",
         "linkedDiagram": "c4-container/notification-service-component.chd"
       }
     },
@@ -225,7 +275,7 @@
       },
       "data": {
         "label": "Booking API\n[backend service]",
-        "details": "c4-container/details/Booking API-api.md",
+        "notes": "c4-container/notes/Booking API-api.md",
         "linkedDiagram": "c4-container/booking-api-component.chd"
       }
     },
@@ -252,7 +302,7 @@
       },
       "data": {
         "label": "Payment Orchestration Service\n[backend service]",
-        "details": "c4-container/details/Payment Orchestration Service-orchestration.md",
+        "notes": "c4-container/notes/Payment Orchestration Service-orchestration.md",
         "linkedDiagram": "c4-container/payment-orchestration-component.chd"
       }
     },
@@ -279,7 +329,7 @@
       },
       "data": {
         "label": "Interop Gateway Service\n[backend service]",
-        "details": "c4-container/details/Interop Gateway Service-gateway.md",
+        "notes": "c4-container/notes/Interop Gateway Service-gateway.md",
         "linkedDiagram": "c4-container/interop-gateway-component.chd"
       }
     },
@@ -306,7 +356,7 @@
       },
       "data": {
         "label": "Legacy Sync Service\n[backend service, transitional]",
-        "details": "c4-container/details/Legacy Sync Service-sync.md",
+        "notes": "c4-container/notes/Legacy Sync Service-sync.md",
         "linkedDiagram": "c4-container/legacy-sync-component.chd"
       }
     },
@@ -333,7 +383,7 @@
       },
       "data": {
         "label": "Platform Database\n[data store]",
-        "details": "c4-container/details/Platform Database-database.md"
+        "notes": "c4-container/notes/Platform Database-database.md"
       }
     },
     {
@@ -358,7 +408,7 @@
       },
       "data": {
         "label": "Payment Gateway\n(external system)",
-        "details": "c4-container/details/Payment Gateway-payment-gateway.md"
+        "notes": "c4-container/notes/Payment Gateway-payment-gateway.md"
       }
     },
     {
@@ -383,7 +433,7 @@
       },
       "data": {
         "label": "National Rail Interop Network\n(external system)",
-        "details": "c4-container/details/National Rail Interop Network-rail-interop.md"
+        "notes": "c4-container/notes/National Rail Interop Network-rail-interop.md"
       }
     },
     {
@@ -408,7 +458,7 @@
       },
       "data": {
         "label": "Loyalty & CRM System\n(existing system)",
-        "details": "c4-container/details/Loyalty & CRM System-loyalty-crm.md"
+        "notes": "c4-container/notes/Loyalty & CRM System-loyalty-crm.md"
       }
     },
     {
@@ -433,7 +483,7 @@
       },
       "data": {
         "label": "Legacy Reservation Mainframe\n(existing system, being retired)",
-        "details": "c4-container/details/Legacy Reservation Mainframe-legacy-mainframe.md"
+        "notes": "c4-container/notes/Legacy Reservation Mainframe-legacy-mainframe.md"
       }
     }
   ],
@@ -648,8 +698,15 @@
         "startMarker": "none",
         "endMarker": "arrowOpen",
         "fontSize": 11,
-        "fontColor": "#f2f2f3"
-      }
+        "fontColor": "#f2f2f3",
+        "routingStyle": "catmullRom"
+      },
+      "points": [
+        {
+          "x": 57.119127343986925,
+          "y": 394.14840879372076
+        }
+      ]
     },
     {
       "id": "xy-edge__booking-apiright-ext-loyalty-crmleft",

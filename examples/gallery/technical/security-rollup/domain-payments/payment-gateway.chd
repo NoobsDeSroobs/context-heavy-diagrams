@@ -47,7 +47,7 @@
         "fontFamily": "sans-serif"
       },
       "data": {
-        "label": "EXAMPLE (leaf) — Payment Gateway internals. Layer 3 of the security-rollup demo.\nThe Card Vault drives 'Data breach' consequence to the ceiling; the PSP Connector makes 'Supply chain compromise' the standout risk. Switching the Threat score mode from Average to Max makes that jump out."
+        "label": "Payment Gateway internals (layer 3 of the security rollup demo).\nThe Card Vault drives 'Data breach' consequence to the ceiling; the PSP Connector makes 'Supply chain compromise' the standout risk. Switching the Threat score mode from Average to Max makes that jump out."
       }
     },
     {

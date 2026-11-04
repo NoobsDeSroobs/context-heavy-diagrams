@@ -10,10 +10,10 @@ Export a diagram, with its linked diagrams, as a self-contained page that a read
 There is no way to share a diagram with someone who does not have the app, apart from a PNG. A page could also be published as a static site or attached to a wiki.
 
 ## Open questions
-- Whether it can share the renderer chosen in [epic 0144](0144-svg-and-command-line-export.md); probably it should wait for that.
+- Whether it can share the renderer chosen in [epic 0144](../completed-epics.md#0144-svg-export-and-a-command-line-export); probably it should wait for that.
 - How much interactivity is worth having (highlights, search, notes) against a plain page of SVG.
 - Whether it is one file or a folder, and how linked diagrams and notes are included.
 - How it relates to the offline rule: the page itself must make no network requests either.
 
 ## Related
-[Epic 0144](0144-svg-and-command-line-export.md), [epic 0114](later/0114-android-diagram-viewer.md) (another reader-only view).
+[Epic 0144](../completed-epics.md#0144-svg-export-and-a-command-line-export), [epic 0114](later/0114-android-diagram-viewer.md) (another reader-only view).

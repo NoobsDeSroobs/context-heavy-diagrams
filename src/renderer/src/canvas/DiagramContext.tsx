@@ -6,7 +6,7 @@ import type { Theme } from '../styling/theme'
 
 export interface DiagramContextValue {
   // Current file path, or null for an unsaved diagram — nodes need this to
-  // resolve their sibling assets/ folder (custom icons, later details).
+  // resolve their sibling assets/ folder (custom icons, later notes).
   diagramPath: string | null
   openContextMenu: (x: number, y: number, items: ContextMenuItem[]) => void
   // Rendered at Canvas level, fixed-positioned from the node's own
@@ -18,7 +18,7 @@ export interface DiagramContextValue {
   // reasoning as openIconPicker above.
   openColorPicker: (nodeId: string, kind: 'fill' | 'border', anchorRect: DOMRect) => void
   // Fixed right-side dock — no anchor needed, it's not attached to the node.
-  openDetailsPanel: (nodeId: string) => void
+  openNotesPanel: (nodeId: string) => void
   // Reference images (see ADR 0069). openReferencesFor: entity/
   // container right-click "Reference images…" — opens a floating viewer
   // window per attached reference, or the file picker if the node has none

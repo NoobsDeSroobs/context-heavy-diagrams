@@ -80,7 +80,7 @@ App-frame files stay at the tree root (`main/index.ts`, `windows.ts`, `App.tsx`,
 | `legend` | The legend panel and the legend items and placement shared with the export ([ADR 0033](../decisions/0033-diagram-legend-design.md)). |
 | `threat-matrix` | The threat/risk matrix ([ADR 0082](../decisions/0082-security-data-schema.md)). Main: the matrix crawl across linked diagrams. |
 | `references` | Reference images in floating viewers ([ADR 0069](../decisions/0069-reference-images.md)). |
-| `details` | Notes (Markdown files in a diagram's sibling `details/` folder), the note panel and the peek card ([ADR 0093](../decisions/0093-details-peek-card-on-modifier-hold.md)). |
+| `notes` | Notes (Markdown files in a diagram's sibling `notes/` folder), the notes panel and the peek card ([ADR 0093](../decisions/0093-details-peek-card-on-modifier-hold.md)). |
 | `links` | Renderer: `useLinks`, Ctrl+click navigation and creating or choosing a link. Main: creating and browsing to linked diagrams, and resolving link paths ([ADR 0115](../decisions/0115-paths-stored-in-diagrams-are-untrusted.md)). |
 | `search` | Search overlay ([ADR 0062](../decisions/0062-search-scope-and-matching.md)); the shared model and linked-diagram walk ([ADR 0097](../decisions/0097-deep-search-across-linked-diagrams.md)) run in main too. |
 | `document` | Hooks for saving, the window lifecycle (initial load, crash recovery, autosave, the close prompt, file drop), the File commands, dirty state and external-change detection; the conflict dialog and changes since save ([ADR 0092](../decisions/0092-unified-multi-file-save-and-change-detection.md)); the shared `documentSave` plan is executed in main by `documentSaveExec.ts`. |

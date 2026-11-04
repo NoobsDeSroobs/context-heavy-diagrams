@@ -2,7 +2,7 @@ import { app, BrowserWindow, dialog, ipcMain } from 'electron'
 import { createHash, randomUUID } from 'crypto'
 import { mkdir, readdir, readFile, rm, stat, writeFile } from 'fs/promises'
 import { join } from 'path'
-import type { DiagramFile } from '@shared/diagram'
+import { normalizeLegacyFields, type DiagramFile } from '@shared/diagram'
 import type { NoteBaseline, RecoverySnapshot } from '@shared/document/documentSave'
 
 // Crash-recovery snapshots (ADR 0040). Stored centrally under userData, never beside the real .chd:
@@ -10,15 +10,15 @@ import type { NoteBaseline, RecoverySnapshot } from '@shared/document/documentSa
 // live for a never-saved diagram. Each envelope records its own originalPath so a diagram with no
 // path yet (originalPath: null) can still be found by the startup orphan scan, which has no path to
 // key a lookup on.
-// detailsDrafts rides alongside the diagram, not inside it: a details edit only becomes part of
-// DiagramFile once persistDiagram's flushDetailsDrafts writes it to a per-node file at save time
-// (Canvas.tsx). Without carrying it here, a crash mid-edit of a node's Details text would recover
+// noteDrafts rides alongside the diagram, not inside it: a note edit only becomes part of
+// DiagramFile once persistDiagram's flushNotesDrafts writes it to a per-node file at save time
+// (Canvas.tsx). Without carrying it here, a crash mid-edit of a node's Note text would recover
 // everything except that text.
 interface RecoveryEnvelope {
   originalPath: string | null
   savedAt: number
   diagram: DiagramFile
-  detailsDrafts: Record<string, string>
+  noteDrafts: Record<string, string>
   // Each draft's note baseline (path, stamp, text) so a restored note can still
   // detect an outside change (ADR 0092). Absent in older snapshots.
   noteBaselines?: Record<string, NoteBaseline>
@@ -55,7 +55,7 @@ export async function writeRecoverySnapshot(
   path: string | null,
   sessionId: string,
   diagram: DiagramFile,
-  detailsDrafts: Record<string, string>,
+  noteDrafts: Record<string, string>,
   noteBaselines?: Record<string, NoteBaseline>
 ): Promise<void> {
   await ensureRecoveryDir()
@@ -63,7 +63,7 @@ export async function writeRecoverySnapshot(
     originalPath: path,
     savedAt: Date.now(),
     diagram,
-    detailsDrafts,
+    noteDrafts,
     noteBaselines
   }
   await writeFile(fileFor(keyFor(path, sessionId)), JSON.stringify(envelope), 'utf-8')
@@ -71,7 +71,16 @@ export async function writeRecoverySnapshot(
 
 async function readEnvelope(file: string): Promise<RecoveryEnvelope | null> {
   try {
-    return JSON.parse(await readFile(file, 'utf-8')) as RecoveryEnvelope
+    // A snapshot written by an older build carries the diagram and the note drafts under that
+    // build's names (`details`).
+    const envelope = JSON.parse(await readFile(file, 'utf-8')) as RecoveryEnvelope & {
+      detailsDrafts?: Record<string, string>
+    }
+    return {
+      ...envelope,
+      diagram: normalizeLegacyFields(envelope.diagram),
+      noteDrafts: envelope.noteDrafts ?? envelope.detailsDrafts ?? {}
+    }
   } catch {
     return null
   }
@@ -105,7 +114,7 @@ export async function checkRecoveryForPath(path: string): Promise<RecoverySnapsh
   }
   return {
     diagram: envelope.diagram,
-    detailsDrafts: envelope.detailsDrafts,
+    noteDrafts: envelope.noteDrafts,
     noteBaselines: envelope.noteBaselines
   }
 }
@@ -131,7 +140,7 @@ async function listOrphans(): Promise<OrphanEntry[]> {
         key: entry.replace(/\.json$/, ''),
         snapshot: {
           diagram: envelope.diagram,
-          detailsDrafts: envelope.detailsDrafts,
+          noteDrafts: envelope.noteDrafts,
           noteBaselines: envelope.noteBaselines
         }
       })
@@ -196,10 +205,10 @@ export function registerRecoveryHandlers(): void {
       path: string | null,
       sessionId: string,
       diagram: DiagramFile,
-      detailsDrafts: Record<string, string>,
+      noteDrafts: Record<string, string>,
       noteBaselines?: Record<string, NoteBaseline>
     ) => {
-      await writeRecoverySnapshot(path, sessionId, diagram, detailsDrafts, noteBaselines)
+      await writeRecoverySnapshot(path, sessionId, diagram, noteDrafts, noteBaselines)
     }
   )
 

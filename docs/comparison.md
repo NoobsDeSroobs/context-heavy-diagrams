@@ -214,10 +214,10 @@ These are the honest gaps, roughly in the order they are likely to matter.
 
 1. **Getting diagrams into wikis and documentation.** The exports are PNG and SVG, and SVG can be made from the command line. PDF export, a PNG from the command line, and an export to the open JSON Canvas format (so a diagram can open in Obsidian) would close most of this.
 2. **Importing.** There is no import from other tools, so moving an existing diagram in means redrawing it. This can be alleviated by using AI to redraw things.
-3. **Layout.** Everything is placed by hand, by your hand or your AI assistant's. There is no automatic layout.
+3. **Layout.** Everything is placed by hand, by your hand or your AI assistant's. This is a stance as much as a gap: positions are the person's job, and the file keeps them stable so a small edit stays a small diff in git. The cost is that a diagram an assistant generates needs a person to tidy the layout. There is no automatic layout; one limited to new or AI-written elements is parked ([epic 0126](planning/epics/later/0126-auto-layout.md)) until it can be done without disturbing hand-laid diagrams.
 4. **Shapes and notation.** Entities, containers, text and lines, with icons, but no large shape or template libraries and no BPMN or ArchiMate stencils.
 5. **Data and integrations.** There is no shared model across diagrams beyond tags and search, and no connection to a CMDB, cloud accounts or ticket trackers. This is a bit by design.
 6. **Collaboration and sharing.** Nothing beyond git, and no web view for a reader who does not have the app. Should be fairly straightforward to implement, but not seen as a priority.
-7. **Release state.** An early open-source release: no installers are published, it is built and tested mainly on Windows, Linux and macOS are not yet verified, and it has one maintainer.
+7. **Release state.** An early open-source release: the only installer is an unsigned one for Windows, it is built and tested mainly on Windows, Linux and macOS are not yet verified, and it has one maintainer.
 
 Some of these are planned (see [the planning documents](planning/README.md)). Real-time collaboration and a formal metamodel are deliberate non-goals: the tool stays a flexible drawing tool, and leaves model-driven work to the platforms above.

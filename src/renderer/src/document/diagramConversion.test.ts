@@ -61,7 +61,7 @@ const fixture = (): DiagramFile => ({
       data: {
         label: 'A',
         icons: { topLeft: { source: 'builtin', id: 'user' } },
-        details: 'details/a.md',
+        notes: 'notes/a.md',
         linkedDiagram: 'a/child.chd',
         references: ['assets/references/one.png'],
         security: { t1: { probability: 2, consequence: 3 } }

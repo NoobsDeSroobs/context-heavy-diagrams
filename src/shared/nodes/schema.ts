@@ -45,7 +45,7 @@ export interface DiagramNode {
   parentId?: string
   // Blocks drag/resize/rotate and accidental delete via this app's own UI
   // — not a read-only mode, every other edit (style, tags, label,
-  // connection points, details) stays allowed. Not meaningful on edges (no
+  // connection points, notes) stays allowed. Not meaningful on edges (no
   // position of their own to accidentally relocate). Absent means unlocked.
   locked?: boolean
   style?: NodeStyle
@@ -55,7 +55,9 @@ export interface DiagramNode {
   data: {
     label: string
     icons?: Partial<Record<IconSlot, IconRef>>
-    details?: string
+    // The element's note: a relative path to a Markdown file (ADR 0140). parseDiagram reads the
+    // older name `details` as this field.
+    notes?: string
     linkedDiagram?: string
     // 'line' nodes only — see LinePoint/ADR 0050. Node-local coordinates
     // (relative to `position`, like a container child's own position),
@@ -64,7 +66,7 @@ export interface DiagramNode {
     points?: LinePoint[]
     // Reference images (see ADR 0069) — 'entity'/'container' only.
     // Ordered list of relative paths (from this diagram file's own dir,
-    // same convention as `details`) to files under the sibling
+    // same convention as `notes`) to files under the sibling
     // assets/references/ folder. Pure working aid: shown only in floating
     // viewer panels the user opens/closes, never rendered on the canvas
     // and never included in exports. Absent/empty means none.

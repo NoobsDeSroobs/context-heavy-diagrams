@@ -1,5 +1,5 @@
 // Run with `npm test` (Node's built-in runner; TypeScript is type-stripped).
-// Covers parseDiagram's legacy-field normalization (Shape -> Entity rename) — every other DiagramFile concern is exercised through the app
+// Covers parseDiagram's legacy-field normalization (Shape -> Entity rename, details -> notes) — every other DiagramFile concern is exercised through the app
 // itself, not unit-tested here.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
@@ -68,4 +68,35 @@ test('serializeDiagram never writes the legacy names, even for a freshly-normali
   assert.ok(!out.includes('"shape"'))
   assert.ok(out.includes('matrixEntityIds'))
   assert.ok(!out.includes('matrixShapeIds'))
+})
+
+const noteNode = (data) => ({ id: 'n1', type: 'entity', position: { x: 0, y: 0 }, data })
+
+test('a note path stored as details is read as notes', () => {
+  const file = parseDiagram(
+    minimal({ nodes: [noteNode({ label: 'A', details: 'd/details/a.md' })] })
+  )
+  assert.equal(file.nodes[0].data.notes, 'd/details/a.md')
+  assert.ok(!('details' in file.nodes[0].data))
+})
+
+test('notes wins when a node has both notes and details', () => {
+  const file = parseDiagram(
+    minimal({ nodes: [noteNode({ label: 'A', notes: 'n/a.md', details: 'd/a.md' })] })
+  )
+  assert.equal(file.nodes[0].data.notes, 'n/a.md')
+  assert.ok(!('details' in file.nodes[0].data))
+})
+
+test('a file saved after reading details writes notes only', () => {
+  const out = serializeDiagram(
+    parseDiagram(minimal({ nodes: [noteNode({ label: 'A', details: 'd/details/a.md' })] }))
+  )
+  assert.ok(out.includes('"notes": "d/details/a.md"'))
+  assert.ok(!out.includes('"details"'))
+})
+
+test('a node without a note gets neither key', () => {
+  const file = parseDiagram(minimal({ nodes: [noteNode({ label: 'A' })] }))
+  assert.ok(!('notes' in file.nodes[0].data))
 })

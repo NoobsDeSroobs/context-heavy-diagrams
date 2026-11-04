@@ -4,9 +4,9 @@ import {
   type ChangesSinceSave
 } from '@shared/document/changesSinceSave'
 
-// An element with unsaved Details content — sourced from noteShadows'
+// An element with unsaved Note content — sourced from noteShadows'
 // existing dirty flag (ADR 0092), not a new tracking mechanism. See ADR 0102.
-export interface DetailsChangedEntry {
+export interface NotesChangedEntry {
   nodeId: string
   label: string
 }
@@ -14,7 +14,7 @@ export interface DetailsChangedEntry {
 interface ChangesPanelProps {
   // null while the first diff hasn't resolved yet (the reread IPC is async).
   diff: ChangesSinceSave | null
-  detailsChanged: DetailsChangedEntry[]
+  notesChanged: NotesChangedEntry[]
   // True when currentPath is null — comparing against an empty diagram
   // rather than a file on disk (never saved yet).
   neverSaved: boolean
@@ -153,7 +153,7 @@ function Section({
 // deliberate fast-follow, not shown here.
 export default function ChangesPanel({
   diff,
-  detailsChanged,
+  notesChanged,
   neverSaved,
   onRefresh,
   onReveal,
@@ -165,13 +165,13 @@ export default function ChangesPanel({
     diff.added.length === 0 &&
     diff.removed.length === 0 &&
     diff.modified.length === 0 &&
-    detailsChanged.length === 0
+    notesChanged.length === 0
 
   return (
     <div className="changes-panel">
       <div className="diagnostics-panel-toolbar">
         <span className="diagnostics-panel-title">Changes since last save</span>
-        <div className="details-panel-spacer" />
+        <div className="notes-panel-spacer" />
         <button type="button" onClick={onRefresh}>
           Refresh
         </button>
@@ -208,11 +208,11 @@ export default function ChangesPanel({
             />
           </>
         )}
-        {detailsChanged.length > 0 && (
+        {notesChanged.length > 0 && (
           <div className="changes-section">
-            <p className="diagnostics-section-title">Notes changed ({detailsChanged.length})</p>
+            <p className="diagnostics-section-title">Notes changed ({notesChanged.length})</p>
             <ul className="changes-row-list">
-              {detailsChanged.map((d) => (
+              {notesChanged.map((d) => (
                 <li key={d.nodeId} className="changes-row">
                   <button
                     type="button"

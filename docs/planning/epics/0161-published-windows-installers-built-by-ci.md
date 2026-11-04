@@ -1,7 +1,7 @@
 # 0161: Published Windows installers, built by CI on a version tag
 
 ## Status
-In Progress. v0.4.0 was tagged and the workflow built and published its release. The epic is done when the installer passes a clean-machine test; the other open tasks below are follow-ups.
+In Progress. v0.4.0 was tagged and the workflow built and published its release. The installer passed a clean-machine test on 2026-11-03; the open tasks below are follow-ups.
 
 ## Goal
 Anyone can download a Windows installer for each released version from the repository's releases page, without Node, git or a build. The installer is built by a GitHub Actions workflow when the maintainer pushes a version tag, so the file on the page is the one built from that tagged commit.
@@ -42,7 +42,8 @@ Permissions: the workflow gets `contents: write` only in the release job, and no
 - [ ] Check the licence and notices are inside the installer and the release notes point to the tagged source
 - [x] README: a Download section above build-from-source; first-run SmartScreen steps and the checksum
 - [x] Update `docs/architecture/packaging.md` (the CI path) and the stale line in `CLAUDE.md` that said no installers are made yet
-- [ ] Put the first installer through a clean-machine test (no Node, no repo) before announcing it
+- [x] Put the first installer through a clean-machine test (no Node, no repo) before announcing it (2026-11-03, v0.4.0: install, first run, save and reopen, association, `chd`, uninstall; no problems)
+- [ ] Let the person choose the install folder (`allowToChangeInstallationDirectory` is `false` today). Check what assumes the default: the `chd` launcher, `install-options.json`, the uninstaller and the association
 
 ## Notes
 Raised after 0.3.0 was released. This is the missing piece for [0160](0160-readme-and-docs-from-outside-feedback.md), whose audience cannot build from source.

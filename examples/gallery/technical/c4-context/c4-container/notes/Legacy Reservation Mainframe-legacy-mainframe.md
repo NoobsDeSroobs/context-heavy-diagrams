@@ -4,7 +4,7 @@ The system the Ticketing & Booking Platform is replacing. Still authoritative fo
 
 ## Role today
 
-Holds the current seat/reservation inventory and historical booking records going back decades. Point-to-point integrated with several other legacy systems not shown at this level — see epic 0022 entry #1, the as-is landscape diagram, once built, for the fuller picture of what this system currently touches.
+Holds the current seat/reservation inventory and historical booking records going back decades. Point-to-point integrated with several other legacy systems not shown at this level — see the Meridian Rail landscape diagram for the fuller picture of what this system currently touches.
 
 ## Planned end state
 

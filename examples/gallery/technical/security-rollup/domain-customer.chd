@@ -47,7 +47,7 @@
         "fontFamily": "sans-serif"
       },
       "data": {
-        "label": "EXAMPLE (mid) — Customer Management services. Layer 2 of the security-rollup demo.\nOpen the Security Matrix persona. Identity Service and Profile Service are 🔗 derived columns — greyed, read-only, rolled up from their linked leaf diagrams; click a cell for the breakdown. Notification Service is assessed directly (no linked diagram).\nThe leaf 'Identity Service' also assesses 'Insider misuse', which isn't in this catalog — it shows up as a note under the completeness banner, not as a row."
+        "label": "Customer Management services (layer 2 of the security rollup demo).\nOpen the Security Matrix persona. Identity Service and Profile Service are 🔗 derived columns — greyed, read-only, rolled up from their linked leaf diagrams; click a cell for the breakdown. Notification Service is assessed directly (no linked diagram).\nThe leaf 'Identity Service' also assesses 'Insider misuse', which isn't in this catalog — it shows up as a note under the completeness banner, not as a row."
       }
     },
     {

@@ -2,6 +2,14 @@
 
 What changed for people using the tool, one entry per minor or major release. The reasons are in [docs/decisions/](docs/decisions/); the full history is in `git log`.
 
+## 0.5.0 (2026-11-03)
+
+### Changed
+- **A note is called a note all the way down.** The Markdown file behind an element was already **Open note** in the menus; the file, the folder and the command line now use the same word. New notes are created in a `notes` folder next to the diagram, and the AI instructions, the skill and the Claude Desktop extension write `notes`. ([ADR 0140](docs/decisions/0140-the-markdown-files-behind-an-element-are-called-notes.md))
+
+### File format
+- **`data.details` is now `data.notes`.** Older files open unchanged: `details` is read as `notes` and becomes `notes` on the next save, which also moves the note files from the `details` folder into `notes` and removes the folder once it is empty. In a repository that save shows as renames. The reverse does not hold: a version before 0.5.0 ignores `notes` and drops the link to a note when it saves a file that has one, so update before opening such files in an older version. ([docs/file-format.md](docs/file-format.md))
+
 ## 0.4.0 (2026-11-03)
 
 ### Added

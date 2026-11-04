@@ -329,7 +329,7 @@ export default function StylePalettePanel({
     <div className="required-tags-panel">
       <div className="required-tags-panel-toolbar">
         <span className="required-tags-panel-title">Style Palette</span>
-        <div className="details-panel-spacer" />
+        <div className="notes-panel-spacer" />
         <button type="button" onClick={handleExport} disabled={activeEmpty}>
           Export…
         </button>

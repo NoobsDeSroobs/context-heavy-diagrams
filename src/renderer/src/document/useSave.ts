@@ -14,7 +14,7 @@ import {
   type SaveOutcome,
   type Stamp
 } from '@shared/document/documentSave'
-import { derivedDetailsPath } from '@shared/details/detailPaths'
+import { derivedNotesPath } from '@shared/notes/notePaths'
 import type {
   DiagramFile,
   DiagramSecurity,
@@ -29,7 +29,7 @@ import { showAlert } from '../ui/alerts'
 import type { CanvasApi } from '../canvas/canvasApi'
 import { applyMissingFileRemoval } from '../diagnostics/resourceRefs'
 import type { MissingFileEntry } from '../diagnostics/DiagnosticsPanel'
-import { detailsNoteName } from '../details/detailsLabels'
+import { noteName } from '../notes/notesLabels'
 import type { ReferenceWindowEntry } from '../references/useReferences'
 import { askConflictResolution, type ConflictItem } from './conflictPrompt'
 import { toDiagramFile } from './diagramConversion'
@@ -79,7 +79,7 @@ export interface SaveState {
   performSaveNow: (nodesToSave: Node[], currentPathNow: string | null) => Promise<string | null>
 }
 
-// Saving the diagram and the detail notes it owns (ADR 0092).
+// Saving the diagram and the notes it owns (ADR 0092).
 export function useSave(
   { setNodes, currentPath }: CanvasApi,
   {
@@ -119,7 +119,7 @@ export function useSave(
   const [showSavedFlash, setShowSavedFlash] = useState(false)
   const savedFlashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Saves the diagram and the detail notes it owns as one operation (ADR 0092) and syncs canvas
+  // Saves the diagram and the notes it owns as one operation (ADR 0092) and syncs canvas
   // state to what was written. It is the one place a diagram is persisted, so every save-adjacent
   // flow (manual save, link creation, forward link navigation) goes through it.
   //
@@ -148,14 +148,14 @@ export function useSave(
       const newLocation = baseline.path !== path
       const notes: PlanNoteInput[] = []
       for (const n of savedNodes) {
-        const nodeDetailsPath = typeof n.data?.details === 'string' ? n.data.details : null
+        const nodeNotesPath = typeof n.data?.notes === 'string' ? n.data.notes : null
         const shadow = noteShadows[n.id]
-        if (nodeDetailsPath === null && !shadow) continue
+        if (nodeNotesPath === null && !shadow) continue
         const label = typeof n.data?.label === 'string' ? n.data.label : ''
         notes.push({
           nodeId: n.id,
-          desiredPath: derivedDetailsPath(path, n.id, label),
-          nodeDetailsPath,
+          desiredPath: derivedNotesPath(path, n.id, label),
+          nodeNotesPath,
           shadow
         })
       }
@@ -169,10 +169,10 @@ export function useSave(
       const withPaths = (list: Node[], paths: Record<string, string | null>): Node[] =>
         list.map((n) => {
           const p = paths[n.id]
-          if (p === undefined || (n.data?.details ?? null) === p) return n
+          if (p === undefined || (n.data?.notes ?? null) === p) return n
           const data = { ...n.data }
-          if (p === null) delete data.details
-          else data.details = p
+          if (p === null) delete data.notes
+          else data.notes = p
           return { ...n, data }
         })
       savedNodes = withPaths(savedNodes, plan.finalPaths)
@@ -297,7 +297,7 @@ export function useSave(
             : {
                 key: c.nodeId ?? '',
                 kind: 'note',
-                label: detailsNoteName(savedNodes.find((n) => n.id === c.nodeId))
+                label: noteName(savedNodes.find((n) => n.id === c.nodeId))
               }
         )
         const decisions = await askConflictResolution(items)
@@ -311,7 +311,7 @@ export function useSave(
             delete sentContent[id] // my text is being discarded, never recorded as saved
             const shadow = noteShadows[id]
             if (!shadow || shadow.originalPath === null) continue
-            const disk = await window.api.readDetailsWithStamp(path, shadow.originalPath)
+            const disk = await window.api.readNotesWithStamp(path, shadow.originalPath)
             setNoteShadows((prev) =>
               prev[id] ? { ...prev, [id]: adoptDisk(prev[id], disk.content, disk.stamp) } : prev
             )

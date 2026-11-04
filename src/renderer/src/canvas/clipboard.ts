@@ -79,13 +79,13 @@ export function parseClipboardPayload(text: string): ClipboardPayload | null {
 // diagram; ADR 0049). Connection point ids are left alone: they are only looked up together with
 // their owning node's id, so two nodes both having a "cp-3" is normal, not a collision.
 //
-// A node's four resource-path fields (`linkedDiagram`, `details`, a custom `icons[slot].path`, each
+// A node's four resource-path fields (`linkedDiagram`, `notes`, a custom `icons[slot].path`, each
 // entry of `references`) are stored relative to the diagram file that owns them
 // (docs/file-format.md, "Linking and file organization"). Paste never copies or moves the file a
 // path points at, so it can't make a broken reference resolve; whether a paste should share, fork
 // or drop those files is the user's call. What it can do safely: when a path starts with the source
 // diagram's own name, the default home for a diagram's resources (`<diagram-name>/assets/...`,
-// `<diagram-name>/details/...`, a new `<diagram-name>/<child>.chd`; see
+// `<diagram-name>/notes/...`, a new `<diagram-name>/<child>.chd`; see
 // linkPaths.ts/links.ts/icons.ts), that leading segment is relabelled to the destination diagram's
 // name. The file hasn't moved, so the path is exactly as unresolved as before and Diagnostics (ADR
 // 0084) flags it either way; but if the user then copies the file into the new diagram's own
@@ -120,7 +120,7 @@ function retargetNodeData(
     retargetResourcePath(p, sourceDiagramBaseName, destDiagramBaseName)
   const next = { ...data }
   if (typeof next.linkedDiagram === 'string') next.linkedDiagram = retarget(next.linkedDiagram)
-  if (typeof next.details === 'string') next.details = retarget(next.details)
+  if (typeof next.notes === 'string') next.notes = retarget(next.notes)
   const icons = next.icons as Partial<Record<IconSlot, IconRef>> | undefined
   if (icons) {
     next.icons = Object.fromEntries(

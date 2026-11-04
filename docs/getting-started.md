@@ -33,7 +33,7 @@ Tags and other key-value metadata are in the **Metadata** section of the propert
 
 ## 4. Link a deeper diagram
 
-Right-click an element and choose **Link to diagram…** to point it at another `.chd` file. Ctrl-click the element to follow the link; if it has none, Ctrl-click offers to create and link a new diagram. Links point downward only, so any diagram in a tree can be opened on its own as a root. Hold Ctrl while hovering an element to peek at its details, tags and link without opening anything.
+Right-click an element and choose **Link to diagram…** to point it at another `.chd` file. Ctrl-click the element to follow the link; if it has none, Ctrl-click offers to create and link a new diagram. Links point downward only, so any diagram in a tree can be opened on its own as a root. Hold Ctrl while hovering an element to peek at its note, tags and link without opening anything.
 
 ## 5. See the picture from different angles
 
@@ -51,7 +51,7 @@ Right-click an element and choose **Link to diagram…** to point it at another 
 
 ## 7. Working with an AI assistant
 
-The **AI** menu sets up a folder so an assistant such as Claude can read and edit diagrams safely: copy-paste instructions for a plain chat, a skill and `AGENTS.md` for agents working in a folder, and a local extension for Claude Desktop. Anything an assistant reads is sent to its provider. See [ai-integration.md](architecture/ai-integration.md).
+The **AI** menu sets up a folder so an assistant such as Claude can read and edit diagrams safely: copy-paste instructions for a plain chat, a skill and `AGENTS.md` for agents working in a folder, and a local extension for Claude Desktop. Anything an assistant reads is sent to its provider. Treat what it produces as a draft: ask it to tell you what it changed, then review with **View → Changes → Compare with git revision…** or `chd diff`, and expect to tidy the layout yourself. A sample prompt for turning existing text into a diagram is in the [README](../README.md#draft-with-an-assistant-then-review). See [ai-integration.md](architecture/ai-integration.md).
 
 ## Where next
 

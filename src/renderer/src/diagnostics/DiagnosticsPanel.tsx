@@ -4,7 +4,7 @@ import type { ConformanceState } from '../conformance/useConformance'
 
 // One diagram element (node, or a legend entry) that references a file on
 // disk which no longer resolves — a linked diagram, a custom icon, a
-// reference image, or a details `.md`. See ADR 0084. Computed in Canvas
+// reference image, or a note `.md`. See ADR 0084. Computed in Canvas
 // (an async fs check via IPC), passed in here.
 export interface MissingFileEntry {
   // Stable key for React + the action dispatch back in Canvas.
@@ -15,7 +15,7 @@ export interface MissingFileEntry {
   ownerLabel: string
   // Node type ('entity' | 'container' | 'text' | …) or 'legend'.
   ownerType: string
-  resourceKind: 'linkedDiagram' | 'icon' | 'reference' | 'details'
+  resourceKind: 'linkedDiagram' | 'icon' | 'reference' | 'notes'
   // The stored relative path.
   relativePath: string
   // Absolute path it was looked for at — the error detail.
@@ -28,7 +28,7 @@ const RESOURCE_LABEL: Record<MissingFileEntry['resourceKind'], string> = {
   linkedDiagram: 'Linked diagram',
   icon: 'Icon',
   reference: 'Reference image',
-  details: 'Note file'
+  notes: 'Note file'
 }
 
 // Which kinds have a "pick a replacement" flow (a file dialog). The others
@@ -70,7 +70,7 @@ function OwnerLabel({ mf }: { mf: MissingFileEntry }): React.JSX.Element {
   )
 }
 
-// Fixed right-side dock, same shell and toggle model as DetailsPanel/RequiredTagsPanel (ADR 0013).
+// Fixed right-side dock, same shell and toggle model as NotesPanel/RequiredTagsPanel (ADR 0013).
 // `entries` is a plain text list (first used for required-tags backfill notices, ADR 0022) so any
 // unrelated diagram-health check can reuse it without a shape change (the legend-empty advisory
 // does). The "Missing files" section (ADR 0084) is the first check needing per-row controls, so it
@@ -99,7 +99,7 @@ export default function DiagnosticsPanel({
     <div className="diagnostics-panel">
       <div className="diagnostics-panel-toolbar">
         <span className="diagnostics-panel-title">Diagnostics</span>
-        <div className="details-panel-spacer" />
+        <div className="notes-panel-spacer" />
         <button type="button" onClick={onRecheck}>
           Recheck
         </button>

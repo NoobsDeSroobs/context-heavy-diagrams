@@ -1,7 +1,7 @@
 import { Children, type ReactNode } from 'react'
 
 // Outer-level dock, sibling of the canvas view (ADR 0013). Holds content that is about the diagram
-// but isn't editing it: `DetailsPanel`/`RequiredTagsPanel`/`DiagnosticsPanel` today, and a slot for
+// but isn't editing it: `NotesPanel`/`RequiredTagsPanel`/`DiagnosticsPanel` today, and a slot for
 // future non-editing features. Zero width when empty, and renders nothing (not even the wrapper
 // div) so it never claims layout space.
 //

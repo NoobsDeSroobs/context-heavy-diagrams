@@ -33,7 +33,7 @@ export interface LinkedSearchDeps {
   // before it spends a file read on anything.
   matchNode(node: DiagramNode): boolean
   matchEdge(edge: DiagramEdge): boolean
-  // Costlier tier: does the node's details note match? `diagramPath` is the
+  // Costlier tier: does the node's note match? `diagramPath` is the
   // diagram the node lives in — its notes resolve relative to that.
   matchNodeNote(node: DiagramNode, diagramPath: string): Promise<boolean>
 }

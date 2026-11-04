@@ -21,7 +21,7 @@ import {
 } from '@shared/compare/match'
 import DiagramContext, { type DiagramContextValue } from '../canvas/DiagramContext'
 import { DEFAULT_EDGE_OPTIONS, edgeTypes, nodeTypes } from '../canvas/flowTypes'
-import { useDetailsPeek } from '../details/useDetailsPeek'
+import { useNotesPeek } from '../notes/useNotesPeek'
 import { fromDiagramFile } from '../document/diagramConversion'
 import EdgeMarkerDefs from '../edges/edgeMarkers'
 import { effectiveStylePalette } from '@shared/preferences/preferences'
@@ -52,7 +52,7 @@ function useReadOnlyContext(diagramPath: string | null): DiagramContextValue {
       openContextMenu: noop,
       openIconPicker: noop,
       openColorPicker: noop,
-      openDetailsPanel: noop,
+      openNotesPanel: noop,
       openReferencesFor: noop,
       openReferenceWindow: noop,
       addReferencesToNode: noop,
@@ -147,7 +147,7 @@ function CompareCanvas({
   const { theme } = useTheme()
   const { preferences } = useReadOnlyPreferences()
   const context = useReadOnlyContext(session.diagramPath)
-  const { peek, bindings } = useDetailsPeek()
+  const { peek, bindings } = useNotesPeek()
   const [showRestyled, setShowRestyled] = useState(true)
   const [edgePointer, setEdgePointer] = useState({ x: 0, y: 0 })
   const [showList, setShowList] = useState(true)
@@ -348,7 +348,7 @@ export default function CompareView(): React.JSX.Element {
             matches ? applyIdMatches(session.base, matches) : session.base,
             session.next,
             {
-              detailsContent: new Map(Object.entries(session.detailsContent ?? {}))
+              notesContent: new Map(Object.entries(session.notesContent ?? {}))
             }
           )
         : null,

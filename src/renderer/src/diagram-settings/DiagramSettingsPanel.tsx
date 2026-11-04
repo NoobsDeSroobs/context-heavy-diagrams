@@ -118,7 +118,7 @@ export default function DiagramSettingsPanel({
     <div className="required-tags-panel diagram-settings-panel">
       <div className="required-tags-panel-toolbar">
         <span className="required-tags-panel-title">Diagram settings</span>
-        <div className="details-panel-spacer" />
+        <div className="notes-panel-spacer" />
         <button type="button" title="Close" aria-label="Close" onClick={onClose}>
           ✕
         </button>

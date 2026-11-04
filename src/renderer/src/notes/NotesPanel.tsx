@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
-interface DetailsPanelProps {
+interface NotesPanelProps {
   title: string
   content: string
   onChange: (content: string) => void
@@ -15,12 +15,12 @@ type Mode = 'edit' | 'preview'
 // formatting toolbar (bold/italic/heading/bullet), not a rich editor, per
 // the brief's own framing: most substantial edits happen in an external
 // editor, this is just enough to jot something down without leaving the app.
-export default function DetailsPanel({
+export default function NotesPanel({
   title,
   content,
   onChange,
   onClose
-}: DetailsPanelProps): React.JSX.Element {
+}: NotesPanelProps): React.JSX.Element {
   const [mode, setMode] = useState<Mode>('preview')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -52,13 +52,13 @@ export default function DetailsPanel({
   }
 
   return (
-    <div className="details-panel">
-      <div className="details-panel-toolbar">
-        <span className="details-panel-title" title={title}>
+    <div className="notes-panel">
+      <div className="notes-panel-toolbar">
+        <span className="notes-panel-title" title={title}>
           {title}
         </span>
         {mode === 'edit' && (
-          <div className="details-panel-format-buttons">
+          <div className="notes-panel-format-buttons">
             <button type="button" title="Bold" onClick={() => wrapSelection('**')}>
               <strong>B</strong>
             </button>
@@ -73,7 +73,7 @@ export default function DetailsPanel({
             </button>
           </div>
         )}
-        <div className="details-panel-spacer" />
+        <div className="notes-panel-spacer" />
         <button type="button" onClick={() => setMode(mode === 'edit' ? 'preview' : 'edit')}>
           {mode === 'edit' ? 'Preview' : 'Edit'}
         </button>
@@ -81,18 +81,18 @@ export default function DetailsPanel({
           ✕
         </button>
       </div>
-      <div className="details-panel-body">
+      <div className="notes-panel-body">
         {mode === 'edit' ? (
           <textarea
             ref={textareaRef}
-            className="details-panel-textarea"
+            className="notes-panel-textarea"
             dir="auto"
             value={content}
             onChange={(event) => onChange(event.target.value)}
             placeholder="Notes about this node — purpose, integration type, inputs/outputs, anything worth writing down."
           />
         ) : (
-          <div className="details-panel-preview" dir="auto">
+          <div className="notes-panel-preview" dir="auto">
             {/* remark-gfm: tables, strikethrough, task lists — react-markdown
                 is CommonMark-only without it (see known-issues.md). */}
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>

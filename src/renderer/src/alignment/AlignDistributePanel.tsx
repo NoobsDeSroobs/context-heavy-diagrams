@@ -24,7 +24,7 @@ export default function AlignDistributePanel({
     <div className="align-distribute-panel">
       <div className="align-distribute-panel-toolbar">
         <span className="align-distribute-panel-title">Align / Distribute</span>
-        <div className="details-panel-spacer" />
+        <div className="notes-panel-spacer" />
         <button type="button" title="Close" aria-label="Close" onClick={onClose}>
           ✕
         </button>
