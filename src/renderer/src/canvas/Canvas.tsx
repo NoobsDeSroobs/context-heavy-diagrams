@@ -66,6 +66,8 @@ import DiagramSettingsPanel from '../diagram-settings/DiagramSettingsPanel'
 import { effectiveGravityPresets } from '../nodes/lineGravityPresets'
 import EdgeMarkerDefs from '../edges/edgeMarkers'
 import { useModifierHeldClass } from '../edges/useModifierHeldClass'
+import { usePrefersReducedMotion } from '../edges/usePrefersReducedMotion'
+import { edgeAnimationIsOn } from '@shared/preferences/preferences'
 import DiagramContext, { type DiagramContextValue } from './DiagramContext'
 import ContextMenu, { type ContextMenuItem } from '../ui/ContextMenu'
 import IconPicker from '../icons/IconPicker'
@@ -251,10 +253,14 @@ function CanvasInner(): React.JSX.Element {
   // Deliberately not reset by loadDiagramIntoCanvas below; only the panel's
   // open/closed UI state is.
   const { preferences, updatePreferences } = usePreferences()
-  // View -> Animate edges and its shortcut (ADR 0141): the Animate edges preference, flipped.
+  // Whether animated edges move (ADR 0141): the person's choice if they made one, else what the
+  // system's reduced-motion setting says. View -> Animate edges and its shortcut make an explicit
+  // choice, the opposite of what is drawn now.
+  const systemReducesMotion = usePrefersReducedMotion()
+  const edgeAnimationOn = edgeAnimationIsOn(preferences.animateEdges, systemReducesMotion)
   const toggleEdgeAnimation = useCallback(
-    () => updatePreferences({ animateEdges: !preferences.animateEdges }),
-    [updatePreferences, preferences.animateEdges]
+    () => updatePreferences({ animateEdges: edgeAnimationOn ? 'off' : 'on' }),
+    [updatePreferences, edgeAnimationOn]
   )
   useModifierHeldClass()
   // What is drawn: the diagram's font, else the personal default (ADR 0130).
@@ -3086,6 +3092,7 @@ function CanvasInner(): React.JSX.Element {
     toggleReferencesPanel,
     toggleStylePalettePanel,
     toggleEdgeAnimation,
+    edgeAnimationOn,
     toggleDiagramSettingsPanel,
     togglePreferencesPanel,
     setCommandPaletteOpen,
@@ -3194,7 +3201,7 @@ function CanvasInner(): React.JSX.Element {
       {/* Outer app shell: [canvas view [diagram dock]] [utility dock], nested
           not flat — see ADR 0013. */}
       <div className="app-shell">
-        <div className={`canvas-view${preferences.animateEdges ? '' : ' edges-still'}`}>
+        <div className={`canvas-view${edgeAnimationOn ? '' : ' edges-still'}`}>
           <div className="toolbar">
             <MenuBar menus={menus} />
             {/* Persona selector sits after the File/Edit/View/Help menus, not

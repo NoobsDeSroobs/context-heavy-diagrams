@@ -102,19 +102,11 @@
   }
 }
 
-/* Nothing moves for people who asked their system for less motion, with Animate edges off (View
-   menu or Preferences; Canvas.tsx puts .edges-still on the canvas), or in the compare window, which
-   is a still review of two versions. The line stays dashed or plain; a pulse is hidden. */
-@media (prefers-reduced-motion: reduce) {
-  .edge-flow,
-  .edge-pulse {
-    animation: none;
-  }
-  .edge-pulse {
-    display: none;
-  }
-}
-
+/* Nothing moves with Animate edges off, or on "Follow the system" when the system asks for reduced
+   motion; Canvas.tsx decides that (ADR 0141) and puts .edges-still on the canvas. The person's own
+   choice of "Always on" wins over the system, which also reports reduced motion in a Remote Desktop
+   session and in many virtual machines, so there is no media query here. The compare window is a
+   still review of two versions and never moves. The line stays dashed or plain; a pulse is hidden. */
 .compare-canvas .edge-flow,
 .compare-canvas .edge-pulse,
 .edges-still .edge-flow,
@@ -127,10 +119,10 @@
   display: none;
 }
 
-/* With Animate edges off, holding Ctrl (Cmd on a Mac) over an edge still shows it moving, the way
-   holding it over an element shows its note (ADR 0093). useModifierHeldClass puts .mod-held on the
-   page while the key is down; the edge is the hovered <g class="react-flow__edge">, whose hit path
-   is part of it. Reduced motion still wins: it is the system's request, not a preference of ours. */
+/* While still, holding Ctrl (Cmd on a Mac) over an edge shows it moving, the way holding it over an
+   element shows its note (ADR 0093). useModifierHeldClass puts .mod-held on the page while the key
+   is down; the edge is the hovered <g class="react-flow__edge">, whose hit path is part of it. A
+   deliberate, momentary request, so it also applies when the system asks for reduced motion. */
 .mod-held .edges-still .react-flow__edge:hover .edge-flow,
 .mod-held .edges-still .react-flow__edge:hover .edge-pulse {
   animation: edge-flow var(--edge-flow-duration) linear infinite var(--edge-flow-direction, normal);
@@ -138,16 +130,6 @@
 
 .mod-held .edges-still .react-flow__edge:hover .edge-pulse {
   display: inline;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .mod-held .edges-still .react-flow__edge:hover .edge-flow,
-  .mod-held .edges-still .react-flow__edge:hover .edge-pulse {
-    animation: none;
-  }
-  .mod-held .edges-still .react-flow__edge:hover .edge-pulse {
-    display: none;
-  }
 }
 
 .edge-label-text {

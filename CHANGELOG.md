@@ -2,6 +2,11 @@
 
 What changed for people using the tool, one entry per minor or major release. The reasons are in [docs/decisions/](docs/decisions/); the full history is in `git log`.
 
+## 0.5.1 (2026-11-04)
+
+### Fixed
+- **Animated edges did not move at all on a computer that asks for reduced motion,** whatever **Animate edges** was set to, and holding Ctrl over an edge did nothing either. Windows reports reduced motion when "Animation effects" is off, and also in a Remote Desktop session and in many virtual machines. **Animate edges** is now **Follow the system** (the default), **Always on** or **Always off**, and your own choice wins over the system: **View → Animate edges** (Ctrl+Shift+A) makes one, and holding Ctrl over an edge while it is still shows it moving. A computer that asks for reduced motion still starts with animation off, and you turn it on once. ([ADR 0141](docs/decisions/0141-animated-edges-are-an-edge-style-field.md), [known issues](docs/known-issues.md))
+
 ## 0.5.0 (2026-11-04)
 
 ### Added

@@ -786,3 +786,17 @@ Fixed by the paste rework described under "Pasting a copied child-of-a-container
 **Cause:** the handles are React Flow's default size in flow units, so on screen they shrink with the zoom (at 0.2 a 6 px handle is about 1 px). `connectionRadius` is in flow units too, so the snap radius shrank the same way.
 
 **Resolution:** the handle size is `max(6px, 10px / zoom)` from a `--canvas-zoom` CSS variable, and `connectionRadius` grows in steps as the zoom falls.
+
+---
+
+## Animated edges did not move on a computer that asks for reduced motion
+
+**Status:** Solved (2026-11-04), [ADR 0141](decisions/0141-animated-edges-are-an-edge-style-field.md)
+
+**Symptom:** on one computer, edges set to Flow or Pulse never moved, with Animate edges on or off, and holding Ctrl over an edge did nothing. On the maintainer's main computer the same file moved.
+
+**Cause:** the stylesheet switched animation off under `prefers-reduced-motion: reduce`, with no way to override it. Chromium reports that when Windows has "Animation effects" off, and also in a Remote Desktop session and in many virtual machines, where it reflects the environment and not a wish. The Ctrl-hover reveal was behind the same rule. It was found by emulating the media feature in the packaged app: reduced motion on gave no movement whatever the preference said, off gave the expected result.
+
+**Resolution:** the system setting is only the default. The preference is `system`, `on` or `off`, `on` and `off` win over the system, and the Ctrl-hover reveal ignores the system setting. The old boolean is read as `off` for `false` and `system` for `true`.
+
+**Notes:** the first report looked like the Animate edges preference being off (a recent write had set it) and, in the dev app, a stale hot reload after switching branches; both were real possibilities and neither was the cause. A preference that defaults to true is written back with every other preference, so a stored default cannot be told from a choice.
