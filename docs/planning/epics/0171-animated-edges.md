@@ -17,10 +17,13 @@ Let an edge be animated (movement along the line, from the source end to the tar
 - [x] Controls: `animationSpeed` (a multiplier, 0.1 to 10) and `animationDirection` (forward or reverse) per edge, shown in the panel only while an edge is animated, copied by the brush; setting None removes both
 - [x] One global switch: the **Animate edges** preference (on by default) draws every animated edge still; a class on the canvas, so no edge re-renders
 - [ ] Not done, to decide: a View-menu toggle or shortcut for the switch, animating only the selected or hovered edge, a per-pulse count or size, speed in the legend
-- [ ] Look at it in the app (see Notes): speed, the dot's size and colour, a selected edge, step and curved routing, a dashed and a dotted line, switching the direction set, light and dark theme
+- [x] Looked at in the running app (2026-11-04, over the DevTools protocol): flow and pulse draw, the loop times match the speed (flow 0.49 s at speed 1, 0.98 s at 0.5; pulse halves at 2), reverse runs the other way, and an unstyled edge draws its arrowhead
+- [ ] Still to look at by eye: the pulse dot on step and curved routing, a selected edge, a dotted line, switching the direction set, light and dark theme, and that the `flow` loop has no visible jump
 - [ ] Measure a diagram with many animated edges
 
 ## Notes
-Not verified by eye: the animation could not be run here, so the checks are the unit tests, the type check and the lint. The two things most worth a look are that the `pulse` dot rides the path on every routing kind (it uses SVG motion along the same path the line is drawn with) and that the `flow` loop has no visible jump.
+The maintainer has looked at the first version (flow and pulse, no speed or direction) in the app and found it good. Two things were not looked at: that the `pulse` dot rides the path on every routing kind (it uses SVG motion along the same path the line is drawn with), and that the `flow` loop has no visible jump. The reverse pulse (`keyPoints`) was checked only as attributes, not by watching a dot.
+
+The missing arrowhead on a default edge ([known issues](../../known-issues.md)) was found while testing this and fixed on the same branch, since it is unrelated to animation.
 
 Not in the first version, by decision: the legend (a legend row does not animate, so there is no way to show "live" there yet), the SVG export (still) and the per-edge-direction-set default style. A rule or tag that sets the field automatically ("status=live" animates) was considered and left for later.
