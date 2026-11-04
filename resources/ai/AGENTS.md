@@ -17,4 +17,6 @@ node .claude/skills/chd-diagrams/scripts/validate_chd.mjs path/to/diagram.chd
 
 {{CLI_NOTE}}
 
+If you tag elements with the file they came from, write the path relative to this folder (forward slashes, never absolute); if you use another base, record it once in the diagram's top-level `metadata` (for example `sourceBase`).
+
 Keep the app's own conventions: don't delete or reformat things you weren't asked to change, and tell the user what you changed.

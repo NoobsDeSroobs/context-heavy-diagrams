@@ -29,10 +29,23 @@ export function formatSpec(sources, topic) {
     parts.push(PREAMBLE + stripFrontmatter(sources.skill))
   }
   for (const [name, title] of Object.entries(TITLES)) {
-    if (topic === 'all' || topic === name) parts.push(`# ${title}\n\n${sources[name]}`)
+    if (topic === name) parts.push(`# ${title}\n\n${sources[name]}`)
   }
+  // The references together are about 66 KB, over what some clients accept in one result, so
+  // "all" is the core rules plus an index; the topics are read one at a time.
+  if (topic === 'all') parts.push(topicIndex(sources))
   if (topic === undefined || topic === 'core') {
-    parts.push('More detail: topics "fields", "authoring", "layout" or "all".')
+    parts.push(
+      'More detail, one topic per call: "fields", "authoring", "layout" (or "all" for an index).'
+    )
   }
   return parts.join('\n\n---\n\n').trimEnd()
+}
+
+function topicIndex(sources) {
+  const lines = Object.entries(TITLES).map(
+    ([name, title]) =>
+      `- "${name}" (${Math.ceil(Buffer.byteLength(sources[name], 'utf-8') / 1024)} KB): ${title}`
+  )
+  return `# Topics\n\nCall get_format_spec once per topic you need:\n\n${lines.join('\n')}`
 }

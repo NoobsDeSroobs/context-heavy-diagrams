@@ -73,6 +73,14 @@ This compounds with the previous section: an edge's tag is exactly as inert as a
 
 *(Both lessons came from the same real pass, 2026-09-05, authoring `examples/gallery/landscape/meridian-rail-landscape-layered/` in this app's own repo — every edge had been left at its auto-backfilled tag default, and neither new file had `highlights` or a `legend` set up, both caught by the user opening the files in-app.)*
 
+## Recording which file an element came from
+
+When you tag elements with the source file they were drawn from (a `source` or `file` key in `metadata`), say what the path is relative to, because two assistants given the same job choose different bases and the paths then mean different files. The convention:
+
+- Write the path **relative to the folder you were given** (the folder the diagram files live in or that the user opened), with forward slashes. Never an absolute path.
+- If you must use another base, such as the root of the code repository you read, record that once in the diagram's own top-level `metadata`, for example `"metadata": { "sourceBase": "root of the acme-shop repository" }`, so a later reader knows how to resolve the paths.
+- A source path is a tag, not a link: the app does not open it, and it is not checked by the validator.
+
 ## Git and large assets
 
 The `.chd` file itself is deterministic JSON by design (fixed key order, no inline binaries — see [field-reference.md](field-reference.md#determinism--versioning)) specifically so it's git-friendly: diffs show real changes, not reformatting noise. Files under a colocation folder (`assets/*` especially) are ordinary binary/text files with no special handling — if a repo accumulates many or large custom icons, [Git LFS](https://git-lfs.com/) tracking `*.svg`/`*.png` under those folders is a reasonable, standard way to keep the repo light. The tool has no opinion on this either way; it never touches git directly.

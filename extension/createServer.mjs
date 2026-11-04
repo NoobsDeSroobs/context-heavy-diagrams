@@ -47,7 +47,7 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
     {
       title: 'List files',
       description:
-        'List the diagrams (.chd), notes and supporting documents in the diagram folder, with size, modified time and whether the type can be written.',
+        'List the diagrams (.chd), notes and supporting documents in the diagram folder, with size, modified time and whether the type can be written. The result names the folder (its name only, not its path) so you can tell whether the server points at the folder you expect.',
       annotations: readOnly
     },
     guarded(() => tools.list_files())
@@ -57,7 +57,7 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
     {
       title: 'Get the .chd format spec',
       description:
-        'The rules for the .chd diagram format. Call this before creating or editing a diagram. The default is the core rules; topics fields, authoring, layout or all add the detailed references.',
+        'The rules for the .chd diagram format. Call this before creating or editing a diagram. The default is the core rules. Read the detailed references one topic at a time (fields, authoring, layout); "all" returns the core rules and an index of the topics, not the references themselves.',
       inputSchema: { topic: z.enum(['core', ...SPEC_TOPICS]).optional() },
       annotations: readOnly
     },

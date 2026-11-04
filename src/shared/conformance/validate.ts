@@ -16,7 +16,13 @@ const PRESENCES = ['required', 'optional', 'forbidden']
 const SEVERITIES = ['error', 'warning', 'info']
 const NODE_TYPES = ['entity', 'container', 'text']
 const EDGE_DIRECTIONS = ['outgoing', 'incoming', 'either']
-const KINDS = ['forbiddenEdge', 'requiredEdge', 'containment', 'requiredProperty', 'maxElements']
+export const KINDS = [
+  'forbiddenEdge',
+  'requiredEdge',
+  'containment',
+  'requiredProperty',
+  'maxElements'
+]
 const NAME_PATTERN = /^[A-Za-z0-9_-]+$/
 
 const isObject = (value: unknown): value is Json =>

@@ -4,6 +4,11 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 ## 0.5.0 (2026-11-03)
 
+### Added
+- **The validator reports an edge that names a connection point its element does not have.** Such an edge is not drawn; `chd validate`, the skill's script and the Claude Desktop extension now say so as an error, and warn about names the app still reads but no longer writes (node type `shape`, `data.details`, legend kind `shape`, `matrixShapeIds`/`hiddenShapeIds`). ([known issues](docs/known-issues.md))
+- **An assistant can write an architecture profile for you.** The skill now explains what to ask you, the format, and how to test the result with `chd check`. ([ADR 0131](docs/decisions/0131-conformance-profiles.md))
+- **The Claude Desktop extension names the folder it serves** in its file listing, and `get_format_spec` with `all` returns the core rules and an index of topics instead of 66 KB at once.
+
 ### Changed
 - **A note is called a note all the way down.** The Markdown file behind an element was already **Open note** in the menus; the file, the folder and the command line now use the same word. New notes are created in a `notes` folder next to the diagram, and the AI instructions, the skill and the Claude Desktop extension write `notes`. ([ADR 0140](docs/decisions/0140-the-markdown-files-behind-an-element-are-called-notes.md))
 
