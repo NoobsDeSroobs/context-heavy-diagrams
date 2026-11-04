@@ -2,7 +2,7 @@
 
 What changed for people using the tool, one entry per minor or major release. The reasons are in [docs/decisions/](docs/decisions/); the full history is in `git log`.
 
-## 0.5.0 (2026-11-03)
+## 0.5.0 (2026-11-04)
 
 ### Added
 - **An edge can be animated, to mark something live.** **Animation** in an edge's Line properties is None (the default), Flow (the dashes travel from the source end to the target end) or Pulse (a dot does), with a **Speed**, a **Direction** (forward or reverse) and, for a pulse, a **Pulse distance** that turns it into an evenly spaced stream. The copy-style brush carries all of it to other edges, and a legend line picked from an animated edge moves too. **View → Animate edges** (Ctrl+Shift+A, also in Preferences) switches every animation off; with it off, hold Ctrl (Cmd) over an edge to see it move. The system's reduced-motion setting also stops the movement. An SVG or PNG export and the compare window show it still, so say what "live" means in a tag, label or the legend as well.
