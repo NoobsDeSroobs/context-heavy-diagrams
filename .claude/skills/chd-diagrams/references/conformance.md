@@ -23,7 +23,13 @@ Each finding names the rule (`id`), a severity and the elements. `error` breaks 
 
 ## Writing a metamodel
 
-Only when asked. A metamodel is a JSON file named `<name>.chdmeta`. Ask the person for the three decisions that are theirs, then write the file:
+Only when asked. First see whether a built-in metamodel already is what the person means (`chd check --help` lists them; `get_format_spec` with `conformance` does in the Claude Desktop extension). Then be clear about what you are making:
+
+- **The person's rules, written down.** Where do the rules come from: a named style (hexagonal, C4), a team standard, an architecture decision? Write what they say. Do not infer rules from the diagram in front of you: a metamodel fitted to a diagram passes it by construction and tells nobody anything.
+- **One style per file.** A metamodel is the complete set of rules of one style. Rules from two styles (hexagonal on top of C4) do not combine into anything; make two files.
+- **Only what the format can say.** A rule can forbid or require an edge between kinds of element, require an element to be inside or outside a container, require a label or a tag, and cap how many elements a role has. It cannot express layer order or cycles, levels (C4 context, container, component), rules across linked diagrams, exceptions for a deliberate case, or anything about the code a diagram describes. When one of the person's rules is not expressible, say which and leave it out; do not approximate it with a rule that means something else.
+
+A metamodel is a JSON file named `<name>.chdmeta`. Ask the person for the three decisions that are theirs, then write the file:
 
 1. **What does an arrow mean, and must there be any?** `edges.meaning` is `dependsOn` (A depends on B), `flowsTo` (something flows from A to B) or `irrelevant`; `edges.presence` is `required`, `optional` or `forbidden`. There is no default, and `"none"` (as in the app's template) is invalid.
 2. **How is each kind of element recognised?** Usually a tag such as `role` or `layer`, sometimes the element's `type` (`entity`, `container`, `text`) or being inside a container of another role. Each kind of element is a named **role**.
@@ -45,7 +51,7 @@ Where to save it: next to the diagrams (for example `rules/`), so it is in versi
 | `requiredProperty` | `each` (a role, or `"@edges"`), `property` (`"label"` or `{ "tag": "key" }`) | an element or edge without it |
 | `maxElements` | `of`, `max` (whole number, 1 or more) | the diagram holding more than `max` elements of that role |
 
-`forbiddenEdge` and `requiredEdge` need a direction, so they are not allowed with `irrelevant` or `forbidden`. Tag keys, values and role names are compared ignoring case and spaces, and exactly otherwise.
+`forbiddenEdge` and `requiredEdge` need a direction, so they are not allowed with `irrelevant` or `forbidden`. `edges.presence` of `forbidden` (no edges at all) goes only with `edges.meaning` of `irrelevant`. `containment` takes exactly one of `mustBeInside` and `mustNotBeInside`, and that one names a real role, not `"*"`. Roles may use `insideRole` of each other, but not in a loop; `*` and names starting with `@` are reserved. Tag keys, values and role names are compared ignoring case and spaces, and exactly otherwise.
 
 A complete, valid example:
 
@@ -70,4 +76,4 @@ A complete, valid example:
 }
 ```
 
-**Test it before handing it over.** `chd check` reads the metamodel first and refuses one that is invalid (exit 2, with each problem named), so run it against any diagram and fix the metamodel until it gets as far as checking. A metamodel that finds nothing may simply match no element (a misspelt tag): run it on a diagram you know breaks a rule, or on a copy you break on purpose, and see that the rule fires. Then run it on the real diagram and report what it finds, as above. The complete format is `docs/metamodel-format.md` in the project's repository.
+**Test it before handing it over.** The format is checked for you, not by you: `chd check` reads the metamodel first and refuses one that is invalid (exit 2, with each problem named), and in the Claude Desktop extension `create_file` and `update_file` do the same on every write. So write the file, read the problems, fix them, and repeat; you do not need to verify the format by hand. Run it against any diagram until it gets as far as checking. A metamodel that finds nothing may simply match no element (a misspelt tag): run it on a diagram you know breaks a rule, or on a copy you break on purpose, and see that the rule fires. Then run it on the real diagram and report what it finds, as above. (`docs/metamodel-format.md` in the project's repository is the full specification, if you can read it; this page has what you need to write one.)
