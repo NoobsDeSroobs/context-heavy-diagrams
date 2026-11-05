@@ -70,9 +70,9 @@ async function installClaudeExtension(win: BrowserWindow | null): Promise<Claude
       'one folder with your diagrams and documents. Claude can read everything in that folder and create ' +
       'new diagrams there. A second option, off by default, lets Claude change existing files, which can ' +
       'cause data loss.\n\n' +
-      'The extension runs on your computer and makes no network connections. It also runs git, to read ' +
-      'only: when Claude is asked what changed in a diagram, git hands over the last committed version of ' +
-      'that file. That version can contain things you have since deleted, and Claude will see them. ' +
+      'The extension runs on your computer and makes no network connections. It also runs git (read only) ' +
+      'to get the last committed version of a diagram when Claude is asked what changed. That version can ' +
+      'contain things you have since deleted, and Claude will see them. ' +
       'Whatever Claude reads is sent to Anthropic as part of your conversation, so do not choose a ' +
       'folder with confidential material or history unless that is acceptable.\n\n' +
       'If your computer asks which app should open the file, choose Claude. You can also drag the file ' +
