@@ -34,6 +34,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { basename, dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { hiddenLabels } from './label_clearance.mjs'
 
 const SIDES = ['top', 'right', 'bottom', 'left']
 // Only these carry connection points; 'shape' is the legacy name the app still reads as 'entity'.
@@ -57,6 +58,24 @@ function load(path) {
 // older/hand-edited files the same way a lenient reader should.
 function resolveRef(baseDir, ref) {
   return resolve(baseDir, ref.replaceAll('\\', '/'))
+}
+
+// An edge label that does not fit in the gap between the two elements it joins is partly hidden behind them
+// (references/layout-guide.md, "Elements joined by an edge"). The geometry is label_clearance.mjs, a
+// generated copy of the app's own src/shared/layout/labelClearance.ts, so this script, the app's
+// Diagnostics panel and the extension agree. It is an estimate, so this only warns.
+function hiddenLabelWarnings(prefix, nodes, edges, diagramFont) {
+  const found = hiddenLabels(nodes, edges, diagramFont).map((hidden) => {
+    const label = hidden.label.length > 30 ? hidden.label.slice(0, 29) + '…' : hidden.label
+    return `${prefix} edge '${hidden.edgeId}' ("${label}") has ${Math.round(hidden.gap)}px between '${hidden.sourceId}' and '${hidden.targetId}', but its label needs about ${hidden.needed}px: it will cover the edge or leave too little of it showing (layout guide, "Elements joined by an edge")`
+  })
+  const shown = found.slice(0, 5)
+  if (found.length > shown.length) {
+    shown.push(
+      `${prefix} ${found.length - shown.length} more edge label(s) do not fit in the gap they sit in`
+    )
+  }
+  return shown
 }
 
 export function validateFile(path, recursive = false, visited = new Set()) {
@@ -258,6 +277,15 @@ export function validateFile(path, recursive = false, visited = new Set()) {
       checkPath(`legend entry '${entry.id ?? '?'}' icon`, icon.path)
     }
   }
+
+  warnings.push(
+    ...hiddenLabelWarnings(
+      prefix,
+      nodes,
+      edges,
+      typeof data?.fontFamily === 'string' ? data.fontFamily : undefined
+    )
+  )
 
   if (recursive) {
     for (const target of linkedDiagrams) {

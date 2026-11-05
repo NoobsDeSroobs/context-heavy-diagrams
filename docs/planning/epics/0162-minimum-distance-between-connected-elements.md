@@ -1,7 +1,7 @@
 # 0162: Minimum distance between connected elements, in everything we tell an AI agent
 
 ## Status
-Not Started. Parked on purpose; do not forget it.
+Built on the branch `epic/0162-minimum-distance` (2026-11-06); not merged. Design in [ADR 0146](../../decisions/0146-elements-joined-by-an-edge-keep-a-gap-for-the-label.md).
 
 ## Goal
 Every piece of guidance we hand an AI agent that draws diagrams says: two entities or containers joined by an edge must be far enough apart for the edge to be seen and its label to be read, and the distance depends on the label.
@@ -23,12 +23,16 @@ The layout guide already says an edge label needs roughly 100-160 px of clearanc
 - Edges between a container and an element inside it are not covered; the rule is about siblings and about different containers.
 
 ## Tasks
-- [ ] Measure how much clearance a label needs at the default font, for a horizontal and a vertical edge, and set the floor
-- [ ] Rewrite the spacing section of the layout guide so the connected-elements rule wins over the baseline gap, with a worked example
-- [ ] Mirror it in `SKILL.md`, `AGENTS.md`, the extension's spec text and the copy-paste instructions
-- [ ] Decide whether `validate_chd.mjs`, `validate_diagram` and `chd validate` warn when connected elements are closer than the floor (a warning, never an error)
-- [ ] Add the rule to the layout line of the Immich experiment scorecard, if that experiment is kept in the repo
-- [ ] Re-check the gallery examples against the new floor
+- [x] Set the floor for a horizontal and a vertical edge, by eye in the running app on Windows: the target is the label's chip plus about 20 px of line a side, the warning the chip plus what the larger end graphic needs (5 to 18 px a side, 12 for the default arrow); a slid label needs 3 px at its near side. Linux is not eye-checked; the vertical figure rests on one three-line label and may want a few more px; the capitals and monospace widths come out 6 to 8 px wide of what was judged to fit (the export's estimate errs wide), so those two warn slightly early
+- [x] Rewrite the spacing section of the layout guide so the connected-elements rule wins over the baseline gap, with a worked example; the four recipes that put connected elements at the baseline gap (hub-and-spoke, pipeline, swimlane steps, layered) now use the connection gap
+- [x] Mirror it: `SKILL.md` points to it; `AGENTS.md` and the copy-paste instructions only point to the skill; the extension's spec text is built from the same file
+- [x] `chd validate` and `validate_diagram` warn when a label is wider than the gap it sits in (a warning, never an error), with tests. The text is measured with the export's per-character estimate, in the edge's font or the diagram's, so bold, monospace, capitals, wide characters and several lines are allowed for
+- [x] The check is `src/shared/layout/labelClearance.ts`; the skill's script runs a generated, committed copy, and a test fails when the copy is stale ([ADR 0147](../../decisions/0147-a-check-shared-with-the-skill-script-has-one-source-and-a-committed-copy.md))
+- [x] The Immich scorecard is not in the repository, so there is nothing to add
+- [x] Diagnostics has a Layout section listing the same edges, each row finding the edge on the canvas (`src/renderer/src/layout/LayoutSection.tsx`)
+- [x] Loosen the gallery diagrams that warned: 23 edges in 14 files, moved apart to the target gap (about 20 px of line a side) by cutting through each flagged gap and moving everything beyond it, widening the containers the cut passes through; only coordinates and container sizes changed. Eye-check of the result in the app is open
 
 ## Notes
 Raised while preparing the showcase video, from the layout of AI-generated diagrams.
+
+The validator warns at the label plus 8 px of line either side, not at the guide's full figure (12 px a side): at the full figure one edge in five of the shipped examples warned, at the warning bar 23 of 206 do. An edge that leaves by the far side of an element is skipped, as in `hello-world.chd`, where the line loops round and the label is not in the gap.

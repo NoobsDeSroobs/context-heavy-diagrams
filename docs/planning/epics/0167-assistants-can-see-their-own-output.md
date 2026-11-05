@@ -24,3 +24,5 @@ In both trial runs the assistant never saw its output. One had no renderer; the 
 
 ## Notes
 Raised after the first trial runs.
+
+Raised in a trial run, 2026-11-06: `chd export` draws the light theme with the theme's own background by default (`--theme light`, `--background theme`), so an assistant's SVG came out on white although nobody asked for light mode. Not urgent. Test it with the PNG work: whether the default should follow the app's theme, be transparent, or stay light and be said so in the help and the skill.

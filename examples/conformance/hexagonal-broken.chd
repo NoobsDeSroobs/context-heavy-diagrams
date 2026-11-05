@@ -54,7 +54,7 @@
       "type": "entity",
       "position": {
         "x": 150,
-        "y": 130
+        "y": 110
       },
       "size": {
         "width": 140,
@@ -115,7 +115,7 @@
       "id": "sql",
       "type": "entity",
       "position": {
-        "x": 700,
+        "x": 720,
         "y": 260
       },
       "size": {

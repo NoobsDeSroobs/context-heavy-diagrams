@@ -84,7 +84,7 @@
         "y": -125
       },
       "size": {
-        "width": 569,
+        "width": 679.42,
         "height": 380
       },
       "style": {
@@ -155,7 +155,7 @@
       "id": "booking-client",
       "type": "entity",
       "position": {
-        "x": 328.5800901402119,
+        "x": 439,
         "y": 80
       },
       "size": {
@@ -180,7 +180,7 @@
       "id": "booking-api",
       "type": "entity",
       "position": {
-        "x": 240,
+        "x": 350.42,
         "y": -35
       },
       "size": {

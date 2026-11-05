@@ -90,7 +90,7 @@
       "id": "cmp-vault",
       "type": "entity",
       "position": {
-        "x": 300,
+        "x": 328,
         "y": 0
       },
       "size": {
@@ -126,7 +126,7 @@
       "id": "cmp-pspconn",
       "type": "entity",
       "position": {
-        "x": 600,
+        "x": 628,
         "y": 0
       },
       "size": {

@@ -85,7 +85,7 @@
       },
       "size": {
         "width": 740,
-        "height": 371
+        "height": 407
       },
       "style": {
         "fill": "#eef4fd",
@@ -131,7 +131,7 @@
       "type": "entity",
       "position": {
         "x": -340,
-        "y": 91
+        "y": 127
       },
       "size": {
         "width": 210,

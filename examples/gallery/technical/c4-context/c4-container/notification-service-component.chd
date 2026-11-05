@@ -79,7 +79,7 @@
         "y": -125
       },
       "size": {
-        "width": 740,
+        "width": 929,
         "height": 250
       },
       "style": {
@@ -125,7 +125,7 @@
       "id": "template-renderer",
       "type": "entity",
       "position": {
-        "x": 272.76382579891134,
+        "x": 384,
         "y": 70
       },
       "size": {
@@ -150,7 +150,7 @@
       "id": "delivery-dispatcher",
       "type": "entity",
       "position": {
-        "x": 520,
+        "x": 709,
         "y": 70
       },
       "size": {
@@ -175,7 +175,7 @@
       "id": "actor-passenger",
       "type": "entity",
       "position": {
-        "x": 627.3871223695176,
+        "x": 816.387,
         "y": -45
       },
       "size": {

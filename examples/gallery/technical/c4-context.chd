@@ -176,7 +176,7 @@
       "id": "ext-payment-gateway",
       "type": "entity",
       "position": {
-        "x": 399.881451784224,
+        "x": 444,
         "y": -300.62731451558807
       },
       "size": {
@@ -201,7 +201,7 @@
       "id": "ext-rail-interop",
       "type": "entity",
       "position": {
-        "x": 399.881451784224,
+        "x": 444,
         "y": -140.62731451558807
       },
       "size": {
@@ -226,7 +226,7 @@
       "id": "ext-loyalty-crm",
       "type": "entity",
       "position": {
-        "x": 399.881451784224,
+        "x": 444,
         "y": 19.372685484411917
       },
       "size": {
@@ -251,7 +251,7 @@
       "id": "ext-legacy-mainframe",
       "type": "entity",
       "position": {
-        "x": 399.8814517842241,
+        "x": 444,
         "y": 179.37268548441193
       },
       "size": {

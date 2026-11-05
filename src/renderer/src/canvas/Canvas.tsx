@@ -2,6 +2,7 @@ import { showAlert } from '../ui/alerts'
 import { useZoomedConnectionHandles } from './useZoomedConnectionHandles'
 import { effectiveDiagramFont } from '@shared/styling/fontStack'
 import { checkDiagram } from '@shared/conformance/check'
+import { hiddenLabels } from '@shared/layout/labelClearance'
 import { useConformance } from '../conformance/useConformance'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
@@ -76,6 +77,7 @@ import ColorPickerPopup from '../styling/ColorPickerPopup'
 import StylePicker from '../styling/StylePicker'
 import NotesPanel from '../notes/NotesPanel'
 import DiagnosticsPanel from '../diagnostics/DiagnosticsPanel'
+import type { LayoutEntry } from '../layout/LayoutSection'
 import ChangesPanel, { type NotesChangedEntry } from '../document/ChangesPanel'
 import HighlightsPanel from '../tagging/HighlightsPanel'
 import SearchOverlay from '../search/SearchOverlay'
@@ -874,6 +876,24 @@ function CanvasInner(): React.JSX.Element {
       rfInstance.fitView({ nodes: [{ id: nodeId }], duration: 300, padding: 0.5 })
     },
     [setNodes, rfInstance]
+  )
+
+  // Select one edge and frame the two elements it joins (a row of the Diagnostics layout section).
+  const revealEdge = useCallback(
+    (entry: LayoutEntry) => {
+      setNodes((nds) => nds.map((n) => (n.selected ? { ...n, selected: false } : n)))
+      setEdges((eds) =>
+        eds.map((e) =>
+          e.selected === (e.id === entry.edgeId) ? e : { ...e, selected: e.id === entry.edgeId }
+        )
+      )
+      rfInstance.fitView({
+        nodes: [{ id: entry.sourceId }, { id: entry.targetId }],
+        duration: 300,
+        padding: 0.5
+      })
+    },
+    [setNodes, setEdges, rfInstance]
   )
 
   const updateGravityPresets = useCallback(
@@ -3000,30 +3020,27 @@ function CanvasInner(): React.JSX.Element {
   // The architecture check (ADR 0131): the metamodel chosen in Diagnostics, run on the diagram as a
   // save would write it. Only while the panel is open, so it costs nothing otherwise.
   const conformance = useConformance(diagnosticsPanelOpen)
-  const conformanceResult = useMemo(
+  // The diagram as a save would write it, for the checks of the panel; only while it is open.
+  const checkedDiagram = useMemo(
     () =>
-      diagnosticsPanelOpen && conformance.metamodel
-        ? checkDiagram(
-            toDiagramFile(
-              nodes,
-              edges,
-              diagramMetadata,
-              requiredTags,
-              highlights,
-              legend,
-              gravityPresets,
-              diagramMaxConnectionPointsPerSide,
-              edgeDirectionSets,
-              activeEdgeDirectionSetId,
-              security,
-              diagramFontFamily
-            ),
-            conformance.metamodel
+      diagnosticsPanelOpen
+        ? toDiagramFile(
+            nodes,
+            edges,
+            diagramMetadata,
+            requiredTags,
+            highlights,
+            legend,
+            gravityPresets,
+            diagramMaxConnectionPointsPerSide,
+            edgeDirectionSets,
+            activeEdgeDirectionSetId,
+            security,
+            diagramFontFamily
           )
         : null,
     [
       diagnosticsPanelOpen,
-      conformance.metamodel,
       nodes,
       edges,
       diagramMetadata,
@@ -3038,6 +3055,26 @@ function CanvasInner(): React.JSX.Element {
       diagramFontFamily
     ]
   )
+  const conformanceResult = useMemo(
+    () =>
+      checkedDiagram && conformance.metamodel
+        ? checkDiagram(checkedDiagram, conformance.metamodel)
+        : null,
+    [checkedDiagram, conformance.metamodel]
+  )
+  // Edge labels hidden behind the elements they join (ADR 0146), measured in the font the canvas
+  // draws them in: the diagram's, else the personal default.
+  const layoutEntries = useMemo<LayoutEntry[]>(() => {
+    if (!checkedDiagram) return []
+    const names = new Map(checkedDiagram.nodes.map((n) => [n.id, n.data.label || n.id]))
+    return hiddenLabels(checkedDiagram.nodes, checkedDiagram.edges, effectiveFontFamily).map(
+      (hidden) => ({
+        ...hidden,
+        sourceName: names.get(hidden.sourceId) ?? hidden.sourceId,
+        targetName: names.get(hidden.targetId) ?? hidden.targetId
+      })
+    )
+  }, [checkedDiagram, effectiveFontFamily])
   // Count on the View-menu "Diagnostics (N)" label — undecided missing
   // files + staged removals (a nudge to save), never dismissed ones.
   const diagnosticsCount =
@@ -3730,6 +3767,8 @@ function CanvasInner(): React.JSX.Element {
               onUnstageRemoval={unstageMissingFileRemoval}
               conformance={conformance}
               conformanceResult={conformanceResult}
+              layoutEntries={layoutEntries}
+              onRevealEdge={revealEdge}
               onClose={() => setDiagnosticsPanelOpen(false)}
             />
           )}
