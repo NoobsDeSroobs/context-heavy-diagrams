@@ -13,9 +13,9 @@ afterEach(async () => {
   await rm(dir, { recursive: true, force: true })
 })
 
-async function check(nodes, edges) {
+async function check(nodes, edges, extra = {}) {
   const file = join(dir, 'd.chd')
-  await writeFile(file, JSON.stringify({ version: 1, nodes, edges }))
+  await writeFile(file, JSON.stringify({ version: 1, nodes, edges, ...extra }))
   return validateFile(file)
 }
 
@@ -153,7 +153,7 @@ const sized = (id, x, y, extra = {}) =>
 const labelWarnings = (warnings) => warnings.filter((w) => /label needs/.test(w))
 
 test('a label wider than the gap between its elements is a warning, never an error', async () => {
-  // "reads from" is 10 characters: about 79px of chip in a 23px gap.
+  // "reads from" needs a chip of about 74px; the gap is 23px.
   const { errors, warnings } = await check(
     [sized('a', 0, 0), sized('b', 123, 0)],
     [edge({ label: 'reads from' })]
@@ -161,7 +161,7 @@ test('a label wider than the gap between its elements is a warning, never an err
   assert.deepEqual(errors, [])
   const found = labelWarnings(warnings)
   assert.equal(found.length, 1)
-  assert.match(found[0], /edge 'e' \("reads from"\) has 23px between 'a' and 'b'.*about 79px/)
+  assert.match(found[0], /edge 'e' \("reads from"\) has 23px between 'a' and 'b'.*about 74px/)
 })
 
 test('a label that fits in the gap raises nothing', async () => {
@@ -178,7 +178,7 @@ test('a vertical edge needs the height of the label, not its width', async () =>
   assert.deepEqual(labelWarnings(roomy.warnings), [], '30px of height holds a one-line chip')
   const tight = await check([sized('a', 0, 0), sized('b', 0, 70)], [edge({ label: long })])
   assert.equal(labelWarnings(tight.warnings).length, 1)
-  assert.match(labelWarnings(tight.warnings)[0], /has 10px.*about 23px/)
+  assert.match(labelWarnings(tight.warnings)[0], /has 10px.*about 24px/)
 })
 
 test('no label, bend points, a moved label, overlap and a text-size change are handled', async () => {
@@ -198,24 +198,20 @@ test('no label, bend points, a moved label, overlap and a text-size change are h
   )
 })
 
-test('bold, a monospace family, capitals and wide characters make a label wider', async () => {
-  // Plain "reads from" needs 79px: 10 characters of 6.5px, plus 14px.
-  const small = [sized('a', 0, 0), sized('b', 180, 0)] // 80px of gap
-  const roomy = async (extra, label = 'reads from') =>
-    labelWarnings((await check(small, [edge({ label, ...extra })])).warnings)
-  assert.deepEqual(await roomy({}), [], 'plain fits in 80px')
-  assert.equal((await roomy({ style: { fontWeight: 'bold' } })).length, 1, 'bold needs 86px')
-  assert.equal(
-    (await roomy({ style: { fontFamily: 'monospace' } })).length,
-    1,
-    'monospace is wider'
+test("the label's font sets its width: the edge's own, else the diagram's", async () => {
+  // "reads from" needs about 74px in the default font, 78px in bold and 89px in monospace.
+  const nodes = [sized('a', 0, 0), sized('b', 176, 0)] // 76px of gap
+  const warn = async (style, diagram) =>
+    labelWarnings((await check(nodes, [edge({ label: 'reads from', style })], diagram)).warnings)
+  assert.deepEqual(await warn(undefined, {}), [])
+  assert.equal((await warn({ fontWeight: 'bold' }, {})).length, 1)
+  assert.equal((await warn({ fontFamily: 'monospace' }, {})).length, 1)
+  assert.equal((await warn(undefined, { fontFamily: 'monospace' })).length, 1, 'the diagram font')
+  assert.deepEqual(
+    await warn({ fontFamily: 'sans-serif' }, { fontFamily: 'monospace' }),
+    [],
+    "the edge's own font wins"
   )
-  assert.deepEqual(await roomy({ style: { fontFamily: 'serif' } }), [], 'serif is not narrowed')
-  assert.equal((await roomy({}, 'READS FROM')).length, 1, 'capitals are wider than lowercase')
-  assert.equal((await roomy({}, '読み取り元から')).length, 1, 'CJK characters are about a full em')
-  // A monospace font sets every character the same width: capitals are not wider again.
-  const mono = await roomy({ style: { fontFamily: 'monospace' } }, 'READS FROM')
-  assert.match(mono[0], /about 86px/)
 })
 
 test('a vertical label is as high as its lines', async () => {

@@ -49,9 +49,9 @@ The baseline and loose gaps are for elements that are *not* joined by an edge. T
 - **Vertical edge** (the gap is the clear space top to bottom): 55px for a one-line label, 40px with no label. Each further line adds 19px (`19 × lines + 36`). The chip is as wide as its text, so it also reaches half its width to each side of the line: keep other elements and edges that far from it.
 - **A diagonal edge:** use the figure for the direction it mostly runs.
 - **Another font size:** scale the per-character width, and the 19px a line, by `size / 12`. The 46 and the 36 are padding and do not scale.
-- **Bold, monospace or cursive text** runs about 10% wider (both together about 20%). A capital letter is about 25% wider than the average letter (except in monospace), and a CJK or emoji character about 85% wider.
+- **Another kind of text:** the validator measures every character with the widths the SVG export uses, those of a sans-serif such as Arial or Segoe UI. At 12px a lowercase letter is about 6.5px, a capital 8.4px, a digit 6.9px, a space 3.4px, and a CJK or emoji character 12.4px. Bold text is 7% wider, monospace text is 7.4px a character, and serif and cursive text are 5% narrower. A label with many capitals or wide characters needs more than `6.5 × characters`.
 
-`chd validate` (and `validate_diagram`) warns when a label is wider than the gap it sits in, which is narrower than the figures above: treat the warning as the minimum and the figures as the target. It makes the same allowances for font size, line count, bold, family, capitals and wide characters.
+`chd validate` (and `validate_diagram`) warns when a label is wider than the gap it sits in, which is narrower than the figures above: treat the warning as the minimum and the figures as the target. It measures the label in the font the edge sets, else the diagram's font; the personal default font in Preferences is not stored in the file, so it cannot be taken into account.
 
 Worked example: `Client` (x 0, width 120) with an edge labelled "requests" to `API` in the same row. The API starts at x 220 or more (120 + 100), not at 140 (120 + the baseline gap): at 140 the label would cover the whole edge.
 

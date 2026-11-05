@@ -34,6 +34,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { basename, dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { hiddenLabels } from './label_clearance.mjs'
 
 const SIDES = ['top', 'right', 'bottom', 'left']
 // Only these carry connection points; 'shape' is the legacy name the app still reads as 'entity'.
@@ -59,109 +60,20 @@ function resolveRef(baseDir, ref) {
   return resolve(baseDir, ref.replaceAll('\\', '/'))
 }
 
-// An edge label is a chip centred on the edge's midpoint: its text plus 14px of padding and border
-// either side, and 3.8px above and below its lines. When the clear space between the two connected
-// elements, along the direction the edge mostly runs, is smaller than the chip, the label is partly
-// hidden behind them. The figures are an estimate (references/layout-guide.md, "Elements joined by an
-// edge"), so this only warns, and only where the label certainly does not fit.
-const LABEL_CHAR_PX = 6.5 // an average character of ordinary text at the default 12px
-const LABEL_PADDING_PX = 14
-const LABEL_LINE_PX = 19.2 // one line at 12px: the line height is 1.6
-const LABEL_VERTICAL_PADDING_PX = 3.8
-// How much wider than an average character some text runs. Estimates, not measurements: bold and the
-// monospace and cursive families (the generic ones the app offers) widen every character, a capital
-// is wider than the average lowercase letter, and a CJK or emoji character is about a full em.
-const BOLD_FACTOR = 1.1
-const WIDER_FAMILY_FACTOR = 1.1
-const CAPITAL_FACTOR = 1.25
-const WIDE_FACTOR = 1.85
-const MONOSPACE = /mono|courier|consolas/i
-const WIDER_FAMILY = /mono|courier|consolas|cursive|comic/i
-const WIDE_CHAR =
-  /[\u1100-\u115f\u2e80-\ua4cf\uac00-\ud7a3\uf900-\ufaff\ufe30-\ufe6f\uff00-\uff60\uffe0-\uffe6\u{1f300}-\u{1faff}]/u
-const CAPITAL = /\p{Lu}/u
-const roundUp = (px) => Math.ceil(Number(px.toFixed(2)))
-const PLAIN_SIDES = new Set(['left', 'right', 'top', 'bottom'])
-
-// The width of one line of a label in px, from its characters and the edge's font.
-function labelLineWidth(line, style) {
-  const monospace = MONOSPACE.test(style?.fontFamily ?? '')
-  let characters = 0
-  for (const ch of line) {
-    if (WIDE_CHAR.test(ch)) characters += WIDE_FACTOR
-    else characters += !monospace && CAPITAL.test(ch) ? CAPITAL_FACTOR : 1
-  }
-  const size = Number.isFinite(style?.fontSize) ? style.fontSize : 12
-  const family = WIDER_FAMILY.test(style?.fontFamily ?? '') ? WIDER_FAMILY_FACTOR : 1
-  const weight = style?.fontWeight === 'bold' ? BOLD_FACTOR : 1
-  return LABEL_CHAR_PX * (size / 12) * characters * family * weight
-}
-
-function hiddenLabelWarnings(prefix, nodes, edges) {
-  const byId = new Map(nodes.filter((n) => n && n.id !== undefined).map((n) => [n.id, n]))
-  const parentOf = (n) => (n.parentId === undefined ? undefined : byId.get(n.parentId))
-  const isInside = (n, ancestorId) => {
-    for (let p = parentOf(n), hops = 0; p && hops < 100; p = parentOf(p), hops += 1) {
-      if (p.id === ancestorId) return true
-    }
-    return false
-  }
-  // Absolute position: a child's `position` is relative to its parent container.
-  const rectOf = (n) => {
-    let x = n.position?.x
-    let y = n.position?.y
-    const width = n.size?.width
-    const height = n.size?.height
-    if (![x, y, width, height].every(Number.isFinite)) return null
-    for (let p = parentOf(n), hops = 0; p && hops < 100; p = parentOf(p), hops += 1) {
-      if (!Number.isFinite(p.position?.x) || !Number.isFinite(p.position?.y)) return null
-      x += p.position.x
-      y += p.position.y
-    }
-    return { x, y, width, height }
-  }
-
-  const found = []
-  for (const edge of edges) {
-    const label = typeof edge?.label === 'string' ? edge.label.trim() : ''
-    if (label === '') continue
-    // Bend points or a moved label put the chip somewhere other than the middle of the gap.
-    if (Array.isArray(edge.points) && edge.points.length > 0) continue
-    const position = edge.style?.labelPosition
-    if (position !== undefined && position !== 0.5) continue
-    const a = byId.get(edge.source)
-    const b = byId.get(edge.target)
-    if (!a || !b || a === b || a.type === 'line' || b.type === 'line') continue
-    if (isInside(a, b.id) || isInside(b, a.id)) continue
-    const ra = rectOf(a)
-    const rb = rectOf(b)
-    if (!ra || !rb) continue
-
-    const gapX = Math.max(rb.x - (ra.x + ra.width), ra.x - (rb.x + rb.width))
-    const gapY = Math.max(rb.y - (ra.y + ra.height), ra.y - (rb.y + rb.height))
-    if (gapX <= 0 && gapY <= 0) continue // overlapping elements: a different problem
-    const horizontal = gapX > 0 && (gapY <= 0 || gapX >= gapY)
-    const gap = horizontal ? gapX : gapY
-    // An edge that leaves by the far side of an element loops round it: the label is not in the gap.
-    const aIsFirst = horizontal ? ra.x < rb.x : ra.y < rb.y
-    const [firstSide, secondSide] = horizontal ? ['right', 'left'] : ['bottom', 'top']
-    const faces = (handle, isFirst) =>
-      !PLAIN_SIDES.has(handle) || handle === (isFirst ? firstSide : secondSide)
-    if (!faces(edge.sourceHandle, aIsFirst) || !faces(edge.targetHandle, !aIsFirst)) continue
-    const lines = label.split('\n')
-    const size = Number.isFinite(edge.style?.fontSize) ? edge.style.fontSize : 12
-    const needed = horizontal
-      ? roundUp(Math.max(...lines.map((line) => labelLineWidth(line, edge.style))) + LABEL_PADDING_PX)
-      : roundUp(LABEL_LINE_PX * (size / 12) * lines.length + LABEL_VERTICAL_PADDING_PX)
-    if (gap < needed) {
-      found.push(
-        `${prefix} edge '${edge.id ?? '?'}' ("${label.length > 30 ? label.slice(0, 29) + '…' : label}") has ${Math.round(gap)}px between '${a.id}' and '${b.id}', but its label needs about ${needed}px: it will be hidden behind them (layout guide, "Elements joined by an edge")`
-      )
-    }
-  }
+// An edge label wider than the gap between the two elements it joins is partly hidden behind them
+// (references/layout-guide.md, "Elements joined by an edge"). The geometry is label_clearance.mjs, a
+// generated copy of the app's own src/shared/layout/labelClearance.ts, so this script, the app's
+// Diagnostics panel and the extension agree. It is an estimate, so this only warns.
+function hiddenLabelWarnings(prefix, nodes, edges, diagramFont) {
+  const found = hiddenLabels(nodes, edges, diagramFont).map((hidden) => {
+    const label = hidden.label.length > 30 ? hidden.label.slice(0, 29) + '…' : hidden.label
+    return `${prefix} edge '${hidden.edgeId}' ("${label}") has ${Math.round(hidden.gap)}px between '${hidden.sourceId}' and '${hidden.targetId}', but its label needs about ${hidden.needed}px: it will be hidden behind them (layout guide, "Elements joined by an edge")`
+  })
   const shown = found.slice(0, 5)
   if (found.length > shown.length) {
-    shown.push(`${prefix} ${found.length - shown.length} more edge label(s) are wider than the gap they sit in`)
+    shown.push(
+      `${prefix} ${found.length - shown.length} more edge label(s) are wider than the gap they sit in`
+    )
   }
   return shown
 }
@@ -366,7 +278,14 @@ export function validateFile(path, recursive = false, visited = new Set()) {
     }
   }
 
-  warnings.push(...hiddenLabelWarnings(prefix, nodes, edges))
+  warnings.push(
+    ...hiddenLabelWarnings(
+      prefix,
+      nodes,
+      edges,
+      typeof data?.fontFamily === 'string' ? data.fontFamily : undefined
+    )
+  )
 
   if (recursive) {
     for (const target of linkedDiagrams) {
