@@ -86,6 +86,7 @@ var EDGE_STYLE_DEFAULTS = {
 };
 
 // src/shared/layout/labelClearance.ts
+var VISIBLE_LINE_PX = 8;
 var CHIP_ACROSS_PX = 14;
 var CHIP_DOWN_PX = 4;
 var CHIP_MIN_TEXT_PX = 8;
@@ -109,6 +110,10 @@ function labelChipSize(label, font) {
     width: Math.max(CHIP_MIN_TEXT_PX, textWidth) + CHIP_ACROSS_PX,
     height: Math.max(font.size, lines.length * lineHeight) + CHIP_DOWN_PX
   };
+}
+function labelNeededGap(label, font, horizontal) {
+  const chip = labelChipSize(label, font);
+  return roundUp((horizontal ? chip.width : chip.height) + 2 * VISIBLE_LINE_PX);
 }
 function hiddenLabels(nodes, edges, diagramFont) {
   const byId = /* @__PURE__ */ new Map();
@@ -155,8 +160,7 @@ function hiddenLabels(nodes, edges, diagramFont) {
     const [firstSide, secondSide] = horizontal ? ["right", "left"] : ["bottom", "top"];
     const faces = (handle, isFirst) => typeof handle !== "string" || !PLAIN_SIDES.has(handle) || handle === (isFirst ? firstSide : secondSide);
     if (!faces(edge.sourceHandle, aIsFirst) || !faces(edge.targetHandle, !aIsFirst)) continue;
-    const chip = labelChipSize(edge.label, labelFont(edge, diagramFont));
-    const needed = roundUp(horizontal ? chip.width : chip.height);
+    const needed = labelNeededGap(edge.label, labelFont(edge, diagramFont), horizontal);
     if (gap < needed) {
       found.push({
         edgeId: String(edge.id ?? "?"),
@@ -173,5 +177,6 @@ function hiddenLabels(nodes, edges, diagramFont) {
 }
 export {
   hiddenLabels,
-  labelChipSize
+  labelChipSize,
+  labelNeededGap
 };

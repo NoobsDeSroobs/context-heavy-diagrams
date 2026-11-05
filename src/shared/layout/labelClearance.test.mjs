@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
 import { bundleLabelClearance, LABEL_CLEARANCE_BUNDLE } from '../../../scripts/build-cli.mjs'
-import { hiddenLabels, labelChipSize } from './labelClearance.ts'
+import { hiddenLabels, labelChipSize, labelNeededGap } from './labelClearance.ts'
 
 const plain = { size: 12, weight: 'normal' }
 const entity = (id, x, y, extra = {}) => ({
@@ -35,7 +35,13 @@ test('the chip is as high as its lines, scaled by the font size', () => {
   assert.ok(Math.abs(height('one', { ...plain, size: 24 }) - 42.4) < 0.01)
 })
 
-test('a label wider than the gap is found, with the gap and what it needs', () => {
+test('the gap needed is the chip plus 8px of line either side', () => {
+  assert.equal(labelNeededGap('reads from', plain, true), 90)
+  assert.equal(labelNeededGap('reads from', { ...plain, weight: 'bold' }, true), 94)
+  assert.equal(labelNeededGap('one\ntwo\nthree', plain, false), 78)
+})
+
+test('a label that does not fit in the gap is found, with the gap and what it needs', () => {
   const nodes = [entity('a', 0, 0), entity('b', 123, 0)]
   const [hidden] = hiddenLabels(nodes, [edge()])
   assert.deepEqual(
@@ -46,7 +52,7 @@ test('a label wider than the gap is found, with the gap and what it needs', () =
       sourceId: 'a',
       targetId: 'b',
       gap: 23,
-      needed: 74,
+      needed: 90,
       horizontal: true
     }
   )
@@ -54,7 +60,7 @@ test('a label wider than the gap is found, with the gap and what it needs', () =
 })
 
 test("an edge label inherits the diagram's font unless the edge sets its own", () => {
-  const nodes = [entity('a', 0, 0), entity('b', 176, 0)] // 76px: plain 74, bold 78, monospace 89
+  const nodes = [entity('a', 0, 0), entity('b', 192, 0)] // 92px: plain 90, bold 94, monospace 105
   assert.equal(hiddenLabels(nodes, [edge()]).length, 0)
   assert.equal(hiddenLabels(nodes, [edge()], 'monospace').length, 1)
   assert.equal(

@@ -43,17 +43,17 @@ Two gap sizes cover most layouts:
 
 ### Elements joined by an edge
 
-The baseline and loose gaps are for elements that are *not* joined by an edge. Two elements joined by an edge need a **connection gap**: enough clear space for the line, its arrowhead and its label to be seen. The label is most of it, so the gap depends on the label and on the direction the edge runs. At the default 12px edge-label font the label is a chip about 23px tall and as wide as its text plus 14px (the text runs about 6.5px per character), centred on the edge's midpoint; leave about 16px of visible line on each side of it.
+The baseline and loose gaps are for elements that are *not* joined by an edge. Two elements joined by an edge need a **connection gap**: enough clear space for the line, its arrowhead and its label to be seen. The label is most of it, so the gap depends on the label and on the direction the edge runs. At the default 12px edge-label font the label is a chip about 23px tall and as wide as its text plus 14px (the text runs about 6.5px per character), centred on the edge's midpoint; leave about 12px of line and arrowhead showing on each side of it (judged by eye in the app: below about 8px it stops reading as an edge).
 
-- **Horizontal edge** (the gap is the clear space left to right): `6.5 × characters + 46` px, or 40px with no label. A label of 8 characters ("requests") needs 100px, one of 12 characters 125px, one of 30 characters 240px.
-- **Vertical edge** (the gap is the clear space top to bottom): 55px for a one-line label, 40px with no label. Each further line adds 19px (`19 × lines + 36`). The chip is as wide as its text, so it also reaches half its width to each side of the line: keep other elements and edges that far from it.
+- **Horizontal edge** (the gap is the clear space left to right): `6.5 × characters + 38` px, or 40px with no label. A label of 8 characters ("requests") needs 90px, one of 12 characters 116px, one of 30 characters 233px.
+- **Vertical edge** (the gap is the clear space top to bottom): 47px for a one-line label, 40px with no label. Each further line adds 19px (`19 × lines + 28`). The chip is as wide as its text, so it also reaches half its width to each side of the line: keep other elements and edges that far from it.
 - **A diagonal edge:** use the figure for the direction it mostly runs.
-- **Another font size:** scale the per-character width, and the 19px a line, by `size / 12`. The 46 and the 36 are padding and do not scale.
+- **Another font size:** scale the per-character width, and the 19px a line, by `size / 12`. The 38 and the 28 are padding and do not scale.
 - **Another kind of text:** the validator measures every character with the widths the SVG export uses, those of a sans-serif such as Arial or Segoe UI. At 12px a lowercase letter is about 6.5px, a capital 8.4px, a digit 6.9px, a space 3.4px, and a CJK or emoji character 12.4px. Bold text is 7% wider, monospace text is 7.4px a character, and serif and cursive text are 5% narrower. A label with many capitals or wide characters needs more than `6.5 × characters`.
 
-`chd validate` (and `validate_diagram`) warns when a label is wider than the gap it sits in, which is narrower than the figures above: treat the warning as the minimum and the figures as the target. It measures the label in the font the edge sets, else the diagram's font; the personal default font in Preferences is not stored in the file, so it cannot be taken into account.
+`chd validate` (and `validate_diagram`) warns when the gap is smaller than the label plus 8px of line and arrowhead on each side (about the text width + 30px across, `19 × lines + 20` down), which is narrower than the figures above: treat the warning as the minimum and the figures as the target. It measures the label in the font the edge sets, else the diagram's font; the personal default font in Preferences is not stored in the file, so it cannot be taken into account.
 
-Worked example: `Client` (x 0, width 120) with an edge labelled "requests" to `API` in the same row. The API starts at x 220 or more (120 + 100), not at 140 (120 + the baseline gap): at 140 the label would cover the whole edge.
+Worked example: `Client` (x 0, width 120) with an edge labelled "requests" to `API` in the same row. The API starts at x 210 or more (120 + 90), not at 140 (120 + the baseline gap): at 140 the label would cover the whole edge.
 
 The rule covers elements that are siblings or in different containers; an edge from a container to an element inside it is not covered. The figures come from the label's styling and an average character width, not from a measurement of each font, so add a margin for wide letters (W, M, capitals) or when unsure.
 
@@ -83,13 +83,13 @@ Horizontal bands stacked top-to-bottom (presentation → application → data, o
 ### Hub-and-spoke
 One central Entity with several others arranged around it, each connected directly to the hub.
 
-- Place the hub first; place spokes at the four (or eight) compass points around it, each offset by roughly `hub size/2 + connection gap + spoke size/2` along that axis (the spoke is joined to the hub by an edge, so it gets the connection gap, not the baseline gap) — e.g. a spoke directly above the hub sits at `hub.x + (hub.width - spoke.width)/2`, `hub.y - spoke.height - 55`, or more for a long label.
+- Place the hub first; place spokes at the four (or eight) compass points around it, each offset by roughly `hub size/2 + connection gap + spoke size/2` along that axis (the spoke is joined to the hub by an edge, so it gets the connection gap, not the baseline gap) — e.g. a spoke directly above the hub sits at `hub.x + (hub.width - spoke.width)/2`, `hub.y - spoke.height - 47`, or more for a long label.
 - With more than ~4 spokes, prefer an evenly-angled ring (simple trig around the hub's center) over cramming everything onto the four cardinal points — pick connection-point sides that face the hub rather than defaulting to the same side for every spoke.
 
 ### Request/response pipeline
 A left-to-right (or top-to-bottom) sequence of steps, each connected to the next.
 
-- One row of entities, each the **connection gap** from the previous one's right edge (the steps are joined by edges: about 100px for a label of a word or two, 40px for an unlabelled edge; 55px for a vertical pipeline), all sharing the same `y`.
+- One row of entities, each the **connection gap** from the previous one's right edge (the steps are joined by edges: about 90px for a label of a word or two, 40px for an unlabelled edge; 47px for a vertical pipeline), all sharing the same `y`.
 - `sourceHandle: "right"` / `targetHandle: "left"` on every edge (or `"bottom"`/`"top"` for a vertical pipeline) unless a step branches.
 - A return/response path (if drawn as a separate edge rather than implied) usually routes as a second edge between the same two entities, offset with a couple of manual `points` or a different `routingStyle` so it doesn't overlap the forward-path edge.
 

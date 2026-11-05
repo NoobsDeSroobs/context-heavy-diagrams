@@ -1,6 +1,6 @@
 import type { HiddenLabel } from '@shared/layout/labelClearance'
 
-// An edge whose label is wider than the gap between its two elements, with the elements' names for
+// An edge whose label does not fit in the gap between its two elements, with the elements' names for
 // the row.
 export interface LayoutEntry extends HiddenLabel {
   sourceName: string
@@ -22,8 +22,8 @@ export default function LayoutSection({
     <div className="diagnostics-layout">
       <p className="diagnostics-section-title">Layout ({entries.length})</p>
       <p className="diagnostics-panel-hint">
-        These edge labels are wider than the space between the elements the edge joins, so they are
-        partly hidden behind them. Move the elements apart.
+        These edge labels do not fit in the space between the elements the edge joins, so they cover
+        the edge or leave too little of it showing. Move the elements apart.
       </p>
       <ul className="diagnostics-conformance-list">
         {entries.map((entry) => (

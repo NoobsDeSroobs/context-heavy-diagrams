@@ -82,7 +82,7 @@ Exit codes: 0 ok, 2 unknown topic.
 
 For a diagram: reports duplicate ids, dangling edge endpoints, parent-before-child ordering, and
 relative paths (icons, notes, linked diagrams) that don't resolve. It also warns where an edge
-label is wider than the gap between the two elements it joins, so it would be hidden behind them.
+label does not fit in the gap between the two elements it joins, with the line showing either side of it.
 Run it after every edit to a diagram. For a diagram metamodel (.chdmeta): reports every way the file breaks its format.
 
   --recursive   Also follow linked diagrams (diagrams only)

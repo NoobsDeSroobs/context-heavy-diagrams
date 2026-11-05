@@ -1,5 +1,5 @@
-// Edge labels that are wider (or higher) than the gap between the two elements their edge joins, so
-// the label is drawn partly behind them (ADR 0146). One implementation for everything that checks
+// Edge labels that do not fit in the gap between the two elements their edge joins, with the line and
+// its arrowhead still visible either side of them (ADR 0146). One implementation for everything that checks
 // this: `chd validate` and the Claude Desktop extension run it through the skill's script, which gets
 // a generated copy of this file (scripts/build-cli.mjs), and the app's Diagnostics panel imports it.
 //
@@ -54,6 +54,10 @@ interface Rect {
   height: number
 }
 
+// The least line (and arrowhead) that must show either side of the chip for the edge to read. Set by
+// eye in the app: 12px a side looks right, 8px is where it stops reading as an edge.
+const VISIBLE_LINE_PX = 8
+
 // The chip's own padding and border: 6px + 1px each side across, 1px + 1px each side down.
 const CHIP_ACROSS_PX = 14
 const CHIP_DOWN_PX = 4
@@ -89,7 +93,15 @@ export function labelChipSize(label: string, font: FontSpec): { width: number; h
   }
 }
 
-// The edges whose label certainly does not fit in the gap, so it is partly hidden behind the elements.
+// The gap an edge label needs, in px, along the direction its edge runs: the chip plus the visible line
+// either side.
+export function labelNeededGap(label: string, font: FontSpec, horizontal: boolean): number {
+  const chip = labelChipSize(label, font)
+  return roundUp((horizontal ? chip.width : chip.height) + 2 * VISIBLE_LINE_PX)
+}
+
+// The edges whose label does not fit in the gap, so it is partly hidden behind the elements or leaves
+// too little of the line to read.
 // Left out because the chip is not in the middle of the gap or the gap cannot be judged: an edge with
 // bend points or a moved label, a text-only line, an edge between a container and its own content,
 // overlapping elements, and an edge that leaves by the far side of an element (it loops round).
@@ -152,8 +164,7 @@ export function hiddenLabels(
       handle === (isFirst ? firstSide : secondSide)
     if (!faces(edge.sourceHandle, aIsFirst) || !faces(edge.targetHandle, !aIsFirst)) continue
 
-    const chip = labelChipSize(edge.label, labelFont(edge, diagramFont))
-    const needed = roundUp(horizontal ? chip.width : chip.height)
+    const needed = labelNeededGap(edge.label, labelFont(edge, diagramFont), horizontal)
     if (gap < needed) {
       found.push({
         edgeId: String(edge.id ?? '?'),
