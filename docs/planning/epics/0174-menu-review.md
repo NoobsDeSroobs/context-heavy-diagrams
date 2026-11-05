@@ -15,7 +15,7 @@ The menus have grown one entry at a time. Related entries sit apart, the groups 
 
 ## Questions to settle first
 - Export: submenu or dialog option.
-- The glossary: the existing `docs/architecture/glossary.md` is written for people working on the code. Is the in-app one a user-facing text of its own, kept in the repository as plain text and shipped with the app, and does it share a source with the developer one?
+- The glossary has one source, `docs/architecture/glossary.md`, which the build reads and ships in the app (a `?raw` import or a copy step, whichever suits the electron-vite setup). The open part is the content: it is written for people working on the code, with type names, ADR links and relative links that mean nothing in the app. Likely shape: each term starts with a plain-language definition and keeps the developer detail apart, and the build ships only the plain part and resolves or drops the links. Terms the app shows but the file lacks (diagram metamodel is added; edge direction set, notes, layers) get an entry.
 - Search in the glossary: a filter box over the terms, or a full-text search; offline either way.
 - Keyboard shortcuts and the command palette follow the menu: an entry that moves or merges keeps its shortcut.
 
