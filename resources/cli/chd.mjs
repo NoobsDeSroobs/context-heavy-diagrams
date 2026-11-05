@@ -81,8 +81,9 @@ Exit codes: 0 ok, 2 unknown topic.
   validate: `Usage: chd validate <file.chd|file.chdmeta>... [--recursive]
 
 For a diagram: reports duplicate ids, dangling edge endpoints, parent-before-child ordering, and
-relative paths (icons, notes, linked diagrams) that don't resolve. Run it after every edit to a
-diagram. For a diagram metamodel (.chdmeta): reports every way the file breaks its format.
+relative paths (icons, notes, linked diagrams) that don't resolve. It also warns where an edge
+label is wider than the gap between the two elements it joins, so it would be hidden behind them.
+Run it after every edit to a diagram. For a diagram metamodel (.chdmeta): reports every way the file breaks its format.
 
   --recursive   Also follow linked diagrams (diagrams only)
 

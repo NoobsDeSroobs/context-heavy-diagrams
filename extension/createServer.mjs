@@ -70,7 +70,7 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
     {
       title: 'Validate a diagram',
       description:
-        'Check a .chd file for structural problems: duplicate ids, dangling edges, parent ordering, unresolved relative paths.',
+        'Check a .chd file for structural problems: duplicate ids, dangling edges, parent ordering, unresolved relative paths. Warns where an edge label is wider than the gap between the elements it joins.',
       inputSchema: { path },
       annotations: readOnly
     },

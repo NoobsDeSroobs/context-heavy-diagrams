@@ -1,7 +1,7 @@
 # 0162: Minimum distance between connected elements, in everything we tell an AI agent
 
 ## Status
-Not Started. Parked on purpose; do not forget it.
+In progress on the branch `epic/0162-minimum-distance` (2026-11-05). Design in [ADR 0146](../../decisions/0146-elements-joined-by-an-edge-keep-a-gap-for-the-label.md).
 
 ## Goal
 Every piece of guidance we hand an AI agent that draws diagrams says: two entities or containers joined by an edge must be far enough apart for the edge to be seen and its label to be read, and the distance depends on the label.
@@ -23,12 +23,14 @@ The layout guide already says an edge label needs roughly 100-160 px of clearanc
 - Edges between a container and an element inside it are not covered; the rule is about siblings and about different containers.
 
 ## Tasks
-- [ ] Measure how much clearance a label needs at the default font, for a horizontal and a vertical edge, and set the floor
-- [ ] Rewrite the spacing section of the layout guide so the connected-elements rule wins over the baseline gap, with a worked example
-- [ ] Mirror it in `SKILL.md`, `AGENTS.md`, the extension's spec text and the copy-paste instructions
-- [ ] Decide whether `validate_chd.mjs`, `validate_diagram` and `chd validate` warn when connected elements are closer than the floor (a warning, never an error)
-- [ ] Add the rule to the layout line of the Immich experiment scorecard, if that experiment is kept in the repo
-- [ ] Re-check the gallery examples against the new floor
+- [x] Set the floor for a horizontal and a vertical edge. Derived from the label's styling (a 23 px chip, 14 px of padding, 6.5 px a character at 12 px) and not yet measured in the app on each OS's font: an eye-check of the numbers in the running app is open
+- [x] Rewrite the spacing section of the layout guide so the connected-elements rule wins over the baseline gap, with a worked example; the four recipes that put connected elements at the baseline gap (hub-and-spoke, pipeline, swimlane steps, layered) now use the connection gap
+- [x] Mirror it: `SKILL.md` points to it; `AGENTS.md` and the copy-paste instructions only point to the skill; the extension's spec text is built from the same file
+- [x] `validate_chd.mjs`, so `chd validate` and `validate_diagram`, warn when a label is wider than the gap it sits in (a warning, never an error), with tests
+- [x] The Immich scorecard is not in the repository, so there is nothing to add
+- [ ] Loosen the gallery diagrams that now warn: 22 edges in 12 files (`c4-context.chd`; `c4-container/` booking-api, booking-web-app, interop-gateway, legacy-sync, notification-service and payment-orchestration components; `security-rollup/` domain-customer, domain-payments, profile-service and ledger-service; `meridian-rail-landscape-layered/ticketing-and-booking.chd`). Each needs nodes moved and containers resized, so it wants an eye on the result in the app
 
 ## Notes
 Raised while preparing the showcase video, from the layout of AI-generated diagrams.
+
+The validator warns at the label's own width, not at the guide's figures (which add 32 px of visible line): at the full figure one edge in five of the shipped examples warned, at the label's width 22 of 206 do. An edge that leaves by the far side of an element is skipped, as in `hello-world.chd`, where the line loops round and the label is not in the gap.

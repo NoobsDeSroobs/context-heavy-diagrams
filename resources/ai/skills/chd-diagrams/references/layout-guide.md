@@ -13,7 +13,7 @@ The general flow for creating or modifying a diagram, loosely (this is a shape t
 3. Fill in metadata and any other content (tags, icons, notes).
 4. **Only then**, do a geometry pass: reposition/resize to eliminate overlap and bleeding, uncross edges where reasonably possible, and use empty space well.
 
-The reason step 4 comes last, not first: **an edge's label consumes real visual space that a bounding-box-only layout doesn't account for.** Positioning entities and routing edges as if a label were free — then adding the label text afterward — routinely leaves the label overlapping the edge itself, a neighboring entity, or another edge's label, even when the entities and edge paths themselves looked perfectly spaced. (Found 2026-09-05: exactly this, in `examples/gallery/landscape/meridian-rail-landscape-layered/ticketing-and-booking.chd` — edges were positioned and spaced *before* their labels were written, and the spacing stopped making sense once the labels existed.) A label sits at `labelPosition` (default the edge's midpoint, see [field-reference.md](field-reference.md#edge-style)) — when doing the geometry pass, treat that point as needing roughly as much clearance as the label text itself (rough rule of thumb: 100–160px of horizontal breathing room at a typical 12px font, more for a longer label), not just a bare point on a path.
+The reason step 4 comes last, not first: **an edge's label consumes real visual space that a bounding-box-only layout doesn't account for.** Positioning entities and routing edges as if a label were free — then adding the label text afterward — routinely leaves the label overlapping the edge itself, a neighboring entity, or another edge's label, even when the entities and edge paths themselves looked perfectly spaced. (Found 2026-09-05: exactly this, in `examples/gallery/landscape/meridian-rail-landscape-layered/ticketing-and-booking.chd` — edges were positioned and spaced *before* their labels were written, and the spacing stopped making sense once the labels existed.) A label sits at `labelPosition` (default the edge's midpoint, see [field-reference.md](field-reference.md#edge-style)) — when doing the geometry pass, treat that point as needing roughly as much clearance as the label text itself (the figures are under *Elements joined by an edge* below), not just a bare point on a path.
 
 This doesn't mean re-deriving geometry from nothing every time — a small content edit (one more tag, a renamed label) doesn't need a full re-layout. It means: when geometry is actually being decided (a first draft, or a deliberate restructure), decide it after the content that occupies visual space actually exists, not before.
 
@@ -36,10 +36,25 @@ Deviate freely when a label needs more room or an entity represents something th
 
 Two gap sizes cover most layouts:
 
-- **Baseline gap — 20px edge-to-edge.** This matches the app's own Align/Distribute feature's default gap. Use it between closely related elements in the same row/column/group (e.g. entities inside the same container, steps in one pipeline).
+- **Baseline gap — 20px edge-to-edge.** This matches the app's own Align/Distribute feature's default gap. Use it between closely related elements in the same row/column/group that are **not joined by an edge** (e.g. entities inside the same container). Elements joined by an edge need more; see *Elements joined by an edge*.
 - **Loose gap — ~60px edge-to-edge (3× baseline).** Use it between distinct groups or sections — separate layers, separate swimlanes, separate subsystems — so the grouping reads visually even before or without a container drawn around it.
 
 "Edge-to-edge" means clear space between bounding boxes, not anchor-to-anchor distance — measure from one node's `position + size` to the next node's `position`, not center-to-center, otherwise a size mix (e.g. a 320-wide container next to a 120-wide entity) reads as uneven even with a "matching" gap.
+
+### Elements joined by an edge
+
+The baseline and loose gaps are for elements that are *not* joined by an edge. Two elements joined by an edge need a **connection gap**: enough clear space for the line, its arrowhead and its label to be seen. The label is most of it, so the gap depends on the label and on the direction the edge runs. At the default 12px edge-label font the label is a chip about 23px tall and as wide as its text plus 14px (the text runs about 6.5px per character), centred on the edge's midpoint; leave about 16px of visible line on each side of it.
+
+- **Horizontal edge** (the gap is the clear space left to right): `6.5 × characters + 46` px, or 40px with no label. A label of 8 characters ("requests") needs 100px, one of 12 characters 125px, one of 30 characters 240px.
+- **Vertical edge** (the gap is the clear space top to bottom): 55px for any label, 40px with no label, because the chip is one line high. The chip is as wide as its text, so it also reaches half its width to each side of the line: keep other elements and edges that far from it.
+- **A diagonal edge:** use the figure for the direction it mostly runs.
+- **Another font size:** scale the per-character width by `size / 12`.
+
+`chd validate` (and `validate_diagram`) warns when a label is wider than the gap it sits in, which is narrower than the figures above: treat the warning as the minimum and the figures as the target.
+
+Worked example: `Client` (x 0, width 120) with an edge labelled "requests" to `API` in the same row. The API starts at x 220 or more (120 + 100), not at 140 (120 + the baseline gap): at 140 the label would cover the whole edge.
+
+The rule covers elements that are siblings or in different containers; an edge from a container to an element inside it is not covered. The figures come from the label's styling and an average character width, not from a measurement of each font, so add a margin for wide letters (W, M, capitals) or when unsure.
 
 **Container sizing has no auto-fit** — this app never resizes a container to hug its children, and there's no stored padding/inset field. When you size a container by hand around its children, leave roughly **24–40px of clear space** between the container's own edge and its nearest child on every side. Remember the coordinate system: a child's `position` is relative to *its container's* top-left corner, not the canvas — so if the container's top-left sits at canvas `(x, y)` and you want 30px of inset, the first child's `position` is `{ x: 30, y: 30 }` regardless of where the container itself sits on the canvas.
 
@@ -61,19 +76,19 @@ Named starting layouts for common diagram shapes. Each is a description plus the
 Horizontal bands stacked top-to-bottom (presentation → application → data, or similar), each band a Container spanning the full width.
 
 - Stack containers vertically with the **loose gap (60px)** between one container's bottom edge and the next one's top edge, all sharing the same `x` and `width`.
-- Inside each container, lay out its entities left-to-right with the **baseline gap (20px)**, inset **30px** from the container's own edges (per the container-sizing note above).
+- Inside each container, lay out its entities left-to-right with the **baseline gap (20px)** (the **connection gap** where an edge joins two of them), inset **30px** from the container's own edges (per the container-sizing note above).
 - Cross-layer edges (an entity in one band connecting to an entity in the band below) usually want `sourceHandle: "bottom"` / `targetHandle: "top"`.
 
 ### Hub-and-spoke
 One central Entity with several others arranged around it, each connected directly to the hub.
 
-- Place the hub first; place spokes at the four (or eight) compass points around it, each offset by roughly `hub size/2 + baseline gap + spoke size/2` along that axis — e.g. a spoke directly above the hub sits at `hub.x + (hub.width - spoke.width)/2`, `hub.y - spoke.height - 20`.
+- Place the hub first; place spokes at the four (or eight) compass points around it, each offset by roughly `hub size/2 + connection gap + spoke size/2` along that axis (the spoke is joined to the hub by an edge, so it gets the connection gap, not the baseline gap) — e.g. a spoke directly above the hub sits at `hub.x + (hub.width - spoke.width)/2`, `hub.y - spoke.height - 55`, or more for a long label.
 - With more than ~4 spokes, prefer an evenly-angled ring (simple trig around the hub's center) over cramming everything onto the four cardinal points — pick connection-point sides that face the hub rather than defaulting to the same side for every spoke.
 
 ### Request/response pipeline
 A left-to-right (or top-to-bottom) sequence of steps, each connected to the next.
 
-- One row of entities, each **baseline gap (20px)** from the previous one's right edge, all sharing the same `y`.
+- One row of entities, each the **connection gap** from the previous one's right edge (the steps are joined by edges: about 100px for a label of a word or two, 40px for an unlabelled edge; 55px for a vertical pipeline), all sharing the same `y`.
 - `sourceHandle: "right"` / `targetHandle: "left"` on every edge (or `"bottom"`/`"top"` for a vertical pipeline) unless a step branches.
 - A return/response path (if drawn as a separate edge rather than implied) usually routes as a second edge between the same two entities, offset with a couple of manual `points` or a different `routingStyle` so it doesn't overlap the forward-path edge.
 
@@ -81,7 +96,7 @@ A left-to-right (or top-to-bottom) sequence of steps, each connected to the next
 Rows (or columns) by responsibility — one lane per actor/system — with steps placed into whichever lane owns them.
 
 - One Container per lane, full diagram width (or height, for vertical lanes), stacked with the **loose gap (60px)** between lanes, all sharing `x`/`width` (or `y`/`height`).
-- Entities representing a step go inside the lane Container that owns that step, positioned left-to-right (or top-to-bottom) in call order with the **baseline gap** — this is what makes "which lane is this in" read at a glance instead of needing a label lookup.
+- Entities representing a step go inside the lane Container that owns that step, positioned left-to-right (or top-to-bottom) in call order, the **connection gap** apart when an edge joins them — this is what makes "which lane is this in" read at a glance instead of needing a label lookup.
 - Cross-lane edges connect entities that have different `parentId`s directly by their node `id`s — the format doesn't require same-parent for an edge, only that both endpoint ids exist.
 
 ### Boundary / zone nesting

@@ -59,6 +59,85 @@ function resolveRef(baseDir, ref) {
   return resolve(baseDir, ref.replaceAll('\\', '/'))
 }
 
+// An edge label is a chip centred on the edge's midpoint: about 6.5px a character at the default 12px
+// font plus 14px of padding and border, and 23px tall. When the clear space between the two connected
+// elements, along the direction the edge mostly runs, is smaller than the chip, the label is partly
+// hidden behind them. The figures are an estimate (references/layout-guide.md, "Elements joined by an
+// edge"), so this only warns, and only where the label certainly does not fit.
+const LABEL_CHAR_PX = 6.5
+const LABEL_PADDING_PX = 14
+const LABEL_HEIGHT_PX = 23
+const PLAIN_SIDES = new Set(['left', 'right', 'top', 'bottom'])
+
+function hiddenLabelWarnings(prefix, nodes, edges) {
+  const byId = new Map(nodes.filter((n) => n && n.id !== undefined).map((n) => [n.id, n]))
+  const parentOf = (n) => (n.parentId === undefined ? undefined : byId.get(n.parentId))
+  const isInside = (n, ancestorId) => {
+    for (let p = parentOf(n), hops = 0; p && hops < 100; p = parentOf(p), hops += 1) {
+      if (p.id === ancestorId) return true
+    }
+    return false
+  }
+  // Absolute position: a child's `position` is relative to its parent container.
+  const rectOf = (n) => {
+    let x = n.position?.x
+    let y = n.position?.y
+    const width = n.size?.width
+    const height = n.size?.height
+    if (![x, y, width, height].every(Number.isFinite)) return null
+    for (let p = parentOf(n), hops = 0; p && hops < 100; p = parentOf(p), hops += 1) {
+      if (!Number.isFinite(p.position?.x) || !Number.isFinite(p.position?.y)) return null
+      x += p.position.x
+      y += p.position.y
+    }
+    return { x, y, width, height }
+  }
+
+  const found = []
+  for (const edge of edges) {
+    const label = typeof edge?.label === 'string' ? edge.label.trim() : ''
+    if (label === '') continue
+    // Bend points or a moved label put the chip somewhere other than the middle of the gap.
+    if (Array.isArray(edge.points) && edge.points.length > 0) continue
+    const position = edge.style?.labelPosition
+    if (position !== undefined && position !== 0.5) continue
+    const a = byId.get(edge.source)
+    const b = byId.get(edge.target)
+    if (!a || !b || a === b || a.type === 'line' || b.type === 'line') continue
+    if (isInside(a, b.id) || isInside(b, a.id)) continue
+    const ra = rectOf(a)
+    const rb = rectOf(b)
+    if (!ra || !rb) continue
+
+    const gapX = Math.max(rb.x - (ra.x + ra.width), ra.x - (rb.x + rb.width))
+    const gapY = Math.max(rb.y - (ra.y + ra.height), ra.y - (rb.y + rb.height))
+    if (gapX <= 0 && gapY <= 0) continue // overlapping elements: a different problem
+    const horizontal = gapX > 0 && (gapY <= 0 || gapX >= gapY)
+    const gap = horizontal ? gapX : gapY
+    // An edge that leaves by the far side of an element loops round it: the label is not in the gap.
+    const aIsFirst = horizontal ? ra.x < rb.x : ra.y < rb.y
+    const [firstSide, secondSide] = horizontal ? ['right', 'left'] : ['bottom', 'top']
+    const faces = (handle, isFirst) =>
+      !PLAIN_SIDES.has(handle) || handle === (isFirst ? firstSide : secondSide)
+    if (!faces(edge.sourceHandle, aIsFirst) || !faces(edge.targetHandle, !aIsFirst)) continue
+    const scale = (Number.isFinite(edge.style?.fontSize) ? edge.style.fontSize : 12) / 12
+    const longestLine = Math.max(...label.split('\n').map((line) => [...line].length))
+    const needed = horizontal
+      ? Math.ceil(LABEL_CHAR_PX * scale * longestLine + LABEL_PADDING_PX)
+      : Math.ceil(LABEL_HEIGHT_PX * scale)
+    if (gap < needed) {
+      found.push(
+        `${prefix} edge '${edge.id ?? '?'}' ("${label.length > 30 ? label.slice(0, 29) + '…' : label}") has ${Math.round(gap)}px between '${a.id}' and '${b.id}', but its label needs about ${needed}px: it will be hidden behind them (layout guide, "Elements joined by an edge")`
+      )
+    }
+  }
+  const shown = found.slice(0, 5)
+  if (found.length > shown.length) {
+    shown.push(`${prefix} ${found.length - shown.length} more edge label(s) are wider than the gap they sit in`)
+  }
+  return shown
+}
+
 export function validateFile(path, recursive = false, visited = new Set()) {
   const abs = resolve(path)
   if (visited.has(abs)) return { errors: [], warnings: [] }
@@ -258,6 +337,8 @@ export function validateFile(path, recursive = false, visited = new Set()) {
       checkPath(`legend entry '${entry.id ?? '?'}' icon`, icon.path)
     }
   }
+
+  warnings.push(...hiddenLabelWarnings(prefix, nodes, edges))
 
   if (recursive) {
     for (const target of linkedDiagrams) {
