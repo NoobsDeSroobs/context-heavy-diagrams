@@ -35,10 +35,34 @@ test('the chip is as high as its lines, scaled by the font size', () => {
   assert.ok(Math.abs(height('one', { ...plain, size: 24 }) - 42.4) < 0.01)
 })
 
-test('the gap needed is the chip plus 8px of line either side', () => {
-  assert.equal(labelNeededGap('reads from', plain, true), 90)
-  assert.equal(labelNeededGap('reads from', { ...plain, weight: 'bold' }, true), 94)
-  assert.equal(labelNeededGap('one\ntwo\nthree', plain, false), 78)
+test('the gap needed is the chip plus what the larger end graphic needs either side', () => {
+  const needed = (label, font, horizontal, ends) => labelNeededGap(label, font, horizontal, ends)
+  // The default edge: no graphic at the start, a closed arrow at the end (12px).
+  assert.equal(needed('reads from', plain, true), 98)
+  assert.equal(needed('reads from', { ...plain, weight: 'bold' }, true), 102)
+  assert.equal(needed('one\ntwo\nthree', plain, false), 86)
+  const both = (marker) =>
+    needed('reads from', plain, true, { startMarker: marker, endMarker: marker })
+  assert.equal(both('none'), 90)
+  assert.equal(both('crowsFootOne'), 84)
+  assert.equal(both('crowsFootZeroOrMany'), 110)
+  assert.equal(both('not-a-marker'), 98, 'an unknown graphic counts as 12px')
+})
+
+test('a label slid towards one end needs 3px at the near side and its graphic at the far side', () => {
+  const at = (position, ends) => labelNeededGap('reads from', plain, true, { position, ...ends })
+  assert.equal(at(0.5), 98)
+  assert.equal(at(0.52), 98, 'a nudge from the middle is still centred')
+  // Towards the source: 3px + half the chip (36.7px) over 0.3 of the gap; the far side, 12px, needs less.
+  assert.equal(at(0.3), 133)
+  assert.equal(at(0.7), 133, 'towards the target, the near side is the target side')
+  assert.equal(at(0.3, { endMarker: 'crowsFootZeroOrMany' }), 133, 'the far side is not the limit')
+  assert.equal(at(0.44), 91, 'a little off the middle: the near side is the limit')
+  assert.equal(
+    at(0.44, { endMarker: 'crowsFootZeroOrMany' }),
+    98,
+    'with a big graphic the far side (18px) is'
+  )
 })
 
 test('a label that does not fit in the gap is found, with the gap and what it needs', () => {
@@ -52,7 +76,7 @@ test('a label that does not fit in the gap is found, with the gap and what it ne
       sourceId: 'a',
       targetId: 'b',
       gap: 23,
-      needed: 90,
+      needed: 98,
       horizontal: true
     }
   )
@@ -60,7 +84,7 @@ test('a label that does not fit in the gap is found, with the gap and what it ne
 })
 
 test("an edge label inherits the diagram's font unless the edge sets its own", () => {
-  const nodes = [entity('a', 0, 0), entity('b', 192, 0)] // 92px: plain 90, bold 94, monospace 105
+  const nodes = [entity('a', 0, 0), entity('b', 200, 0)] // 100px: plain 98, bold 102, monospace 113
   assert.equal(hiddenLabels(nodes, [edge()]).length, 0)
   assert.equal(hiddenLabels(nodes, [edge()], 'monospace').length, 1)
   assert.equal(
@@ -75,7 +99,7 @@ test('what cannot be judged is left out', () => {
   const found = (extra) => hiddenLabels(nodes, [edge(extra)]).length
   assert.equal(found({ label: '  ' }), 0, 'a blank label')
   assert.equal(found({ points: [{ x: 1, y: 1 }] }), 0, 'bend points')
-  assert.equal(found({ style: { labelPosition: 0.2 } }), 0, 'a moved label')
+  assert.equal(found({ style: { labelPosition: 1.5 } }), 0, 'a label position off the edge')
   assert.equal(found({ sourceHandle: 'left', targetHandle: 'right' }), 0, 'a looping edge')
   assert.equal(found({ sourceHandle: 'cp-1' }), 1, 'a connection point counts as facing')
   assert.equal(hiddenLabels([entity('a', 0, 0), entity('b', 50, 0)], [edge()]).length, 0, 'overlap')

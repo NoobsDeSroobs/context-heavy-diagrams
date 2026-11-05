@@ -86,7 +86,23 @@ var EDGE_STYLE_DEFAULTS = {
 };
 
 // src/shared/layout/labelClearance.ts
-var VISIBLE_LINE_PX = 8;
+var MARKER_LINE_PX = {
+  none: 8,
+  arrowOpen: 12,
+  arrowClosed: 12,
+  circle: 12,
+  circleFilled: 11,
+  diamond: 12,
+  diamondFilled: 11,
+  crowsFootOne: 5,
+  crowsFootMany: 15,
+  crowsFootOneOrMany: 17,
+  crowsFootZeroOrOne: 12,
+  crowsFootZeroOrMany: 18
+};
+var UNKNOWN_MARKER_LINE_PX = 12;
+var NEAR_SIDE_LINE_PX = 3;
+var CENTRED_TOLERANCE = 0.05;
 var CHIP_ACROSS_PX = 14;
 var CHIP_DOWN_PX = 4;
 var CHIP_MIN_TEXT_PX = 8;
@@ -111,9 +127,22 @@ function labelChipSize(label, font) {
     height: Math.max(font.size, lines.length * lineHeight) + CHIP_DOWN_PX
   };
 }
-function labelNeededGap(label, font, horizontal) {
+var markerLine = (marker) => typeof marker === "string" && marker in MARKER_LINE_PX ? MARKER_LINE_PX[marker] : UNKNOWN_MARKER_LINE_PX;
+function labelNeededGap(label, font, horizontal, ends = {}) {
   const chip = labelChipSize(label, font);
-  return roundUp((horizontal ? chip.width : chip.height) + 2 * VISIBLE_LINE_PX);
+  const size = horizontal ? chip.width : chip.height;
+  const start = markerLine(ends.startMarker ?? EDGE_STYLE_DEFAULTS.startMarker);
+  const end = markerLine(ends.endMarker ?? EDGE_STYLE_DEFAULTS.endMarker);
+  const position = Math.min(0.98, Math.max(0.02, ends.position ?? 0.5));
+  if (Math.abs(position - 0.5) <= CENTRED_TOLERANCE) {
+    return roundUp(size + 2 * Math.max(start, end));
+  }
+  const slidToSource = position < 0.5;
+  const sourceSide = slidToSource ? NEAR_SIDE_LINE_PX : start;
+  const targetSide = slidToSource ? end : NEAR_SIDE_LINE_PX;
+  return roundUp(
+    Math.max((sourceSide + size / 2) / position, (targetSide + size / 2) / (1 - position))
+  );
 }
 function hiddenLabels(nodes, edges, diagramFont) {
   const byId = /* @__PURE__ */ new Map();
@@ -142,8 +171,9 @@ function hiddenLabels(nodes, edges, diagramFont) {
   for (const edge of edges) {
     if (!edge || typeof edge.label !== "string" || edge.label.trim() === "") continue;
     if (Array.isArray(edge.points) && edge.points.length > 0) continue;
-    const position = edge.style?.labelPosition;
-    if (position !== void 0 && position !== 0.5) continue;
+    const labelPosition = edge.style?.labelPosition;
+    if (labelPosition !== void 0 && !(isNumber(labelPosition) && labelPosition > 0 && labelPosition < 1))
+      continue;
     const a = byId.get(edge.source);
     const b = byId.get(edge.target);
     if (!a || !b || a === b || a.type === "line" || b.type === "line") continue;
@@ -160,7 +190,11 @@ function hiddenLabels(nodes, edges, diagramFont) {
     const [firstSide, secondSide] = horizontal ? ["right", "left"] : ["bottom", "top"];
     const faces = (handle, isFirst) => typeof handle !== "string" || !PLAIN_SIDES.has(handle) || handle === (isFirst ? firstSide : secondSide);
     if (!faces(edge.sourceHandle, aIsFirst) || !faces(edge.targetHandle, !aIsFirst)) continue;
-    const needed = labelNeededGap(edge.label, labelFont(edge, diagramFont), horizontal);
+    const needed = labelNeededGap(edge.label, labelFont(edge, diagramFont), horizontal, {
+      startMarker: edge.style?.startMarker,
+      endMarker: edge.style?.endMarker,
+      position: isNumber(labelPosition) ? labelPosition : void 0
+    });
     if (gap < needed) {
       found.push({
         edgeId: String(edge.id ?? "?"),
@@ -176,6 +210,7 @@ function hiddenLabels(nodes, edges, diagramFont) {
   return found;
 }
 export {
+  MARKER_LINE_PX,
   hiddenLabels,
   labelChipSize,
   labelNeededGap

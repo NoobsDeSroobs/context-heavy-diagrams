@@ -18,6 +18,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 - [A colour typed in light mode comes back changed (the theme flip is not exactly reversible)](#a-colour-typed-in-light-mode-comes-back-changed-the-theme-flip-is-not-exactly-reversible) — Won't fix.
 - [A native confirm() dialog left `<select>` elements unresponsive afterward](#a-native-confirm-dialog-left-select-elements-unresponsive-afterward) — Worked around.
 - [Clicking a container selects a different container that visually encloses it](#clicking-a-container-selects-a-different-container-that-visually-encloses-it) — Worked around.
+- [Edges start far from their elements after zooming out and in to a part of the diagram not seen up close](#edges-start-far-from-their-elements-after-zooming-out-and-in-to-a-part-of-the-diagram-not-seen-up-close) — Open.
 
 ---
 
@@ -800,3 +801,20 @@ Fixed by the paste rework described under "Pasting a copied child-of-a-container
 **Resolution:** the system setting is only the default. The preference is `system`, `on` or `off`, `on` and `off` win over the system, and the Ctrl-hover reveal ignores the system setting. The old boolean is read as `off` for `false` and `system` for `true`.
 
 **Notes:** the first report looked like the Animate edges preference being off (a recent write had set it) and, in the dev app, a stale hot reload after switching branches; both were real possibilities and neither was the cause. A preference that defaults to true is written back with every other preference, so a stored default cannot be told from a choice.
+
+---
+
+## Edges start far from their elements after zooming out and in to a part of the diagram not seen up close
+
+**Status:** Open (2026-11-06)
+**Found:** 2026-11-06, while moving elements in a test diagram to calibrate edge labels
+
+**Symptom:** zoom out, then zoom in on a part of the diagram that was not on screen before: the line of every edge there starts and ends a long way from its element, instead of at the connection point. Panning so the elements leave the window and come back draws them right.
+
+**Cause (not yet confirmed):** the canvas mounts only the nodes and edges inside the window (`onlyRenderVisibleElements`, [ADR 0073](decisions/0073-react-flow-render-performance-round-2.md)), so the elements of the new view mount at the new zoom, and an edge's end seems to be placed from connection point positions that are stale or measured at another zoom until the element leaves and re-enters the window. Nothing has been measured; this is what the trigger points to.
+
+**Workaround:** pan or zoom so the affected elements leave the window and return.
+
+**Direction:** reproduce on a diagram of a few dozen elements, then compare the measured connection point positions of a freshly mounted node with one that stayed on screen, and check whether the gap disappears with `onlyRenderVisibleElements` off. If it does, the fix is where the positions are measured or re-measured on mount, not turning the option off (it is what keeps a large diagram fast).
+
+**References:** `src/renderer/src/canvas/Canvas.tsx` (`onlyRenderVisibleElements`)

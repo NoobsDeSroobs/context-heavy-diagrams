@@ -1,12 +1,12 @@
 // Edge labels that do not fit in the gap between the two elements their edge joins, with the line and
-// its arrowhead still visible either side of them (ADR 0146). One implementation for everything that checks
+// its end graphics still visible either side of them (ADR 0146). One implementation for everything that checks
 // this: `chd validate` and the Claude Desktop extension run it through the skill's script, which gets
 // a generated copy of this file (scripts/build-cli.mjs), and the app's Diagnostics panel imports it.
 //
 // The width of the text comes from the same per-character estimate the SVG export wraps with
 // (export/textLayout.ts, ADR 0124), because no font file is available to a command-line check and an
 // estimate gives the same answer on every computer. The chip around the text is the one the canvas
-// and the export draw: 12px of padding and border across, 4px down, centred on the edge's midpoint.
+// and the export draw: 12px of padding and border across, 4px down, at the edge's label position.
 //
 // The inputs are what a parsed .chd holds, not yet validated, so every field is read defensively.
 import { LINE_HEIGHT_EM, measureText, wrapText, type FontSpec } from '../export/textLayout.ts'
@@ -33,6 +33,8 @@ export interface ClearanceEdge {
     fontWeight?: unknown
     fontFamily?: unknown
     labelPosition?: unknown
+    startMarker?: unknown
+    endMarker?: unknown
   } | null
 }
 
@@ -54,9 +56,32 @@ interface Rect {
   height: number
 }
 
-// The least line (and arrowhead) that must show either side of the chip for the edge to read. Set by
-// eye in the app: 12px a side looks right, 8px is where it stops reading as an edge.
-const VISIBLE_LINE_PX = 8
+// The line that must show between the chip and an element, per end graphic on that side, for the edge
+// to read as one. Set by eye in the app, from the smallest gap at which a label centred on an edge with
+// the same graphic at both ends looked acceptable, with the default 12px label: half of the gap left
+// beside the chip. Nothing is drawn for 'none', so it needs the least; a crow's foot with a zero ring is
+// the largest graphic.
+export const MARKER_LINE_PX: Readonly<Record<string, number>> = {
+  none: 8,
+  arrowOpen: 12,
+  arrowClosed: 12,
+  circle: 12,
+  circleFilled: 11,
+  diamond: 12,
+  diamondFilled: 11,
+  crowsFootOne: 5,
+  crowsFootMany: 15,
+  crowsFootOneOrMany: 17,
+  crowsFootZeroOrOne: 12,
+  crowsFootZeroOrMany: 18
+}
+const UNKNOWN_MARKER_LINE_PX = 12
+
+// A label slid towards one end leaves line on the far side to show what the edge is; the near side only
+// has to keep the chip clear of the element. Set by eye in the app: 3px or more looked acceptable.
+const NEAR_SIDE_LINE_PX = 3
+// A label within this of the middle (0.5) is judged as centred, so a nudge never lowers the need.
+const CENTRED_TOLERANCE = 0.05
 
 // The chip's own padding and border: 6px + 1px each side across, 1px + 1px each side down.
 const CHIP_ACROSS_PX = 14
@@ -93,18 +118,53 @@ export function labelChipSize(label: string, font: FontSpec): { width: number; h
   }
 }
 
-// The gap an edge label needs, in px, along the direction its edge runs: the chip plus the visible line
-// either side.
-export function labelNeededGap(label: string, font: FontSpec, horizontal: boolean): number {
+export interface LabelEnds {
+  // The edge's own end graphics; absent means the defaults of a new edge (no graphic at the start, a
+  // closed arrow at the end).
+  startMarker?: unknown
+  endMarker?: unknown
+  // How far along the edge from its source the label sits (0 to 1); absent means 0.5, the middle.
+  position?: number
+}
+
+const markerLine = (marker: unknown): number =>
+  typeof marker === 'string' && marker in MARKER_LINE_PX
+    ? MARKER_LINE_PX[marker]
+    : UNKNOWN_MARKER_LINE_PX
+
+// The gap an edge label needs, in px, along the direction its edge runs. Centred, it is the chip plus the
+// line its larger end graphic needs on each side. Slid towards one end, each side is judged on its own:
+// the nearer side only has to keep the chip off the element, the farther one keeps its end graphic.
+export function labelNeededGap(
+  label: string,
+  font: FontSpec,
+  horizontal: boolean,
+  ends: LabelEnds = {}
+): number {
   const chip = labelChipSize(label, font)
-  return roundUp((horizontal ? chip.width : chip.height) + 2 * VISIBLE_LINE_PX)
+  const size = horizontal ? chip.width : chip.height
+  const start = markerLine(ends.startMarker ?? EDGE_STYLE_DEFAULTS.startMarker)
+  const end = markerLine(ends.endMarker ?? EDGE_STYLE_DEFAULTS.endMarker)
+  const position = Math.min(0.98, Math.max(0.02, ends.position ?? 0.5))
+  if (Math.abs(position - 0.5) <= CENTRED_TOLERANCE) {
+    return roundUp(size + 2 * Math.max(start, end))
+  }
+  // The chip's centre is `position` of the way along the gap, so a side of length s needs a gap of
+  // (s + half the chip) / its share of the gap.
+  const slidToSource = position < 0.5
+  const sourceSide = slidToSource ? NEAR_SIDE_LINE_PX : start
+  const targetSide = slidToSource ? end : NEAR_SIDE_LINE_PX
+  return roundUp(
+    Math.max((sourceSide + size / 2) / position, (targetSide + size / 2) / (1 - position))
+  )
 }
 
 // The edges whose label does not fit in the gap, so it is partly hidden behind the elements or leaves
 // too little of the line to read.
-// Left out because the chip is not in the middle of the gap or the gap cannot be judged: an edge with
-// bend points or a moved label, a text-only line, an edge between a container and its own content,
-// overlapping elements, and an edge that leaves by the far side of an element (it loops round).
+// Left out because the gap cannot be judged: an edge with bend points (the chip's place is not along
+// the gap), a label position outside the edge, a text-only line, an edge between a container and its
+// own content, overlapping elements, and an edge that leaves by the far side of an element (it loops
+// round).
 // `diagramFont` is the diagram's own font, which an edge label inherits (ADR 0130).
 export function hiddenLabels(
   nodes: readonly ClearanceNode[],
@@ -140,8 +200,12 @@ export function hiddenLabels(
   for (const edge of edges) {
     if (!edge || typeof edge.label !== 'string' || edge.label.trim() === '') continue
     if (Array.isArray(edge.points) && edge.points.length > 0) continue
-    const position = edge.style?.labelPosition
-    if (position !== undefined && position !== 0.5) continue
+    const labelPosition = edge.style?.labelPosition
+    if (
+      labelPosition !== undefined &&
+      !(isNumber(labelPosition) && labelPosition > 0 && labelPosition < 1)
+    )
+      continue
     const a = byId.get(edge.source)
     const b = byId.get(edge.target)
     if (!a || !b || a === b || a.type === 'line' || b.type === 'line') continue
@@ -164,7 +228,11 @@ export function hiddenLabels(
       handle === (isFirst ? firstSide : secondSide)
     if (!faces(edge.sourceHandle, aIsFirst) || !faces(edge.targetHandle, !aIsFirst)) continue
 
-    const needed = labelNeededGap(edge.label, labelFont(edge, diagramFont), horizontal)
+    const needed = labelNeededGap(edge.label, labelFont(edge, diagramFont), horizontal, {
+      startMarker: edge.style?.startMarker,
+      endMarker: edge.style?.endMarker,
+      position: isNumber(labelPosition) ? labelPosition : undefined
+    })
     if (gap < needed) {
       found.push({
         edgeId: String(edge.id ?? '?'),
