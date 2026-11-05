@@ -198,6 +198,37 @@ test('no label, bend points, a moved label, overlap and a text-size change are h
   )
 })
 
+test('bold, a monospace family, capitals and wide characters make a label wider', async () => {
+  // Plain "reads from" needs 79px: 10 characters of 6.5px, plus 14px.
+  const small = [sized('a', 0, 0), sized('b', 180, 0)] // 80px of gap
+  const roomy = async (extra, label = 'reads from') =>
+    labelWarnings((await check(small, [edge({ label, ...extra })])).warnings)
+  assert.deepEqual(await roomy({}), [], 'plain fits in 80px')
+  assert.equal((await roomy({ style: { fontWeight: 'bold' } })).length, 1, 'bold needs 86px')
+  assert.equal(
+    (await roomy({ style: { fontFamily: 'monospace' } })).length,
+    1,
+    'monospace is wider'
+  )
+  assert.deepEqual(await roomy({ style: { fontFamily: 'serif' } }), [], 'serif is not narrowed')
+  assert.equal((await roomy({}, 'READS FROM')).length, 1, 'capitals are wider than lowercase')
+  assert.equal((await roomy({}, '読み取り元から')).length, 1, 'CJK characters are about a full em')
+  // A monospace font sets every character the same width: capitals are not wider again.
+  const mono = await roomy({ style: { fontFamily: 'monospace' } }, 'READS FROM')
+  assert.match(mono[0], /about 86px/)
+})
+
+test('a vertical label is as high as its lines', async () => {
+  const gap = (px) => [sized('a', 0, 0), sized('b', 0, 60 + px)]
+  const three = (px) => check(gap(px), [edge({ label: 'one\ntwo\nthree' })])
+  // Three lines at 12px: 3 x 19.2px of text + 3.8px = 62px.
+  assert.equal(labelWarnings((await three(61)).warnings).length, 1)
+  assert.match(labelWarnings((await three(61)).warnings)[0], /about 62px/)
+  assert.deepEqual(labelWarnings((await three(62)).warnings), [])
+  const big = await check(gap(40), [edge({ label: 'x', style: { fontSize: 24 } })])
+  assert.match(labelWarnings(big.warnings)[0], /about 43px/)
+})
+
 test('positions inside a container are added up, and an edge to its own container is ignored', async () => {
   // b sits at x 130 on the canvas (container at 130, b at 0 inside it), 30px from a.
   const container = sized('c', 130, 0, { type: 'container', size: { width: 300, height: 200 } })

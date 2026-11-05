@@ -59,15 +59,43 @@ function resolveRef(baseDir, ref) {
   return resolve(baseDir, ref.replaceAll('\\', '/'))
 }
 
-// An edge label is a chip centred on the edge's midpoint: about 6.5px a character at the default 12px
-// font plus 14px of padding and border, and 23px tall. When the clear space between the two connected
+// An edge label is a chip centred on the edge's midpoint: its text plus 14px of padding and border
+// either side, and 3.8px above and below its lines. When the clear space between the two connected
 // elements, along the direction the edge mostly runs, is smaller than the chip, the label is partly
 // hidden behind them. The figures are an estimate (references/layout-guide.md, "Elements joined by an
 // edge"), so this only warns, and only where the label certainly does not fit.
-const LABEL_CHAR_PX = 6.5
+const LABEL_CHAR_PX = 6.5 // an average character of ordinary text at the default 12px
 const LABEL_PADDING_PX = 14
-const LABEL_HEIGHT_PX = 23
+const LABEL_LINE_PX = 19.2 // one line at 12px: the line height is 1.6
+const LABEL_VERTICAL_PADDING_PX = 3.8
+// How much wider than an average character some text runs. Estimates, not measurements: bold and the
+// monospace and cursive families (the generic ones the app offers) widen every character, a capital
+// is wider than the average lowercase letter, and a CJK or emoji character is about a full em.
+const BOLD_FACTOR = 1.1
+const WIDER_FAMILY_FACTOR = 1.1
+const CAPITAL_FACTOR = 1.25
+const WIDE_FACTOR = 1.85
+const MONOSPACE = /mono|courier|consolas/i
+const WIDER_FAMILY = /mono|courier|consolas|cursive|comic/i
+const WIDE_CHAR =
+  /[\u1100-\u115f\u2e80-\ua4cf\uac00-\ud7a3\uf900-\ufaff\ufe30-\ufe6f\uff00-\uff60\uffe0-\uffe6\u{1f300}-\u{1faff}]/u
+const CAPITAL = /\p{Lu}/u
+const roundUp = (px) => Math.ceil(Number(px.toFixed(2)))
 const PLAIN_SIDES = new Set(['left', 'right', 'top', 'bottom'])
+
+// The width of one line of a label in px, from its characters and the edge's font.
+function labelLineWidth(line, style) {
+  const monospace = MONOSPACE.test(style?.fontFamily ?? '')
+  let characters = 0
+  for (const ch of line) {
+    if (WIDE_CHAR.test(ch)) characters += WIDE_FACTOR
+    else characters += !monospace && CAPITAL.test(ch) ? CAPITAL_FACTOR : 1
+  }
+  const size = Number.isFinite(style?.fontSize) ? style.fontSize : 12
+  const family = WIDER_FAMILY.test(style?.fontFamily ?? '') ? WIDER_FAMILY_FACTOR : 1
+  const weight = style?.fontWeight === 'bold' ? BOLD_FACTOR : 1
+  return LABEL_CHAR_PX * (size / 12) * characters * family * weight
+}
 
 function hiddenLabelWarnings(prefix, nodes, edges) {
   const byId = new Map(nodes.filter((n) => n && n.id !== undefined).map((n) => [n.id, n]))
@@ -120,11 +148,11 @@ function hiddenLabelWarnings(prefix, nodes, edges) {
     const faces = (handle, isFirst) =>
       !PLAIN_SIDES.has(handle) || handle === (isFirst ? firstSide : secondSide)
     if (!faces(edge.sourceHandle, aIsFirst) || !faces(edge.targetHandle, !aIsFirst)) continue
-    const scale = (Number.isFinite(edge.style?.fontSize) ? edge.style.fontSize : 12) / 12
-    const longestLine = Math.max(...label.split('\n').map((line) => [...line].length))
+    const lines = label.split('\n')
+    const size = Number.isFinite(edge.style?.fontSize) ? edge.style.fontSize : 12
     const needed = horizontal
-      ? Math.ceil(LABEL_CHAR_PX * scale * longestLine + LABEL_PADDING_PX)
-      : Math.ceil(LABEL_HEIGHT_PX * scale)
+      ? roundUp(Math.max(...lines.map((line) => labelLineWidth(line, edge.style))) + LABEL_PADDING_PX)
+      : roundUp(LABEL_LINE_PX * (size / 12) * lines.length + LABEL_VERTICAL_PADDING_PX)
     if (gap < needed) {
       found.push(
         `${prefix} edge '${edge.id ?? '?'}' ("${label.length > 30 ? label.slice(0, 29) + '…' : label}") has ${Math.round(gap)}px between '${a.id}' and '${b.id}', but its label needs about ${needed}px: it will be hidden behind them (layout guide, "Elements joined by an edge")`
