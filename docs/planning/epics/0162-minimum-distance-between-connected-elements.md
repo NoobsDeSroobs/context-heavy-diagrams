@@ -29,6 +29,7 @@ The layout guide already says an edge label needs roughly 100-160 px of clearanc
 - [x] `chd validate` and `validate_diagram` warn when a label is wider than the gap it sits in (a warning, never an error), with tests. The text is measured with the export's per-character estimate, in the edge's font or the diagram's, so bold, monospace, capitals, wide characters and several lines are allowed for
 - [x] The check is `src/shared/layout/labelClearance.ts`; the skill's script runs a generated, committed copy, and a test fails when the copy is stale ([ADR 0147](../../decisions/0147-a-check-shared-with-the-skill-script-has-one-source-and-a-committed-copy.md))
 - [x] The Immich scorecard is not in the repository, so there is nothing to add
+- [x] Diagnostics has a Layout section listing the same edges, each row finding the edge on the canvas (`src/renderer/src/layout/LayoutSection.tsx`)
 - [ ] Loosen the gallery diagrams that now warn: 19 edges in 11 files (`c4-context.chd`; `c4-container/` booking-api, booking-web-app, interop-gateway, legacy-sync, notification-service and payment-orchestration components; `security-rollup/` domain-customer, domain-payments and ledger-service; `meridian-rail-landscape-layered/ticketing-and-booking.chd`). Each needs nodes moved and containers resized, so it wants an eye on the result in the app
 
 ## Notes

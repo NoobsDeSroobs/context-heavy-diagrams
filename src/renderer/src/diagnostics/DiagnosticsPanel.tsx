@@ -1,5 +1,6 @@
 import type { CheckResult } from '@shared/conformance/check'
 import ConformanceSection from '../conformance/ConformanceSection'
+import LayoutSection, { type LayoutEntry } from '../layout/LayoutSection'
 import type { ConformanceState } from '../conformance/useConformance'
 
 // One diagram element (node, or a legend entry) that references a file on
@@ -56,6 +57,9 @@ interface DiagnosticsPanelProps {
   // The architecture check (ADR 0131): the chosen metamodel and what it found in the open diagram.
   conformance: ConformanceState
   conformanceResult: CheckResult | null
+  // Edge labels hidden behind the elements they join (ADR 0146), and the action to find one.
+  layoutEntries: LayoutEntry[]
+  onRevealEdge: (entry: LayoutEntry) => void
   onClose: () => void
 }
 
@@ -91,9 +95,15 @@ export default function DiagnosticsPanel({
   onUnstageRemoval,
   conformance,
   conformanceResult,
+  layoutEntries,
+  onRevealEdge,
   onClose
 }: DiagnosticsPanelProps): React.JSX.Element {
-  const empty = entries.length === 0 && missingFiles.length === 0 && stagedRemovals.length === 0
+  const empty =
+    entries.length === 0 &&
+    missingFiles.length === 0 &&
+    stagedRemovals.length === 0 &&
+    layoutEntries.length === 0
 
   return (
     <div className="diagnostics-panel">
@@ -193,6 +203,8 @@ export default function DiagnosticsPanel({
           result={conformanceResult}
           onRevealNode={onRevealNode}
         />
+
+        <LayoutSection entries={layoutEntries} onRevealEdge={onRevealEdge} />
 
         {entries.length > 0 && (
           <ul className="diagnostics-panel-list">
