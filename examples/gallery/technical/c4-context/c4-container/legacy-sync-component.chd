@@ -75,11 +75,11 @@
       "id": "boundary",
       "type": "container",
       "position": {
-        "x": -250,
+        "x": -174,
         "y": -115
       },
       "size": {
-        "width": 500,
+        "width": 587,
         "height": 230
       },
       "style": {
@@ -125,7 +125,7 @@
       "id": "legacy-protocol-adapter",
       "type": "entity",
       "position": {
-        "x": 270,
+        "x": 357,
         "y": 90
       },
       "size": {
@@ -150,7 +150,7 @@
       "id": "ext-legacy-mainframe",
       "type": "entity",
       "position": {
-        "x": 364.7215833612949,
+        "x": 614,
         "y": -20
       },
       "size": {

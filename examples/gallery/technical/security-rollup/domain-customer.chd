@@ -76,7 +76,7 @@
       "id": "svc-profile",
       "type": "entity",
       "position": {
-        "x": 300,
+        "x": 384,
         "y": 0
       },
       "size": {
@@ -98,7 +98,7 @@
       "id": "svc-notifications",
       "type": "entity",
       "position": {
-        "x": 600,
+        "x": 684,
         "y": 0
       },
       "size": {

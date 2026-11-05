@@ -79,7 +79,7 @@
         "y": -125
       },
       "size": {
-        "width": 740,
+        "width": 876,
         "height": 250
       },
       "style": {
@@ -125,7 +125,7 @@
       "id": "retry-reconciliation-engine",
       "type": "entity",
       "position": {
-        "x": 270,
+        "x": 357,
         "y": 80
       },
       "size": {
@@ -150,7 +150,7 @@
       "id": "gateway-client",
       "type": "entity",
       "position": {
-        "x": 510,
+        "x": 646,
         "y": 80
       },
       "size": {
@@ -175,7 +175,7 @@
       "id": "ext-payment-gateway",
       "type": "entity",
       "position": {
-        "x": 550.7236346085155,
+        "x": 686.724,
         "y": -35
       },
       "size": {

@@ -1,7 +1,7 @@
 # 0162: Minimum distance between connected elements, in everything we tell an AI agent
 
 ## Status
-In progress on the branch `epic/0162-minimum-distance` (2026-11-05). Design in [ADR 0146](../../decisions/0146-elements-joined-by-an-edge-keep-a-gap-for-the-label.md).
+Built on the branch `epic/0162-minimum-distance` (2026-11-06); not merged. Design in [ADR 0146](../../decisions/0146-elements-joined-by-an-edge-keep-a-gap-for-the-label.md).
 
 ## Goal
 Every piece of guidance we hand an AI agent that draws diagrams says: two entities or containers joined by an edge must be far enough apart for the edge to be seen and its label to be read, and the distance depends on the label.
@@ -30,7 +30,7 @@ The layout guide already says an edge label needs roughly 100-160 px of clearanc
 - [x] The check is `src/shared/layout/labelClearance.ts`; the skill's script runs a generated, committed copy, and a test fails when the copy is stale ([ADR 0147](../../decisions/0147-a-check-shared-with-the-skill-script-has-one-source-and-a-committed-copy.md))
 - [x] The Immich scorecard is not in the repository, so there is nothing to add
 - [x] Diagnostics has a Layout section listing the same edges, each row finding the edge on the canvas (`src/renderer/src/layout/LayoutSection.tsx`)
-- [ ] Loosen the gallery diagrams that now warn: 23 edges in 14 files (`c4-context.chd`; the seven `c4-container/` components; `security-rollup/` domain-customer, domain-payments, profile-service, payment-gateway and ledger-service; `meridian-rail-landscape-layered/ticketing-and-booking.chd`). The three small examples `with-icons.chd` and `conformance/hexagonal-ok.chd` and `-broken.chd` were nudged apart already. Each needs nodes moved and containers resized, so it wants an eye on the result in the app
+- [x] Loosen the gallery diagrams that warned: 23 edges in 14 files, moved apart to the target gap (about 20 px of line a side) by cutting through each flagged gap and moving everything beyond it, widening the containers the cut passes through; only coordinates and container sizes changed. Eye-check of the result in the app is open
 
 ## Notes
 Raised while preparing the showcase video, from the layout of AI-generated diagrams.
