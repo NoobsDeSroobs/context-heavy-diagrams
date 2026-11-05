@@ -134,7 +134,7 @@
   opacity: 0.75;
 }
 
-/* Architecture check (ADR 0131): a profile picker, then one row per finding. */
+/* Architecture check (ADR 0131): a metamodel picker, then one row per finding. */
 .diagnostics-conformance {
   margin-bottom: 12px;
 }

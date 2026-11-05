@@ -16,10 +16,10 @@ import type {
 } from '@shared/document/documentSave'
 import type { AiFolderResult, ClaudeExtensionOutcome } from '@shared/ai/aiFolderResult'
 import type {
-  NewProfileResult,
-  ProfileListing,
-  ProfilesFolderInfo
-} from '@shared/conformance/profilesFolder'
+  NewMetamodelResult,
+  MetamodelListing,
+  MetamodelsFolderInfo
+} from '@shared/conformance/metamodelsFolder'
 import type { AppPreferences } from '@shared/preferences/preferences'
 import type { SecurityCrawlResult } from '@shared/threat-matrix/threatMatrixMath'
 import type { LinkedSearchLink, LinkedSearchResult } from '@shared/search/linkedSearch'
@@ -125,11 +125,11 @@ export interface DiagramApi {
   getAppVersion(): Promise<string>
   enableAiInFolder(): Promise<AiFolderResult | null>
   installClaudeExtension(): Promise<ClaudeExtensionOutcome>
-  getProfilesFolder(): Promise<ProfilesFolderInfo>
-  listProfiles(): Promise<ProfileListing[]>
-  loadProfile(id: string): Promise<string | null>
-  chooseProfilesFolder(): Promise<string | null>
-  createProfile(): Promise<NewProfileResult>
+  getMetamodelsFolder(): Promise<MetamodelsFolderInfo>
+  listMetamodels(): Promise<MetamodelListing[]>
+  loadMetamodel(id: string): Promise<string | null>
+  chooseMetamodelsFolder(): Promise<string | null>
+  createMetamodel(): Promise<NewMetamodelResult>
   exportStylePalette(json: string): Promise<boolean>
   importStylePalette(): Promise<{ name: string; content: string } | null>
   exportPngToFile(dataUrl: string, suggestedFilename: string): Promise<boolean>

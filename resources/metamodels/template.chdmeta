@@ -1,7 +1,7 @@
 {
-  "profileVersion": 1,
-  "name": "My architecture style",
-  "description": "TEMPLATE. Describe the style and how a diagram must be prepared for it (which tags to set on which elements). Work through the file top to bottom; the full specification is docs/conformance-profile-format.md. The file stays invalid until both values under \"edges\" are chosen.",
+  "metamodelVersion": 1,
+  "name": "My metamodel",
+  "description": "TEMPLATE. Describe the style and how a diagram must be prepared for it (which tags to set on which elements). Work through the file top to bottom; the full specification is docs/metamodel-format.md. The file stays invalid until both values under \"edges\" are chosen.",
   "edges": {
     "meaning": "none",
     "presence": "none"

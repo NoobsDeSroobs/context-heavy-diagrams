@@ -13,17 +13,33 @@ import {
 } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import { basename, dirname, extname, join, sep } from 'node:path'
+import { parseDiagram } from '../../src/shared/diagram/index.ts'
+import { metamodelFileBase } from '../../src/shared/conformance/metamodel.ts'
+import {
+  checkDiagramText,
+  metamodelProblems,
+  parseMetamodelText
+} from '../../src/shared/conformance/report.ts'
+import { compareDiagrams, diffToJson, notesBetween } from '../../src/shared/compare/report.ts'
+// The same containment rule the command line applies to a stored note path (ADR 0115).
+import { containedPath } from '../../src/main/containedPath.ts'
+// The one place the extension starts another program: `git show <revision>:<file>`, read-only
+// (ADR 0142).
+import { buildGitSession } from '../../src/main/compare/gitCompare.ts'
 import { validateFile } from '../../resources/ai/skills/chd-diagrams/scripts/validate_chd.mjs'
 import {
   MAX_FILE_BYTES,
+  METAMODEL_SUFFIX,
   READ_EXTENSIONS,
   ToolError,
-  WRITE_EXTENSIONS,
   isDotOrIgnoredEntry,
+  isMetamodelName,
+  isWritableName,
   resolveInFolder
 } from './fileRules.mjs'
 import { FINGERPRINT_PATTERN, fingerprint } from './fingerprint.mjs'
 import { formatSpec } from './formatSpec.mjs'
+import { loadBuiltinMetamodels } from './metamodelsText.mjs'
 
 const LIST_LIMIT = 300
 const LIST_MAX_DEPTH = 8
@@ -78,7 +94,72 @@ function refuseInvalid(rel, validation) {
   )
 }
 
+// A metamodel is checked from its text, with the same reader `chd check` uses; it holds no relative
+// paths, so unlike a diagram it needs no temporary file (ADR 0143).
+function refuseInvalidMetamodel(rel, content) {
+  const loaded = parseMetamodelText(content, basename(rel))
+  if ('message' in loaded) {
+    throw new ToolError(`"${rel}" was not written. ${loaded.message}`)
+  }
+}
+
 export function createTools({ root, allowUpdate, specSources }) {
+  const builtinMetamodels = loadBuiltinMetamodels()
+
+  // The text of a file the assistant named, refused if it is too large or not UTF-8 text.
+  function textOf(absolute, rel) {
+    assertFile(absolute, rel)
+    if (statSync(absolute).size > MAX_FILE_BYTES) {
+      throw new ToolError(`"${rel}" is larger than the ${MAX_FILE_BYTES / (1024 * 1024)} MB limit`)
+    }
+    try {
+      return new TextDecoder('utf-8', { fatal: true }).decode(readFileSync(absolute))
+    } catch {
+      throw new ToolError(`"${rel}" is not valid UTF-8 text`)
+    }
+  }
+
+  // A .chd the assistant named, as { absolute, rel, text }.
+  function diagramFile(path, tool) {
+    const { absolute, relative: rel } = resolveInFolder(root, path, 'read', { mustExist: true })
+    if (extname(absolute).toLowerCase() !== '.chd') {
+      throw new ToolError(`${tool} only works on .chd diagram files`)
+    }
+    return { absolute, rel, text: textOf(absolute, rel) }
+  }
+
+  // A diagram given as a path in the folder, or as its text: the inline form judges a candidate
+  // before it is written. Exactly one of the two. `names` are the argument names for the messages
+  // and `label` is what an inline diagram is called in a result.
+  function diagramInput({ path, content }, names, tool, label = '(inline)') {
+    const hasPath = typeof path === 'string' && path.trim() !== ''
+    const hasContent = content !== undefined
+    if (hasPath && hasContent) {
+      throw new ToolError(
+        `give ${names.path} (a file in the folder) or ${names.content} (the diagram's text), not both`
+      )
+    }
+    if (!hasPath && !hasContent) {
+      throw new ToolError(`${names.path} or ${names.content} is required`)
+    }
+    if (!hasContent) return diagramFile(path, tool)
+    if (typeof content !== 'string') throw new ToolError(`${names.content} must be text`)
+    if (Buffer.byteLength(content, 'utf-8') > MAX_FILE_BYTES) {
+      throw new ToolError(
+        `${names.content} is larger than the ${MAX_FILE_BYTES / (1024 * 1024)} MB limit`
+      )
+    }
+    return { absolute: null, rel: label, text: content, inline: true }
+  }
+
+  function parsed(file) {
+    try {
+      return parseDiagram(file.text)
+    } catch (error) {
+      throw new ToolError(`can't read '${file.rel}': ${error?.message ?? error}`)
+    }
+  }
+
   function listFiles() {
     const files = []
     let truncated = false
@@ -104,7 +185,7 @@ export function createTools({ root, allowUpdate, specSources }) {
             .join('/'),
           bytes: stats.size,
           modified: stats.mtime.toISOString(),
-          writable: WRITE_EXTENSIONS.has(ext)
+          writable: isWritableName(entry.name)
         })
       }
     }
@@ -130,6 +211,164 @@ export function createTools({ root, allowUpdate, specSources }) {
     }
     assertFile(absolute, rel)
     return tidyValidation(root, validateFile(absolute, false), absolute, rel)
+  }
+
+  // `chd validate` on a metamodel file: the same list of problems, from the shared reader. A
+  // metamodel under its old name (.chdprofile.json) is read too.
+  function validateMetamodel({ path }) {
+    const { absolute, relative: rel } = resolveInFolder(root, path, 'read', { mustExist: true })
+    if (metamodelFileBase(rel) === null) {
+      throw new ToolError('validate_metamodel only validates .chdmeta metamodel files')
+    }
+    const errors = metamodelProblems(textOf(absolute, rel))
+    return { ok: errors.length === 0, errors, warnings: [] }
+  }
+
+  // `chd check` (ADR 0131): the same shared code, so the same result as `chd check --json` for one
+  // file. A metamodel is a built-in one by name, or a .chdmeta file in the folder.
+  function checkDiagram({ path, content, metamodel }) {
+    const file = diagramInput(
+      { path, content },
+      { path: 'path', content: 'content' },
+      'check_diagram'
+    )
+    const builtIn = Object.keys(builtinMetamodels)
+    if (typeof metamodel !== 'string' || metamodel.trim() === '') {
+      throw new ToolError(
+        `metamodel is required: the name of a built-in metamodel (${builtIn.join(', ')}) or the path of a ${METAMODEL_SUFFIX} file in the folder`
+      )
+    }
+    let metamodelText
+    let metamodelName
+    if (Object.hasOwn(builtinMetamodels, metamodel)) {
+      metamodelText = builtinMetamodels[metamodel]
+      metamodelName = metamodel + METAMODEL_SUFFIX
+    } else {
+      const unknown = new ToolError(
+        `no metamodel called '${metamodel}': use a built-in metamodel (${builtIn.join(', ')}) or the path of a ${METAMODEL_SUFFIX} file in the folder`
+      )
+      let found
+      try {
+        found = resolveInFolder(root, metamodel, 'read', { mustExist: false })
+      } catch {
+        throw unknown
+      }
+      if (metamodelFileBase(found.relative) === null || !existsSync(found.absolute)) throw unknown
+      metamodelText = textOf(found.absolute, found.relative)
+      metamodelName = basename(found.relative)
+    }
+    const loaded = parseMetamodelText(metamodelText, metamodelName)
+    if ('message' in loaded) throw new ToolError(loaded.message)
+    parsed(file)
+    return { file: file.rel, result: checkDiagramText(file.text, loaded.metamodel) }
+  }
+
+  // The text of a note beside a diagram, or null if it is not there or may not be read: a stored
+  // path leaving the diagram's folder is never read (ADR 0115), and the folder rules still apply.
+  function noteBeside(diagramAbsolute, stored) {
+    const full = containedPath(dirname(diagramAbsolute), stored)
+    return full === null ? null : noteOnDisk(full)
+  }
+
+  // `chd diff` (ADR 0137): the same shared code, so the same result as `chd diff --json`. The
+  // earlier version is a second file in the folder, or the same file in git at a revision
+  // (`chd diff <file> --rev`, ADR 0142).
+  async function diffDiagrams({
+    old_path: oldPath,
+    old_content: oldContent,
+    new_path: newPath,
+    new_content: newContent,
+    revision,
+    match
+  }) {
+    const hasOldPath = typeof oldPath === 'string' && oldPath.trim() !== ''
+    const earlier = [hasOldPath, oldContent !== undefined, revision !== undefined]
+    if (earlier.filter(Boolean).length > 1) {
+      throw new ToolError(
+        'give only one of old_path (a second file), old_content (its text) and revision (the file in git)'
+      )
+    }
+    const newer = diagramInput(
+      { path: newPath, content: newContent },
+      { path: 'new_path', content: 'new_content' },
+      'diff_diagrams',
+      'new content'
+    )
+    if (!earlier[0] && !earlier[1]) {
+      if (newer.inline) {
+        throw new ToolError(
+          'new_content needs an earlier version to compare with: give old_path or old_content (a revision compares a file on disk with git)'
+        )
+      }
+      return diffWithGit(newer, revision ?? 'HEAD', match === true)
+    }
+    const older = diagramInput(
+      { path: oldPath, content: oldContent },
+      { path: 'old_path', content: 'old_content' },
+      'diff_diagrams',
+      'old content'
+    )
+    const olderDiagram = parsed(older)
+    const newerDiagram = parsed(newer)
+    // Notes sit beside a file: a side given as text has none, and comparing one side's notes with
+    // none would report every note as added or removed.
+    const notes =
+      older.inline || newer.inline
+        ? {}
+        : notesBetween(olderDiagram, newerDiagram, {
+            before: (stored) => noteBeside(older.absolute, stored),
+            after: (stored) => noteBeside(newer.absolute, stored)
+          })
+    return diffToJson(
+      compareDiagrams(olderDiagram, newerDiagram, {
+        olderName: older.rel,
+        newerName: newer.rel,
+        match: match === true,
+        notes
+      })
+    )
+  }
+
+  // The file on disk against the same file at a git revision. Git is asked for that one file only,
+  // and the note files on disk are read under the folder rules (ADR 0142).
+  async function diffWithGit(newer, revision, match) {
+    if (typeof revision !== 'string') throw new ToolError('revision must be text')
+    const result = await buildGitSession(newer.absolute, revision, {
+      allowed: noteMayBeRead,
+      read: noteOnDisk
+    })
+    if (!result.ok) throw new ToolError(result.message)
+    const { base, next, notesContent } = result.session
+    const name = basename(newer.rel)
+    return diffToJson(
+      compareDiagrams(base, next, {
+        olderName: `${name} at ${revision}`,
+        newerName: `${name} on disk`,
+        match,
+        notes: notesContent ?? {}
+      })
+    )
+  }
+
+  // Whether the folder rules allow reading a note at all, whether or not it exists now (git may
+  // still have it).
+  function noteMayBeRead(absolute) {
+    try {
+      resolveInFolder(root, absolute, 'read', { mustExist: false })
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  // A note on disk under the folder rules, or null.
+  function noteOnDisk(absolute) {
+    try {
+      const found = resolveInFolder(root, absolute, 'read', { mustExist: true })
+      return textOf(found.absolute, found.relative)
+    } catch {
+      return null
+    }
   }
 
   function readFile({ path }) {
@@ -164,6 +403,8 @@ export function createTools({ root, allowUpdate, specSources }) {
         const validation = validateCandidate(root, absolute, rel, content)
         if (!validation.ok) throw refuseInvalid(rel, validation)
         warnings = validation.warnings
+      } else if (isMetamodelName(absolute)) {
+        refuseInvalidMetamodel(rel, content)
       }
       try {
         // 'wx' is an exclusive create: it fails if the file appeared meanwhile.
@@ -211,6 +452,8 @@ export function createTools({ root, allowUpdate, specSources }) {
         const validation = tidyValidation(root, validateFile(temp, false), temp, rel)
         if (!validation.ok) throw refuseInvalid(rel, validation)
         warnings = validation.warnings
+      } else if (isMetamodelName(absolute)) {
+        refuseInvalidMetamodel(rel, content)
       }
       // Checked again right before replacing; the instant between this and the
       // rename is the one race left (ADR 0110).
@@ -226,6 +469,9 @@ export function createTools({ root, allowUpdate, specSources }) {
     list_files: listFiles,
     get_format_spec: getFormatSpec,
     validate_diagram: validateDiagram,
+    validate_metamodel: validateMetamodel,
+    check_diagram: checkDiagram,
+    diff_diagrams: diffDiagrams,
     read_file: readFile,
     create_file: createFile,
     update_file: updateFile

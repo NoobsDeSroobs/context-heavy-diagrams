@@ -1,5 +1,5 @@
-// A conformance profile (ADR 0131): the rules of one architectural style, applied to a diagram.
-// The file format is specified in docs/conformance-profile-format.md.
+// A diagram metamodel (ADR 0131): the rules of one architectural style, applied to a diagram.
+// The file format is specified in docs/metamodel-format.md.
 
 export type EdgeMeaning = 'dependsOn' | 'flowsTo' | 'irrelevant'
 export type EdgePresence = 'required' | 'optional' | 'forbidden'
@@ -62,8 +62,8 @@ export interface MaxElementsRule extends RuleBase {
 export type Rule =
   ForbiddenEdgeRule | RequiredEdgeRule | ContainmentRule | RequiredPropertyRule | MaxElementsRule
 
-export interface Profile {
-  profileVersion: 1
+export interface Metamodel {
+  metamodelVersion: 1
   name: string
   description?: string
   edges: { meaning: EdgeMeaning; presence: EdgePresence }
@@ -71,8 +71,20 @@ export interface Profile {
   rules: Rule[]
 }
 
-// A profile file is named <name>.chdprofile.json.
-export const PROFILE_FILE_SUFFIX = '.chdprofile.json'
+// A metamodel file is named <name>.chdmeta.
+export const METAMODEL_FILE_SUFFIX = '.chdmeta'
+// What the suffix was before the rename; such a file is still read, never written.
+export const LEGACY_METAMODEL_FILE_SUFFIX = '.chdprofile.json'
+
+// The name a metamodel file goes by (its file name without the suffix), or null if the file name is
+// not a metamodel's under either suffix.
+export function metamodelFileBase(file: string): string | null {
+  const lower = file.toLowerCase()
+  for (const suffix of [METAMODEL_FILE_SUFFIX, LEGACY_METAMODEL_FILE_SUFFIX]) {
+    if (lower.endsWith(suffix)) return file.slice(0, -suffix.length)
+  }
+  return null
+}
 
 export const ANY_ROLE = '*'
 export const EDGES_TARGET = '@edges'

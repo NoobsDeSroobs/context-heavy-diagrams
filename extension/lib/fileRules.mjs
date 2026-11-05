@@ -16,6 +16,7 @@ export const READ_EXTENSIONS = new Set([
   '.markdown',
   '.txt',
   '.json',
+  '.chdmeta',
   '.csv',
   '.tsv',
   '.yaml',
@@ -27,7 +28,18 @@ export const READ_EXTENSIONS = new Set([
   '.ini'
 ])
 export const WRITE_EXTENSIONS = new Set(['.chd', '.md', '.txt', '.svg'])
+// The one extra file type that can be written: a diagram metamodel, validated before it is written
+// (ADR 0143). A metamodel under its old name (.chdprofile.json) can still be read, as any .json can.
+export const METAMODEL_SUFFIX = '.chdmeta'
 export const MAX_FILE_BYTES = 5 * 1024 * 1024
+
+export function isMetamodelName(name) {
+  return name.toLowerCase().endsWith(METAMODEL_SUFFIX)
+}
+
+export function isWritableName(name) {
+  return WRITE_EXTENSIONS.has(extname(name).toLowerCase()) || isMetamodelName(name)
+}
 
 function isInside(root, target) {
   const rel = relative(root, target)
@@ -77,10 +89,11 @@ export function resolveInFolder(root, input, kind, { mustExist }) {
   }
 
   const ext = extname(target).toLowerCase()
-  const allowed = kind === 'write' ? WRITE_EXTENSIONS : READ_EXTENSIONS
-  if (!allowed.has(ext)) {
+  const writing = kind === 'write'
+  if (writing ? !isWritableName(target) : !READ_EXTENSIONS.has(ext)) {
+    const allowed = writing ? [...WRITE_EXTENSIONS, METAMODEL_SUFFIX] : [...READ_EXTENSIONS]
     throw new ToolError(
-      `${ext === '' ? 'files without an extension' : `${ext} files`} cannot be ${kind === 'write' ? 'written' : 'read'} here; allowed: ${[...allowed].join(', ')}`
+      `${ext === '' ? 'files without an extension' : `${ext} files`} cannot be ${writing ? 'written' : 'read'} here; allowed: ${allowed.join(', ')}`
     )
   }
 

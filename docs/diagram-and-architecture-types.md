@@ -125,13 +125,13 @@ These are not architecture styles but well-formedness rules that a checker could
 ## 3. What this suggests for the rule language
 
 - **Four rule shapes cover the structural styles** (layered, hexagonal, onion, plug-in, three-tier), but not the distributed and security styles. Those need **cardinality (N)** ("each data store belongs to one service") and **crossing (X)** ("a boundary crossing goes through a gateway").
-- **Roles are the common currency.** Almost every rule is phrased as "elements with role A and role B". A profile therefore needs a stable way to give an element a role, and a defined result for elements with none.
+- **Roles are the common currency.** Almost every rule is phrased as "elements with role A and role B". A metamodel therefore needs a stable way to give an element a role, and a defined result for elements with none.
 - **Edge meaning is the biggest risk.** A hexagonal diagram drawn as a call flow points the opposite way from one drawn as dependencies. The rule format must say which, per diagram or per edge set.
 - **Some rules cross diagrams.** C4 consistency and "every threat is linked" need the link tree, not one file.
 - **Limits.** A check only says the diagram follows the style. It cannot say the code does. That is a different category of tool.
 
 ## 4. Open items
 
-- Decide which of the styles above ship as built-in profiles first. Hexagonal and layered are the simplest and exercise the whole mechanism.
-- Add one deliberately wrong example diagram per profile, so a rule has something to fail on.
+- Decide which of the styles above ship as built-in metamodels first. Hexagonal and layered are the simplest and exercise the whole mechanism.
+- Add one deliberately wrong example diagram per metamodel, so a rule has something to fail on.
 - Keep this list in step with the gallery: each diagram type marked **Good** should eventually have an example.

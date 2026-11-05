@@ -2,6 +2,20 @@
 
 What changed for people using the tool, one entry per minor or major release. The reasons are in [docs/decisions/](docs/decisions/); the full history is in `git log`.
 
+## 0.6.0 (unreleased)
+
+### Added
+- **The Claude Desktop extension can check a diagram against a diagram metamodel and show what changed.** `check_diagram` applies a built-in metamodel or a `.chdmeta` file in the folder, and `diff_diagrams` compares two diagrams in the folder, with the same results as `chd check` and `chd diff`. The `conformance` topic of `get_format_spec` explains the checks. The command line stays what a build pipeline relies on. ([ADR 0138](docs/decisions/0138-the-mcp-server-carries-the-guidance-the-cli-carries-the-checks.md))
+- **The extension can compare a diagram with its last commit in git,** and write diagram metamodels. `diff_diagrams` takes a `revision` as `chd diff --rev` does, which makes `git show` the only program the extension starts; the install dialog says so, and that history can bring back content since removed. `create_file` and `update_file` also write `.chdmeta` files, validated first and with the same stale-edit check as a diagram. ([ADR 0142](docs/decisions/0142-the-extension-may-run-git-show-to-read-an-earlier-version.md), [ADR 0143](docs/decisions/0143-the-extension-writes-diagram-metamodels.md))
+- **A diagram metamodel can be validated on its own.** `chd validate rules/house.chdmeta` and the extension's `validate_metamodel` list every way the file breaks the format, without applying it to a diagram. The skill's guide for writing a metamodel now says what to ask for and what the format cannot express. ([ADR 0143](docs/decisions/0143-the-extension-writes-diagram-metamodels.md))
+- **A draft can be checked and compared before it is written.** `chd check -` and `chd diff <file> -` read the diagram from standard input, and the extension's `check_diagram` and `diff_diagrams` take it as `content` / `new_content` / `old_content`. Notes are not compared for a draft. ([ADR 0145](docs/decisions/0145-a-draft-is-checked-and-compared-without-being-written.md))
+
+### Changed
+- **A conformance profile is now called a diagram metamodel:** the complete set of rules one kind of diagram or architecture follows, of which a diagram is checked against exactly one. The file is `<name>.chdmeta`, the option is `chd check --metamodel`, the Diagnostics panel, the File menu and Preferences say metamodel, and `--json` names it `metamodelName` (it was `profileName`). Your `.chdprofile.json` files, `--profile`, and the folder you chose in Preferences keep working. ([ADR 0144](docs/decisions/0144-a-conformance-profile-is-called-a-diagram-metamodel.md), [format](docs/metamodel-format.md))
+
+### File format
+- **A diagram metamodel carries `metamodelVersion`** where a profile carried `profileVersion`. Both are read; a file with both is refused, and new files use the new key. The diagram format (`.chd`) is unchanged. ([docs/metamodel-format.md](docs/metamodel-format.md))
+
 ## 0.5.1 (2026-11-04)
 
 ### Fixed
@@ -45,7 +59,7 @@ What changed for people using the tool, one entry per minor or major release. Th
 ### Added
 - **Review what changed between two versions of a diagram.** A compare window draws the later version with added, removed, link-or-note-changed and modified elements coloured and the rest dimmed, with a list to step through, hover details and a revert per change. Open it from the "changed outside the app" banner, or from **View → Changes**, which now holds **Changes since last save…**, **Review changes on disk** and **Compare with git revision…**. The changes panel can reset, remove or restore one element at a time. If an assistant gave every element a new id, the window offers to match them up. ([ADRs 0132 to 0136](docs/decisions/0132-the-compare-window-is-a-read-only-canvas-with-its-own-bridge.md))
 - **`chd diff`** prints the same review for a terminal or CI, between two files or between a file and a git revision, with `--json` and `--exit-code`. ([ADR 0137](docs/decisions/0137-chd-diff-the-same-review-without-the-app.md))
-- **Architecture conformance checks.** A rules file (a profile) is applied to a diagram from the Diagnostics panel or with `chd check`. ([ADR 0131](docs/decisions/0131-conformance-profiles.md), format in [docs/conformance-profile-format.md](docs/conformance-profile-format.md))
+- **Architecture conformance checks.** A rules file (a profile) is applied to a diagram from the Diagnostics panel or with `chd check`. ([ADR 0131](docs/decisions/0131-conformance-profiles.md), format in [docs/metamodel-format.md](docs/metamodel-format.md))
 - **SVG export**: **File → Export as SVG…**, and `chd export` writes an SVG from a `.chd` file without the app. ([ADR 0124](docs/decisions/0124-svg-export-from-a-shared-pure-renderer.md))
 - **A default font for the whole diagram**, stored in the file, with the fonts installed on the computer offered in the font lists. ([ADR 0130](docs/decisions/0130-diagram-default-font-and-installed-fonts.md))
 - A legend line can be picked from an edge. ([ADR 0123](docs/decisions/0123-legend-line-picked-from-an-edge.md))

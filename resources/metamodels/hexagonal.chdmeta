@@ -1,5 +1,5 @@
 {
-  "profileVersion": 1,
+  "metamodelVersion": 1,
   "name": "Hexagonal architecture (ports and adapters)",
   "description": "Dependencies point inward: adapters depend on ports, ports belong to the application core, and the core depends on nothing outside it. Prepare the diagram with an edge direction set named \"Depends On\" (an arrow from A to B means A depends on B) and a tag \"role\" on the elements: hexagon (the container drawn around the core), domain (core elements, inside the hexagon), port-in or port-out (the interfaces on the boundary), adapter-in or adapter-out (outside the hexagon).",
   "edges": {

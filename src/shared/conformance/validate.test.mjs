@@ -2,14 +2,14 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
-import { KINDS, validateProfile } from './validate.ts'
+import { KINDS, validateMetamodel } from './validate.ts'
 
-const profilesDir = join(import.meta.dirname, '..', '..', '..', 'resources', 'profiles')
-const load = (name) => JSON.parse(readFileSync(join(profilesDir, name), 'utf8'))
+const metamodelsDir = join(import.meta.dirname, '..', '..', '..', 'resources', 'metamodels')
+const load = (name) => JSON.parse(readFileSync(join(metamodelsDir, name), 'utf8'))
 
-// A small valid profile to break one thing at a time.
+// A small valid metamodel to break one thing at a time.
 const base = () => ({
-  profileVersion: 1,
+  metamodelVersion: 1,
   name: 'Test',
   edges: { meaning: 'dependsOn', presence: 'optional' },
   roles: {
@@ -19,30 +19,30 @@ const base = () => ({
   rules: [{ id: 'r1', kind: 'forbiddenEdge', from: 'a', to: 'a' }]
 })
 
-const errorsOf = (profile) => validateProfile(profile).errors.join('\n')
+const errorsOf = (metamodel) => validateMetamodel(metamodel).errors.join('\n')
 
-test('every shipped profile except the template is valid', () => {
-  const files = readdirSync(profilesDir).filter((f) => f.endsWith('.chdprofile.json'))
+test('every shipped metamodel except the template is valid', () => {
+  const files = readdirSync(metamodelsDir).filter((f) => f.endsWith('.chdmeta'))
   assert.ok(files.length >= 3)
   for (const file of files) {
-    if (file === 'template.chdprofile.json') continue
-    const { errors } = validateProfile(load(file))
+    if (file === 'template.chdmeta') continue
+    const { errors } = validateMetamodel(load(file))
     assert.deepEqual(errors, [], file)
   }
 })
 
 test('the template is invalid until both edge values are chosen, and nothing else is wrong', () => {
-  const { profile, errors } = validateProfile(load('template.chdprofile.json'))
-  assert.equal(profile, null)
+  const { metamodel, errors } = validateMetamodel(load('template.chdmeta'))
+  assert.equal(metamodel, null)
   assert.equal(errors.length, 2)
   assert.match(errors[0], /edges\.meaning is not chosen/)
   assert.match(errors[1], /edges\.presence is not chosen/)
-  const chosen = load('template.chdprofile.json')
+  const chosen = load('template.chdmeta')
   chosen.edges = { meaning: 'flowsTo', presence: 'required' }
-  assert.deepEqual(validateProfile(chosen).errors, [])
+  assert.deepEqual(validateMetamodel(chosen).errors, [])
 })
 
-test('the profile guide in the skill has a valid example and names every rule kind', () => {
+test('the metamodel guide in the skill has a valid example and names every rule kind', () => {
   const guide = readFileSync(
     join(
       import.meta.dirname,
@@ -60,7 +60,7 @@ test('the profile guide in the skill has a valid example and names every rule ki
   )
   const example = guide.match(/```json\r?\n([\s\S]*?)\r?\n```/)
   assert.ok(example, 'the guide has a json example')
-  const { errors } = validateProfile(JSON.parse(example[1]))
+  const { errors } = validateMetamodel(JSON.parse(example[1]))
   assert.deepEqual(errors, [])
   for (const kind of KINDS) assert.ok(guide.includes(`\`${kind}\``), `the guide names ${kind}`)
   for (const key of ['type', 'tag', 'insideRole']) {
@@ -68,11 +68,11 @@ test('the profile guide in the skill has a valid example and names every rule ki
   }
 })
 
-test('a valid profile is returned as it is', () => {
+test('a valid metamodel is returned as it is', () => {
   const raw = base()
-  const { profile, errors } = validateProfile(raw)
+  const { metamodel, errors } = validateMetamodel(raw)
   assert.deepEqual(errors, [])
-  assert.deepEqual(profile, raw)
+  assert.deepEqual(metamodel, raw)
 })
 
 test('"none" and a missing value are both not chosen', () => {
@@ -92,7 +92,7 @@ test('forbidden edges need an irrelevant meaning, and an irrelevant meaning allo
   p.edges = { meaning: 'irrelevant', presence: 'optional' }
   assert.match(errorsOf(p), /"forbiddenEdge" needs a direction/)
   p.rules = [{ id: 'size', kind: 'maxElements', of: '*', max: 3 }]
-  assert.deepEqual(validateProfile(p).errors, [])
+  assert.deepEqual(validateMetamodel(p).errors, [])
   p.edges = { meaning: 'irrelevant', presence: 'forbidden' }
   p.rules = [{ id: 'l', kind: 'requiredProperty', each: '@edges', property: 'label' }]
   assert.match(errorsOf(p), /edges are forbidden/)
@@ -110,14 +110,26 @@ test('an unknown key is an error at every level', () => {
 
 test('the version, name and descriptions are checked', () => {
   const p = base()
-  p.profileVersion = 2
+  p.metamodelVersion = 2
   p.name = '  '
   p.description = 5
   const text = errorsOf(p)
-  assert.match(text, /profileVersion must be 1/)
+  assert.match(text, /metamodelVersion must be 1/)
   assert.match(text, /name is required/)
   assert.match(text, /description must be text/)
   assert.match(errorsOf([]), /must be a JSON object/)
+})
+
+test('profileVersion, the old name of the version key, is still read, but not beside the new one', () => {
+  const old = base()
+  delete old.metamodelVersion
+  old.profileVersion = 1
+  assert.deepEqual(validateMetamodel(old).errors, [])
+  old.profileVersion = 2
+  assert.match(errorsOf(old), /profileVersion must be 1/)
+  const both = base()
+  both.profileVersion = 1
+  assert.match(errorsOf(both), /Give metamodelVersion only/)
 })
 
 test('role problems: no match, bad type, bad tag, bad name, duplicate after normalising', () => {
@@ -183,5 +195,5 @@ test('rule problems: ids, kind, severity, role references, kind-specific fields'
 test('role references are normalised like everything else', () => {
   const p = base()
   p.rules = [{ id: 'r', kind: 'forbiddenEdge', from: ' A ', to: 'Box' }]
-  assert.deepEqual(validateProfile(p).errors, [])
+  assert.deepEqual(validateMetamodel(p).errors, [])
 })

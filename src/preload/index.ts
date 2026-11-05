@@ -17,10 +17,10 @@ import type {
 } from '@shared/document/documentSave'
 import type { AiFolderResult, ClaudeExtensionOutcome } from '@shared/ai/aiFolderResult'
 import type {
-  NewProfileResult,
-  ProfileListing,
-  ProfilesFolderInfo
-} from '@shared/conformance/profilesFolder'
+  NewMetamodelResult,
+  MetamodelListing,
+  MetamodelsFolderInfo
+} from '@shared/conformance/metamodelsFolder'
 import type { AppPreferences } from '@shared/preferences/preferences'
 import type { SecurityCrawlResult } from '@shared/threat-matrix/threatMatrixMath'
 import type { LinkedSearchLink, LinkedSearchResult } from '@shared/search/linkedSearch'
@@ -383,26 +383,26 @@ const api = {
     return ipcRenderer.invoke('ai:installExtension')
   },
 
-  // Conformance profiles (ADR 0131): where they live, choosing that folder, and making a new one
+  // Diagram metamodels (ADR 0131): where they live, choosing that folder, and making a new one
   // from the template (a save dialog; the file is never overwritten).
-  getProfilesFolder(): Promise<ProfilesFolderInfo> {
-    return ipcRenderer.invoke('profiles:getFolder')
+  getMetamodelsFolder(): Promise<MetamodelsFolderInfo> {
+    return ipcRenderer.invoke('metamodels:getFolder')
   },
 
-  listProfiles(): Promise<ProfileListing[]> {
-    return ipcRenderer.invoke('profiles:list')
+  listMetamodels(): Promise<MetamodelListing[]> {
+    return ipcRenderer.invoke('metamodels:list')
   },
 
-  loadProfile(id: string): Promise<string | null> {
-    return ipcRenderer.invoke('profiles:load', id)
+  loadMetamodel(id: string): Promise<string | null> {
+    return ipcRenderer.invoke('metamodels:load', id)
   },
 
-  chooseProfilesFolder(): Promise<string | null> {
-    return ipcRenderer.invoke('profiles:chooseFolder')
+  chooseMetamodelsFolder(): Promise<string | null> {
+    return ipcRenderer.invoke('metamodels:chooseFolder')
   },
 
-  createProfile(): Promise<NewProfileResult> {
-    return ipcRenderer.invoke('profiles:create')
+  createMetamodel(): Promise<NewMetamodelResult> {
+    return ipcRenderer.invoke('metamodels:create')
   },
 
   // Style palette export/import (see ADR 0048) — returns false/null

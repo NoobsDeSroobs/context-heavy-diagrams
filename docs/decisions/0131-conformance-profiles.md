@@ -1,13 +1,13 @@
 # 0131: Conformance profiles: a rules file applied to a diagram
 
 ## Status
-Accepted (2026-10-23).
+Accepted (2026-10-23). The profile is called a diagram metamodel since [ADR 0144](0144-a-conformance-profile-is-called-a-diagram-metamodel.md); the design below stands and keeps the words of its time.
 
 ## Context
 A diagram can claim an architectural style (hexagonal, data-flow) and break its rules without anyone noticing. The tool already knows what the rules need: tags, containers, directed edges and named edge readings. What was missing is a way to write the rules down once and check any diagram against them, in the app and in CI.
 
 ## Decision
-- **A profile is a JSON file applied to a diagram, never stored in one.** It has `edges`, `roles` and `rules`; the full format is in [conformance-profile-format.md](../conformance-profile-format.md), written to stand on its own so others can author profiles or build checkers.
+- **A profile is a JSON file applied to a diagram, never stored in one.** It has `edges`, `roles` and `rules`; the full format is in [metamodel-format.md](../metamodel-format.md), written to stand on its own so others can author profiles or build checkers.
 - **The arrow meaning is declared, never guessed.** `edges.meaning` is `dependsOn`, `flowsTo` or `irrelevant` and `edges.presence` is `required`, `optional` or `forbidden`. Both start at `none` in the template, which is invalid, so a profile cannot be used until its author has chosen. Direction rules are rejected under `irrelevant` and `forbidden`.
 - **A diagram states its meaning with an edge direction set** ([ADR 0081](0081-flippable-edge-direction-sets.md)) whose name equals the meaning with spaces removed and lower-cased (`Depends On` is `dependsOn`). The rules are evaluated in that set's orientation. A diagram without the set, or with two that match, has a violation; it is never silently checked in the wrong reading.
 - **Roles are exact matches on type, tag and containment**, not the substring matching of the search box ([ADR 0096](0096-search-facets-and-shared-match-predicate.md)). Compared text is normalised (lower-cased, whitespace removed) and must then be equal, so `Data Store` equals `datastore` but a rule about `role=port` does not catch `support`. An element that matches no role is ignored.

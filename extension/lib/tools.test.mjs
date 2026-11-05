@@ -13,6 +13,7 @@ import {
   writeFileSync,
   existsSync
 } from 'node:fs'
+import { execFileSync } from 'node:child_process'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { openFolder, ToolError } from './fileRules.mjs'
@@ -234,4 +235,480 @@ test('get_format_spec "all" is the core rules plus an index, small enough for on
   assert.ok(Buffer.byteLength(all, 'utf-8') < 25 * 1024)
   // Each topic is still available on its own.
   assert.match(tools.get_format_spec({ topic: 'layout' }), /# Layout guide/)
+})
+
+// --- check_diagram and diff_diagrams (ADR 0138): the same shared code as `chd check` and `chd diff`.
+// The two are compared over the same inputs in src/cli/parity.test.mjs.
+
+const examples = join(import.meta.dirname, '..', '..', 'examples', 'conformance')
+const copyExample = (name) => writeFileSync(join(folder, name), readFileSync(join(examples, name)))
+
+test('check_diagram applies a built-in metamodel by name', () => {
+  copyExample('hexagonal-ok.chd')
+  copyExample('hexagonal-broken.chd')
+  const ok = make().check_diagram({ path: 'hexagonal-ok.chd', metamodel: 'hexagonal' })
+  assert.equal(ok.file, 'hexagonal-ok.chd')
+  assert.equal(ok.result.conforms, true)
+  const broken = make().check_diagram({ path: 'hexagonal-broken.chd', metamodel: 'hexagonal' })
+  assert.equal(broken.result.conforms, false)
+  assert.ok(broken.result.findings.some((f) => f.severity === 'error'))
+})
+
+test('check_diagram takes a metamodel file from the folder, and says what is wrong with one', () => {
+  copyExample('hexagonal-ok.chd')
+  const metamodel = readFileSync(
+    join(import.meta.dirname, '..', '..', 'resources', 'metamodels', 'hexagonal.chdmeta'),
+    'utf8'
+  )
+  mkdirSync(join(folder, 'rules'))
+  writeFileSync(join(folder, 'rules', 'mine.chdmeta'), metamodel)
+  const result = make().check_diagram({
+    path: 'hexagonal-ok.chd',
+    metamodel: 'rules/mine.chdmeta'
+  })
+  assert.equal(result.result.conforms, true)
+
+  writeFileSync(join(folder, 'rules', 'bad.chdmeta'), '{ "metamodelVersion": 1 }')
+  assert.throws(
+    () => make().check_diagram({ path: 'hexagonal-ok.chd', metamodel: 'rules/bad.chdmeta' }),
+    /the metamodel 'bad\.chdmeta' is not valid/
+  )
+  writeFileSync(join(folder, 'rules', 'junk.chdmeta'), 'not json')
+  assert.throws(
+    () => make().check_diagram({ path: 'hexagonal-ok.chd', metamodel: 'rules/junk.chdmeta' }),
+    /can't read the metamodel 'junk\.chdmeta'/
+  )
+})
+
+test('check_diagram still reads a metamodel under its old name, but nothing writes one', () => {
+  copyExample('hexagonal-ok.chd')
+  const metamodel = readFileSync(
+    join(import.meta.dirname, '..', '..', 'resources', 'metamodels', 'hexagonal.chdmeta'),
+    'utf8'
+  ).replace('"metamodelVersion"', '"profileVersion"')
+  writeFileSync(join(folder, 'old.chdprofile.json'), metamodel)
+  const result = make().check_diagram({
+    path: 'hexagonal-ok.chd',
+    metamodel: 'old.chdprofile.json'
+  })
+  assert.equal(result.result.conforms, true)
+  refusal(
+    () => make().create_file({ path: 'new.chdprofile.json', content: metamodel }),
+    /cannot be written/
+  )
+})
+
+test('check_diagram refuses an unknown metamodel, a metamodel outside the folder and a non-diagram', () => {
+  copyExample('hexagonal-ok.chd')
+  assert.throws(
+    () => make().check_diagram({ path: 'hexagonal-ok.chd', metamodel: 'nope' }),
+    /no metamodel called 'nope'.*data-flow-diagram.*hexagonal/
+  )
+  assert.throws(
+    () => make().check_diagram({ path: 'hexagonal-ok.chd', metamodel: '../outside.md' }),
+    /no metamodel called/
+  )
+  assert.throws(() => make().check_diagram({ path: 'hexagonal-ok.chd' }), /metamodel is required/)
+  assert.throws(
+    () => make().check_diagram({ path: 'notes/readme.md', metamodel: 'hexagonal' }),
+    /only works on \.chd/
+  )
+  writeFileSync(join(folder, 'junk.chd'), 'not a diagram')
+  assert.throws(
+    () => make().check_diagram({ path: 'junk.chd', metamodel: 'hexagonal' }),
+    /can't read 'junk\.chd'/
+  )
+})
+
+test('the template is not offered as a built-in metamodel', () => {
+  copyExample('hexagonal-ok.chd')
+  assert.throws(
+    () => make().check_diagram({ path: 'hexagonal-ok.chd', metamodel: 'template' }),
+    /no metamodel called 'template'/
+  )
+})
+
+const diagramJson = (nodes, edges = []) => JSON.stringify({ version: 1, nodes, edges }, null, 2)
+const entity = (id, label, extra = {}) => ({
+  id,
+  type: 'entity',
+  position: { x: 0, y: 0 },
+  data: { label, ...extra }
+})
+
+test('diff_diagrams reports what changed between two files, notes included', async () => {
+  mkdirSync(join(folder, 'v1', 'notes'), { recursive: true })
+  mkdirSync(join(folder, 'v2', 'notes'), { recursive: true })
+  writeFileSync(
+    join(folder, 'v1', 'd.chd'),
+    diagramJson([entity('a', 'Billing', { notes: 'notes/a.md' }), entity('b', 'Orders')])
+  )
+  writeFileSync(
+    join(folder, 'v2', 'd.chd'),
+    diagramJson([entity('a', 'Billing', { notes: 'notes/a.md' }), entity('b', 'Orders (EU)')])
+  )
+  writeFileSync(join(folder, 'v1', 'notes', 'a.md'), 'Handles invoices.')
+  writeFileSync(join(folder, 'v2', 'notes', 'a.md'), 'Handles invoices and refunds.')
+  const diff = await make().diff_diagrams({ old_path: 'v1/d.chd', new_path: 'v2/d.chd' })
+  assert.equal(diff.changed, true)
+  assert.equal(diff.older, 'v1/d.chd')
+  const byId = Object.fromEntries(diff.changes.map((c) => [c.id, c]))
+  assert.ok(byId.a, 'the changed note is a change')
+  assert.ok(byId.b, 'the renamed element is a change')
+  const same = await make().diff_diagrams({ old_path: 'v1/d.chd', new_path: 'v1/d.chd' })
+  assert.equal(same.changed, false)
+})
+
+test('diff_diagrams never reads a note path that leaves the diagram’s folder', async () => {
+  mkdirSync(join(folder, 'v1'))
+  mkdirSync(join(folder, 'v2'))
+  const withNote = (label) => diagramJson([entity('a', label, { notes: '../secret.md' })])
+  writeFileSync(join(folder, 'v1', 'd.chd'), withNote('A'))
+  writeFileSync(join(folder, 'v2', 'd.chd'), withNote('A'))
+  writeFileSync(join(folder, 'secret.md'), 'one')
+  const diff = await make().diff_diagrams({ old_path: 'v1/d.chd', new_path: 'v2/d.chd' })
+  assert.equal(diff.changed, false)
+})
+
+test('diff_diagrams pairs elements whose ids were replaced when asked to', async () => {
+  writeFileSync(
+    join(folder, 'old.chd'),
+    diagramJson([entity('a', 'Billing'), entity('b', 'Orders'), entity('c', 'Payments')])
+  )
+  writeFileSync(
+    join(folder, 'new.chd'),
+    diagramJson([entity('x', 'Billing'), entity('y', 'Orders'), entity('z', 'Payments')])
+  )
+  const plain = await make().diff_diagrams({ old_path: 'old.chd', new_path: 'new.chd' })
+  assert.equal(plain.idsProbablyChanged, true)
+  const matched = await make().diff_diagrams({
+    old_path: 'old.chd',
+    new_path: 'new.chd',
+    match: true
+  })
+  assert.equal(matched.matched.elements, 3)
+})
+
+test('the diff and check tools only read', async () => {
+  assert.equal(typeof make(false).check_diagram, 'function')
+  await assert.rejects(
+    () => make().diff_diagrams({ old_path: 'missing.chd', new_path: 'a.chd' }),
+    /file not found/
+  )
+  await assert.rejects(
+    () => make().diff_diagrams({ old_path: '../outside.md', new_path: 'a.chd' }),
+    /outside/
+  )
+})
+
+// --- diff_diagrams against git (ADR 0142)
+
+let git = true
+try {
+  execFileSync('git', ['--version'], { stdio: 'ignore' })
+} catch {
+  git = false
+}
+
+// A repository at the top, a diagram folder one level down: the folder the extension serves is
+// inside the repository, as it often is. Returns tools for that folder and a way to run git.
+function gitFolder() {
+  const top = mkdtempSync(join(tmpdir(), 'chd-ext-git-'))
+  const docs = join(top, 'docs')
+  mkdirSync(join(docs, 'notes'), { recursive: true })
+  mkdirSync(join(docs, '.private'))
+  const sh = (...args) =>
+    execFileSync(
+      'git',
+      [
+        '-c',
+        'user.name=t',
+        '-c',
+        'user.email=t@example.com',
+        '-c',
+        'commit.gpgsign=false',
+        ...args
+      ],
+      { cwd: top, stdio: 'ignore' }
+    )
+  const tools = createTools({
+    root: openFolder(docs),
+    allowUpdate: false,
+    specSources: loadSpecSources()
+  })
+  return { top, docs, sh, tools }
+}
+
+test('diff_diagrams compares a file with git, notes included', { skip: !git }, async (t) => {
+  const { top, docs, sh, tools } = gitFolder()
+  t.after(() => rmSync(top, { recursive: true, force: true }))
+  writeFileSync(
+    join(docs, 'd.chd'),
+    diagramJson([entity('a', 'Billing', { notes: 'notes/a.md' }), entity('b', 'Orders')])
+  )
+  writeFileSync(join(docs, 'notes', 'a.md'), 'Handles invoices.')
+  sh('init', '-q')
+  sh('add', '.')
+  sh('commit', '-q', '-m', 'one')
+  writeFileSync(
+    join(docs, 'd.chd'),
+    diagramJson([entity('a', 'Billing', { notes: 'notes/a.md' }), entity('b', 'Orders (EU)')])
+  )
+  writeFileSync(join(docs, 'notes', 'a.md'), 'Handles invoices and refunds.')
+
+  const diff = await tools.diff_diagrams({ new_path: 'd.chd' })
+  assert.equal(diff.changed, true)
+  assert.equal(diff.older, 'd.chd at HEAD')
+  assert.equal(diff.newer, 'd.chd on disk')
+  const byId = Object.fromEntries(diff.changes.map((c) => [c.id, c]))
+  assert.ok(byId.a, 'the changed note is a change')
+  assert.ok(byId.b, 'the renamed element is a change')
+  assert.ok(!JSON.stringify(diff).includes(top), 'no path of the computer in the result')
+
+  const same = await tools.diff_diagrams({ new_path: 'd.chd', revision: 'HEAD' })
+  assert.deepEqual(same, diff)
+})
+
+test('diff_diagrams with git refuses what it should', { skip: !git }, async (t) => {
+  const { top, docs, sh, tools } = gitFolder()
+  t.after(() => rmSync(top, { recursive: true, force: true }))
+  writeFileSync(join(docs, 'd.chd'), diagramJson([entity('a', 'A')]))
+  writeFileSync(join(docs, 'new.chd'), diagramJson([entity('a', 'A')]))
+  sh('init', '-q')
+  sh('add', 'docs/d.chd')
+  sh('commit', '-q', '-m', 'one')
+
+  await assert.rejects(
+    () => tools.diff_diagrams({ new_path: 'd.chd', revision: 'nosuchrevision' }),
+    /does not know the revision/
+  )
+  // an option, not a revision: never handed to git
+  await assert.rejects(
+    () => tools.diff_diagrams({ new_path: 'd.chd', revision: '--output=out.txt' }),
+    /not a usable git revision/
+  )
+  await assert.rejects(() => tools.diff_diagrams({ new_path: 'new.chd' }), /not in git at "HEAD"/)
+  await assert.rejects(
+    () => tools.diff_diagrams({ new_path: 'd.chd', old_path: 'new.chd', revision: 'HEAD' }),
+    /give only one of old_path/
+  )
+  await assert.rejects(
+    () => tools.diff_diagrams({ old_path: 'd.chd' }),
+    /new_path or new_content is required/
+  )
+  await assert.rejects(
+    () => tools.diff_diagrams({ new_path: '../outside.chd' }),
+    /outside the folder/
+  )
+})
+
+test(
+  'diff_diagrams with git never reads a note the folder rules keep closed',
+  { skip: !git },
+  async (t) => {
+    const { top, docs, sh, tools } = gitFolder()
+    t.after(() => rmSync(top, { recursive: true, force: true }))
+    const withNote = (label) => diagramJson([entity('a', label, { notes: '.private/n.md' })])
+    writeFileSync(join(docs, 'd.chd'), withNote('A'))
+    writeFileSync(join(docs, '.private', 'n.md'), 'old secret')
+    sh('init', '-q')
+    sh('add', '-A')
+    sh('commit', '-q', '-m', 'one')
+    writeFileSync(join(docs, '.private', 'n.md'), 'new secret')
+    const diff = await tools.diff_diagrams({ new_path: 'd.chd' })
+    assert.equal(diff.changed, false)
+    assert.ok(!JSON.stringify(diff).includes('secret'))
+  }
+)
+
+test(
+  'diff_diagrams with git says so when the folder is not in a repository',
+  { skip: !git },
+  async (t) => {
+    const { top, docs, tools } = gitFolder()
+    t.after(() => rmSync(top, { recursive: true, force: true }))
+    writeFileSync(join(docs, 'd.chd'), diagramJson([entity('a', 'A')]))
+    await assert.rejects(
+      () => tools.diff_diagrams({ new_path: 'd.chd' }),
+      /not inside a git repository/
+    )
+  }
+)
+
+// --- metamodels are written like diagrams, and only metamodels (ADR 0143)
+
+const METAMODEL = readFileSync(
+  join(import.meta.dirname, '..', '..', 'resources', 'metamodels', 'hexagonal.chdmeta'),
+  'utf8'
+)
+
+test('a metamodel can be created, validated first, and used by check_diagram', () => {
+  const tools = make(true)
+  refusal(
+    () => tools.create_file({ path: 'rules/bad.chdmeta', content: '{ "metamodelVersion": 1 }' }),
+    /was not written.*is not valid/s
+  )
+  refusal(
+    () => tools.create_file({ path: 'rules/junk.chdmeta', content: 'not json' }),
+    /was not written.*can't read the metamodel/s
+  )
+  assert.equal(existsSync(join(folder, 'rules')), false, 'a refused create leaves no folder behind')
+
+  const created = tools.create_file({ path: 'rules/mine.chdmeta', content: METAMODEL })
+  assert.equal(created.fingerprint, sha(METAMODEL))
+  assert.equal(readFileSync(join(folder, 'rules', 'mine.chdmeta'), 'utf8'), METAMODEL)
+  refusal(
+    () => tools.create_file({ path: 'rules/mine.chdmeta', content: METAMODEL }),
+    /already exists/
+  )
+
+  writeFileSync(join(folder, 'ok.chd'), readFileSync(join(examples, 'hexagonal-ok.chd')))
+  const checked = tools.check_diagram({ path: 'ok.chd', metamodel: 'rules/mine.chdmeta' })
+  assert.equal(checked.result.conforms, true)
+})
+
+test('a metamodel is updated only from the version the edit was based on, and validated', () => {
+  const tools = make(true)
+  const { fingerprint } = tools.create_file({ path: 'p.chdmeta', content: METAMODEL })
+  const edited = METAMODEL.replace('"name": "Hexagonal', '"name": "Edited hexagonal')
+  assert.notEqual(edited, METAMODEL)
+  refusal(
+    () => tools.update_file({ path: 'p.chdmeta', content: edited, base_fingerprint: sha('x') }),
+    /has changed since you read it/
+  )
+  refusal(
+    () =>
+      tools.update_file({
+        path: 'p.chdmeta',
+        content: '{}',
+        base_fingerprint: fingerprint
+      }),
+    /was not written/
+  )
+  assert.equal(readFileSync(join(folder, 'p.chdmeta'), 'utf8'), METAMODEL)
+  const updated = tools.update_file({
+    path: 'p.chdmeta',
+    content: edited,
+    base_fingerprint: fingerprint
+  })
+  assert.equal(updated.fingerprint, sha(edited))
+  assert.deepEqual(
+    readdirSync(folder).filter((n) => n.startsWith('.chd-')),
+    []
+  )
+})
+
+test('no other JSON file can be written, and list_files flags metamodels as writable', () => {
+  const tools = make(true)
+  refusal(() => tools.create_file({ path: 'settings.json', content: '{}' }), /cannot be written/)
+  refusal(() => tools.create_file({ path: 'x.chdmeta.bat', content: '{}' }), /cannot be written/)
+  refusal(() => tools.create_file({ path: 'chdmeta', content: '{}' }), /cannot be written/)
+  writeFileSync(join(folder, 'settings.json'), '{}')
+  writeFileSync(join(folder, 'p.chdmeta'), METAMODEL)
+  const { files } = tools.list_files()
+  const writable = Object.fromEntries(files.map((f) => [f.path, f.writable]))
+  assert.equal(writable['p.chdmeta'], true)
+  assert.equal(writable['settings.json'], false)
+})
+
+test('get_format_spec serves the conformance topic with the tool names for the commands', () => {
+  const spec = make().get_format_spec({ topic: 'conformance' })
+  assert.match(spec, /chd check/)
+  const core = make().get_format_spec({})
+  assert.match(core, /diff_diagrams/)
+  assert.match(core, /check_diagram/)
+})
+
+// --- a draft given as text, to judge it before it is written
+
+test('check_diagram takes the diagram as text, and only one of path and content', () => {
+  const ok = readFileSync(join(examples, 'hexagonal-ok.chd'), 'utf8')
+  const broken = readFileSync(join(examples, 'hexagonal-broken.chd'), 'utf8')
+  const fromText = make().check_diagram({ content: ok, metamodel: 'hexagonal' })
+  assert.equal(fromText.file, '(inline)')
+  assert.equal(fromText.result.conforms, true)
+  assert.equal(
+    make().check_diagram({ content: broken, metamodel: 'hexagonal' }).result.conforms,
+    false
+  )
+
+  copyExample('hexagonal-ok.chd')
+  const before = readdirSync(folder, { recursive: true }).sort()
+  refusal(
+    () => make().check_diagram({ path: 'hexagonal-ok.chd', content: ok, metamodel: 'hexagonal' }),
+    /not both/
+  )
+  refusal(() => make().check_diagram({ metamodel: 'hexagonal' }), /path or content is required/)
+  refusal(
+    () => make().check_diagram({ content: 'not json', metamodel: 'hexagonal' }),
+    /can't read '\(inline\)'/
+  )
+  refusal(
+    () =>
+      make().check_diagram({ content: 'x'.repeat(5 * 1024 * 1024 + 1), metamodel: 'hexagonal' }),
+    /content is larger than the 5 MB limit/
+  )
+  assert.deepEqual(readdirSync(folder, { recursive: true }).sort(), before, 'nothing was written')
+})
+
+test('diff_diagrams compares a draft with the file now, and leaves notes out for a draft', async () => {
+  mkdirSync(join(folder, 'inline', 'notes'), { recursive: true })
+  writeFileSync(
+    join(folder, 'inline', 'd.chd'),
+    diagramJson([entity('a', 'Billing', { notes: 'notes/a.md' }), entity('b', 'Orders')])
+  )
+  writeFileSync(join(folder, 'inline', 'notes', 'a.md'), 'Handles invoices.')
+  const before = readdirSync(folder, { recursive: true }).sort()
+  const draft = diagramJson([
+    entity('a', 'Billing', { notes: 'notes/a.md' }),
+    entity('b', 'Orders (EU)')
+  ])
+
+  const diff = await make().diff_diagrams({ old_path: 'inline/d.chd', new_content: draft })
+  assert.equal(diff.changed, true)
+  assert.equal(diff.older, 'inline/d.chd')
+  assert.equal(diff.newer, 'new content')
+  assert.deepEqual(
+    diff.changes.map((c) => c.id),
+    ['b'],
+    'only the renamed element; the note beside the file is not compared with nothing'
+  )
+
+  const both = await make().diff_diagrams({
+    old_content: diagramJson([entity('a', 'A')]),
+    new_content: diagramJson([entity('a', 'A'), entity('b', 'B')])
+  })
+  assert.equal(both.changed, true)
+  assert.deepEqual(
+    both.changes.map((c) => c.id),
+    ['b']
+  )
+  const same = await make().diff_diagrams({ old_content: draft, new_content: draft })
+  assert.equal(same.changed, false)
+  assert.deepEqual(readdirSync(folder, { recursive: true }).sort(), before, 'nothing was written')
+})
+
+test('diff_diagrams refuses a draft with nothing to compare with, and two earlier versions', async () => {
+  const draft = diagramJson([entity('a', 'A')])
+  writeFileSync(join(folder, 'd.chd'), draft)
+  await assert.rejects(
+    () => make().diff_diagrams({ new_content: draft }),
+    /new_content needs an earlier version/
+  )
+  await assert.rejects(
+    () => make().diff_diagrams({ new_content: draft, revision: 'HEAD' }),
+    /give only one of old_path.*old_content.*revision|new_content needs an earlier version/
+  )
+  await assert.rejects(
+    () => make().diff_diagrams({ new_path: 'd.chd', old_path: 'd.chd', old_content: draft }),
+    /give only one of old_path/
+  )
+  await assert.rejects(
+    () => make().diff_diagrams({ old_path: 'd.chd', new_path: 'd.chd', new_content: draft }),
+    /new_path.*new_content.*not both/
+  )
+  await assert.rejects(
+    () => make().diff_diagrams({ old_content: draft, new_content: 'not json' }),
+    /can't read 'new content'/
+  )
 })

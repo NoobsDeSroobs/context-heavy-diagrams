@@ -37,7 +37,7 @@ const SPEC_TOPICS = {
   conformance: {
     title: 'Architecture checks',
     file: 'references/conformance.md',
-    about: 'Checking a diagram against an architecture style (chd check).'
+    about: 'Checking a diagram against a metamodel (chd check).'
   }
 }
 const SPEC_TOPIC_NAMES = Object.keys(SPEC_TOPICS)
@@ -46,10 +46,10 @@ const HELP = `chd — command-line companion to Context-Heavy Diagrams
 
 Usage:
   chd spec [topic]                         Print the .chd file format reference
-  chd validate <file.chd>... [--recursive] Check diagram files for structural problems
+  chd validate <file>... [--recursive]     Check diagram or metamodel files for problems
   chd hash <file.chd>                      Print the file's fingerprint (SHA-256 of its bytes)
   chd export <file.chd> [options]          Draw the diagram as an SVG image
-  chd check <file.chd>... --profile <p>    Check diagrams against an architecture profile
+  chd check <file.chd>... --metamodel <m>  Check diagrams against a diagram metamodel
   chd diff <old.chd> <new.chd>             What changed between two versions (or against git)
   chd help <command>                       Details, options and exit codes of one command
   chd --version
@@ -78,12 +78,13 @@ ${SPEC_TOPIC_NAMES.map((name) => `  ${name.padEnd(12)} ${SPEC_TOPICS[name].about
 
 Exit codes: 0 ok, 2 unknown topic.
 `,
-  validate: `Usage: chd validate <file.chd>... [--recursive]
+  validate: `Usage: chd validate <file.chd|file.chdmeta>... [--recursive]
 
-Reports duplicate ids, dangling edge endpoints, parent-before-child ordering, and relative paths
-(icons, notes, linked diagrams) that don't resolve. Run it after every edit to a diagram.
+For a diagram: reports duplicate ids, dangling edge endpoints, parent-before-child ordering, and
+relative paths (icons, notes, linked diagrams) that don't resolve. Run it after every edit to a
+diagram. For a diagram metamodel (.chdmeta): reports every way the file breaks its format.
 
-  --recursive   Also follow linked diagrams
+  --recursive   Also follow linked diagrams (diagrams only)
 
 Exit codes: 0 ok (warnings alone don't fail), 1 if any ERROR was found, 2 usage error.
 `,
@@ -198,19 +199,39 @@ async function exportCommand(args) {
   return bundle.runExport(args, { iconDir: builtinIconDir() })
 }
 
-// `check` is bundled the same way as `export`. The built-in profiles sit in resources/profiles,
+// `check` is bundled the same way as `export`. The built-in metamodels sit in resources/metamodels,
 // next to this folder, in a source checkout and in the packaged app alike.
-async function checkCommand(args) {
-  let bundle
+async function loadCheckBundle() {
   try {
-    bundle = await import('./check.mjs')
+    return await import('./check.mjs')
   } catch (error) {
     console.error(
       `chd: the check command is not built here (run 'npm run build:cli'): ${error instanceof Error ? error.message : error}`
     )
-    return 1
+    return null
   }
-  const env = { profilesDir: join(here, '..', 'profiles') }
+}
+
+// `validate` checks diagrams with the skill's script and metamodel files with the check bundle's
+// validator; a file is told apart by its name (.chdmeta, or the older .chdprofile.json).
+const isMetamodelFile = (file) => /\.(chdmeta|chdprofile\.json)$/i.test(file)
+
+async function validateCommand(args) {
+  const metamodels = args.filter((a) => !a.startsWith('--') && isMetamodelFile(a))
+  const rest = args.filter((a) => !metamodels.includes(a))
+  let status = rest.some((a) => !a.startsWith('--')) ? validateMain(rest) : 0
+  if (metamodels.length > 0) {
+    const bundle = await loadCheckBundle()
+    if (!bundle) return 1
+    status = Math.max(status, bundle.runValidateMetamodels(metamodels))
+  }
+  return status
+}
+
+async function checkCommand(args) {
+  const bundle = await loadCheckBundle()
+  if (!bundle) return 1
+  const env = { metamodelsDir: join(here, '..', 'metamodels') }
   if (wantsHelp(args)) {
     console.log(bundle.usage(env))
     return 0
@@ -273,10 +294,10 @@ export async function run(argv) {
         return 0
       }
       if (rest.filter((a) => !a.startsWith('--')).length === 0) {
-        console.error('Usage: chd validate <file.chd>... [--recursive]')
+        console.error('Usage: chd validate <file.chd|file.chdmeta>... [--recursive]')
         return 2
       }
-      return validateMain(rest)
+      return validateCommand(rest)
     case 'hash':
       if (wantsHelp(rest)) {
         console.log(COMMAND_HELP.hash)

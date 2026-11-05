@@ -2,7 +2,7 @@ import type { Edge, Node } from '@xyflow/react'
 import { AI_INSTRUCTIONS } from '@shared/ai/aiInstructions'
 import { summarizeAiFolderResult } from '@shared/ai/aiFolderResult'
 import { showAlert } from './ui/alerts'
-import { createProfile } from './conformance/createProfile'
+import { createMetamodel } from './conformance/createMetamodel'
 import { acceleratorFor } from './commands'
 import type { MenuBarItem, MenuBarMenu } from './MenuBar'
 import { buildPaletteActions, type ExtraPaletteAction, type PaletteAction } from './paletteActions'
@@ -178,9 +178,9 @@ export function useMenus(inputs: MenuInputs): {
           ]
         : []),
       {
-        label: 'New conformance profile…',
+        label: 'New diagram metamodel…',
         separatorBefore: true,
-        onSelect: () => void createProfile()
+        onSelect: () => void createMetamodel()
       },
       { label: 'Reload', disabled: !currentPath, onSelect: handleReload },
       { label: 'Close', accelerator: acceleratorFor('file.close'), onSelect: handleClose }

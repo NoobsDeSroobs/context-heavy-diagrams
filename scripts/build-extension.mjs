@@ -30,6 +30,22 @@ const inlineSpec = {
   }
 }
 
+// Swaps the disk-reading metamodel module for one with the built-in metamodels baked in.
+const inlineMetamodels = {
+  name: 'inline-metamodels',
+  setup(b) {
+    b.onLoad({ filter: /extension[\\/]lib[\\/]metamodelsText\.mjs$/ }, async () => {
+      const { loadBuiltinMetamodels } = await import(
+        pathToFileURL(join(root, 'extension', 'lib', 'metamodelsText.mjs')).href
+      )
+      return {
+        loader: 'js',
+        contents: `export function loadBuiltinMetamodels() { return ${JSON.stringify(loadBuiltinMetamodels())}; }`
+      }
+    })
+  }
+}
+
 export async function bundleServer(outfile, version = '0.0.0') {
   await build({
     entryPoints: [join(root, 'extension', 'server.mjs')],
@@ -44,7 +60,7 @@ export async function bundleServer(outfile, version = '0.0.0') {
       js: "import { createRequire as __chdCreateRequire } from 'node:module';\nconst require = __chdCreateRequire(import.meta.url);"
     },
     define: { 'process.env.CHD_EXTENSION_VERSION': JSON.stringify(version) },
-    plugins: [inlineSpec]
+    plugins: [inlineSpec, inlineMetamodels]
   })
 }
 

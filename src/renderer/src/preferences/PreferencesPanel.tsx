@@ -5,7 +5,7 @@ import { MIN_RECENT_DIAGRAMS_LIMIT, type EdgeAnimationMode } from '@shared/prefe
 import { FieldRow, NumberField, SelectField } from '../ui/fields'
 import { useRafThrottledCallback } from '../ui/useRafThrottledCallback'
 import { useFontOptions } from '../styling/useFontOptions'
-import ProfilesFolderSection from '../conformance/ProfilesFolderSection'
+import MetamodelsFolderSection from '../conformance/MetamodelsFolderSection'
 
 // '' means the field is absent (bezier, today's only historical behavior)
 // — see PropertyPanel.tsx's identical ROUTING_STYLE_OPTIONS/own comment on
@@ -238,9 +238,9 @@ export default function PreferencesPanel({
           onChange={(v) => onChange({ defaultFontFamily: v === '' ? undefined : v })}
           pushSnapshot={() => {}}
         />
-        <ProfilesFolderSection
-          chosen={preferences.profilesFolder}
-          onReset={() => onChange({ profilesFolder: undefined })}
+        <MetamodelsFolderSection
+          chosen={preferences.metamodelsFolder}
+          onReset={() => onChange({ metamodelsFolder: undefined })}
         />
         <FieldRow label="Scan for unsaved diagrams on startup">
           <input

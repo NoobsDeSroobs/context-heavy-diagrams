@@ -1,24 +1,18 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { basename, dirname, resolve } from 'node:path'
 import { parseDiagram, type DiagramFile } from '../shared/diagram/index.ts'
+import type { NotesContent } from '../shared/compare/classify.ts'
 import {
-  classifyDiagrams,
-  describeCount,
-  flattenReview,
-  type Classification,
-  type NotesContent,
-  type ReviewItem
-} from '../shared/compare/classify.ts'
-import {
-  applyIdMatches,
-  detectIdChurn,
-  matchReplaced,
-  type IdMatches
-} from '../shared/compare/match.ts'
-import { diagramLevelText, itemLines, reviewSection } from '../shared/compare/format.ts'
-import { previewTextChange, sameText } from '../shared/compare/textPreview.ts'
+  compareDiagrams,
+  diffToJson,
+  formatDiffText,
+  hasChanges,
+  notesBetween,
+  type Compared
+} from '../shared/compare/report.ts'
 import { containedPath } from '../main/containedPath.ts'
 import { buildGitSession } from '../main/compare/gitCompare.ts'
+import { readStdin, STDIN, STDIN_LABEL } from './stdin.ts'
 
 // `chd diff`: what changed in a diagram between two versions, the same review the app's compare
 // window gives, for a terminal, CI and an assistant that wants to tell a person what it changed.
@@ -32,7 +26,9 @@ Shows what changed in a diagram between two versions, in the order a reviewer sh
 security assessments, links and notes, modified elements, removed, added. Moving or resizing an
 element is not a change; a changed note, link, label, tag or connection is.
 
-  <old.chd> <new.chd>   Two files; the first is the earlier version.
+  <old.chd> <new.chd>   Two files; the first is the earlier version. A single - stands for one of
+                        them read from standard input, to review a draft before it is written
+                        (notes are not compared for it).
   <file.chd>            One file: the file on disk against the same file in git at --rev.
   --rev <revision>      A branch, a tag, a commit or HEAD~2 (default HEAD). Needs git.
   --match               The ids were replaced (an assistant rewrote the diagram): pair removed and
@@ -70,7 +66,7 @@ function parseArgs(args: string[]): Parsed {
     } else if (arg === '--match') parsed.match = true
     else if (arg === '--json') parsed.json = true
     else if (arg === '--exit-code') parsed.exitCode = true
-    else if (arg.startsWith('-')) throw new UsageError(`unknown option '${arg}'`)
+    else if (arg.startsWith('-') && arg !== STDIN) throw new UsageError(`unknown option '${arg}'`)
     else parsed.files.push(arg)
   }
   if (parsed.files.length === 0) throw new UsageError('no diagram file given')
@@ -78,14 +74,21 @@ function parseArgs(args: string[]): Parsed {
   if (parsed.files.length === 2 && parsed.rev !== undefined) {
     throw new UsageError('--rev compares one file with git; give one file, or two without --rev')
   }
+  if (parsed.files.filter((f) => f === STDIN).length > 1) {
+    throw new UsageError('standard input (-) can be read once')
+  }
+  if (parsed.files.length === 1 && parsed.files[0] === STDIN) {
+    throw new UsageError('a draft from standard input needs a file to compare with: give two files')
+  }
   return parsed
 }
 
 function readDiagram(path: string): DiagramFile {
   try {
-    return parseDiagram(readFileSync(path, 'utf-8'))
+    return parseDiagram(path === STDIN ? readStdin() : readFileSync(path, 'utf-8'))
   } catch (error) {
-    throw new ReadError(`can't read '${path}': ${error instanceof Error ? error.message : error}`)
+    const shown = path === STDIN ? STDIN_LABEL : path
+    throw new ReadError(`can't read '${shown}': ${error instanceof Error ? error.message : error}`)
   }
 }
 
@@ -106,33 +109,10 @@ function notesBetweenFiles(
   older: DiagramFile,
   newer: DiagramFile
 ): Record<string, NotesContent> {
-  const olderNotes = new Map(older.nodes.map((n) => [n.id, n.data.notes]))
-  const found: Record<string, NotesContent> = {}
-  for (const node of newer.nodes) {
-    const stored = node.data.notes
-    if (!stored || stored !== olderNotes.get(node.id)) continue
-    const before = readNote(containedPath(dirname(olderPath), stored))
-    const after = readNote(containedPath(dirname(newerPath), stored))
-    if (before === null && after === null) continue
-    if (before === null && after !== null) {
-      found[node.id] = { state: 'added', preview: previewTextChange('', after) }
-    } else if (before !== null && after === null) {
-      found[node.id] = { state: 'removed', preview: previewTextChange(before, '') }
-    } else if (before !== null && after !== null && !sameText(before, after)) {
-      found[node.id] = { state: 'changed', preview: previewTextChange(before, after) }
-    }
-  }
-  return found
-}
-
-interface Compared {
-  olderName: string
-  newerName: string
-  classification: Classification
-  matches: IdMatches | null
-  churnSuspected: boolean
-  churnTwins: number
-  churnRemoved: number
+  return notesBetween(older, newer, {
+    before: (stored) => readNote(containedPath(dirname(olderPath), stored)),
+    after: (stored) => readNote(containedPath(dirname(newerPath), stored))
+  })
 }
 
 async function compare(parsed: Parsed): Promise<Compared> {
@@ -142,12 +122,18 @@ async function compare(parsed: Parsed): Promise<Compared> {
   let newerName: string
   let notes: Record<string, NotesContent>
   if (parsed.files.length === 2) {
-    const [olderPath, newerPath] = parsed.files.map((f) => resolve(f))
+    const [olderPath, newerPath] = parsed.files.map((f) => (f === STDIN ? f : resolve(f)))
     older = readDiagram(olderPath)
     newer = readDiagram(newerPath)
-    olderName = parsed.files[0]
-    newerName = parsed.files[1]
-    notes = notesBetweenFiles(olderPath, newerPath, older, newer)
+    const [olderGiven, newerGiven] = parsed.files
+    olderName = olderGiven === STDIN ? STDIN_LABEL : olderGiven
+    newerName = newerGiven === STDIN ? STDIN_LABEL : newerGiven
+    // A draft from standard input has no notes beside it; comparing the other side's notes with
+    // none would report every note as added or removed.
+    notes =
+      olderGiven === STDIN || newerGiven === STDIN
+        ? {}
+        : notesBetweenFiles(olderPath, newerPath, older, newer)
   } else {
     const path = resolve(parsed.files[0])
     const revision = parsed.rev ?? 'HEAD'
@@ -159,104 +145,7 @@ async function compare(parsed: Parsed): Promise<Compared> {
     newerName = `${basename(path)} on disk`
     notes = result.session.notesContent ?? {}
   }
-  const suspicion = detectIdChurn(older, newer)
-  const matches = parsed.match ? matchReplaced(older, newer) : null
-  const classification = classifyDiagrams(matches ? applyIdMatches(older, matches) : older, newer, {
-    notesContent: new Map(Object.entries(notes))
-  })
-  return {
-    olderName,
-    newerName,
-    classification,
-    matches,
-    churnSuspected: suspicion.suspected,
-    churnTwins: suspicion.twins,
-    churnRemoved: suspicion.removed
-  }
-}
-
-function hasChanges(c: Classification): boolean {
-  return c.review.length > 0 || c.diagramLevel.length > 0
-}
-
-function formatText(result: Compared): string {
-  const { classification: c } = result
-  const lines: string[] = [`${result.newerName} against ${result.olderName}`]
-  if (result.matches) {
-    lines.push(
-      `Matched ${result.matches.nodes.size} elements and ${result.matches.edges.size} connections by name and place (a guess).` +
-        (result.matches.fuzzySkipped
-          ? ' The similarity pass was cut short: the diagram is large.'
-          : '')
-    )
-  }
-  if (!hasChanges(c)) {
-    lines.push('No changes.')
-  } else {
-    const all = flattenReview(c.review)
-    const elements = all.filter((i) => i.kind === 'node').length
-    const connections = all.length - elements
-    const restyled = c.restyledNodes.size
-    lines.push(
-      `${describeCount({ nodes: elements, edges: connections })} changed` +
-        (restyled > 0 ? `; ${restyled} restyled` : '')
-    )
-    let current = ''
-    for (const item of c.review) {
-      const heading = reviewSection(item)
-      if (heading !== current) {
-        lines.push('', heading)
-        current = heading
-      }
-      lines.push(...itemLines(item))
-    }
-    if (c.diagramLevel.length > 0) {
-      lines.push('', 'DIAGRAM-LEVEL CHANGES')
-      for (const change of c.diagramLevel) lines.push(`  ${diagramLevelText(change)}`)
-    }
-  }
-  if (!result.matches && result.churnSuspected) {
-    lines.push(
-      '',
-      `Note: ${result.churnTwins} of ${result.churnRemoved} removed elements have an added element with the same name and type, so the ids probably changed. Run again with --match to pair them.`
-    )
-  }
-  return lines.join('\n')
-}
-
-function itemToJson(item: ReviewItem): Record<string, unknown> {
-  return {
-    kind: item.kind,
-    id: item.id,
-    label: item.label,
-    status: item.change.status,
-    security: item.change.security,
-    fields: item.change.fields.map((f) => ({ field: f.field, lines: f.lines })),
-    ...(item.connections && item.connections.length > 0
-      ? { connections: item.connections.map(itemToJson) }
-      : {})
-  }
-}
-
-function toJson(result: Compared): unknown {
-  const { classification: c } = result
-  return {
-    older: result.olderName,
-    newer: result.newerName,
-    changed: hasChanges(c),
-    counts: c.counts,
-    restyled: { elements: c.restyledNodes.size, connections: c.restyledEdges.size },
-    changes: c.review.map(itemToJson),
-    diagramLevel: c.diagramLevel,
-    matched: result.matches
-      ? {
-          elements: result.matches.nodes.size,
-          connections: result.matches.edges.size,
-          similarityCutShort: result.matches.fuzzySkipped
-        }
-      : null,
-    idsProbablyChanged: !result.matches && result.churnSuspected
-  }
+  return compareDiagrams(older, newer, { olderName, newerName, match: parsed.match, notes })
 }
 
 export async function runDiff(args: string[]): Promise<number> {
@@ -276,6 +165,6 @@ export async function runDiff(args: string[]): Promise<number> {
     console.error(`chd: ${error.message}`)
     return 3
   }
-  console.log(parsed.json ? JSON.stringify(toJson(result), null, 2) : formatText(result))
+  console.log(parsed.json ? JSON.stringify(diffToJson(result), null, 2) : formatDiffText(result))
   return parsed.exitCode && hasChanges(result.classification) ? 1 : 0
 }

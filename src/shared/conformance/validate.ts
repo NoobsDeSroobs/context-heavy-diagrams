@@ -1,11 +1,11 @@
 import { normalizeText } from './normalize.ts'
-import { ANY_ROLE, EDGES_TARGET, type Profile } from './profile.ts'
+import { ANY_ROLE, EDGES_TARGET, type Metamodel } from './metamodel.ts'
 
-// Checks a parsed profile against docs/conformance-profile-format.md (ADR 0131). Every problem is
-// collected, not just the first, so an author fixes a file in one pass. A profile with any problem
-// checks nothing: `profile` is null then.
-export interface ProfileValidation {
-  profile: Profile | null
+// Checks a parsed metamodel against docs/metamodel-format.md (ADR 0131). Every problem is
+// collected, not just the first, so an author fixes a file in one pass. A metamodel with any problem
+// checks nothing: `metamodel` is null then.
+export interface MetamodelValidation {
+  metamodel: Metamodel | null
   errors: string[]
 }
 
@@ -24,15 +24,17 @@ export const KINDS = [
   'maxElements'
 ]
 const NAME_PATTERN = /^[A-Za-z0-9_-]+$/
+// What metamodelVersion was called before the rename; still read, never written.
+const LEGACY_VERSION_KEY = 'profileVersion'
 
 const isObject = (value: unknown): value is Json =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
 const isText = (value: unknown): value is string => typeof value === 'string' && value.trim() !== ''
 const quoted = (list: string[]): string => list.map((item) => `"${item}"`).join(', ')
 
-export function validateProfile(raw: unknown): ProfileValidation {
+export function validateMetamodel(raw: unknown): MetamodelValidation {
   const errors: string[] = []
-  if (!isObject(raw)) return { profile: null, errors: ['A profile must be a JSON object.'] }
+  if (!isObject(raw)) return { metamodel: null, errors: ['A metamodel must be a JSON object.'] }
 
   const unknownKeys = (obj: Json, allowed: string[], where: string): void => {
     for (const key of Object.keys(obj)) {
@@ -40,9 +42,16 @@ export function validateProfile(raw: unknown): ProfileValidation {
     }
   }
 
-  unknownKeys(raw, ['profileVersion', 'name', 'description', 'edges', 'roles', 'rules'], 'Profile')
-  if (raw.profileVersion !== 1) {
-    errors.push(`profileVersion must be 1 (found ${JSON.stringify(raw.profileVersion)}).`)
+  unknownKeys(
+    raw,
+    [LEGACY_VERSION_KEY, 'metamodelVersion', 'name', 'description', 'edges', 'roles', 'rules'],
+    'Metamodel'
+  )
+  if (LEGACY_VERSION_KEY in raw && 'metamodelVersion' in raw) {
+    errors.push(`Give metamodelVersion only: ${LEGACY_VERSION_KEY} is its old name.`)
+  } else if ((raw.metamodelVersion ?? raw[LEGACY_VERSION_KEY]) !== 1) {
+    const key = LEGACY_VERSION_KEY in raw ? LEGACY_VERSION_KEY : 'metamodelVersion'
+    errors.push(`${key} must be 1 (found ${JSON.stringify(raw[key])}).`)
   }
   if (!isText(raw.name)) errors.push('name is required and must not be blank.')
   if (raw.description !== undefined && typeof raw.description !== 'string') {
@@ -261,6 +270,6 @@ export function validateProfile(raw: unknown): ProfileValidation {
   }
 
   return errors.length === 0
-    ? { profile: raw as unknown as Profile, errors }
-    : { profile: null, errors }
+    ? { metamodel: raw as unknown as Metamodel, errors }
+    : { metamodel: null, errors }
 }
