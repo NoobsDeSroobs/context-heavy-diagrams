@@ -1,4 +1,4 @@
-/* The profiles folder (ADR 0131): a long path shows its start and ends in an ellipsis; the full
+/* The metamodels folder (ADR 0131): a long path shows its start and ends in an ellipsis; the full
    path is the tooltip. */
 .preferences-folder-path {
   min-width: 0;

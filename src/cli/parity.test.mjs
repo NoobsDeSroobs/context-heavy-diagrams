@@ -17,7 +17,7 @@ import { loadSpecSources } from '../../extension/lib/specText.mjs'
 const root = join(import.meta.dirname, '..', '..')
 const cli = join(root, 'resources', 'cli', 'chd.mjs')
 const examples = join(root, 'examples', 'conformance')
-const BUILT_IN_PROFILES = ['data-flow-diagram', 'hexagonal']
+const BUILT_IN_METAMODELS = ['data-flow-diagram', 'hexagonal']
 
 // Which capability of each `chd` command the server has, and why a command has none. A command that
 // is in neither list fails the completeness test, so adding one is a decision, not an accident.
@@ -77,16 +77,16 @@ test('the format spec has the same topics on both sides', () => {
   assert.deepEqual([...usage].sort(), [...SPEC_TOPICS].sort())
 })
 
-test('chd check and check_diagram give the same result for every example and built-in profile', () => {
+test('chd check and check_diagram give the same result for every example and built-in metamodel', () => {
   const diagrams = readdirSync(dir).filter((name) => name.endsWith('.chd'))
   assert.ok(diagrams.length >= 4)
   let failing = 0
-  for (const profile of BUILT_IN_PROFILES) {
+  for (const metamodel of BUILT_IN_METAMODELS) {
     for (const file of diagrams) {
-      const cliRun = run('check', file, '--profile', profile, '--json')
+      const cliRun = run('check', file, '--metamodel', metamodel, '--json')
       const fromCli = JSON.parse(cliRun.stdout)
-      const fromServer = asJson([tools.check_diagram({ path: file, profile })])
-      assert.deepEqual(fromServer, fromCli, `${file} against ${profile}`)
+      const fromServer = asJson([tools.check_diagram({ path: file, metamodel })])
+      assert.deepEqual(fromServer, fromCli, `${file} against ${metamodel}`)
       // the verdict and the exit code say the same thing
       assert.equal(cliRun.status === 0, fromServer[0].result.conforms)
       if (!fromServer[0].result.conforms) failing += 1
@@ -95,22 +95,22 @@ test('chd check and check_diagram give the same result for every example and bui
   assert.ok(failing > 0, 'the examples include diagrams that break a rule')
 })
 
-test('chd check and check_diagram refuse the same profile in the same words', () => {
+test('chd check and check_diagram refuse the same metamodel in the same words', () => {
   mkdirSync(join(dir, 'rules'))
-  writeFileSync(join(dir, 'rules', 'bad.chdprofile.json'), '{ "profileVersion": 1 }')
-  writeFileSync(join(dir, 'rules', 'junk.chdprofile.json'), 'not json')
-  for (const profile of ['rules/bad.chdprofile.json', 'rules/junk.chdprofile.json']) {
-    const cliRun = run('check', 'hexagonal-ok.chd', '--profile', profile)
+  writeFileSync(join(dir, 'rules', 'bad.chdmeta'), '{ "metamodelVersion": 1 }')
+  writeFileSync(join(dir, 'rules', 'junk.chdmeta'), 'not json')
+  for (const metamodel of ['rules/bad.chdmeta', 'rules/junk.chdmeta']) {
+    const cliRun = run('check', 'hexagonal-ok.chd', '--metamodel', metamodel)
     assert.equal(cliRun.status, 2)
     let message = ''
     try {
-      tools.check_diagram({ path: 'hexagonal-ok.chd', profile })
+      tools.check_diagram({ path: 'hexagonal-ok.chd', metamodel })
     } catch (error) {
       assert.ok(error instanceof ToolError)
       message = error.message
     }
     assert.notEqual(message, '')
-    assert.ok(cliRun.stderr.includes(message), `${profile}: ${message}`)
+    assert.ok(cliRun.stderr.includes(message), `${metamodel}: ${message}`)
   }
 })
 

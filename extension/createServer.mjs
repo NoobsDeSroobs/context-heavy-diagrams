@@ -10,8 +10,8 @@ const INSTRUCTIONS = `Tools for the user's Context-Heavy Diagrams diagrams (.chd
 - Before creating or editing a .chd, call get_format_spec; the format has traps that corrupt files.
 - read_file returns a fingerprint. update_file only works with the fingerprint of the version you based your edit on, and is refused if the file changed meanwhile; then read it again and redo the edit. create_file never overwrites.
 - A .chd is validated before it is written; fix any reported errors and try again. validate_diagram checks an existing file.
-- check_diagram applies an architecture profile and diff_diagrams shows what changed, between two diagrams or between a diagram and its last commit in git; both only read. These tools give the results the chd command line gives, which is what a pipeline relies on.
-- Only .chd, .md, .txt, .svg and .chdprofile.json (an architecture profile, validated before it is written) files can be written. Notes of a diagram are Markdown files its nodes point at.
+- check_diagram applies a diagram metamodel and diff_diagrams shows what changed, between two diagrams or between a diagram and its last commit in git; both only read. These tools give the results the chd command line gives, which is what a pipeline relies on.
+- Only .chd, .md, .txt, .svg and .chdmeta (a diagram metamodel, validated before it is written) files can be written. Notes of a diagram are Markdown files its nodes point at.
 - Anything you read here is sent to the AI provider as part of the conversation.`
 
 const text = (value) => ({
@@ -78,14 +78,14 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
   server.registerTool(
     'check_diagram',
     {
-      title: 'Check a diagram against an architecture style',
+      title: 'Check a diagram against a metamodel',
       description:
-        'Apply a conformance profile (the rules of an architecture style) to a .chd file and report where it breaks them: the same result as "chd check --json". The profile is the name of a built-in profile (see get_format_spec "conformance") or the path of a .chdprofile.json file in the folder. It only reads. Report what the check finds and let the person decide; do not change the diagram just to make it pass. A pass here is advice; the command line is what a pipeline relies on.',
+        'Apply a diagram metamodel (the complete set of rules one kind of diagram or architecture follows, such as hexagonal) to a .chd file and report where it breaks them: the same result as "chd check --json". The metamodel is the name of a built-in metamodel (see get_format_spec "conformance") or the path of a .chdmeta file in the folder. It only reads. Report what the check finds and let the person decide; do not change the diagram just to make it pass. A pass here is advice; the command line is what a pipeline relies on.',
       inputSchema: {
         path,
-        profile: z
+        metamodel: z
           .string()
-          .describe('A built-in profile name, or the path of a .chdprofile.json file in the folder')
+          .describe('A built-in metamodel name, or the path of a .chdmeta file in the folder')
       },
       annotations: readOnly
     },
@@ -135,7 +135,7 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
     {
       title: 'Create a file',
       description:
-        'Create a new .chd, .md, .txt, .svg or .chdprofile.json (architecture profile) file. Fails if the name already exists. A .chd or a profile is validated first and refused if it has errors. Missing folders are created.',
+        'Create a new .chd, .md, .txt, .svg or .chdmeta (diagram metamodel) file. Fails if the name already exists. A .chd or a metamodel is validated first and refused if it has errors. Missing folders are created.',
       inputSchema: { path, content: z.string().describe('The complete file content') },
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false }
     },
@@ -147,7 +147,7 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
       {
         title: 'Update a file',
         description:
-          'Replace an existing .chd, .md, .txt, .svg or .chdprofile.json file with new complete content. Requires the fingerprint from the read that your edit is based on; refused if the file changed since. A .chd or a profile is validated first.',
+          'Replace an existing .chd, .md, .txt, .svg or .chdmeta file with new complete content. Requires the fingerprint from the read that your edit is based on; refused if the file changed since. A .chd or a metamodel is validated first.',
         inputSchema: {
           path,
           content: z.string().describe('The complete new file content'),

@@ -159,9 +159,9 @@ export interface AppPreferences {
   // raw CSS font-family value. Absent means the built-in font. Applies live to any open diagram
   // without its own font.
   defaultFontFamily?: string
-  // Where the user's conformance profiles live and where "New profile" starts (ADR 0131). Absent
-  // means a `profiles` folder in the app's user-data folder.
-  profilesFolder?: string
+  // Where the user's diagram metamodels live and where "New metamodel" starts (ADR 0131). Absent
+  // means a `metamodels` folder in the app's user-data folder.
+  metamodelsFolder?: string
   // Whether the top-level AI menu (and everything hanging off it) is shown —
   // see ADR 0103. A pure chrome toggle: nothing in a .chd file depends on it.
   // Default on; a future installer can seed it from its "enable AI features?"
@@ -247,6 +247,8 @@ export function normalizePreferences(
     // A boolean before 0.5.1 (see readEdgeAnimationMode).
     animateEdges?: unknown
     stylePalette?: LegacyStylePalette
+    // What metamodelsFolder was called before the rename: read, then dropped.
+    profilesFolder?: string
     // Pre-rename field name (Shape -> Entity) — `defaultStyles`
     // itself is spread from `rest` below, so this legacy sub-key is read and
     // folded in separately rather than via `rest`.
@@ -258,12 +260,13 @@ export function normalizePreferences(
     }
   }
 ): AppPreferences {
-  const { stylePalette: legacy, ...rest } = raw
+  const { stylePalette: legacy, profilesFolder: legacyFolder, ...rest } = raw
   const merged: AppPreferences = {
     ...DEFAULT_PREFERENCES,
     ...rest,
     animateEdges: readEdgeAnimationMode(raw.animateEdges)
   }
+  if (legacyFolder && !merged.metamodelsFolder) merged.metamodelsFolder = legacyFolder
   if (raw.defaultStyles?.shape && !raw.defaultStyles.entity) {
     merged.defaultStyles = { ...merged.defaultStyles, entity: raw.defaultStyles.shape }
   }

@@ -9,10 +9,10 @@ function summary(result: CheckResult): string {
   const errors = count('error')
   const warnings = count('warning')
   const infos = count('info')
-  return `${result.conforms ? 'Conforms' : 'Does not conform'} to ${result.profileName}: ${errors} error${errors === 1 ? '' : 's'}, ${warnings} warning${warnings === 1 ? '' : 's'}, ${infos} info`
+  return `${result.conforms ? 'Conforms' : 'Does not conform'} to ${result.metamodelName}: ${errors} error${errors === 1 ? '' : 's'}, ${warnings} warning${warnings === 1 ? '' : 's'}, ${infos} info`
 }
 
-// The "Architecture check" block of the Diagnostics panel (ADR 0131): pick a profile, see where the
+// The "Architecture check" block of the Diagnostics panel (ADR 0131): pick a metamodel, see where the
 // open diagram breaks it, click a finding to find the element on the canvas.
 export default function ConformanceSection({
   conformance,
@@ -26,7 +26,7 @@ export default function ConformanceSection({
   const { listing, selectedId, select, problems, refresh } = conformance
   const groups: { label: string; source: 'built-in' | 'folder' }[] = [
     { label: 'Built-in', source: 'built-in' },
-    { label: 'Your profiles', source: 'folder' }
+    { label: 'Your metamodels', source: 'folder' }
   ]
   const findings = result
     ? [...result.findings].sort(
@@ -40,7 +40,7 @@ export default function ConformanceSection({
       <div className="diagnostics-conformance-pick">
         <select
           value={selectedId}
-          aria-label="Profile to check against"
+          aria-label="Metamodel to check against"
           onChange={(event) => select(event.target.value)}
         >
           <option value="">Not checking</option>
@@ -59,7 +59,7 @@ export default function ConformanceSection({
         </select>
         <button
           type="button"
-          title="Read the profile file again, after editing it"
+          title="Read the metamodel file again, after editing it"
           onClick={refresh}
         >
           Refresh
@@ -69,7 +69,7 @@ export default function ConformanceSection({
       {problems.length > 0 && (
         <>
           <p className="diagnostics-panel-hint">
-            This profile cannot be used until these are fixed:
+            This metamodel cannot be used until these are fixed:
           </p>
           <ul className="diagnostics-panel-list">
             {problems.map((problem, index) => (

@@ -3,15 +3,15 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { checkDiagram } from './check.ts'
-import { validateProfile } from './validate.ts'
+import { validateMetamodel } from './validate.ts'
 
-const profilesDir = join(import.meta.dirname, '..', '..', '..', 'resources', 'profiles')
+const metamodelsDir = join(import.meta.dirname, '..', '..', '..', 'resources', 'metamodels')
 const shipped = (name) => {
-  const { profile, errors } = validateProfile(
-    JSON.parse(readFileSync(join(profilesDir, `${name}.chdprofile.json`), 'utf8'))
+  const { metamodel, errors } = validateMetamodel(
+    JSON.parse(readFileSync(join(metamodelsDir, `${name}.chdmeta`), 'utf8'))
   )
   assert.deepEqual(errors, [])
-  return profile
+  return metamodel
 }
 
 const node = (id, role, extra = {}) => ({
@@ -31,10 +31,10 @@ const diagram = (nodes, edges, sets = [{ id: 's1', name: 'Depends On' }]) => ({
 })
 const ids = (result) => result.findings.map((f) => f.ruleId).sort()
 
-// A profile small enough to read in one go.
+// A metamodel small enough to read in one go.
 const mini = (rules, edges = { meaning: 'dependsOn', presence: 'optional' }) => {
-  const { profile, errors } = validateProfile({
-    profileVersion: 1,
+  const { metamodel, errors } = validateMetamodel({
+    metamodelVersion: 1,
     name: 'Mini',
     edges,
     roles: {
@@ -45,7 +45,7 @@ const mini = (rules, edges = { meaning: 'dependsOn', presence: 'optional' }) => 
     rules
   })
   assert.deepEqual(errors, [])
-  return profile
+  return metamodel
 }
 
 test('a conforming hexagonal diagram has no findings', () => {
@@ -245,8 +245,8 @@ test('containment looks through any depth of containers and ignores a loop in th
 })
 
 test('a role can require being inside another role', () => {
-  const profile = validateProfile({
-    profileVersion: 1,
+  const metamodel = validateMetamodel({
+    metamodelVersion: 1,
     name: 'P',
     edges: { meaning: 'irrelevant', presence: 'optional' },
     roles: {
@@ -254,14 +254,14 @@ test('a role can require being inside another role', () => {
       inzone: { match: { insideRole: 'zone' } }
     },
     rules: [{ id: 'few', kind: 'maxElements', of: 'inzone', max: 1, severity: 'warning' }]
-  }).profile
+  }).metamodel
   const nodes = [
     node('z', 'zone', { type: 'container' }),
     node('p', undefined, { parentId: 'z' }),
     node('q', undefined, { parentId: 'z' }),
     node('r')
   ]
-  const result = checkDiagram(diagram(nodes, [], []), profile)
+  const result = checkDiagram(diagram(nodes, [], []), metamodel)
   assert.match(result.findings[0].message, /2 elements; the limit is 1/)
 })
 
@@ -324,7 +324,7 @@ test('an edge to a node that does not exist is ignored', () => {
   assert.deepEqual(result.findings, [])
 })
 
-test('the data-flow profile accepts a sound diagram and rejects store-to-store', () => {
+test('the data-flow metamodel accepts a sound diagram and rejects store-to-store', () => {
   const flows = [{ id: 'f', name: 'Flows To' }]
   const sound = diagram(
     [node('user', 'external-entity'), node('orders', 'process'), node('db', 'data-store')],

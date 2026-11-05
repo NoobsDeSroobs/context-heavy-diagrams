@@ -1,23 +1,23 @@
 import { useEffect, useState } from 'react'
-import type { ProfilesFolderInfo } from '@shared/conformance/profilesFolder'
+import type { MetamodelsFolderInfo } from '@shared/conformance/metamodelsFolder'
 import { FieldRow } from '../ui/fields'
 import { showAlert } from '../ui/alerts'
-import { createProfile } from './createProfile'
+import { createMetamodel } from './createMetamodel'
 
-// Preferences: where the user's conformance profiles live (ADR 0131), and a way to start a new one.
+// Preferences: where the user's diagram metamodels live (ADR 0131), and a way to start a new one.
 // `chosen` is the stored setting; the folder shown is resolved by main, which also knows the default.
-export default function ProfilesFolderSection({
+export default function MetamodelsFolderSection({
   chosen,
   onReset
 }: {
   chosen: string | undefined
   onReset: () => void
 }): React.JSX.Element {
-  const [info, setInfo] = useState<ProfilesFolderInfo | null>(null)
+  const [info, setInfo] = useState<MetamodelsFolderInfo | null>(null)
 
   useEffect(() => {
     let live = true
-    void window.api.getProfilesFolder().then((next) => {
+    void window.api.getMetamodelsFolder().then((next) => {
       if (live) setInfo(next)
     })
     return () => {
@@ -27,7 +27,7 @@ export default function ProfilesFolderSection({
 
   const choose = (): void => {
     window.api
-      .chooseProfilesFolder()
+      .chooseMetamodelsFolder()
       .catch((err) =>
         showAlert(`Could not set the folder: ${err instanceof Error ? err.message : String(err)}`)
       )
@@ -35,10 +35,10 @@ export default function ProfilesFolderSection({
 
   return (
     <>
-      <FieldRow label="Profiles folder">
+      <FieldRow label="Metamodels folder">
         <span
           className="preferences-folder-path"
-          title="Where your conformance profiles live and where New profile starts"
+          title="Where your diagram metamodels live and where New metamodel starts"
         >
           {info ? info.folder : '…'}
         </span>
@@ -50,8 +50,8 @@ export default function ProfilesFolderSection({
         <button type="button" disabled={info?.isDefault ?? true} onClick={onReset}>
           Use default
         </button>
-        <button type="button" onClick={() => void createProfile()}>
-          New profile…
+        <button type="button" onClick={() => void createMetamodel()}>
+          New metamodel…
         </button>
       </div>
     </>

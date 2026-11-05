@@ -19,7 +19,7 @@ topics of the same tool ("fields", "authoring", "layout", "conformance"). This s
 place of the commands the text names: \`node scripts/validate_chd.mjs <file>\` is validate_diagram,
 \`chd hash <file>\` is the fingerprint read_file returns, \`chd diff\` is diff_diagrams (its \`--rev\` is
 the revision argument) and \`chd check\` is check_diagram. Use update_file/create_file to write, a
-profile too.)
+metamodel too.)
 
 `
 

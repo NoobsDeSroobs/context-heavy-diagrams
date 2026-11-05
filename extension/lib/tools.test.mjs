@@ -243,70 +243,88 @@ test('get_format_spec "all" is the core rules plus an index, small enough for on
 const examples = join(import.meta.dirname, '..', '..', 'examples', 'conformance')
 const copyExample = (name) => writeFileSync(join(folder, name), readFileSync(join(examples, name)))
 
-test('check_diagram applies a built-in profile by name', () => {
+test('check_diagram applies a built-in metamodel by name', () => {
   copyExample('hexagonal-ok.chd')
   copyExample('hexagonal-broken.chd')
-  const ok = make().check_diagram({ path: 'hexagonal-ok.chd', profile: 'hexagonal' })
+  const ok = make().check_diagram({ path: 'hexagonal-ok.chd', metamodel: 'hexagonal' })
   assert.equal(ok.file, 'hexagonal-ok.chd')
   assert.equal(ok.result.conforms, true)
-  const broken = make().check_diagram({ path: 'hexagonal-broken.chd', profile: 'hexagonal' })
+  const broken = make().check_diagram({ path: 'hexagonal-broken.chd', metamodel: 'hexagonal' })
   assert.equal(broken.result.conforms, false)
   assert.ok(broken.result.findings.some((f) => f.severity === 'error'))
 })
 
-test('check_diagram takes a profile file from the folder, and says what is wrong with one', () => {
+test('check_diagram takes a metamodel file from the folder, and says what is wrong with one', () => {
   copyExample('hexagonal-ok.chd')
-  const profile = readFileSync(
-    join(import.meta.dirname, '..', '..', 'resources', 'profiles', 'hexagonal.chdprofile.json'),
+  const metamodel = readFileSync(
+    join(import.meta.dirname, '..', '..', 'resources', 'metamodels', 'hexagonal.chdmeta'),
     'utf8'
   )
   mkdirSync(join(folder, 'rules'))
-  writeFileSync(join(folder, 'rules', 'mine.chdprofile.json'), profile)
+  writeFileSync(join(folder, 'rules', 'mine.chdmeta'), metamodel)
   const result = make().check_diagram({
     path: 'hexagonal-ok.chd',
-    profile: 'rules/mine.chdprofile.json'
+    metamodel: 'rules/mine.chdmeta'
   })
   assert.equal(result.result.conforms, true)
 
-  writeFileSync(join(folder, 'rules', 'bad.chdprofile.json'), '{ "profileVersion": 1 }')
+  writeFileSync(join(folder, 'rules', 'bad.chdmeta'), '{ "metamodelVersion": 1 }')
   assert.throws(
-    () => make().check_diagram({ path: 'hexagonal-ok.chd', profile: 'rules/bad.chdprofile.json' }),
-    /the profile 'bad\.chdprofile\.json' is not valid/
+    () => make().check_diagram({ path: 'hexagonal-ok.chd', metamodel: 'rules/bad.chdmeta' }),
+    /the metamodel 'bad\.chdmeta' is not valid/
   )
-  writeFileSync(join(folder, 'rules', 'junk.chdprofile.json'), 'not json')
+  writeFileSync(join(folder, 'rules', 'junk.chdmeta'), 'not json')
   assert.throws(
-    () => make().check_diagram({ path: 'hexagonal-ok.chd', profile: 'rules/junk.chdprofile.json' }),
-    /can't read the profile 'junk\.chdprofile\.json'/
+    () => make().check_diagram({ path: 'hexagonal-ok.chd', metamodel: 'rules/junk.chdmeta' }),
+    /can't read the metamodel 'junk\.chdmeta'/
   )
 })
 
-test('check_diagram refuses an unknown profile, a profile outside the folder and a non-diagram', () => {
+test('check_diagram still reads a metamodel under its old name, but nothing writes one', () => {
+  copyExample('hexagonal-ok.chd')
+  const metamodel = readFileSync(
+    join(import.meta.dirname, '..', '..', 'resources', 'metamodels', 'hexagonal.chdmeta'),
+    'utf8'
+  ).replace('"metamodelVersion"', '"profileVersion"')
+  writeFileSync(join(folder, 'old.chdprofile.json'), metamodel)
+  const result = make().check_diagram({
+    path: 'hexagonal-ok.chd',
+    metamodel: 'old.chdprofile.json'
+  })
+  assert.equal(result.result.conforms, true)
+  refusal(
+    () => make().create_file({ path: 'new.chdprofile.json', content: metamodel }),
+    /cannot be written/
+  )
+})
+
+test('check_diagram refuses an unknown metamodel, a metamodel outside the folder and a non-diagram', () => {
   copyExample('hexagonal-ok.chd')
   assert.throws(
-    () => make().check_diagram({ path: 'hexagonal-ok.chd', profile: 'nope' }),
-    /no profile called 'nope'.*data-flow-diagram.*hexagonal/
+    () => make().check_diagram({ path: 'hexagonal-ok.chd', metamodel: 'nope' }),
+    /no metamodel called 'nope'.*data-flow-diagram.*hexagonal/
   )
   assert.throws(
-    () => make().check_diagram({ path: 'hexagonal-ok.chd', profile: '../outside.md' }),
-    /no profile called/
+    () => make().check_diagram({ path: 'hexagonal-ok.chd', metamodel: '../outside.md' }),
+    /no metamodel called/
   )
-  assert.throws(() => make().check_diagram({ path: 'hexagonal-ok.chd' }), /profile is required/)
+  assert.throws(() => make().check_diagram({ path: 'hexagonal-ok.chd' }), /metamodel is required/)
   assert.throws(
-    () => make().check_diagram({ path: 'notes/readme.md', profile: 'hexagonal' }),
+    () => make().check_diagram({ path: 'notes/readme.md', metamodel: 'hexagonal' }),
     /only works on \.chd/
   )
   writeFileSync(join(folder, 'junk.chd'), 'not a diagram')
   assert.throws(
-    () => make().check_diagram({ path: 'junk.chd', profile: 'hexagonal' }),
+    () => make().check_diagram({ path: 'junk.chd', metamodel: 'hexagonal' }),
     /can't read 'junk\.chd'/
   )
 })
 
-test('the template is not offered as a built-in profile', () => {
+test('the template is not offered as a built-in metamodel', () => {
   copyExample('hexagonal-ok.chd')
   assert.throws(
-    () => make().check_diagram({ path: 'hexagonal-ok.chd', profile: 'template' }),
-    /no profile called 'template'/
+    () => make().check_diagram({ path: 'hexagonal-ok.chd', metamodel: 'template' }),
+    /no metamodel called 'template'/
   )
 })
 
@@ -514,61 +532,59 @@ test(
   }
 )
 
-// --- profiles are written like diagrams, and only profiles (ADR 0143)
+// --- metamodels are written like diagrams, and only metamodels (ADR 0143)
 
-const PROFILE = readFileSync(
-  join(import.meta.dirname, '..', '..', 'resources', 'profiles', 'hexagonal.chdprofile.json'),
+const METAMODEL = readFileSync(
+  join(import.meta.dirname, '..', '..', 'resources', 'metamodels', 'hexagonal.chdmeta'),
   'utf8'
 )
 
-test('a profile can be created, validated first, and used by check_diagram', () => {
+test('a metamodel can be created, validated first, and used by check_diagram', () => {
   const tools = make(true)
   refusal(
-    () =>
-      tools.create_file({ path: 'rules/bad.chdprofile.json', content: '{ "profileVersion": 1 }' }),
+    () => tools.create_file({ path: 'rules/bad.chdmeta', content: '{ "metamodelVersion": 1 }' }),
     /was not written.*is not valid/s
   )
   refusal(
-    () => tools.create_file({ path: 'rules/junk.chdprofile.json', content: 'not json' }),
-    /was not written.*can't read the profile/s
+    () => tools.create_file({ path: 'rules/junk.chdmeta', content: 'not json' }),
+    /was not written.*can't read the metamodel/s
   )
   assert.equal(existsSync(join(folder, 'rules')), false, 'a refused create leaves no folder behind')
 
-  const created = tools.create_file({ path: 'rules/mine.chdprofile.json', content: PROFILE })
-  assert.equal(created.fingerprint, sha(PROFILE))
-  assert.equal(readFileSync(join(folder, 'rules', 'mine.chdprofile.json'), 'utf8'), PROFILE)
+  const created = tools.create_file({ path: 'rules/mine.chdmeta', content: METAMODEL })
+  assert.equal(created.fingerprint, sha(METAMODEL))
+  assert.equal(readFileSync(join(folder, 'rules', 'mine.chdmeta'), 'utf8'), METAMODEL)
   refusal(
-    () => tools.create_file({ path: 'rules/mine.chdprofile.json', content: PROFILE }),
+    () => tools.create_file({ path: 'rules/mine.chdmeta', content: METAMODEL }),
     /already exists/
   )
 
   writeFileSync(join(folder, 'ok.chd'), readFileSync(join(examples, 'hexagonal-ok.chd')))
-  const checked = tools.check_diagram({ path: 'ok.chd', profile: 'rules/mine.chdprofile.json' })
+  const checked = tools.check_diagram({ path: 'ok.chd', metamodel: 'rules/mine.chdmeta' })
   assert.equal(checked.result.conforms, true)
 })
 
-test('a profile is updated only from the version the edit was based on, and validated', () => {
+test('a metamodel is updated only from the version the edit was based on, and validated', () => {
   const tools = make(true)
-  const { fingerprint } = tools.create_file({ path: 'p.chdprofile.json', content: PROFILE })
-  const edited = PROFILE.replace('"name": "Hexagonal', '"name": "Edited hexagonal')
-  assert.notEqual(edited, PROFILE)
+  const { fingerprint } = tools.create_file({ path: 'p.chdmeta', content: METAMODEL })
+  const edited = METAMODEL.replace('"name": "Hexagonal', '"name": "Edited hexagonal')
+  assert.notEqual(edited, METAMODEL)
   refusal(
-    () =>
-      tools.update_file({ path: 'p.chdprofile.json', content: edited, base_fingerprint: sha('x') }),
+    () => tools.update_file({ path: 'p.chdmeta', content: edited, base_fingerprint: sha('x') }),
     /has changed since you read it/
   )
   refusal(
     () =>
       tools.update_file({
-        path: 'p.chdprofile.json',
+        path: 'p.chdmeta',
         content: '{}',
         base_fingerprint: fingerprint
       }),
     /was not written/
   )
-  assert.equal(readFileSync(join(folder, 'p.chdprofile.json'), 'utf8'), PROFILE)
+  assert.equal(readFileSync(join(folder, 'p.chdmeta'), 'utf8'), METAMODEL)
   const updated = tools.update_file({
-    path: 'p.chdprofile.json',
+    path: 'p.chdmeta',
     content: edited,
     base_fingerprint: fingerprint
   })
@@ -579,19 +595,16 @@ test('a profile is updated only from the version the edit was based on, and vali
   )
 })
 
-test('no other JSON file can be written, and list_files flags profiles as writable', () => {
+test('no other JSON file can be written, and list_files flags metamodels as writable', () => {
   const tools = make(true)
   refusal(() => tools.create_file({ path: 'settings.json', content: '{}' }), /cannot be written/)
-  refusal(
-    () => tools.create_file({ path: 'x.chdprofile.json.bat', content: '{}' }),
-    /cannot be written/
-  )
-  refusal(() => tools.create_file({ path: 'chdprofile.json', content: '{}' }), /cannot be written/)
+  refusal(() => tools.create_file({ path: 'x.chdmeta.bat', content: '{}' }), /cannot be written/)
+  refusal(() => tools.create_file({ path: 'chdmeta', content: '{}' }), /cannot be written/)
   writeFileSync(join(folder, 'settings.json'), '{}')
-  writeFileSync(join(folder, 'p.chdprofile.json'), PROFILE)
+  writeFileSync(join(folder, 'p.chdmeta'), METAMODEL)
   const { files } = tools.list_files()
   const writable = Object.fromEntries(files.map((f) => [f.path, f.writable]))
-  assert.equal(writable['p.chdprofile.json'], true)
+  assert.equal(writable['p.chdmeta'], true)
   assert.equal(writable['settings.json'], false)
 })
 

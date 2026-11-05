@@ -1,7 +1,7 @@
 # 0110: Claude Desktop extension (MCPB) — a local, folder-scoped server shipped inside the app
 
 ## Status
-Accepted (2026-10-16). Widened by [ADR 0142](0142-the-extension-may-run-git-show-to-read-an-earlier-version.md) (it may run `git show`) and [ADR 0143](0143-the-extension-writes-architecture-profiles.md) (it may write `.chdprofile.json` files).
+Accepted (2026-10-16). Widened by [ADR 0142](0142-the-extension-may-run-git-show-to-read-an-earlier-version.md) (it may run `git show`) and [ADR 0143](0143-the-extension-writes-diagram-metamodels.md) (it may write `.chdmeta` files).
 
 ## Context
 The folder route ([ADR 0105](0105-bundled-ai-material-and-folder-setup.md)) and

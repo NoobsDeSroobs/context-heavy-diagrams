@@ -90,7 +90,7 @@ A diagram is a small, deterministic text file, so git can do for it what it does
 - File-version warning
 - Recent diagrams and shortcuts help
 - SVG/PNG export from the File menu, and `chd export` to produce the same SVG from a terminal or CI job
-- Architecture checks: a diagram can be checked against the rules of a style (hexagonal and data-flow diagrams ship with the app, and you can write your own profiles), from Diagnostics or with `chd check` in CI
+- Architecture checks: a diagram can be checked against the rules of a diagram metamodel (hexagonal and data-flow diagrams ship with the app, and you can write your own metamodels), from Diagnostics or with `chd check` in CI
 - Review what changed between two versions of a diagram, e.g. after an AI assistant edited it: a compare window draws the later version with added, removed, link-or-note-changed and modified elements coloured and everything else dimmed. You also get a list of changes to step through and a per-change revert (View → Changes → Compare with git revision…, or **Review changes** when the file changes on disk); `chd diff` prints the same review for a terminal or CI
 - The `chd` command line tool (`spec`, `validate`, `hash`, `export`, `check`)
 
@@ -138,7 +138,7 @@ You place the elements, and the file keeps the positions stable, so a small edit
 - Offline, enforced: a test fails if a network API appears in the source ([ADR 0113](docs/decisions/0113-enforced-offline-behaviour.md)).
 - The file format is a standalone specification ([docs/file-format.md](docs/file-format.md)), so there is no lock-in.
 - `chd diff` and `chd check` run in CI, and the compare window lets you reviews a change before it is committed.
-- Architecture checks ship for hexagonal and data-flow diagrams; other styles need a profile of your own.
+- Architecture checks ship for hexagonal and data-flow diagrams; other styles need a metamodel of your own.
 - GPL-3.0-or-later, with third-party licences listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
 ## Documentation

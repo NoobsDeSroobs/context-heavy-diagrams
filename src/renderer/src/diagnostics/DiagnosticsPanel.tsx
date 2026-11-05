@@ -53,7 +53,7 @@ interface DiagnosticsPanelProps {
   // Stage / unstage the reference for removal-on-save.
   onStageRemoval: (entry: MissingFileEntry) => void
   onUnstageRemoval: (entry: MissingFileEntry) => void
-  // The architecture check (ADR 0131): the chosen profile and what it found in the open diagram.
+  // The architecture check (ADR 0131): the chosen metamodel and what it found in the open diagram.
   conformance: ConformanceState
   conformanceResult: CheckResult | null
   onClose: () => void

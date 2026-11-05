@@ -40,7 +40,7 @@ async function listFiles(dir: string, prefix = ''): Promise<string[]> {
 // assistant is not left to find out by a failed command.
 function cliNote(cliPath: string | undefined): string {
   if (!cliPath) {
-    return `The \`chd\` command that the skill mentions is not set up for this folder: this copy of the app has no launcher with a stable path (a run from source, an AppImage or a macOS build). Do not rely on it unless \`chd --version\` works in your terminal. Instead: where the skill says \`chd hash\`, re-read the file; where it says \`chd diff\`, compare with \`git diff\` or with what you read earlier and describe the changes yourself; \`chd check\` is not available, so say so rather than judging a diagram against a profile by hand. The Node script above still validates.
+    return `The \`chd\` command that the skill mentions is not set up for this folder: this copy of the app has no launcher with a stable path (a run from source, an AppImage or a macOS build). Do not rely on it unless \`chd --version\` works in your terminal. Instead: where the skill says \`chd hash\`, re-read the file; where it says \`chd diff\`, compare with \`git diff\` or with what you read earlier and describe the changes yourself; \`chd check\` is not available, so say so rather than judging a diagram against a metamodel by hand. The Node script above still validates.
 
 `
   }

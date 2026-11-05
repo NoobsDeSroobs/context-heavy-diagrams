@@ -4,17 +4,17 @@ import {
   ANY_ROLE,
   EDGES_TARGET,
   needsDirection,
-  type Profile,
+  type Metamodel,
   type RoleMatch,
   type Rule,
   type Severity
-} from './profile.ts'
+} from './metamodel.ts'
 
-// Applies a validated profile to a diagram (ADR 0131). Pure: the same diagram and profile always
+// Applies a validated metamodel to a diagram (ADR 0131). Pure: the same diagram and metamodel always
 // give the same result, so the app, the command line and the tests all see one answer.
 
 export interface Finding {
-  // The rule's id, or "edge-set" / "edge-presence" for the profile's `edges` declaration.
+  // The rule's id, or "edge-set" / "edge-presence" for the metamodel's `edges` declaration.
   ruleId: string
   severity: Severity
   message: string
@@ -25,7 +25,7 @@ export interface Finding {
 }
 
 export interface CheckResult {
-  profileName: string
+  metamodelName: string
   findings: Finding[]
   // Rules that could not run, because the diagram lacks the edge set they need.
   notEvaluated: string[]
@@ -35,7 +35,7 @@ export interface CheckResult {
 
 type NodeKind = 'entity' | 'container' | 'text'
 
-// An edge as the profile reads it: its ends in the reading of the edge set the meaning asks for.
+// An edge as the metamodel reads it: its ends in the reading of the edge set the meaning asks for.
 interface OrientedEdge {
   id: string
   source: string
@@ -75,7 +75,7 @@ function isBlank(value: JsonValue | undefined): boolean {
   return false
 }
 
-export function checkDiagram(diagram: DiagramFile, profile: Profile): CheckResult {
+export function checkDiagram(diagram: DiagramFile, metamodel: Metamodel): CheckResult {
   const findings: Finding[] = []
   const notEvaluated: string[] = []
   const nodes = new Map(diagram.nodes.map((node) => [node.id, node]))
@@ -85,8 +85,8 @@ export function checkDiagram(diagram: DiagramFile, profile: Profile): CheckResul
   }
   const eligible = diagram.nodes.filter((node) => nodeKind(node) !== null)
 
-  // -- the edges, in the reading the profile's meaning asks for
-  const { meaning, presence } = profile.edges
+  // -- the edges, in the reading the metamodel's meaning asks for
+  const { meaning, presence } = metamodel.edges
   let edges: OrientedEdge[] = []
   let directionAvailable = true
   const asIs = (edge: DiagramEdge): OrientedEdge => ({
@@ -129,7 +129,7 @@ export function checkDiagram(diagram: DiagramFile, profile: Profile): CheckResul
     findings.push({
       ruleId: 'edge-presence',
       severity: 'error',
-      message: 'The diagram has no edges, but this profile requires them.',
+      message: 'The diagram has no edges, but this metamodel requires them.',
       nodeIds: [],
       edgeIds: []
     })
@@ -137,7 +137,7 @@ export function checkDiagram(diagram: DiagramFile, profile: Profile): CheckResul
     findings.push({
       ruleId: 'edge-presence',
       severity: 'error',
-      message: 'The diagram has edges, but this profile does not allow any.',
+      message: 'The diagram has edges, but this metamodel does not allow any.',
       nodeIds: [],
       edgeIds: diagram.edges.map((edge) => edge.id)
     })
@@ -146,7 +146,7 @@ export function checkDiagram(diagram: DiagramFile, profile: Profile): CheckResul
   // -- roles
   const byRole = new Map<string, Set<string>>()
   const roleDefs = new Map(
-    Object.entries(profile.roles).map(([name, role]) => [normalizeText(name), role.match])
+    Object.entries(metamodel.roles).map(([name, role]) => [normalizeText(name), role.match])
   )
   const ancestors = (id: string): string[] => {
     const chain: string[] = []
@@ -206,7 +206,7 @@ export function checkDiagram(diagram: DiagramFile, profile: Profile): CheckResul
     })
   }
 
-  for (const rule of profile.rules) {
+  for (const rule of metamodel.rules) {
     if (needsDirection(rule) && !directionAvailable) {
       notEvaluated.push(rule.id)
       continue
@@ -301,7 +301,7 @@ export function checkDiagram(diagram: DiagramFile, profile: Profile): CheckResul
   }
 
   return {
-    profileName: profile.name,
+    metamodelName: metamodel.name,
     findings,
     notEvaluated,
     conforms: !findings.some((finding) => finding.severity === 'error')

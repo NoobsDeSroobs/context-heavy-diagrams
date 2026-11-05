@@ -26,7 +26,7 @@ import { registerExportHandlers } from './export/export'
 import { registerSecurityHandlers } from './threat-matrix/security'
 import { registerLinkedSearchHandlers } from './search/linkedSearch'
 import { registerAiHandlers } from './ai/ai'
-import { registerProfileHandlers } from './conformance/profiles'
+import { registerMetamodelHandlers } from './conformance/metamodels'
 import { registerClipboardHandlers } from './canvas/clipboard'
 import { registerCompareHandlers } from './compare/compareWindow'
 import { disableProxyDiscovery, enforceOffline } from './offline'
@@ -93,7 +93,7 @@ app.whenReady().then(async () => {
   registerSecurityHandlers()
   registerLinkedSearchHandlers()
   registerAiHandlers()
-  registerProfileHandlers()
+  registerMetamodelHandlers()
   registerClipboardHandlers()
   registerCompareHandlers()
 

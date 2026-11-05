@@ -14,7 +14,8 @@ import {
 import { randomUUID } from 'node:crypto'
 import { basename, dirname, extname, join, sep } from 'node:path'
 import { parseDiagram } from '../../src/shared/diagram/index.ts'
-import { checkDiagramText, parseProfileText } from '../../src/shared/conformance/report.ts'
+import { metamodelFileBase } from '../../src/shared/conformance/metamodel.ts'
+import { checkDiagramText, parseMetamodelText } from '../../src/shared/conformance/report.ts'
 import { compareDiagrams, diffToJson, notesBetween } from '../../src/shared/compare/report.ts'
 // The same containment rule the command line applies to a stored note path (ADR 0115).
 import { containedPath } from '../../src/main/containedPath.ts'
@@ -24,17 +25,17 @@ import { buildGitSession } from '../../src/main/compare/gitCompare.ts'
 import { validateFile } from '../../resources/ai/skills/chd-diagrams/scripts/validate_chd.mjs'
 import {
   MAX_FILE_BYTES,
-  PROFILE_SUFFIX,
+  METAMODEL_SUFFIX,
   READ_EXTENSIONS,
   ToolError,
   isDotOrIgnoredEntry,
-  isProfileName,
+  isMetamodelName,
   isWritableName,
   resolveInFolder
 } from './fileRules.mjs'
 import { FINGERPRINT_PATTERN, fingerprint } from './fingerprint.mjs'
 import { formatSpec } from './formatSpec.mjs'
-import { loadBuiltinProfiles } from './profilesText.mjs'
+import { loadBuiltinMetamodels } from './metamodelsText.mjs'
 
 const LIST_LIMIT = 300
 const LIST_MAX_DEPTH = 8
@@ -89,17 +90,17 @@ function refuseInvalid(rel, validation) {
   )
 }
 
-// A profile is checked from its text, with the same reader `chd check` uses; it holds no relative
+// A metamodel is checked from its text, with the same reader `chd check` uses; it holds no relative
 // paths, so unlike a diagram it needs no temporary file (ADR 0143).
-function refuseInvalidProfile(rel, content) {
-  const loaded = parseProfileText(content, basename(rel))
+function refuseInvalidMetamodel(rel, content) {
+  const loaded = parseMetamodelText(content, basename(rel))
   if ('message' in loaded) {
     throw new ToolError(`"${rel}" was not written. ${loaded.message}`)
   }
 }
 
 export function createTools({ root, allowUpdate, specSources }) {
-  const builtinProfiles = loadBuiltinProfiles()
+  const builtinMetamodels = loadBuiltinMetamodels()
 
   // The text of a file the assistant named, refused if it is too large or not UTF-8 text.
   function textOf(absolute, rel) {
@@ -185,38 +186,38 @@ export function createTools({ root, allowUpdate, specSources }) {
   }
 
   // `chd check` (ADR 0131): the same shared code, so the same result as `chd check --json` for one
-  // file. A profile is a built-in one by name, or a .chdprofile.json file in the folder.
-  function checkDiagram({ path, profile }) {
+  // file. A metamodel is a built-in one by name, or a .chdmeta file in the folder.
+  function checkDiagram({ path, metamodel }) {
     const file = diagramFile(path, 'check_diagram')
-    const builtIn = Object.keys(builtinProfiles)
-    if (typeof profile !== 'string' || profile.trim() === '') {
+    const builtIn = Object.keys(builtinMetamodels)
+    if (typeof metamodel !== 'string' || metamodel.trim() === '') {
       throw new ToolError(
-        `profile is required: the name of a built-in profile (${builtIn.join(', ')}) or the path of a ${PROFILE_SUFFIX} file in the folder`
+        `metamodel is required: the name of a built-in metamodel (${builtIn.join(', ')}) or the path of a ${METAMODEL_SUFFIX} file in the folder`
       )
     }
-    let profileText
-    let profileName
-    if (Object.hasOwn(builtinProfiles, profile)) {
-      profileText = builtinProfiles[profile]
-      profileName = profile + PROFILE_SUFFIX
+    let metamodelText
+    let metamodelName
+    if (Object.hasOwn(builtinMetamodels, metamodel)) {
+      metamodelText = builtinMetamodels[metamodel]
+      metamodelName = metamodel + METAMODEL_SUFFIX
     } else {
       const unknown = new ToolError(
-        `no profile called '${profile}': use a built-in profile (${builtIn.join(', ')}) or the path of a ${PROFILE_SUFFIX} file in the folder`
+        `no metamodel called '${metamodel}': use a built-in metamodel (${builtIn.join(', ')}) or the path of a ${METAMODEL_SUFFIX} file in the folder`
       )
       let found
       try {
-        found = resolveInFolder(root, profile, 'read', { mustExist: false })
+        found = resolveInFolder(root, metamodel, 'read', { mustExist: false })
       } catch {
         throw unknown
       }
-      if (!found.relative.endsWith(PROFILE_SUFFIX) || !existsSync(found.absolute)) throw unknown
-      profileText = textOf(found.absolute, found.relative)
-      profileName = basename(found.relative)
+      if (metamodelFileBase(found.relative) === null || !existsSync(found.absolute)) throw unknown
+      metamodelText = textOf(found.absolute, found.relative)
+      metamodelName = basename(found.relative)
     }
-    const loaded = parseProfileText(profileText, profileName)
+    const loaded = parseMetamodelText(metamodelText, metamodelName)
     if ('message' in loaded) throw new ToolError(loaded.message)
     parsed(file)
-    return { file: file.rel, result: checkDiagramText(file.text, loaded.profile) }
+    return { file: file.rel, result: checkDiagramText(file.text, loaded.metamodel) }
   }
 
   // The text of a note beside a diagram, or null if it is not there or may not be read: a stored
@@ -332,8 +333,8 @@ export function createTools({ root, allowUpdate, specSources }) {
         const validation = validateCandidate(root, absolute, rel, content)
         if (!validation.ok) throw refuseInvalid(rel, validation)
         warnings = validation.warnings
-      } else if (isProfileName(absolute)) {
-        refuseInvalidProfile(rel, content)
+      } else if (isMetamodelName(absolute)) {
+        refuseInvalidMetamodel(rel, content)
       }
       try {
         // 'wx' is an exclusive create: it fails if the file appeared meanwhile.
@@ -381,8 +382,8 @@ export function createTools({ root, allowUpdate, specSources }) {
         const validation = tidyValidation(root, validateFile(temp, false), temp, rel)
         if (!validation.ok) throw refuseInvalid(rel, validation)
         warnings = validation.warnings
-      } else if (isProfileName(absolute)) {
-        refuseInvalidProfile(rel, content)
+      } else if (isMetamodelName(absolute)) {
+        refuseInvalidMetamodel(rel, content)
       }
       // Checked again right before replacing; the instant between this and the
       // rename is the one race left (ADR 0110).

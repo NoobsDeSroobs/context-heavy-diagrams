@@ -14,14 +14,14 @@ These three also serve as round-trip fixtures: the app must open and re-save the
 
 ## Architecture checks
 
-[`conformance/`](conformance) has a pair of diagrams for each built-in profile, one that follows the style and one that breaks it, to try `chd check` on (see [the profile format](../docs/conformance-profile-format.md)):
+[`conformance/`](conformance) has a pair of diagrams for each built-in metamodel, one that follows the style and one that breaks it, to try `chd check` on (see [the metamodel format](../docs/metamodel-format.md)):
 
 | File | Check it with |
 |---|---|
-| `conformance/hexagonal-ok.chd`, `hexagonal-broken.chd` | `chd check <file> --profile hexagonal` |
-| `conformance/data-flow-ok.chd`, `data-flow-broken.chd` | `chd check <file> --profile data-flow-diagram` |
+| `conformance/hexagonal-ok.chd`, `hexagonal-broken.chd` | `chd check <file> --metamodel hexagonal` |
+| `conformance/data-flow-ok.chd`, `data-flow-broken.chd` | `chd check <file> --metamodel data-flow-diagram` |
 
-Each diagram has an edge direction set named after what its arrows mean ("Depends On", "Flows To") and a `role` tag on its elements, which is how a profile knows what each element is.
+Each diagram has an edge direction set named after what its arrows mean ("Depends On", "Flows To") and a `role` tag on its elements, which is how a metamodel knows what each element is.
 
 ## The gallery
 

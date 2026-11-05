@@ -16,7 +16,7 @@ Change the README, the website copy and the docs so that a first-time reader see
 
 ## Do not claim
 - "Draw.io alternative" or "fully brandable".
-- C4 validation (not shipped as a profile).
+- C4 validation (not shipped as a metamodel).
 - Automated migration or automatic compliance tagging.
 - "Air-gapped" next to the AI features without the data warning.
 - "Enterprise-grade" while the release is 0.x, built mainly on Windows, unsigned and without an installer.

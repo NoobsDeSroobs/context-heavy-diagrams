@@ -37,7 +37,7 @@ const SPEC_TOPICS = {
   conformance: {
     title: 'Architecture checks',
     file: 'references/conformance.md',
-    about: 'Checking a diagram against an architecture style (chd check).'
+    about: 'Checking a diagram against a metamodel (chd check).'
   }
 }
 const SPEC_TOPIC_NAMES = Object.keys(SPEC_TOPICS)
@@ -49,7 +49,7 @@ Usage:
   chd validate <file.chd>... [--recursive] Check diagram files for structural problems
   chd hash <file.chd>                      Print the file's fingerprint (SHA-256 of its bytes)
   chd export <file.chd> [options]          Draw the diagram as an SVG image
-  chd check <file.chd>... --profile <p>    Check diagrams against an architecture profile
+  chd check <file.chd>... --metamodel <m>  Check diagrams against a diagram metamodel
   chd diff <old.chd> <new.chd>             What changed between two versions (or against git)
   chd help <command>                       Details, options and exit codes of one command
   chd --version
@@ -198,7 +198,7 @@ async function exportCommand(args) {
   return bundle.runExport(args, { iconDir: builtinIconDir() })
 }
 
-// `check` is bundled the same way as `export`. The built-in profiles sit in resources/profiles,
+// `check` is bundled the same way as `export`. The built-in metamodels sit in resources/metamodels,
 // next to this folder, in a source checkout and in the packaged app alike.
 async function checkCommand(args) {
   let bundle
@@ -210,7 +210,7 @@ async function checkCommand(args) {
     )
     return 1
   }
-  const env = { profilesDir: join(here, '..', 'profiles') }
+  const env = { metamodelsDir: join(here, '..', 'metamodels') }
   if (wantsHelp(args)) {
     console.log(bundle.usage(env))
     return 0
