@@ -7,7 +7,7 @@ import { SPEC_TOPICS } from './lib/formatSpec.mjs'
 import { createTools } from './lib/tools.mjs'
 
 const INSTRUCTIONS = `Tools for the user's Context-Heavy Diagrams diagrams (.chd files) and the supporting documents in one folder they chose. Everything is relative to that folder.
-- Before creating or editing a .chd, call get_format_spec; the format has traps that corrupt files. Before writing a .chdmeta (a diagram metamodel), call it with topic "conformance": it says what to ask the person, what the format can and cannot say, and gives a valid example.
+- Before creating or editing a .chd, call get_format_spec; the format has traps that corrupt files. Before writing a .chdmeta (a diagram metamodel), call it with topic "conformance": it says what to ask the person, what the format can and cannot say, and gives a valid example. validate_metamodel lists what is wrong with a .chdmeta.
 - read_file returns a fingerprint. update_file only works with the fingerprint of the version you based your edit on, and is refused if the file changed meanwhile; then read it again and redo the edit. create_file never overwrites.
 - A .chd is validated before it is written; fix any reported errors and try again. validate_diagram checks an existing file.
 - check_diagram applies a diagram metamodel and diff_diagrams shows what changed, between two diagrams or between a diagram and its last commit in git; both only read. These tools give the results the chd command line gives, which is what a pipeline relies on.
@@ -58,7 +58,7 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
     {
       title: 'Get the .chd format spec',
       description:
-        'The rules for the .chd diagram format. Call this before creating or editing a diagram. The default is the core rules. Read the detailed references one topic at a time (fields, authoring, layout); "all" returns the core rules and an index of the topics, not the references themselves.',
+        'The rules for the .chd diagram format. Call this before creating or editing a diagram. The default is the core rules. Read the detailed references one topic at a time (fields, authoring, layout, conformance); "all" returns the core rules and an index of the topics, not the references themselves.',
       inputSchema: { topic: z.enum(['core', ...SPEC_TOPICS]).optional() },
       annotations: readOnly
     },
@@ -74,6 +74,17 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
       annotations: readOnly
     },
     guarded((args) => tools.validate_diagram(args))
+  )
+  server.registerTool(
+    'validate_metamodel',
+    {
+      title: 'Validate a diagram metamodel',
+      description:
+        'Check a .chdmeta file against the metamodel format and list every problem in it. The same list as "chd validate" gives for a metamodel. It does not apply the metamodel to a diagram (check_diagram does).',
+      inputSchema: { path },
+      annotations: readOnly
+    },
+    guarded((args) => tools.validate_metamodel(args))
   )
   server.registerTool(
     'check_diagram',

@@ -5,7 +5,15 @@
 import { test, before, beforeEach, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
 import { execFileSync, spawnSync } from 'node:child_process'
-import { copyFileSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import {
+  copyFileSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, sep } from 'node:path'
 import { bundleCheck, bundleDiff } from '../../scripts/build-cli.mjs'
@@ -229,6 +237,49 @@ test('chd hash and the fingerprint read_file returns are the same', () => {
   const fromCli = run('hash', 'hexagonal-ok.chd').stdout.trim()
   assert.match(fromCli, /^[0-9a-f]{64}$/)
   assert.equal(tools.read_file({ path: 'hexagonal-ok.chd' }).fingerprint, fromCli)
+})
+
+test('chd validate and validate_metamodel report the same problems with a metamodel file', () => {
+  const good = readFileSync(join(root, 'resources', 'metamodels', 'hexagonal.chdmeta'), 'utf8')
+  writeFileSync(join(dir, 'good.chdmeta'), good)
+  const bad = JSON.parse(good)
+  bad.edges = { meaning: 'dependsOn', presence: 'forbidden' }
+  bad.rules[0].mesage = 'typo'
+  writeFileSync(join(dir, 'bad.chdmeta'), JSON.stringify(bad))
+  writeFileSync(join(dir, 'junk.chdmeta'), 'not json')
+
+  const ok = run('validate', 'good.chdmeta')
+  assert.equal(ok.status, 0)
+  assert.match(ok.stdout, /\[good\.chdmeta\] OK/)
+  assert.deepEqual(asJson(tools.validate_metamodel({ path: 'good.chdmeta' })), {
+    ok: true,
+    errors: [],
+    warnings: []
+  })
+
+  for (const file of ['bad.chdmeta', 'junk.chdmeta']) {
+    const cliRun = run('validate', file)
+    assert.equal(cliRun.status, 1, file)
+    const fromCli = cliRun.stdout
+      .split(/\r?\n/)
+      .filter((l) => l.startsWith('ERROR'))
+      .map((l) => l.replace(/^ERROR\s+/, ''))
+    const served = tools.validate_metamodel({ path: file })
+    assert.equal(served.ok, false)
+    assert.deepEqual(served.errors, fromCli)
+    assert.ok(fromCli.length >= 1)
+  }
+  // A diagram and a metamodel can be named together; the worst result wins.
+  const mixed = run('validate', 'hexagonal-ok.chd', 'bad.chdmeta')
+  assert.equal(mixed.status, 1)
+  assert.match(mixed.stdout, /\[hexagonal-ok\.chd\] OK/)
+})
+
+test('validate_metamodel refuses what is not a metamodel file', () => {
+  assert.throws(
+    () => tools.validate_metamodel({ path: 'hexagonal-ok.chd' }),
+    /only validates .chdmeta/
+  )
 })
 
 test('chd validate and validate_diagram report the same errors and warnings', () => {

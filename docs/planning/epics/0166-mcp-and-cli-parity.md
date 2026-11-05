@@ -29,6 +29,7 @@ Every check lives once in shared code and is reachable from `chd`; the MCP serve
 - [x] The parity test (`src/cli/parity.test.mjs`): same results over every example and built-in metamodel, the same words for a refused metamodel, the same review with and without `--match`, the same fingerprint and validation; and a check that every `chd` command is mapped to a tool or listed as command-line only
 - [x] The extension's instructions and the spec text tell the assistant which tool replaces which command, and `get_format_spec` serves the `conformance` topic
 - [x] The conformance profile is renamed a diagram metamodel (`.chdmeta`, `--metamodel`, `metamodelVersion`), the old names still read ([ADR 0144](../../decisions/0144-a-conformance-profile-is-called-a-diagram-metamodel.md))
+- [x] A metamodel file validates on its own: `chd validate file.chdmeta` and the server's `validate_metamodel` (`validate_diagram` stays for diagrams); the skill's guide says what to make and what the format cannot say
 - [ ] `check_diagram` and `diff_diagrams` take diagram text as well as a path (and `chd check` and `chd diff` take `-` for standard input), so a candidate can be judged before it is written
 - [ ] The `chd mcp` launch command is part of [0159](0159-ai-menu-for-more-than-claude.md)
 

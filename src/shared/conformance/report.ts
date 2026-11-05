@@ -30,6 +30,18 @@ export function parseMetamodelText(
   return { metamodel }
 }
 
+// What is wrong with a metamodel's text, one entry for each problem; empty when it is valid. `chd
+// validate` and the server's `validate_metamodel` both report this list.
+export function metamodelProblems(text: string): string[] {
+  let raw: unknown
+  try {
+    raw = JSON.parse(text)
+  } catch (error) {
+    return [`not valid JSON: ${error instanceof Error ? error.message : error}`]
+  }
+  return validateMetamodel(raw).errors
+}
+
 // Throws if the text is not a diagram.
 export function checkDiagramText(text: string, metamodel: Metamodel): CheckResult {
   return checkDiagram(parseDiagram(text), metamodel)

@@ -16,7 +16,8 @@ function stripFrontmatter(text) {
 
 const PREAMBLE = `(Output of get_format_spec. File links below such as references/field-reference.md are the
 topics of the same tool ("fields", "authoring", "layout", "conformance"). This server has tools in
-place of the commands the text names: \`node scripts/validate_chd.mjs <file>\` is validate_diagram,
+place of the commands the text names: \`node scripts/validate_chd.mjs <file>\` is validate_diagram
+(for a .chdmeta file, \`chd validate\` is validate_metamodel),
 \`chd hash <file>\` is the fingerprint read_file returns, \`chd diff\` is diff_diagrams (its \`--rev\` is
 the revision argument) and \`chd check\` is check_diagram. Use update_file/create_file to write, a
 metamodel too.)

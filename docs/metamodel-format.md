@@ -161,7 +161,7 @@ A checker must reject a metamodel, with a message naming the problem, when:
 - a rule has a duplicate or invalid `id`, an unknown `kind`, an unknown `severity`, a missing field for its kind (or a `max` that is not a whole number of at least 1), or names a role that does not exist;
 - a rule's kind is not allowed by `edges` (see above).
 
-A metamodel that fails validation checks nothing.
+A metamodel that fails validation checks nothing. `chd validate <file>.chdmeta` lists every problem in a file without applying it to a diagram.
 
 ## Versioning
 
@@ -173,4 +173,4 @@ Before 0.6.0 a metamodel was called a profile. A checker still reads a file name
 
 ## Out of scope
 
-This version checks one diagram at a time. Not covered, and not guessed at: rules across linked diagrams, levels (as in C4), layer ordering and cycles, waivers for deliberate exceptions.
+This version checks one diagram at a time against one metamodel; a style with several kinds of diagram, such as the levels of C4, is one metamodel for each. Not covered, and not guessed at: rules across linked diagrams, dependency cycles (a rule looks at one edge at a time), a layer order stated as an order (it is written as one `forbiddenEdge` for each forbidden pair), waivers for deliberate exceptions.

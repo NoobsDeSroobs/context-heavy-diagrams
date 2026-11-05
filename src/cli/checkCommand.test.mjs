@@ -197,3 +197,20 @@ test('the old names still work: --profile, a .chdprofile.json file and profileVe
   )
   assert.equal(run('check', join(examples, 'hexagonal-ok.chd'), '--profile').status, 2)
 })
+
+test('chd validate reads a metamodel file: OK, every problem, and the old file name', async () => {
+  const good = join(root, 'resources', 'metamodels', 'hexagonal.chdmeta')
+  const ok = run('validate', good)
+  assert.equal(ok.status, 0)
+  assert.match(ok.stdout, /hexagonal\.chdmeta\] OK/)
+
+  const old = join(dir, 'old.chdprofile.json')
+  await writeFile(old, JSON.stringify({ profileVersion: 2, name: 'x', edges: {}, rules: [] }))
+  const bad = run('validate', old)
+  assert.equal(bad.status, 1)
+  assert.match(bad.stdout, /ERROR\s+profileVersion must be 1/)
+  assert.match(bad.stdout, /ERROR\s+edges\.meaning is not chosen/)
+  assert.match(bad.stdout, /ERROR\s+roles is required/)
+
+  assert.match(run('validate', '--help').stdout, /file\.chdmeta/)
+})

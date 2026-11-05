@@ -10,6 +10,7 @@ The extension applies a metamodel (`check_diagram`, [ADR 0131](0131-conformance-
 - **A file whose name ends in `.chdmeta` can be created and updated.** No other `.json` file can; the set of writable names stays narrow.
 - **It is validated before it is written,** with the reader `chd check` uses, and refused with the same message if it does not parse or is not a valid metamodel. A refused create leaves nothing behind.
 - **The stale-edit check applies** ([ADR 0109](0109-stale-edit-check-for-every-ai-write-path.md)): an update needs the fingerprint of the version it was based on, a create fails if the file exists, and updates stay behind the person's opt-in.
+- **A metamodel file can be validated on its own,** with `chd validate <file>.chdmeta` and the server's `validate_metamodel`, which list the same problems. `validate_diagram` stays for diagrams: a metamodel is not a diagram.
 - **No guard against an assistant fitting a metamodel to its own diagram.** A metamodel and the diagram it is checked against can come from the same session, and the server cannot tell sessions apart. What a green check is worth is for the person to judge, who owns the rules and the result; the skill's "ask what the rules are" step is about getting the right metamodel, not about trust.
 
 ## Alternatives considered

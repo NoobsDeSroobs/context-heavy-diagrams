@@ -25,6 +25,7 @@
     { "name": "list_files", "description": "List the diagrams, notes and supporting documents in the folder." },
     { "name": "get_format_spec", "description": "The rules of the .chd diagram format." },
     { "name": "validate_diagram", "description": "Check a .chd file for structural problems." },
+    { "name": "validate_metamodel", "description": "Check a .chdmeta file against the metamodel format." },
     { "name": "check_diagram", "description": "Check a .chd file against a diagram metamodel." },
     { "name": "diff_diagrams", "description": "See what changed in a diagram: between two files, or since a commit in git." },
     { "name": "read_file", "description": "Read a text file and get its fingerprint." },

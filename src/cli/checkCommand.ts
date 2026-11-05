@@ -4,6 +4,7 @@ import type { CheckResult } from '../shared/conformance/check.ts'
 import {
   checkDiagramText,
   formatCheckText,
+  metamodelProblems,
   parseMetamodelText
 } from '../shared/conformance/report.ts'
 import type { Metamodel } from '../shared/conformance/metamodel.ts'
@@ -106,6 +107,27 @@ function loadMetamodel(value: string, env: CheckEnv): Metamodel {
   const parsed = parseMetamodelText(text, basename(path))
   if ('message' in parsed) throw new UsageError(parsed.message)
   return parsed.metamodel
+}
+
+// `chd validate` for metamodel files: the same lines as for a diagram, so a pipeline reads both alike
+// (`[file] OK`, or one `ERROR` line for each problem). Exit 1 if any file has a problem.
+export function runValidateMetamodels(files: string[]): number {
+  let status = 0
+  for (const file of files) {
+    let problems: string[]
+    try {
+      problems = metamodelProblems(readFileSync(resolve(file), 'utf-8'))
+    } catch (error) {
+      problems = [`can't read the file: ${error instanceof Error ? error.message : error}`]
+    }
+    if (problems.length === 0) {
+      console.log(`[${file}] OK`)
+    } else {
+      for (const problem of problems) console.log(`ERROR   ${problem}`)
+      status = 1
+    }
+  }
+  return status
 }
 
 export function runCheck(args: string[], env: CheckEnv = {}): number {

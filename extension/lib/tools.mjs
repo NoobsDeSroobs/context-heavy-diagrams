@@ -15,7 +15,11 @@ import { randomUUID } from 'node:crypto'
 import { basename, dirname, extname, join, sep } from 'node:path'
 import { parseDiagram } from '../../src/shared/diagram/index.ts'
 import { metamodelFileBase } from '../../src/shared/conformance/metamodel.ts'
-import { checkDiagramText, parseMetamodelText } from '../../src/shared/conformance/report.ts'
+import {
+  checkDiagramText,
+  metamodelProblems,
+  parseMetamodelText
+} from '../../src/shared/conformance/report.ts'
 import { compareDiagrams, diffToJson, notesBetween } from '../../src/shared/compare/report.ts'
 // The same containment rule the command line applies to a stored note path (ADR 0115).
 import { containedPath } from '../../src/main/containedPath.ts'
@@ -183,6 +187,17 @@ export function createTools({ root, allowUpdate, specSources }) {
     }
     assertFile(absolute, rel)
     return tidyValidation(root, validateFile(absolute, false), absolute, rel)
+  }
+
+  // `chd validate` on a metamodel file: the same list of problems, from the shared reader. A
+  // metamodel under its old name (.chdprofile.json) is read too.
+  function validateMetamodel({ path }) {
+    const { absolute, relative: rel } = resolveInFolder(root, path, 'read', { mustExist: true })
+    if (metamodelFileBase(rel) === null) {
+      throw new ToolError('validate_metamodel only validates .chdmeta metamodel files')
+    }
+    const errors = metamodelProblems(textOf(absolute, rel))
+    return { ok: errors.length === 0, errors, warnings: [] }
   }
 
   // `chd check` (ADR 0131): the same shared code, so the same result as `chd check --json` for one
@@ -399,6 +414,7 @@ export function createTools({ root, allowUpdate, specSources }) {
     list_files: listFiles,
     get_format_spec: getFormatSpec,
     validate_diagram: validateDiagram,
+    validate_metamodel: validateMetamodel,
     check_diagram: checkDiagram,
     diff_diagrams: diffDiagrams,
     read_file: readFile,

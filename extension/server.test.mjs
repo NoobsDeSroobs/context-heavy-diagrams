@@ -46,7 +46,8 @@ async function exercise(entry) {
         'get_format_spec',
         'list_files',
         'read_file',
-        'validate_diagram'
+        'validate_diagram',
+        'validate_metamodel'
       ])
       const read = JSON.parse(
         textOf(await client.callTool({ name: 'read_file', arguments: { path: 'a.chd' } }))
