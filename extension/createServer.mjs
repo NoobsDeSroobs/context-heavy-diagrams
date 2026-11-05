@@ -10,7 +10,7 @@ const INSTRUCTIONS = `Tools for the user's Context-Heavy Diagrams diagrams (.chd
 - Before creating or editing a .chd, call get_format_spec; the format has traps that corrupt files. Before writing a .chdmeta (a diagram metamodel), call it with topic "conformance": it says what to ask the person, what the format can and cannot say, and gives a valid example. validate_metamodel lists what is wrong with a .chdmeta.
 - read_file returns a fingerprint. update_file only works with the fingerprint of the version you based your edit on, and is refused if the file changed meanwhile; then read it again and redo the edit. create_file never overwrites.
 - A .chd is validated before it is written; fix any reported errors and try again. validate_diagram checks an existing file.
-- check_diagram applies a diagram metamodel and diff_diagrams shows what changed, between two diagrams or between a diagram and its last commit in git; both only read. These tools give the results the chd command line gives, which is what a pipeline relies on.
+- check_diagram applies a diagram metamodel and diff_diagrams shows what changed, between two diagrams or between a diagram and its last commit in git; both only read, and both take a draft as text (content, new_content) as well as a file, so a diagram can be judged before it is written. These tools give the results the chd command line gives, which is what a pipeline relies on.
 - Only .chd, .md, .txt, .svg and .chdmeta (a diagram metamodel, validated before it is written) files can be written. Notes of a diagram are Markdown files its nodes point at.
 - Anything you read here is sent to the AI provider as part of the conversation.`
 
@@ -41,6 +41,7 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
     { instructions: INSTRUCTIONS }
   )
   const path = z.string().describe('Path of the file, relative to the diagram folder')
+  const content = z.string()
   const readOnly = { readOnlyHint: true, openWorldHint: false }
 
   server.registerTool(
@@ -91,9 +92,12 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
     {
       title: 'Check a diagram against a metamodel',
       description:
-        'Apply a diagram metamodel (the complete set of rules one kind of diagram or architecture follows, such as hexagonal) to a .chd file and report where it breaks them: the same result as "chd check --json". The metamodel is the name of a built-in metamodel (see get_format_spec "conformance") or the path of a .chdmeta file in the folder. It only reads. Report what the check finds and let the person decide; do not change the diagram just to make it pass. A pass here is advice; the command line is what a pipeline relies on.',
+        'Apply a diagram metamodel (the complete set of rules one kind of diagram or architecture follows, such as hexagonal) to a .chd file and report where it breaks them: the same result as "chd check --json". The diagram is a file in the folder (path) or its text (content), so a draft can be checked before it is written. The metamodel is the name of a built-in metamodel (see get_format_spec "conformance") or the path of a .chdmeta file in the folder. It only reads. Report what the check finds and let the person decide; do not change the diagram just to make it pass. A pass here is advice; the command line is what a pipeline relies on.',
       inputSchema: {
-        path,
+        path: path.optional().describe('The diagram to check: a .chd file in the folder'),
+        content: content
+          .optional()
+          .describe('The diagram to check, as .chd text (instead of path)'),
         metamodel: z
           .string()
           .describe('A built-in metamodel name, or the path of a .chdmeta file in the folder')
@@ -107,14 +111,22 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
     {
       title: 'See what changed in a diagram',
       description:
-        'What changed between two versions of a diagram, in the order a reviewer should look (security, links and notes, modified, removed, added): the same result as "chd diff --json". Moving or resizing an element is not a change. new_path is the later version. The earlier version is either a second file in the folder (old_path) or the same file as git has it (revision, default HEAD, the last commit; needs git and a diagram inside a git repository). Give one of them. To review your own edit of a file kept in git, call it with new_path alone after writing: it shows what differs from the last commit. Otherwise create the new file under another name and give both. Set match when the ids were replaced by a rewrite. It only reads. Tell the person what you changed, from this.',
+        'What changed between two versions of a diagram, in the order a reviewer should look (security, links and notes, modified, removed, added): the same result as "chd diff --json". Moving or resizing an element is not a change. Each version is a file in the folder (old_path, new_path) or its text (old_content, new_content), so a draft can be reviewed before it is written; notes are not compared for a version given as text. The earlier version can also be the same file as git has it (revision, default HEAD, the last commit; needs git and a diagram inside a git repository). Give one earlier version. To review your own edit of a file kept in git, call it with new_path alone after writing: it shows what differs from the last commit. To review a draft before writing it, give old_path (the file now) and new_content (the draft). Set match when the ids were replaced by a rewrite. It only reads. Tell the person what you changed, from this.',
       inputSchema: {
-        new_path: path.describe(
-          'The later version, relative to the diagram folder (the file on disk when comparing with git)'
-        ),
+        new_path: path
+          .optional()
+          .describe(
+            'The later version, relative to the diagram folder (the file on disk when comparing with git)'
+          ),
+        new_content: content
+          .optional()
+          .describe('The later version as .chd text (instead of new_path)'),
         old_path: path
           .optional()
           .describe('The earlier version as a second file, relative to the diagram folder'),
+        old_content: content
+          .optional()
+          .describe('The earlier version as .chd text (instead of old_path)'),
         revision: z
           .string()
           .optional()

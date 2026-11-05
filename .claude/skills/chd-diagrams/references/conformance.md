@@ -8,6 +8,8 @@ chd check path/to/diagram.chd --metamodel rules/house.chdmeta --json
 chd check --help        # lists the built-in metamodels
 ```
 
+A draft can be checked before it is written: `chd check - --metamodel hexagonal` reads the diagram from standard input (the Claude Desktop extension's `check_diagram` takes it as `content`).
+
 `--metamodel` takes a built-in name or the path to a `.chdmeta` file. (Older versions called these a "profile": `--profile`, `.chdprofile.json` and `profileVersion` are still read, and are not written.) Exit code 0: the diagram conforms (warnings and information are listed but do not fail it). 1: a diagram has an error. 2: the command or the metamodel cannot be used (the message says why).
 
 ## Read the metamodel before preparing a diagram

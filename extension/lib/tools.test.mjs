@@ -490,9 +490,12 @@ test('diff_diagrams with git refuses what it should', { skip: !git }, async (t) 
   await assert.rejects(() => tools.diff_diagrams({ new_path: 'new.chd' }), /not in git at "HEAD"/)
   await assert.rejects(
     () => tools.diff_diagrams({ new_path: 'd.chd', old_path: 'new.chd', revision: 'HEAD' }),
-    /not both/
+    /give only one of old_path/
   )
-  await assert.rejects(() => tools.diff_diagrams({ old_path: 'd.chd' }), /new_path is required/)
+  await assert.rejects(
+    () => tools.diff_diagrams({ old_path: 'd.chd' }),
+    /new_path or new_content is required/
+  )
   await assert.rejects(
     () => tools.diff_diagrams({ new_path: '../outside.chd' }),
     /outside the folder/
@@ -614,4 +617,98 @@ test('get_format_spec serves the conformance topic with the tool names for the c
   const core = make().get_format_spec({})
   assert.match(core, /diff_diagrams/)
   assert.match(core, /check_diagram/)
+})
+
+// --- a draft given as text, to judge it before it is written
+
+test('check_diagram takes the diagram as text, and only one of path and content', () => {
+  const ok = readFileSync(join(examples, 'hexagonal-ok.chd'), 'utf8')
+  const broken = readFileSync(join(examples, 'hexagonal-broken.chd'), 'utf8')
+  const fromText = make().check_diagram({ content: ok, metamodel: 'hexagonal' })
+  assert.equal(fromText.file, '(inline)')
+  assert.equal(fromText.result.conforms, true)
+  assert.equal(
+    make().check_diagram({ content: broken, metamodel: 'hexagonal' }).result.conforms,
+    false
+  )
+
+  copyExample('hexagonal-ok.chd')
+  const before = readdirSync(folder, { recursive: true }).sort()
+  refusal(
+    () => make().check_diagram({ path: 'hexagonal-ok.chd', content: ok, metamodel: 'hexagonal' }),
+    /not both/
+  )
+  refusal(() => make().check_diagram({ metamodel: 'hexagonal' }), /path or content is required/)
+  refusal(
+    () => make().check_diagram({ content: 'not json', metamodel: 'hexagonal' }),
+    /can't read '\(inline\)'/
+  )
+  refusal(
+    () =>
+      make().check_diagram({ content: 'x'.repeat(5 * 1024 * 1024 + 1), metamodel: 'hexagonal' }),
+    /content is larger than the 5 MB limit/
+  )
+  assert.deepEqual(readdirSync(folder, { recursive: true }).sort(), before, 'nothing was written')
+})
+
+test('diff_diagrams compares a draft with the file now, and leaves notes out for a draft', async () => {
+  mkdirSync(join(folder, 'inline', 'notes'), { recursive: true })
+  writeFileSync(
+    join(folder, 'inline', 'd.chd'),
+    diagramJson([entity('a', 'Billing', { notes: 'notes/a.md' }), entity('b', 'Orders')])
+  )
+  writeFileSync(join(folder, 'inline', 'notes', 'a.md'), 'Handles invoices.')
+  const before = readdirSync(folder, { recursive: true }).sort()
+  const draft = diagramJson([
+    entity('a', 'Billing', { notes: 'notes/a.md' }),
+    entity('b', 'Orders (EU)')
+  ])
+
+  const diff = await make().diff_diagrams({ old_path: 'inline/d.chd', new_content: draft })
+  assert.equal(diff.changed, true)
+  assert.equal(diff.older, 'inline/d.chd')
+  assert.equal(diff.newer, 'new content')
+  assert.deepEqual(
+    diff.changes.map((c) => c.id),
+    ['b'],
+    'only the renamed element; the note beside the file is not compared with nothing'
+  )
+
+  const both = await make().diff_diagrams({
+    old_content: diagramJson([entity('a', 'A')]),
+    new_content: diagramJson([entity('a', 'A'), entity('b', 'B')])
+  })
+  assert.equal(both.changed, true)
+  assert.deepEqual(
+    both.changes.map((c) => c.id),
+    ['b']
+  )
+  const same = await make().diff_diagrams({ old_content: draft, new_content: draft })
+  assert.equal(same.changed, false)
+  assert.deepEqual(readdirSync(folder, { recursive: true }).sort(), before, 'nothing was written')
+})
+
+test('diff_diagrams refuses a draft with nothing to compare with, and two earlier versions', async () => {
+  const draft = diagramJson([entity('a', 'A')])
+  writeFileSync(join(folder, 'd.chd'), draft)
+  await assert.rejects(
+    () => make().diff_diagrams({ new_content: draft }),
+    /new_content needs an earlier version/
+  )
+  await assert.rejects(
+    () => make().diff_diagrams({ new_content: draft, revision: 'HEAD' }),
+    /give only one of old_path.*old_content.*revision|new_content needs an earlier version/
+  )
+  await assert.rejects(
+    () => make().diff_diagrams({ new_path: 'd.chd', old_path: 'd.chd', old_content: draft }),
+    /give only one of old_path/
+  )
+  await assert.rejects(
+    () => make().diff_diagrams({ old_path: 'd.chd', new_path: 'd.chd', new_content: draft }),
+    /new_path.*new_content.*not both/
+  )
+  await assert.rejects(
+    () => make().diff_diagrams({ old_content: draft, new_content: 'not json' }),
+    /can't read 'new content'/
+  )
 })

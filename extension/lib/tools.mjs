@@ -128,6 +128,30 @@ export function createTools({ root, allowUpdate, specSources }) {
     return { absolute, rel, text: textOf(absolute, rel) }
   }
 
+  // A diagram given as a path in the folder, or as its text: the inline form judges a candidate
+  // before it is written. Exactly one of the two. `names` are the argument names for the messages
+  // and `label` is what an inline diagram is called in a result.
+  function diagramInput({ path, content }, names, tool, label = '(inline)') {
+    const hasPath = typeof path === 'string' && path.trim() !== ''
+    const hasContent = content !== undefined
+    if (hasPath && hasContent) {
+      throw new ToolError(
+        `give ${names.path} (a file in the folder) or ${names.content} (the diagram's text), not both`
+      )
+    }
+    if (!hasPath && !hasContent) {
+      throw new ToolError(`${names.path} or ${names.content} is required`)
+    }
+    if (!hasContent) return diagramFile(path, tool)
+    if (typeof content !== 'string') throw new ToolError(`${names.content} must be text`)
+    if (Buffer.byteLength(content, 'utf-8') > MAX_FILE_BYTES) {
+      throw new ToolError(
+        `${names.content} is larger than the ${MAX_FILE_BYTES / (1024 * 1024)} MB limit`
+      )
+    }
+    return { absolute: null, rel: label, text: content, inline: true }
+  }
+
   function parsed(file) {
     try {
       return parseDiagram(file.text)
@@ -202,8 +226,12 @@ export function createTools({ root, allowUpdate, specSources }) {
 
   // `chd check` (ADR 0131): the same shared code, so the same result as `chd check --json` for one
   // file. A metamodel is a built-in one by name, or a .chdmeta file in the folder.
-  function checkDiagram({ path, metamodel }) {
-    const file = diagramFile(path, 'check_diagram')
+  function checkDiagram({ path, content, metamodel }) {
+    const file = diagramInput(
+      { path, content },
+      { path: 'path', content: 'content' },
+      'check_diagram'
+    )
     const builtIn = Object.keys(builtinMetamodels)
     if (typeof metamodel !== 'string' || metamodel.trim() === '') {
       throw new ToolError(
@@ -245,25 +273,52 @@ export function createTools({ root, allowUpdate, specSources }) {
   // `chd diff` (ADR 0137): the same shared code, so the same result as `chd diff --json`. The
   // earlier version is a second file in the folder, or the same file in git at a revision
   // (`chd diff <file> --rev`, ADR 0142).
-  async function diffDiagrams({ old_path: oldPath, new_path: newPath, revision, match }) {
-    if (typeof newPath !== 'string' || newPath.trim() === '') {
+  async function diffDiagrams({
+    old_path: oldPath,
+    old_content: oldContent,
+    new_path: newPath,
+    new_content: newContent,
+    revision,
+    match
+  }) {
+    const hasOldPath = typeof oldPath === 'string' && oldPath.trim() !== ''
+    const earlier = [hasOldPath, oldContent !== undefined, revision !== undefined]
+    if (earlier.filter(Boolean).length > 1) {
       throw new ToolError(
-        'new_path is required: the later version, or the file on disk when comparing with git'
+        'give only one of old_path (a second file), old_content (its text) and revision (the file in git)'
       )
     }
-    const hasOld = typeof oldPath === 'string' && oldPath.trim() !== ''
-    if (hasOld && revision !== undefined) {
-      throw new ToolError('give old_path (a second file) or revision (the file in git), not both')
+    const newer = diagramInput(
+      { path: newPath, content: newContent },
+      { path: 'new_path', content: 'new_content' },
+      'diff_diagrams',
+      'new content'
+    )
+    if (!earlier[0] && !earlier[1]) {
+      if (newer.inline) {
+        throw new ToolError(
+          'new_content needs an earlier version to compare with: give old_path or old_content (a revision compares a file on disk with git)'
+        )
+      }
+      return diffWithGit(newer, revision ?? 'HEAD', match === true)
     }
-    const newer = diagramFile(newPath, 'diff_diagrams')
-    if (!hasOld) return diffWithGit(newer, revision ?? 'HEAD', match === true)
-    const older = diagramFile(oldPath, 'diff_diagrams')
+    const older = diagramInput(
+      { path: oldPath, content: oldContent },
+      { path: 'old_path', content: 'old_content' },
+      'diff_diagrams',
+      'old content'
+    )
     const olderDiagram = parsed(older)
     const newerDiagram = parsed(newer)
-    const notes = notesBetween(olderDiagram, newerDiagram, {
-      before: (stored) => noteBeside(older.absolute, stored),
-      after: (stored) => noteBeside(newer.absolute, stored)
-    })
+    // Notes sit beside a file: a side given as text has none, and comparing one side's notes with
+    // none would report every note as added or removed.
+    const notes =
+      older.inline || newer.inline
+        ? {}
+        : notesBetween(olderDiagram, newerDiagram, {
+            before: (stored) => noteBeside(older.absolute, stored),
+            after: (stored) => noteBeside(newer.absolute, stored)
+          })
     return diffToJson(
       compareDiagrams(olderDiagram, newerDiagram, {
         olderName: older.rel,

@@ -8,6 +8,7 @@ import {
   parseMetamodelText
 } from '../shared/conformance/report.ts'
 import type { Metamodel } from '../shared/conformance/metamodel.ts'
+import { readStdin, STDIN, STDIN_LABEL } from './stdin.ts'
 
 // `chd check` (ADR 0131): diagrams against a diagram metamodel, for CI and for an AI assistant.
 // Bundled into resources/cli/check.mjs by scripts/build-cli.mjs; chd.mjs loads it only for this
@@ -18,6 +19,8 @@ import type { Metamodel } from '../shared/conformance/metamodel.ts'
 
 export const CHECK_USAGE = `Usage: chd check <file.chd>... --metamodel <metamodel> [options]
 
+  <file.chd>                A diagram. A single - reads the diagram from standard input, to check
+                            a draft before it is written.
   --metamodel <metamodel>   A metamodel file (.chdmeta), or the name of a built-in metamodel
                             (--profile is the old name for this option and still works)
   --json                    Print the result as JSON instead of text
@@ -62,7 +65,7 @@ function parseArgs(args: string[]): Parsed {
       i += 1
     } else if (arg === '--json') {
       parsed.json = true
-    } else if (arg.startsWith('-')) {
+    } else if (arg.startsWith('-') && arg !== STDIN) {
       throw new UsageError(`unknown option '${arg}'`)
     } else {
       parsed.inputs.push(arg)
@@ -70,6 +73,9 @@ function parseArgs(args: string[]): Parsed {
   }
   if (parsed.inputs.length === 0) throw new UsageError('no diagram file given')
   if (parsed.metamodel === '') throw new UsageError('no --metamodel given')
+  if (parsed.inputs.filter((f) => f === STDIN).length > 1) {
+    throw new UsageError('standard input (-) can be read once')
+  }
   return parsed
 }
 
@@ -145,12 +151,14 @@ export function runCheck(args: string[], env: CheckEnv = {}): number {
   let status = 0
   const out: { file: string; result?: CheckResult; error?: string }[] = []
   for (const file of parsed.inputs) {
+    const shown = file === STDIN ? STDIN_LABEL : file
     try {
-      const result = checkDiagramText(readFileSync(resolve(file), 'utf-8'), metamodel)
-      out.push({ file, result })
+      const text = file === STDIN ? readStdin() : readFileSync(resolve(file), 'utf-8')
+      const result = checkDiagramText(text, metamodel)
+      out.push({ file: shown, result })
       if (!result.conforms) status = 1
     } catch (error) {
-      out.push({ file, error: error instanceof Error ? error.message : String(error) })
+      out.push({ file: shown, error: error instanceof Error ? error.message : String(error) })
       status = 1
     }
   }

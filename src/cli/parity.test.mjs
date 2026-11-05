@@ -306,3 +306,64 @@ test('chd validate and validate_diagram report the same errors and warnings', ()
   assert.deepEqual({ errors: served.errors, warnings: served.warnings }, fromCli)
   assert.ok(fromCli.errors.length >= 2)
 })
+
+// A draft given as text: standard input on the command line, `content` in the server. The name a
+// draft goes by differs by design, because only one of them has a standard input.
+const runWithInput = (input, ...args) =>
+  spawnSync(process.execPath, [cli, ...args], { encoding: 'utf-8', cwd: dir, input })
+
+test('chd check - and check_diagram with content give the same result', () => {
+  let failing = 0
+  for (const file of ['hexagonal-ok.chd', 'hexagonal-broken.chd']) {
+    const text = readFileSync(join(dir, file), 'utf8')
+    const cliRun = runWithInput(text, 'check', '-', '--metamodel', 'hexagonal', '--json')
+    const fromCli = JSON.parse(cliRun.stdout)
+    const fromServer = asJson([tools.check_diagram({ content: text, metamodel: 'hexagonal' })])
+    assert.equal(fromCli[0].file, '(stdin)')
+    assert.equal(fromServer[0].file, '(inline)')
+    assert.deepEqual(fromCli[0].result, fromServer[0].result, file)
+    // The draft gives what the file gives.
+    assert.deepEqual(
+      fromServer[0].result,
+      asJson([tools.check_diagram({ path: file, metamodel: 'hexagonal' })])[0].result
+    )
+    if (!fromServer[0].result.conforms) failing += 1
+  }
+  assert.equal(failing, 1)
+})
+
+test('chd diff - and diff_diagrams with content give the same review, notes left out', async () => {
+  mkdirSync(join(dir, 'notes'))
+  writeFileSync(join(dir, 'notes', 'a.md'), 'Handles invoices.')
+  const older = diagram([node('a', 'Billing', { notes: 'notes/a.md' }), node('b', 'Orders')])
+  const newer = diagram([node('a', 'Billing', { notes: 'notes/a.md' }), node('b', 'Orders (EU)')])
+  writeFileSync(join(dir, 'old.chd'), older)
+
+  const cliRun = runWithInput(newer, 'diff', 'old.chd', '-', '--json')
+  assert.equal(cliRun.status, 0)
+  const fromCli = JSON.parse(cliRun.stdout)
+  const served = asJson(await tools.diff_diagrams({ old_path: 'old.chd', new_content: newer }))
+  assert.equal(fromCli.newer, '(stdin)')
+  assert.equal(served.newer, 'new content')
+  assert.deepEqual({ ...fromCli, newer: '' }, { ...served, newer: '' })
+  assert.equal(fromCli.changed, true)
+
+  // The draft on the earlier side as well.
+  const reversed = JSON.parse(runWithInput(older, 'diff', '-', 'old.chd', '--json').stdout)
+  assert.equal(reversed.changed, false)
+  const servedReversed = asJson(
+    await tools.diff_diagrams({ old_content: older, new_path: 'old.chd' })
+  )
+  assert.deepEqual({ ...reversed, older: '' }, { ...servedReversed, older: '' })
+})
+
+test('standard input can be used once, and a draft needs something to compare with', () => {
+  assert.equal(runWithInput('{}', 'diff', '-', '-').status, 2)
+  assert.equal(runWithInput('{}', 'diff', '-').status, 2)
+  assert.match(runWithInput('{}', 'diff', '-').stderr, /needs a file to compare with/)
+  assert.equal(runWithInput('{}', 'check', '-', '-', '--metamodel', 'hexagonal').status, 2)
+  // Not a diagram: the check fails like an unreadable file, with the same exit code.
+  const bad = runWithInput('not json', 'check', '-', '--metamodel', 'hexagonal')
+  assert.equal(bad.status, 1)
+  assert.match(bad.stderr, /can't read '\(stdin\)'/)
+})
