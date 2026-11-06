@@ -64,7 +64,7 @@ export interface OperationResult {
   requiredTag?: RequiredTagDefinition
   highlight?: HighlightDefinition
   legendEntry?: LegendEntry
-  // set_link / set_note: the path now stored on the element (relative to the diagram, with "/").
+  // link_to_existing_diagram / set_note: the path now stored on the element (relative to the diagram, with "/").
   link?: string
   note?: string
 }
@@ -85,7 +85,7 @@ export interface ApplyOptions {
   // set_note is refused: this executor has nowhere to put a note.
   notesFolder?: string
   // The folder, relative to the diagram's own, where the diagrams linked from this one belong, named
-  // after it ("shop" for shop.chd), as the editor does (ADR 0005). Without it link_new_diagram is
+  // after it ("shop" for shop.chd), as the editor does (ADR 0005). Without it add_new_linked_diagram is
   // refused.
   linkedFolder?: string
   // Whether a file already exists at a path relative to the diagram, so a new linked diagram does not

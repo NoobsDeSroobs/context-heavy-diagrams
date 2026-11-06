@@ -413,20 +413,20 @@ function storedPath(model: Model, reader: Reader, key: string): string {
   return path
 }
 
-function setLink(model: Model, reader: Reader): OperationResult {
+function linkToExistingDiagram(model: Model, reader: Reader): OperationResult {
   const node = linkable(model, reader)
   const path = storedPath(model, reader, 'path')
   if (!path.toLowerCase().endsWith('.chd')) reader.fail('a link points at another .chd diagram')
   node.data.linkedDiagram = path
   const result: OperationResult = {
-    op: 'set_link',
+    op: 'link_to_existing_diagram',
     element: summarizeNode(model.diagram, node),
     link: path
   }
   const folder = model.options.linkedFolder
-  if (folder !== undefined && !path.startsWith(`${folder}/`)) {
+  if (folder !== undefined && !path.startsWith(`${folder}/`) && !model.options.fileExists?.(path)) {
     result.notices = [
-      `the editor keeps the diagrams linked from this one in "${folder}/"; "${path}" is elsewhere, which is right for a diagram that already exists or is shared, but for a new one use link_new_diagram`
+      `"${path}" does not exist yet and is outside "${folder}/", where the editor keeps the diagrams linked from this one; to make a new linked diagram use add_new_linked_diagram`
     ]
   }
   return result
@@ -435,13 +435,13 @@ function setLink(model: Model, reader: Reader): OperationResult {
 // What the editor's "new linked diagram" does: the file is named after the label and goes in the folder
 // named after this diagram, so a drill-down hierarchy nests one folder deeper per level. Only the link is
 // stored; the caller makes the diagram at that path (edit_diagram creates it, and the folder with it).
-function linkNewDiagram(model: Model, reader: Reader): OperationResult {
+function addNewLinkedDiagram(model: Model, reader: Reader): OperationResult {
   const node = linkable(model, reader)
   const folder = model.options.linkedFolder
   if (folder === undefined) reader.fail('linked diagrams cannot be made here')
   if (node.data.linkedDiagram) {
     reader.fail(
-      `"${node.id}" already links to ${node.data.linkedDiagram}: use set_link to change it or remove_link first`
+      `"${node.id}" already links to ${node.data.linkedDiagram}: use link_to_existing_diagram to change it or remove_link first`
     )
   }
   const stem = labelToFileStem(reader.optionalString('name') ?? node.data.label, 'diagram')
@@ -453,7 +453,7 @@ function linkNewDiagram(model: Model, reader: Reader): OperationResult {
   const refusal = model.options.checkReference?.(path)
   if (refusal) reader.fail(refusal)
   node.data.linkedDiagram = path
-  return { op: 'link_new_diagram', element: summarizeNode(model.diagram, node), link: path }
+  return { op: 'add_new_linked_diagram', element: summarizeNode(model.diagram, node), link: path }
 }
 
 function removeLink(model: Model, reader: Reader): OperationResult {
@@ -521,8 +521,8 @@ export const ANNOTATION_OPERATIONS: Record<
   add_legend_entry: addLegendEntry,
   set_legend_entry: setLegendEntry,
   remove_legend_entry: removeLegendEntry,
-  set_link: setLink,
-  link_new_diagram: linkNewDiagram,
+  link_to_existing_diagram: linkToExistingDiagram,
+  add_new_linked_diagram: addNewLinkedDiagram,
   remove_link: removeLink,
   set_note: setNote,
   remove_note: removeNote

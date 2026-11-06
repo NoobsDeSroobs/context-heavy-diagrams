@@ -270,18 +270,34 @@ test('a legend entry is checked', () => {
 test('a link goes on an entity or container, to a relative .chd path, and can be removed', () => {
   const { diagram, results } = run(
     base(),
-    { op: 'set_link', id: 'api', path: 'api\\Api.chd' },
-    { op: 'set_link', id: 'db', path: 'db/Db.chd' },
+    { op: 'link_to_existing_diagram', id: 'api', path: 'api\\Api.chd' },
+    { op: 'link_to_existing_diagram', id: 'db', path: 'db/Db.chd' },
     { op: 'remove_link', id: 'db' }
   )
   assert.equal(diagram.nodes[0].data.linkedDiagram, 'api/Api.chd', 'stored with forward slashes')
   assert.equal(results[0].link, 'api/Api.chd')
   assert.equal(diagram.nodes[1].data.linkedDiagram, undefined)
   assertValid(diagram)
-  refused(diagram, { op: 'set_link', id: 'note', path: 'x.chd' }, /only entities and containers/)
-  refused(diagram, { op: 'set_link', id: 'api', path: '/abs/x.chd' }, /relative to this diagram/)
-  refused(diagram, { op: 'set_link', id: 'api', path: 'C:/x.chd' }, /relative to this diagram/)
-  refused(diagram, { op: 'set_link', id: 'api', path: 'notes.md' }, /another \.chd diagram/)
+  refused(
+    diagram,
+    { op: 'link_to_existing_diagram', id: 'note', path: 'x.chd' },
+    /only entities and containers/
+  )
+  refused(
+    diagram,
+    { op: 'link_to_existing_diagram', id: 'api', path: '/abs/x.chd' },
+    /relative to this diagram/
+  )
+  refused(
+    diagram,
+    { op: 'link_to_existing_diagram', id: 'api', path: 'C:/x.chd' },
+    /relative to this diagram/
+  )
+  refused(
+    diagram,
+    { op: 'link_to_existing_diagram', id: 'api', path: 'notes.md' },
+    /another \.chd diagram/
+  )
   refused(diagram, { op: 'remove_link', id: 'db' }, /has no link/)
 })
 
@@ -291,11 +307,16 @@ test('the caller can refuse a stored path, and the refusal is the answer', () =>
     checkReference: (path) => (path.startsWith('..') ? 'outside the folder' : undefined)
   }
   assert.throws(
-    () => applyOperations(base(), [{ op: 'set_link', id: 'api', path: '../x.chd' }], refuse),
+    () =>
+      applyOperations(
+        base(),
+        [{ op: 'link_to_existing_diagram', id: 'api', path: '../x.chd' }],
+        refuse
+      ),
     /outside the folder/
   )
   assert.doesNotThrow(() =>
-    applyOperations(base(), [{ op: 'set_link', id: 'api', path: 'x.chd' }], refuse)
+    applyOperations(base(), [{ op: 'link_to_existing_diagram', id: 'api', path: 'x.chd' }], refuse)
   )
 })
 
@@ -363,7 +384,7 @@ test('describeDiagram shows tags, links, notes and the catalogs, and leaves out 
     { op: 'set_highlight', key: 'environment', value: 'dev', color: '#00ff00' },
     { op: 'add_legend_entry', id: 'l1', kind: 'entity', label: 'Dev', color: '#00ff00' },
     { op: 'set_diagram_tag', key: 'sourceBase', value: 'src/' },
-    { op: 'set_link', id: 'api', path: 'Api.chd' },
+    { op: 'link_to_existing_diagram', id: 'api', path: 'Api.chd' },
     { op: 'set_note', id: 'api', text: 'x' }
   )
   const described = describeDiagram(diagram)
@@ -377,7 +398,7 @@ test('describeDiagram shows tags, links, notes and the catalogs, and leaves out 
   assert.deepEqual(described.diagramTags, { sourceBase: 'src/' })
 })
 
-test('link_new_diagram names the file after the label in the folder of this diagram, never twice the same', () => {
+test('add_new_linked_diagram names the file after the label in the folder of this diagram, never twice the same', () => {
   const taken = new Set(['d/Orders-1.chd'])
   const linked = { ...options, linkedFolder: 'd', fileExists: (path) => taken.has(path) }
   const { diagram, results } = applyOperations(
@@ -386,11 +407,11 @@ test('link_new_diagram names the file after the label in the folder of this diag
       { op: 'add_entity', id: 'o1', label: 'Orders\nthe order service', x: 0, y: 0 },
       { op: 'add_entity', id: 'o2', label: 'Orders', x: 0, y: 0 },
       { op: 'add_entity', id: 'o3', label: 'Orders', x: 0, y: 0 },
-      { op: 'link_new_diagram', id: 'o1' },
-      { op: 'link_new_diagram', id: 'o2' },
-      { op: 'link_new_diagram', id: 'o3', name: 'A/B?' },
-      { op: 'set_link', id: 'api', path: 'shared/Shared.chd' },
-      { op: 'set_link', id: 'db', path: 'd/Db.chd' }
+      { op: 'add_new_linked_diagram', id: 'o1' },
+      { op: 'add_new_linked_diagram', id: 'o2' },
+      { op: 'add_new_linked_diagram', id: 'o3', name: 'A/B?' },
+      { op: 'link_to_existing_diagram', id: 'api', path: 'shared/Shared.chd' },
+      { op: 'link_to_existing_diagram', id: 'db', path: 'd/Db.chd' }
     ],
     linked
   )
@@ -400,11 +421,18 @@ test('link_new_diagram names the file after the label in the folder of this diag
     'the first line of the label, a numbered name when one is taken, here or on disk'
   )
   assert.equal(diagram.nodes.find((n) => n.id === 'o1').data.linkedDiagram, 'd/Orders.chd')
-  assert.match(results[6].notices[0], /"d\/".*elsewhere.*link_new_diagram/)
+  assert.match(results[6].notices[0], /does not exist yet.*"d\/".*add_new_linked_diagram/)
   assert.equal(results[7].notices, undefined, 'a link inside the folder needs no remark')
+  taken.add('shared/Shared.chd')
+  const existing = applyOperations(
+    diagram,
+    [{ op: 'link_to_existing_diagram', id: 'db', path: 'shared/Shared.chd' }],
+    linked
+  )
+  assert.equal(existing.results[0].notices, undefined, 'an existing diagram elsewhere is fine')
   assert.throws(
-    () => applyOperations(diagram, [{ op: 'link_new_diagram', id: 'o1' }], linked),
+    () => applyOperations(diagram, [{ op: 'add_new_linked_diagram', id: 'o1' }], linked),
     /already links to d\/Orders\.chd/
   )
-  refused(base(), { op: 'link_new_diagram', id: 'api' }, /cannot be made here/)
+  refused(base(), { op: 'add_new_linked_diagram', id: 'api' }, /cannot be made here/)
 })
