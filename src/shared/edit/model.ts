@@ -43,6 +43,9 @@ export interface EdgeSummary {
   fromHandle: string | null
   toHandle: string | null
   label: string
+  // Only when set: the routing style and the manual routing points (absolute coordinates).
+  routing?: string
+  points?: { x: number; y: number; gravity?: number }[]
 }
 
 export interface OperationResult {
@@ -124,6 +127,8 @@ export const FONT_STYLE: Record<string, StyleRule> = {
   fontFamily: { kind: 'string' },
   fontOpacity: { kind: 'number', min: 0, max: 100 }
 }
+export const ROUTING_STYLES = ['straight', 'step', 'smoothstep', 'catmullRom']
+
 export const NODE_STYLE: Record<string, StyleRule> = {
   ...FONT_STYLE,
   fill: { kind: 'string' },
@@ -151,7 +156,7 @@ export const EDGE_STYLE: Record<string, StyleRule> = {
   dashLength: { kind: 'number', min: 0 },
   dashGap: { kind: 'number', min: 0 },
   labelPosition: { kind: 'number', min: 0, max: 1 },
-  routingStyle: { kind: 'enum', values: ['straight', 'step', 'smoothstep', 'catmullRom'] }
+  routingStyle: { kind: 'enum', values: ROUTING_STYLES }
 }
 
 export const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -300,7 +305,9 @@ export function summarizeEdge(edge: DiagramEdge): EdgeSummary {
     to: edge.target,
     fromHandle: edge.sourceHandle ?? null,
     toHandle: edge.targetHandle ?? null,
-    label: edge.label ?? ''
+    label: edge.label ?? '',
+    ...(edge.style?.routingStyle ? { routing: edge.style.routingStyle } : {}),
+    ...(edge.points?.length ? { points: edge.points } : {})
   }
 }
 

@@ -25,6 +25,7 @@ import {
   Model,
   NODE_STYLE,
   OperationError,
+  ROUTING_STYLES,
   Reader,
   SIDES,
   checkedStyle,
@@ -328,6 +329,44 @@ function reparent(model: Model, reader: Reader): OperationResult {
   return { op: 'reparent', element: summarizeNode(model.diagram, node) }
 }
 
+// Replaces an edge's manual routing points; an empty list clears them. The points only shape the path
+// under catmullRom, step and smoothstep routing (docs/file-format.md), so say so when they would be ignored.
+const POINT_ROUTING = ['catmullRom', 'step', 'smoothstep']
+
+function setEdgePoints(model: Model, reader: Reader): OperationResult {
+  const id = reader.string('id')
+  const edge = model.edge(id)
+  if (!edge) reader.fail(`"${id}" is not an edge of this diagram`)
+  const raw = reader.raw('points')
+  if (!Array.isArray(raw))
+    reader.fail('"points" must be a list of {x, y, gravity?} (empty clears them)')
+  const points: LinePoint[] = raw.map((p: unknown, i: number) => {
+    if (!isRecord(p) || !isNumber(p.x) || !isNumber(p.y))
+      reader.fail(`point ${i + 1} needs numeric x and y`)
+    if (p.gravity !== undefined && !isNumber(p.gravity))
+      reader.fail(`point ${i + 1}: gravity must be a number`)
+    return isNumber(p.gravity)
+      ? { x: round(p.x), y: round(p.y), gravity: p.gravity }
+      : { x: round(p.x), y: round(p.y) }
+  })
+  if (points.length > 0) edge.points = points
+  else delete edge.points
+  if (reader.has('routing')) {
+    const routing = reader.string('routing')
+    if (!ROUTING_STYLES.includes(routing))
+      reader.fail(`"routing" must be one of ${ROUTING_STYLES.join(', ')}`)
+    edge.style = { ...edge.style, routingStyle: routing as never }
+  }
+  const result: OperationResult = { op: 'set_edge_points', element: summarizeEdge(edge) }
+  const routing = edge.style?.routingStyle
+  if (points.length > 0 && !(routing && POINT_ROUTING.includes(routing))) {
+    result.notices = [
+      `the points are stored but ignored while the edge is routed ${routing ?? 'as a plain curve'}; pass routing: "smoothstep", "step" or "catmullRom"`
+    ]
+  }
+  return result
+}
+
 function remove(model: Model, reader: Reader): OperationResult {
   const id = reader.string('id')
   const edge = model.edge(id)
@@ -366,6 +405,7 @@ const OPERATIONS: Record<string, (model: Model, reader: Reader) => OperationResu
   set_style: setStyle,
   reparent,
   remove,
+  set_edge_points: setEdgePoints,
   ...ANNOTATION_OPERATIONS
 }
 

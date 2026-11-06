@@ -215,6 +215,57 @@ test('add_line stores the points relative to the line and its bounding box', () 
   assertValid(diagram)
 })
 
+test('set_edge_points replaces, clears and explains when the routing would ignore the points', () => {
+  const { diagram, results } = run(
+    start(),
+    { op: 'add_entity', id: 'a', label: 'A', x: 0, y: 0 },
+    { op: 'add_entity', id: 'b', label: 'B', x: 400, y: 300 },
+    { op: 'connect', id: 'e', from: 'a', to: 'b' },
+    {
+      op: 'set_edge_points',
+      id: 'e',
+      points: [
+        { x: 300, y: 40.12345 },
+        { x: 300, y: 340, gravity: 0 }
+      ]
+    }
+  )
+  const edge = diagram.edges[0]
+  assert.deepEqual(edge.points, [
+    { x: 300, y: 40.123 },
+    { x: 300, y: 340, gravity: 0 }
+  ])
+  assert.match(results[3].notices[0], /ignored while the edge is routed as a plain curve/)
+  assert.equal(results[3].element.points.length, 2)
+
+  const routed = run(diagram, {
+    op: 'set_edge_points',
+    id: 'e',
+    routing: 'smoothstep',
+    points: [{ x: 300, y: 40 }]
+  })
+  assert.equal(routed.diagram.edges[0].style.routingStyle, 'smoothstep')
+  assert.equal(routed.results[0].notices, undefined)
+  assert.equal(routed.results[0].element.routing, 'smoothstep')
+  assertValid(routed.diagram)
+
+  const cleared = run(routed.diagram, { op: 'set_edge_points', id: 'e', points: [] })
+  assert.equal('points' in cleared.diagram.edges[0], false)
+  assert.equal('points' in cleared.results[0].element, false)
+  assert.equal(describeDiagram(routed.diagram).edges[0].points.length, 1)
+
+  assert.throws(() => run(diagram, { op: 'set_edge_points', id: 'a', points: [] }), /not an edge/)
+  assert.throws(
+    () => run(diagram, { op: 'set_edge_points', id: 'e', points: [{ x: 1 }] }),
+    /numeric x and y/
+  )
+  assert.throws(() => run(diagram, { op: 'set_edge_points', id: 'e', points: 5 }), /must be a list/)
+  assert.throws(
+    () => run(diagram, { op: 'set_edge_points', id: 'e', points: [], routing: 'zigzag' }),
+    /"routing" must be one of/
+  )
+})
+
 test('a batch is all or nothing and the error names the operation', () => {
   const base = run(start(), { op: 'add_entity', id: 'a', label: 'A', x: 0, y: 0 }).diagram
   const before = JSON.stringify(base)

@@ -54,7 +54,8 @@ A second implementation of the editor's edits that drifts from the app; an opera
 - [x] Try it with a real assistant in Claude Desktop on a diagram of moderate size (the first version: works well enough)
 - [x] Tags, required tags, highlights, legend, links and notes as operations
 - [ ] Try the tags, notes and legend with a real assistant
-- [ ] Icons, edge routing points, the security matrix as operations, if wanted
+- [x] Edge routing points as an operation
+- [ ] Icons and the security matrix as operations, if wanted
 - [ ] Guidance: update the skill, `AGENTS.md`, the extension's instructions and the copy-paste text to prefer it
 - [ ] Re-run an assistant on a large project and compare against the hand-written generators
 
