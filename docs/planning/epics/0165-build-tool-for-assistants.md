@@ -1,7 +1,7 @@
 # 0165: A build tool so an assistant describes a diagram and does not generate files
 
 ## Status
-Not Started.
+In progress on the branch `epic/0165-build-tool-for-assistants` (2026-11-06); design first, nothing built yet.
 
 ## Goal
 An assistant gives a small description of a diagram (elements, parents, labels, tags, notes, links, edges) and a tool returns a valid `.chd` with its notes. No assistant has to write a generator script, and the result is the same on any machine.
