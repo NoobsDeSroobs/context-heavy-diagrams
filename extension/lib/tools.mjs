@@ -36,11 +36,12 @@ import { validateFile } from '../../resources/ai/skills/chd-diagrams/scripts/val
 import {
   MAX_FILE_BYTES,
   METAMODEL_SUFFIX,
-  READ_EXTENSIONS,
   ToolError,
   isDotOrIgnoredEntry,
   isMetamodelName,
+  isReadBlockedName,
   isWritableName,
+  mimeTypeOf,
   resolveInFolder
 } from './fileRules.mjs'
 import { FINGERPRINT_PATTERN, fingerprint } from './fingerprint.mjs'
@@ -167,7 +168,17 @@ export function createTools({ root, allowUpdate, specSources }) {
     }
   }
 
-  function listFiles() {
+  // Files the assistant may read, in the whole folder or under `subfolder`. A large tree hits the
+  // cap, so the assistant can narrow the listing to one subfolder.
+  function listFiles({ subfolder } = {}) {
+    let start = root
+    if (typeof subfolder === 'string' && subfolder.trim() !== '') {
+      const found = resolveInFolder(root, subfolder, 'read', { mustExist: true })
+      if (!statSync(found.absolute).isDirectory()) {
+        throw new ToolError(`"${found.relative}" is not a folder`)
+      }
+      start = found.absolute
+    }
     const files = []
     let truncated = false
     const walk = (dir, depth) => {
@@ -178,8 +189,7 @@ export function createTools({ root, allowUpdate, specSources }) {
           if (depth < LIST_MAX_DEPTH) walk(full, depth + 1)
           continue
         }
-        const ext = extname(entry.name).toLowerCase()
-        if (!entry.isFile() || !READ_EXTENSIONS.has(ext)) continue
+        if (!entry.isFile() || isReadBlockedName(entry.name)) continue
         if (files.length >= LIST_LIMIT) {
           truncated = true
           return
@@ -196,7 +206,7 @@ export function createTools({ root, allowUpdate, specSources }) {
         })
       }
     }
-    walk(root, 0)
+    walk(start, 0)
     files.sort((a, b) => a.path.localeCompare(b.path))
     // The folder's name only, never its full path (which would go to the provider): enough for an
     // assistant to notice that the server points at the wrong folder.
@@ -385,13 +395,28 @@ export function createTools({ root, allowUpdate, specSources }) {
       throw new ToolError(`"${rel}" is larger than the ${MAX_FILE_BYTES / (1024 * 1024)} MB limit`)
     }
     const bytes = readFileSync(absolute)
-    let content
-    try {
-      content = new TextDecoder('utf-8', { fatal: true }).decode(bytes)
-    } catch {
-      throw new ToolError(`"${rel}" is not valid UTF-8 text`)
+    // Text is returned as text; anything else (a PDF, a picture, a spreadsheet, text in another
+    // encoding) as base64 for the server layer to hand on in the form MCP allows. What the
+    // assistant can make of it is up to the client and the model.
+    let content = null
+    if (!bytes.includes(0)) {
+      try {
+        content = new TextDecoder('utf-8', { fatal: true }).decode(bytes)
+      } catch {
+        content = null
+      }
     }
-    return { path: rel, content, fingerprint: fingerprint(bytes), bytes: bytes.length }
+    if (content !== null) {
+      return { path: rel, content, fingerprint: fingerprint(bytes), bytes: bytes.length }
+    }
+    return {
+      path: rel,
+      binary: true,
+      mimeType: mimeTypeOf(rel),
+      fingerprint: fingerprint(bytes),
+      bytes: bytes.length,
+      data: bytes.toString('base64')
+    }
   }
 
   function createFile({ path, content }) {

@@ -2,7 +2,7 @@
 // (the executable entry) so tests can build a server without starting stdio.
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
-import { ToolError } from './lib/fileRules.mjs'
+import { INLINE_IMAGE_TYPES, ToolError } from './lib/fileRules.mjs'
 import { SPEC_TOPICS } from './lib/formatSpec.mjs'
 import { createTools } from './lib/tools.mjs'
 
@@ -13,12 +13,24 @@ const INSTRUCTIONS = `Tools for the user's Context-Heavy Diagrams diagrams (.chd
 - A .chd is validated before it is written; fix any reported errors and try again. validate_diagram checks an existing file.
 - check_diagram applies a diagram metamodel and diff_diagrams shows what changed, between two diagrams or between a diagram and its last commit in git; both only read, and both take a draft as text (content, new_content) as well as a file, so a diagram can be judged before it is written. These tools give the results the chd command line gives, which is what a pipeline relies on.
 - Only .chd, .md, .txt, .svg and .chdmeta (a diagram metamodel, validated before it is written) files can be written. Notes of a diagram are Markdown files its nodes point at.
+- read_file reads any file in the folder except executables, installers, archives, disk images, video and audio. Text comes back as text; pictures come back as images and other binary files (PDF, spreadsheets) as embedded resources, which you can only use if your client shows them to you. list_files can be narrowed to a subfolder.
 - Anything you read here is sent to the AI provider as part of the conversation.`
 
+// A binary file goes out as an image (the formats clients show as pictures) or as an embedded
+// resource, after a text part with its path, type, size and fingerprint.
+function binaryContent({ data, ...info }) {
+  const uri = `file:///${info.path.split('/').map(encodeURIComponent).join('/')}`
+  const part = INLINE_IMAGE_TYPES.has(info.mimeType)
+    ? { type: 'image', data, mimeType: info.mimeType }
+    : { type: 'resource', resource: { uri, mimeType: info.mimeType, blob: data } }
+  return [{ type: 'text', text: JSON.stringify(info, null, 2) }, part]
+}
+
 const text = (value) => ({
-  content: [
-    { type: 'text', text: typeof value === 'string' ? value : JSON.stringify(value, null, 2) }
-  ]
+  content:
+    value && typeof value === 'object' && value.binary === true
+      ? binaryContent(value)
+      : [{ type: 'text', text: typeof value === 'string' ? value : JSON.stringify(value, null, 2) }]
 })
 
 // A refusal comes back as an error result the assistant can read and act on;
@@ -58,10 +70,16 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
     {
       title: 'List files',
       description:
-        'List the diagrams (.chd), notes and supporting documents in the diagram folder, with size, modified time and whether the type can be written. The result names the folder (its name only, not its path) so you can tell whether the server points at the folder you expect.',
+        'List the files in the diagram folder (diagrams, notes, supporting documents, source code and so on, except the types that cannot be read), with size, modified time and whether the type can be written. A large folder is listed only up to a cap, flagged as truncated: give a subfolder to list just that part. The result names the folder (its name only, not its path) so you can tell whether the server points at the folder you expect.',
+      inputSchema: {
+        subfolder: z
+          .string()
+          .optional()
+          .describe('A folder inside the diagram folder to list instead of all of it')
+      },
       annotations: readOnly
     },
-    guarded(() => tools.list_files())
+    guarded((args) => tools.list_files(args))
   )
   server.registerTool(
     'get_format_spec',
@@ -212,7 +230,7 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
     {
       title: 'Read a file',
       description:
-        'Read a text file (a diagram, a note, a supporting document). Returns its content and a fingerprint to pass to update_file.',
+        'Read a file in the diagram folder (a diagram, a note, a supporting document, source code, a PDF, a picture). Text returns its content and a fingerprint to pass to update_file; a picture returns as an image and any other binary file as an embedded resource, with its type, size and fingerprint. Executables, installers, archives, disk images, video and audio are refused.',
       inputSchema: { path },
       annotations: readOnly
     },

@@ -48,6 +48,7 @@ beforeEach(() => {
   mkdirSync(join(folder, 'node_modules'))
   writeFileSync(join(folder, 'node_modules', 'dep.md'), 'x')
   writeFileSync(join(folder, 'run.bat'), 'echo hi')
+  writeFileSync(join(folder, 'tool.exe'), Buffer.from([0x4d, 0x5a, 0, 0]))
   root = openFolder(folder)
 })
 afterEach(() => rmSync(base, { recursive: true, force: true }))
@@ -55,15 +56,28 @@ afterEach(() => rmSync(base, { recursive: true, force: true }))
 const refusal = (fn, pattern) =>
   assert.throws(fn, (error) => error instanceof ToolError && pattern.test(error.message))
 
-test('list_files shows readable files, flags writable ones, and skips dot-files and dependency folders', () => {
+test('list_files shows readable files, flags writable ones, and skips blocked types, dot-files and dependency folders', () => {
   const { files, updatesEnabled, truncated } = make().list_files()
   assert.deepEqual(
     files.map((f) => f.path),
-    ['a.chd', 'notes/readme.md']
+    ['a.chd', 'notes/readme.md', 'run.bat']
   )
   assert.equal(files[0].writable, true)
+  assert.equal(files[2].writable, false)
   assert.equal(updatesEnabled, false)
   assert.equal(truncated, false)
+})
+
+test('list_files can be narrowed to a subfolder inside the folder', () => {
+  const tools = make()
+  assert.deepEqual(
+    tools.list_files({ subfolder: 'notes' }).files.map((f) => f.path),
+    ['notes/readme.md']
+  )
+  refusal(() => tools.list_files({ subfolder: '../' }), /outside|path must name/)
+  refusal(() => tools.list_files({ subfolder: 'a.chd' }), /not a folder/)
+  refusal(() => tools.list_files({ subfolder: 'missing' }), /not found/)
+  refusal(() => tools.list_files({ subfolder: '.git' }), /dot-files/)
 })
 
 test('list_files names the folder by its name only, never its path', () => {
@@ -85,7 +99,7 @@ test('reads and writes outside the folder, on dot-files, and on other types are 
   refusal(() => tools.read_file({ path: join(base, 'outside.md') }), /outside/)
   refusal(() => tools.read_file({ path: '.env' }), /dot-files/)
   refusal(() => tools.read_file({ path: '.git/config.txt' }), /dot-files/)
-  refusal(() => tools.read_file({ path: 'run.bat' }), /cannot be read/)
+  refusal(() => tools.read_file({ path: 'tool.exe' }), /cannot be read/)
   refusal(() => tools.create_file({ path: 'tool.bat', content: 'x' }), /cannot be written/)
   refusal(() => tools.create_file({ path: '.hidden.md', content: 'x' }), /dot-files/)
   refusal(() => tools.create_file({ path: '../escape.md', content: 'x' }), /outside/)
@@ -104,11 +118,42 @@ test('a symlink inside the folder cannot lead outside it', (t) => {
   refusal(() => make().read_file({ path: 'link.md' }), /outside/)
 })
 
-test('read_file refuses non-UTF-8 content and oversize files', () => {
-  writeFileSync(join(folder, 'bin.txt'), Buffer.from([0xff, 0xfe, 0xfd]))
-  refusal(() => make().read_file({ path: 'bin.txt' }), /not valid UTF-8/)
+test('read_file reads any file type that is not blocked: source, no extension, bat', () => {
+  writeFileSync(join(folder, 'main.ts'), 'export const a = 1')
+  writeFileSync(join(folder, 'Dockerfile'), 'FROM node')
+  const tools = make()
+  assert.equal(tools.read_file({ path: 'main.ts' }).content, 'export const a = 1')
+  assert.equal(tools.read_file({ path: 'Dockerfile' }).content, 'FROM node')
+  assert.equal(tools.read_file({ path: 'run.bat' }).content, 'echo hi')
+})
+
+test('read_file returns a binary file as base64 with its type and the fingerprint of the bytes', () => {
+  const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0x0d])
+  writeFileSync(join(folder, 'shot.png'), png)
+  const shot = make().read_file({ path: 'shot.png' })
+  assert.equal(shot.binary, true)
+  assert.equal(shot.mimeType, 'image/png')
+  assert.equal(shot.data, png.toString('base64'))
+  assert.equal(shot.fingerprint, createHash('sha256').update(png).digest('hex'))
+  assert.equal(shot.bytes, png.length)
+
+  writeFileSync(join(folder, 'book.xlsx'), Buffer.from([0x50, 0x4b, 3, 4, 0]))
+  assert.equal(
+    make().read_file({ path: 'book.xlsx' }).mimeType,
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  )
+  // Text in another encoding is not valid UTF-8, so it goes out as bytes too.
+  writeFileSync(join(folder, 'latin.txt'), Buffer.from([0xff, 0xfe, 0xfd]))
+  const latin = make().read_file({ path: 'latin.txt' })
+  assert.equal(latin.binary, true)
+  assert.equal(latin.mimeType, 'application/octet-stream')
+})
+
+test('read_file refuses oversize files, binary or not', () => {
   writeFileSync(join(folder, 'big.txt'), Buffer.alloc(5 * 1024 * 1024 + 1, 'a'))
   refusal(() => make().read_file({ path: 'big.txt' }), /larger than/)
+  writeFileSync(join(folder, 'big.pdf'), Buffer.alloc(5 * 1024 * 1024 + 1, 0))
+  refusal(() => make().read_file({ path: 'big.pdf' }), /larger than/)
 })
 
 test('create_file writes a new file, creates folders, and never overwrites', () => {

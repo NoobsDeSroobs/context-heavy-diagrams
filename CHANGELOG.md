@@ -7,6 +7,9 @@ What changed for people using the tool, one entry per minor or major release. Th
 ### Added
 - **An assistant can build a diagram step by step in Claude Desktop, without a shell.** The extension has three new tools: `edit_diagram` applies a list of operations (add an entity, container, text or line, connect, move, resize, restyle, nest, remove) and answers with what each made and what is wrong with the layout so far; `inspect_diagram` lists the elements as they stand; `room_for_label` says how much space two connected elements need for an edge label. The assistant decides all placement. A first, small proof of concept: tags, notes and links are not in it yet. ([ADR 0148](docs/decisions/0148-an-assistant-builds-a-diagram-by-operations-that-answer.md))
 
+### Changed
+- **The Claude Desktop extension can read any file in its folder, not only a list of text types:** source code, PDFs, pictures, spreadsheets. Text comes over as text, pictures as images and other binary files as attachments; what Claude can make of an attachment depends on the client. Executables, installers, archives, disk images, video and audio stay blocked, and writing is unchanged. `list_files` can be narrowed to one subfolder. ([ADR 0110](docs/decisions/0110-claude-desktop-extension.md))
+
 ## 0.6.0 (2026-11-06)
 
 ### Added
