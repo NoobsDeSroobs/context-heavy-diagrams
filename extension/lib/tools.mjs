@@ -713,10 +713,10 @@ export function createTools({ root, allowUpdate, specSources }) {
 
   const INSPECT_LIMIT = 400
 
-  function inspectDiagram({ path }) {
+  function inspectDiagram({ path, styles = false }) {
     const { absolute, relative: rel } = resolveInFolder(root, path, 'read', { mustExist: true })
     const diagram = loadDiagram(absolute, rel)
-    const { nodes, edges, ...catalogs } = describeDiagram(diagram)
+    const { nodes, edges, ...catalogs } = describeDiagram(diagram, { styles: styles === true })
     const truncated = nodes.length > INSPECT_LIMIT || edges.length > INSPECT_LIMIT
     return {
       path: rel,

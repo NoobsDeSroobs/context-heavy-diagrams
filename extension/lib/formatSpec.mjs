@@ -22,6 +22,12 @@ place of the commands the text names: \`node scripts/validate_chd.mjs <file>\` i
 the revision argument) and \`chd check\` is check_diagram. Use update_file/create_file to write, a
 metamodel too.)
 
+If you build or change a diagram with edit_diagram you need very little of what follows: that tool
+keeps ids unique, parents before children, paths relative and the file valid, so the rules below on
+writing the JSON by hand apply to create_file and update_file only. Note that edit_diagram takes
+absolute coordinates even inside a container (the file stores a child relative to its parent; the
+tool converts both ways). The "layout" topic has the gaps and sizes worth following either way.
+
 `
 
 export function formatSpec(sources, topic) {

@@ -340,6 +340,15 @@ test('a note is a Markdown file the caller writes, named after the label and the
     /notes cannot be written here/
   )
 
+  // A long label makes an unwieldy file name; the name given stands in for it.
+  const named = run(base(), {
+    op: 'set_note',
+    id: 'db',
+    name: 'Database: why Postgres?',
+    text: 'x'
+  })
+  assert.equal(named.results[0].note, 'd/notes/Database why Postgres-db.md')
+
   // Removing the note drops the reference only; the file is never deleted.
   const removed = run(diagram, { op: 'remove_note', id: 'api' })
   assert.equal(removed.diagram.nodes[0].data.notes, undefined)

@@ -26,11 +26,13 @@ Once any file can be read, the folder can be a repository. In the C4 run on the 
 - **The command line.** Whether `chd` gets the same listing and search, as the checks are shared ([0166](0166-mcp-and-cli-parity.md)); an agent with a shell has `ls` and `grep`, so this may be extension-only.
 
 ## Tasks
+A first set was built after the Immich trial in [0165](0165-build-tool-for-assistants.md): `search_files` in process ([ADR 0149](../../decisions/0149-the-extension-searches-file-text-in-process.md)), `list_files` with a folder view, a glob and paging, and `read_file` by line range. The questions above are open only where this set leaves them: ignore rules beyond dot-folders and `node_modules`, what a limit should count (bytes of the answer rather than files), and the command line.
+
 - [ ] Measure two or three real repositories: files per folder, sizes, how many are generated or vendored
 - [ ] Try a few real tasks by hand against the current tools and note where the assistant gets lost
 - [ ] Settle the questions above and write the design
 - [ ] ADR for the listing, search and ranged read
-- [ ] Build it, with tests for the limits, the paging and the folder rules
+- [x] Build it, with tests for the limits, the paging and the folder rules (first set)
 - [ ] Re-run the Immich C4 task and compare tokens and misses with the numbers in 0177
 
 ## Notes

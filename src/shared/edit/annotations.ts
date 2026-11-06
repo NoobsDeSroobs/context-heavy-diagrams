@@ -462,9 +462,10 @@ function removeLink(model: Model, reader: Reader): OperationResult {
   return { op: 'remove_link', element: { id: node.id }, removed: [was] }
 }
 
-// "<first line of the label>-<id>.md", the app's own naming with the id in place of its UUID suffix.
-function noteFileName(node: DiagramNode): string {
-  const first = node.data.label.split(/\r?\n/)[0]
+// "<first line of the label, or of the name given>-<id>.md", the app's own naming with the id in place
+// of its UUID suffix.
+function noteFileName(node: DiagramNode, name?: string): string {
+  const first = (name ?? node.data.label).split(/\r?\n/)[0]
   const cleaned = [...first]
     .map((c) => (c.charCodeAt(0) < 32 || '\\/:*?"<>|'.includes(c) ? ' ' : c))
     .join('')
@@ -487,7 +488,7 @@ function setNote(model: Model, reader: Reader): OperationResult {
   }
   const folder = model.options.notesFolder
   if (folder === undefined) reader.fail('notes cannot be written here')
-  const path = `${folder}/${noteFileName(node)}`
+  const path = `${folder}/${noteFileName(node, reader.optionalString('name'))}`
   const refusal = model.options.checkReference?.(path)
   if (refusal) reader.fail(refusal)
   model.files.push({ path, content: text.endsWith('\n') ? text : `${text}\n` })

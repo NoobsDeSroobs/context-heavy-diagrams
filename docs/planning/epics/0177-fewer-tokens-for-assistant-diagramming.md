@@ -47,8 +47,8 @@ Much of the quality side can be scripted, since the tools already compute those 
 - [ ] Compact `inspect_diagram` format, default handles left out, `issues_only` and `ids`/`container` filters, with tests
 - [ ] Settle one check path (what `validate_diagram` still adds beside `edit_diagram`'s issues)
 - [ ] Write the short `build` topic in `get_format_spec`, and change the server instructions
-- [ ] Shorter `edit_diagram` answers (new ids and changed fields, not the full element), with tests
-- [ ] Filtering and paging for `list_files`: moved to [0178](0178-reading-large-repositories-through-the-extension.md), which designs reading large repositories as a whole
+- [x] Shorter `edit_diagram` answers (new ids and changed fields, not the full element), with tests
+- [x] Filtering and paging for `list_files`: done in [0178](0178-reading-large-repositories-through-the-extension.md), which designs reading large repositories as a whole
 - [ ] Measure the size of an `edit_diagram` answer on a large build (first numbers below)
 - [ ] Define the task set and the automatic quality checks
 - [ ] Run the comparison (full spec, short spec, no spec), each case more than once, and record the numbers

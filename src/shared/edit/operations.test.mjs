@@ -350,3 +350,62 @@ test('layoutIssues finds a label without room, an overlap, an element sticking o
   ).diagram
   assert.deepEqual(layoutIssues(clean), [])
 })
+
+test('describeDiagram gives the styles only when asked for them', () => {
+  const { diagram } = run(
+    start(),
+    { op: 'add_entity', id: 'a', label: 'A', x: 0, y: 0, style: { fill: '#ff0000' } },
+    { op: 'add_entity', id: 'b', label: 'B', x: 300, y: 0 },
+    {
+      op: 'connect',
+      id: 'e',
+      from: 'a',
+      to: 'b',
+      style: { lineStyle: 'dashed', labelPosition: 0.3 }
+    }
+  )
+  const plain = describeDiagram(diagram)
+  assert.equal(plain.nodes[0].style, undefined)
+  assert.equal(plain.edges[0].style, undefined)
+  const styled = describeDiagram(diagram, { styles: true })
+  assert.deepEqual(styled.nodes[0].style, { fill: '#ff0000' })
+  assert.equal(styled.nodes[1].style, undefined, 'an element with no style has none to show')
+  assert.deepEqual(styled.edges[0].style, { lineStyle: 'dashed', labelPosition: 0.3 })
+})
+
+test('layoutIssues finds a label that does not fit its own box, and leaves a fitting one alone', () => {
+  const { diagram } = run(
+    start(),
+    { op: 'add_entity', id: 'ok', label: 'Orders', x: 0, y: 0 },
+    {
+      op: 'add_entity',
+      id: 'tall',
+      label: 'Handles every incoming request from the mobile app and the web app and the CLI',
+      x: 200,
+      y: 0,
+      width: 120,
+      height: 40
+    },
+    {
+      op: 'add_entity',
+      id: 'wide',
+      label: 'AbsurdlyLongIdentifierNameWithoutBreaks',
+      x: 400,
+      y: 0,
+      width: 100
+    },
+    { op: 'add_container', id: 'box', label: 'Container', x: 0, y: 200 }
+  )
+  const found = layoutIssues(diagram).filter((i) => i.kind === 'label-overflow')
+  assert.deepEqual(found.map((i) => i.ids).sort(), [['tall'], ['wide']])
+  assert.match(
+    found.find((i) => i.ids[0] === 'tall').message,
+    /needs about \d+px of height but the box is 40px high/
+  )
+  assert.match(
+    found.find((i) => i.ids[0] === 'wide').message,
+    /word "AbsurdlyLongIdentifierNameWithoutBreaks".*breaks in the middle/
+  )
+  const taller = run(diagram, { op: 'resize', id: 'tall', height: 160 }).diagram
+  assert.equal(layoutIssues(taller).filter((i) => i.ids[0] === 'tall').length, 0)
+})

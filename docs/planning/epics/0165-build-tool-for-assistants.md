@@ -53,7 +53,7 @@ A second implementation of the editor's edits that drifts from the app; an opera
 - [x] The MCP tools. [ ] The command line (`chd edit`, `chd ask`) and the parity test of [0166](0166-mcp-and-cli-parity.md) are not done
 - [x] Try it with a real assistant in Claude Desktop on a diagram of moderate size (the first version: works well enough)
 - [x] Tags, required tags, highlights, legend, links and notes as operations
-- [ ] Try the tags, notes and legend with a real assistant
+- [x] Try the tags, notes and legend with a real assistant (the Immich run: diagrams nested in their parents' folders, feedback on verbose answers, search and reading large files led to ADR 0149)
 - [x] Edge routing points as an operation
 - [ ] Icons and the security matrix as operations, if wanted
 - [ ] Guidance: update the skill, `AGENTS.md`, the extension's instructions and the copy-paste text to prefer it

@@ -20,6 +20,8 @@ import {
   labelNeededGap,
   labelTargetGap
 } from '../layout/labelClearance.ts'
+import { LINE_HEIGHT_EM, measureText, wrapText, type FontSpec } from '../export/textLayout.ts'
+import { NODE_STYLE_DEFAULTS, styledNodeType } from '../styling/styleDefaults.ts'
 import { summarizeEdge, summarizeNode, type EdgeSummary, type NodeSummary } from './operations.ts'
 
 export interface DescribedNode extends NodeSummary {
@@ -27,10 +29,13 @@ export interface DescribedNode extends NodeSummary {
   // The relative paths stored on the element: the diagram it links to, the Markdown file of its note.
   link?: string
   note?: string
+  // Only when asked for: the style fields the element sets.
+  style?: Record<string, unknown>
 }
 
 export interface DescribedEdge extends EdgeSummary {
   tags?: Record<string, JsonValue>
+  style?: Record<string, unknown>
 }
 
 export interface DiagramDescription {
@@ -51,15 +56,27 @@ function tagsOf(
   return { tags: Object.fromEntries(keys.map((key) => [key, metadata[key].value])) }
 }
 
-export function describeDiagram(diagram: DiagramFile): DiagramDescription {
+// `styles` adds the style fields each element and edge sets (colours, line style, markers, label
+// position): a long answer otherwise, so it is asked for.
+export function describeDiagram(
+  diagram: DiagramFile,
+  { styles = false }: { styles?: boolean } = {}
+): DiagramDescription {
+  const styleOf = (style: object | undefined): { style?: Record<string, unknown> } =>
+    styles && style && Object.keys(style).length > 0 ? { style: { ...style } } : {}
   return {
     nodes: diagram.nodes.map((n) => ({
       ...summarizeNode(diagram, n),
       ...tagsOf(n.metadata),
       ...(n.data.linkedDiagram ? { link: n.data.linkedDiagram } : {}),
-      ...(n.data.notes ? { note: n.data.notes } : {})
+      ...(n.data.notes ? { note: n.data.notes } : {}),
+      ...styleOf(n.style)
     })),
-    edges: diagram.edges.map((e) => ({ ...summarizeEdge(e), ...tagsOf(e.metadata) })),
+    edges: diagram.edges.map((e) => ({
+      ...summarizeEdge(e),
+      ...tagsOf(e.metadata),
+      ...styleOf(e.style)
+    })),
     ...(diagram.metadata && Object.keys(diagram.metadata).length > 0
       ? { diagramTags: diagram.metadata }
       : {}),
@@ -110,7 +127,7 @@ export function roomForLabel(question: RoomQuestion): Room {
 }
 
 export interface LayoutIssue {
-  kind: 'label-room' | 'overlap' | 'outside-container' | 'edge-through-element'
+  kind: 'label-room' | 'label-overflow' | 'overlap' | 'outside-container' | 'edge-through-element'
   message: string
   ids: string[]
 }
@@ -229,6 +246,41 @@ export function layoutIssues(diagram: DiagramFile, diagramFont?: string): Layout
           ids: [solid[i].id, solid[j].id]
         })
       }
+    }
+  }
+
+  // A label that does not fit its own box: too many lines for the height, or a word wider than the
+  // box, which the canvas and the export break in the middle. The wrapping is the export's.
+  for (const node of diagram.nodes) {
+    if (node.type === 'line' || !node.data.label || !node.size) continue
+    const type = styledNodeType(node.type)
+    const defaults = NODE_STYLE_DEFAULTS[type]
+    const font: FontSpec = {
+      size: node.style?.fontSize ?? defaults.fontSize,
+      weight: node.style?.fontWeight ?? defaults.fontWeight,
+      family: node.style?.fontFamily ?? diagramFont
+    }
+    const stroke = node.style?.strokeWidth ?? defaults.strokeWidth
+    const available = Math.max(0, node.size.width - stroke * 2 - (type === 'container' ? 8 : 16))
+    const widest = node.data.label
+      .split(/\s+/)
+      .reduce((a, b) => (measureText(b, font) > measureText(a, font) ? b : a), '')
+    if (available > 0 && measureText(widest, font) > available) {
+      issues.push({
+        kind: 'label-overflow',
+        message: `the word "${widest}" in the label of "${label(node)}" (${node.id}) is wider than the box (${Math.round(node.size.width)}px) and breaks in the middle: widen the box or shorten the word`,
+        ids: [node.id]
+      })
+      continue
+    }
+    if (type === 'container') continue
+    const needed = wrapText(node.data.label, available, font).length * font.size * LINE_HEIGHT_EM
+    if (needed > node.size.height - stroke * 2 + 1) {
+      issues.push({
+        kind: 'label-overflow',
+        message: `the label of "${label(node)}" (${node.id}) needs about ${Math.round(needed)}px of height but the box is ${Math.round(node.size.height)}px high: make it taller or wider, or shorten the label`,
+        ids: [node.id]
+      })
     }
   }
 
