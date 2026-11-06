@@ -43,9 +43,12 @@ async function exercise(entry) {
         'check_diagram',
         'create_file',
         'diff_diagrams',
+        'edit_diagram',
         'get_format_spec',
+        'inspect_diagram',
         'list_files',
         'read_file',
+        'room_for_label',
         'validate_diagram',
         'validate_metamodel'
       ])

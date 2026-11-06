@@ -712,3 +712,123 @@ test('diff_diagrams refuses a draft with nothing to compare with, and two earlie
     /can't read 'new content'/
   )
 })
+
+// --- building a diagram step by step: edit_diagram, inspect_diagram, room_for_label
+
+const TWO_BOXES = [
+  { op: 'add_entity', id: 'web', label: 'Web', x: 0, y: 0 },
+  { op: 'add_entity', id: 'api', label: 'API', x: 320, y: 0 },
+  { op: 'connect', id: 'calls', from: 'web', to: 'api', label: 'requests' }
+]
+
+test('edit_diagram creates a diagram, answers with what it made, and the file is valid', () => {
+  const tools = make()
+  const made = tools.edit_diagram({ path: 'new.chd', operations: TWO_BOXES })
+  assert.equal(made.path, 'new.chd')
+  assert.deepEqual(
+    made.results.map((r) => r.element.id),
+    ['web', 'api', 'calls']
+  )
+  assert.deepEqual(made.issues, [])
+  assert.equal(made.fingerprint, sha(readFileSync(join(folder, 'new.chd'))))
+  assert.deepEqual(tools.validate_diagram({ path: 'new.chd' }).errors, [])
+})
+
+test('edit_diagram can go on editing what it made, with the fingerprint, even when changing files is off', () => {
+  const tools = make(false)
+  const first = tools.edit_diagram({ path: 'new.chd', operations: TWO_BOXES })
+  const second = tools.edit_diagram({
+    path: 'new.chd',
+    base_fingerprint: first.fingerprint,
+    operations: [
+      { op: 'move', id: 'api', x: 200, y: 0 },
+      { op: 'add_entity', id: 'db', label: 'DB', x: 320, y: 200 }
+    ]
+  })
+  // 200 - 120 = 80px between Web and API: "requests" needs more room than that.
+  assert.ok(second.issues.some((issue) => /requests/.test(issue)))
+  assert.notEqual(second.fingerprint, first.fingerprint)
+  refusal(
+    () => tools.edit_diagram({ path: 'new.chd', operations: [{ op: 'remove', id: 'db' }] }),
+    /base_fingerprint is required/
+  )
+  refusal(
+    () =>
+      tools.edit_diagram({
+        path: 'new.chd',
+        base_fingerprint: first.fingerprint,
+        operations: [{ op: 'remove', id: 'db' }]
+      }),
+    /has changed since you read it/
+  )
+})
+
+test('edit_diagram does not touch a diagram it did not make unless changing files is allowed', () => {
+  const existing = JSON.stringify({
+    version: 1,
+    nodes: [{ id: 'a', type: 'entity', position: { x: 0, y: 0 }, data: { label: 'A' } }],
+    edges: []
+  })
+  writeFileSync(join(folder, 'real.chd'), existing)
+  const fingerprintNow = sha(existing)
+  refusal(
+    () =>
+      make(false).edit_diagram({
+        path: 'real.chd',
+        base_fingerprint: fingerprintNow,
+        operations: [{ op: 'add_entity', x: 0, y: 0 }]
+      }),
+    /was not made in this session/
+  )
+  const allowed = make(true).edit_diagram({
+    path: 'real.chd',
+    base_fingerprint: fingerprintNow,
+    operations: [{ op: 'add_entity', id: 'extra', label: 'Extra', x: 500, y: 500 }]
+  })
+  assert.equal(allowed.results[0].element.id, 'extra')
+})
+
+test('edit_diagram refuses a bad batch whole and names the operation', () => {
+  const tools = make()
+  refusal(
+    () =>
+      tools.edit_diagram({
+        path: 'bad.chd',
+        operations: [
+          { op: 'add_entity', id: 'a', label: 'A', x: 0, y: 0 },
+          { op: 'connect', from: 'a', to: 'ghost' }
+        ]
+      }),
+    /operation 2: "to": "ghost" is not an element.*Nothing was changed/
+  )
+  assert.equal(existsSync(join(folder, 'bad.chd')), false, 'nothing was created')
+  refusal(() => tools.edit_diagram({ path: 'x.chd', operations: [] }), /at least one operation/)
+  refusal(() => tools.edit_diagram({ path: 'x.md', operations: TWO_BOXES }), /works on .chd files/)
+  refusal(
+    () =>
+      tools.edit_diagram({
+        path: 'x.chd',
+        base_fingerprint: 'a'.repeat(64),
+        operations: TWO_BOXES
+      }),
+    /does not exist yet/
+  )
+})
+
+test('inspect_diagram lists the elements and the problems, and room_for_label answers in pixels', () => {
+  const tools = make()
+  tools.edit_diagram({ path: 'new.chd', operations: TWO_BOXES })
+  const seen = tools.inspect_diagram({ path: 'new.chd' })
+  assert.deepEqual(
+    seen.nodes.map((n) => [n.id, n.x, n.y]),
+    [
+      ['web', 0, 0],
+      ['api', 320, 0]
+    ]
+  )
+  assert.equal(seen.edges[0].label, 'requests')
+  assert.deepEqual(seen.issues, [])
+  const room = tools.room_for_label({ label: 'requests', direction: 'horizontal' })
+  assert.ok(room.minimum > 0 && room.target > room.minimum)
+  refusal(() => tools.room_for_label({ label: 'x', direction: 'sideways' }), /direction/)
+})

@@ -103,6 +103,7 @@ var MARKER_LINE_PX = {
 var UNKNOWN_MARKER_LINE_PX = 12;
 var NEAR_SIDE_LINE_PX = 3;
 var CENTRED_TOLERANCE = 0.05;
+var TARGET_LINE_PX = 20;
 var CHIP_ACROSS_PX = 14;
 var CHIP_DOWN_PX = 4;
 var CHIP_MIN_TEXT_PX = 8;
@@ -128,6 +129,10 @@ function labelChipSize(label, font) {
   };
 }
 var markerLine = (marker) => typeof marker === "string" && marker in MARKER_LINE_PX ? MARKER_LINE_PX[marker] : UNKNOWN_MARKER_LINE_PX;
+function labelTargetGap(label, font, horizontal) {
+  const chip = labelChipSize(label, font);
+  return roundUp((horizontal ? chip.width : chip.height) + 2 * TARGET_LINE_PX);
+}
 function labelNeededGap(label, font, horizontal, ends = {}) {
   const chip = labelChipSize(label, font);
   const size = horizontal ? chip.width : chip.height;
@@ -213,5 +218,6 @@ export {
   MARKER_LINE_PX,
   hiddenLabels,
   labelChipSize,
-  labelNeededGap
+  labelNeededGap,
+  labelTargetGap
 };

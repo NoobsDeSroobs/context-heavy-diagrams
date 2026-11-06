@@ -82,6 +82,9 @@ const UNKNOWN_MARKER_LINE_PX = 12
 const NEAR_SIDE_LINE_PX = 3
 // A label within this of the middle (0.5) is judged as centred, so a nudge never lowers the need.
 const CENTRED_TOLERANCE = 0.05
+// The line to leave either side of a centred label so the edge reads as solid, dashed or dotted, as
+// well as being there. Set by eye in the app.
+const TARGET_LINE_PX = 20
 
 // The chip's own padding and border: 6px + 1px each side across, 1px + 1px each side down.
 const CHIP_ACROSS_PX = 14
@@ -131,6 +134,13 @@ const markerLine = (marker: unknown): number =>
   typeof marker === 'string' && marker in MARKER_LINE_PX
     ? MARKER_LINE_PX[marker]
     : UNKNOWN_MARKER_LINE_PX
+
+// The gap worth leaving for a centred label: the chip plus the target line either side. Guidance; the
+// minimum above is what is checked.
+export function labelTargetGap(label: string, font: FontSpec, horizontal: boolean): number {
+  const chip = labelChipSize(label, font)
+  return roundUp((horizontal ? chip.width : chip.height) + 2 * TARGET_LINE_PX)
+}
 
 // The gap an edge label needs, in px, along the direction its edge runs. Centred, it is the chip plus the
 // line its larger end graphic needs on each side. Slid towards one end, each side is judged on its own:

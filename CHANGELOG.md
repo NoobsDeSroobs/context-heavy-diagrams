@@ -4,6 +4,9 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 ## 0.7.0 (unreleased)
 
+### Added
+- **An assistant can build a diagram step by step in Claude Desktop, without a shell.** The extension has three new tools: `edit_diagram` applies a list of operations (add an entity, container, text or line, connect, move, resize, restyle, nest, remove) and answers with what each made and what is wrong with the layout so far; `inspect_diagram` lists the elements as they stand; `room_for_label` says how much space two connected elements need for an edge label. The assistant decides all placement. A first, small proof of concept: tags, notes and links are not in it yet. ([ADR 0148](docs/decisions/0148-an-assistant-builds-a-diagram-by-operations-that-answer.md))
+
 ## 0.6.0 (2026-11-06)
 
 ### Added

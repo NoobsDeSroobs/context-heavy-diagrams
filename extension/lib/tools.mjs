@@ -13,7 +13,13 @@ import {
 } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import { basename, dirname, extname, join, sep } from 'node:path'
-import { parseDiagram } from '../../src/shared/diagram/index.ts'
+import {
+  createEmptyDiagram,
+  parseDiagram,
+  serializeDiagram
+} from '../../src/shared/diagram/index.ts'
+import { describeDiagram, layoutIssues, roomForLabel } from '../../src/shared/edit/inspect.ts'
+import { applyOperations, OperationError } from '../../src/shared/edit/operations.ts'
 import { metamodelFileBase } from '../../src/shared/conformance/metamodel.ts'
 import {
   checkDiagramText,
@@ -105,6 +111,7 @@ function refuseInvalidMetamodel(rel, content) {
 
 export function createTools({ root, allowUpdate, specSources }) {
   const builtinMetamodels = loadBuiltinMetamodels()
+  const madeHere = new Set()
 
   // The text of a file the assistant named, refused if it is too large or not UTF-8 text.
   function textOf(absolute, rel) {
@@ -415,6 +422,7 @@ export function createTools({ root, allowUpdate, specSources }) {
         }
         throw error
       }
+      if (extname(absolute).toLowerCase() === '.chd') madeHere.add(rel)
       return {
         path: rel,
         fingerprint: fingerprint(readFileSync(absolute)),
@@ -426,12 +434,16 @@ export function createTools({ root, allowUpdate, specSources }) {
     }
   }
 
-  function updateFile({ path, content, base_fingerprint: baseFingerprint }) {
+  function updateFile(args) {
     if (!allowUpdate) {
       throw new ToolError(
         'Updating existing files is turned off for this extension. The user can enable "Allow Claude to modify existing files" in the extension settings; until then use create_file with a new name.'
       )
     }
+    return replaceFile(args)
+  }
+
+  function replaceFile({ path, content, base_fingerprint: baseFingerprint }) {
     const { absolute, relative: rel } = resolveInFolder(root, path, 'write', { mustExist: true })
     assertFile(absolute, rel)
     checkSize(content)
@@ -465,7 +477,116 @@ export function createTools({ root, allowUpdate, specSources }) {
     }
   }
 
+  // --- building a diagram step by step (epic 0165): operations that answer with what they made,
+  // and questions about room and layout. The shared core is src/shared/edit.
+
+  function issueLines(diagram) {
+    const issues = layoutIssues(diagram, diagram.fontFamily)
+    const shown = issues.slice(0, 12).map((issue) => issue.message)
+    if (issues.length > shown.length) shown.push(`${issues.length - shown.length} more`)
+    return shown
+  }
+
+  function loadDiagram(absolute, rel) {
+    try {
+      return parseDiagram(textOf(absolute, rel))
+    } catch (error) {
+      if (error instanceof ToolError) throw error
+      throw new ToolError(`"${rel}" is not a valid .chd diagram: ${error.message}`)
+    }
+  }
+
+  function editDiagram({ path, operations, base_fingerprint: baseFingerprint }) {
+    if (!Array.isArray(operations) || operations.length === 0) {
+      throw new ToolError('operations must be a list with at least one operation')
+    }
+    if (operations.length > 200) throw new ToolError('at most 200 operations in one call')
+    const { absolute, relative: rel } = resolveInFolder(root, path, 'write', { mustExist: false })
+    if (extname(absolute).toLowerCase() !== '.chd')
+      throw new ToolError('edit_diagram works on .chd files')
+    const exists = existsSync(absolute)
+    let diagram
+    if (exists) {
+      assertFile(absolute, rel)
+      if (!allowUpdate && !madeHere.has(rel)) {
+        throw new ToolError(
+          `"${rel}" already exists and was not made in this session. Changing existing files is turned off for this extension (the user can enable "Allow Claude to modify existing files"). You can keep editing a diagram you created yourself in this session.`
+        )
+      }
+      if (typeof baseFingerprint !== 'string' || !FINGERPRINT_PATTERN.test(baseFingerprint)) {
+        throw new ToolError(
+          'base_fingerprint is required for a diagram that exists: pass the fingerprint from your last edit_diagram or inspect_diagram answer (or read_file) for it.'
+        )
+      }
+      if (fingerprint(readFileSync(absolute)) !== baseFingerprint) throw staleError(rel)
+      diagram = loadDiagram(absolute, rel)
+    } else {
+      if (baseFingerprint !== undefined) {
+        throw new ToolError(
+          `"${rel}" does not exist yet, so there is no fingerprint to pass: leave base_fingerprint out and the diagram is created.`
+        )
+      }
+      diagram = createEmptyDiagram()
+    }
+    let applied
+    try {
+      applied = applyOperations(diagram, operations, {
+        newId: (prefix) => `${prefix}-${randomUUID()}`
+      })
+    } catch (error) {
+      if (error instanceof OperationError) {
+        throw new ToolError(
+          `${error.message}. Nothing was changed; fix it and send the whole list again.`
+        )
+      }
+      throw error
+    }
+    const content = serializeDiagram(applied.diagram)
+    const written = exists
+      ? replaceFile({ path: rel, content, base_fingerprint: baseFingerprint })
+      : createFile({ path: rel, content })
+    return {
+      path: rel,
+      fingerprint: written.fingerprint,
+      results: applied.results,
+      issues: issueLines(applied.diagram),
+      warnings: written.warnings
+    }
+  }
+
+  const INSPECT_LIMIT = 400
+
+  function inspectDiagram({ path }) {
+    const { absolute, relative: rel } = resolveInFolder(root, path, 'read', { mustExist: true })
+    const diagram = loadDiagram(absolute, rel)
+    const { nodes, edges } = describeDiagram(diagram)
+    const truncated = nodes.length > INSPECT_LIMIT || edges.length > INSPECT_LIMIT
+    return {
+      path: rel,
+      fingerprint: fingerprint(readFileSync(absolute)),
+      nodes: nodes.slice(0, INSPECT_LIMIT),
+      edges: edges.slice(0, INSPECT_LIMIT),
+      ...(truncated
+        ? { truncated: `only the first ${INSPECT_LIMIT} nodes and edges are listed` }
+        : {}),
+      issues: issueLines(diagram)
+    }
+  }
+
+  function roomForLabelTool(question) {
+    if (typeof question.label !== 'string') throw new ToolError('label must be text')
+    if (question.direction !== 'horizontal' && question.direction !== 'vertical') {
+      throw new ToolError(
+        'direction must be "horizontal" (side by side) or "vertical" (one above the other)'
+      )
+    }
+    return roomForLabel(question)
+  }
+
   return {
+    edit_diagram: editDiagram,
+    inspect_diagram: inspectDiagram,
+    room_for_label: roomForLabelTool,
     list_files: listFiles,
     get_format_spec: getFormatSpec,
     validate_diagram: validateDiagram,

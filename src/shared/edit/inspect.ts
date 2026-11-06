@@ -1,0 +1,228 @@
+// What an assistant can ask about a diagram while it builds one: the elements as they stand (with
+// absolute positions and the connection points an edge may name), how much room an edge label needs,
+// and what is wrong with the layout so far. All read-only and all taking a diagram, not a file, so the
+// open window can answer from its live state as well. The label geometry is layout/labelClearance.ts.
+import type { ConnectionPoint, DiagramEdge, DiagramFile, DiagramNode } from '../diagram/index.ts'
+import { effectiveConnectionPoints, pointCoordinates } from '../geometry/connectionPoints.ts'
+import {
+  hiddenLabels,
+  labelChipSize,
+  labelNeededGap,
+  labelTargetGap
+} from '../layout/labelClearance.ts'
+import { summarizeEdge, summarizeNode, type EdgeSummary, type NodeSummary } from './operations.ts'
+
+export function describeDiagram(diagram: DiagramFile): {
+  nodes: NodeSummary[]
+  edges: EdgeSummary[]
+} {
+  return {
+    nodes: diagram.nodes.map((n) => summarizeNode(diagram, n)),
+    edges: diagram.edges.map(summarizeEdge)
+  }
+}
+
+export interface RoomQuestion {
+  label: string
+  // 'horizontal': the two elements sit side by side; 'vertical': one above the other.
+  direction: 'horizontal' | 'vertical'
+  fontSize?: number
+  bold?: boolean
+  fontFamily?: string
+  startMarker?: string
+  endMarker?: string
+  // How far along the edge from its source the label sits (0 to 1); absent means the middle.
+  position?: number
+}
+
+export interface Room {
+  // The clear space between the two elements, in px, below which the label hides the line or its end.
+  minimum: number
+  // Enough for the line to read as solid, dashed or dotted either side of the label.
+  target: number
+  chip: { width: number; height: number }
+}
+
+export function roomForLabel(question: RoomQuestion): Room {
+  const font = {
+    size: question.fontSize ?? 12,
+    weight: question.bold ? ('bold' as const) : ('normal' as const),
+    family: question.fontFamily
+  }
+  const horizontal = question.direction === 'horizontal'
+  const chip = labelChipSize(question.label, font)
+  return {
+    minimum: labelNeededGap(question.label, font, horizontal, {
+      startMarker: question.startMarker,
+      endMarker: question.endMarker,
+      position: question.position
+    }),
+    target: labelTargetGap(question.label, font, horizontal),
+    chip: { width: Math.round(chip.width * 10) / 10, height: Math.round(chip.height * 10) / 10 }
+  }
+}
+
+export interface LayoutIssue {
+  kind: 'label-room' | 'overlap' | 'outside-container' | 'edge-through-element'
+  message: string
+  ids: string[]
+}
+
+interface Rect {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+function originOf(byId: Map<string, DiagramNode>, node: DiagramNode): { x: number; y: number } {
+  let x = node.position.x
+  let y = node.position.y
+  for (
+    let p = byId.get(node.parentId ?? ''), hops = 0;
+    p && hops < 200;
+    p = byId.get(p.parentId ?? ''), hops += 1
+  ) {
+    x += p.position.x
+    y += p.position.y
+  }
+  return { x, y }
+}
+
+function isInside(byId: Map<string, DiagramNode>, node: DiagramNode, ancestorId: string): boolean {
+  for (
+    let p = byId.get(node.parentId ?? ''), hops = 0;
+    p && hops < 200;
+    p = byId.get(p.parentId ?? ''), hops += 1
+  ) {
+    if (p.id === ancestorId) return true
+  }
+  return false
+}
+
+// Where an edge meets an element: the named connection point on the element's current box.
+function handlePoint(
+  node: DiagramNode,
+  rect: Rect,
+  handle: string | undefined
+): { x: number; y: number } {
+  const points: ConnectionPoint[] = effectiveConnectionPoints(node.connectionPoints ?? [])
+  const point = points.find((p) => p.id === handle)
+  const fallback = point ?? points[0]
+  return pointCoordinates(
+    { left: rect.x, top: rect.y, width: rect.width, height: rect.height },
+    fallback ?? { id: 'right', side: 'right', offset: 0.5 }
+  )
+}
+
+// Does the straight segment p-q pass through the rectangle? (Liang-Barsky clipping.)
+function segmentHits(p: { x: number; y: number }, q: { x: number; y: number }, r: Rect): boolean {
+  let t0 = 0
+  let t1 = 1
+  const dx = q.x - p.x
+  const dy = q.y - p.y
+  const checks: [number, number][] = [
+    [-dx, p.x - r.x],
+    [dx, r.x + r.width - p.x],
+    [-dy, p.y - r.y],
+    [dy, r.y + r.height - p.y]
+  ]
+  for (const [d, dist] of checks) {
+    if (d === 0) {
+      if (dist < 0) return false
+    } else {
+      const t = dist / d
+      if (d < 0) {
+        if (t > t1) return false
+        if (t > t0) t0 = t
+      } else {
+        if (t < t0) return false
+        if (t < t1) t1 = t
+      }
+    }
+  }
+  return t0 < t1
+}
+
+const shrink = (r: Rect, by: number): Rect => ({
+  x: r.x + by,
+  y: r.y + by,
+  width: Math.max(r.width - 2 * by, 0),
+  height: Math.max(r.height - 2 * by, 0)
+})
+
+export function layoutIssues(diagram: DiagramFile, diagramFont?: string): LayoutIssue[] {
+  const issues: LayoutIssue[] = []
+  const byId = new Map(diagram.nodes.map((n) => [n.id, n]))
+  const rectOf = (n: DiagramNode): Rect => {
+    const o = originOf(byId, n)
+    return { x: o.x, y: o.y, width: n.size?.width ?? 0, height: n.size?.height ?? 0 }
+  }
+  const label = (n: DiagramNode): string => n.data.label || n.id
+
+  for (const hidden of hiddenLabels(diagram.nodes, diagram.edges, diagramFont)) {
+    issues.push({
+      kind: 'label-room',
+      message: `edge ${hidden.edgeId} ("${hidden.label}") has ${Math.round(hidden.gap)}px between ${hidden.sourceId} and ${hidden.targetId}, but its label needs about ${hidden.needed}px`,
+      ids: [hidden.edgeId, hidden.sourceId, hidden.targetId]
+    })
+  }
+
+  const solid = diagram.nodes.filter((n) => n.type !== 'container' && n.type !== 'line')
+  for (let i = 0; i < solid.length; i += 1) {
+    for (let j = i + 1; j < solid.length; j += 1) {
+      const a = rectOf(solid[i])
+      const b = rectOf(solid[j])
+      const overlapX = Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x)
+      const overlapY = Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y)
+      if (overlapX > 1 && overlapY > 1) {
+        issues.push({
+          kind: 'overlap',
+          message: `"${label(solid[i])}" (${solid[i].id}) and "${label(solid[j])}" (${solid[j].id}) overlap by ${Math.round(overlapX)} x ${Math.round(overlapY)}px`,
+          ids: [solid[i].id, solid[j].id]
+        })
+      }
+    }
+  }
+
+  for (const node of diagram.nodes) {
+    const parent = byId.get(node.parentId ?? '')
+    if (!parent) continue
+    const a = rectOf(node)
+    const p = rectOf(parent)
+    if (
+      a.x < p.x - 0.5 ||
+      a.y < p.y - 0.5 ||
+      a.x + a.width > p.x + p.width + 0.5 ||
+      a.y + a.height > p.y + p.height + 0.5
+    ) {
+      issues.push({
+        kind: 'outside-container',
+        message: `"${label(node)}" (${node.id}) sticks out of its container "${label(parent)}" (${parent.id})`,
+        ids: [node.id, parent.id]
+      })
+    }
+  }
+
+  // An approximation: the app draws curves, but a straight line between the two connection points
+  // shows when an edge runs over an element it does not join.
+  for (const edge of diagram.edges as DiagramEdge[]) {
+    const from = byId.get(edge.source)
+    const to = byId.get(edge.target)
+    if (!from || !to || (edge.points && edge.points.length > 0)) continue
+    const p = handlePoint(from, rectOf(from), edge.sourceHandle)
+    const q = handlePoint(to, rectOf(to), edge.targetHandle)
+    for (const other of solid) {
+      if (other.id === from.id || other.id === to.id) continue
+      if (isInside(byId, other, from.id) || isInside(byId, other, to.id)) continue
+      if (segmentHits(p, q, shrink(rectOf(other), 2))) {
+        issues.push({
+          kind: 'edge-through-element',
+          message: `edge ${edge.id} (${label(from)} to ${label(to)}) runs over "${label(other)}" (${other.id}); a straight line between its two connection points crosses it`,
+          ids: [edge.id, other.id]
+        })
+      }
+    }
+  }
+  return issues
+}

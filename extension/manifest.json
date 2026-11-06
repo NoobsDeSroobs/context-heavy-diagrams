@@ -22,15 +22,45 @@
     }
   },
   "tools": [
-    { "name": "list_files", "description": "List the diagrams, notes and supporting documents in the folder." },
+    {
+      "name": "list_files",
+      "description": "List the diagrams, notes and supporting documents in the folder."
+    },
     { "name": "get_format_spec", "description": "The rules of the .chd diagram format." },
     { "name": "validate_diagram", "description": "Check a .chd file for structural problems." },
-    { "name": "validate_metamodel", "description": "Check a .chdmeta file against the metamodel format." },
-    { "name": "check_diagram", "description": "Check a .chd file, or a draft as text, against a diagram metamodel." },
-    { "name": "diff_diagrams", "description": "See what changed in a diagram: between two files or drafts, or since a commit in git." },
+    {
+      "name": "validate_metamodel",
+      "description": "Check a .chdmeta file against the metamodel format."
+    },
+    {
+      "name": "check_diagram",
+      "description": "Check a .chd file, or a draft as text, against a diagram metamodel."
+    },
+    {
+      "name": "diff_diagrams",
+      "description": "See what changed in a diagram: between two files or drafts, or since a commit in git."
+    },
+    {
+      "name": "edit_diagram",
+      "description": "Build or change a diagram step by step: add, connect, move and restyle elements, and learn what is wrong with the layout."
+    },
+    {
+      "name": "inspect_diagram",
+      "description": "List the elements of a diagram with their positions and connection points."
+    },
+    {
+      "name": "room_for_label",
+      "description": "How much space two connected elements need for an edge label."
+    },
     { "name": "read_file", "description": "Read a text file and get its fingerprint." },
-    { "name": "create_file", "description": "Create a new .chd, .md, .txt, .svg or .chdmeta file." },
-    { "name": "update_file", "description": "Replace an existing file (only if you allow modifying files)." }
+    {
+      "name": "create_file",
+      "description": "Create a new .chd, .md, .txt, .svg or .chdmeta file."
+    },
+    {
+      "name": "update_file",
+      "description": "Replace an existing file (only if you allow modifying files)."
+    }
   ],
   "user_config": {
     "diagram_folder": {

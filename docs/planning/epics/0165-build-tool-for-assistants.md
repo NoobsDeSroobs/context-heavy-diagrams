@@ -1,7 +1,7 @@
 # 0165: An editing tool for assistants: the steps a person takes, and questions about layout
 
 ## Status
-In progress on the branch `epic/0165-build-tool-for-assistants` (2026-11-06); direction agreed, design open, nothing built yet. (The file keeps its first name; the first idea, a one-shot spec like D2, was dropped.)
+In progress on the branch `epic/0165-build-tool-for-assistants` (2026-11-06). A proof of concept is built: the operations, the questions and the three extension tools ([ADR 0148](../../decisions/0148-an-assistant-builds-a-diagram-by-operations-that-answer.md)). The maintainer decides whether it is good enough to go on; nothing is tried with a real assistant yet. (The file keeps its first name; the first idea, a one-shot spec like D2, was dropped.)
 
 ## Goal
 An assistant draws and edits a diagram by doing what a person does, one step at a time, and each step answers with what it made, so the next step can use it: create boxes, move them, connect them, style them, add notes and links. The assistant decides spacing and layout. The tool helps it get that right by answering questions ("how much room does an edge labelled X need?", "what is wrong with this layout?"). No assistant writes a generator script again, and the result is the same on any machine.
@@ -46,11 +46,13 @@ Raised by the maintainer as thoughts, not requirements; the feature may shrink o
 A second implementation of the editor's edits that drifts from the app; an operation set too small to be useful or so large it is the whole editor; answers that are too long for the assistant to read at each step.
 
 ## Tasks
-- [ ] Decide where the operations run and how a call looks (ADR)
-- [ ] The operation vocabulary as data, and the answer each one gives
-- [ ] The editing core in shared code, with tests that every result passes the validator and serialises as the app does
-- [ ] The questions: room for a label (exists), layout issues, element list
-- [ ] The command line (`chd edit`, `chd ask`) and the MCP tools, with the parity test of [0166](0166-mcp-and-cli-parity.md)
+- [x] Decide where the operations run and how a call looks (ADR 0148: a pure core, run on the file by one `edit_diagram` tool taking a list; the app can run the same operations later)
+- [x] The operation vocabulary as data, and the answer each one gives (proof of concept: entities, containers, text, lines, connections, connection points, move, resize, label, style, nest, remove)
+- [x] The editing core in shared code, with tests that every result passes the validator and serialises as the app does (`src/shared/edit/`)
+- [x] The questions: room for a label, layout issues, element list (`room_for_label`, `inspect_diagram`, and the issues in every `edit_diagram` answer)
+- [x] The MCP tools. [ ] The command line (`chd edit`, `chd ask`) and the parity test of [0166](0166-mcp-and-cli-parity.md) are not done
+- [ ] Try it with a real assistant in Claude Desktop on a diagram of moderate size, and judge whether the operations are enough
+- [ ] Tags, notes and links as operations, if the proof of concept holds
 - [ ] Guidance: update the skill, `AGENTS.md`, the extension's instructions and the copy-paste text to prefer it
 - [ ] Re-run an assistant on a large project and compare against the hand-written generators
 

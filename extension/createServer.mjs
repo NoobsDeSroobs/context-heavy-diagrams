@@ -9,6 +9,7 @@ import { createTools } from './lib/tools.mjs'
 const INSTRUCTIONS = `Tools for the user's Context-Heavy Diagrams diagrams (.chd files) and the supporting documents in one folder they chose. Everything is relative to that folder.
 - Before creating or editing a .chd, call get_format_spec; the format has traps that corrupt files. Before writing a .chdmeta (a diagram metamodel), call it with topic "conformance": it says what to ask the person, what the format can and cannot say, and gives a valid example. validate_metamodel lists what is wrong with a .chdmeta.
 - read_file returns a fingerprint. update_file only works with the fingerprint of the version you based your edit on, and is refused if the file changed meanwhile; then read it again and redo the edit. create_file never overwrites.
+- To build or change a diagram step by step, use edit_diagram: it creates the file if it does not exist, applies a list of operations (add_entity, connect, move, ...) and answers with what each made (ids, positions, connection points) and what is wrong with the layout so far. You decide where everything goes; ask room_for_label how much space two connected elements need before you place them, and pass the fingerprint each answer returns as base_fingerprint in the next call. inspect_diagram lists the elements as they stand. A diagram made this way in this session can be edited again without allowing changes to existing files.
 - A .chd is validated before it is written; fix any reported errors and try again. validate_diagram checks an existing file.
 - check_diagram applies a diagram metamodel and diff_diagrams shows what changed, between two diagrams or between a diagram and its last commit in git; both only read, and both take a draft as text (content, new_content) as well as a file, so a diagram can be judged before it is written. These tools give the results the chd command line gives, which is what a pipeline relies on.
 - Only .chd, .md, .txt, .svg and .chdmeta (a diagram metamodel, validated before it is written) files can be written. Notes of a diagram are Markdown files its nodes point at.
@@ -33,6 +34,14 @@ function guarded(run) {
     }
   }
 }
+
+const OPERATIONS_HELP = `Operations, applied in order and all or nothing. Coordinates are absolute canvas pixels (x, y = top-left corner), even inside a container. An answer names each element made or changed with its id.
+- add_entity {label, x, y, width=120, height=80, parent?, id?, style?}; add_container {label, x, y, width=320, height=180, ...}; add_text {label, x, y, width=120, height=48, ...}. parent is a container's id. id is optional (a short one such as "api" is fine; letters, digits . _ -).
+- add_line {points: [{x, y, gravity?}, ...] (at least 2), parent?, id?, style?}: a freeform curved line.
+- connect {from, to, label?, fromHandle?, toHandle?, id?, style?}: an edge between two entities or containers. Handles are connection point ids; by default the sides that face each other are used.
+- add_connection_point {id, side: top|right|bottom|left, offset: 0..1, pointId?}: another point on a side, for more edges on one side. The answer gives pointId to use as fromHandle or toHandle.
+- move {id, x, y}; resize {id, width?, height?}; set_label {id, label} (an element or an edge); set_style {id, style}; reparent {id, parent: id | null} (keeps the element where it is); remove {id} (removes the edges that touch it; what was inside a container moves up a level).
+- style fields. Elements: fill, fillOpacity, stroke, strokeOpacity, strokeWidth, textAlign (start|center|end), lineStyle (solid|dashed|dotted), startMarker, endMarker, fontSize, fontColor, fontWeight (normal|bold), fontFamily, fontOpacity. Edges: stroke, strokeOpacity, strokeWidth, lineStyle, startMarker, endMarker, labelPosition (0..1 along the edge), routingStyle (straight|step|smoothstep|catmullRom), animation (flow|pulse), animationSpeed, animationDirection, pulseDistance, dashLength, dashGap and the font fields. Markers: none, arrowOpen, arrowClosed, circle, circleFilled, diamond, diamondFilled, crowsFootOne, crowsFootMany, crowsFootOneOrMany, crowsFootZeroOrOne, crowsFootZeroOrMany. A value of null removes a field. Colours are CSS colours.`
 
 export function createServer({ root, allowUpdate, specSources, version = '0.0.0' }) {
   const tools = createTools({ root, allowUpdate, specSources })
@@ -141,6 +150,62 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
       annotations: readOnly
     },
     guarded((args) => tools.diff_diagrams(args))
+  )
+  server.registerTool(
+    'edit_diagram',
+    {
+      title: 'Build or change a diagram step by step',
+      description:
+        'Create a .chd (if the path does not exist) or change one by applying a list of operations, the way a person works: add entities, containers, text and lines, connect them, move, resize, restyle, remove. Everything is placed where you say; nothing is laid out for you. The answer gives, for each operation, the element it made or changed (id, position, size, connection points), a new fingerprint for the next call, and the layout problems found so far (labels without room, overlaps, elements sticking out of their container, edges running over an element). Fix those and carry on. ' +
+        OPERATIONS_HELP,
+      inputSchema: {
+        path: path.describe(
+          'The diagram, relative to the diagram folder. It is created if it does not exist.'
+        ),
+        operations: z
+          .array(z.object({ op: z.string().describe('The operation name') }).passthrough())
+          .describe('The operations, in order'),
+        base_fingerprint: z
+          .string()
+          .optional()
+          .describe(
+            'Required for a diagram that exists: the fingerprint from your last edit_diagram or inspect_diagram answer (or read_file). Leave out to create a new diagram.'
+          )
+      },
+      annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false }
+    },
+    guarded((args) => tools.edit_diagram(args))
+  )
+  server.registerTool(
+    'inspect_diagram',
+    {
+      title: 'List the elements of a diagram',
+      description:
+        'The elements of a .chd as they stand: id, type, label, absolute position and size, parent and connection point ids; the edges with their ends; the layout problems found so far (labels without room, overlaps, elements sticking out of a container, edges running over an element); and the fingerprint to pass to edit_diagram. Read-only.',
+      inputSchema: { path },
+      annotations: readOnly
+    },
+    guarded((args) => tools.inspect_diagram(args))
+  )
+  server.registerTool(
+    'room_for_label',
+    {
+      title: 'How much room an edge label needs',
+      description:
+        'How much clear space, in pixels, two connected elements need between them for an edge with this label: the minimum below which the label hides the line or its end graphic, and a target at which the line reads clearly either side. direction is "horizontal" for elements side by side, "vertical" for one above the other. Give fontSize, bold or fontFamily if the edge sets its own, the end graphics if they are not the default (no start graphic, a closed arrow at the end), and position (0 to 1) if the label is slid towards one end. Use it before placing connected elements.',
+      inputSchema: {
+        label: z.string(),
+        direction: z.enum(['horizontal', 'vertical']),
+        fontSize: z.number().optional(),
+        bold: z.boolean().optional(),
+        fontFamily: z.string().optional(),
+        startMarker: z.string().optional(),
+        endMarker: z.string().optional(),
+        position: z.number().optional()
+      },
+      annotations: readOnly
+    },
+    guarded((args) => tools.room_for_label(args))
   )
   server.registerTool(
     'read_file',
