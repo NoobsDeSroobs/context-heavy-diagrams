@@ -292,10 +292,12 @@ test('chd validate and validate_diagram report the same errors and warnings', ()
   )
   const cliRun = run('validate', 'broken.chd')
   assert.equal(cliRun.status, 1)
-  // The one intended difference: the server leaves the folder's own path out of a message, so it
-  // does not go to the AI provider (ADR 0110). Take it out of the command line's output too.
+  // The intended differences: the server leaves the folder's own path out of a message, so it does
+  // not go to the AI provider (ADR 0110), and writes a path inside the folder with "/" on every
+  // system. Do the same to the command line's output.
   const lines = cliRun.stdout
     .replaceAll(dir + sep, '')
+    .replaceAll('\\', '/')
     .split(/\r?\n/)
     .filter(Boolean)
   const fromCli = {

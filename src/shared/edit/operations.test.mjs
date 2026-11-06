@@ -38,15 +38,24 @@ test('add_entity, add_container and add_text make elements with the editor defau
     { op: 'add_text', label: 'Note', x: 0, y: 300 }
   )
   assert.deepEqual(
-    results.map((r) => [r.element.type, r.element.width, r.element.height]),
+    results.map((r) => [r.element.width, r.element.height]),
     [
-      ['entity', 120, 80],
-      ['container', 320, 180],
-      ['text', 120, 48]
+      [120, 80],
+      [320, 180],
+      [120, 48]
     ]
   )
-  assert.deepEqual(results[0].element.handles, ['top', 'right', 'bottom', 'left'])
-  assert.deepEqual(results[2].element.handles, [], 'text has no connection points')
+  assert.deepEqual(
+    diagram.nodes.map((n) => n.type ?? 'entity'),
+    ['entity', 'container', 'text']
+  )
+  assert.equal(results[0].element.type, undefined, 'the answer does not repeat what it was told')
+  assert.equal(
+    results[0].element.handles,
+    undefined,
+    'the four default connection points are implied'
+  )
+  assert.equal(results[0].element.parent, undefined)
   assert.equal(diagram.nodes.length, 3)
   assertValid(diagram)
 })
@@ -115,8 +124,9 @@ test('add_connection_point keeps the side name valid for edges that already use 
     offset: 0.2
   })
   assert.equal(results[0].pointId, 'cp-1')
+  assert.deepEqual(results[0].element, { id: 'a' }, 'the answer does not repeat the element')
   assert.deepEqual(
-    results[0].element.handles.filter((h) => h === 'right' || h === 'cp-1'),
+    describeDiagram(diagram).nodes[0].handles.filter((h) => h === 'right' || h === 'cp-1'),
     ['right', 'cp-1']
   )
   assertValid(diagram)
@@ -236,7 +246,7 @@ test('set_edge_points replaces, clears and explains when the routing would ignor
     { x: 300, y: 340, gravity: 0 }
   ])
   assert.match(results[3].notices[0], /ignored while the edge is routed as a plain curve/)
-  assert.equal(results[3].element.points.length, 2)
+  assert.equal(results[3].element.points, 2)
 
   const routed = run(diagram, {
     op: 'set_edge_points',
@@ -251,7 +261,7 @@ test('set_edge_points replaces, clears and explains when the routing would ignor
 
   const cleared = run(routed.diagram, { op: 'set_edge_points', id: 'e', points: [] })
   assert.equal('points' in cleared.diagram.edges[0], false)
-  assert.equal('points' in cleared.results[0].element, false)
+  assert.equal(cleared.results[0].element.points, 0)
   assert.equal(describeDiagram(routed.diagram).edges[0].points.length, 1)
 
   assert.throws(() => run(diagram, { op: 'set_edge_points', id: 'a', points: [] }), /not an edge/)
@@ -297,7 +307,7 @@ test('describeDiagram lists elements in absolute coordinates', () => {
   assert.deepEqual(
     nodes.map((n) => [n.id, n.x, n.y, n.parent]),
     [
-      ['c', 100, 100, null],
+      ['c', 100, 100, undefined],
       ['e', 140, 150, 'c']
     ]
   )

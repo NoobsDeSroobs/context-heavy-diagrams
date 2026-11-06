@@ -46,6 +46,7 @@ import {
 } from './fileRules.mjs'
 import { FINGERPRINT_PATTERN, fingerprint } from './fingerprint.mjs'
 import { formatSpec } from './formatSpec.mjs'
+import { groupMessages } from './issues.mjs'
 import { loadBuiltinMetamodels } from './metamodelsText.mjs'
 import { searchFiles } from './search.mjs'
 
@@ -89,10 +90,12 @@ function tidyValidation(root, { errors, warnings }, validatedPath, rel) {
       .replaceAll(validatedPath, rel)
       .replaceAll(root + sep, '')
       .replaceAll(root, '.')
+      // A path inside the folder reads the same on every system: with "/".
+      .replace(/(?<=[\w.)-])\\(?=[\w.(-])/g, '/')
   return {
     ok: errors.length === 0,
     errors: errors.map(tidy),
-    warnings: warnings.map(tidy)
+    warnings: groupMessages(warnings.map(tidy))
   }
 }
 
@@ -507,10 +510,7 @@ export function createTools({ root, allowUpdate, specSources }) {
   // and questions about room and layout. The shared core is src/shared/edit.
 
   function issueLines(diagram) {
-    const issues = layoutIssues(diagram, diagram.fontFamily)
-    const shown = issues.slice(0, 12).map((issue) => issue.message)
-    if (issues.length > shown.length) shown.push(`${issues.length - shown.length} more`)
-    return shown
+    return groupMessages(layoutIssues(diagram, diagram.fontFamily))
   }
 
   function loadDiagram(absolute, rel) {

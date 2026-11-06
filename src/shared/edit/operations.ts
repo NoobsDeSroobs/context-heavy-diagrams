@@ -28,6 +28,8 @@ import {
   ROUTING_STYLES,
   Reader,
   SIDES,
+  briefEdge,
+  briefNode,
   checkedStyle,
   handlesOf,
   isNumber,
@@ -35,8 +37,6 @@ import {
   mergeStyle,
   round,
   sizeOf,
-  summarizeEdge,
-  summarizeNode,
   type ApplyOptions,
   type OperationResult,
   type ProducedFile
@@ -82,7 +82,7 @@ function addNode(
   }
   startingTags(model, reader, node)
   model.nodes.push(node)
-  return { op: `add_${kind}`, element: summarizeNode(model.diagram, node) }
+  return { op: `add_${kind}`, element: briefNode(model.diagram, node) }
 }
 
 function placementParent(model: Model, reader: Reader): DiagramNode | undefined {
@@ -127,7 +127,7 @@ function addLine(model: Model, reader: Reader): OperationResult {
     if (style) node.style = style
   }
   model.nodes.push(node)
-  return { op: 'add_line', element: summarizeNode(model.diagram, node) }
+  return { op: 'add_line', element: briefNode(model.diagram, node) }
 }
 
 function connectable(model: Model, reader: Reader, key: string): DiagramNode {
@@ -197,7 +197,7 @@ function connect(model: Model, reader: Reader): OperationResult {
   }
   startingTags(model, reader, edge)
   model.edges.push(edge)
-  return { op: 'connect', element: summarizeEdge(edge) }
+  return { op: 'connect', element: briefEdge(edge) }
 }
 
 function addConnectionPoint(model: Model, reader: Reader): OperationResult {
@@ -228,7 +228,7 @@ function addConnectionPoint(model: Model, reader: Reader): OperationResult {
   }
   stored.push({ id: pointId, side: side as ConnectionPointSide, offset: round(offset) })
   node.connectionPoints = stored
-  return { op: 'add_connection_point', element: summarizeNode(model.diagram, node), pointId }
+  return { op: 'add_connection_point', element: { id: node.id }, pointId }
 }
 
 function anyElement(model: Model, reader: Reader, key = 'id'): DiagramNode | DiagramEdge {
@@ -264,7 +264,7 @@ function move(model: Model, reader: Reader): OperationResult {
   const parent = model.parentOf(node)
   const origin = parent ? model.origin(parent) : { x: 0, y: 0 }
   node.position = { x: round(x - origin.x), y: round(y - origin.y) }
-  return { op: 'move', element: summarizeNode(model.diagram, node) }
+  return { op: 'move', element: briefNode(model.diagram, node) }
 }
 
 function resize(model: Model, reader: Reader): OperationResult {
@@ -275,7 +275,7 @@ function resize(model: Model, reader: Reader): OperationResult {
   if (width === undefined && height === undefined) reader.fail('give "width", "height" or both')
   const size = sizeOf(node)
   node.size = { width: width ?? size.width, height: height ?? size.height }
-  return { op: 'resize', element: summarizeNode(model.diagram, node) }
+  return { op: 'resize', element: briefNode(model.diagram, node) }
 }
 
 function setLabel(model: Model, reader: Reader): OperationResult {
@@ -284,10 +284,10 @@ function setLabel(model: Model, reader: Reader): OperationResult {
   if ('source' in target) {
     if (label) target.label = label
     else delete target.label
-    return { op: 'set_label', element: summarizeEdge(target) }
+    return { op: 'set_label', element: { id: target.id } }
   }
   target.data.label = label
-  return { op: 'set_label', element: summarizeNode(model.diagram, target) }
+  return { op: 'set_label', element: { id: target.id } }
 }
 
 function setStyle(model: Model, reader: Reader): OperationResult {
@@ -299,7 +299,7 @@ function setStyle(model: Model, reader: Reader): OperationResult {
   else delete target.style
   return {
     op: 'set_style',
-    element: 'source' in target ? summarizeEdge(target) : summarizeNode(model.diagram, target)
+    element: { id: target.id }
   }
 }
 
@@ -326,7 +326,7 @@ function reparent(model: Model, reader: Reader): OperationResult {
     model.nodes.length = 0
     model.nodes.push(...rest, ...subtree)
   }
-  return { op: 'reparent', element: summarizeNode(model.diagram, node) }
+  return { op: 'reparent', element: briefNode(model.diagram, node) }
 }
 
 // Replaces an edge's manual routing points; an empty list clears them. The points only shape the path
@@ -357,8 +357,11 @@ function setEdgePoints(model: Model, reader: Reader): OperationResult {
       reader.fail(`"routing" must be one of ${ROUTING_STYLES.join(', ')}`)
     edge.style = { ...edge.style, routingStyle: routing as never }
   }
-  const result: OperationResult = { op: 'set_edge_points', element: summarizeEdge(edge) }
   const routing = edge.style?.routingStyle
+  const result: OperationResult = {
+    op: 'set_edge_points',
+    element: { id: edge.id, points: points.length, ...(routing ? { routing } : {}) }
+  }
   if (points.length > 0 && !(routing && POINT_ROUTING.includes(routing))) {
     result.notices = [
       `the points are stored but ignored while the edge is routed ${routing ?? 'as a plain curve'}; pass routing: "smoothstep", "step" or "catmullRom"`

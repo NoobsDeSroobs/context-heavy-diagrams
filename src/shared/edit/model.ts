@@ -30,9 +30,11 @@ export interface NodeSummary {
   y: number
   width: number
   height: number
-  parent: string | null
-  // The connection point ids an edge can name (entities and containers only).
-  handles: string[]
+  // Absent for a top-level element.
+  parent?: string
+  // The connection point ids an edge can name. Absent when the element has the four default ones
+  // (top, right, bottom, left) or, for a text or a line, none.
+  handles?: string[]
 }
 
 export interface EdgeSummary {
@@ -40,18 +42,27 @@ export interface EdgeSummary {
   type: 'edge'
   from: string
   to: string
-  fromHandle: string | null
-  toHandle: string | null
-  label: string
+  // Absent when the edge names none and the renderer picks.
+  fromHandle?: string
+  toHandle?: string
+  // Absent when the edge has no label.
+  label?: string
   // Only when set: the routing style and the manual routing points (absolute coordinates).
   routing?: string
   points?: { x: number; y: number; gravity?: number }[]
 }
 
+// The short answer an operation gives about the element it touched, so a long build does not pay for
+// the same fields again and again; inspect_diagram has the full description.
+export interface ElementEcho {
+  id: string
+  [key: string]: unknown
+}
+
 export interface OperationResult {
   op: string
-  // What the operation made or changed.
-  element?: NodeSummary | EdgeSummary
+  // What the operation made or changed: its id, and for a geometry operation the new place and size.
+  element?: ElementEcho
   // For `remove`: everything that went with the element (its edges).
   removed?: string[]
   // For `add_connection_point`: the id of the new point.
@@ -299,9 +310,26 @@ export function summarizeNode(diagram: DiagramFile, node: DiagramNode): NodeSumm
     y: round(origin.y),
     width: round(size.width),
     height: round(size.height),
-    parent: node.parentId ?? null,
-    handles: handlesOf(node)
+    ...(node.parentId === undefined ? {} : { parent: node.parentId }),
+    ...(hasDefaultHandles(node) ? {} : { handles: handlesOf(node) })
   }
+}
+
+const DEFAULT_HANDLES = SIDES.join()
+function hasDefaultHandles(node: DiagramNode): boolean {
+  const handles = handlesOf(node)
+  return handles.length === 0 || handles.join() === DEFAULT_HANDLES
+}
+
+// What a geometry operation answers: where the element now is and how large, not what it is called.
+export function briefNode(diagram: DiagramFile, node: DiagramNode): ElementEcho {
+  const { id, x, y, width, height, parent, handles } = summarizeNode(diagram, node)
+  return { id, x, y, width, height, ...(parent ? { parent } : {}), ...(handles ? { handles } : {}) }
+}
+
+export function briefEdge(edge: DiagramEdge): ElementEcho {
+  const { id, from, to, fromHandle, toHandle } = summarizeEdge(edge)
+  return { id, from, to, ...(fromHandle ? { fromHandle } : {}), ...(toHandle ? { toHandle } : {}) }
 }
 
 export function summarizeEdge(edge: DiagramEdge): EdgeSummary {
@@ -310,9 +338,9 @@ export function summarizeEdge(edge: DiagramEdge): EdgeSummary {
     type: 'edge',
     from: edge.source,
     to: edge.target,
-    fromHandle: edge.sourceHandle ?? null,
-    toHandle: edge.targetHandle ?? null,
-    label: edge.label ?? '',
+    ...(edge.sourceHandle ? { fromHandle: edge.sourceHandle } : {}),
+    ...(edge.targetHandle ? { toHandle: edge.targetHandle } : {}),
+    ...(edge.label ? { label: edge.label } : {}),
     ...(edge.style?.routingStyle ? { routing: edge.style.routingStyle } : {}),
     ...(edge.points?.length ? { points: edge.points } : {})
   }

@@ -20,8 +20,6 @@ import {
   ID_PATTERN,
   checkedStyle,
   isRecord,
-  summarizeEdge,
-  summarizeNode,
   type Model,
   type OperationResult,
   type Reader,
@@ -39,8 +37,8 @@ const isEdge = (target: Tagged): target is DiagramEdge => 'source' in target
 const carriesTags = (target: Tagged): boolean =>
   isEdge(target) || (target.type !== 'text' && target.type !== 'line')
 
-function summaryOf(model: Model, target: Tagged): OperationResult['element'] {
-  return isEdge(target) ? summarizeEdge(target) : summarizeNode(model.diagram, target)
+function summaryOf(target: Tagged): OperationResult['element'] {
+  return { id: target.id }
 }
 
 function isJson(value: unknown, depth: number): boolean {
@@ -142,7 +140,7 @@ function setTag(model: Model, reader: Reader): OperationResult {
   const target = taggable(model, reader)
   const key = tagKey(reader, 'key')
   writeTag(model, reader, target, key, jsonValue(reader, 'value'))
-  return { op: 'set_tag', element: summaryOf(model, target), tags: tagValues(target.metadata) }
+  return { op: 'set_tag', element: summaryOf(target), tags: tagValues(target.metadata) }
 }
 
 function removeTag(model: Model, reader: Reader): OperationResult {
@@ -159,7 +157,7 @@ function removeTag(model: Model, reader: Reader): OperationResult {
   delete next[key]
   if (Object.keys(next).length > 0) target.metadata = next
   else delete target.metadata
-  return { op: 'remove_tag', element: summaryOf(model, target), tags: tagValues(target.metadata) }
+  return { op: 'remove_tag', element: summaryOf(target), tags: tagValues(target.metadata) }
 }
 
 function setDiagramTag(model: Model, reader: Reader): OperationResult {
@@ -420,7 +418,7 @@ function linkToExistingDiagram(model: Model, reader: Reader): OperationResult {
   node.data.linkedDiagram = path
   const result: OperationResult = {
     op: 'link_to_existing_diagram',
-    element: summarizeNode(model.diagram, node),
+    element: { id: node.id },
     link: path
   }
   const folder = model.options.linkedFolder
@@ -453,7 +451,7 @@ function addNewLinkedDiagram(model: Model, reader: Reader): OperationResult {
   const refusal = model.options.checkReference?.(path)
   if (refusal) reader.fail(refusal)
   node.data.linkedDiagram = path
-  return { op: 'add_new_linked_diagram', element: summarizeNode(model.diagram, node), link: path }
+  return { op: 'add_new_linked_diagram', element: { id: node.id }, link: path }
 }
 
 function removeLink(model: Model, reader: Reader): OperationResult {
@@ -461,7 +459,7 @@ function removeLink(model: Model, reader: Reader): OperationResult {
   if (!node.data.linkedDiagram) reader.fail(`"${node.id}" has no link`)
   const was = node.data.linkedDiagram
   delete node.data.linkedDiagram
-  return { op: 'remove_link', element: summarizeNode(model.diagram, node), removed: [was] }
+  return { op: 'remove_link', element: { id: node.id }, removed: [was] }
 }
 
 // "<first line of the label>-<id>.md", the app's own naming with the id in place of its UUID suffix.
@@ -494,7 +492,7 @@ function setNote(model: Model, reader: Reader): OperationResult {
   if (refusal) reader.fail(refusal)
   model.files.push({ path, content: text.endsWith('\n') ? text : `${text}\n` })
   node.data.notes = path
-  return { op: 'set_note', element: summarizeNode(model.diagram, node), note: path }
+  return { op: 'set_note', element: { id: node.id }, note: path }
 }
 
 // Only the reference goes: the note file stays where it is, and this tool never deletes a file.
@@ -503,7 +501,7 @@ function removeNote(model: Model, reader: Reader): OperationResult {
   if (!node.data.notes) reader.fail(`"${node.id}" has no note`)
   const was = node.data.notes
   delete node.data.notes
-  return { op: 'remove_note', element: summarizeNode(model.diagram, node), removed: [was] }
+  return { op: 'remove_note', element: { id: node.id }, removed: [was] }
 }
 
 export const ANNOTATION_OPERATIONS: Record<

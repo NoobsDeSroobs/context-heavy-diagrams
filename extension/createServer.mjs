@@ -9,7 +9,7 @@ import { createTools } from './lib/tools.mjs'
 const INSTRUCTIONS = `Tools for the user's Context-Heavy Diagrams diagrams (.chd files) and the supporting documents in one folder they chose. Everything is relative to that folder.
 - Before creating or editing a .chd, call get_format_spec; the format has traps that corrupt files. Before writing a .chdmeta (a diagram metamodel), call it with topic "conformance": it says what to ask the person, what the format can and cannot say, and gives a valid example. validate_metamodel lists what is wrong with a .chdmeta.
 - read_file returns a fingerprint. update_file only works with the fingerprint of the version you based your edit on, and is refused if the file changed meanwhile; then read it again and redo the edit. create_file never overwrites.
-- To build or change a diagram step by step, use edit_diagram: it creates the file if it does not exist, applies a list of operations (add_entity, connect, move, ...) and answers with what each made (ids, positions, connection points) and what is wrong with the layout so far. You decide where everything goes; ask room_for_label how much space two connected elements need before you place them, and pass the fingerprint each answer returns as base_fingerprint in the next call. inspect_diagram lists the elements as they stand. A diagram made this way in this session can be edited again without allowing changes to existing files.
+- To build or change a diagram step by step, use edit_diagram: it creates the file if it does not exist, applies a list of operations (add_entity, connect, move, ...) and answers briefly with what each made (ids, places, sizes) and what is wrong with the layout so far, with many problems of one kind collapsed into one line with their number. You decide where everything goes; ask room_for_label how much space two connected elements need before you place them, and pass the fingerprint each answer returns as base_fingerprint in the next call. inspect_diagram lists the elements as they stand. A diagram made this way in this session can be edited again without allowing changes to existing files.
 - A .chd is validated before it is written; fix any reported errors and try again. validate_diagram checks an existing file.
 - check_diagram applies a diagram metamodel and diff_diagrams shows what changed, between two diagrams or between a diagram and its last commit in git; both only read, and both take a draft as text (content, new_content) as well as a file, so a diagram can be judged before it is written. These tools give the results the chd command line gives, which is what a pipeline relies on.
 - Only .chd, .md, .txt, .svg and .chdmeta (a diagram metamodel, validated before it is written) files can be written. Notes of a diagram are Markdown files its nodes point at.
@@ -26,11 +26,29 @@ function binaryContent({ data, ...info }) {
   return [{ type: 'text', text: JSON.stringify(info, null, 2) }, part]
 }
 
+// JSON with one line per key and per item of a list, instead of one per field: the same data in far
+// fewer tokens, since a long answer is mostly lists of small objects.
+function compactJson(value) {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    return JSON.stringify(value)
+  }
+  const lines = (items, indent) => items.join(`,\n${indent}`)
+  const entries = Object.entries(value).map(([key, item]) =>
+    Array.isArray(item) && item.length > 0
+      ? `${JSON.stringify(key)}: [\n    ${lines(
+          item.map((one) => JSON.stringify(one)),
+          '    '
+        )}\n  ]`
+      : `${JSON.stringify(key)}: ${JSON.stringify(item)}`
+  )
+  return `{\n  ${lines(entries, '  ')}\n}`
+}
+
 const text = (value) => ({
   content:
     value && typeof value === 'object' && value.binary === true
       ? binaryContent(value)
-      : [{ type: 'text', text: typeof value === 'string' ? value : JSON.stringify(value, null, 2) }]
+      : [{ type: 'text', text: typeof value === 'string' ? value : compactJson(value) }]
 })
 
 // A refusal comes back as an error result the assistant can read and act on;
@@ -47,7 +65,7 @@ function guarded(run) {
   }
 }
 
-const OPERATIONS_HELP = `Operations, applied in order and all or nothing. Coordinates are absolute canvas pixels (x, y = top-left corner), even inside a container. An answer names each element made or changed with its id.
+const OPERATIONS_HELP = `Operations, applied in order and all or nothing. Coordinates are absolute canvas pixels (x, y = top-left corner), even inside a container. An answer is short: the id of each element made or changed, with its absolute place and size after a move, resize or add; an element with no "handles" in an answer has the four default connection points (top, right, bottom, left).
 - add_entity {label, x, y, width=120, height=80, parent?, id?, style?}; add_container {label, x, y, width=320, height=180, ...}; add_text {label, x, y, width=120, height=48, ...}. parent is a container's id. id is optional (a short one such as "api" is fine; letters, digits . _ -).
 - add_line {points: [{x, y, gravity?}, ...] (at least 2), parent?, id?, style?}: a freeform curved line.
 - connect {from, to, label?, fromHandle?, toHandle?, id?, style?}: an edge between two entities or containers. Handles are connection point ids; by default the sides that face each other are used.
@@ -225,7 +243,7 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
     {
       title: 'List the elements of a diagram',
       description:
-        'The elements of a .chd as they stand: id, type, label, absolute position and size, parent and connection point ids; the edges with their ends; tags, links and note paths; the required tags, highlights and legend; the layout problems found so far (labels without room, overlaps, elements sticking out of a container, edges running over an element); and the fingerprint to pass to edit_diagram. Read-only.',
+        'The elements of a .chd as they stand: id, type, label, absolute position and size, parent and connection point ids (left out when they are the four defaults); the edges with their ends; tags, links and note paths; the required tags, highlights and legend; the layout problems found so far (labels without room, overlaps, elements sticking out of a container, edges running over an element); and the fingerprint to pass to edit_diagram. Read-only.',
       inputSchema: { path },
       annotations: readOnly
     },
