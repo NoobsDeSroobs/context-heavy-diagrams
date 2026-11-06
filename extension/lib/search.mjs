@@ -50,6 +50,14 @@ function globToRegExp(glob) {
   return new RegExp(`^${source}$`, 'i')
 }
 
+// A test for a file: null when there is no glob, else (name, path) => whether it matches.
+export function globTest(glob) {
+  if (typeof glob !== 'string' || glob.trim() === '') return null
+  const re = globToRegExp(glob.trim())
+  const onName = !glob.includes('/')
+  return (name, path) => re.test(onName ? name : path)
+}
+
 // Runs inside a script with a time limit; `text`, `source`, `flags` and `cut` are set on the context.
 const REGEX_SCAN = new Script(`
   (() => {
@@ -120,8 +128,7 @@ export function searchFiles(
       throw new ToolError(`pattern is not a valid regular expression: ${error.message}`)
     }
   }
-  const globRe = typeof glob === 'string' && glob.trim() !== '' ? globToRegExp(glob.trim()) : null
-  const globOnName = globRe !== null && !glob.includes('/')
+  const fileWanted = globTest(glob)
 
   let start = root
   if (typeof subfolder === 'string' && subfolder.trim() !== '') {
@@ -208,7 +215,7 @@ export function searchFiles(
         .slice(root.length + 1)
         .split(sep)
         .join('/')
-      if (globRe && !globRe.test(globOnName ? entry.name : path)) continue
+      if (fileWanted && !fileWanted(entry.name, path)) continue
       filesVisited += 1
       if (filesVisited > MAX_FILES_VISITED) {
         stopped = `stopped after looking at ${MAX_FILES_VISITED} files`

@@ -1131,3 +1131,96 @@ test('search_files cuts a regular expression that never finishes, and a long lin
   const [line] = tools.search_files({ pattern: 'NEEDLE', glob: 'minified.js' }).matches
   assert.ok(line.length < 300 && line.includes('NEEDLE') && line.includes('…'), line)
 })
+
+// --- list_files in pages and by folder, read_file by line (ADR 0149)
+
+function writeTree() {
+  mkdirSync(join(folder, 'server', 'src', 'services'), { recursive: true })
+  mkdirSync(join(folder, 'web'), { recursive: true })
+  mkdirSync(join(folder, 'i18n'), { recursive: true })
+  for (let i = 0; i < 5; i += 1) writeFileSync(join(folder, 'i18n', `l${i}.json`), '{}')
+  writeFileSync(join(folder, 'server', 'src', 'main.ts'), 'x')
+  writeFileSync(join(folder, 'server', 'src', 'services', 'a.service.ts'), 'abc')
+  writeFileSync(join(folder, 'server', 'src', 'services', 'b.service.ts'), 'abcdef')
+  writeFileSync(join(folder, 'web', 'page.svelte'), 'x')
+}
+
+test('list_files can show the shape of the tree one level at a time', () => {
+  writeTree()
+  const tools = make()
+  const top = tools.list_files({ folders: true })
+  assert.deepEqual(
+    top.folders.map((f) => [f.name, f.files]),
+    [
+      ['i18n', 5],
+      ['notes', 1],
+      ['server', 3],
+      ['web', 1]
+    ]
+  )
+  assert.equal(top.folders.find((f) => f.name === 'server').bytes, 10)
+  assert.deepEqual(
+    top.files.map((f) => f.path),
+    ['a.chd', 'run.bat']
+  )
+  assert.equal(top.path, '')
+  const inner = tools.list_files({ folders: true, subfolder: 'server/src' })
+  assert.deepEqual(
+    inner.folders.map((f) => [f.name, f.files, f.bytes]),
+    [['services', 2, 9]]
+  )
+  assert.deepEqual(
+    inner.files.map((f) => f.path),
+    ['server/src/main.ts']
+  )
+  assert.equal(inner.path, 'server/src')
+})
+
+test('list_files takes a glob and pages with an offset and a limit, in the order of the paths', () => {
+  writeTree()
+  const tools = make()
+  assert.deepEqual(
+    tools.list_files({ glob: '*.service.ts' }).files.map((f) => f.path),
+    ['server/src/services/a.service.ts', 'server/src/services/b.service.ts']
+  )
+  const first = tools.list_files({ glob: 'i18n/*.json', limit: 2 })
+  assert.deepEqual(
+    first.files.map((f) => f.path),
+    ['i18n/l0.json', 'i18n/l1.json']
+  )
+  assert.deepEqual([first.total, first.truncated, first.nextOffset], [5, true, 2])
+  const last = tools.list_files({ glob: 'i18n/*.json', limit: 2, offset: 4 })
+  assert.deepEqual(
+    last.files.map((f) => f.path),
+    ['i18n/l4.json']
+  )
+  assert.deepEqual([last.truncated, last.nextOffset], [false, undefined])
+  refusal(() => tools.list_files({ offset: -1 }), /offset must be/)
+  refusal(() => tools.list_files({ limit: 0 }), /limit must be/)
+})
+
+test('read_file can read part of a text file by line and says it is a part', () => {
+  const tools = make()
+  const lines = Array.from({ length: 10 }, (_, i) => `line ${i + 1}`)
+  writeFileSync(join(folder, 'notes', 'long.md'), `${lines.join('\n')}\n`)
+  const whole = tools.read_file({ path: 'notes/long.md' })
+  const part = tools.read_file({ path: 'notes/long.md', start_line: 3, end_line: 5 })
+  assert.equal(part.content, 'line 3\nline 4\nline 5')
+  assert.deepEqual(part.lines, { from: 3, to: 5, of: 10 })
+  assert.match(part.partial, /read the whole file before replacing/)
+  assert.equal(part.fingerprint, whole.fingerprint, 'the fingerprint is the whole file')
+  assert.equal(tools.read_file({ path: 'notes/long.md', start_line: 9 }).content, 'line 9\nline 10')
+  assert.equal(tools.read_file({ path: 'notes/long.md', end_line: 2 }).content, 'line 1\nline 2')
+  assert.equal(tools.read_file({ path: 'notes/long.md', start_line: 9, end_line: 99 }).lines.to, 10)
+  refusal(
+    () => tools.read_file({ path: 'notes/long.md', start_line: 0 }),
+    /whole numbers, 1 or more/
+  )
+  refusal(
+    () => tools.read_file({ path: 'notes/long.md', start_line: 5, end_line: 4 }),
+    /start first/
+  )
+  refusal(() => tools.read_file({ path: 'notes/long.md', start_line: 11 }), /has only 10 lines/)
+  writeFileSync(join(folder, 'pic.png'), Buffer.from([0x89, 0x50, 0, 0]))
+  refusal(() => tools.read_file({ path: 'pic.png', start_line: 1 }), /not text/)
+})

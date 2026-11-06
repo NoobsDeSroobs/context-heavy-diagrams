@@ -94,12 +94,24 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
     {
       title: 'List files',
       description:
-        'List the files in the diagram folder (diagrams, notes, supporting documents, source code and so on, except the types that cannot be read), with size, modified time and whether the type can be written. A large folder is listed only up to a cap, flagged as truncated: give a subfolder to list just that part. The result names the folder (its name only, not its path) so you can tell whether the server points at the folder you expect.',
+        'List the files in the diagram folder (diagrams, notes, supporting documents, source code and so on, except the types that cannot be read), with size, modified time and whether the type can be written. In a large folder start with folders: true to see the shape of the tree, then list one subfolder, with a glob if you want one kind of file; a long list comes in pages (total says how many, nextOffset where the next page starts). To find a file by what is in it, use search_files. The result names the folder (its name only, not its path) so you can tell whether the server points at the folder you expect.',
       inputSchema: {
         subfolder: z
           .string()
           .optional()
-          .describe('A folder inside the diagram folder to list instead of all of it')
+          .describe('A folder inside the diagram folder to list instead of all of it'),
+        folders: z
+          .boolean()
+          .optional()
+          .describe(
+            'Show the shape of the tree: the folders directly inside (subfolder, or the top), each with its number of files and bytes, and the files directly inside. Go down one folder at a time.'
+          ),
+        glob: z
+          .string()
+          .optional()
+          .describe('Only files whose path matches, such as "*.ts" or "server/**/*.service.ts"'),
+        offset: z.number().int().optional().describe('Skip this many files (to page through)'),
+        limit: z.number().int().optional().describe('At most this many files, up to 300')
       },
       annotations: readOnly
     },
@@ -274,8 +286,16 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
     {
       title: 'Read a file',
       description:
-        'Read a file in the diagram folder (a diagram, a note, a supporting document, source code, a PDF, a picture). Text returns its content and a fingerprint to pass to update_file; a picture returns as an image and any other binary file as an embedded resource, with its type, size and fingerprint. Executables, installers, archives, disk images, video and audio are refused.',
-      inputSchema: { path },
+        'Read a file in the diagram folder (a diagram, a note, a supporting document, source code, a PDF, a picture). Text returns its content and a fingerprint to pass to update_file; a picture returns as an image and any other binary file as an embedded resource, with its type, size and fingerprint. A large text file can be read in part with start_line and end_line (use search_files to find the lines); a part carries the fingerprint of the whole file but must not be written back with update_file. Executables, installers, archives, disk images, video and audio are refused.',
+      inputSchema: {
+        path,
+        start_line: z
+          .number()
+          .int()
+          .optional()
+          .describe('First line to read (1 is the first line)'),
+        end_line: z.number().int().optional().describe('Last line to read, included')
+      },
       annotations: readOnly
     },
     guarded((args) => tools.read_file(args))

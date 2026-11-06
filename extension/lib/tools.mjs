@@ -48,10 +48,12 @@ import { FINGERPRINT_PATTERN, fingerprint } from './fingerprint.mjs'
 import { formatSpec } from './formatSpec.mjs'
 import { groupMessages } from './issues.mjs'
 import { loadBuiltinMetamodels } from './metamodelsText.mjs'
-import { searchFiles } from './search.mjs'
+import { globTest, searchFiles } from './search.mjs'
 
+const NEWLINE = String.fromCharCode(10)
 const LIST_LIMIT = 300
-const LIST_MAX_DEPTH = 8
+const LIST_COLLECT_LIMIT = 50000
+const LIST_MAX_DEPTH = 12
 
 function staleError(rel) {
   return new ToolError(
@@ -172,9 +174,59 @@ export function createTools({ root, allowUpdate, specSources }) {
     }
   }
 
-  // Files the assistant may read, in the whole folder or under `subfolder`. A large tree hits the
-  // cap, so the assistant can narrow the listing to one subfolder.
-  function listFiles({ subfolder } = {}) {
+  // Every file the assistant may read under `start`, as { full, path, name }, in the order of the
+  // paths. The walk never follows a symlink and skips dot-files, dependency folders and the types
+  // that cannot be read; `matches` narrows it further (a glob).
+  function visibleFiles(start, matches) {
+    const found = []
+    let capped = false
+    const walk = (dir, depth) => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        if (capped) return
+        if (isDotOrIgnoredEntry(entry.name) || entry.isSymbolicLink()) continue
+        const full = join(dir, entry.name)
+        if (entry.isDirectory()) {
+          if (depth < LIST_MAX_DEPTH) walk(full, depth + 1)
+          continue
+        }
+        if (!entry.isFile() || isReadBlockedName(entry.name)) continue
+        const path = full
+          .slice(root.length + 1)
+          .split(sep)
+          .join('/')
+        if (matches && !matches(entry.name, path)) continue
+        if (found.length >= LIST_COLLECT_LIMIT) {
+          capped = true
+          return
+        }
+        found.push({ full, path, name: entry.name })
+      }
+    }
+    walk(start, 0)
+    found.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
+    return { found, capped }
+  }
+
+  const fileEntry = ({ full, path, name }) => {
+    const stats = statSync(full)
+    return {
+      path,
+      bytes: stats.size,
+      modified: stats.mtime.toISOString(),
+      writable: isWritableName(name)
+    }
+  }
+
+  // Files the assistant may read, in the whole folder or under `subfolder`, a page at a time. With
+  // `folders` the answer is the shape of the tree instead: the folders directly inside, with how many
+  // files and bytes each holds, and the files directly inside; go down one level at a time.
+  function listFiles({ subfolder, glob, folders = false, offset = 0, limit = LIST_LIMIT } = {}) {
+    if (!Number.isInteger(offset) || offset < 0) {
+      throw new ToolError('offset must be a whole number, 0 or more')
+    }
+    if (!Number.isInteger(limit) || limit < 1 || limit > LIST_LIMIT) {
+      throw new ToolError(`limit must be a whole number from 1 to ${LIST_LIMIT}`)
+    }
     let start = root
     if (typeof subfolder === 'string' && subfolder.trim() !== '') {
       const found = resolveInFolder(root, subfolder, 'read', { mustExist: true })
@@ -183,38 +235,48 @@ export function createTools({ root, allowUpdate, specSources }) {
       }
       start = found.absolute
     }
-    const files = []
-    let truncated = false
-    const walk = (dir, depth) => {
-      for (const entry of readdirSync(dir, { withFileTypes: true })) {
-        if (isDotOrIgnoredEntry(entry.name) || entry.isSymbolicLink()) continue
-        const full = join(dir, entry.name)
-        if (entry.isDirectory()) {
-          if (depth < LIST_MAX_DEPTH) walk(full, depth + 1)
-          continue
-        }
-        if (!entry.isFile() || isReadBlockedName(entry.name)) continue
-        if (files.length >= LIST_LIMIT) {
-          truncated = true
-          return
-        }
-        const stats = statSync(full)
-        files.push({
-          path: full
-            .slice(root.length + 1)
-            .split(sep)
-            .join('/'),
-          bytes: stats.size,
-          modified: stats.mtime.toISOString(),
-          writable: isWritableName(entry.name)
-        })
-      }
-    }
-    walk(start, 0)
-    files.sort((a, b) => a.path.localeCompare(b.path))
+    const { found, capped } = visibleFiles(start, globTest(glob))
     // The folder's name only, never its full path (which would go to the provider): enough for an
     // assistant to notice that the server points at the wrong folder.
-    return { folder: basename(root), files, truncated, updatesEnabled: allowUpdate }
+    const common = { folder: basename(root), updatesEnabled: allowUpdate }
+    if (folders) {
+      const base =
+        start === root
+          ? ''
+          : `${start
+              .slice(root.length + 1)
+              .split(sep)
+              .join('/')}/`
+      const subfolders = new Map()
+      const here = []
+      for (const file of found) {
+        const below = file.path.slice(base.length).split('/')
+        if (below.length === 1) {
+          here.push(file)
+          continue
+        }
+        const counted = subfolders.get(below[0]) ?? { name: below[0], files: 0, bytes: 0 }
+        counted.files += 1
+        counted.bytes += statSync(file.full).size
+        subfolders.set(below[0], counted)
+      }
+      return {
+        ...common,
+        path: base.slice(0, -1),
+        folders: [...subfolders.values()],
+        files: here.slice(0, LIST_LIMIT).map(fileEntry),
+        truncated: capped || here.length > LIST_LIMIT
+      }
+    }
+    const page = found.slice(offset, offset + limit)
+    const more = offset + limit < found.length
+    return {
+      ...common,
+      files: page.map(fileEntry),
+      total: found.length,
+      truncated: capped || more,
+      ...(more ? { nextOffset: offset + limit } : {})
+    }
   }
 
   function getFormatSpec({ topic } = {}) {
@@ -392,7 +454,33 @@ export function createTools({ root, allowUpdate, specSources }) {
     }
   }
 
-  function readFile({ path }) {
+  // Part of a text file, by line number (1 is the first line, both ends included). The fingerprint is
+  // still the whole file's (ADR 0109), and update_file needs the whole file, so a part says so.
+  function linesOf(rel, content, bytes, startLine = 1, endLine) {
+    const lines = content.split(NEWLINE)
+    if (lines.length > 1 && lines[lines.length - 1] === '') lines.pop()
+    const from = startLine
+    const to = endLine ?? Math.max(lines.length, from)
+    if (!Number.isInteger(from) || !Number.isInteger(to) || from < 1 || to < from) {
+      throw new ToolError('start_line and end_line must be whole numbers, 1 or more, start first')
+    }
+    if (from > lines.length) {
+      throw new ToolError(
+        `"${rel}" has only ${lines.length} lines, so there is nothing from line ${from}`
+      )
+    }
+    const last = Math.min(to, lines.length)
+    return {
+      path: rel,
+      content: lines.slice(from - 1, last).join(NEWLINE),
+      lines: { from, to: last, of: lines.length },
+      partial: 'only these lines; read the whole file before replacing it with update_file',
+      fingerprint: fingerprint(bytes),
+      bytes: bytes.length
+    }
+  }
+
+  function readFile({ path, start_line: startLine, end_line: endLine }) {
     const { absolute, relative: rel } = resolveInFolder(root, path, 'read', { mustExist: true })
     assertFile(absolute, rel)
     if (statSync(absolute).size > MAX_FILE_BYTES) {
@@ -410,9 +498,14 @@ export function createTools({ root, allowUpdate, specSources }) {
         content = null
       }
     }
+    const ranged = startLine !== undefined || endLine !== undefined
+    if (content !== null && ranged) {
+      return linesOf(rel, content, bytes, startLine, endLine)
+    }
     if (content !== null) {
       return { path: rel, content, fingerprint: fingerprint(bytes), bytes: bytes.length }
     }
+    if (ranged) throw new ToolError(`"${rel}" is not text, so a line range does not apply`)
     return {
       path: rel,
       binary: true,
