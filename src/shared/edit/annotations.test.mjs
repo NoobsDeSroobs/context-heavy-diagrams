@@ -376,3 +376,35 @@ test('describeDiagram shows tags, links, notes and the catalogs, and leaves out 
   assert.equal(described.legend[0].id, 'l1')
   assert.deepEqual(described.diagramTags, { sourceBase: 'src/' })
 })
+
+test('link_new_diagram names the file after the label in the folder of this diagram, never twice the same', () => {
+  const taken = new Set(['d/Orders-1.chd'])
+  const linked = { ...options, linkedFolder: 'd', fileExists: (path) => taken.has(path) }
+  const { diagram, results } = applyOperations(
+    base(),
+    [
+      { op: 'add_entity', id: 'o1', label: 'Orders\nthe order service', x: 0, y: 0 },
+      { op: 'add_entity', id: 'o2', label: 'Orders', x: 0, y: 0 },
+      { op: 'add_entity', id: 'o3', label: 'Orders', x: 0, y: 0 },
+      { op: 'link_new_diagram', id: 'o1' },
+      { op: 'link_new_diagram', id: 'o2' },
+      { op: 'link_new_diagram', id: 'o3', name: 'A/B?' },
+      { op: 'set_link', id: 'api', path: 'shared/Shared.chd' },
+      { op: 'set_link', id: 'db', path: 'd/Db.chd' }
+    ],
+    linked
+  )
+  assert.deepEqual(
+    results.slice(3, 6).map((r) => r.link),
+    ['d/Orders.chd', 'd/Orders-2.chd', 'd/A-B-.chd'],
+    'the first line of the label, a numbered name when one is taken, here or on disk'
+  )
+  assert.equal(diagram.nodes.find((n) => n.id === 'o1').data.linkedDiagram, 'd/Orders.chd')
+  assert.match(results[6].notices[0], /"d\/".*elsewhere.*link_new_diagram/)
+  assert.equal(results[7].notices, undefined, 'a link inside the folder needs no remark')
+  assert.throws(
+    () => applyOperations(diagram, [{ op: 'link_new_diagram', id: 'o1' }], linked),
+    /already links to d\/Orders\.chd/
+  )
+  refused(base(), { op: 'link_new_diagram', id: 'api' }, /cannot be made here/)
+})

@@ -562,6 +562,11 @@ export function createTools({ root, allowUpdate, specSources }) {
       applied = applyOperations(diagram, operations, {
         newId: (prefix) => `${prefix}-${randomUUID()}`,
         notesFolder: `${posix.basename(rel, extname(rel))}/notes`,
+        linkedFolder: posix.basename(rel, extname(rel)),
+        fileExists: (stored) =>
+          existsSync(
+            resolveInFolder(root, inFolder(stored), 'read', { mustExist: false }).absolute
+          ),
         checkReference: (stored) => {
           try {
             resolveInFolder(root, inFolder(stored), 'read', { mustExist: false })

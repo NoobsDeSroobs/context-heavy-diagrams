@@ -12,6 +12,7 @@ import type {
   MetadataEntry,
   RequiredTagDefinition
 } from '../diagram/index.ts'
+import { labelToFileStem } from '../labelFileName.ts'
 import { highlightId } from '../tagging/highlights.ts'
 import { seedMetadata, syncElementMetadata } from '../tagging/metadataSync.ts'
 import {
@@ -417,7 +418,42 @@ function setLink(model: Model, reader: Reader): OperationResult {
   const path = storedPath(model, reader, 'path')
   if (!path.toLowerCase().endsWith('.chd')) reader.fail('a link points at another .chd diagram')
   node.data.linkedDiagram = path
-  return { op: 'set_link', element: summarizeNode(model.diagram, node), link: path }
+  const result: OperationResult = {
+    op: 'set_link',
+    element: summarizeNode(model.diagram, node),
+    link: path
+  }
+  const folder = model.options.linkedFolder
+  if (folder !== undefined && !path.startsWith(`${folder}/`)) {
+    result.notices = [
+      `the editor keeps the diagrams linked from this one in "${folder}/"; "${path}" is elsewhere, which is right for a diagram that already exists or is shared, but for a new one use link_new_diagram`
+    ]
+  }
+  return result
+}
+
+// What the editor's "new linked diagram" does: the file is named after the label and goes in the folder
+// named after this diagram, so a drill-down hierarchy nests one folder deeper per level. Only the link is
+// stored; the caller makes the diagram at that path (edit_diagram creates it, and the folder with it).
+function linkNewDiagram(model: Model, reader: Reader): OperationResult {
+  const node = linkable(model, reader)
+  const folder = model.options.linkedFolder
+  if (folder === undefined) reader.fail('linked diagrams cannot be made here')
+  if (node.data.linkedDiagram) {
+    reader.fail(
+      `"${node.id}" already links to ${node.data.linkedDiagram}: use set_link to change it or remove_link first`
+    )
+  }
+  const stem = labelToFileStem(reader.optionalString('name') ?? node.data.label, 'diagram')
+  const taken = new Set(model.nodes.map((n) => n.data.linkedDiagram))
+  let path = `${folder}/${stem}.chd`
+  for (let n = 1; taken.has(path) || model.options.fileExists?.(path); n += 1) {
+    path = `${folder}/${stem}-${n}.chd`
+  }
+  const refusal = model.options.checkReference?.(path)
+  if (refusal) reader.fail(refusal)
+  node.data.linkedDiagram = path
+  return { op: 'link_new_diagram', element: summarizeNode(model.diagram, node), link: path }
 }
 
 function removeLink(model: Model, reader: Reader): OperationResult {
@@ -486,6 +522,7 @@ export const ANNOTATION_OPERATIONS: Record<
   set_legend_entry: setLegendEntry,
   remove_legend_entry: removeLegendEntry,
   set_link: setLink,
+  link_new_diagram: linkNewDiagram,
   remove_link: removeLink,
   set_note: setNote,
   remove_note: removeNote

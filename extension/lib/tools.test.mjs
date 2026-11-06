@@ -977,3 +977,38 @@ test('a link may only lead somewhere the extension may use', () => {
     'a link to a diagram not made yet is a warning'
   )
 })
+
+test('a new linked diagram goes in the folder named after its parent, one level deeper each time', () => {
+  const tools = make()
+  const top = tools.edit_diagram({
+    path: 'shop.chd',
+    operations: [
+      { op: 'add_entity', id: 'orders', label: 'Orders', x: 0, y: 0 },
+      { op: 'link_new_diagram', id: 'orders' }
+    ]
+  })
+  assert.equal(top.results[1].link, 'shop/Orders.chd')
+  const child = tools.edit_diagram({
+    path: top.results[1].link,
+    operations: [
+      { op: 'add_entity', id: 'items', label: 'Items', x: 0, y: 0 },
+      { op: 'link_new_diagram', id: 'items' }
+    ]
+  })
+  assert.equal(child.results[1].link, 'Orders/Items.chd')
+  assert.equal(
+    existsSync(join(folder, 'shop', 'Orders.chd')),
+    true,
+    'the folder is made with the file'
+  )
+  // A name that is in use on disk is not taken again.
+  const again = tools.edit_diagram({
+    path: 'shop.chd',
+    base_fingerprint: top.fingerprint,
+    operations: [
+      { op: 'add_entity', id: 'orders2', label: 'Orders', x: 0, y: 200 },
+      { op: 'link_new_diagram', id: 'orders2' }
+    ]
+  })
+  assert.equal(again.results[1].link, 'shop/Orders-1.chd')
+})

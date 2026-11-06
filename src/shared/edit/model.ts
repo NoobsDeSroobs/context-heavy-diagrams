@@ -84,6 +84,13 @@ export interface ApplyOptions {
   // The folder, relative to the diagram's own, where a new note goes ("shop/notes"). Without it
   // set_note is refused: this executor has nowhere to put a note.
   notesFolder?: string
+  // The folder, relative to the diagram's own, where the diagrams linked from this one belong, named
+  // after it ("shop" for shop.chd), as the editor does (ADR 0005). Without it link_new_diagram is
+  // refused.
+  linkedFolder?: string
+  // Whether a file already exists at a path relative to the diagram, so a new linked diagram does not
+  // take a name that is in use.
+  fileExists?: (path: string) => boolean
   // Refuses a path that is about to be stored in the diagram (a link or a note): returns the reason,
   // or undefined if it is fine. The caller knows the folder the assistant may use; the core only
   // knows the path is relative.
