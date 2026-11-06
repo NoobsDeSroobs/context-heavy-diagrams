@@ -49,6 +49,7 @@ async function exercise(entry) {
         'list_files',
         'read_file',
         'room_for_label',
+        'search_files',
         'validate_diagram',
         'validate_metamodel'
       ])

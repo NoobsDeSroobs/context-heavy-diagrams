@@ -47,6 +47,7 @@ import {
 import { FINGERPRINT_PATTERN, fingerprint } from './fingerprint.mjs'
 import { formatSpec } from './formatSpec.mjs'
 import { loadBuiltinMetamodels } from './metamodelsText.mjs'
+import { searchFiles } from './search.mjs'
 
 const LIST_LIMIT = 300
 const LIST_MAX_DEPTH = 8
@@ -652,6 +653,7 @@ export function createTools({ root, allowUpdate, specSources }) {
     inspect_diagram: inspectDiagram,
     room_for_label: roomForLabelTool,
     list_files: listFiles,
+    search_files: (args) => searchFiles(root, args),
     get_format_spec: getFormatSpec,
     validate_diagram: validateDiagram,
     validate_metamodel: validateMetamodel,

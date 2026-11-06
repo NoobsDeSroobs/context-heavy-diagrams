@@ -1012,3 +1012,122 @@ test('a new linked diagram goes in the folder named after its parent, one level 
   })
   assert.equal(again.results[1].link, 'shop/Orders-1.chd')
 })
+
+// --- search_files (ADR 0149)
+
+function writeSource() {
+  mkdirSync(join(folder, 'server', 'src'), { recursive: true })
+  mkdirSync(join(folder, 'web'), { recursive: true })
+  writeFileSync(
+    join(folder, 'server', 'src', 'metadata.service.ts'),
+    'import x from "y"\n\nexport class Metadata {\n  // emits AssetUpdate\n  run() {\n    emit("AssetUpdate")\n  }\n}\n'
+  )
+  writeFileSync(
+    join(folder, 'server', 'src', 'other.ts'),
+    'const assetupdate = 1\r\nconst b = 2\r\n'
+  )
+  writeFileSync(join(folder, 'web', 'page.svelte'), '<p>AssetUpdate</p>\n')
+  writeFileSync(join(folder, 'notes', 'readme.md'), '# Notes\nAssetUpdate is an event\n')
+}
+
+test('search_files finds lines of text and says where, in the order of the paths', () => {
+  writeSource()
+  const found = make().search_files({ pattern: 'AssetUpdate' })
+  assert.deepEqual(found.matches, [
+    'notes/readme.md:2: AssetUpdate is an event',
+    'server/src/metadata.service.ts:4:   // emits AssetUpdate',
+    'server/src/metadata.service.ts:6:     emit("AssetUpdate")',
+    'web/page.svelte:1: <p>AssetUpdate</p>'
+  ])
+  assert.match(found.summary, /^4 lines match in 3 files \(\d+ files searched\)$/)
+  assert.equal(found.stopped, undefined)
+})
+
+test('search_files can ignore case, take a glob, a subfolder and context, and list only the files', () => {
+  writeSource()
+  const tools = make()
+  assert.equal(tools.search_files({ pattern: 'assetupdate' }).matches.length, 1)
+  const loose = tools.search_files({ pattern: 'assetupdate', ignore_case: true, glob: '*.ts' })
+  assert.deepEqual(
+    loose.matches.map((m) => m.split(':')[0]),
+    ['server/src/metadata.service.ts', 'server/src/metadata.service.ts', 'server/src/other.ts'],
+    'a glob without a slash is tried against the file name'
+  )
+  assert.equal(
+    loose.matches[2],
+    'server/src/other.ts:1: const assetupdate = 1',
+    'CRLF is cut cleanly'
+  )
+  const nested = tools.search_files({ pattern: 'AssetUpdate', glob: 'server/**/*.service.ts' })
+  assert.equal(nested.matches.length, 2)
+  assert.equal(tools.search_files({ pattern: 'AssetUpdate', subfolder: 'web' }).matches.length, 1)
+  const around = tools.search_files({
+    pattern: 'emit("AssetUpdate")',
+    subfolder: 'server',
+    context: 1
+  })
+  assert.deepEqual(around.matches, [
+    'server/src/metadata.service.ts-5-   run() {',
+    'server/src/metadata.service.ts:6:     emit("AssetUpdate")',
+    'server/src/metadata.service.ts-7-   }'
+  ])
+  const only = tools.search_files({ pattern: 'AssetUpdate', glob: '*.ts', files_only: true })
+  assert.deepEqual(only.files, ['server/src/metadata.service.ts (2)'])
+  const braces = tools.search_files({
+    pattern: 'AssetUpdate',
+    glob: '*.{svelte,md}',
+    files_only: true
+  })
+  assert.equal(braces.files.length, 2)
+})
+
+test('search_files takes a regular expression, stops at the cap and says so', () => {
+  writeSource()
+  const tools = make()
+  const re = tools.search_files({ pattern: 'emit\\("(\\w+)"\\)', regex: true })
+  assert.equal(re.matches.length, 1)
+  refusal(() => tools.search_files({ pattern: '(', regex: true }), /not a valid regular expression/)
+  const capped = tools.search_files({ pattern: 'e', max_matches: 3 })
+  assert.equal(capped.matches.length, 3)
+  assert.match(capped.stopped, /stopped after 3 matches; narrow it/)
+  assert.match(capped.summary, /^3\+ lines match/)
+})
+
+test('search_files follows the same rules as list_files and read_file', () => {
+  writeSource()
+  writeFileSync(join(folder, 'node_modules', 'dep.md'), 'AssetUpdate')
+  writeFileSync(join(folder, '.env'), 'AssetUpdate')
+  writeFileSync(join(folder, 'tool.exe'), 'AssetUpdate')
+  writeFileSync(join(folder, 'image.dat'), Buffer.from([0, 1, 2, 65, 115, 115, 101, 116]))
+  writeFileSync(join(folder, 'huge.txt'), `AssetUpdate${' '.repeat(3 * 1024 * 1024)}`)
+  writeFileSync(join(base, 'outside.md'), 'AssetUpdate')
+  try {
+    symlinkSync(base, join(folder, 'link'), 'junction')
+  } catch {
+    // no permission to make a link here: the rest still holds
+  }
+  const tools = make()
+  const found = tools.search_files({ pattern: 'AssetUpdate', files_only: true })
+  assert.deepEqual(
+    found.files.map((f) => f.split(' ')[0]),
+    ['notes/readme.md', 'server/src/metadata.service.ts', 'web/page.svelte']
+  )
+  assert.match(found.skipped, /1 files over 2 MB.*1 files that are not text/)
+  refusal(() => tools.search_files({ pattern: 'x', subfolder: '../' }), /outside the folder/)
+  refusal(() => tools.search_files({ pattern: 'x', subfolder: '.git' }), /dot-files/)
+  refusal(() => tools.search_files({ pattern: 'x', subfolder: 'a.chd' }), /not a folder/)
+  refusal(() => tools.search_files({ pattern: '' }), /pattern is required/)
+  refusal(() => tools.search_files({ pattern: 'x', context: 9 }), /context must be/)
+  refusal(() => tools.search_files({ pattern: 'x', max_matches: 0 }), /max_matches must be/)
+})
+
+test('search_files cuts a regular expression that never finishes, and a long line around its match', () => {
+  const tools = make()
+  writeFileSync(join(folder, 'evil.txt'), `${'a'.repeat(40)}b\n`)
+  writeFileSync(join(folder, 'minified.js'), `${'x'.repeat(5000)}NEEDLE${'y'.repeat(5000)}\n`)
+  const slow = tools.search_files({ pattern: '(a+)+$', regex: true, glob: 'evil.txt' })
+  assert.deepEqual(slow.matches, [])
+  assert.match(slow.skipped, /1 files where the regular expression took too long/)
+  const [line] = tools.search_files({ pattern: 'NEEDLE', glob: 'minified.js' }).matches
+  assert.ok(line.length < 300 && line.includes('NEEDLE') && line.includes('…'), line)
+})

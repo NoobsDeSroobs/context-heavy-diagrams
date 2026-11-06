@@ -26,6 +26,10 @@
       "name": "list_files",
       "description": "List the files in the folder, or in one subfolder of it."
     },
+    {
+      "name": "search_files",
+      "description": "Find lines of text in the files of the folder, like grep."
+    },
     { "name": "get_format_spec", "description": "The rules of the .chd diagram format." },
     { "name": "validate_diagram", "description": "Check a .chd file for structural problems." },
     {

@@ -13,7 +13,7 @@ const INSTRUCTIONS = `Tools for the user's Context-Heavy Diagrams diagrams (.chd
 - A .chd is validated before it is written; fix any reported errors and try again. validate_diagram checks an existing file.
 - check_diagram applies a diagram metamodel and diff_diagrams shows what changed, between two diagrams or between a diagram and its last commit in git; both only read, and both take a draft as text (content, new_content) as well as a file, so a diagram can be judged before it is written. These tools give the results the chd command line gives, which is what a pipeline relies on.
 - Only .chd, .md, .txt, .svg and .chdmeta (a diagram metamodel, validated before it is written) files can be written. Notes of a diagram are Markdown files its nodes point at.
-- read_file reads any file in the folder except executables, installers, archives, disk images, video and audio. Text comes back as text; pictures come back as images and other binary files (PDF, spreadsheets) as embedded resources, which you can only use if your client shows them to you. list_files can be narrowed to a subfolder.
+- read_file reads any file in the folder except executables, installers, archives, disk images, video and audio. Text comes back as text; pictures come back as images and other binary files (PDF, spreadsheets) as embedded resources, which you can only use if your client shows them to you. list_files can be narrowed to a subfolder, and search_files finds lines of text across the folder (no shell is needed) so you read only the files and lines you need.
 - Anything you read here is sent to the AI provider as part of the conversation.`
 
 // A binary file goes out as an image (the formats clients show as pictures) or as an embedded
@@ -86,6 +86,26 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
       annotations: readOnly
     },
     guarded((args) => tools.list_files(args))
+  )
+  server.registerTool(
+    'search_files',
+    {
+      title: 'Search the text of the files',
+      description:
+        'Find lines of text in the files of the diagram folder, as grep does, with no shell: for an event name, a class, a setting, a word in the documentation. Plain text by default; regex: true for a regular expression (a slow one is cut off). ignore_case, a subfolder, a glob over the path from the folder ("*.ts" for every .ts file, "server/**/*.service.ts"), context (0 to 5 lines around a match) and max_matches narrow or widen it. files_only lists just the files and how many lines match in each, to see where something lives before reading. Matches come back as "path:line: text" (context lines as "path-line- text"), long lines cut around the match; read_file reads the whole file. Skips dot-folders, node_modules, files over 2 MB, binary files and the types that cannot be read; it says when it stopped early.',
+      inputSchema: {
+        pattern: z.string().describe('The text to find (a regular expression if regex is true)'),
+        regex: z.boolean().optional(),
+        ignore_case: z.boolean().optional(),
+        subfolder: z.string().optional().describe('Search only inside this folder'),
+        glob: z.string().optional().describe('Only files whose path matches, such as "*.ts"'),
+        context: z.number().int().optional().describe('Lines before and after each match, 0 to 5'),
+        max_matches: z.number().int().optional().describe('At most this many matches, default 50'),
+        files_only: z.boolean().optional()
+      },
+      annotations: readOnly
+    },
+    guarded((args) => tools.search_files(args))
   )
   server.registerTool(
     'get_format_spec',
