@@ -24,6 +24,24 @@ In both trial runs the assistant wrote its own generator, about 1,000 lines each
 - **How much of the editor in the first version.** Likely: entities, containers, text, move, resize, nesting, labels, connections with connection points, styles passed through to the file's own style fields, tags, notes, links, delete. Left for later: align and distribute, edge points, the security matrix, icons.
 - The former questions on the write scope and on how a spec would be checked are open until the above is settled.
 
+## Options and rough costs
+Raised by the maintainer as thoughts, not requirements; the feature may shrink or go.
+- **Operations tool** (above): no script and no runtime, works in Claude Desktop through the extension. Large: edits, CLI and MCP surface, parity tests.
+- **Snippets or helper functions** the assistant calls from its own glue script, so it invents only the glue: small, fully flexible, but it still needs a shell and a runtime, which is part of the problem. Could be made language-neutral by letting `chd` print them (a valid entity with a fresh id, and so on).
+- **The questions alone** (room for a label, layout issues, element list): small to medium; read-only, no second implementation of any edit, shared with [0167](0167-assistants-can-see-their-own-output.md), and useful with every option above.
+- Leaning: build the questions first, then judge by a re-run of the trial whether snippets or the operations tool is worth it. Which assistants this is for (Claude Desktop with only the extension, or agents with a shell) decides how much the operations tool is worth.
+
+## Keeping the live bridge possible
+[0163](0163-mcp-server-connected-to-the-running-app.md) has a later mode in which the assistant edits the open diagram and the person watches it change. Whatever is built here must not rule that out:
+- **One core, two executors.** The operations are a pure function from a diagram and an operation to a new diagram and an answer, in shared code. The file executor reads and writes the `.chd`; the app executor takes the canvas as a diagram, runs the same function, and puts the result back as one undoable step. That way the app is not a second implementation.
+- **Operations are data** (`{op, ...}`), so they can travel over a socket as well as arrive on standard input or as MCP arguments.
+- **Questions take a diagram, not a path,** so the app can answer from its live, unsaved state; the Diagnostics Layout section already works this way.
+- **No file paths in operations.** A note is text and a link is a path relative to the diagram; the executor decides where the note file goes (the file executor writes it, the app uses its own note handling).
+- **Positions are absolute** in the operations; the core converts to and from parent-relative, so that trap stays inside it.
+- **A version token, not a fingerprint.** Every call takes the token from the previous answer and returns a new one: the file's SHA-256 for the file executor ([ADR 0109](../../decisions/0109-stale-edit-check-for-every-ai-write-path.md)), a revision counter for the app.
+- **No save operation** over the bridge; only the person saves.
+- This epic must stand without the bridge: [0163](0163-mcp-server-connected-to-the-running-app.md) allows a no-go.
+
 ## Risks
 A second implementation of the editor's edits that drifts from the app; an operation set too small to be useful or so large it is the whole editor; answers that are too long for the assistant to read at each step.
 
