@@ -2,7 +2,9 @@
 
 What changed for people using the tool, one entry per minor or major release. The reasons are in [docs/decisions/](docs/decisions/); the full history is in `git log`.
 
-## 0.6.0 (unreleased)
+## 0.7.0 (unreleased)
+
+## 0.6.0 (2026-11-06)
 
 ### Added
 - **The Claude Desktop extension can check a diagram against a diagram metamodel and show what changed.** `check_diagram` applies a built-in metamodel or a `.chdmeta` file in the folder, and `diff_diagrams` compares two diagrams in the folder, with the same results as `chd check` and `chd diff`. The `conformance` topic of `get_format_spec` explains the checks. The command line stays what a build pipeline relies on. ([ADR 0138](docs/decisions/0138-the-mcp-server-carries-the-guidance-the-cli-carries-the-checks.md))
