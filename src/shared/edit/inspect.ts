@@ -2,7 +2,17 @@
 // absolute positions and the connection points an edge may name), how much room an edge label needs,
 // and what is wrong with the layout so far. All read-only and all taking a diagram, not a file, so the
 // open window can answer from its live state as well. The label geometry is layout/labelClearance.ts.
-import type { ConnectionPoint, DiagramEdge, DiagramFile, DiagramNode } from '../diagram/index.ts'
+import type {
+  ConnectionPoint,
+  DiagramEdge,
+  DiagramFile,
+  DiagramNode,
+  HighlightDefinition,
+  JsonValue,
+  LegendEntry,
+  MetadataEntry,
+  RequiredTagDefinition
+} from '../diagram/index.ts'
 import { effectiveConnectionPoints, pointCoordinates } from '../geometry/connectionPoints.ts'
 import {
   hiddenLabels,
@@ -12,13 +22,50 @@ import {
 } from '../layout/labelClearance.ts'
 import { summarizeEdge, summarizeNode, type EdgeSummary, type NodeSummary } from './operations.ts'
 
-export function describeDiagram(diagram: DiagramFile): {
-  nodes: NodeSummary[]
-  edges: EdgeSummary[]
-} {
+export interface DescribedNode extends NodeSummary {
+  tags?: Record<string, JsonValue>
+  // The relative paths stored on the element: the diagram it links to, the Markdown file of its note.
+  link?: string
+  note?: string
+}
+
+export interface DescribedEdge extends EdgeSummary {
+  tags?: Record<string, JsonValue>
+}
+
+export interface DiagramDescription {
+  nodes: DescribedNode[]
+  edges: DescribedEdge[]
+  // The diagram-level pieces, each present only when the diagram has any.
+  diagramTags?: Record<string, JsonValue>
+  requiredTags?: RequiredTagDefinition[]
+  highlights?: HighlightDefinition[]
+  legend?: LegendEntry[]
+}
+
+function tagsOf(
+  metadata: Record<string, MetadataEntry> | undefined
+): { tags: Record<string, JsonValue> } | Record<string, never> {
+  const keys = Object.keys(metadata ?? {})
+  if (!metadata || keys.length === 0) return {}
+  return { tags: Object.fromEntries(keys.map((key) => [key, metadata[key].value])) }
+}
+
+export function describeDiagram(diagram: DiagramFile): DiagramDescription {
   return {
-    nodes: diagram.nodes.map((n) => summarizeNode(diagram, n)),
-    edges: diagram.edges.map(summarizeEdge)
+    nodes: diagram.nodes.map((n) => ({
+      ...summarizeNode(diagram, n),
+      ...tagsOf(n.metadata),
+      ...(n.data.linkedDiagram ? { link: n.data.linkedDiagram } : {}),
+      ...(n.data.notes ? { note: n.data.notes } : {})
+    })),
+    edges: diagram.edges.map((e) => ({ ...summarizeEdge(e), ...tagsOf(e.metadata) })),
+    ...(diagram.metadata && Object.keys(diagram.metadata).length > 0
+      ? { diagramTags: diagram.metadata }
+      : {}),
+    ...(diagram.requiredTags?.length ? { requiredTags: diagram.requiredTags } : {}),
+    ...(diagram.highlights?.length ? { highlights: diagram.highlights } : {}),
+    ...(diagram.legend?.length ? { legend: diagram.legend } : {})
   }
 }
 

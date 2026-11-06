@@ -1,7 +1,7 @@
 # 0165: An editing tool for assistants: the steps a person takes, and questions about layout
 
 ## Status
-In progress on the branch `epic/0165-build-tool-for-assistants` (2026-11-06). A proof of concept is built: the operations, the questions and the three extension tools ([ADR 0148](../../decisions/0148-an-assistant-builds-a-diagram-by-operations-that-answer.md)). The maintainer decides whether it is good enough to go on; nothing is tried with a real assistant yet. (The file keeps its first name; the first idea, a one-shot spec like D2, was dropped.)
+In progress on the branch `epic/0165-build-tool-for-assistants` (2026-11-06). The operations, the questions and the three extension tools are built ([ADR 0148](../../decisions/0148-an-assistant-builds-a-diagram-by-operations-that-answer.md)). The first version was tried with a real assistant in Claude Desktop and works well enough; tags, required tags, highlights, legend, links and notes were added after. (The file keeps its first name; the first idea, a one-shot spec like D2, was dropped.)
 
 ## Goal
 An assistant draws and edits a diagram by doing what a person does, one step at a time, and each step answers with what it made, so the next step can use it: create boxes, move them, connect them, style them, add notes and links. The assistant decides spacing and layout. The tool helps it get that right by answering questions ("how much room does an edge labelled X need?", "what is wrong with this layout?"). No assistant writes a generator script again, and the result is the same on any machine.
@@ -51,8 +51,10 @@ A second implementation of the editor's edits that drifts from the app; an opera
 - [x] The editing core in shared code, with tests that every result passes the validator and serialises as the app does (`src/shared/edit/`)
 - [x] The questions: room for a label, layout issues, element list (`room_for_label`, `inspect_diagram`, and the issues in every `edit_diagram` answer)
 - [x] The MCP tools. [ ] The command line (`chd edit`, `chd ask`) and the parity test of [0166](0166-mcp-and-cli-parity.md) are not done
-- [ ] Try it with a real assistant in Claude Desktop on a diagram of moderate size, and judge whether the operations are enough
-- [ ] Tags, notes and links as operations, if the proof of concept holds
+- [x] Try it with a real assistant in Claude Desktop on a diagram of moderate size (the first version: works well enough)
+- [x] Tags, required tags, highlights, legend, links and notes as operations
+- [ ] Try the tags, notes and legend with a real assistant
+- [ ] Icons, edge routing points, the security matrix as operations, if wanted
 - [ ] Guidance: update the skill, `AGENTS.md`, the extension's instructions and the copy-paste text to prefer it
 - [ ] Re-run an assistant on a large project and compare against the hand-written generators
 

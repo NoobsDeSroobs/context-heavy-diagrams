@@ -42,7 +42,7 @@
     },
     {
       "name": "edit_diagram",
-      "description": "Build or change a diagram step by step: add, connect, move and restyle elements, and learn what is wrong with the layout."
+      "description": "Build or change a diagram step by step: add, connect, move, restyle, tag, link, note and delete elements, and learn what is wrong with the layout."
     },
     {
       "name": "inspect_diagram",

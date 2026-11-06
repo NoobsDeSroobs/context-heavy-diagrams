@@ -877,3 +877,103 @@ test('inspect_diagram lists the elements and the problems, and room_for_label an
   assert.ok(room.minimum > 0 && room.target > room.minimum)
   refusal(() => tools.room_for_label({ label: 'x', direction: 'sideways' }), /direction/)
 })
+
+// --- tags, links, notes, legend and the rest through edit_diagram
+
+test('edit_diagram writes a note beside the diagram, and inspect_diagram shows tags, the note and the catalogs', () => {
+  const tools = make()
+  const made = tools.edit_diagram({
+    path: 'sub/shop.chd',
+    operations: [
+      {
+        op: 'set_required_tag',
+        key: 'environment',
+        allowedValues: ['dev', 'prod'],
+        defaultValue: 'dev'
+      },
+      { op: 'add_entity', id: 'api', label: 'API', x: 0, y: 0, tags: { owner: 'platform' } },
+      { op: 'set_note', id: 'api', text: '# API\nTakes requests.' },
+      { op: 'set_highlight', key: 'environment', value: 'prod', color: '#e6194b' },
+      { op: 'add_legend_entry', id: 'l1', kind: 'entity', label: 'Prod', color: '#e6194b' }
+    ]
+  })
+  assert.equal(made.results[2].note, 'shop/notes/API-api.md')
+  const notePath = join(folder, 'sub', 'shop', 'notes', 'API-api.md')
+  assert.equal(readFileSync(notePath, 'utf-8'), '# API\nTakes requests.\n')
+  assert.deepEqual(made.warnings, [], 'the stored path resolves to the file just written')
+
+  const seen = tools.inspect_diagram({ path: 'sub/shop.chd' })
+  assert.deepEqual(seen.nodes[0].tags, { environment: 'dev', owner: 'platform' })
+  assert.equal(seen.nodes[0].note, 'shop/notes/API-api.md')
+  assert.equal(seen.requiredTags[0].key, 'environment')
+  assert.equal(seen.highlights.length, 1)
+  assert.equal(seen.legend[0].id, 'l1')
+  // The assistant reads the note with the file tools, by the path the answer gave.
+  assert.equal(
+    tools.read_file({ path: 'sub/shop/notes/API-api.md' }).content,
+    '# API\nTakes requests.\n'
+  )
+})
+
+test('a refused diagram leaves no note behind, and an existing note file is never overwritten', () => {
+  const tools = make()
+  const first = tools.edit_diagram({
+    path: 'shop.chd',
+    operations: [{ op: 'add_entity', id: 'api', label: 'API', x: 0, y: 0 }]
+  })
+  // A stale fingerprint is refused after the note would have been written: nothing remains.
+  refusal(
+    () =>
+      tools.edit_diagram({
+        path: 'shop.chd',
+        base_fingerprint: 'a'.repeat(64),
+        operations: [{ op: 'set_note', id: 'api', text: 'x' }]
+      }),
+    /has changed since you read it/
+  )
+  assert.equal(existsSync(join(folder, 'shop')), false, 'the notes folder made for it is gone')
+
+  // A file already at the note's path stays as it is.
+  mkdirSync(join(folder, 'shop', 'notes'), { recursive: true })
+  writeFileSync(join(folder, 'shop', 'notes', 'API-api.md'), 'mine')
+  refusal(
+    () =>
+      tools.edit_diagram({
+        path: 'shop.chd',
+        base_fingerprint: first.fingerprint,
+        operations: [{ op: 'set_note', id: 'api', text: 'x' }]
+      }),
+    /already exists/
+  )
+  assert.equal(readFileSync(join(folder, 'shop', 'notes', 'API-api.md'), 'utf-8'), 'mine')
+  assert.equal(
+    sha(readFileSync(join(folder, 'shop.chd'))),
+    first.fingerprint,
+    'the diagram is untouched'
+  )
+})
+
+test('a link may only lead somewhere the extension may use', () => {
+  const tools = make()
+  const ops = (path) => [
+    { op: 'add_entity', id: 'api', label: 'API', x: 0, y: 0 },
+    { op: 'set_link', id: 'api', path }
+  ]
+  refusal(
+    () => tools.edit_diagram({ path: 'sub/a.chd', operations: ops('../../outside.chd') }),
+    /outside the folder/
+  )
+  refusal(
+    () => tools.edit_diagram({ path: 'sub/a.chd', operations: ops('.git/x.chd') }),
+    /dot-files/
+  )
+  const made = tools.edit_diagram({ path: 'sub/a.chd', operations: ops('../a.chd') })
+  assert.equal(made.results[1].link, '../a.chd')
+  assert.deepEqual(made.warnings, [], 'the target exists')
+  const missing = tools.edit_diagram({ path: 'sub/b.chd', operations: ops('Later.chd') })
+  assert.match(
+    missing.warnings.join('\n'),
+    /Later\.chd.*does not exist/,
+    'a link to a diagram not made yet is a warning'
+  )
+})

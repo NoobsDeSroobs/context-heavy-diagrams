@@ -12,7 +12,7 @@ import {
   writeFileSync
 } from 'node:fs'
 import { randomUUID } from 'node:crypto'
-import { basename, dirname, extname, join, sep } from 'node:path'
+import { basename, dirname, extname, join, posix, sep } from 'node:path'
 import {
   createEmptyDiagram,
   parseDiagram,
@@ -553,10 +553,24 @@ export function createTools({ root, allowUpdate, specSources }) {
       }
       diagram = createEmptyDiagram()
     }
+    // Paths the operations store in the diagram (a link, a note) are relative to it; they may only
+    // lead to places this extension may use (ADR 0115).
+    const here = posix.dirname(rel)
+    const inFolder = (stored) => posix.join(here, stored)
     let applied
     try {
       applied = applyOperations(diagram, operations, {
-        newId: (prefix) => `${prefix}-${randomUUID()}`
+        newId: (prefix) => `${prefix}-${randomUUID()}`,
+        notesFolder: `${posix.basename(rel, extname(rel))}/notes`,
+        checkReference: (stored) => {
+          try {
+            resolveInFolder(root, inFolder(stored), 'read', { mustExist: false })
+            return undefined
+          } catch (error) {
+            if (error instanceof ToolError) return `"${stored}": ${error.message}`
+            throw error
+          }
+        }
       })
     } catch (error) {
       if (error instanceof OperationError) {
@@ -567,9 +581,28 @@ export function createTools({ root, allowUpdate, specSources }) {
       throw error
     }
     const content = serializeDiagram(applied.diagram)
-    const written = exists
-      ? replaceFile({ path: rel, content, base_fingerprint: baseFingerprint })
-      : createFile({ path: rel, content })
+    // New notes first, each created and never overwritten; if the diagram is then refused (a stale
+    // fingerprint, an invalid result) the notes made for it are removed again.
+    const madeNotes = []
+    const madeDirs = []
+    let written
+    try {
+      for (const note of applied.files) {
+        const target = inFolder(note.path)
+        const { absolute } = resolveInFolder(root, target, 'write', { mustExist: false })
+        const firstNew = mkdirSync(dirname(absolute), { recursive: true })
+        if (firstNew) madeDirs.push(firstNew)
+        createFile({ path: target, content: note.content })
+        madeNotes.push(absolute)
+      }
+      written = exists
+        ? replaceFile({ path: rel, content, base_fingerprint: baseFingerprint })
+        : createFile({ path: rel, content })
+    } catch (error) {
+      for (const file of madeNotes) rmSync(file, { force: true })
+      for (const dir of madeDirs) rmSync(dir, { recursive: true, force: true })
+      throw error
+    }
     return {
       path: rel,
       fingerprint: written.fingerprint,
@@ -584,11 +617,12 @@ export function createTools({ root, allowUpdate, specSources }) {
   function inspectDiagram({ path }) {
     const { absolute, relative: rel } = resolveInFolder(root, path, 'read', { mustExist: true })
     const diagram = loadDiagram(absolute, rel)
-    const { nodes, edges } = describeDiagram(diagram)
+    const { nodes, edges, ...catalogs } = describeDiagram(diagram)
     const truncated = nodes.length > INSPECT_LIMIT || edges.length > INSPECT_LIMIT
     return {
       path: rel,
       fingerprint: fingerprint(readFileSync(absolute)),
+      ...catalogs,
       nodes: nodes.slice(0, INSPECT_LIMIT),
       edges: edges.slice(0, INSPECT_LIMIT),
       ...(truncated
