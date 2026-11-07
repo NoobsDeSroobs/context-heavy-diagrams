@@ -135,7 +135,19 @@ function IsolateOpacityField({
 }): React.JSX.Element {
   const [draft, setDraft, onFocus, onBlur] = useNumberDraft(value)
   return (
-    <FieldRow label="Isolate opacity">
+    <FieldRow
+      label="Isolate opacity"
+      scrub={{
+        value,
+        mixed: false,
+        min: 0,
+        max: 1,
+        step: 0.05,
+        onChange: (next) => onChange({ isolateOpacity: next }),
+        onSessionStart: () => {},
+        onSessionEnd: () => {}
+      }}
+    >
       <input
         type="number"
         className="property-number-field preferences-zoom-limit-input"
