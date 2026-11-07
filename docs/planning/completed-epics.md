@@ -494,3 +494,11 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 ### 0171: Animated edges
 
 *Done* (merged; released in v0.5.0, the reduced-motion fix in v0.5.1). An edge can be animated (`flow` or `pulse`) with speed, direction, pulse distance and dash length and gap; the copy-style brush carries it, a legend line can move, and exports show it still. **View → Animate edges** (Ctrl+Shift+A) and the preference follow the system, always on or always off. ADR: [0141](../decisions/0141-animated-edges-are-an-edge-style-field.md). Leftovers, not verified: the eye-checks (the pulse dot on step and curved routing, a selected edge, a dotted line, switching the direction set, light and dark theme, the flow loop's seam) and a measurement of a diagram with many animated edges.
+
+### 0022: Example diagram gallery
+
+*Superseded* (closed 2026-11-07). Six of the ten planned entries were built under `examples/gallery/` (the landscape and its layered form, the C4 chain, the security roll-up, the customer journey, the motivation view, the Power BI star schema) and they stay. The rest of the planned list (compliance overlays as separate files, a capability heatmap, further disciplines) is not pursued as a programme. In its place a standing rule: every feature people see has an example. ADR: [0151](../decisions/0151-every-visible-feature-has-an-example-diagram.md).
+
+### 0110: AI-assisted diagram reformat
+
+*Superseded* (closed 2026-11-07). A way to tidy the layout of a diagram an assistant drew roughly. The layout guidance in the bundled skill, the layout checks in `chd edit` and `room_for_label`, and the operations that place elements deliberately mean an assistant builds the layout right the first time. A tidy-up action that moves things after the fact remains the parked auto-layout idea in epic 0126. ADRs: [0148](../decisions/0148-an-assistant-builds-a-diagram-by-operations-that-answer.md), [0150](../decisions/0150-chd-edit-and-chd-ask-build-a-diagram-from-the-command-line.md).

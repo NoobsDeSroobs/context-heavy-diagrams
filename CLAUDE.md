@@ -68,6 +68,7 @@ Split between in-code and high-level docs:
 
 - **In-code**: technical/functional detail needed to understand a specific piece of code lives next to that code — a one-line comment above a tricky line, or a short block above/below a function definition. Keep it lean: skip comments where the code is already self-explanatory. Never restate what the code obviously does.
 - **Comments cite ADRs, never epics.** Epics are work documents that get collapsed into an index and deleted, so a citation in code goes dead. A comment states the rule or the reason; who asked for something, or when, belongs in the ADR, not above the code. If a comment needs more than a few lines of rationale, the rationale belongs in an ADR and the comment links to it.
+- **Examples**: a change that adds a feature people will see adds or extends a diagram under `examples/` that shows it, and `examples/README.md` names it ([ADR 0151](docs/decisions/0151-every-visible-feature-has-an-example-diagram.md)).
 - **High-level**: purpose, design principles, how to build/run, functional overview, component overview — these live in `docs/architecture/` (and `docs/` more broadly), as markdown with images/diagrams where useful, organized into a logical tree as it grows. Not duplicated into code comments.
 
 ## Standing design rule: AI write paths
