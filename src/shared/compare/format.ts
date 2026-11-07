@@ -22,30 +22,21 @@ export function withItNote(item: ReviewItem): string {
   return `${count} ${item.change.status === 'removed' ? 'removed' : 'added'} with it`
 }
 
-// One line on what changed: the first of the lines the hover card shows.
-export function summarizeItem(item: ReviewItem): string {
+export const MAX_ROW_LINES = 8
+
+// What changed, one line each, for a row of the changes list: the lines of every changed field,
+// the strongest field first. A long list is cut with a count; the hover card has all of it.
+export function changeLines(item: ReviewItem): string[] {
   const { change } = item
-  if (change.status === 'added') return item.kind === 'node' ? 'Added' : 'Added connection'
-  if (change.status === 'removed') return item.kind === 'node' ? 'Removed' : 'Removed connection'
-  const lines = change.fields[0]?.lines ?? []
-  // A line that only introduces the next ("label, further lines:") is no summary on its own.
-  const first =
-    (lines[0]?.endsWith(':') && lines[1] ? `${lines[0]} ${lines[1]}` : lines[0]) ??
-    STATUS_LABEL[change.status]
-  return alsoChanged(
-    change.fields.slice(1).map((f) => f.field),
-    first
-  )
-}
-
-// The other changed fields by name, so the row says what else to look at and not only how many.
-const MAX_NAMED = 3
-
-function alsoChanged(names: string[], first: string): string {
-  if (names.length === 0) return first
-  const shown = names.slice(0, MAX_NAMED).join(', ')
-  const rest = names.length - MAX_NAMED
-  return `${first} (also ${shown}${rest > 0 ? ` and ${rest} more` : ''})`
+  if (change.status === 'added') return [item.kind === 'node' ? 'Added' : 'Added connection']
+  if (change.status === 'removed') return [item.kind === 'node' ? 'Removed' : 'Removed connection']
+  const lines = change.fields.flatMap((f) => f.lines)
+  if (lines.length === 0) return [STATUS_LABEL[change.status]]
+  if (lines.length <= MAX_ROW_LINES) return lines
+  return [
+    ...lines.slice(0, MAX_ROW_LINES - 1),
+    `…and ${lines.length - MAX_ROW_LINES + 1} more lines`
+  ]
 }
 
 // A catalog or setting change the canvas cannot colour: "Palette: +Teal −Red ~Blue" or

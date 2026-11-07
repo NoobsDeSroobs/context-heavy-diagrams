@@ -335,10 +335,25 @@ label.compare-legend-item {
 }
 
 .compare-row-summary {
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   color: var(--ev-c-text-2);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+}
+
+/* One changed line; a long one wraps instead of hiding what changed. */
+.compare-row-line {
+  overflow-wrap: anywhere;
+}
+
+/* A colour in a changed line, drawn as the canvas draws it. */
+.compare-chip {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 3px;
+  border: 1px solid var(--color-text);
+  border-radius: 2px;
+  vertical-align: -1px;
 }
 
 .compare-row-current {

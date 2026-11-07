@@ -1,7 +1,7 @@
 // Run with `npm test` (Node's built-in runner; TypeScript is type-stripped).
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { diagramLevelText, itemLines, reviewSection, summarizeItem, withItNote } from './format.ts'
+import { changeLines, diagramLevelText, itemLines, reviewSection, withItNote } from './format.ts'
 
 function item(status, over = {}) {
   return {
@@ -24,29 +24,33 @@ test('a security change sits under SECURITY whatever its status', () => {
   assert.equal(reviewSection(item('added')), 'ADDED')
 })
 
-test('the summary is the first line, with the names of the other changed fields', () => {
+test('a row lists every changed line, one under the other', () => {
   const change = {
     status: 'content',
     security: false,
-    fields: [field('label: "A" → "B"'), { ...field('x'), field: 'fill' }]
+    fields: [
+      field('tags:', '+ api'),
+      { ...field('border colour: #111111 → #222222'), field: 'border colour' },
+      { ...field('border width: 2 → 3'), field: 'border width' }
+    ]
   }
-  assert.equal(summarizeItem(item('content', { change })), 'label: "A" → "B" (also fill)')
-  const many = {
-    status: 'content',
-    security: false,
-    fields: ['a', 'b', 'c', 'd', 'e'].map((name) => ({ ...field(`${name} changed`), field: name }))
-  }
-  assert.equal(
-    summarizeItem(item('content', { change: many })),
-    'a changed (also b, c, d and 1 more)'
-  )
-  assert.equal(summarizeItem(item('added', { kind: 'edge' })), 'Added connection')
-  assert.equal(summarizeItem(item('removed')), 'Removed')
+  assert.deepEqual(changeLines(item('content', { change })), [
+    'tags:',
+    '+ api',
+    'border colour: #111111 → #222222',
+    'border width: 2 → 3'
+  ])
+  assert.deepEqual(changeLines(item('added', { kind: 'edge' })), ['Added connection'])
+  assert.deepEqual(changeLines(item('removed')), ['Removed'])
 })
 
-test('a line that only introduces the next is joined to it in the summary', () => {
-  const change = { status: 'content', security: false, fields: [field('tags:', '+ api')] }
-  assert.equal(summarizeItem(item('content', { change })), 'tags: + api')
+test('a long list in a row is cut with a count', () => {
+  const fields = Array.from({ length: 12 }, (_, i) => field(`line ${i}`))
+  const lines = changeLines(
+    item('content', { change: { status: 'content', security: false, fields } })
+  )
+  assert.equal(lines.length, 8)
+  assert.equal(lines.at(-1), '…and 5 more lines')
 })
 
 test('connections that came or went with an element are counted in its direction', () => {
