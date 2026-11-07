@@ -23,10 +23,13 @@ One page a person, or whoever writes a CI job, can keep open: every `chd` comman
 - **Audience:** people who write pipelines, and the AI assistants whose skill already names these commands. One page for both, or a short form in the skill.
 
 ## Tasks
-- [ ] Decide where it lives and how it is kept in step with the help text
-- [ ] Write the sheet with examples and real output
-- [ ] A test that fails when a command or option is missing from it
-- [ ] Link it from the README and, if 0174 lands, from Help
+- [x] Decide where it lives and how it is kept in step with the help text: `docs/cli-reference.md`, and a test reads the help of each command
+- [x] Write the sheet with examples and real output
+- [x] A test that fails when a command, an option or an edit operation is missing from it
+- [x] `chd help edit` lists the operations (it sent a command-line user to the extension's tool for them); one shared text for both ([ADR 0150](../../decisions/0150-chd-edit-and-chd-ask-build-a-diagram-from-the-command-line.md))
+- [x] Link it from the README and from `chd --help`
+- [ ] Link it from Help in the app, if 0174 lands
+- [ ] Check the Windows notes (PowerShell 5.1 re-encoding, the launcher path) on a machine with the installed app
 
 ## Notes
 Raised while showing the standard-input form of `chd check` and `chd diff`: the examples only make sense next to each other.

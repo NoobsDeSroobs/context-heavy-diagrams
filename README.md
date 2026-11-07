@@ -145,6 +145,7 @@ You place the elements, and the file keeps the positions stable, so a small edit
 
 - [`docs/getting-started.md`](docs/getting-started.md): a ten-minute tour of the app.
 - [`docs/file-format.md`](docs/file-format.md): the `.chd` format specification.
+- [`docs/cli-reference.md`](docs/cli-reference.md): the `chd` command line, with options, exit codes and examples.
 - [`docs/architecture/`](docs/architecture/overview.md): purpose, design principles, components, packaging.
 - [`docs/decisions/`](docs/decisions/): one short record per significant design decision, covering what was decided, why, and what else was considered.
 - [`docs/planning/`](docs/planning/README.md): the backlog, as epics with task checklists. [`docs/known-issues.md`](docs/known-issues.md) lists real bugs found along the way.

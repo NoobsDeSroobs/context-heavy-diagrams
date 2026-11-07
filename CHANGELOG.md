@@ -4,6 +4,14 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 ## 0.8.0 (unreleased)
 
+### Added
+
+- **A reference for the `chd` command line** ([docs/cli-reference.md](docs/cli-reference.md)): every command, its options and exit codes, how to get `chd` on a machine, and worked examples with their output, including checking a draft or a committed version through a pipe. A test fails when a command, an option or an edit operation is missing from it.
+
+### Changed
+
+- **`chd help edit` now lists every operation `chd edit` takes**, with its fields. Before, it sent you to the Claude Desktop extension's tool for them. The extension and the command line print the same text. ([ADR 0150](docs/decisions/0150-chd-edit-and-chd-ask-build-a-diagram-from-the-command-line.md))
+
 ## 0.7.0 (2026-11-07)
 
 ### Added
