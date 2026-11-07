@@ -16,7 +16,7 @@ import {
 } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, sep } from 'node:path'
-import { bundleCheck, bundleDiff } from '../../scripts/build-cli.mjs'
+import { bundleCheck, bundleDiff, bundleEdit } from '../../scripts/build-cli.mjs'
 import { createTools } from '../../extension/lib/tools.mjs'
 import { openFolder, ToolError } from '../../extension/lib/fileRules.mjs'
 import { SPEC_TOPICS } from '../../extension/lib/formatSpec.mjs'
@@ -34,7 +34,20 @@ const SERVER_TOOL = {
   validate: 'validate_diagram',
   hash: 'read_file',
   check: 'check_diagram',
-  diff: 'diff_diagrams'
+  diff: 'diff_diagrams',
+  edit: 'edit_diagram',
+  ask: 'inspect_diagram'
+}
+// The server's reading tools that the command line leaves to the shell it runs in: a shell has grep,
+// ls and cat, and the server has none (ADR 0149).
+const SERVER_ONLY = {
+  list_files: 'a shell lists files',
+  search_files: 'a shell has grep',
+  read_file: 'a shell reads files (its fingerprint is chd hash)',
+  create_file: 'a shell writes files (chd validate checks them, chd hash gives the fingerprint)',
+  update_file: 'a shell writes files (chd validate checks them, chd hash gives the fingerprint)',
+  room_for_label: 'chd ask room',
+  validate_metamodel: 'chd validate file.chdmeta'
 }
 const COMMAND_LINE_ONLY = {
   export: 'an assistant needs to see the result, which is a different tool',
@@ -51,6 +64,7 @@ const asJson = (value) => JSON.parse(JSON.stringify(value))
 before(async () => {
   await bundleCheck()
   await bundleDiff()
+  await bundleEdit()
 })
 beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'chd-parity-'))
@@ -368,4 +382,153 @@ test('standard input can be used once, and a draft needs something to compare wi
   const bad = runWithInput('not json', 'check', '-', '--metamodel', 'hexagonal')
   assert.equal(bad.status, 1)
   assert.match(bad.stderr, /can't read '\(stdin\)'/)
+})
+
+test('every server tool is either behind a chd command or listed as server-only', () => {
+  const covered = new Set(Object.values(SERVER_TOOL))
+  for (const tool of Object.keys(tools)) {
+    assert.ok(
+      covered.has(tool) || tool in SERVER_ONLY,
+      `${tool} is neither behind a chd command nor listed as server-only`
+    )
+  }
+})
+
+// --- building a diagram: chd edit / chd ask and edit_diagram / inspect_diagram / room_for_label
+// (ADR 0148). The same operations must give the same answers and the same bytes. The command line
+// works in a folder of its own with the same file name, so what an operation stores is the same.
+
+const BUILD = [
+  { op: 'add_entity', id: 'web', label: 'Web', x: 0, y: 0 },
+  { op: 'add_entity', id: 'api', label: 'API', x: 140, y: 0, width: 150 },
+  { op: 'add_container', id: 'zone', label: 'Zone', x: -20, y: -40, width: 500, height: 200 },
+  { op: 'connect', id: 'calls', from: 'web', to: 'api', label: 'a long label for a short gap' },
+  { op: 'add_connection_point', id: 'api', side: 'bottom', offset: 0.25, pointId: 'low' },
+  { op: 'set_tag', id: 'api', key: 'owner', value: 'platform' },
+  { op: 'set_note', id: 'api', text: '# API\nTakes requests.' },
+  { op: 'add_new_linked_diagram', id: 'api', name: 'API internals' },
+  { op: 'add_entity', id: 'db', label: 'DB', x: 300, y: 300 },
+  { op: 'connect', id: 'reads', from: 'api', to: 'db' },
+  { op: 'set_edge_points', id: 'reads', points: [{ x: 215, y: 250 }], routing: 'step' }
+]
+
+const sameAs = (served, fromCli) => {
+  const { path: servedPath, ...rest } = asJson(served)
+  const { path: cliPath, ...cliRest } = fromCli
+  assert.ok(servedPath && cliPath)
+  // A warning names the file: the server's is in the folder srv, the command line's is in its own.
+  const unprefixed = JSON.parse(JSON.stringify(rest).replaceAll('srv/', ''))
+  assert.deepEqual(unprefixed, cliRest)
+}
+
+let cliDir
+beforeEach(() => {
+  cliDir = join(dir, 'cli')
+  mkdirSync(cliDir)
+  mkdirSync(join(dir, 'srv'))
+})
+const runCli = (args, input) =>
+  spawnSync(process.execPath, [cli, ...args], { encoding: 'utf-8', cwd: cliDir, input })
+
+test('chd edit and edit_diagram give the same answer and write the same bytes, creating and changing', () => {
+  const fromCli = runCli(['edit', 'shop.chd'], JSON.stringify(BUILD))
+  assert.equal(fromCli.status, 0, fromCli.stderr)
+  const served = tools.edit_diagram({ path: 'srv/shop.chd', operations: BUILD })
+  sameAs(served, JSON.parse(fromCli.stdout))
+  assert.deepEqual(
+    readFileSync(join(dir, 'srv', 'shop.chd')),
+    readFileSync(join(cliDir, 'shop.chd'))
+  )
+  const note = JSON.parse(readFileSync(join(cliDir, 'shop.chd'), 'utf8')).nodes.find(
+    (n) => n.id === 'api'
+  ).data.notes
+  assert.deepEqual(readFileSync(join(dir, 'srv', note)), readFileSync(join(cliDir, note)))
+  assert.ok(served.issues.length > 0, 'the build has layout problems to compare')
+
+  const more = [
+    { op: 'move', id: 'web', x: 10, y: 10 },
+    { op: 'set_label', id: 'web', label: 'Web app' }
+  ]
+  const nextCli = runCli(
+    ['edit', 'shop.chd', '--base', JSON.parse(fromCli.stdout).fingerprint],
+    JSON.stringify(more)
+  )
+  assert.equal(nextCli.status, 0, nextCli.stderr)
+  const nextServed = tools.edit_diagram({
+    path: 'srv/shop.chd',
+    operations: more,
+    base_fingerprint: served.fingerprint
+  })
+  sameAs(nextServed, JSON.parse(nextCli.stdout))
+})
+
+test('chd edit and edit_diagram refuse a bad operation, a stale base and a stored path outside the folder alike', () => {
+  const refusals = [[{ op: 'connect', from: 'web', to: 'ghost' }]]
+  const setup = [{ op: 'add_entity', id: 'web', label: 'Web', x: 0, y: 0 }]
+  const cliBase = JSON.parse(runCli(['edit', 'shop.chd'], JSON.stringify(setup)).stdout).fingerprint
+  const served = tools.edit_diagram({ path: 'srv/shop.chd', operations: setup })
+  for (const operations of refusals) {
+    const cliRun = runCli(['edit', 'shop.chd', '--base', cliBase], JSON.stringify(operations))
+    assert.equal(cliRun.status, 1)
+    let message = ''
+    try {
+      tools.edit_diagram({
+        path: 'srv/shop.chd',
+        operations,
+        base_fingerprint: served.fingerprint
+      })
+    } catch (error) {
+      assert.ok(error instanceof ToolError)
+      message = error.message
+    }
+    assert.notEqual(message, '')
+    // The server words where the folder is differently ("the extension's folder"), so compare the
+    // operation's own complaint, which comes first.
+    const complaint = message.split('. Nothing was changed')[0].split(': ').pop()
+    assert.ok(cliRun.stderr.includes(complaint), `${complaint} in ${cliRun.stderr}`)
+  }
+  // A path that leads out of the folder is refused by both, naming the path (the words about the
+  // folder differ: the server's is the one the person chose).
+  const outside = [{ op: 'link_to_existing_diagram', id: 'web', path: '../../outside.chd' }]
+  const cliOutside = runCli(['edit', 'shop.chd', '--base', cliBase], JSON.stringify(outside))
+  assert.equal(cliOutside.status, 1)
+  assert.ok(cliOutside.stderr.includes('../../outside.chd'))
+  assert.throws(
+    () =>
+      tools.edit_diagram({
+        path: 'srv/shop.chd',
+        operations: outside,
+        base_fingerprint: served.fingerprint
+      }),
+    /\.\.\/\.\.\/outside\.chd/
+  )
+})
+
+test('chd ask inspect and inspect_diagram give the same answer, with and without styles', () => {
+  runCli(['edit', 'shop.chd'], JSON.stringify(BUILD))
+  tools.edit_diagram({ path: 'srv/shop.chd', operations: BUILD })
+  for (const styles of [false, true]) {
+    const fromCli = JSON.parse(
+      runCli(['ask', 'inspect', 'shop.chd', ...(styles ? ['--styles'] : [])]).stdout
+    )
+    sameAs(tools.inspect_diagram({ path: 'srv/shop.chd', styles }), fromCli)
+  }
+})
+
+test('chd ask room and room_for_label give the same answer', () => {
+  const question = { label: 'sends orders', direction: 'vertical', fontSize: 14, bold: true }
+  const fromCli = JSON.parse(
+    runCli([
+      'ask',
+      'room',
+      '--label',
+      'sends orders',
+      '--direction',
+      'vertical',
+      '--font-size',
+      '14',
+      '--bold'
+    ]).stdout
+  )
+  assert.deepEqual(asJson(tools.room_for_label(question)), fromCli)
 })

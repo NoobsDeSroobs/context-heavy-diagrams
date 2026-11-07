@@ -5,7 +5,7 @@ This folder contains `.chd` diagram files (from Context-Heavy Diagrams). A `.chd
 
 **Before reading, creating or editing any `.chd` file, read `.claude/skills/chd-diagrams/SKILL.md`** and follow it. It points to the field reference, the authoring guide and the layout guide in the same folder.
 
-If you have the Context-Heavy Diagrams tools (`edit_diagram` and the others), build and change diagrams with `edit_diagram` instead of writing the JSON.
+Build and change diagrams with `chd edit` (or the `edit_diagram` tool, if you have the Context-Heavy Diagrams tools) instead of writing the JSON: you send a list of operations and it answers with what each made and what is wrong with the layout so far. `chd edit --help` explains it; `chd ask inspect <file>` lists the elements as they stand.
 
 Before you write an edited file back, check that it hasn't changed since you read it (read it again, or compare `chd hash <file>`); if it has, re-read it and redo your edit on the fresh content instead of overwriting.
 

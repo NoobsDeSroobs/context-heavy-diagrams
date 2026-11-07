@@ -1,6 +1,6 @@
 // Bundles the `chd` commands that need the app's TypeScript: `chd export` (ADR 0124) into
-// resources/cli/export.mjs, `chd check` (ADR 0131) into resources/cli/check.mjs and `chd diff` into
-// resources/cli/diff.mjs. Each is one
+// resources/cli/export.mjs, `chd check` (ADR 0131) into resources/cli/check.mjs, `chd diff` into
+// resources/cli/diff.mjs and `chd edit` with `chd ask` into resources/cli/edit.mjs. Each is one
 // self-contained file (the shared code, the diagram parser and the command's own code), so the
 // plain-Node CLI (resources/cli/chd.mjs, ADR 0106) needs no TypeScript and no node_modules. The
 // output is git-ignored; `npm run build` runs this before packaging, and `npm run build:cli` runs it
@@ -13,6 +13,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 export const EXPORT_BUNDLE = join(root, 'resources', 'cli', 'export.mjs')
 export const CHECK_BUNDLE = join(root, 'resources', 'cli', 'check.mjs')
 export const DIFF_BUNDLE = join(root, 'resources', 'cli', 'diff.mjs')
+export const EDIT_BUNDLE = join(root, 'resources', 'cli', 'edit.mjs')
 // Unlike the bundles above this one is committed: the skill's script imports it, and the script has to
 // run from a checkout, from the folder the app installs it into, and from the repo's own .claude copy,
 // none of which has a build step. A test fails when the committed copy differs from a fresh bundle.
@@ -43,6 +44,7 @@ async function bundle(entry, outfile) {
 export const bundleExport = (outfile = EXPORT_BUNDLE) => bundle('exportCommand.ts', outfile)
 export const bundleCheck = (outfile = CHECK_BUNDLE) => bundle('checkCommand.ts', outfile)
 export const bundleDiff = (outfile = DIFF_BUNDLE) => bundle('diffCommand.ts', outfile)
+export const bundleEdit = (outfile = EDIT_BUNDLE) => bundle('editCommand.ts', outfile)
 export const bundleLabelClearance = (outfile = LABEL_CLEARANCE_BUNDLE) =>
   build({
     entryPoints: [join(root, 'src', 'shared', 'layout', 'labelClearance.ts')],
@@ -61,8 +63,9 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   await bundleExport()
   await bundleCheck()
   await bundleDiff()
+  await bundleEdit()
   await bundleLabelClearance()
   console.log(
-    `built ${EXPORT_BUNDLE}\nbuilt ${CHECK_BUNDLE}\nbuilt ${DIFF_BUNDLE}\nbuilt ${LABEL_CLEARANCE_BUNDLE}`
+    `built ${EXPORT_BUNDLE}\nbuilt ${CHECK_BUNDLE}\nbuilt ${DIFF_BUNDLE}\nbuilt ${EDIT_BUNDLE}\nbuilt ${LABEL_CLEARANCE_BUNDLE}`
   )
 }

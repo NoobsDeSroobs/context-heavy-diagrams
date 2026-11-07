@@ -25,5 +25,5 @@ Assistants asked to draw a large diagram wrote their own generator scripts, abou
 
 ## Consequences
 - A second path for edits that must produce what the editor would: every result is validated and written in the app's own serialisation, and the tests check both.
-- The command line has no counterpart yet; a `chd` command would take the same operations on standard input.
+- The command line runs the same operations: `chd edit` and `chd ask` ([ADR 0150](0150-chd-edit-and-chd-ask-build-a-diagram-from-the-command-line.md)).
 - The set of style fields is checked in the core (known fields, numbers in range, known markers) and passed through to the file.

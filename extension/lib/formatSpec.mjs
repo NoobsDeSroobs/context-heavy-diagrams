@@ -19,8 +19,9 @@ topics of the same tool ("fields", "authoring", "layout", "conformance"). This s
 place of the commands the text names: \`node scripts/validate_chd.mjs <file>\` is validate_diagram
 (for a .chdmeta file, \`chd validate\` is validate_metamodel),
 \`chd hash <file>\` is the fingerprint read_file returns, \`chd diff\` is diff_diagrams (its \`--rev\` is
-the revision argument) and \`chd check\` is check_diagram. Use update_file/create_file to write, a
-metamodel too.)
+the revision argument) and \`chd check\` is check_diagram. \`chd edit\` is edit_diagram (\`--base\` is
+its base_fingerprint), \`chd ask inspect\` is inspect_diagram and \`chd ask room\` is room_for_label.
+Use update_file/create_file to write, a metamodel too.)
 
 If you build or change a diagram with edit_diagram you need very little of what follows: that tool
 keeps ids unique, parents before children, paths relative and the file valid, so the rules below on

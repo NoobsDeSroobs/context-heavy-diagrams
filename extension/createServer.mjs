@@ -2,6 +2,7 @@
 // (the executable entry) so tests can build a server without starting stdio.
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
+import { compactJson } from '../src/shared/edit/answers.ts'
 import { INLINE_IMAGE_TYPES, ToolError } from './lib/fileRules.mjs'
 import { SPEC_TOPICS } from './lib/formatSpec.mjs'
 import { createTools } from './lib/tools.mjs'
@@ -24,24 +25,6 @@ function binaryContent({ data, ...info }) {
     ? { type: 'image', data, mimeType: info.mimeType }
     : { type: 'resource', resource: { uri, mimeType: info.mimeType, blob: data } }
   return [{ type: 'text', text: JSON.stringify(info, null, 2) }, part]
-}
-
-// JSON with one line per key and per item of a list, instead of one per field: the same data in far
-// fewer tokens, since a long answer is mostly lists of small objects.
-function compactJson(value) {
-  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
-    return JSON.stringify(value)
-  }
-  const lines = (items, indent) => items.join(`,\n${indent}`)
-  const entries = Object.entries(value).map(([key, item]) =>
-    Array.isArray(item) && item.length > 0
-      ? `${JSON.stringify(key)}: [\n    ${lines(
-          item.map((one) => JSON.stringify(one)),
-          '    '
-        )}\n  ]`
-      : `${JSON.stringify(key)}: ${JSON.stringify(item)}`
-  )
-  return `{\n  ${lines(entries, '  ')}\n}`
 }
 
 const text = (value) => ({

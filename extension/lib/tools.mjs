@@ -18,7 +18,13 @@ import {
   parseDiagram,
   serializeDiagram
 } from '../../src/shared/diagram/index.ts'
-import { describeDiagram, layoutIssues, roomForLabel } from '../../src/shared/edit/inspect.ts'
+import { roomForLabel } from '../../src/shared/edit/inspect.ts'
+import {
+  editIssues,
+  foldersFor,
+  inspectAnswer,
+  MAX_OPERATIONS
+} from '../../src/shared/edit/answers.ts'
 import { applyOperations, OperationError } from '../../src/shared/edit/operations.ts'
 import { metamodelFileBase } from '../../src/shared/conformance/metamodel.ts'
 import {
@@ -612,10 +618,6 @@ export function createTools({ root, allowUpdate, specSources }) {
   // --- building a diagram step by step (epic 0165): operations that answer with what they made,
   // and questions about room and layout. The shared core is src/shared/edit.
 
-  function issueLines(diagram) {
-    return groupMessages(layoutIssues(diagram, diagram.fontFamily))
-  }
-
   function loadDiagram(absolute, rel) {
     try {
       return parseDiagram(textOf(absolute, rel))
@@ -629,7 +631,9 @@ export function createTools({ root, allowUpdate, specSources }) {
     if (!Array.isArray(operations) || operations.length === 0) {
       throw new ToolError('operations must be a list with at least one operation')
     }
-    if (operations.length > 200) throw new ToolError('at most 200 operations in one call')
+    if (operations.length > MAX_OPERATIONS) {
+      throw new ToolError(`at most ${MAX_OPERATIONS} operations in one call`)
+    }
     const { absolute, relative: rel } = resolveInFolder(root, path, 'write', { mustExist: false })
     if (extname(absolute).toLowerCase() !== '.chd')
       throw new ToolError('edit_diagram works on .chd files')
@@ -665,8 +669,7 @@ export function createTools({ root, allowUpdate, specSources }) {
     try {
       applied = applyOperations(diagram, operations, {
         newId: (prefix) => `${prefix}-${randomUUID()}`,
-        notesFolder: `${posix.basename(rel, extname(rel))}/notes`,
-        linkedFolder: posix.basename(rel, extname(rel)),
+        ...foldersFor(posix.basename(rel, extname(rel))),
         fileExists: (stored) =>
           existsSync(
             resolveInFolder(root, inFolder(stored), 'read', { mustExist: false }).absolute
@@ -716,28 +719,18 @@ export function createTools({ root, allowUpdate, specSources }) {
       path: rel,
       fingerprint: written.fingerprint,
       results: applied.results,
-      issues: issueLines(applied.diagram),
+      issues: editIssues(applied.diagram),
       warnings: written.warnings
     }
   }
 
-  const INSPECT_LIMIT = 400
-
   function inspectDiagram({ path, styles = false }) {
     const { absolute, relative: rel } = resolveInFolder(root, path, 'read', { mustExist: true })
     const diagram = loadDiagram(absolute, rel)
-    const { nodes, edges, ...catalogs } = describeDiagram(diagram, { styles: styles === true })
-    const truncated = nodes.length > INSPECT_LIMIT || edges.length > INSPECT_LIMIT
     return {
       path: rel,
       fingerprint: fingerprint(readFileSync(absolute)),
-      ...catalogs,
-      nodes: nodes.slice(0, INSPECT_LIMIT),
-      edges: edges.slice(0, INSPECT_LIMIT),
-      ...(truncated
-        ? { truncated: `only the first ${INSPECT_LIMIT} nodes and edges are listed` }
-        : {}),
-      issues: issueLines(diagram)
+      ...inspectAnswer(diagram, { styles: styles === true })
     }
   }
 

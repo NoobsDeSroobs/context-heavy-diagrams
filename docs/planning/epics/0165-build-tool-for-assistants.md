@@ -50,12 +50,13 @@ A second implementation of the editor's edits that drifts from the app; an opera
 - [x] The operation vocabulary as data, and the answer each one gives (proof of concept: entities, containers, text, lines, connections, connection points, move, resize, label, style, nest, remove)
 - [x] The editing core in shared code, with tests that every result passes the validator and serialises as the app does (`src/shared/edit/`)
 - [x] The questions: room for a label, layout issues, element list (`room_for_label`, `inspect_diagram`, and the issues in every `edit_diagram` answer)
-- [x] The MCP tools. [ ] The command line (`chd edit`, `chd ask`) and the parity test of [0166](0166-mcp-and-cli-parity.md) are not done
+- [x] The MCP tools
+- [x] The command line (`chd edit`, `chd ask inspect`, `chd ask room`) and its parity test ([ADR 0150](../../decisions/0150-chd-edit-and-chd-ask-build-a-diagram-from-the-command-line.md)); the skill and `AGENTS.md` point to it
 - [x] Try it with a real assistant in Claude Desktop on a diagram of moderate size (the first version: works well enough)
 - [x] Tags, required tags, highlights, legend, links and notes as operations
 - [x] Try the tags, notes and legend with a real assistant (the Immich run: diagrams nested in their parents' folders, feedback on verbose answers, search and reading large files led to ADR 0149)
 - [x] Edge routing points as an operation
-- [ ] Icons and the security matrix as operations, if wanted
+- [ ] Icons and the security matrix as operations: postponed (2026-11-07), until there is a need
 - [x] Guidance: the skill and `AGENTS.md` now say to build with `edit_diagram` when the tools are there, and the extension's instructions already did. The copy-paste text is for a chat with no tools, so it stays as it is
 - [x] Re-run an assistant on a large project and compare against the hand-written generators (the Immich C4 set, second round: 238k tokens of context against 285k before the shorter answers; messages 151k against 216k; no generator script)
 

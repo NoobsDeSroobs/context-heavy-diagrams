@@ -9,7 +9,10 @@ import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { main as validateMain } from '../ai/skills/chd-diagrams/scripts/validate_chd.mjs'
+import {
+  main as validateMain,
+  validateFile
+} from '../ai/skills/chd-diagrams/scripts/validate_chd.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const skillDir = join(here, '..', 'ai', 'skills', 'chd-diagrams')
@@ -51,21 +54,25 @@ Usage:
   chd export <file.chd> [options]          Draw the diagram as an SVG image
   chd check <file.chd>... --metamodel <m>  Check diagrams against a diagram metamodel
   chd diff <old.chd> <new.chd>             What changed between two versions (or against git)
-  chd help <command>                       Details, options and exit codes of one command
+  chd edit <file.chd> --base <hash>        Build or change a diagram with a list of operations
+  chd ask inspect|room ...                 Ask about the layout of a diagram while you build it
+  chd help <command>                     Details, options and exit codes of one command
   chd --version
   chd --help
 
 Every command also takes --help.
 
-If you are an AI assistant: run \`chd spec\` first to learn the .chd format, then
-run \`chd validate <file>\` after every edit you make to a diagram. Before you write an
+If you are an AI assistant: run \`chd spec\` first to learn the .chd format. Build and change a
+diagram with \`chd edit\` (operations in, what each made out) rather than writing the JSON; \`chd ask\`
+answers questions about its layout. If you write the JSON yourself, run
+\`chd validate <file>\` after every edit you make to a diagram. Before you write an
 edited file back, run \`chd hash <file>\` again and compare it with the value from when
 you read it: if it differs, someone changed the file meanwhile, so re-read it and redo
 your edit on the fresh content. When you are done, run \`chd diff <file>\` (it compares with
 git at HEAD) and use it to tell the person what you changed.
 `
 
-// The help of the commands implemented in this file. `export`, `check` and `diff` print their own, from
+// The help of the commands implemented in this file. `export`, `check`, `diff`, `edit` and `ask` print their own, from
 // their bundles (scripts/build-cli.mjs), next to the code that parses their options.
 const COMMAND_HELP = {
   spec: `Usage: chd spec [${SPEC_TOPIC_NAMES.join('|')}|all]
@@ -98,7 +105,7 @@ when you read the file before you write an edit back.
 Exit codes: 0 ok, 1 if the file can't be read, 2 usage error.
 `
 }
-const COMMANDS = ['spec', 'validate', 'hash', 'export', 'check', 'diff']
+const COMMANDS = ['spec', 'validate', 'hash', 'export', 'check', 'diff', 'edit', 'ask']
 const wantsHelp = (args) => args.includes('--help') || args.includes('-h')
 
 function readSkillFile(rel) {
@@ -259,6 +266,39 @@ async function diffCommand(args) {
   return bundle.runDiff(args)
 }
 
+// `edit` and `ask` share one bundle. `edit` checks what it would write with the skill's validator,
+// which is plain Node and so is passed in rather than bundled.
+async function editBundle(command) {
+  try {
+    return await import('./edit.mjs')
+  } catch (error) {
+    console.error(
+      `chd: the ${command} command is not built here (run 'npm run build:cli'): ${error instanceof Error ? error.message : error}`
+    )
+    return null
+  }
+}
+
+async function editCommand(args) {
+  const bundle = await editBundle('edit')
+  if (!bundle) return 1
+  if (wantsHelp(args)) {
+    console.log(bundle.EDIT_USAGE)
+    return 0
+  }
+  return bundle.runEdit(args, { validateFile })
+}
+
+async function askCommand(args) {
+  const bundle = await editBundle('ask')
+  if (!bundle) return 1
+  if (wantsHelp(args)) {
+    console.log(bundle.ASK_USAGE)
+    return 0
+  }
+  return bundle.runAsk(args)
+}
+
 export async function run(argv) {
   const [command, ...rest] = argv
   switch (command) {
@@ -315,6 +355,10 @@ export async function run(argv) {
       return checkCommand(rest)
     case 'diff':
       return diffCommand(rest)
+    case 'edit':
+      return editCommand(rest)
+    case 'ask':
+      return askCommand(rest)
     default:
       console.error(`chd: unknown command '${command}'. Run 'chd --help'.`)
       return 2
