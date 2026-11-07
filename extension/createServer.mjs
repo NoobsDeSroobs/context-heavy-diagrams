@@ -3,6 +3,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import { compactJson } from '../src/shared/edit/answers.ts'
+import { OPERATIONS_HELP } from '../src/shared/edit/help.ts'
 import { INLINE_IMAGE_TYPES, ToolError } from './lib/fileRules.mjs'
 import { SPEC_TOPICS } from './lib/formatSpec.mjs'
 import { createTools } from './lib/tools.mjs'
@@ -47,20 +48,6 @@ function guarded(run) {
     }
   }
 }
-
-const OPERATIONS_HELP = `Operations, applied in order and all or nothing. Coordinates are absolute canvas pixels (x, y = top-left corner), even inside a container. An answer is short: the id of each element made or changed, with its absolute place and size after a move, resize or add; an element with no "handles" in an answer has the four default connection points (top, right, bottom, left).
-- add_entity {label, x, y, width=120, height=80, parent?, id?, style?}; add_container {label, x, y, width=320, height=180, ...}; add_text {label, x, y, width=120, height=48, ...}. parent is a container's id. id is optional (a short one such as "api" is fine; letters, digits . _ -).
-- add_line {points: [{x, y, gravity?}, ...] (at least 2), parent?, id?, style?}: a freeform curved line.
-- connect {from, to, label?, fromHandle?, toHandle?, id?, style?}: an edge between two entities or containers. Handles are connection point ids; by default the sides that face each other are used.
-- add_connection_point {id, side: top|right|bottom|left, offset: 0..1, pointId?}: another point on a side, for more edges on one side. The answer gives pointId to use as fromHandle or toHandle.
-- move {id, x, y}; resize {id, width?, height?}; set_label {id, label} (an element or an edge); set_style {id, style}; reparent {id, parent: id | null} (keeps the element where it is); remove {id} deletes an element or an edge (an element's edges go with it; what was inside a container moves up a level).
-- set_edge_points {id, points: [{x, y, gravity?}, ...], routing?}: the points an edge's path is bent through, absolute coordinates, in order from the source end; replaces any it has, [] clears them. They only count when the edge is routed catmullRom (a smooth curve; gravity 0 is a sharp corner) or step/smoothstep (right angles through each point), so pass routing too unless the edge already has one of those; the answer warns if the points would be ignored.
-- style fields. Elements: fill, fillOpacity, stroke, strokeOpacity, strokeWidth, textAlign (start|center|end), lineStyle (solid|dashed|dotted), startMarker, endMarker, fontSize, fontColor, fontWeight (normal|bold), fontFamily, fontOpacity. Edges: stroke, strokeOpacity, strokeWidth, lineStyle, startMarker, endMarker, labelPosition (0..1 along the edge), routingStyle (straight|step|smoothstep|catmullRom), animation (flow|pulse), animationSpeed, animationDirection, pulseDistance, dashLength, dashGap and the font fields. Markers: none, arrowOpen, arrowClosed, circle, circleFilled, diamond, diamondFilled, crowsFootOne, crowsFootMany, crowsFootOneOrMany, crowsFootZeroOrOne, crowsFootZeroOrMany. A value of null removes a field. Colours are CSS colours.
-- Tags (entities, containers, edges; a value is any JSON value): add_entity, add_container and connect take tags {name: value}; set_tag {id, key, value}; remove_tag {id, key}. set_diagram_tag {key, value} and remove_diagram_tag {key} tag the diagram itself.
-- Required tags are a template every entity, container and edge must carry: set_required_tag {key, lock?, allowedValues?: [text], defaultValue?} seeds it on new elements and fills it in on every existing one; lock is lockedEditable (default; the value can be changed within allowedValues, null is always allowed) or lockedStatic (fixed). remove_required_tag {key} keeps each element's value as a free tag. A required tag applies to edges as well as entities and containers, so choose keys that make sense on both, or allow "N/A" in allowedValues for the ones that do not (null is always allowed).
-- Highlights colour the elements whose tag has a value: set_highlight {key, value, color}; remove_highlight {key, value}.
-- The legend explains a colour or line style the diagram uses: add_legend_entry {kind: line|entity, label, color?, id?, and for line: lineStyle?, startMarker?, endMarker?, animation?, ...}; set_legend_entry {id, label?, ...fields, null removes one}; remove_legend_entry {id}.
-- Links and notes (entities and containers): add_new_linked_diagram {id, name?} links to a new drill-down diagram the way the editor does: the file is named after the element (or name) and goes in a folder named after this diagram, so shop.chd links to shop/Orders.chd, and that file (in shop/) links to Orders/Items.chd, as paths relative to the file that holds the link. The answer gives the path; create it with edit_diagram (no base_fingerprint). Always use this for the diagrams of a hierarchy, never one flat folder. link_to_existing_diagram {id, path} links to a diagram that already exists or is shared, path relative to this diagram (if it does not exist yet the answer warns, and points to add_new_linked_diagram when the path is also outside this diagram's folder); remove_link {id}. set_note {id, text, name?} writes a Markdown note beside the diagram, named after the element's label or after name (give a short name when the label is long), and answers with its path, to read with read_file and change with update_file; it is refused if the element has a note. remove_note {id} removes only the reference, never the file.`
 
 export function createServer({ root, allowUpdate, specSources, version = '0.0.0' }) {
   const tools = createTools({ root, allowUpdate, specSources })

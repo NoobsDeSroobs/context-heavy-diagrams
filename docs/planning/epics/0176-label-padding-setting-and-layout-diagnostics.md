@@ -1,7 +1,7 @@
 # 0176: A label padding setting, and layout problems in Diagnostics
 
 ## Status
-Not Started. Logged 2026-11-05; follows [0162](0162-minimum-distance-between-connected-elements.md).
+Not Started. Logged 2026-11-05; follows [0162](../completed-epics.md#0162-minimum-distance-between-connected-elements).
 
 ## Goal
 Let the person say how much room they want around an edge label, and show the edges that break it in the Diagnostics panel, so the soft rule is checked by the program and not left to an assistant's judgement.

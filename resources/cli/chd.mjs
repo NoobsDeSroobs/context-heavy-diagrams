@@ -56,11 +56,11 @@ Usage:
   chd diff <old.chd> <new.chd>             What changed between two versions (or against git)
   chd edit <file.chd> --base <hash>        Build or change a diagram with a list of operations
   chd ask inspect|room ...                 Ask about the layout of a diagram while you build it
-  chd help <command>                     Details, options and exit codes of one command
+  chd help <command>                       Details, options and exit codes of one command
   chd --version
   chd --help
 
-Every command also takes --help.
+Every command also takes --help. A reference with examples: docs/cli-reference.md in the repository.
 
 If you are an AI assistant: run \`chd spec\` first to learn the .chd format. Build and change a
 diagram with \`chd edit\` (operations in, what each made out) rather than writing the JSON; \`chd ask\`
@@ -283,7 +283,7 @@ async function editCommand(args) {
   const bundle = await editBundle('edit')
   if (!bundle) return 1
   if (wantsHelp(args)) {
-    console.log(bundle.EDIT_USAGE)
+    console.log(bundle.EDIT_HELP)
     return 0
   }
   return bundle.runEdit(args, { validateFile })

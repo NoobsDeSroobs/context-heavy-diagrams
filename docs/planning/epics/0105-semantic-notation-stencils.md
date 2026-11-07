@@ -49,7 +49,7 @@ validated ([ADR 0080](../../decisions/0080-bpmn-as-adopted-vocabulary-not-metamo
   the property panel.
 - **Icons** — reuse the built-in Tabler set, or does this need dedicated
   glyphs (the BPMN gateway marks X / + / O, an event's thin/thick/double ring
-  aren't obviously in Tabler)? Ties into [epic 0019](0019-installable-icon-packs.md)
+  aren't obviously in Tabler)? Ties into [epic 0183](0183-installable-icon-packs.md)
   and the custom-icon pipeline.
 
 ## Selectable / toggleable stencil sets (2026-09-08, user thoughts — not designed)

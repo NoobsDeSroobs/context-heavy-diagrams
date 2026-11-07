@@ -21,7 +21,7 @@ editing the `.chd` directly) don't need hand-arranging.
   affected edges, or leaves them alone — undecided).
 - **LLM-friendliness angle:** a pure layout function in `@shared/` that takes
   the parsed diagram and returns positions could be used by the app *and* by a
-  script/skill ([epic 0110](0110-ai-assisted-diagram-reformat.md)), so an LLM
+  script/skill ([epic 0110](../../completed-epics.md#0110-ai-assisted-diagram-reformat), closed), so an LLM
   doing bulk edits never needs the GUI. Argues for building it as a pure,
   file-level function, not an in-canvas interaction.
 

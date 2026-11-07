@@ -19,6 +19,7 @@ import {
   MAX_OPERATIONS
 } from '../shared/edit/answers.ts'
 import { roomForLabel, type RoomQuestion } from '../shared/edit/inspect.ts'
+import { OPERATIONS_HELP } from '../shared/edit/help.ts'
 import { groupMessages } from '../shared/edit/issues.ts'
 import { applyOperations, OperationError } from '../shared/edit/operations.ts'
 import { containedPath } from '../main/containedPath.ts'
@@ -50,14 +51,17 @@ if it does not exist.
                      answer) of the version the edit is based on. The edit is refused if the file
                      changed since. Leave it out to create a new file.
 
-At most ${MAX_OPERATIONS} operations in one call, all or nothing. The operations (add_entity, connect,
-move, set_tag, add_new_linked_diagram, set_note, ...) are listed in the edit_diagram tool of the
-Claude Desktop extension; \`chd spec\` has the layout guide for gaps and sizes. Positions are
-absolute, even inside a container. A note or a linked diagram made by an operation is written beside
-the diagram, in a folder named after it.
+At most ${MAX_OPERATIONS} operations in one call. \`chd spec layout\` has the layout guide for gaps and
+sizes. A note or a linked diagram made by an operation is written beside the diagram, in a folder
+named after it.
 
 Exit codes: 0 done, 1 not done (an operation was refused, the file changed, the result would be
 invalid), 2 usage error.
+`
+
+// What `chd edit --help` prints: the usage and the operations. A usage error prints only EDIT_USAGE.
+export const EDIT_HELP = `${EDIT_USAGE}
+${OPERATIONS_HELP}
 `
 
 export const ASK_USAGE = `Usage: chd ask inspect <file.chd> [--styles]

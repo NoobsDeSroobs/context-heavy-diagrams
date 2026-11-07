@@ -1,7 +1,7 @@
 # 0177: Fewer tokens for an assistant that builds diagrams with the tools
 
 ## Status
-Not Started. Logged 2026-11-06; follows the proof of concept of [0165](0165-build-tool-for-assistants.md).
+Not Started. Logged 2026-11-06; follows the proof of concept of [0165](../completed-epics.md#0165-an-editing-tool-for-assistants).
 
 ## Goal
 Shrink what an assistant has to read to build or check a diagram with the extension tools, without raising the risk of badly structured diagrams in any way that matters. One goal of the tools is to reduce the tokens a person spends on a task through an agent, so this is measured, not assumed.

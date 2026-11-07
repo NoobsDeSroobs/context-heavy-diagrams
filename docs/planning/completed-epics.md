@@ -466,3 +466,51 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 ### 0144: SVG export and a command-line export
 
 *Done* (the app's export live-tested on Windows in the dev and an installed build, 2026-10-21; released in v0.3.0). **File → Export as SVG…** writes the diagram as an SVG, and `chd export` writes the same SVG from a `.chd` file without opening the app, so images in wikis and READMEs can be regenerated in CI. Both use one pure renderer in `src/shared`. ADR: [0124](../decisions/0124-svg-export-from-a-shared-pure-renderer.md); PNG export in the app is [ADR 0051](../decisions/0051-png-export.md). Leftovers, not verified: `chd export` from an installed build (the launcher; its built-in icons come from `app.asar`), Linux and macOS (the save dialog and the command), `chd export` to PNG (a WASM rasteriser) and a PDF export.
+
+### 0166: The MCP server and the command line share their checks
+
+*Done* (merged; released in v0.6.0). Every check lives once in shared code and is reachable from `chd`; the Claude Desktop extension has `check_diagram`, `diff_diagrams` (also against a git revision) and `validate_metamodel`, a draft can be checked as text or on standard input, and a parity test runs both front doors over the same diagrams and fails if they disagree. The conformance profile became a diagram metamodel (`.chdmeta`). ADRs: [0138](../decisions/0138-the-mcp-server-carries-the-guidance-the-cli-carries-the-checks.md), [0142](../decisions/0142-the-extension-may-run-git-show-to-read-an-earlier-version.md), [0143](../decisions/0143-the-extension-writes-diagram-metamodels.md), [0144](../decisions/0144-a-conformance-profile-is-called-a-diagram-metamodel.md), [0145](../decisions/0145-a-draft-is-checked-and-compared-without-being-written.md). Leftover: the `chd mcp` launch command, in [0159](epics/0159-ai-menu-for-more-than-claude.md).
+
+### 0162: Minimum distance between connected elements
+
+*Done* (merged; released in v0.6.0). Two elements joined by an edge keep a gap that grows with the label: the layout guide, the validator warning (`chd validate`, `validate_diagram`), a Layout section in Diagnostics, and the loosened gallery diagrams all follow one measurement of the label. ADRs: [0146](../decisions/0146-elements-joined-by-an-edge-keep-a-gap-for-the-label.md), [0147](../decisions/0147-a-check-shared-with-the-skill-script-has-one-source-and-a-committed-copy.md). Leftovers, not verified: Linux is not eye-checked, the loosened gallery wants an eye-check in the app, and the capitals and monospace widths warn slightly early (the export's width estimate errs wide). Follow-up: [0176](epics/0176-label-padding-setting-and-layout-diagnostics.md).
+
+### 0165: An editing tool for assistants
+
+*Done* (merged; released in v0.7.0). An assistant builds a diagram by doing what a person does, one operation at a time, and each operation answers with what it made: entities, containers, text, lines, connections and connection points, styles, nesting, edge routing points, tags, required tags, highlights, the legend, links to existing or new drill-down diagrams (nested in a folder named after the parent), notes, and removal. The core is pure shared code; the Claude Desktop extension runs it on a file as `edit_diagram` with `inspect_diagram` and `room_for_label`, and the command line as `chd edit` and `chd ask`, with a parity test that requires the same answers and the same bytes. The extension also searches file text without a shell (`search_files`) and lists and reads large folders in pages and by line. Tried twice on the Immich repository (second run 238k tokens of context against 285k). ADRs: [0148](../decisions/0148-an-assistant-builds-a-diagram-by-operations-that-answer.md), [0149](../decisions/0149-the-extension-searches-file-text-in-process.md), [0150](../decisions/0150-chd-edit-and-chd-ask-build-a-diagram-from-the-command-line.md). Left out: icons and the security matrix as operations (until there is a need). Follow-ups: [0177](epics/0177-fewer-tokens-for-assistant-diagramming.md), [0178](epics/0178-reading-large-repositories-through-the-extension.md), [0179](epics/0179-align-a-connection-point-with-another-element.md), [0180](epics/0180-transparent-highlight-for-not-applicable.md), [0181](epics/0181-second-round-of-assistant-tooling-feedback.md).
+
+### 0158: Notes: the name for the Markdown files behind an element
+
+*Done* (merged; released in v0.5.0). "Notes" is the one word from the file on disk to the interface: stored as `data.notes` (`data.details` is still read), new notes go in a `notes/` folder, and an older note is moved there on the next save. Leftover, not verified: the live check of the rename in the app was never recorded. ADR: [0140](../decisions/0140-the-markdown-files-behind-an-element-are-called-notes.md).
+
+### 0160: README and documentation changes from outside feedback
+
+*Done* (merged; released in v0.5.0). The README leads with plain boxes and arrows and the opt-in features, makes tag perspectives a headline, presents AI work as draft then review with a sample prompt, states why layout is manual, and carries a short factual list for regulated settings; each claim was checked against the software. Leftover: the website wording, as the repository holds no website.
+
+### 0164: Tooling fixes from the first assistant trial runs
+
+*Done* (merged; released in v0.5.0). The validator checks edge handles and warns on legacy names; the extension names the folder it serves and `get_format_spec all` returns the core rules and an index; the guidance covers provenance paths, what to do without `chd`, and writing a diagram metamodel. Leftover: the trial's missing command-line note could not be traced for certain (a run from source is the likely cause). ADR: [0138](../decisions/0138-the-mcp-server-carries-the-guidance-the-cli-carries-the-checks.md).
+
+### 0171: Animated edges
+
+*Done* (merged; released in v0.5.0, the reduced-motion fix in v0.5.1). An edge can be animated (`flow` or `pulse`) with speed, direction, pulse distance and dash length and gap; the copy-style brush carries it, a legend line can move, and exports show it still. **View → Animate edges** (Ctrl+Shift+A) and the preference follow the system, always on or always off. ADR: [0141](../decisions/0141-animated-edges-are-an-edge-style-field.md). Leftovers, not verified: the eye-checks (the pulse dot on step and curved routing, a selected edge, a dotted line, switching the direction set, light and dark theme, the flow loop's seam) and a measurement of a diagram with many animated edges.
+
+### 0022: Example diagram gallery
+
+*Superseded* (closed 2026-11-07). Six of the ten planned entries were built under `examples/gallery/` (the landscape and its layered form, the C4 chain, the security roll-up, the customer journey, the motivation view, the Power BI star schema) and they stay. The rest of the planned list (compliance overlays as separate files, a capability heatmap, further disciplines) is not pursued as a programme. In its place a standing rule: every feature people see has an example. ADR: [0151](../decisions/0151-every-visible-feature-has-an-example-diagram.md).
+
+### 0110: AI-assisted diagram reformat
+
+*Superseded* (closed 2026-11-07). A way to tidy the layout of a diagram an assistant drew roughly. The layout guidance in the bundled skill, the layout checks in `chd edit` and `room_for_label`, and the operations that place elements deliberately mean an assistant builds the layout right the first time. A tidy-up action that moves things after the fact remains the parked auto-layout idea in epic 0126. ADRs: [0148](../decisions/0148-an-assistant-builds-a-diagram-by-operations-that-answer.md), [0150](../decisions/0150-chd-edit-and-chd-ask-build-a-diagram-from-the-command-line.md).
+
+### 0019: Installable vendor icon packs
+
+*Superseded* (closed 2026-11-07). It waited on the vendors' redistribution terms. Packs the person installs from their own files need no such answer, so the work continues as epic 0183.
+
+### 0098: Configurable asset subfolder paths
+
+*Retired* (closed 2026-11-07). Making the `assets/`, `assets/references/` and `details/` folders settable. With icon packs moving out of the diagram's folder, what is left belongs to one diagram and no need for it has shown up; it can be raised again if one does.
+
+### 0104: Central custom-icon library
+
+*Superseded* (closed 2026-11-07). One shared place for custom icons instead of a copy in each diagram's `assets/` folder, with a fallback for a machine that lacks the library. Taken over by epic 0183, with the library as installable packs kept beside the saved preferences.
