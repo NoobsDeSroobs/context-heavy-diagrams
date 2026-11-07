@@ -502,3 +502,15 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 ### 0110: AI-assisted diagram reformat
 
 *Superseded* (closed 2026-11-07). A way to tidy the layout of a diagram an assistant drew roughly. The layout guidance in the bundled skill, the layout checks in `chd edit` and `room_for_label`, and the operations that place elements deliberately mean an assistant builds the layout right the first time. A tidy-up action that moves things after the fact remains the parked auto-layout idea in epic 0126. ADRs: [0148](../decisions/0148-an-assistant-builds-a-diagram-by-operations-that-answer.md), [0150](../decisions/0150-chd-edit-and-chd-ask-build-a-diagram-from-the-command-line.md).
+
+### 0019: Installable vendor icon packs
+
+*Superseded* (closed 2026-11-07). It waited on the vendors' redistribution terms. Packs the person installs from their own files need no such answer, so the work continues as epic 0183.
+
+### 0098: Configurable asset subfolder paths
+
+*Retired* (closed 2026-11-07). Making the `assets/`, `assets/references/` and `details/` folders settable. With icon packs moving out of the diagram's folder, what is left belongs to one diagram and no need for it has shown up; it can be raised again if one does.
+
+### 0104: Central custom-icon library
+
+*Superseded* (closed 2026-11-07). One shared place for custom icons instead of a copy in each diagram's `assets/` folder, with a fallback for a machine that lacks the library. Taken over by epic 0183, with the library as installable packs kept beside the saved preferences.
