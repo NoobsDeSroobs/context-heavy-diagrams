@@ -12,8 +12,20 @@ import {
   writeFileSync
 } from 'node:fs'
 import { randomUUID } from 'node:crypto'
-import { basename, dirname, extname, join, sep } from 'node:path'
-import { parseDiagram } from '../../src/shared/diagram/index.ts'
+import { basename, dirname, extname, join, posix, sep } from 'node:path'
+import {
+  createEmptyDiagram,
+  parseDiagram,
+  serializeDiagram
+} from '../../src/shared/diagram/index.ts'
+import { roomForLabel } from '../../src/shared/edit/inspect.ts'
+import {
+  editIssues,
+  foldersFor,
+  inspectAnswer,
+  MAX_OPERATIONS
+} from '../../src/shared/edit/answers.ts'
+import { applyOperations, OperationError } from '../../src/shared/edit/operations.ts'
 import { metamodelFileBase } from '../../src/shared/conformance/metamodel.ts'
 import {
   checkDiagramText,
@@ -30,19 +42,24 @@ import { validateFile } from '../../resources/ai/skills/chd-diagrams/scripts/val
 import {
   MAX_FILE_BYTES,
   METAMODEL_SUFFIX,
-  READ_EXTENSIONS,
   ToolError,
   isDotOrIgnoredEntry,
   isMetamodelName,
+  isReadBlockedName,
   isWritableName,
+  mimeTypeOf,
   resolveInFolder
 } from './fileRules.mjs'
 import { FINGERPRINT_PATTERN, fingerprint } from './fingerprint.mjs'
 import { formatSpec } from './formatSpec.mjs'
+import { groupMessages } from './issues.mjs'
 import { loadBuiltinMetamodels } from './metamodelsText.mjs'
+import { globTest, searchFiles } from './search.mjs'
 
+const NEWLINE = String.fromCharCode(10)
 const LIST_LIMIT = 300
-const LIST_MAX_DEPTH = 8
+const LIST_COLLECT_LIMIT = 50000
+const LIST_MAX_DEPTH = 12
 
 function staleError(rel) {
   return new ToolError(
@@ -81,10 +98,12 @@ function tidyValidation(root, { errors, warnings }, validatedPath, rel) {
       .replaceAll(validatedPath, rel)
       .replaceAll(root + sep, '')
       .replaceAll(root, '.')
+      // A path inside the folder reads the same on every system: with "/".
+      .replace(/(?<=[\w.)-])\\(?=[\w.(-])/g, '/')
   return {
     ok: errors.length === 0,
     errors: errors.map(tidy),
-    warnings: warnings.map(tidy)
+    warnings: groupMessages(warnings.map(tidy))
   }
 }
 
@@ -105,6 +124,7 @@ function refuseInvalidMetamodel(rel, content) {
 
 export function createTools({ root, allowUpdate, specSources }) {
   const builtinMetamodels = loadBuiltinMetamodels()
+  const madeHere = new Set()
 
   // The text of a file the assistant named, refused if it is too large or not UTF-8 text.
   function textOf(absolute, rel) {
@@ -160,40 +180,119 @@ export function createTools({ root, allowUpdate, specSources }) {
     }
   }
 
-  function listFiles() {
-    const files = []
-    let truncated = false
+  // Every file the assistant may read under `start`, as { full, path, name }, in the order of the
+  // paths. The walk never follows a symlink and skips dot-files, dependency folders and the types
+  // that cannot be read; `matches` narrows it further (a glob).
+  function visibleFiles(start, matches) {
+    const found = []
+    let capped = false
+    let tooDeep = false
     const walk = (dir, depth) => {
       for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        if (capped) return
         if (isDotOrIgnoredEntry(entry.name) || entry.isSymbolicLink()) continue
         const full = join(dir, entry.name)
         if (entry.isDirectory()) {
           if (depth < LIST_MAX_DEPTH) walk(full, depth + 1)
+          else tooDeep = true
           continue
         }
-        const ext = extname(entry.name).toLowerCase()
-        if (!entry.isFile() || !READ_EXTENSIONS.has(ext)) continue
-        if (files.length >= LIST_LIMIT) {
-          truncated = true
+        if (!entry.isFile() || isReadBlockedName(entry.name)) continue
+        const path = full
+          .slice(root.length + 1)
+          .split(sep)
+          .join('/')
+        if (matches && !matches(entry.name, path)) continue
+        if (found.length >= LIST_COLLECT_LIMIT) {
+          capped = true
           return
         }
-        const stats = statSync(full)
-        files.push({
-          path: full
-            .slice(root.length + 1)
-            .split(sep)
-            .join('/'),
-          bytes: stats.size,
-          modified: stats.mtime.toISOString(),
-          writable: isWritableName(entry.name)
-        })
+        found.push({ full, path, name: entry.name })
       }
     }
-    walk(root, 0)
-    files.sort((a, b) => a.path.localeCompare(b.path))
+    walk(start, 0)
+    found.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
+    return { found, capped, tooDeep }
+  }
+
+  const fileEntry = ({ full, path, name }) => {
+    const stats = statSync(full)
+    return {
+      path,
+      bytes: stats.size,
+      modified: stats.mtime.toISOString(),
+      writable: isWritableName(name)
+    }
+  }
+
+  // Files the assistant may read, in the whole folder or under `subfolder`, a page at a time. With
+  // `folders` the answer is the shape of the tree instead: the folders directly inside, with how many
+  // files and bytes each holds, and the files directly inside; go down one level at a time.
+  function listFiles({ subfolder, glob, folders = false, offset = 0, limit = LIST_LIMIT } = {}) {
+    if (!Number.isInteger(offset) || offset < 0) {
+      throw new ToolError('offset must be a whole number, 0 or more')
+    }
+    if (!Number.isInteger(limit) || limit < 1 || limit > LIST_LIMIT) {
+      throw new ToolError(`limit must be a whole number from 1 to ${LIST_LIMIT}`)
+    }
+    let start = root
+    if (typeof subfolder === 'string' && subfolder.trim() !== '') {
+      const found = resolveInFolder(root, subfolder, 'read', { mustExist: true })
+      if (!statSync(found.absolute).isDirectory()) {
+        throw new ToolError(`"${found.relative}" is not a folder`)
+      }
+      start = found.absolute
+    }
+    const { found, capped, tooDeep } = visibleFiles(start, globTest(glob))
     // The folder's name only, never its full path (which would go to the provider): enough for an
     // assistant to notice that the server points at the wrong folder.
-    return { folder: basename(root), files, truncated, updatesEnabled: allowUpdate }
+    const common = {
+      folder: basename(root),
+      updatesEnabled: allowUpdate,
+      ...(tooDeep
+        ? {
+            note: `folders more than ${LIST_MAX_DEPTH} levels below ${start === root ? 'the folder' : 'this subfolder'} are not listed; list from a deeper subfolder to see them`
+          }
+        : {})
+    }
+    if (folders) {
+      const base =
+        start === root
+          ? ''
+          : `${start
+              .slice(root.length + 1)
+              .split(sep)
+              .join('/')}/`
+      const subfolders = new Map()
+      const here = []
+      for (const file of found) {
+        const below = file.path.slice(base.length).split('/')
+        if (below.length === 1) {
+          here.push(file)
+          continue
+        }
+        const counted = subfolders.get(below[0]) ?? { name: below[0], files: 0, bytes: 0 }
+        counted.files += 1
+        counted.bytes += statSync(file.full).size
+        subfolders.set(below[0], counted)
+      }
+      return {
+        ...common,
+        path: base.slice(0, -1),
+        folders: [...subfolders.values()],
+        files: here.slice(0, LIST_LIMIT).map(fileEntry),
+        truncated: capped || here.length > LIST_LIMIT
+      }
+    }
+    const page = found.slice(offset, offset + limit)
+    const more = offset + limit < found.length
+    return {
+      ...common,
+      files: page.map(fileEntry),
+      total: found.length,
+      truncated: capped || more,
+      ...(more ? { nextOffset: offset + limit } : {})
+    }
   }
 
   function getFormatSpec({ topic } = {}) {
@@ -371,20 +470,66 @@ export function createTools({ root, allowUpdate, specSources }) {
     }
   }
 
-  function readFile({ path }) {
+  // Part of a text file, by line number (1 is the first line, both ends included). The fingerprint is
+  // still the whole file's (ADR 0109), and update_file needs the whole file, so a part says so.
+  function linesOf(rel, content, bytes, startLine = 1, endLine) {
+    const lines = content.split(NEWLINE)
+    if (lines.length > 1 && lines[lines.length - 1] === '') lines.pop()
+    const from = startLine
+    const to = endLine ?? Math.max(lines.length, from)
+    if (!Number.isInteger(from) || !Number.isInteger(to) || from < 1 || to < from) {
+      throw new ToolError('start_line and end_line must be whole numbers, 1 or more, start first')
+    }
+    if (from > lines.length) {
+      throw new ToolError(
+        `"${rel}" has only ${lines.length} lines, so there is nothing from line ${from}`
+      )
+    }
+    const last = Math.min(to, lines.length)
+    return {
+      path: rel,
+      content: lines.slice(from - 1, last).join(NEWLINE),
+      lines: { from, to: last, of: lines.length },
+      partial: 'only these lines; read the whole file before replacing it with update_file',
+      fingerprint: fingerprint(bytes),
+      bytes: bytes.length
+    }
+  }
+
+  function readFile({ path, start_line: startLine, end_line: endLine }) {
     const { absolute, relative: rel } = resolveInFolder(root, path, 'read', { mustExist: true })
     assertFile(absolute, rel)
     if (statSync(absolute).size > MAX_FILE_BYTES) {
       throw new ToolError(`"${rel}" is larger than the ${MAX_FILE_BYTES / (1024 * 1024)} MB limit`)
     }
     const bytes = readFileSync(absolute)
-    let content
-    try {
-      content = new TextDecoder('utf-8', { fatal: true }).decode(bytes)
-    } catch {
-      throw new ToolError(`"${rel}" is not valid UTF-8 text`)
+    // Text is returned as text; anything else (a PDF, a picture, a spreadsheet, text in another
+    // encoding) as base64 for the server layer to hand on in the form MCP allows. What the
+    // assistant can make of it is up to the client and the model.
+    let content = null
+    if (!bytes.includes(0)) {
+      try {
+        content = new TextDecoder('utf-8', { fatal: true }).decode(bytes)
+      } catch {
+        content = null
+      }
     }
-    return { path: rel, content, fingerprint: fingerprint(bytes), bytes: bytes.length }
+    const ranged = startLine !== undefined || endLine !== undefined
+    if (content !== null && ranged) {
+      return linesOf(rel, content, bytes, startLine, endLine)
+    }
+    if (content !== null) {
+      return { path: rel, content, fingerprint: fingerprint(bytes), bytes: bytes.length }
+    }
+    if (ranged) throw new ToolError(`"${rel}" is not text, so a line range does not apply`)
+    return {
+      path: rel,
+      binary: true,
+      mimeType: mimeTypeOf(rel),
+      fingerprint: fingerprint(bytes),
+      bytes: bytes.length,
+      data: bytes.toString('base64')
+    }
   }
 
   function createFile({ path, content }) {
@@ -415,6 +560,7 @@ export function createTools({ root, allowUpdate, specSources }) {
         }
         throw error
       }
+      if (extname(absolute).toLowerCase() === '.chd') madeHere.add(rel)
       return {
         path: rel,
         fingerprint: fingerprint(readFileSync(absolute)),
@@ -426,12 +572,16 @@ export function createTools({ root, allowUpdate, specSources }) {
     }
   }
 
-  function updateFile({ path, content, base_fingerprint: baseFingerprint }) {
+  function updateFile(args) {
     if (!allowUpdate) {
       throw new ToolError(
         'Updating existing files is turned off for this extension. The user can enable "Allow Claude to modify existing files" in the extension settings; until then use create_file with a new name.'
       )
     }
+    return replaceFile(args)
+  }
+
+  function replaceFile({ path, content, base_fingerprint: baseFingerprint }) {
     const { absolute, relative: rel } = resolveInFolder(root, path, 'write', { mustExist: true })
     assertFile(absolute, rel)
     checkSize(content)
@@ -465,8 +615,141 @@ export function createTools({ root, allowUpdate, specSources }) {
     }
   }
 
+  // --- building a diagram step by step (epic 0165): operations that answer with what they made,
+  // and questions about room and layout. The shared core is src/shared/edit.
+
+  function loadDiagram(absolute, rel) {
+    try {
+      return parseDiagram(textOf(absolute, rel))
+    } catch (error) {
+      if (error instanceof ToolError) throw error
+      throw new ToolError(`"${rel}" is not a valid .chd diagram: ${error.message}`)
+    }
+  }
+
+  function editDiagram({ path, operations, base_fingerprint: baseFingerprint }) {
+    if (!Array.isArray(operations) || operations.length === 0) {
+      throw new ToolError('operations must be a list with at least one operation')
+    }
+    if (operations.length > MAX_OPERATIONS) {
+      throw new ToolError(`at most ${MAX_OPERATIONS} operations in one call`)
+    }
+    const { absolute, relative: rel } = resolveInFolder(root, path, 'write', { mustExist: false })
+    if (extname(absolute).toLowerCase() !== '.chd')
+      throw new ToolError('edit_diagram works on .chd files')
+    const exists = existsSync(absolute)
+    let diagram
+    if (exists) {
+      assertFile(absolute, rel)
+      if (!allowUpdate && !madeHere.has(rel)) {
+        throw new ToolError(
+          `"${rel}" already exists and was not made in this session. Changing existing files is turned off for this extension (the user can enable "Allow Claude to modify existing files"). You can keep editing a diagram you created yourself in this session.`
+        )
+      }
+      if (typeof baseFingerprint !== 'string' || !FINGERPRINT_PATTERN.test(baseFingerprint)) {
+        throw new ToolError(
+          'base_fingerprint is required for a diagram that exists: pass the fingerprint from your last edit_diagram or inspect_diagram answer (or read_file) for it.'
+        )
+      }
+      if (fingerprint(readFileSync(absolute)) !== baseFingerprint) throw staleError(rel)
+      diagram = loadDiagram(absolute, rel)
+    } else {
+      if (baseFingerprint !== undefined) {
+        throw new ToolError(
+          `"${rel}" does not exist yet, so there is no fingerprint to pass: leave base_fingerprint out and the diagram is created.`
+        )
+      }
+      diagram = createEmptyDiagram()
+    }
+    // Paths the operations store in the diagram (a link, a note) are relative to it; they may only
+    // lead to places this extension may use (ADR 0115).
+    const here = posix.dirname(rel)
+    const inFolder = (stored) => posix.join(here, stored)
+    let applied
+    try {
+      applied = applyOperations(diagram, operations, {
+        newId: (prefix) => `${prefix}-${randomUUID()}`,
+        ...foldersFor(posix.basename(rel, extname(rel))),
+        fileExists: (stored) =>
+          existsSync(
+            resolveInFolder(root, inFolder(stored), 'read', { mustExist: false }).absolute
+          ),
+        checkReference: (stored) => {
+          try {
+            resolveInFolder(root, inFolder(stored), 'read', { mustExist: false })
+            return undefined
+          } catch (error) {
+            if (error instanceof ToolError) return `"${stored}": ${error.message}`
+            throw error
+          }
+        }
+      })
+    } catch (error) {
+      if (error instanceof OperationError) {
+        throw new ToolError(
+          `${error.message}. Nothing was changed; fix it and send the whole list again.`
+        )
+      }
+      throw error
+    }
+    const content = serializeDiagram(applied.diagram)
+    // New notes first, each created and never overwritten; if the diagram is then refused (a stale
+    // fingerprint, an invalid result) the notes made for it are removed again.
+    const madeNotes = []
+    const madeDirs = []
+    let written
+    try {
+      for (const note of applied.files) {
+        const target = inFolder(note.path)
+        const { absolute } = resolveInFolder(root, target, 'write', { mustExist: false })
+        const firstNew = mkdirSync(dirname(absolute), { recursive: true })
+        if (firstNew) madeDirs.push(firstNew)
+        createFile({ path: target, content: note.content })
+        madeNotes.push(absolute)
+      }
+      written = exists
+        ? replaceFile({ path: rel, content, base_fingerprint: baseFingerprint })
+        : createFile({ path: rel, content })
+    } catch (error) {
+      for (const file of madeNotes) rmSync(file, { force: true })
+      for (const dir of madeDirs) rmSync(dir, { recursive: true, force: true })
+      throw error
+    }
+    return {
+      path: rel,
+      fingerprint: written.fingerprint,
+      results: applied.results,
+      issues: editIssues(applied.diagram),
+      warnings: written.warnings
+    }
+  }
+
+  function inspectDiagram({ path, styles = false }) {
+    const { absolute, relative: rel } = resolveInFolder(root, path, 'read', { mustExist: true })
+    const diagram = loadDiagram(absolute, rel)
+    return {
+      path: rel,
+      fingerprint: fingerprint(readFileSync(absolute)),
+      ...inspectAnswer(diagram, { styles: styles === true })
+    }
+  }
+
+  function roomForLabelTool(question) {
+    if (typeof question.label !== 'string') throw new ToolError('label must be text')
+    if (question.direction !== 'horizontal' && question.direction !== 'vertical') {
+      throw new ToolError(
+        'direction must be "horizontal" (side by side) or "vertical" (one above the other)'
+      )
+    }
+    return roomForLabel(question)
+  }
+
   return {
+    edit_diagram: editDiagram,
+    inspect_diagram: inspectDiagram,
+    room_for_label: roomForLabelTool,
     list_files: listFiles,
+    search_files: (args) => searchFiles(root, args),
     get_format_spec: getFormatSpec,
     validate_diagram: validateDiagram,
     validate_metamodel: validateMetamodel,

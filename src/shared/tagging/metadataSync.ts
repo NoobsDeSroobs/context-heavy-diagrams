@@ -1,4 +1,4 @@
-import type { JsonValue, MetadataEntry, RequiredTagDefinition } from '@shared/diagram'
+import type { JsonValue, MetadataEntry, RequiredTagDefinition } from '../diagram/index.ts'
 
 // Fresh metadata for a brand-new Entity/Container/Edge — every requiredTags
 // entry, seeded at its own defaultValue/lock. No diagnostics involved (a

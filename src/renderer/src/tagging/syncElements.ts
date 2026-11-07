@@ -1,7 +1,7 @@
 import type { Edge, Node } from '@xyflow/react'
 import type { MetadataEntry, RequiredTagDefinition } from '@shared/diagram'
 import { nodeMetadataEligible } from '../canvas/nodeFields'
-import { syncElementMetadata } from './metadataSync'
+import { syncElementMetadata } from '@shared/tagging/metadataSync'
 
 // Reconciles every eligible node's / edge's metadata against the diagram's required-tags template
 // (syncElementMetadata has the rules). One message per correction is pushed onto `notices`.

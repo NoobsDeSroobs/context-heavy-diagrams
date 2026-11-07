@@ -127,7 +127,7 @@ Treat what an assistant produces as a draft. Give it the material and ask for a 
 
 > Read `docs/payments-overview.md` and `docs/integrations.md` and draw the systems and how they connect as a diagram in `payments.chd`. Tag each system with its owning team, add a note to every system with what the text says about it, and tell me what you were unsure of.
 
-The Claude Desktop extension reads text files only (Markdown, plain text, CSV, JSON, YAML, XML, HTML and the like), not images or PDFs, so convert other sources first; an agent in a folder reads whatever its own tools can. Then review the result instead of trusting it: the compare window (View → Changes → Compare with git revision…, or **Review changes** when the open file changes on disk) colours what was added, removed and modified, and `chd diff` prints the same review in a terminal or CI.
+The Claude Desktop extension reads any file in its folder except executables, installers, archives, disk images, video and audio: text comes over as text, pictures as images, and other files such as PDFs and spreadsheets as attachments. What Claude can make of an attachment depends on the client, so check the result, and convert a source it cannot use first. An agent in a folder reads whatever its own tools can. Then review the result instead of trusting it: the compare window (View → Changes → Compare with git revision…, or **Review changes** when the open file changes on disk) colours what was added, removed and modified, and `chd diff` prints the same review in a terminal or CI.
 
 ### Why the layout is manual
 

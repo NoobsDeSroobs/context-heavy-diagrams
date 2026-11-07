@@ -43,9 +43,13 @@ async function exercise(entry) {
         'check_diagram',
         'create_file',
         'diff_diagrams',
+        'edit_diagram',
         'get_format_spec',
+        'inspect_diagram',
         'list_files',
         'read_file',
+        'room_for_label',
+        'search_files',
         'validate_diagram',
         'validate_metamodel'
       ])
@@ -53,6 +57,17 @@ async function exercise(entry) {
         textOf(await client.callTool({ name: 'read_file', arguments: { path: 'a.chd' } }))
       )
       assert.equal(read.content, VALID)
+      const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0x0d])
+      writeFileSync(join(folder, 'shot.png'), png)
+      const picture = await client.callTool({ name: 'read_file', arguments: { path: 'shot.png' } })
+      assert.equal(JSON.parse(textOf(picture)).mimeType, 'image/png')
+      assert.equal(picture.content[1].type, 'image')
+      assert.equal(picture.content[1].data, png.toString('base64'))
+      writeFileSync(join(folder, 'doc.pdf'), Buffer.from('%PDF-1.4\n\0\0'))
+      const pdf = await client.callTool({ name: 'read_file', arguments: { path: 'doc.pdf' } })
+      assert.equal(pdf.content[1].type, 'resource')
+      assert.equal(pdf.content[1].resource.mimeType, 'application/pdf')
+      assert.equal(pdf.content[1].resource.uri, 'file:///doc.pdf')
       const spec = await client.callTool({ name: 'get_format_spec', arguments: {} })
       assert.match(textOf(spec), /# \.chd diagram format/)
       const refused = await client.callTool({

@@ -163,7 +163,7 @@ import { sortNodesForHierarchy, removeContainerReparenting } from './hierarchy'
 import { resolveEndpointPosition } from '../edges/endpointPosition'
 import { notesPanelTitle, noteName } from '../notes/notesLabels'
 import { toDiagramFile, fromDiagramFile } from '../document/diagramConversion'
-import { seedMetadata } from '../tagging/metadataSync'
+import { seedMetadata } from '@shared/tagging/metadataSync'
 import { syncEdgeMetadata, syncNodeMetadata } from '../tagging/syncElements'
 
 // Toolbar default-edge-style swatch preview only — deliberately a scaled-

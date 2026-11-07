@@ -48,6 +48,7 @@ beforeEach(() => {
   mkdirSync(join(folder, 'node_modules'))
   writeFileSync(join(folder, 'node_modules', 'dep.md'), 'x')
   writeFileSync(join(folder, 'run.bat'), 'echo hi')
+  writeFileSync(join(folder, 'tool.exe'), Buffer.from([0x4d, 0x5a, 0, 0]))
   root = openFolder(folder)
 })
 afterEach(() => rmSync(base, { recursive: true, force: true }))
@@ -55,15 +56,28 @@ afterEach(() => rmSync(base, { recursive: true, force: true }))
 const refusal = (fn, pattern) =>
   assert.throws(fn, (error) => error instanceof ToolError && pattern.test(error.message))
 
-test('list_files shows readable files, flags writable ones, and skips dot-files and dependency folders', () => {
+test('list_files shows readable files, flags writable ones, and skips blocked types, dot-files and dependency folders', () => {
   const { files, updatesEnabled, truncated } = make().list_files()
   assert.deepEqual(
     files.map((f) => f.path),
-    ['a.chd', 'notes/readme.md']
+    ['a.chd', 'notes/readme.md', 'run.bat']
   )
   assert.equal(files[0].writable, true)
+  assert.equal(files[2].writable, false)
   assert.equal(updatesEnabled, false)
   assert.equal(truncated, false)
+})
+
+test('list_files can be narrowed to a subfolder inside the folder', () => {
+  const tools = make()
+  assert.deepEqual(
+    tools.list_files({ subfolder: 'notes' }).files.map((f) => f.path),
+    ['notes/readme.md']
+  )
+  refusal(() => tools.list_files({ subfolder: '../' }), /outside|path must name/)
+  refusal(() => tools.list_files({ subfolder: 'a.chd' }), /not a folder/)
+  refusal(() => tools.list_files({ subfolder: 'missing' }), /not found/)
+  refusal(() => tools.list_files({ subfolder: '.git' }), /dot-files/)
 })
 
 test('list_files names the folder by its name only, never its path', () => {
@@ -85,7 +99,7 @@ test('reads and writes outside the folder, on dot-files, and on other types are 
   refusal(() => tools.read_file({ path: join(base, 'outside.md') }), /outside/)
   refusal(() => tools.read_file({ path: '.env' }), /dot-files/)
   refusal(() => tools.read_file({ path: '.git/config.txt' }), /dot-files/)
-  refusal(() => tools.read_file({ path: 'run.bat' }), /cannot be read/)
+  refusal(() => tools.read_file({ path: 'tool.exe' }), /cannot be read/)
   refusal(() => tools.create_file({ path: 'tool.bat', content: 'x' }), /cannot be written/)
   refusal(() => tools.create_file({ path: '.hidden.md', content: 'x' }), /dot-files/)
   refusal(() => tools.create_file({ path: '../escape.md', content: 'x' }), /outside/)
@@ -104,11 +118,42 @@ test('a symlink inside the folder cannot lead outside it', (t) => {
   refusal(() => make().read_file({ path: 'link.md' }), /outside/)
 })
 
-test('read_file refuses non-UTF-8 content and oversize files', () => {
-  writeFileSync(join(folder, 'bin.txt'), Buffer.from([0xff, 0xfe, 0xfd]))
-  refusal(() => make().read_file({ path: 'bin.txt' }), /not valid UTF-8/)
+test('read_file reads any file type that is not blocked: source, no extension, bat', () => {
+  writeFileSync(join(folder, 'main.ts'), 'export const a = 1')
+  writeFileSync(join(folder, 'Dockerfile'), 'FROM node')
+  const tools = make()
+  assert.equal(tools.read_file({ path: 'main.ts' }).content, 'export const a = 1')
+  assert.equal(tools.read_file({ path: 'Dockerfile' }).content, 'FROM node')
+  assert.equal(tools.read_file({ path: 'run.bat' }).content, 'echo hi')
+})
+
+test('read_file returns a binary file as base64 with its type and the fingerprint of the bytes', () => {
+  const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0x0d])
+  writeFileSync(join(folder, 'shot.png'), png)
+  const shot = make().read_file({ path: 'shot.png' })
+  assert.equal(shot.binary, true)
+  assert.equal(shot.mimeType, 'image/png')
+  assert.equal(shot.data, png.toString('base64'))
+  assert.equal(shot.fingerprint, createHash('sha256').update(png).digest('hex'))
+  assert.equal(shot.bytes, png.length)
+
+  writeFileSync(join(folder, 'book.xlsx'), Buffer.from([0x50, 0x4b, 3, 4, 0]))
+  assert.equal(
+    make().read_file({ path: 'book.xlsx' }).mimeType,
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  )
+  // Text in another encoding is not valid UTF-8, so it goes out as bytes too.
+  writeFileSync(join(folder, 'latin.txt'), Buffer.from([0xff, 0xfe, 0xfd]))
+  const latin = make().read_file({ path: 'latin.txt' })
+  assert.equal(latin.binary, true)
+  assert.equal(latin.mimeType, 'application/octet-stream')
+})
+
+test('read_file refuses oversize files, binary or not', () => {
   writeFileSync(join(folder, 'big.txt'), Buffer.alloc(5 * 1024 * 1024 + 1, 'a'))
   refusal(() => make().read_file({ path: 'big.txt' }), /larger than/)
+  writeFileSync(join(folder, 'big.pdf'), Buffer.alloc(5 * 1024 * 1024 + 1, 0))
+  refusal(() => make().read_file({ path: 'big.pdf' }), /larger than/)
 })
 
 test('create_file writes a new file, creates folders, and never overwrites', () => {
@@ -711,4 +756,484 @@ test('diff_diagrams refuses a draft with nothing to compare with, and two earlie
     () => make().diff_diagrams({ old_content: draft, new_content: 'not json' }),
     /can't read 'new content'/
   )
+})
+
+// --- building a diagram step by step: edit_diagram, inspect_diagram, room_for_label
+
+const TWO_BOXES = [
+  { op: 'add_entity', id: 'web', label: 'Web', x: 0, y: 0 },
+  { op: 'add_entity', id: 'api', label: 'API', x: 320, y: 0 },
+  { op: 'connect', id: 'calls', from: 'web', to: 'api', label: 'requests' }
+]
+
+test('edit_diagram creates a diagram, answers with what it made, and the file is valid', () => {
+  const tools = make()
+  const made = tools.edit_diagram({ path: 'new.chd', operations: TWO_BOXES })
+  assert.equal(made.path, 'new.chd')
+  assert.deepEqual(
+    made.results.map((r) => r.element.id),
+    ['web', 'api', 'calls']
+  )
+  assert.deepEqual(made.issues, [])
+  assert.equal(made.fingerprint, sha(readFileSync(join(folder, 'new.chd'))))
+  assert.deepEqual(tools.validate_diagram({ path: 'new.chd' }).errors, [])
+})
+
+test('edit_diagram can go on editing what it made, with the fingerprint, even when changing files is off', () => {
+  const tools = make(false)
+  const first = tools.edit_diagram({ path: 'new.chd', operations: TWO_BOXES })
+  const second = tools.edit_diagram({
+    path: 'new.chd',
+    base_fingerprint: first.fingerprint,
+    operations: [
+      { op: 'move', id: 'api', x: 200, y: 0 },
+      { op: 'add_entity', id: 'db', label: 'DB', x: 320, y: 200 }
+    ]
+  })
+  // 200 - 120 = 80px between Web and API: "requests" needs more room than that.
+  assert.ok(second.issues.some((issue) => /requests/.test(issue)))
+  assert.notEqual(second.fingerprint, first.fingerprint)
+  refusal(
+    () => tools.edit_diagram({ path: 'new.chd', operations: [{ op: 'remove', id: 'db' }] }),
+    /base_fingerprint is required/
+  )
+  refusal(
+    () =>
+      tools.edit_diagram({
+        path: 'new.chd',
+        base_fingerprint: first.fingerprint,
+        operations: [{ op: 'remove', id: 'db' }]
+      }),
+    /has changed since you read it/
+  )
+})
+
+test('edit_diagram does not touch a diagram it did not make unless changing files is allowed', () => {
+  const existing = JSON.stringify({
+    version: 1,
+    nodes: [{ id: 'a', type: 'entity', position: { x: 0, y: 0 }, data: { label: 'A' } }],
+    edges: []
+  })
+  writeFileSync(join(folder, 'real.chd'), existing)
+  const fingerprintNow = sha(existing)
+  refusal(
+    () =>
+      make(false).edit_diagram({
+        path: 'real.chd',
+        base_fingerprint: fingerprintNow,
+        operations: [{ op: 'add_entity', x: 0, y: 0 }]
+      }),
+    /was not made in this session/
+  )
+  const allowed = make(true).edit_diagram({
+    path: 'real.chd',
+    base_fingerprint: fingerprintNow,
+    operations: [{ op: 'add_entity', id: 'extra', label: 'Extra', x: 500, y: 500 }]
+  })
+  assert.equal(allowed.results[0].element.id, 'extra')
+})
+
+test('edit_diagram refuses a bad batch whole and names the operation', () => {
+  const tools = make()
+  refusal(
+    () =>
+      tools.edit_diagram({
+        path: 'bad.chd',
+        operations: [
+          { op: 'add_entity', id: 'a', label: 'A', x: 0, y: 0 },
+          { op: 'connect', from: 'a', to: 'ghost' }
+        ]
+      }),
+    /operation 2: "to": "ghost" is not an element.*Nothing was changed/
+  )
+  assert.equal(existsSync(join(folder, 'bad.chd')), false, 'nothing was created')
+  refusal(() => tools.edit_diagram({ path: 'x.chd', operations: [] }), /at least one operation/)
+  refusal(() => tools.edit_diagram({ path: 'x.md', operations: TWO_BOXES }), /works on .chd files/)
+  refusal(
+    () =>
+      tools.edit_diagram({
+        path: 'x.chd',
+        base_fingerprint: 'a'.repeat(64),
+        operations: TWO_BOXES
+      }),
+    /does not exist yet/
+  )
+})
+
+test('inspect_diagram lists the elements and the problems, and room_for_label answers in pixels', () => {
+  const tools = make()
+  tools.edit_diagram({ path: 'new.chd', operations: TWO_BOXES })
+  const seen = tools.inspect_diagram({ path: 'new.chd' })
+  assert.deepEqual(
+    seen.nodes.map((n) => [n.id, n.x, n.y]),
+    [
+      ['web', 0, 0],
+      ['api', 320, 0]
+    ]
+  )
+  assert.equal(seen.edges[0].label, 'requests')
+  assert.deepEqual(seen.issues, [])
+  const room = tools.room_for_label({ label: 'requests', direction: 'horizontal' })
+  assert.ok(room.minimum > 0 && room.target > room.minimum)
+  refusal(() => tools.room_for_label({ label: 'x', direction: 'sideways' }), /direction/)
+})
+
+// --- tags, links, notes, legend and the rest through edit_diagram
+
+test('edit_diagram writes a note beside the diagram, and inspect_diagram shows tags, the note and the catalogs', () => {
+  const tools = make()
+  const made = tools.edit_diagram({
+    path: 'sub/shop.chd',
+    operations: [
+      {
+        op: 'set_required_tag',
+        key: 'environment',
+        allowedValues: ['dev', 'prod'],
+        defaultValue: 'dev'
+      },
+      { op: 'add_entity', id: 'api', label: 'API', x: 0, y: 0, tags: { owner: 'platform' } },
+      { op: 'set_note', id: 'api', text: '# API\nTakes requests.' },
+      { op: 'set_highlight', key: 'environment', value: 'prod', color: '#e6194b' },
+      { op: 'add_legend_entry', id: 'l1', kind: 'entity', label: 'Prod', color: '#e6194b' }
+    ]
+  })
+  assert.equal(made.results[2].note, 'shop/notes/API-api.md')
+  const notePath = join(folder, 'sub', 'shop', 'notes', 'API-api.md')
+  assert.equal(readFileSync(notePath, 'utf-8'), '# API\nTakes requests.\n')
+  assert.deepEqual(made.warnings, [], 'the stored path resolves to the file just written')
+
+  const seen = tools.inspect_diagram({ path: 'sub/shop.chd' })
+  assert.deepEqual(seen.nodes[0].tags, { environment: 'dev', owner: 'platform' })
+  assert.equal(seen.nodes[0].note, 'shop/notes/API-api.md')
+  assert.equal(seen.requiredTags[0].key, 'environment')
+  assert.equal(seen.highlights.length, 1)
+  assert.equal(seen.legend[0].id, 'l1')
+  // The assistant reads the note with the file tools, by the path the answer gave.
+  assert.equal(
+    tools.read_file({ path: 'sub/shop/notes/API-api.md' }).content,
+    '# API\nTakes requests.\n'
+  )
+})
+
+test('a refused diagram leaves no note behind, and an existing note file is never overwritten', () => {
+  const tools = make()
+  const first = tools.edit_diagram({
+    path: 'shop.chd',
+    operations: [{ op: 'add_entity', id: 'api', label: 'API', x: 0, y: 0 }]
+  })
+  // A stale fingerprint is refused after the note would have been written: nothing remains.
+  refusal(
+    () =>
+      tools.edit_diagram({
+        path: 'shop.chd',
+        base_fingerprint: 'a'.repeat(64),
+        operations: [{ op: 'set_note', id: 'api', text: 'x' }]
+      }),
+    /has changed since you read it/
+  )
+  assert.equal(existsSync(join(folder, 'shop')), false, 'the notes folder made for it is gone')
+
+  // A file already at the note's path stays as it is.
+  mkdirSync(join(folder, 'shop', 'notes'), { recursive: true })
+  writeFileSync(join(folder, 'shop', 'notes', 'API-api.md'), 'mine')
+  refusal(
+    () =>
+      tools.edit_diagram({
+        path: 'shop.chd',
+        base_fingerprint: first.fingerprint,
+        operations: [{ op: 'set_note', id: 'api', text: 'x' }]
+      }),
+    /already exists/
+  )
+  assert.equal(readFileSync(join(folder, 'shop', 'notes', 'API-api.md'), 'utf-8'), 'mine')
+  assert.equal(
+    sha(readFileSync(join(folder, 'shop.chd'))),
+    first.fingerprint,
+    'the diagram is untouched'
+  )
+})
+
+test('a link may only lead somewhere the extension may use', () => {
+  const tools = make()
+  const ops = (path) => [
+    { op: 'add_entity', id: 'api', label: 'API', x: 0, y: 0 },
+    { op: 'link_to_existing_diagram', id: 'api', path }
+  ]
+  refusal(
+    () => tools.edit_diagram({ path: 'sub/a.chd', operations: ops('../../outside.chd') }),
+    /outside the folder/
+  )
+  refusal(
+    () => tools.edit_diagram({ path: 'sub/a.chd', operations: ops('.git/x.chd') }),
+    /dot-files/
+  )
+  const made = tools.edit_diagram({ path: 'sub/a.chd', operations: ops('../a.chd') })
+  assert.equal(made.results[1].link, '../a.chd')
+  assert.deepEqual(made.warnings, [], 'the target exists')
+  const missing = tools.edit_diagram({ path: 'sub/b.chd', operations: ops('Later.chd') })
+  assert.match(
+    missing.warnings.join('\n'),
+    /Later\.chd.*does not exist/,
+    'a link to a diagram not made yet is a warning'
+  )
+})
+
+test('a new linked diagram goes in the folder named after its parent, one level deeper each time', () => {
+  const tools = make()
+  const top = tools.edit_diagram({
+    path: 'shop.chd',
+    operations: [
+      { op: 'add_entity', id: 'orders', label: 'Orders', x: 0, y: 0 },
+      { op: 'add_new_linked_diagram', id: 'orders' }
+    ]
+  })
+  assert.equal(top.results[1].link, 'shop/Orders.chd')
+  const child = tools.edit_diagram({
+    path: top.results[1].link,
+    operations: [
+      { op: 'add_entity', id: 'items', label: 'Items', x: 0, y: 0 },
+      { op: 'add_new_linked_diagram', id: 'items' }
+    ]
+  })
+  assert.equal(child.results[1].link, 'Orders/Items.chd')
+  assert.equal(
+    existsSync(join(folder, 'shop', 'Orders.chd')),
+    true,
+    'the folder is made with the file'
+  )
+  // A name that is in use on disk is not taken again.
+  const again = tools.edit_diagram({
+    path: 'shop.chd',
+    base_fingerprint: top.fingerprint,
+    operations: [
+      { op: 'add_entity', id: 'orders2', label: 'Orders', x: 0, y: 200 },
+      { op: 'add_new_linked_diagram', id: 'orders2' }
+    ]
+  })
+  assert.equal(again.results[1].link, 'shop/Orders-1.chd')
+})
+
+// --- search_files (ADR 0149)
+
+function writeSource() {
+  mkdirSync(join(folder, 'server', 'src'), { recursive: true })
+  mkdirSync(join(folder, 'web'), { recursive: true })
+  writeFileSync(
+    join(folder, 'server', 'src', 'metadata.service.ts'),
+    'import x from "y"\n\nexport class Metadata {\n  // emits AssetUpdate\n  run() {\n    emit("AssetUpdate")\n  }\n}\n'
+  )
+  writeFileSync(
+    join(folder, 'server', 'src', 'other.ts'),
+    'const assetupdate = 1\r\nconst b = 2\r\n'
+  )
+  writeFileSync(join(folder, 'web', 'page.svelte'), '<p>AssetUpdate</p>\n')
+  writeFileSync(join(folder, 'notes', 'readme.md'), '# Notes\nAssetUpdate is an event\n')
+}
+
+test('search_files finds lines of text and says where, in the order of the paths', () => {
+  writeSource()
+  const found = make().search_files({ pattern: 'AssetUpdate' })
+  assert.deepEqual(found.matches, [
+    'notes/readme.md:2: AssetUpdate is an event',
+    'server/src/metadata.service.ts:4:   // emits AssetUpdate',
+    'server/src/metadata.service.ts:6:     emit("AssetUpdate")',
+    'web/page.svelte:1: <p>AssetUpdate</p>'
+  ])
+  assert.match(found.summary, /^4 lines match in 3 files \(\d+ files searched\)$/)
+  assert.equal(found.stopped, undefined)
+})
+
+test('search_files can ignore case, take a glob, a subfolder and context, and list only the files', () => {
+  writeSource()
+  const tools = make()
+  assert.equal(tools.search_files({ pattern: 'assetupdate' }).matches.length, 1)
+  const loose = tools.search_files({ pattern: 'assetupdate', ignore_case: true, glob: '*.ts' })
+  assert.deepEqual(
+    loose.matches.map((m) => m.split(':')[0]),
+    ['server/src/metadata.service.ts', 'server/src/metadata.service.ts', 'server/src/other.ts'],
+    'a glob without a slash is tried against the file name'
+  )
+  assert.equal(
+    loose.matches[2],
+    'server/src/other.ts:1: const assetupdate = 1',
+    'CRLF is cut cleanly'
+  )
+  const nested = tools.search_files({ pattern: 'AssetUpdate', glob: 'server/**/*.service.ts' })
+  assert.equal(nested.matches.length, 2)
+  assert.equal(tools.search_files({ pattern: 'AssetUpdate', subfolder: 'web' }).matches.length, 1)
+  const around = tools.search_files({
+    pattern: 'emit("AssetUpdate")',
+    subfolder: 'server',
+    context: 1
+  })
+  assert.deepEqual(around.matches, [
+    'server/src/metadata.service.ts-5-   run() {',
+    'server/src/metadata.service.ts:6:     emit("AssetUpdate")',
+    'server/src/metadata.service.ts-7-   }'
+  ])
+  const only = tools.search_files({ pattern: 'AssetUpdate', glob: '*.ts', files_only: true })
+  assert.deepEqual(only.files, ['server/src/metadata.service.ts (2)'])
+  const braces = tools.search_files({
+    pattern: 'AssetUpdate',
+    glob: '*.{svelte,md}',
+    files_only: true
+  })
+  assert.equal(braces.files.length, 2)
+})
+
+test('search_files takes a regular expression, stops at the cap and says so', () => {
+  writeSource()
+  const tools = make()
+  const re = tools.search_files({ pattern: 'emit\\("(\\w+)"\\)', regex: true })
+  assert.equal(re.matches.length, 1)
+  refusal(() => tools.search_files({ pattern: '(', regex: true }), /not a valid regular expression/)
+  const capped = tools.search_files({ pattern: 'e', max_matches: 3 })
+  assert.equal(capped.matches.length, 3)
+  assert.match(capped.stopped, /stopped after 3 matches; narrow it/)
+  assert.match(capped.summary, /^3\+ lines match/)
+})
+
+test('search_files follows the same rules as list_files and read_file', () => {
+  writeSource()
+  writeFileSync(join(folder, 'node_modules', 'dep.md'), 'AssetUpdate')
+  writeFileSync(join(folder, '.env'), 'AssetUpdate')
+  writeFileSync(join(folder, 'tool.exe'), 'AssetUpdate')
+  writeFileSync(join(folder, 'image.dat'), Buffer.from([0, 1, 2, 65, 115, 115, 101, 116]))
+  writeFileSync(join(folder, 'huge.txt'), `AssetUpdate${' '.repeat(3 * 1024 * 1024)}`)
+  writeFileSync(join(base, 'outside.md'), 'AssetUpdate')
+  try {
+    symlinkSync(base, join(folder, 'link'), 'junction')
+  } catch {
+    // no permission to make a link here: the rest still holds
+  }
+  const tools = make()
+  const found = tools.search_files({ pattern: 'AssetUpdate', files_only: true })
+  assert.deepEqual(
+    found.files.map((f) => f.split(' ')[0]),
+    ['notes/readme.md', 'server/src/metadata.service.ts', 'web/page.svelte']
+  )
+  assert.match(found.skipped, /1 files over 2 MB.*1 files that are not text/)
+  refusal(() => tools.search_files({ pattern: 'x', subfolder: '../' }), /outside the folder/)
+  refusal(() => tools.search_files({ pattern: 'x', subfolder: '.git' }), /dot-files/)
+  refusal(() => tools.search_files({ pattern: 'x', subfolder: 'a.chd' }), /not a folder/)
+  refusal(() => tools.search_files({ pattern: '' }), /pattern is required/)
+  refusal(() => tools.search_files({ pattern: 'x', context: 9 }), /context must be/)
+  refusal(() => tools.search_files({ pattern: 'x', max_matches: 0 }), /max_matches must be/)
+})
+
+test('search_files cuts a regular expression that never finishes, and a long line around its match', () => {
+  const tools = make()
+  writeFileSync(join(folder, 'evil.txt'), `${'a'.repeat(40)}b\n`)
+  writeFileSync(join(folder, 'minified.js'), `${'x'.repeat(5000)}NEEDLE${'y'.repeat(5000)}\n`)
+  const slow = tools.search_files({ pattern: '(a+)+$', regex: true, glob: 'evil.txt' })
+  assert.deepEqual(slow.matches, [])
+  assert.match(slow.skipped, /1 files where the regular expression took too long/)
+  const [line] = tools.search_files({ pattern: 'NEEDLE', glob: 'minified.js' }).matches
+  assert.ok(line.length < 300 && line.includes('NEEDLE') && line.includes('…'), line)
+})
+
+// --- list_files in pages and by folder, read_file by line (ADR 0149)
+
+function writeTree() {
+  mkdirSync(join(folder, 'server', 'src', 'services'), { recursive: true })
+  mkdirSync(join(folder, 'web'), { recursive: true })
+  mkdirSync(join(folder, 'i18n'), { recursive: true })
+  for (let i = 0; i < 5; i += 1) writeFileSync(join(folder, 'i18n', `l${i}.json`), '{}')
+  writeFileSync(join(folder, 'server', 'src', 'main.ts'), 'x')
+  writeFileSync(join(folder, 'server', 'src', 'services', 'a.service.ts'), 'abc')
+  writeFileSync(join(folder, 'server', 'src', 'services', 'b.service.ts'), 'abcdef')
+  writeFileSync(join(folder, 'web', 'page.svelte'), 'x')
+}
+
+test('list_files can show the shape of the tree one level at a time', () => {
+  writeTree()
+  const tools = make()
+  const top = tools.list_files({ folders: true })
+  assert.deepEqual(
+    top.folders.map((f) => [f.name, f.files]),
+    [
+      ['i18n', 5],
+      ['notes', 1],
+      ['server', 3],
+      ['web', 1]
+    ]
+  )
+  assert.equal(top.folders.find((f) => f.name === 'server').bytes, 10)
+  assert.deepEqual(
+    top.files.map((f) => f.path),
+    ['a.chd', 'run.bat']
+  )
+  assert.equal(top.path, '')
+  const inner = tools.list_files({ folders: true, subfolder: 'server/src' })
+  assert.deepEqual(
+    inner.folders.map((f) => [f.name, f.files, f.bytes]),
+    [['services', 2, 9]]
+  )
+  assert.deepEqual(
+    inner.files.map((f) => f.path),
+    ['server/src/main.ts']
+  )
+  assert.equal(inner.path, 'server/src')
+})
+
+test('list_files takes a glob and pages with an offset and a limit, in the order of the paths', () => {
+  writeTree()
+  const tools = make()
+  assert.deepEqual(
+    tools.list_files({ glob: '*.service.ts' }).files.map((f) => f.path),
+    ['server/src/services/a.service.ts', 'server/src/services/b.service.ts']
+  )
+  const first = tools.list_files({ glob: 'i18n/*.json', limit: 2 })
+  assert.deepEqual(
+    first.files.map((f) => f.path),
+    ['i18n/l0.json', 'i18n/l1.json']
+  )
+  assert.deepEqual([first.total, first.truncated, first.nextOffset], [5, true, 2])
+  const last = tools.list_files({ glob: 'i18n/*.json', limit: 2, offset: 4 })
+  assert.deepEqual(
+    last.files.map((f) => f.path),
+    ['i18n/l4.json']
+  )
+  assert.deepEqual([last.truncated, last.nextOffset], [false, undefined])
+  refusal(() => tools.list_files({ offset: -1 }), /offset must be/)
+  refusal(() => tools.list_files({ limit: 0 }), /limit must be/)
+})
+
+test('list_files says when folders below its depth limit were left out', () => {
+  const deep = Array.from({ length: 14 }, (_, i) => `d${i}`)
+  mkdirSync(join(folder, 'deep', ...deep), { recursive: true })
+  writeFileSync(join(folder, 'deep', ...deep, 'bottom.md'), 'x')
+  const tools = make()
+  const above = tools.list_files({ glob: 'bottom.md' })
+  assert.deepEqual(above.files, [])
+  assert.match(above.note, /more than 12 levels below the folder are not listed/)
+  const inside = tools.list_files({ subfolder: 'deep/d0/d1/d2', glob: 'bottom.md' })
+  assert.equal(inside.files.length, 1)
+  assert.equal(inside.note, undefined)
+})
+
+test('read_file can read part of a text file by line and says it is a part', () => {
+  const tools = make()
+  const lines = Array.from({ length: 10 }, (_, i) => `line ${i + 1}`)
+  writeFileSync(join(folder, 'notes', 'long.md'), `${lines.join('\n')}\n`)
+  const whole = tools.read_file({ path: 'notes/long.md' })
+  const part = tools.read_file({ path: 'notes/long.md', start_line: 3, end_line: 5 })
+  assert.equal(part.content, 'line 3\nline 4\nline 5')
+  assert.deepEqual(part.lines, { from: 3, to: 5, of: 10 })
+  assert.match(part.partial, /read the whole file before replacing/)
+  assert.equal(part.fingerprint, whole.fingerprint, 'the fingerprint is the whole file')
+  assert.equal(tools.read_file({ path: 'notes/long.md', start_line: 9 }).content, 'line 9\nline 10')
+  assert.equal(tools.read_file({ path: 'notes/long.md', end_line: 2 }).content, 'line 1\nline 2')
+  assert.equal(tools.read_file({ path: 'notes/long.md', start_line: 9, end_line: 99 }).lines.to, 10)
+  refusal(
+    () => tools.read_file({ path: 'notes/long.md', start_line: 0 }),
+    /whole numbers, 1 or more/
+  )
+  refusal(
+    () => tools.read_file({ path: 'notes/long.md', start_line: 5, end_line: 4 }),
+    /start first/
+  )
+  refusal(() => tools.read_file({ path: 'notes/long.md', start_line: 11 }), /has only 10 lines/)
+  writeFileSync(join(folder, 'pic.png'), Buffer.from([0x89, 0x50, 0, 0]))
+  refusal(() => tools.read_file({ path: 'pic.png', start_line: 1 }), /not text/)
 })

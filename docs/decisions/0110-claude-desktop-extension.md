@@ -1,7 +1,8 @@
 # 0110: Claude Desktop extension (MCPB) — a local, folder-scoped server shipped inside the app
 
 ## Status
-Accepted (2026-10-16). Widened by [ADR 0142](0142-the-extension-may-run-git-show-to-read-an-earlier-version.md) (it may run `git show`) and [ADR 0143](0143-the-extension-writes-diagram-metamodels.md) (it may write `.chdmeta` files).
+Accepted (2026-10-16). Corrected (2026-11-06): the read rule is a blacklist, as
+intended from the start; the first text wrongly read as a short allowlist. Widened by [ADR 0142](0142-the-extension-may-run-git-show-to-read-an-earlier-version.md) (it may run `git show`) and [ADR 0143](0143-the-extension-writes-diagram-metamodels.md) (it may write `.chdmeta` files).
 
 ## Context
 The folder route ([ADR 0105](0105-bundled-ai-material-and-folder-setup.md)) and
@@ -60,11 +61,14 @@ Both write tools refuse a `.chd` the validator reports errors for (warnings are
 returned, not blocking), and return the new fingerprint. Creating a details note
 and pointing a diagram at it are two writes, each with its own fingerprint.
 
-**Which files.** The folder is the user's chosen scope, so reading is broad and
-writing is narrower:
-- **Read** any text file with a known document or data extension (`.chd`, `.md`,
-  `.markdown`, `.txt`, `.json`, `.csv`, `.tsv`, `.yaml`, `.yml`, `.xml`, `.svg`,
-  `.html`, `.toml`, `.ini`). Binary files (PDFs, images) are not served in v1.
+**Which files.** The folder is the user's chosen scope, so reading is open and
+writing is narrow:
+- **Read** any file in the folder except the types on a short blacklist: the most
+  common dangerous or costly ones, such as executables and installers (`.exe`,
+  `.dll`, `.msi`) and large opaque files like archives and disk images. The exact
+  list lives in the code. Text and binary documents alike (source code, PDFs,
+  screenshots, spreadsheets) are served; what the assistant can make of a binary
+  file is up to the client and the model, and that is accepted.
 - **Write** (create or update) only `.chd`, `.md`, `.txt` and `.svg` — diagrams,
   their notes, supporting text, and custom icons. Nothing that could be run
   (scripts, executables, shortcuts, configuration for other tools) can be
@@ -80,7 +84,8 @@ writing is narrower:
   installed and passes it to the server. Everything is confined to it: paths are
   resolved and must stay inside after symlinks are resolved (for a file being
   created, the parent directory is the one resolved); `..` and absolute paths
-  outside are refused; only the file types above; a size cap (5 MB) on reads and writes.
+  outside are refused; reads refuse the blacklisted types, writes accept only the
+  types above; a size cap (5 MB) on reads and writes.
 - **Update is a second manifest setting, a boolean, off by default**, labelled
   along the lines of "Allow Claude to modify existing files (can cause data
   loss)". With it off, `update_file` is not registered at all and the server
@@ -142,7 +147,12 @@ writing is narrower:
 - **Only `.chd` files, for reading and writing** (the first draft). Rejected: the
   notes a diagram points at are Markdown files the assistant must be able to read
   and edit, and users place supporting documents in the folder for it to use. The
-  safety goal is met by a short list of text types plus the dot-file rule instead.
+  safety goal is met by a narrow write list, a read blacklist and the dot-file rule
+  instead.
+- **A read allowlist of text and data types.** Rejected: people work with PDFs,
+  screenshots, spreadsheets and source code, and an allowlist refuses all of them
+  for no safety gain. A blacklist of the dangerous and costly types is shorter and
+  keeps the harm out; what the assistant cannot interpret it simply cannot use.
 - **Letting the assistant write any file in the folder.** Rejected: planting a
   script or shortcut the user might later run is a different class of harm from
   editing a document, and nothing the extension is for needs it.

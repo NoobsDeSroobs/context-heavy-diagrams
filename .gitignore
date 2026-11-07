@@ -15,6 +15,7 @@ resources/extension/
 resources/cli/export.mjs
 resources/cli/check.mjs
 resources/cli/diff.mjs
+resources/cli/edit.mjs
 
 # The maintainer's personal Claude Code rules (how they work with Claude, not part of the project)
 CLAUDE.local.md
