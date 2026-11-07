@@ -32,8 +32,20 @@ export function summarizeItem(item: ReviewItem): string {
   const first =
     (lines[0]?.endsWith(':') && lines[1] ? `${lines[0]} ${lines[1]}` : lines[0]) ??
     STATUS_LABEL[change.status]
-  const more = change.fields.length - 1
-  return more > 0 ? `${first} (+${more} more)` : first
+  return alsoChanged(
+    change.fields.slice(1).map((f) => f.field),
+    first
+  )
+}
+
+// The other changed fields by name, so the row says what else to look at and not only how many.
+const MAX_NAMED = 3
+
+function alsoChanged(names: string[], first: string): string {
+  if (names.length === 0) return first
+  const shown = names.slice(0, MAX_NAMED).join(', ')
+  const rest = names.length - MAX_NAMED
+  return `${first} (also ${shown}${rest > 0 ? ` and ${rest} more` : ''})`
 }
 
 // A catalog or setting change the canvas cannot colour: "Palette: +Teal −Red ~Blue" or

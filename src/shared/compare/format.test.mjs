@@ -24,13 +24,22 @@ test('a security change sits under SECURITY whatever its status', () => {
   assert.equal(reviewSection(item('added')), 'ADDED')
 })
 
-test('the summary is the first line, with a count of the other changed fields', () => {
+test('the summary is the first line, with the names of the other changed fields', () => {
   const change = {
     status: 'content',
     security: false,
-    fields: [field('label: "A" → "B"'), field('x')]
+    fields: [field('label: "A" → "B"'), { ...field('x'), field: 'fill' }]
   }
-  assert.equal(summarizeItem(item('content', { change })), 'label: "A" → "B" (+1 more)')
+  assert.equal(summarizeItem(item('content', { change })), 'label: "A" → "B" (also fill)')
+  const many = {
+    status: 'content',
+    security: false,
+    fields: ['a', 'b', 'c', 'd', 'e'].map((name) => ({ ...field(`${name} changed`), field: name }))
+  }
+  assert.equal(
+    summarizeItem(item('content', { change: many })),
+    'a changed (also b, c, d and 1 more)'
+  )
   assert.equal(summarizeItem(item('added', { kind: 'edge' })), 'Added connection')
   assert.equal(summarizeItem(item('removed')), 'Removed')
 })
