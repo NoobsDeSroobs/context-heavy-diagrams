@@ -11,6 +11,7 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 ### Changed
 
+- **A change in how an element looks is now a change in a review,** when the look carries meaning: fill, border colour, width and opacity, line style, markers, an edge's colour, width and animation, and icons. Such an element is coloured fuchsia as **Restyled**, with the old and new value in the hover card and the list ("line style: solid → dotted"), its own count and its own heading in `chd diff`; an edge keeps its own look and gets a glow instead of being recoloured. Font, text alignment, label position and routing are still only marked with the paint brush. In `chd diff --json` each field has a `category` and a look has `before` and `after`, `counts` has `restyled`, and the old `restyled` count is now `cosmeticLook`; `--exit-code` exits 1 for a restyle alone. ([ADR 0153](docs/decisions/0153-a-look-that-carries-meaning-is-a-change-in-a-review.md))
 - **`chd help edit` now lists every operation `chd edit` takes**, with its fields. Before, it sent you to the Claude Desktop extension's tool for them. The extension and the command line print the same text. ([ADR 0150](docs/decisions/0150-chd-edit-and-chd-ask-build-a-diagram-from-the-command-line.md))
 
 ## 0.7.0 (2026-11-07)

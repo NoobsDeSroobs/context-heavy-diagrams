@@ -3,7 +3,7 @@
 ## Status
 Accepted (2026-10-27)
 Supersedes: none
-Superseded by: none
+Superseded by: none (in part: what counts of a look is replaced by [0153](0153-a-look-that-carries-meaning-is-a-change-in-a-review.md))
 
 ## Context
 A review is only useful if what it marks is what a reviewer must look at. A diagram has two kinds of change: what it says (a label, a tag, a connection, a link) and how it looks (where a box sits, its colour). An AI edit mostly changes the first; the second would bury it.

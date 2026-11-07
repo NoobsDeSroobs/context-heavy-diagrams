@@ -107,10 +107,10 @@ export function formatDiffText(result: Compared): string {
     const all = flattenReview(c.review)
     const elements = all.filter((i) => i.kind === 'node').length
     const connections = all.length - elements
-    const restyled = c.restyledNodes.size
+    const cosmetic = c.restyledNodes.size + c.restyledEdges.size
     lines.push(
       `${describeCount({ nodes: elements, edges: connections })} changed` +
-        (restyled > 0 ? `; ${restyled} restyled` : '')
+        (cosmetic > 0 ? `; ${cosmetic} with a cosmetic look change (font, text, route)` : '')
     )
     let current = ''
     for (const item of c.review) {
@@ -142,7 +142,13 @@ function itemToJson(item: ReviewItem): Record<string, unknown> {
     label: item.label,
     status: item.change.status,
     security: item.change.security,
-    fields: item.change.fields.map((f) => ({ field: f.field, lines: f.lines })),
+    fields: item.change.fields.map((f) => ({
+      field: f.field,
+      category: f.category,
+      lines: f.lines,
+      // A look is a plain value, so the old and new one come with it.
+      ...(f.category === 'style' ? { before: f.before ?? null, after: f.after ?? null } : {})
+    })),
     ...(item.connections && item.connections.length > 0
       ? { connections: item.connections.map(itemToJson) }
       : {})
@@ -157,7 +163,7 @@ export function diffToJson(result: Compared): unknown {
     newer: result.newerName,
     changed: hasChanges(c),
     counts: c.counts,
-    restyled: { elements: c.restyledNodes.size, connections: c.restyledEdges.size },
+    cosmeticLook: { elements: c.restyledNodes.size, connections: c.restyledEdges.size },
     changes: c.review.map(itemToJson),
     diagramLevel: c.diagramLevel,
     matched: result.matches

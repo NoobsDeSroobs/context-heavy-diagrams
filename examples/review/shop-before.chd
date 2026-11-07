@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "web",
+      "type": "entity",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 140,
+        "height": 70
+      },
+      "data": {
+        "label": "Web shop"
+      },
+      "style": {
+        "fontSize": 14
+      }
+    },
+    {
+      "id": "pay",
+      "type": "entity",
+      "position": {
+        "x": 300,
+        "y": 0
+      },
+      "size": {
+        "width": 140,
+        "height": 70
+      },
+      "data": {
+        "label": "Payments",
+        "icons": {
+          "topLeft": {
+            "source": "builtin",
+            "id": "server"
+          }
+        }
+      }
+    },
+    {
+      "id": "db",
+      "type": "entity",
+      "position": {
+        "x": 300,
+        "y": 200
+      },
+      "size": {
+        "width": 140,
+        "height": 70
+      },
+      "data": {
+        "label": "Database"
+      },
+      "style": {
+        "fill": "#3b4252"
+      }
+    },
+    {
+      "id": "erp",
+      "type": "entity",
+      "position": {
+        "x": 0,
+        "y": 200
+      },
+      "size": {
+        "width": 140,
+        "height": 70
+      },
+      "data": {
+        "label": "Legacy ERP"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "type": "labeled",
+      "source": "web",
+      "target": "pay",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "charges",
+      "style": {
+        "lineStyle": "solid"
+      }
+    },
+    {
+      "id": "e2",
+      "type": "labeled",
+      "source": "pay",
+      "target": "db",
+      "sourceHandle": "bottom",
+      "targetHandle": "top",
+      "label": "stores"
+    },
+    {
+      "id": "e3",
+      "type": "labeled",
+      "source": "erp",
+      "target": "db",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "syncs"
+    }
+  ]
+}

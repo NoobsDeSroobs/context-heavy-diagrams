@@ -33,7 +33,8 @@ const REVERT_LABEL: Record<CompareStatus, string> = {
   added: 'Remove',
   removed: 'Restore',
   links: 'Revert',
-  content: 'Revert'
+  content: 'Revert',
+  restyled: 'Revert'
 }
 
 // A note's text is a file, not part of the element, so a revert cannot put it back.
@@ -60,7 +61,7 @@ function revertDoneNote(item: ReviewItem): string {
     : 'Done in the editor window.'
 }
 
-// Everything that changed, most important first (security, links, content, removed, added): a
+// Everything that changed, most important first (security, links, content, restyled, removed, added): a
 // list that can be worked through to the end. A click shows the element on the canvas; the ticks
 // are the reviewer's own and last only as long as this window.
 export default function CompareList({

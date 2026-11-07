@@ -6,8 +6,10 @@ import type { DiagramEdge, DiagramNode, MetadataEntry, RiskCell } from '../diagr
 import { previewTextChange } from './textPreview.ts'
 
 // 'link' is a path or file reference (orange); 'content' is what an element says or connects to
-// (yellow); 'layout' only moves or restyles it (not tracked, the element stays dimmed).
-export type FieldCategory = 'link' | 'content' | 'layout'
+// (yellow); 'style' is a look that carries meaning: colour, line, markers, animation, icons
+// (restyled, ADR 0153); 'layout' only moves or restyles it cosmetically (not tracked, the element
+// stays dimmed).
+export type FieldCategory = 'link' | 'content' | 'style' | 'layout'
 
 export type Side = 'before' | 'after'
 
@@ -20,6 +22,9 @@ export interface DescribeContext {
 export interface FieldSpec<T> {
   name: string
   category: FieldCategory
+  // The name this field has in the "changes since last save" list, when that list keeps one
+  // coarser field where this one is a part of it (the style bag).
+  covers?: string
   get: (el: T) => unknown
   // Lines for the hover card; absent means just "<name> changed".
   describe?: (before: unknown, after: unknown, ctx: DescribeContext) => string[]
@@ -127,6 +132,101 @@ function count(value: unknown): number {
   return Array.isArray(value) ? value.length : 0
 }
 
+// A look field in words. Colours are shown as stored: the dark theme's form (ADR 0034), which is
+// also what the comparison looks at, so the light theme's flip never reads as a change.
+function styleSpec<T extends { style?: object }>(
+  key: string,
+  name: string,
+  absent = 'default'
+): FieldSpec<T> {
+  const text = (value: unknown): string =>
+    value === undefined || value === null ? absent : String(value)
+  return {
+    name,
+    category: 'style',
+    covers: 'style',
+    get: (el) => (el.style as Record<string, unknown> | undefined)?.[key],
+    describe: (b, a) => [`${name}: ${text(b)} → ${text(a)}`]
+  }
+}
+
+// The style keys that carry meaning, with the name the property panel gives them. Every other key
+// of a style bag (font, text alignment, label position, routing) is cosmetic.
+type StyleKey = [key: string, name: string, absent?: string]
+
+const NODE_STYLE_KEYS: StyleKey[] = [
+  ['fill', 'fill'],
+  ['fillOpacity', 'fill opacity'],
+  ['stroke', 'border colour'],
+  ['strokeOpacity', 'border opacity'],
+  ['strokeWidth', 'border width'],
+  ['lineStyle', 'line style'],
+  ['startMarker', 'start marker'],
+  ['endMarker', 'end marker']
+]
+
+const EDGE_STYLE_KEYS: StyleKey[] = [
+  ['stroke', 'colour'],
+  ['strokeOpacity', 'opacity'],
+  ['strokeWidth', 'width'],
+  ['lineStyle', 'line style'],
+  ['startMarker', 'start marker'],
+  ['endMarker', 'end marker'],
+  ['animation', 'animation', 'none'],
+  ['animationSpeed', 'animation speed'],
+  ['animationDirection', 'animation direction'],
+  ['pulseDistance', 'pulse distance'],
+  ['dashLength', 'dash length'],
+  ['dashGap', 'dash gap']
+]
+
+// What is left of a style bag once the keys that carry meaning are taken out: the cosmetic look.
+// A change here only earns the paint-brush marker.
+export const COSMETIC_LOOK = 'other look'
+
+function cosmeticLook<T extends { style?: object }>(keys: StyleKey[]): FieldSpec<T> {
+  const counted = new Set(keys.map((k) => k[0]))
+  return {
+    name: COSMETIC_LOOK,
+    category: 'layout',
+    covers: 'style',
+    get: (el) =>
+      Object.fromEntries(Object.entries(el.style ?? {}).filter(([key]) => !counted.has(key)))
+  }
+}
+
+const SLOT_NAME: Record<string, string> = {
+  topLeft: 'top left',
+  topRight: 'top right',
+  bottomLeft: 'bottom left',
+  bottomRight: 'bottom right'
+}
+
+function iconName(icon: unknown): string {
+  const ref = icon as { source?: string; id?: string; path?: string } | undefined
+  if (!ref) return '(none)'
+  return ref.source === 'builtin' ? String(ref.id) : String(ref.path).split('/').pop() || ''
+}
+
+// An icon is a picture of what the element is, so which one sits in which corner is meaning.
+function describeIcons(before: unknown, after: unknown): string[] {
+  const was = (before ?? {}) as Record<string, unknown>
+  const now = (after ?? {}) as Record<string, unknown>
+  const lines: string[] = []
+  for (const slot of Object.keys(SLOT_NAME)) {
+    if (deepEqualJson(was[slot], now[slot])) continue
+    const where = `icon, ${SLOT_NAME[slot]}`
+    if (!was[slot]) lines.push(`${where}: added ${quoted(iconName(now[slot]))}`)
+    else if (!now[slot]) lines.push(`${where}: removed (was ${quoted(iconName(was[slot]))})`)
+    else lines.push(`${where}: ${quoted(iconName(was[slot]))} → ${quoted(iconName(now[slot]))}`)
+  }
+  return lines
+}
+
+function deepEqualJson(a: unknown, b: unknown): boolean {
+  return JSON.stringify(a) === JSON.stringify(b)
+}
+
 export const NODE_FIELDS: FieldSpec<DiagramNode>[] = [
   {
     name: 'type',
@@ -151,7 +251,8 @@ export const NODE_FIELDS: FieldSpec<DiagramNode>[] = [
     describe: describeNodeRef('container')
   },
   { name: 'locked', category: 'layout', get: (n) => n.locked },
-  { name: 'style', category: 'layout', get: (n) => n.style },
+  ...NODE_STYLE_KEYS.map(([key, name, absent]) => styleSpec<DiagramNode>(key, name, absent)),
+  cosmeticLook<DiagramNode>(NODE_STYLE_KEYS),
   { name: 'tags', category: 'content', get: (n) => n.metadata, describe: describeTags },
   {
     name: 'label',
@@ -159,7 +260,7 @@ export const NODE_FIELDS: FieldSpec<DiagramNode>[] = [
     get: (n) => n.data.label,
     describe: describeLabel
   },
-  { name: 'icons', category: 'layout', get: (n) => n.data.icons },
+  { name: 'icons', category: 'style', get: (n) => n.data.icons, describe: describeIcons },
   {
     name: 'note link',
     category: 'link',
@@ -204,7 +305,8 @@ export const EDGE_FIELDS: FieldSpec<DiagramEdge>[] = [
     get: (e) => e.label,
     describe: describeLabel
   },
-  { name: 'style', category: 'layout', get: (e) => e.style },
+  ...EDGE_STYLE_KEYS.map(([key, name, absent]) => styleSpec<DiagramEdge>(key, name, absent)),
+  cosmeticLook<DiagramEdge>(EDGE_STYLE_KEYS),
   { name: 'tags', category: 'content', get: (e) => e.metadata, describe: describeTags },
   {
     name: 'direction sets',

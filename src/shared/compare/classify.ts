@@ -8,6 +8,7 @@ import { deepEqual } from '../document/changesSinceSave.ts'
 import { diffCollections, type CollectionChange } from './collections.ts'
 import { makeEdgesDrawable } from './drawable.ts'
 import {
+  COSMETIC_LOOK,
   EDGE_FIELDS,
   NODE_FIELDS,
   type DescribeContext,
@@ -15,12 +16,14 @@ import {
   type Side
 } from './fields.ts'
 
-// green / red / orange (a link or a Note) / yellow (what the element says or connects to)
-export type CompareStatus = 'added' | 'removed' | 'links' | 'content'
+// green / red / orange (a link or a Note) / yellow (what the element says or connects to) / fuchsia
+// (only its look changed: colour, line, markers, animation, icons)
+export type CompareStatus = 'added' | 'removed' | 'links' | 'content' | 'restyled'
 
 export interface FieldChange {
   field: string
-  link: boolean
+  // Which colour this field alone would earn; an element takes the strongest of its fields.
+  category: 'link' | 'content' | 'style'
   // What changed, as lines for the hover card.
   lines: string[]
   before: unknown
@@ -117,15 +120,16 @@ export interface CompareOptions {
 export interface Classification {
   nodes: Map<string, ElementChange>
   edges: Map<string, ElementChange>
-  // Every change worth a decision, most important first: security, links, content, removed,
-  // added. A connection that came or went with an element sits under that element
+  // Every change worth a decision, most important first: security, links, content, restyled,
+  // removed, added. A connection that came or went with an element sits under that element
   // (`connections`); `flattenReview` lists them all.
   review: ReviewItem[]
   // Per colour, elements and connections apart: deleting one entity also removes its edges, and
   // "5 removed" would read as five things gone.
   counts: Record<CompareStatus, ElementCount>
-  // Elements present in both versions whose own look changed (fill, border, font, icons), whatever
-  // else changed. Not a colour: the window marks them with a paint brush, if asked to.
+  // Elements present in both versions whose cosmetic look changed (font, text alignment, label
+  // position, routing), whatever else changed. Not a colour: the window marks them with a paint
+  // brush, if asked to. A look that carries meaning is the 'restyled' colour instead.
   restyledNodes: Set<string>
   restyledEdges: Set<string>
   diagramLevel: CollectionChange[]
@@ -173,7 +177,7 @@ function fieldChanges<T>(
     const lines = spec.describe?.(was, now, ctx) ?? []
     changes.push({
       field: spec.name,
-      link: spec.category === 'link',
+      category: spec.category,
       lines: lines.length > 0 ? lines : [`${spec.name} changed`],
       before: was,
       after: now
@@ -182,12 +186,18 @@ function fieldChanges<T>(
   return changes
 }
 
+const FIELD_STRENGTH = { link: 0, content: 1, style: 2 }
+
+// An element takes the strongest colour of its fields and lists all of them, strongest first, so
+// a restyle together with a rename reads as the rename with the restyle after it.
 function statusOf(fields: FieldChange[]): ElementChange | null {
   if (fields.length === 0) return null
+  const sorted = [...fields].sort((a, b) => FIELD_STRENGTH[a.category] - FIELD_STRENGTH[b.category])
+  const status = { link: 'links', content: 'content', style: 'restyled' } as const
   return {
-    status: fields.some((f) => f.link) ? 'links' : 'content',
-    fields,
-    security: fields.some((f) => f.field === 'security')
+    status: status[sorted[0].category],
+    fields: sorted,
+    security: sorted.some((f) => f.field === 'security')
   }
 }
 
@@ -218,15 +228,13 @@ function classifyElements<T extends { id: string }>(
   return { changes, removed }
 }
 
-// The look-only fields: what a restyle changes. Position, size and the rest stay untracked.
-const LOOK_FIELDS = new Set(['style', 'icons'])
-
-function restyled<T extends { id: string }>(
+// Elements whose cosmetic look changed. Position, size and the rest stay untracked.
+function cosmeticallyRestyled<T extends { id: string }>(
   base: T[],
   next: T[],
   specs: FieldSpec<T>[]
 ): Set<string> {
-  const looks = specs.filter((s) => LOOK_FIELDS.has(s.name))
+  const looks = specs.filter((s) => s.name === COSMETIC_LOOK)
   const baseById = new Map(base.map((el) => [el.id, el]))
   const ids = new Set<string>()
   for (const el of next) {
@@ -238,7 +246,7 @@ function restyled<T extends { id: string }>(
 
 function rank(change: ElementChange): number {
   if (change.security) return 0
-  return { links: 1, content: 2, removed: 3, added: 4 }[change.status]
+  return { links: 1, content: 2, restyled: 3, removed: 4, added: 5 }[change.status]
 }
 
 function nodeLabel(n: DiagramNode): string {
@@ -256,7 +264,7 @@ export function classifyDiagrams(
     if (!content) return undefined
     return {
       field: 'Note file content',
-      link: true,
+      category: 'link',
       lines: [
         `Note file: ${content.state === 'changed' ? 'content changed' : content.state}`,
         ...content.preview
@@ -306,7 +314,8 @@ export function classifyDiagrams(
     added: empty(),
     removed: empty(),
     links: empty(),
-    content: empty()
+    content: empty(),
+    restyled: empty()
   }
   for (const item of changed) {
     counts[item.change.status][item.kind === 'node' ? 'nodes' : 'edges'] += 1
@@ -317,8 +326,8 @@ export function classifyDiagrams(
     edges: edges.changes,
     review,
     counts,
-    restyledNodes: restyled(base.nodes, next.nodes, NODE_FIELDS),
-    restyledEdges: restyled(base.edges, next.edges, EDGE_FIELDS),
+    restyledNodes: cosmeticallyRestyled(base.nodes, next.nodes, NODE_FIELDS),
+    restyledEdges: cosmeticallyRestyled(base.edges, next.edges, EDGE_FIELDS),
     diagramLevel: diffCollections(base, next),
     merged,
     view: drawable.diagram,

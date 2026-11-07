@@ -13,7 +13,7 @@ function item(status, over = {}) {
   }
 }
 
-const field = (...lines) => ({ field: 'x', link: false, lines, before: 1, after: 2 })
+const field = (...lines) => ({ field: 'x', category: 'content', lines, before: 1, after: 2 })
 
 test('a security change sits under SECURITY whatever its status', () => {
   const change = { status: 'content', security: true, fields: [] }

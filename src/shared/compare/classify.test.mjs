@@ -23,13 +23,17 @@ const diagram = (nodes = [], edges = [], over = {}) => ({ version: 1, nodes, edg
 const statusOf = (c, id) => c.nodes.get(id)?.status
 const lines = (c, id, field) => c.nodes.get(id).fields.find((f) => f.field === field).lines
 
+// The review splits the style bag into the fields that carry meaning and a cosmetic rest; the
+// save list keeps it whole, so a part counts under the name it covers.
+const coveredNames = (fields) => [...new Set(fields.map((f) => f.covers ?? f.name))]
+
 test('the field lists cover the same fields as "changes since last save"', () => {
   assert.deepEqual(
-    NODE_FIELDS.map((f) => f.name),
+    coveredNames(NODE_FIELDS),
     SAVE_NODE_FIELDS.map((f) => f.name)
   )
   assert.deepEqual(
-    EDGE_FIELDS.map((f) => f.name),
+    coveredNames(EDGE_FIELDS),
     SAVE_EDGE_FIELDS.map((f) => f.name)
   )
 })
@@ -62,7 +66,8 @@ test('added and removed elements; the removed one is kept in the merged diagram'
     added: { nodes: 1, edges: 0 },
     removed: { nodes: 1, edges: 1 },
     links: { nodes: 0, edges: 0 },
-    content: { nodes: 0, edges: 0 }
+    content: { nodes: 0, edges: 0 },
+    restyled: { nodes: 0, edges: 0 }
   })
   assert.equal(describeCount(c.counts.removed), '1 element, 1 connection')
   assert.equal(describeCount(c.counts.links), '0')
@@ -155,11 +160,11 @@ test('a changed Note file the caller found turns an otherwise unchanged element 
   assert.equal(statusOf(c, 'b'), undefined)
 })
 
-test('only moving or restyling an element does not classify it', () => {
+test('only moving or a cosmetic restyle does not classify an element', () => {
   const base = diagram([node('a'), node('b')])
   const next = diagram([
     node('a', { position: { x: 400, y: 300 }, size: { width: 99, height: 50 } }),
-    node('b', { style: { fill: '#000000' }, rotation: 12, locked: true })
+    node('b', { style: { fontSize: 30 }, rotation: 12, locked: true })
   ])
   const c = classifyDiagrams(base, next)
   assert.equal(c.nodes.size, 0)
@@ -263,22 +268,163 @@ test('the view repairs edges, the merged diagram and the classification do not',
   assert.equal(c.edges.size, 0)
 })
 
-test('restyled elements are recorded apart from the colours', () => {
+test('a cosmetic look change earns the marker but no colour', () => {
   const base = diagram([node('a'), node('b'), node('c')], [edge('e', 'a', 'b')])
   const next = diagram(
     [
-      node('a', { style: { fill: '#112233' } }),
-      node('b', { data: { label: 'Renamed' }, style: { fill: '#445566' } }),
+      node('a', { style: { fontSize: 20 } }),
+      node('b', { data: { label: 'Renamed' }, style: { textAlign: 'end' } }),
       node('c', { position: { x: 90, y: 90 } })
     ],
-    [edge('e', 'a', 'b', { style: { stroke: '#ff0000' } })]
+    [edge('e', 'a', 'b', { style: { routingStyle: 'step', labelPosition: 0.2 } })]
   )
   const c = classifyDiagrams(base, next)
   assert.deepEqual([...c.restyledNodes].sort(), ['a', 'b'])
   assert.deepEqual([...c.restyledEdges], ['e'])
-  // Restyling alone is not a colour; the rename still is.
+  // Not a colour; the rename still is.
   assert.equal(statusOf(c, 'a'), undefined)
   assert.equal(statusOf(c, 'b'), 'content')
+  assert.equal(c.edges.get('e'), undefined)
+})
+
+test('a change to a counted node look is Restyled, with the old and new value', () => {
+  const base = diagram([node('a', { style: { fill: '#ff0000', strokeWidth: 1 } })])
+  const next = diagram([node('a', { style: { fill: '#00ff00', strokeWidth: 3 } })])
+  const c = classifyDiagrams(base, next)
+  assert.equal(statusOf(c, 'a'), 'restyled')
+  assert.equal(c.counts.restyled.nodes, 1)
+  assert.deepEqual(lines(c, 'a', 'fill'), ['fill: #ff0000 → #00ff00'])
+  assert.deepEqual(lines(c, 'a', 'border width'), ['border width: 1 → 3'])
+  assert.equal(c.restyledNodes.size, 0)
+})
+
+test('every counted look field is a change, on a node and on an edge', () => {
+  const nodeChanges = {
+    fill: '#111111',
+    fillOpacity: 50,
+    stroke: '#222222',
+    strokeOpacity: 50,
+    strokeWidth: 4,
+    lineStyle: 'dotted',
+    startMarker: 'arrowClosed',
+    endMarker: 'diamond'
+  }
+  for (const [key, value] of Object.entries(nodeChanges)) {
+    const c = classifyDiagrams(
+      diagram([node('a')]),
+      diagram([node('a', { style: { [key]: value } })])
+    )
+    assert.equal(statusOf(c, 'a'), 'restyled', `node ${key}`)
+  }
+  const edgeChanges = {
+    stroke: '#333333',
+    strokeOpacity: 50,
+    strokeWidth: 4,
+    lineStyle: 'dashed',
+    startMarker: 'circle',
+    endMarker: 'none',
+    animation: 'flow',
+    animationSpeed: 2,
+    animationDirection: 'reverse',
+    pulseDistance: 30,
+    dashLength: 8,
+    dashGap: 4
+  }
+  const ends = [node('a'), node('b')]
+  for (const [key, value] of Object.entries(edgeChanges)) {
+    const c = classifyDiagrams(
+      diagram(ends, [edge('e', 'a', 'b')]),
+      diagram(ends, [edge('e', 'a', 'b', { style: { [key]: value } })])
+    )
+    assert.equal(c.edges.get('e')?.status, 'restyled', `edge ${key}`)
+  }
+})
+
+test('a line and an animation read in words', () => {
+  const ends = [node('a'), node('b')]
+  const c = classifyDiagrams(
+    diagram(ends, [edge('e', 'a', 'b', { style: { lineStyle: 'solid' } })]),
+    diagram(ends, [edge('e', 'a', 'b', { style: { lineStyle: 'dotted', animation: 'pulse' } })])
+  )
+  const fields = c.edges.get('e').fields
+  assert.deepEqual(
+    fields.map((f) => f.lines[0]),
+    ['line style: solid → dotted', 'animation: none → pulse']
+  )
+})
+
+test('icons are a counted look, told by name and corner', () => {
+  const base = diagram([
+    node('a', { data: { label: 'A', icons: { topLeft: { source: 'builtin', id: 'server' } } } })
+  ])
+  const next = diagram([
+    node('a', {
+      data: {
+        label: 'A',
+        icons: {
+          topLeft: { source: 'builtin', id: 'database' },
+          topRight: { source: 'custom', path: 'icons/own/lock.svg' }
+        }
+      }
+    })
+  ])
+  const c = classifyDiagrams(base, next)
+  assert.equal(statusOf(c, 'a'), 'restyled')
+  assert.deepEqual(lines(c, 'a', 'icons'), [
+    'icon, top left: "server" → "database"',
+    'icon, top right: added "lock.svg"'
+  ])
+})
+
+test('the stored colour is what is compared, so a theme flip is no change', () => {
+  const same = { style: { fill: '#112233', stroke: '#445566' } }
+  const c = classifyDiagrams(diagram([node('a', same)]), diagram([node('a', same)]))
+  assert.equal(c.nodes.size, 0)
+})
+
+test('a restyle with another change keeps the stronger colour and lists both, strongest first', () => {
+  const base = diagram([node('a', { style: { fill: '#ff0000' } })])
+  const next = diagram([node('a', { data: { label: 'Renamed' }, style: { fill: '#00ff00' } })])
+  const c = classifyDiagrams(base, next)
+  assert.equal(statusOf(c, 'a'), 'content')
+  assert.deepEqual(
+    c.nodes.get('a').fields.map((f) => f.field),
+    ['label', 'fill']
+  )
+  assert.equal(c.counts.content.nodes, 1)
+  assert.equal(c.counts.restyled.nodes, 0)
+})
+
+test('restyled sits after modified and before removed in the review', () => {
+  const base = diagram([
+    node('gone'),
+    node('moded'),
+    node('styled', { style: { fill: '#111111' } })
+  ])
+  const next = diagram([
+    node('moded', { data: { label: 'New name' } }),
+    node('styled', { style: { fill: '#222222' } }),
+    node('fresh')
+  ])
+  const c = classifyDiagrams(base, next)
+  assert.deepEqual(
+    c.review.map((i) => i.id),
+    ['moded', 'styled', 'gone', 'fresh']
+  )
+})
+
+test('a changed legend entry is still told at diagram level', () => {
+  const base = diagram([], [], {
+    legend: [{ id: 'l1', label: 'Planned', kind: 'line', style: { lineStyle: 'solid' } }]
+  })
+  const next = diagram([], [], {
+    legend: [{ id: 'l1', label: 'Planned', kind: 'line', style: { lineStyle: 'dotted' } }]
+  })
+  const changes = classifyDiagrams(base, next).diagramLevel
+  assert.deepEqual(
+    changes.map((d) => [d.name, d.changed]),
+    [['Legend', ['Planned']]]
+  )
 })
 
 test('a label whose first line is the same shows the lines that changed', () => {

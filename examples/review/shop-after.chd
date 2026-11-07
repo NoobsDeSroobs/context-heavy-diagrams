@@ -1,0 +1,111 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "web",
+      "type": "entity",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 140,
+        "height": 70
+      },
+      "data": {
+        "label": "Web shop"
+      },
+      "style": {
+        "fontSize": 18
+      }
+    },
+    {
+      "id": "pay",
+      "type": "entity",
+      "position": {
+        "x": 300,
+        "y": 0
+      },
+      "size": {
+        "width": 140,
+        "height": 70
+      },
+      "data": {
+        "label": "Payments API",
+        "icons": {
+          "topLeft": {
+            "source": "builtin",
+            "id": "database"
+          }
+        }
+      }
+    },
+    {
+      "id": "db",
+      "type": "entity",
+      "position": {
+        "x": 300,
+        "y": 200
+      },
+      "size": {
+        "width": 140,
+        "height": 70
+      },
+      "data": {
+        "label": "Database"
+      },
+      "style": {
+        "fill": "#7c2d12",
+        "strokeWidth": 3
+      }
+    },
+    {
+      "id": "search",
+      "type": "entity",
+      "position": {
+        "x": 0,
+        "y": 200
+      },
+      "size": {
+        "width": 140,
+        "height": 70
+      },
+      "data": {
+        "label": "Search"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "type": "labeled",
+      "source": "web",
+      "target": "pay",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "charges",
+      "style": {
+        "lineStyle": "dotted",
+        "animation": "flow"
+      }
+    },
+    {
+      "id": "e2",
+      "type": "labeled",
+      "source": "pay",
+      "target": "db",
+      "sourceHandle": "bottom",
+      "targetHandle": "top",
+      "label": "stores"
+    },
+    {
+      "id": "e4",
+      "type": "labeled",
+      "source": "search",
+      "target": "db",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "indexes"
+    }
+  ]
+}

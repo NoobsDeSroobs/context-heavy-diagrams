@@ -8,7 +8,8 @@ export const STATUS_LABEL: Record<CompareStatus, string> = {
   added: 'Added',
   removed: 'Removed',
   links: 'Links or Notes changed',
-  content: 'Modified'
+  content: 'Modified',
+  restyled: 'Restyled'
 }
 
 export function kindName(item: ReviewItem): string {
@@ -47,7 +48,8 @@ export function diagramLevelText(change: CollectionChange): string {
   return `${change.name}: ${parts.join(' ')}`
 }
 
-export type ReviewSection = 'SECURITY' | 'LINKS AND NOTES' | 'MODIFIED' | 'REMOVED' | 'ADDED'
+export type ReviewSection =
+  'SECURITY' | 'LINKS AND NOTES' | 'MODIFIED' | 'RESTYLED' | 'REMOVED' | 'ADDED'
 
 // Which heading an item sits under; the review order already keeps each heading together.
 export function reviewSection(item: ReviewItem): ReviewSection {
@@ -57,6 +59,8 @@ export function reviewSection(item: ReviewItem): ReviewSection {
       return 'LINKS AND NOTES'
     case 'content':
       return 'MODIFIED'
+    case 'restyled':
+      return 'RESTYLED'
     case 'removed':
       return 'REMOVED'
     default:

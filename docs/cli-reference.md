@@ -88,7 +88,7 @@ $ git show HEAD:docs/arch.chd | chd check - --metamodel hexagonal
 
 ## `chd diff`
 
-`chd diff <old.chd> <new.chd>` or `chd diff <file.chd> [--rev <revision>]` shows what changed, in the order a reviewer should look: security assessments, links and notes, modified elements, removed, added. Moving or resizing an element is not a change; a changed note, link, label, tag or connection is. It only reads.
+`chd diff <old.chd> <new.chd>` or `chd diff <file.chd> [--rev <revision>]` shows what changed, in the order a reviewer should look: security assessments, links and notes, modified elements, restyled elements, removed, added. Moving or resizing an element is not a change; a changed note, link, label, tag or connection is, and so is a look that carries meaning (colour, line style, markers, animation, icons: "restyled"). A change of font, text alignment or routing is only counted under `cosmeticLook` in `--json`. It only reads.
 
 | Option | Meaning |
 |---|---|
