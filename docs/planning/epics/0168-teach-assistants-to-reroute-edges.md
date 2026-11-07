@@ -16,7 +16,7 @@ Found while testing the C4 examples: a line crossed an entity, and the fix was o
 - Probably needs a check the assistant can run (`chd check`-style) or the picture of its own output ([0167](0167-assistants-can-see-their-own-output.md)).
 
 ## Related
-[0162](0162-minimum-distance-between-connected-elements.md) (spacing, which makes room for a lane), [0164](0164-tooling-fixes-from-the-first-assistant-trial-runs.md), [0165](0165-build-tool-for-assistants.md), [0166](0166-mcp-and-cli-parity.md) and [0167](0167-assistants-can-see-their-own-output.md).
+[0162](../completed-epics.md#0162-minimum-distance-between-connected-elements) (spacing, which makes room for a lane), [0164](0164-tooling-fixes-from-the-first-assistant-trial-runs.md), [0165](../completed-epics.md#0165-an-editing-tool-for-assistants), [0166](../completed-epics.md#0166-the-mcp-server-and-the-command-line-share-their-checks) and [0167](0167-assistants-can-see-their-own-output.md).
 
 ## Tasks
 - [ ] Trial runs: ask an assistant to fix crossings in a few dense diagrams and record what it gets wrong

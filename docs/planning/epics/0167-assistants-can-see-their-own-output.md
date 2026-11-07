@@ -12,7 +12,7 @@ In both trial runs the assistant never saw its output. One had no renderer; the 
 ## Options
 - **An MCP tool that returns a PNG as an image,** so a client that can see images sees the diagram with no shell and no browser. Needs a rasteriser that runs without a system runtime or a window: a WebAssembly one is the likeliest, and it is a new dependency (size, licence, notice) to evaluate.
 - **`chd export --png`** with the same rasteriser, for an agent with a shell and a way to view files.
-- **A text report,** needing no image: elements that overlap, edges that run through a box they do not connect, labels that collide, connected elements closer than the minimum of [0162](0162-minimum-distance-between-connected-elements.md). Works for any client and can come first.
+- **A text report,** needing no image: elements that overlap, edges that run through a box they do not connect, labels that collide, connected elements closer than the minimum of [0162](../completed-epics.md#0162-minimum-distance-between-connected-elements). Works for any client and can come first.
 - The Electron-as-Node launcher cannot open a window, so rendering through the app's own engine is not an option without a separate mode.
 
 ## Tasks
@@ -20,7 +20,7 @@ In both trial runs the assistant never saw its output. One had no renderer; the 
 - [ ] The geometry report as a shared module, exposed as `chd check` rules or a separate `chd lint`, and as an MCP tool
 - [ ] The PNG: MCP tool and `chd export --png`
 - [ ] Guidance: render and look after the geometry pass, and fix what the report lists
-- [ ] Parity with [0166](0166-mcp-and-cli-parity.md); update `docs/architecture/ai-integration.md`
+- [ ] Parity with [0166](../completed-epics.md#0166-the-mcp-server-and-the-command-line-share-their-checks); update `docs/architecture/ai-integration.md`
 
 ## Notes
 Raised after the first trial runs.

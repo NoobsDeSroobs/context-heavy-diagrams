@@ -2,6 +2,8 @@
 
 What changed for people using the tool, one entry per minor or major release. The reasons are in [docs/decisions/](docs/decisions/); the full history is in `git log`.
 
+## 0.8.0 (unreleased)
+
 ## 0.7.0 (2026-11-07)
 
 ### Added

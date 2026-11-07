@@ -30,4 +30,4 @@ Built on the branch `epic/0164-tooling-fixes` (2026-11-04). The handle check rea
 
 The Claude Desktop extension has no `chd check`, so the profile guidance is in the folder route only; a profile can be tested only with the command line.
 
-Raised from the trial runs. The project they used is not named here; the runs and their write-up are kept out of the repository for now. Minimum spacing between connected elements is [0162](0162-minimum-distance-between-connected-elements.md).
+Raised from the trial runs. The project they used is not named here; the runs and their write-up are kept out of the repository for now. Minimum spacing between connected elements is [0162](../completed-epics.md#0162-minimum-distance-between-connected-elements).

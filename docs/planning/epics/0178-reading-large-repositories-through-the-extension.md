@@ -23,10 +23,10 @@ Once any file can be read, the folder can be a repository. In the C4 run on the 
 - **Search.** File names only, or content too (grep-like, results as path, line and a short excerpt). The extension may not start other programs (ADR 0110), so content search has to be in-process; what that costs on a large tree and how to bound it.
 - **Reading part of a file.** A line or byte range on `read_file`, and a note in the answer when a file was cut. How that fits the fingerprint of ADR 0109, which is the hash of the whole file.
 - **Tool surface.** New tools or new arguments on `list_files` and `read_file`. Every added tool is more description for the assistant to read on every conversation, which is the cost 0177 is about.
-- **The command line.** Whether `chd` gets the same listing and search, as the checks are shared ([0166](0166-mcp-and-cli-parity.md)); an agent with a shell has `ls` and `grep`, so this may be extension-only.
+- **The command line.** Whether `chd` gets the same listing and search, as the checks are shared ([0166](../completed-epics.md#0166-the-mcp-server-and-the-command-line-share-their-checks)); an agent with a shell has `ls` and `grep`, so this may be extension-only.
 
 ## Tasks
-A first set was built after the Immich trial in [0165](0165-build-tool-for-assistants.md): `search_files` in process ([ADR 0149](../../decisions/0149-the-extension-searches-file-text-in-process.md)), `list_files` with a folder view, a glob and paging, and `read_file` by line range. The questions above are open only where this set leaves them: ignore rules beyond dot-folders and `node_modules`, what a limit should count (bytes of the answer rather than files), and the command line.
+A first set was built after the Immich trial in [0165](../completed-epics.md#0165-an-editing-tool-for-assistants): `search_files` in process ([ADR 0149](../../decisions/0149-the-extension-searches-file-text-in-process.md)), `list_files` with a folder view, a glob and paging, and `read_file` by line range. The questions above are open only where this set leaves them: ignore rules beyond dot-folders and `node_modules`, what a limit should count (bytes of the answer rather than files), and the command line.
 
 - [ ] Measure two or three real repositories: files per folder, sizes, how many are generated or vendored
 - [ ] Try a few real tasks by hand against the current tools and note where the assistant gets lost
