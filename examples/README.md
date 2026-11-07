@@ -18,7 +18,7 @@ These three also serve as round-trip fixtures: the app must open and re-save the
 
 | File | What it shows |
 |---|---|
-| `review/shop-before.chd`, `shop-after.chd` | A rename and an icon change (Modified), a recoloured element and a connection made dotted and animated (Restyled), a font-size change (only marked with the paint brush), a removed and an added element. Try `chd diff examples/review/shop-before.chd examples/review/shop-after.chd`, or open the after file and use **View → Changes → Compare with git revision…** |
+| `review/shop-before.chd`, `shop-after.chd` | A ten-plus-element shop architecture and the same after an edit: renames, a changed tag and a relabelled connection (Modified); recoloured elements, other icons, connections made dotted, solid or animated (Restyled); a font-size change (only marked with the paint brush); removed and added elements and connections. Try `chd diff examples/review/shop-before.chd examples/review/shop-after.chd`, or open the after file and use **View → Changes → Compare with git revision…** |
 
 ## Architecture checks
 
