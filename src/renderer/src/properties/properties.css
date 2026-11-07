@@ -210,3 +210,15 @@
   -webkit-appearance: none;
   margin: 0;
 }
+
+/* A label that can be dragged to change its field's value (ui/useScrub.ts). */
+.property-field-label.scrubbable {
+  cursor: ew-resize;
+  user-select: none;
+}
+
+body.scrubbing,
+body.scrubbing * {
+  cursor: ew-resize !important;
+  user-select: none !important;
+}

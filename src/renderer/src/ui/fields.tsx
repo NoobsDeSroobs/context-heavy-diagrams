@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useRafThrottledCallback } from './useRafThrottledCallback'
+import { useScrub, type ScrubConfig } from './useScrub'
 
 // Shared, dumb field primitives for the property panel: generic value-in/onChange-out controls with
 // no knowledge of NodeStyle/EdgeStyle or the diagram model, plus the "mixed across selection"
@@ -57,16 +58,26 @@ export function CollapsibleSection({
   )
 }
 
+// With `scrub`, dragging the label sideways changes the value (useScrub.ts).
 export function FieldRow({
   label,
-  children
+  children,
+  scrub
 }: {
   label: string
   children: ReactNode
+  scrub?: ScrubConfig
 }): React.JSX.Element {
+  const handlers = useScrub(scrub)
   return (
     <label className="property-field">
-      <span className="property-field-label">{label}</span>
+      <span
+        className={scrub ? 'property-field-label scrubbable' : 'property-field-label'}
+        title={scrub ? 'Drag to change. Shift: finer, Ctrl: coarser' : undefined}
+        {...(scrub ? handlers : {})}
+      >
+        {label}
+      </span>
       {children}
     </label>
   )
@@ -228,7 +239,10 @@ export function NumberField({
     mixed
   )
   return (
-    <FieldRow label={label}>
+    <FieldRow
+      label={label}
+      scrub={{ value, mixed, min, max, step, onChange, onSessionStart, onSessionEnd }}
+    >
       <input
         type="number"
         className="property-number-field"
@@ -293,7 +307,10 @@ export function SliderField({
   }
 
   return (
-    <FieldRow label={label}>
+    <FieldRow
+      label={label}
+      scrub={{ value, mixed, min, max, onChange, onSessionStart, onSessionEnd }}
+    >
       <div className="property-slider-field">
         <input
           type="range"

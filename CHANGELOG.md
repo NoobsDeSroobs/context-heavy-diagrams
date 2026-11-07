@@ -6,6 +6,7 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 ### Added
 
+- **Drag a number field's label to change its value** in the properties panel and the Preferences panel (stroke width, font size, opacity, animation speed and the rest): drag sideways, one step per pixel, Shift for fine and Ctrl for coarse. The cursor hides and the drag carries on past the window edge; one drag is one undo step, and a plain click still focuses the box for typing. ([ADR 0152](docs/decisions/0152-drag-a-number-fields-label-to-change-it.md))
 - **A reference for the `chd` command line** ([docs/cli-reference.md](docs/cli-reference.md)): every command, its options and exit codes, how to get `chd` on a machine, and worked examples with their output, including checking a draft or a committed version through a pipe. A test fails when a command, an option or an edit operation is missing from it.
 
 ### Changed
