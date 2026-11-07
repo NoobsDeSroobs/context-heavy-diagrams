@@ -1,7 +1,7 @@
 # 0178: Reading large repositories through the extension
 
 ## Status
-Not Started. Logged 2026-11-06; follows [0177](0177-fewer-tokens-for-assistant-diagramming.md) and the opening of reads to every file type ([ADR 0110](../../decisions/0110-claude-desktop-extension.md)).
+In Progress: a first set is built (see Tasks); what is left is measuring and deciding the open questions. Logged 2026-11-06; follows [0177](0177-fewer-tokens-for-assistant-diagramming.md) and the opening of reads to every file type ([ADR 0110](../../decisions/0110-claude-desktop-extension.md)).
 
 ## Goal
 Design how an assistant finds and reads the right files in a folder that holds a whole repository, without a listing or a read that is too large to use. Design first; the build comes after the design is settled.

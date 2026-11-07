@@ -46,4 +46,4 @@ Permissions: the workflow gets `contents: write` only in the release job, and no
 - [ ] Let the person choose the install folder (`allowToChangeInstallationDirectory` is `false` today). Check what assumes the default: the `chd` launcher, `install-options.json`, the uninstaller and the association
 
 ## Notes
-Raised after 0.3.0 was released. This is the missing piece for [0160](0160-readme-and-docs-from-outside-feedback.md), whose audience cannot build from source.
+Raised after 0.3.0 was released. This is the missing piece for [0160](../completed-epics.md#0160-readme-and-documentation-changes-from-outside-feedback), whose audience cannot build from source.

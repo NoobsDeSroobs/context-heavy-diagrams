@@ -1,7 +1,7 @@
 # 0175: A command-line reference sheet with examples
 
 ## Status
-Not Started. Logged 2026-11-05; for later.
+In Progress (2026-11-07). Logged 2026-11-05.
 
 ## Goal
 One page a person, or whoever writes a CI job, can keep open: every `chd` command, its options and exit codes, and worked examples, including the ones that need a pipe (a draft on standard input, a version out of git). `chd help <command>` lists usage; it does not show how the commands fit together.

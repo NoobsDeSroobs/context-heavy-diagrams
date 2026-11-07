@@ -478,3 +478,19 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 ### 0165: An editing tool for assistants
 
 *Done* (merged; released in v0.7.0). An assistant builds a diagram by doing what a person does, one operation at a time, and each operation answers with what it made: entities, containers, text, lines, connections and connection points, styles, nesting, edge routing points, tags, required tags, highlights, the legend, links to existing or new drill-down diagrams (nested in a folder named after the parent), notes, and removal. The core is pure shared code; the Claude Desktop extension runs it on a file as `edit_diagram` with `inspect_diagram` and `room_for_label`, and the command line as `chd edit` and `chd ask`, with a parity test that requires the same answers and the same bytes. The extension also searches file text without a shell (`search_files`) and lists and reads large folders in pages and by line. Tried twice on the Immich repository (second run 238k tokens of context against 285k). ADRs: [0148](../decisions/0148-an-assistant-builds-a-diagram-by-operations-that-answer.md), [0149](../decisions/0149-the-extension-searches-file-text-in-process.md), [0150](../decisions/0150-chd-edit-and-chd-ask-build-a-diagram-from-the-command-line.md). Left out: icons and the security matrix as operations (until there is a need). Follow-ups: [0177](epics/0177-fewer-tokens-for-assistant-diagramming.md), [0178](epics/0178-reading-large-repositories-through-the-extension.md), [0179](epics/0179-align-a-connection-point-with-another-element.md), [0180](epics/0180-transparent-highlight-for-not-applicable.md), [0181](epics/0181-second-round-of-assistant-tooling-feedback.md).
+
+### 0158: Notes: the name for the Markdown files behind an element
+
+*Done* (merged; released in v0.5.0). "Notes" is the one word from the file on disk to the interface: stored as `data.notes` (`data.details` is still read), new notes go in a `notes/` folder, and an older note is moved there on the next save. Leftover, not verified: the live check of the rename in the app was never recorded. ADR: [0140](../decisions/0140-the-markdown-files-behind-an-element-are-called-notes.md).
+
+### 0160: README and documentation changes from outside feedback
+
+*Done* (merged; released in v0.5.0). The README leads with plain boxes and arrows and the opt-in features, makes tag perspectives a headline, presents AI work as draft then review with a sample prompt, states why layout is manual, and carries a short factual list for regulated settings; each claim was checked against the software. Leftover: the website wording, as the repository holds no website.
+
+### 0164: Tooling fixes from the first assistant trial runs
+
+*Done* (merged; released in v0.5.0). The validator checks edge handles and warns on legacy names; the extension names the folder it serves and `get_format_spec all` returns the core rules and an index; the guidance covers provenance paths, what to do without `chd`, and writing a diagram metamodel. Leftover: the trial's missing command-line note could not be traced for certain (a run from source is the likely cause). ADR: [0138](../decisions/0138-the-mcp-server-carries-the-guidance-the-cli-carries-the-checks.md).
+
+### 0171: Animated edges
+
+*Done* (merged; released in v0.5.0, the reduced-motion fix in v0.5.1). An edge can be animated (`flow` or `pulse`) with speed, direction, pulse distance and dash length and gap; the copy-style brush carries it, a legend line can move, and exports show it still. **View → Animate edges** (Ctrl+Shift+A) and the preference follow the system, always on or always off. ADR: [0141](../decisions/0141-animated-edges-are-an-edge-style-field.md). Leftovers, not verified: the eye-checks (the pulse dot on step and curved routing, a selected edge, a dotted line, switching the direction set, light and dark theme, the flow loop's seam) and a measurement of a diagram with many animated edges.
