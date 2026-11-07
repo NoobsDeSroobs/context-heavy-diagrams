@@ -123,7 +123,7 @@
 }
 .compare-canvas .cmp-restyled {
   --cmp-color: var(--cmp-restyled);
-  --cmp-badge: 'D0';
+  --cmp-badge: '\25D0';
 }
 
 /* An edge has no box to outline, so its line is recoloured and thickened. A restyled edge keeps
