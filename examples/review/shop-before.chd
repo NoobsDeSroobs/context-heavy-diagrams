@@ -87,7 +87,8 @@
         "height": 70
       },
       "data": {
-        "label": "Payments"
+        "label": "Payments",
+        "notes": "shop-before/notes/Payments-pay.md"
       },
       "style": {
         "stroke": "#16a34a",
