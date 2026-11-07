@@ -15,7 +15,12 @@ let dir
 const run = (args, input) =>
   spawnSync(process.execPath, [cli, ...args], { encoding: 'utf-8', cwd: dir, input })
 const edit = (file, operations, ...more) => run(['edit', file, ...more], JSON.stringify(operations))
-const answer = (result) => JSON.parse(result.stdout)
+const answer = (result) => {
+  assert.ok(result.stdout, `no answer; it said: ${result.stderr}`)
+  return JSON.parse(result.stdout)
+}
+// A usage error, with what the command said if it was something else.
+const usageError = (result) => assert.equal(result.status, 2, result.stderr)
 
 const BUILD = [
   { op: 'add_entity', id: 'web', label: 'Web', x: 0, y: 0 },
@@ -143,10 +148,10 @@ test('chd edit works inside the current folder, on .chd files, and says how to u
   const outside = edit('../out.chd', BUILD)
   assert.equal(outside.status, 1)
   assert.match(outside.stderr, /outside the current folder/)
-  assert.equal(edit('notes.md', BUILD).status, 2)
-  assert.equal(run(['edit', 'a.chd'], 'not json').status, 2)
-  assert.equal(run(['edit', 'a.chd'], '[]').status, 2)
-  assert.equal(run(['edit'], '[]').status, 2)
+  usageError(edit('notes.md', BUILD))
+  usageError(run(['edit', 'a.chd'], 'not json'))
+  usageError(run(['edit', 'a.chd'], '[]'))
+  usageError(run(['edit'], '[]'))
   assert.match(run(['edit', '--help']).stdout, /Usage: chd edit/)
 })
 

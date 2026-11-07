@@ -6,6 +6,7 @@
 // output is git-ignored; `npm run build` runs this before packaging, and `npm run build:cli` runs it
 // alone. Exports the bundlers so the tests can build the real bundles.
 import { build } from 'esbuild'
+import { mkdirSync, renameSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -27,8 +28,19 @@ export const LABEL_CLEARANCE_BUNDLE = join(
   'label_clearance.mjs'
 )
 
+// The tests of several commands rebuild bundles at the same time, in separate processes, while others
+// run them. The output is written beside its target and renamed over it, so a reader sees the old file
+// or the new one and never half of one.
+async function buildAtomically(options) {
+  const result = await build({ ...options, write: false })
+  mkdirSync(dirname(options.outfile), { recursive: true })
+  const temp = `${options.outfile}.${process.pid}.tmp`
+  writeFileSync(temp, result.outputFiles[0].contents)
+  renameSync(temp, options.outfile)
+}
+
 async function bundle(entry, outfile) {
-  await build({
+  await buildAtomically({
     entryPoints: [join(root, 'src', 'cli', entry)],
     bundle: true,
     platform: 'node',
@@ -46,7 +58,7 @@ export const bundleCheck = (outfile = CHECK_BUNDLE) => bundle('checkCommand.ts',
 export const bundleDiff = (outfile = DIFF_BUNDLE) => bundle('diffCommand.ts', outfile)
 export const bundleEdit = (outfile = EDIT_BUNDLE) => bundle('editCommand.ts', outfile)
 export const bundleLabelClearance = (outfile = LABEL_CLEARANCE_BUNDLE) =>
-  build({
+  buildAtomically({
     entryPoints: [join(root, 'src', 'shared', 'layout', 'labelClearance.ts')],
     bundle: true,
     platform: 'neutral',
