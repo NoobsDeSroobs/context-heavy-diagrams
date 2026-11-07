@@ -180,6 +180,7 @@ export function createTools({ root, allowUpdate, specSources }) {
   function visibleFiles(start, matches) {
     const found = []
     let capped = false
+    let tooDeep = false
     const walk = (dir, depth) => {
       for (const entry of readdirSync(dir, { withFileTypes: true })) {
         if (capped) return
@@ -187,6 +188,7 @@ export function createTools({ root, allowUpdate, specSources }) {
         const full = join(dir, entry.name)
         if (entry.isDirectory()) {
           if (depth < LIST_MAX_DEPTH) walk(full, depth + 1)
+          else tooDeep = true
           continue
         }
         if (!entry.isFile() || isReadBlockedName(entry.name)) continue
@@ -204,7 +206,7 @@ export function createTools({ root, allowUpdate, specSources }) {
     }
     walk(start, 0)
     found.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
-    return { found, capped }
+    return { found, capped, tooDeep }
   }
 
   const fileEntry = ({ full, path, name }) => {
@@ -235,10 +237,18 @@ export function createTools({ root, allowUpdate, specSources }) {
       }
       start = found.absolute
     }
-    const { found, capped } = visibleFiles(start, globTest(glob))
+    const { found, capped, tooDeep } = visibleFiles(start, globTest(glob))
     // The folder's name only, never its full path (which would go to the provider): enough for an
     // assistant to notice that the server points at the wrong folder.
-    const common = { folder: basename(root), updatesEnabled: allowUpdate }
+    const common = {
+      folder: basename(root),
+      updatesEnabled: allowUpdate,
+      ...(tooDeep
+        ? {
+            note: `folders more than ${LIST_MAX_DEPTH} levels below ${start === root ? 'the folder' : 'this subfolder'} are not listed; list from a deeper subfolder to see them`
+          }
+        : {})
+    }
     if (folders) {
       const base =
         start === root

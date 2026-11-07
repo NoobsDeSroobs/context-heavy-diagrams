@@ -44,6 +44,10 @@ Missing targets are meant to be recoverable, not fatal — the app shows "not fo
 - `nodes` array order matters structurally, not just cosmetically: **a parent node must appear before its children.** This is a React Flow requirement, not a style preference — build/preserve this ordering in anything you write.
 - For the full field-by-field reference (every field, type, and exact meaning across top-level object, Node, Node style, Edge, Edge style, line points, edge points, icon references, metadata, required tags, highlights, legend, gravity presets, edge direction sets, and the security matrix), see [references/field-reference.md](references/field-reference.md). Read it whenever you need an exact field name/type/enum rather than guessing.
 
+## With the Context-Heavy Diagrams tools, build with `edit_diagram`
+
+If your client offers the Context-Heavy Diagrams tools (`edit_diagram`, `inspect_diagram`, `room_for_label`, `search_files`), build and change diagrams with `edit_diagram` and skip the hand-editing steps below: it keeps ids unique, parents before children, paths relative and the file valid, takes absolute coordinates even inside a container, can set tags, required tags, highlights, the legend, links and notes, and answers with what each step made and what is wrong with the layout so far. Read the layout guide for gaps and sizes either way. Write the JSON by hand (`create_file`, `update_file`, or your own file tools) only for what the operations cannot express. Without those tools, follow the steps below.
+
 ## Editing a file by hand
 
 1. **Parse, mutate the in-memory structure, re-serialize** — don't do string-level surgery on the JSON text, since key order and indentation both matter for clean diffs (see Determinism below).

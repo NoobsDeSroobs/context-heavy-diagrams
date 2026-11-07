@@ -56,8 +56,8 @@ A second implementation of the editor's edits that drifts from the app; an opera
 - [x] Try the tags, notes and legend with a real assistant (the Immich run: diagrams nested in their parents' folders, feedback on verbose answers, search and reading large files led to ADR 0149)
 - [x] Edge routing points as an operation
 - [ ] Icons and the security matrix as operations, if wanted
-- [ ] Guidance: update the skill, `AGENTS.md`, the extension's instructions and the copy-paste text to prefer it
-- [ ] Re-run an assistant on a large project and compare against the hand-written generators
+- [x] Guidance: the skill and `AGENTS.md` now say to build with `edit_diagram` when the tools are there, and the extension's instructions already did. The copy-paste text is for a chat with no tools, so it stays as it is
+- [x] Re-run an assistant on a large project and compare against the hand-written generators (the Immich C4 set, second round: 238k tokens of context against 285k before the shorter answers; messages 151k against 216k; no generator script)
 
 ## Notes
 Raised after the first trial runs. Redirected 2026-11-06: the first design, a compact spec with tool-made placement, was set aside because the maintainer wants the tool to simulate what a user does, with the back and forth that implies.

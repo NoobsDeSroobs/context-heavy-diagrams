@@ -1199,6 +1199,19 @@ test('list_files takes a glob and pages with an offset and a limit, in the order
   refusal(() => tools.list_files({ limit: 0 }), /limit must be/)
 })
 
+test('list_files says when folders below its depth limit were left out', () => {
+  const deep = Array.from({ length: 14 }, (_, i) => `d${i}`)
+  mkdirSync(join(folder, 'deep', ...deep), { recursive: true })
+  writeFileSync(join(folder, 'deep', ...deep, 'bottom.md'), 'x')
+  const tools = make()
+  const above = tools.list_files({ glob: 'bottom.md' })
+  assert.deepEqual(above.files, [])
+  assert.match(above.note, /more than 12 levels below the folder are not listed/)
+  const inside = tools.list_files({ subfolder: 'deep/d0/d1/d2', glob: 'bottom.md' })
+  assert.equal(inside.files.length, 1)
+  assert.equal(inside.note, undefined)
+})
+
 test('read_file can read part of a text file by line and says it is a part', () => {
   const tools = make()
   const lines = Array.from({ length: 10 }, (_, i) => `line ${i + 1}`)
