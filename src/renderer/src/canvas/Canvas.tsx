@@ -21,6 +21,7 @@ import {
   Controls,
   ControlButton,
   MiniMap,
+  Panel,
   ConnectionMode,
   SelectionMode,
   addEdge,
@@ -177,6 +178,11 @@ const DEFAULT_EDGE_SWATCH_DASH: Record<'solid' | 'dashed' | 'dotted', string | u
   dotted: '1.5 2'
 }
 
+// The minimap's size in pixels (React Flow's own default), fixed so the corner button knows where
+// the minimap's top-right corner is.
+const MINIMAP_WIDTH = 200
+const MINIMAP_HEIGHT = 150
+
 function CanvasInner(): React.JSX.Element {
   const { theme, setTheme } = useTheme()
   const [nodes, setNodes, onNodesChangeBase] = useNodesState<Node>([])
@@ -267,6 +273,13 @@ function CanvasInner(): React.JSX.Element {
   const toggleEdgeAnimation = useCallback(
     () => updatePreferences({ animateEdges: edgeAnimationOn ? 'off' : 'on' }),
     [updatePreferences, edgeAnimationOn]
+  )
+  // The minimap is a per-person display choice (ADR 0158): the corner button and View -> Minimap
+  // flip it.
+  const minimapOn = preferences.showMinimap
+  const toggleMinimap = useCallback(
+    () => updatePreferences({ showMinimap: !minimapOn }),
+    [updatePreferences, minimapOn]
   )
   useModifierHeldClass()
   // What is drawn: the diagram's font, else the personal default (ADR 0130).
@@ -3137,6 +3150,8 @@ function CanvasInner(): React.JSX.Element {
     toggleStylePalettePanel,
     toggleEdgeAnimation,
     edgeAnimationOn,
+    toggleMinimap,
+    minimapOn,
     toggleDiagramSettingsPanel,
     togglePreferencesPanel,
     setCommandPaletteOpen,
@@ -3540,7 +3555,35 @@ function CanvasInner(): React.JSX.Element {
                       </svg>
                     </ControlButton>
                   </Controls>
-                  <MiniMap />
+                  {minimapOn && (
+                    <MiniMap style={{ width: MINIMAP_WIDTH, height: MINIMAP_HEIGHT }} />
+                  )}
+                  <Panel position="bottom-right" className="minimap-toggle-panel">
+                    <button
+                      type="button"
+                      className="minimap-toggle"
+                      style={
+                        minimapOn
+                          ? { transform: `translate(-4px, ${-(MINIMAP_HEIGHT - 26)}px)` }
+                          : undefined
+                      }
+                      title={minimapOn ? 'Hide the minimap' : 'Show the minimap'}
+                      aria-label={minimapOn ? 'Hide the minimap' : 'Show the minimap'}
+                      aria-pressed={minimapOn}
+                      onClick={toggleMinimap}
+                    >
+                      <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                        <path
+                          d="M9 4 3 6.5v13L9 17l6 3 6-2.5v-13L15 7 9 4Zm0 0v13m6-10v13"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinejoin="round"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    </button>
+                  </Panel>
                 </ReactFlow>
                 <AlignmentGuides guides={alignmentGuides} />
               </div>
@@ -3734,7 +3777,10 @@ function CanvasInner(): React.JSX.Element {
             </div>
           )}
         </div>
-        <UtilityDock>
+        <UtilityDock
+          width={preferences.utilityDockWidth}
+          onWidthChange={(utilityDockWidth) => updatePreferences({ utilityDockWidth })}
+        >
           {notesPanelNodeId && (
             <NotesPanel
               title={notesPanelTitle(nodes.find((n) => n.id === notesPanelNodeId))}

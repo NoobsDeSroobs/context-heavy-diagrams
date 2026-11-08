@@ -273,11 +273,33 @@ body {
    .utility-dock — see ADR 0013. Internal layout (toolbar + body) unchanged,
    just its outer positioning. .utility-dock owns the width. */
 .utility-dock {
+  position: relative;
   flex: 0 0 auto;
   height: 100%;
+  /* The width comes from the preferences (inline); the limits keep the canvas on screen. */
   width: 360px;
+  min-width: 280px;
+  max-width: calc(100vw - 400px);
   border-left: 1px solid var(--ev-c-gray-2);
   box-shadow: -4px 0 16px rgba(0, 0, 0, 0.4);
+}
+
+/* The drag handle on the dock's inner edge (UtilityDock.tsx): a few pixels wide, over the border. */
+.utility-dock-resize {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -3px;
+  width: 6px;
+  z-index: 5;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.utility-dock-resize:hover,
+.utility-dock-resize:focus-visible {
+  background: var(--ev-c-gray-2);
+  outline: none;
 }
 
 .about-dialog-overlay:has(.alert-dialog) {
