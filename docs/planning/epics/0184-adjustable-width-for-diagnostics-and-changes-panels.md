@@ -9,5 +9,6 @@ The diagnostics panel and the changes (review) panel have a fixed width. Let a p
 ## Tasks
 - [x] A drag handle on the panels' inner edge; the width is kept in the preferences and applied on the next start
 - [x] A minimum and a maximum width, and a double-click that restores the default (and arrow keys)
+- [x] The review (compare) window's list has the same handle through a shared hook; its width is kept for the life of the window, because that window cannot write preferences
 - [x] Check the other side panels for the same need, and share the handle if they have it: all of them sit in one dock, so the handle is on the dock
 - [ ] Look at it in the app, in both themes, with the window narrow

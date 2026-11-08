@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   describeCount,
   flattenReview,
@@ -9,6 +9,11 @@ import {
 import { STATUS_LABEL, changeLines, kindName, withItNote } from '@shared/compare/format'
 import { useTheme, type Theme } from '../styling/theme'
 import { themeAdaptiveColor } from '../styling/themeAdaptiveColor'
+import { useEdgeResize, type WidthRange } from '../ui/useEdgeResize'
+
+// The list's width in the review window (ADR 0158). Kept for the life of the window: that window
+// cannot write a preference (ADR 0112).
+const LIST_WIDTH: WidthRange = { default: 320, min: 240, max: 800 }
 
 // What came of a revert asked for in the editor window.
 export interface RevertState {
@@ -105,6 +110,8 @@ export default function CompareList({
 }: CompareListProps): React.JSX.Element {
   const listRef = useRef<HTMLUListElement>(null)
   const { theme } = useTheme()
+  const [width, setWidth] = useState(LIST_WIDTH.default)
+  const { shownWidth, handle } = useEdgeResize(width, LIST_WIDTH, setWidth, 'Resize the list')
 
   useEffect(() => {
     if (currentKey === null) return
@@ -123,7 +130,8 @@ export default function CompareList({
   const connections = everything.length - elements
 
   return (
-    <aside className="compare-list" aria-label="Changes">
+    <aside className="compare-list" aria-label="Changes" style={{ flexBasis: shownWidth }}>
+      {handle}
       <div className="compare-list-header">
         <div className="compare-list-title">
           <strong>Changes</strong>

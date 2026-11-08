@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ReviewItem } from '@shared/compare/classify'
 import CompareList from './CompareList'
@@ -63,5 +63,31 @@ describe('a row of the changes list', () => {
     ])
     expect(container.querySelectorAll('.compare-chip')).toHaveLength(2)
     expect(screen.getByText('Payments')).toBeTruthy()
+  })
+})
+
+describe('the width of the changes list', () => {
+  it('can be changed with the handle, and goes back on a double-click', () => {
+    const { container } = render(
+      <CompareList
+        items={[item]}
+        currentKey={null}
+        reviewed={new Set()}
+        canRevert={false}
+        revertStates={new Map()}
+        onSelect={vi.fn()}
+        onToggleReviewed={vi.fn()}
+        onRevert={vi.fn()}
+        onPrevious={vi.fn()}
+        onNext={vi.fn()}
+      />
+    )
+    const list = container.querySelector<HTMLElement>('.compare-list')!
+    const handle = screen.getByRole('separator', { name: 'Resize the list' })
+    expect(list.style.flexBasis).toBe('320px')
+    fireEvent.keyDown(handle, { key: 'ArrowLeft', shiftKey: true })
+    expect(list.style.flexBasis).toBe('384px')
+    fireEvent.doubleClick(handle)
+    expect(list.style.flexBasis).toBe('320px')
   })
 })
