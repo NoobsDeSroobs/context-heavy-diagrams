@@ -35,7 +35,7 @@ import './compare.css'
 
 const noop = (): void => {}
 
-const STATUS_ORDER: CompareStatus[] = ['added', 'removed', 'links', 'content']
+const STATUS_ORDER: CompareStatus[] = ['added', 'removed', 'links', 'content', 'restyled']
 
 // Everything the node and edge components read from the editing canvas, with every action a
 // no-op: this window draws a diagram, it never changes one.
@@ -111,10 +111,10 @@ const CURRENT = ' cmp-current'
 function decorateNode(
   node: Node,
   change: ElementChange | undefined,
-  restyled: boolean,
+  cosmetic: boolean,
   current: boolean
 ): Node {
-  const marks = `${restyled ? ' cmp-restyled' : ''}${current ? CURRENT : ''}`
+  const marks = `${cosmetic ? ' cmp-cosmetic' : ''}${current ? CURRENT : ''}`
   return { ...node, className: `cmp ${statusClass(change)}${marks}` }
 }
 
@@ -148,7 +148,7 @@ function CompareCanvas({
   const { preferences } = useReadOnlyPreferences()
   const context = useReadOnlyContext(session.diagramPath)
   const { peek, bindings } = useNotesPeek()
-  const [showRestyled, setShowRestyled] = useState(true)
+  const [showCosmetic, setShowCosmetic] = useState(true)
   const [edgePointer, setEdgePointer] = useState({ x: 0, y: 0 })
   const [showList, setShowList] = useState(true)
 
@@ -164,7 +164,7 @@ function CompareCanvas({
         decorateNode(
           n,
           classification.nodes.get(n.id),
-          showRestyled && classification.restyledNodes.has(n.id),
+          showCosmetic && classification.restyledNodes.has(n.id),
           currentKey === `node:${n.id}`
         )
       ),
@@ -172,7 +172,7 @@ function CompareCanvas({
         decorateEdge(e, classification.edges.get(e.id), currentKey === `edge:${e.id}`)
       )
     }),
-    [flow, classification, showRestyled, currentKey]
+    [flow, classification, showCosmetic, currentKey]
   )
 
   const matchedIds = useMemo<MatchedIds>(
@@ -198,7 +198,7 @@ function CompareCanvas({
           ))}
           <span className="compare-legend-item">
             <span className="compare-swatch cmp-dim" />
-            Unchanged or only moved or restyled
+            Unchanged or only moved
           </span>
           <label className="compare-legend-item compare-legend-toggle">
             <input
@@ -211,11 +211,11 @@ function CompareCanvas({
           <label className="compare-legend-item">
             <input
               type="checkbox"
-              checked={showRestyled}
-              onChange={(event) => setShowRestyled(event.target.checked)}
+              checked={showCosmetic}
+              onChange={(event) => setShowCosmetic(event.target.checked)}
             />
             <span className="compare-brush" aria-hidden="true" />
-            Mark restyled ({classification.restyledNodes.size})
+            Mark cosmetic look changes ({classification.restyledNodes.size})
           </label>
         </div>
         {!churn.matches && churn.suspicion.suspected && (

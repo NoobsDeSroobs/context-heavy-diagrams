@@ -8,7 +8,8 @@ export const STATUS_LABEL: Record<CompareStatus, string> = {
   added: 'Added',
   removed: 'Removed',
   links: 'Links or Notes changed',
-  content: 'Modified'
+  content: 'Modified',
+  restyled: 'Restyled'
 }
 
 export function kindName(item: ReviewItem): string {
@@ -21,18 +22,21 @@ export function withItNote(item: ReviewItem): string {
   return `${count} ${item.change.status === 'removed' ? 'removed' : 'added'} with it`
 }
 
-// One line on what changed: the first of the lines the hover card shows.
-export function summarizeItem(item: ReviewItem): string {
+export const MAX_ROW_LINES = 8
+
+// What changed, one line each, for a row of the changes list: the lines of every changed field,
+// the strongest field first. A long list is cut with a count; the hover card has all of it.
+export function changeLines(item: ReviewItem): string[] {
   const { change } = item
-  if (change.status === 'added') return item.kind === 'node' ? 'Added' : 'Added connection'
-  if (change.status === 'removed') return item.kind === 'node' ? 'Removed' : 'Removed connection'
-  const lines = change.fields[0]?.lines ?? []
-  // A line that only introduces the next ("label, further lines:") is no summary on its own.
-  const first =
-    (lines[0]?.endsWith(':') && lines[1] ? `${lines[0]} ${lines[1]}` : lines[0]) ??
-    STATUS_LABEL[change.status]
-  const more = change.fields.length - 1
-  return more > 0 ? `${first} (+${more} more)` : first
+  if (change.status === 'added') return [item.kind === 'node' ? 'Added' : 'Added connection']
+  if (change.status === 'removed') return [item.kind === 'node' ? 'Removed' : 'Removed connection']
+  const lines = change.fields.flatMap((f) => f.lines)
+  if (lines.length === 0) return [STATUS_LABEL[change.status]]
+  if (lines.length <= MAX_ROW_LINES) return lines
+  return [
+    ...lines.slice(0, MAX_ROW_LINES - 1),
+    `…and ${lines.length - MAX_ROW_LINES + 1} more lines`
+  ]
 }
 
 // A catalog or setting change the canvas cannot colour: "Palette: +Teal −Red ~Blue" or
@@ -47,7 +51,8 @@ export function diagramLevelText(change: CollectionChange): string {
   return `${change.name}: ${parts.join(' ')}`
 }
 
-export type ReviewSection = 'SECURITY' | 'LINKS AND NOTES' | 'MODIFIED' | 'REMOVED' | 'ADDED'
+export type ReviewSection =
+  'SECURITY' | 'LINKS AND NOTES' | 'MODIFIED' | 'RESTYLED' | 'REMOVED' | 'ADDED'
 
 // Which heading an item sits under; the review order already keeps each heading together.
 export function reviewSection(item: ReviewItem): ReviewSection {
@@ -57,6 +62,8 @@ export function reviewSection(item: ReviewItem): ReviewSection {
       return 'LINKS AND NOTES'
     case 'content':
       return 'MODIFIED'
+    case 'restyled':
+      return 'RESTYLED'
     case 'removed':
       return 'REMOVED'
     default:

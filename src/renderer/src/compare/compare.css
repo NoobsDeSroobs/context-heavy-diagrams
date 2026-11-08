@@ -6,6 +6,7 @@
   --cmp-removed: #e5484d;
   --cmp-links: #f97316;
   --cmp-content: #facc15;
+  --cmp-restyled: #d946ef;
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -50,6 +51,9 @@
 }
 .compare-swatch.cmp-content {
   background: var(--cmp-content);
+}
+.compare-swatch.cmp-restyled {
+  background: var(--cmp-restyled);
 }
 .compare-swatch.cmp-dim {
   background: var(--color-text);
@@ -117,11 +121,19 @@
   --cmp-color: var(--cmp-content);
   --cmp-badge: '~';
 }
+.compare-canvas .cmp-restyled {
+  --cmp-color: var(--cmp-restyled);
+  --cmp-badge: '\25D0';
+}
 
-/* An edge has no box to outline, so its line is recoloured and thickened. */
-.compare-canvas .react-flow__edge.cmp:not(.cmp-dim) .react-flow__edge-path {
+/* An edge has no box to outline, so its line is recoloured and thickened. A restyled edge keeps
+   its own look, which is the change, and gets a glow instead. */
+.compare-canvas .react-flow__edge.cmp:not(.cmp-dim):not(.cmp-restyled) .react-flow__edge-path {
   stroke: var(--cmp-color) !important;
   stroke-width: 4px !important;
+}
+.compare-canvas .react-flow__edge.cmp-restyled {
+  filter: drop-shadow(0 0 3px var(--cmp-color)) drop-shadow(0 0 3px var(--cmp-color));
 }
 .compare-canvas .react-flow__edge.cmp-removed .react-flow__edge-path {
   stroke-dasharray: 6 4 !important;
@@ -143,10 +155,10 @@
   font-size: 13px;
 }
 
-/* Restyled marker: a paint brush at the top-left corner (the status badge is top-right), so a
+/* Cosmetic-look marker: a paint brush at the top-left corner (the status badge is top-right), so a
    changed look is findable although the element is otherwise unchanged and dimmed. */
 .compare-brush,
-.compare-canvas .react-flow__node.cmp-restyled::before {
+.compare-canvas .react-flow__node.cmp-cosmetic::before {
   background: #6475e8
     url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 21v-4a4 4 0 1 1 4 4h-4'/><path d='M21 3a16 16 0 0 0 -12.8 10.2'/><path d='M21 3a16 16 0 0 1 -10.2 12.8'/><path d='M10.6 9a9 9 0 0 1 4.4 4.4'/></svg>")
     center / 14px 14px no-repeat;
@@ -157,7 +169,7 @@
   width: 18px;
   height: 18px;
 }
-.compare-canvas .react-flow__node.cmp-restyled::before {
+.compare-canvas .react-flow__node.cmp-cosmetic::before {
   position: absolute;
   top: -12px;
   left: -12px;
@@ -293,6 +305,9 @@ label.compare-legend-item {
 .cmp-row-content {
   --cmp-row-color: var(--cmp-content);
 }
+.cmp-row-restyled {
+  --cmp-row-color: var(--cmp-restyled);
+}
 
 .compare-row-kind {
   flex: 0 0 auto;
@@ -320,10 +335,25 @@ label.compare-legend-item {
 }
 
 .compare-row-summary {
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   color: var(--ev-c-text-2);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+}
+
+/* One changed line; a long one wraps instead of hiding what changed. */
+.compare-row-line {
+  overflow-wrap: anywhere;
+}
+
+/* A colour in a changed line, drawn as the canvas draws it. */
+.compare-chip {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 3px;
+  border: 1px solid var(--color-text);
+  border-radius: 2px;
+  vertical-align: -1px;
 }
 
 .compare-row-current {

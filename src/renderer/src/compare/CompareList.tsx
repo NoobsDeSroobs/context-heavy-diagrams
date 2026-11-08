@@ -6,7 +6,9 @@ import {
   type CompareStatus,
   type ReviewItem
 } from '@shared/compare/classify'
-import { STATUS_LABEL, kindName, summarizeItem, withItNote } from '@shared/compare/format'
+import { STATUS_LABEL, changeLines, kindName, withItNote } from '@shared/compare/format'
+import { useTheme, type Theme } from '../styling/theme'
+import { themeAdaptiveColor } from '../styling/themeAdaptiveColor'
 
 // What came of a revert asked for in the editor window.
 export interface RevertState {
@@ -33,7 +35,33 @@ const REVERT_LABEL: Record<CompareStatus, string> = {
   added: 'Remove',
   removed: 'Restore',
   links: 'Revert',
-  content: 'Revert'
+  content: 'Revert',
+  restyled: 'Revert'
+}
+
+const HEX = /#[0-9a-fA-F]{6}\b/g
+
+// One changed line. A colour in it gets a chip beside the hex, drawn as the canvas draws it in
+// this theme (stored colours are the dark theme's form, ADR 0034).
+function ChangeLine({ text, theme }: { text: string; theme: Theme }): React.JSX.Element {
+  const parts: React.ReactNode[] = []
+  let last = 0
+  for (const match of text.matchAll(HEX)) {
+    const at = match.index ?? 0
+    parts.push(text.slice(last, at))
+    parts.push(
+      <span
+        key={at}
+        className="compare-chip"
+        style={{ background: themeAdaptiveColor(match[0], theme) }}
+        aria-hidden="true"
+      />,
+      match[0]
+    )
+    last = at + match[0].length
+  }
+  parts.push(text.slice(last))
+  return <span className="compare-row-line">{parts}</span>
 }
 
 // A note's text is a file, not part of the element, so a revert cannot put it back.
@@ -60,7 +88,7 @@ function revertDoneNote(item: ReviewItem): string {
     : 'Done in the editor window.'
 }
 
-// Everything that changed, most important first (security, links, content, removed, added): a
+// Everything that changed, most important first (security, links, content, restyled, removed, added): a
 // list that can be worked through to the end. A click shows the element on the canvas; the ticks
 // are the reviewer's own and last only as long as this window.
 export default function CompareList({
@@ -76,6 +104,7 @@ export default function CompareList({
   onNext
 }: CompareListProps): React.JSX.Element {
   const listRef = useRef<HTMLUListElement>(null)
+  const { theme } = useTheme()
 
   useEffect(() => {
     if (currentKey === null) return
@@ -170,7 +199,11 @@ export default function CompareList({
                       )}
                       <span className="compare-row-label">{item.label}</span>
                     </span>
-                    <span className="compare-row-summary">{summarizeItem(item)}</span>
+                    <span className="compare-row-summary">
+                      {changeLines(item).map((text, i) => (
+                        <ChangeLine key={i} text={text} theme={theme} />
+                      ))}
+                    </span>
                   </button>
                   {canRevert && (
                     <button

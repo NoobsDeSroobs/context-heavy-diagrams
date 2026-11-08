@@ -37,7 +37,7 @@ export function describeHover(
     lines.push('id differs from the earlier version; matched by name and place (a guess)')
   }
   if (node ? c.restyledNodes.has(id) : c.restyledEdges.has(id))
-    lines.push('restyled (look changed)')
+    lines.push('cosmetic look changed (font, text or route)')
   if (edge && c.repairedEdges.has(id)) {
     lines.push('names a connection point its node lacks; drawn to the nearest one')
   }

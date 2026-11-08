@@ -1,0 +1,497 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "web",
+      "type": "entity",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 140,
+        "height": 70
+      },
+      "data": {
+        "label": "Web shop"
+      },
+      "style": {
+        "fontSize": 14
+      }
+    },
+    {
+      "id": "mobile",
+      "type": "entity",
+      "position": {
+        "x": 0,
+        "y": 180
+      },
+      "size": {
+        "width": 140,
+        "height": 70
+      },
+      "data": {
+        "label": "Mobile app"
+      }
+    },
+    {
+      "id": "gateway",
+      "type": "entity",
+      "position": {
+        "x": 260,
+        "y": 90
+      },
+      "size": {
+        "width": 140,
+        "height": 70
+      },
+      "data": {
+        "label": "API gateway",
+        "icons": {
+          "topLeft": {
+            "source": "builtin",
+            "id": "server"
+          }
+        }
+      }
+    },
+    {
+      "id": "orders",
+      "type": "entity",
+      "position": {
+        "x": 520,
+        "y": 0
+      },
+      "size": {
+        "width": 140,
+        "height": 70
+      },
+      "data": {
+        "label": "Orders"
+      },
+      "metadata": {
+        "owner": {
+          "value": "team-orders"
+        }
+      }
+    },
+    {
+      "id": "pay",
+      "type": "entity",
+      "position": {
+        "x": 520,
+        "y": 180
+      },
+      "size": {
+        "width": 140,
+        "height": 70
+      },
+      "data": {
+        "label": "Payments",
+        "notes": "shop-before/notes/Payments-pay.md"
+      },
+      "style": {
+        "stroke": "#16a34a",
+        "strokeWidth": 2
+      },
+      "metadata": {
+        "owner": {
+          "value": "team-pay"
+        },
+        "pci": {
+          "value": "yes"
+        }
+      }
+    },
+    {
+      "id": "stock",
+      "type": "entity",
+      "position": {
+        "x": 520,
+        "y": 360
+      },
+      "size": {
+        "width": 140,
+        "height": 70
+      },
+      "data": {
+        "label": "Inventory"
+      }
+    },
+    {
+      "id": "queue",
+      "type": "entity",
+      "position": {
+        "x": 780,
+        "y": 90
+      },
+      "size": {
+        "width": 140,
+        "height": 70
+      },
+      "data": {
+        "label": "Message queue"
+      }
+    },
+    {
+      "id": "db",
+      "type": "entity",
+      "position": {
+        "x": 780,
+        "y": 330
+      },
+      "size": {
+        "width": 140,
+        "height": 70
+      },
+      "data": {
+        "label": "Database",
+        "icons": {
+          "topLeft": {
+            "source": "builtin",
+            "id": "database"
+          }
+        }
+      },
+      "style": {
+        "fill": "#1e3a5f"
+      }
+    },
+    {
+      "id": "email",
+      "type": "entity",
+      "position": {
+        "x": 1040,
+        "y": 0
+      },
+      "size": {
+        "width": 140,
+        "height": 70
+      },
+      "data": {
+        "label": "Email service"
+      }
+    },
+    {
+      "id": "erp",
+      "type": "entity",
+      "position": {
+        "x": 1040,
+        "y": 180
+      },
+      "size": {
+        "width": 140,
+        "height": 70
+      },
+      "data": {
+        "label": "Legacy ERP"
+      },
+      "style": {
+        "fill": "#4b5563"
+      }
+    },
+    {
+      "id": "auth",
+      "type": "entity",
+      "position": {
+        "x": 260,
+        "y": -180
+      },
+      "size": {
+        "width": 140,
+        "height": 70
+      },
+      "data": {
+        "label": "Auth service",
+        "icons": {
+          "topLeft": {
+            "source": "builtin",
+            "id": "lock"
+          }
+        }
+      },
+      "metadata": {
+        "owner": {
+          "value": "team-id"
+        }
+      }
+    },
+    {
+      "id": "cache",
+      "type": "entity",
+      "position": {
+        "x": 780,
+        "y": 540
+      },
+      "size": {
+        "width": 140,
+        "height": 70
+      },
+      "data": {
+        "label": "Cache"
+      },
+      "style": {
+        "fill": "#334155"
+      }
+    },
+    {
+      "id": "analytics",
+      "type": "entity",
+      "position": {
+        "x": 1040,
+        "y": 360
+      },
+      "size": {
+        "width": 140,
+        "height": 70
+      },
+      "data": {
+        "label": "Analytics"
+      },
+      "metadata": {
+        "owner": {
+          "value": "team-data"
+        }
+      }
+    },
+    {
+      "id": "ship",
+      "type": "entity",
+      "position": {
+        "x": 1040,
+        "y": 540
+      },
+      "size": {
+        "width": 140,
+        "height": 70
+      },
+      "data": {
+        "label": "Shipping partner"
+      },
+      "style": {
+        "fill": "#4b5563"
+      }
+    },
+    {
+      "id": "cdn",
+      "type": "entity",
+      "position": {
+        "x": -260,
+        "y": 0
+      },
+      "size": {
+        "width": 140,
+        "height": 70
+      },
+      "data": {
+        "label": "CDN"
+      }
+    },
+    {
+      "id": "admin",
+      "type": "entity",
+      "position": {
+        "x": 0,
+        "y": -180
+      },
+      "size": {
+        "width": 140,
+        "height": 70
+      },
+      "data": {
+        "label": "Admin console"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "type": "labeled",
+      "source": "web",
+      "target": "gateway",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "HTTPS"
+    },
+    {
+      "id": "e2",
+      "type": "labeled",
+      "source": "mobile",
+      "target": "gateway",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "HTTPS"
+    },
+    {
+      "id": "e3",
+      "type": "labeled",
+      "source": "gateway",
+      "target": "orders",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "orders"
+    },
+    {
+      "id": "e4",
+      "type": "labeled",
+      "source": "gateway",
+      "target": "pay",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "charges",
+      "style": {
+        "lineStyle": "solid",
+        "strokeWidth": 3
+      }
+    },
+    {
+      "id": "e5",
+      "type": "labeled",
+      "source": "gateway",
+      "target": "stock",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "stock"
+    },
+    {
+      "id": "e6",
+      "type": "labeled",
+      "source": "orders",
+      "target": "queue",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "publishes",
+      "style": {
+        "lineStyle": "dashed"
+      }
+    },
+    {
+      "id": "e7",
+      "type": "labeled",
+      "source": "pay",
+      "target": "db",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "stores"
+    },
+    {
+      "id": "e8",
+      "type": "labeled",
+      "source": "stock",
+      "target": "db",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "reads"
+    },
+    {
+      "id": "e9",
+      "type": "labeled",
+      "source": "queue",
+      "target": "email",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "notifies",
+      "style": {
+        "lineStyle": "dashed"
+      }
+    },
+    {
+      "id": "e10",
+      "type": "labeled",
+      "source": "erp",
+      "target": "queue",
+      "sourceHandle": "left",
+      "targetHandle": "right",
+      "label": "syncs",
+      "style": {
+        "lineStyle": "dotted",
+        "stroke": "#9ca3af"
+      }
+    },
+    {
+      "id": "e12",
+      "type": "labeled",
+      "source": "gateway",
+      "target": "auth",
+      "sourceHandle": "top",
+      "targetHandle": "bottom",
+      "label": "verifies"
+    },
+    {
+      "id": "e13",
+      "type": "labeled",
+      "source": "admin",
+      "target": "auth",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "signs in"
+    },
+    {
+      "id": "e14",
+      "type": "labeled",
+      "source": "cdn",
+      "target": "web",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "serves"
+    },
+    {
+      "id": "e15",
+      "type": "labeled",
+      "source": "stock",
+      "target": "cache",
+      "sourceHandle": "bottom",
+      "targetHandle": "left",
+      "label": "caches",
+      "style": {
+        "lineStyle": "dashed"
+      }
+    },
+    {
+      "id": "e16",
+      "type": "labeled",
+      "source": "cache",
+      "target": "db",
+      "sourceHandle": "top",
+      "targetHandle": "bottom",
+      "label": "falls back to",
+      "style": {
+        "lineStyle": "dashed"
+      }
+    },
+    {
+      "id": "e17",
+      "type": "labeled",
+      "source": "queue",
+      "target": "analytics",
+      "sourceHandle": "bottom",
+      "targetHandle": "left",
+      "label": "streams",
+      "style": {
+        "lineStyle": "dashed"
+      }
+    },
+    {
+      "id": "e18",
+      "type": "labeled",
+      "source": "orders",
+      "target": "ship",
+      "sourceHandle": "right",
+      "targetHandle": "top",
+      "label": "ships via",
+      "style": {
+        "lineStyle": "dotted",
+        "stroke": "#9ca3af"
+      }
+    },
+    {
+      "id": "e19",
+      "type": "labeled",
+      "source": "admin",
+      "target": "gateway",
+      "sourceHandle": "right",
+      "targetHandle": "top",
+      "label": "manages"
+    }
+  ]
+}

@@ -12,7 +12,11 @@ export default function ReferencesSection({ node }: { node: Node }): React.JSX.E
   const refs = Array.isArray(node.data?.references) ? (node.data.references as string[]) : []
 
   return (
-    <CollapsibleSection title={`References (${refs.length})`} sectionKey="references">
+    <CollapsibleSection
+      title={`References (${refs.length})`}
+      sectionKey="references"
+      defaultOpen={false}
+    >
       <p className="property-references-hint">
         Screenshots or diagrams kept as reference while working. Shown only in floating windows —
         never on the canvas or in exports.

@@ -12,6 +12,14 @@ Real, working diagram files. Open any of them with **File → Open** (or drop it
 
 These three also serve as round-trip fixtures: the app must open and re-save them without changing their meaning.
 
+## Reviewing changes
+
+[`review/`](review) has a diagram in two versions, to try the compare window and `chd diff` on:
+
+| File | What it shows |
+|---|---|
+| `review/shop-before.chd`, `shop-after.chd` | A ten-plus-element shop architecture and the same after an edit: renames, a changed tag and a relabelled connection (Modified); recoloured elements, other icons, connections made dotted, solid or animated (Restyled); a font-size change (only marked with the paint brush); removed and added elements and connections. Try `chd diff examples/review/shop-before.chd examples/review/shop-after.chd`, or open the after file and use **View → Changes → Compare with git revision…** |
+
 ## Architecture checks
 
 [`conformance/`](conformance) has a pair of diagrams for each built-in metamodel, one that follows the style and one that breaks it, to try `chd check` on (see [the metamodel format](../docs/metamodel-format.md)):
