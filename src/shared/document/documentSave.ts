@@ -154,6 +154,30 @@ export function anyNoteDirty(shadows: Record<string, NoteShadow>): boolean {
   return false
 }
 
+// Unsaved text in a note whose element is no longer in the diagram (deleted, or gone from a
+// reloaded file). It is kept and listed, never dropped silently (ADR 0092); undoing the deletion
+// brings the element back and the entry with it.
+export interface OrphanedNoteEdit {
+  nodeId: string
+  // The note's file, or null if it was never saved.
+  path: string | null
+  content: string
+}
+
+export function orphanedNoteEdits(
+  shadows: Record<string, NoteShadow>,
+  liveNodeIds: ReadonlySet<string>
+): OrphanedNoteEdit[] {
+  const out: OrphanedNoteEdit[] = []
+  for (const id in shadows) {
+    const s = shadows[id]
+    if (s.dirty && !liveNodeIds.has(id)) {
+      out.push({ nodeId: id, path: s.originalPath, content: s.content })
+    }
+  }
+  return out
+}
+
 // Crash-recovery snapshots only need the notes with unsaved edits.
 export function dirtyDrafts(shadows: Record<string, NoteShadow>): Record<string, string> {
   const out: Record<string, string> = {}

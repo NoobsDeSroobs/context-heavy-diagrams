@@ -2,6 +2,8 @@ import type { CheckResult } from '@shared/conformance/check'
 import ConformanceSection from '../conformance/ConformanceSection'
 import LayoutSection, { type LayoutEntry } from '../layout/LayoutSection'
 import type { ConformanceState } from '../conformance/useConformance'
+import type { OrphanedNoteEdit } from '@shared/document/documentSave'
+import OrphanedNotesSection from './OrphanedNotesSection'
 
 // One diagram element (node, or a legend entry) that references a file on
 // disk which no longer resolves — a linked diagram, a custom icon, a
@@ -60,6 +62,10 @@ interface DiagnosticsPanelProps {
   // Edge labels hidden behind the elements they join (ADR 0146), and the action to find one.
   layoutEntries: LayoutEntry[]
   onRevealEdge: (entry: LayoutEntry) => void
+  // Unsaved note text whose element is gone (ADR 0092), and what can be done with it.
+  orphanedEdits: OrphanedNoteEdit[]
+  onCopyOrphanedEdit: (edit: OrphanedNoteEdit) => void
+  onDiscardOrphanedEdit: (edit: OrphanedNoteEdit) => void
   onClose: () => void
 }
 
@@ -97,13 +103,17 @@ export default function DiagnosticsPanel({
   conformanceResult,
   layoutEntries,
   onRevealEdge,
+  orphanedEdits,
+  onCopyOrphanedEdit,
+  onDiscardOrphanedEdit,
   onClose
 }: DiagnosticsPanelProps): React.JSX.Element {
   const empty =
     entries.length === 0 &&
     missingFiles.length === 0 &&
     stagedRemovals.length === 0 &&
-    layoutEntries.length === 0
+    layoutEntries.length === 0 &&
+    orphanedEdits.length === 0
 
   return (
     <div className="diagnostics-panel">
@@ -205,6 +215,12 @@ export default function DiagnosticsPanel({
         />
 
         <LayoutSection entries={layoutEntries} onRevealEdge={onRevealEdge} />
+
+        <OrphanedNotesSection
+          edits={orphanedEdits}
+          onCopy={onCopyOrphanedEdit}
+          onDiscard={onDiscardOrphanedEdit}
+        />
 
         {entries.length > 0 && (
           <ul className="diagnostics-panel-list">

@@ -10,6 +10,7 @@ import {
   editNote,
   loadedNoteShadow,
   newNoteShadow,
+  orphanedNoteEdits,
   type NoteShadow,
   type Stamp
 } from '@shared/document/documentSave'
@@ -2505,20 +2506,20 @@ function CanvasInner(): React.JSX.Element {
       if (opts?.keepNoteShadows) {
         // A reload replaces the diagram only — notes are independent files with their
         // own state. Unsaved note edits are kept (clean copies are just a cache and are
-        // re-read on demand); edits for an element the reloaded diagram no longer has
-        // can't be shown, so say so rather than dropping them silently.
+        // re-read on demand). Edits for an element the reloaded diagram no longer has
+        // can't be shown on it, so they are listed in Diagnostics instead of being dropped.
         const live = new Set(openedNodes.map((n) => n.id))
         const kept: Record<string, NoteShadow> = {}
-        let lost = 0
+        let orphaned = 0
         for (const [id, shadow] of Object.entries(noteShadowsRef.current)) {
           if (!shadow.dirty) continue
-          if (live.has(id)) kept[id] = shadow
-          else lost++
+          kept[id] = shadow
+          if (!live.has(id)) orphaned++
         }
         setNoteShadows(kept)
-        if (lost > 0) {
+        if (orphaned > 0) {
           showAlert(
-            `The reloaded diagram no longer contains ${lost} element(s) whose notes had unsaved edits; those edits were discarded.`
+            `The reloaded diagram no longer contains ${orphaned} element(s) whose notes had unsaved edits. The edits are kept: see Diagnostics to copy or discard them.`
           )
         }
       } else {
@@ -3095,10 +3096,18 @@ function CanvasInner(): React.JSX.Element {
       })
     )
   }, [checkedDiagram, effectiveFontFamily])
+  // Unsaved note edits whose element is gone (ADR 0092): kept, listed in Diagnostics.
+  const orphanedEdits = useMemo(
+    () => orphanedNoteEdits(noteShadows, new Set(nodes.map((n) => n.id))),
+    [noteShadows, nodes]
+  )
   // Count on the View-menu "Diagnostics (N)" label — undecided missing
-  // files + staged removals (a nudge to save), never dismissed ones.
+  // files + staged removals (a nudge to save) + orphaned note edits, never dismissed ones.
   const diagnosticsCount =
-    displayedDiagnostics.length + visibleMissingFiles.length + stagedFileRemovals.length
+    displayedDiagnostics.length +
+    visibleMissingFiles.length +
+    stagedFileRemovals.length +
+    orphanedEdits.length
 
   // Mode-aware menu bar (ADR 0079): what the Security Matrix persona hides is decided in
   // buildMenus.
@@ -3821,6 +3830,15 @@ function CanvasInner(): React.JSX.Element {
               conformanceResult={conformanceResult}
               layoutEntries={layoutEntries}
               onRevealEdge={revealEdge}
+              orphanedEdits={orphanedEdits}
+              onCopyOrphanedEdit={(edit) => window.api.copyToClipboard(edit.content)}
+              onDiscardOrphanedEdit={(edit) =>
+                setNoteShadows((prev) => {
+                  const next = { ...prev }
+                  delete next[edit.nodeId]
+                  return next
+                })
+              }
               onClose={() => setDiagnosticsPanelOpen(false)}
             />
           )}

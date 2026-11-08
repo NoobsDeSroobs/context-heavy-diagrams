@@ -353,12 +353,15 @@ export function useSave(
         if (!completed.has(op.nodeId)) notDone[op.nodeId] = fallbackPaths[op.nodeId]
       savedNodes = withPaths(savedNodes, notDone)
 
-      // Notes of elements that no longer exist have nothing left to save.
+      // Notes of elements that no longer exist have nothing left to save, unless they hold edits:
+      // those stay, and Diagnostics lists them (ADR 0092).
       const liveIds = new Set(savedNodes.map((n) => n.id))
       setNoteShadows((prev) =>
-        Object.keys(prev).every((id) => liveIds.has(id))
+        Object.entries(prev).every(([id, shadow]) => liveIds.has(id) || shadow.dirty)
           ? prev
-          : Object.fromEntries(Object.entries(prev).filter(([id]) => liveIds.has(id)))
+          : Object.fromEntries(
+              Object.entries(prev).filter(([id, shadow]) => liveIds.has(id) || shadow.dirty)
+            )
       )
 
       // The diagram's own state is only finalised if it was actually written (or

@@ -10,6 +10,7 @@ import {
   loadedNoteShadow,
   markSaved,
   newNoteShadow,
+  orphanedNoteEdits,
   planSave,
   recoveredNoteShadow,
   resolveConflicts,
@@ -296,4 +297,21 @@ test('resolve: with the diagram reloaded, a note taken from disk does not also g
 test('resolve: only notes in conflict (no diagram conflict) never rewrite the diagram for in-place writes', () => {
   const r = resolveConflicts([w('n1', 'a.md', 'a.md')], { n1: 'mine' })
   assert.equal(r.writeHub, false)
+})
+
+// --- orphaned edits ---------------------------------------------------------
+
+test('orphaned edits: only an edited note whose element is gone is listed', () => {
+  const edited = editNote(loadedNoteShadow('gone', 'notes/G-1.md', 's', 'a'), 'b')
+  const keptClean = loadedNoteShadow('gone-clean', 'notes/C-1.md', 's', 'a')
+  const stillThere = editNote(loadedNoteShadow('live', 'notes/L-1.md', 's', 'a'), 'b')
+  const unsaved = editNote(newNoteShadow('never-saved'), 'draft')
+  const list = orphanedNoteEdits(
+    { gone: edited, 'gone-clean': keptClean, live: stillThere, 'never-saved': unsaved },
+    new Set(['live'])
+  )
+  assert.deepEqual(list, [
+    { nodeId: 'gone', path: 'notes/G-1.md', content: 'b' },
+    { nodeId: 'never-saved', path: null, content: 'draft' }
+  ])
 })
