@@ -33,7 +33,7 @@ export function ConnectionPointFields({
   const pending = useRef<Partial<Record<ConnectionPointSide, number>>>({})
 
   return (
-    <CollapsibleSection title="Connection points">
+    <CollapsibleSection title="Connection points" defaultOpen={false}>
       {CONNECTION_POINT_SIDES.map((side) => {
         const count = connectionPointCountForSide(customPoints, side)
         return (

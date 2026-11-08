@@ -154,7 +154,7 @@ export function NodeStyleFields({
           onSessionEnd={endContinuousEdit}
         />
       </CollapsibleSection>
-      <CollapsibleSection title="Font">
+      <CollapsibleSection title="Font" defaultOpen={false}>
         <SelectField
           label="Name"
           value={fontFamily.value ?? ''}
@@ -213,7 +213,7 @@ export function NodeStyleFields({
           pushSnapshot={pushSnapshot}
         />
       </CollapsibleSection>
-      <CollapsibleSection title="Transform">
+      <CollapsibleSection title="Transform" defaultOpen={false}>
         <NumberField
           label="X"
           value={x.value}
