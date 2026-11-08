@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { MetadataEntry } from '@shared/diagram'
+import type { IconRef, IconSlot } from '@shared/icons/schema'
+import { namedIcons } from '@shared/icons/names'
 import { isMac } from '../commands'
 import type { PeekTarget } from './useNotesPeek'
 
@@ -19,6 +21,8 @@ interface PeekCardProps {
   notesPath: string | undefined
   linkedPath: string | undefined
   metadata: Record<string, MetadataEntry> | undefined
+  // The element's icons, named so a person can read what each one means (ADR 0155).
+  icons: Partial<Record<IconSlot, IconRef>> | undefined
   diagramPath: string | null
   // The note's in-memory text when it has been opened this session (so unsaved
   // edits show); undefined = read the file.
@@ -39,6 +43,7 @@ export default function PeekCard({
   notesPath,
   linkedPath,
   metadata,
+  icons,
   diagramPath,
   shadowContent
 }: PeekCardProps): React.JSX.Element | null {
@@ -57,7 +62,8 @@ export default function PeekCard({
 
   const text = (shadowContent ?? fileContent ?? '').trim()
   const tags = Object.entries(metadata ?? {})
-  if (!text && !linkedPath && tags.length === 0) return null
+  const iconNames = namedIcons(icons)
+  if (!text && !linkedPath && tags.length === 0 && iconNames.length === 0) return null
 
   const title = label.split('\n')[0].trim()
   const linkName = linkedPath?.split(/[/\\]/).pop() ?? linkedPath
@@ -102,6 +108,15 @@ export default function PeekCard({
           {tags.map(([key, entry]) => (
             <span key={key} className="peek-card-tag">
               {key}: {formatTagValue(entry.value)}
+            </span>
+          ))}
+        </div>
+      )}
+      {iconNames.length > 0 && (
+        <div className="peek-card-tags">
+          {iconNames.map(({ where, name }) => (
+            <span key={where} className="peek-card-tag" title={`Icon, ${where}`}>
+              {where}: {name}
             </span>
           ))}
         </div>
