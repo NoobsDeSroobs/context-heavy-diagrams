@@ -83,7 +83,10 @@ export function registerDiagramHandlers(): void {
           writeHub: request.writeHub,
           expectedHubStamp: request.expectedHubStamp,
           ops: request.ops,
-          overwrite: request.overwrite
+          overwrite: request.overwrite,
+          copyFromDir: request.previousDiagramPath
+            ? dirname(request.previousDiagramPath)
+            : undefined
         },
         {
           contain: containedPath,

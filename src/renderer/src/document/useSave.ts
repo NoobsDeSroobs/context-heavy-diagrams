@@ -210,7 +210,8 @@ export function useSave(
         expectedHubStamp: newLocation ? null : baseline.stamp,
         ops: plan.ops,
         fallbackPaths,
-        overwrite: false
+        overwrite: false,
+        previousDiagramPath: newLocation ? baseline.path : null
       }
 
       // Records what actually reached disk on each note's shadow; text typed

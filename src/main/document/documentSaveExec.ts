@@ -1,4 +1,4 @@
-import { copyFile, mkdir, rmdir, unlink, writeFile } from 'fs/promises'
+import { copyFile, mkdir, readFile, rmdir, stat, unlink, writeFile } from 'fs/promises'
 import { dirname } from 'path'
 import type {
   Conflict,
@@ -28,6 +28,8 @@ export interface SaveRequest {
   ops: NoteOp[]
   // The user already chose "overwrite" after seeing the conflicts.
   overwrite: boolean
+  // Save As: the folder of the diagram's previous file, which `copy` ops read from.
+  copyFromDir?: string
 }
 
 export interface ExecDeps {
@@ -51,7 +53,17 @@ function changedOnDisk(expected: Stamp, current: Stamp): boolean {
 // An op that changes which path the diagram must reference (a rename or a new
 // note), as opposed to rewriting a note in place.
 function changesReference(op: NoteOp): boolean {
-  return op.kind === 'move' || op.from !== op.to
+  return op.kind !== 'write' || op.from !== op.to
+}
+
+// The same file under two names (Save As in the same folder keeps the notes where they are).
+async function sameFile(a: string, b: string): Promise<boolean> {
+  try {
+    const [x, y] = await Promise.all([stat(a, { bigint: true }), stat(b, { bigint: true })])
+    return x.ino !== 0n && x.ino === y.ino && x.dev === y.dev
+  } catch {
+    return false
+  }
 }
 
 export async function executeSave(req: SaveRequest, deps: ExecDeps): Promise<SaveOutcome> {
@@ -108,6 +120,24 @@ export async function executeSave(req: SaveRequest, deps: ExecDeps): Promise<Sav
       await mkdir(dirname(to), { recursive: true })
       if (op.kind === 'write') {
         await writeFile(to, op.content, 'utf-8')
+      } else if (op.kind === 'copy') {
+        // Read from the previous folder; a source that is missing, or outside it, copies
+        // nothing and the node keeps its old path.
+        const from = req.copyFromDir === undefined ? null : deps.contain(req.copyFromDir, op.from)
+        if (from === null || (await deps.stamp(from)) === null) {
+          skippedMoves.push(op.nodeId)
+          continue
+        }
+        if (!(await sameFile(from, to))) {
+          if ((await deps.stamp(to)) === null) {
+            await copyFile(from, to)
+          } else if (!(await readFile(from)).equals(await readFile(to))) {
+            // Never replace a file that is already there: it may be another diagram's note.
+            warnings.push(
+              `${op.to} already exists with other text, so it was kept and the saved diagram uses it.`
+            )
+          }
+        }
       } else {
         // A move whose source is outside the folder is treated as having no
         // source: nothing is copied, and the node keeps its old path.
@@ -146,7 +176,8 @@ export async function executeSave(req: SaveRequest, deps: ExecDeps): Promise<Sav
   //    failed save — the new state is already fully in place.
   const emptied = new Set<string>()
   for (const op of runNow) {
-    if (op.from === null || op.from === op.to || !(op.nodeId in notes)) continue
+    if (op.kind === 'copy' || op.from === null || op.from === op.to || !(op.nodeId in notes))
+      continue
     const from = inside(op.from)
     if (from === null) continue
     try {

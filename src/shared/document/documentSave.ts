@@ -179,7 +179,7 @@ export interface PlanInput {
   hubDirty: boolean
   // Save As / first save: paths relative to the previous location mean nothing
   // there, so nothing is moved or conflict-checked — dirty notes are simply
-  // written to the new location.
+  // written to the new location, and the others are copied there.
   newLocation: boolean
   notes: PlanNoteInput[]
 }
@@ -198,6 +198,10 @@ export type NoteOp =
   // An unedited note whose label changed: its on-disk content is moved, never
   // re-written from possibly-stale memory.
   | { kind: 'move'; nodeId: string; from: string; to: string }
+  // Save As: an unedited note is copied from the previous diagram's folder (`from` is relative to
+  // it) to the new one, so the new diagram does not point at files that are not there. The source
+  // is never touched.
+  | { kind: 'copy'; nodeId: string; from: string; to: string }
 
 export interface SavePlan {
   writeHub: boolean
@@ -226,6 +230,12 @@ export function planSave(input: PlanInput): SavePlan {
         expectedStamp: input.newLocation ? null : shadow.baselineStamp
       })
       finalPath = desiredPath
+    } else if (input.newLocation) {
+      const source = shadow?.originalPath ?? nodeNotesPath
+      if (source !== null) {
+        ops.push({ kind: 'copy', nodeId: note.nodeId, from: source, to: desiredPath })
+        finalPath = desiredPath
+      }
     } else if (current !== null && current !== desiredPath) {
       ops.push({ kind: 'move', nodeId: note.nodeId, from: current, to: desiredPath })
       finalPath = desiredPath
@@ -286,6 +296,8 @@ export interface SaveDocumentRequest {
   // by a conflict.
   fallbackPaths: Record<string, string | null>
   overwrite: boolean
+  // Save As: the diagram file this window had before, whose folder the `copy` ops read from.
+  previousDiagramPath: string | null
 }
 
 // ---------------------------------------------------------------------------
@@ -301,7 +313,7 @@ export type Decision = 'mine' | 'disk'
 // An op that changes which path the diagram must reference (a rename or a new
 // note), as opposed to rewriting a note in place.
 export function changesReference(op: NoteOp): boolean {
-  return op.kind === 'move' || op.from !== op.to
+  return op.kind !== 'write' || op.from !== op.to
 }
 
 export interface Resolution {

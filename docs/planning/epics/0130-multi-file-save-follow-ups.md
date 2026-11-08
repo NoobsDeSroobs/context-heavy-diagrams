@@ -2,12 +2,12 @@
 
 ## Status
 Not Started — parked on purpose, logged 2026-09-20. **Technical debt, to be done later**, not
-a scheduled epic. Split off from [epic 0129](../../completed-epics.md#0129-unified-multi-file-save-and-change-tracking)
+a scheduled epic. Split off from [epic 0129](../completed-epics.md#0129-unified-multi-file-save-and-change-tracking)
 when its save side (shadow model, one save plan, per-file conflict dialog, reload that keeps
 unsaved notes) was finished and live-tested: what remains is refinement, and the queued batch
-([0119](../../completed-epics.md#0119-details-peek-card-while-holding-ctrlcmd-over-an-element) → [0120](../../completed-epics.md#0120-help--keyboard-shortcuts--gestures-page)
-→ [0121](../../completed-epics.md#0121-copy-style--format-painter-apply-mode)) goes first. Design is already agreed in
-[ADR 0092](../../../decisions/0092-unified-multi-file-save-and-change-detection.md); no new
+([0119](../completed-epics.md#0119-details-peek-card-while-holding-ctrlcmd-over-an-element) → [0120](../completed-epics.md#0120-help--keyboard-shortcuts--gestures-page)
+→ [0121](../completed-epics.md#0121-copy-style--format-painter-apply-mode)) goes first. Design is already agreed in
+[ADR 0092](../../decisions/0092-unified-multi-file-save-and-change-detection.md); no new
 design conversation is needed for the first two items.
 
 ## Items

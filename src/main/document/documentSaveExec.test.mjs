@@ -412,3 +412,75 @@ test('the diagram folder itself is never removed, even when it ends up empty', a
   assert.equal(has('notes/A-1.md'), true)
   assert.equal(existsSync(dir), true)
 })
+
+// --- Save As: copying the notes that were never opened -----------------------
+
+const copy = (nodeId, from, to) => ({ kind: 'copy', nodeId, from, to })
+
+test('copy: the note comes from the previous folder, which is left as it was', async () => {
+  await put('prev/notes/A.md', 'alpha')
+  const out = await executeSave(
+    req({
+      writeHub: true,
+      ops: [copy('n1', 'notes/A.md', 'notes/A.md')],
+      copyFromDir: join(dir, 'prev')
+    }),
+    deps()
+  )
+  assert.equal(out.status, 'saved')
+  assert.equal(await read('notes/A.md'), 'alpha')
+  assert.equal(await read('prev/notes/A.md'), 'alpha')
+  assert.deepEqual(Object.keys(out.notes), ['n1'])
+  assert.deepEqual(out.skippedMoves, [])
+})
+
+test('copy: a file already there with other text is kept, with a warning', async () => {
+  await put('prev/notes/A.md', 'alpha')
+  await put('notes/A.md', "someone else's note")
+  const out = await executeSave(
+    req({ ops: [copy('n1', 'notes/A.md', 'notes/A.md')], copyFromDir: join(dir, 'prev') }),
+    deps()
+  )
+  assert.equal(await read('notes/A.md'), "someone else's note")
+  assert.equal(out.warnings.length, 1)
+})
+
+test('copy: an identical file already there is no cause for a warning', async () => {
+  await put('prev/notes/A.md', 'alpha')
+  await put('notes/A.md', 'alpha')
+  const out = await executeSave(
+    req({ ops: [copy('n1', 'notes/A.md', 'notes/A.md')], copyFromDir: join(dir, 'prev') }),
+    deps()
+  )
+  assert.deepEqual(out.warnings, [])
+})
+
+test('copy: Save As in the same folder shares the note and does not damage it', async () => {
+  await put('notes/A.md', 'alpha')
+  const out = await executeSave(
+    req({ ops: [copy('n1', 'notes/A.md', 'notes/A.md')], copyFromDir: dir }),
+    deps()
+  )
+  assert.equal(await read('notes/A.md'), 'alpha')
+  assert.deepEqual(out.warnings, [])
+  assert.deepEqual(Object.keys(out.notes), ['n1'])
+})
+
+test('copy: a missing source copies nothing and the node keeps its old path', async () => {
+  const out = await executeSave(
+    req({ ops: [copy('n1', 'notes/A.md', 'notes/A.md')], copyFromDir: join(dir, 'prev') }),
+    deps()
+  )
+  assert.deepEqual(out.skippedMoves, ['n1'])
+  assert.equal(has('notes/A.md'), false)
+})
+
+test('copy: a source outside the previous folder is never read', async () => {
+  await put('secret.md', 'do not copy')
+  const out = await executeSave(
+    req({ ops: [copy('n1', '../secret.md', 'notes/A.md')], copyFromDir: join(dir, 'prev') }),
+    deps()
+  )
+  assert.deepEqual(out.skippedMoves, ['n1'])
+  assert.equal(has('notes/A.md'), false)
+})
