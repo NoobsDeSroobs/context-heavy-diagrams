@@ -45,15 +45,14 @@ describe('the Ctrl-hover card', () => {
     expect(groups()).toEqual([['Icons', ['top left: server', 'top right: lock.svg']]])
   })
 
-  it('keeps required tags, free tags and icons in groups of their own', () => {
+  it('puts required tags before the others on one Tags line, apart from the icons', () => {
     card(
       { topLeft: { source: 'builtin', id: 'user' } },
-      { GDPR: { value: 'PII' }, env: { value: 'prod' } },
+      { env: { value: 'prod' }, GDPR: { value: 'PII' } },
       ['GDPR']
     )
     expect(groups()).toEqual([
-      ['Required tags', ['GDPR: PII']],
-      ['Tags', ['env: prod']],
+      ['Tags', ['GDPR: PII', 'env: prod']],
       ['Icons', ['top left: user']]
     ])
     expect(document.querySelector('.peek-card-tag-required')?.textContent).toBe('GDPR: PII')

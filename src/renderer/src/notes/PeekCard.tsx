@@ -21,7 +21,7 @@ interface PeekCardProps {
   notesPath: string | undefined
   linkedPath: string | undefined
   metadata: Record<string, MetadataEntry> | undefined
-  // The diagram's required tag keys: their tags are listed apart from the free ones.
+  // The diagram's required tag keys: their tags come first, in their own colour.
   requiredTagKeys: ReadonlySet<string>
   // The element's icons, named so a person can read what each one means (ADR 0155).
   icons: Partial<Record<IconSlot, IconRef>> | undefined
@@ -31,24 +31,24 @@ interface PeekCardProps {
   shadowContent: string | undefined
 }
 
-// One kind of thing on the card, named and in its own colour, so a tag and an icon are not taken
-// for each other (ADR 0155).
+type ChipKind = 'required' | 'tag' | 'icon'
+
+// A line of the card: the name of what it lists once, then the items, each in the colour of its
+// kind, so a tag and an icon are not taken for each other (ADR 0155).
 function Group({
   label,
-  kind,
   items
 }: {
   label: string
-  kind: 'required' | 'tag' | 'icon'
-  items: string[]
+  items: { text: string; kind: ChipKind }[]
 }): React.JSX.Element | null {
   if (items.length === 0) return null
   return (
     <div className="peek-card-tags">
       <span className="peek-card-group-label">{label}</span>
-      {items.map((item) => (
-        <span key={item} className={`peek-card-tag peek-card-tag-${kind}`}>
-          {item}
+      {items.map(({ text, kind }) => (
+        <span key={text} className={`peek-card-tag peek-card-tag-${kind}`}>
+          {text}
         </span>
       ))}
     </div>
@@ -89,8 +89,14 @@ export default function PeekCard({
 
   const text = (shadowContent ?? fileContent ?? '').trim()
   const tags = Object.entries(metadata ?? {})
-  const requiredTags = tags.filter(([key]) => requiredTagKeys.has(key))
-  const freeTags = tags.filter(([key]) => !requiredTagKeys.has(key))
+  // Required tags first, then the others, on one line.
+  const tagChips: { text: string; kind: ChipKind }[] = [
+    ...tags.filter(([key]) => requiredTagKeys.has(key)),
+    ...tags.filter(([key]) => !requiredTagKeys.has(key))
+  ].map(([key, entry]) => ({
+    text: `${key}: ${formatTagValue(entry.value)}`,
+    kind: requiredTagKeys.has(key) ? 'required' : 'tag'
+  }))
   const iconNames = namedIcons(icons)
   if (!text && !linkedPath && tags.length === 0 && iconNames.length === 0) return null
 
@@ -132,20 +138,10 @@ export default function PeekCard({
         </svg>
       )}
       {title && <div className="peek-card-title">{title}</div>}
-      <Group
-        label="Required tags"
-        kind="required"
-        items={requiredTags.map(([key, entry]) => `${key}: ${formatTagValue(entry.value)}`)}
-      />
-      <Group
-        label="Tags"
-        kind="tag"
-        items={freeTags.map(([key, entry]) => `${key}: ${formatTagValue(entry.value)}`)}
-      />
+      <Group label="Tags" items={tagChips} />
       <Group
         label="Icons"
-        kind="icon"
-        items={iconNames.map(({ where, name }) => `${where}: ${name}`)}
+        items={iconNames.map(({ where, name }) => ({ text: `${where}: ${name}`, kind: 'icon' }))}
       />
       {text && (
         <div className="peek-card-body notes-panel-preview" dir="auto">
