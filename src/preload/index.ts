@@ -15,7 +15,11 @@ import type {
   SaveOutcome,
   Stamp
 } from '@shared/document/documentSave'
-import type { AiFolderResult, ClaudeExtensionOutcome } from '@shared/ai/aiFolderResult'
+import type {
+  AiFolderResult,
+  ClaudeExtensionOutcome,
+  McpSettingsResult
+} from '@shared/ai/aiFolderResult'
 import type {
   NewMetamodelResult,
   MetamodelListing,
@@ -371,7 +375,7 @@ const api = {
     return ipcRenderer.invoke('app:getVersion')
   },
 
-  // AI -> Enable AI assistance in a folder (ADR 0105): folder picker + file
+  // AI -> Set up a folder for AI agents (ADR 0105): folder picker + file
   // writes happen in main; null means the user cancelled the picker.
   enableAiInFolder(): Promise<AiFolderResult | null> {
     return ipcRenderer.invoke('ai:enableInFolder')
@@ -381,6 +385,12 @@ const api = {
   // and asks the OS to open the bundled .mcpb.
   installClaudeExtension(): Promise<ClaudeExtensionOutcome> {
     return ipcRenderer.invoke('ai:installExtension')
+  },
+
+  // AI -> Install the MCP server for -> Other apps (ADR 0110): main asks for the folder and the
+  // update choice and returns the settings to paste into the app.
+  mcpServerSettings(): Promise<McpSettingsResult> {
+    return ipcRenderer.invoke('ai:mcpServerSettings')
   },
 
   // Diagram metamodels (ADR 0131): where they live, choosing that folder, and making a new one

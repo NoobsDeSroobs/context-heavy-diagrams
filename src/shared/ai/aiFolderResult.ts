@@ -7,7 +7,15 @@ export type ClaudeExtensionOutcome =
   | 'unsupported' // Claude Desktop does not exist on this OS
   | 'missing' // the .mcpb was not built into this copy of the app
 
-// Result of "Enable AI assistance in a folder" (ADR 0105): main does the file
+// Result of AI -> Install the MCP server for -> Other apps (ADR 0110). Main asks for the folder and the
+// update choice; the renderer puts the settings on the clipboard and says so.
+export type McpSettingsResult =
+  | { outcome: 'ready'; settings: string; folder: string; allowUpdate: boolean }
+  | { outcome: 'cancelled' }
+  | { outcome: 'unsupported' } // an AppImage: its files move on every start, so no path would hold
+  | { outcome: 'missing' } // the server was not built into this copy of the app
+
+// Result of "Set up a folder for AI agents" (ADR 0105): main does the file
 // work, the renderer turns this into the message the user reads.
 export interface AiFolderResult {
   folder: string

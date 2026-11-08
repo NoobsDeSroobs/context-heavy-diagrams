@@ -523,3 +523,7 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 *Done* (merged; in the next release, 0.8.0). A look that carries meaning (fill, border colour, width and opacity, line style, markers, an edge's colour, width and animation, icons) is now a change in a review, as a Restyled class with its own colour, badge, count and heading in `chd diff`, told with the old and new value. Font, text alignment, label position and routing keep the paint-brush marker only. The changes list shows every changed line, with a chip beside each colour. An example pair is in `examples/review/`. ADR: [0153](../decisions/0153-a-look-that-carries-meaning-is-a-change-in-a-review.md).
 
+### 0175: A command-line reference sheet with examples
+
+*Done* (merged; in the next release, 0.8.0). [docs/cli-reference.md](../cli-reference.md) lists every `chd` command with its options, exit codes and worked examples, including the pipe forms (a draft on standard input, a version out of git) and a pipeline step that fails on exit code 1. A test reads the help text of each command and fails when a command, an option or an edit operation is missing from the sheet. `chd help edit` now lists the edit operations. It is linked from the README and from `chd --help`. ADR: [0150](../decisions/0150-chd-edit-and-chd-ask-build-a-diagram-from-the-command-line.md). Left open: a link from Help in the app (with the menu review) and a check of the Windows notes (PowerShell 5.1 re-encoding, the launcher path) on a machine with the installed app.
+

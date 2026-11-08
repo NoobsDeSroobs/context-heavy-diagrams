@@ -15,6 +15,9 @@ export interface MenuBarItem {
   // One level of nesting only (File -> Recent Diagrams -> …, ADR 0078).
   // An item with a submenu ignores `onSelect` — it only opens the flyout.
   submenu?: MenuBarItem[]
+  // A submenu whose entries the command palette does not list: Recent Diagrams, whose entries are
+  // files, not named actions (ADR 0100).
+  notInPalette?: boolean
   onSelect?: () => void
 }
 

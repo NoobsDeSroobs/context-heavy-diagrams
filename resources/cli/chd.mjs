@@ -8,7 +8,7 @@
 import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import {
   main as validateMain,
   validateFile
@@ -56,6 +56,7 @@ Usage:
   chd diff <old.chd> <new.chd>             What changed between two versions (or against git)
   chd edit <file.chd> --base <hash>        Build or change a diagram with a list of operations
   chd ask inspect|room ...                 Ask about the layout of a diagram while you build it
+  chd mcp <folder> [--allow-update]        Run the MCP server for one folder (an app starts it)
   chd help <command>                       Details, options and exit codes of one command
   chd --version
   chd --help
@@ -103,9 +104,24 @@ check, the same one the Claude Desktop extension uses (ADR 0109). Compare it wit
 when you read the file before you write an edit back.
 
 Exit codes: 0 ok, 1 if the file can't be read, 2 usage error.
+`,
+  mcp: `Usage: chd mcp <folder> [--allow-update]
+
+Runs the MCP server, the one the Claude Desktop extension runs, over standard input and output, for
+the one folder you give. An app that speaks MCP starts it from its settings; you do not run it by
+hand. The assistant can read the files in the folder, check and diff diagrams, and create new files.
+Anything it reads is sent to its provider.
+
+  --allow-update   Let the assistant replace existing files (can cause data loss). Off by default.
+
+The folder is the only place it can reach. The app's AI menu (Install the MCP server for, Other apps)
+makes the settings to paste into the app, with the command and the folder filled in.
+
+Exit codes: 0 when the app closes the connection, 1 if the folder does not exist or the server is not
+built here, 2 usage error.
 `
 }
-const COMMANDS = ['spec', 'validate', 'hash', 'export', 'check', 'diff', 'edit', 'ask']
+const COMMANDS = ['spec', 'validate', 'hash', 'export', 'check', 'diff', 'edit', 'ask', 'mcp']
 const wantsHelp = (args) => args.includes('--help') || args.includes('-h')
 
 function readSkillFile(rel) {
@@ -299,6 +315,31 @@ async function askCommand(args) {
   return bundle.runAsk(args)
 }
 
+// `mcp` runs the extension's server (ADR 0110, ADR 0138) in this process: the server is built beside
+// the package by the extension build, and speaks to the app that started us over stdio, so nothing
+// else may be written to standard output.
+async function mcpCommand(args) {
+  if (wantsHelp(args)) {
+    console.log(COMMAND_HELP.mcp)
+    return 0
+  }
+  const allowUpdate = args.includes('--allow-update')
+  const rest = args.filter((a) => a !== '--allow-update')
+  if (rest.length !== 1 || rest[0].startsWith('--')) {
+    console.error('Usage: chd mcp <folder> [--allow-update]')
+    return 2
+  }
+  const server = join(here, '..', 'extension', 'server.mjs')
+  if (!existsSync(server)) {
+    console.error(`chd: the MCP server is not built here (run 'npm run build:extension')`)
+    return 1
+  }
+  process.argv = [process.argv[0], server, rest[0]]
+  process.env.CHD_ALLOW_UPDATE = String(allowUpdate)
+  await import(pathToFileURL(server).href)
+  return 0
+}
+
 export async function run(argv) {
   const [command, ...rest] = argv
   switch (command) {
@@ -359,6 +400,8 @@ export async function run(argv) {
       return editCommand(rest)
     case 'ask':
       return askCommand(rest)
+    case 'mcp':
+      return mcpCommand(rest)
     default:
       console.error(`chd: unknown command '${command}'. Run 'chd --help'.`)
       return 2

@@ -9,7 +9,18 @@ const menus = [
     items: [
       { label: 'Save', accelerator: 'Ctrl+S', onSelect: () => {} },
       { label: 'Export as PNG…', disabled: true, onSelect: () => {} },
-      { label: 'Recent Diagrams', submenu: [{ label: 'a.chd', onSelect: () => {} }] }
+      {
+        label: 'Recent Diagrams',
+        notInPalette: true,
+        submenu: [{ label: 'a.chd', onSelect: () => {} }]
+      },
+      {
+        label: 'New',
+        submenu: [
+          { label: 'Diagram', onSelect: () => {} },
+          { label: 'Metamodel', disabled: true, onSelect: () => {} }
+        ]
+      }
     ]
   },
   {
@@ -18,12 +29,17 @@ const menus = [
   }
 ]
 
-test('a disabled item and a submenu parent are left out entirely', () => {
+test('a disabled item and a submenu marked notInPalette are left out entirely', () => {
   const actions = buildPaletteActions(menus, [])
   assert.deepEqual(
     actions.map((a) => a.title),
-    ['Save', 'Diagnostics (2)']
+    ['Save', 'New: Diagram', 'Diagnostics (2)']
   )
+})
+
+test('the leaves of a submenu are listed with the parent in the title', () => {
+  const diagram = buildPaletteActions(menus, []).find((a) => a.title === 'New: Diagram')
+  assert.equal(diagram?.category, 'File')
 })
 
 test('each row carries its menu label as category and the item accelerator as shortcut', () => {
@@ -41,12 +57,12 @@ test('extras are appended after the flattened menu actions', () => {
 test('filter matches on title or category, case-insensitive; blank query keeps everything', () => {
   const actions = buildPaletteActions(menus, [])
   assert.deepEqual(
-    filterPaletteActions(actions, 'diag').map((a) => a.title),
+    filterPaletteActions(actions, 'diagn').map((a) => a.title),
     ['Diagnostics (2)']
   )
   assert.deepEqual(
     filterPaletteActions(actions, 'FILE').map((a) => a.title),
-    ['Save']
+    ['Save', 'New: Diagram']
   )
   assert.equal(filterPaletteActions(actions, '').length, actions.length)
   assert.equal(filterPaletteActions(actions, 'nope').length, 0)

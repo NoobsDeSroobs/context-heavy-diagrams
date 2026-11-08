@@ -53,7 +53,7 @@ refused and the writer must re-read and redo its change on the fresh content.
 - **Scope:** diagram files, the files a diagram owns when a feature writes them
   (notes, assets), and any other file in a user's folder that an AI feature is
   allowed to write (for example supporting documents). Files the app generates only for its own setup (the
-  `AGENTS.md` and skill copy written by "Enable AI assistance") keep their
+  `AGENTS.md` and skill copy written by "Set up a folder for AI agents") keep their
   existing never-overwrite-what-we-didn't-write marker rule.
 - **The protection runs one way.** It keeps an assistant from overwriting the
   person's work, because the person decides and must be informed; the assistant

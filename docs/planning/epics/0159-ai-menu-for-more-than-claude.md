@@ -1,7 +1,7 @@
 # 0159: An AI menu that serves more than Claude
 
 ## Status
-Not Started.
+In Progress (2026-11-08). Built; the Linux check and a try with Claude Code or Cursor are still to do.
 
 ## Goal
 The three ways to give an AI assistant access to a diagram stay as they are, but the menu and the wording stop reading as Claude-only, and the MCP server can be set up in apps other than Claude Desktop.
@@ -31,13 +31,14 @@ Named entries for further apps are added one at a time, once each has been teste
 - Not limited to Windows and macOS, which gives Linux a route to the server for the first time.
 
 ## Tasks
-- [ ] Restructure the AI menu as above; the label and dialog text say "MCP server", not "extension", except for the Claude Desktop entry
-- [ ] Ship the server unpacked, add the launcher and the `chd mcp` command; the Claude Desktop package runs the same server
-- [ ] "Other apps: copy server settings…": folder picker, update choice, snippet, warning
-- [ ] Reword the folder-setup label and docs so they say which parts serve any agent (`AGENTS.md`) and which serve Claude Code
-- [ ] Update ADR 0110 ("Getting it to the user") and ADR 0105 in place; no new ADR, the delivery routes are the same
-- [ ] Update the docs and the README where they describe the extension as the only MCP route
-- [ ] Test on Linux, where the menu entry is new
+- [x] Restructure the AI menu as above; the label and dialog text say "MCP server", not "extension", except for the Claude Desktop entry
+- [x] Ship the server unpacked, add the launcher and the `chd mcp` command; the Claude Desktop package runs the same server
+- [x] "Other apps: copy server settings…": folder picker, update choice, snippet, warning
+- [x] Reword the folder-setup label and docs so they say which parts serve any agent (`AGENTS.md`) and which serve Claude Code
+- [x] Update ADR 0110 ("Getting it to the user") and ADR 0105 in place; no new ADR, the delivery routes are the same
+- [x] Update the docs and the README where they describe the extension as the only MCP route
+- [ ] Test on Linux, where the menu entry is new (the executable run as Node with `chd.mjs mcp` was tried on Windows only)
+- [ ] Try the copied settings in Claude Code or Cursor; an AppImage has no stable path, so it is told to use another package
 
 ## Notes
 Raised while preparing the showcase video, where the menu is described as "Claude for now".

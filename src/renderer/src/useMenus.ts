@@ -140,6 +140,7 @@ export function useMenus(inputs: MenuInputs): {
       ? { label: 'Recent Diagrams', disabled: true }
       : {
           label: 'Recent Diagrams',
+          notInPalette: true,
           submenu: [
             ...recentDiagrams.map((path) => ({
               label: path.split(/[\\/]/).slice(-2).join('/') || path,
@@ -308,7 +309,22 @@ export function useMenus(inputs: MenuInputs): {
   // when it has no items.
   const aiMenuItems: MenuBarItem[] = [
     {
-      label: 'Enable AI assistance in a folder…',
+      label: 'Copy AI instructions',
+      title: 'For a chat with any AI assistant: the short guide to the .chd format',
+      onSelect: () => {
+        window.api.copyToClipboard(AI_INSTRUCTIONS)
+        // The dialog's Copy button re-copies the instructions, not this
+        // confirmation text (ADR 0104).
+        showAlert(
+          'Copied the AI instructions to your clipboard. Paste them into a chat with Claude (or another AI assistant), then attach or paste your .chd file.',
+          AI_INSTRUCTIONS
+        )
+      }
+    },
+    {
+      label: 'Set up a folder for AI agents…',
+      title:
+        'Writes AGENTS.md, which most AI agents read, and CLAUDE.md with a skill, which Claude Code reads',
       onSelect: () => {
         window.api
           .enableAiInFolder()
@@ -322,34 +338,54 @@ export function useMenus(inputs: MenuInputs): {
           )
       }
     },
-    // Claude Desktop exists for Windows and macOS only (ADR 0110).
-    ...(window.api.platform === 'win32' || window.api.platform === 'darwin'
-      ? [
-          {
-            label: 'Install Claude Desktop extension…',
-            onSelect: () => {
-              window.api
-                .installClaudeExtension()
-                .catch((err) =>
-                  showAlert(
-                    `Could not install the Claude Desktop extension: ${err instanceof Error ? err.message : String(err)}`
-                  )
-                )
-            }
-          }
-        ]
-      : []),
     {
-      label: 'Copy AI instructions',
-      onSelect: () => {
-        window.api.copyToClipboard(AI_INSTRUCTIONS)
-        // The dialog's Copy button re-copies the instructions, not this
-        // confirmation text (ADR 0104).
-        showAlert(
-          'Copied the AI instructions to your clipboard. Paste them into a chat with Claude (or another AI assistant), then attach or paste your .chd file.',
-          AI_INSTRUCTIONS
-        )
-      }
+      label: 'Install the MCP server for',
+      title: 'An MCP server lets an AI app read, check and create diagrams in one folder',
+      submenu: [
+        // Claude Desktop exists for Windows and macOS only (ADR 0110).
+        ...(window.api.platform === 'win32' || window.api.platform === 'darwin'
+          ? [
+              {
+                label: 'Claude Desktop…',
+                onSelect: () => {
+                  window.api
+                    .installClaudeExtension()
+                    .catch((err) =>
+                      showAlert(
+                        `Could not install the Claude Desktop extension: ${err instanceof Error ? err.message : String(err)}`
+                      )
+                    )
+                }
+              }
+            ]
+          : []),
+        {
+          label: 'Other apps: copy server settings…',
+          title: 'Settings that point an app that can use MCP servers at one folder',
+          onSelect: () => {
+            window.api
+              .mcpServerSettings()
+              .then((result) => {
+                if (result.outcome === 'unsupported') {
+                  showAlert(
+                    'This copy of the app is an AppImage, which cannot give an MCP server a path that stays valid. Use the .deb or snap package, or run the server from a build of the repository (chd mcp <folder>).'
+                  )
+                } else if (result.outcome === 'ready') {
+                  window.api.copyToClipboard(result.settings)
+                  showAlert(
+                    `Copied settings for the MCP server on ${result.folder}${result.allowUpdate ? ', allowed to change existing files' : ' (read only for existing files)'}. Paste them into the MCP settings of your app (the "mcpServers" part, in the app's own settings file).`,
+                    result.settings
+                  )
+                }
+              })
+              .catch((err) =>
+                showAlert(
+                  `Could not make the MCP server settings: ${err instanceof Error ? err.message : String(err)}`
+                )
+              )
+          }
+        }
+      ]
     }
   ]
   const aiMenu: MenuBarMenu | null =
