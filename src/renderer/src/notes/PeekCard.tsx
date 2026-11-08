@@ -3,26 +3,54 @@ import { createPortal } from 'react-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { MetadataEntry } from '@shared/diagram'
+import type { IconRef, IconSlot } from '@shared/icons/schema'
+import { namedIcons } from '@shared/icons/names'
 import { isMac } from '../commands'
+import { peekNoteCharCap } from '@shared/preferences/peekCard'
 import type { PeekTarget } from './useNotesPeek'
 
-const CARD_WIDTH = 340
-const CARD_MAX_HEIGHT = 260
 const GAP = 8
-// Raw-text cap before rendering: cheap, keeps the markdown pass small; the
-// CSS max-height (with a fade) does the visual truncation.
-const MAX_CHARS = 1200
-
 interface PeekCardProps {
   target: PeekTarget
+  // The card's width and the height beyond which it is trimmed, from the preferences.
+  width: number
+  maxHeight: number
   label: string
   notesPath: string | undefined
   linkedPath: string | undefined
   metadata: Record<string, MetadataEntry> | undefined
+  // The diagram's required tag keys: their tags come first, in their own colour.
+  requiredTagKeys: ReadonlySet<string>
+  // The element's icons, named so a person can read what each one means (ADR 0155).
+  icons: Partial<Record<IconSlot, IconRef>> | undefined
   diagramPath: string | null
   // The note's in-memory text when it has been opened this session (so unsaved
   // edits show); undefined = read the file.
   shadowContent: string | undefined
+}
+
+type ChipKind = 'required' | 'tag' | 'icon'
+
+// A line of the card: the name of what it lists once, then the items, each in the colour of its
+// kind, so a tag and an icon are not taken for each other (ADR 0155).
+function Group({
+  label,
+  items
+}: {
+  label: string
+  items: { text: string; kind: ChipKind }[]
+}): React.JSX.Element | null {
+  if (items.length === 0) return null
+  return (
+    <div className="peek-card-tags">
+      <span className="peek-card-group-label">{label}</span>
+      {items.map(({ text, kind }) => (
+        <span key={text} className={`peek-card-tag peek-card-tag-${kind}`}>
+          {text}
+        </span>
+      ))}
+    </div>
+  )
 }
 
 function formatTagValue(value: unknown): string {
@@ -35,10 +63,14 @@ function formatTagValue(value: unknown): string {
 // load, and never goes stale.
 export default function PeekCard({
   target,
+  width,
+  maxHeight,
   label,
   notesPath,
   linkedPath,
   metadata,
+  requiredTagKeys,
+  icons,
   diagramPath,
   shadowContent
 }: PeekCardProps): React.JSX.Element | null {
@@ -57,14 +89,23 @@ export default function PeekCard({
 
   const text = (shadowContent ?? fileContent ?? '').trim()
   const tags = Object.entries(metadata ?? {})
-  if (!text && !linkedPath && tags.length === 0) return null
+  // Required tags first, then the others, on one line.
+  const tagChips: { text: string; kind: ChipKind }[] = [
+    ...tags.filter(([key]) => requiredTagKeys.has(key)),
+    ...tags.filter(([key]) => !requiredTagKeys.has(key))
+  ].map(([key, entry]) => ({
+    text: `${key}: ${formatTagValue(entry.value)}`,
+    kind: requiredTagKeys.has(key) ? 'required' : 'tag'
+  }))
+  const iconNames = namedIcons(icons)
+  if (!text && !linkedPath && tags.length === 0 && iconNames.length === 0) return null
 
   const title = label.split('\n')[0].trim()
   const linkName = linkedPath?.split(/[/\\]/).pop() ?? linkedPath
   const { rect } = target
-  const left = Math.max(GAP, Math.min(rect.left, window.innerWidth - CARD_WIDTH - GAP))
-  const fitsBelow = rect.bottom + GAP + CARD_MAX_HEIGHT <= window.innerHeight
-  const fitsAbove = rect.top - GAP - CARD_MAX_HEIGHT >= 0
+  const left = Math.max(GAP, Math.min(rect.left, window.innerWidth - width - GAP))
+  const fitsBelow = rect.bottom + GAP + maxHeight <= window.innerHeight
+  const fitsAbove = rect.top - GAP - maxHeight >= 0
   // Anchored by `bottom` when above so the card hugs the node whatever its
   // real (content-driven) height; a node too big for either falls back to the
   // top of the window.
@@ -77,7 +118,7 @@ export default function PeekCard({
   return createPortal(
     <div
       className={`peek-card${linkedPath ? ' peek-card-linked' : ''}`}
-      style={{ left, width: CARD_WIDTH, maxHeight: CARD_MAX_HEIGHT, ...vertical }}
+      style={{ left, width, maxHeight, ...vertical }}
     >
       {linkedPath && (
         <svg
@@ -97,18 +138,16 @@ export default function PeekCard({
         </svg>
       )}
       {title && <div className="peek-card-title">{title}</div>}
-      {tags.length > 0 && (
-        <div className="peek-card-tags">
-          {tags.map(([key, entry]) => (
-            <span key={key} className="peek-card-tag">
-              {key}: {formatTagValue(entry.value)}
-            </span>
-          ))}
-        </div>
-      )}
+      <Group label="Tags" items={tagChips} />
+      <Group
+        label="Icons"
+        items={iconNames.map(({ where, name }) => ({ text: `${where}: ${name}`, kind: 'icon' }))}
+      />
       {text && (
         <div className="peek-card-body notes-panel-preview" dir="auto">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{text.slice(0, MAX_CHARS)}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {text.slice(0, peekNoteCharCap(width, maxHeight))}
+          </ReactMarkdown>
         </div>
       )}
       {linkedPath && (

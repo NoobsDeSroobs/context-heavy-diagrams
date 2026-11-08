@@ -25,7 +25,7 @@ Selection works as in most editors: click, Shift+click to add, Shift+drag to box
 
 Right-click an element for its menu:
 
-- **Open note** opens a Markdown panel for the element's note. The note is saved next to the diagram as a separate `.md` file, so it diffs and reviews like any other text.
+- **Open note** opens a Markdown panel for the element's note. The note is saved next to the diagram as a separate `.md` file, so it diffs and reviews like any other text. What you type is kept as you go, also when you close the panel, and is written to the file when you save the diagram (Save writes the diagram and its notes together). The panel says **Unsaved** beside the note's name until then, and the window title has a dot in front of the file name while anything is unsaved.
 - **Add icon** picks from the bundled icons or your own SVG/PNG files.
 - **Reference images…** pins pictures to the element. They show in floating windows and never become part of the diagram or its exports.
 
@@ -33,7 +33,7 @@ Tags and other key-value metadata are in the **Metadata** section of the propert
 
 ## 4. Link a deeper diagram
 
-Right-click an element and choose **Link to diagram…** to point it at another `.chd` file. Ctrl-click the element to follow the link; if it has none, Ctrl-click offers to create and link a new diagram. Links point downward only, so any diagram in a tree can be opened on its own as a root. Hold Ctrl while hovering an element to peek at its note, tags and link without opening anything.
+Right-click an element and choose **Link to diagram…** to point it at another `.chd` file. Ctrl-click the element to follow the link; if it has none, Ctrl-click offers to create and link a new diagram. Links point downward only, so any diagram in a tree can be opened on its own as a root. Hold Ctrl while hovering an element to peek at its note, tags, link and the names of its icons without opening anything.
 
 ## 5. See the picture from different angles
 

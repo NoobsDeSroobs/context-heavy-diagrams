@@ -140,6 +140,7 @@ import { useDirtyState } from '../document/useDirtyState'
 import { useExternalChange } from '../document/useExternalChange'
 import { useSave } from '../document/useSave'
 import { useWindowLifecycle } from '../document/useWindowLifecycle'
+import { useWindowTitle } from '../document/useWindowTitle'
 import { useDocumentCommands } from '../document/useDocumentCommands'
 import { useLinks } from '../links/useLinks'
 import { useImageExport } from '../export/useImageExport'
@@ -161,7 +162,7 @@ import {
 import { isVoidDrop, pointFromEvent, visibleCanvasCenter } from './screenGeometry'
 import { sortNodesForHierarchy, removeContainerReparenting } from './hierarchy'
 import { resolveEndpointPosition } from '../edges/endpointPosition'
-import { notesPanelTitle, noteName } from '../notes/notesLabels'
+import { notesPanelTitle, noteName, noteSaveState } from '../notes/notesLabels'
 import { toDiagramFile, fromDiagramFile } from '../document/diagramConversion'
 import { seedMetadata } from '@shared/tagging/metadataSync'
 import { syncEdgeMetadata, syncNodeMetadata } from '../tagging/syncElements'
@@ -191,6 +192,7 @@ function CanvasInner(): React.JSX.Element {
   )
   const { hubDirty, setHubDirty, noteShadows, setNoteShadows, noteShadowsRef, isDirty, markDirty } =
     useDirtyState()
+  useWindowTitle(currentPath, isDirty)
   // Reloads the diagram file from disk keeping unsaved note edits — set once
   // loadDiagramIntoCanvas exists (it is declared after persistDiagram).
   const reloadHubRef = useRef<((path: string) => Promise<void>) | null>(null)
@@ -3398,6 +3400,8 @@ function CanvasInner(): React.JSX.Element {
                   <PeekCard
                     key={peek.nodeId}
                     target={peek}
+                    width={preferences.peekCardWidth}
+                    maxHeight={preferences.peekCardMaxHeight}
                     label={typeof peekNode.data?.label === 'string' ? peekNode.data.label : ''}
                     notesPath={
                       typeof peekNode.data?.notes === 'string' ? peekNode.data.notes : undefined
@@ -3408,6 +3412,8 @@ function CanvasInner(): React.JSX.Element {
                         : undefined
                     }
                     metadata={peekNode.data?.metadata as Record<string, MetadataEntry> | undefined}
+                    requiredTagKeys={new Set(requiredTags.map((tag) => tag.key))}
+                    icons={peekNode.data?.icons as Partial<Record<IconSlot, IconRef>> | undefined}
                     diagramPath={currentPath}
                     shadowContent={noteShadows[peek.nodeId]?.content}
                   />
@@ -3727,6 +3733,7 @@ function CanvasInner(): React.JSX.Element {
             <NotesPanel
               title={notesPanelTitle(nodes.find((n) => n.id === notesPanelNodeId))}
               content={noteShadows[notesPanelNodeId]?.content ?? ''}
+              saveState={noteSaveState(noteShadows[notesPanelNodeId])}
               onChange={(content) => {
                 // The one edit site: the note's own dirty flag, not the diagram's.
                 setNoteShadows((prev) => ({

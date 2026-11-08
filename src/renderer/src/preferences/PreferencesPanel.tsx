@@ -3,6 +3,7 @@ import type { EdgeStyle } from '@shared/diagram'
 import type { AppPreferences } from './preferences'
 import { MIN_RECENT_DIAGRAMS_LIMIT, type EdgeAnimationMode } from '@shared/preferences/preferences'
 import { FieldRow, NumberField, SelectField } from '../ui/fields'
+import { PEEK_CARD_MAX_HEIGHT, PEEK_CARD_WIDTH, clampPeekSize } from '@shared/preferences/peekCard'
 import { useRafThrottledCallback } from '../ui/useRafThrottledCallback'
 import { useFontOptions } from '../styling/useFontOptions'
 import MetamodelsFolderSection from '../conformance/MetamodelsFolderSection'
@@ -113,6 +114,66 @@ function ZoomLimitField({
           }}
           onBlur={onMaxBlur}
           title="Maximum zoom (most zoomed in)"
+        />
+      </div>
+    </FieldRow>
+  )
+}
+
+// The Ctrl-hover card's width and greatest height on one row (ADR 0156), laid out like the zoom
+// limits. The stored value is kept inside its range as the number is typed; the box keeps what was
+// typed until it loses focus.
+function HoverCardSizeField({
+  width,
+  maxHeight,
+  onChange
+}: {
+  width: number
+  maxHeight: number
+  onChange: (patch: { peekCardWidth?: number; peekCardMaxHeight?: number }) => void
+}): React.JSX.Element {
+  const [widthDraft, setWidthDraft, onWidthFocus, onWidthBlur] = useNumberDraft(width)
+  const [heightDraft, setHeightDraft, onHeightFocus, onHeightBlur] = useNumberDraft(maxHeight)
+  return (
+    <FieldRow label="Hover card">
+      <div className="preferences-zoom-limit">
+        <span className="preferences-zoom-limit-label">Width</span>
+        <input
+          type="number"
+          className="property-number-field preferences-zoom-limit-input"
+          step={10}
+          min={PEEK_CARD_WIDTH.min}
+          max={PEEK_CARD_WIDTH.max}
+          value={widthDraft}
+          onFocus={onWidthFocus}
+          onChange={(e) => {
+            setWidthDraft(e.target.value)
+            if (e.target.value !== '') {
+              onChange({ peekCardWidth: clampPeekSize(Number(e.target.value), PEEK_CARD_WIDTH) })
+            }
+          }}
+          onBlur={onWidthBlur}
+          title="Width in pixels of the card shown while Ctrl (Cmd on a Mac) is held over an element"
+        />
+        <span className="preferences-zoom-limit-label">Height</span>
+        <input
+          type="number"
+          className="property-number-field preferences-zoom-limit-input"
+          step={10}
+          min={PEEK_CARD_MAX_HEIGHT.min}
+          max={PEEK_CARD_MAX_HEIGHT.max}
+          value={heightDraft}
+          onFocus={onHeightFocus}
+          onChange={(e) => {
+            setHeightDraft(e.target.value)
+            if (e.target.value !== '') {
+              onChange({
+                peekCardMaxHeight: clampPeekSize(Number(e.target.value), PEEK_CARD_MAX_HEIGHT)
+              })
+            }
+          }}
+          onBlur={onHeightBlur}
+          title="Greatest height in pixels of that card; it is shorter when its content is"
         />
       </div>
     </FieldRow>
@@ -287,6 +348,11 @@ export default function PreferencesPanel({
           onChange={onChange}
         />
         <IsolateOpacityField value={preferences.isolateOpacity} onChange={onChange} />
+        <HoverCardSizeField
+          width={preferences.peekCardWidth}
+          maxHeight={preferences.peekCardMaxHeight}
+          onChange={onChange}
+        />
         <FieldRow label="Drag-select requires full enclosure">
           <input
             type="checkbox"

@@ -1,4 +1,5 @@
 import type { EdgeStyle, GravityPreset, NodeStyle } from '../diagram'
+import { PEEK_CARD_MAX_HEIGHT, PEEK_CARD_WIDTH, clampPeekSize } from './peekCard.ts'
 
 // The app-wide Preferences tier — per-installation, every-diagram (see the
 // glossary and ADR 0052's addendum for the "Settings" -> "Preferences"
@@ -132,6 +133,11 @@ export interface AppPreferences {
   // non-matches entirely; deliberately left as a plain opacity rather than
   // a visibility toggle so de-emphasized structure/context stays visible.
   isolateOpacity: number
+  // Size of the card shown while Ctrl (Cmd on a Mac) is held over an element, in pixels: its width
+  // and the height beyond which its content is trimmed (ADR 0156). Clamped at every normalize
+  // boundary.
+  peekCardWidth: number
+  peekCardMaxHeight: number
   // Directory of the last opened or saved diagram, passed as `defaultPath` to File -> Open/Save As
   // so the dialogs start where the user was last working. Absent means no dialog opened yet this
   // install, deliberately not defaulted to e.g. the home directory. Written by main
@@ -211,6 +217,8 @@ export const DEFAULT_PREFERENCES: AppPreferences = {
   minZoom: 0.1,
   maxZoom: 2,
   isolateOpacity: 0.5,
+  peekCardWidth: PEEK_CARD_WIDTH.default,
+  peekCardMaxHeight: PEEK_CARD_MAX_HEIGHT.default,
   recentDiagramsLimit: 10,
   aiFeaturesEnabled: true,
   animateEdges: 'system'
@@ -267,6 +275,8 @@ export function normalizePreferences(
     animateEdges: readEdgeAnimationMode(raw.animateEdges)
   }
   if (legacyFolder && !merged.metamodelsFolder) merged.metamodelsFolder = legacyFolder
+  merged.peekCardWidth = clampPeekSize(merged.peekCardWidth, PEEK_CARD_WIDTH)
+  merged.peekCardMaxHeight = clampPeekSize(merged.peekCardMaxHeight, PEEK_CARD_MAX_HEIGHT)
   if (raw.defaultStyles?.shape && !raw.defaultStyles.entity) {
     merged.defaultStyles = { ...merged.defaultStyles, entity: raw.defaultStyles.shape }
   }

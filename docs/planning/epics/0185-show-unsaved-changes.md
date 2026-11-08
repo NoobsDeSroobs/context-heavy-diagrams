@@ -1,7 +1,7 @@
 # 0185: Show unsaved changes
 
 ## Status
-Not Started. Logged 2026-11-08; a quality-of-life fix, scheduled before 0182.
+Built (2026-11-08), awaiting a look in the app. Logged 2026-11-08. ADR: [0154](../../decisions/0154-unsaved-changes-show-in-the-window-title-and-the-notes-panel.md).
 
 ## Goal
 Nothing in the window says that the diagram, or a note being edited, has changes that are not on disk. The unsaved state only shows in the close prompt, the reload confirmations and the Changes panel. A person editing a note cannot tell whether closing the panel keeps the text, or whether it is on disk yet.
@@ -14,8 +14,8 @@ Nothing in the window says that the diagram, or a note being edited, has changes
 - The crash-recovery snapshot (every 5 seconds while unsaved) stays invisible.
 
 ## Tasks
-- [ ] Find where the window title is set and add the unsaved marker (and, if it fits, the platform's own edited-document mark on macOS)
-- [ ] The Notes panel chip, from the note's own dirty flag
-- [ ] A short ADR: the two states and where they show
-- [ ] Tests for the title text and the chip
+- [x] The window title: file name, a dot while unsaved (the macOS edited-document mark is left out)
+- [x] The Notes panel mark, from the note's own dirty flag
+- [x] A short ADR: the two states and where they show
+- [x] Tests for the title text and the mark
 - [ ] Look at it in the app on Windows and Linux, in both themes

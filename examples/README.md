@@ -7,7 +7,7 @@ Real, working diagram files. Open any of them with **File → Open** (or drop it
 | File | What it shows |
 |---|---|
 | [`hello-world.chd`](hello-world.chd) | The smallest diagram: two entities and one edge. |
-| [`with-icons.chd`](with-icons.chd) | Two entities with built-in corner icons. |
+| [`with-icons.chd`](with-icons.chd) | Two entities with built-in corner icons. Hold Ctrl (Cmd on a Mac) over one to read the icons' names. |
 | [`with-metadata.chd`](with-metadata.chd) | A diagram-level required-tag template, one required tag and one free tag on an entity. |
 
 These three also serve as round-trip fixtures: the app must open and re-save them without changing their meaning.

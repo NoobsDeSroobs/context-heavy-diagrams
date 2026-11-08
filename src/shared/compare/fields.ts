@@ -3,6 +3,8 @@
 // engine says on purpose that it does not track them.
 
 import type { DiagramEdge, DiagramNode, MetadataEntry, RiskCell } from '../diagram'
+import type { IconRef } from '../icons/schema.ts'
+import { ICON_SLOTS, iconName } from '../icons/names.ts'
 import { previewTextChange } from './textPreview.ts'
 
 // 'link' is a path or file reference (orange); 'content' is what an element says or connects to
@@ -195,30 +197,21 @@ function cosmeticLook<T extends { style?: object }>(keys: StyleKey[]): FieldSpec
   }
 }
 
-const SLOT_NAME: Record<string, string> = {
-  topLeft: 'top left',
-  topRight: 'top right',
-  bottomLeft: 'bottom left',
-  bottomRight: 'bottom right'
-}
-
-function iconName(icon: unknown): string {
-  const ref = icon as { source?: string; id?: string; path?: string } | undefined
-  if (!ref) return '(none)'
-  return ref.source === 'builtin' ? String(ref.id) : String(ref.path).split('/').pop() || ''
-}
-
 // An icon is a picture of what the element is, so which one sits in which corner is meaning.
 function describeIcons(before: unknown, after: unknown): string[] {
   const was = (before ?? {}) as Record<string, unknown>
   const now = (after ?? {}) as Record<string, unknown>
   const lines: string[] = []
-  for (const slot of Object.keys(SLOT_NAME)) {
+  for (const { slot, where } of ICON_SLOTS) {
     if (deepEqualJson(was[slot], now[slot])) continue
-    const where = `icon, ${SLOT_NAME[slot]}`
-    if (!was[slot]) lines.push(`${where}: added ${quoted(iconName(now[slot]))}`)
-    else if (!now[slot]) lines.push(`${where}: removed (was ${quoted(iconName(was[slot]))})`)
-    else lines.push(`${where}: ${quoted(iconName(was[slot]))} → ${quoted(iconName(now[slot]))}`)
+    const label = `icon, ${where}`
+    if (!was[slot]) lines.push(`${label}: added ${quoted(iconName(now[slot] as IconRef))}`)
+    else if (!now[slot]) {
+      lines.push(`${label}: removed (was ${quoted(iconName(was[slot] as IconRef))})`)
+    } else {
+      const [from, to] = [was[slot], now[slot]].map((r) => quoted(iconName(r as IconRef)))
+      lines.push(`${label}: ${from} → ${to}`)
+    }
   }
   return lines
 }
