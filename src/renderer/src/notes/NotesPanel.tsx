@@ -1,10 +1,13 @@
 import { useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import type { NoteSaveState } from './notesLabels'
 
 interface NotesPanelProps {
   title: string
   content: string
+  // Whether the edits are on disk yet (ADR 0154).
+  saveState: NoteSaveState
   onChange: (content: string) => void
   onClose: () => void
 }
@@ -18,6 +21,7 @@ type Mode = 'edit' | 'preview'
 export default function NotesPanel({
   title,
   content,
+  saveState,
   onChange,
   onClose
 }: NotesPanelProps): React.JSX.Element {
@@ -57,6 +61,19 @@ export default function NotesPanel({
         <span className="notes-panel-title" title={title}>
           {title}
         </span>
+        {saveState === 'unsaved' && (
+          <span
+            className="notes-panel-state notes-panel-state-unsaved"
+            title="Your edits are kept while this panel is closed, and written to the file when you save the diagram."
+          >
+            Unsaved
+          </span>
+        )}
+        {saveState === 'saved' && (
+          <span className="notes-panel-state" title="The note on disk is what you see here.">
+            Saved
+          </span>
+        )}
         {mode === 'edit' && (
           <div className="notes-panel-format-buttons">
             <button type="button" title="Bold" onClick={() => wrapSelection('**')}>

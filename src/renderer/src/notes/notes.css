@@ -32,6 +32,21 @@
   flex: 1;
 }
 
+/* Whether the note is on disk yet; "unsaved" has a dot so it is not told by colour alone. */
+.notes-panel-state {
+  flex: 0 0 auto;
+  color: var(--ev-c-text-2);
+  font-size: 11px;
+}
+.notes-panel-state-unsaved {
+  color: var(--color-text);
+  font-weight: 600;
+}
+.notes-panel-state-unsaved::before {
+  content: '\25CF\00a0';
+  color: #f97316;
+}
+
 .notes-panel-toolbar button {
   cursor: pointer;
   border: 1px solid var(--ev-c-gray-2);
