@@ -514,3 +514,12 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 ### 0104: Central custom-icon library
 
 *Superseded* (closed 2026-11-07). One shared place for custom icons instead of a copy in each diagram's `assets/` folder, with a fallback for a machine that lacks the library. Taken over by epic 0183, with the library as installable packs kept beside the saved preferences.
+
+### 0172: Drag to adjust number fields
+
+*Done* (merged; in the next release, 0.8.0). Dragging the label of a number or slider field changes its value: one step per pixel, Shift for fine and Ctrl for coarse, the cursor hidden by pointer lock so a long drag does not run out of screen, one undo step per drag, and a mixed selection set to the one value. It applies to every `NumberField` and `SliderField` and to the Isolate opacity preference. ADR: [0152](../decisions/0152-drag-a-number-fields-label-to-change-it.md). Left out: the zoom limits, the connection-point maximum in Diagram settings and the gravity preset values, which are bare inputs outside `NumberField`.
+
+### 0173: Style changes in the change review
+
+*Done* (merged; in the next release, 0.8.0). A look that carries meaning (fill, border colour, width and opacity, line style, markers, an edge's colour, width and animation, icons) is now a change in a review, as a Restyled class with its own colour, badge, count and heading in `chd diff`, told with the old and new value. Font, text alignment, label position and routing keep the paint-brush marker only. The changes list shows every changed line, with a chip beside each colour. An example pair is in `examples/review/`. ADR: [0153](../decisions/0153-a-look-that-carries-meaning-is-a-change-in-a-review.md).
+
