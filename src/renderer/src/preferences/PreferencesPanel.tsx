@@ -120,6 +120,66 @@ function ZoomLimitField({
   )
 }
 
+// The Ctrl-hover card's width and greatest height on one row (ADR 0156), laid out like the zoom
+// limits. The stored value is kept inside its range as the number is typed; the box keeps what was
+// typed until it loses focus.
+function HoverCardSizeField({
+  width,
+  maxHeight,
+  onChange
+}: {
+  width: number
+  maxHeight: number
+  onChange: (patch: { peekCardWidth?: number; peekCardMaxHeight?: number }) => void
+}): React.JSX.Element {
+  const [widthDraft, setWidthDraft, onWidthFocus, onWidthBlur] = useNumberDraft(width)
+  const [heightDraft, setHeightDraft, onHeightFocus, onHeightBlur] = useNumberDraft(maxHeight)
+  return (
+    <FieldRow label="Hover card">
+      <div className="preferences-zoom-limit">
+        <span className="preferences-zoom-limit-label">Width</span>
+        <input
+          type="number"
+          className="property-number-field preferences-zoom-limit-input"
+          step={10}
+          min={PEEK_CARD_WIDTH.min}
+          max={PEEK_CARD_WIDTH.max}
+          value={widthDraft}
+          onFocus={onWidthFocus}
+          onChange={(e) => {
+            setWidthDraft(e.target.value)
+            if (e.target.value !== '') {
+              onChange({ peekCardWidth: clampPeekSize(Number(e.target.value), PEEK_CARD_WIDTH) })
+            }
+          }}
+          onBlur={onWidthBlur}
+          title="Width in pixels of the card shown while Ctrl (Cmd on a Mac) is held over an element"
+        />
+        <span className="preferences-zoom-limit-label">Height</span>
+        <input
+          type="number"
+          className="property-number-field preferences-zoom-limit-input"
+          step={10}
+          min={PEEK_CARD_MAX_HEIGHT.min}
+          max={PEEK_CARD_MAX_HEIGHT.max}
+          value={heightDraft}
+          onFocus={onHeightFocus}
+          onChange={(e) => {
+            setHeightDraft(e.target.value)
+            if (e.target.value !== '') {
+              onChange({
+                peekCardMaxHeight: clampPeekSize(Number(e.target.value), PEEK_CARD_MAX_HEIGHT)
+              })
+            }
+          }}
+          onBlur={onHeightBlur}
+          title="Greatest height in pixels of that card; it is shorter when its content is"
+        />
+      </div>
+    </FieldRow>
+  )
+}
+
 // Fractional 0-1 opacity (ADR 0063). NumberField's draft has no `step`, for the same reason
 // ZoomLimitField above has none. Same two-class combination as ZoomLimitField:
 // .property-number-field supplies the theme-aware background, border and colour (its own width:
@@ -288,27 +348,10 @@ export default function PreferencesPanel({
           onChange={onChange}
         />
         <IsolateOpacityField value={preferences.isolateOpacity} onChange={onChange} />
-        <NumberField
-          label="Hover card width (px)"
-          value={preferences.peekCardWidth}
-          mixed={false}
-          min={PEEK_CARD_WIDTH.min}
-          max={PEEK_CARD_WIDTH.max}
-          step={10}
-          onChange={(v) => onChange({ peekCardWidth: clampPeekSize(v, PEEK_CARD_WIDTH) })}
-          onSessionStart={() => {}}
-          onSessionEnd={() => {}}
-        />
-        <NumberField
-          label="Hover card max height (px)"
-          value={preferences.peekCardMaxHeight}
-          mixed={false}
-          min={PEEK_CARD_MAX_HEIGHT.min}
-          max={PEEK_CARD_MAX_HEIGHT.max}
-          step={10}
-          onChange={(v) => onChange({ peekCardMaxHeight: clampPeekSize(v, PEEK_CARD_MAX_HEIGHT) })}
-          onSessionStart={() => {}}
-          onSessionEnd={() => {}}
+        <HoverCardSizeField
+          width={preferences.peekCardWidth}
+          maxHeight={preferences.peekCardMaxHeight}
+          onChange={onChange}
         />
         <FieldRow label="Drag-select requires full enclosure">
           <input
