@@ -3410,6 +3410,7 @@ function CanvasInner(): React.JSX.Element {
                         : undefined
                     }
                     metadata={peekNode.data?.metadata as Record<string, MetadataEntry> | undefined}
+                    requiredTagKeys={new Set(requiredTags.map((tag) => tag.key))}
                     icons={peekNode.data?.icons as Partial<Record<IconSlot, IconRef>> | undefined}
                     diagramPath={currentPath}
                     shadowContent={noteShadows[peek.nodeId]?.content}

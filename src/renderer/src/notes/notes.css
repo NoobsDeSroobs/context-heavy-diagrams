@@ -175,10 +175,29 @@
 }
 
 .peek-card-tag {
-  background: var(--color-background-mute);
+  --peek-kind: var(--ev-c-gray-2);
+  background: color-mix(in srgb, var(--peek-kind) 20%, transparent);
+  border-left: 3px solid var(--peek-kind);
   border-radius: 3px;
   padding: 1px 6px;
   font-size: 12px;
+}
+
+/* The group's name, then its items; each kind has its own colour, none of them a signal colour
+   (red, green, yellow), so a required tag, a free tag and an icon are told apart at a glance. */
+.peek-card-group-label {
+  align-self: center;
+  color: var(--ev-c-text-2);
+  font-size: 11px;
+}
+.peek-card-tag-required {
+  --peek-kind: #8b5cf6;
+}
+.peek-card-tag-tag {
+  --peek-kind: #0ea5e9;
+}
+.peek-card-tag-icon {
+  --peek-kind: #d946ef;
 }
 
 /* Reuses .notes-panel-preview's markdown styling; flex/overflow overridden

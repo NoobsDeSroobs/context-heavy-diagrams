@@ -8,6 +8,7 @@ An icon on an element has to be recognised by sight. A person who did not draw t
 
 ## Decision
 - **The card that shows an element's tags, note and link while Ctrl (Cmd on a Mac) is held also lists its icons,** one per corner as `top left: server`, in the order the element draws them (top left, top right, bottom left, bottom right). An element whose only content is icons now gets a card.
+- **The card is in named groups, each in its own colour:** `Required tags` (violet), `Tags` (sky blue) and `Icons` (fuchsia), the group's name once before its items (`Tags: env: prod`, `Icons: top left: user`). Tags and icons are both short `key: value` chips, and without this they read alike. The colours avoid red, green and yellow, which already signal meaning elsewhere, and a colour is never the only cue because each group is named. Fuchsia is also the review's colour for a changed look ([ADR 0153](0153-a-look-that-carries-meaning-is-a-change-in-a-review.md)), which icons belong to.
 - **A built-in icon is named by its id; a custom icon by its file name,** with the extension, which also tells it from a built-in icon of the same name. The same words are used in a review line ([ADR 0153](0153-a-look-that-carries-meaning-is-a-change-in-a-review.md)), from one function in `src/shared/icons/names.ts`.
 - **Not in the compare window's hover card:** a change to an icon is already told there in words, and an unchanged one is not what a reviewer is looking for.
 

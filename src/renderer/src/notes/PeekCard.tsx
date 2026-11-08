@@ -21,12 +21,38 @@ interface PeekCardProps {
   notesPath: string | undefined
   linkedPath: string | undefined
   metadata: Record<string, MetadataEntry> | undefined
+  // The diagram's required tag keys: their tags are listed apart from the free ones.
+  requiredTagKeys: ReadonlySet<string>
   // The element's icons, named so a person can read what each one means (ADR 0155).
   icons: Partial<Record<IconSlot, IconRef>> | undefined
   diagramPath: string | null
   // The note's in-memory text when it has been opened this session (so unsaved
   // edits show); undefined = read the file.
   shadowContent: string | undefined
+}
+
+// One kind of thing on the card, named and in its own colour, so a tag and an icon are not taken
+// for each other (ADR 0155).
+function Group({
+  label,
+  kind,
+  items
+}: {
+  label: string
+  kind: 'required' | 'tag' | 'icon'
+  items: string[]
+}): React.JSX.Element | null {
+  if (items.length === 0) return null
+  return (
+    <div className="peek-card-tags">
+      <span className="peek-card-group-label">{label}</span>
+      {items.map((item) => (
+        <span key={item} className={`peek-card-tag peek-card-tag-${kind}`}>
+          {item}
+        </span>
+      ))}
+    </div>
+  )
 }
 
 function formatTagValue(value: unknown): string {
@@ -43,6 +69,7 @@ export default function PeekCard({
   notesPath,
   linkedPath,
   metadata,
+  requiredTagKeys,
   icons,
   diagramPath,
   shadowContent
@@ -62,6 +89,8 @@ export default function PeekCard({
 
   const text = (shadowContent ?? fileContent ?? '').trim()
   const tags = Object.entries(metadata ?? {})
+  const requiredTags = tags.filter(([key]) => requiredTagKeys.has(key))
+  const freeTags = tags.filter(([key]) => !requiredTagKeys.has(key))
   const iconNames = namedIcons(icons)
   if (!text && !linkedPath && tags.length === 0 && iconNames.length === 0) return null
 
@@ -103,24 +132,21 @@ export default function PeekCard({
         </svg>
       )}
       {title && <div className="peek-card-title">{title}</div>}
-      {tags.length > 0 && (
-        <div className="peek-card-tags">
-          {tags.map(([key, entry]) => (
-            <span key={key} className="peek-card-tag">
-              {key}: {formatTagValue(entry.value)}
-            </span>
-          ))}
-        </div>
-      )}
-      {iconNames.length > 0 && (
-        <div className="peek-card-tags">
-          {iconNames.map(({ where, name }) => (
-            <span key={where} className="peek-card-tag" title={`Icon, ${where}`}>
-              {where}: {name}
-            </span>
-          ))}
-        </div>
-      )}
+      <Group
+        label="Required tags"
+        kind="required"
+        items={requiredTags.map(([key, entry]) => `${key}: ${formatTagValue(entry.value)}`)}
+      />
+      <Group
+        label="Tags"
+        kind="tag"
+        items={freeTags.map(([key, entry]) => `${key}: ${formatTagValue(entry.value)}`)}
+      />
+      <Group
+        label="Icons"
+        kind="icon"
+        items={iconNames.map(({ where, name }) => `${where}: ${name}`)}
+      />
       {text && (
         <div className="peek-card-body notes-panel-preview" dir="auto">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{text.slice(0, MAX_CHARS)}</ReactMarkdown>
