@@ -168,3 +168,87 @@
   margin: 3px 0 0;
   padding-left: 14px;
 }
+
+/* Save As dialog (SaveAsDialog.tsx, ADR 0160). */
+.saveas-dialog {
+  width: 600px;
+}
+
+.saveas-path {
+  display: flex;
+  gap: 8px;
+}
+
+.saveas-path input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.saveas-path button,
+.saveas-dialog .alert-dialog-actions button {
+  cursor: pointer;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 4px 12px;
+}
+
+.saveas-path button:hover,
+.saveas-dialog .alert-dialog-actions button:hover:not(:disabled) {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.saveas-dialog .alert-dialog-actions button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.saveas-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 8px 12px;
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 4px;
+}
+
+.saveas-option {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.saveas-option-label {
+  flex: 1 1 auto;
+}
+
+.saveas-option-hint {
+  opacity: 0.7;
+}
+
+.saveas-warning {
+  margin: 12px 0 0;
+}
+
+.saveas-removed {
+  margin-top: 8px;
+  font-size: 0.9em;
+}
+
+.saveas-removed p {
+  margin: 0 0 4px;
+}
+
+.saveas-removed ul,
+.saveas-problems {
+  margin: 0;
+  padding-left: 20px;
+  overflow-wrap: anywhere;
+}
+
+.saveas-problems {
+  margin-top: 8px;
+  color: #e5534b;
+}

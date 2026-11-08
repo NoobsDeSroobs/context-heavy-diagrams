@@ -543,3 +543,11 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 *Done* (in the next release, 0.8.0). A line separates the kinds of entry in File, Edit, View and Help; **New** (Diagram, Diagram metamodel…) and **Export** (PNG…, SVG…) are submenus; the command palette lists submenu entries as `New: Diagram`. **Help → Glossary…** shows the plain part of each term in `docs/architecture/glossary.md`, with a filter box. ADR: [0157](../decisions/0157-menus-are-grouped-and-the-glossary-is-in-help.md). Left open: a link to the command-line reference from Help, which needs the sheet compiled into the app like the glossary.
 
+### 0184: Adjustable width for the diagnostics and changes panels
+
+*Done* (in the next release, 0.8.0). The right-hand dock that holds the notes, diagnostics, changes, layers and preferences panels has a drag handle on its left edge (also the arrow keys, and a double-click for the default); one width for every panel, kept as a preference between 280 and 900 px. The list in the review window has the same handle, kept while that window is open because it cannot write preferences. ADR: [0158](../decisions/0158-side-panel-width-and-the-minimap-are-preferences.md).
+
+### 0169: A setting to hide the minimap
+
+*Done* (in the next release, 0.8.0). A small button on the minimap's corner and **View → Minimap** show or hide it; the choice is a preference, on by default. ADR: [0158](../decisions/0158-side-panel-width-and-the-minimap-are-preferences.md).
+

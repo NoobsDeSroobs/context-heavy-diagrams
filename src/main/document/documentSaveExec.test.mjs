@@ -412,3 +412,143 @@ test('the diagram folder itself is never removed, even when it ends up empty', a
   assert.equal(has('notes/A-1.md'), true)
   assert.equal(existsSync(dir), true)
 })
+
+// --- Save As: copying the notes that were never opened -----------------------
+
+const copy = (nodeId, from, to) => ({ kind: 'copy', nodeId, from, to })
+
+test('copy: the note comes from the previous folder, which is left as it was', async () => {
+  await put('prev/notes/A.md', 'alpha')
+  const out = await executeSave(
+    req({
+      writeHub: true,
+      ops: [copy('n1', 'notes/A.md', 'notes/A.md')],
+      copyFromDir: join(dir, 'prev')
+    }),
+    deps()
+  )
+  assert.equal(out.status, 'saved')
+  assert.equal(await read('notes/A.md'), 'alpha')
+  assert.equal(await read('prev/notes/A.md'), 'alpha')
+  assert.deepEqual(Object.keys(out.notes), ['n1'])
+  assert.deepEqual(out.skippedMoves, [])
+})
+
+test('copy: a file already there with other text is kept, with a warning', async () => {
+  await put('prev/notes/A.md', 'alpha')
+  await put('notes/A.md', "someone else's note")
+  const out = await executeSave(
+    req({ ops: [copy('n1', 'notes/A.md', 'notes/A.md')], copyFromDir: join(dir, 'prev') }),
+    deps()
+  )
+  assert.equal(await read('notes/A.md'), "someone else's note")
+  assert.equal(out.warnings.length, 1)
+})
+
+test('copy: an identical file already there is no cause for a warning', async () => {
+  await put('prev/notes/A.md', 'alpha')
+  await put('notes/A.md', 'alpha')
+  const out = await executeSave(
+    req({ ops: [copy('n1', 'notes/A.md', 'notes/A.md')], copyFromDir: join(dir, 'prev') }),
+    deps()
+  )
+  assert.deepEqual(out.warnings, [])
+})
+
+test('copy: Save As in the same folder shares the note and does not damage it', async () => {
+  await put('notes/A.md', 'alpha')
+  const out = await executeSave(
+    req({ ops: [copy('n1', 'notes/A.md', 'notes/A.md')], copyFromDir: dir }),
+    deps()
+  )
+  assert.equal(await read('notes/A.md'), 'alpha')
+  assert.deepEqual(out.warnings, [])
+  assert.deepEqual(Object.keys(out.notes), ['n1'])
+})
+
+test('copy: a missing source copies nothing and the node keeps its old path', async () => {
+  const out = await executeSave(
+    req({ ops: [copy('n1', 'notes/A.md', 'notes/A.md')], copyFromDir: join(dir, 'prev') }),
+    deps()
+  )
+  assert.deepEqual(out.skippedMoves, ['n1'])
+  assert.equal(has('notes/A.md'), false)
+})
+
+test('copy: a source outside the previous folder is never read', async () => {
+  await put('secret.md', 'do not copy')
+  const out = await executeSave(
+    req({ ops: [copy('n1', '../secret.md', 'notes/A.md')], copyFromDir: join(dir, 'prev') }),
+    deps()
+  )
+  assert.deepEqual(out.skippedMoves, ['n1'])
+  assert.equal(has('notes/A.md'), false)
+})
+
+test('assets: images and linked diagrams are copied and written before the diagram', async () => {
+  await put('prev/assets/p.png', 'PNG')
+  const out = await executeSave(
+    req({
+      writeHub: true,
+      copyFromDir: join(dir, 'prev'),
+      assets: [
+        { kind: 'copy', from: 'assets/p.png', to: 'd/assets/p.png' },
+        { kind: 'write', to: 'd/child.chd', content: 'CHILD' }
+      ]
+    }),
+    deps()
+  )
+  assert.equal(out.status, 'saved')
+  assert.equal(await read('d/assets/p.png'), 'PNG')
+  assert.equal(await read('d/child.chd'), 'CHILD')
+  assert.equal(await read('prev/assets/p.png'), 'PNG')
+  assert.equal(out.hubWritten, true)
+})
+
+test('assets: a place that is taken stops the save before anything is written', async () => {
+  await put('prev/a.png', 'A')
+  await put('d/taken.png', 'someone else')
+  const out = await executeSave(
+    req({
+      writeHub: true,
+      copyFromDir: join(dir, 'prev'),
+      assets: [
+        { kind: 'write', to: 'd/first.chd', content: 'X' },
+        { kind: 'copy', from: 'a.png', to: 'd/taken.png' }
+      ]
+    }),
+    deps()
+  )
+  assert.equal(out.status, 'failed')
+  assert.match(out.error, /"d\/taken.png" already exists/)
+  assert.equal(has('d/first.chd'), false)
+  assert.equal(await read('d/taken.png'), 'someone else')
+  assert.equal(out.hubWritten, false)
+})
+
+test('assets: a source that vanished is a warning, and one outside the folder is never read', async () => {
+  await put('secret.png', 'do not copy')
+  const out = await executeSave(
+    req({
+      copyFromDir: join(dir, 'prev'),
+      assets: [
+        { kind: 'copy', from: 'gone.png', to: 'd/gone.png' },
+        { kind: 'copy', from: '../secret.png', to: 'd/secret.png' }
+      ]
+    }),
+    deps()
+  )
+  assert.equal(out.status, 'saved')
+  assert.equal(out.warnings.length, 2)
+  assert.equal(has('d/gone.png'), false)
+  assert.equal(has('d/secret.png'), false)
+})
+
+test('assets: a destination outside the new folder fails the save', async () => {
+  const out = await executeSave(
+    req({ assets: [{ kind: 'write', to: '../escape.chd', content: 'X' }] }),
+    deps()
+  )
+  assert.equal(out.status, 'failed')
+  assert.match(out.error, /outside the diagram's folder/)
+})

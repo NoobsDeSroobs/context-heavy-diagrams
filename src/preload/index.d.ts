@@ -24,6 +24,7 @@ import type {
   MetamodelListing,
   MetamodelsFolderInfo
 } from '@shared/conformance/metamodelsFolder'
+import type { PlanSaveAsRequest, SaveAsPlan } from '@shared/document/saveAsCopy'
 import type { AppPreferences } from '@shared/preferences/preferences'
 import type { SecurityCrawlResult } from '@shared/threat-matrix/threatMatrixMath'
 import type { LinkedSearchLink, LinkedSearchResult } from '@shared/search/linkedSearch'
@@ -39,7 +40,8 @@ export interface DiagramApi {
   openDiagramAtPath(path: string): Promise<{ diagram: DiagramFile; stamp: Stamp }>
   rereadDiagramForDiff(path: string): Promise<DiagramFile | null>
   saveDocument(request: SaveDocumentRequest): Promise<SaveOutcome>
-  pickSavePath(): Promise<string | null>
+  pickSavePath(suggested?: string): Promise<string | null>
+  planSaveAs(request: PlanSaveAsRequest): Promise<SaveAsPlan>
   pickAndCopyCustomIcon(diagramPath: string): Promise<string | null>
   listCustomIcons(diagramPath: string): Promise<string[]>
   readIconAsDataUrl(diagramPath: string, relativePath: string): Promise<string>

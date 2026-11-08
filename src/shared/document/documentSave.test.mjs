@@ -10,6 +10,7 @@ import {
   loadedNoteShadow,
   markSaved,
   newNoteShadow,
+  orphanedNoteEdits,
   planSave,
   recoveredNoteShadow,
   resolveConflicts,
@@ -167,7 +168,7 @@ test('hub-only edits write the hub with no note ops', () => {
   assert.equal(p.writeHub, true)
 })
 
-test('Save As / first save: dirty notes go to the new location unchecked; others untouched', () => {
+test('Save As / first save: dirty notes go to the new location unchecked; the others are copied', () => {
   const dirty = editNote(loadedNoteShadow('entity-1', 'old/notes/A-1.md', 's1', 'a'), 'b')
   const p = plan(
     [
@@ -180,10 +181,32 @@ test('Save As / first save: dirty notes go to the new location unchecked; others
     ],
     { newLocation: true, hubDirty: true }
   )
-  assert.equal(p.ops.length, 1)
+  assert.equal(p.ops.length, 2)
   assert.equal(p.ops[0].from, null)
   assert.equal(p.ops[0].expectedStamp, null)
-  assert.equal(p.finalPaths['entity-2'], 'old/notes/B-2.md')
+  assert.deepEqual(p.ops[1], {
+    kind: 'copy',
+    nodeId: 'entity-2',
+    from: 'old/notes/B-2.md',
+    to: 'new/notes/B-2.md'
+  })
+  assert.equal(p.finalPaths['entity-2'], 'new/notes/B-2.md')
+})
+
+test('Save As: an opened but unedited note is copied from where it was read', () => {
+  const clean = loadedNoteShadow('entity-1', 'old/notes/A-1.md', 's1', 'a')
+  const p = plan([note({ shadow: clean, nodeNotesPath: 'old/notes/A-1.md' })], {
+    newLocation: true
+  })
+  assert.equal(p.ops[0].kind, 'copy')
+  assert.equal(p.ops[0].from, 'old/notes/A-1.md')
+})
+
+test('Save As: an element with no note has nothing to copy', () => {
+  const p = plan([note({ nodeNotesPath: null, shadow: newNoteShadow('entity-1') })], {
+    newLocation: true
+  })
+  assert.deepEqual(p.ops, [])
 })
 
 test('many untouched notes produce no work at all', () => {
@@ -274,4 +297,21 @@ test('resolve: with the diagram reloaded, a note taken from disk does not also g
 test('resolve: only notes in conflict (no diagram conflict) never rewrite the diagram for in-place writes', () => {
   const r = resolveConflicts([w('n1', 'a.md', 'a.md')], { n1: 'mine' })
   assert.equal(r.writeHub, false)
+})
+
+// --- orphaned edits ---------------------------------------------------------
+
+test('orphaned edits: only an edited note whose element is gone is listed', () => {
+  const edited = editNote(loadedNoteShadow('gone', 'notes/G-1.md', 's', 'a'), 'b')
+  const keptClean = loadedNoteShadow('gone-clean', 'notes/C-1.md', 's', 'a')
+  const stillThere = editNote(loadedNoteShadow('live', 'notes/L-1.md', 's', 'a'), 'b')
+  const unsaved = editNote(newNoteShadow('never-saved'), 'draft')
+  const list = orphanedNoteEdits(
+    { gone: edited, 'gone-clean': keptClean, live: stillThere, 'never-saved': unsaved },
+    new Set(['live'])
+  )
+  assert.deepEqual(list, [
+    { nodeId: 'gone', path: 'notes/G-1.md', content: 'b' },
+    { nodeId: 'never-saved', path: null, content: 'draft' }
+  ])
 })

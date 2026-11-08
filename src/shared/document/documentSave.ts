@@ -9,6 +9,7 @@
 // '/'-separated.
 
 import type { DiagramFile } from '../diagram'
+import type { AssetOp } from './saveAsCopy'
 
 // A file's cheap change fingerprint (mtime:size, see src/main/document/fileStamp.ts).
 // null = no baseline / file absent.
@@ -154,6 +155,30 @@ export function anyNoteDirty(shadows: Record<string, NoteShadow>): boolean {
   return false
 }
 
+// Unsaved text in a note whose element is no longer in the diagram (deleted, or gone from a
+// reloaded file). It is kept and listed, never dropped silently (ADR 0092); undoing the deletion
+// brings the element back and the entry with it.
+export interface OrphanedNoteEdit {
+  nodeId: string
+  // The note's file, or null if it was never saved.
+  path: string | null
+  content: string
+}
+
+export function orphanedNoteEdits(
+  shadows: Record<string, NoteShadow>,
+  liveNodeIds: ReadonlySet<string>
+): OrphanedNoteEdit[] {
+  const out: OrphanedNoteEdit[] = []
+  for (const id in shadows) {
+    const s = shadows[id]
+    if (s.dirty && !liveNodeIds.has(id)) {
+      out.push({ nodeId: id, path: s.originalPath, content: s.content })
+    }
+  }
+  return out
+}
+
 // Crash-recovery snapshots only need the notes with unsaved edits.
 export function dirtyDrafts(shadows: Record<string, NoteShadow>): Record<string, string> {
   const out: Record<string, string> = {}
@@ -179,7 +204,7 @@ export interface PlanInput {
   hubDirty: boolean
   // Save As / first save: paths relative to the previous location mean nothing
   // there, so nothing is moved or conflict-checked — dirty notes are simply
-  // written to the new location.
+  // written to the new location, and the others are copied there.
   newLocation: boolean
   notes: PlanNoteInput[]
 }
@@ -198,6 +223,10 @@ export type NoteOp =
   // An unedited note whose label changed: its on-disk content is moved, never
   // re-written from possibly-stale memory.
   | { kind: 'move'; nodeId: string; from: string; to: string }
+  // Save As: an unedited note is copied from the previous diagram's folder (`from` is relative to
+  // it) to the new one, so the new diagram does not point at files that are not there. The source
+  // is never touched.
+  | { kind: 'copy'; nodeId: string; from: string; to: string }
 
 export interface SavePlan {
   writeHub: boolean
@@ -226,6 +255,12 @@ export function planSave(input: PlanInput): SavePlan {
         expectedStamp: input.newLocation ? null : shadow.baselineStamp
       })
       finalPath = desiredPath
+    } else if (input.newLocation) {
+      const source = shadow?.originalPath ?? nodeNotesPath
+      if (source !== null) {
+        ops.push({ kind: 'copy', nodeId: note.nodeId, from: source, to: desiredPath })
+        finalPath = desiredPath
+      }
     } else if (current !== null && current !== desiredPath) {
       ops.push({ kind: 'move', nodeId: note.nodeId, from: current, to: desiredPath })
       finalPath = desiredPath
@@ -286,6 +321,11 @@ export interface SaveDocumentRequest {
   // by a conflict.
   fallbackPaths: Record<string, string | null>
   overwrite: boolean
+  // Save As: the diagram file this window had before, whose folder the `copy` ops read from.
+  previousDiagramPath: string | null
+  // Save As: the images, linked diagrams and the notes of those, copied before the diagram is written
+  // (saveAsCopy.ts). Never replaces a file.
+  assets?: AssetOp[]
 }
 
 // ---------------------------------------------------------------------------
@@ -301,7 +341,7 @@ export type Decision = 'mine' | 'disk'
 // An op that changes which path the diagram must reference (a rename or a new
 // note), as opposed to rewriting a note in place.
 export function changesReference(op: NoteOp): boolean {
-  return op.kind === 'move' || op.from !== op.to
+  return op.kind !== 'write' || op.from !== op.to
 }
 
 export interface Resolution {

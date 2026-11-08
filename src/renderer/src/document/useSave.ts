@@ -14,6 +14,12 @@ import {
   type SaveOutcome,
   type Stamp
 } from '@shared/document/documentSave'
+import {
+  applySaveAsRefs,
+  refNodesOf,
+  type SaveAsOptions,
+  type SaveAsPlan
+} from '@shared/document/saveAsCopy'
 import { derivedNotesPath } from '@shared/notes/notePaths'
 import type {
   DiagramFile,
@@ -34,6 +40,7 @@ import type { ReferenceWindowEntry } from '../references/useReferences'
 import { askConflictResolution, type ConflictItem } from './conflictPrompt'
 import { toDiagramFile } from './diagramConversion'
 import { SaveAbortedError, isSaveAborted } from './saveAborted'
+import { askSaveAs } from './saveAsPrompt'
 
 export interface SaveInputs {
   nodes: Node[]
@@ -63,8 +70,8 @@ export interface SaveInputs {
   // loadDiagramIntoCanvas exists (it is declared after persistDiagram).
   reloadHubRef: React.MutableRefObject<((path: string) => Promise<void>) | null>
   hubBaselineRef: React.MutableRefObject<{ path: string | null; stamp: Stamp }>
-  dismissedStampRef: React.MutableRefObject<string | null>
-  setExternalChangeStamp: React.Dispatch<React.SetStateAction<string | null>>
+  // The diagram was written: the outside-change notice no longer applies to it.
+  clearOutsideChanges: () => void
 }
 
 export interface SaveState {
@@ -72,7 +79,7 @@ export interface SaveState {
   persistDiagram: (
     path: string,
     nodesToSave: Node[],
-    opts?: { forceHub?: boolean }
+    opts?: { forceHub?: boolean; saveAs?: { options: SaveAsOptions; plan: SaveAsPlan } }
   ) => Promise<Node[]>
   handleSave: () => Promise<void>
   handleSaveAs: () => Promise<void>
@@ -108,8 +115,7 @@ export function useSave(
     loadedSavedWithRef,
     reloadHubRef,
     hubBaselineRef,
-    dismissedStampRef,
-    setExternalChangeStamp
+    clearOutsideChanges
   }: SaveInputs
 ): SaveState {
   // Brief post-save confirmation next to the toolbar's Save button — see
@@ -131,7 +137,11 @@ export function useSave(
   // the diagram unless a path in it changes. forceHub: the caller changed the diagram outside
   // normal dirty tracking (link creation).
   const persistDiagram = useCallback(
-    async (path: string, nodesToSave: Node[], opts?: { forceHub?: boolean }): Promise<Node[]> => {
+    async (
+      path: string,
+      nodesToSave: Node[],
+      opts?: { forceHub?: boolean; saveAs?: { options: SaveAsOptions; plan: SaveAsPlan } }
+    ): Promise<Node[]> => {
       // Apply any staged missing-file removals (ADR 0084) — this is the one
       // point they reach disk. Also drop them from `legend` and close any
       // now-orphaned reference windows.
@@ -143,11 +153,23 @@ export function useSave(
         legendToSave = r.legend
       }
 
+      // Save As (ADR 0160): the references go where the plan puts them, and notes that were not
+      // ticked are left out entirely, unsaved edits to them included.
+      const saveAs = opts?.saveAs
+      if (saveAs) {
+        savedNodes = applySaveAsRefs(
+          savedNodes as { id: string; data: Record<string, unknown> }[] as Node[],
+          saveAs.plan,
+          saveAs.options
+        )
+      }
+      const dropNotes = saveAs !== undefined && !saveAs.options.notes
+
       // Save As / first save: paths relative to the old location are meaningless.
       const baseline = hubBaselineRef.current
       const newLocation = baseline.path !== path
       const notes: PlanNoteInput[] = []
-      for (const n of savedNodes) {
+      for (const n of dropNotes ? [] : savedNodes) {
         const nodeNotesPath = typeof n.data?.notes === 'string' ? n.data.notes : null
         const shadow = noteShadows[n.id]
         if (nodeNotesPath === null && !shadow) continue
@@ -178,11 +200,12 @@ export function useSave(
       savedNodes = withPaths(savedNodes, plan.finalPaths)
 
       // Where each note's node points if that note does not reach its new path
-      // (held back by a conflict, or nothing to move): its old path, or none.
+      // (held back by a conflict, or nothing to move): its old path, or none. A note that could
+      // not be copied to a new place has no old path to fall back on: that is the previous folder.
       const fallbackPaths: Record<string, string | null> = {}
       const sentContent: Record<string, string> = {}
       for (const op of plan.ops) {
-        fallbackPaths[op.nodeId] = op.from
+        fallbackPaths[op.nodeId] = op.kind === 'copy' ? null : op.from
         if (op.kind === 'write') sentContent[op.nodeId] = op.content
       }
       const buildDiagram = (list: Node[]): DiagramFile => ({
@@ -210,7 +233,9 @@ export function useSave(
         expectedHubStamp: newLocation ? null : baseline.stamp,
         ops: plan.ops,
         fallbackPaths,
-        overwrite: false
+        overwrite: false,
+        previousDiagramPath: newLocation ? baseline.path : null,
+        assets: saveAs?.plan.assets
       }
 
       // Records what actually reached disk on each note's shadow; text typed
@@ -352,12 +377,15 @@ export function useSave(
         if (!completed.has(op.nodeId)) notDone[op.nodeId] = fallbackPaths[op.nodeId]
       savedNodes = withPaths(savedNodes, notDone)
 
-      // Notes of elements that no longer exist have nothing left to save.
+      // Notes of elements that no longer exist have nothing left to save, unless they hold edits:
+      // those stay, and Diagnostics lists them (ADR 0092).
       const liveIds = new Set(savedNodes.map((n) => n.id))
       setNoteShadows((prev) =>
-        Object.keys(prev).every((id) => liveIds.has(id))
+        Object.entries(prev).every(([id, shadow]) => liveIds.has(id) || shadow.dirty)
           ? prev
-          : Object.fromEntries(Object.entries(prev).filter(([id]) => liveIds.has(id)))
+          : Object.fromEntries(
+              Object.entries(prev).filter(([id, shadow]) => liveIds.has(id) || shadow.dirty)
+            )
       )
 
       // The diagram's own state is only finalised if it was actually written (or
@@ -380,8 +408,12 @@ export function useSave(
           setStagedFileRemovals([])
         }
         setHubDirty(false)
-        setExternalChangeStamp(null)
-        dismissedStampRef.current = null
+        clearOutsideChanges()
+        if (saveAs) {
+          // The copy has its own images, and no notes the person did not ask for.
+          setReferenceWindows([])
+          if (dropNotes) setNoteShadows({})
+        }
       }
       // Something stayed unsaved (the user cancelled): not a "Saved" moment.
       if (aborted) throw new SaveAbortedError()
@@ -409,8 +441,7 @@ export function useSave(
       setNoteShadows,
       setReferenceWindows,
       hubBaselineRef,
-      dismissedStampRef,
-      setExternalChangeStamp,
+      clearOutsideChanges,
       sessionIdRef,
       loadedSavedWithRef,
       reloadHubRef
@@ -454,7 +485,28 @@ export function useSave(
   )
 
   const handleSave = useCallback(() => performSave(false), [performSave])
-  const handleSaveAs = useCallback(() => performSave(true), [performSave])
+
+  // Save As asks what to copy (ADR 0160), then saves the diagram and the copied files to the new
+  // place. A diagram that has never been saved has nothing to copy: the plain picker.
+  const handleSaveAs = useCallback(async () => {
+    if (!currentPath) return performSave(true)
+    try {
+      const choice = await askSaveAs({
+        currentPath,
+        planFor: (newPath, options) =>
+          window.api.planSaveAs({ currentPath, newPath, options, nodes: refNodesOf(nodes) })
+      })
+      if (!choice) return
+      await persistDiagram(choice.path, nodes, {
+        saveAs: { options: choice.options, plan: choice.plan }
+      })
+      setCurrentPath(choice.path)
+      flashSaved()
+    } catch (error) {
+      if (isSaveAborted(error)) return
+      showAlert(`Save failed: ${error instanceof Error ? error.message : String(error)}`)
+    }
+  }, [currentPath, nodes, performSave, persistDiagram, setCurrentPath, flashSaved])
 
   // Shared by the close-prompt's Save and the drop-prompt's "Save & Open Here": both need "pick a
   // path if there isn't one, then persist" outside an interactive Save click, so it takes its

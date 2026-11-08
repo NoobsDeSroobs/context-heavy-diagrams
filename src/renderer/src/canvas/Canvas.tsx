@@ -6,14 +6,15 @@ import { hiddenLabels } from '@shared/layout/labelClearance'
 import { useConformance } from '../conformance/useConformance'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
-  adoptDisk,
   editNote,
   loadedNoteShadow,
   newNoteShadow,
+  orphanedNoteEdits,
   type NoteShadow,
   type Stamp
 } from '@shared/document/documentSave'
 import ConflictDialog from '../document/ConflictDialog'
+import SaveAsDialog from '../document/SaveAsDialog'
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -139,7 +140,8 @@ import { useDiagnostics } from '../diagnostics/useDiagnostics'
 import { useEdgeDirectionSets } from '../edges/useEdgeDirectionSets'
 import { useThreatMatrix } from '../threat-matrix/useThreatMatrix'
 import { useDirtyState } from '../document/useDirtyState'
-import { useExternalChange } from '../document/useExternalChange'
+import { useOutsideChanges } from '../document/useOutsideChanges'
+import OutsideChangeNotice from '../document/OutsideChangeNotice'
 import { useSave } from '../document/useSave'
 import { useWindowLifecycle } from '../document/useWindowLifecycle'
 import { useWindowTitle } from '../document/useWindowTitle'
@@ -203,22 +205,9 @@ function CanvasInner(): React.JSX.Element {
   // Reloads the diagram file from disk keeping unsaved note edits — set once
   // loadDiagramIntoCanvas exists (it is declared after persistDiagram).
   const reloadHubRef = useRef<((path: string) => Promise<void>) | null>(null)
-  const {
-    hubBaselineRef,
-    externalChangeStamp,
-    setExternalChangeStamp,
-    dismissedStampRef,
-    dismissExternalChange
-  } = useExternalChange(currentPath)
-  // What the open Notes panel says about an outside change to its note:
-  // 'refreshed' = it was unedited, so it was silently re-read from disk;
-  // 'conflict' = the note has unsaved edits AND the file changed. The
-  // dismissed map remembers the stamp the user chose to ignore, per note.
-  const [notesNotice, setNotesNotice] = useState<{
-    nodeId: string
-    kind: 'refreshed' | 'conflict'
-  } | null>(null)
-  const notesDismissedStampRef = useRef<Record<string, string>>({})
+  // What this window last read or wrote of the diagram file: the baseline the window-focus check
+  // and the save-time conflict check compare against (ADR 0091, ADR 0092).
+  const hubBaselineRef = useRef<{ path: string | null; stamp: Stamp }>({ path: null, stamp: null })
   // See loadDiagramIntoCanvas's own comment on why this exists — a short
   // grace window after any load during which React Flow's own automatic
   // post-mount dimension measurement doesn't count as a discrete edit.
@@ -463,6 +452,19 @@ function CanvasInner(): React.JSX.Element {
     toggleChangesPanelWith,
     handlePersonaChange
   } = usePanels(canvasApi, { setNoteShadows, setDefaultEdgeStylePicker })
+
+  // One notice for the diagram and every note that changed outside the app (ADR 0159).
+  const outsideChanges = useOutsideChanges({
+    currentPath,
+    hubBaselineRef,
+    hubDirty,
+    noteShadows,
+    setNoteShadows,
+    noteLabel: (nodeId) => noteName(nodes.find((n) => n.id === nodeId)),
+    notesPanelNodeId,
+    reloadHubRef
+  })
+  const { clear: clearOutsideChanges, reset: resetOutsideChanges } = outsideChanges
 
   const {
     security,
@@ -1061,65 +1063,6 @@ function CanvasInner(): React.JSX.Element {
       )
     })
   }, [notesPanelNodeId, noteShadows, nodes, currentPath, setNoteShadows])
-
-  // Outside-the-app edit to the note shown in the open Notes panel (ADR 0092,
-  // same detector as the diagram's focus check). Runs when the panel opens on an
-  // already-loaded shadow (which would otherwise hide the change) and whenever
-  // the window regains focus. Unedited -> adopt the disk text and say so; edited
-  // -> a conflict notice with Reload / Keep mine (the save-time check still
-  // guards the actual overwrite either way). Never marks anything dirty — the
-  // shadow now equals the disk.
-  const checkOpenNotesForChange = useEventCallback(async () => {
-    const nodeId = notesPanelNodeId
-    const shadow = nodeId ? noteShadows[nodeId] : undefined
-    if (!nodeId || !currentPath || !shadow || shadow.originalPath === null) return
-    const [result] = await window.api.checkFiles(currentPath, [
-      { relPath: shadow.originalPath, stamp: shadow.baselineStamp }
-    ])
-    if (!result.changed) return
-    if (!shadow.dirty) {
-      const { content, stamp } = await window.api.readNotesWithStamp(
-        currentPath,
-        shadow.originalPath
-      )
-      setNoteShadows((prev) =>
-        prev[nodeId] ? { ...prev, [nodeId]: adoptDisk(prev[nodeId], content, stamp) } : prev
-      )
-      setNotesNotice({ nodeId, kind: 'refreshed' })
-    } else if (notesDismissedStampRef.current[nodeId] !== result.stamp) {
-      setNotesNotice({ nodeId, kind: 'conflict' })
-    }
-  })
-
-  useEffect(() => {
-    if (!notesPanelNodeId) return undefined
-    void checkOpenNotesForChange()
-    const onFocus = (): void => void checkOpenNotesForChange()
-    window.addEventListener('focus', onFocus)
-    return () => window.removeEventListener('focus', onFocus)
-  }, [notesPanelNodeId, checkOpenNotesForChange])
-
-  const reloadOpenNotesFromDisk = useEventCallback(async () => {
-    const nodeId = notesPanelNodeId
-    const shadow = nodeId ? noteShadows[nodeId] : undefined
-    if (!nodeId || !currentPath || !shadow || shadow.originalPath === null) return
-    const { content, stamp } = await window.api.readNotesWithStamp(currentPath, shadow.originalPath)
-    setNoteShadows((prev) =>
-      prev[nodeId] ? { ...prev, [nodeId]: adoptDisk(prev[nodeId], content, stamp) } : prev
-    )
-    setNotesNotice(null)
-  })
-
-  const keepMyNotesEdits = useEventCallback(async () => {
-    const nodeId = notesPanelNodeId
-    const shadow = nodeId ? noteShadows[nodeId] : undefined
-    if (!nodeId || !currentPath || !shadow || shadow.originalPath === null) return
-    const [result] = await window.api.checkFiles(currentPath, [
-      { relPath: shadow.originalPath, stamp: shadow.baselineStamp }
-    ])
-    if (result.stamp !== null) notesDismissedStampRef.current[nodeId] = result.stamp
-    setNotesNotice(null)
-  })
 
   // Style seeded onto a brand-new edge (ADR 0045 / ADR 0083): the global
   // default-edge-style preference, overlaid with the active edge direction
@@ -2362,8 +2305,7 @@ function CanvasInner(): React.JSX.Element {
       loadedSavedWithRef,
       reloadHubRef,
       hubBaselineRef,
-      dismissedStampRef,
-      setExternalChangeStamp
+      clearOutsideChanges
     }
   )
 
@@ -2505,29 +2447,26 @@ function CanvasInner(): React.JSX.Element {
       if (opts?.keepNoteShadows) {
         // A reload replaces the diagram only — notes are independent files with their
         // own state. Unsaved note edits are kept (clean copies are just a cache and are
-        // re-read on demand); edits for an element the reloaded diagram no longer has
-        // can't be shown, so say so rather than dropping them silently.
+        // re-read on demand). Edits for an element the reloaded diagram no longer has
+        // can't be shown on it, so they are listed in Diagnostics instead of being dropped.
         const live = new Set(openedNodes.map((n) => n.id))
         const kept: Record<string, NoteShadow> = {}
-        let lost = 0
+        let orphaned = 0
         for (const [id, shadow] of Object.entries(noteShadowsRef.current)) {
           if (!shadow.dirty) continue
-          if (live.has(id)) kept[id] = shadow
-          else lost++
+          kept[id] = shadow
+          if (!live.has(id)) orphaned++
         }
         setNoteShadows(kept)
-        if (lost > 0) {
+        if (orphaned > 0) {
           showAlert(
-            `The reloaded diagram no longer contains ${lost} element(s) whose notes had unsaved edits; those edits were discarded.`
+            `The reloaded diagram no longer contains ${orphaned} element(s) whose notes had unsaved edits. The edits are kept: see Diagnostics to copy or discard them.`
           )
         }
       } else {
         setNoteShadows({})
       }
-      notesDismissedStampRef.current = {}
-      setNotesNotice(null)
-      setExternalChangeStamp(null)
-      dismissedStampRef.current = null
+      resetOutsideChanges()
       setContextMenu(null)
       setIconPicker(null)
       setColorPicker(null)
@@ -2580,8 +2519,7 @@ function CanvasInner(): React.JSX.Element {
       noteShadowsRef,
       setReferenceWindows,
       hubBaselineRef,
-      dismissedStampRef,
-      setExternalChangeStamp
+      resetOutsideChanges
     ]
   )
 
@@ -3095,10 +3033,18 @@ function CanvasInner(): React.JSX.Element {
       })
     )
   }, [checkedDiagram, effectiveFontFamily])
+  // Unsaved note edits whose element is gone (ADR 0092): kept, listed in Diagnostics.
+  const orphanedEdits = useMemo(
+    () => orphanedNoteEdits(noteShadows, new Set(nodes.map((n) => n.id))),
+    [noteShadows, nodes]
+  )
   // Count on the View-menu "Diagnostics (N)" label — undecided missing
-  // files + staged removals (a nudge to save), never dismissed ones.
+  // files + staged removals (a nudge to save) + orphaned note edits, never dismissed ones.
   const diagnosticsCount =
-    displayedDiagnostics.length + visibleMissingFiles.length + stagedFileRemovals.length
+    displayedDiagnostics.length +
+    visibleMissingFiles.length +
+    stagedFileRemovals.length +
+    orphanedEdits.length
 
   // Mode-aware menu bar (ADR 0079): what the Security Matrix persona hides is decided in
   // buildMenus.
@@ -3304,44 +3250,12 @@ function CanvasInner(): React.JSX.Element {
                 {currentPath.split(/[\\/]/).pop()}
               </span>
             )}
-            {notesNotice && notesNotice.nodeId === notesPanelNodeId && (
-              <span className="toolbar-external-change" role="status">
-                {noteName(nodes.find((n) => n.id === notesNotice.nodeId))}
-                {notesNotice.kind === 'refreshed'
-                  ? ' — updated from disk (changed outside the app).'
-                  : ' — changed outside the app, and you have unsaved edits.'}
-                {notesNotice.kind === 'refreshed' ? (
-                  <button type="button" onClick={() => setNotesNotice(null)}>
-                    OK
-                  </button>
-                ) : (
-                  <>
-                    <button type="button" onClick={() => void reloadOpenNotesFromDisk()}>
-                      Reload (discard mine)
-                    </button>
-                    <button type="button" onClick={() => void keepMyNotesEdits()}>
-                      Keep mine
-                    </button>
-                  </>
-                )}
-              </span>
-            )}
-            {externalChangeStamp && (
-              <span className="toolbar-external-change" role="alert">
-                {isDirty
-                  ? 'Changed outside the app — and you have unsaved changes.'
-                  : 'Changed outside the app.'}
-                <button type="button" onClick={() => void reviewDiskChanges()}>
-                  Review changes
-                </button>
-                <button type="button" onClick={handleReload}>
-                  Reload
-                </button>
-                <button type="button" onClick={dismissExternalChange}>
-                  Ignore
-                </button>
-              </span>
-            )}
+            <OutsideChangeNotice
+              files={outsideChanges.files}
+              onReview={() => void reviewDiskChanges()}
+              onReload={() => void outsideChanges.reload()}
+              onIgnore={outsideChanges.ignore}
+            />
             {/* Default-edge-style swatch — diagram-only; nothing in the
                 Security Matrix persona draws edges (ADR 0079). */}
             {isDiagramPersona && (
@@ -3796,18 +3710,8 @@ function CanvasInner(): React.JSX.Element {
                   )
                 }))
               }}
-              onClose={() => {
-                const closingId = notesPanelNodeId
-                setNotesPanelNodeId(null)
-                setNotesNotice(null)
-                // A note nobody edited needs no in-memory copy: next open reads it fresh.
-                setNoteShadows((prev) => {
-                  if (!prev[closingId] || prev[closingId].dirty) return prev
-                  const next = { ...prev }
-                  delete next[closingId]
-                  return next
-                })
-              }}
+              // usePanels drops the clean copy once the panel is closed.
+              onClose={() => setNotesPanelNodeId(null)}
             />
           )}
           {diagnosticsPanelOpen && (
@@ -3828,6 +3732,15 @@ function CanvasInner(): React.JSX.Element {
               conformanceResult={conformanceResult}
               layoutEntries={layoutEntries}
               onRevealEdge={revealEdge}
+              orphanedEdits={orphanedEdits}
+              onCopyOrphanedEdit={(edit) => window.api.copyToClipboard(edit.content)}
+              onDiscardOrphanedEdit={(edit) =>
+                setNoteShadows((prev) => {
+                  const next = { ...prev }
+                  delete next[edit.nodeId]
+                  return next
+                })
+              }
               onClose={() => setDiagnosticsPanelOpen(false)}
             />
           )}
@@ -3974,6 +3887,7 @@ function CanvasInner(): React.JSX.Element {
         )}
         <AlertDialog />
         <ConflictDialog />
+        <SaveAsDialog />
         {bulkCreateType && (
           <BulkCreateDialog
             typeLabel={bulkCreateType}

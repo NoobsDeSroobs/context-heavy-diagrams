@@ -1,13 +1,12 @@
 # 0130: Multi-file save follow-ups (technical debt)
 
 ## Status
-Not Started — parked on purpose, logged 2026-09-20. **Technical debt, to be done later**, not
-a scheduled epic. Split off from [epic 0129](../../completed-epics.md#0129-unified-multi-file-save-and-change-tracking)
+In Progress (2026-11-08); logged 2026-09-20 as technical debt, taken up because it holds real bugs. Built, awaiting a look in the app, except the Linux check. Split off from [epic 0129](../completed-epics.md#0129-unified-multi-file-save-and-change-tracking)
 when its save side (shadow model, one save plan, per-file conflict dialog, reload that keeps
 unsaved notes) was finished and live-tested: what remains is refinement, and the queued batch
-([0119](../../completed-epics.md#0119-details-peek-card-while-holding-ctrlcmd-over-an-element) → [0120](../../completed-epics.md#0120-help--keyboard-shortcuts--gestures-page)
-→ [0121](../../completed-epics.md#0121-copy-style--format-painter-apply-mode)) goes first. Design is already agreed in
-[ADR 0092](../../../decisions/0092-unified-multi-file-save-and-change-detection.md); no new
+([0119](../completed-epics.md#0119-details-peek-card-while-holding-ctrlcmd-over-an-element) → [0120](../completed-epics.md#0120-help--keyboard-shortcuts--gestures-page)
+→ [0121](../completed-epics.md#0121-copy-style--format-painter-apply-mode)) goes first. Design is already agreed in
+[ADR 0092](../../decisions/0092-unified-multi-file-save-and-change-detection.md); no new
 design conversation is needed for the first two items.
 
 ## Items
@@ -37,8 +36,9 @@ surfaced, never silently discarded: list them in the Diagnostics panel with Disc
   clean copies are never written and the open-time check refreshes stale ones — but ADR 0092 §8
   intends it).
 - **Save As doesn't copy notes that were never opened** to the new folder, so their references
-  break. Pre-existing limitation (was true before 0129); the planner already knows every note,
-  so it can copy them.
+  break. Pre-existing limitation (was true before 0129). It grew into a Save As dialog that
+  copies or removes every reference: notes, images, custom icons, linked diagrams
+  ([ADR 0160](../../decisions/0160-save-as-copies-into-a-folder-named-after-the-new-diagram.md)).
 - **Verify on Linux**: file-stamp/mtime granularity, native dialog behaviour, the recovery
   folder — for 0128 and 0129 both (the project's cross-platform rule).
 - **`persistDiagram` is now a large orchestration inside `Canvas.tsx`.** Extract the save flow
@@ -47,9 +47,10 @@ surfaced, never silently discarded: list them in the Diagnostics panel with Disc
   React test setup is ever introduced (today only the pure planner/executor/resolver are tested).
 
 ## Tasks
-- [ ] Unified change notice + minimal reload (item 1)
-- [ ] Orphaned edits in Diagnostics (item 2)
-- [ ] Drop clean copies on all close paths
-- [ ] Save As copies unopened notes
-- [ ] Extract the save orchestration out of `Canvas.tsx`
+- [x] Unified change notice + minimal reload (item 1), [ADR 0159](../../decisions/0159-one-notice-for-every-file-that-changed-outside-the-app.md)
+- [x] Orphaned edits in Diagnostics (item 2)
+- [x] Drop clean copies on all close paths
+- [x] Save As copies unopened notes
+- [x] Save As dialog: copy or remove every reference ([ADR 0160](../../decisions/0160-save-as-copies-into-a-folder-named-after-the-new-diagram.md))
+- [x] Extract the save orchestration out of `Canvas.tsx` (already done: it is `useSave.ts`)
 - [ ] Verify 0128/0129 on Linux

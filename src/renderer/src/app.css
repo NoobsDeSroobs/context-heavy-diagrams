@@ -288,7 +288,8 @@ body {
   z-index: 200;
 }
 
-.about-dialog-overlay:has(.conflict-dialog) {
+.about-dialog-overlay:has(.conflict-dialog),
+.about-dialog-overlay:has(.saveas-dialog) {
   z-index: 200;
 }
 

@@ -171,8 +171,8 @@ What landed, and where it settled the questions this ADR left open:
   refreshes a stale one; on Save, shadows whose element no longer exists are dropped (their
   unsaved text is discarded — before this change it was written to an orphan file; the
   reconcile PR surfaces such edits instead).
-- Save As / first save writes only *dirty* notes to the new location — unchanged limitation:
-  notes that weren't opened aren't copied to the new folder.
+- Save As / first save writes only *dirty* notes to the new location — a limitation at the time;
+  what Save As copies, and what it removes, is now [ADR 0160](0160-save-as-copies-into-a-folder-named-after-the-new-diagram.md).
 
 ## Implementation notes — step 2a (per-file conflict dialog)
 - **In-app dialog replaces the interim native popup.** `ConflictDialog` (mounted by Canvas,
@@ -191,9 +191,13 @@ What landed, and where it settled the questions this ADR left open:
 - **A diagram reload now keeps unsaved note edits** (`loadDiagramIntoCanvas` with
   `keepNoteShadows`; used by "Take disk" and by the toolbar Reload). Clean note copies are just a
   cache and are re-read on demand. Edits for an element the reloaded diagram no longer contains
-  cannot be shown, so an alert says they were discarded — surfacing them in Diagnostics is still
-  to do. The Reload confirm now only warns about the diagram's own edits.
+  cannot be shown on it, so they are kept and listed in Diagnostics (Copy text, Discard), and
+  neither Save nor a reload drops them. The Reload confirm now only warns about the diagram's own
+  edits.
 - **The snapshot written before asking is deleted once the choices are applied**, so recovery
   never offers edits that were just saved or discarded.
-- **Still open for step 2:** one notice for every file (Reload / Ignore) on window focus, with
-  minimal reload of only the changed files; orphaned dirty edits in Diagnostics.
+- **Step 2 (done):** one notice for every file with a minimal reload is
+  [ADR 0159](0159-one-notice-for-every-file-that-changed-outside-the-app.md); orphaned dirty edits
+  are listed in Diagnostics; Save As copies the notes that were never opened to the new folder
+  ([ADR 0160](0160-save-as-copies-into-a-folder-named-after-the-new-diagram.md));
+  clean note copies are dropped on every path that closes the panel.
