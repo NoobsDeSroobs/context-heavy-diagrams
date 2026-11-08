@@ -105,6 +105,7 @@ import PreferencesPanel from '../preferences/PreferencesPanel'
 import AlignDistributePanel from '../alignment/AlignDistributePanel'
 import AboutDialog from '../AboutDialog'
 import ShortcutsDialog from '../ShortcutsDialog'
+import GlossaryDialog from '../GlossaryDialog'
 import CommandPalette from '../CommandPalette'
 import { findKeyCommand, type CommandId } from '../commands'
 import AlertDialog from '../ui/AlertDialog'
@@ -242,6 +243,7 @@ function CanvasInner(): React.JSX.Element {
   // edge.data rebuilt the whole edges array on every hover.
   const [aboutDialogOpen, setAboutDialogOpen] = useState(false)
   const [shortcutsDialogOpen, setShortcutsDialogOpen] = useState(false)
+  const [glossaryDialogOpen, setGlossaryDialogOpen] = useState(false)
   // Command palette (ADR 0100).
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
   // Which git revision to compare with (ADR 0134): the dialog that asks.
@@ -2687,6 +2689,8 @@ function CanvasInner(): React.JSX.Element {
           setCommandPaletteOpen(false)
         } else if (shortcutsDialogOpen) {
           setShortcutsDialogOpen(false)
+        } else if (glossaryDialogOpen) {
+          setGlossaryDialogOpen(false)
         } else if (legendLinePick) {
           abortLegendLinePick()
         } else if (searchIconPicker) {
@@ -2773,6 +2777,7 @@ function CanvasInner(): React.JSX.Element {
     searchIconPicker,
     setSearchIconPicker,
     shortcutsDialogOpen,
+    glossaryDialogOpen,
     commandPaletteOpen,
     legendLinePick,
     abortLegendLinePick,
@@ -3136,6 +3141,7 @@ function CanvasInner(): React.JSX.Element {
     togglePreferencesPanel,
     setCommandPaletteOpen,
     setShortcutsDialogOpen,
+    setGlossaryDialogOpen,
     setAboutDialogOpen
   })
 
@@ -3906,6 +3912,7 @@ function CanvasInner(): React.JSX.Element {
         })}
         {aboutDialogOpen && <AboutDialog onClose={() => setAboutDialogOpen(false)} />}
         {shortcutsDialogOpen && <ShortcutsDialog onClose={() => setShortcutsDialogOpen(false)} />}
+        {glossaryDialogOpen && <GlossaryDialog onClose={() => setGlossaryDialogOpen(false)} />}
         {commandPaletteOpen && (
           <CommandPalette actions={paletteActions} onClose={() => setCommandPaletteOpen(false)} />
         )}

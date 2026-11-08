@@ -1,46 +1,119 @@
 # Glossary
 
-Terms this project uses precisely, for the same reason a shared vocabulary matters in any codebase: so "settings" doesn't quietly mean three different things depending on who's talking. See [ADR 0052](../decisions/0052-settings-ownership-tiers.md) for the reasoning behind this split, and its 2026-08-27 addendum for the "Configuration → Diagram settings" / "Settings → Preferences" rename that gave the two middle tiers their current names.
+The terms this project uses precisely, so that "settings" does not quietly mean three things. The app shows this file under **Help → Glossary…**: for each `##` term, the text up to its `### For developers` subheading, and nothing else. So that text is plain: no type names, no ADR numbers, no links (name another term instead). The code-level detail goes under `### For developers`. A test fails for a term with no plain part, and for a link or an ADR number in one ([ADR 0157](../decisions/0157-menus-are-grouped-and-the-glossary-is-in-help.md)). See [ADR 0052](../decisions/0052-settings-ownership-tiers.md) for the reasoning behind the settings tiers.
 
-## Ownership tiers
+## Entity
 
-Every piece of state in this app belongs to exactly one of these. The test is *scope*: how far does a change to this value reach?
+A box that stands for one thing in what the diagram models: a service, a system, a team, a queue. It means "this diagram treats it as one thing", not "it has no inside": link it to a deeper diagram to show the inside.
 
-### Properties
-**Scope: one element** (an Entity, Container, Text, Line, or Edge). Everything shown in the Property Panel for a single selected element — style (fill, border, font, line style, markers, ...) and the metadata/tags attached to that specific element. Lives in that element's own `data` on `DiagramNode`/`DiagramEdge`. Changing an entity's fill color never affects any other element.
+### For developers
 
-### Diagram settings
-**Scope: one diagram.** State that applies to every element in a diagram, but only that diagram — stored at the top level of `DiagramFile` (everything except `nodes`/`edges` themselves): `requiredTags`, `highlights`, `legend`, `gravityPresets`, `maxConnectionPointsPerSide`, `metadata`. Opening the same `.chd` file always shows the same Diagram settings, regardless of who opens it or what their own Preferences look like. Camera position (pan/zoom) is deliberately *not* part of this tier — it isn't persisted at all (see [ADR 0090](../decisions/0090-drop-viewport-persistence.md)). The View → **Diagram settings** panel (`DiagramSettingsPanel`) edits the subset a human authors directly. (Older docs/comments call this tier "Configuration".)
+The `entity` node type (called Shape before 2026-09-30, [ADR 0101](../decisions/0101-shape-to-entity-rename.md); a pre-rename file's `"shape"` is accepted as a synonym on load, per [docs/file-format.md](../file-format.md)). The meaning lives in the node's *type*, not its appearance: an Entity styled to look like a Container is still an Entity. Its `linkedDiagram` leads to the diagram where it is a Container.
 
-### Preferences
-**Scope: this installation, every diagram.** Your own choices for how the app behaves, independent of which diagram is open — stored in `AppPreferences` (a real per-OS file, previously `localStorage` — see [ADR 0053](../decisions/0053-os-conventional-settings-storage.md)). Examples: the selected-edge highlight color, whether startup scans for crash recovery, the style palette. Two people can have completely different Preferences and still collaborate on the same diagram file without conflict — *unless* a particular value actually needs to be consistent for the diagram to make sense (see the fallback pattern below). The View → **Preferences** panel is `PreferencesPanel`. (Older docs/comments call this tier "Settings"; the on-disk file is still `settings.json`.)
+## Container
 
-### Views
-Not a tier — called out so it isn't mistaken for one. Diagnostics and Layers are read-only or derived inspection tools: they show you a projection of the diagram's existing Properties/Diagram settings, but own no state of their own. Nothing to classify.
+A box that holds other elements: a boundary, a scope, a group. It never means a thing of its own, only a collection of things. Drag an element into it to nest it; moving the container moves what is inside. What is a container in one diagram can be a single entity in a higher-level one.
 
-## The fallback pattern: Diagram override → User default → Built-in default
+### For developers
 
-Some values sit at the boundary between Diagram settings and Preferences — they're *personal preferences* most of the time, but occasionally need to be pinned per-diagram for collaboration to work. Rather than force every such value into one tier or the other, this app uses a three-step resolution order wherever that tension is real:
+The `container` node type. Both Entity and Container are scoped to the diagram they are drawn in, not absolute. A diagram scoped to a team might show each of its services as a Container with the compute, queues and storage inside as Entities; a diagram for the whole organization draws that service as one Entity, linked (via `linkedDiagram`) down to the detailed diagram. Nothing new needs building for this: it is what linked-diagram drill-down already does, and the naming makes it legible.
 
-1. **Diagram override** — a value stored in the diagram's own Diagram settings. If present, it wins, and everyone who opens the file sees the same thing.
-2. **User default** — your own Preferences value, used when the diagram doesn't specify an override.
-3. **Built-in default** — a hardcoded constant in the app itself, used when neither of the above exists (a fresh install, or a diagram authored with no override and opened by someone who's never touched their own Preferences for it).
+## Edge
 
-This is deliberately *not* applied everywhere — see [ADR 0052](../decisions/0052-settings-ownership-tiers.md) for which values get it and why (max connection points per side, gravity presets) versus which stay Preferences-only with no diagram tier at all (the style palette — see that ADR for why a diagram-local copy would be redundant with what Properties already stores).
+An arrow or line that joins two elements at connection points. It stays attached and re-routes when either end moves, and it can carry a label and tags like an element.
 
-## Entity vs. Container
+## Edge direction set
 
-Easy to conflate since either can be styled identically, but they mean different things regardless of how they look. (Renamed from Shape/Container 2026-09-30 — see [ADR 0101](../decisions/0101-shape-to-entity-rename.md) — including the on-disk `.chd` type value and the code's own node type/component/CSS naming; a pre-rename file's `"shape"` type is accepted as a synonym for `"entity"` on load, per [docs/file-format.md](../file-format.md).)
+A named reading of a diagram's arrows. The same edges can be read as "Data flow" or "Trigger direction", which for a request and its response point opposite ways. You switch between readings, and each can have its own colour and arrow style. A diagram metamodel can require one named for what its arrows mean.
 
-- **Entity** represents a standalone thing in whatever the diagram is modeling — a service, a system, a team, a queue, anything the diagram's own domain treats as "a thing." An Entity styled to look identical to a Container is still an Entity — the meaning lives in the node's *type*, not its appearance.
-- **Container** represents grouping/boundary — a scope that holds other elements, never a standalone thing of its own. A Container never means "a thing"; it always means "a collection of things."
+### For developers
 
-**Both are scoped to the diagram they're drawn in, not absolute.** What's a Container in one diagram — a logical grouping of several related Entities — can itself be drawn as a single Entity in a different, higher-level diagram. For example: a diagram scoped to a cross-functional team might show each of that team's services as a Container, with the compute, queues and storage that make it up as the Entities inside it; a diagram one level up, scoped to the whole organization, might then draw that entire service as one Entity, linked (via an Entity's `linkedDiagram`) down to the more detailed diagram it's a Container in. Nothing new needs building for this — it's exactly what linked-diagram drill-down already does; naming Entity/Container this way just makes the existing mechanic legible.
+`edgeDirectionSets` and `activeEdgeDirectionSetId` at the top of the file ([ADR 0081](../decisions/0081-flippable-edge-direction-sets.md), per-set style in [ADR 0083](../decisions/0083-per-set-edge-style-as-creation-template.md)). Edited in the Edge direction sets section of the Diagram settings panel.
 
-One consequence worth being explicit about: an Entity is not necessarily atomic. It means "this diagram treats it as one thing and isn't modeling its internals here" — not "this thing has no internal structure." An Entity can be arbitrarily complex underneath, visible by following its linked diagram.
+## Notes
+
+The Markdown text behind an element: what you would otherwise squeeze into the box. A note is saved next to the diagram as its own file, and written when you save the diagram. Its panel says Unsaved until then. Hold Ctrl (Cmd on a Mac) over an element to peek at its note.
+
+### For developers
+
+A `.md` file the node's `data.notes` points at, kept in an in-memory shadow while it is edited and written on diagram Save ([ADR 0092](../decisions/0092-unified-multi-file-save-and-change-detection.md), [ADR 0154](../decisions/0154-unsaved-changes-show-in-the-window-title-and-the-notes-panel.md)). Called details before 0.4.0.
+
+## Tags
+
+Key and value data on an element or an edge, such as `env=prod` or `owner=payments`, entered in the Metadata section of the properties panel. Search finds them (`tag:env=prod`), highlights colour by them, and a diagram metamodel can check them.
+
+### For developers
+
+The `metadata` object on a node or edge ([docs/file-format.md](../file-format.md#metadata)).
+
+## Required tags
+
+The diagram's own list of tags that every element carries, each with the values it allows. Set under View → Diagram settings.
+
+### For developers
+
+`requiredTags` at the top of the file ([docs/file-format.md](../file-format.md#required-tags)).
+
+## Highlights
+
+Colours tied to a tag value, such as `env=prod` in red. Switch one on and every element with that tag value takes the colour, so one diagram can answer "what is production?" or "where does personal data live?". Which highlights are switched on is not saved in the file.
+
+## Legend
+
+The author's own explanation of what the colours, lines and icons mean in this diagram, written by hand. It does not follow the highlights. An exported image can carry it, in a corner you choose.
+
+## Layers
+
+The order in which elements are drawn: what lies above what. The Layers panel lists them and lets you drag one up or down. It shows the diagram from this angle and holds nothing of its own.
+
+### For developers
+
+A read-only projection of each node's `zIndex` ([ADR 0075](../decisions/0075-container-hierarchy-integrity.md) for the parent rule). Like Diagnostics it owns no state, so it is not a settings tier.
+
+## Linked diagram
+
+An element that points at another diagram file, usually a deeper view of the same thing. Ctrl-click (Cmd-click on a Mac) follows the link. Links only point downward, so any diagram in a tree can be opened on its own as its root.
+
+### For developers
+
+`linkedDiagram`, a relative path resolved against the diagram's folder and kept inside it ([ADR 0115](../decisions/0115-paths-stored-in-diagrams-are-untrusted.md)).
+
+## Properties
+
+The settings of one selected element, in the properties panel: fill, border, font, tags and the rest. Changing one element's properties never changes another's.
+
+### For developers
+
+**Scope: one element** (an Entity, Container, Text, Line or Edge). Lives in that element's own `data` on `DiagramNode` / `DiagramEdge`.
+
+## Diagram settings
+
+Settings that belong to the whole diagram and are saved in its file: required tags, highlights, the legend, edge direction sets, gravity presets (named bends for curved lines) and the most connection points a side may have. Whoever opens the file sees the same ones. View → Diagram settings.
+
+### For developers
+
+**Scope: one diagram.** Stored at the top level of `DiagramFile`, everything except `nodes` and `edges`: `requiredTags`, `highlights`, `legend`, `gravityPresets`, `maxConnectionPointsPerSide`, `metadata`. The camera position is deliberately not part of this tier; it is not persisted at all ([ADR 0090](../decisions/0090-drop-viewport-persistence.md)). Edited by `DiagramSettingsPanel`. Older docs and comments call this tier "Configuration".
+
+## Preferences
+
+Your own choices for how the app behaves, kept on this computer for every diagram: the colour of a selected edge, the size of the Ctrl-hover card, whether the AI menu shows. Two people with different preferences can work on the same file without conflict. View → Preferences.
+
+### For developers
+
+**Scope: this installation, every diagram.** Stored in `AppPreferences`, a per-OS file ([ADR 0053](../decisions/0053-os-conventional-settings-storage.md); on disk it is still `settings.json`). Edited by `PreferencesPanel`. Older docs and comments call this tier "Settings".
+
+## Override and default
+
+A few values can be set at three levels. A diagram can pin one for everyone who opens it (the diagram's override). Otherwise your own preference applies, and otherwise the app's built-in value. The most connection points per side and the gravity presets work this way.
+
+### For developers
+
+Diagram override → user default → built-in default. It is deliberately not applied everywhere: [ADR 0052](../decisions/0052-settings-ownership-tiers.md) lists which values get it and why, and which stay Preferences-only (the style palette, where a diagram-local copy would repeat what Properties already stores). A value that needs to be consistent for the diagram to make sense gets the override.
 
 ## Diagram metamodel
 
-The complete set of rules one kind of diagram or architecture follows (hexagonal, a data-flow diagram, C4): which kinds of element there are, what an arrow means, and how they may be combined. It is a separate `.chdmeta` file applied to a diagram, never stored in one ([ADR 0131](../decisions/0131-conformance-profiles.md), [format](../metamodel-format.md), naming in [ADR 0144](../decisions/0144-a-conformance-profile-is-called-a-diagram-metamodel.md)).
+The complete set of rules one kind of diagram follows, such as hexagonal, data flow or C4: which kinds of element there are, what an arrow means and how they may be combined. It is a separate file applied to a diagram, never stored in one. A diagram is checked against one metamodel at a time, because hexagonal rules laid over C4 rules mean nothing. That separates a metamodel from a regulation such as GDPR, whose rules do add up.
 
-The rules are one unit: a diagram is checked against **one** metamodel, and hexagonal rules laid over C4 rules mean nothing. That is what separates a metamodel from a *regulation* such as GDPR or NIS2, whose rules do add up. The check is a **conformance check**; the thing it checks against is the metamodel. It was called a *profile* before 0.6.0.
+### For developers
+
+A `.chdmeta` file ([ADR 0131](../decisions/0131-conformance-profiles.md), [format](../metamodel-format.md), naming in [ADR 0144](../decisions/0144-a-conformance-profile-is-called-a-diagram-metamodel.md)). The check is the **conformance check** (`chd check`, and Diagnostics in the app). It was called a *profile* before 0.6.0.

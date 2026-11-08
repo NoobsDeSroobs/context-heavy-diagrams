@@ -127,6 +127,23 @@
   color: var(--ev-c-text-3);
 }
 
+/* Help -> Glossary (GlossaryDialog.tsx) — the shortcuts window's shell, one section per term. */
+.glossary-term {
+  padding: 4px 0 8px;
+  border-bottom: 1px solid var(--ev-c-divider, var(--color-border));
+}
+
+.glossary-term-name {
+  margin: 10px 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.glossary-term p {
+  margin: 0 0 6px;
+  line-height: 1.45;
+}
+
 /* Command palette (CommandPalette.tsx, ADR 0100) — top-anchored, not
    centered like About/Shortcuts: a type-and-go launcher, not a reference
    page. */

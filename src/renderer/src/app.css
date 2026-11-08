@@ -143,6 +143,8 @@ body {
   border-radius: 4px;
   padding: 6px 8px;
   font-size: 13px;
+  /* A label stays on one line; the dropdown is as wide as its longest one. */
+  white-space: nowrap;
 }
 
 .toolbar .menu-bar-dropdown-item:hover:not(:disabled) {

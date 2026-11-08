@@ -2,7 +2,7 @@
 
 ## Status
 Accepted (2026-10-16). Corrected (2026-11-06): the read rule is a blacklist, as
-intended from the start; the first text wrongly read as a short allowlist. Widened by [ADR 0142](0142-the-extension-may-run-git-show-to-read-an-earlier-version.md) (it may run `git show`) and [ADR 0143](0143-the-extension-writes-diagram-metamodels.md) (it may write `.chdmeta` files).
+intended from the start; the first text wrongly read as a short allowlist. Widened by [ADR 0142](0142-the-extension-may-run-git-show-to-read-an-earlier-version.md) (it may run `git show`) and [ADR 0143](0143-the-extension-writes-diagram-metamodels.md) (it may write `.chdmeta` files). Extended (2026-11-08): the same server also runs through `chd mcp` for any MCP client ([ADR 0138](0138-the-mcp-server-carries-the-guidance-the-cli-carries-the-checks.md)).
 
 ## Context
 The folder route ([ADR 0105](0105-bundled-ai-material-and-folder-setup.md)) and
@@ -108,8 +108,8 @@ writing is narrow:
   provider.
 
 ### Getting it to the user
-- A menu item **AI → "Install Claude Desktop extension…"**, shown only on Windows
-  and macOS and only when AI features are enabled
+- A menu item **AI → Install the MCP server for → "Claude Desktop…"**, shown only on
+  Windows and macOS and only when AI features are enabled
   ([ADR 0103](0103-ai-menu-and-feature-preference.md)).
 - It first shows a short dialog (what the extension does, that the contents of
   diagrams Claude reads are sent to its provider, that Claude Desktop will ask
@@ -119,6 +119,18 @@ writing is narrow:
 - The extension is rebuilt with every app build and carries the app's version, so
   an app upgrade makes the menu item offer the newer one; installing it again
   replaces the old copy.
+- **Any other app that can use MCP servers:** the same bundle ships unpacked as
+  `resources/extension/server.mjs`, and `chd mcp <folder> [--allow-update]` runs it
+  over stdio. **AI → Install the MCP server for → "Other apps: copy server
+  settings…"** asks for the folder (the OS picker is the consent) and shows the
+  same data warning as the Claude Desktop dialog and the update choice, off by
+  default, then puts an `mcpServers` block on the clipboard. Its command is the
+  app's own executable with `ELECTRON_RUN_AS_NODE=1` and the path of `chd.mjs`, not
+  the `chd` launcher: a client starts a program without a shell, and a Windows
+  `.cmd` file needs one. It works on Windows, macOS and Linux, so Linux has a
+  route to the server; from an AppImage there is no stable path to write, and the
+  menu says so. Named entries for further apps are added one at a time, once each
+  has been tried, because their settings formats change.
 
 ### Build and layout
 - Source in a top-level `extension/` folder as plain ESM (like the `chd` tool, so
@@ -161,9 +173,10 @@ writing is narrow:
   around a tool it cannot use; the refusal remains as a second guard.
 
 ## Consequences
-- Windows and macOS only. Linux users keep the agent-in-a-folder route.
+- The Claude Desktop package is for Windows and macOS only; other apps, on any OS, use `chd mcp`.
 - Three development dependencies and one more build step; the installer grows by
-  the bundle's size (the MCP SDK plus a small amount of our code).
+  the bundle's size (the MCP SDK plus a small amount of our code), twice: the
+  package and the unpacked server beside it (about 1.4 MB for the second).
 - The manifest format is young and may change. The pinned version plus the build
   validation is the early warning; tracking a new manifest version is a small,
   deliberate change.

@@ -8,7 +8,7 @@ A keyboard-invoked, searchable launcher for app actions was planned to be driven
 
 ## Decision
 **The palette is built by flattening two things that already exist, not a new registry:**
-- **Every menu bar leaf item** (`menus: MenuBarMenu[]`, already computed for `<MenuBar>`) becomes one row: `label` → title, the containing menu's `label` → category, `accelerator` → shortcut, `onSelect` → the action. A `disabled` item, or a submenu parent (only "Recent Diagrams" today), is **left out of the list entirely** rather than shown greyed out — "the palette lists only what can run" for free, with no separate availability predicate to keep in sync.
+- **Every menu bar leaf item** (`menus: MenuBarMenu[]`, already computed for `<MenuBar>`) becomes one row: `label` → title, the containing menu's `label` → category, `accelerator` → shortcut, `onSelect` → the action. A `disabled` item is **left out of the list entirely** rather than shown greyed out — "the palette lists only what can run" for free, with no separate availability predicate to keep in sync.
 - **A handful of keyboard-only actions with no menu item** (`edit.duplicate`, `style.copy`, `style.paste`, `selection.selectAll`, `view.fit`, `search.toggle` — everything in `commands.ts` with a real handler in `Canvas.tsx`'s keydown `handlers` map but no menu entry) are appended by hand, reusing those same handler functions.
 - Pure logic in `src/renderer/src/paletteActions.ts` (`buildPaletteActions`, `filterPaletteActions` — substring match on title+category, same style as `ShortcutsDialog`'s own filter), unit-tested; `CommandPalette.tsx` is the overlay component (arrow-key navigate, Enter to run, click to run, Escape/outside-click to close — same close-then-run ordering `MenuBar`'s own `DropdownItem` already uses).
 - **Trigger: Ctrl/Cmd+K**, one new `CommandDef` (`view.commandPalette`, category `View`) — free of the existing bindings (checked against `commands.test.mjs`'s own overlap test) and the now-standard convention (Slack/Linear/Notion/Raycast) over VS Code's three-key Ctrl+Shift+P. Also a View-menu item ("Command palette…") for discoverability, and it shows up on the Help shortcuts page automatically (it's a normal `CommandDef`).
@@ -18,6 +18,6 @@ A keyboard-invoked, searchable launcher for app actions was planned to be driven
 - **Fuzzy scoring / recently-used ordering** — both nice-to-haves, not requirements; substring match in stable menu order is enough for the number of actions this app has today.
 
 ## Consequences
-- "Recent Diagrams" entries aren't palette-searchable (only its parent "Recent Diagrams" *label*, and only if it had a runnable `onSelect`, which it doesn't). Acceptable — those are per-file, not named actions.
+- "Recent Diagrams" entries aren't palette-searchable. Acceptable — those are per-file, not named actions. The leaves of every other submenu are listed, titled `Parent: leaf` ([ADR 0157](0157-menus-are-grouped-and-the-glossary-is-in-help.md)).
 - "Delete selection" isn't included (it's React Flow's native Delete/Backspace handling, not a callable `handlers` entry) — a natural small follow-up if wanted, not built here to keep v1 to "reuse existing handlers only."
 - No `.chd` schema change.

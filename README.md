@@ -119,7 +119,7 @@ Other scripts: `npm test`, `npm run typecheck`, `npm run lint`. To build an inst
 
 **Make sure you toggle the AI features on during installation or enable it in Preferences if you want to use the AI native features!**
 
-An **AI** menu helps an assistant (Claude or another) read and write your diagrams safely: copy-paste instructions for a plain chat, a skill and `AGENTS.md` for agents working in a folder, a `chd` command-line tool to validate files, and a local extension for Claude Desktop. Everything runs locally and writes are guarded by a stale-edit check, but **whatever an assistant reads is sent to its provider**. Details are in [docs/architecture/ai-integration.md](docs/architecture/ai-integration.md). The Windows installer asks whether to enable the menu; either way you can switch it on or off at any time in Preferences, and it is on by default in a build from source.
+An **AI** menu helps an assistant (Claude or another) read and write your diagrams safely: copy-paste instructions for a plain chat, a skill and `AGENTS.md` for agents working in a folder, a `chd` command-line tool to validate files, and an MCP server that an app such as Claude Desktop, Claude Code or Cursor can use to read, check and create diagrams in one folder. Everything runs locally and writes are guarded by a stale-edit check, but **whatever an assistant reads is sent to its provider**. Details are in [docs/architecture/ai-integration.md](docs/architecture/ai-integration.md). The Windows installer asks whether to enable the menu; either way you can switch it on or off at any time in Preferences, and it is on by default in a build from source.
 
 ### Draft with an assistant, then review
 

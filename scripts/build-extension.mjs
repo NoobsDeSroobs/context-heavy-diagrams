@@ -1,7 +1,8 @@
 // Builds the Claude Desktop extension (ADR 0110): bundles extension/server.mjs
 // into one self-contained file with the spec text inlined, stages it with the
 // manifest, validates and packs it with the `mcpb` CLI into
-// resources/extension/context-heavy-diagrams.mcpb (git-ignored; shipped inside
+// resources/extension/context-heavy-diagrams.mcpb, and leaves the bundle itself
+// beside it as server.mjs for `chd mcp` (both git-ignored; shipped inside
 // the app like the rest of resources/). Run by `npm run build:extension`, which
 // the app build runs first. Exports bundleServer so the tests can exercise the
 // real bundle.
@@ -13,6 +14,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 export const EXTENSION_FILE = join(root, 'resources', 'extension', 'context-heavy-diagrams.mcpb')
+// The same bundle the package holds, unpacked, for `chd mcp` (ADR 0110): any MCP client can start it.
+export const SERVER_FILE = join(root, 'resources', 'extension', 'server.mjs')
 
 // Swaps the disk-reading spec module for one with the text baked in.
 const inlineSpec = {
@@ -79,6 +82,8 @@ export async function buildExtension() {
   mkdirSync(join(staging, 'server'), { recursive: true })
 
   await bundleServer(join(staging, 'server', 'index.mjs'), version)
+  mkdirSync(dirname(SERVER_FILE), { recursive: true })
+  copyFileSync(join(staging, 'server', 'index.mjs'), SERVER_FILE)
 
   const manifest = JSON.parse(readFileSync(join(root, 'extension', 'manifest.json'), 'utf-8'))
   manifest.version = version
@@ -88,7 +93,7 @@ export async function buildExtension() {
   mkdirSync(dirname(EXTENSION_FILE), { recursive: true })
   mcpb('validate', join(staging, 'manifest.json'))
   mcpb('pack', staging, EXTENSION_FILE)
-  console.log(`built ${EXTENSION_FILE}`)
+  console.log(`built ${EXTENSION_FILE}\nbuilt ${SERVER_FILE}`)
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

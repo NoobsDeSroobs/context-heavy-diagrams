@@ -51,7 +51,8 @@ const SERVER_ONLY = {
 }
 const COMMAND_LINE_ONLY = {
   export: 'an assistant needs to see the result, which is a different tool',
-  help: 'it explains the command line itself'
+  help: 'it explains the command line itself',
+  mcp: 'it starts the server, so a tool for it would be the server calling itself'
 }
 
 let dir

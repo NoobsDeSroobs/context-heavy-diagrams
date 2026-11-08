@@ -12,6 +12,7 @@
 | [`diff`](#chd-diff) | What changed between two versions of a diagram |
 | [`edit`](#chd-edit) | Build or change a diagram with a list of operations |
 | [`ask`](#chd-ask) | Ask about a diagram's layout while you build it |
+| [`mcp`](#chd-mcp) | Run the MCP server for one folder, for an app to start |
 
 **Exit codes** are the same everywhere: `0` ok, `1` the command found something or could not finish (an error in a diagram, a refused edit, an unreadable file), `2` it was used wrongly. Each command lists the exceptions. A pipeline can rely on them.
 
@@ -166,6 +167,26 @@ $ chd ask room --label requests --direction horizontal
   "chip": {"width":62.2,"height":23.2}
 }
 ```
+
+## `chd mcp`
+
+`chd mcp <folder> [--allow-update]` runs the MCP server, the one the Claude Desktop extension runs, over standard input and output, for the one folder you give. It is not meant to be run by hand: an app that speaks MCP starts it from its settings. The assistant can read the files in the folder, check and diff diagrams, build and change them, and create files; `--allow-update` also lets it replace existing files, which can lose data, so it is off unless you add it. Exit codes: `0` when the app closes the connection, `1` if the folder does not exist or the server is not built here, `2` for wrong use.
+
+The app's AI menu makes the settings for you: **AI → Install the MCP server for → Other apps: copy server settings…** asks for the folder and puts a block like this on the clipboard, with the paths of your installation:
+
+```json
+{
+  "mcpServers": {
+    "context-heavy-diagrams": {
+      "command": "C:\\Users\\you\\AppData\\Local\\Programs\\context-heavy-diagrams\\context-heavy-diagrams.exe",
+      "args": ["C:\\Users\\you\\AppData\\Local\\Programs\\context-heavy-diagrams\\resources\\app.asar.unpacked\\resources\\cli\\chd.mjs", "mcp", "D:\\diagrams"],
+      "env": { "ELECTRON_RUN_AS_NODE": "1" }
+    }
+  }
+}
+```
+
+It starts the app's executable as plain Node instead of calling the `chd` launcher, because an app starts a program without a shell and a `.cmd` file needs one. From a checkout, `node resources/cli/chd.mjs mcp <folder>` does the same once `npm run build:extension` has run. Everything the assistant reads is sent to its provider.
 
 ## Using the commands together
 

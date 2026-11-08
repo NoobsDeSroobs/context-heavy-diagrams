@@ -14,7 +14,11 @@ import type {
   SaveOutcome,
   Stamp
 } from '@shared/document/documentSave'
-import type { AiFolderResult, ClaudeExtensionOutcome } from '@shared/ai/aiFolderResult'
+import type {
+  AiFolderResult,
+  ClaudeExtensionOutcome,
+  McpSettingsResult
+} from '@shared/ai/aiFolderResult'
 import type {
   NewMetamodelResult,
   MetamodelListing,
@@ -125,6 +129,7 @@ export interface DiagramApi {
   getAppVersion(): Promise<string>
   enableAiInFolder(): Promise<AiFolderResult | null>
   installClaudeExtension(): Promise<ClaudeExtensionOutcome>
+  mcpServerSettings(): Promise<McpSettingsResult>
   getMetamodelsFolder(): Promise<MetamodelsFolderInfo>
   listMetamodels(): Promise<MetamodelListing[]>
   loadMetamodel(id: string): Promise<string | null>

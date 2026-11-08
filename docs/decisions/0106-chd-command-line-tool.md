@@ -37,8 +37,7 @@ be the CLI.
   files); there is no "AI features" gate on them.
 - **No PATH registration for now.** Editing the user's PATH needs installer
   scripting (NSIS include, deb hooks) that cannot be verified on this machine and
-  overlaps the file-association installer work. Instead, "Enable AI assistance in
-  a folder…" writes the launcher's **absolute path** into the folder's
+  overlaps the file-association installer work. Instead, "Set up a folder for AI agents…" writes the launcher's **absolute path** into the folder's
   `AGENTS.md` (`{{CLI_NOTE}}` placeholder), so an agent can call it without PATH.
   Not written in dev builds or an AppImage (its exe lives in a temporary mount —
   the path would rot); re-running the menu item refreshes it after a

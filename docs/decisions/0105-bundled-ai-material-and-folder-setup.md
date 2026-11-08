@@ -1,4 +1,4 @@
-# 0105: Bundled AI material (`resources/ai`) and "Enable AI assistance in a folder"
+# 0105: Bundled AI material (`resources/ai`) and "Set up a folder for AI agents"
 
 ## Status
 Accepted (2026-10-15).
@@ -22,7 +22,9 @@ no repo).
   when working on this repo. A unit test fails if the two diverge. Alternatives:
   keep the skill in `.claude` and copy it into the bundle at build time (needs
   special dev-mode path handling); a symlink (unreliable on Windows).
-- **AI → "Enable AI assistance in a folder…"** opens the OS folder picker (the
+- **AI → "Set up a folder for AI agents…"** (first called "Enable AI assistance in a
+  folder…"; renamed because `AGENTS.md` serves any agent and the rest is Claude
+  Code's) opens the OS folder picker (the
   user's consent: nothing is written outside the chosen folder), then writes
   `AGENTS.md`, `CLAUDE.md` (`@AGENTS.md`) and `.claude/skills/chd-diagrams/`.
 - **Never overwrite what we didn't write.** Every file we create carries a
