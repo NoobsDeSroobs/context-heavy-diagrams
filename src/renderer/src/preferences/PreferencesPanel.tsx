@@ -3,6 +3,7 @@ import type { EdgeStyle } from '@shared/diagram'
 import type { AppPreferences } from './preferences'
 import { MIN_RECENT_DIAGRAMS_LIMIT, type EdgeAnimationMode } from '@shared/preferences/preferences'
 import { FieldRow, NumberField, SelectField } from '../ui/fields'
+import { PEEK_CARD_MAX_HEIGHT, PEEK_CARD_WIDTH, clampPeekSize } from '@shared/preferences/peekCard'
 import { useRafThrottledCallback } from '../ui/useRafThrottledCallback'
 import { useFontOptions } from '../styling/useFontOptions'
 import MetamodelsFolderSection from '../conformance/MetamodelsFolderSection'
@@ -287,6 +288,28 @@ export default function PreferencesPanel({
           onChange={onChange}
         />
         <IsolateOpacityField value={preferences.isolateOpacity} onChange={onChange} />
+        <NumberField
+          label="Hover card width (px)"
+          value={preferences.peekCardWidth}
+          mixed={false}
+          min={PEEK_CARD_WIDTH.min}
+          max={PEEK_CARD_WIDTH.max}
+          step={10}
+          onChange={(v) => onChange({ peekCardWidth: clampPeekSize(v, PEEK_CARD_WIDTH) })}
+          onSessionStart={() => {}}
+          onSessionEnd={() => {}}
+        />
+        <NumberField
+          label="Hover card max height (px)"
+          value={preferences.peekCardMaxHeight}
+          mixed={false}
+          min={PEEK_CARD_MAX_HEIGHT.min}
+          max={PEEK_CARD_MAX_HEIGHT.max}
+          step={10}
+          onChange={(v) => onChange({ peekCardMaxHeight: clampPeekSize(v, PEEK_CARD_MAX_HEIGHT) })}
+          onSessionStart={() => {}}
+          onSessionEnd={() => {}}
+        />
         <FieldRow label="Drag-select requires full enclosure">
           <input
             type="checkbox"

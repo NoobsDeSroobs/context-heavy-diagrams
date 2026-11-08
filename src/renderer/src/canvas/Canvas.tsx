@@ -3400,6 +3400,8 @@ function CanvasInner(): React.JSX.Element {
                   <PeekCard
                     key={peek.nodeId}
                     target={peek}
+                    width={preferences.peekCardWidth}
+                    maxHeight={preferences.peekCardMaxHeight}
                     label={typeof peekNode.data?.label === 'string' ? peekNode.data.label : ''}
                     notesPath={
                       typeof peekNode.data?.notes === 'string' ? peekNode.data.notes : undefined

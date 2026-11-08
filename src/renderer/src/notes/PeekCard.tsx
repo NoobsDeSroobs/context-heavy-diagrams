@@ -6,17 +6,15 @@ import type { MetadataEntry } from '@shared/diagram'
 import type { IconRef, IconSlot } from '@shared/icons/schema'
 import { namedIcons } from '@shared/icons/names'
 import { isMac } from '../commands'
+import { peekNoteCharCap } from '@shared/preferences/peekCard'
 import type { PeekTarget } from './useNotesPeek'
 
-const CARD_WIDTH = 340
-const CARD_MAX_HEIGHT = 260
 const GAP = 8
-// Raw-text cap before rendering: cheap, keeps the markdown pass small; the
-// CSS max-height (with a fade) does the visual truncation.
-const MAX_CHARS = 1200
-
 interface PeekCardProps {
   target: PeekTarget
+  // The card's width and the height beyond which it is trimmed, from the preferences.
+  width: number
+  maxHeight: number
   label: string
   notesPath: string | undefined
   linkedPath: string | undefined
@@ -65,6 +63,8 @@ function formatTagValue(value: unknown): string {
 // load, and never goes stale.
 export default function PeekCard({
   target,
+  width,
+  maxHeight,
   label,
   notesPath,
   linkedPath,
@@ -103,9 +103,9 @@ export default function PeekCard({
   const title = label.split('\n')[0].trim()
   const linkName = linkedPath?.split(/[/\\]/).pop() ?? linkedPath
   const { rect } = target
-  const left = Math.max(GAP, Math.min(rect.left, window.innerWidth - CARD_WIDTH - GAP))
-  const fitsBelow = rect.bottom + GAP + CARD_MAX_HEIGHT <= window.innerHeight
-  const fitsAbove = rect.top - GAP - CARD_MAX_HEIGHT >= 0
+  const left = Math.max(GAP, Math.min(rect.left, window.innerWidth - width - GAP))
+  const fitsBelow = rect.bottom + GAP + maxHeight <= window.innerHeight
+  const fitsAbove = rect.top - GAP - maxHeight >= 0
   // Anchored by `bottom` when above so the card hugs the node whatever its
   // real (content-driven) height; a node too big for either falls back to the
   // top of the window.
@@ -118,7 +118,7 @@ export default function PeekCard({
   return createPortal(
     <div
       className={`peek-card${linkedPath ? ' peek-card-linked' : ''}`}
-      style={{ left, width: CARD_WIDTH, maxHeight: CARD_MAX_HEIGHT, ...vertical }}
+      style={{ left, width, maxHeight, ...vertical }}
     >
       {linkedPath && (
         <svg
@@ -145,7 +145,9 @@ export default function PeekCard({
       />
       {text && (
         <div className="peek-card-body notes-panel-preview" dir="auto">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{text.slice(0, MAX_CHARS)}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {text.slice(0, peekNoteCharCap(width, maxHeight))}
+          </ReactMarkdown>
         </div>
       )}
       {linkedPath && (

@@ -16,6 +16,8 @@ function card(
   render(
     <PeekCard
       target={target}
+      width={340}
+      maxHeight={260}
       label="Payments"
       notesPath={undefined}
       linkedPath={undefined}
