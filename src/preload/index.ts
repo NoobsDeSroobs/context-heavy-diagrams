@@ -15,6 +15,7 @@ import type {
   SaveOutcome,
   Stamp
 } from '@shared/document/documentSave'
+import type { PlanSaveAsRequest, SaveAsPlan } from '@shared/document/saveAsCopy'
 import type {
   AiFolderResult,
   ClaudeExtensionOutcome,
@@ -49,8 +50,13 @@ const api = {
     return ipcRenderer.invoke('document:save', request)
   },
 
-  pickSavePath(): Promise<string | null> {
-    return ipcRenderer.invoke('diagram:pickSavePath')
+  pickSavePath(suggested?: string): Promise<string | null> {
+    return ipcRenderer.invoke('diagram:pickSavePath', suggested)
+  },
+
+  // What a Save As would copy, and whether it can be made (ADR 0160).
+  planSaveAs(request: PlanSaveAsRequest): Promise<SaveAsPlan> {
+    return ipcRenderer.invoke('document:planSaveAs', request)
   },
 
   // Custom icons — see docs/decisions/0006-icon-storage-model.md. All three

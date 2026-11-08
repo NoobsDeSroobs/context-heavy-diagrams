@@ -1,5 +1,6 @@
 import { copyFile, mkdir, readFile, rmdir, stat, unlink, writeFile } from 'fs/promises'
 import { dirname } from 'path'
+import type { AssetOp } from '../../shared/document/saveAsCopy'
 import type {
   Conflict,
   NoteOp,
@@ -30,6 +31,8 @@ export interface SaveRequest {
   overwrite: boolean
   // Save As: the folder of the diagram's previous file, which `copy` ops read from.
   copyFromDir?: string
+  // Save As: files copied or written before the diagram, each to a place that is free.
+  assets?: AssetOp[]
 }
 
 export interface ExecDeps {
@@ -113,6 +116,30 @@ export async function executeSave(req: SaveRequest, deps: ExecDeps): Promise<Sav
   let hubStamp: Stamp = null
 
   try {
+    // 1b. Save As: the images and linked diagrams. Nothing is ever replaced, so every place is
+    //     checked before the first file is written.
+    const assets = req.assets ?? []
+    const assetPaths = assets.map((asset) => mustBeInside(asset.to))
+    for (const [i, to] of assetPaths.entries()) {
+      if ((await deps.stamp(to)) !== null) {
+        throw new Error(`"${assets[i].to}" already exists, so nothing was copied`)
+      }
+    }
+    for (const [i, asset] of assets.entries()) {
+      const to = assetPaths[i]
+      await mkdir(dirname(to), { recursive: true })
+      if (asset.kind === 'write') {
+        await writeFile(to, asset.content, 'utf-8')
+        continue
+      }
+      const from = req.copyFromDir === undefined ? null : deps.contain(req.copyFromDir, asset.from)
+      if (from === null || (await deps.stamp(from)) === null) {
+        warnings.push(`${asset.from} was not found, so it was not copied.`)
+        continue
+      }
+      await copyFile(from, to)
+    }
+
     // 2. New and changed note files (a move copies, so the old name is still
     //    valid until the diagram points elsewhere).
     for (const op of runNow) {

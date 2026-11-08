@@ -9,6 +9,7 @@
 // '/'-separated.
 
 import type { DiagramFile } from '../diagram'
+import type { AssetOp } from './saveAsCopy'
 
 // A file's cheap change fingerprint (mtime:size, see src/main/document/fileStamp.ts).
 // null = no baseline / file absent.
@@ -322,6 +323,9 @@ export interface SaveDocumentRequest {
   overwrite: boolean
   // Save As: the diagram file this window had before, whose folder the `copy` ops read from.
   previousDiagramPath: string | null
+  // Save As: the images, linked diagrams and the notes of those, copied before the diagram is written
+  // (saveAsCopy.ts). Never replaces a file.
+  assets?: AssetOp[]
 }
 
 // ---------------------------------------------------------------------------

@@ -6,6 +6,7 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 ### Added
 
+- **Save As asks what to copy.** It opens a dialog with a path (set by the system's save picker) and three switches: **Notes**, **Images and custom icons**, and **Linked diagrams, recursively, with the same settings**, each with how many files it covers. What is ticked is copied into a folder named after the new diagram (`Copy.chd` and `Copy/`); what is not ticked, and anything that cannot be copied (missing, or outside the diagram's folder), is removed from the copy and listed, and the original is never changed. Linked diagrams keep their place relative to the original and are each copied once, with their own notes and images. The name and the folder must both be free, so nothing is ever replaced. ([ADR 0160](docs/decisions/0160-save-as-copies-into-a-folder-named-after-the-new-diagram.md))
 - **One notice when files change outside the app.** If the diagram or a note you have open or edited was changed by another editor, git or an assistant, a single notice lists the files, says which of them you have unsaved edits to, and offers Review changes, Reload (only those files, asking first if edits would be lost) and Ignore. Before, the diagram and the open note had separate notices, and an unedited open note was refreshed without saying so. ([ADR 0159](docs/decisions/0159-one-notice-for-every-file-that-changed-outside-the-app.md))
 - **Unsaved note text is no longer lost when its element is deleted.** It is kept and listed in Diagnostics (and counted in the View menu), with Copy text and Discard; undoing the deletion brings it back.
 - **The side panels can be made wider or narrower.** Drag the left edge of the panel on the right (notes, diagnostics, changes, layers, preferences), use the arrow keys on it, or double-click it for the default width; the width is kept for next time and is the same for every panel. The list in the review window has the same handle (its width lasts while that window is open). ([ADR 0158](docs/decisions/0158-side-panel-width-and-the-minimap-are-preferences.md))
@@ -28,7 +29,7 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 ### Fixed
 
-- **Save As copies the notes you never opened.** They used to stay in the old folder while the new diagram still pointed at them.
+- **Save As no longer leaves the copy pointing at the original's files.** Notes you never opened stayed in the old folder while the new diagram still referred to them, so editing one changed the other; images and linked diagrams were not carried either. See Save As asks what to copy.
 
 ## 0.7.0 (2026-11-07)
 

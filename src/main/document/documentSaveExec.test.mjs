@@ -484,3 +484,71 @@ test('copy: a source outside the previous folder is never read', async () => {
   assert.deepEqual(out.skippedMoves, ['n1'])
   assert.equal(has('notes/A.md'), false)
 })
+
+test('assets: images and linked diagrams are copied and written before the diagram', async () => {
+  await put('prev/assets/p.png', 'PNG')
+  const out = await executeSave(
+    req({
+      writeHub: true,
+      copyFromDir: join(dir, 'prev'),
+      assets: [
+        { kind: 'copy', from: 'assets/p.png', to: 'd/assets/p.png' },
+        { kind: 'write', to: 'd/child.chd', content: 'CHILD' }
+      ]
+    }),
+    deps()
+  )
+  assert.equal(out.status, 'saved')
+  assert.equal(await read('d/assets/p.png'), 'PNG')
+  assert.equal(await read('d/child.chd'), 'CHILD')
+  assert.equal(await read('prev/assets/p.png'), 'PNG')
+  assert.equal(out.hubWritten, true)
+})
+
+test('assets: a place that is taken stops the save before anything is written', async () => {
+  await put('prev/a.png', 'A')
+  await put('d/taken.png', 'someone else')
+  const out = await executeSave(
+    req({
+      writeHub: true,
+      copyFromDir: join(dir, 'prev'),
+      assets: [
+        { kind: 'write', to: 'd/first.chd', content: 'X' },
+        { kind: 'copy', from: 'a.png', to: 'd/taken.png' }
+      ]
+    }),
+    deps()
+  )
+  assert.equal(out.status, 'failed')
+  assert.match(out.error, /"d\/taken.png" already exists/)
+  assert.equal(has('d/first.chd'), false)
+  assert.equal(await read('d/taken.png'), 'someone else')
+  assert.equal(out.hubWritten, false)
+})
+
+test('assets: a source that vanished is a warning, and one outside the folder is never read', async () => {
+  await put('secret.png', 'do not copy')
+  const out = await executeSave(
+    req({
+      copyFromDir: join(dir, 'prev'),
+      assets: [
+        { kind: 'copy', from: 'gone.png', to: 'd/gone.png' },
+        { kind: 'copy', from: '../secret.png', to: 'd/secret.png' }
+      ]
+    }),
+    deps()
+  )
+  assert.equal(out.status, 'saved')
+  assert.equal(out.warnings.length, 2)
+  assert.equal(has('d/gone.png'), false)
+  assert.equal(has('d/secret.png'), false)
+})
+
+test('assets: a destination outside the new folder fails the save', async () => {
+  const out = await executeSave(
+    req({ assets: [{ kind: 'write', to: '../escape.chd', content: 'X' }] }),
+    deps()
+  )
+  assert.equal(out.status, 'failed')
+  assert.match(out.error, /outside the diagram's folder/)
+})

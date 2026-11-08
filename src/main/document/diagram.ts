@@ -12,6 +12,8 @@ import { fileStamp } from './fileStamp'
 import { executeSave } from './documentSaveExec'
 import { resolveLinkPath } from '../links/linkPaths'
 import { containedPath } from '../containedPath'
+import { planSaveAs } from './saveAsPlan'
+import type { PlanSaveAsRequest } from '@shared/document/saveAsCopy'
 
 // Shared by diagram:openPath and document:save — records `path` in both the
 // last-opened-directory preference and the recent-diagrams list, in a single
@@ -49,20 +51,29 @@ export function registerDiagramHandlers(): void {
   // than the OS/Electron's own arbitrary default. Absent
   // lastOpenedDirectory (nothing saved yet this install) falls back to
   // the bare filename, today's only prior behavior.
-  ipcMain.handle('diagram:pickSavePath', async () => {
+  // `suggested` (Save As) is a full path to start from. A name without .chd gets it: the copy's
+  // files go in a folder of the same name, which could not sit beside a file with no extension.
+  ipcMain.handle('diagram:pickSavePath', async (_event, suggested?: string) => {
     const prefs = await readPreferences()
-    const defaultPath = prefs?.lastOpenedDirectory
-      ? join(prefs.lastOpenedDirectory, 'New Diagram.chd')
-      : 'New Diagram.chd'
+    const defaultPath =
+      suggested ??
+      (prefs?.lastOpenedDirectory
+        ? join(prefs.lastOpenedDirectory, 'New Diagram.chd')
+        : 'New Diagram.chd')
     const result = await dialog.showSaveDialog({
       title: 'Save diagram',
       defaultPath,
       filters: FILTERS
     })
     if (result.canceled || !result.filePath) return null
-    await updatePreferences({ lastOpenedDirectory: dirname(result.filePath) })
-    return result.filePath
+    const path = /\.chd$/i.test(result.filePath) ? result.filePath : `${result.filePath}.chd`
+    await updatePreferences({ lastOpenedDirectory: dirname(path) })
+    return path
   })
+
+  // What a Save As would copy and whether it can be made (ADR 0160): the dialog's preview, and again
+  // when the person confirms.
+  ipcMain.handle('document:planSaveAs', (_event, request: PlanSaveAsRequest) => planSaveAs(request))
 
   // Saves the diagram and its notes as one plan (ADR 0092): check for conflicts, save everything
   // that doesn't conflict in the crash-safe order (documentSaveExec.ts), and report what was held
@@ -84,6 +95,7 @@ export function registerDiagramHandlers(): void {
           expectedHubStamp: request.expectedHubStamp,
           ops: request.ops,
           overwrite: request.overwrite,
+          assets: request.assets,
           copyFromDir: request.previousDiagramPath
             ? dirname(request.previousDiagramPath)
             : undefined

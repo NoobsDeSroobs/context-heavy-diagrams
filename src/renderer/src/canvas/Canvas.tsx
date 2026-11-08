@@ -14,6 +14,7 @@ import {
   type Stamp
 } from '@shared/document/documentSave'
 import ConflictDialog from '../document/ConflictDialog'
+import SaveAsDialog from '../document/SaveAsDialog'
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -3886,6 +3887,7 @@ function CanvasInner(): React.JSX.Element {
         )}
         <AlertDialog />
         <ConflictDialog />
+        <SaveAsDialog />
         {bulkCreateType && (
           <BulkCreateDialog
             typeLabel={bulkCreateType}

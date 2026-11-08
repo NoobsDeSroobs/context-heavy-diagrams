@@ -36,8 +36,9 @@ surfaced, never silently discarded: list them in the Diagnostics panel with Disc
   clean copies are never written and the open-time check refreshes stale ones — but ADR 0092 §8
   intends it).
 - **Save As doesn't copy notes that were never opened** to the new folder, so their references
-  break. Pre-existing limitation (was true before 0129); the planner already knows every note,
-  so it can copy them.
+  break. Pre-existing limitation (was true before 0129). It grew into a Save As dialog that
+  copies or removes every reference: notes, images, custom icons, linked diagrams
+  ([ADR 0160](../../decisions/0160-save-as-copies-into-a-folder-named-after-the-new-diagram.md)).
 - **Verify on Linux**: file-stamp/mtime granularity, native dialog behaviour, the recovery
   folder — for 0128 and 0129 both (the project's cross-platform rule).
 - **`persistDiagram` is now a large orchestration inside `Canvas.tsx`.** Extract the save flow
@@ -50,5 +51,6 @@ surfaced, never silently discarded: list them in the Diagnostics panel with Disc
 - [x] Orphaned edits in Diagnostics (item 2)
 - [x] Drop clean copies on all close paths
 - [x] Save As copies unopened notes
+- [x] Save As dialog: copy or remove every reference ([ADR 0160](../../decisions/0160-save-as-copies-into-a-folder-named-after-the-new-diagram.md))
 - [x] Extract the save orchestration out of `Canvas.tsx` (already done: it is `useSave.ts`)
 - [ ] Verify 0128/0129 on Linux
