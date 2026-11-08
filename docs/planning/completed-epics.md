@@ -469,7 +469,7 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0166: The MCP server and the command line share their checks
 
-*Done* (merged; released in v0.6.0). Every check lives once in shared code and is reachable from `chd`; the Claude Desktop extension has `check_diagram`, `diff_diagrams` (also against a git revision) and `validate_metamodel`, a draft can be checked as text or on standard input, and a parity test runs both front doors over the same diagrams and fails if they disagree. The conformance profile became a diagram metamodel (`.chdmeta`). ADRs: [0138](../decisions/0138-the-mcp-server-carries-the-guidance-the-cli-carries-the-checks.md), [0142](../decisions/0142-the-extension-may-run-git-show-to-read-an-earlier-version.md), [0143](../decisions/0143-the-extension-writes-diagram-metamodels.md), [0144](../decisions/0144-a-conformance-profile-is-called-a-diagram-metamodel.md), [0145](../decisions/0145-a-draft-is-checked-and-compared-without-being-written.md). Leftover: the `chd mcp` launch command, in [0159](epics/0159-ai-menu-for-more-than-claude.md).
+*Done* (merged; released in v0.6.0). Every check lives once in shared code and is reachable from `chd`; the Claude Desktop extension has `check_diagram`, `diff_diagrams` (also against a git revision) and `validate_metamodel`, a draft can be checked as text or on standard input, and a parity test runs both front doors over the same diagrams and fails if they disagree. The conformance profile became a diagram metamodel (`.chdmeta`). ADRs: [0138](../decisions/0138-the-mcp-server-carries-the-guidance-the-cli-carries-the-checks.md), [0142](../decisions/0142-the-extension-may-run-git-show-to-read-an-earlier-version.md), [0143](../decisions/0143-the-extension-writes-diagram-metamodels.md), [0144](../decisions/0144-a-conformance-profile-is-called-a-diagram-metamodel.md), [0145](../decisions/0145-a-draft-is-checked-and-compared-without-being-written.md). Leftover: the `chd mcp` launch command, in [0159](#0159-an-ai-menu-that-serves-more-than-claude).
 
 ### 0162: Minimum distance between connected elements
 
@@ -526,4 +526,20 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 ### 0175: A command-line reference sheet with examples
 
 *Done* (merged; in the next release, 0.8.0). [docs/cli-reference.md](../cli-reference.md) lists every `chd` command with its options, exit codes and worked examples, including the pipe forms (a draft on standard input, a version out of git) and a pipeline step that fails on exit code 1. A test reads the help text of each command and fails when a command, an option or an edit operation is missing from the sheet. `chd help edit` now lists the edit operations. It is linked from the README and from `chd --help`. ADR: [0150](../decisions/0150-chd-edit-and-chd-ask-build-a-diagram-from-the-command-line.md). Left open: a link from Help in the app (with the menu review) and a check of the Windows notes (PowerShell 5.1 re-encoding, the launcher path) on a machine with the installed app.
+
+### 0185: Show unsaved changes
+
+*Done* (in the next release, 0.8.0). The window title reads `<file name> — Context-Heavy Diagrams` with a dot in front while the diagram or one of its notes is not on disk, and the Notes panel says Unsaved or Saved beside the note's name. Two states, not three: an edit is kept in memory at once and reaches the file when the diagram is saved. ADR: [0154](../decisions/0154-unsaved-changes-show-in-the-window-title-and-the-notes-panel.md).
+
+### 0182: Icon names in the Ctrl-hover card
+
+*Done* (in the next release, 0.8.0). Holding Ctrl (Cmd on a Mac) over an element names its icons, one per corner (`top left: server`), in a card whose tags and icons are on coloured, labelled lines (required tags first, then other tags, then icons). The card's width and the height beyond which it is trimmed are preferences. ADRs: [0155](../decisions/0155-the-ctrl-hover-card-names-an-elements-icons.md), [0156](../decisions/0156-the-ctrl-hover-cards-size-is-a-preference.md).
+
+### 0159: An AI menu that serves more than Claude
+
+*Done* (in the next release, 0.8.0). The AI menu reads Copy AI instructions, Set up a folder for AI agents… and Install the MCP server for (Claude Desktop…, Other apps: copy server settings…). The server the Claude Desktop extension runs also ships unpacked and starts with `chd mcp <folder> [--allow-update]`; the copied settings start the app's executable as plain Node, so Linux has a route to the server too. ADRs: [0110](../decisions/0110-claude-desktop-extension.md), [0138](../decisions/0138-the-mcp-server-carries-the-guidance-the-cli-carries-the-checks.md). Left open: a try of the copied settings on Linux and in Claude Code or Cursor, and an AppImage, which has no stable path and is told to use another package.
+
+### 0174: A review of the menus, and a glossary in Help
+
+*Done* (in the next release, 0.8.0). A line separates the kinds of entry in File, Edit, View and Help; **New** (Diagram, Diagram metamodel…) and **Export** (PNG…, SVG…) are submenus; the command palette lists submenu entries as `New: Diagram`. **Help → Glossary…** shows the plain part of each term in `docs/architecture/glossary.md`, with a filter box. ADR: [0157](../decisions/0157-menus-are-grouped-and-the-glossary-is-in-help.md). Left open: a link to the command-line reference from Help, which needs the sheet compiled into the app like the glossary.
 
