@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { recoveredNoteShadow, restoredNoteShadow } from '@shared/document/documentSave'
+import {
+  editNote,
+  loadedNoteShadow,
+  recoveredNoteShadow,
+  restoredNoteShadow
+} from '@shared/document/documentSave'
 import type { NoteBaseline, RecoverySnapshot } from '@shared/document/documentSave'
 import type { DiagramFile } from '@shared/diagram'
-import { shadowsFromSnapshot } from './noteShadows'
+import { pruneCleanShadows, shadowsFromSnapshot } from './noteShadows'
 
 const diagram: DiagramFile = {
   version: 1,
@@ -33,5 +38,25 @@ describe('shadowsFromSnapshot', () => {
     const out = shadowsFromSnapshot(snapshot)
     expect(out.a).toEqual(recoveredNoteShadow('a', 'notes/a.md', 'x'))
     expect(out.b).toEqual(recoveredNoteShadow('b', null, 'y'))
+  })
+})
+
+describe('pruneCleanShadows', () => {
+  const clean = loadedNoteShadow('a', 'notes/a.md', '1:1', 'text')
+  const dirty = editNote(loadedNoteShadow('b', 'notes/b.md', '1:1', 'text'), 'edited')
+  const open = loadedNoteShadow('c', 'notes/c.md', '1:1', 'text')
+
+  it('drops the clean shadows and keeps the edited one and the open one', () => {
+    const out = pruneCleanShadows({ a: clean, b: dirty, c: open }, 'c')
+    expect(Object.keys(out).sort()).toEqual(['b', 'c'])
+  })
+
+  it('returns the same object when there is nothing to drop', () => {
+    const shadows = { b: dirty, c: open }
+    expect(pruneCleanShadows(shadows, 'c')).toBe(shadows)
+  })
+
+  it('drops a clean shadow when no note is open', () => {
+    expect(pruneCleanShadows({ a: clean }, null)).toEqual({})
   })
 })

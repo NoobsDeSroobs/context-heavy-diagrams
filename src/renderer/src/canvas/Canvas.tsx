@@ -3797,16 +3797,9 @@ function CanvasInner(): React.JSX.Element {
                 }))
               }}
               onClose={() => {
-                const closingId = notesPanelNodeId
+                // usePanels drops the clean copy once the panel is closed.
                 setNotesPanelNodeId(null)
                 setNotesNotice(null)
-                // A note nobody edited needs no in-memory copy: next open reads it fresh.
-                setNoteShadows((prev) => {
-                  if (!prev[closingId] || prev[closingId].dirty) return prev
-                  const next = { ...prev }
-                  delete next[closingId]
-                  return next
-                })
               }}
             />
           )}

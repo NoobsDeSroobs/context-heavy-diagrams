@@ -1,8 +1,9 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { ChangesSinceSave } from '@shared/document/changesSinceSave'
 import type { NoteShadow } from '@shared/document/documentSave'
 import { newNoteShadow } from '@shared/document/documentSave'
 import type { CanvasApi } from './canvasApi'
+import { pruneCleanShadows } from '../document/noteShadows'
 
 export interface PanelsState {
   notesPanelNodeId: string | null
@@ -59,6 +60,11 @@ export function usePanels(
   const [alignDistributePanelOpen, setAlignDistributePanelOpen] = useState(false)
   const [diagramSettingsPanelOpen, setDiagramSettingsPanelOpen] = useState(false)
   const [notesPanelNodeId, setNotesPanelNodeId] = useState<string | null>(null)
+  // However the open note changes or closes (the close button, Escape, another panel, a deleted
+  // element), clean copies of the notes not open are dropped (ADR 0092).
+  useEffect(() => {
+    setNoteShadows((prev) => pruneCleanShadows(prev, notesPanelNodeId))
+  }, [notesPanelNodeId, setNoteShadows])
   // Layer panel (ADR 0035) — same UtilityDock family as
   // Highlights/Required tags/Diagnostics. No catalog of its own: it reads
   // straight off `nodes`' own zIndex, there's nothing separate to persist.
