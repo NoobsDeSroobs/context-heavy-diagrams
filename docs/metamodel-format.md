@@ -2,7 +2,7 @@
 
 A **diagram metamodel** is a plain JSON file that holds the complete set of rules one kind of diagram or architecture follows, such as hexagonal architecture or a data-flow diagram: which kinds of element there are (roles), what an arrow means, and how they may be combined. The rules only mean something together, so a diagram is checked against one metamodel, and two are never combined. A checker applies a metamodel to a diagram (`.chd`, see [file-format.md](file-format.md)) and lists where the diagram breaks the rules.
 
-This page is the whole specification, written so that anyone can author a metamodel, or build a checker for one, without reading this project's code. A copy of the file to start from is [`resources/metamodels/template.chdmeta`](../resources/metamodels/template.chdmeta); two finished examples sit beside it. In the app, **File → New diagram metamodel…** copies the template into your metamodels folder (a setting in Preferences) under the name you choose.
+This page is the whole specification, written so that anyone can author a metamodel, or build a checker for one, without reading this project's code. A copy of the file to start from is [`resources/metamodels/template.chdmeta`](../resources/metamodels/template.chdmeta); two finished examples sit beside it. In the app, **File → New → Diagram metamodel…** copies the template into your metamodels folder (a setting in Preferences) under the name you choose.
 
 A metamodel is **applied to** a diagram and is never stored inside one. A metamodel checks the diagram, not the code the diagram describes: a diagram can conform while the implementation does not.
 

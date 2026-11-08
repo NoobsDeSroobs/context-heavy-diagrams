@@ -1,7 +1,7 @@
 # 0124: SVG export from a shared, pure renderer, and `chd export`
 
 ## Status
-Decided (2026-10-21). The renderer, the app's **File → Export as SVG…** and `chd export` for SVG are built. A PNG from the command line is not (see "Not decided yet").
+Decided (2026-10-21). The renderer, the app's **File → Export → SVG…** and `chd export` for SVG are built. A PNG from the command line is not (see "Not decided yet").
 
 ## Context
 PNG was the only way out of the app ([ADR 0051](0051-png-export.md)), the weakest point against almost every other diagramming tool and the main way a diagram reaches a wiki or a README. Two things were wanted: an SVG that is real vector (ADR 0051 decision 1 ruled out a wrapped screenshot), and a command that produces the image from a `.chd` file without opening the app, so CI can regenerate it whenever the diagram changes.
@@ -29,7 +29,7 @@ The command line is plain Node run by the app's own executable in `ELECTRON_RUN_
 
 **Left out on purpose:** the lock badge, selection and search outlines, resize handles and the layer-panel indicator (editor state, not diagram content). Highlights are session state ([ADR 0025](0025-tagging-and-overlay-visualization.md)), so they are off unless the app has them switched on or the command is given `--highlight`.
 
-**In the app**, **File → Export as SVG…** opens the same dialog as the PNG export (padding, background, legend corner), whose remembered values are shared by both formats (the preference fields keep their `pngExport` names to avoid migrating settings files). The SVG is rendered from the diagram's data, not from the DOM, so unlike the PNG export it needs no deselecting and no mounting of off-screen elements. The main process shows the save dialog and writes the text.
+**In the app**, **File → Export → SVG…** opens the same dialog as the PNG export (padding, background, legend corner), whose remembered values are shared by both formats (the preference fields keep their `pngExport` names to avoid migrating settings files). The SVG is rendered from the diagram's data, not from the DOM, so unlike the PNG export it needs no deselecting and no mounting of off-screen elements. The main process shows the save dialog and writes the text.
 
 **On the command line**, `chd export <file.chd>` writes an `.svg` next to the diagram (`-o` to choose, `-` for stdout) with `--theme`, `--padding`, `--background`, `--no-legend`, `--legend-corner` and `--highlight`. It only reads the diagram, so the stale-edit rule ([ADR 0109](0109-stale-edit-check-for-every-ai-write-path.md)) does not apply, and it refuses an output that is not an `.svg`, so it cannot overwrite a diagram. The command is bundled by `scripts/build-cli.mjs` into `resources/cli/export.mjs` (git-ignored, built by `npm run build`) and loaded only for this command, so the other commands stay plain Node with nothing to build.
 

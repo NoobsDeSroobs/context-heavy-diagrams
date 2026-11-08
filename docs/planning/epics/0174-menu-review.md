@@ -1,7 +1,7 @@
 # 0174: A review of the menus, and a glossary in Help
 
 ## Status
-Not Started. Logged 2026-11-05; for later.
+Built (2026-11-08), awaiting a look in the app. Logged 2026-11-05.
 
 ## Goal
 The menus have grown one entry at a time. Related entries sit apart, the groups are not marked, and a person who meets a term in the app has nowhere to look it up. Go through every menu once, group what belongs together, and add a searchable glossary.
@@ -20,12 +20,13 @@ The menus have grown one entry at a time. Related entries sit apart, the groups 
 - Keyboard shortcuts and the command palette follow the menu: an entry that moves or merges keeps its shortcut.
 
 ## Tasks
-- [ ] Walk every menu and write down the grouping and the merges
-- [ ] Decide export (submenu or dialog) and glossary (source, search)
-- [ ] An ADR for the menu structure, with the rule for when a group gets its own line
-- [ ] Apply the grouping, the **New** submenu and the **Export** change, with separators
-- [ ] Help → Glossary, with search
-- [ ] Update `docs/getting-started.md` and the screenshots in the README if a menu they show changed
+- [x] Walk every menu and write down the grouping and the merges
+- [x] Decide export (submenu or dialog) and glossary (source, search)
+- [x] An ADR for the menu structure, with the rule for when a group gets its own line ([ADR 0157](../../decisions/0157-menus-are-grouped-and-the-glossary-is-in-help.md))
+- [x] Apply the grouping, the **New** submenu and the **Export** change, with separators
+- [x] Help → Glossary, with search
+- [x] Update `docs/getting-started.md` (the README screenshots show no menu entry that moved)
+- [ ] Link the command-line reference from Help (left over from 0175): the app ships no docs and has no window that shows a document, so it needs the sheet compiled in like the glossary; decide whether it is worth a window
 
 ## Notes
 Raised while naming the diagram metamodel: a user who meets that word needs somewhere to look it up.

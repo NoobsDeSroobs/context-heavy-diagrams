@@ -1,6 +1,6 @@
 # Getting started
 
-A ten-minute tour: open an example, draw a small diagram, hang context on it, link a deeper diagram, and find your way around. "Ctrl" means Cmd on macOS. The full shortcut list is always under **Help → Keyboard shortcuts…**, and **Ctrl+K** opens a command palette that finds every menu action by name.
+A ten-minute tour: open an example, draw a small diagram, hang context on it, link a deeper diagram, and find your way around. "Ctrl" means Cmd on macOS. The full shortcut list is always under **Help → Keyboard shortcuts…**, the terms used in the app are explained under **Help → Glossary…**, and **Ctrl+K** opens a command palette that finds every menu action by name.
 
 First run the app from source; the steps are in the [README](../README.md#try-it).
 
@@ -12,7 +12,7 @@ Move around by dragging empty canvas (pan) and with the mouse wheel (zoom). **Ct
 
 ## 2. Draw a small diagram
 
-1. **File → New** (Ctrl+N).
+1. **File → New → Diagram** (Ctrl+N).
 2. Drag an **entity** from the palette onto the canvas. The palette also has **containers** (boxes that hold other elements), **text** and **free-form lines**. Right-click an entity or container button to create many from a pasted list.
 3. Double-click the element to edit its label. Enter commits; Shift+Enter starts a new line; Esc cancels.
 4. Drag from a connection point on one entity to another to connect them. The edge stays attached and re-routes when either end moves. Drag a selected edge's end to move it to another connection point.
@@ -40,9 +40,9 @@ Right-click an element and choose **Link to diagram…** to point it at another 
 - **Highlights and the legend** colour elements by tag value, so one diagram can answer "what is production?" or "where does personal data live?".
 - **Search with isolate** dims everything that does not match.
 - **Layers**, **Diagnostics** (missing files, an empty legend, and similar) and **Style Palette** are in the **View** menu.
-- **File → Export as PNG…** and **Export as SVG…** write an image with an auto-generated legend. The SVG is real vector, so it stays sharp and opens in Inkscape or Illustrator. `chd export <file.chd>` writes the same SVG from a terminal or a CI job, without opening the app (`chd export --help` lists the options).
+- **File → Export → PNG…** and **SVG…** write an image with an auto-generated legend. The SVG is real vector, so it stays sharp and opens in Inkscape or Illustrator. `chd export <file.chd>` writes the same SVG from a terminal or a CI job, without opening the app (`chd export --help` lists the options).
 - **Reviewing changes.** **View → Changes → Changes since last save…** lists what you changed since the last save, with **Reset**, **Remove** and **Restore** per row (Ctrl+Z undoes one). **View → Changes → Compare with git revision…** (or **Review changes** on the "changed outside the app" banner, when an assistant or another tool edited the open file) opens a window with the later version drawn on the real canvas: green is added, red removed (a dashed ghost), yellow modified (label, tags, security, what a connection joins), orange a changed link or note, fuchsia restyled (a colour, line style, marker, animation or icon changed), and everything else is dimmed; a moved or resized element is not a change, and ones whose font, text alignment or routing changed can be marked with a paint brush. Hold Ctrl and hover an element or connection to see what changed, step through the list with the arrow keys (N and P), tick changes off, and revert one in the editor window. Connections that left with a deleted element are listed under it. If an assistant rewrote the file and every id changed, **Match them up** pairs the elements by name and place (a guess, marked as one). `chd diff <file.chd>` prints the same review in a terminal (`--rev`, `--match`, `--json` and `--exit-code` are in `chd diff --help`).
-- **Architecture checks.** In **Diagnostics**, pick a metamodel (hexagonal and data-flow diagram are built in) to see where the diagram breaks that style's rules; click a finding to find the element. `chd check <file.chd> --metamodel hexagonal` does the same in CI and exits non-zero on errors. A diagram needs a `role` tag on its elements and an edge direction set named for what its arrows mean ("Depends On", "Flows To"); [`examples/conformance/`](../examples/conformance) has diagrams that pass and that fail, and **File → New diagram metamodel…** starts a metamodel of your own ([the format](metamodel-format.md)).
+- **Architecture checks.** In **Diagnostics**, pick a metamodel (hexagonal and data-flow diagram are built in) to see where the diagram breaks that style's rules; click a finding to find the element. `chd check <file.chd> --metamodel hexagonal` does the same in CI and exits non-zero on errors. A diagram needs a `role` tag on its elements and an edge direction set named for what its arrows mean ("Depends On", "Flows To"); [`examples/conformance/`](../examples/conformance) has diagrams that pass and that fail, and **File → New → Diagram metamodel…** starts a metamodel of your own ([the format](metamodel-format.md)).
 - The [`security-rollup`](../examples/gallery/technical/security-rollup/README.md) example shows the security matrix view rolling scores up through linked diagrams.
 
 ## 6. Use it with git
