@@ -63,8 +63,8 @@ export interface SaveInputs {
   // loadDiagramIntoCanvas exists (it is declared after persistDiagram).
   reloadHubRef: React.MutableRefObject<((path: string) => Promise<void>) | null>
   hubBaselineRef: React.MutableRefObject<{ path: string | null; stamp: Stamp }>
-  dismissedStampRef: React.MutableRefObject<string | null>
-  setExternalChangeStamp: React.Dispatch<React.SetStateAction<string | null>>
+  // The diagram was written: the outside-change notice no longer applies to it.
+  clearOutsideChanges: () => void
 }
 
 export interface SaveState {
@@ -108,8 +108,7 @@ export function useSave(
     loadedSavedWithRef,
     reloadHubRef,
     hubBaselineRef,
-    dismissedStampRef,
-    setExternalChangeStamp
+    clearOutsideChanges
   }: SaveInputs
 ): SaveState {
   // Brief post-save confirmation next to the toolbar's Save button — see
@@ -384,8 +383,7 @@ export function useSave(
           setStagedFileRemovals([])
         }
         setHubDirty(false)
-        setExternalChangeStamp(null)
-        dismissedStampRef.current = null
+        clearOutsideChanges()
       }
       // Something stayed unsaved (the user cancelled): not a "Saved" moment.
       if (aborted) throw new SaveAbortedError()
@@ -413,8 +411,7 @@ export function useSave(
       setNoteShadows,
       setReferenceWindows,
       hubBaselineRef,
-      dismissedStampRef,
-      setExternalChangeStamp,
+      clearOutsideChanges,
       sessionIdRef,
       loadedSavedWithRef,
       reloadHubRef

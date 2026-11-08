@@ -6,6 +6,8 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 ### Added
 
+- **One notice when files change outside the app.** If the diagram or a note you have open or edited was changed by another editor, git or an assistant, a single notice lists the files, says which of them you have unsaved edits to, and offers Review changes, Reload (only those files, asking first if edits would be lost) and Ignore. Before, the diagram and the open note had separate notices, and an unedited open note was refreshed without saying so. ([ADR 0159](docs/decisions/0159-one-notice-for-every-file-that-changed-outside-the-app.md))
+- **Unsaved note text is no longer lost when its element is deleted.** It is kept and listed in Diagnostics (and counted in the View menu), with Copy text and Discard; undoing the deletion brings it back.
 - **The side panels can be made wider or narrower.** Drag the left edge of the panel on the right (notes, diagnostics, changes, layers, preferences), use the arrow keys on it, or double-click it for the default width; the width is kept for next time and is the same for every panel. The list in the review window has the same handle (its width lasts while that window is open). ([ADR 0158](docs/decisions/0158-side-panel-width-and-the-minimap-are-preferences.md))
 - **The minimap can be hidden.** A small button on its corner and **View → Minimap** switch it off and on, and the choice is kept. ([ADR 0158](docs/decisions/0158-side-panel-width-and-the-minimap-are-preferences.md))
 - **Help → Glossary…** explains the terms the app uses (diagram metamodel, edge direction set, notes, layers, the three kinds of settings and more), with a filter box. It is written once, in `docs/architecture/glossary.md`, and the app shows the plain part of each term. ([ADR 0157](docs/decisions/0157-menus-are-grouped-and-the-glossary-is-in-help.md))
@@ -23,6 +25,10 @@ What changed for people using the tool, one entry per minor or major release. Th
 - **A change in how an element looks is now a change in a review,** when the look carries meaning: fill, border colour, width and opacity, line style, markers, an edge's colour, width and animation, and icons. Such an element is coloured fuchsia as **Restyled**, with the old and new value in the hover card, and every changed line one under the other in the list with a chip beside each colour ("line style: solid → dotted"), its own count and its own heading in `chd diff`; an edge keeps its own look and gets a glow instead of being recoloured. Font, text alignment, label position and routing are still only marked with the paint brush. In `chd diff --json` each field has a `category` and a look has `before` and `after`, `counts` has `restyled`, and the old `restyled` count is now `cosmeticLook`; `--exit-code` exits 1 for a restyle alone. ([ADR 0153](docs/decisions/0153-a-look-that-carries-meaning-is-a-change-in-a-review.md))
 - **The properties panel opens Fill, Border and Metadata, and starts with Font, Transform, Connection points and References closed,** since those are the ones used least. A section you open or close stays that way for the rest of the session, as before.
 - **`chd help edit` now lists every operation `chd edit` takes**, with its fields. Before, it sent you to the Claude Desktop extension's tool for them. The extension and the command line print the same text. ([ADR 0150](docs/decisions/0150-chd-edit-and-chd-ask-build-a-diagram-from-the-command-line.md))
+
+### Fixed
+
+- **Save As copies the notes you never opened.** They used to stay in the old folder while the new diagram still pointed at them.
 
 ## 0.7.0 (2026-11-07)
 

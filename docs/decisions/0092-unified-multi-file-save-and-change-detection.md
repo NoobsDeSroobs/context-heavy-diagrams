@@ -191,9 +191,12 @@ What landed, and where it settled the questions this ADR left open:
 - **A diagram reload now keeps unsaved note edits** (`loadDiagramIntoCanvas` with
   `keepNoteShadows`; used by "Take disk" and by the toolbar Reload). Clean note copies are just a
   cache and are re-read on demand. Edits for an element the reloaded diagram no longer contains
-  cannot be shown, so an alert says they were discarded — surfacing them in Diagnostics is still
-  to do. The Reload confirm now only warns about the diagram's own edits.
+  cannot be shown on it, so they are kept and listed in Diagnostics (Copy text, Discard), and
+  neither Save nor a reload drops them. The Reload confirm now only warns about the diagram's own
+  edits.
 - **The snapshot written before asking is deleted once the choices are applied**, so recovery
   never offers edits that were just saved or discarded.
-- **Still open for step 2:** one notice for every file (Reload / Ignore) on window focus, with
-  minimal reload of only the changed files; orphaned dirty edits in Diagnostics.
+- **Step 2 (done):** one notice for every file with a minimal reload is
+  [ADR 0159](0159-one-notice-for-every-file-that-changed-outside-the-app.md); orphaned dirty edits
+  are listed in Diagnostics; Save As copies the notes that were never opened to the new folder;
+  clean note copies are dropped on every path that closes the panel.

@@ -1,8 +1,7 @@
 # 0130: Multi-file save follow-ups (technical debt)
 
 ## Status
-Not Started — parked on purpose, logged 2026-09-20. **Technical debt, to be done later**, not
-a scheduled epic. Split off from [epic 0129](../completed-epics.md#0129-unified-multi-file-save-and-change-tracking)
+In Progress (2026-11-08); logged 2026-09-20 as technical debt, taken up because it holds real bugs. Built, awaiting a look in the app, except the Linux check. Split off from [epic 0129](../completed-epics.md#0129-unified-multi-file-save-and-change-tracking)
 when its save side (shadow model, one save plan, per-file conflict dialog, reload that keeps
 unsaved notes) was finished and live-tested: what remains is refinement, and the queued batch
 ([0119](../completed-epics.md#0119-details-peek-card-while-holding-ctrlcmd-over-an-element) → [0120](../completed-epics.md#0120-help--keyboard-shortcuts--gestures-page)
@@ -47,9 +46,9 @@ surfaced, never silently discarded: list them in the Diagnostics panel with Disc
   React test setup is ever introduced (today only the pure planner/executor/resolver are tested).
 
 ## Tasks
-- [ ] Unified change notice + minimal reload (item 1)
-- [ ] Orphaned edits in Diagnostics (item 2)
-- [ ] Drop clean copies on all close paths
-- [ ] Save As copies unopened notes
-- [ ] Extract the save orchestration out of `Canvas.tsx`
+- [x] Unified change notice + minimal reload (item 1), [ADR 0159](../../decisions/0159-one-notice-for-every-file-that-changed-outside-the-app.md)
+- [x] Orphaned edits in Diagnostics (item 2)
+- [x] Drop clean copies on all close paths
+- [x] Save As copies unopened notes
+- [x] Extract the save orchestration out of `Canvas.tsx` (already done: it is `useSave.ts`)
 - [ ] Verify 0128/0129 on Linux
