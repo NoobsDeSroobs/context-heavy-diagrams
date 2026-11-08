@@ -1,5 +1,6 @@
 import type { EdgeStyle, GravityPreset, NodeStyle } from '../diagram'
 import { PEEK_CARD_MAX_HEIGHT, PEEK_CARD_WIDTH, clampPeekSize } from './peekCard.ts'
+import { UTILITY_DOCK_WIDTH, clampDockWidth } from './panelWidth.ts'
 
 // The app-wide Preferences tier — per-installation, every-diagram (see the
 // glossary and ADR 0052's addendum for the "Settings" -> "Preferences"
@@ -138,6 +139,12 @@ export interface AppPreferences {
   // boundary.
   peekCardWidth: number
   peekCardMaxHeight: number
+  // Width in pixels of the right-hand dock that holds the notes, diagnostics, changes and other side
+  // panels, set by dragging its edge (ADR 0158). Clamped at every normalize boundary.
+  utilityDockWidth: number
+  // Whether the minimap is drawn in the corner of the canvas (ADR 0158). A per-person display
+  // choice; nothing about it is stored in a diagram.
+  showMinimap: boolean
   // Directory of the last opened or saved diagram, passed as `defaultPath` to File -> Open/Save As
   // so the dialogs start where the user was last working. Absent means no dialog opened yet this
   // install, deliberately not defaulted to e.g. the home directory. Written by main
@@ -219,6 +226,8 @@ export const DEFAULT_PREFERENCES: AppPreferences = {
   isolateOpacity: 0.5,
   peekCardWidth: PEEK_CARD_WIDTH.default,
   peekCardMaxHeight: PEEK_CARD_MAX_HEIGHT.default,
+  utilityDockWidth: UTILITY_DOCK_WIDTH.default,
+  showMinimap: true,
   recentDiagramsLimit: 10,
   aiFeaturesEnabled: true,
   animateEdges: 'system'
@@ -277,6 +286,8 @@ export function normalizePreferences(
   if (legacyFolder && !merged.metamodelsFolder) merged.metamodelsFolder = legacyFolder
   merged.peekCardWidth = clampPeekSize(merged.peekCardWidth, PEEK_CARD_WIDTH)
   merged.peekCardMaxHeight = clampPeekSize(merged.peekCardMaxHeight, PEEK_CARD_MAX_HEIGHT)
+  merged.utilityDockWidth = clampDockWidth(merged.utilityDockWidth)
+  merged.showMinimap = merged.showMinimap !== false
   if (raw.defaultStyles?.shape && !raw.defaultStyles.entity) {
     merged.defaultStyles = { ...merged.defaultStyles, entity: raw.defaultStyles.shape }
   }

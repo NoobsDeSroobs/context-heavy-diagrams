@@ -54,6 +54,9 @@ export interface MenuInputs {
   toggleEdgeAnimation: () => void
   // Whether animated edges move now (ADR 0141), which is what the menu item's check mark shows.
   edgeAnimationOn: boolean
+  toggleMinimap: () => void
+  // Whether the minimap is drawn (ADR 0158), which is what the menu item's check mark shows.
+  minimapOn: boolean
   toggleDiagramSettingsPanel: () => void
   togglePreferencesPanel: () => void
   setCommandPaletteOpen: (open: boolean) => void
@@ -117,6 +120,8 @@ export function useMenus(inputs: MenuInputs): {
     toggleStylePalettePanel,
     toggleEdgeAnimation,
     edgeAnimationOn,
+    toggleMinimap,
+    minimapOn,
     toggleDiagramSettingsPanel,
     togglePreferencesPanel,
     setCommandPaletteOpen,
@@ -271,6 +276,13 @@ export function useMenus(inputs: MenuInputs): {
     onSelect: toggleEdgeAnimation
   }
 
+  const minimapItem: MenuBarItem = {
+    label: 'Minimap',
+    checked: minimapOn,
+    title: 'Show or hide the overview in the corner of the canvas',
+    onSelect: toggleMinimap
+  }
+
   const viewMenu: MenuBarMenu = {
     label: 'View',
     items: isDiagramPersona
@@ -308,6 +320,7 @@ export function useMenus(inputs: MenuInputs): {
           },
           { label: 'Style Palette', onSelect: toggleStylePalettePanel },
           { ...animateEdgesItem, separatorBefore: true },
+          minimapItem,
           {
             label: 'Diagram settings',
             separatorBefore: true,
