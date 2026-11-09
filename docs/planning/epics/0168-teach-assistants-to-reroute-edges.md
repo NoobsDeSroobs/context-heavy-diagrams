@@ -13,10 +13,10 @@ Found while testing the C4 examples: a line crossed an entity, and the fix was o
 - Teach the skill, the MCP guidance and the copy-paste instructions that an edge can carry `points` and a `routingStyle`, and when to use each.
 - Tell an assistant how to notice a crossing: an edge's straight path against the boxes of the entities it passes.
 - Routing highways: leave a lane free between rows or columns of entities and run the crossing edges along it, with a bend point at each end.
-- Probably needs a check the assistant can run (`chd check`-style) or the picture of its own output ([0167](0167-assistants-can-see-their-own-output.md)).
+- The check an assistant can run after drawing exists now ([0167](../completed-epics.md#0167-an-assistant-can-see-the-diagram-it-drew)); this epic teaches it to act on what the check lists by rerouting.
 
 ## Related
-[0162](../completed-epics.md#0162-minimum-distance-between-connected-elements) (spacing, which makes room for a lane), [0164](../completed-epics.md#0164-tooling-fixes-from-the-first-assistant-trial-runs), [0165](../completed-epics.md#0165-an-editing-tool-for-assistants), [0166](../completed-epics.md#0166-the-mcp-server-and-the-command-line-share-their-checks) and [0167](0167-assistants-can-see-their-own-output.md).
+[0162](../completed-epics.md#0162-minimum-distance-between-connected-elements) (spacing, which makes room for a lane), [0164](../completed-epics.md#0164-tooling-fixes-from-the-first-assistant-trial-runs), [0165](../completed-epics.md#0165-an-editing-tool-for-assistants), [0166](../completed-epics.md#0166-the-mcp-server-and-the-command-line-share-their-checks) and [0167](../completed-epics.md#0167-an-assistant-can-see-the-diagram-it-drew).
 
 ## Tasks
 - [ ] Trial runs: ask an assistant to fix crossings in a few dense diagrams and record what it gets wrong

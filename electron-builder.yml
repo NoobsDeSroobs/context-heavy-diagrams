@@ -13,10 +13,13 @@ asarUnpack:
   - resources/**
 win:
   executableName: context-heavy-diagrams
-  # chd launcher next to the exe (ADR 0106)
+  # chd launcher next to the exe (ADR 0106), and bin/chd.cmd, the only folder the installer
+  # can put on the PATH (ADR 0162)
   extraFiles:
     - from: build/launchers/chd.cmd
       to: chd.cmd
+    - from: build/launchers/chd-path.cmd
+      to: bin/chd.cmd
 # Wizard-style, still per-user (no elevation). Needed so the installer can ask the
 # .chd-association and AI-features questions on an options page (ADR 0108).
 # No global `fileAssociations` on purpose: electron-builder would register .chd

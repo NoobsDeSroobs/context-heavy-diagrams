@@ -2,10 +2,11 @@
 
 What changed for people using the tool, one entry per minor or major release. The reasons are in [docs/decisions/](docs/decisions/); the full history is in `git log`.
 
-## 0.8.0 (unreleased)
+## 0.8.0 (2026-11-09)
 
 ### Added
 
+- **The Windows installer can put `chd` on your PATH.** A new checkbox on its options page, **Add the chd command to your PATH** (unticked by default), adds the app's `bin` folder to your user PATH so `chd` works by name in a new terminal; uninstalling takes exactly that entry out again, and a PATH it cannot read safely is left alone. ([ADR 0162](docs/decisions/0162-the-installer-can-put-chd-on-the-path.md))
 - **An assistant is told when an edge is drawn across an element, when edges cross, and when an edge label sits on an element, another edge or another label.** The answers of `edit_diagram`, `inspect_diagram`, `chd edit` and `chd ask inspect` judge each edge on the path that is drawn (curves, bend points and routing style included, not a straight line), so an assistant that cannot look at its diagram can still find and fix these. ([ADR 0161](docs/decisions/0161-the-layout-check-judges-edges-as-they-are-drawn.md))
 - **Save As asks what to copy.** It opens a dialog with a path (set by the system's save picker) and three switches: **Notes**, **Images and custom icons**, and **Linked diagrams, recursively, with the same settings**, each with how many files it covers. What is ticked is copied into a folder named after the new diagram (`Copy.chd` and `Copy/`); what is not ticked, and anything that cannot be copied (missing, or outside the diagram's folder), is removed from the copy and listed, and the original is never changed. Linked diagrams keep their place relative to the original and are each copied once, with their own notes and images. The name and the folder must both be free, so nothing is ever replaced. ([ADR 0160](docs/decisions/0160-save-as-copies-into-a-folder-named-after-the-new-diagram.md))
 - **One notice when files change outside the app.** If the diagram or a note you have open or edited was changed by another editor, git or an assistant, a single notice lists the files, says which of them you have unsaved edits to, and offers Review changes, Reload (only those files, asking first if edits would be lost) and Ignore. Before, the diagram and the open note had separate notices, and an unedited open note was refreshed without saying so. ([ADR 0159](docs/decisions/0159-one-notice-for-every-file-that-changed-outside-the-app.md))

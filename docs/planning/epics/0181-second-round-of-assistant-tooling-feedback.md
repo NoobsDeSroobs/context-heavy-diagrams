@@ -14,4 +14,4 @@ Small gaps found by the second Immich trial (a run of 238k tokens of context, ag
 - [ ] `inspect_diagram` `ids` filter (also in 0177)
 
 ## Notes
-Left out on purpose: a legend generated from the highlights (the legend does not hold highlights, [ADR 0033](../../decisions/0033-diagram-legend-design.md)); a description field for entities (tags and notes carry it); a rendered preview for the assistant ([0167](0167-assistants-can-see-their-own-output.md)).
+Left out on purpose: a legend generated from the highlights (the legend does not hold highlights, [ADR 0033](../../decisions/0033-diagram-legend-design.md)); a description field for entities (tags and notes carry it); a rendered preview for the assistant ([0167](../completed-epics.md#0167-an-assistant-can-see-the-diagram-it-drew)).
