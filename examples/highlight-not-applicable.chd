@@ -1,0 +1,159 @@
+{
+  "version": 1,
+  "highlights": [
+    {
+      "key": "dataClass",
+      "value": "No PII",
+      "color": "#36d349"
+    },
+    {
+      "key": "dataClass",
+      "value": "PII",
+      "color": "#ed8936"
+    },
+    {
+      "key": "dataClass",
+      "value": "Sensitive PII",
+      "color": "#e53e3e"
+    },
+    {
+      "key": "dataClass",
+      "value": "N/A",
+      "color": "transparent"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "payments",
+      "type": "container",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 460,
+        "height": 260
+      },
+      "metadata": {
+        "dataClass": {
+          "value": "N/A"
+        }
+      },
+      "data": {
+        "label": "Payments system"
+      }
+    },
+    {
+      "id": "api",
+      "type": "entity",
+      "position": {
+        "x": 40,
+        "y": 60
+      },
+      "size": {
+        "width": 130,
+        "height": 60
+      },
+      "parentId": "payments",
+      "metadata": {
+        "dataClass": {
+          "value": "PII"
+        }
+      },
+      "data": {
+        "label": "Payments API"
+      }
+    },
+    {
+      "id": "ledger",
+      "type": "entity",
+      "position": {
+        "x": 290,
+        "y": 40
+      },
+      "size": {
+        "width": 130,
+        "height": 60
+      },
+      "parentId": "payments",
+      "metadata": {
+        "dataClass": {
+          "value": "Sensitive PII"
+        }
+      },
+      "data": {
+        "label": "Ledger"
+      }
+    },
+    {
+      "id": "cache",
+      "type": "entity",
+      "position": {
+        "x": 290,
+        "y": 160
+      },
+      "size": {
+        "width": 130,
+        "height": 60
+      },
+      "parentId": "payments",
+      "metadata": {
+        "dataClass": {
+          "value": "No PII"
+        }
+      },
+      "data": {
+        "label": "Rate cache"
+      }
+    },
+    {
+      "id": "site",
+      "type": "entity",
+      "position": {
+        "x": -260,
+        "y": 60
+      },
+      "size": {
+        "width": 130,
+        "height": 60
+      },
+      "metadata": {
+        "dataClass": {
+          "value": "No PII"
+        }
+      },
+      "data": {
+        "label": "Marketing site"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "type": "labeled",
+      "source": "site",
+      "target": "api",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "checkout"
+    },
+    {
+      "id": "e2",
+      "type": "labeled",
+      "source": "api",
+      "target": "ledger",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "writes"
+    },
+    {
+      "id": "e3",
+      "type": "labeled",
+      "source": "api",
+      "target": "cache",
+      "sourceHandle": "bottom",
+      "targetHandle": "left",
+      "label": "reads"
+    }
+  ]
+}

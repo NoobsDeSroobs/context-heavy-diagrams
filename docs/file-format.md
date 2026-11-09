@@ -288,7 +288,7 @@ A saved catalog of visual highlights — `highlights` on the top-level object �
 |---|---|---|---|
 | `key` | string | yes | The metadata key this highlight matches against. |
 | `value` | JSON value | yes | The exact value this highlight matches against — compared for equality against a matching element's `metadata[key].value`, not a substring or pattern. |
-| `color` | string (CSS color, typically `#rrggbb`) | yes | The highlight's display color. This app renders it as a border/stroke override when an element matches exactly one enabled highlight, or as a small color chip (one per match) when an element matches two or more at once — purely a rendering detail, not something a passive reader needs to reproduce. |
+| `color` | string (CSS color, typically `#rrggbb`) | yes | The highlight's display color. This app renders it as a border/stroke override when an element matches exactly one enabled highlight, or as a small color chip (one per match) when an element matches two or more at once — purely a rendering detail, not something a passive reader needs to reproduce. The word `transparent` (case-insensitive) means *no colour*: an element with that value is left as it is, draws no chip, and counts for nothing when deciding between one match and several ([ADR 0163](decisions/0163-a-transparent-highlight-leaves-an-element-out.md)). |
 
 **Enabled/disabled state is deliberately not part of this file.** Only the catalog of *available* highlights is persisted — whether a given highlight happens to be switched on right now is local, in-memory, per-session UI state in this app, reset every time the file is (re)opened. A reader doesn't need to track or reproduce this; it isn't in the file to begin with.
 

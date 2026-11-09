@@ -16,6 +16,14 @@ export const HIGHLIGHT_BORDER_WIDTH = 3
 // the user recolors deliberately.
 export const DEFAULT_HIGHLIGHT_COLOR = '#ffffff'
 
+// A highlight with this colour marks nothing (ADR 0163): it is the way to leave an element out,
+// typically the value `N/A`, so a container does not take the colour of its group.
+export const TRANSPARENT_HIGHLIGHT_COLOR = 'transparent'
+
+export function isTransparentHighlight(h: { color: string }): boolean {
+  return h.color.trim().toLowerCase() === TRANSPARENT_HIGHLIGHT_COLOR
+}
+
 // Stable identity for a highlight — used both for the enabled-set (Canvas
 // state) and to enforce catalog uniqueness when adding a new one. Two
 // highlights for the same key+value would be ambiguous (which color
@@ -65,7 +73,8 @@ export function reconcileHighlightGroup(
 }
 
 // Every enabled highlight whose key=value exactly matches this element's
-// metadata. Recomputed per render, not cached — diagrams are small enough
+// metadata, except the transparent ones: those draw nothing and must not push a single match into
+// the two-or-more chip display. Recomputed per render, not cached — diagrams are small enough
 // that this isn't worth memoizing, same reasoning already used elsewhere
 // in Canvas.tsx (e.g. selectedNodes/selectedEdges).
 export function matchingHighlights(
@@ -75,7 +84,7 @@ export function matchingHighlights(
 ): HighlightDefinition[] {
   if (!metadata) return []
   return highlights.filter((h) => {
-    if (!enabledIds.has(highlightId(h))) return false
+    if (!enabledIds.has(highlightId(h)) || isTransparentHighlight(h)) return false
     const entry = metadata[h.key]
     return entry !== undefined && JSON.stringify(entry.value) === JSON.stringify(h.value)
   })

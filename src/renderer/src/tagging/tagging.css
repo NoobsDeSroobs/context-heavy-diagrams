@@ -231,6 +231,41 @@
   flex: 0 0 auto;
 }
 
+/* "No color": the picker shows a struck-through empty swatch (ADR 0163). */
+.highlight-row-swatch.is-none {
+  background: linear-gradient(
+    to top right,
+    transparent calc(50% - 1px),
+    var(--ev-c-gray-1) calc(50% - 1px),
+    var(--ev-c-gray-1) calc(50% + 1px),
+    transparent calc(50% + 1px)
+  );
+  opacity: 0.7;
+}
+
+.highlight-row-swatch.is-none::-webkit-color-swatch {
+  background: transparent;
+  border: none;
+}
+
+.highlight-row-none {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.highlight-row-none.is-active {
+  background: var(--ev-c-gray-3);
+}
+
 .highlight-row-label {
   flex: 1;
   font-size: 12px;
