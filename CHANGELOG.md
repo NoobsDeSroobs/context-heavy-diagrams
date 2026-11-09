@@ -6,6 +6,7 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 ### Added
 
+- **Slide a connection's label along its line** by holding Alt and dragging the label. It follows the line round bends and curves, and the Position slider in the Label section of the properties panel shows the result. One undo step per drag. ([ADR 0164](docs/decisions/0164-alt-drag-slides-an-edge-label-along-its-edge.md))
 - **A highlight can have no colour,** to leave an element out. Press ∅ beside a highlight's colour (or give an assistant's `set_highlight` the colour `transparent`) and elements with that value, typically `N/A`, keep their own look when the highlight is switched on, so a system boundary no longer takes the colour of the entities inside it. It has no legend row. An older version of the app draws such an element's border invisible. ([ADR 0163](docs/decisions/0163-a-transparent-highlight-leaves-an-element-out.md))
 
 ## 0.8.0 (2026-11-09)

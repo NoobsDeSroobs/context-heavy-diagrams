@@ -28,6 +28,7 @@ export function useHistory({
   pushSnapshot: () => void
   beginContinuousEdit: () => void
   endContinuousEdit: () => void
+  isContinuousEdit: () => boolean
   undo: () => void
   redo: () => void
 } {
@@ -62,6 +63,10 @@ export function useHistory({
     interactionInProgressRef.current = false
   }, [])
 
+  // True between begin and end: the gesture already holds its one snapshot, so a change made
+  // through a path that snapshots on its own (an edge's data, see onEdgesChange) must not add more.
+  const isContinuousEdit = useCallback(() => interactionInProgressRef.current, [])
+
   const undo = useCallback(() => {
     if (past.length === 0) return
     const previous = past[past.length - 1]
@@ -88,6 +93,7 @@ export function useHistory({
     pushSnapshot,
     beginContinuousEdit,
     endContinuousEdit,
+    isContinuousEdit,
     undo,
     redo
   }

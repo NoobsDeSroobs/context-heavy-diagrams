@@ -345,6 +345,7 @@ function CanvasInner(): React.JSX.Element {
     pushSnapshot,
     beginContinuousEdit,
     endContinuousEdit,
+    isContinuousEdit,
     undo,
     redo
   } = useHistory({ graphRef, setNodes, setEdges, markDirty })
@@ -566,10 +567,12 @@ function CanvasInner(): React.JSX.Element {
   // discrete (remove/add/replace), so this is simpler than onNodesChange.
   const onEdgesChange = useCallback(
     (changes: Parameters<typeof onEdgesChangeBase>[0]) => {
-      if (changes.some((change) => change.type !== 'select')) pushSnapshot()
+      // A gesture that opened its undo step (beginContinuousEdit) already has its snapshot, so an
+      // edge-data update inside it, such as sliding a label, does not add one per move.
+      if (changes.some((change) => change.type !== 'select') && !isContinuousEdit()) pushSnapshot()
       onEdgesChangeBase(changes)
     },
-    [onEdgesChangeBase, pushSnapshot]
+    [onEdgesChangeBase, pushSnapshot, isContinuousEdit]
   )
 
   const openContextMenu = useCallback((x: number, y: number, items: ContextMenuItem[]) => {

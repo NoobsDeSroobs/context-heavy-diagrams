@@ -19,7 +19,7 @@ Move around by dragging empty canvas (pan) and with the mouse wheel (zoom). **Ct
 5. Drag an entity into a container to nest it. Dragging the container moves what is inside.
 6. **File → Save** (Ctrl+S). The result is a plain `.chd` text file; autosave and crash recovery keep a safety copy while you work.
 
-Selection works as in most editors: click, Shift+click to add, Shift+drag to box-select, Ctrl+A for everything. Alt+drag leaves the original in place and drags a copy. Ctrl+Z undoes.
+Selection works as in most editors: click, Shift+click to add, Shift+drag to box-select, Ctrl+A for everything. Alt+drag leaves the original in place and drags a copy. Alt+drag on a connection's label slides the label along its line. Ctrl+Z undoes.
 
 ## 3. Put the context behind the box
 
