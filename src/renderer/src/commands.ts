@@ -239,6 +239,12 @@ export const COMMANDS = [
     keys: 'Enter / Shift+Enter'
   },
   { id: 'labels.cancel', title: 'Cancel the label edit', category: 'Labels', keys: 'Esc' },
+  {
+    id: 'labels.slide',
+    title: 'Slide a connection label along its line',
+    category: 'Labels',
+    keys: 'Alt+Drag'
+  },
 
   {
     id: 'create.palette',

@@ -70,7 +70,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 ## Alt+drag duplicate may be swallowed by Linux window managers
 
-**Status:** Open, untested on Linux
+**Status:** Open, untested on Linux. The same applies to Alt+drag on an edge label ([ADR 0164](decisions/0164-alt-drag-slides-an-edge-label-along-its-edge.md)); the label's slider in the properties panel does the same job without a modifier.
 **Found:** 2026-09-24, while designing the duplicate-drag feature (not yet observed — no Linux machine available)
 
 **Symptom (expected):** on Linux desktops where the window manager grabs Alt+drag to move windows (GNOME/Mutter, KDE/KWin and XFCE by default), the app never receives the Alt mouse-down, so Alt+drag duplicate does nothing and the whole window moves instead.

@@ -1,7 +1,9 @@
 import {
   memo,
   useCallback,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type CSSProperties,
   type MouseEvent as ReactMouseEvent,
@@ -10,6 +12,7 @@ import {
 import { BaseEdge, EdgeLabelRenderer, useReactFlow, type EdgeProps } from '@xyflow/react'
 import type { EdgeStyle, LinePoint, MetadataEntry } from '@shared/diagram'
 import { buildEdgePath } from '@shared/geometry/edgePath'
+import { ratioNearest } from '@shared/geometry/pathSampling'
 import {
   orthogonalRouteVertices,
   orthogonalSegments,
@@ -85,8 +88,9 @@ function pathLengthOf(pathD: string): number {
 // identity across renders and the hooks below that depend on it do not re-run.
 const NO_POINTS: LinePoint[] = []
 
-// Fixed midpoint only, no drag-along-path: deliberately simple for v1 (ADR 0020). The label is
-// always rendered, even empty, so there is something to double-click to add one.
+// The label sits at `style.labelPosition` along the path (midpoint when unset); Alt+drag on it
+// moves it (ADR 0164). The label is always rendered, even empty, so there is something to
+// double-click to add one.
 //
 // Style (ADR 0014): `style`/`markerEnd` arriving as props are React Flow's resolution of
 // defaultEdgeOptions (Canvas.tsx) for an edge with no style override, used as-is when data.style
@@ -112,6 +116,8 @@ function LabeledEdge({
     edgeStraightSegmentLength,
     theme,
     pushSnapshot,
+    beginContinuousEdit,
+    endContinuousEdit,
     openContextMenu,
     gravityPresets,
     searchMatchIds,
@@ -213,6 +219,59 @@ function LabeledEdge({
     () => pointAtRatio(edgePath, labelRatio ?? 0.5),
     [edgePath, labelRatio]
   )
+
+  // Alt+drag on the label slides it along the path (ADR 0164). A native capture-phase listener, as
+  // for the duplicate drag, so the press never reaches the label editor or React Flow's pane pan.
+  // The point grabbed stays under the pointer, and the undo step opens on the first real change,
+  // so an Alt+click leaves none.
+  const labelRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = labelRef.current
+    if (!el) return
+    const onDown = (down: MouseEvent): void => {
+      if (down.button !== 0 || !down.altKey || down.shiftKey || down.ctrlKey || down.metaKey) return
+      if (down.target instanceof Element && down.target.closest('input, textarea')) return
+      down.stopPropagation()
+      down.preventDefault()
+      const grab = screenToFlowPosition({ x: down.clientX, y: down.clientY })
+      const start = pointAtRatio(edgePath, labelRatio ?? 0.5)
+      const offset = { x: grab.x - start.x, y: grab.y - start.y }
+      let last = labelRatio ?? 0.5
+      let snapshotted = false
+      const onMove = (move: MouseEvent): void => {
+        const pointer = screenToFlowPosition({ x: move.clientX, y: move.clientY })
+        const ratio =
+          Math.round(
+            ratioNearest(edgePath, { x: pointer.x - offset.x, y: pointer.y - offset.y }) * 1000
+          ) / 1000
+        if (ratio === last) return
+        last = ratio
+        if (!snapshotted) {
+          beginContinuousEdit()
+          snapshotted = true
+        }
+        updateEdgeData(id, { style: { ...edgeStyle, labelPosition: ratio } })
+      }
+      const onUp = (): void => {
+        if (snapshotted) endContinuousEdit()
+        window.removeEventListener('mousemove', onMove)
+        window.removeEventListener('mouseup', onUp)
+      }
+      window.addEventListener('mousemove', onMove)
+      window.addEventListener('mouseup', onUp)
+    }
+    el.addEventListener('mousedown', onDown, true)
+    return () => el.removeEventListener('mousedown', onDown, true)
+  }, [
+    edgePath,
+    labelRatio,
+    edgeStyle,
+    id,
+    beginContinuousEdit,
+    endContinuousEdit,
+    screenToFlowPosition,
+    updateEdgeData
+  ])
 
   // Opacity is per channel (strokeOpacity/fontOpacity), not one whole-element value (see
   // FontStyle.fontOpacity for why). Each is baked into its own colour with color-mix()
@@ -446,6 +505,7 @@ function LabeledEdge({
       />
       <EdgeLabelRenderer>
         <div
+          ref={labelRef}
           className={`edge-label${data?.compareClass ? ` ${data.compareClass}` : ''}`}
           style={{
             position: 'absolute',

@@ -64,6 +64,36 @@ export function flattenPath(d: string): Point[] {
   return points
 }
 
+// The inverse of pointAtRatio: the fraction (0-1) of the path's length at the point of the path
+// nearest to `target`. Dragging an edge label uses it (ADR 0164). A path that doubles back over
+// itself has several answers; the first of equal distance wins.
+export function ratioNearest(d: string, target: Point): number {
+  const points = flattenPath(d)
+  let total = 0
+  let bestDistance = Infinity
+  let bestAlong = 0
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1]
+    const dx = points[i].x - a.x
+    const dy = points[i].y - a.y
+    const length = Math.hypot(dx, dy)
+    const f =
+      length === 0
+        ? 0
+        : Math.max(
+            0,
+            Math.min(1, ((target.x - a.x) * dx + (target.y - a.y) * dy) / (length * length))
+          )
+    const distance = Math.hypot(target.x - (a.x + dx * f), target.y - (a.y + dy * f))
+    if (distance < bestDistance) {
+      bestDistance = distance
+      bestAlong = total + length * f
+    }
+    total += length
+  }
+  return total === 0 ? 0.5 : bestAlong / total
+}
+
 // The point at `ratio` (0-1) of the path's length, like SVGGeometryElement.getPointAtLength, with
 // the length taken along the flattened polyline.
 export function pointAtRatio(d: string, ratio: number): Point {
