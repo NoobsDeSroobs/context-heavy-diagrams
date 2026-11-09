@@ -53,7 +53,7 @@ The command line and the MCP server give the same answers ([ADR 0138](../decisio
 
 ## Draft, then review
 
-What an assistant writes is a draft. The skill tells it to run `chd diff` after an edit and say what changed, and the person reviews the same result in the app's compare window. The extension reads any file in its folder except a blacklist of executables, installers, archives, disk images, video and audio (what the assistant can make of a binary file depends on the client); layout is left to a person, because there is no automatic layout. A sample prompt is in the [README](../../README.md#draft-with-an-assistant-then-review).
+What an assistant writes is a draft. The skill tells it to run `chd diff` after an edit and say what changed, and the person reviews the same result in the app's compare window. The extension reads any file in its folder except a blacklist of executables, installers, archives, disk images, video and audio (what the assistant can make of a binary file depends on the client); layout is left to the assistant and the person, because there is no automatic layout: the answers of `edit_diagram` and `inspect_diagram` (and `chd edit`, `chd ask inspect`) list what is wrong with the layout as it is drawn, including edges across elements, crossing edges and labels on things, so an assistant can fix what it cannot see ([ADR 0161](../decisions/0161-the-layout-check-judges-edges-as-they-are-drawn.md)). A sample prompt is in the [README](../../README.md#draft-with-an-assistant-then-review).
 
 ## Rules every path follows
 

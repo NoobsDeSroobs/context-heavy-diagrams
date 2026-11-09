@@ -3,8 +3,6 @@
 // and what is wrong with the layout so far. All read-only and all taking a diagram, not a file, so the
 // open window can answer from its live state as well. The label geometry is layout/labelClearance.ts.
 import type {
-  ConnectionPoint,
-  DiagramEdge,
   DiagramFile,
   DiagramNode,
   HighlightDefinition,
@@ -13,13 +11,13 @@ import type {
   MetadataEntry,
   RequiredTagDefinition
 } from '../diagram/index.ts'
-import { effectiveConnectionPoints, pointCoordinates } from '../geometry/connectionPoints.ts'
 import {
   hiddenLabels,
   labelChipSize,
   labelNeededGap,
   labelTargetGap
 } from '../layout/labelClearance.ts'
+import { edgeIssues, type EdgeIssue } from './edgeRouting.ts'
 import { LINE_HEIGHT_EM, measureText, wrapText, type FontSpec } from '../export/textLayout.ts'
 import { NODE_STYLE_DEFAULTS, styledNodeType } from '../styling/styleDefaults.ts'
 import { summarizeEdge, summarizeNode, type EdgeSummary, type NodeSummary } from './operations.ts'
@@ -127,7 +125,7 @@ export function roomForLabel(question: RoomQuestion): Room {
 }
 
 export interface LayoutIssue {
-  kind: 'label-room' | 'label-overflow' | 'overlap' | 'outside-container' | 'edge-through-element'
+  kind: 'label-room' | 'label-overflow' | 'overlap' | 'outside-container' | EdgeIssue['kind']
   message: string
   ids: string[]
 }
@@ -153,68 +151,6 @@ function originOf(byId: Map<string, DiagramNode>, node: DiagramNode): { x: numbe
   return { x, y }
 }
 
-function isInside(byId: Map<string, DiagramNode>, node: DiagramNode, ancestorId: string): boolean {
-  for (
-    let p = byId.get(node.parentId ?? ''), hops = 0;
-    p && hops < 200;
-    p = byId.get(p.parentId ?? ''), hops += 1
-  ) {
-    if (p.id === ancestorId) return true
-  }
-  return false
-}
-
-// Where an edge meets an element: the named connection point on the element's current box.
-function handlePoint(
-  node: DiagramNode,
-  rect: Rect,
-  handle: string | undefined
-): { x: number; y: number } {
-  const points: ConnectionPoint[] = effectiveConnectionPoints(node.connectionPoints ?? [])
-  const point = points.find((p) => p.id === handle)
-  const fallback = point ?? points[0]
-  return pointCoordinates(
-    { left: rect.x, top: rect.y, width: rect.width, height: rect.height },
-    fallback ?? { id: 'right', side: 'right', offset: 0.5 }
-  )
-}
-
-// Does the straight segment p-q pass through the rectangle? (Liang-Barsky clipping.)
-function segmentHits(p: { x: number; y: number }, q: { x: number; y: number }, r: Rect): boolean {
-  let t0 = 0
-  let t1 = 1
-  const dx = q.x - p.x
-  const dy = q.y - p.y
-  const checks: [number, number][] = [
-    [-dx, p.x - r.x],
-    [dx, r.x + r.width - p.x],
-    [-dy, p.y - r.y],
-    [dy, r.y + r.height - p.y]
-  ]
-  for (const [d, dist] of checks) {
-    if (d === 0) {
-      if (dist < 0) return false
-    } else {
-      const t = dist / d
-      if (d < 0) {
-        if (t > t1) return false
-        if (t > t0) t0 = t
-      } else {
-        if (t < t0) return false
-        if (t < t1) t1 = t
-      }
-    }
-  }
-  return t0 < t1
-}
-
-const shrink = (r: Rect, by: number): Rect => ({
-  x: r.x + by,
-  y: r.y + by,
-  width: Math.max(r.width - 2 * by, 0),
-  height: Math.max(r.height - 2 * by, 0)
-})
-
 export function layoutIssues(diagram: DiagramFile, diagramFont?: string): LayoutIssue[] {
   const issues: LayoutIssue[] = []
   const byId = new Map(diagram.nodes.map((n) => [n.id, n]))
@@ -224,7 +160,8 @@ export function layoutIssues(diagram: DiagramFile, diagramFont?: string): Layout
   }
   const label = (n: DiagramNode): string => n.data.label || n.id
 
-  for (const hidden of hiddenLabels(diagram.nodes, diagram.edges, diagramFont)) {
+  const hiddenList = hiddenLabels(diagram.nodes, diagram.edges, diagramFont)
+  for (const hidden of hiddenList) {
     issues.push({
       kind: 'label-room',
       message: `edge ${hidden.edgeId} ("${hidden.label}") has ${Math.round(hidden.gap)}px between ${hidden.sourceId} and ${hidden.targetId}, but its label needs about ${hidden.needed}px`,
@@ -303,25 +240,7 @@ export function layoutIssues(diagram: DiagramFile, diagramFont?: string): Layout
     }
   }
 
-  // An approximation: the app draws curves, but a straight line between the two connection points
-  // shows when an edge runs over an element it does not join.
-  for (const edge of diagram.edges as DiagramEdge[]) {
-    const from = byId.get(edge.source)
-    const to = byId.get(edge.target)
-    if (!from || !to || (edge.points && edge.points.length > 0)) continue
-    const p = handlePoint(from, rectOf(from), edge.sourceHandle)
-    const q = handlePoint(to, rectOf(to), edge.targetHandle)
-    for (const other of solid) {
-      if (other.id === from.id || other.id === to.id) continue
-      if (isInside(byId, other, from.id) || isInside(byId, other, to.id)) continue
-      if (segmentHits(p, q, shrink(rectOf(other), 2))) {
-        issues.push({
-          kind: 'edge-through-element',
-          message: `edge ${edge.id} (${label(from)} to ${label(to)}) runs over "${label(other)}" (${other.id}); a straight line between its two connection points crosses it`,
-          ids: [edge.id, other.id]
-        })
-      }
-    }
-  }
+  // The edges as drawn: over an element, crossing, and their labels (ADR 0161).
+  issues.push(...edgeIssues(diagram, new Set(hiddenList.map((h) => h.edgeId))))
   return issues
 }

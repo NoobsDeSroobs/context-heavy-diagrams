@@ -1,26 +1,25 @@
 # 0167: An assistant can see the diagram it drew
 
 ## Status
-In Progress: the spike is done (2026-11-08), the findings are below and the choice is the maintainer's.
+Built (2026-11-09), to be confirmed: the geometry report on the real edge paths ([ADR 0161](../../decisions/0161-the-layout-check-judges-edges-as-they-are-drawn.md)). The maintainer chose the report over a picture.
 
 ## Goal
-After an assistant draws or changes a diagram it can look at the result, find overlaps and crowded labels, and fix them, without opening the app.
+After an assistant draws or changes a diagram it can find overlaps, crossing edges and crowded labels, and fix them, without opening the app.
 
 ## Why
-In both trial runs the assistant never saw its output. One had no renderer; the other wrote its own and could not open it, because the browser tool refused a local file. Both reported layout as unchecked. `chd export` already writes an SVG without the app, but an assistant cannot read an SVG as a picture, and a rasteriser is not something the command line or the server has today.
+In both trial runs the assistant never saw its output. One had no renderer; the other wrote its own and could not open it, because the browser tool refused a local file. Both reported layout as unchecked. `chd export` already writes an SVG without the app, but an assistant cannot read an SVG as a picture.
 
-## Options
-- **An MCP tool that returns a PNG as an image,** so a client that can see images sees the diagram with no shell and no browser. Needs a rasteriser that runs without a system runtime or a window: a WebAssembly one is the likeliest, and it is a new dependency (size, licence, notice) to evaluate.
-- **`chd export --png`** with the same rasteriser, for an agent with a shell and a way to view files.
-- **A text report,** needing no image: elements that overlap, edges that run through a box they do not connect, labels that collide, connected elements closer than the minimum of [0162](../completed-epics.md#0162-minimum-distance-between-connected-elements). Works for any client and can come first.
-- The Electron-as-Node launcher cannot open a window, so rendering through the app's own engine is not an option without a separate mode.
+## Decision
+No PNG in this tool. A rasteriser means a new dependency (resvg-wasm plus a bundled font) or an installed browser (not on every OS, and not our code under the offline rule), for a picture that not every client shows its model. Turning an SVG into a PNG is a separate tool that takes any SVG; `chd export` already writes the SVG it needs. The geometry report works in every client, offline and the same on every computer.
 
 ## Tasks
 - [x] Spike the rasteriser options: size, licence, behaviour on Windows and Linux, fonts (see Spike findings; Linux and macOS not tried)
-- [ ] The geometry report on the real edge paths: edge against element for bent and curved edges, edge crossing edge, label chips against elements and edges. It builds on `layoutIssues`, which `chd edit` and `chd ask inspect` already answer
-- [ ] The PNG: MCP tool and `chd export --png`
-- [ ] Guidance: render and look after the geometry pass, and fix what the report lists
-- [ ] Parity with [0166](../completed-epics.md#0166-the-mcp-server-and-the-command-line-share-their-checks); update `docs/architecture/ai-integration.md`
+- [x] The geometry report on the real edge paths: edge against element for bent and curved edges, edge crossing edge, label chips against elements, edges and each other (`src/shared/edit/edgeRouting.ts`, called from `layoutIssues`, which `chd edit` and `chd ask inspect` already answer)
+- [x] Guidance: run the report after drawing and fix what it lists (skill layout guide)
+- [x] Parity with [0166](../completed-epics.md#0166-the-mcp-server-and-the-command-line-share-their-checks); update `docs/architecture/ai-integration.md`
+
+## Result (2026-11-09)
+Run over the 34 example diagrams it reports edges across elements (55), crossings (81, 79 of them in the large rail landscape), labels over elements (16), over edges (15) and over other labels (3). Checked against a render of two of them (the C4 container diagram and hello-world): the labels it names do sit on a box corner, on a line or on another label, and the hello-world edge really doubles back across both boxes. The slowest diagram takes 12 ms. Not done: a way to see whether an assistant given the list actually fixes what it names; try it in the next trial run.
 
 ## Notes
 Raised after the first trial runs.
