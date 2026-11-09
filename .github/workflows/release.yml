@@ -66,6 +66,7 @@ jobs:
           {
             cat notes.md
             printf '\n### Installing\n\nThe installer is not signed yet. Windows shows "Windows protected your PC": choose **More info**, then **Run anyway**. The SHA-256 of the installer is in `SHA256SUMS`.\n'
+            printf '\n### Linux and macOS\n\nA Linux AppImage and deb and a macOS DMG are attached when their builds succeed. **They have not been tested on real hardware**: CI checks that the program is built and that `chd --version` runs, and nothing more. Please report what you find. The macOS app is not notarised: open it with right-click, **Open**, or under System Settings, Privacy & Security, **Open Anyway**. Their SHA-256 are in `SHA256SUMS-linux` and `SHA256SUMS-macos`.\n'
             printf '\n### Source code\n\nThis installer is built from the source at %s/%s/tree/%s (GPL-3.0-or-later). The licence and the third-party notices are installed next to the program, as `LICENSE.txt` and `THIRD-PARTY-NOTICES.md`.\n' "$GITHUB_SERVER_URL" "$GH_REPO" "$TAG"
           } > release-notes.md
       - name: Publish the release
@@ -79,3 +80,77 @@ jobs:
             case "$version" in 0.*) flag="--prerelease" ;; esac
             gh release create "$TAG" "$file" dist/SHA256SUMS --verify-tag --title "Context-Heavy Diagrams $version" --notes-file release-notes.md $flag
           fi
+
+  # The Linux and macOS builds are published after the Windows release exists and only add files
+  # to it, so a failure here never blocks the tested installer. They are labelled as not tested
+  # on real hardware (ADR 0166).
+  linux:
+    name: Linux builds (not tested on real hardware)
+    needs: windows
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        shell: bash
+    env:
+      TAG: ${{ github.event.inputs.tag || github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: refs/tags/${{ github.event.inputs.tag || github.ref_name }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # AppImage and deb only: snap needs snapcraft.
+      - run: npm run build:linux -- AppImage deb --publish never
+      - name: Check the build
+        run: node scripts/smoke-packaged.mjs
+      - name: Publish
+        run: |
+          version=$(node -p "require('./package.json').version")
+          cd dist
+          appimage="context-heavy-diagrams-$version.AppImage"
+          deb=$(ls ./*.deb | head -n 1 | sed 's|^\./||')
+          [ -f "$appimage" ] && [ -n "$deb" ] || { echo "Expected files are missing"; ls; exit 1; }
+          sha256sum "$appimage" "$deb" > SHA256SUMS-linux
+          gh release upload "$TAG" "$appimage#Linux AppImage (not tested on real hardware)" "$deb#Linux deb package (not tested on real hardware)" SHA256SUMS-linux --clobber
+
+  macos:
+    name: macOS build (not tested on real hardware)
+    needs: windows
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        shell: bash
+    env:
+      TAG: ${{ github.event.inputs.tag || github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: refs/tags/${{ github.event.inputs.tag || github.ref_name }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # electron-builder.yml makes it one universal, ad-hoc signed DMG (ADR 0166).
+      - run: npm run build:mac -- --publish never
+      - name: Check the build
+        run: node scripts/smoke-packaged.mjs
+      - name: Publish
+        run: |
+          version=$(node -p "require('./package.json').version")
+          cd dist
+          dmg="context-heavy-diagrams-$version.dmg"
+          [ -f "$dmg" ] || { echo "Expected file is missing"; ls; exit 1; }
+          shasum -a 256 "$dmg" > SHA256SUMS-macos
+          gh release upload "$TAG" "$dmg#macOS DMG, Apple Silicon and Intel (not tested on real hardware)" SHA256SUMS-macos --clobber

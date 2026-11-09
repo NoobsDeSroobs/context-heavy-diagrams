@@ -98,7 +98,10 @@ A diagram is a small, deterministic text file, so git can do for it what it does
 
 **Windows:** get `context-heavy-diagrams-<version>-setup.exe` from the [releases page](https://github.com/NoobsDeSroobs/context-heavy-diagrams/releases), together with `SHA256SUMS`. The installer is **not signed yet**, so Windows shows "Windows protected your PC": choose **More info**, then **Run anyway**. You have to accept the install this way until the installers are signed. To check the download, compare `Get-FileHash <file>` in PowerShell with `SHA256SUMS`.
 
-**Linux and macOS:** no installer is published yet; build from source below.
+**Linux and macOS:** each release also has a Linux AppImage and deb and a macOS DMG (Apple Silicon and Intel in one file), with checksums in `SHA256SUMS-linux` and `SHA256SUMS-macos`. **Nobody has tried them on real hardware yet**: CI builds them and checks that the program starts as a command-line tool, nothing more, and each file says so on the releases page. They are attached when their build succeeds, so an older release may have none. Please [report what you find](https://github.com/NoobsDeSroobs/context-heavy-diagrams/issues), or build from source below.
+
+- **AppImage:** make it executable and run it. A recent Ubuntu may need `libfuse2` for it; the deb does not.
+- **macOS:** the app is not notarised, so macOS says it cannot verify it. Right-click the app and choose **Open**, or allow it under System Settings, Privacy & Security, **Open Anyway**.
 
 ## Try it
 
