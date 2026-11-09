@@ -13,27 +13,31 @@ import {
   type IconAsset,
   type SvgExportOptions
 } from '../shared/export/renderDiagram.ts'
+import { renderDiagramDrawio } from '../shared/export/drawio.ts'
 
 // `chd export` (ADR 0124): a .chd file to an SVG image without opening the app, so a README or a
-// wiki image can be regenerated whenever the diagram changes. Bundled into resources/cli/export.mjs
-// by scripts/build-cli.mjs; chd.mjs loads it only for this command. Read-only on the diagram, so the
-// stale-edit rule (ADR 0109) does not apply; the output must be an .svg, so it can never overwrite a
-// diagram.
+// wiki image can be regenerated whenever the diagram changes, or to a draw.io file (ADR 0167).
+// Bundled into resources/cli/export.mjs by scripts/build-cli.mjs; chd.mjs loads it only for this
+// command. Read-only on the diagram, so the stale-edit rule (ADR 0109) does not apply; the output
+// must be an .svg or .drawio, so it can never overwrite a diagram.
 
 export const EXPORT_USAGE = `Usage: chd export <file.chd> [options]
 
-  -o, --output <file.svg>   Where to write (default: next to the diagram, same name). '-' is stdout.
+  --format svg|drawio       What to write (default: from the -o extension, else svg)
+  -o, --output <file>       Where to write (default: next to the diagram, same name). '-' is stdout.
   --theme light|dark        Which look to draw (default: light)
+  --highlight <key[=value]> Draw a highlight as if it were switched on (repeatable); 'key' alone
+                            switches on every value of that key
+ svg only:
   --padding <px>            Margin around the drawing (default: ${DEFAULT_SVG_EXPORT_OPTIONS.paddingPx})
   --background <value>      'theme' (default), 'transparent' or a colour such as #ffffff
   --no-legend               Leave the legend out
   --legend-corner <corner>  bottom-left (default), bottom-right, top-left or top-right
-  --highlight <key[=value]> Draw a highlight as if it were switched on (repeatable); 'key' alone
-                            switches on every value of that key
 
 Writes an .svg next to the diagram (or where -o says), so an image in a README or wiki can be
-regenerated whenever the diagram changes. It needs no display and only reads the diagram; it never
-overwrites a diagram.
+regenerated whenever the diagram changes. With --format drawio (or an output ending in .drawio) it
+writes a draw.io / diagrams.net file instead; what draw.io cannot hold is listed on stderr. It needs
+no display and only reads the diagram; it never overwrites a diagram.
 
 Exit codes: 0 ok, 1 if the file can't be read or written, 2 usage error.
 `
@@ -46,9 +50,14 @@ export interface ExportEnv {
   iconDir?: string
 }
 
+type Format = 'svg' | 'drawio'
+
 interface Parsed {
   input: string
   output?: string
+  format?: Format
+  // The options that only mean something for an SVG, so asking for them with draw.io is an error.
+  svgOnly: string[]
   theme: 'light' | 'dark'
   paddingPx: number
   background: SvgExportOptions['background']
@@ -62,6 +71,7 @@ class UsageError extends Error {}
 function parseArgs(args: string[]): Parsed {
   const parsed: Parsed = {
     input: '',
+    svgOnly: [],
     theme: 'light',
     paddingPx: DEFAULT_SVG_EXPORT_OPTIONS.paddingPx,
     background: 'theme',
@@ -78,26 +88,35 @@ function parseArgs(args: string[]): Parsed {
     if (arg === '-o' || arg === '--output') {
       parsed.output = value(i, arg)
       i += 1
+    } else if (arg === '--format') {
+      const v = value(i, arg)
+      if (v !== 'svg' && v !== 'drawio') throw new UsageError(`--format must be svg or drawio`)
+      parsed.format = v
+      i += 1
     } else if (arg === '--theme') {
       const v = value(i, arg)
       if (v !== 'light' && v !== 'dark') throw new UsageError(`--theme must be light or dark`)
       parsed.theme = v
       i += 1
     } else if (arg === '--padding') {
+      parsed.svgOnly.push(arg)
       const n = Number(value(i, arg))
       if (!Number.isFinite(n) || n < 0)
         throw new UsageError('--padding must be a number of 0 or more')
       parsed.paddingPx = n
       i += 1
     } else if (arg === '--background') {
+      parsed.svgOnly.push(arg)
       const v = value(i, arg)
       if (v === 'theme' || v === 'transparent') parsed.background = v
       else if (/^#[0-9a-fA-F]{3,8}$/.test(v)) parsed.background = { color: v }
       else throw new UsageError(`--background must be theme, transparent or a #hex colour`)
       i += 1
     } else if (arg === '--no-legend') {
+      parsed.svgOnly.push(arg)
       parsed.legend = false
     } else if (arg === '--legend-corner') {
+      parsed.svgOnly.push(arg)
       const v = value(i, arg) as LegendCorner
       if (!CORNERS.includes(v))
         throw new UsageError(`--legend-corner must be one of ${CORNERS.join(', ')}`)
@@ -195,6 +214,20 @@ export function runExport(args: string[], env: ExportEnv = {}): number {
     return 2
   }
 
+  // The format is the --format option, else what the output file's extension says, else SVG.
+  const format: Format =
+    parsed.format ??
+    (parsed.output && parsed.output !== '-' && extname(parsed.output).toLowerCase() === '.drawio'
+      ? 'drawio'
+      : 'svg')
+  if (format === 'drawio' && parsed.svgOnly.length > 0) {
+    console.error(
+      `chd: ${parsed.svgOnly.join(', ')} only apply to an SVG, not to --format drawio\n\n${EXPORT_USAGE}`
+    )
+    return 2
+  }
+  const extension = format === 'drawio' ? '.drawio' : '.svg'
+
   const input = resolve(parsed.input)
   let diagram: DiagramFile
   try {
@@ -209,33 +242,46 @@ export function runExport(args: string[], env: ExportEnv = {}): number {
   const output =
     parsed.output === '-'
       ? '-'
-      : resolve(parsed.output ?? join(dirname(input), basename(input, extname(input)) + '.svg'))
-  if (output !== '-' && extname(output).toLowerCase() !== '.svg') {
+      : resolve(parsed.output ?? join(dirname(input), basename(input, extname(input)) + extension))
+  if (output !== '-' && extname(output).toLowerCase() !== extension) {
     console.error(
-      `chd: the output must be an .svg file (it never overwrites a diagram): '${output}'`
+      `chd: the output must be ${format === 'drawio' ? 'a .drawio' : 'an .svg'} file (it never overwrites a diagram): '${output}'`
     )
     return 2
   }
 
   const enabled = enabledHighlightIds(diagram, parsed.highlights)
-  const legendItems = parsed.legend ? defaultLegendItems(diagram, enabled) : []
-  const svg = renderDiagramSvg(diagram, {
-    theme: parsed.theme,
-    paddingPx: parsed.paddingPx,
-    background: parsed.background,
-    legend: legendItems.length > 0 ? { items: legendItems, corner: parsed.corner } : undefined,
-    enabledHighlightIds: enabled,
-    edgeStraightSegmentLength: DEFAULT_SVG_EXPORT_OPTIONS.edgeStraightSegmentLength,
-    icons: loadIcons(diagram, dirname(input), legendItems, env, (m) => console.error(`chd: ${m}`)),
-    title: basename(input, extname(input))
-  })
+  const warn = (message: string): void => console.error(`chd: ${message}`)
+  let text: string
+  if (format === 'drawio') {
+    const result = renderDiagramDrawio(diagram, {
+      theme: parsed.theme,
+      enabledHighlightIds: enabled,
+      icons: loadIcons(diagram, dirname(input), [], env, warn),
+      title: basename(input, extname(input))
+    })
+    for (const note of result.notes) warn(`note: ${note}`)
+    text = result.xml
+  } else {
+    const legendItems = parsed.legend ? defaultLegendItems(diagram, enabled) : []
+    text = renderDiagramSvg(diagram, {
+      theme: parsed.theme,
+      paddingPx: parsed.paddingPx,
+      background: parsed.background,
+      legend: legendItems.length > 0 ? { items: legendItems, corner: parsed.corner } : undefined,
+      enabledHighlightIds: enabled,
+      edgeStraightSegmentLength: DEFAULT_SVG_EXPORT_OPTIONS.edgeStraightSegmentLength,
+      icons: loadIcons(diagram, dirname(input), legendItems, env, warn),
+      title: basename(input, extname(input))
+    })
+  }
 
   if (output === '-') {
-    process.stdout.write(svg)
+    process.stdout.write(text)
     return 0
   }
   try {
-    writeFileSync(output, svg, 'utf-8')
+    writeFileSync(output, text, 'utf-8')
   } catch (error) {
     console.error(`chd: can't write '${output}': ${error instanceof Error ? error.message : error}`)
     return 1

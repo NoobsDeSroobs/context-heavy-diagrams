@@ -443,6 +443,9 @@ const api = {
   exportSvgToFile(svg: string, suggestedFilename: string): Promise<boolean> {
     return ipcRenderer.invoke('export:svgToFile', svg, suggestedFilename)
   },
+  exportDrawioToFile(xml: string, suggestedFilename: string): Promise<boolean> {
+    return ipcRenderer.invoke('export:drawioToFile', xml, suggestedFilename)
+  },
 
   // Copy/paste (see ADR 0049) — the real OS clipboard. The preload is
   // sandboxed (ADR 0112), which has no `clipboard` module, so main does it

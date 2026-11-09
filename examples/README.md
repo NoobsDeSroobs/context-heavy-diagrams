@@ -2,6 +2,8 @@
 
 Real, working diagram files. Open any of them with **File → Open** (or drop it onto the window). Each is a single `.chd` file, which is plain JSON (see [`docs/file-format.md`](../docs/file-format.md)). A diagram that uses a feature needing extra files (notes, linked diagrams, images) keeps them in a sibling folder named after it (`<name>/notes/`, `<name>/assets/`).
 
+Every example also exports to draw.io, from **File → Export → draw.io…** or `chd export <file.chd> -o <file>.drawio`. `gallery/landscape/.../aws-deployment.chd` (nested containers, icons, tags) and `gallery/data/star-schema-powerbi.chd` (crow's-foot ends, tags) show the most of what comes across; a test exports every example.
+
 ## Start here
 
 | File | What it shows |

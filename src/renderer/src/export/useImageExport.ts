@@ -20,6 +20,7 @@ import type { AppPreferences } from '../preferences/preferences'
 import type { Theme } from '../styling/theme'
 import type { ImageExportChoice } from './ExportImageDialog'
 import { buildDiagramSvg } from './exportSvg'
+import { buildDiagramDrawio } from './exportDrawio'
 import { captureDiagramPng, resolveEffectiveBackgroundColor, rgbStringToHex } from './exportPng'
 
 export interface ImageExportInputs {
@@ -49,6 +50,7 @@ export interface ImageExportState {
   isExportingPng: boolean
   handleExportPng: (choice: ImageExportChoice) => Promise<void>
   handleExportSvg: (choice: ImageExportChoice) => Promise<void>
+  handleExportDrawio: () => Promise<void>
 }
 
 // Exporting the diagram as a PNG (ADR 0051) or an SVG (ADR 0124).
@@ -173,31 +175,49 @@ export function useImageExport(
     ]
   )
 
-  // SVG export (ADR 0124): rendered from the diagram's data, not from the DOM, so unlike the PNG
-  // export it needs no deselecting, no mounting of off-screen elements and no waiting for a frame.
-  // A node that has no stored size is given the size React Flow measured for it.
+  // The diagram as the file would hold it, for the exports that render from data (SVG, ADR 0124,
+  // and draw.io, ADR 0167) instead of the DOM, so they need no deselecting, no mounting of
+  // off-screen elements and no waiting for a frame. A node that has no stored size is given the
+  // size React Flow measured for it.
+  const currentDiagram = useCallback(() => {
+    const sized = nodes.map((n) =>
+      n.width == null && n.measured?.width != null && n.measured.height != null
+        ? { ...n, width: n.measured.width, height: n.measured.height }
+        : n
+    )
+    return toDiagramFile(
+      sized,
+      edges,
+      diagramMetadata,
+      requiredTags,
+      highlights,
+      legend,
+      gravityPresets,
+      diagramMaxConnectionPointsPerSide,
+      edgeDirectionSets,
+      activeEdgeDirectionSetId,
+      security,
+      diagramFontFamily
+    )
+  }, [
+    nodes,
+    edges,
+    diagramMetadata,
+    requiredTags,
+    highlights,
+    legend,
+    gravityPresets,
+    diagramMaxConnectionPointsPerSide,
+    diagramFontFamily,
+    edgeDirectionSets,
+    activeEdgeDirectionSetId,
+    security
+  ])
+
   const handleExportSvg = useCallback(
     async (choice: ImageExportChoice) => {
       try {
-        const sized = nodes.map((n) =>
-          n.width == null && n.measured?.width != null && n.measured.height != null
-            ? { ...n, width: n.measured.width, height: n.measured.height }
-            : n
-        )
-        const diagram = toDiagramFile(
-          sized,
-          edges,
-          diagramMetadata,
-          requiredTags,
-          highlights,
-          legend,
-          gravityPresets,
-          diagramMaxConnectionPointsPerSide,
-          edgeDirectionSets,
-          activeEdgeDirectionSetId,
-          security,
-          diagramFontFamily
-        )
+        const diagram = currentDiagram()
         const fileName = currentPath ? currentPath.split(/[\\/]/).pop()! : 'diagram.chd'
         const svg = await buildDiagramSvg(diagram, {
           theme,
@@ -217,18 +237,8 @@ export function useImageExport(
       }
     },
     [
-      nodes,
-      edges,
-      diagramMetadata,
-      requiredTags,
-      highlights,
-      legend,
-      gravityPresets,
-      diagramMaxConnectionPointsPerSide,
+      currentDiagram,
       diagramFontFamily,
-      edgeDirectionSets,
-      activeEdgeDirectionSetId,
-      security,
       currentPath,
       theme,
       exportPngEffectiveColorHex,
@@ -237,6 +247,39 @@ export function useImageExport(
       preferences.defaultFontFamily
     ]
   )
+
+  // draw.io export (ADR 0167): no dialog, since a draw.io file has no padding, background or legend
+  // to choose. What draw.io cannot hold is shown after the file is written.
+  const handleExportDrawio = useCallback(async () => {
+    try {
+      const diagram = currentDiagram()
+      const fileName = (currentPath ? currentPath.split(/[\\/]/).pop()! : 'diagram.chd').replace(
+        /\.chd$/,
+        ''
+      )
+      const { xml, notes } = await buildDiagramDrawio(diagram, {
+        theme,
+        enabledHighlightIds: [...enabledHighlightIds],
+        diagramPath: currentPath,
+        fontFamily: effectiveDiagramFont(diagramFontFamily, preferences.defaultFontFamily),
+        title: fileName
+      })
+      const saved = await window.api.exportDrawioToFile(xml, fileName + '.drawio')
+      if (saved && notes.length > 0) {
+        const list = notes.map((n) => `- ${n}`).join('\n')
+        showAlert(`Exported to draw.io. Not carried over, or only approximated:\n\n${list}`)
+      }
+    } catch (error) {
+      showAlert(`draw.io export failed: ${error instanceof Error ? error.message : String(error)}`)
+    }
+  }, [
+    currentDiagram,
+    currentPath,
+    theme,
+    enabledHighlightIds,
+    diagramFontFamily,
+    preferences.defaultFontFamily
+  ])
 
   // Refs can't be read during render (React lint rule, and genuinely
   // unsafe under concurrent rendering) — so ExportImageDialog's color-swatch
@@ -256,6 +299,7 @@ export function useImageExport(
     exportPngEffectiveColorHex,
     isExportingPng,
     handleExportPng,
-    handleExportSvg
+    handleExportSvg,
+    handleExportDrawio
   }
 }
