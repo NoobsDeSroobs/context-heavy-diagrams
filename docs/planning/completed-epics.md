@@ -551,6 +551,10 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 *Done* (in the next release, 0.8.0). A small button on the minimap's corner and **View → Minimap** show or hide it; the choice is a preference, on by default. ADR: [0158](../decisions/0158-side-panel-width-and-the-minimap-are-preferences.md).
 
+### 0186: `chd` on the PATH, as a choice in the installer
+
+*Done* (0.8.0). The Windows installer's options page has a third checkbox, unticked by default, that adds `<install folder>\bin` to the user's PATH (`HKCU\Environment\Path`, kept as `REG_EXPAND_SZ`); `bin\chd.cmd` is a one-line shim that calls the launcher one folder up. The uninstaller removes exactly that entry, an update leaves it alone, and a PATH too long for NSIS strings is left untouched. `scripts/installerPath.test.mjs` runs the same NSIS code against a scratch registry key. Tried by the maintainer with the built installer. ADR: [0162](../decisions/0162-the-installer-can-put-chd-on-the-path.md). Left open: Linux and macOS, and an update must move the entry if the install-folder choice (0161) is ever added.
+
 ### 0130: Multi-file save follow-ups
 
 *Done* (in the next release, 0.8.0). One notice lists every file changed outside the app (the diagram, and any note that is open or has unsaved edits) with Review changes, Reload and Ignore, and Reload touches only those files. Unsaved text in a note whose element was deleted is kept and listed in Diagnostics with Copy text and Discard. A note's clean copy is dropped on every way the panel closes. Save As is a dialog that copies or removes every reference (notes, images and custom icons, linked diagrams) into a folder named after the new diagram. ADRs: [0159](../decisions/0159-one-notice-for-every-file-that-changed-outside-the-app.md), [0160](../decisions/0160-save-as-copies-into-a-folder-named-after-the-new-diagram.md), and [0092](../decisions/0092-unified-multi-file-save-and-change-detection.md) updated. Left open: the check on Linux (file-stamp granularity, the native dialogs including the save picker's replace prompt, the recovery folder).
