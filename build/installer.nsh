@@ -1,10 +1,11 @@
 ; Custom NSIS pieces for the Windows installer (ADR 0108), pulled in through
 ; `nsis.include` in electron-builder.yml. The installer is the assisted (wizard)
-; form so it can ask two questions on one options page:
+; form so it can ask three questions on one options page:
 ;   1. Associate .chd files with this app (double-click to open).
 ;   2. Enable AI features (seeds the aiFeaturesEnabled preference).
-; Both default to ticked. Both are first-run choices: an update (--updated)
-; skips the page and leaves everything as the user last left it.
+;   3. Put the chd command on the PATH (ADR 0162).
+; The first two default to ticked, the third to unticked. All are first-run choices: an update
+; (--updated) skips the page and leaves everything as the user last left it.
 ;
 ; The file association is written here, by hand, instead of through
 ; electron-builder's global `fileAssociations`, because that registers
@@ -14,6 +15,7 @@
 
 !include nsDialogs.nsh
 !include LogicLib.nsh
+!include "chdPath.nsh"
 
 !define CHD_PROGID "ContextHeavyDiagrams.Diagram"
 !define CHD_BACKUP_VALUE "ContextHeavyDiagrams.backup"
@@ -24,14 +26,21 @@
 !ifndef BUILD_UNINSTALLER
   Var ChdAssocWanted
   Var ChdAiWanted
+  Var ChdPathWanted
   Var ChdAssocBox
   Var ChdAiBox
+  Var ChdPathBox
+  !insertmacro ChdPathRemove ""
+  !insertmacro ChdPathAdd
+!else
+  !insertmacro ChdPathRemove "un."
 !endif
 
 ; Silent installs never show the page, so the defaults have to be set up front.
 !macro customInit
   StrCpy $ChdAssocWanted ${BST_CHECKED}
   StrCpy $ChdAiWanted ${BST_CHECKED}
+  StrCpy $ChdPathWanted ${BST_UNCHECKED}
 !macroend
 
 !macro customPageAfterChangeDir
@@ -46,16 +55,22 @@
       Abort
     ${EndIf}
 
-    ${NSD_CreateCheckbox} 0 8u 100% 12u "Open .chd diagram files with this app (double-click to open)"
+    ${NSD_CreateCheckbox} 0 0u 100% 12u "Open .chd diagram files with this app (double-click to open)"
     Pop $ChdAssocBox
     ${NSD_SetState} $ChdAssocBox $ChdAssocWanted
-    ${NSD_CreateLabel} 12u 22u 94% 24u "Untick this if another program, for example an emulator, should keep opening .chd files. You can still open diagrams from File > Open or by dragging them onto the window."
+    ${NSD_CreateLabel} 12u 11u 94% 24u "Untick this if another program, for example an emulator, should keep opening .chd files. You can still open diagrams from File > Open or by dragging them onto the window."
     Pop $0
 
-    ${NSD_CreateCheckbox} 0 58u 100% 12u "Enable AI features (adds an AI menu)"
+    ${NSD_CreateCheckbox} 0 40u 100% 12u "Enable AI features (adds an AI menu)"
     Pop $ChdAiBox
     ${NSD_SetState} $ChdAiBox $ChdAiWanted
-    ${NSD_CreateLabel} 12u 72u 94% 44u "Warning: this only prepares your diagrams for AI tools you choose to use. Anything you share with an AI assistant, including diagram contents, may leave your computer and be sent to the company that runs it. Leave this off if your diagrams are confidential. You can change this later in Preferences."
+    ${NSD_CreateLabel} 12u 52u 94% 40u "Warning: this only prepares your diagrams for AI tools you choose to use. Anything you share with an AI assistant, including diagram contents, may leave your computer and be sent to the company that runs it. Leave this off if your diagrams are confidential. You can change this later in Preferences."
+    Pop $0
+
+    ${NSD_CreateCheckbox} 0 98u 100% 12u "Add the chd command to your PATH (type chd in a terminal)"
+    Pop $ChdPathBox
+    ${NSD_SetState} $ChdPathBox $ChdPathWanted
+    ${NSD_CreateLabel} 12u 110u 94% 18u "Adds the app's bin folder to your user PATH; terminals that are already open need to be reopened. Uninstalling removes it again."
     Pop $0
 
     nsDialogs::Show
@@ -64,6 +79,7 @@
   Function ChdOptionsPageLeave
     ${NSD_GetState} $ChdAssocBox $ChdAssocWanted
     ${NSD_GetState} $ChdAiBox $ChdAiWanted
+    ${NSD_GetState} $ChdPathBox $ChdPathWanted
   FunctionEnd
 
   Page custom ChdOptionsPageCreate ChdOptionsPageLeave
@@ -80,6 +96,11 @@
     FileOpen $1 "$INSTDIR\install-options.json" w
     FileWrite $1 '{ "aiFeaturesEnabled": $0 }$\r$\n'
     FileClose $1
+
+    ${If} $ChdPathWanted == ${BST_CHECKED}
+      Push "$INSTDIR\bin"
+      Call ChdPathAdd
+    ${EndIf}
 
     ${If} $ChdAssocWanted == ${BST_CHECKED}
       ; Remember whoever owned .chd before us so uninstalling can hand it back.
@@ -121,6 +142,8 @@
     DeleteRegKey /ifempty SHELL_CONTEXT "Software\Classes\.chd"
     DeleteRegKey SHELL_CONTEXT "Software\Classes\${CHD_PROGID}"
     Delete "$INSTDIR\install-options.json"
+    Push "$INSTDIR\bin"
+    Call un.ChdPathRemove
     System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0, p 0, p 0)'
   ${endIf}
 !macroend

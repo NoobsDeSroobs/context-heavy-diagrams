@@ -1,7 +1,7 @@
 # 0106: The `chd` command-line tool — Electron-as-Node launchers, no separate binary
 
 ## Status
-Accepted (2026-10-15).
+Accepted (2026-10-15). The decision not to register `chd` on the PATH is replaced for the Windows installer by [ADR 0162](0162-the-installer-can-put-chd-on-the-path.md).
 
 ## Context
 Two audiences need to run our format knowledge from a terminal: an AI agent that

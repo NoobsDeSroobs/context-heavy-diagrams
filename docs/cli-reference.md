@@ -18,7 +18,7 @@
 
 ## Getting `chd`
 
-The Windows and Linux builds carry a launcher next to the app's executable: `chd.cmd` on Windows, `chd` on Linux. It is **not on your `PATH`** ([ADR 0106](decisions/0106-chd-command-line-tool.md)), so call it by its full path, or add its folder to `PATH` yourself. **AI → Enable AI assistance in a folder…** writes the launcher's full path into that folder's `AGENTS.md`. From a source checkout, run `node resources/cli/chd.mjs` in place of `chd` (after `npm run build`, which builds the commands that live in their own bundles). There is no launcher in a macOS build.
+The Windows and Linux builds carry a launcher next to the app's executable: `chd.cmd` on Windows, `chd` on Linux. On Windows the installer can add it to your `PATH`: tick **Add the chd command to your PATH** on its options page (unticked by default; open a new terminal afterwards), and uninstalling removes it again ([ADR 0162](decisions/0162-the-installer-can-put-chd-on-the-path.md)). Otherwise, and on Linux, it is **not on your `PATH`** ([ADR 0106](decisions/0106-chd-command-line-tool.md)): call it by its full path, or add its folder to `PATH` yourself. **AI → Enable AI assistance in a folder…** writes the launcher's full path into that folder's `AGENTS.md`. From a source checkout, run `node resources/cli/chd.mjs` in place of `chd` (after `npm run build`, which builds the commands that live in their own bundles). There is no launcher in a macOS build.
 
 On **Windows PowerShell 5.1**, text piped to a program is re-encoded and can damage non-ASCII labels. Give the operations as a file (`--ops ops.json`) rather than a pipe, or use PowerShell 7 or bash.
 
