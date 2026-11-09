@@ -1,7 +1,7 @@
 # 0146: JSON Canvas export
 
 ## Status
-Not Started. Logged 2026-10-21 from the [comparison with other tools](../../comparison.md). Sparse on purpose: to be reviewed and discussed before any decision to build it.
+Not Started. Logged 2026-10-21; after the draw.io export ([0052](0052-drawio-import-export.md)) in the import/export batch. Sparse on purpose: to be reviewed and discussed before any decision to build it.
 
 ## Goal
 Export a diagram to the open [JSON Canvas](https://jsoncanvas.org/) format so it can be opened in Obsidian and other apps that read it. Possibly import in the other direction later.
@@ -16,4 +16,4 @@ Obsidian Canvas is the closest tool in feel, and its format is open and small. A
 - **Direction.** Export only at first.
 
 ## Related
-[Epic 0144](../completed-epics.md#0144-svg-export-and-a-command-line-export) (the first export to build; this is its small sibling), [epic 0052](later/0052-drawio-import-export.md).
+[Epic 0144](../completed-epics.md#0144-svg-export-and-a-command-line-export) (the first export to build; this is its small sibling), [epic 0052](0052-drawio-import-export.md).

@@ -7,7 +7,7 @@ import type {
   LineStyleKind,
   MarkerKind
 } from '../diagram/index.ts'
-import { highlightId } from '../tagging/highlights.ts'
+import { highlightId, isTransparentHighlight } from '../tagging/highlights.ts'
 
 // The legend row the active direction set contributes (ADR 0081): its name
 // drawn as an arrow, shown in the Legend panel and prepended to the image
@@ -117,7 +117,10 @@ export function buildExportLegendItems(
     label: entry.label
   }))
 
-  const enabled = highlights.filter((h) => enabledHighlightIds.has(highlightId(h)))
+  // A transparent highlight has no swatch to show; it only leaves elements out (ADR 0163).
+  const enabled = highlights.filter(
+    (h) => enabledHighlightIds.has(highlightId(h)) && !isTransparentHighlight(h)
+  )
   const countByKey = new Map<string, number>()
   for (const h of enabled) countByKey.set(h.key, (countByKey.get(h.key) ?? 0) + 1)
 

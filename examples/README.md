@@ -9,6 +9,7 @@ Real, working diagram files. Open any of them with **File → Open** (or drop it
 | [`hello-world.chd`](hello-world.chd) | The smallest diagram: two entities and one edge. |
 | [`with-icons.chd`](with-icons.chd) | Two entities with built-in corner icons. Hold Ctrl (Cmd on a Mac) over one to read the icons' names. |
 | [`with-metadata.chd`](with-metadata.chd) | A diagram-level required-tag template, one required tag and one free tag on an entity. |
+| [`highlight-not-applicable.chd`](highlight-not-applicable.chd) | A data-classification highlight with a transparent colour for `N/A`, so the system boundary around the entities is left uncoloured when the highlights are switched on. |
 
 These three also serve as round-trip fixtures: the app must open and re-save them without changing their meaning.
 

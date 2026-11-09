@@ -1,6 +1,11 @@
 import { useState } from 'react'
 import type { HighlightDefinition, JsonValue } from '@shared/diagram'
-import { DEFAULT_HIGHLIGHT_COLOR, highlightId } from '@shared/tagging/highlights'
+import {
+  DEFAULT_HIGHLIGHT_COLOR,
+  TRANSPARENT_HIGHLIGHT_COLOR,
+  highlightId,
+  isTransparentHighlight
+} from '@shared/tagging/highlights'
 
 interface HighlightsPanelProps {
   highlights: HighlightDefinition[]
@@ -60,6 +65,7 @@ function HighlightRow({
   onUpdateColor: (color: string) => void
   onRemove: () => void
 }): React.JSX.Element {
+  const none = isTransparentHighlight(h)
   return (
     <div className="highlight-row">
       <input
@@ -71,11 +77,21 @@ function HighlightRow({
       />
       <input
         type="color"
-        className="highlight-row-swatch"
-        value={h.color}
+        className={`highlight-row-swatch${none ? ' is-none' : ''}`}
+        value={none ? DEFAULT_HIGHLIGHT_COLOR : h.color}
         onChange={(event) => onUpdateColor(event.target.value)}
-        title="Color"
+        title={none ? 'No color. Pick one to colour these elements' : 'Color'}
       />
+      <button
+        type="button"
+        className={`highlight-row-none${none ? ' is-active' : ''}`}
+        title="No color: elements with this value are left as they are"
+        aria-label="No color"
+        aria-pressed={none}
+        onClick={() => onUpdateColor(none ? DEFAULT_HIGHLIGHT_COLOR : TRANSPARENT_HIGHLIGHT_COLOR)}
+      >
+        ∅
+      </button>
       <span className="highlight-row-label">{label}</span>
       <button
         type="button"
@@ -193,7 +209,8 @@ export default function HighlightsPanel({
         <p className="highlights-panel-hint">
           Each highlight colors every Entity, Container, or Edge tagged with an exact key = value
           match. A single matching highlight recolors the element&rsquo;s border; two or more show
-          as small color chips instead. Enabled/disabled state isn&rsquo;t saved with the file —
+          as small color chips instead. A highlight set to no color (∅) leaves its elements as they
+          are, for a value like N/A. Enabled/disabled state isn&rsquo;t saved with the file —
           everyone starts with highlights off.
         </p>
         {highlights.length === 0 && <p className="highlights-panel-hint">No highlights yet.</p>}

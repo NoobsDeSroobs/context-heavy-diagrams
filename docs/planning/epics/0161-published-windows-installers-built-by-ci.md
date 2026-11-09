@@ -1,7 +1,7 @@
 # 0161: Published Windows installers, built by CI on a version tag
 
 ## Status
-In Progress. v0.4.0 was tagged and the workflow built and published its release. The installer passed a clean-machine test on 2026-11-03; the open tasks below are follow-ups.
+In Progress. v0.4.0 was tagged and the workflow built and published its release. The installer passed a clean-machine test on 2026-11-03; the open tasks below are follow-ups. **Decided (2026-11-09): publish Linux and macOS builds labelled untested on real hardware** (in the release notes and the file names or descriptions), rather than holding them back.
 
 ## Goal
 Anyone can download a Windows installer for each released version from the repository's releases page, without Node, git or a build. The installer is built by a GitHub Actions workflow when the maintainer pushes a version tag, so the file on the page is the one built from that tagged commit.
@@ -38,7 +38,11 @@ Permissions: the workflow gets `contents: write` only in the release job, and no
 - [x] Pin the actions in the release workflow by commit hash
 - [x] First tag: watch the first run of the workflow (`v0.4.0` built and published a release)
 - [ ] Silent-install smoke test on the runner (`/S`), then run the app's `chd --version`
-- [ ] Research signing options and record the outcome in the ADR
+- [ ] Build the Linux (AppImage, deb) and macOS (DMG) installers in the release workflow and publish them marked "not tested on real hardware": say so in the release notes, in the README download section and on each asset (name or label), and ask people to report what they find
+- [ ] Choose the macOS architecture (arm64, x64 or universal) and say what an unsigned, un-notarised DMG makes the person do on first run
+- [x] Research signing options (2026-11-09): SignPath Foundation is free for OSS (OSI licence, public repo, GitHub-hosted build, MFA, a "Code signing policy" page, manual approval of each release, verifiable project reputation; publisher shows as SignPath Foundation); Artifact Signing costs about $9.99 a month and needs a US or Canadian individual or a registered organization in a listed country; Certum is about €49 a year. Plan: apply to SignPath once there are downloads to show
+- [ ] Apply to SignPath Foundation: write the code signing policy page and privacy statement, turn on MFA, gather the reputation evidence; then sign the installer in `release.yml` (note: at most 3 re-runs of a build per policy evaluation)
+- [ ] Record the signing decision in an ADR once the application is answered
 - [ ] Check the licence and notices are inside the installer and the release notes point to the tagged source
 - [x] README: a Download section above build-from-source; first-run SmartScreen steps and the checksum
 - [x] Update `docs/architecture/packaging.md` (the CI path) and the stale line in `CLAUDE.md` that said no installers are made yet

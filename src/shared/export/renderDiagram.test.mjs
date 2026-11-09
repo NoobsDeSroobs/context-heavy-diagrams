@@ -314,6 +314,31 @@ test('a single matching highlight overrides the border; two make chips', () => {
   assert.ok(on.includes('fill="#00ff00"'))
 })
 
+test('a transparent highlight leaves an element as it is and does not turn a match into chips', () => {
+  const diagram = diagramOf(
+    [
+      entity('a', 0, 0, { metadata: { team: { value: 'red' }, data: { value: 'N/A' } } }),
+      entity('b', 200, 0, { metadata: { data: { value: 'N/A' } } })
+    ],
+    [],
+    {
+      highlights: [
+        { key: 'team', value: 'red', color: '#ff0000' },
+        { key: 'data', value: 'N/A', color: 'transparent' }
+      ]
+    }
+  )
+  const enabledHighlightIds = ['team::"red"', 'data::"N/A"']
+  const on = render(diagram, {
+    enabledHighlightIds,
+    legend: { items: defaultLegendItems(diagram, enabledHighlightIds), corner: 'bottom-left' }
+  })
+  // a keeps its single red border (not chips); b is untouched
+  assert.match(on, /data-id="a"[^>]*><rect[^>]*stroke="#ff0000" stroke-width="3"/)
+  assert.ok(!/data-id="b"[^>]*><rect[^>]*stroke-width="3"/.test(on))
+  assert.ok(!on.includes('transparent'))
+})
+
 test('the legend adds a box and grows the image only when its corner is occupied', () => {
   const diagram = diagramOf([entity('a', 0, 0)], [], {
     legend: [{ id: 'l', kind: 'entity', label: 'Systems', color: '#336699' }]
