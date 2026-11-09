@@ -1,7 +1,7 @@
 # 0052: Draw.io (diagrams.net) import/export
 
 ## Status
-Not Started. Chosen as the first import/export work (2026-11-09), ahead of the other exports. The maintainer wants to export to competing products, so **export to `.drawio` comes first** and import follows; the fork below is about which fidelity contract to accept, not about the direction. Needs a design pass before building.
+In Progress. **Export is built (2026-11-09), to be tried by the maintainer**; import has not been started. The design pass for export is [ADR 0167](../../decisions/0167-drawio-export.md): the connection-point worry below turned out not to be a fork, since draw.io keeps the exact attachment on each edge (`exitX`, `entryX`).
 
 ## Goal
 Interop with draw.io / diagrams.net — read and/or write its `.drawio` file format, in service of this app's existing low-lock-in stance (see `docs/file-format.md`'s own design intent).
@@ -16,6 +16,15 @@ Which direction is actually harder was debated in the raising conversation and l
 - **Import (`.drawio` → this app)**: draw.io's open-ended style-string mini-language and large stencil/shape library make a *fully general* importer hard, but a scoped importer (basic shapes, containers, edges, labels; skip or flatten anything exotic) may be more tractable than getting connection-point fidelity right on export.
 
 Which direction to build first — or whether both are worth it — needs a real design pass, not a guess. Whichever is chosen, a lossy case needs an explicit fidelity contract (what gets dropped or approximated, and how the user is told) rather than silent data loss, consistent with [ADR 0029](../../decisions/0029-backward-compatible-loading-is-a-standing-rule.md)'s spirit even though that ADR is about this app's own format, not a foreign one.
+
+## Tasks
+- [x] Design pass for export: the fidelity contract (what is dropped or approximated, and how the person is told) and the mapping ([ADR 0167](../../decisions/0167-drawio-export.md))
+- [x] `renderDiagramDrawio` in `src/shared/export/drawio.ts`, with tests over every example
+- [x] `chd export --format drawio` (or an output ending in `.drawio`), notes on stderr
+- [x] File → Export → draw.io…, notes shown after the file is written
+- [x] Opened the output in the draw.io web app: nested containers, icons, tags, curved and stepped edges, crow's feet
+- [ ] Try it in the draw.io desktop app and on a diagram of your own; look at step and smooth-step routing and long labels
+- [ ] Import (`.drawio` to this app): a scoped importer (shapes, containers, edges, labels, tags from `<object>`), with the same kind of contract for what it skips. Needs its own design pass
 
 ## Notes
 Not scheduled into the current batch (see [PROGRESS.md](../../../PROGRESS.md)) — flagged here so it isn't lost, not because it's next up.

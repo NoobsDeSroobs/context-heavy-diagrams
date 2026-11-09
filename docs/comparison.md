@@ -172,7 +172,7 @@ For a market view, Gartner's 2026 Magic Quadrant for Enterprise Architecture Too
 
 ## Getting diagrams into wikis and documentation
 
-Embedding is the weakest part of this tool. The ways out today are an exported **PNG** or **SVG** from the app, and `chd export`, which writes the SVG from the command line so CI can regenerate the image whenever the diagram changes. There is no PDF export and no wiki plugin.
+Embedding is the weakest part of this tool. The ways out today are an exported **PNG** or **SVG** from the app, and `chd export`, which writes the SVG from the command line so CI can regenerate the image whenever the diagram changes. There is no PDF export and no wiki plugin. A diagram can also be exported as a draw.io file (`chd export --format drawio` or File → Export), to continue it in draw.io.
 
 | Tool | How a diagram reaches a wiki or README |
 |---|---|

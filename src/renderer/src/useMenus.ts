@@ -32,6 +32,7 @@ export interface MenuInputs {
   handleReload: () => Promise<void>
   handleClose: () => void
   setExportDialogFormat: (format: 'png' | 'svg') => void
+  onExportDrawio: () => void
   undo: () => void
   redo: () => void
   cutSelection: () => void
@@ -99,6 +100,7 @@ export function useMenus(inputs: MenuInputs): {
     handleReload,
     handleClose,
     setExportDialogFormat,
+    onExportDrawio,
     undo,
     redo,
     cutSelection,
@@ -198,6 +200,11 @@ export function useMenus(inputs: MenuInputs): {
                   label: 'SVG…',
                   disabled: nodes.length === 0,
                   onSelect: () => setExportDialogFormat('svg')
+                },
+                {
+                  label: 'draw.io…',
+                  disabled: nodes.length === 0,
+                  onSelect: onExportDrawio
                 }
               ]
             }

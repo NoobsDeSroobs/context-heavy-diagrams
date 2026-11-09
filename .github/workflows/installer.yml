@@ -1,17 +1,10 @@
-# Builds the Windows installer and installs it silently (ADR 0165), without publishing anything.
-# Runs when something the installer is made from changes, and on demand from the Actions tab, so
-# an installer problem shows up before a release tag, not on it. No secrets, read-only token.
+# Builds the installers and checks them (ADR 0165, ADR 0166), without publishing anything. Run it
+# by hand from the Actions tab when something the installers are made from has changed
+# (`build/`, `electron-builder.yml`, the package files, an Electron or electron-builder upgrade),
+# so a problem shows up before a release tag, not on it. No secrets, read-only token.
 name: Installer
 
 on:
-  pull_request:
-    paths:
-      - 'build/**'
-      - 'electron-builder.yml'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'scripts/smoke-installer.mjs'
-      - '.github/workflows/installer.yml'
   workflow_dispatch:
 
 permissions:
@@ -34,3 +27,29 @@ jobs:
       - run: npm ci
       - run: npm run build:win -- --publish never
       - run: node scripts/smoke-installer.mjs
+
+  linux:
+    name: Linux builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build:linux -- AppImage deb --publish never
+      - run: node scripts/smoke-packaged.mjs
+
+  macos:
+    name: macOS build
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build:mac -- --publish never
+      - run: node scripts/smoke-packaged.mjs

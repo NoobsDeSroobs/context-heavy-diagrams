@@ -90,6 +90,7 @@ A diagram is a small, deterministic text file, so git can do for it what it does
 - File-version warning
 - Recent diagrams and shortcuts help
 - SVG/PNG export from the File menu, and `chd export` to produce the same SVG from a terminal or CI job
+- Export to draw.io (diagrams.net) files, from the File menu or `chd export --format drawio`
 - Architecture checks: a diagram can be checked against the rules of a diagram metamodel (hexagonal and data-flow diagrams ship with the app, and you can write your own metamodels), from Diagnostics or with `chd check` in CI
 - Review what changed between two versions of a diagram, e.g. after an AI assistant edited it: a compare window draws the later version with added, removed, link-or-note-changed, modified and restyled (colour, line, marker, animation or icon) elements coloured and everything else dimmed. You also get a list of changes to step through and a per-change revert (View → Changes → Compare with git revision…, or **Review changes** when the file changes on disk); `chd diff` prints the same review for a terminal or CI
 - The `chd` command line tool (`spec`, `validate`, `hash`, `export`, `check`)
@@ -98,7 +99,10 @@ A diagram is a small, deterministic text file, so git can do for it what it does
 
 **Windows:** get `context-heavy-diagrams-<version>-setup.exe` from the [releases page](https://github.com/NoobsDeSroobs/context-heavy-diagrams/releases), together with `SHA256SUMS`. The installer is **not signed yet**, so Windows shows "Windows protected your PC": choose **More info**, then **Run anyway**. You have to accept the install this way until the installers are signed. To check the download, compare `Get-FileHash <file>` in PowerShell with `SHA256SUMS`.
 
-**Linux and macOS:** no installer is published yet; build from source below.
+**Linux and macOS:** each release also has a Linux AppImage and deb and a macOS DMG (Apple Silicon and Intel in one file), with checksums in `SHA256SUMS-linux` and `SHA256SUMS-macos`. **Nobody has tried them on real hardware yet**: CI builds them and checks that the program starts as a command-line tool, nothing more, and each file says so on the releases page. They are attached when their build succeeds, so an older release may have none. Please [report what you find](https://github.com/NoobsDeSroobs/context-heavy-diagrams/issues), or build from source below.
+
+- **AppImage:** make it executable and run it. A recent Ubuntu may need `libfuse2` for it; the deb does not.
+- **macOS:** the app is not notarised, so macOS says it cannot verify it. Right-click the app and choose **Open**, or allow it under System Settings, Privacy & Security, **Open Anyway**.
 
 ## Try it
 

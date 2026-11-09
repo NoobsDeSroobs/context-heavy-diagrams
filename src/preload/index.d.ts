@@ -141,6 +141,7 @@ export interface DiagramApi {
   importStylePalette(): Promise<{ name: string; content: string } | null>
   exportPngToFile(dataUrl: string, suggestedFilename: string): Promise<boolean>
   exportSvgToFile(svg: string, suggestedFilename: string): Promise<boolean>
+  exportDrawioToFile(xml: string, suggestedFilename: string): Promise<boolean>
   copyToClipboard(text: string): void
   readClipboardText(): string
   platform: NodeJS.Platform

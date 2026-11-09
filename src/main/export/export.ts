@@ -6,9 +6,10 @@ import { writeFile } from 'fs/promises'
 // hands over a data URL (from html-to-image's toPng) rather than a raw
 // buffer since that's what the browser-side capture API already produces;
 // stripping the data: prefix here keeps that detail out of the renderer's
-// own IPC surface. SVG export (ADR 0124) hands over the document text.
+// own IPC surface. SVG export (ADR 0124) and draw.io export (ADR 0167) hand over the document text.
 const FILTERS = [{ name: 'PNG image', extensions: ['png'] }]
 const SVG_FILTERS = [{ name: 'SVG image', extensions: ['svg'] }]
+const DRAWIO_FILTERS = [{ name: 'draw.io diagram', extensions: ['drawio'] }]
 
 export function registerExportHandlers(): void {
   ipcMain.handle('export:pngToFile', async (_event, dataUrl: string, suggestedFilename: string) => {
@@ -31,6 +32,17 @@ export function registerExportHandlers(): void {
     })
     if (result.canceled || !result.filePath) return false
     await writeFile(result.filePath, svg, 'utf-8')
+    return true
+  })
+
+  ipcMain.handle('export:drawioToFile', async (_event, xml: string, suggestedFilename: string) => {
+    const result = await dialog.showSaveDialog({
+      title: 'Export as draw.io',
+      defaultPath: suggestedFilename,
+      filters: DRAWIO_FILTERS
+    })
+    if (result.canceled || !result.filePath) return false
+    await writeFile(result.filePath, xml, 'utf-8')
     return true
   })
 }

@@ -166,3 +166,55 @@ test('help export is the same as export --help', () => {
   assert.equal(r.stdout, run('export', '--help').stdout)
   assert.match(r.stdout, /Exit codes:/)
 })
+
+test('--format drawio writes a .drawio next to the diagram and lists what it could not carry', async () => {
+  const file = join(dir, 'arch.chd')
+  await writeFile(
+    file,
+    diagram({ legend: [{ id: 'l', label: 'x', kind: 'color', color: '#fff' }] })
+  )
+  const r = run('export', file, '--format', 'drawio')
+  assert.equal(r.status, 0)
+  assert.equal(r.stdout.trim(), join(dir, 'arch.drawio'))
+  assert.match(r.stderr, /chd: note: the legend is not exported/)
+  const xml = await readFile(join(dir, 'arch.drawio'), 'utf-8')
+  assert.match(xml, /^<mxfile /)
+  assert.match(xml, /label="Alpha"/)
+  assert.match(xml, /source="a" target="b"/)
+})
+
+test('an output ending in .drawio chooses the draw.io format, and the output stays on stdout for -', async () => {
+  const file = join(dir, 'arch.chd')
+  await writeFile(file, diagram())
+  assert.equal(run('export', file, '-o', join(dir, 'x.drawio')).status, 0)
+  assert.match(await readFile(join(dir, 'x.drawio'), 'utf-8'), /<mxGraphModel/)
+  const r = run('export', file, '--format', 'drawio', '-o', '-')
+  assert.match(r.stdout, /^<mxfile /)
+})
+
+test('draw.io export is deterministic and honours --theme and --highlight', async () => {
+  const file = join(dir, 'arch.chd')
+  await writeFile(file, diagram({ highlights: [{ key: 'risk', value: 'high', color: '#ff0000' }] }))
+  const once = run('export', file, '-o', '-', '--format', 'drawio').stdout
+  assert.equal(once, run('export', file, '-o', '-', '--format', 'drawio').stdout)
+  assert.match(
+    run('export', file, '-o', '-', '--format', 'drawio', '--theme', 'dark').stdout,
+    /background="#1b1b1f"/
+  )
+  assert.match(
+    run('export', file, '-o', '-', '--format', 'drawio', '--highlight', 'risk').stdout,
+    /strokeColor=#ff0000/
+  )
+})
+
+test('draw.io refuses the SVG-only options and a mismatched output', async () => {
+  const file = join(dir, 'arch.chd')
+  await writeFile(file, diagram())
+  const padded = run('export', file, '--format', 'drawio', '--padding', '8')
+  assert.equal(padded.status, 2)
+  assert.match(padded.stderr, /--padding only apply to an SVG/)
+  const wrong = run('export', file, '--format', 'drawio', '-o', join(dir, 'x.svg'))
+  assert.equal(wrong.status, 2)
+  assert.match(wrong.stderr, /must be a \.drawio/)
+  assert.equal(run('export', file, '--format', 'png').status, 2)
+})

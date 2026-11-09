@@ -48,22 +48,26 @@ $ chd hash shop.chd
 
 ## `chd export`
 
-`chd export <file.chd> [options]` writes the diagram as an SVG, so an image in a README or wiki can be regenerated whenever the diagram changes. It only reads the diagram and never overwrites one.
+`chd export <file.chd> [options]` writes the diagram as an SVG, so an image in a README or wiki can be regenerated whenever the diagram changes, or as a draw.io (diagrams.net) file. It only reads the diagram and never overwrites one.
 
 | Option | Meaning |
 |---|---|
-| `-o`, `--output <file.svg>` | Where to write; the default is next to the diagram, `-` is standard output |
+| `--format svg\|drawio` | What to write; the default follows the `-o` extension (`.drawio` is draw.io), else SVG |
+| `-o`, `--output <file>` | Where to write (an `.svg` or `.drawio` file); the default is next to the diagram, `-` is standard output |
 | `--theme light\|dark` | The look to draw (default light) |
-| `--padding <px>` | Margin around the drawing (default 24) |
-| `--background <value>` | `theme` (default), `transparent` or a colour such as `#ffffff` |
-| `--no-legend` | Leave the legend out |
-| `--legend-corner <corner>` | `bottom-left` (default), `bottom-right`, `top-left` or `top-right` |
 | `--highlight <key[=value]>` | Draw a highlight as if it were switched on; repeatable. `key` alone switches on every value of that key |
+| `--padding <px>` | SVG only: margin around the drawing (default 24) |
+| `--background <value>` | SVG only: `theme` (default), `transparent` or a colour such as `#ffffff` |
+| `--no-legend` | SVG only: leave the legend out |
+| `--legend-corner <corner>` | SVG only: `bottom-left` (default), `bottom-right`, `top-left` or `top-right` |
+
+A draw.io file is plain XML with one cell per line. Containers, connections with their attachment points and waypoints, labels, colours, fonts, arrowheads, icons and tags (as draw.io data) come across; what draw.io has no place for, such as the legend, notes and the threat matrix, or can only approximate, such as curved routing, is listed on standard error as `chd: note: ...` and the exit code stays `0`.
 
 Exit codes: `0`, `1` if the file cannot be read or written, `2`.
 
 ```
 $ chd export shop.chd --theme dark --highlight owner=team-a -o docs/shop-dark.svg
+$ chd export shop.chd -o shop.drawio
 ```
 
 ## `chd check`

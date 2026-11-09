@@ -2318,7 +2318,8 @@ function CanvasInner(): React.JSX.Element {
     exportPngEffectiveColorHex,
     isExportingPng,
     handleExportPng,
-    handleExportSvg
+    handleExportSvg,
+    handleExportDrawio
   } = useImageExport(canvasApi, {
     nodes,
     edges,
@@ -3078,6 +3079,7 @@ function CanvasInner(): React.JSX.Element {
     handleReload,
     handleClose,
     setExportDialogFormat,
+    onExportDrawio: handleExportDrawio,
     undo,
     redo,
     cutSelection,

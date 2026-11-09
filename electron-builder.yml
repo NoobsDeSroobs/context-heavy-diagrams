@@ -58,6 +58,16 @@ mac:
     - NSDocumentsFolderUsageDescription: Context-Heavy Diagrams opens and saves your diagram files in your Documents folder.
     - NSDownloadsFolderUsageDescription: Context-Heavy Diagrams opens and saves your diagram files in your Downloads folder.
   notarize: false
+  # One DMG for Apple Silicon and Intel (ADR 0166).
+  target:
+    - target: dmg
+      arch: universal
+  # Ad-hoc signed ("-"), not Developer ID signed: an unsigned arm64 build is refused with "is
+  # damaged" instead of the usual "unidentified developer" prompt. The hardened runtime needs the
+  # library-validation entitlement with an ad-hoc signature and buys nothing without notarisation,
+  # so it is off. With a Developer ID certificate, remove `identity` and turn it back on.
+  identity: '-'
+  hardenedRuntime: false
 dmg:
   artifactName: ${name}-${version}.${ext}
 linux:
