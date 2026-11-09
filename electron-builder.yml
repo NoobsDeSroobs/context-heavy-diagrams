@@ -11,6 +11,14 @@ files:
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
 asarUnpack:
   - resources/**
+# The licence and the third-party notices where a person can read them, next to the program and
+# Electron's own LICENSE.electron.txt, not only inside app.asar (ADR 0165). The platform
+# `extraFiles` below add to this list.
+extraFiles:
+  - from: LICENSE
+    to: LICENSE.txt
+  - from: THIRD-PARTY-NOTICES.md
+    to: THIRD-PARTY-NOTICES.md
 win:
   executableName: context-heavy-diagrams
   # chd launcher next to the exe (ADR 0106), and bin/chd.cmd, the only folder the installer

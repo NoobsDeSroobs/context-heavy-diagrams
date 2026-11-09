@@ -1,7 +1,7 @@
 # 0161: Published Windows installers, built by CI on a version tag
 
 ## Status
-In Progress. v0.4.0 was tagged and the workflow built and published its release. The installer passed a clean-machine test on 2026-11-03; the open tasks below are follow-ups. **Decided (2026-11-09): publish Linux and macOS builds labelled untested on real hardware** (in the release notes and the file names or descriptions), rather than holding them back.
+In Progress. Part one (the cheap leftovers: smoke test, licence beside the program, source in the release notes) is built; part two is the Linux and macOS builds, then signing. v0.4.0 was tagged and the workflow built and published its release. The installer passed a clean-machine test on 2026-11-03; the open tasks below are follow-ups. **Decided (2026-11-09): publish Linux and macOS builds labelled untested on real hardware** (in the release notes and the file names or descriptions), rather than holding them back.
 
 ## Goal
 Anyone can download a Windows installer for each released version from the repository's releases page, without Node, git or a build. The installer is built by a GitHub Actions workflow when the maintainer pushes a version tag, so the file on the page is the one built from that tagged commit.
@@ -37,17 +37,17 @@ Permissions: the workflow gets `contents: write` only in the release job, and no
 - [x] `workflow_dispatch` for an existing tag. It cannot publish `v0.3.0` unchanged: that tag lacks the changelog script the workflow runs, and it has no release notes to take
 - [x] Pin the actions in the release workflow by commit hash
 - [x] First tag: watch the first run of the workflow (`v0.4.0` built and published a release)
-- [ ] Silent-install smoke test on the runner (`/S`), then run the app's `chd --version`
+- [x] Silent-install smoke test on the runner (`/S`), then run the app's `chd --version` (`scripts/smoke-installer.mjs`, run by `release.yml` before it publishes and by `installer.yml` on pull requests and on demand, [ADR 0165](../../decisions/0165-the-release-installs-its-own-installer-and-ships-the-licence.md)). Not yet run on a runner: its first run is the real test, so trigger the Installer workflow from the Actions tab and read the log
 - [ ] Build the Linux (AppImage, deb) and macOS (DMG) installers in the release workflow and publish them marked "not tested on real hardware": say so in the release notes, in the README download section and on each asset (name or label), and ask people to report what they find
 - [ ] Choose the macOS architecture (arm64, x64 or universal) and say what an unsigned, un-notarised DMG makes the person do on first run
 - [x] Research signing options (2026-11-09): SignPath Foundation is free for OSS (OSI licence, public repo, GitHub-hosted build, MFA, a "Code signing policy" page, manual approval of each release, verifiable project reputation; publisher shows as SignPath Foundation); Artifact Signing costs about $9.99 a month and needs a US or Canadian individual or a registered organization in a listed country; Certum is about €49 a year. Plan: apply to SignPath once there are downloads to show
 - [ ] Apply to SignPath Foundation: write the code signing policy page and privacy statement, turn on MFA, gather the reputation evidence; then sign the installer in `release.yml` (note: at most 3 re-runs of a build per policy evaluation)
 - [ ] Record the signing decision in an ADR once the application is answered
-- [ ] Check the licence and notices are inside the installer and the release notes point to the tagged source
+- [x] Check the licence and notices are inside the installer and the release notes point to the tagged source (they were only inside `app.asar`; `LICENSE.txt` and `THIRD-PARTY-NOTICES.md` now sit next to the program, and the notes link to the tagged tree, ADR 0165)
 - [x] README: a Download section above build-from-source; first-run SmartScreen steps and the checksum
 - [x] Update `docs/architecture/packaging.md` (the CI path) and the stale line in `CLAUDE.md` that said no installers are made yet
 - [x] Put the first installer through a clean-machine test (no Node, no repo) before announcing it (2026-11-03, v0.4.0: install, first run, save and reopen, association, `chd`, uninstall; no problems)
-- [ ] Let the person choose the install folder (`allowToChangeInstallationDirectory` is `false` today). Check what assumes the default: the `chd` launcher, `install-options.json`, the uninstaller and the association
+- [ ] Let the person choose the install folder (`allowToChangeInstallationDirectory` is `false` today). Check what assumes the default: the `chd` launcher, `install-options.json`, the uninstaller and the association. Looked at 2026-11-09 and left: the options page, the association and the PATH entry all use `$INSTDIR`, so a first install works, but electron-builder runs the old uninstaller with `--updated` when a new install goes to a different folder, and the custom uninstall steps are skipped for `--updated`. The old PATH entry and association would stay pointing at the old folder. It needs the install steps to move them, tested against real installs, for a choice few people will use
 
 ## Notes
 Raised after 0.3.0 was released. This is the missing piece for [0160](../completed-epics.md#0160-readme-and-documentation-changes-from-outside-feedback), whose audience cannot build from source.
