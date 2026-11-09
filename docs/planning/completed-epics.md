@@ -551,3 +551,6 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 *Done* (in the next release, 0.8.0). A small button on the minimap's corner and **View → Minimap** show or hide it; the choice is a preference, on by default. ADR: [0158](../decisions/0158-side-panel-width-and-the-minimap-are-preferences.md).
 
+### 0130: Multi-file save follow-ups
+
+*Done* (in the next release, 0.8.0). One notice lists every file changed outside the app (the diagram, and any note that is open or has unsaved edits) with Review changes, Reload and Ignore, and Reload touches only those files. Unsaved text in a note whose element was deleted is kept and listed in Diagnostics with Copy text and Discard. A note's clean copy is dropped on every way the panel closes. Save As is a dialog that copies or removes every reference (notes, images and custom icons, linked diagrams) into a folder named after the new diagram. ADRs: [0159](../decisions/0159-one-notice-for-every-file-that-changed-outside-the-app.md), [0160](../decisions/0160-save-as-copies-into-a-folder-named-after-the-new-diagram.md), and [0092](../decisions/0092-unified-multi-file-save-and-change-detection.md) updated. Left open: the check on Linux (file-stamp granularity, the native dialogs including the save picker's replace prompt, the recovery folder).
