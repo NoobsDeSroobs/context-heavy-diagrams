@@ -1,0 +1,36 @@
+# Builds the Windows installer and installs it silently (ADR 0165), without publishing anything.
+# Runs when something the installer is made from changes, and on demand from the Actions tab, so
+# an installer problem shows up before a release tag, not on it. No secrets, read-only token.
+name: Installer
+
+on:
+  pull_request:
+    paths:
+      - 'build/**'
+      - 'electron-builder.yml'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'scripts/smoke-installer.mjs'
+      - '.github/workflows/installer.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: installer-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    name: Windows installer
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build:win -- --publish never
+      - run: node scripts/smoke-installer.mjs

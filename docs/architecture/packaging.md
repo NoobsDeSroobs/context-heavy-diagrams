@@ -18,7 +18,7 @@ Only needed on the machine doing the *build* — whoever receives the finished i
 
 ## Releases built by CI
 
-Pushing a tag `vMAJOR.MINOR.PATCH` on a commit that is on `master` runs `.github/workflows/release.yml` ([ADR 0139](../decisions/0139-releases-built-by-ci-from-a-version-tag.md)): it checks that the tag matches the `package.json` version, runs lint and the tests, builds the Windows installer, writes `SHA256SUMS`, and creates a GitHub Release with the changelog section as notes (a pre-release below 1.0.0). Before tagging, the version bump and the `CHANGELOG.md` entry must be on `master`. The workflow can be re-run for an existing tag from the Actions tab. Windows only; the installer is unsigned.
+Pushing a tag `vMAJOR.MINOR.PATCH` on a commit that is on `master` runs `.github/workflows/release.yml` ([ADR 0139](../decisions/0139-releases-built-by-ci-from-a-version-tag.md)): it checks that the tag matches the `package.json` version, runs lint and the tests, builds the Windows installer, installs it silently and runs `chd --version` (`scripts/smoke-installer.mjs`, [ADR 0165](../decisions/0165-the-release-installs-its-own-installer-and-ships-the-licence.md); `.github/workflows/installer.yml` runs the same check on pull requests that touch the installer and on demand, so run it from the Actions tab before tagging if the installer changed), writes `SHA256SUMS`, and creates a GitHub Release with the changelog section as notes (a pre-release below 1.0.0). Before tagging, the version bump and the `CHANGELOG.md` entry must be on `master`. The workflow can be re-run for an existing tag from the Actions tab. Windows only; the installer is unsigned.
 
 ## Windows
 

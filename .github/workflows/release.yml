@@ -54,6 +54,10 @@ jobs:
       - run: npm test
       # --publish never: electron-builder must not upload anything itself.
       - run: npm run build:win -- --publish never
+      # Installs the installer silently, runs `chd --version` and uninstalls (ADR 0165); a broken
+      # installer stops the release here, before anything is published.
+      - name: Smoke-test the installer
+        run: node scripts/smoke-installer.mjs
       - name: Checksums and release notes
         run: |
           version=$(node -p "require('./package.json').version")
@@ -62,6 +66,7 @@ jobs:
           {
             cat notes.md
             printf '\n### Installing\n\nThe installer is not signed yet. Windows shows "Windows protected your PC": choose **More info**, then **Run anyway**. The SHA-256 of the installer is in `SHA256SUMS`.\n'
+            printf '\n### Source code\n\nThis installer is built from the source at %s/%s/tree/%s (GPL-3.0-or-later). The licence and the third-party notices are installed next to the program, as `LICENSE.txt` and `THIRD-PARTY-NOTICES.md`.\n' "$GITHUB_SERVER_URL" "$GH_REPO" "$TAG"
           } > release-notes.md
       - name: Publish the release
         run: |
