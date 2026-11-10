@@ -15,7 +15,7 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 ### Changed
 
-- **The licence and the third-party notices are installed next to the program** (`LICENSE.txt`, `THIRD-PARTY-NOTICES.md`), and a release's notes link to the source it was built from. The release is now checked by installing the installer silently and running `chd --version` before it is published. ([ADR 0165](docs/decisions/0165-the-release-installs-its-own-installer-and-ships-the-licence.md))
+- **The licence and the third-party notices are installed next to the program** (`LICENSE.txt`, `THIRD-PARTY-NOTICES.md`; in the app's Resources folder on macOS), and a release's notes link to the source it was built from. The release is now checked by installing the installer silently and running `chd --version` before it is published. ([ADR 0165](docs/decisions/0165-the-release-installs-its-own-installer-and-ships-the-licence.md))
 
 ## 0.8.0 (2026-11-09)
 

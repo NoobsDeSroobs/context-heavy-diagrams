@@ -38,7 +38,7 @@ if (process.platform === 'linux') {
       readdirSync(join(contents, 'MacOS')).find((f) => !f.startsWith('.')) ?? ''
     )
     for (const name of ['LICENSE.txt', 'THIRD-PARTY-NOTICES.md']) {
-      note(existsSync(join(contents, name)), `present: ${name}`)
+      note(existsSync(join(contents, 'Resources', name)), `present: Resources/${name}`)
     }
     const archs = run('lipo', ['-archs', exe]).stdout ?? ''
     note(/x86_64/.test(archs) && /arm64/.test(archs), `both architectures (got "${archs.trim()}")`)

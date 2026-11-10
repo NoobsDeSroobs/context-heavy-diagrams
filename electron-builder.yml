@@ -11,19 +11,19 @@ files:
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
 asarUnpack:
   - resources/**
-# The licence and the third-party notices where a person can read them, next to the program and
-# Electron's own LICENSE.electron.txt, not only inside app.asar (ADR 0165). The platform
-# `extraFiles` below add to this list.
-extraFiles:
-  - from: LICENSE
-    to: LICENSE.txt
-  - from: THIRD-PARTY-NOTICES.md
-    to: THIRD-PARTY-NOTICES.md
+# The licence and the third-party notices go where a person can read them, not only inside
+# app.asar (ADR 0165): next to the program on Windows and Linux, in Resources on macOS (a loose
+# file in the root of a .app makes codesign fail). They are listed per platform on purpose: a
+# top-level `extraFiles` would also apply on macOS.
 win:
   executableName: context-heavy-diagrams
   # chd launcher next to the exe (ADR 0106), and bin/chd.cmd, the only folder the installer
   # can put on the PATH (ADR 0162)
   extraFiles:
+    - from: LICENSE
+      to: LICENSE.txt
+    - from: THIRD-PARTY-NOTICES.md
+      to: THIRD-PARTY-NOTICES.md
     - from: build/launchers/chd.cmd
       to: chd.cmd
     - from: build/launchers/chd-path.cmd
@@ -52,6 +52,11 @@ mac:
       mimeType: application/vnd.context-heavy-diagram+json
       role: Editor
   entitlementsInherit: build/entitlements.mac.plist
+  extraResources:
+    - from: LICENSE
+      to: LICENSE.txt
+    - from: THIRD-PARTY-NOTICES.md
+      to: THIRD-PARTY-NOTICES.md
   # Only what the app really does: open and save diagram files wherever the user
   # keeps them. No camera or microphone (ADR 0112 also denies every web permission).
   extendInfo:
@@ -83,6 +88,10 @@ linux:
   executableName: context-heavy-diagrams
   # chd launcher next to the executable (ADR 0106)
   extraFiles:
+    - from: LICENSE
+      to: LICENSE.txt
+    - from: THIRD-PARTY-NOTICES.md
+      to: THIRD-PARTY-NOTICES.md
     - from: build/launchers/chd
       to: chd
   target:
