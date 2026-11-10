@@ -274,7 +274,7 @@ function LabeledEdge({
   ])
 
   // Opacity is per channel (strokeOpacity/fontOpacity), not one whole-element value (see
-  // FontStyle.fontOpacity for why). Each is baked into its own colour with color-mix()
+  // TextStyle.fontOpacity for why). Each is baked into its own colour with color-mix()
   // (withOpacity) and applied separately to the path and the label, because EdgeLabelRenderer
   // portals the label into a DOM container outside the SVG, so it isn't a descendant of the path
   // and inherits nothing from it. Width is always a concrete number, not CSS's default, since a

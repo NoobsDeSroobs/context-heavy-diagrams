@@ -271,7 +271,7 @@ export function NumberField({
 
 // Slider and number, linked: both are controlled from the same value/onChange, so they stay in sync
 // without extra wiring. Built for the fillOpacity/strokeOpacity/fontOpacity fields (per-channel
-// opacity; see FontStyle.fontOpacity) and usable for any bounded numeric field that reads as a
+// opacity; see TextStyle.fontOpacity) and usable for any bounded numeric field that reads as a
 // slider, e.g. an edge label's position. Mixed selections show the slider at `defaultValue`, since
 // a range input can't be blank the way NumberField's placeholder is.
 export function SliderField({
