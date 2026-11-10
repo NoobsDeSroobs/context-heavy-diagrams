@@ -473,7 +473,7 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0162: Minimum distance between connected elements
 
-*Done* (merged; released in v0.6.0). Two elements joined by an edge keep a gap that grows with the label: the layout guide, the validator warning (`chd validate`, `validate_diagram`), a Layout section in Diagnostics, and the loosened gallery diagrams all follow one measurement of the label. ADRs: [0146](../decisions/0146-elements-joined-by-an-edge-keep-a-gap-for-the-label.md), [0147](../decisions/0147-a-check-shared-with-the-skill-script-has-one-source-and-a-committed-copy.md). Leftovers, not verified: Linux is not eye-checked, the loosened gallery wants an eye-check in the app, and the capitals and monospace widths warn slightly early (the export's width estimate errs wide). Follow-up: [0176](epics/0176-label-padding-setting-and-layout-diagnostics.md).
+*Done* (merged; released in v0.6.0). Two elements joined by an edge keep a gap that grows with the label: the layout guide, the validator warning (`chd validate`, `validate_diagram`), a Layout section in Diagnostics, and the loosened gallery diagrams all follow one measurement of the label. ADRs: [0146](../decisions/0146-elements-joined-by-an-edge-keep-a-gap-for-the-label.md), [0147](../decisions/0147-a-check-shared-with-the-skill-script-has-one-source-and-a-committed-copy.md). Leftovers, not verified: Linux is not eye-checked, the loosened gallery wants an eye-check in the app, and the capitals and monospace widths warn slightly early (the export's width estimate errs wide). Follow-up: [0176](epics/0176-a-spacing-setting-for-assistants.md).
 
 ### 0165: An editing tool for assistants
 
