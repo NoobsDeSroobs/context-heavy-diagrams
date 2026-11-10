@@ -10,6 +10,7 @@ import {
   loadedNoteShadow,
   newNoteShadow,
   orphanedNoteEdits,
+  recoveredNoteShadow,
   type NoteShadow,
   type Stamp
 } from '@shared/document/documentSave'
@@ -113,6 +114,7 @@ import { findKeyCommand, type CommandId } from '../commands'
 import AlertDialog from '../ui/AlertDialog'
 import ExportImageDialog, { type ImageExportChoice } from '../export/ExportImageDialog'
 import BulkCreateDialog from '../bulk-create/BulkCreateDialog'
+import type { PreparedElement } from '@shared/bulk-create/prepare'
 import StylePalettePanel from '../styling/StylePalettePanel'
 import ReferenceWindow from '../references/ReferenceWindow'
 import ReferencesPanel from '../references/ReferencesPanel'
@@ -1505,7 +1507,8 @@ function CanvasInner(): React.JSX.Element {
     ])
   }, [setNodes, pushSnapshot, spawnPosition, requiredTags, preferences.defaultStyles.container])
 
-  // Bulk counterpart to addEntityNode/addContainerNode — see ADR 0089. One
+  // Bulk counterpart to addEntityNode/addContainerNode — see ADR 0089, and ADR 0168 for the
+  // table paste, whose elements arrive with their metadata and note. One
   // pushSnapshot/setNodes for the whole batch (one undo step), laid out in
   // a grid centered on the viewport rather than spawnPosition's small
   // per-click jitter (which exists to keep repeated single clicks visibly
@@ -1513,8 +1516,12 @@ function CanvasInner(): React.JSX.Element {
   // against the array as it grows within the same batch, so zIndex among
   // the new nodes stays deterministic (first line = lowest).
   const addMultipleNodes = useCallback(
-    (type: 'entity' | 'container', labels: string[]) => {
-      if (labels.length === 0) return
+    (type: 'entity' | 'container', elements: PreparedElement[]) => {
+      if (elements.length === 0) return
+      const labels = elements.map((e) => e.label)
+      // Ids are made up front: the notes below are kept by node id, and an updater function may run
+      // more than once.
+      const ids = elements.map(() => newNodeId(type))
       pushSnapshot()
       const width = type === 'entity' ? ENTITY_MIN_WIDTH * 2 : CONTAINER_MIN_WIDTH * 2
       const height = type === 'entity' ? ENTITY_MIN_HEIGHT * 2 : CONTAINER_MIN_HEIGHT * 1.5
@@ -1535,7 +1542,7 @@ function CanvasInner(): React.JSX.Element {
               ? {
                   label: labels[index],
                   zIndex: nextZIndex(acc, 'entity'),
-                  metadata: seedMetadata(requiredTags),
+                  metadata: elements[index].metadata,
                   style: preferences.defaultStyles.entity
                 }
               : {
@@ -1545,12 +1552,12 @@ function CanvasInner(): React.JSX.Element {
                     fill: 'var(--ev-c-gray-1)',
                     fillOpacity: 20
                   },
-                  metadata: seedMetadata(requiredTags)
+                  metadata: elements[index].metadata
                 }
           acc = [
             ...acc,
             {
-              id: newNodeId(type),
+              id: ids[index],
               type,
               position: {
                 x: originX + col * (width + gap),
@@ -1564,12 +1571,23 @@ function CanvasInner(): React.JSX.Element {
         }
         return sortNodesForHierarchy(acc)
       })
+      // A note is a file written at the next Save (ADR 0092): until then it is an unsaved note with
+      // no file yet, like one typed into a new element's panel.
+      const notes = elements.flatMap((e, index) => (e.note ? [[ids[index], e.note] as const] : []))
+      if (notes.length > 0) {
+        setNoteShadows((prev) => ({
+          ...prev,
+          ...Object.fromEntries(
+            notes.map(([id, note]) => [id, recoveredNoteShadow(id, null, note)])
+          )
+        }))
+      }
     },
     [
       setNodes,
+      setNoteShadows,
       pushSnapshot,
       rfInstance,
-      requiredTags,
       preferences.defaultStyles.entity,
       preferences.defaultStyles.container
     ]
@@ -3896,9 +3914,10 @@ function CanvasInner(): React.JSX.Element {
         {bulkCreateType && (
           <BulkCreateDialog
             typeLabel={bulkCreateType}
+            requiredTags={requiredTags}
             onClose={() => setBulkCreateType(null)}
-            onConfirm={(labels) => {
-              addMultipleNodes(bulkCreateType, labels)
+            onConfirm={(elements) => {
+              addMultipleNodes(bulkCreateType, elements)
               setBulkCreateType(null)
             }}
           />

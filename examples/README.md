@@ -4,6 +4,8 @@ Real, working diagram files. Open any of them with **File → Open** (or drop it
 
 Every example also exports to draw.io, from **File → Export → draw.io…** or `chd export <file.chd> -o <file>.drawio`. `gallery/landscape/.../aws-deployment.chd` (nested containers, icons, tags) and `gallery/data/star-schema-powerbi.chd` (crow's-foot ends, tags) show the most of what comes across; a test exports every example.
 
+`paste-a-table.csv` is not a diagram but a table to paste: copy its contents, right-click the Entity button and paste. It has a Name, a Description, a Domain and three tag columns, one repeated row that merges, and a description with a comma in it.
+
 ## Start here
 
 | File | What it shows |

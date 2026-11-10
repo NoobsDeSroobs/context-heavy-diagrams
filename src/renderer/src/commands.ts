@@ -260,7 +260,7 @@ export const COMMANDS = [
   },
   {
     id: 'create.bulk',
-    title: 'Create many shapes or containers from a pasted list',
+    title: 'Create many shapes or containers from a pasted list or table',
     category: 'Connections & creation',
     keys: 'Right-click the palette button'
   },
