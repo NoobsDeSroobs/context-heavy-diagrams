@@ -11,7 +11,7 @@ Measured on Windows: a Node named pipe gets an access list that gives **Everyone
 ## Decision
 1. **The app opens no listener.** No port, socket or pipe, for any program. The server stays a separate process that reads and writes files, and the stale-edit check of [ADR 0109](0109-stale-edit-check-for-every-ai-write-path.md) stays the only guard between an assistant's write and the person's work.
 2. **The offline tripwire stays as it is.** No Node networking module is allowed anywhere in `src/`, `extension/` or the command line.
-3. **What the person points at reaches an assistant through the clipboard,** by an explicit act, not through a standing connection.
+3. **What the person points at reaches an assistant through the clipboard,** by an explicit act, not through a standing connection. The existing copy ([ADR 0049](0049-clipboard-copy-paste.md)) puts the selection there as JSON and is enough; a leaner form for assistants (the `.chd` node shape, without notes and links) is not built.
 
 ## Why
 - **The gain is small.** The unsaved-edit gap is covered from the person's side: a single notice names every file changed outside the app, and says which have unsaved edits ([ADR 0159](0159-one-notice-for-every-file-that-changed-outside-the-app.md)). What is left is the selection.
@@ -26,5 +26,8 @@ Measured on Windows: a Node named pipe gets an access list that gives **Everyone
 - **Hand-off through the running instance** (`second-instance`). One-way, so it can open a file but not answer a question.
 - **The server reading the crash-recovery snapshots.** Holds unsaved text, but only periodically and in the app's private folder.
 
+## Not ruled out
+An assistant that drives the window the way a person does, with the screen, the mouse and the keyboard, needs nothing from the app: no listener, no token. That is the assistant's tool, not a connection this app offers, and nothing here prevents it.
+
 ## If it is revisited
-For live editing, say. Then: the tripwire gets a narrow named exception for one local socket in the user's runtime folder; a token per start, never written into a diagram folder; off by default, a visible indicator and an idle timeout; a warning on every switch-on that any program holding the token can read the open diagram; no save operation on the connection, so only the person saves; an edit is rejected if the diagram changed since the assistant read it (the in-memory form of ADR 0109) and arrives as one undo step. Not verified: whether a Windows pipe can be reached from another machine, and Unix socket permissions on Linux and macOS.
+For a protocol into the app (live editing, say). Then: the tripwire gets a narrow named exception for one local socket in the user's runtime folder; a token per start, never written into a diagram folder; off by default, a visible indicator and an idle timeout; a warning on every switch-on that any program holding the token can read the open diagram; no save operation on the connection, so only the person saves; an edit is rejected if the diagram changed since the assistant read it (the in-memory form of ADR 0109) and arrives as one undo step. Not verified: whether a Windows pipe can be reached from another machine, and Unix socket permissions on Linux and macOS.
