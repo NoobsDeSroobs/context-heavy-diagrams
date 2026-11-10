@@ -1,7 +1,7 @@
 # 0163: The MCP server connected to the running app, with a toggle
 
 ## Status
-Not Started. Depends on the `chd mcp` command from [ADR 0138](../../decisions/0138-the-mcp-server-carries-the-guidance-the-cli-carries-the-checks.md); do not start before it exists.
+Spike done (2026-11-10); go or no-go is the maintainer's call, see "Spike findings". The `chd mcp` command it depends on exists ([ADR 0138](../../decisions/0138-the-mcp-server-carries-the-guidance-the-cli-carries-the-checks.md)).
 
 ## Goal
 An assistant using `chd mcp` can ask the running app what is open, what is selected and what has unsaved changes, and a person turns that connection on and off from the menu and can always see its state. Edits still arrive as file writes the person reviews afterwards: the app's window does not update live unless a later, separate mode is turned on.
@@ -34,8 +34,16 @@ Local-only does not stop software already running as the user, and a local conne
 - **A warning each time it is switched on**, in plain words: while it is on, any program running as you that holds the token can read the open diagram, including unsaved changes; local-only does not protect against software already on the machine; do not forward or tunnel it unless you know what you are doing (there are valid cases, such as a container or a remote machine, but then the token is the only protection); what an assistant reads goes to its provider; switch it off when not in use. The same text goes in the documentation.
 - The gain is modest (open diagram, selection, unsaved state) against a standing attack surface, so the spike ends in a go or no-go. Not building it is an acceptable outcome.
 
+## Spike findings (2026-11-10)
+- **Windows named pipe, measured** (a Node `net` server, access list read through .NET): the creator, SYSTEM and Administrators get full control, and **Everyone and ANONYMOUS LOGON get read access**. Node cannot narrow it (`readableAll` and `writableAll` only widen). So the pipe name and the file system do not protect anything: the first message must carry the token and the server must say nothing before it checks. Connecting through `\\<machine>\pipe\…` also worked from the same machine; that may be the local shortcut, so whether another machine can reach it is **not verified** (needs a second machine, with and without SMB allowed).
+- **Unix socket** (not run here, Windows machine): connecting needs write permission on the socket file, which the umask decides. Put it in a directory only the user can enter (mode 0700, a per-user runtime folder), not under `userData`: macOS limits a socket path to 104 characters and `~/Library/Application Support/…` can exceed it. To test on Linux.
+- **Both fire the offline tripwire** (`net`). The change is a narrow, named exception in `src/offline.test.mjs` and an amendment to [ADR 0113](../../decisions/0113-enforced-offline-behaviour.md).
+- **Without a listener:** Electron's `second-instance` event can hand a launch's arguments to the running app, and it already does for opening a file, but it is one-way, so a reply would need a spool file. The recovery snapshots in `userData/recovery` already hold unsaved text, periodically.
+- **What it would buy:** the open diagram, the selection and whether there are unsaved edits. The unsaved-edit gap is already covered from the person's side by the changed-outside-the-app notice ([ADR 0159](../../decisions/0159-one-notice-for-every-file-that-changed-outside-the-app.md)); that leaves the selection (exact ids of what the person points at). The larger payoff, an assistant editing in the open window, is a later mode this epic does not build.
+- **Recommendation: no-go for the listener now.** A standing attack surface, a changed offline rule and a warning on every enable, for a selection. Do instead "copy the selection for an assistant" (a menu entry that puts the ids, labels, tags and the file path of what is selected on the clipboard): no listener, no token, one explicit act per use. Revisit the connection when live editing is wanted, since that is when it earns its cost.
+
 ## Tasks
-- [ ] Spike: pick the transport (front-runner: local socket), check permissions on Windows and Linux, and decide go or no-go
+- [x] Spike: pick the transport (front-runner: local socket), check permissions on Windows and Linux, and decide go or no-go (Windows measured, Linux not run; decision with the maintainer)
 - [ ] ADR: the connection, and the amendment to 0113 and the tripwire test
 - [ ] Read the reference design of the app that inspired this (its control-protocol doc) for the handshake and token handling
 - [ ] The listener in the main process, off by default, with the token
