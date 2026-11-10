@@ -1,7 +1,7 @@
 # 0052: Draw.io (diagrams.net) import/export
 
 ## Status
-In Progress. **Export is built (2026-11-09), to be tried by the maintainer**; import has not been started. The design pass for export is [ADR 0167](../../decisions/0167-drawio-export.md): the connection-point worry below turned out not to be a fork, since draw.io keeps the exact attachment on each edge (`exitX`, `entryX`).
+In Progress. **Export is done (0.9.0, tried by the maintainer in draw.io)**; import has not been started and is bigger than first thought, so it waits for its own design pass. The design pass for export is [ADR 0167](../../decisions/0167-drawio-export.md): the connection-point worry below turned out not to be a fork, since draw.io keeps the exact attachment on each edge (`exitX`, `entryX`).
 
 ## Goal
 Interop with draw.io / diagrams.net — read and/or write its `.drawio` file format, in service of this app's existing low-lock-in stance (see `docs/file-format.md`'s own design intent).
@@ -23,7 +23,7 @@ Which direction to build first — or whether both are worth it — needs a real
 - [x] `chd export --format drawio` (or an output ending in `.drawio`), notes on stderr
 - [x] File → Export → draw.io…, notes shown after the file is written
 - [x] Opened the output in the draw.io web app: nested containers, icons, tags, curved and stepped edges, crow's feet
-- [ ] Try it in the draw.io desktop app and on a diagram of your own; look at step and smooth-step routing and long labels
+- [x] Tried in draw.io by the maintainer
 - [ ] Import (`.drawio` to this app): a scoped importer (shapes, containers, edges, labels, tags from `<object>`), with the same kind of contract for what it skips. Needs its own design pass
 
 ## Notes
