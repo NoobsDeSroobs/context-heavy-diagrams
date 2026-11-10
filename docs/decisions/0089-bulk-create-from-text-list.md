@@ -1,7 +1,7 @@
 # 0089: Bulk-create shapes/containers from a pasted text list
 
 ## Status
-Decided and implemented (2026-09-15).
+Decided and implemented (2026-09-15). A pasted table with a header row is also read, see [ADR 0168](0168-create-elements-from-a-pasted-table.md); a list of labels works as described here.
 
 ## Context
 

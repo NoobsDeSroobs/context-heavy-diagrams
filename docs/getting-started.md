@@ -13,7 +13,7 @@ Move around by dragging empty canvas (pan) and with the mouse wheel (zoom). **Ct
 ## 2. Draw a small diagram
 
 1. **File → New → Diagram** (Ctrl+N).
-2. Drag an **entity** from the palette onto the canvas. The palette also has **containers** (boxes that hold other elements), **text** and **free-form lines**. Right-click an entity or container button to create many from a pasted list.
+2. Drag an **entity** from the palette onto the canvas. The palette also has **containers** (boxes that hold other elements), **text** and **free-form lines**. Right-click an entity or container button to create many from a pasted list, or from a pasted table (copied from a spreadsheet, or comma-separated, with a header row): the Name column is the label, Description becomes the note, and every other column becomes a tag. [`examples/paste-a-table.csv`](../examples/paste-a-table.csv) is one to try.
 3. Double-click the element to edit its label. Enter commits; Shift+Enter starts a new line; Esc cancels.
 4. Drag from a connection point on one entity to another to connect them. The edge stays attached and re-routes when either end moves. Drag a selected edge's end to move it to another connection point.
 5. Drag an entity into a container to nest it. Dragging the container moves what is inside.

@@ -1,0 +1,9 @@
+Name,Description,Domain,Owner,Environment,Status
+Billing API,"Charges cards, issues invoices and sends receipts.",Payments,team-billing,prod,live
+Ledger,Books every payment as a double entry.,Payments,team-billing,prod,live
+Fraud Check,Scores each payment before it is accepted.,Payments,team-risk,prod,live
+Customer Portal,The web app customers pay and manage their plans in.,Customer,team-web,prod,live
+Notification Service,Sends email and SMS.,Customer,team-web,staging,pilot
+Notification Service,,Customer,team-web,prod,pilot
+Data Warehouse,Nightly copy of billing and customer data for reporting.,Reporting,team-data,prod,live
+Legacy Invoicing,Replaced by the Billing API; switched off in the spring.,Payments,team-billing,prod,retired
