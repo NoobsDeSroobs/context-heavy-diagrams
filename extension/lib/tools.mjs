@@ -724,13 +724,24 @@ export function createTools({ root, allowUpdate, specSources }) {
     }
   }
 
-  function inspectDiagram({ path, styles = false }) {
+  function inspectDiagram({ path, styles = false, issues_only = false, ids, container }) {
+    if (ids !== undefined && !(Array.isArray(ids) && ids.every((id) => typeof id === 'string'))) {
+      throw new ToolError('ids must be a list of element ids')
+    }
+    if (container !== undefined && typeof container !== 'string') {
+      throw new ToolError('container must be the id of a container')
+    }
     const { absolute, relative: rel } = resolveInFolder(root, path, 'read', { mustExist: true })
     const diagram = loadDiagram(absolute, rel)
     return {
       path: rel,
       fingerprint: fingerprint(readFileSync(absolute)),
-      ...inspectAnswer(diagram, { styles: styles === true })
+      ...inspectAnswer(diagram, {
+        styles: styles === true,
+        issuesOnly: issues_only === true,
+        ids,
+        container
+      })
     }
   }
 

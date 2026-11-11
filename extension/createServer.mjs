@@ -225,7 +225,7 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
     {
       title: 'List the elements of a diagram',
       description:
-        'The elements of a .chd as they stand: id, type, label, absolute position and size, parent and connection point ids (left out when they are the four defaults); the edges with their ends; tags, links and note paths; the required tags, highlights and legend; the layout problems found so far (labels without room, overlaps, elements sticking out of a container, edges running over an element); and the fingerprint to pass to edit_diagram. Read-only.',
+        'The elements of a .chd as they stand: id, type, label, absolute position and size, parent and connection point ids (left out when they are the four defaults); the edges with their ends; tags, links and note paths; the required tags, highlights and legend; the layout problems found so far (labels without room, overlaps, elements sticking out of a container, edges running over an element); and the fingerprint to pass to edit_diagram. Read-only. Use issues_only, ids or container for a short answer after an edit.',
       inputSchema: {
         path,
         styles: z
@@ -233,6 +233,22 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
           .optional()
           .describe(
             'Also give the style each element and edge sets (colours, line style, markers, label position)'
+          ),
+        issues_only: z
+          .boolean()
+          .optional()
+          .describe('Only the layout problems and the fingerprint, not the elements'),
+        ids: z
+          .array(z.string())
+          .optional()
+          .describe(
+            'Only these elements (nodes and edges) and the problems that involve them; ids not in the diagram are listed as unknown'
+          ),
+        container: z
+          .string()
+          .optional()
+          .describe(
+            'Only this container, everything inside it, the edges that touch them, and their problems'
           )
       },
       annotations: readOnly

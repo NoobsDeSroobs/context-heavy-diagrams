@@ -11,7 +11,7 @@ Small gaps found by the second Immich trial (a run of 238k tokens of context, ag
 - [ ] Creating a diagram can copy the setup (required tags, highlights, legend, no elements) from an existing file, so a set of linked diagrams is not set up four times
 - [ ] The layout check flags an edge label that sits on a container border
 - [ ] `get_format_spec` description sends `edit_diagram` users to the layout topic only (see the `build` topic in [0177](0177-fewer-tokens-for-assistant-diagramming.md))
-- [ ] `inspect_diagram` `ids` filter (also in 0177)
+- [x] `inspect_diagram` `ids` filter (done with the filters of 0177)
 
 ## Notes
 Left out on purpose: a legend generated from the highlights (the legend does not hold highlights, [ADR 0033](../../decisions/0033-diagram-legend-design.md)); a description field for entities (tags and notes carry it); a rendered preview for the assistant ([0167](../completed-epics.md#0167-an-assistant-can-see-the-diagram-it-drew)).

@@ -44,7 +44,8 @@ Run the same diagram tasks (the Immich set among them) with the full spec, the s
 Much of the quality side can be scripted, since the tools already compute those checks.
 
 ## Tasks
-- [ ] Compact `inspect_diagram` format, default handles left out, `issues_only` and `ids`/`container` filters, with tests
+- [x] Default handles left out and one line per element (`compactJson`): done earlier, so the custom one-line text format is not built (measured 2026-11-11, see Notes)
+- [x] `issues_only`, `ids` and `container` filters on `inspect_diagram` and `chd ask inspect`, with tests; an id not in the diagram comes back as `unknown`
 - [ ] Settle one check path (what `validate_diagram` still adds beside `edit_diagram`'s issues)
 - [ ] Write the short `build` topic in `get_format_spec`, and change the server instructions
 - [x] Shorter `edit_diagram` answers (new ids and changed fields, not the full element), with tests
@@ -55,6 +56,8 @@ Much of the quality side can be scripted, since the tools already compute those 
 - [ ] Decide what to keep; record the choice in an ADR
 
 ## Notes
+**Measured 2026-11-11, after the first trial.** The answers already go out one line per element, and default handles are left out, so the 5–8x the custom text format was expected to give was mostly taken: `inspect_diagram` on a 16-node, 14-edge C4 diagram is 8,636 characters (about 2,500 tokens, about 290 characters an element, most of it long labels, note paths and the legend); on an 81-node landscape 49,405 characters. The same answer with only the problems is 913 and 2,219 characters, so the filters, not a new text format, are where the saving is. A line format would save the quotes and key names (perhaps a third) and cost a second shape for assistants to parse; not built.
+
 **First numbers: a C4 set of the Immich repository (2026-11-06).** An assistant with only the extension tools, no notes, tags or links, built four diagrams (context, containers, components, code) in `immich-c4/` from a repository placed in the diagram folder. Token figures are the assistant's estimates, not measurements. All four diagrams validated with no warnings.
 - `list_files` on the whole repository: about 12–14k tokens, truncated before `server/` and `web/`.
 - Reading the draw.io architecture file in the repository: about 6k tokens, mostly styling attributes.

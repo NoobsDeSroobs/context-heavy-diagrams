@@ -516,6 +516,20 @@ test('chd ask inspect and inspect_diagram give the same answer, with and without
   }
 })
 
+test('chd ask inspect and inspect_diagram give the same narrowed answers', () => {
+  runCli(['edit', 'shop.chd'], JSON.stringify(BUILD))
+  tools.edit_diagram({ path: 'srv/shop.chd', operations: BUILD })
+  const cases = [
+    [['--issues-only'], { issues_only: true }],
+    [['--ids', 'api,reads,nope'], { ids: ['api', 'reads', 'nope'] }],
+    [['--container', 'zone'], { container: 'zone' }]
+  ]
+  for (const [flags, args] of cases) {
+    const fromCli = JSON.parse(runCli(['ask', 'inspect', 'shop.chd', ...flags]).stdout)
+    sameAs(tools.inspect_diagram({ path: 'srv/shop.chd', ...args }), fromCli)
+  }
+})
+
 test('chd ask room and room_for_label give the same answer', () => {
   const question = { label: 'sends orders', direction: 'vertical', fontSize: 14, bold: true }
   const fromCli = JSON.parse(

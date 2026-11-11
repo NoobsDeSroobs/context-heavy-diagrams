@@ -168,6 +168,35 @@ test('chd ask inspect lists the elements, and --styles adds the style fields', (
   assert.equal(run(['ask', 'inspect', 'missing.chd']).status, 1)
 })
 
+test('chd ask inspect can be narrowed to the problems, some ids or one container', () => {
+  edit('shop.chd', [
+    { op: 'add_container', id: 'zone', label: 'Zone', x: 0, y: 0, width: 400, height: 300 },
+    { op: 'add_entity', id: 'web', label: 'Web', x: 20, y: 60, parent: 'zone' },
+    { op: 'add_entity', id: 'api', label: 'API', x: 200, y: 60, parent: 'zone' },
+    { op: 'add_entity', id: 'db', label: 'DB', x: 700, y: 60 },
+    { op: 'connect', id: 'calls', from: 'web', to: 'api' }
+  ])
+  const issues = answer(run(['ask', 'inspect', 'shop.chd', '--issues-only']))
+  assert.deepEqual(Object.keys(issues).sort(), ['fingerprint', 'issues', 'path'])
+  const some = answer(run(['ask', 'inspect', 'shop.chd', '--ids', 'web, calls,nope']))
+  assert.deepEqual(
+    some.nodes.map((n) => n.id),
+    ['web']
+  )
+  assert.deepEqual(
+    some.edges.map((e) => e.id),
+    ['calls']
+  )
+  assert.deepEqual(some.unknown, ['nope'])
+  const zone = answer(run(['ask', 'inspect', 'shop.chd', '--container', 'zone']))
+  assert.deepEqual(
+    zone.nodes.map((n) => n.id),
+    ['zone', 'web', 'api']
+  )
+  usageError(run(['ask', 'inspect', 'shop.chd', '--ids']))
+  usageError(run(['ask', 'inspect', 'shop.chd', '--container']))
+})
+
 test('chd ask room says how much space a label needs, and refuses a question it cannot answer', () => {
   const room = answer(run(['ask', 'room', '--label', 'requests', '--direction', 'horizontal']))
   assert.ok(room.minimum > 0 && room.target >= room.minimum)

@@ -878,6 +878,38 @@ test('inspect_diagram lists the elements and the problems, and room_for_label an
   refusal(() => tools.room_for_label({ label: 'x', direction: 'sideways' }), /direction/)
 })
 
+test('inspect_diagram can be narrowed to the problems, some ids or one container', () => {
+  const tools = make()
+  tools.edit_diagram({
+    path: 'zones.chd',
+    operations: [
+      { op: 'add_container', id: 'zone', label: 'Zone', x: 0, y: 0, width: 400, height: 300 },
+      { op: 'add_entity', id: 'web', label: 'Web', x: 20, y: 60, parent: 'zone' },
+      { op: 'add_entity', id: 'db', label: 'DB', x: 700, y: 60 },
+      { op: 'connect', id: 'calls', from: 'web', to: 'db' }
+    ]
+  })
+  const issues = tools.inspect_diagram({ path: 'zones.chd', issues_only: true })
+  assert.deepEqual(Object.keys(issues).sort(), ['fingerprint', 'issues', 'path'])
+  const some = tools.inspect_diagram({ path: 'zones.chd', ids: ['db', 'nope'] })
+  assert.deepEqual(
+    some.nodes.map((n) => n.id),
+    ['db']
+  )
+  assert.deepEqual(some.unknown, ['nope'])
+  const zone = tools.inspect_diagram({ path: 'zones.chd', container: 'zone' })
+  assert.deepEqual(
+    zone.nodes.map((n) => n.id),
+    ['zone', 'web']
+  )
+  assert.deepEqual(
+    zone.edges.map((e) => e.id),
+    ['calls']
+  )
+  refusal(() => tools.inspect_diagram({ path: 'zones.chd', ids: 'db' }), /list of element ids/)
+  refusal(() => tools.inspect_diagram({ path: 'zones.chd', container: 7 }), /id of a container/)
+})
+
 // --- tags, links, notes, legend and the rest through edit_diagram
 
 test('edit_diagram writes a note beside the diagram, and inspect_diagram shows tags, the note and the catalogs', () => {
