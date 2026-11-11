@@ -46,7 +46,7 @@ Much of the quality side can be scripted, since the tools already compute those 
 ## Tasks
 - [x] Default handles left out and one line per element (`compactJson`): done earlier, so the custom one-line text format is not built (measured 2026-11-11, see Notes)
 - [x] `issues_only`, `ids` and `container` filters on `inspect_diagram` and `chd ask inspect`, with tests; an id not in the diagram comes back as `unknown`
-- [ ] Settle one check path (what `validate_diagram` still adds beside `edit_diagram`'s issues)
+- [x] Settle one check path: `edit_diagram` answers with the problems it touched and a count of the rest, `validate_diagram` stays for files it did not write ([ADR 0171](../../decisions/0171-an-edit-answers-with-the-problems-it-touched.md))
 - [ ] Write the short `build` topic in `get_format_spec`, and change the server instructions
 - [x] Shorter `edit_diagram` answers (new ids and changed fields, not the full element), with tests
 - [x] Filtering and paging for `list_files`: done in [0178](0178-reading-large-repositories-through-the-extension.md), which designs reading large repositories as a whole

@@ -4,6 +4,7 @@
 import type { DiagramFile } from '../diagram/index.ts'
 import { describeDiagram, layoutIssues } from './inspect.ts'
 import { groupMessages } from './issues.ts'
+import type { OperationResult } from './model.ts'
 
 // At most this many operations in one call.
 export const MAX_OPERATIONS = 200
@@ -17,6 +18,41 @@ export function editIssues(diagram: DiagramFile, only?: ReadonlySet<string>): st
   return groupMessages(
     only ? issues.filter((issue) => issue.ids.some((id) => only.has(id))) : issues
   )
+}
+
+// What an edit answers about the layout: the problems that involve an element the call touched (made,
+// changed or named, with whatever sits inside a touched container), then one line with the number of
+// the others, which `inspect` lists when asked (ADR 0171).
+export function editAnswerIssues(
+  diagram: DiagramFile,
+  results: readonly OperationResult[]
+): string[] {
+  const touched = new Set<string>()
+  for (const result of results) {
+    if (result.element) touched.add(result.element.id)
+    for (const id of result.removed ?? []) touched.add(id)
+  }
+  // Moving or resizing a container changes where everything inside it stands.
+  const parent = new Map(diagram.nodes.map((n) => [n.id, n.parentId]))
+  for (const node of diagram.nodes) {
+    for (let at = node.parentId, hops = 0; at !== undefined && hops < 200; hops += 1) {
+      if (touched.has(at)) {
+        touched.add(node.id)
+        break
+      }
+      at = parent.get(at)
+    }
+  }
+  const all = layoutIssues(diagram, diagram.fontFamily)
+  const mine = all.filter((issue) => issue.ids.some((id) => touched.has(id)))
+  const lines = groupMessages(mine)
+  const others = all.length - mine.length
+  if (others > 0) {
+    lines.push(
+      `${others} other problem${others === 1 ? '' : 's'} elsewhere in the diagram ${others === 1 ? 'was' : 'were'} left out; list ${others === 1 ? 'it' : 'them'} with inspect_diagram issues_only (chd ask inspect --issues-only)`
+    )
+  }
+  return lines
 }
 
 export interface InspectOptions {

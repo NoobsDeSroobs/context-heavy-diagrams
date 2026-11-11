@@ -1,7 +1,7 @@
 # 0148: An assistant builds a diagram by operations that answer with what they made
 
 ## Status
-Accepted (2026-11-06). The set of operations has grown since the first version and is expected to grow again; the shape of an operation does not change.
+Accepted (2026-11-06). Partly superseded by [0171](0171-an-edit-answers-with-the-problems-it-touched.md): an edit no longer repeats every layout problem. The set of operations has grown since the first version and is expected to grow again; the shape of an operation does not change.
 
 ## Context
 Assistants asked to draw a large diagram wrote their own generator scripts, about a thousand lines each, to get ids, parent order, connection points and positions right. A script needs a runtime the machine may not have, and Claude Desktop with the extension has no shell at all.

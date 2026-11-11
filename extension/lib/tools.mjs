@@ -20,7 +20,7 @@ import {
 } from '../../src/shared/diagram/index.ts'
 import { roomForLabel } from '../../src/shared/edit/inspect.ts'
 import {
-  editIssues,
+  editAnswerIssues,
   foldersFor,
   inspectAnswer,
   MAX_OPERATIONS
@@ -719,7 +719,7 @@ export function createTools({ root, allowUpdate, specSources }) {
       path: rel,
       fingerprint: written.fingerprint,
       results: applied.results,
-      issues: editIssues(applied.diagram),
+      issues: editAnswerIssues(applied.diagram, applied.results),
       warnings: written.warnings
     }
   }

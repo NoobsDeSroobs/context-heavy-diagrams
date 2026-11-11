@@ -13,7 +13,7 @@ import { createEmptyDiagram, parseDiagram, serializeDiagram } from '../shared/di
 import type { DiagramFile } from '../shared/diagram/index.ts'
 import {
   compactJson,
-  editIssues,
+  editAnswerIssues,
   foldersFor,
   inspectAnswer,
   MAX_OPERATIONS
@@ -293,7 +293,7 @@ function runEditOnFile(parsed: EditArgs, operations: unknown[], env: EditEnv): u
       path: fromRoot,
       fingerprint: fingerprintOf(readFileSync(absolute)),
       results: applied.results,
-      issues: editIssues(applied.diagram),
+      issues: editAnswerIssues(applied.diagram, applied.results),
       warnings: groupMessages(checked.warnings.map(tidy))
     }
   } catch (error) {
