@@ -33,3 +33,5 @@ The technical checks (the label floor, overlaps, containment, crossings) say whe
 
 ## Notes
 Raised while reviewing 0162: the label figures in the guide are an estimate, and the person is the one who knows how they want assistant work to look. First written as a diagram setting with a second warning tier, then as a spacing number for assistants; both dropped for free-text preferences, which cover spacing and everything else in one place.
+
+**A central process** that every window, the CLI and the MCP server query is parked, not planned (2026-11-11). The concern is the connection into the application being abused, not the preferences leaking. Node's `net` module is also the way to open an outbound connection, so allowing it for one local socket leaves the offline test unable to tell the two apart unless the exception pins the exact call. The maintainer is looking for a secure way; until then the file is the plan, and the conditions of [ADR 0169](../../decisions/0169-no-live-connection-between-the-mcp-server-and-the-app.md) apply if it is revisited.
