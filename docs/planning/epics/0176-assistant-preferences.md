@@ -1,7 +1,7 @@
 # 0176: Assistant preferences
 
 ## Status
-Not Started. Logged 2026-11-05 as a label padding setting; redirected 2026-11-11 to the person's preferences for an assistant. Follows [0162](../completed-epics.md#0162-minimum-distance-between-connected-elements).
+Not Started, not being built now (2026-11-11). Logged 2026-11-05 as a label padding setting; redirected 2026-11-11 to the person's preferences for an assistant. Follows [0162](../completed-epics.md#0162-minimum-distance-between-connected-elements).
 
 ## Goal
 Let each person prepackage what they want from an assistant that draws, tidies or reformats their diagrams, in their own words, the way Claude's own custom instructions set tone: how airy, which colours, how to name and group things, any standing commands. Example: "I prefer a lot of whitespace in my diagrams, and sharp, vibrant colours over dim or dark ones." An assistant asked to clean up a diagram then changes it by that person's taste, not a default one. A person drawing by hand can see what looks right; the assistant cannot, so this exists only for assistant work.
