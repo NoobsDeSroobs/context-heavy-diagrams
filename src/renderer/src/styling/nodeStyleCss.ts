@@ -11,7 +11,7 @@ import { themeAdaptiveColor } from './themeAdaptiveColor'
 // an inline default.
 //
 // Opacity is per-channel (fillOpacity/strokeOpacity/fontOpacity), not one
-// whole-element value — see FontStyle.fontOpacity's comment for why. Each
+// whole-element value — see TextStyle.fontOpacity's comment for why. Each
 // is baked into its own color via color-mix() (withOpacity), not the CSS
 // `opacity` property, which can't isolate fill from border from text.
 //

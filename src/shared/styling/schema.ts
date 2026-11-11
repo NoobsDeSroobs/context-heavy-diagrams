@@ -3,7 +3,12 @@
 // field. `MarkerKind`/`LineStyleKind` are deliberately shape-described
 // ("arrowOpen", "crowsFootMany"), not notation-named — see ADR 0014's Notes
 // for why the naming-system question is deliberately kept out of the schema.
-export interface FontStyle {
+//
+// `NodeStyle` and `EdgeStyle` are built from the same small parts, side by side: text, fill, stroke
+// and line ends (ADR 0170). No part is the parent of another, and the JSON stays flat.
+
+// How the text of an element or label is drawn.
+export interface TextStyle {
   fontSize?: number
   fontColor?: string
   fontWeight?: 'normal' | 'bold'
@@ -29,20 +34,35 @@ export interface FontStyle {
   fontOpacity?: number
 }
 
-export interface NodeStyle extends FontStyle {
+// What a shape or container is filled with.
+export interface FillStyle {
   fill?: string
   fillOpacity?: number
+}
+
+// The outline of an element, or the line itself.
+export interface StrokeStyle {
   stroke?: string
   strokeOpacity?: number
   strokeWidth?: number
-  textAlign?: 'start' | 'center' | 'end'
-  // 'line' nodes only (see ADR 0050) — same fields/vocabulary as
-  // EdgeStyle's, added here rather than making DiagramNode.style a union,
-  // same precedent as LegendEntry's own 'line' kind.
   lineStyle?: LineStyleKind
+}
+
+// The graphics at the two ends of a line.
+export interface LineEndsStyle {
   startMarker?: MarkerKind
   endMarker?: MarkerKind
 }
+
+// 'lineStyle', 'startMarker' and 'endMarker' are for 'line' nodes only (see ADR 0050): the same
+// fields and vocabulary as EdgeStyle's, added here rather than making DiagramNode.style a union,
+// same precedent as LegendEntry's own 'line' kind.
+export type NodeStyle = TextStyle &
+  FillStyle &
+  StrokeStyle &
+  LineEndsStyle & {
+    textAlign?: 'start' | 'center' | 'end'
+  }
 
 export type LineStyleKind = 'solid' | 'dashed' | 'dotted'
 export type MarkerKind =
@@ -66,38 +86,34 @@ export type EdgeAnimation = 'flow' | 'pulse'
 // 'forward' runs from the source end to the target end; 'reverse' the other way. Absent means forward.
 export type EdgeAnimationDirection = 'forward' | 'reverse'
 
-export interface EdgeStyle extends FontStyle {
-  stroke?: string
-  strokeOpacity?: number
-  strokeWidth?: number
-  lineStyle?: LineStyleKind
-  startMarker?: MarkerKind
-  endMarker?: MarkerKind
-  animation?: EdgeAnimation
-  // Meaningful only with `animation`. A multiplier on the normal speed: 2 is twice as fast, 0.5 half
-  // as fast. Absent means 1; a stored value outside 0.1 to 10 is drawn at the nearest end of it.
-  animationSpeed?: number
-  animationDirection?: EdgeAnimationDirection
-  // 'pulse' only: the distance between pulses, in pixels, so a stream of them runs along the edge.
-  // Absent or 0 means one pulse at a time; a negative value is read as 0.
-  pulseDistance?: number
-  // The length of a dash and of the gap after it, in pixels, for a dashed, dotted or flowing line;
-  // absent means what the line style draws (ADR 0141).
-  dashLength?: number
-  dashGap?: number
-  // 0-1 fraction along the rendered path, same convention as
-  // ConnectionPoint's `offset` — stays meaningful if the edge's endpoints
-  // move, unlike a fixed pixel offset. Absent means 0.5 (today's only
-  // behavior, the path midpoint) — see ADR 0045.
-  labelPosition?: number
-  // How the path is routed between the two endpoints — see ADR 0057.
-  // 'straight'/'step'/'smoothstep' are React Flow's own built-in path
-  // entities; 'catmullRom' reuses the freeform-line curve math (ADR 0050,
-  // bendablePath.ts) with DiagramEdge.points as manual bend
-  // points. Absent means today's only behavior, a plain bezier
-  // (React Flow's default, plus the edgeStraightSegmentLength lead-in/out
-  // setting) — kept as the omitted default rather than an explicit
-  // `'bezier'` value, same "absent means current hardcoded look"
-  // convention as every other style field.
-  routingStyle?: 'straight' | 'step' | 'smoothstep' | 'catmullRom'
-}
+export type EdgeStyle = TextStyle &
+  StrokeStyle &
+  LineEndsStyle & {
+    animation?: EdgeAnimation
+    // Meaningful only with `animation`. A multiplier on the normal speed: 2 is twice as fast, 0.5 half
+    // as fast. Absent means 1; a stored value outside 0.1 to 10 is drawn at the nearest end of it.
+    animationSpeed?: number
+    animationDirection?: EdgeAnimationDirection
+    // 'pulse' only: the distance between pulses, in pixels, so a stream of them runs along the edge.
+    // Absent or 0 means one pulse at a time; a negative value is read as 0.
+    pulseDistance?: number
+    // The length of a dash and of the gap after it, in pixels, for a dashed, dotted or flowing line;
+    // absent means what the line style draws (ADR 0141).
+    dashLength?: number
+    dashGap?: number
+    // 0-1 fraction along the rendered path, same convention as
+    // ConnectionPoint's `offset` — stays meaningful if the edge's endpoints
+    // move, unlike a fixed pixel offset. Absent means 0.5 (today's only
+    // behavior, the path midpoint) — see ADR 0045.
+    labelPosition?: number
+    // How the path is routed between the two endpoints — see ADR 0057.
+    // 'straight'/'step'/'smoothstep' are React Flow's own built-in path
+    // entities; 'catmullRom' reuses the freeform-line curve math (ADR 0050,
+    // bendablePath.ts) with DiagramEdge.points as manual bend
+    // points. Absent means today's only behavior, a plain bezier
+    // (React Flow's default, plus the edgeStraightSegmentLength lead-in/out
+    // setting) — kept as the omitted default rather than an explicit
+    // `'bezier'` value, same "absent means current hardcoded look"
+    // convention as every other style field.
+    routingStyle?: 'straight' | 'step' | 'smoothstep' | 'catmullRom'
+  }
