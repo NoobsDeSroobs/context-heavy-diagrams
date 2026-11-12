@@ -93,6 +93,7 @@ export interface DiagramApi {
   ): Promise<{ found: true } | { found: false; resolvedPath: string }>
   openRecentDiagram(path: string, isCurrentWindowEmpty: boolean): Promise<{ found: boolean }>
   clearWindowPath(): Promise<void>
+  showDiagramInFolder(path: string): Promise<boolean>
   getPathForFile(file: File): string
   handleDroppedFiles(
     paths: string[],
