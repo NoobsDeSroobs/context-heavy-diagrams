@@ -16,11 +16,12 @@ Building a diagram with `edit_diagram` (or `chd edit`). About a page: what you n
 - Elements in a group, not joined by an edge: **20px** apart. Distinct groups or layers: **60px**.
 - Inside a container: **24–40px** (use 30) from its edge to its nearest child on every side. A container does not grow by itself.
 - Joined by an edge: the gap from `room_for_label`. Without it, horizontal `6.5 × characters + 50`, vertical 63 for a one-line label, 40 with no label.
+- Several edges leaving one element (a gateway to four services): their labels sit side by side near it and collide unless the targets are more than a label chip wide apart (`room_for_label` gives the chip width; add 20px). Spread the targets rather than patching with `labelPosition` afterwards.
 - Measure gaps between boxes (`x + width` to the next `x`), not between centres.
 - Leave `style` out unless one element must stand out. Use highlights for colour by tag.
 
 ## Recipes
-- **Layers:** one full-width container per band, same `x` and `width`, 60px apart; entities left to right inside, 30px in. Edges between bands: `bottom` to `top`.
+- **Layers:** one full-width container per band, same `x` and `width`, 60px apart; entities left to right inside, 30px in. Edges between bands: `bottom` to `top`; in any vertical run pick `bottom` and `top`, not the sides.
 - **Hub and spoke:** hub first, spokes at the compass points (a ring beyond four), each the connection gap away, with connection points facing the hub.
 - **Pipeline:** one row, same `y`, each step a connection gap from the last; `right` to `left`.
 - **Swimlane:** one container per lane, same `x` and `width`, 60px apart; each step in its lane in call order.
