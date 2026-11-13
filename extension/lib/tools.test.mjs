@@ -269,12 +269,21 @@ test('get_format_spec returns the core rules by default and rejects unknown topi
   refusal(() => tools.get_format_spec({ topic: 'nope' }), /unknown topic/)
 })
 
+test('get_format_spec "build" is the short page for edit_diagram, without the core rules', () => {
+  const build = make().get_format_spec({ topic: 'build' })
+  assert.match(build, /# Building with edit_diagram/)
+  assert.match(build, /room_for_label/)
+  assert.doesNotMatch(build, /# \.chd diagram format/)
+  // About a page: the point of the topic is that it is cheap to read.
+  assert.ok(build.length < 5000, `${build.length} characters`)
+})
+
 test('get_format_spec "all" is the core rules plus an index, small enough for one result', () => {
   const tools = make()
   const all = tools.get_format_spec({ topic: 'all' })
   assert.match(all, /# \.chd diagram format/)
   assert.match(all, /# Topics/)
-  for (const name of ['fields', 'authoring', 'layout'])
+  for (const name of ['build', 'fields', 'authoring', 'layout'])
     assert.match(all, new RegExp(`"${name}" \\(\\d+ KB\\)`))
   assert.doesNotMatch(all, /# Field reference/)
   assert.ok(Buffer.byteLength(all, 'utf-8') < 25 * 1024)

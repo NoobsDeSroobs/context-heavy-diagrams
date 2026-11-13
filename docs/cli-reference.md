@@ -24,7 +24,7 @@ On **Windows PowerShell 5.1**, text piped to a program is re-encoded and can dam
 
 ## `chd spec`
 
-`chd spec [fields|authoring|layout|conformance|all]` prints the file format reference an assistant needs. With no topic it prints the core rules and traps; the others are opt-in, because together they are large. Exit codes: `0`, `2` for an unknown topic.
+`chd spec [build|fields|authoring|layout|conformance|all]` prints the file format reference an assistant needs. With no topic it prints the core rules and traps; the others are opt-in, because together they are large. Exit codes: `0`, `2` for an unknown topic.
 
 ## `chd validate`
 

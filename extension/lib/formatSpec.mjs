@@ -1,8 +1,9 @@
 // Same topics as `chd spec` (resources/cli/chd.mjs): the default is only the
 // skill itself, the references are opt-in because they are tens of KB.
-export const SPEC_TOPICS = ['fields', 'authoring', 'layout', 'conformance', 'all']
+export const SPEC_TOPICS = ['build', 'fields', 'authoring', 'layout', 'conformance', 'all']
 
 const TITLES = {
+  build: 'Building with edit_diagram',
   fields: 'Field reference',
   authoring: 'Authoring guide',
   layout: 'Layout guide',
@@ -15,7 +16,7 @@ function stripFrontmatter(text) {
 }
 
 const PREAMBLE = `(Output of get_format_spec. File links below such as references/field-reference.md are the
-topics of the same tool ("fields", "authoring", "layout", "conformance"). This server has tools in
+topics of the same tool ("build", "fields", "authoring", "layout", "conformance"). This server has tools in
 place of the commands the text names: \`node scripts/validate_chd.mjs <file>\` is validate_diagram
 (for a .chdmeta file, \`chd validate\` is validate_metamodel),
 \`chd hash <file>\` is the fingerprint read_file returns, \`chd diff\` is diff_diagrams (its \`--rev\` is
@@ -25,9 +26,9 @@ Use update_file/create_file to write, a metamodel too.)
 
 If you build or change a diagram with edit_diagram you need very little of what follows: that tool
 keeps ids unique, parents before children, paths relative and the file valid, so the rules below on
-writing the JSON by hand apply to create_file and update_file only. Note that edit_diagram takes
-absolute coordinates even inside a container (the file stores a child relative to its parent; the
-tool converts both ways). The "layout" topic has the gaps and sizes worth following either way.
+writing the JSON by hand apply to create_file and update_file only. The "build" topic is the page
+you need instead. Note that edit_diagram takes absolute coordinates even inside a container (the
+file stores a child relative to its parent; the tool converts both ways).
 
 `
 
@@ -47,7 +48,7 @@ export function formatSpec(sources, topic) {
   if (topic === 'all') parts.push(topicIndex(sources))
   if (topic === undefined || topic === 'core') {
     parts.push(
-      'More detail, one topic per call: "fields", "authoring", "layout", "conformance" (or "all" for an index).'
+      'More detail, one topic per call: "build", "fields", "authoring", "layout", "conformance" (or "all" for an index).'
     )
   }
   return parts.join('\n\n---\n\n').trimEnd()

@@ -9,7 +9,7 @@ import { SPEC_TOPICS } from './lib/formatSpec.mjs'
 import { createTools } from './lib/tools.mjs'
 
 const INSTRUCTIONS = `Tools for the user's Context-Heavy Diagrams diagrams (.chd files) and the supporting documents in one folder they chose. Everything is relative to that folder.
-- Before creating or editing a .chd, call get_format_spec; the format has traps that corrupt files. Before writing a .chdmeta (a diagram metamodel), call it with topic "conformance": it says what to ask the person, what the format can and cannot say, and gives a valid example. validate_metamodel lists what is wrong with a .chdmeta.
+- To build or change a diagram with edit_diagram, call get_format_spec with topic "build" (about a page) and nothing else. Before hand-writing a .chd with create_file or update_file, call it without a topic; the format has traps that corrupt files. Before writing a .chdmeta (a diagram metamodel), call it with topic "conformance": it says what to ask the person, what the format can and cannot say, and gives a valid example. validate_metamodel lists what is wrong with a .chdmeta.
 - read_file returns a fingerprint. update_file only works with the fingerprint of the version you based your edit on, and is refused if the file changed meanwhile; then read it again and redo the edit. create_file never overwrites.
 - To build or change a diagram step by step, use edit_diagram: it creates the file if it does not exist, applies a list of operations (add_entity, connect, move, ...) and answers briefly with what each made (ids, places, sizes) and the layout problems that involve what the call touched (many of one kind collapsed into one line with their number), with a count of the others, which inspect_diagram with issues_only lists. You decide where everything goes; ask room_for_label how much space two connected elements need before you place them, and pass the fingerprint each answer returns as base_fingerprint in the next call. inspect_diagram lists the elements as they stand. A diagram made this way in this session can be edited again without allowing changes to existing files.
 - A .chd is validated before it is written; fix any reported errors and try again. validate_diagram checks an existing file.
@@ -112,7 +112,7 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
     {
       title: 'Get the .chd format spec',
       description:
-        'The rules for the .chd diagram format. Call this before creating or editing a diagram. The default is the core rules. Read the detailed references one topic at a time (fields, authoring, layout, conformance); "all" returns the core rules and an index of the topics, not the references themselves.',
+        'The rules for the .chd diagram format. Topic "build" is the page you need to build a diagram with edit_diagram. Call it without a topic (the core rules) before writing a diagram by hand with create_file or update_file. Read the detailed references one topic at a time (build, fields, authoring, layout, conformance); "all" returns the core rules and an index of the topics, not the references themselves.',
       inputSchema: { topic: z.enum(['core', ...SPEC_TOPICS]).optional() },
       annotations: readOnly
     },
