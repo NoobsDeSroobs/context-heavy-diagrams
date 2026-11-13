@@ -49,6 +49,25 @@ const inlineMetamodels = {
   }
 }
 
+// The version with the commit the server was built from, as semver build metadata: `0.10.0+c1f085e`, and
+// `.dirty` when the tree has changes. Before a release the package version does not change from build to
+// build, so this is what tells two installed builds apart. Without git the version stands alone.
+function buildVersion(version) {
+  try {
+    const git = (...args) =>
+      execFileSync('git', args, {
+        cwd: root,
+        encoding: 'utf-8',
+        stdio: ['ignore', 'pipe', 'ignore']
+      })
+    const commit = git('rev-parse', '--short', 'HEAD').trim()
+    const dirty = git('status', '--porcelain').trim() !== ''
+    return `${version}+${commit}${dirty ? '.dirty' : ''}`
+  } catch {
+    return version
+  }
+}
+
 export async function bundleServer(outfile, version = '0.0.0') {
   await build({
     entryPoints: [join(root, 'extension', 'server.mjs')],
@@ -81,7 +100,7 @@ export async function buildExtension() {
   rmSync(staging, { recursive: true, force: true })
   mkdirSync(join(staging, 'server'), { recursive: true })
 
-  await bundleServer(join(staging, 'server', 'index.mjs'), version)
+  await bundleServer(join(staging, 'server', 'index.mjs'), buildVersion(version))
   mkdirSync(dirname(SERVER_FILE), { recursive: true })
   copyFileSync(join(staging, 'server', 'index.mjs'), SERVER_FILE)
 

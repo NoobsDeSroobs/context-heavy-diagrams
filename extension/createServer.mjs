@@ -53,7 +53,10 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
   const tools = createTools({ root, allowUpdate, specSources })
   const server = new McpServer(
     { name: 'context-heavy-diagrams', version },
-    { instructions: INSTRUCTIONS }
+    {
+      instructions: `${INSTRUCTIONS}
+- This is version ${version} of the Context-Heavy Diagrams extension.`
+    }
   )
   const path = z.string().describe('Path of the file, relative to the diagram folder')
   const content = z.string()

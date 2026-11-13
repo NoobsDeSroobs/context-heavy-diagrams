@@ -113,6 +113,21 @@ test('the bundled server (what ships) behaves the same, with its spec text inlin
   }
 })
 
+test('the server tells the assistant which build it is, so two installed builds can be told apart', async () => {
+  const outDir = mkdtempSync(join(tmpdir(), 'chd-ext-version-'))
+  const folder = mkdtempSync(join(tmpdir(), 'chd-ext-version-folder-'))
+  try {
+    const bundle = join(outDir, 'index.mjs')
+    await bundleServer(bundle, '9.9.9+abc1234.dirty')
+    await withServer(bundle, false, folder, async (client) => {
+      assert.match(client.getInstructions(), /version 9\.9\.9\+abc1234\.dirty of the Context-Heavy/)
+    })
+  } finally {
+    rmSync(outDir, { recursive: true, force: true })
+    rmSync(folder, { recursive: true, force: true })
+  }
+})
+
 test('starting without a folder, or with a missing one, fails cleanly', async () => {
   const { spawnSync } = await import('node:child_process')
   const r = spawnSync(process.execPath, [sourceEntry], { encoding: 'utf-8' })
