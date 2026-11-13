@@ -16,7 +16,9 @@ Building a diagram with `edit_diagram` (or `chd edit`). About a page: what you n
 - Elements in a group, not joined by an edge: **20px** apart. Distinct groups or layers: **60px**.
 - Inside a container: **24–40px** (use 30) from its edge to its nearest child on every side. A container does not grow by itself.
 - Joined by an edge: the gap from `room_for_label`. Without it, horizontal `6.5 × characters + 50`, vertical 63 for a one-line label, 40 with no label.
-- Several edges leaving one element (a gateway to four services): their labels sit side by side near it and collide unless the targets are more than a label chip wide apart (`room_for_label` gives the chip width; add 20px). Spread the targets rather than patching with `labelPosition` afterwards.
+- Several edges leaving one element (a gateway to four services): make that element wide, add a connection point for each edge (`add_connection_point`) so every edge leaves from its own point and runs straight, and put the targets more than a label chip apart (`room_for_label` gives the chip width; add 20px). Never let several edges share one point, and do not patch collisions with `labelPosition` afterwards.
+- Size boxes to their job: a hub or a bus is a wide bar, not another 120 × 80 box. Boxes joined by an edge go next to each other in the flow, not with a third box between them, so edges stay short and evenly spaced.
+- An edge should not cross a container it does not start or end in. Straight is the default; bend an edge only when a straight one cannot be had. Mirror the layout where the structure is symmetrical.
 - Measure gaps between boxes (`x + width` to the next `x`), not between centres.
 - Leave `style` out unless one element must stand out. Use highlights for colour by tag.
 

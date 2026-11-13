@@ -150,6 +150,59 @@ function score(file) {
   out.canvas = `${Math.round(Math.max(...all.map((a) => a.x + a.w)) - Math.min(...all.map((a) => a.x)))} x ${Math.round(Math.max(...all.map((a) => a.y + a.h)) - Math.min(...all.map((a) => a.y)))}`
   out.edgesWithHandles = d.edges.filter((e) => e.sourceHandle && e.targetHandle).length
   out.styledNodes = d.nodes.filter((n) => n.style && Object.keys(n.style).length).length
+  // What a person sees (the ratings of the first pilot): edges sharing one attachment point, boxes all
+  // the same size, dead space, edges drawn through a container they neither start nor end in (the
+  // straight line between the centres stands in for the drawn path), and edges running against the
+  // top-to-bottom flow.
+  const ends = new Map()
+  for (const e of d.edges) {
+    for (const [id, handle] of [
+      [e.source, e.sourceHandle],
+      [e.target, e.targetHandle]
+    ]) {
+      const key = `${id}|${handle}`
+      ends.set(key, (ends.get(key) ?? 0) + 1)
+    }
+  }
+  out.sharedAttachmentPoints = [...ends.values()].filter((n) => n > 1).length
+  const entities = d.nodes.filter((n) => n.type === 'entity')
+  out.distinctEntitySizes = new Set(entities.map((n) => `${n.size.width}x${n.size.height}`)).size
+  const canvas = Math.max(...all.map((a) => a.x + a.w)) - Math.min(...all.map((a) => a.x))
+  const canvasHigh = Math.max(...all.map((a) => a.y + a.h)) - Math.min(...all.map((a) => a.y))
+  out.density = Number(
+    (
+      entities.reduce((sum, n) => sum + n.size.width * n.size.height, 0) /
+      (canvas * canvasHigh)
+    ).toFixed(3)
+  )
+  const ancestors = (n) => {
+    const ids = new Set()
+    for (let p = byId.get(n.parentId); p; p = byId.get(p.parentId)) ids.add(p.id)
+    return ids
+  }
+  const crosses = (a, b, r) => {
+    for (let t = 0.02; t < 1; t += 0.02) {
+      const x = a.x + (b.x - a.x) * t
+      const y = a.y + (b.y - a.y) * t
+      if (x > r.x && x < r.x + r.w && y > r.y && y < r.y + r.h) return true
+    }
+    return false
+  }
+  let throughContainers = 0
+  let against = 0
+  for (const e of d.edges) {
+    const from = byId.get(e.source)
+    const to = byId.get(e.target)
+    const a = abs(from)
+    const b = abs(to)
+    const ca = { x: a.x + a.w / 2, y: a.y + a.h / 2 }
+    const cb = { x: b.x + b.w / 2, y: b.y + b.h / 2 }
+    const own = new Set([...ancestors(from), ...ancestors(to)])
+    if (containers.some((c) => !own.has(c.id) && crosses(ca, cb, abs(c)))) throughContainers += 1
+    if (cb.y < ca.y - 1) against += 1
+  }
+  out.edgesThroughOtherContainers = throughContainers
+  out.edgesAgainstTheFlow = against
   out.bytes = readFileSync(file).length
   return out
 }
