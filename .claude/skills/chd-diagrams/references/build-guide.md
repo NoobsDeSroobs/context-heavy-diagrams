@@ -19,7 +19,7 @@ Building a diagram with `edit_diagram` (or `chd edit`). About a page: what you n
 - Several edges leaving one element (a gateway to four services): make that element wide, add a connection point for each edge (`add_connection_point`) so every edge leaves from its own point and runs straight, and put the targets more than a label chip apart (`room_for_label` gives the chip width; add 20px). Never let several edges share one point, and do not patch collisions with `labelPosition` afterwards.
 - Size boxes to their job: a hub or a bus is a wide bar, not another 120 × 80 box. Boxes joined by an edge go next to each other in the flow, not with a third box between them, so edges stay short and evenly spaced.
 - An edge should not cross a container it does not start or end in. Straight is the default; bend an edge only when a straight one cannot be had. Mirror the layout where the structure is symmetrical.
-- Keep an edge label off container titles and container walls. The layout check does not report either: put the label (`labelPosition`) where there is room, usually inside the container rather than in the narrow gap between an outside box and the wall.
+- Keep an edge label off container titles and container walls (the answer reports both). Put the label (`labelPosition`) where there is room, usually inside the container rather than in the narrow gap between an outside box and the wall.
 - Measure gaps between boxes (`x + width` to the next `x`), not between centres.
 - Leave `style` out unless one element must stand out. Use highlights for colour by tag.
 
