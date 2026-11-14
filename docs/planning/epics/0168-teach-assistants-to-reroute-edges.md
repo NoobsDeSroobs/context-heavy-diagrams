@@ -24,10 +24,20 @@ Found while testing the C4 examples: a line crossed an entity, and the fix was o
 ## What was built first (2026-11-14)
 `route_edges {ids?}` (ADR 0174). On the trial diagrams it removes every edge drawn across an element (3 of 3 on `small.chd`, 38 of 38 on `large.chd`, in under 0.1 s) and leaves the crossings about where they were (0 to 1 on small; 39 to 50 on large, because the placement of ten domains with 29 connections between them forces them). A first version had a route running through its own source box: edges are now checked against their own two elements too. The picture of the large one is right-angled and clean of elements but busy, with long runs through the gaps between domains; the placement is the next lever.
 
-## Related
+## First trial (2026-11-14), extension `0.10.0+bf2e877`, one run each, no new guidance
+Scored with `scripts/reroute-trial/score.mjs`; the brief does not mention `route_edges`.
+- **small, two runs: 7 problems to 0 in both.** Both found and used `route_edges` for the edge across Database, then routed the edge across Message queue and Analytics warehouse by hand, over the top of the diagram: the router's route for it crossed another edge, which they would not accept. Labels were moved with `labelPosition`. One run also moved five elements and bent an edge as a curve; the other changed two elements and made an edge straight. Neither could render the diagram.
+- **large, router only: 77 to 49** (38 through elements to 0, crossings 39 to 49). It stopped there: the rest "come from the structure". It also added two connection points it could not use.
+- **large, own router: 77 to 22** (0 through elements, 22 crossings), the cleanest picture of the four. That run (it had a shell, so not what a chat-only user has) wrote its own router, added 111 connection points so that no two edges share one, **removed and re-made 70 edges** to put them on the new points, made 48 edges straight, and swapped the places of 11 same-sized elements inside their containers.
+- **What it shows:** (1) every run hit the same gap: an existing edge cannot be moved to another connection point, which cost one run 70 re-made edges (fixed: `set_edge_handles`). (2) On the large diagram the lever was not routing but attachment: each edge on its own point on the side facing its other end, so edges run straight and do not fan. `route_edges` does not choose points. (3) Small edges: the crossing price is low enough that the router accepts a crossing where a person goes a long way round.
+
+
 [0162](../completed-epics.md#0162-minimum-distance-between-connected-elements) (spacing, which makes room for a lane), [0164](../completed-epics.md#0164-tooling-fixes-from-the-first-assistant-trial-runs), [0165](../completed-epics.md#0165-an-editing-tool-for-assistants), [0166](../completed-epics.md#0166-the-mcp-server-and-the-command-line-share-their-checks) and [0167](../completed-epics.md#0167-an-assistant-can-see-the-diagram-it-drew).
 
 ## Tasks
 - [x] Build the router as an edit operation (`route_edges`), with tests, the operations help, the build page, the changelog and ADR 0174
 - [ ] Trial runs with `scripts/reroute-trial/` (`small.chd`, `large.chd`, `brief.md`, `score.mjs`): an assistant is asked to fix the reported problems, now with `route_edges` available; record what it does and what is left
+- [x] `set_edge_handles` (move an edge's ends to other connection points), from the trial
+- [ ] Decide whether `route_edges` also chooses connection points (one per edge, on the side facing the other end, spread so they do not cross), as the best run did by hand; it overlaps [0188](0188-loosely-attached-edges.md), where the same idea is a property of the edge instead of stored points
+- [ ] Retune the price of a crossing against a detour, on the small diagram
 - [ ] Decide what to teach, where it lives and whether a crossing check belongs in the tools

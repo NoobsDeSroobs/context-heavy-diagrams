@@ -225,6 +225,31 @@ test('add_line stores the points relative to the line and its bounding box', () 
   assertValid(diagram)
 })
 
+test('set_edge_handles moves an edge to another connection point and keeps everything else', () => {
+  const base = run(
+    createEmptyDiagram(),
+    { op: 'add_entity', id: 'a', label: 'A', x: 0, y: 0 },
+    { op: 'add_entity', id: 'b', label: 'B', x: 300, y: 0 },
+    { op: 'add_connection_point', id: 'b', side: 'left', offset: 0.25, pointId: 'high' },
+    { op: 'connect', id: 'e', from: 'a', to: 'b', label: 'calls', tags: { owner: 'x' } }
+  ).diagram
+  const moved = run(base, { op: 'set_edge_handles', id: 'e', toHandle: 'high' })
+  const edge = moved.diagram.edges.find((e) => e.id === 'e')
+  assert.equal(edge.targetHandle, 'high')
+  assert.equal(edge.sourceHandle, 'right')
+  assert.equal(edge.label, 'calls')
+  assert.deepEqual(moved.results[0].element.toHandle, 'high')
+  assert.throws(
+    () => run(base, { op: 'set_edge_handles', id: 'e', toHandle: 'nope' }),
+    /not a connection point of "b"/
+  )
+  assert.throws(() => run(base, { op: 'set_edge_handles', id: 'e' }), /fromHandle/)
+  assert.throws(
+    () => run(base, { op: 'set_edge_handles', id: 'a', toHandle: 'left' }),
+    /not an edge/
+  )
+})
+
 test('set_edge_points replaces, clears and explains when the routing would ignore the points', () => {
   const { diagram, results } = run(
     start(),

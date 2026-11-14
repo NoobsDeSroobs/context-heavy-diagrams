@@ -201,6 +201,33 @@ function connect(model: Model, reader: Reader): OperationResult {
   return { op: 'connect', element: briefEdge(edge) }
 }
 
+// Moves an edge's ends to other connection points of the same two elements: it keeps its id, label, tags
+// and style, which removing and connecting again would not.
+function setEdgeHandles(model: Model, reader: Reader): OperationResult {
+  const id = reader.string('id')
+  const edge = model.edge(id)
+  if (!edge) reader.fail(`"${id}" is not an edge of this diagram`)
+  if (!reader.has('fromHandle') && !reader.has('toHandle')) {
+    reader.fail('give "fromHandle" or "toHandle" (or both): the connection point to use')
+  }
+  for (const [key, nodeId] of [
+    ['fromHandle', edge.source],
+    ['toHandle', edge.target]
+  ] as const) {
+    if (!reader.has(key)) continue
+    const handle = reader.string(key)
+    const node = model.node(nodeId)
+    if (!node || !handlesOf(node).includes(handle)) {
+      reader.fail(
+        `"${key}": "${handle}" is not a connection point of "${nodeId}" (it has ${node ? handlesOf(node).join(', ') : 'none'})`
+      )
+    }
+    if (key === 'fromHandle') edge.sourceHandle = handle
+    else edge.targetHandle = handle
+  }
+  return { op: 'set_edge_handles', element: briefEdge(edge) }
+}
+
 function addConnectionPoint(model: Model, reader: Reader): OperationResult {
   const node = connectable(model, reader, 'id')
   const side = reader.string('side')
@@ -441,6 +468,7 @@ const OPERATIONS: Record<string, (model: Model, reader: Reader) => OperationResu
   reparent,
   remove,
   set_edge_points: setEdgePoints,
+  set_edge_handles: setEdgeHandles,
   route_edges: routeEdgesOperation,
   ...ANNOTATION_OPERATIONS
 }
