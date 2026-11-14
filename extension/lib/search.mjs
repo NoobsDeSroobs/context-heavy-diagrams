@@ -1,10 +1,12 @@
 // Searching the text of the files in the folder, in plain Node: no shell and no other program, so it
 // works the same on every system (ADR 0149). It reads what list_files lists and nothing else: the same
-// folder, the same skipped names, never a symlink, never a dot-file, never the types that cannot be read.
+// folder, the same skipped names, never a symlink, never a dot-file, never what a .gitignore names
+// (ADR 0173), never the types that cannot be read.
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, sep } from 'node:path'
 import { createContext, Script } from 'node:vm'
 import { ToolError, isDotOrIgnoredEntry, isReadBlockedName, resolveInFolder } from './fileRules.mjs'
+import { createIgnoreRules } from './gitignore.mjs'
 
 export const SEARCH_DEFAULT_MATCHES = 50
 export const SEARCH_MAX_MATCHES = 300
@@ -198,7 +200,8 @@ export function searchFiles(
     }
   }
 
-  const walk = (dir, depth) => {
+  const rules = createIgnoreRules(root, start)
+  const walk = (dir, depth, scope) => {
     const entries = readdirSync(dir, { withFileTypes: true }).sort((a, b) =>
       a.name < b.name ? -1 : a.name > b.name ? 1 : 0
     )
@@ -206,16 +209,18 @@ export function searchFiles(
       if (stopped) return
       if (isDotOrIgnoredEntry(entry.name) || entry.isSymbolicLink()) continue
       const full = join(dir, entry.name)
-      if (entry.isDirectory()) {
-        if (depth < MAX_DEPTH) walk(full, depth + 1)
-        continue
-      }
-      if (!entry.isFile() || isReadBlockedName(entry.name)) continue
       const path = full
         .slice(root.length + 1)
         .split(sep)
         .join('/')
+      if (entry.isDirectory()) {
+        if (rules.skips(scope, path, true)) continue
+        if (depth < MAX_DEPTH) walk(full, depth + 1, rules.into(scope, full))
+        continue
+      }
+      if (!entry.isFile() || isReadBlockedName(entry.name)) continue
       if (fileWanted && !fileWanted(entry.name, path)) continue
+      if (rules.skips(scope, path, false)) continue
       filesVisited += 1
       if (filesVisited > MAX_FILES_VISITED) {
         stopped = `stopped after looking at ${MAX_FILES_VISITED} files`
@@ -228,7 +233,7 @@ export function searchFiles(
       scan(full, path)
     }
   }
-  walk(start, 0)
+  walk(start, 0, rules.scope)
 
   const skippedNote = Object.entries({
     [`files over ${MAX_FILE_BYTES / (1024 * 1024)} MB`]: skipped.tooLarge,
@@ -249,5 +254,7 @@ export function searchFiles(
     answer.stopped = `${stopped}; narrow it with subfolder or glob, or a more exact pattern`
   }
   if (skippedNote.length > 0) answer.skipped = `not searched: ${skippedNote.join(', ')}`
+  const ignored = rules.note()
+  if (ignored) answer.ignored = ignored
   return answer
 }

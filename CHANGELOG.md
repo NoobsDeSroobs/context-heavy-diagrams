@@ -8,6 +8,10 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 - **File → Show in Folder** shows the open diagram's file in the system's file manager (Explorer, Finder, or the desktop's own on Linux).
 
+### Changed
+
+- **The Claude Desktop extension leaves out what a repository's `.gitignore` names** (build output, dependencies) when it lists and searches files, and says which folders it left out; `list_files` answers with 100 files a page and no modified time. ([ADR 0173](docs/decisions/0173-listings-and-searches-leave-out-what-gitignore-names.md))
+
 ## 0.9.0 (2026-11-10)
 
 ### Added

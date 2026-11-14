@@ -63,7 +63,8 @@ test('list_files shows readable files, flags writable ones, and skips blocked ty
     ['a.chd', 'notes/readme.md', 'run.bat']
   )
   assert.equal(files[0].writable, true)
-  assert.equal(files[2].writable, false)
+  assert.equal(files[2].writable, undefined)
+  assert.ok(!('modified' in files[0]))
   assert.equal(updatesEnabled, false)
   assert.equal(truncated, false)
 })
@@ -660,7 +661,7 @@ test('no other JSON file can be written, and list_files flags metamodels as writ
   writeFileSync(join(folder, 'settings.json'), '{}')
   writeFileSync(join(folder, 'p.chdmeta'), METAMODEL)
   const { files } = tools.list_files()
-  const writable = Object.fromEntries(files.map((f) => [f.path, f.writable]))
+  const writable = Object.fromEntries(files.map((f) => [f.path, f.writable === true]))
   assert.equal(writable['p.chdmeta'], true)
   assert.equal(writable['settings.json'], false)
 })
@@ -1238,6 +1239,90 @@ test('list_files takes a glob and pages with an offset and a limit, in the order
   assert.deepEqual([last.truncated, last.nextOffset], [false, undefined])
   refusal(() => tools.list_files({ offset: -1 }), /offset must be/)
   refusal(() => tools.list_files({ limit: 0 }), /limit must be/)
+})
+
+// --- what a .gitignore names is left out (ADR 0173)
+
+function writeIgnoredTree() {
+  const lines = ['# build', 'dist/', '*.log', '!keep.log', '/top-only.md']
+  writeFileSync(join(folder, '.gitignore'), `${lines.join('\n')}\n`)
+  mkdirSync(join(folder, 'dist'))
+  writeFileSync(join(folder, 'dist', 'bundle.md'), 'NEEDLE built')
+  writeFileSync(join(folder, 'debug.log'), 'NEEDLE log')
+  writeFileSync(join(folder, 'keep.log'), 'NEEDLE kept')
+  writeFileSync(join(folder, 'top-only.md'), 'NEEDLE top')
+  mkdirSync(join(folder, 'server', 'generated'), { recursive: true })
+  writeFileSync(join(folder, 'server', '.gitignore'), 'generated/\ntop-only.md\n')
+  writeFileSync(join(folder, 'server', 'generated', 'g.md'), 'NEEDLE generated')
+  writeFileSync(join(folder, 'server', 'top-only.md'), 'NEEDLE nested rule')
+  writeFileSync(join(folder, 'server', 'real.md'), 'NEEDLE real')
+}
+
+test('list_files and search_files leave out what the .gitignore files name, and say so', () => {
+  writeIgnoredTree()
+  const tools = make()
+  const listing = tools.list_files()
+  assert.deepEqual(
+    listing.files.map((f) => f.path),
+    ['a.chd', 'keep.log', 'notes/readme.md', 'run.bat', 'server/real.md']
+  )
+  assert.match(listing.ignored, /dist\/.*server\/generated\/.*\d+ files?/)
+  assert.match(listing.ignored, /give it as subfolder/)
+  const found = tools.search_files({ pattern: 'NEEDLE', files_only: true })
+  assert.deepEqual(
+    found.files.map((line) => line.split(' ')[0]),
+    ['keep.log', 'server/real.md']
+  )
+  assert.match(found.ignored, /dist\//)
+})
+
+test('a folder asked for by name is listed even when a .gitignore names it, and its files can be read', () => {
+  writeIgnoredTree()
+  const tools = make()
+  assert.deepEqual(
+    tools.list_files({ subfolder: 'dist' }).files.map((f) => f.path),
+    ['dist/bundle.md']
+  )
+  assert.equal(tools.search_files({ pattern: 'built', subfolder: 'dist' }).matches.length, 1)
+  assert.equal(tools.read_file({ path: 'dist/bundle.md' }).content, 'NEEDLE built')
+})
+
+test('the folder view does not count what a .gitignore names', () => {
+  writeIgnoredTree()
+  const view = make().list_files({ folders: true })
+  assert.deepEqual(
+    view.folders.map((f) => f.name),
+    ['notes', 'server']
+  )
+})
+
+test('the .gitignore is never listed, searched or read, and a folder without one lists as before', () => {
+  writeIgnoredTree()
+  const tools = make()
+  assert.ok(!tools.list_files().files.some((f) => f.path.includes('.gitignore')))
+  assert.equal(tools.search_files({ pattern: 'generated' }).matches.length, 0)
+  refusal(() => tools.read_file({ path: '.gitignore' }), /dot-files/)
+  rmSync(join(folder, '.gitignore'))
+  rmSync(join(folder, 'server', '.gitignore'))
+  const plain = make().list_files()
+  assert.equal(plain.ignored, undefined)
+  assert.ok(plain.files.some((f) => f.path === 'dist/bundle.md'))
+})
+
+test('a .gitignore that is a symlink is not followed', () => {
+  mkdirSync(join(folder, 'dist'))
+  writeFileSync(join(folder, 'dist', 'bundle.md'), 'x')
+  writeFileSync(join(base, 'elsewhere.txt'), 'dist/\n')
+  try {
+    symlinkSync(join(base, 'elsewhere.txt'), join(folder, '.gitignore'))
+  } catch {
+    return // symlinks need a privilege on some Windows setups
+  }
+  assert.ok(
+    make()
+      .list_files()
+      .files.some((f) => f.path === 'dist/bundle.md')
+  )
 })
 
 test('list_files says when folders below its depth limit were left out', () => {
