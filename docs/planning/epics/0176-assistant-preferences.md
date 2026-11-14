@@ -11,7 +11,7 @@ The technical checks (the label floor, overlaps, containment, crossings) say whe
 
 ## Direction (decided 2026-11-11)
 - **Not part of the `.chd` and not a diagram setting.** It belongs to the person and the assistant integration.
-- **A tool returns it** (working name `assistant_guidance`; `chd guidance` on the command line; one shared implementation). The server instructions tell an assistant to call it before it draws, reformats or tidies a diagram. The description of the tool stays a few words, so the preferences cost tokens only when asked for ([0177](0177-fewer-tokens-for-assistant-diagramming.md)), and a size limit keeps the answer short.
+- **A tool returns it** (working name `assistant_guidance`; `chd guidance` on the command line; one shared implementation). The server instructions tell an assistant to call it before it draws, reformats or tidies a diagram. The description of the tool stays a few words, so the preferences cost tokens only when asked for ([0177](../completed-epics.md#0177-fewer-tokens-for-an-assistant-that-builds-diagrams-with-the-tools)), and a size limit keeps the answer short.
 - **Free text first.** Most of what a person wants is prose, and an assistant reads prose. Structure is added only where a tool must act on it without the assistant's help (the spacing number for `room_for_label` is the one candidate), and then as an optional field.
 - **Read-only for assistants.** The preferences are the person's; an assistant changes them only when the person asks.
 - The layout guide and the skill point to the tool instead of carrying fixed taste numbers.
