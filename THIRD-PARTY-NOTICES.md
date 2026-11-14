@@ -68,6 +68,7 @@ The built-in icon set is [Tabler Icons](https://tabler.io/icons) (`@tabler/icons
 | hast-util-whitespace | 3.0.0 | MIT |
 | html-to-image | 1.11.13 | MIT |
 | html-url-attributes | 3.0.1 | MIT |
+| ignore (extension only) | 7.0.14 | MIT |
 | inline-style-parser | 0.2.7 | MIT |
 | is-alphabetical | 2.0.1 | MIT |
 | is-alphanumerical | 2.0.1 | MIT |
@@ -1631,6 +1632,37 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+```
+
+### ignore 7.0.14
+
+License: MIT  
+Author: kael  
+Source: https://github.com/kaelzhang/node-ignore  
+Ships only in the Claude Desktop extension
+
+```text
+Copyright (c) 2013 Kael Zhang <i@kael.me>, contributors
+http://kael.me/
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
 ### inline-style-parser 0.2.7

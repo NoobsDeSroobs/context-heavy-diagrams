@@ -1,7 +1,7 @@
 # 0178: Reading large repositories through the extension
 
 ## Status
-In Progress: a first set is built (see Tasks); the measurements are done and a design is proposed below, to be confirmed. Logged 2026-11-06; follows [0177](0177-fewer-tokens-for-assistant-diagramming.md) and the opening of reads to every file type ([ADR 0110](../../decisions/0110-claude-desktop-extension.md)).
+In Progress: a first set is built (see Tasks); measured, designed ([ADR 0173](../../decisions/0173-listings-and-searches-leave-out-what-gitignore-names.md)) and built; what is left is the trial. Logged 2026-11-06; follows [0177](0177-fewer-tokens-for-assistant-diagramming.md) and the opening of reads to every file type ([ADR 0110](../../decisions/0110-claude-desktop-extension.md)).
 
 ## Goal
 Design how an assistant finds and reads the right files in a folder that holds a whole repository, without a listing or a read that is too large to use. Design first; the build comes after the design is settled.
@@ -24,10 +24,11 @@ What `list_files` sees, with today's rules (dot entries and `node_modules` skipp
 - Build output is the usual noise: on three of five trees most files are in a folder git already ignores, and the alphabetical page ends before `src/`. Every one of those folders is named in `.gitignore`.
 - The 300-file page and 50,000-file cap are not the problem; what the walk lets in is.
 
-## Proposed design (to confirm)
+## Design (settled 2026-11-14, ADR 0173)
 - **Ignore rules: read `.gitignore`** (the root file and nested ones) in the server, only to decide what to list and search. The content is never returned and no dot-file becomes readable, so the dot-file rule of [ADR 0110](../../decisions/0110-claude-desktop-extension.md) keeps its purpose; it needs its own ADR, since it is a change to that rule. Ignored folders are not walked (fast on a huge tree) and are named in the answer, so the assistant knows what is left out. A `subfolder` inside an ignored folder lists it, and `read_file` by path is unchanged: only discovery narrows. `node_modules` and dot entries stay skipped with or without git. Use the `ignore` package (MIT, no dependencies, already in the tree through ESLint) rather than a hand-made matcher.
 - **No fixed list of build folder names** (`dist`, `target`, ...): a folder without git is rare for a repository, and a name list guesses wrong (`bin` holds scripts).
 - **Smaller entries:** drop `modified` and say `writable` only when true; default page 100 files (maximum stays 300). The unit stays files, not bytes: the server cannot count tokens and a file entry is almost constant in size.
+- **After the build** (same trees): this repository 6,176 files become 845, the web shop 1,120 become 152, the Rust workspace 104,178 become 26,242 (listed in 0.7 s), Immich 3,544 stay (it ignores little). A page is 7,000-8,700 characters instead of 36,000-39,000.
 - **Search** shares the same rules, as it reads what `list_files` lists ([ADR 0149](../../decisions/0149-the-extension-searches-file-text-in-process.md)).
 - **Tool surface:** no new tools; the descriptions say to start with the folder view.
 - **Command line:** none. An agent with a shell has `ls`, `grep` and `git ls-files`.
@@ -54,9 +55,10 @@ A first set was built after the Immich trial in [0165](../completed-epics.md#016
 
 - [x] Measure real repositories: files per folder, sizes, how many are generated or vendored
 - [ ] Try a few real tasks by hand against the current tools and note where the assistant gets lost
-- [ ] Settle the questions above and write the design
-- [ ] ADR for the listing, search and ranged read
+- [x] Settle the questions above and write the design
+- [x] ADR for the ignore rules and the smaller listing (ADR 0173; the ranged read and search have theirs)
 - [x] Build it, with tests for the limits, the paging and the folder rules (first set)
+- [x] Build the `.gitignore` rule, the smaller entries and the page of 100
 - [ ] Re-run the Immich C4 task and compare tokens and misses with the numbers in 0177
 
 ## Notes

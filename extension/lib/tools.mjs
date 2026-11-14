@@ -54,10 +54,12 @@ import { FINGERPRINT_PATTERN, fingerprint } from './fingerprint.mjs'
 import { formatSpec } from './formatSpec.mjs'
 import { groupMessages } from './issues.mjs'
 import { loadBuiltinMetamodels } from './metamodelsText.mjs'
+import { createIgnoreRules } from './gitignore.mjs'
 import { globTest, searchFiles } from './search.mjs'
 
 const NEWLINE = String.fromCharCode(10)
 const LIST_LIMIT = 300
+const LIST_DEFAULT = 100
 const LIST_COLLECT_LIMIT = 50000
 const LIST_MAX_DEPTH = 12
 
@@ -181,28 +183,31 @@ export function createTools({ root, allowUpdate, specSources }) {
   }
 
   // Every file the assistant may read under `start`, as { full, path, name }, in the order of the
-  // paths. The walk never follows a symlink and skips dot-files, dependency folders and the types
-  // that cannot be read; `matches` narrows it further (a glob).
+  // paths. The walk never follows a symlink and skips dot-files, dependency folders, what a .gitignore
+  // names (ADR 0173) and the types that cannot be read; `matches` narrows it further (a glob).
   function visibleFiles(start, matches) {
     const found = []
     let capped = false
     let tooDeep = false
-    const walk = (dir, depth) => {
+    const rules = createIgnoreRules(root, start)
+    const walk = (dir, depth, scope) => {
       for (const entry of readdirSync(dir, { withFileTypes: true })) {
         if (capped) return
         if (isDotOrIgnoredEntry(entry.name) || entry.isSymbolicLink()) continue
         const full = join(dir, entry.name)
-        if (entry.isDirectory()) {
-          if (depth < LIST_MAX_DEPTH) walk(full, depth + 1)
-          else tooDeep = true
-          continue
-        }
-        if (!entry.isFile() || isReadBlockedName(entry.name)) continue
         const path = full
           .slice(root.length + 1)
           .split(sep)
           .join('/')
+        if (entry.isDirectory()) {
+          if (rules.skips(scope, path, true)) continue
+          if (depth < LIST_MAX_DEPTH) walk(full, depth + 1, rules.into(scope, full))
+          else tooDeep = true
+          continue
+        }
+        if (!entry.isFile() || isReadBlockedName(entry.name)) continue
         if (matches && !matches(entry.name, path)) continue
+        if (rules.skips(scope, path, false)) continue
         if (found.length >= LIST_COLLECT_LIMIT) {
           capped = true
           return
@@ -210,25 +215,20 @@ export function createTools({ root, allowUpdate, specSources }) {
         found.push({ full, path, name: entry.name })
       }
     }
-    walk(start, 0)
+    walk(start, 0, rules.scope)
     found.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
-    return { found, capped, tooDeep }
+    return { found, capped, tooDeep, ignored: rules.note() }
   }
 
   const fileEntry = ({ full, path, name }) => {
     const stats = statSync(full)
-    return {
-      path,
-      bytes: stats.size,
-      modified: stats.mtime.toISOString(),
-      writable: isWritableName(name)
-    }
+    return { path, bytes: stats.size, ...(isWritableName(name) ? { writable: true } : {}) }
   }
 
   // Files the assistant may read, in the whole folder or under `subfolder`, a page at a time. With
   // `folders` the answer is the shape of the tree instead: the folders directly inside, with how many
   // files and bytes each holds, and the files directly inside; go down one level at a time.
-  function listFiles({ subfolder, glob, folders = false, offset = 0, limit = LIST_LIMIT } = {}) {
+  function listFiles({ subfolder, glob, folders = false, offset = 0, limit = LIST_DEFAULT } = {}) {
     if (!Number.isInteger(offset) || offset < 0) {
       throw new ToolError('offset must be a whole number, 0 or more')
     }
@@ -243,12 +243,13 @@ export function createTools({ root, allowUpdate, specSources }) {
       }
       start = found.absolute
     }
-    const { found, capped, tooDeep } = visibleFiles(start, globTest(glob))
+    const { found, capped, tooDeep, ignored } = visibleFiles(start, globTest(glob))
     // The folder's name only, never its full path (which would go to the provider): enough for an
     // assistant to notice that the server points at the wrong folder.
     const common = {
       folder: basename(root),
       updatesEnabled: allowUpdate,
+      ...(ignored ? { ignored } : {}),
       ...(tooDeep
         ? {
             note: `folders more than ${LIST_MAX_DEPTH} levels below ${start === root ? 'the folder' : 'this subfolder'} are not listed; list from a deeper subfolder to see them`

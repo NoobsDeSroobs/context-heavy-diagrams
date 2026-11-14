@@ -67,7 +67,7 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
     {
       title: 'List files',
       description:
-        'List the files in the diagram folder (diagrams, notes, supporting documents, source code and so on, except the types that cannot be read), with size, modified time and whether the type can be written. In a large folder start with folders: true to see the shape of the tree, then list one subfolder, with a glob if you want one kind of file; a long list comes in pages (total says how many, nextOffset where the next page starts). To find a file by what is in it, use search_files. The result names the folder (its name only, not its path) so you can tell whether the server points at the folder you expect.',
+        'List the files in the diagram folder (diagrams, notes, supporting documents, source code and so on, except the types that cannot be read), with the size and writable: true for the types that can be written. What the .gitignore files in the folder name (build output, dependencies) is left out and the answer says which folders. In a large folder start with folders: true to see the shape of the tree, then list one subfolder, with a glob if you want one kind of file; a long list comes in pages of 100 (total says how many, nextOffset where the next page starts). To find a file by what is in it, use search_files. The result names the folder (its name only, not its path) so you can tell whether the server points at the folder you expect.',
       inputSchema: {
         subfolder: z
           .string()
@@ -84,7 +84,11 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
           .optional()
           .describe('Only files whose path matches, such as "*.ts" or "server/**/*.service.ts"'),
         offset: z.number().int().optional().describe('Skip this many files (to page through)'),
-        limit: z.number().int().optional().describe('At most this many files, up to 300')
+        limit: z
+          .number()
+          .int()
+          .optional()
+          .describe('At most this many files, default 100, up to 300')
       },
       annotations: readOnly
     },
@@ -95,7 +99,7 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
     {
       title: 'Search the text of the files',
       description:
-        'Find lines of text in the files of the diagram folder, as grep does, with no shell: for an event name, a class, a setting, a word in the documentation. Plain text by default; regex: true for a regular expression (a slow one is cut off). ignore_case, a subfolder, a glob over the path from the folder ("*.ts" for every .ts file, "server/**/*.service.ts"), context (0 to 5 lines around a match) and max_matches narrow or widen it. files_only lists just the files and how many lines match in each, to see where something lives before reading. Matches come back as "path:line: text" (context lines as "path-line- text"), long lines cut around the match; read_file reads the whole file. Skips dot-folders, node_modules, files over 2 MB, binary files and the types that cannot be read; it says when it stopped early.',
+        'Find lines of text in the files of the diagram folder, as grep does, with no shell: for an event name, a class, a setting, a word in the documentation. Plain text by default; regex: true for a regular expression (a slow one is cut off). ignore_case, a subfolder, a glob over the path from the folder ("*.ts" for every .ts file, "server/**/*.service.ts"), context (0 to 5 lines around a match) and max_matches narrow or widen it. files_only lists just the files and how many lines match in each, to see where something lives before reading. Matches come back as "path:line: text" (context lines as "path-line- text"), long lines cut around the match; read_file reads the whole file. Skips dot-folders, node_modules, what .gitignore names, files over 2 MB, binary files and the types that cannot be read; it says when it stopped early.',
       inputSchema: {
         pattern: z.string().describe('The text to find (a regular expression if regex is true)'),
         regex: z.boolean().optional(),
