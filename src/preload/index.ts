@@ -238,6 +238,11 @@ const api = {
     return ipcRenderer.invoke('windows:clearPath')
   },
 
+  // Shows this window's diagram file in the OS file manager.
+  showDiagramInFolder(path: string): Promise<boolean> {
+    return ipcRenderer.invoke('windows:showInFolder', path)
+  },
+
   // Drag-and-drop — recent Electron versions removed the
   // renderer's direct File.path access for security; webUtils is the
   // preload-context-only replacement. Synchronous, not IPC — no main

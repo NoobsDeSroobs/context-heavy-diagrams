@@ -13,7 +13,7 @@ import { createEmptyDiagram, parseDiagram, serializeDiagram } from '../shared/di
 import type { DiagramFile } from '../shared/diagram/index.ts'
 import {
   compactJson,
-  editIssues,
+  editAnswerIssues,
   foldersFor,
   inspectAnswer,
   MAX_OPERATIONS
@@ -64,7 +64,7 @@ export const EDIT_HELP = `${EDIT_USAGE}
 ${OPERATIONS_HELP}
 `
 
-export const ASK_USAGE = `Usage: chd ask inspect <file.chd> [--styles]
+export const ASK_USAGE = `Usage: chd ask inspect <file.chd> [--styles] [--issues-only] [--ids <a,b,...>] [--container <id>]
        chd ask room --label <text> --direction horizontal|vertical [options]
 
 Questions about a diagram while you build it. Both only read; the answer is JSON.
@@ -72,7 +72,12 @@ Questions about a diagram while you build it. Both only read; the answer is JSON
   inspect   The elements as they stand, with absolute positions and the connection points an edge may
             name, the tags, links, notes, required tags, highlights and legend, the fingerprint, and
             what is wrong with the layout so far.
-              --styles   Also the style fields each element sets
+              --styles       Also the style fields each element sets
+              --issues-only  Only the layout problems and the fingerprint, not the elements
+              --ids <a,b>    Only these elements (nodes and edges) and the problems that involve them;
+                             ids not in the diagram are listed as unknown
+              --container <id>  Only this container, everything inside it, the edges that touch them,
+                             and their problems
   room      How much space two connected elements need for an edge label.
               --label <text>          The label
               --direction <d>         horizontal (side by side) or vertical (one above the other)
@@ -288,7 +293,7 @@ function runEditOnFile(parsed: EditArgs, operations: unknown[], env: EditEnv): u
       path: fromRoot,
       fingerprint: fingerprintOf(readFileSync(absolute)),
       results: applied.results,
-      issues: editIssues(applied.diagram),
+      issues: editAnswerIssues(applied.diagram, applied.results),
       warnings: groupMessages(checked.warnings.map(tidy))
     }
   } catch (error) {
@@ -334,9 +339,23 @@ export function runEdit(args: string[], env: EditEnv): number {
 function runInspect(args: string[]): unknown {
   let file = ''
   let styles = false
-  for (const arg of args) {
+  let issuesOnly = false
+  let ids: string[] | undefined
+  let container: string | undefined
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i]
     if (arg === '--styles') styles = true
-    else if (arg.startsWith('-')) throw new UsageError(`unknown option '${arg}'`)
+    else if (arg === '--issues-only') issuesOnly = true
+    else if (arg === '--ids') {
+      ids = valueOf(args, i)
+        .split(',')
+        .map((id) => id.trim())
+        .filter((id) => id !== '')
+      i += 1
+    } else if (arg === '--container') {
+      container = valueOf(args, i)
+      i += 1
+    } else if (arg.startsWith('-')) throw new UsageError(`unknown option '${arg}'`)
     else if (file === '') file = arg
     else throw new UsageError(`unexpected argument '${arg}'`)
   }
@@ -352,7 +371,7 @@ function runInspect(args: string[]): unknown {
   return {
     path: file.split(sep).join('/'),
     fingerprint: fingerprintOf(bytes),
-    ...inspectAnswer(diagram, { styles })
+    ...inspectAnswer(diagram, { styles, issuesOnly, ids, container })
   }
 }
 

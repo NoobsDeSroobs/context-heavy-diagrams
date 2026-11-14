@@ -1,9 +1,14 @@
 // What is wrong with the edges of a diagram as they are drawn: an edge over an element it does not
-// join, two edges crossing, and an edge label sitting on an element, on another edge or on another
-// label (ADR 0161). It judges the path the canvas and the SVG export draw (buildEdgePath), curves,
+// join, two edges crossing, and an edge label sitting on an element, on another edge, on another
+// label, on a container's wall or on its title (ADR 0161). It judges the path the canvas and the SVG export draw (buildEdgePath), curves,
 // bend points and routing style included, not a straight line between the two ends.
 import type { DiagramFile } from '../diagram/index.ts'
-import { DEFAULT_FONT_FAMILY, resolveEdgeLabelLook } from '../export/appearance.ts'
+import {
+  DEFAULT_FONT_FAMILY,
+  resolveBoxLook,
+  resolveEdgeLabelLook,
+  resolveLabelLook
+} from '../export/appearance.ts'
 import {
   layoutEdges,
   layoutNodes,
@@ -14,6 +19,7 @@ import {
 import { buildEdgePath } from '../geometry/edgePath.ts'
 import { flattenPath, pointAtRatio, type Point } from '../geometry/pathSampling.ts'
 import { labelChipSize } from '../layout/labelClearance.ts'
+import { LINE_HEIGHT_EM, measureText, wrapText } from '../export/textLayout.ts'
 import { DEFAULT_PREFERENCES } from '../preferences/preferences.ts'
 
 export interface EdgeIssue {
@@ -23,6 +29,8 @@ export interface EdgeIssue {
     | 'label-over-element'
     | 'label-over-edge'
     | 'label-over-label'
+    | 'label-over-container-title'
+    | 'label-on-container-border'
   message: string
   ids: string[]
 }
@@ -132,6 +140,8 @@ const shortName = (text: string): string => {
 // plus a margin.
 const LEAD_IN_PX = DEFAULT_PREFERENCES.edgeStraightSegmentLength
 const SHARED_END_PX = LEAD_IN_PX + 4
+// A label closer than this to a container's wall counts as sitting on it.
+const WALL_BAND_PX = 3
 // An overlap of a pixel is rounding; the layout check for elements uses the same.
 const OVERLAP_PX = 1
 // How far inside an element's border an edge must reach to count as running over it.
@@ -185,6 +195,23 @@ export function edgeIssues(diagram: DiagramFile, skipLabelOf: ReadonlySet<string
     drawn.push(entry)
   }
 
+  // The box the export draws a container's title in: inside the wall, from its top left.
+  const containers = [...nodes.values()].filter((n) => n.kind === 'container')
+  const titleOf = (c: LaidOutNode): Rect | undefined => {
+    const text = c.node.data.label ?? ''
+    if (text.trim() === '') return undefined
+    const look = resolveLabelLook('container', c.node.style, 'light', family)
+    const wall = resolveBoxLook('container', c.node.style, 'light', undefined).strokeWidth
+    const lines = wrapText(text, Math.max(0, c.width - wall * 2 - 8), look.font)
+    const width = Math.max(...lines.map((line) => measureText(line, look.font)))
+    return {
+      x: c.x + wall + 8,
+      y: c.y + wall + 4,
+      width,
+      height: lines.length * look.font.size * LINE_HEIGHT_EM
+    }
+  }
+
   const nameOfEdge = (e: DrawnEdge): string => {
     const from = nodes.get(e.laid.edge.source)
     const to = nodes.get(e.laid.edge.target)
@@ -232,6 +259,33 @@ export function edgeIssues(diagram: DiagramFile, skipLabelOf: ReadonlySet<string
           kind: 'label-over-element',
           message: `${label} covers "${name(other)}" (${other.node.id}): move the element, the label along the edge, or the edge`,
           ids: [e.id, other.node.id]
+        })
+      }
+    }
+    for (const container of containers) {
+      const wall = rectOf(container)
+      const title = titleOf(container)
+      const onTitle = title ? overlapOf(chip, title) : { x: 0, y: 0 }
+      if (onTitle.x > OVERLAP_PX && onTitle.y > OVERLAP_PX) {
+        issues.push({
+          kind: 'label-over-container-title',
+          message: `${label} covers the title of "${name(container)}" (${container.node.id}): move the label along its edge`,
+          ids: [e.id, container.node.id]
+        })
+      }
+      const within = overlapOf(chip, wall)
+      if (within.x <= OVERLAP_PX || within.y <= OVERLAP_PX) continue
+      const inner = shrink(wall, WALL_BAND_PX)
+      const fullyInside =
+        chip.x >= inner.x &&
+        chip.y >= inner.y &&
+        chip.x + chip.width <= inner.x + inner.width &&
+        chip.y + chip.height <= inner.y + inner.height
+      if (!fullyInside) {
+        issues.push({
+          kind: 'label-on-container-border',
+          message: `${label} sits on the border of "${name(container)}" (${container.node.id}): move the label along its edge so it lies wholly inside or outside, or leave more room`,
+          ids: [e.id, container.node.id]
         })
       }
     }

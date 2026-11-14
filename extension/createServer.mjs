@@ -9,9 +9,9 @@ import { SPEC_TOPICS } from './lib/formatSpec.mjs'
 import { createTools } from './lib/tools.mjs'
 
 const INSTRUCTIONS = `Tools for the user's Context-Heavy Diagrams diagrams (.chd files) and the supporting documents in one folder they chose. Everything is relative to that folder.
-- Before creating or editing a .chd, call get_format_spec; the format has traps that corrupt files. Before writing a .chdmeta (a diagram metamodel), call it with topic "conformance": it says what to ask the person, what the format can and cannot say, and gives a valid example. validate_metamodel lists what is wrong with a .chdmeta.
+- To build or change a diagram with edit_diagram, call get_format_spec with topic "build" (about a page) and nothing else. Before hand-writing a .chd with create_file or update_file, call it without a topic; the format has traps that corrupt files. Before writing a .chdmeta (a diagram metamodel), call it with topic "conformance": it says what to ask the person, what the format can and cannot say, and gives a valid example. validate_metamodel lists what is wrong with a .chdmeta.
 - read_file returns a fingerprint. update_file only works with the fingerprint of the version you based your edit on, and is refused if the file changed meanwhile; then read it again and redo the edit. create_file never overwrites.
-- To build or change a diagram step by step, use edit_diagram: it creates the file if it does not exist, applies a list of operations (add_entity, connect, move, ...) and answers briefly with what each made (ids, places, sizes) and what is wrong with the layout so far, with many problems of one kind collapsed into one line with their number. You decide where everything goes; ask room_for_label how much space two connected elements need before you place them, and pass the fingerprint each answer returns as base_fingerprint in the next call. inspect_diagram lists the elements as they stand. A diagram made this way in this session can be edited again without allowing changes to existing files.
+- To build or change a diagram step by step, use edit_diagram: it creates the file if it does not exist, applies a list of operations (add_entity, connect, move, ...) and answers briefly with what each made (ids, places, sizes) and the layout problems that involve what the call touched (many of one kind collapsed into one line with their number), with a count of the others, which inspect_diagram with issues_only lists. You decide where everything goes; ask room_for_label how much space two connected elements need before you place them, and pass the fingerprint each answer returns as base_fingerprint in the next call. inspect_diagram lists the elements as they stand. A diagram made this way in this session can be edited again without allowing changes to existing files.
 - A .chd is validated before it is written; fix any reported errors and try again. validate_diagram checks an existing file.
 - check_diagram applies a diagram metamodel and diff_diagrams shows what changed, between two diagrams or between a diagram and its last commit in git; both only read, and both take a draft as text (content, new_content) as well as a file, so a diagram can be judged before it is written. These tools give the results the chd command line gives, which is what a pipeline relies on.
 - Only .chd, .md, .txt, .svg and .chdmeta (a diagram metamodel, validated before it is written) files can be written. Notes of a diagram are Markdown files its nodes point at.
@@ -53,7 +53,10 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
   const tools = createTools({ root, allowUpdate, specSources })
   const server = new McpServer(
     { name: 'context-heavy-diagrams', version },
-    { instructions: INSTRUCTIONS }
+    {
+      instructions: `${INSTRUCTIONS}
+- This is version ${version} of the Context-Heavy Diagrams extension.`
+    }
   )
   const path = z.string().describe('Path of the file, relative to the diagram folder')
   const content = z.string()
@@ -112,7 +115,7 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
     {
       title: 'Get the .chd format spec',
       description:
-        'The rules for the .chd diagram format. Call this before creating or editing a diagram. The default is the core rules. Read the detailed references one topic at a time (fields, authoring, layout, conformance); "all" returns the core rules and an index of the topics, not the references themselves.',
+        'The rules for the .chd diagram format. Topic "build" is the page you need to build a diagram with edit_diagram. Call it without a topic (the core rules) before writing a diagram by hand with create_file or update_file. Read the detailed references one topic at a time (build, fields, authoring, layout, conformance); "all" returns the core rules and an index of the topics, not the references themselves.',
       inputSchema: { topic: z.enum(['core', ...SPEC_TOPICS]).optional() },
       annotations: readOnly
     },
@@ -123,7 +126,7 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
     {
       title: 'Validate a diagram',
       description:
-        'Check a .chd file for structural problems: duplicate ids, dangling edges, parent ordering, unresolved relative paths. Warns where an edge label does not fit in the gap between the elements it joins, with the line showing either side of it.',
+        'Check a .chd file for structural problems: duplicate ids, dangling edges, parent ordering, unresolved relative paths. Warns where an edge label does not fit in the gap between the elements it joins, with the line showing either side of it. Not needed after edit_diagram, which already checks what it changed; use it for a file written some other way.',
       inputSchema: { path },
       annotations: readOnly
     },
@@ -200,7 +203,7 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
     {
       title: 'Build or change a diagram step by step',
       description:
-        'Create a .chd (if the path does not exist) or change one by applying a list of operations, the way a person works: add entities, containers, text and lines, connect them, move, resize, restyle, tag, link, add notes, highlights and legend entries, remove. Everything is placed where you say; nothing is laid out for you. The answer gives, for each operation, the element it made or changed (id, position, size, connection points), a new fingerprint for the next call, and the layout problems found so far (labels without room, overlaps, elements sticking out of their container, edges running over an element). Fix those and carry on. ' +
+        'Create a .chd (if the path does not exist) or change one by applying a list of operations, the way a person works: add entities, containers, text and lines, connect them, move, resize, restyle, tag, link, add notes, highlights and legend entries, remove. Everything is placed where you say; nothing is laid out for you. The answer gives, for each operation, the element it made or changed (id, position, size, connection points), a new fingerprint for the next call, and the layout problems that involve what you touched (labels without room, overlaps, elements sticking out of their container, edges running over an element), plus how many other problems the diagram has. Fix those and carry on. ' +
         OPERATIONS_HELP,
       inputSchema: {
         path: path.describe(
@@ -225,7 +228,7 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
     {
       title: 'List the elements of a diagram',
       description:
-        'The elements of a .chd as they stand: id, type, label, absolute position and size, parent and connection point ids (left out when they are the four defaults); the edges with their ends; tags, links and note paths; the required tags, highlights and legend; the layout problems found so far (labels without room, overlaps, elements sticking out of a container, edges running over an element); and the fingerprint to pass to edit_diagram. Read-only.',
+        'The elements of a .chd as they stand: id, type, label, absolute position and size, parent and connection point ids (left out when they are the four defaults); the edges with their ends; tags, links and note paths; the required tags, highlights and legend; the layout problems found so far (labels without room, overlaps, elements sticking out of a container, edges running over an element); and the fingerprint to pass to edit_diagram. Read-only. Use issues_only, ids or container for a short answer after an edit.',
       inputSchema: {
         path,
         styles: z
@@ -233,6 +236,22 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
           .optional()
           .describe(
             'Also give the style each element and edge sets (colours, line style, markers, label position)'
+          ),
+        issues_only: z
+          .boolean()
+          .optional()
+          .describe('Only the layout problems and the fingerprint, not the elements'),
+        ids: z
+          .array(z.string())
+          .optional()
+          .describe(
+            'Only these elements (nodes and edges) and the problems that involve them; ids not in the diagram are listed as unknown'
+          ),
+        container: z
+          .string()
+          .optional()
+          .describe(
+            'Only this container, everything inside it, the edges that touch them, and their problems'
           )
       },
       annotations: readOnly

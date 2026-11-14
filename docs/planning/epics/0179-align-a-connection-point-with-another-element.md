@@ -12,4 +12,6 @@ Let an assistant get a straight vertical or horizontal edge without working out 
 - [ ] Mention it in the `edit_diagram` help
 
 ## Notes
+[0188](0188-loosely-attached-edges.md) (dynamic and springy attachment) may make most of this unnecessary: read it before building this.
+
 Seen in the second Immich trial. The operation stays in the shared edit core, so the app can use it too.

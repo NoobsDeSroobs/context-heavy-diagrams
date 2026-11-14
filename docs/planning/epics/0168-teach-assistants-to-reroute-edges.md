@@ -15,6 +15,9 @@ Found while testing the C4 examples: a line crossed an entity, and the fix was o
 - Routing highways: leave a lane free between rows or columns of entities and run the crossing edges along it, with a bend point at each end.
 - The check an assistant can run after drawing exists now ([0167](../completed-epics.md#0167-an-assistant-can-see-the-diagram-it-drew)); this epic teaches it to act on what the check lists by rerouting.
 
+## A benchmark
+`scripts/spec-comparison/meridian-brief.md` is the Meridian Rail landscape as a brief (70 services in 10 domains, 83 connections, 29 of them between domains, spread over many domain pairs, so no grid puts every neighbour next to each other). The first run of an assistant on it (2026-11-14, `build` page, 7 `edit_diagram` calls, 168 operations) stopped after one pass with 77 problems left: 38 edges drawn across an element and 39 crossings. The example diagram it was made from has 126 by the same check (45 and 81). A routing method should bring such a run well below that.
+
 ## Related
 [0162](../completed-epics.md#0162-minimum-distance-between-connected-elements) (spacing, which makes room for a lane), [0164](../completed-epics.md#0164-tooling-fixes-from-the-first-assistant-trial-runs), [0165](../completed-epics.md#0165-an-editing-tool-for-assistants), [0166](../completed-epics.md#0166-the-mcp-server-and-the-command-line-share-their-checks) and [0167](../completed-epics.md#0167-an-assistant-can-see-the-diagram-it-drew).
 

@@ -98,6 +98,58 @@ test('a label on an element, on another edge or on another label is reported', (
   assert.equal(issuesOf(stacked, 'label-over-label').length, 1)
 })
 
+test('an edge label on a container wall or on its title is reported, and sliding it clear fixes it', () => {
+  const wallOps = [
+    { op: 'add_container', id: 'zone', label: '', x: 200, y: 0, width: 300, height: 200 },
+    { op: 'add_entity', id: 'out', label: 'out', x: 0, y: 60 },
+    { op: 'add_entity', id: 'in', label: 'in', x: 260, y: 60, parent: 'zone' },
+    { op: 'connect', id: 'calls', from: 'out', to: 'in', label: 'calls', ...side }
+  ]
+  const onWall = build(...wallOps)
+  assert.deepEqual(
+    issuesOf(onWall, 'label-on-container-border').map((i) => i.ids),
+    [['calls', 'zone']]
+  )
+  // Slid into the container, the label is wholly inside.
+  const inside = build(...wallOps, { op: 'set_style', id: 'calls', style: { labelPosition: 0.9 } })
+  assert.deepEqual(issuesOf(inside, 'label-on-container-border'), [])
+
+  const titled = build(
+    {
+      op: 'add_container',
+      id: 'net',
+      label: 'Production network zone',
+      x: 0,
+      y: 0,
+      width: 400,
+      height: 120
+    },
+    { op: 'add_entity', id: 'a', label: 'a', x: 10, y: 10, width: 40, height: 20, parent: 'net' },
+    { op: 'add_entity', id: 'b', label: 'b', x: 140, y: 10, width: 40, height: 20, parent: 'net' },
+    { op: 'connect', id: 'ab', from: 'a', to: 'b', label: 'x', ...side }
+  )
+  assert.deepEqual(
+    issuesOf(titled, 'label-over-container-title').map((i) => i.ids),
+    [['ab', 'net']]
+  )
+  const wide = build(
+    {
+      op: 'add_container',
+      id: 'net',
+      label: 'Production network zone',
+      x: 0,
+      y: 0,
+      width: 400,
+      height: 200
+    },
+    { op: 'add_entity', id: 'a', label: 'a', x: 30, y: 100, parent: 'net' },
+    { op: 'add_entity', id: 'b', label: 'b', x: 230, y: 100, parent: 'net' },
+    { op: 'connect', id: 'ab', from: 'a', to: 'b', label: 'x', ...side }
+  )
+  assert.deepEqual(issuesOf(wide, 'label-over-container-title'), [])
+  assert.deepEqual(issuesOf(wide, 'label-on-container-border'), [])
+})
+
 test('a tidy diagram has nothing to report', () => {
   const diagram = build(
     entity('a', 0, 0),

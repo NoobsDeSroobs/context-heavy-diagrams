@@ -211,6 +211,11 @@ export function useMenus(inputs: MenuInputs): {
           ]
         : []),
       { label: 'Reload', separatorBefore: true, disabled: !currentPath, onSelect: handleReload },
+      {
+        label: 'Show in Folder',
+        disabled: !currentPath,
+        onSelect: () => currentPath && void window.api.showDiagramInFolder(currentPath)
+      },
       { label: 'Close', accelerator: acceleratorFor('file.close'), onSelect: handleClose }
     ]
   }

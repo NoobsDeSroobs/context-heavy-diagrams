@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url'
 
 export const SPEC_FILES = {
   skill: 'SKILL.md',
+  build: 'references/build-guide.md',
   fields: 'references/field-reference.md',
   authoring: 'references/authoring-guide.md',
   layout: 'references/layout-guide.md',

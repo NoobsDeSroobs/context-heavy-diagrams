@@ -58,6 +58,14 @@ test('spec fields / all add the reference documents; an unknown topic is a usage
   assert.equal(run('spec', 'nope').status, 2)
 })
 
+test('spec build prints the short page for chd edit and none of the core rules', () => {
+  const r = run('spec', 'build')
+  assert.equal(r.status, 0)
+  assert.match(r.stdout, /# Building with edit_diagram/)
+  assert.doesNotMatch(r.stdout, /# \.chd diagram format/)
+  assert.ok(run('spec', 'all').stdout.includes('# Building with edit_diagram'))
+})
+
 test('hash prints the SHA-256 of the raw bytes, changes when the file does, and rejects bad usage', async () => {
   const file = join(dir, 'h.chd')
   await writeFile(file, 'hello')
@@ -121,7 +129,7 @@ test('--help does not treat the flag as a file or a topic', () => {
 
 test('spec --help lists every topic that spec accepts', () => {
   const help = run('spec', '--help').stdout
-  for (const topic of ['fields', 'authoring', 'layout', 'conformance', 'all']) {
+  for (const topic of ['build', 'fields', 'authoring', 'layout', 'conformance', 'all']) {
     assert.match(help, new RegExp(`\\b${topic}\\b`), topic)
     if (topic !== 'all') assert.equal(run('spec', topic).status, 0, topic)
   }

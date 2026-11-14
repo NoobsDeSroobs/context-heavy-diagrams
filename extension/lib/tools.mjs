@@ -20,7 +20,7 @@ import {
 } from '../../src/shared/diagram/index.ts'
 import { roomForLabel } from '../../src/shared/edit/inspect.ts'
 import {
-  editIssues,
+  editAnswerIssues,
   foldersFor,
   inspectAnswer,
   MAX_OPERATIONS
@@ -719,18 +719,29 @@ export function createTools({ root, allowUpdate, specSources }) {
       path: rel,
       fingerprint: written.fingerprint,
       results: applied.results,
-      issues: editIssues(applied.diagram),
+      issues: editAnswerIssues(applied.diagram, applied.results),
       warnings: written.warnings
     }
   }
 
-  function inspectDiagram({ path, styles = false }) {
+  function inspectDiagram({ path, styles = false, issues_only = false, ids, container }) {
+    if (ids !== undefined && !(Array.isArray(ids) && ids.every((id) => typeof id === 'string'))) {
+      throw new ToolError('ids must be a list of element ids')
+    }
+    if (container !== undefined && typeof container !== 'string') {
+      throw new ToolError('container must be the id of a container')
+    }
     const { absolute, relative: rel } = resolveInFolder(root, path, 'read', { mustExist: true })
     const diagram = loadDiagram(absolute, rel)
     return {
       path: rel,
       fingerprint: fingerprint(readFileSync(absolute)),
-      ...inspectAnswer(diagram, { styles: styles === true })
+      ...inspectAnswer(diagram, {
+        styles: styles === true,
+        issuesOnly: issues_only === true,
+        ids,
+        container
+      })
     }
   }
 

@@ -22,6 +22,11 @@ const skillDir = join(here, '..', 'ai', 'skills', 'chd-diagrams')
 // into an AI's context unasked, so they are opt-in. `about` is the line
 // `chd spec --help` shows; every other list of topics is made from this table.
 const SPEC_TOPICS = {
+  build: {
+    title: 'Building with edit_diagram',
+    file: 'references/build-guide.md',
+    about: 'The short page for building a diagram with chd edit.'
+  },
   fields: {
     title: 'Field reference',
     file: 'references/field-reference.md',

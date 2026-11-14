@@ -381,6 +381,15 @@ export function registerWindowHandlers(): void {
     if (win) unregisterWindow(win)
   })
 
+  // Shows the diagram's file in the OS file manager (Explorer, Finder, the desktop's own on Linux). Only
+  // the path this window shows is revealed, whatever the renderer sends (ADR 0112).
+  ipcMain.handle('windows:showInFolder', (event, path: string) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    if (!win || typeof path !== 'string' || findWindowForPath(path) !== win) return false
+    shell.showItemInFolder(path)
+    return true
+  })
+
   // Close-prompt choreography (ADR 0040): the "how to save" logic (flush drafts, pick a path if
   // none) stays in the renderer's save flow; main only shows the native three-button dialog and,
   // once the close is approved, removes the recovery file and lets the window close. `detail` (ADR

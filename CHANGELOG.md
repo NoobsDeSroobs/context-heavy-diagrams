@@ -4,6 +4,10 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 ## 0.10.0 (unreleased)
 
+### Added
+
+- **File → Show in Folder** shows the open diagram's file in the system's file manager (Explorer, Finder, or the desktop's own on Linux).
+
 ## 0.9.0 (2026-11-10)
 
 ### Added
