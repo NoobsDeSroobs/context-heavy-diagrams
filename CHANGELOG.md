@@ -10,6 +10,7 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 ### Changed
 
+- **Assistants can route edges.** A new `route_edges` operation (in `edit_diagram` and `chd edit`) gives edges a right-angled route through the free space round the elements they do not join, with a lane of their own where there is room; without ids it takes the edges the layout check reports. It draws edges only: where elements go stays with the assistant. ([ADR 0174](docs/decisions/0174-route-edges-is-an-edit-operation-that-draws-edges-only.md))
 - **The Claude Desktop extension leaves out what a repository's `.gitignore` names** (build output, dependencies) when it lists and searches files, and says which folders it left out; `list_files` answers with 100 files a page and no modified time. ([ADR 0173](docs/decisions/0173-listings-and-searches-leave-out-what-gitignore-names.md))
 
 ## 0.9.0 (2026-11-10)

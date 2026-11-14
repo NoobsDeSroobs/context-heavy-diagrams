@@ -31,9 +31,21 @@ console.log(`  total: ${total(before)} -> ${total(after)}`)
 
 // What must not change.
 const joined = (e) => `${e.source}>${e.target}`
-const nodeIds = (d) => d.nodes.map((n) => n.id).sort().join()
-const edgeKeys = (d) => d.edges.map((e) => `${e.id}:${joined(e)}:${e.data?.label ?? ''}`).sort().join()
-const nodeLabels = (d) => d.nodes.map((n) => `${n.id}:${n.data?.label ?? ''}`).sort().join()
+const nodeIds = (d) =>
+  d.nodes
+    .map((n) => n.id)
+    .sort()
+    .join()
+const edgeKeys = (d) =>
+  d.edges
+    .map((e) => `${e.id}:${joined(e)}:${e.data?.label ?? ''}`)
+    .sort()
+    .join()
+const nodeLabels = (d) =>
+  d.nodes
+    .map((n) => `${n.id}:${n.data?.label ?? ''}`)
+    .sort()
+    .join()
 console.log('kept as it was:')
 console.log(`  same elements: ${nodeIds(start) === nodeIds(end)}`)
 console.log(`  same edges, ends and labels: ${edgeKeys(start) === edgeKeys(end)}`)

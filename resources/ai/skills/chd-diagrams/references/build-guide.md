@@ -2,14 +2,14 @@ Building a diagram with `edit_diagram` (or `chd edit`). About a page: what you n
 
 ## What the tool does and does not do
 - It keeps ids unique, parents before children, paths relative and the file valid. You never write the JSON.
-- It places nothing. Every `x` and `y` is yours, **absolute on the canvas, even inside a container** (the tool converts). Sizes: entity 120 × 80, container 320 × 180 (size a real one to fit its contents), text 120 × 48.
+- It places no element. Every `x` and `y` is yours, **absolute on the canvas, even inside a container** (the tool converts). Sizes: entity 120 × 80, container 320 × 180 (size a real one to fit its contents), text 120 × 48.
 - Its answer lists the problems involving what the call touched (label without room, overlap, element sticking out of its container, an edge across an element, crossing edges, a label on something) and how many others remain. It cannot judge alignment, even gaps or grouping: the recipes below are for that.
 
 ## Order
 1. Decide the grid on paper first: the rows and columns, and the gap each pair of neighbours needs.
 2. Ask `room_for_label` (or `chd ask room`) for each edge that has a label, with its direction and font, and take `target` as the gap. Do not use the plain gaps for elements joined by an edge.
 3. One call per section (a container and what is in it, then the edges), not one per element. Containers first, then their children with `parent`, then `connect`. Pass the fingerprint of the last answer as `base_fingerprint`.
-4. Read the problems in the answer and fix them with `move` and `resize` in the next call. A crossing is sometimes the clearest drawing: keep it and say so.
+4. Read the problems in the answer and fix them with `move` and `resize` in the next call. An edge across an element is best fixed by moving the element or the edge's connection point; where that cannot be done, `route_edges` (the reported edges, or `ids`) gives the edge a right-angled route through the gaps, so leave gaps (20-60px) for it to use. A crossing is sometimes the clearest drawing: keep it and say so.
 5. Tags, links and notes last. At the end, `inspect_diagram` with `issues_only` shows everything still open.
 
 ## Numbers

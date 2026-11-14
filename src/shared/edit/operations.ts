@@ -17,6 +17,7 @@ import type {
 } from '../diagram/index.ts'
 import { effectivePointsForSide } from '../geometry/connectionPoints.ts'
 import { ANNOTATION_OPERATIONS, startingTags } from './annotations.ts'
+import { routeEdges } from './routeEdges.ts'
 import {
   DEFAULT_SIZE,
   EDGE_STYLE,
@@ -370,6 +371,37 @@ function setEdgePoints(model: Model, reader: Reader): OperationResult {
   return result
 }
 
+// Gives edges a right-angled route around the elements (ADR 0174): the ones named, or else the ones the
+// layout check reports as over an element or crossing another edge. Each routed edge gets bend points and
+// the "step" routing; one that cannot be routed is left as it was and named in the answer.
+function routeEdgesOperation(model: Model, reader: Reader): OperationResult {
+  let ids: string[] | undefined
+  if (reader.has('ids')) {
+    const raw = reader.raw('ids')
+    if (!Array.isArray(raw) || !raw.every((id) => typeof id === 'string')) {
+      reader.fail('"ids" must be a list of edge ids')
+    }
+    for (const id of raw as string[]) {
+      if (!model.edge(id)) reader.fail(`"${id}" is not an edge of this diagram`)
+    }
+    ids = raw as string[]
+  }
+  const { routed, failed } = routeEdges(model.diagram, ids)
+  for (const [id, points] of routed) {
+    const edge = model.edge(id)
+    if (!edge) continue
+    if (points.length > 0) edge.points = points
+    else delete edge.points
+    edge.style = { ...edge.style, routingStyle: 'step' }
+  }
+  const notices = [...failed].map(([id, why]) => `edge ${id} was not routed: ${why}`)
+  return {
+    op: 'route_edges',
+    routed: [...routed.keys()],
+    ...(notices.length > 0 ? { notices } : {})
+  }
+}
+
 function remove(model: Model, reader: Reader): OperationResult {
   const id = reader.string('id')
   const edge = model.edge(id)
@@ -409,6 +441,7 @@ const OPERATIONS: Record<string, (model: Model, reader: Reader) => OperationResu
   reparent,
   remove,
   set_edge_points: setEdgePoints,
+  route_edges: routeEdgesOperation,
   ...ANNOTATION_OPERATIONS
 }
 

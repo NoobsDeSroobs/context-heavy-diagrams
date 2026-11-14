@@ -410,7 +410,8 @@ const BUILD = [
   { op: 'add_new_linked_diagram', id: 'api', name: 'API internals' },
   { op: 'add_entity', id: 'db', label: 'DB', x: 300, y: 300 },
   { op: 'connect', id: 'reads', from: 'api', to: 'db' },
-  { op: 'set_edge_points', id: 'reads', points: [{ x: 215, y: 250 }], routing: 'step' }
+  { op: 'set_edge_points', id: 'reads', points: [{ x: 215, y: 250 }], routing: 'step' },
+  { op: 'route_edges', ids: ['reads'] }
 ]
 
 const sameAs = (served, fromCli) => {
