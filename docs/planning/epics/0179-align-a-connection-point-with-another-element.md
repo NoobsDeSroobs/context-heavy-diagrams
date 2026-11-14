@@ -1,7 +1,7 @@
 # 0179: Align a connection point with another element
 
 ## Status
-Not Started. Logged 2026-11-07; for later.
+Not Started. Logged 2026-11-07. Waits for [0188](0188-loosely-attached-edges.md) (decided 2026-11-14): dynamic and springy connection points may make this unnecessary or change what it should be, so it is read again when 0188 is designed.
 
 ## Goal
 Let an assistant get a straight vertical or horizontal edge without working out the offset itself. Today it turns the target's centre into `(cx - x) / width` by hand for every `add_connection_point`.
