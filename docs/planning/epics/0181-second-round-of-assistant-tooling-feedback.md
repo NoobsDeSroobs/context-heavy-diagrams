@@ -9,8 +9,9 @@ Small gaps found by the second Immich trial (a run of 238k tokens of context, ag
 ## Tasks
 - [x] `list_files` says when files deeper than its 12 levels were left out (a folder listed from inside reached 4 more files than the same folder listed from above)
 - [ ] Creating a diagram can copy the setup (required tags, highlights, legend, no elements) from an existing file, so a set of linked diagrams is not set up four times
-- [ ] The layout check flags an edge label that sits on a container border
-- [ ] `get_format_spec` description sends `edit_diagram` users to the layout topic only (see the `build` topic in [0177](0177-fewer-tokens-for-assistant-diagramming.md))
+- [ ] The layout check flags an edge label that sits on a container border, including one squeezed into the gap between an element outside the container and its wall while the container has room (seen in the spec comparison of 0177)
+- [ ] The layout check flags an edge label that covers a container's own label (the check only looks at entities and text today, `solid` in `edgeRouting.ts`)
+- [x] `get_format_spec` description sends `edit_diagram` users to the `build` topic (done with 0177)
 - [x] `inspect_diagram` `ids` filter (done with the filters of 0177)
 
 ## Notes
