@@ -17,14 +17,23 @@ import { edgeIssues, segmentHits, type Rect } from './edgeRouting.ts'
 
 // How far a lane keeps from an element, and the straight piece an edge leaves its element by.
 const MIN_CLEAR = 9
-const STUB = 14
+// The straight piece an edge leaves (and enters) its element by: long enough that the arrowhead does
+// not cover the first bend, shorter only where the gap beside the element is narrow.
+const STUB = 24
+const STUB_MIN = 10
+// Lanes keep this far from the border of a container, so an edge is never taken for part of it.
+const BORDER_CLEAR = 8
+// An edge that bends or passes straight through where another edge has a corner (a price in pixels).
+const CORNER_COST = 300
 // Lanes in a gap are this far apart, at most this many, and this many run round the whole drawing.
-const LANE = 10
-const MAX_LANES = 4
+const LANE = 14
+const LANE_MAX = 20
+const LANE_MARGIN = 14
+const MAX_LANES = 6
 const OUTSIDE_LANES = 3
 // What a route costs, in pixels of length.
 const BEND_COST = 45
-const CROSS_COST = 400
+const CROSS_COST = 1200
 const SHARED_LANE_PER_PX = 12
 const FOREIGN_CONTAINER_PER_PX = 2
 // The routing as a whole gives up on the edges left after this long.
@@ -61,31 +70,36 @@ interface Grid {
   hOver: Uint8Array
   vCross: Uint8Array
   vOver: Uint8Array
+  // Per node: another edge has a corner there.
+  corners: Uint8Array
 }
 
 const sortedUnique = (values: number[]): number[] =>
   [...new Set(values.map((v) => Math.round(v * 100) / 100))].sort((a, b) => a - b)
 
 // The lines of the grid on one axis: the sides of the elements, lanes in the gaps between them, and
-// lanes outside them all.
-function laneLines(sides: number[], extra: number[]): number[] {
+// lanes outside them all. `borders` are the container sides on this axis, which no lane sits close to.
+function laneLines(sides: number[], extra: number[], borders: number[]): number[] {
   const base = sortedUnique(sides)
-  const lines = new Set<number>(base)
+  const lines = new Set<number>()
   for (let i = 0; i + 1 < base.length; i += 1) {
     const gap = base[i + 1] - base[i]
     if (gap < 2 * MIN_CLEAR) continue
-    const count = Math.min(MAX_LANES, Math.floor((gap - 2 * MIN_CLEAR) / LANE) + 1)
+    // Lanes use the whole gap, up to a comfortable spacing, and keep their distance from the sides.
+    const usable = Math.max(0, gap - 2 * LANE_MARGIN)
+    const count = Math.min(MAX_LANES, Math.floor(usable / LANE) + 1)
+    const spacing = count > 1 ? Math.min(LANE_MAX, usable / (count - 1)) : 0
     const middle = (base[i] + base[i + 1]) / 2
-    for (let k = 0; k < count; k += 1) lines.add(middle + (k - (count - 1) / 2) * LANE)
+    for (let k = 0; k < count; k += 1) lines.add(middle + (k - (count - 1) / 2) * spacing)
   }
   if (base.length > 0) {
     for (let k = 0; k < OUTSIDE_LANES; k += 1) {
-      lines.add(base[0] - MIN_CLEAR - 4 - k * LANE)
-      lines.add(base[base.length - 1] + MIN_CLEAR + 4 + k * LANE)
+      lines.add(base[0] - LANE_MARGIN - k * LANE)
+      lines.add(base[base.length - 1] + LANE_MARGIN + k * LANE)
     }
   }
-  for (const value of extra) lines.add(value)
-  return sortedUnique([...lines])
+  const clear = [...lines].filter((v) => borders.every((b) => Math.abs(v - b) > BORDER_CLEAR))
+  return sortedUnique([...base, ...clear, ...extra])
 }
 
 // The index of the last line at or before `value`.
@@ -111,6 +125,16 @@ const indexOfLine = (lines: number[], value: number): number => {
 // Records a drawn polyline on the grid: the lane pieces it crosses, and the ones it runs along.
 function ingest(grid: Grid, path: Point[]): void {
   const { xs, ys, nx } = grid
+  // A right-angled corner of the path that sits on a node.
+  for (let k = 1; k + 1 < path.length; k += 1) {
+    const [a, b, c] = [path[k - 1], path[k], path[k + 1]]
+    const turns =
+      (Math.abs(a.y - b.y) < 0.5 && Math.abs(b.x - c.x) < 0.5) ||
+      (Math.abs(a.x - b.x) < 0.5 && Math.abs(b.y - c.y) < 0.5)
+    const i = indexOfLine(xs, b.x)
+    const j = indexOfLine(grid.ys, b.y)
+    if (turns && i >= 0 && j >= 0) grid.corners[j * nx + i] = 1
+  }
   for (let k = 1; k < path.length; k += 1) {
     const p = path[k - 1]
     const q = path[k]
@@ -316,10 +340,39 @@ export function routeEdges(diagram: DiagramFile, ids?: readonly string[]): Route
   }
   const extraX: number[] = []
   const extraY: number[] = []
-  const stubOf = (end: { x: number; y: number; side: Side }): { x: number; y: number } => ({
-    x: end.x + OUTWARD_DIRECTION[end.side].x * STUB,
-    y: end.y + OUTWARD_DIRECTION[end.side].y * STUB
-  })
+  // How far an end's straight piece reaches: STUB, less where an element stands close in front of it.
+  const stubOf = (end: { x: number; y: number; side: Side }): { x: number; y: number } => {
+    const dir = OUTWARD_DIRECTION[end.side]
+    let room = STUB + MIN_CLEAR
+    for (const n of solid) {
+      const across =
+        dir.x !== 0
+          ? end.y > n.y - MIN_CLEAR && end.y < n.y + n.height + MIN_CLEAR
+          : end.x > n.x - MIN_CLEAR && end.x < n.x + n.width + MIN_CLEAR
+      if (!across) continue
+      const gap = dir.x > 0 ? n.x - end.x : dir.x < 0 ? end.x - (n.x + n.width) : 0
+      const gapY = dir.y > 0 ? n.y - end.y : dir.y < 0 ? end.y - (n.y + n.height) : 0
+      const d = dir.x !== 0 ? gap : gapY
+      if (d > 0.5 && d < room) room = d
+    }
+    let length = Math.max(STUB_MIN, Math.min(STUB, room - MIN_CLEAR - 1))
+    // And no further than a container's border ahead, less its clearance: the bend there would sit on it.
+    for (const c of nodes.values()) {
+      if (c.kind !== 'container') continue
+      const inside = end.x > c.x && end.x < c.x + c.width && end.y > c.y && end.y < c.y + c.height
+      if (!inside) continue
+      const toBorder =
+        dir.x > 0
+          ? c.x + c.width - end.x
+          : dir.x < 0
+            ? end.x - c.x
+            : dir.y > 0
+              ? c.y + c.height - end.y
+              : end.y - c.y
+      length = Math.max(STUB_MIN, Math.min(length, toBorder - BORDER_CLEAR - 1))
+    }
+    return { x: end.x + dir.x * length, y: end.y + dir.y * length }
+  }
   for (const id of candidates) {
     const entry = byId.get(id) as (typeof laid)[number]
     for (const end of [entry.from, entry.to]) {
@@ -328,8 +381,15 @@ export function routeEdges(diagram: DiagramFile, ids?: readonly string[]): Route
       extraY.push(end.y, stub.y)
     }
   }
-  const xs = laneLines(sideX, extraX)
-  const ys = laneLines(sideY, extraY)
+  const bordersX: number[] = []
+  const bordersY: number[] = []
+  for (const c of nodes.values()) {
+    if (c.kind !== 'container') continue
+    bordersX.push(c.x, c.x + c.width)
+    bordersY.push(c.y, c.y + c.height)
+  }
+  const xs = laneLines(sideX, extraX, bordersX)
+  const ys = laneLines(sideY, extraY, bordersY)
   const nx = xs.length
   const ny = ys.length
   const grid: Grid = {
@@ -343,7 +403,8 @@ export function routeEdges(diagram: DiagramFile, ids?: readonly string[]): Route
     hCross: new Uint8Array(ny * (nx - 1)),
     hOver: new Uint8Array(ny * (nx - 1)),
     vCross: new Uint8Array((ny - 1) * nx),
-    vOver: new Uint8Array((ny - 1) * nx)
+    vOver: new Uint8Array((ny - 1) * nx),
+    corners: new Uint8Array(nx * ny)
   }
   const sigIndex = new Map<string, number>([['', 0]])
   for (let j = 0; j < ny; j += 1) {
@@ -475,7 +536,8 @@ export function routeEdges(diagram: DiagramFile, ids?: readonly string[]): Route
           length * (1 + FOREIGN_CONTAINER_PER_PX * foreignCount[grid.sig[next]]) +
           length * SHARED_LANE_PER_PX * shared +
           CROSS_COST * crossed +
-          (turn === 0 ? 0 : BEND_COST)
+          (turn === 0 ? 0 : BEND_COST) +
+          (grid.corners[node] && node !== start ? CORNER_COST : 0)
         const total = cost + price
         const ns = next * 4 + nd
         if (total < best[ns]) {

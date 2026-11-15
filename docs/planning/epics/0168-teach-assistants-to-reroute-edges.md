@@ -34,10 +34,22 @@ Scored with `scripts/reroute-trial/score.mjs`; the brief does not mention `route
 
 [0162](../completed-epics.md#0162-minimum-distance-between-connected-elements) (spacing, which makes room for a lane), [0164](../completed-epics.md#0164-tooling-fixes-from-the-first-assistant-trial-runs), [0165](../completed-epics.md#0165-an-editing-tool-for-assistants), [0166](../completed-epics.md#0166-the-mcp-server-and-the-command-line-share-their-checks) and [0167](../completed-epics.md#0167-an-assistant-can-see-the-diagram-it-drew).
 
+## Second look (2026-11-15), the maintainer's reading of the four runs
+Small 2 a little better than small 1, with much to criticise in both. Large 2 a little more readable (no shared points, sensible use of them), but its routing a jumble; large 1 very bad. Wider spacing between lines would give clearer air gaps. Fixes the maintainer made by hand to large 2, each now a rule:
+1. The last straight piece of an edge long enough that the arrowhead does not cover the last bend (router: 24 px, shorter only where the gap is narrow).
+2. Edges kept off container borders (router: no lane within 8 px of a border, and the end piece stops short of one).
+3. Connection points evenly spaced, as in the app, not at offsets the assistant chose ([ADR 0175](../../decisions/0175-assistants-make-what-a-person-can-make.md); `add_connection_point` now respaces the side).
+4. Bends not on top of each other, so crossings fall on clear straight pieces (router: a high price for a bend or a straight pass where another edge has a corner).
+5. Container borders heavier, so they read apart from edges (not done; a style choice, to settle with the guidance).
+Principle from the maintainer: an assistant's diagram and a person's must look alike, with no custom edges and no custom point locations.
+
+Router, large diagram, every edge routed: edges across elements 38 to 0; crossings 41 (price 1200; 39 at the start); lanes 14 to 20 px apart, up to 6 in a gap. Small diagram: 3 crossings left whichever price, where the hand fixes had none.
+
 ## Tasks
 - [x] Build the router as an edit operation (`route_edges`), with tests, the operations help, the build page, the changelog and ADR 0174
 - [ ] Trial runs with `scripts/reroute-trial/` (`small.chd`, `large.chd`, `brief.md`, `score.mjs`): an assistant is asked to fix the reported problems, now with `route_edges` available; record what it does and what is left
 - [x] `set_edge_handles` (move an edge's ends to other connection points), from the trial
-- [ ] Decide whether `route_edges` also chooses connection points (one per edge, on the side facing the other end, spread so they do not cross), as the best run did by hand; it overlaps [0188](0188-loosely-attached-edges.md), where the same idea is a property of the edge instead of stored points
-- [ ] Retune the price of a crossing against a detour, on the small diagram
+- [ ] `route_edges` choosing connection points: one per edge on the side facing its other end, in the order of their targets, with the side's points evenly spaced as in the app (ADR 0175); it overlaps [0188](0188-loosely-attached-edges.md), where the same idea is a property of the edge instead of stored points
+- [ ] A second trial round after rebuilding the extension (`npm run build:extension`)
+- [x] Wider lanes, container-border and corner rules, a longer end piece, the crossing price (1200); the small diagram's last 3 crossings remain
 - [ ] Decide what to teach, where it lives and whether a crossing check belongs in the tools

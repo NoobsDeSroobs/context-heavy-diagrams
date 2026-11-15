@@ -15,7 +15,12 @@ import type {
   DiagramNode,
   LinePoint
 } from '../diagram/index.ts'
-import { effectivePointsForSide } from '../geometry/connectionPoints.ts'
+import {
+  CLOCKWISE_ASCENDING,
+  effectivePointsForSide,
+  respaceClockwise,
+  sortClockwise
+} from '../geometry/connectionPoints.ts'
 import { ANNOTATION_OPERATIONS, startingTags } from './annotations.ts'
 import { routeEdges } from './routeEdges.ts'
 import {
@@ -237,14 +242,17 @@ function addConnectionPoint(model: Model, reader: Reader): OperationResult {
   if (offset < 0 || offset > 1)
     reader.fail('"offset" must be between 0 (start of the side) and 1 (end)')
   const stored: ConnectionPoint[] = [...(node.connectionPoints ?? [])]
-  const onSide = stored.filter((p) => p.side === side)
   // A side with nothing stored has one implicit, centred point named after the side; edges may use
-  // it. Once the side gets a stored point, only stored ids exist, so the centred one is written out.
-  if (onSide.length === 0) stored.push({ id: side, side: side as ConnectionPointSide, offset: 0.5 })
-  if (stored.filter((p) => p.side === side).length >= MAX_POINTS_PER_SIDE) {
+  // it. The side's points are always evenly spaced, as in the app (ADR 0175): `offset` only says
+  // where in the order along the side the new point goes, never where it sits.
+  const onSide = sortClockwise(
+    effectivePointsForSide(stored, side as ConnectionPointSide),
+    side as ConnectionPointSide
+  )
+  if (onSide.length >= MAX_POINTS_PER_SIDE) {
     reader.fail(`a side holds at most ${MAX_POINTS_PER_SIDE} connection points`)
   }
-  const taken = new Set([...stored.map((p) => p.id), ...SIDES])
+  const taken = new Set([...stored.map((p) => p.id), ...onSide.map((p) => p.id), ...SIDES])
   let pointId = reader.optionalString('pointId')
   if (pointId !== undefined) {
     if (!ID_PATTERN.test(pointId) || taken.has(pointId))
@@ -254,8 +262,13 @@ function addConnectionPoint(model: Model, reader: Reader): OperationResult {
     while (taken.has(`cp-${n}`)) n += 1
     pointId = `cp-${n}`
   }
-  stored.push({ id: pointId, side: side as ConnectionPointSide, offset: round(offset) })
-  node.connectionPoints = stored
+  const sideName = side as ConnectionPointSide
+  const ascending = CLOCKWISE_ASCENDING[sideName]
+  let at = onSide.findIndex((p) => (ascending ? offset < p.offset : offset > p.offset))
+  if (at < 0) at = onSide.length
+  const added = { id: pointId, side: sideName, offset }
+  const respaced = respaceClockwise([...onSide.slice(0, at), added, ...onSide.slice(at)], sideName)
+  node.connectionPoints = [...stored.filter((p) => p.side !== sideName), ...respaced]
   return { op: 'add_connection_point', element: { id: node.id }, pointId }
 }
 

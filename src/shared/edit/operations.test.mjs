@@ -126,8 +126,21 @@ test('add_connection_point keeps the side name valid for edges that already use 
   assert.equal(results[0].pointId, 'cp-1')
   assert.deepEqual(results[0].element, { id: 'a' }, 'the answer does not repeat the element')
   assert.deepEqual(
-    describeDiagram(diagram).nodes[0].handles.filter((h) => h === 'right' || h === 'cp-1'),
-    ['right', 'cp-1']
+    describeDiagram(diagram)
+      .nodes[0].handles.filter((h) => h === 'right' || h === 'cp-1')
+      .sort(),
+    ['cp-1', 'right']
+  )
+  // As in the app, the side is respaced evenly; the offset only said which comes first (ADR 0175).
+  const onRight = diagram.nodes
+    .find((n) => n.id === 'a')
+    .connectionPoints.filter((p) => p.side === 'right')
+  assert.deepEqual(
+    onRight.map((p) => [p.id, Math.round(p.offset * 1000) / 1000]),
+    [
+      ['cp-1', 0.333],
+      ['right', 0.667]
+    ]
   )
   assertValid(diagram)
   const moved = run(diagram, { op: 'connect', from: 'a', to: 'b', fromHandle: 'cp-1' })
