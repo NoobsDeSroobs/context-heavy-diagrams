@@ -7,6 +7,7 @@ import type {
   EdgeStyle
 } from '../diagram/index.ts'
 import { effectiveConnectionPoints, pointCoordinates } from '../geometry/connectionPoints.ts'
+import { automaticHandles } from '../geometry/autoAttach.ts'
 import { pointSlides, slideKey } from '../geometry/springPoints.ts'
 import type { EdgeEnd } from '../geometry/edgePath.ts'
 import { pointsBoundingBox } from '../geometry/bendablePath.ts'
@@ -215,18 +216,31 @@ export function layoutEdges(
   looseEdges?: ReadonlySet<string>
 ): LaidOutEdge[] {
   const out: LaidOutEdge[] = []
+  // An end that names no point is attached by the rule in geometry/autoAttach.ts.
+  const placed = [...nodes.values()]
+    .filter((n) => n.kind === 'entity' || n.kind === 'container')
+    .map((n) => ({
+      id: n.node.id,
+      x: n.x,
+      y: n.y,
+      width: n.width,
+      height: n.height,
+      points: n.node.connectionPoints ?? []
+    }))
+  const automatic = automaticHandles(placed, edges)
+  const shown = (e: DiagramEdge): DiagramEdge => {
+    const picked = automatic.get(e.id)
+    return picked
+      ? {
+          ...e,
+          sourceHandle: e.sourceHandle || picked.sourceHandle,
+          targetHandle: e.targetHandle || picked.targetHandle
+        }
+      : e
+  }
   const slides = pointSlides(
-    [...nodes.values()]
-      .filter((n) => n.kind === 'entity' || n.kind === 'container')
-      .map((n) => ({
-        id: n.node.id,
-        x: n.x,
-        y: n.y,
-        width: n.width,
-        height: n.height,
-        points: n.node.connectionPoints ?? []
-      })),
-    edges.map((e) => ({
+    placed,
+    edges.map(shown).map((e) => ({
       source: e.source,
       target: e.target,
       sourceHandle: e.sourceHandle,
@@ -238,8 +252,9 @@ export function layoutEdges(
     const source = nodes.get(edge.source)
     const target = nodes.get(edge.target)
     const own = looseEdges?.has(edge.id) ? new Map<string, number>() : slides
-    const from = endpoint(source, edge.sourceHandle, own)
-    const to = endpoint(target, edge.targetHandle, own)
+    const ends = shown(edge)
+    const from = endpoint(source, ends.sourceHandle, own)
+    const to = endpoint(target, ends.targetHandle, own)
     if (!source || !target || !from || !to) return
     // An edge has no stacking order of its own: it sits at the midpoint of its endpoints'.
     out.push({ edge, from, to, z: (source.z + target.z) / 2, order })

@@ -169,19 +169,25 @@ function middleHandle(node: DiagramNode, side: ConnectionPointSide): string {
   return best ? best.id : side
 }
 
+// The handle value that means "no point named": the end is attached automatically.
+const AUTO = 'auto'
+
 function connect(model: Model, reader: Reader): OperationResult {
   const from = connectable(model, reader, 'from')
   const to = connectable(model, reader, 'to')
   if (from.id === to.id) reader.fail('an edge needs two different elements')
   const [fromSide, toSide] = facingSides(model, from, to)
-  const sourceHandle = reader.optionalString('fromHandle') ?? middleHandle(from, fromSide)
-  const targetHandle = reader.optionalString('toHandle') ?? middleHandle(to, toSide)
-  if (!handlesOf(from).includes(sourceHandle)) {
+  // "auto" names no point: the app attaches that end by itself and follows the element as it moves (ADR 0178).
+  const givenFrom = reader.optionalString('fromHandle')
+  const givenTo = reader.optionalString('toHandle')
+  const sourceHandle = givenFrom === AUTO ? undefined : (givenFrom ?? middleHandle(from, fromSide))
+  const targetHandle = givenTo === AUTO ? undefined : (givenTo ?? middleHandle(to, toSide))
+  if (sourceHandle !== undefined && !handlesOf(from).includes(sourceHandle)) {
     reader.fail(
       `"fromHandle": "${sourceHandle}" is not a connection point of "${from.id}" (it has ${handlesOf(from).join(', ')})`
     )
   }
-  if (!handlesOf(to).includes(targetHandle)) {
+  if (targetHandle !== undefined && !handlesOf(to).includes(targetHandle)) {
     reader.fail(
       `"toHandle": "${targetHandle}" is not a connection point of "${to.id}" (it has ${handlesOf(to).join(', ')})`
     )
@@ -192,8 +198,8 @@ function connect(model: Model, reader: Reader): OperationResult {
     type: 'labeled',
     source: from.id,
     target: to.id,
-    sourceHandle,
-    targetHandle
+    ...(sourceHandle !== undefined ? { sourceHandle } : {}),
+    ...(targetHandle !== undefined ? { targetHandle } : {})
   }
   const label = reader.optionalString('label')
   if (label) edge.label = label
@@ -221,6 +227,11 @@ function setEdgeHandles(model: Model, reader: Reader): OperationResult {
   ] as const) {
     if (!reader.has(key)) continue
     const handle = reader.string(key)
+    if (handle === AUTO) {
+      if (key === 'fromHandle') delete edge.sourceHandle
+      else delete edge.targetHandle
+      continue
+    }
     const node = model.node(nodeId)
     if (!node || !handlesOf(node).includes(handle)) {
       reader.fail(
@@ -252,7 +263,7 @@ function addConnectionPoint(model: Model, reader: Reader): OperationResult {
   if (onSide.length >= MAX_POINTS_PER_SIDE) {
     reader.fail(`a side holds at most ${MAX_POINTS_PER_SIDE} connection points`)
   }
-  const taken = new Set([...stored.map((p) => p.id), ...onSide.map((p) => p.id), ...SIDES])
+  const taken = new Set([...stored.map((p) => p.id), ...onSide.map((p) => p.id), ...SIDES, AUTO])
   let pointId = reader.optionalString('pointId')
   if (pointId !== undefined) {
     if (!ID_PATTERN.test(pointId) || taken.has(pointId))

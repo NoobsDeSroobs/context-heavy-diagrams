@@ -18,6 +18,11 @@ import type { ContextMenuItem } from '../ui/ContextMenu'
 // non-rotatable node types with the same connection point model (see ADR
 // 0012 for why containers are connectable at all).
 
+// The handle id of the central target an edge is dropped on to attach to the element by itself (ADR
+// 0178). It is never stored: an edge dropped on it keeps no handle for that end. It cannot be a point
+// id, which are letters, digits and . _ - only.
+export const AUTO_HANDLE = '~auto'
+
 export const SIDE_POSITION: Record<ConnectionPointSide, Position> = {
   top: Position.Top,
   right: Position.Right,

@@ -6,6 +6,7 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 ### Added
 
+- **Edges that attach by themselves.** Drop a connection on the dashed target that appears in the middle of an element, or right-click an edge and choose **Attach automatically**, and that end of the edge picks the side of its element that faces the other one, and a point on it, and follows as you move the elements. **Fix to current points** makes it fixed again; an edge dropped on a point stays where it is. An edge with no connection point saved in the file now attaches this way too, where it used to leave by the top. Assistants can use `"auto"` as a handle in `connect` and `set_edge_handles`. ([ADR 0178](docs/decisions/0178-edge-ends-with-no-connection-point-attach-themselves.md))
 - **File → Show in Folder** shows the open diagram's file in the system's file manager (Explorer, Finder, or the desktop's own on Linux).
 
 ### Changed

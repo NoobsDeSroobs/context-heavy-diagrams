@@ -133,3 +133,46 @@ test('more edges than a side may hold share points, and it says so', () => {
   assert.equal(bottom.length, 2)
   assert.ok(results[0].notices.some((n) => n.includes('share one')))
 })
+
+test('"auto" as a handle leaves that end to the renderer, in connect and in set_edge_handles', () => {
+  const made = run(
+    build(entity('p', 0, 0), entity('q', 400, 0)),
+    connect('e', 'p', 'q', { fromHandle: 'auto' })
+  ).diagram
+  assert.equal(edgeOf(made, 'e').sourceHandle, undefined)
+  assert.equal(edgeOf(made, 'e').targetHandle, 'left')
+  const fixed = run(made, { op: 'set_edge_handles', id: 'e', fromHandle: 'bottom' }).diagram
+  assert.equal(edgeOf(fixed, 'e').sourceHandle, 'bottom')
+  const freed = run(fixed, {
+    op: 'set_edge_handles',
+    id: 'e',
+    fromHandle: 'auto',
+    toHandle: 'auto'
+  })
+  assert.equal(edgeOf(freed.diagram, 'e').sourceHandle, undefined)
+  assert.equal(edgeOf(freed.diagram, 'e').targetHandle, undefined)
+})
+
+test('a point cannot be named auto', () => {
+  assert.throws(() =>
+    run(build(entity('p', 0, 0)), {
+      op: 'add_connection_point',
+      id: 'p',
+      side: 'top',
+      offset: 0.5,
+      pointId: 'auto'
+    })
+  )
+})
+
+test('routing an automatic edge writes the points it took', () => {
+  const before = build(
+    entity('p', 0, 0),
+    entity('q', 400, 0),
+    connect('e', 'p', 'q', { fromHandle: 'auto', toHandle: 'auto' })
+  )
+  assert.equal(edgeOf(before, 'e').sourceHandle, undefined)
+  const { diagram } = run(before, { op: 'route_edges', ids: ['e'] })
+  assert.equal(edgeOf(diagram, 'e').sourceHandle, 'right')
+  assert.equal(edgeOf(diagram, 'e').targetHandle, 'left')
+})

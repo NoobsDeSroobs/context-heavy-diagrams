@@ -1,0 +1,169 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "core",
+      "type": "entity",
+      "position": {
+        "x": 300,
+        "y": 200
+      },
+      "size": {
+        "width": 200,
+        "height": 80
+      },
+      "connectionPoints": [
+        {
+          "id": "b2",
+          "side": "bottom",
+          "offset": 0.75
+        },
+        {
+          "id": "bottom",
+          "side": "bottom",
+          "offset": 0.5
+        },
+        {
+          "id": "b1",
+          "side": "bottom",
+          "offset": 0.25
+        }
+      ],
+      "data": {
+        "label": "Core"
+      }
+    },
+    {
+      "id": "north",
+      "type": "entity",
+      "position": {
+        "x": 340,
+        "y": 20
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "data": {
+        "label": "North"
+      }
+    },
+    {
+      "id": "east",
+      "type": "entity",
+      "position": {
+        "x": 620,
+        "y": 210
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "data": {
+        "label": "East"
+      }
+    },
+    {
+      "id": "west",
+      "type": "entity",
+      "position": {
+        "x": 20,
+        "y": 210
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "data": {
+        "label": "West"
+      }
+    },
+    {
+      "id": "south-left",
+      "type": "entity",
+      "position": {
+        "x": 240,
+        "y": 420
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "data": {
+        "label": "South left"
+      }
+    },
+    {
+      "id": "south-right",
+      "type": "entity",
+      "position": {
+        "x": 440,
+        "y": 420
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "data": {
+        "label": "South right"
+      }
+    },
+    {
+      "id": "pinned",
+      "type": "entity",
+      "position": {
+        "x": 620,
+        "y": 20
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "data": {
+        "label": "Pinned"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-1",
+      "type": "labeled",
+      "source": "core",
+      "target": "north",
+      "label": "automatic"
+    },
+    {
+      "id": "edge-2",
+      "type": "labeled",
+      "source": "core",
+      "target": "east"
+    },
+    {
+      "id": "edge-3",
+      "type": "labeled",
+      "source": "west",
+      "target": "core"
+    },
+    {
+      "id": "edge-4",
+      "type": "labeled",
+      "source": "core",
+      "target": "south-left"
+    },
+    {
+      "id": "edge-5",
+      "type": "labeled",
+      "source": "core",
+      "target": "south-right"
+    },
+    {
+      "id": "edge-6",
+      "type": "labeled",
+      "source": "core",
+      "target": "pinned",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "fixed"
+    }
+  ]
+}

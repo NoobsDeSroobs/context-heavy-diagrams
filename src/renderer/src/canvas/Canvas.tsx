@@ -1,6 +1,12 @@
 import { showAlert } from '../ui/alerts'
 import { useZoomedConnectionHandles } from './useZoomedConnectionHandles'
-import { currentPointSlides, publishPointSlides } from '../nodes/pointSlideStore'
+import { AUTO_HANDLE } from '../nodes/connectionPoints'
+import {
+  currentAutoHandles,
+  currentPointSlides,
+  publishPointSlides,
+  resolveAutoHandles
+} from '../nodes/pointSlideStore'
 import { pointSlides } from '@shared/geometry/springPoints'
 import { effectiveDiagramFont } from '@shared/styling/fontStack'
 import { checkDiagram } from '@shared/conformance/check'
@@ -655,6 +661,36 @@ function CanvasInner(): React.JSX.Element {
         },
         { label: 'Select all edges', onSelect: () => selectAllOfType('edge') },
         {
+          label: 'Attach automatically',
+          onSelect: () => {
+            pushSnapshot()
+            setEdges((eds) =>
+              eds.map((e) =>
+                e.id === edge.id ? { ...e, sourceHandle: null, targetHandle: null } : e
+              )
+            )
+          }
+        },
+        {
+          label: 'Fix to current points',
+          onSelect: () => {
+            const picked = currentAutoHandles().get(edge.id)
+            if (!picked) return
+            pushSnapshot()
+            setEdges((eds) =>
+              eds.map((e) =>
+                e.id === edge.id
+                  ? {
+                      ...e,
+                      sourceHandle: e.sourceHandle || picked.sourceHandle || null,
+                      targetHandle: e.targetHandle || picked.targetHandle || null
+                    }
+                  : e
+              )
+            )
+          }
+        },
+        {
           label:
             reverseTargetIds.length > 1
               ? `Reverse direction (${reverseTargetIds.length})`
@@ -668,15 +704,16 @@ function CanvasInner(): React.JSX.Element {
             const points = (edge.data?.points as LinePoint[] | undefined) ?? []
             const routingStyle = (edge.data?.style as EdgeStyle | undefined)?.routingStyle
             const nodeById = new Map(nodes.map((n) => [n.id, n]))
+            const picked = currentAutoHandles().get(edge.id)
             const source = resolveEndpointPosition(
               edge.source,
-              edge.sourceHandle,
+              edge.sourceHandle || picked?.sourceHandle,
               nodeById,
               currentPointSlides()
             )
             const target = resolveEndpointPosition(
               edge.target,
-              edge.targetHandle,
+              edge.targetHandle || picked?.targetHandle,
               nodeById,
               currentPointSlides()
             )
@@ -1107,7 +1144,13 @@ function CanvasInner(): React.JSX.Element {
   // looked inconsistent, since unrelated entities rarely face the target the same way, while "the
   // same point" reads as deliberate).
   const onConnect = useCallback(
-    (connection: Connection) => {
+    (dropped: Connection) => {
+      // The central target names no point: that end attaches by itself (ADR 0178).
+      const connection: Connection = {
+        ...dropped,
+        sourceHandle: dropped.sourceHandle === AUTO_HANDLE ? null : dropped.sourceHandle,
+        targetHandle: dropped.targetHandle === AUTO_HANDLE ? null : dropped.targetHandle
+      }
       pushSnapshot()
       setEdges((eds) => {
         const byId = new Map(nodes.map((n) => [n.id, n]))
@@ -1169,9 +1212,33 @@ function CanvasInner(): React.JSX.Element {
   // side keep making sense after entities get rearranged (e.g. "left" now
   // fits better as "top") without deleting and redrawing the whole edge.
   const onReconnect = useCallback(
-    (oldEdge: Edge, newConnection: Connection) => {
+    (oldEdge: Edge, dropped: Connection) => {
       pushSnapshot()
-      setEdges((eds) => reconnectEdge(oldEdge, newConnection, eds))
+      const newConnection: Connection = {
+        ...dropped,
+        sourceHandle: dropped.sourceHandle === AUTO_HANDLE ? null : dropped.sourceHandle,
+        targetHandle: dropped.targetHandle === AUTO_HANDLE ? null : dropped.targetHandle
+      }
+      setEdges((eds) => {
+        const stored = eds.find((e) => e.id === oldEdge.id)
+        const known = new Set(eds.map((e) => e.id))
+        return reconnectEdge(oldEdge, newConnection, eds).map((e) => {
+          if (!stored || (e.id !== oldEdge.id && known.has(e.id))) return e
+          // The end that was not dragged keeps what the file says, a point or none: the handle React
+          // Flow was given for it is the one the automatic attachment chose.
+          const sameSource =
+            newConnection.source === oldEdge.source &&
+            newConnection.sourceHandle === oldEdge.sourceHandle
+          const sameTarget =
+            newConnection.target === oldEdge.target &&
+            newConnection.targetHandle === oldEdge.targetHandle
+          return {
+            ...e,
+            sourceHandle: sameSource ? stored.sourceHandle : e.sourceHandle,
+            targetHandle: sameTarget ? stored.targetHandle : e.targetHandle
+          }
+        })
+      })
     },
     [setEdges, pushSnapshot]
   )
@@ -2856,24 +2923,60 @@ function CanvasInner(): React.JSX.Element {
   // case, so React Flow doesn't re-sync its whole edge store on unrelated CanvasInner renders (ADR
   // 0073). Restricting the reorder to "an edge is selected" loses nothing, since it only breaks
   // ties.
+  // Where every element is, as the attachment rules want it (autoAttach.ts, springPoints.ts).
+  const placedNodes = useMemo(() => {
+    const byId = new Map(nodes.map((n) => [n.id, n]))
+    return nodes
+      .filter((n) => n.type === 'entity' || n.type === 'container')
+      .map((n) => {
+        const place = absolutePosition(n, byId)
+        return {
+          id: n.id,
+          x: place.x,
+          y: place.y,
+          width: n.measured?.width ?? n.width ?? 0,
+          height: n.measured?.height ?? n.height ?? 0,
+          points: (n.data?.connectionPoints as ConnectionPoint[] | undefined) ?? []
+        }
+      })
+  }, [nodes])
+  // An edge end with no connection point named attaches by itself and follows the element as it
+  // moves (ADR 0178).
+  const autoHandles = useMemo(
+    () =>
+      resolveAutoHandles(
+        placedNodes,
+        edges.map((e) => ({
+          id: e.id,
+          source: e.source,
+          target: e.target,
+          sourceHandle: e.sourceHandle,
+          targetHandle: e.targetHandle
+        }))
+      ),
+    [placedNodes, edges]
+  )
+  const attachedEdges = useMemo(
+    () =>
+      autoHandles.size === 0
+        ? edges
+        : edges.map((e) => {
+            const picked = autoHandles.get(e.id)
+            return picked
+              ? {
+                  ...e,
+                  sourceHandle: e.sourceHandle || picked.sourceHandle,
+                  targetHandle: e.targetHandle || picked.targetHandle
+                }
+              : e
+          }),
+    [edges, autoHandles]
+  )
   // Connection points slide a little to straighten the edges between them (springPoints.ts).
   const pointSlideMap = useMemo(() => {
-    const byId = new Map(nodes.map((n) => [n.id, n]))
     return pointSlides(
-      nodes
-        .filter((n) => n.type === 'entity' || n.type === 'container')
-        .map((n) => {
-          const place = absolutePosition(n, byId)
-          return {
-            id: n.id,
-            x: place.x,
-            y: place.y,
-            width: n.measured?.width ?? n.width ?? 0,
-            height: n.measured?.height ?? n.height ?? 0,
-            points: (n.data?.connectionPoints as ConnectionPoint[] | undefined) ?? []
-          }
-        }),
-      edges.map((e) => ({
+      placedNodes,
+      attachedEdges.map((e) => ({
         source: e.source,
         target: e.target,
         sourceHandle: e.sourceHandle,
@@ -2881,13 +2984,13 @@ function CanvasInner(): React.JSX.Element {
         bent: ((e.data?.points as unknown[] | undefined)?.length ?? 0) > 0
       }))
     )
-  }, [nodes, edges])
+  }, [placedNodes, attachedEdges])
   useEffect(() => publishPointSlides(pointSlideMap), [pointSlideMap])
 
   const orderedEdges = useMemo(() => {
-    if (!edges.some((e) => e.selected)) return edges
-    return [...edges.filter((e) => !e.selected), ...edges.filter((e) => e.selected)]
-  }, [edges])
+    if (!attachedEdges.some((e) => e.selected)) return attachedEdges
+    return [...attachedEdges.filter((e) => !e.selected), ...attachedEdges.filter((e) => e.selected)]
+  }, [attachedEdges])
 
   // An edge has no zIndex of its own (ADR 0035 scoped that to Entity/Container/Text): it sits at
   // the midpoint of its endpoints' current stacking, computed here next to orderedEdges and never

@@ -9,6 +9,7 @@
 // the ones before it.
 import type { ConnectionPoint, DiagramFile, LinePoint } from '../diagram/index.ts'
 import { layoutEdges, layoutNodes, type LaidOutNode } from '../export/model.ts'
+import { automaticHandles } from '../geometry/autoAttach.ts'
 import { buildEdgePath, OUTWARD_DIRECTION } from '../geometry/edgePath.ts'
 import { flattenPath, type Point } from '../geometry/pathSampling.ts'
 import type { Side } from '../geometry/side.ts'
@@ -286,12 +287,42 @@ function simplify(points: Point[]): Point[] {
   return out
 }
 
+// The diagram with every automatic end (ADR 0178) named: a routed edge is drawn from a point of its own.
+function withAutomaticHandles(diagram: DiagramFile): DiagramFile {
+  const placed = [...layoutNodes(diagram).values()]
+    .filter((n) => n.kind === 'entity' || n.kind === 'container')
+    .map((n) => ({
+      id: n.node.id,
+      x: n.x,
+      y: n.y,
+      width: n.width,
+      height: n.height,
+      points: n.node.connectionPoints ?? []
+    }))
+  const picked = automaticHandles(placed, diagram.edges)
+  if (picked.size === 0) return diagram
+  return {
+    ...diagram,
+    edges: diagram.edges.map((e) => {
+      const p = picked.get(e.id)
+      return p
+        ? {
+            ...e,
+            sourceHandle: e.sourceHandle || p.sourceHandle,
+            targetHandle: e.targetHandle || p.targetHandle
+          }
+        : e
+    })
+  }
+}
+
 export function routeEdges(
-  diagram: DiagramFile,
+  stored: DiagramFile,
   ids?: readonly string[],
   options: RouteOptions = {}
 ): RouteResult {
   const started = Date.now()
+  const diagram = withAutomaticHandles(stored)
   const nodes = layoutNodes(diagram)
   const laid = layoutEdges(diagram.edges, nodes)
   const byId = new Map(laid.map((l) => [l.edge.id, l]))
@@ -327,7 +358,20 @@ export function routeEdges(
   if (candidates.size === 0) return { routed: new Map(), failed }
   if (!options.choosePoints) {
     const done = routeCandidates(diagram, candidates, started)
-    return { routed: done.routed, failed: new Map([...failed, ...done.failed]) }
+    // A routed edge's bend points are absolute, so an automatic end is written as the point it took.
+    const handles = new Map<string, { sourceHandle?: string; targetHandle?: string }>()
+    for (const id of done.routed.keys()) {
+      const was = stored.edges.find((e) => e.id === id)
+      const now = diagram.edges.find((e) => e.id === id)
+      if (
+        was &&
+        now &&
+        (was.sourceHandle !== now.sourceHandle || was.targetHandle !== now.targetHandle)
+      ) {
+        handles.set(id, { sourceHandle: now.sourceHandle, targetHandle: now.targetHandle })
+      }
+    }
+    return { routed: done.routed, failed: new Map([...failed, ...done.failed]), handles }
   }
 
   // Each pass puts the edges on points and routes them from there. An edge that then cannot be routed
@@ -372,10 +416,14 @@ export function routeEdges(
         nodePoints.set(n.id, n.connectionPoints ?? [])
       }
     }
+    // The routed edges are written with their points named, even where they are the ones an automatic
+    // end would have taken: their bend points are absolute.
     const handles = new Map<string, { sourceHandle?: string; targetHandle?: string }>()
     for (const e of plan.diagram.edges) {
-      const was = diagram.edges.find((o) => o.id === e.id)
-      if (was && (was.sourceHandle !== e.sourceHandle || was.targetHandle !== e.targetHandle)) {
+      const was = stored.edges.find((o) => o.id === e.id)
+      if (!was || !candidates.has(e.id)) continue
+      if (done.failed.has(e.id) && !plan.moved.has(e.id)) continue
+      if (was.sourceHandle !== e.sourceHandle || was.targetHandle !== e.targetHandle) {
         handles.set(e.id, { sourceHandle: e.sourceHandle, targetHandle: e.targetHandle })
       }
     }
