@@ -10,7 +10,7 @@ Offer the recognisable visual language of ArchiMate (layer colours, a small icon
 This follows the same line as the BPMN decision ([ADR 0080](../../decisions/0080-bpmn-as-adopted-vocabulary-not-metamodel.md)): adopt the vocabulary, not the grammar. [ADR 0008](../../decisions/0008-tool-scope-includes-ea-adjacent-diagrams.md) only ruled out an enforced notation and validated relationship types.
 
 ## What might fit what exists (to verify)
-- Elements are rectangles with a corner icon, which matches the icon slots and the rectangular-shapes rule ([ADR 0031](../../decisions/0031-icon-annotation-is-a-standing-requirement.md)). The ArchiMate specification is believed to allow this form; to be confirmed.
+- Elements are rectangles with a corner icon, which matches the icon slots of an entity ([ADR 0031](../../decisions/0031-icon-annotation-is-a-standing-requirement.md)). The ArchiMate specification is believed to allow this form; to be confirmed.
 - Layer colours could be a named style palette (palettes are shareable).
 - Relationships (composition, aggregation, assignment, realisation, serving, access, influence, triggering, flow, specialisation, association) are line styles plus end markers, probably as edge direction sets. Realisation and specialisation need a hollow triangle ([epic 0149](0149-hollow-triangle-edge-marker.md)).
 

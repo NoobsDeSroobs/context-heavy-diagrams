@@ -2,7 +2,7 @@
 
 ## Status
 Accepted (2026-11-15)
-Supersedes: the part of [0031](0031-icon-annotation-is-a-standing-requirement.md) that has every shape variant carry an icon a person can change, for stencils only; the rest of 0031 stands. Builds on [0080](0080-bpmn-as-adopted-vocabulary-not-metamodel.md) (BPMN as vocabulary, not metamodel).
+Supersedes: none. Builds on [0080](0080-bpmn-as-adopted-vocabulary-not-metamodel.md) (BPMN as vocabulary, not metamodel). [0031](0031-icon-annotation-is-a-standing-requirement.md) (icons) concerns entities only and does not apply to stencils.
 Superseded by: none
 
 ## Context
@@ -10,10 +10,10 @@ An entity is a thing or a concept and carries context: notes, tags, metadata, li
 
 ## Decision
 - **A new node type, `stencil`, with a `kind` from a closed list built into the app.** The first kinds are `step`, `decision`, `parallel`, `start` and `end`. **Events and verbs are stencils; nouns and concepts are entities.**
-- **A kind is a base shape with a mark on it,** one row in a table in the app: its id, neutral name, base shape, mark, default colour and search terms. **A stencil's icon is part of its kind and cannot be changed or added.** Most stencils have no room for an icon, and a mark that says what sort of step it is belongs in the list: a manual step and an automatic step are two kinds that share the step's base shape. Adding a kind is adding a row.
+- **A kind is a base shape with an optional mark on it** (whether it has one depends on the kind), one row in a table in the app: its id, neutral name, base shape, mark, default colour and search terms. **A stencil's icon is part of its kind and cannot be changed or added.** Most stencils have no room for an icon, and a mark that says what sort of step it is belongs in the list: a manual step and an automatic step are two kinds that share the step's base shape. Adding a kind is adding a row.
 - **What a stencil carries:** a label, its kind, a style, a size and place, a parent container, connection points (with automatic attachment) as an entity has, and **one link to another diagram**. **It carries no icons of its own, notes, tags, metadata, references or security data.** Without tags, highlights, required tags and tag rules do not apply to it.
 - **A lane is a container, and a stencil in a lane is its child.** The lane is the only other context a stencil has.
-- **Shape:** `start` and `end` are circles, `decision` and `parallel` squares with a mark inside, `step` a rounded rectangle. The frame is always a rectangle, so resizing, containment and connection points work as for any node. The marks are drawn by the app as vector graphics; no raster image is part of the base.
+- **Shape:** `start` and `end` are circles, `decision` and `parallel` squares with a mark inside, `step` a rounded rectangle (with no mark; a sort of step with one is its own kind). The frame is always a rectangle, so resizing, containment and connection points work as for any node. The marks are drawn by the app as vector graphics; no raster image is part of the base.
 - **Colour:** each kind has a default fill built into the app, found when the element is drawn and not stored, so it is the same on every machine. A fill on the element itself wins; removing it returns to the default. It is not a preference.
 - **Legend:** shows the kinds the diagram uses, each with its mark, colour and neutral name. The rows are derived, not stored. They are shown by default, and a switch in the app hides them for the session; nothing about it is in the file.
 - **Names and notation:** labels are neutral (Step, Decision, Parallel split or join, Start, End). BPMN terms are search keywords only. The marks are our own drawings and nothing is copied from the specification; the product says "based on BPMN 2.0", never "compliant", and the notices credit OMG.
