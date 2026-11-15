@@ -1,7 +1,5 @@
 # 0179: Align a connection point with another element
 
-> Conflicts with [ADR 0175](../../decisions/0175-assistants-make-what-a-person-can-make.md): points on a side are evenly spaced, so a point is not placed to line up with another element. Likely to be dropped; straight edges come from placing elements.
-
 ## Status
 Not Started. Logged 2026-11-07. Waits for [0188](0188-loosely-attached-edges.md) (decided 2026-11-14): dynamic and springy connection points may make this unnecessary or change what it should be, so it is read again when 0188 is designed.
 

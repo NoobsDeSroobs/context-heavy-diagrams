@@ -40,7 +40,7 @@ Small 2 a little better than small 1, with much to criticise in both. Large 2 a 
 2. Edges kept off container borders (router: no lane within 8 px of a border, and the end piece stops short of one).
 3. Connection points evenly spaced, as in the app, not at offsets the assistant chose ([ADR 0175](../../decisions/0175-assistants-make-what-a-person-can-make.md); `add_connection_point` now respaces the side).
 4. Bends not on top of each other, so crossings fall on clear straight pieces (router: a high price for a bend or a straight pass where another edge has a corner).
-5. Container borders heavier, so they read apart from edges (not done; a style choice, to settle with the guidance).
+5. Container borders heavier, so they read apart from edges. Not a default change: the build guide now says that in a complex, busy diagram style is used to increase the differences between aspects (borders, weights, colours).
 Principle from the maintainer: an assistant's diagram and a person's must look alike, with no custom edges and no custom point locations.
 
 Router, large diagram, every edge routed: edges across elements 38 to 0; crossings 41 (price 1200; 39 at the start); lanes 14 to 20 px apart, up to 6 in a gap. Small diagram: 3 crossings left whichever price, where the hand fixes had none.

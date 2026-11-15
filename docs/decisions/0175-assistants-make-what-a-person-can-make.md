@@ -15,8 +15,8 @@ A diagram an assistant draws and one a person draws must look alike, so a person
 
 ## Alternatives considered
 - **Keep exact offsets for assistants:** gives straight edges by placing a point opposite its target, but the result does not look like a person's and a later point added in the app re-spaces them all anyway.
-- **Align a point with another element:** the same exactness; rejected for the same reason. Straight edges come from placing elements.
+- **Align a point with another element by a stored offset:** the same exactness, rejected for the same reason. Straightness is meant to come from rendering instead: a point slides a few pixels off its even slot to line an edge up, for any author's diagram, and past that range the edge bends.
 
 ## Consequences
-- An assistant gets a straight edge by placing the elements so, not by offsetting points.
+- An assistant gets a straight edge by placing the elements so, and by the small slide of a point where that is built, not by offsetting points.
 - A file written earlier with uneven points is unchanged until a point on that side is added.

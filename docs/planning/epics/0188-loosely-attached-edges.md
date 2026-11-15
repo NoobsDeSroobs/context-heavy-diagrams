@@ -10,6 +10,8 @@ Make edges straighter and tidier without the person or an assistant placing ever
 1. **Springy points.** If the point on the element below is 10px left of the point on the element above, the edge ends move 5px each so the edge runs straight, within limits set by the neighbouring points on the same side and by how much a point may give.
 2. **Dynamic attachment.** The edge uses whichever point on the element fits best, and the choice changes as the other element moves round it. A fixed point (the edge is dropped exactly on a connection point) is told apart from a dynamic one (it is dropped on a usually hidden central target, shown while an edge is dragged). It need not be computed while dragging if that is expensive.
 
+   The stored points stay evenly spaced, whoever placed them (an assistant's and a person's diagram look alike, [ADR 0175](../../decisions/0175-assistants-make-what-a-person-can-make.md)). A point slides a small range, about 10 px, off its slot to make an edge straight; past the range the edge bends instead. Two ways to build it (maintainer, 2026-11-15): a spring between each point and its fixed slot, or a chain of springs between the points of a side, so pulling one moves its neighbours a little too. This is also what makes aligning a point with another element ([0179](0179-align-a-connection-point-with-another-element.md)) unnecessary for assistants.
+
 When points are added or removed, edges spread out by simple rules (closest, free points first, and so on).
 
 ## Where things stand

@@ -21,7 +21,7 @@ Building a diagram with `edit_diagram` (or `chd edit`). About a page: what you n
 - An edge should not cross a container it does not start or end in. Straight is the default; bend an edge only when a straight one cannot be had. Mirror the layout where the structure is symmetrical.
 - Keep an edge label off container titles and container walls (the answer reports both). Put the label (`labelPosition`) where there is room, usually inside the container rather than in the narrow gap between an outside box and the wall.
 - Measure gaps between boxes (`x + width` to the next `x`), not between centres.
-- Leave `style` out unless one element must stand out. Use highlights for colour by tag.
+- Leave `style` out unless one element must stand out, or the diagram is complex and busy: then use style to increase the differences between aspects (a heavier container border so containers read apart from edges, different weights and colours for different kinds of element or edge). Use highlights for colour by tag.
 
 ## Recipes
 - **Layers:** one full-width container per band, same `x` and `width`, 60px apart; entities left to right inside, 30px in. Edges between bands: `bottom` to `top`; in any vertical run pick `bottom` and `top`, not the sides.
