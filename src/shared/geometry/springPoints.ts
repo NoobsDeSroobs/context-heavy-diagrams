@@ -1,12 +1,8 @@
-// Springy connection points, as a chain of springs. The stored points of a side stay evenly spaced;
-// when two edges' ends are a little out of line, the points slide along their sides so the edge runs
-// straight, and past the range the edge bends instead. Pure: the canvas draws the handles where this
-// says, and the exports and the layout checks use the same places.
-//
-// Each point that has an edge to straighten is pulled towards its wish (half the misalignment: the
-// other end moves the other half). Neighbouring points on a side are tied to each other, so pulling
-// one drags the ones next to it a little too, and a point nothing pulls is held to its slot by a weak
-// spring. The result is clamped to the range and kept in order.
+// Springy connection points, one spring per point. The stored points of a side stay evenly spaced;
+// when two edges' ends are a little out of line, each point slides along its side from its own slot so
+// the edge runs straight, and past the range the edge bends instead. A point is tied only to its own
+// slot, so what happens to a point does not move the others (unless they would meet). Pure: the canvas
+// draws the handles where this says, and the exports and the layout checks use the same places.
 import type { ConnectionPoint, ConnectionPointSide } from '../diagram'
 import { effectiveConnectionPoints } from './connectionPoints.ts'
 
@@ -14,12 +10,6 @@ import { effectiveConnectionPoints } from './connectionPoints.ts'
 export const SLIDE_RANGE = 10
 const MIN_GAP = 6
 const SIDE_MARGIN = 4
-// Stiffness: of the pull on a point that has an edge to straighten, of a spring between neighbours,
-// and of the one that holds a point nothing pulls. Held firmly against the springs between points,
-// each step along a side keeps about a fifth of the movement before it, so the effect dies out fast.
-const PULL = 10
-const CHAIN = 0.5
-const HOLD = 1.6
 
 export interface SlideNode {
   id: string
@@ -48,34 +38,6 @@ const OPPOSITE: Partial<Record<ConnectionPointSide, ConnectionPointSide>> = {
   right: 'left'
 }
 const alongX = (side: ConnectionPointSide): boolean => side === 'top' || side === 'bottom'
-
-// Solves the chain on one side: unknown shifts u, wishes t (null where nothing pulls).
-function solveChain(wishes: (number | null)[]): number[] {
-  const n = wishes.length
-  const diag: number[] = []
-  const rhs: number[] = []
-  for (let i = 0; i < n; i += 1) {
-    const neighbours = (i > 0 ? 1 : 0) + (i < n - 1 ? 1 : 0)
-    const pulled = wishes[i] !== null
-    diag.push((pulled ? PULL : HOLD) + CHAIN * neighbours)
-    rhs.push(pulled ? PULL * (wishes[i] as number) : 0)
-  }
-  // Thomas algorithm for the tridiagonal system.
-  const upper: number[] = new Array(n).fill(0)
-  const out: number[] = new Array(n).fill(0)
-  for (let i = 0; i < n; i += 1) {
-    if (i === 0) {
-      upper[0] = -CHAIN / diag[0]
-      out[0] = rhs[0] / diag[0]
-    } else {
-      const denominator = diag[i] + CHAIN * upper[i - 1]
-      upper[i] = -CHAIN / denominator
-      out[i] = (rhs[i] + CHAIN * out[i - 1]) / denominator
-    }
-  }
-  for (let i = n - 2; i >= 0; i -= 1) out[i] -= upper[i] * out[i + 1]
-  return out
-}
 
 // How far each point slides along its side, in pixels (positive: right or down); points that stay in
 // their slot are left out. Keys are `slideKey(nodeId, pointId)`.
@@ -131,8 +93,8 @@ export function pointSlides(
       })
       const length = place(node, onSide[0]).length
       const slots = onSide.map((p) => p.offset * length)
-      const shifts = solveChain(targets).map((u) =>
-        Math.max(-SLIDE_RANGE, Math.min(SLIDE_RANGE, u))
+      const shifts = targets.map((wishedShift) =>
+        Math.max(-SLIDE_RANGE, Math.min(SLIDE_RANGE, wishedShift ?? 0))
       )
       // Keep the order and some room between neighbours, and stay off the corners.
       for (let i = 0; i < onSide.length; i += 1) {

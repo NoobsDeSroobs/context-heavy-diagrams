@@ -43,7 +43,7 @@ test('left and right sides slide up and down', () => {
   assert.ok(Math.abs(20 + a - (30 + b)) < 0.2)
 })
 
-test('pulling one point of a side drags its neighbours a little, in order, and nothing goes past the range', () => {
+test('a point slides on its own: the others on its side stay in their slots, in order', () => {
   // a has three points on the bottom (slots 25, 50, 75); only the middle one has an edge, 18 off.
   const points = [
     { id: 'p1', side: 'bottom', offset: 0.25 },
@@ -54,12 +54,29 @@ test('pulling one point of a side drags its neighbours a little, in order, and n
     [node('a', 0, 0, points), node('b', 18, 200)],
     [down('a', 'b', 'p2', 'top')]
   )
-  const [s1, s2, s3] = ['p1', 'p2', 'p3'].map((id) => slides.get(slideKey('a', id)) ?? 0)
-  assert.ok(s2 > 0 && s1 > 0 && s3 > 0, 'neighbours follow')
-  assert.ok(s2 > s1 && s2 > s3, 'but less than the pulled point')
-  assert.ok(s1 < 0.3 * s2 && s3 < 0.3 * s2, 'and only a fraction of it')
-  assert.ok(25 + s1 < 50 + s2 && 50 + s2 < 75 + s3, 'the order is kept')
-  for (const s of [s1, s2, s3]) assert.ok(Math.abs(s) <= SLIDE_RANGE)
+  assert.ok(Math.abs((slides.get(slideKey('a', 'p2')) ?? 0) - 9) < 0.01, 'half the way')
+  assert.equal(slides.get(slideKey('a', 'p1')), undefined)
+  assert.equal(slides.get(slideKey('a', 'p3')), undefined)
+})
+
+test('two points that would meet keep their room', () => {
+  // slots 25 and 75 on a 100 wide node are far apart; on a 30 wide node they are 10 apart.
+  const points = [
+    { id: 'p1', side: 'bottom', offset: 1 / 3 },
+    { id: 'p2', side: 'bottom', offset: 2 / 3 }
+  ]
+  const narrow = { id: 'a', x: 0, y: 0, width: 30, height: 40, points }
+  const slides = pointSlides(
+    [
+      narrow,
+      { id: 'b', x: 8, y: 200, width: 100, height: 40, points: [] },
+      { id: 'c', x: -20, y: 200, width: 100, height: 40, points: [] }
+    ],
+    [down('a', 'b', 'p1', 'top'), down('a', 'c', 'p2', 'top')]
+  )
+  const p1 = 10 + (slides.get(slideKey('a', 'p1')) ?? 0)
+  const p2 = 20 + (slides.get(slideKey('a', 'p2')) ?? 0)
+  assert.ok(p2 - p1 >= 6 - 0.01, `room kept (${p1}, ${p2})`)
 })
 
 test('the same diagram slides the same way twice', () => {
