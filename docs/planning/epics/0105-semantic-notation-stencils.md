@@ -32,6 +32,12 @@ validated ([ADR 0080](../../decisions/0080-bpmn-as-adopted-vocabulary-not-metamo
   distinguishing icon + a default label, not a non-rectangular outline
   ([ADR 0031](../../decisions/0031-icon-annotation-is-a-standing-requirement.md)).
 
+## Decided (the maintainer, 2026-11-15)
+
+- **What is a stencil:** events and verbs (what happens, and how the flow behaves: a step, a decision, a split or join, a start, an end, a timer). **Nouns and concepts are entities** (a User, a service, a node, an ArchiMate element), already possible with an icon. A stencil is never a thing in the system.
+- **Stencils need no context:** no notes, tags, links, metadata or security data. That is also what keeps them from replacing entities: whatever needs context is an entity.
+- **A closed, built-in list:** no stencils made or installed by a person, so the category cannot grow nouns. [0183](0183-installable-icon-packs.md) gives entities icons; it does not add stencils.
+
 ## Open questions (not yet designed)
 
 - **Category name** — "Notation", "Flow symbols", "Process symbols",
@@ -39,10 +45,13 @@ validated ([ADR 0080](../../decisions/0080-bpmn-as-adopted-vocabulary-not-metamo
 - **Which symbols ship** — at minimum: exclusive choice, parallel, inclusive
   choice; start event, end event, intermediate/message/timer event. How many
   event sub-types before it's bloat?
-- **Is a stencil a distinct thing in the `.chd`, or just a Shape?** Leaning:
-  just a Shape (style + icon + a default label) with no new schema — the
-  palette is a convenience, the file only ever sees Shapes. Confirm there's a
-  clean way to seed a Shape's icon slot + label from a palette item.
+- **Is a stencil a distinct thing in the `.chd`, or just a Shape?** The
+  decision above changes the earlier leaning (just a Shape, no schema). Now
+  leaning: **its own light node type** with a `kind` from the built-in list, so
+  it carries no notes or tags, conformance and required tags can leave it
+  alone, and a person or an assistant cannot mistake it for an entity. Costs: a
+  schema, `docs/file-format.md`, an edit operation, the exports (draw.io has
+  BPMN shapes to map to) and the checks. To settle first.
 - **Right-click type-swap** — swapping keeps size/position/label edits/edges,
   and just changes the icon (and maybe re-suggests the default label if the
   user hasn't customised it). Interaction with the existing icon controls in

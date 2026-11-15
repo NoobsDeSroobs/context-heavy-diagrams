@@ -14,6 +14,9 @@ This follows the same line as the BPMN decision ([ADR 0080](../../decisions/0080
 - Layer colours could be a named style palette (palettes are shareable).
 - Relationships (composition, aggregation, assignment, realisation, serving, access, influence, triggering, flow, specialisation, association) are line styles plus end markers, probably as edge direction sets. Realisation and specialisation need a hollow triangle ([epic 0149](0149-hollow-triangle-edge-marker.md)).
 
+## Decided (2026-11-15)
+ArchiMate's elements are nouns (actor, role, service, node, capability), and nouns are entities, not stencils ([0105](0105-semantic-notation-stencils.md)). The kit is a named style palette (layer colours, a corner icon) and relationship line styles; only the AND / OR junction is stencil-like. So this no longer depends on 0105 and can be tried first.
+
 ## Open questions
 - **Licence.** Whether the notation and its icons can be reused, and under what terms. This is the question that blocked vendor icon packs, which the person now installs from their own files ([epic 0183](0183-installable-icon-packs.md)).
 - Which subset: strategy, business, application, technology, motivation layers and the core relationships.
