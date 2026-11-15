@@ -6,6 +6,8 @@ Not Started — idea only, not yet scoped
 ## Goal
 Detect edges whose source and target shapes sit in *different* containers (or one in a container and one outside), and call that out visually somehow — similar in spirit to how a swim-lane diagram makes a cross-lane flow visually distinct from an in-lane one. Idea only; no decisions yet on how it should actually surface (a distinct edge style, a diagnostic/warning list like the existing empty-legend check, a togglable highlight mode, something else).
 
+Update 2026-11-15: for BPMN-style flows this is the functional half of a swim lane: a container is the lane visually, and an edge that leaves its lane is a hand-off. Re-read it with [0105](../0105-semantic-notation-stencils.md), where a stencil carries no context of its own and its lane (its parent container) is the only context it has.
+
 ## Open questions, not yet discussed with the user
 - What should "crossing" actually look like once detected — automatic edge styling (color/dash), an opt-in highlight/dim mode (compare epic 0063's dim-non-matching-elements idea), a DiagnosticsPanel-style list, something else entirely?
 - Does "container" here mean direct `parentId` only, or should it walk up nested containers (a container inside a container) and compare top-level ancestry?

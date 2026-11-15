@@ -36,6 +36,8 @@ validated ([ADR 0080](../../decisions/0080-bpmn-as-adopted-vocabulary-not-metamo
 
 - **What is a stencil:** events and verbs (what happens, and how the flow behaves: a step, a decision, a split or join, a start, an end, a timer). **Nouns and concepts are entities** (a User, a service, a node, an ArchiMate element), already possible with an icon. A stencil is never a thing in the system.
 - **Stencils need no context:** no notes, tags, links, metadata or security data. That is also what keeps them from replacing entities: whatever needs context is an entity.
+- **Vector first.** The built-in stencil marks (a gateway's ×, + and ○, an event's ring, a step's corner) are drawn as SVG by the app, with no raster files in the base, so they follow the theme and stay sharp at any zoom. A person may install raster elements if they want them; that is an extension of [0183](0183-installable-icon-packs.md), which today takes SVG only (to decide there).
+- **Swim lanes need no new element.** A container is a lane, and a stencil's lane is its parent. What is missing is the functional half: seeing which edges cross lanes (a hand-off), which is [0088](later/0088-cross-container-edge-detection.md) and is worth re-reading with this one.
 - **A closed, built-in list:** no stencils made or installed by a person, so the category cannot grow nouns. [0183](0183-installable-icon-packs.md) gives entities icons; it does not add stencils.
 
 ## Open questions (not yet designed)
