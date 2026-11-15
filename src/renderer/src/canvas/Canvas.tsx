@@ -73,7 +73,7 @@ import { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from '../nodes/TextNode'
 import { CONTAINER_MIN_WIDTH, CONTAINER_MIN_HEIGHT } from '../nodes/ContainerNode'
 import { scaleGroupMembers, type GroupResizeMember } from './groupResize'
 import { LINE_BOUNDS_PADDING } from '../nodes/LineNode'
-import { nodeTypes, edgeTypes, DEFAULT_EDGE_OPTIONS } from './flowTypes'
+import { nodeTypes, edgeTypes, DEFAULT_EDGE_OPTIONS, HIDE_ATTRIBUTION } from './flowTypes'
 import DiagramSettingsPanel from '../diagram-settings/DiagramSettingsPanel'
 import { effectiveGravityPresets } from '../nodes/lineGravityPresets'
 import EdgeMarkerDefs from '../edges/edgeMarkers'
@@ -3524,6 +3524,7 @@ function CanvasInner(): React.JSX.Element {
                   edges={orderedEdges}
                   nodeTypes={nodeTypes}
                   edgeTypes={edgeTypes}
+                  proOptions={HIDE_ATTRIBUTION}
                   // Only mount nodes/edges intersecting the viewport — see
                   // ADR 0073. Nodes carry width/height (fromDiagramFile) so
                   // their bounds are known before measurement. Disabled

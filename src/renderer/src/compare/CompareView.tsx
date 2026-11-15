@@ -20,7 +20,7 @@ import {
   type IdMatches
 } from '@shared/compare/match'
 import DiagramContext, { type DiagramContextValue } from '../canvas/DiagramContext'
-import { DEFAULT_EDGE_OPTIONS, edgeTypes, nodeTypes } from '../canvas/flowTypes'
+import { DEFAULT_EDGE_OPTIONS, edgeTypes, HIDE_ATTRIBUTION, nodeTypes } from '../canvas/flowTypes'
 import { useNotesPeek } from '../notes/useNotesPeek'
 import { fromDiagramFile } from '../document/diagramConversion'
 import EdgeMarkerDefs from '../edges/edgeMarkers'
@@ -264,6 +264,7 @@ function CompareCanvas({
               edges={edges}
               nodeTypes={nodeTypes}
               edgeTypes={edgeTypes}
+              proOptions={HIDE_ATTRIBUTION}
               defaultEdgeOptions={DEFAULT_EDGE_OPTIONS}
               nodesDraggable={false}
               nodesConnectable={false}

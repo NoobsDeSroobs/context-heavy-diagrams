@@ -1,3 +1,4 @@
+import type { ProOptions } from '@xyflow/react'
 import EntityNode from '../nodes/EntityNode'
 import TextNode from '../nodes/TextNode'
 import ContainerNode from '../nodes/ContainerNode'
@@ -30,3 +31,7 @@ export const DEFAULT_EDGE_OPTIONS = {
   type: 'labeled',
   markerEnd: DEFAULT_EDGE_MARKER_END
 }
+
+// Hides the "React Flow" link React Flow draws in the corner; the library is credited in the About
+// dialog and the third-party notices instead (ADR 0179).
+export const HIDE_ATTRIBUTION: ProOptions = { hideAttribution: true }
