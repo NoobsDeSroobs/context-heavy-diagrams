@@ -3,6 +3,7 @@ import EntityNode from '../nodes/EntityNode'
 import TextNode from '../nodes/TextNode'
 import ContainerNode from '../nodes/ContainerNode'
 import LineNode from '../nodes/LineNode'
+import StencilNode from '../nodes/StencilNode'
 import LabeledEdge from '../edges/LabeledEdge'
 import { DEFAULT_EDGE_MARKER_END } from '../edges/markerIds'
 
@@ -13,7 +14,8 @@ export const nodeTypes = {
   entity: EntityNode,
   text: TextNode,
   container: ContainerNode,
-  line: LineNode
+  line: LineNode,
+  stencil: StencilNode
 }
 export const edgeTypes = { labeled: LabeledEdge }
 

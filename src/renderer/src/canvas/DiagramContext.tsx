@@ -119,7 +119,9 @@ export interface DiagramContextValue {
   // type. Exposed here so each node type's own right-click context menu
   // can offer "Select all entities"/"...containers"/etc. without Canvas.tsx
   // having to build every node's context menu itself.
-  selectAllOfType: (type: 'entity' | 'container' | 'text' | 'line' | 'edge') => void
+  selectAllOfType: (type: 'entity' | 'container' | 'text' | 'line' | 'stencil' | 'edge') => void
+  // Changes the kind of these stencils, one undo step (ADR 0180).
+  setStencilKind: (nodeIds: string[], kindId: string) => void
   // Multi-select resize (ADR 0098) — the three resizable node types forward
   // their NodeResizer's start/resize/end here so Canvas can scale the rest of
   // the selection by the same percentage.

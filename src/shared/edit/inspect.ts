@@ -18,6 +18,7 @@ import {
   labelTargetGap
 } from '../layout/labelClearance.ts'
 import { edgeIssues, type EdgeIssue } from './edgeRouting.ts'
+import { stencilLabelOutside } from '../stencils/kinds.ts'
 import { LINE_HEIGHT_EM, measureText, wrapText, type FontSpec } from '../export/textLayout.ts'
 import { NODE_STYLE_DEFAULTS, styledNodeType } from '../styling/styleDefaults.ts'
 import { summarizeEdge, summarizeNode, type EdgeSummary, type NodeSummary } from './operations.ts'
@@ -190,6 +191,8 @@ export function layoutIssues(diagram: DiagramFile, diagramFont?: string): Layout
   // box, which the canvas and the export break in the middle. The wrapping is the export's.
   for (const node of diagram.nodes) {
     if (node.type === 'line' || !node.data.label || !node.size) continue
+    // A stencil's small shapes carry their label below them, not inside (ADR 0180).
+    if (node.type === 'stencil' && stencilLabelOutside(node.data.kind)) continue
     const type = styledNodeType(node.type)
     const defaults = NODE_STYLE_DEFAULTS[type]
     const font: FontSpec = {

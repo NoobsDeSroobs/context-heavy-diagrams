@@ -10,6 +10,7 @@ import {
   resolveLabelLook
 } from '../export/appearance.ts'
 import {
+  isEntityLike,
   layoutEdges,
   layoutNodes,
   orientEdges,
@@ -176,7 +177,7 @@ export function edgeIssues(diagram: DiagramFile, skipLabelOf: ReadonlySet<string
     }
     return false
   }
-  const solid = [...nodes.values()].filter((n) => n.kind === 'entity' || n.kind === 'text')
+  const solid = [...nodes.values()].filter((n) => isEntityLike(n.kind) || n.kind === 'text')
   const rectOf = (n: LaidOutNode): Rect => ({ x: n.x, y: n.y, width: n.width, height: n.height })
 
   const drawn: DrawnEdge[] = []

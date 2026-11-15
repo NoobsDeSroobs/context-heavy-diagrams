@@ -4,6 +4,13 @@ import { buildBendablePath } from '../geometry/bendablePath.ts'
 import { flattenPath, pointAtRatio, type Point } from '../geometry/pathSampling.ts'
 import { highlightId, matchingHighlights } from '../tagging/highlights.ts'
 import { styledNodeType } from '../styling/styleDefaults.ts'
+import {
+  HEAVY_BORDER_FACTOR,
+  stencilKind,
+  stencilLabelOutside,
+  stencilStyle,
+  type StencilKind
+} from '../stencils/kinds.ts'
 import { dasharrayOf, dashPattern } from '../styling/edgeDash.ts'
 import type { Theme } from '../styling/theme.ts'
 import {
@@ -14,6 +21,7 @@ import {
   resolveEdgeLook,
   resolveLabelLook,
   resolveLineNodeLook,
+  type BoxLook,
   type LabelLook,
   type LineLook,
   type Paint
@@ -127,6 +135,35 @@ function num(n: number): string {
 function paintAttrs(name: 'fill' | 'stroke', paint: Paint | null): string {
   if (!paint) return ` ${name}="none"`
   return ` ${name}="${esc(paint.color)}"${paint.opacity < 1 ? ` ${name}-opacity="${num(paint.opacity)}"` : ''}`
+}
+
+// A stencil's base shape with its mark on it (ADR 0180), drawn as vector shapes.
+function stencilShape(
+  kind: StencilKind,
+  box: Rect,
+  look: BoxLook,
+  strokeWidth: number,
+  markPaint: Paint
+): string {
+  const { x, y, width, height } = box
+  const inset = look.stroke ? strokeWidth / 2 : 0
+  const paint =
+    paintAttrs('fill', look.fill) +
+    paintAttrs('stroke', look.stroke) +
+    (look.stroke ? ` stroke-width="${num(strokeWidth)}"` : '')
+  const cx = x + width / 2
+  const cy = y + height / 2
+  const shape =
+    kind.shape === 'circle'
+      ? `<circle cx="${num(cx)}" cy="${num(cy)}" r="${num(Math.max(0, Math.min(width, height) / 2 - inset))}"${paint}/>`
+      : `<rect x="${num(x + inset)}" y="${num(y + inset)}" width="${num(width - inset * 2)}" height="${num(height - inset * 2)}" rx="${num(kind.shape === 'rounded' ? Math.min(12, height / 2) : 4)}"${paint}/>`
+  if (!kind.mark) return shape
+  const s = Math.min(width, height) * 0.22
+  const d =
+    kind.mark === 'cross'
+      ? `M${num(cx - s)} ${num(cy - s)}L${num(cx + s)} ${num(cy + s)}M${num(cx - s)} ${num(cy + s)}L${num(cx + s)} ${num(cy - s)}`
+      : `M${num(cx - s)} ${num(cy)}L${num(cx + s)} ${num(cy)}M${num(cx)} ${num(cy - s)}L${num(cx)} ${num(cy + s)}`
+  return `${shape}<path d="${d}" fill="none"${paintAttrs('stroke', markPaint)} stroke-width="2.5" stroke-linecap="round"/>`
 }
 
 // ---- arrowheads ------------------------------------------------------------------------------
@@ -444,12 +481,16 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
     }
 
     const type = styledNodeType(node.type)
-    const look = resolveBoxLook(type, node.style, theme, single)
-    const labelLook = resolveLabelLook(type, node.style, theme, family)
-    const sw = look.strokeWidth
+    const style = kind === 'stencil' ? stencilStyle(node.data.kind, node.style) : node.style
+    const look = resolveBoxLook(type, style, theme, single)
+    const labelLook = resolveLabelLook(type, style, theme, family)
+    const sk = kind === 'stencil' ? stencilKind(node.data.kind) : undefined
+    const sw = sk?.heavyBorder ? look.strokeWidth * HEAVY_BORDER_FACTOR : look.strokeWidth
     const text = node.data.label ?? ''
 
-    if (look.fill || look.stroke) {
+    if (sk && (look.fill || look.stroke)) {
+      parts.push(stencilShape(sk, { x, y, width, height }, look, sw, tokens.text))
+    } else if (look.fill || look.stroke) {
       const inset = look.stroke ? sw / 2 : 0
       const rx = Math.max(0, 6 - inset)
       parts.push(
@@ -461,7 +502,19 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
     }
 
     const lineHeight = labelLook.font.size * LINE_HEIGHT_EM
-    if (kind === 'container') {
+    if (kind === 'stencil' && stencilLabelOutside(node.data.kind)) {
+      // The small shapes carry their label below them (ADR 0180), centred and as wide as it needs.
+      const available = Math.max(width, 120)
+      const lines = wrapText(text, available, labelLook.font)
+      const blockWidth = Math.min(available, blockWidthOf(lines, labelLook.font))
+      const left = x + width / 2 - blockWidth / 2
+      const top = y + height + sw / 2 + 4
+      parts.push(textLines(lines, labelLook, left, blockWidth, top))
+      if (text) {
+        extent.rect(left, top, blockWidth, lines.length * lineHeight)
+        obstacles.push({ x: left, y: top, width: blockWidth, height: lines.length * lineHeight })
+      }
+    } else if (kind === 'container') {
       const available = Math.max(0, width - sw * 2 - 8)
       const lines = wrapText(text, available, labelLook.font)
       const blockWidth = Math.min(available, blockWidthOf(lines, labelLook.font))

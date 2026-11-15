@@ -78,6 +78,58 @@
   overflow-wrap: anywhere;
 }
 
+/* A stencil (ADR 0180): a base shape from the element's kind, with a mark on it. It reads the entity's
+   default look; a kind may bring its own fill (inline, from the kind). The small shapes carry their
+   label below them. */
+.stencil-node {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border: var(--default-entity-stroke-width) solid var(--default-entity-stroke);
+  background: var(--default-entity-fill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+}
+
+.stencil-node--rounded {
+  border-radius: 12px;
+}
+
+.stencil-node--square {
+  border-radius: 4px;
+}
+
+.stencil-node--circle {
+  border-radius: 50%;
+}
+
+.stencil-node-mark {
+  width: 46%;
+  height: 46%;
+  color: var(--default-entity-font-color);
+  pointer-events: none;
+}
+
+.stencil-node-label {
+  font-size: var(--default-entity-font-size);
+  color: var(--default-entity-font-color);
+  font-weight: var(--default-entity-font-weight);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.stencil-node-label--outside {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 160px;
+}
+
 .container-node {
   position: relative;
   width: 100%;
@@ -108,20 +160,23 @@
    visual containment — no extra "proximity margin" trick needed. Applies
    everywhere ConnectionHandles is used: EntityNode and ContainerNode. */
 .entity-node .react-flow__handle,
-.container-node .react-flow__handle {
+.container-node .react-flow__handle,
+.stencil-node .react-flow__handle {
   opacity: 0;
   transition: opacity 0.1s ease;
 }
 
 .entity-node:hover .react-flow__handle,
-.container-node:hover .react-flow__handle {
+.container-node:hover .react-flow__handle,
+.stencil-node:hover .react-flow__handle {
   opacity: 1;
 }
 
 /* Handles are in flow units, so they shrink with the zoom; below a zoom of about 0.6 they grow
    to stay 10 screen px (--canvas-zoom is set by useZoomedConnectionHandles). */
 .entity-node .react-flow__handle,
-.container-node .react-flow__handle {
+.container-node .react-flow__handle,
+.stencil-node .react-flow__handle {
   width: max(6px, calc(10px / var(--canvas-zoom, 1)));
   height: max(6px, calc(10px / var(--canvas-zoom, 1)));
 }
@@ -129,7 +184,8 @@
 /* The central target an edge is dropped on to attach to the element by itself (ADR 0178): out of the
    way and unreachable, except while a connection is being dragged. */
 .entity-node .react-flow__handle.chd-auto-target,
-.container-node .react-flow__handle.chd-auto-target {
+.container-node .react-flow__handle.chd-auto-target,
+.stencil-node .react-flow__handle.chd-auto-target {
   width: max(18px, calc(26px / var(--canvas-zoom, 1)));
   height: max(18px, calc(26px / var(--canvas-zoom, 1)));
   border: 1.5px dashed var(--ev-c-gray-1);
@@ -139,7 +195,8 @@
 }
 
 .entity-node .react-flow__handle.chd-auto-target.chd-auto-target--live,
-.container-node .react-flow__handle.chd-auto-target.chd-auto-target--live {
+.container-node .react-flow__handle.chd-auto-target.chd-auto-target--live,
+.stencil-node .react-flow__handle.chd-auto-target.chd-auto-target--live {
   opacity: 0.8;
   pointer-events: all;
 }
@@ -242,6 +299,7 @@
    both the selection outline and the property-highlight border override. */
 .entity-node.entity-highlighted,
 .container-node.entity-highlighted,
+.stencil-node.entity-highlighted,
 .text-node.entity-highlighted {
   outline: 2px dashed var(--ev-c-text-1);
   outline-offset: 2px;
@@ -255,6 +313,7 @@
    rather than fighting it for the same CSS property. */
 .entity-node.search-match,
 .container-node.search-match,
+.stencil-node.search-match,
 .text-node.search-match {
   outline: 3px dashed var(--search-match-color);
   outline-offset: 4px;

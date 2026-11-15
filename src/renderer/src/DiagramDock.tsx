@@ -27,6 +27,8 @@ function DiagramDock({
   onAddText,
   onAddContainer,
   onAddLine,
+  onAddStencil,
+  onSetStencilKind,
   onCreateMultipleEntities,
   onCreateMultipleContainers,
   onUpdateNodeStyle,
@@ -51,6 +53,8 @@ function DiagramDock({
   onAddText: () => void
   onAddContainer: () => void
   onAddLine: () => void
+  onAddStencil: (kindId: string) => void
+  onSetStencilKind: (nodeIds: string[], kindId: string) => void
   onCreateMultipleEntities: () => void
   onCreateMultipleContainers: () => void
   onUpdateNodeStyle: (nodeIds: string[], patch: Partial<NodeStyle>) => void
@@ -102,6 +106,7 @@ function DiagramDock({
           onSetDefaultStyle={onSetDefaultStyle}
           styleBrushActive={styleBrushActive}
           onToggleStyleBrush={onToggleStyleBrush}
+          onSetStencilKind={onSetStencilKind}
         />
       ) : (
         <ItemPalette
@@ -109,6 +114,7 @@ function DiagramDock({
           onAddText={onAddText}
           onAddContainer={onAddContainer}
           onAddLine={onAddLine}
+          onAddStencil={onAddStencil}
           onCreateMultipleEntities={onCreateMultipleEntities}
           onCreateMultipleContainers={onCreateMultipleContainers}
         />

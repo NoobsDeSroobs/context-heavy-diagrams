@@ -23,6 +23,11 @@ export interface DiagramNode {
   // line, see ADR 0050 — position/size are the bounding box of data.points,
   // never connectable, never rotated) — see ADR 0004, ADR 0012. Kept as a
   // plain string, not a union, since more types may arrive later.
+  //
+  // 'stencil' (ADR 0180) is an event or a verb of a flow (a step, a decision, a start): resizable,
+  // connectable, never rotated, can sit in a container but not parent one. Its `data.kind` names
+  // the kind from the app's closed list; it has no notes, tags, metadata, references, security
+  // data or icons of its own, and one link to another diagram.
   type?: string
   position: { x: number; y: number }
   size?: { width: number; height: number }
@@ -59,6 +64,9 @@ export interface DiagramNode {
     // older name `details` as this field.
     notes?: string
     linkedDiagram?: string
+    // 'stencil' nodes only — the id of its kind in the app's built-in list (shared/stencils/kinds.ts).
+    // Absent, or an id this version does not know, is a step.
+    kind?: string
     // 'line' nodes only — see LinePoint/ADR 0050. Node-local coordinates
     // (relative to `position`, like a container child's own position),
     // ordered — array position is the only thing that identifies a point,

@@ -127,7 +127,13 @@ import StylePalettePanel from '../styling/StylePalettePanel'
 import ReferenceWindow from '../references/ReferenceWindow'
 import ReferencesPanel from '../references/ReferencesPanel'
 import DiagramDock from '../DiagramDock'
-import { PALETTE_ITEM_DRAG_TYPE, type PaletteItemType } from '../palette/ItemPalette'
+import {
+  PALETTE_ITEM_DRAG_TYPE,
+  PALETTE_STENCIL_KIND_DRAG_TYPE,
+  type PaletteItemType
+} from '../palette/ItemPalette'
+import { swapStencilKind } from '../nodes/stencilSwap'
+import { stencilKind } from '@shared/stencils/kinds'
 import UtilityDock from '../UtilityDock'
 import AlignmentGuides from '../alignment/AlignmentGuides'
 import { SNAP_THRESHOLD_PX, boundsFrom, computeSnap } from '../alignment/alignment'
@@ -597,7 +603,7 @@ function CanvasInner(): React.JSX.Element {
   // deps array is evaluated at render time, unlike the callback body, so a later declaration would
   // be a real temporal-dead-zone error.
   const selectAllOfType = useCallback(
-    (type: 'entity' | 'container' | 'text' | 'line' | 'edge') => {
+    (type: 'entity' | 'container' | 'text' | 'line' | 'stencil' | 'edge') => {
       setNodes((nds) =>
         nds.map((n) => (n.selected === (n.type === type) ? n : { ...n, selected: n.type === type }))
       )
@@ -1286,7 +1292,12 @@ function CanvasInner(): React.JSX.Element {
   // `presetId` lets a caller that must reference the new node right away (spawnEntityAt, wiring an
   // edge to it) choose the id up front.
   const addNodeAtPosition = useCallback(
-    (type: PaletteItemType, dropPoint: { x: number; y: number }, presetId?: string) => {
+    (
+      type: PaletteItemType,
+      dropPoint: { x: number; y: number },
+      presetId?: string,
+      kindId?: string
+    ) => {
       pushSnapshot()
       setNodes((nds) => {
         const byId = new Map(nds.map((n) => [n.id, n]))
@@ -1350,6 +1361,18 @@ function CanvasInner(): React.JSX.Element {
               style: preferences.defaultStyles.text
             }
             break
+          case 'stencil': {
+            const kind = stencilKind(kindId)
+            width = kind.size.width
+            height = kind.size.height
+            nodeType = 'stencil'
+            data = {
+              label: kind.defaultLabel,
+              kind: kind.id,
+              zIndex: nextZIndex(nds, 'stencil')
+            }
+            break
+          }
           case 'line': {
             const lineLength = 160
             width = lineLength + LINE_BOUNDS_PADDING * 2
@@ -1501,7 +1524,9 @@ function CanvasInner(): React.JSX.Element {
       event.preventDefault()
       addNodeAtPosition(
         type,
-        rfInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY })
+        rfInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY }),
+        undefined,
+        type === 'stencil' ? event.dataTransfer.getData(PALETTE_STENCIL_KIND_DRAG_TYPE) : undefined
       )
     },
     [rfInstance, addNodeAtPosition]
@@ -1552,6 +1577,43 @@ function CanvasInner(): React.JSX.Element {
       }
     ])
   }, [setNodes, pushSnapshot, spawnPosition, preferences.defaultStyles.text])
+
+  // A stencil of the given kind (ADR 0180) near the viewport centre.
+  const addStencilNode = useCallback(
+    (kindId: string) => {
+      pushSnapshot()
+      const kind = stencilKind(kindId)
+      const id = newNodeId('stencil')
+      setNodes((nds) => [
+        ...nds,
+        {
+          id,
+          type: 'stencil',
+          position: spawnPosition(kind.size.width, kind.size.height, nds.length),
+          width: kind.size.width,
+          height: kind.size.height,
+          data: {
+            label: kind.defaultLabel,
+            kind: kind.id,
+            zIndex: nextZIndex(nds, 'stencil')
+          }
+        }
+      ])
+    },
+    [setNodes, pushSnapshot, spawnPosition]
+  )
+
+  // Changes the kind of these stencils, one undo step (ADR 0180).
+  const setStencilKind = useCallback(
+    (nodeIds: string[], kindId: string) => {
+      const ids = new Set(nodeIds)
+      pushSnapshot()
+      setNodes((nds) =>
+        nds.map((n) => (ids.has(n.id) && n.type === 'stencil' ? swapStencilKind(n, kindId) : n))
+      )
+    },
+    [setNodes, pushSnapshot]
+  )
 
   const addContainerNode = useCallback(() => {
     pushSnapshot()
@@ -2927,7 +2989,7 @@ function CanvasInner(): React.JSX.Element {
   const placedNodes = useMemo(() => {
     const byId = new Map(nodes.map((n) => [n.id, n]))
     return nodes
-      .filter((n) => n.type === 'entity' || n.type === 'container')
+      .filter((n) => n.type === 'entity' || n.type === 'container' || n.type === 'stencil')
       .map((n) => {
         const place = absolutePosition(n, byId)
         return {
@@ -3329,6 +3391,7 @@ function CanvasInner(): React.JSX.Element {
       isolateActive,
       isolateOpacity: preferences.isolateOpacity,
       selectAllOfType,
+      setStencilKind,
       pendingLabelEditId,
       clearPendingLabelEdit
     }),
@@ -3363,6 +3426,7 @@ function CanvasInner(): React.JSX.Element {
       isolateActive,
       preferences.isolateOpacity,
       selectAllOfType,
+      setStencilKind,
       pendingLabelEditId,
       clearPendingLabelEdit
     ]
@@ -3675,6 +3739,8 @@ function CanvasInner(): React.JSX.Element {
                 onAddText={addTextNode}
                 onAddContainer={addContainerNode}
                 onAddLine={addLineNode}
+                onAddStencil={addStencilNode}
+                onSetStencilKind={setStencilKind}
                 onCreateMultipleEntities={() => setBulkCreateType('entity')}
                 onCreateMultipleContainers={() => setBulkCreateType('container')}
                 onUpdateNodeStyle={updateNodeStyle}

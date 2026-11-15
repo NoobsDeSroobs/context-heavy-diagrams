@@ -8,17 +8,134 @@
 // Right-click on Entity/Container opens the bulk-create dialog instead —
 // see ADR 0089. onClick keeps its existing single-add meaning.
 
-export type PaletteItemType = 'entity' | 'container' | 'text' | 'line'
+import { useEffect, useRef, useState } from 'react'
+import { STENCIL_KINDS, stencilKind, stencilSearchText } from '@shared/stencils/kinds'
+
+export type PaletteItemType = 'entity' | 'container' | 'text' | 'line' | 'stencil'
 
 // dataTransfer's MIME-style key — namespaced so a drop handler can tell
 // "this came from our own item palette" apart from a stray drag from
 // somewhere else in the OS (a file, browser text selection, etc.) landing
 // on the canvas by accident.
 export const PALETTE_ITEM_DRAG_TYPE = 'application/x-chd-item-type'
+// The kind of a stencil being dragged (ADR 0180), beside PALETTE_ITEM_DRAG_TYPE's 'stencil'.
+export const PALETTE_STENCIL_KIND_DRAG_TYPE = 'application/x-chd-stencil-kind'
 
 function onItemDragStart(event: React.DragEvent<HTMLButtonElement>, type: PaletteItemType): void {
   event.dataTransfer.setData(PALETTE_ITEM_DRAG_TYPE, type)
   event.dataTransfer.effectAllowed = 'copy'
+}
+
+// The palette's entry for stencils (ADR 0180): click adds the kind last used (a step to begin
+// with), drag places it, and right-click or the arrow opens a short list with a filter, whose search
+// also matches the BPMN terms of each kind.
+function StencilPaletteButton({
+  onAddStencil
+}: {
+  onAddStencil: (kindId: string) => void
+}): React.JSX.Element {
+  const [kindId, setKindId] = useState('step')
+  const [open, setOpen] = useState(false)
+  const [filter, setFilter] = useState('')
+  const rootRef = useRef<HTMLDivElement>(null)
+  const kind = stencilKind(kindId)
+
+  useEffect(() => {
+    if (!open) return
+    const onPointerDown = (event: PointerEvent): void => {
+      if (rootRef.current && !rootRef.current.contains(event.target as Node)) setOpen(false)
+    }
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') setOpen(false)
+    }
+    window.addEventListener('pointerdown', onPointerDown)
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      window.removeEventListener('pointerdown', onPointerDown)
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [open])
+
+  const words = filter.trim().toLowerCase().split(/\s+/).filter(Boolean)
+  const shown = STENCIL_KINDS.filter((k) => {
+    const text = stencilSearchText(k.id).toLowerCase()
+    return words.every((w) => text.includes(w))
+  })
+  const groups = [...new Set(shown.map((k) => k.group))]
+
+  return (
+    <div className="item-palette-stencil" ref={rootRef}>
+      <button
+        type="button"
+        className="item-palette-button"
+        draggable
+        onDragStart={(e) => {
+          onItemDragStart(e, 'stencil')
+          e.dataTransfer.setData(PALETTE_STENCIL_KIND_DRAG_TYPE, kind.id)
+        }}
+        onClick={() => onAddStencil(kind.id)}
+        onContextMenu={(e) => {
+          e.preventDefault()
+          setOpen(true)
+        }}
+        title={`Add ${kind.name}. Right-click to choose another kind of step or event.`}
+      >
+        <span
+          className={`item-palette-icon item-palette-icon-stencil item-palette-icon-${kind.shape}`}
+        />
+        {kind.name}
+      </button>
+      <button
+        type="button"
+        className="item-palette-stencil-more"
+        aria-label="Choose a kind of step or event"
+        title="Choose a kind of step or event"
+        onClick={() => setOpen((v) => !v)}
+      >
+        ▾
+      </button>
+      {open && (
+        <div
+          className="item-palette-stencil-list"
+          role="listbox"
+          aria-label="Kinds of step or event"
+        >
+          <input
+            autoFocus
+            className="item-palette-stencil-filter"
+            placeholder="Filter…"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          />
+          {groups.map((group) => (
+            <div key={group}>
+              <div className="item-palette-stencil-group">{group}</div>
+              {shown
+                .filter((k) => k.group === group)
+                .map((k) => (
+                  <button
+                    key={k.id}
+                    type="button"
+                    role="option"
+                    aria-selected={k.id === kind.id}
+                    className="item-palette-stencil-option"
+                    onClick={() => {
+                      setKindId(k.id)
+                      setOpen(false)
+                      setFilter('')
+                      onAddStencil(k.id)
+                    }}
+                  >
+                    {k.name}
+                  </button>
+                ))}
+            </div>
+          ))}
+          {shown.length === 0 && <div className="item-palette-stencil-none">Nothing matches</div>}
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function ItemPalette({
@@ -26,6 +143,7 @@ export default function ItemPalette({
   onAddText,
   onAddContainer,
   onAddLine,
+  onAddStencil,
   onCreateMultipleEntities,
   onCreateMultipleContainers
 }: {
@@ -33,6 +151,7 @@ export default function ItemPalette({
   onAddText: () => void
   onAddContainer: () => void
   onAddLine: () => void
+  onAddStencil: (kindId: string) => void
   onCreateMultipleEntities: () => void
   onCreateMultipleContainers: () => void
 }): React.JSX.Element {
@@ -69,6 +188,7 @@ export default function ItemPalette({
         <span className="item-palette-icon item-palette-icon-container" />
         Container
       </button>
+      <StencilPaletteButton onAddStencil={onAddStencil} />
       <button
         type="button"
         className="item-palette-button"
