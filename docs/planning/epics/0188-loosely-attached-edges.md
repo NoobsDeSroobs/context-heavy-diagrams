@@ -30,6 +30,6 @@ When points are added or removed, edges spread out by simple rules (closest, fre
 ## Tasks
 - [ ] One shared pure function for where an edge ends (point, side, direction), used by the canvas, the exports, the layout checks and the edit tools, with no change in behaviour
 - [ ] Dynamic attachment: the pick, the hidden central target, fixed against dynamic, the spreading rules, the changelog line, examples
-- [ ] Springy points
-- [ ] ADR for each of the two once settled; update `docs/file-format.md` if a field is added; example diagrams ([ADR 0151](../../decisions/0151-every-visible-feature-has-an-example-diagram.md))
+- [x] Springy points: one spring per point, 10 px range ([ADR 0176](../../decisions/0176-connection-points-slide-a-little-to-straighten-edges.md)); the chain-of-springs variant is kept on the local branch `epic/0188-springy-points-chain` for a while, then dropped. Still open: the connection-line preview while dragging from several selected elements starts at the slot; a try-out in the app on a real diagram
+- [ ] ADR for dynamic attachment once settled (springy points have theirs); update `docs/file-format.md` if a field is added; example diagrams ([ADR 0151](../../decisions/0151-every-visible-feature-has-an-example-diagram.md))
 - [ ] Re-read [0179](0179-align-a-connection-point-with-another-element.md) and [0168](0168-teach-assistants-to-reroute-edges.md) against what this changes (a wide hub with one point per edge, which gave the best picture in the spec comparison of 0177, becomes automatic)

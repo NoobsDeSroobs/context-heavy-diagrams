@@ -13,6 +13,7 @@ Every example also exports to draw.io, from **File → Export → draw.io…** o
 | [`hello-world.chd`](hello-world.chd) | The smallest diagram: two entities and one edge. |
 | [`with-icons.chd`](with-icons.chd) | Two entities with built-in corner icons. Hold Ctrl (Cmd on a Mac) over one to read the icons' names. |
 | [`with-metadata.chd`](with-metadata.chd) | A diagram-level required-tag template, one required tag and one free tag on an entity. |
+| [`springy-points.chd`](springy-points.chd) | Connection points sliding to straighten edges: one wide element with three evenly spaced points above three others out of line by 6, 14 and 40 px (the first two run straight, the third bends), and two elements 6 px apart. Drag one element and watch the ends slide. |
 | [`highlight-not-applicable.chd`](highlight-not-applicable.chd) | A data-classification highlight with a transparent colour for `N/A`, so the system boundary around the entities is left uncoloured when the highlights are switched on. |
 
 These three also serve as round-trip fixtures: the app must open and re-save them without changing their meaning.

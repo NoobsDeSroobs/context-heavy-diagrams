@@ -33,6 +33,14 @@ describe('resolveEndpointPosition', () => {
     })
   })
 
+  it('moves a point by its slide along the side', () => {
+    const slides = new Map([['n:right-q', 4]])
+    expect(resolveEndpointPosition('n', 'right-q', byId(box()), slides)).toMatchObject({
+      x: 180,
+      y: 214
+    })
+  })
+
   it('adds the parents’ positions for a nested node', () => {
     const parent: Node = { id: 'p', position: { x: 10, y: 10 }, data: {} }
     const child = box({ parentId: 'p' })

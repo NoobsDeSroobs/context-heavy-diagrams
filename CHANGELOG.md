@@ -10,6 +10,7 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 ### Changed
 
+- **Connection points slide a little to straighten edges.** Where two facing elements are almost in line, each end of the edge between them moves up to 10 px along its side so the edge runs straight; further out of line, the edge bends as before. Nothing is stored, so a person's and an assistant's diagram behave alike. ([ADR 0176](docs/decisions/0176-connection-points-slide-a-little-to-straighten-edges.md))
 - **Assistants can route edges.** A new `route_edges` operation (in `edit_diagram` and `chd edit`) gives edges a right-angled route through the free space round the elements they do not join, with a lane of their own where there is room; without ids it takes the edges the layout check reports. It draws edges only: where elements go stays with the assistant. ([ADR 0174](docs/decisions/0174-route-edges-is-an-edit-operation-that-draws-edges-only.md))
 - **An assistant's connection points look like yours.** `add_connection_point` now spreads a side's points evenly, as the app does; its `offset` only says where in the order the new point goes. ([ADR 0175](docs/decisions/0175-assistants-make-what-a-person-can-make.md))
 - **`set_edge_handles`** moves an edge to another connection point of the same two elements, keeping its id, label, tags and style (`edit_diagram`, `chd edit`).

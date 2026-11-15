@@ -1,6 +1,6 @@
 import { showAlert } from '../ui/alerts'
 import { useZoomedConnectionHandles } from './useZoomedConnectionHandles'
-import { publishPointSlides } from '../nodes/pointSlideStore'
+import { currentPointSlides, publishPointSlides } from '../nodes/pointSlideStore'
 import { pointSlides } from '@shared/geometry/springPoints'
 import { effectiveDiagramFont } from '@shared/styling/fontStack'
 import { checkDiagram } from '@shared/conformance/check'
@@ -668,8 +668,18 @@ function CanvasInner(): React.JSX.Element {
             const points = (edge.data?.points as LinePoint[] | undefined) ?? []
             const routingStyle = (edge.data?.style as EdgeStyle | undefined)?.routingStyle
             const nodeById = new Map(nodes.map((n) => [n.id, n]))
-            const source = resolveEndpointPosition(edge.source, edge.sourceHandle, nodeById)
-            const target = resolveEndpointPosition(edge.target, edge.targetHandle, nodeById)
+            const source = resolveEndpointPosition(
+              edge.source,
+              edge.sourceHandle,
+              nodeById,
+              currentPointSlides()
+            )
+            const target = resolveEndpointPosition(
+              edge.target,
+              edge.targetHandle,
+              nodeById,
+              currentPointSlides()
+            )
             const newPoint: LinePoint = { x: clickPoint.x, y: clickPoint.y }
 
             let newPoints: LinePoint[]

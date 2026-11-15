@@ -13,6 +13,9 @@ const same = (a: Map<string, number>, b: Map<string, number>): boolean => {
   return true
 }
 
+// For code that runs on an event rather than in a render (the context menu).
+export const currentPointSlides = (): Map<string, number> => current
+
 export function publishPointSlides(next: Map<string, number>): void {
   if (same(current, next)) return
   current = next
