@@ -1,5 +1,7 @@
 import { showAlert } from '../ui/alerts'
 import { useZoomedConnectionHandles } from './useZoomedConnectionHandles'
+import { publishPointSlides } from '../nodes/pointSlideStore'
+import { pointSlides } from '@shared/geometry/springPoints'
 import { effectiveDiagramFont } from '@shared/styling/fontStack'
 import { checkDiagram } from '@shared/conformance/check'
 import { hiddenLabels } from '@shared/layout/labelClearance'
@@ -2844,6 +2846,34 @@ function CanvasInner(): React.JSX.Element {
   // case, so React Flow doesn't re-sync its whole edge store on unrelated CanvasInner renders (ADR
   // 0073). Restricting the reorder to "an edge is selected" loses nothing, since it only breaks
   // ties.
+  // Connection points slide a little to straighten the edges between them (springPoints.ts).
+  const pointSlideMap = useMemo(() => {
+    const byId = new Map(nodes.map((n) => [n.id, n]))
+    return pointSlides(
+      nodes
+        .filter((n) => n.type === 'entity' || n.type === 'container')
+        .map((n) => {
+          const place = absolutePosition(n, byId)
+          return {
+            id: n.id,
+            x: place.x,
+            y: place.y,
+            width: n.measured?.width ?? n.width ?? 0,
+            height: n.measured?.height ?? n.height ?? 0,
+            points: (n.data?.connectionPoints as ConnectionPoint[] | undefined) ?? []
+          }
+        }),
+      edges.map((e) => ({
+        source: e.source,
+        target: e.target,
+        sourceHandle: e.sourceHandle,
+        targetHandle: e.targetHandle,
+        bent: ((e.data?.points as unknown[] | undefined)?.length ?? 0) > 0
+      }))
+    )
+  }, [nodes, edges])
+  useEffect(() => publishPointSlides(pointSlideMap), [pointSlideMap])
+
   const orderedEdges = useMemo(() => {
     if (!edges.some((e) => e.selected)) return edges
     return [...edges.filter((e) => !e.selected), ...edges.filter((e) => e.selected)]

@@ -28,9 +28,11 @@ export const SIDE_POSITION: Record<ConnectionPointSide, Position> = {
 // Percentage, not pixels, so a point survives resize without recomputing.
 export function connectionPointStyle(
   side: ConnectionPointSide,
-  offset: number
+  offset: number,
+  slide = 0
 ): React.CSSProperties {
-  const pct = `${offset * 100}%`
+  // `slide`: pixels off the slot, so an edge to a point nearby can run straight (springPoints.ts).
+  const pct = slide === 0 ? `${offset * 100}%` : `calc(${offset * 100}% + ${slide}px)`
   return side === 'top' || side === 'bottom' ? { left: pct } : { top: pct }
 }
 

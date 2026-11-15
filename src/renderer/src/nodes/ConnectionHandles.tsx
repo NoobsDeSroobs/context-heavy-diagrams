@@ -1,7 +1,36 @@
 import type { MouseEvent } from 'react'
-import { Handle } from '@xyflow/react'
+import { useEffect } from 'react'
+import { Handle, useNodeId, useUpdateNodeInternals } from '@xyflow/react'
 import type { ConnectionPoint } from '@shared/diagram'
 import { SIDE_POSITION, connectionPointStyle, effectiveConnectionPoints } from './connectionPoints'
+import { usePointSlide } from './pointSlideStore'
+
+// One handle, placed on its slot plus the slide the canvas worked out. React Flow reads the handle's
+// place from the page, so it is told whenever the place moves.
+function SlidingHandle({
+  nodeId,
+  point,
+  onContextMenu
+}: {
+  nodeId: string | null
+  point: ConnectionPoint
+  onContextMenu: (event: MouseEvent<HTMLDivElement>, point: ConnectionPoint) => void
+}): React.JSX.Element {
+  const slide = usePointSlide(nodeId ?? '', point.id)
+  const updateNodeInternals = useUpdateNodeInternals()
+  useEffect(() => {
+    if (nodeId) updateNodeInternals(nodeId)
+  }, [nodeId, slide, updateNodeInternals])
+  return (
+    <Handle
+      type="source"
+      position={SIDE_POSITION[point.side]}
+      id={point.id}
+      style={connectionPointStyle(point.side, point.offset, slide)}
+      onContextMenu={(event) => onContextMenu(event, point)}
+    />
+  )
+}
 
 // Every point a node's sides currently have, shared by EntityNode and ContainerNode. A separate
 // file from connectionPoints.ts so that one stays component-free (a component export mixed with
@@ -16,16 +45,15 @@ export function ConnectionHandles({
   storedPoints: ConnectionPoint[]
   onPointContextMenu: (event: MouseEvent<HTMLDivElement>, point: ConnectionPoint) => void
 }): React.JSX.Element {
+  const nodeId = useNodeId()
   return (
     <>
       {effectiveConnectionPoints(storedPoints).map((point) => (
-        <Handle
+        <SlidingHandle
           key={point.id}
-          type="source"
-          position={SIDE_POSITION[point.side]}
-          id={point.id}
-          style={connectionPointStyle(point.side, point.offset)}
-          onContextMenu={(event) => onPointContextMenu(event, point)}
+          nodeId={nodeId}
+          point={point}
+          onContextMenu={onPointContextMenu}
         />
       ))}
     </>
