@@ -30,7 +30,7 @@ validated ([ADR 0080](../../decisions/0080-bpmn-as-adopted-vocabulary-not-metamo
   the tool's own vocabulary stays notation-neutral.
 - **Shapes stay rectangular** — each stencil maps to an ordinary Shape with a
   distinguishing icon + a default label, not a non-rectangular outline
-  ([ADR 0031](../../decisions/0031-icon-annotation-is-a-standing-requirement.md)).
+  (decided in [ADR 0180](../../decisions/0180-stencils-are-light-elements-for-events-and-verbs.md)).
 
 ## Decided (the maintainer, 2026-11-15)
 
