@@ -14,9 +14,12 @@ import { effectiveConnectionPoints } from './connectionPoints.ts'
 export const SLIDE_RANGE = 10
 const MIN_GAP = 6
 const SIDE_MARGIN = 4
-// The stiffness of a spring between neighbours, and of the one that holds an unpulled point.
+// Stiffness: of the pull on a point that has an edge to straighten, of a spring between neighbours,
+// and of the one that holds a point nothing pulls. Held firmly against the springs between points,
+// each step along a side keeps about a fifth of the movement before it, so the effect dies out fast.
+const PULL = 10
 const CHAIN = 0.5
-const HOLD = 0.05
+const HOLD = 1.6
 
 export interface SlideNode {
   id: string
@@ -54,8 +57,8 @@ function solveChain(wishes: (number | null)[]): number[] {
   for (let i = 0; i < n; i += 1) {
     const neighbours = (i > 0 ? 1 : 0) + (i < n - 1 ? 1 : 0)
     const pulled = wishes[i] !== null
-    diag.push((pulled ? 1 : HOLD) + CHAIN * neighbours)
-    rhs.push(pulled ? (wishes[i] as number) : 0)
+    diag.push((pulled ? PULL : HOLD) + CHAIN * neighbours)
+    rhs.push(pulled ? PULL * (wishes[i] as number) : 0)
   }
   // Thomas algorithm for the tridiagonal system.
   const upper: number[] = new Array(n).fill(0)

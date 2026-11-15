@@ -57,6 +57,7 @@ test('pulling one point of a side drags its neighbours a little, in order, and n
   const [s1, s2, s3] = ['p1', 'p2', 'p3'].map((id) => slides.get(slideKey('a', id)) ?? 0)
   assert.ok(s2 > 0 && s1 > 0 && s3 > 0, 'neighbours follow')
   assert.ok(s2 > s1 && s2 > s3, 'but less than the pulled point')
+  assert.ok(s1 < 0.3 * s2 && s3 < 0.3 * s2, 'and only a fraction of it')
   assert.ok(25 + s1 < 50 + s2 && 50 + s2 < 75 + s3, 'the order is kept')
   for (const s of [s1, s2, s3]) assert.ok(Math.abs(s) <= SLIDE_RANGE)
 })
