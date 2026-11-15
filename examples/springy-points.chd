@@ -1,0 +1,146 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "gateway",
+      "type": "entity",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 600,
+        "height": 80
+      },
+      "connectionPoints": [
+        {
+          "id": "third",
+          "side": "bottom",
+          "offset": 0.75
+        },
+        {
+          "id": "bottom",
+          "side": "bottom",
+          "offset": 0.5
+        },
+        {
+          "id": "first",
+          "side": "bottom",
+          "offset": 0.25
+        }
+      ],
+      "data": {
+        "label": "Gateway"
+      }
+    },
+    {
+      "id": "near",
+      "type": "entity",
+      "position": {
+        "x": 96,
+        "y": 200
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "data": {
+        "label": "Out by 6 px"
+      }
+    },
+    {
+      "id": "nearer",
+      "type": "entity",
+      "position": {
+        "x": 254,
+        "y": 200
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "data": {
+        "label": "Out by 14 px"
+      }
+    },
+    {
+      "id": "far",
+      "type": "entity",
+      "position": {
+        "x": 430,
+        "y": 200
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "data": {
+        "label": "Out by 40 px"
+      }
+    },
+    {
+      "id": "producer",
+      "type": "entity",
+      "position": {
+        "x": 0,
+        "y": 360
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "data": {
+        "label": "Producer"
+      }
+    },
+    {
+      "id": "consumer",
+      "type": "entity",
+      "position": {
+        "x": 300,
+        "y": 366
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "data": {
+        "label": "Consumer"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-1",
+      "type": "labeled",
+      "source": "gateway",
+      "target": "near",
+      "sourceHandle": "first",
+      "targetHandle": "top"
+    },
+    {
+      "id": "edge-2",
+      "type": "labeled",
+      "source": "gateway",
+      "target": "nearer",
+      "sourceHandle": "bottom",
+      "targetHandle": "top"
+    },
+    {
+      "id": "edge-3",
+      "type": "labeled",
+      "source": "gateway",
+      "target": "far",
+      "sourceHandle": "third",
+      "targetHandle": "top"
+    },
+    {
+      "id": "edge-4",
+      "type": "labeled",
+      "source": "producer",
+      "target": "consumer",
+      "sourceHandle": "right",
+      "targetHandle": "left"
+    }
+  ]
+}

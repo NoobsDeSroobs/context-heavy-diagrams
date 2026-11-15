@@ -31,6 +31,7 @@ export function editAnswerIssues(
   for (const result of results) {
     if (result.element) touched.add(result.element.id)
     for (const id of result.removed ?? []) touched.add(id)
+    for (const id of result.routed ?? []) touched.add(id)
   }
   // Moving or resizing a container changes where everything inside it stands.
   const parent = new Map(diagram.nodes.map((n) => [n.id, n.parentId]))

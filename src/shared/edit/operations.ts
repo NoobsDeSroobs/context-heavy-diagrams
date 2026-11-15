@@ -15,8 +15,14 @@ import type {
   DiagramNode,
   LinePoint
 } from '../diagram/index.ts'
-import { effectivePointsForSide } from '../geometry/connectionPoints.ts'
+import {
+  CLOCKWISE_ASCENDING,
+  effectivePointsForSide,
+  respaceClockwise,
+  sortClockwise
+} from '../geometry/connectionPoints.ts'
 import { ANNOTATION_OPERATIONS, startingTags } from './annotations.ts'
+import { routeEdges } from './routeEdges.ts'
 import {
   DEFAULT_SIZE,
   EDGE_STYLE,
@@ -163,19 +169,25 @@ function middleHandle(node: DiagramNode, side: ConnectionPointSide): string {
   return best ? best.id : side
 }
 
+// The handle value that means "no point named": the end is attached automatically.
+const AUTO = 'auto'
+
 function connect(model: Model, reader: Reader): OperationResult {
   const from = connectable(model, reader, 'from')
   const to = connectable(model, reader, 'to')
   if (from.id === to.id) reader.fail('an edge needs two different elements')
   const [fromSide, toSide] = facingSides(model, from, to)
-  const sourceHandle = reader.optionalString('fromHandle') ?? middleHandle(from, fromSide)
-  const targetHandle = reader.optionalString('toHandle') ?? middleHandle(to, toSide)
-  if (!handlesOf(from).includes(sourceHandle)) {
+  // "auto" names no point: the app attaches that end by itself and follows the element as it moves (ADR 0178).
+  const givenFrom = reader.optionalString('fromHandle')
+  const givenTo = reader.optionalString('toHandle')
+  const sourceHandle = givenFrom === AUTO ? undefined : (givenFrom ?? middleHandle(from, fromSide))
+  const targetHandle = givenTo === AUTO ? undefined : (givenTo ?? middleHandle(to, toSide))
+  if (sourceHandle !== undefined && !handlesOf(from).includes(sourceHandle)) {
     reader.fail(
       `"fromHandle": "${sourceHandle}" is not a connection point of "${from.id}" (it has ${handlesOf(from).join(', ')})`
     )
   }
-  if (!handlesOf(to).includes(targetHandle)) {
+  if (targetHandle !== undefined && !handlesOf(to).includes(targetHandle)) {
     reader.fail(
       `"toHandle": "${targetHandle}" is not a connection point of "${to.id}" (it has ${handlesOf(to).join(', ')})`
     )
@@ -186,8 +198,8 @@ function connect(model: Model, reader: Reader): OperationResult {
     type: 'labeled',
     source: from.id,
     target: to.id,
-    sourceHandle,
-    targetHandle
+    ...(sourceHandle !== undefined ? { sourceHandle } : {}),
+    ...(targetHandle !== undefined ? { targetHandle } : {})
   }
   const label = reader.optionalString('label')
   if (label) edge.label = label
@@ -200,6 +212,38 @@ function connect(model: Model, reader: Reader): OperationResult {
   return { op: 'connect', element: briefEdge(edge) }
 }
 
+// Moves an edge's ends to other connection points of the same two elements: it keeps its id, label, tags
+// and style, which removing and connecting again would not.
+function setEdgeHandles(model: Model, reader: Reader): OperationResult {
+  const id = reader.string('id')
+  const edge = model.edge(id)
+  if (!edge) reader.fail(`"${id}" is not an edge of this diagram`)
+  if (!reader.has('fromHandle') && !reader.has('toHandle')) {
+    reader.fail('give "fromHandle" or "toHandle" (or both): the connection point to use')
+  }
+  for (const [key, nodeId] of [
+    ['fromHandle', edge.source],
+    ['toHandle', edge.target]
+  ] as const) {
+    if (!reader.has(key)) continue
+    const handle = reader.string(key)
+    if (handle === AUTO) {
+      if (key === 'fromHandle') delete edge.sourceHandle
+      else delete edge.targetHandle
+      continue
+    }
+    const node = model.node(nodeId)
+    if (!node || !handlesOf(node).includes(handle)) {
+      reader.fail(
+        `"${key}": "${handle}" is not a connection point of "${nodeId}" (it has ${node ? handlesOf(node).join(', ') : 'none'})`
+      )
+    }
+    if (key === 'fromHandle') edge.sourceHandle = handle
+    else edge.targetHandle = handle
+  }
+  return { op: 'set_edge_handles', element: briefEdge(edge) }
+}
+
 function addConnectionPoint(model: Model, reader: Reader): OperationResult {
   const node = connectable(model, reader, 'id')
   const side = reader.string('side')
@@ -209,14 +253,17 @@ function addConnectionPoint(model: Model, reader: Reader): OperationResult {
   if (offset < 0 || offset > 1)
     reader.fail('"offset" must be between 0 (start of the side) and 1 (end)')
   const stored: ConnectionPoint[] = [...(node.connectionPoints ?? [])]
-  const onSide = stored.filter((p) => p.side === side)
   // A side with nothing stored has one implicit, centred point named after the side; edges may use
-  // it. Once the side gets a stored point, only stored ids exist, so the centred one is written out.
-  if (onSide.length === 0) stored.push({ id: side, side: side as ConnectionPointSide, offset: 0.5 })
-  if (stored.filter((p) => p.side === side).length >= MAX_POINTS_PER_SIDE) {
+  // it. The side's points are always evenly spaced, as in the app (ADR 0175): `offset` only says
+  // where in the order along the side the new point goes, never where it sits.
+  const onSide = sortClockwise(
+    effectivePointsForSide(stored, side as ConnectionPointSide),
+    side as ConnectionPointSide
+  )
+  if (onSide.length >= MAX_POINTS_PER_SIDE) {
     reader.fail(`a side holds at most ${MAX_POINTS_PER_SIDE} connection points`)
   }
-  const taken = new Set([...stored.map((p) => p.id), ...SIDES])
+  const taken = new Set([...stored.map((p) => p.id), ...onSide.map((p) => p.id), ...SIDES, AUTO])
   let pointId = reader.optionalString('pointId')
   if (pointId !== undefined) {
     if (!ID_PATTERN.test(pointId) || taken.has(pointId))
@@ -226,8 +273,13 @@ function addConnectionPoint(model: Model, reader: Reader): OperationResult {
     while (taken.has(`cp-${n}`)) n += 1
     pointId = `cp-${n}`
   }
-  stored.push({ id: pointId, side: side as ConnectionPointSide, offset: round(offset) })
-  node.connectionPoints = stored
+  const sideName = side as ConnectionPointSide
+  const ascending = CLOCKWISE_ASCENDING[sideName]
+  let at = onSide.findIndex((p) => (ascending ? offset < p.offset : offset > p.offset))
+  if (at < 0) at = onSide.length
+  const added = { id: pointId, side: sideName, offset }
+  const respaced = respaceClockwise([...onSide.slice(0, at), added, ...onSide.slice(at)], sideName)
+  node.connectionPoints = [...stored.filter((p) => p.side !== sideName), ...respaced]
   return { op: 'add_connection_point', element: { id: node.id }, pointId }
 }
 
@@ -370,6 +422,69 @@ function setEdgePoints(model: Model, reader: Reader): OperationResult {
   return result
 }
 
+// Gives edges a right-angled route around the elements (ADR 0174): the ones named, or else the ones the
+// layout check reports as over an element or crossing another edge. Each routed edge gets bend points and
+// the "step" routing; one that cannot be routed is left as it was and named in the answer. Unless told to
+// keep them, the routed edges also move to a connection point of their own on the side facing their other
+// end (ADR 0177).
+function routeEdgesOperation(model: Model, reader: Reader): OperationResult {
+  let ids: string[] | undefined
+  if (reader.has('ids')) {
+    const raw = reader.raw('ids')
+    if (!Array.isArray(raw) || !raw.every((id) => typeof id === 'string')) {
+      reader.fail('"ids" must be a list of edge ids')
+    }
+    for (const id of raw as string[]) {
+      if (!model.edge(id)) reader.fail(`"${id}" is not an edge of this diagram`)
+    }
+    ids = raw as string[]
+  }
+  const mode = reader.optionalString('connectionPoints') ?? 'choose'
+  if (mode !== 'choose' && mode !== 'keep') {
+    reader.fail('"connectionPoints" must be "choose" (the default) or "keep"')
+  }
+  const {
+    routed,
+    failed,
+    nodePoints,
+    handles,
+    notices: more
+  } = routeEdges(model.diagram, ids, {
+    choosePoints: mode === 'choose'
+  })
+  for (const [nodeId, points] of nodePoints ?? []) {
+    const node = model.node(nodeId)
+    if (!node) continue
+    if (points.length > 0) node.connectionPoints = points
+    else delete node.connectionPoints
+  }
+  for (const [id, handle] of handles ?? []) {
+    const edge = model.edge(id)
+    if (!edge) continue
+    if (handle.sourceHandle) edge.sourceHandle = handle.sourceHandle
+    if (handle.targetHandle) edge.targetHandle = handle.targetHandle
+    // Its old route fits the old points, not these.
+    if (!routed.has(id)) delete edge.points
+  }
+  for (const [id, points] of routed) {
+    const edge = model.edge(id)
+    if (!edge) continue
+    if (points.length > 0) edge.points = points
+    else delete edge.points
+    edge.style = { ...edge.style, routingStyle: 'step' }
+  }
+  const notices = [
+    ...[...failed].map(([id, why]) => `edge ${id} was not routed: ${why}`),
+    ...(more ?? [])
+  ]
+  return {
+    op: 'route_edges',
+    routed: [...routed.keys()],
+    ...(handles && handles.size > 0 ? { movedToOtherPoints: [...handles.keys()] } : {}),
+    ...(notices.length > 0 ? { notices } : {})
+  }
+}
+
 function remove(model: Model, reader: Reader): OperationResult {
   const id = reader.string('id')
   const edge = model.edge(id)
@@ -409,6 +524,8 @@ const OPERATIONS: Record<string, (model: Model, reader: Reader) => OperationResu
   reparent,
   remove,
   set_edge_points: setEdgePoints,
+  set_edge_handles: setEdgeHandles,
+  route_edges: routeEdgesOperation,
   ...ANNOTATION_OPERATIONS
 }
 

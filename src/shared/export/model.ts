@@ -7,6 +7,8 @@ import type {
   EdgeStyle
 } from '../diagram/index.ts'
 import { effectiveConnectionPoints, pointCoordinates } from '../geometry/connectionPoints.ts'
+import { automaticHandles } from '../geometry/autoAttach.ts'
+import { pointSlides, slideKey } from '../geometry/springPoints.ts'
 import type { EdgeEnd } from '../geometry/edgePath.ts'
 import { pointsBoundingBox } from '../geometry/bendablePath.ts'
 import { NODE_STYLE_DEFAULTS, styledNodeType } from '../styling/styleDefaults.ts'
@@ -184,7 +186,11 @@ export function orientEdges(diagram: DiagramFile): DiagramEdge[] {
 // Where an edge meets a node, the way React Flow resolves a handle: a node with one handle, or an
 // edge naming none, uses the first handle (the top one); an edge naming a handle the node does not
 // have is not drawn at all. Only entities and containers have handles.
-function endpoint(node: LaidOutNode | undefined, handle: string | undefined): EdgeEnd | null {
+function endpoint(
+  node: LaidOutNode | undefined,
+  handle: string | undefined,
+  slides: Map<string, number>
+): EdgeEnd | null {
   if (!node || (node.kind !== 'entity' && node.kind !== 'container')) return null
   const points: ConnectionPoint[] = effectiveConnectionPoints(node.node.connectionPoints ?? [])
   const point = points.length === 1 || !handle ? points[0] : points.find((p) => p.id === handle)
@@ -193,16 +199,62 @@ function endpoint(node: LaidOutNode | undefined, handle: string | undefined): Ed
     { left: node.x, top: node.y, width: node.width, height: node.height },
     point
   )
-  return { x, y, side: point.side }
+  // A point slides a little along its side to straighten an edge (springPoints.ts).
+  const slide = slides.get(slideKey(node.node.id, point.id)) ?? 0
+  return alongX(point.side)
+    ? { x: x + slide, y, side: point.side }
+    : { x, y: y + slide, side: point.side }
 }
 
-export function layoutEdges(edges: DiagramEdge[], nodes: Map<string, LaidOutNode>): LaidOutEdge[] {
+const alongX = (side: ConnectionPoint['side']): boolean => side === 'top' || side === 'bottom'
+
+// `looseEdges` are edges about to be given bend points of their own (route_edges): they pull no point and
+// end in the point's slot, as they will once they have bend points.
+export function layoutEdges(
+  edges: DiagramEdge[],
+  nodes: Map<string, LaidOutNode>,
+  looseEdges?: ReadonlySet<string>
+): LaidOutEdge[] {
   const out: LaidOutEdge[] = []
+  // An end that names no point is attached by the rule in geometry/autoAttach.ts.
+  const placed = [...nodes.values()]
+    .filter((n) => n.kind === 'entity' || n.kind === 'container')
+    .map((n) => ({
+      id: n.node.id,
+      x: n.x,
+      y: n.y,
+      width: n.width,
+      height: n.height,
+      points: n.node.connectionPoints ?? []
+    }))
+  const automatic = automaticHandles(placed, edges)
+  const shown = (e: DiagramEdge): DiagramEdge => {
+    const picked = automatic.get(e.id)
+    return picked
+      ? {
+          ...e,
+          sourceHandle: e.sourceHandle || picked.sourceHandle,
+          targetHandle: e.targetHandle || picked.targetHandle
+        }
+      : e
+  }
+  const slides = pointSlides(
+    placed,
+    edges.map(shown).map((e) => ({
+      source: e.source,
+      target: e.target,
+      sourceHandle: e.sourceHandle,
+      targetHandle: e.targetHandle,
+      bent: (e.points?.length ?? 0) > 0 || (looseEdges?.has(e.id) ?? false)
+    }))
+  )
   edges.forEach((edge, order) => {
     const source = nodes.get(edge.source)
     const target = nodes.get(edge.target)
-    const from = endpoint(source, edge.sourceHandle)
-    const to = endpoint(target, edge.targetHandle)
+    const own = looseEdges?.has(edge.id) ? new Map<string, number>() : slides
+    const ends = shown(edge)
+    const from = endpoint(source, ends.sourceHandle, own)
+    const to = endpoint(target, ends.targetHandle, own)
     if (!source || !target || !from || !to) return
     // An edge has no stacking order of its own: it sits at the midpoint of its endpoints'.
     out.push({ edge, from, to, z: (source.z + target.z) / 2, order })

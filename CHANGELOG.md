@@ -2,15 +2,26 @@
 
 What changed for people using the tool, one entry per minor or major release. The reasons are in [docs/decisions/](docs/decisions/); the full history is in `git log`.
 
-## 0.10.0 (unreleased)
+## 0.10.0 (2026-11-15)
 
 ### Added
 
+- **Edges that attach by themselves.** Drop a connection on the dashed target that appears in the middle of an element, or right-click an edge and choose **Attach automatically**, and that end of the edge picks the side of its element that faces the other one, and a point on it, and follows as you move the elements. **Fix to current points** makes it fixed again; an edge dropped on a point stays where it is. An edge with no connection point saved in the file now attaches this way too, where it used to leave by the top. Assistants can use `"auto"` as a handle in `connect` and `set_edge_handles`. ([ADR 0178](docs/decisions/0178-edge-ends-with-no-connection-point-attach-themselves.md))
 - **File → Show in Folder** shows the open diagram's file in the system's file manager (Explorer, Finder, or the desktop's own on Linux).
 
 ### Changed
 
+- **Connection points slide a little to straighten edges.** Where two facing elements are almost in line, each end of the edge between them moves up to 10 px along its side so the edge runs straight; further out of line, the edge bends as before. Nothing is stored, so a person's and an assistant's diagram behave alike. ([ADR 0176](docs/decisions/0176-connection-points-slide-a-little-to-straighten-edges.md))
+- **Assistants can route edges.** A new `route_edges` operation (in `edit_diagram` and `chd edit`) gives edges a right-angled route through the free space round the elements they do not join, with a lane of their own where there is room; without ids it takes the edges the layout check reports. It also puts each routed edge on a connection point of its own on the side facing its other end, in order along the side and evenly spaced as in the app (`connectionPoints: "keep"` leaves them), and places no element. ([ADR 0174](docs/decisions/0174-route-edges-is-an-edit-operation-that-draws-edges-only.md), [ADR 0177](docs/decisions/0177-route-edges-chooses-the-connection-points-it-routes-from.md))
+- **An assistant's connection points look like yours.** `add_connection_point` now spreads a side's points evenly, as the app does; its `offset` only says where in the order the new point goes. ([ADR 0175](docs/decisions/0175-assistants-make-what-a-person-can-make.md))
+- **`set_edge_handles`** moves an edge to another connection point of the same two elements, keeping its id, label, tags and style (`edit_diagram`, `chd edit`).
+- **An assistant that builds with `edit_diagram` reads less and is told less.** A one-page `build` topic (`get_format_spec`, `chd spec build`) replaces the core rules and three references (about 78 KB) for that way of working, an edit answers with the layout problems that involve what it touched and a count of the rest, answers carry new ids and changed fields instead of the whole element, and `inspect_diagram` (`chd ask inspect`) takes `issues_only`, `ids` and `container`. The server also says which build it is. ([ADR 0171](docs/decisions/0171-an-edit-answers-with-the-problems-it-touched.md), [ADR 0172](docs/decisions/0172-building-with-edit-diagram-reads-a-one-page-topic.md))
+- **The layout check flags an edge label on a container's wall** (including one squeezed outside a container that has room) **and one that covers a container's own title,** and `list_files` says when folders below its depth limit were left out. ([ADR 0161](docs/decisions/0161-the-layout-check-judges-edges-as-they-are-drawn.md))
 - **The Claude Desktop extension leaves out what a repository's `.gitignore` names** (build output, dependencies) when it lists and searches files, and says which folders it left out; `list_files` answers with 100 files a page and no modified time. ([ADR 0173](docs/decisions/0173-listings-and-searches-leave-out-what-gitignore-names.md))
+
+### File format
+
+- No new field. An edge end with no connection point named is now drawn on the side facing the other element, where it was drawn at the first point (the top); the rule is in [docs/file-format.md](docs/file-format.md). Files from 0.9.0 open as before, and a file made here opens in 0.9.0 with those ends at the top.
 
 ## 0.9.0 (2026-11-10)
 

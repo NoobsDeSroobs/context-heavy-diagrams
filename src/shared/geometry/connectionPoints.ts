@@ -53,3 +53,50 @@ export function pointCoordinates(rect: RectLike, point: ConnectionPoint): { x: n
       return { x: rect.left + rect.width, y: rect.top + rect.height * point.offset }
   }
 }
+
+// Clockwise-around-the-box order per side, used by the count-based
+// generator and by remove-with-transfer below — see ADR 0036. Offset
+// is defined left-to-right on top/bottom and top-to-bottom on left/right
+// (nearestConnectionPoint above), so walking top -> right -> bottom -> left
+// clockwise means ascending offset on top/right but descending on
+// bottom/left.
+export const CLOCKWISE_ASCENDING: Record<ConnectionPointSide, boolean> = {
+  top: true,
+  right: true,
+  bottom: false,
+  left: false
+}
+
+export function sortClockwise(
+  points: ConnectionPoint[],
+  side: ConnectionPointSide
+): ConnectionPoint[] {
+  const ascending = CLOCKWISE_ASCENDING[side]
+  return [...points].sort((a, b) => (ascending ? a.offset - b.offset : b.offset - a.offset))
+}
+
+// N points, evenly spaced and inset from both corners — N=1 lands at 0.5.
+// Applies uniformly to every point on a side now, the point that happens
+// to have kept its side-name id included — there's no longer a separate,
+// fixed "default" offset to work around.
+export function evenOffsets(count: number): number[] {
+  return Array.from({ length: count }, (_, i) => (i + 1) / (count + 1))
+}
+
+// The one spacing step every structural connection-point operation shares (bulk count change,
+// manual add, manual remove): `points` must already be in the desired clockwise order, and every
+// point in it, ids preserved, slides onto the evenly spaced offset for its position.
+//
+// evenOffsets() returns ascending raw offsets, but ascending means clockwise only on top/right
+// (CLOCKWISE_ASCENDING); on bottom/left clockwise is descending. Zipping the ascending array
+// straight onto a clockwise-sorted points array mirrored the whole side on bottom/left (correct
+// order, visually flipped), so the offsets are reversed on those two sides. That keeps "index 0"
+// meaning "clockwise-first" on every side.
+export function respaceClockwise(
+  points: ConnectionPoint[],
+  side: ConnectionPointSide
+): ConnectionPoint[] {
+  const offsets = evenOffsets(points.length)
+  const orderedOffsets = CLOCKWISE_ASCENDING[side] ? offsets : [...offsets].reverse()
+  return points.map((p, i) => ({ ...p, offset: orderedOffsets[i] }))
+}

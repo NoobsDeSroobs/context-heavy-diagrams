@@ -243,12 +243,12 @@ test('an edge to a connection point the node does not have is not drawn, as on t
   assert.ok(!svg.includes('chd-edge'))
 })
 
-test('an edge with no handle uses the first connection point, on top', () => {
+test('an edge with no handle is attached on the sides that face, in the middle (ADR 0178)', () => {
   const svg = render(
     diagramOf([entity('a', 0, 0), entity('b', 300, 0)], [{ id: 'e', source: 'a', target: 'b' }]),
     { paddingPx: 0 }
   )
-  assert.ok(svg.includes('M60,0'))
+  assert.ok(svg.includes('M120,30'))
 })
 
 test('a container is dashed and a text node rotates about its centre', () => {

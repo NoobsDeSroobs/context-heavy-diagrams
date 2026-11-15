@@ -126,8 +126,21 @@ test('add_connection_point keeps the side name valid for edges that already use 
   assert.equal(results[0].pointId, 'cp-1')
   assert.deepEqual(results[0].element, { id: 'a' }, 'the answer does not repeat the element')
   assert.deepEqual(
-    describeDiagram(diagram).nodes[0].handles.filter((h) => h === 'right' || h === 'cp-1'),
-    ['right', 'cp-1']
+    describeDiagram(diagram)
+      .nodes[0].handles.filter((h) => h === 'right' || h === 'cp-1')
+      .sort(),
+    ['cp-1', 'right']
+  )
+  // As in the app, the side is respaced evenly; the offset only said which comes first (ADR 0175).
+  const onRight = diagram.nodes
+    .find((n) => n.id === 'a')
+    .connectionPoints.filter((p) => p.side === 'right')
+  assert.deepEqual(
+    onRight.map((p) => [p.id, Math.round(p.offset * 1000) / 1000]),
+    [
+      ['cp-1', 0.333],
+      ['right', 0.667]
+    ]
   )
   assertValid(diagram)
   const moved = run(diagram, { op: 'connect', from: 'a', to: 'b', fromHandle: 'cp-1' })
@@ -223,6 +236,31 @@ test('add_line stores the points relative to the line and its bounding box', () 
   assert.equal(results[0].element.x, 100)
   assert.throws(() => run(start(), { op: 'add_line', points: [{ x: 0, y: 0 }] }), /at least two/)
   assertValid(diagram)
+})
+
+test('set_edge_handles moves an edge to another connection point and keeps everything else', () => {
+  const base = run(
+    createEmptyDiagram(),
+    { op: 'add_entity', id: 'a', label: 'A', x: 0, y: 0 },
+    { op: 'add_entity', id: 'b', label: 'B', x: 300, y: 0 },
+    { op: 'add_connection_point', id: 'b', side: 'left', offset: 0.25, pointId: 'high' },
+    { op: 'connect', id: 'e', from: 'a', to: 'b', label: 'calls', tags: { owner: 'x' } }
+  ).diagram
+  const moved = run(base, { op: 'set_edge_handles', id: 'e', toHandle: 'high' })
+  const edge = moved.diagram.edges.find((e) => e.id === 'e')
+  assert.equal(edge.targetHandle, 'high')
+  assert.equal(edge.sourceHandle, 'right')
+  assert.equal(edge.label, 'calls')
+  assert.deepEqual(moved.results[0].element.toHandle, 'high')
+  assert.throws(
+    () => run(base, { op: 'set_edge_handles', id: 'e', toHandle: 'nope' }),
+    /not a connection point of "b"/
+  )
+  assert.throws(() => run(base, { op: 'set_edge_handles', id: 'e' }), /fromHandle/)
+  assert.throws(
+    () => run(base, { op: 'set_edge_handles', id: 'a', toHandle: 'left' }),
+    /not an edge/
+  )
 })
 
 test('set_edge_points replaces, clears and explains when the routing would ignore the points', () => {

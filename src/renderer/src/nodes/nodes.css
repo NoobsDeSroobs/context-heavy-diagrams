@@ -126,6 +126,24 @@
   height: max(6px, calc(10px / var(--canvas-zoom, 1)));
 }
 
+/* The central target an edge is dropped on to attach to the element by itself (ADR 0178): out of the
+   way and unreachable, except while a connection is being dragged. */
+.entity-node .react-flow__handle.chd-auto-target,
+.container-node .react-flow__handle.chd-auto-target {
+  width: max(18px, calc(26px / var(--canvas-zoom, 1)));
+  height: max(18px, calc(26px / var(--canvas-zoom, 1)));
+  border: 1.5px dashed var(--ev-c-gray-1);
+  background: transparent;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.entity-node .react-flow__handle.chd-auto-target.chd-auto-target--live,
+.container-node .react-flow__handle.chd-auto-target.chd-auto-target--live {
+  opacity: 0.8;
+  pointer-events: all;
+}
+
 /* Line node's own point handles (ADR 0050) — plain positioned
    divs, not React Flow Handles (those are for connections; these just
    reposition a point), so they get their own hover-reveal rule matching
