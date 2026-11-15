@@ -9,7 +9,7 @@ Building a diagram with `edit_diagram` (or `chd edit`). About a page: what you n
 1. Decide the grid on paper first: the rows and columns, and the gap each pair of neighbours needs.
 2. Ask `room_for_label` (or `chd ask room`) for each edge that has a label, with its direction and font, and take `target` as the gap. Do not use the plain gaps for elements joined by an edge.
 3. One call per section (a container and what is in it, then the edges), not one per element. Containers first, then their children with `parent`, then `connect`. Pass the fingerprint of the last answer as `base_fingerprint`.
-4. Read the problems in the answer and fix them with `move` and `resize` in the next call. An edge across an element is best fixed by moving the element or the edge's connection point; where that cannot be done, `route_edges` (the reported edges, or `ids`) gives the edge a right-angled route through the gaps, so leave gaps (20-60px) for it to use. A crossing is sometimes the clearest drawing: keep it and say so.
+4. Read the problems in the answer and fix them with `move` and `resize` in the next call. An edge across an element is best fixed by moving the element or the edge's connection point; where that cannot be done, `route_edges` (the reported edges, or `ids`) gives the edge a right-angled route through the gaps, so leave gaps (20-60px) for it to use. It also puts each routed edge on a connection point of its own on the side facing its other end, in order along the side, so do not add points for those edges. A crossing is sometimes the clearest drawing: keep it and say so.
 5. Tags, links and notes last. At the end, `inspect_diagram` with `issues_only` shows everything still open.
 
 ## Numbers

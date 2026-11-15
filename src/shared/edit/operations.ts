@@ -413,7 +413,9 @@ function setEdgePoints(model: Model, reader: Reader): OperationResult {
 
 // Gives edges a right-angled route around the elements (ADR 0174): the ones named, or else the ones the
 // layout check reports as over an element or crossing another edge. Each routed edge gets bend points and
-// the "step" routing; one that cannot be routed is left as it was and named in the answer.
+// the "step" routing; one that cannot be routed is left as it was and named in the answer. Unless told to
+// keep them, the routed edges also move to a connection point of their own on the side facing their other
+// end (ADR 0177).
 function routeEdgesOperation(model: Model, reader: Reader): OperationResult {
   let ids: string[] | undefined
   if (reader.has('ids')) {
@@ -426,7 +428,33 @@ function routeEdgesOperation(model: Model, reader: Reader): OperationResult {
     }
     ids = raw as string[]
   }
-  const { routed, failed } = routeEdges(model.diagram, ids)
+  const mode = reader.optionalString('connectionPoints') ?? 'choose'
+  if (mode !== 'choose' && mode !== 'keep') {
+    reader.fail('"connectionPoints" must be "choose" (the default) or "keep"')
+  }
+  const {
+    routed,
+    failed,
+    nodePoints,
+    handles,
+    notices: more
+  } = routeEdges(model.diagram, ids, {
+    choosePoints: mode === 'choose'
+  })
+  for (const [nodeId, points] of nodePoints ?? []) {
+    const node = model.node(nodeId)
+    if (!node) continue
+    if (points.length > 0) node.connectionPoints = points
+    else delete node.connectionPoints
+  }
+  for (const [id, handle] of handles ?? []) {
+    const edge = model.edge(id)
+    if (!edge) continue
+    if (handle.sourceHandle) edge.sourceHandle = handle.sourceHandle
+    if (handle.targetHandle) edge.targetHandle = handle.targetHandle
+    // Its old route fits the old points, not these.
+    if (!routed.has(id)) delete edge.points
+  }
   for (const [id, points] of routed) {
     const edge = model.edge(id)
     if (!edge) continue
@@ -434,10 +462,14 @@ function routeEdgesOperation(model: Model, reader: Reader): OperationResult {
     else delete edge.points
     edge.style = { ...edge.style, routingStyle: 'step' }
   }
-  const notices = [...failed].map(([id, why]) => `edge ${id} was not routed: ${why}`)
+  const notices = [
+    ...[...failed].map(([id, why]) => `edge ${id} was not routed: ${why}`),
+    ...(more ?? [])
+  ]
   return {
     op: 'route_edges',
     routed: [...routed.keys()],
+    ...(handles && handles.size > 0 ? { movedToOtherPoints: [...handles.keys()] } : {}),
     ...(notices.length > 0 ? { notices } : {})
   }
 }

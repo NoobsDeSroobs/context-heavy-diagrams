@@ -49,7 +49,7 @@ Router, large diagram, every edge routed: edges across elements 38 to 0; crossin
 - [x] Build the router as an edit operation (`route_edges`), with tests, the operations help, the build page, the changelog and ADR 0174
 - [ ] Trial runs with `scripts/reroute-trial/` (`small.chd`, `large.chd`, `brief.md`, `score.mjs`): an assistant is asked to fix the reported problems, now with `route_edges` available; record what it does and what is left
 - [x] `set_edge_handles` (move an edge's ends to other connection points), from the trial
-- [ ] `route_edges` choosing connection points: one per edge on the side facing its other end, in the order of their targets, with the side's points evenly spaced as in the app (ADR 0175); it overlaps [0188](0188-loosely-attached-edges.md), where the same idea is a property of the edge instead of stored points
+- [x] `route_edges` choosing connection points ([ADR 0177](../../decisions/0177-route-edges-chooses-the-connection-points-it-routes-from.md)): one per edge on the side facing its other end, in the order of their targets, evenly spaced. On the trial diagrams, every edge routed: small 3 crossings and 3 label collisions to 0; large crossings 54 to 33, none over an element. Still to look at: crowded spots where many edges meet one side (the large diagram's Identity & Access Management), and choosing the side by cost where the facing side is blocked
 - [ ] A second trial round after rebuilding the extension (`npm run build:extension`)
 - [x] Wider lanes, container-border and corner rules, a longer end piece, the crossing price (1200); the small diagram's last 3 crossings remain
 - [ ] Decide what to teach, where it lives and whether a crossing check belongs in the tools

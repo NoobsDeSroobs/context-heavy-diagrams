@@ -207,7 +207,13 @@ function endpoint(
 
 const alongX = (side: ConnectionPoint['side']): boolean => side === 'top' || side === 'bottom'
 
-export function layoutEdges(edges: DiagramEdge[], nodes: Map<string, LaidOutNode>): LaidOutEdge[] {
+// `looseEdges` are edges about to be given bend points of their own (route_edges): they pull no point and
+// end in the point's slot, as they will once they have bend points.
+export function layoutEdges(
+  edges: DiagramEdge[],
+  nodes: Map<string, LaidOutNode>,
+  looseEdges?: ReadonlySet<string>
+): LaidOutEdge[] {
   const out: LaidOutEdge[] = []
   const slides = pointSlides(
     [...nodes.values()]
@@ -225,14 +231,15 @@ export function layoutEdges(edges: DiagramEdge[], nodes: Map<string, LaidOutNode
       target: e.target,
       sourceHandle: e.sourceHandle,
       targetHandle: e.targetHandle,
-      bent: (e.points?.length ?? 0) > 0
+      bent: (e.points?.length ?? 0) > 0 || (looseEdges?.has(e.id) ?? false)
     }))
   )
   edges.forEach((edge, order) => {
     const source = nodes.get(edge.source)
     const target = nodes.get(edge.target)
-    const from = endpoint(source, edge.sourceHandle, slides)
-    const to = endpoint(target, edge.targetHandle, slides)
+    const own = looseEdges?.has(edge.id) ? new Map<string, number>() : slides
+    const from = endpoint(source, edge.sourceHandle, own)
+    const to = endpoint(target, edge.targetHandle, own)
     if (!source || !target || !from || !to) return
     // An edge has no stacking order of its own: it sits at the midpoint of its endpoints'.
     out.push({ edge, from, to, z: (source.z + target.z) / 2, order })

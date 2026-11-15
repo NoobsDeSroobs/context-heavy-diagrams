@@ -69,6 +69,8 @@ export interface OperationResult {
   pointId?: string
   // For `route_edges`: the edges that were given a new route.
   routed?: string[]
+  // For `route_edges`: the edges that were put on other connection points.
+  movedToOtherPoints?: string[]
   // Tag operations: every tag the element carries afterwards, as key to value.
   tags?: Record<string, JsonValue>
   // Required-tag operations: what the template change did to existing elements, one line each.

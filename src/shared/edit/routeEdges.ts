@@ -7,13 +7,15 @@
 // for crossing another edge, for running along another edge's lane and for passing through a
 // container it does not belong to. Edges are routed one after the other, shortest first, each seeing
 // the ones before it.
-import type { DiagramFile, LinePoint } from '../diagram/index.ts'
+import type { ConnectionPoint, DiagramFile, LinePoint } from '../diagram/index.ts'
 import { layoutEdges, layoutNodes, type LaidOutNode } from '../export/model.ts'
 import { buildEdgePath, OUTWARD_DIRECTION } from '../geometry/edgePath.ts'
 import { flattenPath, type Point } from '../geometry/pathSampling.ts'
 import type { Side } from '../geometry/side.ts'
 import { DEFAULT_PREFERENCES } from '../preferences/preferences.ts'
+import { choosePoints } from './choosePoints.ts'
 import { edgeIssues, segmentHits, type Rect } from './edgeRouting.ts'
+import { MAX_POINTS_PER_SIDE } from './model.ts'
 
 // How far a lane keeps from an element, and the straight piece an edge leaves its element by.
 const MIN_CLEAR = 9
@@ -54,6 +56,16 @@ export interface RouteResult {
   routed: Map<string, LinePoint[]>
   // The edges that could not be routed, with why.
   failed: Map<string, string>
+  // With connection points chosen: each node's new points (none stored: the sides are implicit), the
+  // edges' new handles, and what to tell the person.
+  nodePoints?: Map<string, ConnectionPoint[]>
+  handles?: Map<string, { sourceHandle?: string; targetHandle?: string }>
+  notices?: string[]
+}
+
+export interface RouteOptions {
+  // Put each routed edge on a point of its own on the side facing its other end (ADR 0177).
+  choosePoints?: boolean
 }
 
 interface Grid {
@@ -274,12 +286,15 @@ function simplify(points: Point[]): Point[] {
   return out
 }
 
-export function routeEdges(diagram: DiagramFile, ids?: readonly string[]): RouteResult {
+export function routeEdges(
+  diagram: DiagramFile,
+  ids?: readonly string[],
+  options: RouteOptions = {}
+): RouteResult {
   const started = Date.now()
   const nodes = layoutNodes(diagram)
   const laid = layoutEdges(diagram.edges, nodes)
   const byId = new Map(laid.map((l) => [l.edge.id, l]))
-  const routed = new Map<string, LinePoint[]>()
   const failed = new Map<string, string>()
 
   // Which edges to route: the ones asked for, else the ones the check reports.
@@ -309,8 +324,83 @@ export function routeEdges(diagram: DiagramFile, ids?: readonly string[]): Route
       failed.set(id, 'joins a container, which is not routed')
     } else candidates.add(id)
   }
-  if (candidates.size === 0) return { routed, failed }
+  if (candidates.size === 0) return { routed: new Map(), failed }
+  if (!options.choosePoints) {
+    const done = routeCandidates(diagram, candidates, started)
+    return { routed: done.routed, failed: new Map([...failed, ...done.failed]) }
+  }
 
+  // Each pass puts the edges on points and routes them from there. An edge that then cannot be routed
+  // goes back to where it was (its points stay as they were) and the passes run again without it.
+  const kept = new Set<string>()
+  for (let pass = 0; ; pass += 1) {
+    const chosen = new Set([...candidates].filter((id) => !kept.has(id)))
+    const plan = choosePoints(
+      diagram,
+      chosen,
+      diagram.maxConnectionPointsPerSide ?? MAX_POINTS_PER_SIDE
+    )
+    const planNodes = layoutNodes(plan.diagram)
+    const everything = new Set(candidates)
+    for (const id of plan.affected) {
+      const edge = plan.diagram.edges.find((e) => e.id === id)
+      const a = edge && planNodes.get(edge.source)
+      const b = edge && planNodes.get(edge.target)
+      if (
+        edge &&
+        a &&
+        b &&
+        edge.source !== edge.target &&
+        a.kind === 'entity' &&
+        b.kind === 'entity'
+      ) {
+        everything.add(id)
+      }
+    }
+    const done = routeCandidates(plan.diagram, everything, started)
+    const stuck = [...done.failed.keys()].filter((id) => plan.moved.has(id))
+    if (stuck.length > 0 && pass < 3) {
+      for (const id of stuck) kept.add(id)
+      continue
+    }
+    const nodePoints = new Map<string, ConnectionPoint[]>()
+    for (const n of plan.diagram.nodes) {
+      const was = diagram.nodes.find((o) => o.id === n.id)
+      if (
+        JSON.stringify(was?.connectionPoints ?? []) !== JSON.stringify(n.connectionPoints ?? [])
+      ) {
+        nodePoints.set(n.id, n.connectionPoints ?? [])
+      }
+    }
+    const handles = new Map<string, { sourceHandle?: string; targetHandle?: string }>()
+    for (const e of plan.diagram.edges) {
+      const was = diagram.edges.find((o) => o.id === e.id)
+      if (was && (was.sourceHandle !== e.sourceHandle || was.targetHandle !== e.targetHandle)) {
+        handles.set(e.id, { sourceHandle: e.sourceHandle, targetHandle: e.targetHandle })
+      }
+    }
+    return {
+      routed: done.routed,
+      failed: new Map([...failed, ...done.failed]),
+      nodePoints,
+      handles,
+      notices: plan.notices
+    }
+  }
+}
+
+// Routes the edges in `candidates` (entities only) through the free space of this diagram as it is.
+function routeCandidates(
+  diagram: DiagramFile,
+  candidates: ReadonlySet<string>,
+  started: number
+): { routed: Map<string, LinePoint[]>; failed: Map<string, string> } {
+  const nodes = layoutNodes(diagram)
+  // The routed edges end in their points' slots, as they will with bend points of their own.
+  const laid = layoutEdges(diagram.edges, nodes, candidates)
+  const byId = new Map(laid.map((l) => [l.edge.id, l]))
+  const routed = new Map<string, LinePoint[]>()
+  const failed = new Map<string, string>()
   const solid = [...nodes.values()].filter((n) => n.kind === 'entity' || n.kind === 'text')
   const containers = [...nodes.values()].filter((n) => n.kind === 'container')
   const rectOf = (n: LaidOutNode): Rect => ({ x: n.x, y: n.y, width: n.width, height: n.height })

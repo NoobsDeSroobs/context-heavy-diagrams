@@ -79,7 +79,7 @@ export function sortClockwise(
 // Applies uniformly to every point on a side now, the point that happens
 // to have kept its side-name id included — there's no longer a separate,
 // fixed "default" offset to work around.
-function evenOffsets(count: number): number[] {
+export function evenOffsets(count: number): number[] {
   return Array.from({ length: count }, (_, i) => (i + 1) / (count + 1))
 }
 
