@@ -30,6 +30,7 @@ import { MARKER_SHAPES, MARKER_STROKE_WIDTH } from './markerShapes.ts'
 import { plainColor } from './color.ts'
 import {
   buildExportLegendItems,
+  stencilKindsUsed,
   directionSetLegendRow,
   type ExportLegendItem
 } from '../legend/legendItems.ts'
@@ -88,7 +89,8 @@ export function defaultLegendItems(
     diagram.legend ?? [],
     diagram.highlights ?? [],
     new Set(enabledHighlightIds),
-    directionSetLegendRow(sets, diagram.activeEdgeDirectionSetId)
+    directionSetLegendRow(sets, diagram.activeEdgeDirectionSetId),
+    stencilKindsUsed(diagram.nodes)
   )
 }
 
@@ -371,6 +373,20 @@ function drawLegend(
       parts.push(
         `<circle cx="${num(swatchX + 14)}" cy="${num(cy)}" r="7"${paintAttrs('fill', paint)}/>`
       )
+    } else if (swatch.kind === 'stencil') {
+      // The kind's shape and mark in a small box, with the colour it is drawn in on the diagram.
+      const sk = stencilKind(swatch.stencilKind)
+      const look = resolveBoxLook(
+        'entity',
+        stencilStyle(sk.id, undefined),
+        options.theme,
+        undefined
+      )
+      const wide = sk.shape === 'rounded'
+      const box = wide
+        ? { x: swatchX + 3, y: cy - 7, width: 22, height: 14 }
+        : { x: swatchX + 7, y: cy - 7, width: 14, height: 14 }
+      parts.push(stencilShape(sk, box, look, 1.5, tokens.text))
     } else if (swatch.kind === 'highlight') {
       const paint = plainColor(swatch.color)
       parts.push(

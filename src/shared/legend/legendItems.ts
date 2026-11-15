@@ -8,6 +8,7 @@ import type {
   MarkerKind
 } from '../diagram/index.ts'
 import { highlightId, isTransparentHighlight } from '../tagging/highlights.ts'
+import { STENCIL_KINDS, stencilKind } from '../stencils/kinds.ts'
 
 // The legend row the active direction set contributes (ADR 0081): its name
 // drawn as an arrow, shown in the Legend panel and prepended to the image
@@ -55,6 +56,17 @@ export type ExportLegendSwatch =
   | { kind: 'entity'; color: string }
   | { kind: 'icon'; icon: IconRef }
   | { kind: 'highlight'; color: string }
+  // A kind of stencil the diagram uses (ADR 0180): its shape and mark, in the kind's own colour.
+  | { kind: 'stencil'; stencilKind: string }
+
+// The kinds of stencil a diagram uses, in the order of the built-in list. Each gets a legend row, so
+// what a mark means does not have to be known (ADR 0180). The rows are derived, never stored.
+export function stencilKindsUsed(nodes: { type?: string; data: { kind?: string } }[]): string[] {
+  const used = new Set(
+    nodes.filter((n) => n.type === 'stencil').map((n) => stencilKind(n.data.kind).id)
+  )
+  return STENCIL_KINDS.filter((k) => used.has(k.id)).map((k) => k.id)
+}
 
 export interface ExportLegendItem {
   swatch: ExportLegendSwatch
@@ -84,7 +96,8 @@ export function buildExportLegendItems(
   legend: LegendEntry[],
   highlights: HighlightDefinition[],
   enabledHighlightIds: Set<string>,
-  directionSetRow?: DirectionSetLegendRow | null
+  directionSetRow?: DirectionSetLegendRow | null,
+  stencilKinds: string[] = []
 ): ExportLegendItem[] {
   const directionItems: ExportLegendItem[] = directionSetRow
     ? [
@@ -132,5 +145,10 @@ export function buildExportLegendItems(
         : stringifyValue(h.value)
   }))
 
-  return [...directionItems, ...legendItems, ...highlightItems]
+  const stencilItems: ExportLegendItem[] = stencilKinds.map((id) => ({
+    swatch: { kind: 'stencil', stencilKind: id },
+    label: stencilKind(id).name
+  }))
+
+  return [...directionItems, ...legendItems, ...stencilItems, ...highlightItems]
 }

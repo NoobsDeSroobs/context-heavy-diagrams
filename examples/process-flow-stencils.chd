@@ -1,0 +1,285 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "erp",
+      "type": "entity",
+      "position": {
+        "x": 130,
+        "y": 0
+      },
+      "size": {
+        "width": 140,
+        "height": 60
+      },
+      "data": {
+        "label": "ERP system"
+      }
+    },
+    {
+      "id": "lane-sales",
+      "type": "container",
+      "position": {
+        "x": 0,
+        "y": 110
+      },
+      "size": {
+        "width": 1000,
+        "height": 240
+      },
+      "data": {
+        "label": "Sales"
+      }
+    },
+    {
+      "id": "lane-wh",
+      "type": "container",
+      "position": {
+        "x": 0,
+        "y": 370
+      },
+      "size": {
+        "width": 1000,
+        "height": 150
+      },
+      "data": {
+        "label": "Warehouse"
+      }
+    },
+    {
+      "id": "start",
+      "type": "stencil",
+      "position": {
+        "x": 30,
+        "y": 120
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "parentId": "lane-sales",
+      "data": {
+        "label": "Order received",
+        "kind": "start"
+      }
+    },
+    {
+      "id": "check",
+      "type": "stencil",
+      "position": {
+        "x": 130,
+        "y": 112
+      },
+      "size": {
+        "width": 140,
+        "height": 56
+      },
+      "parentId": "lane-sales",
+      "data": {
+        "label": "Check the order",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "stock",
+      "type": "stencil",
+      "position": {
+        "x": 330,
+        "y": 116
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "parentId": "lane-sales",
+      "data": {
+        "label": "In stock?",
+        "kind": "decision"
+      }
+    },
+    {
+      "id": "split",
+      "type": "stencil",
+      "position": {
+        "x": 450,
+        "y": 116
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "parentId": "lane-sales",
+      "data": {
+        "label": "",
+        "kind": "parallel"
+      }
+    },
+    {
+      "id": "invoice",
+      "type": "stencil",
+      "position": {
+        "x": 570,
+        "y": 112
+      },
+      "size": {
+        "width": 140,
+        "height": 56
+      },
+      "parentId": "lane-sales",
+      "data": {
+        "label": "Invoice the customer",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "join",
+      "type": "stencil",
+      "position": {
+        "x": 790,
+        "y": 116
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "parentId": "lane-sales",
+      "data": {
+        "label": "",
+        "kind": "parallel"
+      }
+    },
+    {
+      "id": "end",
+      "type": "stencil",
+      "position": {
+        "x": 900,
+        "y": 120
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "parentId": "lane-sales",
+      "data": {
+        "label": "Order closed",
+        "kind": "end"
+      }
+    },
+    {
+      "id": "notify",
+      "type": "stencil",
+      "position": {
+        "x": 290,
+        "y": 10
+      },
+      "size": {
+        "width": 140,
+        "height": 56
+      },
+      "parentId": "lane-sales",
+      "data": {
+        "label": "Tell the customer",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "cancelled",
+      "type": "stencil",
+      "position": {
+        "x": 480,
+        "y": 18
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "parentId": "lane-sales",
+      "data": {
+        "label": "Cancelled",
+        "kind": "end"
+      }
+    },
+    {
+      "id": "pick",
+      "type": "stencil",
+      "position": {
+        "x": 480,
+        "y": 40
+      },
+      "size": {
+        "width": 140,
+        "height": 56
+      },
+      "parentId": "lane-wh",
+      "data": {
+        "label": "Pick and pack",
+        "linkedDiagram": "process-flow-stencils/pick-and-pack.chd",
+        "kind": "step"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "start",
+      "target": "check"
+    },
+    {
+      "id": "e2",
+      "source": "check",
+      "target": "stock"
+    },
+    {
+      "id": "e3",
+      "source": "stock",
+      "target": "split",
+      "label": "yes"
+    },
+    {
+      "id": "e4",
+      "source": "stock",
+      "target": "notify",
+      "label": "no"
+    },
+    {
+      "id": "e5",
+      "source": "notify",
+      "target": "cancelled"
+    },
+    {
+      "id": "e6",
+      "source": "split",
+      "target": "invoice"
+    },
+    {
+      "id": "e7",
+      "source": "split",
+      "target": "pick"
+    },
+    {
+      "id": "e8",
+      "source": "invoice",
+      "target": "join"
+    },
+    {
+      "id": "e9",
+      "source": "pick",
+      "target": "join"
+    },
+    {
+      "id": "e10",
+      "source": "join",
+      "target": "end"
+    },
+    {
+      "id": "e11",
+      "source": "erp",
+      "target": "check",
+      "label": "reads stock",
+      "style": {
+        "lineStyle": "dashed",
+        "endMarker": "none"
+      }
+    }
+  ]
+}

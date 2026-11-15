@@ -134,6 +134,7 @@ import {
 } from '../palette/ItemPalette'
 import { swapStencilKind } from '../nodes/stencilSwap'
 import { stencilKind } from '@shared/stencils/kinds'
+import { stencilKindsUsed } from '@shared/legend/legendItems'
 import UtilityDock from '../UtilityDock'
 import AlignmentGuides from '../alignment/AlignmentGuides'
 import { SNAP_THRESHOLD_PX, boundsFrom, computeSnap } from '../alignment/alignment'
@@ -387,6 +388,20 @@ function CanvasInner(): React.JSX.Element {
     removeLegendEntry,
     toggleLegendPanel
   } = useLegend(canvasApi)
+
+  // The legend rows for the kinds of step and event in use (ADR 0180). Hiding them is for this
+  // session only: nothing about it is saved with the diagram.
+  const [showStencilLegend, setShowStencilLegend] = useState(true)
+  const stencilKinds = useMemo(
+    () =>
+      stencilKindsUsed(
+        nodes.map((n) => ({
+          type: n.type,
+          data: { kind: typeof n.data?.kind === 'string' ? n.data.kind : undefined }
+        }))
+      ),
+    [nodes]
+  )
 
   const {
     highlights,
@@ -3862,6 +3877,9 @@ function CanvasInner(): React.JSX.Element {
               diagramPath={currentPath}
               legend={legend}
               directionSetRow={directionSetRow}
+              stencilKinds={stencilKinds}
+              showStencilKinds={showStencilLegend}
+              onToggleStencilKinds={() => setShowStencilLegend((v) => !v)}
               anchorRect={legendPanelAnchor}
               onAdd={addLegendEntry}
               onUpdate={updateLegendEntry}

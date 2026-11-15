@@ -3,6 +3,12 @@ import { buildBendablePath } from '../geometry/bendablePath.ts'
 import { flattenPath } from '../geometry/pathSampling.ts'
 import { highlightId, matchingHighlights } from '../tagging/highlights.ts'
 import { styledNodeType } from '../styling/styleDefaults.ts'
+import {
+  HEAVY_BORDER_FACTOR,
+  stencilKind,
+  stencilLabelOutside,
+  stencilStyle
+} from '../stencils/kinds.ts'
 import type { Theme } from '../styling/theme.ts'
 import {
   DEFAULT_FONT_FAMILY,
@@ -247,7 +253,8 @@ export function renderDiagramDrawio(
     references: 0,
     missingEnds: oriented.length - edges.length,
     shortLines: 0,
-    lockedTags: 0
+    lockedTags: 0,
+    stencilMarks: 0
   }
 
   // A node's parent cell: its container, unless that is missing or part of a cycle, when the node
@@ -314,38 +321,55 @@ export function renderDiagramDrawio(
     const matches = matchingHighlights(node.metadata, highlights, enabled)
     if (matches.length >= 2) lost.chips += 1
     const type = styledNodeType(node.type)
+    // A stencil is an ellipse, a rhombus or a rounded box with its label below the small ones; the
+    // mark on it has no counterpart here (ADR 0180).
+    const sk = kind === 'stencil' ? stencilKind(node.data.kind) : undefined
+    if (sk?.mark) lost.stencilMarks += 1
+    const styleSource = sk ? stencilStyle(node.data.kind, node.style) : node.style
     const look = resolveBoxLook(
       type,
-      node.style,
+      styleSource,
       theme,
       matches.length === 1 ? matches[0] : undefined
     )
-    const labelLook = resolveLabelLook(type, node.style, theme, family)
+    const labelLook = resolveLabelLook(type, styleSource, theme, family)
     const rotation = kind === 'text' ? (node.rotation ?? 0) : 0
+    const flat = kind === 'text' || (sk !== undefined && sk.shape !== 'rounded')
+    const labelBelow = sk !== undefined && stencilLabelOutside(node.data.kind)
     const style = styleOf(
       [
-        ['rounded', kind === 'text' ? 0 : 1],
-        ['absoluteArcSize', kind === 'text' ? undefined : 1],
-        ['arcSize', kind === 'text' ? undefined : 12],
+        ['rounded', flat ? 0 : 1],
+        ['absoluteArcSize', flat ? undefined : 1],
+        ['arcSize', flat ? undefined : 12],
         ['whiteSpace', 'wrap'],
         ['html', 1],
         ['fillColor', colorOf(look.fill)],
         ['fillOpacity', opacityPercent(look.fill)],
         ['strokeColor', colorOf(look.stroke)],
         ['strokeOpacity', opacityPercent(look.stroke)],
-        ['strokeWidth', look.stroke ? look.strokeWidth : undefined],
+        [
+          'strokeWidth',
+          look.stroke ? look.strokeWidth * (sk?.heavyBorder ? HEAVY_BORDER_FACTOR : 1) : undefined
+        ],
         ['dashed', look.stroke && look.dashed ? 1 : undefined],
         ['dashPattern', look.stroke && look.dashed ? '3 2' : undefined],
         ...fontParts(labelLook),
         ['align', ALIGN[labelLook.align]],
-        ['verticalAlign', kind === 'container' ? 'top' : 'middle'],
+        ['verticalAlign', kind === 'container' || labelBelow ? 'top' : 'middle'],
+        ['verticalLabelPosition', labelBelow ? 'bottom' : undefined],
         ['spacingLeft', kind === 'container' ? 8 : undefined],
         ['spacingTop', kind === 'container' ? 4 : undefined],
         ['container', kind === 'container' ? 1 : undefined],
         ['collapsible', kind === 'container' ? 0 : undefined],
         ['rotation', rotation % 360 !== 0 ? rotation : undefined]
       ],
-      kind === 'text' ? ['text'] : []
+      kind === 'text'
+        ? ['text']
+        : sk?.shape === 'circle'
+          ? ['ellipse']
+          : sk?.shape === 'square'
+            ? ['rhombus']
+            : []
     )
 
     const geometry = `<mxGeometry x="${num(at.x)}" y="${num(at.y)}" width="${num(width)}" height="${num(height)}" as="geometry"/>`
@@ -534,6 +558,7 @@ interface Lost {
   missingEnds: number
   shortLines: number
   lockedTags: number
+  stencilMarks: number
 }
 
 function notesFor(diagram: DiagramFile, lost: Lost, enabled: Set<string>): string[] {
@@ -574,6 +599,10 @@ function notesFor(diagram: DiagramFile, lost: Lost, enabled: Set<string>): strin
   if (lost.lockedTags > 0)
     out.push(
       `${plural(lost.lockedTags, 'locked tag', 'locked tags')} exported as plain data: draw.io does not enforce locks`
+    )
+  if (lost.stencilMarks > 0)
+    out.push(
+      `${plural(lost.stencilMarks, 'step or event has', 'steps and events have')} a mark inside its shape (a cross or a plus) that draw.io does not show; the shape and the label are kept`
     )
   const legendRows =
     (diagram.legend ?? []).length +

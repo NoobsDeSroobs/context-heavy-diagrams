@@ -253,6 +253,13 @@ export const NODE_FIELDS: FieldSpec<DiagramNode>[] = [
     get: (n) => n.data.label,
     describe: describeLabel
   },
+  // What sort of step or event a stencil is says what it means in the flow (ADR 0180).
+  {
+    name: 'kind',
+    category: 'content',
+    get: (n) => (n.type === 'stencil' ? (n.data.kind ?? 'step') : undefined),
+    describe: (b, a) => change('kind', b, a)
+  },
   { name: 'icons', category: 'style', get: (n) => n.data.icons, describe: describeIcons },
   {
     name: 'note link',

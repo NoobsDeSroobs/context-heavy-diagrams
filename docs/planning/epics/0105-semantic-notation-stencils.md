@@ -2,10 +2,10 @@
 
 ## Status
 
-Not Started — scoped out of the [epic 0078](../completed-epics.md#0078-bpmn-as-a-basis-for-this-apps-visual-language)
+In Progress — the first slice is built on the branch `epic/0187-hide-react-flow-label` (ADR [0180](../../decisions/0180-stencils-are-light-elements-for-events-and-verbs.md)); the pull request waits for a fuller set. Scoped out of the [epic 0078](../completed-epics.md#0078-bpmn-as-a-basis-for-this-apps-visual-language)
 BPMN discussion (2026-08-31), see [ADR 0080](../../decisions/0080-bpmn-as-adopted-vocabulary-not-metamodel.md).
-Not blocked on anything — a stencil is a plain rectangular Shape pre-seeded
-with an icon + label.
+Not blocked on anything. (The first plan, a plain Shape pre-seeded with an icon and a label,
+was replaced by its own light node type, see "Decided".)
 
 ## Goal
 
@@ -41,6 +41,19 @@ validated ([ADR 0080](../../decisions/0080-bpmn-as-adopted-vocabulary-not-metamo
 - **Swim lanes need no new element.** A container is a lane, and a stencil's lane is its parent. What is missing is the functional half: seeing which edges cross lanes (a hand-off), which is [0088](later/0088-cross-container-edge-detection.md) and is worth re-reading with this one.
 - **Licence of the notation (read 2026-11-15, [ScanCode's entry](https://scancode-licensedb.aboutcode.org/omg-bpmn-2.0.html) for the BPMN 2.0 specification's terms; not legal advice).** They are the terms of the specification document, not of icons. They say nobody infringes the holders' copyright by using the specification or conforming software to it, and allow software based on it. The conditions are about copies of the document: its notice with every copy, no posting on a network, no modifying, no reselling. So: draw our own marks, copy nothing from the specification (text, figures or the XSD) into the repository, say "based on BPMN 2.0" and never "compliant" (only a full match to the compliance points may claim that), and credit OMG in the notices anyway. The terms are not an open-source licence; the Apache Software Foundation has had the question open with OMG since late 2024 (LEGAL-690). Check the current version of the specification (2.0.2) before release.
 - **A closed, built-in list:** no stencils made or installed by a person, so the category cannot grow nouns. [0183](0183-installable-icon-packs.md) gives entities icons; it does not add stencils.
+
+## Tasks
+
+- [x] ADR 0180; the `stencil` node type with `data.kind`; the kinds table (step, decision, parallel, start, end) with shapes, marks and default colours; `docs/file-format.md`
+- [x] The canvas node, the palette entry with a kind list and filter, the property panel (kind, look, size, connection points), right-click kind swap, one link, inside containers
+- [x] The legend rows for the kinds in use with a session-only switch; search by kind and BPMN terms; the review of changes; SVG, PNG and draw.io export; conformance leaves them out
+- [x] Example `examples/process-flow-stencils.chd` with a drill-down diagram
+- [ ] Try it in the app on real flows (the app itself was not run in the build session): label position when an edge leaves the bottom of a small shape, the colours in the light theme, the palette list
+- [ ] The palette entry's name (the working label is "Step", after the kind last used)
+- [ ] More kinds before the pull request: which (inclusive choice, timer and message events, repeat marks, the sorts of step with a mark of their own)
+- [ ] The assistant tools (`edit_diagram`, `chd edit`, the MCP server) and the build guide: stencils as a full member, once the design has settled
+- [ ] The lane hand-off check ([0088](later/0088-cross-container-edge-detection.md))
+- [ ] The BPMN specification's current version (2.0.2) and its terms, before release
 
 ## Open questions (not yet designed)
 

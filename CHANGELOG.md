@@ -4,6 +4,14 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 ## 0.11.0 (unreleased)
 
+### Added
+
+- **Steps and events for flows.** A new element in the palette (right-click it, or use its arrow, to choose the kind): a **step**, a **decision**, a **parallel split or join**, a **start** and an **end**. They are for what happens and how a flow behaves; things and concepts stay entities. Each kind has its own shape (a circle, a square with a mark, a rounded rectangle) and a default colour; the small ones carry their label below. They can sit in a container (a lane), be connected like an entity, and carry one link to another diagram; they have no notes, tags or icons. The legend lists the kinds a diagram uses, with a switch to hide the rows for the session. Search finds them by kind, including the BPMN terms (try `gateway`). The SVG, PNG and draw.io exports draw them. Based on BPMN 2.0, not compliant with it. ([ADR 0180](docs/decisions/0180-stencils-are-light-elements-for-events-and-verbs.md))
+
+### File format
+
+- A new node `type`, `"stencil"`, with `data.kind`, documented in [docs/file-format.md](docs/file-format.md). A version without it reads such a node as an entity.
+
 ### Changed
 
 - **The "React Flow" link in the corner of the canvas is hidden.** React Flow is credited in **Help → About** and in the third-party notices. ([ADR 0179](docs/decisions/0179-the-react-flow-link-is-hidden-and-the-library-is-credited-elsewhere.md))

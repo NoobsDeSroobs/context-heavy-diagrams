@@ -2,6 +2,9 @@ import type { IconRef } from '@shared/diagram'
 import { loadBuiltinIconSvg } from '../icons/builtinIcons'
 import { markerUrl } from '../edges/markerIds'
 import type { ExportLegendItem } from '@shared/legend/legendItems'
+import { stencilKind } from '@shared/stencils/kinds'
+import { stencilSwatchSvg } from '@shared/stencils/swatch'
+import { themeAdaptiveColor } from '../styling/themeAdaptiveColor'
 import { dasharrayOf, dashPattern } from '@shared/styling/edgeDash'
 
 type ResolvedIcon = { type: 'svg'; markup: string } | { type: 'img'; dataUrl: string }
@@ -80,6 +83,19 @@ function buildSwatch(item: ExportLegendItem, iconMarkup: Map<string, ResolvedIco
     const dot = document.createElement('span')
     dot.style.cssText = `display: block; width: 14px; height: 14px; border-radius: 50%; background: ${swatch.color};`
     wrapper.appendChild(dot)
+    return wrapper
+  }
+  if (swatch.kind === 'stencil') {
+    const theme = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark'
+    const kindFill = stencilKind(swatch.stencilKind).fill
+    const span = document.createElement('span')
+    span.style.cssText = 'display: block; width: 28px; height: 16px;'
+    span.innerHTML = stencilSwatchSvg(swatch.stencilKind, {
+      fill: kindFill ? themeAdaptiveColor(kindFill, theme) : 'transparent',
+      stroke: 'currentColor',
+      mark: 'currentColor'
+    })
+    wrapper.appendChild(span)
     return wrapper
   }
   if (swatch.kind === 'highlight') {

@@ -9,7 +9,7 @@ import { effectiveConnectionPoints } from '../geometry/connectionPoints.ts'
 type Side = 'top' | 'right' | 'bottom' | 'left'
 const SIDES: readonly string[] = ['top', 'right', 'bottom', 'left']
 // Only these node types have connection points.
-const CONNECTABLE = new Set(['entity', 'container'])
+const CONNECTABLE = new Set(['entity', 'container', 'stencil'])
 const FALLBACK_SIZE = { width: 150, height: 60 }
 const MAX_DEPTH = 50
 
