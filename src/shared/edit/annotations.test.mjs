@@ -407,7 +407,7 @@ test('describeDiagram shows tags, links, notes and the catalogs, and leaves out 
   assert.deepEqual(described.diagramTags, { sourceBase: 'src/' })
 })
 
-test('add_new_linked_diagram treats names that differ only by case as taken (ADR 0179)', () => {
+test('add_new_linked_diagram treats names that differ only by case as taken (ADR 0181)', () => {
   const linked = { ...options, linkedFolder: 'd' }
   const { results } = applyOperations(
     base(),

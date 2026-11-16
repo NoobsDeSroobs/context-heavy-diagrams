@@ -1,4 +1,4 @@
-// Run with `npm test`. File names made from labels (ADR 0074, ADR 0179).
+// Run with `npm test`. File names made from labels (ADR 0074, ADR 0181).
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { firstFreeName, labelToFileStem, truncateStem } from './labelFileName.ts'

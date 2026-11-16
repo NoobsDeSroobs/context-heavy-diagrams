@@ -1,4 +1,4 @@
-# 0179: File names from labels are cut by bytes and compared ignoring case
+# 0181: File names from labels are cut by bytes and compared ignoring case
 
 ## Status
 Accepted (2026-11-16)
