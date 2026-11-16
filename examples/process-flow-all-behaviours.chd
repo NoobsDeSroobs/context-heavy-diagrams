@@ -32,8 +32,12 @@
         "width": 1610,
         "height": 300
       },
+      "style": {
+        "textAlign": "center"
+      },
       "data": {
-        "label": "Support"
+        "label": "Support",
+        "labelPosition": "left"
       }
     },
     {
@@ -47,8 +51,12 @@
         "width": 1610,
         "height": 190
       },
+      "style": {
+        "textAlign": "center"
+      },
       "data": {
-        "label": "Finance"
+        "label": "Finance",
+        "labelPosition": "left"
       }
     },
     {

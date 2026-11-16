@@ -9,7 +9,7 @@ The small shapes of [Behaviour](0180-stencils-are-light-elements-for-events-and-
 - **The position is explicit and stored, not chosen by the app.** An automatic choice (the side with no edge) was considered: it needs no work from the person, but labels would move when an edge is added or removed, and the file would not say where the label is.
 - **The canvas and the exports place the label by the same rules**, written once (`shared/stencils/labelPlacement.ts`). Draw.io has no label with a leader line, so a free label is exported below, with a note.
 - **A look, not a meaning:** a change of position shows in the review of changes with the other look changes.
-- Not covered: the label of an entity, a container or an edge, and a layout check that names a free side.
+- Not covered: the label of an entity or an edge, and a layout check that names a free side. A container's label has its own rule ([ADR 0184](0184-the-label-of-a-container-goes-on-any-side.md)).
 
 ## Consequences
 The file format gains two optional fields on a stencil, readable by an older version, which draws the label below. Assistants can set them once the tools cover Behaviour.

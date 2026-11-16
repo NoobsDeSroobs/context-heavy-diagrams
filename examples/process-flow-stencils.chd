@@ -30,8 +30,12 @@
         "height": 257
       },
       "zIndex": 20,
+      "style": {
+        "textAlign": "center"
+      },
       "data": {
-        "label": "Sales"
+        "label": "Sales",
+        "labelPosition": "left"
       }
     },
     {
@@ -46,8 +50,12 @@
         "height": 150
       },
       "zIndex": 30,
+      "style": {
+        "textAlign": "center"
+      },
       "data": {
-        "label": "Warehouse"
+        "label": "Warehouse",
+        "labelPosition": "left"
       }
     },
     {

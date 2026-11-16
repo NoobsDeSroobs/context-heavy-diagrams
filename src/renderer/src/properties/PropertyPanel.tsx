@@ -6,6 +6,7 @@ import type {
   NodeStyle,
   RequiredTagDefinition
 } from '@shared/diagram'
+import type { ContainerLabelSide } from '@shared/nodes/containerLabel'
 import type { LabelPosition } from '@shared/stencils/labelPlacement'
 import { CollapsibleSection } from '../ui/fields'
 import MetadataSection from '../tagging/MetadataSection'
@@ -15,6 +16,7 @@ import { NodeStyleFields } from './NodeStyleFields'
 import { EdgeFields } from './EdgeFields'
 import { LineStyleFields } from './LineStyleFields'
 import { ConnectionPointFields } from './ConnectionPointFields'
+import { ContainerFields } from './ContainerFields'
 import { StencilFields } from './StencilFields'
 import { nodeStyleOf } from './styleAccess'
 import type { TransformPatch } from './transformPatch'
@@ -54,6 +56,8 @@ interface PropertyPanelProps {
   onSetStencilKind: (nodeIds: string[], kindId: string) => void
   // Moves the label of the selected small shapes (ADR 0183).
   onSetStencilLabelPosition: (nodeIds: string[], position: LabelPosition) => void
+  // Moves the label of the selected containers to another side (ADR 0184).
+  onSetContainerLabelSide: (nodeIds: string[], side: ContainerLabelSide) => void
 }
 
 // Entity/container share NodeStyleFields' four groups; text gets the same
@@ -94,7 +98,8 @@ export default function PropertyPanel({
   styleBrushActive,
   onToggleStyleBrush,
   onSetStencilKind,
-  onSetStencilLabelPosition
+  onSetStencilLabelPosition,
+  onSetContainerLabelSide
 }: PropertyPanelProps): React.JSX.Element {
   const byType = new Map<string, Node[]>()
   for (const n of selectedNodes) {
@@ -159,6 +164,16 @@ export default function PropertyPanel({
         pushSnapshot={pushSnapshot}
       />
     )
+    if (type === 'container')
+      return (
+        <div key={type}>
+          <ContainerFields
+            nodes={nodes}
+            onSetLabelSide={(side) => onSetContainerLabelSide(ids, side)}
+          />
+          {styleFields}
+        </div>
+      )
     if (type !== 'stencil') return styleFields
     return (
       <div key={type}>

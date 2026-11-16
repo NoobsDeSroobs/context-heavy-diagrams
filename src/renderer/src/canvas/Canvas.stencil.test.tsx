@@ -139,6 +139,28 @@ describe('stencils on the canvas (ADR 0180)', () => {
     )
   })
 
+  it('moves the label of a container to another side from the property panel', async () => {
+    const lane = {
+      id: 'lane',
+      type: 'container',
+      position: { x: 0, y: 100 },
+      size: { width: 400, height: 200 },
+      data: { label: 'Sales' }
+    }
+    const { container } = renderCanvas({ version: 1, nodes: [lane], edges: [] } as DiagramFile)
+    await screen.findByText('Sales')
+    const node = container.querySelector('.react-flow__node[data-id="lane"]') as HTMLElement
+    expect(node.querySelector('.container-node-label-box--top-start')).not.toBeNull()
+    fireEvent.click(node)
+    const side = await screen.findByRole('combobox', { name: 'Label side' })
+    fireEvent.focus(side)
+    fireEvent.change(side, { target: { value: 'Left' } })
+    fireEvent.click(await screen.findByRole('option', { name: 'Left' }))
+    await waitFor(() =>
+      expect(node.querySelector('.container-node-label-box--left-start')).not.toBeNull()
+    )
+  })
+
   it('changes the kind from the property panel, keeping the label a person typed', async () => {
     const { container } = renderCanvas(flow())
     await screen.findByText('Do the work')

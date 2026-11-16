@@ -9,6 +9,7 @@ import {
   stencilLabelOutside,
   stencilStyle
 } from '../stencils/kinds.ts'
+import { containerLabelSideOf } from '../nodes/containerLabel.ts'
 import { labelPositionOf } from '../stencils/labelPlacement.ts'
 import type { Theme } from '../styling/theme.ts'
 import {
@@ -256,7 +257,8 @@ export function renderDiagramDrawio(
     shortLines: 0,
     lockedTags: 0,
     stencilMarks: 0,
-    freeLabels: 0
+    freeLabels: 0,
+    rightLabels: 0
   }
 
   // A node's parent cell: its container, unless that is missing or part of a cycle, when the node
@@ -343,6 +345,10 @@ export function renderDiagramDrawio(
     const placed = labelPositionOf(node.data.labelPosition)
     if (labelOutside && placed === 'free') lost.freeLabels += 1
     const position = placed === 'free' ? 'below' : placed
+    // The side a container's label is on (ADR 0184). Draw.io turns a label a quarter turn left only, so
+    // one on the right is drawn reading the other way.
+    const side = kind === 'container' ? containerLabelSideOf(node.data.labelPosition) : undefined
+    if (side === 'right') lost.rightLabels += 1
     const style = styleOf(
       [
         ['rounded', flat ? 0 : 1],
@@ -371,9 +377,10 @@ export function renderDiagramDrawio(
         ],
         [
           'verticalAlign',
-          kind === 'container' || (labelOutside && position === 'below')
+          (kind === 'container' && side !== 'bottom' && side !== 'right') ||
+          (labelOutside && position === 'below')
             ? 'top'
-            : labelOutside && position === 'above'
+            : (labelOutside && position === 'above') || kind === 'container'
               ? 'bottom'
               : 'middle'
         ],
@@ -389,8 +396,10 @@ export function renderDiagramDrawio(
           'labelPosition',
           labelOutside && (position === 'left' || position === 'right') ? position : undefined
         ],
+        ['horizontal', side === 'left' || side === 'right' ? 0 : undefined],
         ['spacingLeft', kind === 'container' ? 8 : undefined],
-        ['spacingTop', kind === 'container' ? 4 : undefined],
+        ['spacingTop', side === 'top' || side === 'left' ? 4 : undefined],
+        ['spacingBottom', side === 'bottom' || side === 'right' ? 4 : undefined],
         ['container', kind === 'container' ? 1 : undefined],
         ['collapsible', kind === 'container' ? 0 : undefined],
         ['rotation', rotation % 360 !== 0 ? rotation : undefined]
@@ -594,6 +603,7 @@ interface Lost {
   lockedTags: number
   stencilMarks: number
   freeLabels: number
+  rightLabels: number
 }
 
 function notesFor(diagram: DiagramFile, lost: Lost, enabled: Set<string>): string[] {
@@ -634,6 +644,10 @@ function notesFor(diagram: DiagramFile, lost: Lost, enabled: Set<string>): strin
   if (lost.lockedTags > 0)
     out.push(
       `${plural(lost.lockedTags, 'locked tag', 'locked tags')} exported as plain data: draw.io does not enforce locks`
+    )
+  if (lost.rightLabels > 0)
+    out.push(
+      `${plural(lost.rightLabels, 'container label', 'container labels')} on the right drawn reading upward, as draw.io cannot turn text the other way`
     )
   if (lost.freeLabels > 0)
     out.push(

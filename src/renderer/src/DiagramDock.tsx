@@ -7,6 +7,7 @@ import type {
   NodeStyle,
   RequiredTagDefinition
 } from '@shared/diagram'
+import type { ContainerLabelSide } from '@shared/nodes/containerLabel'
 import type { LabelPosition } from '@shared/stencils/labelPlacement'
 import ItemPalette from './palette/ItemPalette'
 import PropertyPanel from './properties/PropertyPanel'
@@ -31,6 +32,7 @@ function DiagramDock({
   onAddStencil,
   onSetStencilKind,
   onSetStencilLabelPosition,
+  onSetContainerLabelSide,
   onCreateMultipleEntities,
   onCreateMultipleContainers,
   onUpdateNodeStyle,
@@ -58,6 +60,7 @@ function DiagramDock({
   onAddStencil: (kindId: string) => void
   onSetStencilKind: (nodeIds: string[], kindId: string) => void
   onSetStencilLabelPosition: (nodeIds: string[], position: LabelPosition) => void
+  onSetContainerLabelSide: (nodeIds: string[], side: ContainerLabelSide) => void
   onCreateMultipleEntities: () => void
   onCreateMultipleContainers: () => void
   onUpdateNodeStyle: (nodeIds: string[], patch: Partial<NodeStyle>) => void
@@ -111,6 +114,7 @@ function DiagramDock({
           onToggleStyleBrush={onToggleStyleBrush}
           onSetStencilKind={onSetStencilKind}
           onSetStencilLabelPosition={onSetStencilLabelPosition}
+          onSetContainerLabelSide={onSetContainerLabelSide}
         />
       ) : (
         <ItemPalette

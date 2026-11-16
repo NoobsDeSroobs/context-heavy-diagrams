@@ -133,6 +133,7 @@ import {
   type PaletteItemType
 } from '../palette/ItemPalette'
 import { swapStencilKind } from '../nodes/stencilSwap'
+import type { ContainerLabelSide } from '@shared/nodes/containerLabel'
 import { stencilKind, stencilLabelOutside } from '@shared/stencils/kinds'
 import {
   labelPositionOf,
@@ -1668,6 +1669,22 @@ function CanvasInner(): React.JSX.Element {
             }
           }
         })
+      )
+    },
+    [setNodes, pushSnapshot]
+  )
+
+  // Moves the label of these containers to another side, one undo step (ADR 0184).
+  const setContainerLabelSide = useCallback(
+    (nodeIds: string[], side: ContainerLabelSide) => {
+      const ids = new Set(nodeIds)
+      pushSnapshot()
+      setNodes((nds) =>
+        nds.map((n) =>
+          ids.has(n.id) && n.type === 'container'
+            ? { ...n, data: { ...n.data, labelPosition: side === 'top' ? undefined : side } }
+            : n
+        )
       )
     },
     [setNodes, pushSnapshot]
@@ -3798,6 +3815,7 @@ function CanvasInner(): React.JSX.Element {
                 onAddStencil={addStencilNode}
                 onSetStencilKind={setStencilKind}
                 onSetStencilLabelPosition={setStencilLabelPosition}
+                onSetContainerLabelSide={setContainerLabelSide}
                 onCreateMultipleEntities={() => setBulkCreateType('entity')}
                 onCreateMultipleContainers={() => setBulkCreateType('container')}
                 onUpdateNodeStyle={updateNodeStyle}

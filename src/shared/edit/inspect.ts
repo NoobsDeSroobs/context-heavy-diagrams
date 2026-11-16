@@ -18,6 +18,7 @@ import {
   labelTargetGap
 } from '../layout/labelClearance.ts'
 import { edgeIssues, type EdgeIssue } from './edgeRouting.ts'
+import { containerLabelSideOf } from '../nodes/containerLabel.ts'
 import { stencilLabelInsets, stencilLabelOutside } from '../stencils/kinds.ts'
 import { LINE_HEIGHT_EM, measureText, wrapText, type FontSpec } from '../export/textLayout.ts'
 import { NODE_STYLE_DEFAULTS, styledNodeType } from '../styling/styleDefaults.ts'
@@ -204,11 +205,11 @@ export function layoutIssues(diagram: DiagramFile, diagramFont?: string): Layout
     // A step's arrow band takes room on the left, and its mark on the right (ADR 0180).
     const insets =
       node.type === 'stencil' ? stencilLabelInsets(node.data.kind) : { left: 0, right: 0 }
-    const margin = type === 'container' ? 8 : 16
-    const available = Math.max(
-      0,
-      node.size.width - stroke * 2 - margin - insets.left - insets.right
-    )
+    const margin = 16
+    // A container's label runs along the side it is on, which for a turned label is its height (ADR 0184).
+    const side = node.type === 'container' ? containerLabelSideOf(node.data.labelPosition) : 'top'
+    const run = side === 'left' || side === 'right' ? node.size.height : node.size.width
+    const available = Math.max(0, run - stroke * 2 - margin - insets.left - insets.right)
     const widest = node.data.label
       .split(/\s+/)
       .reduce((a, b) => (measureText(b, font) > measureText(a, font) ? b : a), '')

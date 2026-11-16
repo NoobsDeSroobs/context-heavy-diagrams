@@ -5,6 +5,12 @@ import { flattenPath, pointAtRatio, type Point } from '../geometry/pathSampling.
 import { highlightId, matchingHighlights } from '../tagging/highlights.ts'
 import { styledNodeType } from '../styling/styleDefaults.ts'
 import {
+  containerLabelPlace,
+  containerLabelRoom,
+  containerLabelSideOf,
+  containerLabelTurn
+} from '../nodes/containerLabel.ts'
+import {
   labelAlign,
   labelBox,
   LABEL_GAP,
@@ -580,10 +586,27 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
         obstacles.push({ x: box.x, y: box.y, width: blockWidth, height: blockHeight })
       }
     } else if (kind === 'container') {
-      const available = Math.max(0, width - sw * 2 - 8)
-      const lines = wrapText(text, available, labelLook.font)
-      const blockWidth = Math.min(available, blockWidthOf(lines, labelLook.font))
-      parts.push(textLines(lines, labelLook, x + sw + 8, blockWidth, y + sw + 4))
+      // The label sits on the side the container says, turned to face it (ADR 0184): the top of the
+      // text points at the side, except at the bottom, where it stays upright.
+      const side = containerLabelSideOf(node.data.labelPosition)
+      const shape = { x, y, width, height }
+      const room = containerLabelRoom(side, shape, sw)
+      const lines = wrapText(text, room, labelLook.font)
+      const blockWidth = Math.min(room, blockWidthOf(lines, labelLook.font))
+      const at = containerLabelPlace(
+        side,
+        shape,
+        sw,
+        { width: blockWidth, height: lines.length * lineHeight },
+        labelLook.align
+      )
+      const drawn = textLines(lines, labelLook, at.left, blockWidth, at.top)
+      const turn = containerLabelTurn(side)
+      parts.push(
+        turn && drawn
+          ? `<g transform="rotate(${turn} ${num(at.cx)} ${num(at.cy)})">${drawn}</g>`
+          : drawn
+      )
     } else {
       const padding = 8
       // An arrow's band takes room on the left, so the label is centred in what is left.

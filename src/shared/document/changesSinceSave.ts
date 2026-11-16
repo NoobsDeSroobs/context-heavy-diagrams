@@ -45,7 +45,9 @@ export const NODE_FIELDS: FieldSpec<DiagramNode>[] = [
   {
     name: 'label position',
     get: (n) =>
-      n.type === 'stencil' && n.data.labelPosition && n.data.labelPosition !== 'below'
+      (n.type === 'stencil' || n.type === 'container') &&
+      n.data.labelPosition &&
+      n.data.labelPosition !== (n.type === 'container' ? 'top' : 'below')
         ? { position: n.data.labelPosition, offset: n.data.labelOffset }
         : undefined
   },

@@ -106,7 +106,8 @@ export function toDiagramFile(
             ? (n.data.kind as string)
             : undefined,
         labelPosition:
-          n.type === 'stencil' && typeof n.data?.labelPosition === 'string'
+          (n.type === 'stencil' || n.type === 'container') &&
+          typeof n.data?.labelPosition === 'string'
             ? (n.data.labelPosition as string)
             : undefined,
         labelOffset:
@@ -182,7 +183,7 @@ export function fromDiagramFile(diagram: DiagramFile): {
         ...(n.data.notes ? { notes: n.data.notes } : {}),
         ...(n.data.linkedDiagram ? { linkedDiagram: n.data.linkedDiagram } : {}),
         ...(n.type === 'stencil' && n.data.kind ? { kind: n.data.kind } : {}),
-        ...(n.type === 'stencil' && n.data.labelPosition
+        ...((n.type === 'stencil' || n.type === 'container') && n.data.labelPosition
           ? { labelPosition: n.data.labelPosition }
           : {}),
         ...(n.type === 'stencil' && n.data.labelOffset ? { labelOffset: n.data.labelOffset } : {}),

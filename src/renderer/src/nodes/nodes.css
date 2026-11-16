@@ -245,10 +245,99 @@
   padding: 4px 8px;
 }
 
-.container-node-label {
+/* The label of a container sits on the side the container says (ADR 0184), lined up along it by the
+   text alignment. On the left and right the text is turned so that its top points at the side: a
+   quarter turn left reads from the bottom up, a quarter turn right from the top down. At the bottom it
+   stays upright. */
+.container-node-label-box {
   position: absolute;
+  max-width: calc(100% - 16px);
+}
+
+.container-node-label-box--top-start {
   top: 4px;
   left: 8px;
+}
+.container-node-label-box--top-center {
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.container-node-label-box--top-end {
+  top: 4px;
+  right: 8px;
+}
+.container-node-label-box--bottom-start {
+  bottom: 4px;
+  left: 8px;
+}
+.container-node-label-box--bottom-center {
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.container-node-label-box--bottom-end {
+  bottom: 4px;
+  right: 8px;
+}
+
+.container-node-label-box--left-start,
+.container-node-label-box--left-center,
+.container-node-label-box--left-end,
+.container-node-label-box--right-start,
+.container-node-label-box--right-center,
+.container-node-label-box--right-end {
+  writing-mode: vertical-rl;
+  max-width: none;
+  max-height: calc(100% - 16px);
+}
+
+.container-node-label-box--left-start,
+.container-node-label-box--left-center,
+.container-node-label-box--left-end {
+  left: 4px;
+  transform: rotate(180deg);
+}
+.container-node-label-box--left-start {
+  bottom: 8px;
+}
+.container-node-label-box--left-center {
+  top: 50%;
+  transform: translateY(-50%) rotate(180deg);
+}
+.container-node-label-box--left-end {
+  top: 8px;
+}
+
+.container-node-label-box--right-start,
+.container-node-label-box--right-center,
+.container-node-label-box--right-end {
+  right: 4px;
+}
+.container-node-label-box--right-start {
+  top: 8px;
+}
+.container-node-label-box--right-center {
+  top: 50%;
+  transform: translateY(-50%);
+}
+.container-node-label-box--right-end {
+  bottom: 8px;
+}
+
+/* While the label is being edited it is a plain wide field across the top, however it is turned. */
+.container-node-label-box.container-node-label-box:focus-within {
+  writing-mode: horizontal-tb;
+  transform: none;
+  top: 4px;
+  bottom: auto;
+  left: 8px;
+  right: 8px;
+  max-width: none;
+  max-height: none;
+}
+
+.container-node-label {
   font-size: var(--default-container-font-size);
   color: var(--default-container-font-color);
   font-weight: var(--default-container-font-weight);
