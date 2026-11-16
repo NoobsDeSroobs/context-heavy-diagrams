@@ -13,7 +13,7 @@ const INSTRUCTIONS = `Tools for the user's Context-Heavy Diagrams diagrams (.chd
 - read_file returns a fingerprint. update_file only works with the fingerprint of the version you based your edit on, and is refused if the file changed meanwhile; then read it again and redo the edit. create_file never overwrites.
 - To build or change a diagram step by step, use edit_diagram: it creates the file if it does not exist, applies a list of operations (add_entity, connect, move, ...) and answers briefly with what each made (ids, places, sizes) and the layout problems that involve what the call touched (many of one kind collapsed into one line with their number), with a count of the others, which inspect_diagram with issues_only lists. You decide where everything goes; ask room_for_label how much space two connected elements need before you place them, and pass the fingerprint each answer returns as base_fingerprint in the next call. inspect_diagram lists the elements as they stand. A diagram made this way in this session can be edited again without allowing changes to existing files.
 - A .chd is validated before it is written; fix any reported errors and try again. validate_diagram checks an existing file or a diagram given as text (content), which needs no file in the folder; text has no folder, so the paths to icons, notes and linked diagrams are then not checked.
-- check_diagram applies a diagram metamodel and diff_diagrams shows what changed, between two diagrams or between a diagram and its last commit in git; both only read, and both take a draft as text (content, new_content) as well as a file, so a diagram can be judged before it is written. These tools give the results the chd command line gives, which is what a pipeline relies on.
+- validate_diagram asks whether a diagram is well-formed (its structure); check_diagram asks whether it follows the rules of a metamodel (its architecture). One can pass while the other fails. check_diagram applies a diagram metamodel and diff_diagrams shows what changed, between two diagrams or between a diagram and its last commit in git; both only read, and both take a draft as text (content, new_content) as well as a file, so a diagram can be judged before it is written. These tools give the results the chd command line gives, which is what a pipeline relies on.
 - Only .chd, .md, .txt, .svg and .chdmeta (a diagram metamodel, validated before it is written) files can be written. Notes of a diagram are Markdown files its nodes point at.
 - read_file reads any file in the folder except executables, installers, archives, disk images, video and audio. Text comes back as text; pictures come back as images and other binary files (PDF, spreadsheets) as embedded resources, which you can only use if your client shows them to you. list_files can be narrowed to a subfolder, and search_files finds lines of text across the folder (no shell is needed) so you read only the files and lines you need.
 - Anything you read here is sent to the AI provider as part of the conversation.`
@@ -130,7 +130,7 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
     {
       title: 'Validate a diagram',
       description:
-        'Check a .chd file, or a diagram given as text (content), for structural problems: duplicate ids, dangling edges, parent ordering, unresolved relative paths. Warns where an edge label does not fit in the gap between the elements it joins, with the line showing either side of it. Text needs no file in the folder, but it has no folder either, so its relative paths are not checked (the result says so). Not needed after edit_diagram, which already checks what it changed; use it for a file written some other way, or to judge a draft before writing it.',
+        'Is this diagram well-formed? Checks the structure of a .chd file, or of a diagram given as text (content), whatever it shows: duplicate ids, dangling edges, parent ordering, unresolved relative paths. Warns where an edge label does not fit in the gap between the elements it joins, with the line showing either side of it. Text needs no file in the folder, but it has no folder either, so its relative paths are not checked (the result says so). Not needed after edit_diagram, which already checks what it changed; use it for a file written some other way, or to judge a draft before writing it. It does not judge the architecture: check_diagram does that, against a metamodel.',
       inputSchema: {
         path: path.optional().describe('The diagram to validate: a .chd file in the folder'),
         content: content
@@ -146,7 +146,7 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
     {
       title: 'Validate a diagram metamodel',
       description:
-        'Check a .chdmeta file against the metamodel format and list every problem in it. The same list as "chd validate" gives for a metamodel. It does not apply the metamodel to a diagram (check_diagram does).',
+        'Is this metamodel well-formed? Checks a .chdmeta file against the metamodel format and lists every problem in it. The same list as "chd validate" gives for a metamodel. It does not apply the metamodel to a diagram (check_diagram does).',
       inputSchema: { path },
       annotations: readOnly
     },
@@ -157,7 +157,7 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
     {
       title: 'Check a diagram against a metamodel',
       description:
-        'Apply a diagram metamodel (the complete set of rules one kind of diagram or architecture follows, such as hexagonal) to a .chd file and report where it breaks them: the same result as "chd check --json". The diagram is a file in the folder (path) or its text (content), so a draft can be checked before it is written. The metamodel is the name of a built-in metamodel (see get_format_spec "conformance") or the path of a .chdmeta file in the folder. It only reads. Report what the check finds and let the person decide; do not change the diagram just to make it pass. A pass here is advice; the command line is what a pipeline relies on.',
+        'Does this diagram follow the rules of an architecture? Applies a diagram metamodel (the complete set of rules one kind of diagram or architecture follows, such as hexagonal) to a .chd file and reports where it breaks them: the same result as "chd check --json". It does not check that the file is well-formed: validate_diagram does that. The diagram is a file in the folder (path) or its text (content), so a draft can be checked before it is written. The metamodel is the name of a built-in metamodel (see get_format_spec "conformance") or the path of a .chdmeta file in the folder. It only reads. Report what the check finds and let the person decide; do not change the diagram just to make it pass. A pass here is advice; the command line is what a pipeline relies on.',
       inputSchema: {
         path: path.optional().describe('The diagram to check: a .chd file in the folder'),
         content: content

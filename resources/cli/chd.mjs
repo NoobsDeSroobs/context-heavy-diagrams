@@ -54,10 +54,10 @@ const HELP = `chd — command-line companion to Context-Heavy Diagrams
 
 Usage:
   chd spec [topic]                         Print the .chd file format reference
-  chd validate <file|->... [--recursive]   Check diagram or metamodel files (or a diagram on stdin)
+  chd validate <file|->... [--recursive]   Is a diagram or metamodel well-formed? (- reads stdin)
   chd hash <file.chd>                      Print the file's fingerprint (SHA-256 of its bytes)
   chd export <file.chd> [options]          Draw the diagram as an SVG image
-  chd check <file.chd>... --metamodel <m>  Check diagrams against a diagram metamodel
+  chd check <file.chd>... --metamodel <m>  Does a diagram follow a metamodel's rules?
   chd diff <old.chd> <new.chd>             What changed between two versions (or against git)
   chd edit <file.chd> --base <hash>        Build or change a diagram with a list of operations
   chd ask inspect|room ...                 Ask about the layout of a diagram while you build it
@@ -93,7 +93,8 @@ Exit codes: 0 ok, 2 unknown topic.
 `,
   validate: `Usage: chd validate <file.chd|file.chdmeta|->... [--recursive]
 
-For a diagram: reports duplicate ids, dangling edge endpoints, parent-before-child ordering, and
+Asks whether a file is well-formed (its structure), not whether a diagram follows an architecture:
+chd check does that. For a diagram: reports duplicate ids, dangling edge endpoints, parent-before-child ordering, and
 relative paths (icons, notes, linked diagrams) that don't resolve. It also warns where an edge
 label does not fit in the gap between the two elements it joins, with the line showing either side of it.
 Run it after every edit to a diagram. For a diagram metamodel (.chdmeta): reports every way the file breaks its format.

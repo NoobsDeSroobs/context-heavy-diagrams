@@ -5,10 +5,10 @@
 | Command | What it does |
 |---|---|
 | [`spec`](#chd-spec) | Print the `.chd` file format reference |
-| [`validate`](#chd-validate) | Check diagram or metamodel files for problems |
+| [`validate`](#chd-validate) | Is a diagram or metamodel well-formed? (its structure) |
 | [`hash`](#chd-hash) | Print a file's fingerprint (SHA-256 of its bytes) |
 | [`export`](#chd-export) | Draw a diagram as an SVG image |
-| [`check`](#chd-check) | Check diagrams against a diagram metamodel |
+| [`check`](#chd-check) | Does a diagram follow the rules of a diagram metamodel? (its architecture) |
 | [`diff`](#chd-diff) | What changed between two versions of a diagram |
 | [`edit`](#chd-edit) | Build or change a diagram with a list of operations |
 | [`ask`](#chd-ask) | Ask about a diagram's layout while you build it |
