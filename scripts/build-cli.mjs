@@ -6,7 +6,7 @@
 // output is git-ignored; `npm run build` runs this before packaging, and `npm run build:cli` runs it
 // alone. Exports the bundlers so the tests can build the real bundles.
 import { build } from 'esbuild'
-import { mkdirSync, renameSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -30,13 +30,34 @@ export const LABEL_CLEARANCE_BUNDLE = join(
 
 // The tests of several commands rebuild bundles at the same time, in separate processes, while others
 // run them. The output is written beside its target and renamed over it, so a reader sees the old file
-// or the new one and never half of one.
+// or the new one and never half of one. An identical bundle is not written at all. On Windows a file
+// another process has open cannot be renamed over (EPERM, EBUSY), so the rename is tried again for a
+// moment; a temp file is never left behind.
 async function buildAtomically(options) {
   const result = await build({ ...options, write: false })
+  const contents = result.outputFiles[0].contents
   mkdirSync(dirname(options.outfile), { recursive: true })
+  try {
+    if (Buffer.from(contents).equals(readFileSync(options.outfile))) return
+  } catch {
+    // Not built yet.
+  }
   const temp = `${options.outfile}.${process.pid}.tmp`
-  writeFileSync(temp, result.outputFiles[0].contents)
-  renameSync(temp, options.outfile)
+  writeFileSync(temp, contents)
+  try {
+    for (let attempt = 1; ; attempt++) {
+      try {
+        renameSync(temp, options.outfile)
+        return
+      } catch (error) {
+        const busy = ['EPERM', 'EBUSY', 'EACCES'].includes(error.code)
+        if (!busy || attempt === 40) throw error
+        await new Promise((done) => setTimeout(done, 50))
+      }
+    }
+  } finally {
+    rmSync(temp, { force: true })
+  }
 }
 
 async function bundle(entry, outfile) {
