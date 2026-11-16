@@ -67,6 +67,10 @@ export interface DiagramNode {
     // 'stencil' nodes only — the id of its kind in the app's built-in list (shared/stencils/kinds.ts).
     // Absent, or an id this version does not know, is a step.
     kind?: string
+    // 'stencil' nodes whose label sits outside the shape: where it sits — 'below' (absent), 'above',
+    // 'left', 'right' or 'free'; a free label's centre is `labelOffset` from the shape's centre.
+    labelPosition?: string
+    labelOffset?: { x: number; y: number }
     // 'line' nodes only — see LinePoint/ADR 0050. Node-local coordinates
     // (relative to `position`, like a container child's own position),
     // ordered — array position is the only thing that identifies a point,

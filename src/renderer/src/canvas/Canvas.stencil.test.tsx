@@ -24,8 +24,8 @@ const stencil = (
 const flow = (): DiagramFile => ({
   version: 1,
   nodes: [
-    stencil('begin', 'start-event', 'Begin', 0),
-    stencil('check', 'exclusive-choice', 'Approved?', 160),
+    stencil('begin', 'event-start', 'Begin', 0),
+    stencil('check', 'branch-exclusive', 'Approved?', 160),
     {
       ...stencil('work', 'step', 'Do the work', 320),
       size: { width: 140, height: 56 }
@@ -55,17 +55,17 @@ describe('stencils on the canvas (ADR 0180)', () => {
     await screen.findByText('Do the work')
     const shape = (kind: string): Element | null =>
       container.querySelector(`.stencil-node[data-stencil-kind="${kind}"]`)
-    expect(shape('start-event')?.className).toContain('stencil-node--circle')
-    expect(shape('exclusive-choice')?.className).toContain('stencil-node--square')
+    expect(shape('event-start')?.className).toContain('stencil-node--circle')
+    expect(shape('branch-exclusive')?.className).toContain('stencil-node--square')
     expect(shape('step')?.className).toContain('stencil-node--arrow')
-    expect(shape('exclusive-choice')?.querySelector('.stencil-node-mark')).not.toBeNull()
+    expect(shape('branch-exclusive')?.querySelector('.stencil-node-mark')).not.toBeNull()
     expect(shape('step')?.querySelector('.stencil-node-mark')).toBeNull()
   })
 
   it('draws a mark in the slot of a step and a second ring on an event in the middle of a flow', async () => {
     const nodes = [
       stencil('user', 'step-user', 'Review', 0),
-      stencil('wait', 'timer-event', 'Wait', 200),
+      stencil('wait', 'event-timer', 'Wait', 200),
       stencil('plain', 'event', 'Happens', 300)
     ]
     const { container } = renderCanvas({ ...flow(), nodes })
@@ -73,8 +73,8 @@ describe('stencils on the canvas (ADR 0180)', () => {
     const shape = (kind: string): Element | null =>
       container.querySelector(`.stencil-node[data-stencil-kind="${kind}"]`)
     expect(shape('step-user')?.querySelector('.stencil-node-mark--slot')).not.toBeNull()
-    expect(shape('timer-event')?.querySelector('.stencil-node-ring')).not.toBeNull()
-    expect(shape('timer-event')?.querySelector('.stencil-node-mark--ringed')).not.toBeNull()
+    expect(shape('event-timer')?.querySelector('.stencil-node-ring')).not.toBeNull()
+    expect(shape('event-timer')?.querySelector('.stencil-node-mark--ringed')).not.toBeNull()
     expect(shape('event')?.querySelector('.stencil-node-mark')).toBeNull()
     expect(shape('event')?.querySelector('.stencil-node-ring')).not.toBeNull()
   })
@@ -93,7 +93,7 @@ describe('stencils on the canvas (ADR 0180)', () => {
     const added = sent.nodes[sent.nodes.length - 1]
     expect(added.type).toBe('stencil')
     expect(added.data.kind).toBe('step')
-    expect(sent.nodes[1].data.kind).toBe('exclusive-choice')
+    expect(sent.nodes[1].data.kind).toBe('branch-exclusive')
 
     key('z')
     await waitFor(() => expect(container.querySelectorAll('.stencil-node')).toHaveLength(3))
@@ -114,8 +114,28 @@ describe('stencils on the canvas (ADR 0180)', () => {
     fireEvent.click(list.getByRole('option', { name: 'Parallel split or join' }))
     await waitFor(() =>
       expect(
-        container.querySelectorAll('.stencil-node[data-stencil-kind="parallel-split-join"]')
+        container.querySelectorAll('.stencil-node[data-stencil-kind="branch-parallel"]')
       ).toHaveLength(1)
+    )
+  })
+
+  it('moves the label of a small shape from the property panel, and a step has no such field', async () => {
+    const { container } = renderCanvas(flow())
+    await screen.findByText('Do the work')
+    const node = (id: string): HTMLElement =>
+      container.querySelector(`.react-flow__node[data-id="${id}"]`) as HTMLElement
+    expect(node('begin').querySelector('.stencil-node-label-box--below')).not.toBeNull()
+    fireEvent.click(node('begin'))
+    const position = await screen.findByRole('combobox', { name: 'Label position' })
+    fireEvent.focus(position)
+    fireEvent.change(position, { target: { value: 'Above' } })
+    fireEvent.click(await screen.findByRole('option', { name: 'Above' }))
+    await waitFor(() =>
+      expect(node('begin').querySelector('.stencil-node-label-box--above')).not.toBeNull()
+    )
+    fireEvent.click(node('work'))
+    await waitFor(() =>
+      expect(screen.queryByRole('combobox', { name: 'Label position' })).toBeNull()
     )
   })
 
@@ -130,7 +150,7 @@ describe('stencils on the canvas (ADR 0180)', () => {
     fireEvent.click(await screen.findByRole('option', { name: 'Decision' }))
     await waitFor(() =>
       expect(
-        container.querySelector('.stencil-node[data-stencil-kind="exclusive-choice"]')
+        container.querySelector('.stencil-node[data-stencil-kind="branch-exclusive"]')
       ).not.toBeNull()
     )
     expect(screen.getByText('Do the work')).toBeTruthy()

@@ -1,17 +1,17 @@
 # 0189: Where a label goes
 
 ## Status
-Not Started. Logged 2026-11-16, from using Behaviour in flows.
+In Progress. Logged 2026-11-16, from using Behaviour in flows. The small shapes are done; the containers go with the lane hand-off check.
 
 ## Goal
 Let a person choose where an element's label sits, so it does not cover an edge: on the small shapes of [Behaviour](0105-semantic-notation-stencils.md) (start, end, events, choices) and on containers.
 
 ## Tasks
-- [ ] Small shapes: a label position of below (today), above, left, right or free. Free puts the label anywhere, tied to its shape by a dotted line once it is not touching. Stored per element (a position and, for free, an offset from the shape); additive in `docs/file-format.md`.
-- [ ] Containers: a label on any side (top, as now, left, right, bottom). Left and right probably turned 90° as in a swim lane; to decide.
-- [ ] The canvas, the SVG, PNG and draw.io exports, the layout check (label room, label on an edge) and the compare view all use the same position; the layout check can name a side that is free.
-- [ ] Property panel and a handle on the canvas to drag a free label; the assistant tools take the position as a field.
-- [ ] An ADR; an example diagram that shows each position.
+- [x] Small shapes ([ADR 0183](../../decisions/0183-where-the-label-of-a-small-shape-goes.md)): a label position of below (today), above, left, right or free. Free puts the label anywhere, tied to its shape by a dotted line once it is not touching. Stored per element (a position and, for free, an offset from the shape); additive in `docs/file-format.md`.
+- [ ] Containers (with the lane hand-off check, [0088](later/0088-cross-container-edge-detection.md)): a label on any side (top, as now, left, right, bottom). Left and right probably turned 90° as in a swim lane; to decide.
+- [x] The canvas, the SVG, PNG and draw.io exports and the compare view use the same position (a free label goes to draw.io below, with a note). Still to do: the layout check naming a side that is free.
+- [x] Property panel, and dragging a free label on the canvas. Still to do: the assistant tools take the position as a field, with the other tool work for Behaviour.
+- [x] An ADR and an example diagram that shows each position (`examples/label-positions.chd`).
 
 ## Notes
 - A free label that moves with its shape and a dotted leader line cost nothing when the label is close, so the line is drawn only when there is a gap.

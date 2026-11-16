@@ -9,6 +9,7 @@ import {
   stencilLabelOutside,
   stencilStyle
 } from '../stencils/kinds.ts'
+import { labelPositionOf } from '../stencils/labelPlacement.ts'
 import type { Theme } from '../styling/theme.ts'
 import {
   DEFAULT_FONT_FAMILY,
@@ -254,7 +255,8 @@ export function renderDiagramDrawio(
     missingEnds: oriented.length - edges.length,
     shortLines: 0,
     lockedTags: 0,
-    stencilMarks: 0
+    stencilMarks: 0,
+    freeLabels: 0
   }
 
   // A node's parent cell: its container, unless that is missing or part of a cycle, when the node
@@ -335,7 +337,12 @@ export function renderDiagramDrawio(
     const labelLook = resolveLabelLook(type, styleSource, theme, family)
     const rotation = kind === 'text' ? (node.rotation ?? 0) : 0
     const flat = kind === 'text' || (sk !== undefined && sk.shape !== 'arrow')
-    const labelBelow = sk !== undefined && stencilLabelOutside(node.data.kind)
+    const labelOutside = sk !== undefined && stencilLabelOutside(node.data.kind)
+    // Where a small shape's label sits (ADR 0183); a free one is exported below, as draw.io has no
+    // label with a leader line.
+    const placed = labelPositionOf(node.data.labelPosition)
+    if (labelOutside && placed === 'free') lost.freeLabels += 1
+    const position = placed === 'free' ? 'below' : placed
     const style = styleOf(
       [
         ['rounded', flat ? 0 : 1],
@@ -354,9 +361,34 @@ export function renderDiagramDrawio(
         ['dashed', look.stroke && look.dashed ? 1 : undefined],
         ['dashPattern', look.stroke && look.dashed ? '3 2' : undefined],
         ...fontParts(labelLook),
-        ['align', ALIGN[labelLook.align]],
-        ['verticalAlign', kind === 'container' || labelBelow ? 'top' : 'middle'],
-        ['verticalLabelPosition', labelBelow ? 'bottom' : undefined],
+        [
+          'align',
+          labelOutside && position === 'left'
+            ? 'right'
+            : labelOutside && position === 'right'
+              ? 'left'
+              : ALIGN[labelLook.align]
+        ],
+        [
+          'verticalAlign',
+          kind === 'container' || (labelOutside && position === 'below')
+            ? 'top'
+            : labelOutside && position === 'above'
+              ? 'bottom'
+              : 'middle'
+        ],
+        [
+          'verticalLabelPosition',
+          labelOutside && position === 'below'
+            ? 'bottom'
+            : labelOutside && position === 'above'
+              ? 'top'
+              : undefined
+        ],
+        [
+          'labelPosition',
+          labelOutside && (position === 'left' || position === 'right') ? position : undefined
+        ],
         ['spacingLeft', kind === 'container' ? 8 : undefined],
         ['spacingTop', kind === 'container' ? 4 : undefined],
         ['container', kind === 'container' ? 1 : undefined],
@@ -561,6 +593,7 @@ interface Lost {
   shortLines: number
   lockedTags: number
   stencilMarks: number
+  freeLabels: number
 }
 
 function notesFor(diagram: DiagramFile, lost: Lost, enabled: Set<string>): string[] {
@@ -601,6 +634,10 @@ function notesFor(diagram: DiagramFile, lost: Lost, enabled: Set<string>): strin
   if (lost.lockedTags > 0)
     out.push(
       `${plural(lost.lockedTags, 'locked tag', 'locked tags')} exported as plain data: draw.io does not enforce locks`
+    )
+  if (lost.freeLabels > 0)
+    out.push(
+      `${plural(lost.freeLabels, 'behaviour label', 'behaviour labels')} placed freely, with its dotted line, drawn below the shape instead`
     )
   if (lost.stencilMarks > 0)
     out.push(

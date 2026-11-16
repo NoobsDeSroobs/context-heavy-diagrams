@@ -24,23 +24,25 @@ test('an unknown kind is drawn as a step', () => {
 
 test('only the steps carry their label inside', () => {
   assert.equal(stencilLabelOutside('step'), false)
-  assert.equal(stencilLabelOutside('exclusive-choice'), true)
-  assert.equal(stencilLabelOutside('start-event'), true)
+  assert.equal(stencilLabelOutside('branch-exclusive'), true)
+  assert.equal(stencilLabelOutside('event-start'), true)
 })
 
 test('BPMN terms are search keywords, not names', () => {
-  assert.match(stencilSearchText('exclusive-choice'), /gateway/)
+  assert.match(stencilSearchText('branch-exclusive'), /gateway/)
   for (const kind of STENCIL_KINDS) {
     assert.doesNotMatch(kind.name, /bpmn|gateway/i)
   }
 })
 
-test('an id says what the kind is, general first, so related kinds sort together', () => {
+test('an id is the base word first and the subtype after, so related kinds sort together', () => {
   for (const kind of STENCIL_KINDS) assert.match(kind.id, /^[a-z]+(-[a-z]+)*$/)
   const steps = STENCIL_KINDS.filter((k) => k.group === 'Steps').map((k) => k.id)
   assert.ok(steps.every((id) => id === 'step' || id.startsWith('step-')))
+  const branches = STENCIL_KINDS.filter((k) => k.group === 'Branches').map((k) => k.id)
+  assert.ok(branches.length === 3 && branches.every((id) => id.startsWith('branch-')))
   const events = STENCIL_KINDS.filter((k) => k.group === 'Events').map((k) => k.id)
-  assert.deepEqual(events, ['start-event', 'event', 'timer-event', 'message-event', 'end-event'])
+  assert.deepEqual(events, ['event-start', 'event', 'event-timer', 'event-message', 'event-end'])
 })
 
 test('every mark a kind uses has a drawing, and a step keeps its mark in the slot on the right', () => {
@@ -62,8 +64,8 @@ test('the BPMN names of the new kinds find them', () => {
   assert.ok(finds('step-automatic', 'service task'))
   assert.ok(finds('step-sub-flow', 'call activity'))
   assert.ok(finds('step-repeat', 'loop'))
-  assert.ok(finds('inclusive-choice', 'inclusive gateway'))
+  assert.ok(finds('branch-inclusive', 'inclusive gateway'))
   assert.ok(finds('event', 'intermediate event'))
-  assert.ok(finds('timer-event', 'timer'))
-  assert.ok(finds('message-event', 'message'))
+  assert.ok(finds('event-timer', 'timer'))
+  assert.ok(finds('event-message', 'message'))
 })

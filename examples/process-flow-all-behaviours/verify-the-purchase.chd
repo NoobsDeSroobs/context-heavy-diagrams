@@ -14,7 +14,7 @@
       },
       "data": {
         "label": "Purchase to check",
-        "kind": "start-event"
+        "kind": "event-start"
       }
     },
     {
@@ -62,7 +62,7 @@
       },
       "data": {
         "label": "Purchase verified",
-        "kind": "end-event"
+        "kind": "event-end"
       }
     }
   ],

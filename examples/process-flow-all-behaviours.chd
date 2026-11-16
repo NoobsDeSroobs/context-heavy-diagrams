@@ -65,7 +65,7 @@
       "parentId": "lane-support",
       "data": {
         "label": "Refund requested",
-        "kind": "start-event"
+        "kind": "event-start"
       }
     },
     {
@@ -82,7 +82,7 @@
       "parentId": "lane-support",
       "data": {
         "label": "",
-        "kind": "parallel-split-join"
+        "kind": "branch-parallel"
       }
     },
     {
@@ -133,7 +133,7 @@
       "parentId": "lane-support",
       "data": {
         "label": "",
-        "kind": "parallel-split-join"
+        "kind": "branch-parallel"
       }
     },
     {
@@ -150,7 +150,7 @@
       "parentId": "lane-support",
       "data": {
         "label": "Valid?",
-        "kind": "exclusive-choice"
+        "kind": "branch-exclusive"
       }
     },
     {
@@ -184,7 +184,7 @@
       "parentId": "lane-support",
       "data": {
         "label": "Rejected",
-        "kind": "end-event"
+        "kind": "event-end"
       }
     },
     {
@@ -219,7 +219,7 @@
       "parentId": "lane-support",
       "data": {
         "label": "",
-        "kind": "inclusive-choice"
+        "kind": "branch-inclusive"
       }
     },
     {
@@ -287,7 +287,7 @@
       "parentId": "lane-support",
       "data": {
         "label": "",
-        "kind": "inclusive-choice"
+        "kind": "branch-inclusive"
       }
     },
     {
@@ -304,7 +304,7 @@
       "parentId": "lane-support",
       "data": {
         "label": "14 days pass",
-        "kind": "timer-event"
+        "kind": "event-timer"
       }
     },
     {
@@ -321,7 +321,7 @@
       "parentId": "lane-support",
       "data": {
         "label": "Confirmation sent",
-        "kind": "message-event"
+        "kind": "event-message"
       }
     },
     {
@@ -338,7 +338,7 @@
       "parentId": "lane-support",
       "data": {
         "label": "Closed",
-        "kind": "end-event"
+        "kind": "event-end"
       }
     }
   ],

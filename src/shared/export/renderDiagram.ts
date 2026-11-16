@@ -5,6 +5,14 @@ import { flattenPath, pointAtRatio, type Point } from '../geometry/pathSampling.
 import { highlightId, matchingHighlights } from '../tagging/highlights.ts'
 import { styledNodeType } from '../styling/styleDefaults.ts'
 import {
+  labelAlign,
+  labelBox,
+  LABEL_GAP,
+  labelPositionOf,
+  leaderLine,
+  offsetOf
+} from '../stencils/labelPlacement.ts'
+import {
   arrowBandPath,
   DOUBLE_BORDER_GAP,
   HEAVY_BORDER_FACTOR,
@@ -539,16 +547,37 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
 
     const lineHeight = labelLook.font.size * LINE_HEIGHT_EM
     if (kind === 'stencil' && stencilLabelOutside(node.data.kind)) {
-      // The small shapes carry their label below them (ADR 0180), centred and as wide as it needs.
-      const available = Math.max(width, 120)
+      // The small shapes carry their label outside (ADR 0180): where the node says (ADR 0183), as
+      // wide as it needs. A free label is tied to its shape by a dotted line.
+      const position = labelPositionOf(node.data.labelPosition)
+      const beside = position === 'left' || position === 'right'
+      const available = beside ? 140 : Math.max(width, 120)
       const lines = wrapText(text, available, labelLook.font)
       const blockWidth = Math.min(available, blockWidthOf(lines, labelLook.font))
-      const left = x + width / 2 - blockWidth / 2
-      const top = y + height + sw / 2 + 4
-      parts.push(textLines(lines, labelLook, left, blockWidth, top))
+      const blockHeight = lines.length * lineHeight
+      const box = labelBox(
+        position,
+        offsetOf(node.data.labelOffset),
+        { x, y, width, height },
+        { width: blockWidth, height: blockHeight },
+        sw / 2 + LABEL_GAP
+      )
       if (text) {
-        extent.rect(left, top, blockWidth, lines.length * lineHeight)
-        obstacles.push({ x: left, y: top, width: blockWidth, height: lines.length * lineHeight })
+        if (position === 'free') {
+          const leader = leaderLine(
+            sk?.shape === 'circle' ? 'circle' : 'square',
+            { x, y, width, height },
+            box
+          )
+          if (leader)
+            parts.push(
+              `<line class="chd-label-leader" x1="${num(leader.x1)}" y1="${num(leader.y1)}" x2="${num(leader.x2)}" y2="${num(leader.y2)}"${paintAttrs('stroke', labelLook.fill)} stroke-width="1" stroke-dasharray="2 3"/>`
+            )
+        }
+        const look = { ...labelLook, align: labelAlign(position) }
+        parts.push(textLines(lines, look, box.x, blockWidth, box.y))
+        extent.rect(box.x, box.y, blockWidth, blockHeight)
+        obstacles.push({ x: box.x, y: box.y, width: blockWidth, height: blockHeight })
       }
     } else if (kind === 'container') {
       const available = Math.max(0, width - sw * 2 - 8)

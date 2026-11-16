@@ -42,6 +42,13 @@ export const NODE_FIELDS: FieldSpec<DiagramNode>[] = [
   { name: 'tags', get: (n) => n.metadata },
   { name: 'label', get: (n) => n.data.label },
   { name: 'kind', get: (n) => (n.type === 'stencil' ? (n.data.kind ?? 'step') : undefined) },
+  {
+    name: 'label position',
+    get: (n) =>
+      n.type === 'stencil' && n.data.labelPosition && n.data.labelPosition !== 'below'
+        ? { position: n.data.labelPosition, offset: n.data.labelOffset }
+        : undefined
+  },
   { name: 'icons', get: (n) => n.data.icons },
   { name: 'note link', get: (n) => n.data.notes },
   { name: 'linked diagram', get: (n) => n.data.linkedDiagram },

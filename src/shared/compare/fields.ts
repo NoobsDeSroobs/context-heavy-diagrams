@@ -260,6 +260,16 @@ export const NODE_FIELDS: FieldSpec<DiagramNode>[] = [
     get: (n) => (n.type === 'stencil' ? (n.data.kind ?? 'step') : undefined),
     describe: (b, a) => change('kind', b, a)
   },
+  // Where a small shape's label sits is a look, not a meaning.
+  {
+    name: 'label position',
+    category: 'style',
+    get: (n) =>
+      n.type === 'stencil' && n.data.labelPosition && n.data.labelPosition !== 'below'
+        ? { position: n.data.labelPosition, offset: n.data.labelOffset }
+        : undefined,
+    describe: (b, a) => change('label position', b, a)
+  },
   { name: 'icons', category: 'style', get: (n) => n.data.icons, describe: describeIcons },
   {
     name: 'note link',

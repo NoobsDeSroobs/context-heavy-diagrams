@@ -221,6 +221,8 @@ export function serializeDiagram(diagram: DiagramFile): string {
         notes: n.data.notes,
         linkedDiagram: n.data.linkedDiagram,
         kind: n.data.kind,
+        labelPosition: n.data.labelPosition,
+        labelOffset: n.data.labelOffset,
         points: n.data.points && n.data.points.length > 0 ? n.data.points : undefined,
         // NB: `references` was missing here until 2026-09-01 — a 5th
         // instance of the serialize-picklist gap (see known-issues.md),

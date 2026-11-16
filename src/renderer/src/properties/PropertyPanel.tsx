@@ -6,6 +6,7 @@ import type {
   NodeStyle,
   RequiredTagDefinition
 } from '@shared/diagram'
+import type { LabelPosition } from '@shared/stencils/labelPlacement'
 import { CollapsibleSection } from '../ui/fields'
 import MetadataSection from '../tagging/MetadataSection'
 import ReferencesSection from '../references/ReferencesSection'
@@ -51,6 +52,8 @@ interface PropertyPanelProps {
   onToggleStyleBrush: () => void
   // Changes the kind of the selected steps and events (ADR 0180).
   onSetStencilKind: (nodeIds: string[], kindId: string) => void
+  // Moves the label of the selected small shapes (ADR 0183).
+  onSetStencilLabelPosition: (nodeIds: string[], position: LabelPosition) => void
 }
 
 // Entity/container share NodeStyleFields' four groups; text gets the same
@@ -90,7 +93,8 @@ export default function PropertyPanel({
   onSetDefaultStyle,
   styleBrushActive,
   onToggleStyleBrush,
-  onSetStencilKind
+  onSetStencilKind,
+  onSetStencilLabelPosition
 }: PropertyPanelProps): React.JSX.Element {
   const byType = new Map<string, Node[]>()
   for (const n of selectedNodes) {
@@ -158,7 +162,11 @@ export default function PropertyPanel({
     if (type !== 'stencil') return styleFields
     return (
       <div key={type}>
-        <StencilFields nodes={nodes} onSetKind={(kindId) => onSetStencilKind(ids, kindId)} />
+        <StencilFields
+          nodes={nodes}
+          onSetKind={(kindId) => onSetStencilKind(ids, kindId)}
+          onSetLabelPosition={(position) => onSetStencilLabelPosition(ids, position)}
+        />
         {styleFields}
       </div>
     )

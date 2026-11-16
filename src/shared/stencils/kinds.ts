@@ -3,7 +3,7 @@ import type { NodeStyle } from '../styling/schema.ts'
 // The kinds a stencil can be (ADR 0180): events and verbs, not things. A kind is a base shape with an
 // optional mark on it, one row of this table. The list is closed and built in; a person cannot add
 // a kind, and the file stores only the id (`data.kind` of a node of type `stencil`). An id says what
-// the kind is, general first (`step-user`, `timer-event`), so related kinds sort together and a later
+// the kind is, the base word first and the subtype after (`step-user`, `event-timer`), so related kinds sort together and a later
 // kind has room beside them.
 
 // An arrow is a rectangle with an arrow-shaped band down its left side, so a step does not look like
@@ -96,7 +96,7 @@ const STEP = {
 } as const
 
 const CHOICE = {
-  group: 'Gateways',
+  group: 'Branches',
   shape: 'square',
   size: { width: 48, height: 48 },
   fill: '#4d3d14'
@@ -162,7 +162,7 @@ export const STENCIL_KINDS: readonly StencilKind[] = [
   },
   {
     ...CHOICE,
-    id: 'exclusive-choice',
+    id: 'branch-exclusive',
     name: 'Decision',
     mark: 'cross',
     defaultLabel: 'Decision',
@@ -178,7 +178,7 @@ export const STENCIL_KINDS: readonly StencilKind[] = [
   },
   {
     ...CHOICE,
-    id: 'inclusive-choice',
+    id: 'branch-inclusive',
     name: 'Inclusive choice',
     mark: 'ring',
     defaultLabel: 'Inclusive choice',
@@ -195,7 +195,7 @@ export const STENCIL_KINDS: readonly StencilKind[] = [
   },
   {
     ...CHOICE,
-    id: 'parallel-split-join',
+    id: 'branch-parallel',
     name: 'Parallel split or join',
     mark: 'plus',
     defaultLabel: 'Parallel',
@@ -213,7 +213,7 @@ export const STENCIL_KINDS: readonly StencilKind[] = [
   },
   {
     ...EVENT,
-    id: 'start-event',
+    id: 'event-start',
     name: 'Start',
     defaultLabel: 'Start',
     fill: '#1f3d26',
@@ -237,7 +237,7 @@ export const STENCIL_KINDS: readonly StencilKind[] = [
   },
   {
     ...EVENT,
-    id: 'timer-event',
+    id: 'event-timer',
     name: 'Timer',
     mark: 'clock',
     doubleBorder: true,
@@ -247,7 +247,7 @@ export const STENCIL_KINDS: readonly StencilKind[] = [
   },
   {
     ...EVENT,
-    id: 'message-event',
+    id: 'event-message',
     name: 'Message',
     mark: 'envelope',
     doubleBorder: true,
@@ -257,7 +257,7 @@ export const STENCIL_KINDS: readonly StencilKind[] = [
   },
   {
     ...EVENT,
-    id: 'end-event',
+    id: 'event-end',
     name: 'End',
     heavyBorder: true,
     defaultLabel: 'End',

@@ -133,7 +133,13 @@ import {
   type PaletteItemType
 } from '../palette/ItemPalette'
 import { swapStencilKind } from '../nodes/stencilSwap'
-import { stencilKind } from '@shared/stencils/kinds'
+import { stencilKind, stencilLabelOutside } from '@shared/stencils/kinds'
+import {
+  labelPositionOf,
+  offsetFrom,
+  offsetOf,
+  type LabelPosition
+} from '@shared/stencils/labelPlacement'
 import { stencilKindsUsed } from '@shared/legend/legendItems'
 import UtilityDock from '../UtilityDock'
 import AlignmentGuides from '../alignment/AlignmentGuides'
@@ -1625,6 +1631,43 @@ function CanvasInner(): React.JSX.Element {
       pushSnapshot()
       setNodes((nds) =>
         nds.map((n) => (ids.has(n.id) && n.type === 'stencil' ? swapStencilKind(n, kindId) : n))
+      )
+    },
+    [setNodes, pushSnapshot]
+  )
+
+  // Moves the label of these small shapes to another side, or sets it free where it is, one undo
+  // step (ADR 0183). A label made free keeps its place, so it does not jump.
+  const setStencilLabelPosition = useCallback(
+    (nodeIds: string[], position: LabelPosition) => {
+      const ids = new Set(nodeIds)
+      pushSnapshot()
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (!ids.has(n.id) || n.type !== 'stencil') return n
+          const kind = stencilKind(typeof n.data?.kind === 'string' ? n.data.kind : undefined)
+          if (!stencilLabelOutside(kind.id)) return n
+          const was = labelPositionOf(n.data?.labelPosition)
+          if (was === position) return n
+          const shape = {
+            x: 0,
+            y: 0,
+            width: n.width ?? n.measured?.width ?? kind.size.width,
+            height: n.height ?? n.measured?.height ?? kind.size.height
+          }
+          const labelOffset =
+            position === 'free'
+              ? (offsetOf(n.data?.labelOffset) ?? offsetFrom(was, shape, { width: 70, height: 16 }))
+              : undefined
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              labelPosition: position === 'below' ? undefined : position,
+              labelOffset
+            }
+          }
+        })
       )
     },
     [setNodes, pushSnapshot]
@@ -3756,6 +3799,7 @@ function CanvasInner(): React.JSX.Element {
                 onAddLine={addLineNode}
                 onAddStencil={addStencilNode}
                 onSetStencilKind={setStencilKind}
+                onSetStencilLabelPosition={setStencilLabelPosition}
                 onCreateMultipleEntities={() => setBulkCreateType('entity')}
                 onCreateMultipleContainers={() => setBulkCreateType('container')}
                 onUpdateNodeStyle={updateNodeStyle}

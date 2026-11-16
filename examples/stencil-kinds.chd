@@ -216,7 +216,7 @@
       }
     },
     {
-      "id": "kind-exclusive-choice",
+      "id": "kind-branch-exclusive",
       "type": "stencil",
       "position": {
         "x": 56,
@@ -228,11 +228,11 @@
       },
       "data": {
         "label": "Decision",
-        "kind": "exclusive-choice"
+        "kind": "branch-exclusive"
       }
     },
     {
-      "id": "what-exclusive-choice",
+      "id": "what-branch-exclusive",
       "type": "text",
       "position": {
         "x": 190,
@@ -251,7 +251,7 @@
       }
     },
     {
-      "id": "kind-inclusive-choice",
+      "id": "kind-branch-inclusive",
       "type": "stencil",
       "position": {
         "x": 56,
@@ -263,11 +263,11 @@
       },
       "data": {
         "label": "Inclusive choice",
-        "kind": "inclusive-choice"
+        "kind": "branch-inclusive"
       }
     },
     {
-      "id": "what-inclusive-choice",
+      "id": "what-branch-inclusive",
       "type": "text",
       "position": {
         "x": 190,
@@ -286,7 +286,7 @@
       }
     },
     {
-      "id": "kind-parallel-split-join",
+      "id": "kind-branch-parallel",
       "type": "stencil",
       "position": {
         "x": 56,
@@ -298,11 +298,11 @@
       },
       "data": {
         "label": "Parallel split or join",
-        "kind": "parallel-split-join"
+        "kind": "branch-parallel"
       }
     },
     {
-      "id": "what-parallel-split-join",
+      "id": "what-branch-parallel",
       "type": "text",
       "position": {
         "x": 190,
@@ -321,7 +321,7 @@
       }
     },
     {
-      "id": "kind-start-event",
+      "id": "kind-event-start",
       "type": "stencil",
       "position": {
         "x": 60,
@@ -333,11 +333,11 @@
       },
       "data": {
         "label": "Start",
-        "kind": "start-event"
+        "kind": "event-start"
       }
     },
     {
-      "id": "what-start-event",
+      "id": "what-event-start",
       "type": "text",
       "position": {
         "x": 190,
@@ -391,7 +391,7 @@
       }
     },
     {
-      "id": "kind-timer-event",
+      "id": "kind-event-timer",
       "type": "stencil",
       "position": {
         "x": 60,
@@ -403,11 +403,11 @@
       },
       "data": {
         "label": "Timer",
-        "kind": "timer-event"
+        "kind": "event-timer"
       }
     },
     {
-      "id": "what-timer-event",
+      "id": "what-event-timer",
       "type": "text",
       "position": {
         "x": 190,
@@ -426,7 +426,7 @@
       }
     },
     {
-      "id": "kind-message-event",
+      "id": "kind-event-message",
       "type": "stencil",
       "position": {
         "x": 60,
@@ -438,11 +438,11 @@
       },
       "data": {
         "label": "Message",
-        "kind": "message-event"
+        "kind": "event-message"
       }
     },
     {
-      "id": "what-message-event",
+      "id": "what-event-message",
       "type": "text",
       "position": {
         "x": 190,
@@ -461,7 +461,7 @@
       }
     },
     {
-      "id": "kind-end-event",
+      "id": "kind-event-end",
       "type": "stencil",
       "position": {
         "x": 60,
@@ -473,11 +473,11 @@
       },
       "data": {
         "label": "End",
-        "kind": "end-event"
+        "kind": "event-end"
       }
     },
     {
-      "id": "what-end-event",
+      "id": "what-event-end",
       "type": "text",
       "position": {
         "x": 190,
