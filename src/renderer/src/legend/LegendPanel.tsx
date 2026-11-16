@@ -396,7 +396,7 @@ export default function LegendPanel({
         {stencilKinds.length > 0 && (
           <label className="legend-stencil-toggle" title="For this session only">
             <input type="checkbox" checked={showStencilKinds} onChange={onToggleStencilKinds} />
-            Show behaviour
+            Show behaviours
           </label>
         )}
         {legend.map((entry) => (

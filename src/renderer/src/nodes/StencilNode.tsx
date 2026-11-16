@@ -110,7 +110,7 @@ function StencilNode({ id, data, selected }: NodeProps): React.JSX.Element {
         ...detachItem,
         addConnectionPointItem(rect, event.clientX, event.clientY),
         {
-          label: 'Select all behaviour',
+          label: 'Select all behaviours',
           separatorBefore: true,
           onSelect: () => selectAllOfType('stencil')
         }
