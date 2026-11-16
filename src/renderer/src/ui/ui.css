@@ -152,3 +152,67 @@
 .alert-dialog-actions button:hover {
   background: var(--ev-button-alt-hover-bg);
 }
+
+/* A dropdown you can type into (ComboSelect.tsx). The list is drawn on <body>, so a panel's scrolling
+   cannot clip it. */
+.combo-select {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.combo-select-input {
+  padding-right: 18px;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.combo-select-caret {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  color: var(--ev-c-text-3);
+  pointer-events: none;
+}
+
+.combo-select-list {
+  position: fixed;
+  z-index: 2000;
+  overflow-y: auto;
+  box-sizing: border-box;
+  background: var(--color-background-soft);
+  border: 1px solid var(--ev-c-gray-1);
+  border-radius: 4px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  padding: 3px;
+  font-size: 12px;
+}
+
+.combo-select-group {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--ev-c-text-3);
+  padding: 6px 6px 2px;
+}
+
+.combo-select-option {
+  padding: 4px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  color: var(--color-text);
+}
+
+.combo-select-option.active {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.combo-select-option[aria-selected='true'] {
+  font-weight: 600;
+}
+
+.combo-select-none {
+  padding: 4px 6px;
+  color: var(--ev-c-text-3);
+}

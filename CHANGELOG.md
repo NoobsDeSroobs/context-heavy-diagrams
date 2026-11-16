@@ -14,6 +14,7 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 ### Changed
 
+- **Dropdowns can be typed into.** In the properties panel and the other panels with a list (kind, font, line style, end markers, routing and so on), click the box and start writing: what you type appears in the box and the list narrows to the options that contain it (`Dec` finds Decision). Arrow keys and Enter choose, Escape closes.
 - **The "React Flow" link in the corner of the canvas is hidden.** React Flow is credited in **Help → About** and in the third-party notices. ([ADR 0179](docs/decisions/0179-the-react-flow-link-is-hidden-and-the-library-is-credited-elsewhere.md))
 
 ## 0.10.0 (2026-11-15)

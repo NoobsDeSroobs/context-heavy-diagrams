@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useRafThrottledCallback } from './useRafThrottledCallback'
 import { useScrub, type ScrubConfig } from './useScrub'
+import { ComboSelect, type ComboOption } from './ComboSelect'
 
 // Shared, dumb field primitives for the property panel: generic value-in/onChange-out controls with
 // no knowledge of NodeStyle/EdgeStyle or the diagram model, plus the "mixed across selection"
@@ -348,6 +349,9 @@ export function SliderField({
   )
 }
 
+// A dropdown you can type into (ComboSelect.tsx): click it, start writing, and the list narrows to
+// what matches. An option with a `group` is listed under a heading; options without one come first,
+// and groups keep the order they first appear in. `terms` are extra words an option is found by.
 export function SelectField<T extends string>({
   label,
   value,
@@ -359,55 +363,22 @@ export function SelectField<T extends string>({
   label: string
   value: T | undefined
   mixed: boolean
-  // An option with a `group` is listed under a heading (<optgroup>); options
-  // without one come first, ungrouped. Groups keep the order they first appear in.
-  options: { value: T; label: string; group?: string }[]
+  options: ComboOption<T>[]
   onChange: (value: T) => void
   pushSnapshot: () => void
 }): React.JSX.Element {
-  const ungrouped = options.filter((o) => !o.group)
-  const groupNames = [...new Set(options.filter((o) => o.group).map((o) => o.group as string))]
   return (
     <FieldRow label={label}>
-      <select
-        className="property-select-field"
-        value={mixed ? '' : (value ?? '')}
-        onChange={(event) => {
+      <ComboSelect
+        ariaLabel={label}
+        value={value}
+        mixed={mixed}
+        options={options}
+        onChange={(next) => {
           pushSnapshot()
-          onChange(event.target.value as T)
+          onChange(next)
         }}
-      >
-        {mixed && (
-          <option value="" disabled>
-            Mixed
-          </option>
-        )}
-        {/* Distinct from `!value`: a field like fontFamily has a real ''-valued
-            "Default" option meaning "no override," which is a legitimate
-            selection, not a missing one — only show this placeholder when
-            there's truly nothing selected yet. */}
-        {!mixed && value === undefined && (
-          <option value="" disabled>
-            Select…
-          </option>
-        )}
-        {ungrouped.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-        {groupNames.map((name) => (
-          <optgroup key={name} label={name}>
-            {options
-              .filter((opt) => opt.group === name)
-              .map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-          </optgroup>
-        ))}
-      </select>
+      />
     </FieldRow>
   )
 }

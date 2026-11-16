@@ -106,8 +106,10 @@ describe('stencils on the canvas (ADR 0180)', () => {
     await screen.findByText('Do the work')
     const node = container.querySelector('.react-flow__node[data-id="work"]') as HTMLElement
     fireEvent.click(node)
-    const kind = await screen.findByDisplayValue('Step')
-    fireEvent.change(kind, { target: { value: 'decision' } })
+    const kind = await screen.findByRole('combobox', { name: 'Kind' })
+    fireEvent.focus(kind)
+    fireEvent.change(kind, { target: { value: 'gate' } })
+    fireEvent.click(await screen.findByRole('option', { name: 'Decision' }))
     await waitFor(() =>
       expect(container.querySelector('.stencil-node[data-stencil-kind="decision"]')).not.toBeNull()
     )

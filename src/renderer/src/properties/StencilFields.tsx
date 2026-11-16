@@ -20,7 +20,12 @@ export function StencilFields({
       label="Kind"
       value={only}
       mixed={kinds.size > 1}
-      options={STENCIL_KINDS.map((k) => ({ value: k.id, label: k.name, group: k.group }))}
+      options={STENCIL_KINDS.map((k) => ({
+        value: k.id,
+        label: k.name,
+        group: k.group,
+        terms: k.terms.join(' ')
+      }))}
       // Changing the kind takes its own undo snapshot (it also changes the label and the size).
       pushSnapshot={() => undefined}
       onChange={onSetKind}
