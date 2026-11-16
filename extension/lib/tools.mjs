@@ -38,7 +38,10 @@ import { containedPath } from '../../src/main/containedPath.ts'
 // The one place the extension starts another program: `git show <revision>:<file>`, read-only
 // (ADR 0142).
 import { buildGitSession } from '../../src/main/compare/gitCompare.ts'
-import { validateFile } from '../../resources/ai/skills/chd-diagrams/scripts/validate_chd.mjs'
+import {
+  validateFile,
+  validateText
+} from '../../resources/ai/skills/chd-diagrams/scripts/validate_chd.mjs'
 import {
   MAX_FILE_BYTES,
   METAMODEL_SUFFIX,
@@ -94,7 +97,7 @@ function validateCandidate(root, targetAbsolute, rel, content) {
 }
 
 // Messages carry absolute paths: show diagram-relative ones instead.
-function tidyValidation(root, { errors, warnings }, validatedPath, rel) {
+function tidyValidation(root, { errors, warnings, notes = [] }, validatedPath, rel) {
   const tidy = (message) =>
     message
       .replaceAll(validatedPath, rel)
@@ -105,7 +108,8 @@ function tidyValidation(root, { errors, warnings }, validatedPath, rel) {
   return {
     ok: errors.length === 0,
     errors: errors.map(tidy),
-    warnings: groupMessages(warnings.map(tidy))
+    warnings: groupMessages(warnings.map(tidy)),
+    ...(notes.length > 0 ? { notes } : {})
   }
 }
 
@@ -304,7 +308,18 @@ export function createTools({ root, allowUpdate, specSources }) {
     }
   }
 
-  function validateDiagram({ path }) {
+  // A file in the folder, or the diagram's text (ADR 0145, ADR 0182): text has no folder, so the checks
+  // for files its paths point at are skipped and the result says so.
+  function validateDiagram({ path, content }) {
+    if (content !== undefined) {
+      // Refuses path and content together, content that is not text, and one over the size limit.
+      const file = diagramInput(
+        { path, content },
+        { path: 'path', content: 'content' },
+        'validate_diagram'
+      )
+      return tidyValidation(root, validateText(file.text, file.rel), file.rel, file.rel)
+    }
     const { absolute, relative: rel } = resolveInFolder(root, path, 'read', { mustExist: true })
     if (extname(absolute).toLowerCase() !== '.chd') {
       throw new ToolError('validate_diagram only validates .chd diagram files')

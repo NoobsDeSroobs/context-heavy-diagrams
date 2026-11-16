@@ -28,9 +28,11 @@ On **Windows PowerShell 5.1**, text piped to a program is re-encoded and can dam
 
 ## `chd validate`
 
-`chd validate <file.chd|file.chdmeta>... [--recursive]`
+`chd validate <file.chd|file.chdmeta|->... [--recursive]`
 
 Reports duplicate ids, dangling edge endpoints, parent-before-child ordering and relative paths that do not resolve, and warns where an edge label does not fit in the gap between its two elements. A `.chdmeta` file is checked against the metamodel format. `--recursive` also follows linked diagrams. Warnings alone do not fail. Exit codes: `0`, `1` if any error was found, `2`.
+
+A single `-` reads one diagram from standard input, so a draft can be validated before it exists as a file. It has no folder, so the paths to icons, notes and linked diagrams are not checked and a `NOTE` line says so; every other check runs ([ADR 0182](decisions/0182-validate-diagram-takes-text-too.md)).
 
 ```
 $ chd validate shop.chd

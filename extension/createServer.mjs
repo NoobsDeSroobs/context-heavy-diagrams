@@ -12,7 +12,7 @@ const INSTRUCTIONS = `Tools for the user's Context-Heavy Diagrams diagrams (.chd
 - To build or change a diagram with edit_diagram, call get_format_spec with topic "build" (about a page) and nothing else. Before hand-writing a .chd with create_file or update_file, call it without a topic; the format has traps that corrupt files. Before writing a .chdmeta (a diagram metamodel), call it with topic "conformance": it says what to ask the person, what the format can and cannot say, and gives a valid example. validate_metamodel lists what is wrong with a .chdmeta.
 - read_file returns a fingerprint. update_file only works with the fingerprint of the version you based your edit on, and is refused if the file changed meanwhile; then read it again and redo the edit. create_file never overwrites.
 - To build or change a diagram step by step, use edit_diagram: it creates the file if it does not exist, applies a list of operations (add_entity, connect, move, ...) and answers briefly with what each made (ids, places, sizes) and the layout problems that involve what the call touched (many of one kind collapsed into one line with their number), with a count of the others, which inspect_diagram with issues_only lists. You decide where everything goes; ask room_for_label how much space two connected elements need before you place them, and pass the fingerprint each answer returns as base_fingerprint in the next call. inspect_diagram lists the elements as they stand. A diagram made this way in this session can be edited again without allowing changes to existing files.
-- A .chd is validated before it is written; fix any reported errors and try again. validate_diagram checks an existing file.
+- A .chd is validated before it is written; fix any reported errors and try again. validate_diagram checks an existing file or a diagram given as text (content), which needs no file in the folder; text has no folder, so the paths to icons, notes and linked diagrams are then not checked.
 - check_diagram applies a diagram metamodel and diff_diagrams shows what changed, between two diagrams or between a diagram and its last commit in git; both only read, and both take a draft as text (content, new_content) as well as a file, so a diagram can be judged before it is written. These tools give the results the chd command line gives, which is what a pipeline relies on.
 - Only .chd, .md, .txt, .svg and .chdmeta (a diagram metamodel, validated before it is written) files can be written. Notes of a diagram are Markdown files its nodes point at.
 - read_file reads any file in the folder except executables, installers, archives, disk images, video and audio. Text comes back as text; pictures come back as images and other binary files (PDF, spreadsheets) as embedded resources, which you can only use if your client shows them to you. list_files can be narrowed to a subfolder, and search_files finds lines of text across the folder (no shell is needed) so you read only the files and lines you need.
@@ -130,8 +130,13 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
     {
       title: 'Validate a diagram',
       description:
-        'Check a .chd file for structural problems: duplicate ids, dangling edges, parent ordering, unresolved relative paths. Warns where an edge label does not fit in the gap between the elements it joins, with the line showing either side of it. Not needed after edit_diagram, which already checks what it changed; use it for a file written some other way.',
-      inputSchema: { path },
+        'Check a .chd file, or a diagram given as text (content), for structural problems: duplicate ids, dangling edges, parent ordering, unresolved relative paths. Warns where an edge label does not fit in the gap between the elements it joins, with the line showing either side of it. Text needs no file in the folder, but it has no folder either, so its relative paths are not checked (the result says so). Not needed after edit_diagram, which already checks what it changed; use it for a file written some other way, or to judge a draft before writing it.',
+      inputSchema: {
+        path: path.optional().describe('The diagram to validate: a .chd file in the folder'),
+        content: content
+          .optional()
+          .describe('The diagram to validate, as .chd text (instead of path)')
+      },
       annotations: readOnly
     },
     guarded((args) => tools.validate_diagram(args))
