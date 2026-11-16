@@ -2,7 +2,7 @@ import { app, dialog, ipcMain } from 'electron'
 import { access, mkdir, readdir, writeFile } from 'fs/promises'
 import { basename, dirname, extname, join, relative } from 'path'
 import { createEmptyDiagram, serializeDiagram } from '@shared/diagram'
-import { labelToFileStem } from '@shared/labelFileName'
+import { firstFreeName, labelToFileStem } from '@shared/labelFileName'
 import { resolveLinkPath } from './linkPaths'
 
 // Linked diagrams colocate in the same sibling folder as assets/notes
@@ -14,14 +14,10 @@ function linkedDiagramDirFor(diagramPath: string): string {
 }
 
 async function uniqueDiagramFileName(dir: string, baseName: string): Promise<string> {
-  let candidate = `${baseName}.chd`
-  let n = 1
-  const existing = new Set(await readdir(dir).catch(() => [] as string[]))
-  while (existing.has(candidate)) {
-    candidate = `${baseName}-${n}.chd`
-    n += 1
-  }
-  return candidate
+  const existing = new Set(
+    (await readdir(dir).catch(() => [] as string[])).map((name) => name.toLowerCase())
+  )
+  return firstFreeName(baseName, '.chd', (name) => existing.has(name.toLowerCase()))
 }
 
 export function registerLinkHandlers(): void {

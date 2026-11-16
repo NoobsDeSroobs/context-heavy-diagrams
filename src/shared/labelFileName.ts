@@ -43,21 +43,57 @@ function stripControlChars(value: string): string {
     .join('')
 }
 
+// A stem is cut at 60 characters (readability) and at 200 UTF-8 bytes: Linux
+// and macOS limit one file name to 255 bytes, and a note adds "-<uuid>.md"
+// (40 bytes) to the stem (ADR 0179).
+const MAX_STEM_CHARS = 60
+const MAX_STEM_BYTES = 200
+
+function utf8Length(ch: string): number {
+  const cp = ch.codePointAt(0) ?? 0
+  return cp < 0x80 ? 1 : cp < 0x800 ? 2 : cp < 0x10000 ? 3 : 4
+}
+
+// Cuts on whole characters (code points), so an emoji is never split in half.
+export function truncateStem(value: string): string {
+  const kept: string[] = []
+  let bytes = 0
+  for (const ch of value) {
+    bytes += utf8Length(ch)
+    if (kept.length >= MAX_STEM_CHARS || bytes > MAX_STEM_BYTES) break
+    kept.push(ch)
+  }
+  return kept.join('')
+}
+
 // Multi-line labels (ADR 0074): only the first non-empty line contributes
 // to the filename — later lines are a qualifier / context, not part of the
 // thing's identity, and don't belong in a filename.
 export function labelToFileStem(label: string, fallback: string): string {
   const firstLine = label.split(/\r?\n/).find((line) => line.trim().length > 0) ?? ''
-  const sanitized = stripControlChars(firstLine)
+  const collapsed = stripControlChars(firstLine)
     // Characters Windows disallows in filenames — replaced with '-' (not
     // deleted) so word boundaries survive: "A/B" -> "A-B", not "AB".
     .replace(/[<>:"/\\|?*]/g, '-')
     .replace(/\s+/g, ' ')
     .trim()
-    .slice(0, 60)
-    // Windows also disallows a trailing dot or space — re-checked after the
-    // 60-char truncation, which can itself land on one.
-    .replace(/[.\s]+$/, '')
+  // Windows also disallows a trailing dot or space — re-checked after the
+  // truncation, which can itself land on one.
+  const sanitized = truncateStem(collapsed).replace(/[.\s]+$/, '')
   const slug = sanitized.length > 0 ? sanitized : fallback
   return WINDOWS_RESERVED.has(slug.toLowerCase()) ? `_${slug}` : slug
+}
+
+// "<stem><extension>", or "<stem>-1<extension>", "<stem>-2<extension>"... for
+// the first name `isTaken` does not report. Callers compare names ignoring
+// case: macOS and Windows treat "Foo.chd" and "foo.chd" as one file, and a
+// folder moves between systems (ADR 0179).
+export function firstFreeName(
+  stem: string,
+  extension: string,
+  isTaken: (name: string) => boolean
+): string {
+  let name = `${stem}${extension}`
+  for (let n = 1; isTaken(name); n += 1) name = `${stem}-${n}${extension}`
+  return name
 }

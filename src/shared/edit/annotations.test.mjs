@@ -407,6 +407,24 @@ test('describeDiagram shows tags, links, notes and the catalogs, and leaves out 
   assert.deepEqual(described.diagramTags, { sourceBase: 'src/' })
 })
 
+test('add_new_linked_diagram treats names that differ only by case as taken (ADR 0179)', () => {
+  const linked = { ...options, linkedFolder: 'd' }
+  const { results } = applyOperations(
+    base(),
+    [
+      { op: 'add_entity', id: 'o1', label: 'Orders', x: 0, y: 0 },
+      { op: 'add_entity', id: 'o2', label: 'ORDERS', x: 0, y: 0 },
+      { op: 'add_new_linked_diagram', id: 'o1' },
+      { op: 'add_new_linked_diagram', id: 'o2' }
+    ],
+    linked
+  )
+  assert.deepEqual(
+    results.slice(2).map((r) => r.link),
+    ['d/Orders.chd', 'd/ORDERS-1.chd']
+  )
+})
+
 test('add_new_linked_diagram names the file after the label in the folder of this diagram, never twice the same', () => {
   const taken = new Set(['d/Orders-1.chd'])
   const linked = { ...options, linkedFolder: 'd', fileExists: (path) => taken.has(path) }
