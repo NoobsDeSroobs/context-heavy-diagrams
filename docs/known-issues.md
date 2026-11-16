@@ -19,6 +19,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 - [A native confirm() dialog left `<select>` elements unresponsive afterward](#a-native-confirm-dialog-left-select-elements-unresponsive-afterward) — Worked around.
 - [Clicking a container selects a different container that visually encloses it](#clicking-a-container-selects-a-different-container-that-visually-encloses-it) — Worked around.
 - [Edges start far from their elements after zooming out and in to a part of the diagram not seen up close](#edges-start-far-from-their-elements-after-zooming-out-and-in-to-a-part-of-the-diagram-not-seen-up-close) — Open.
+- [`validate` and `check` read as the same thing, and are not](#validate-and-check-read-as-the-same-thing-and-are-not) — Worked around (descriptions say which question each answers).
 
 ---
 
@@ -818,3 +819,20 @@ Fixed by the paste rework described under "Pasting a copied child-of-a-container
 **Direction:** reproduce on a diagram of a few dozen elements, then compare the measured connection point positions of a freshly mounted node with one that stayed on screen, and check whether the gap disappears with `onlyRenderVisibleElements` off. If it does, the fix is where the positions are measured or re-measured on mount, not turning the option off (it is what keeps a large diagram fast).
 
 **References:** `src/renderer/src/canvas/Canvas.tsx` (`onlyRenderVisibleElements`)
+
+---
+
+## `validate` and `check` read as the same thing, and are not
+
+**Status:** Worked around (2026-11-16)
+**Found:** 2026-11-16, when the maintainer asked why a diagram has both
+
+**Symptom:** `validate_diagram` / `chd validate` and `check_diagram` / `chd check` look interchangeable ("check" and "validate" are near-synonyms), so a person or an assistant picks the wrong one, or thinks one is redundant. They are not: validate asks whether the file is well-formed (duplicate ids, dangling edges, parent order), check asks whether the diagram follows the rules of a metamodel (an architecture). Either can pass while the other fails.
+
+**Cause:** the names were chosen one command at a time; the second one reused a near-synonym of the first.
+
+**Workaround:** the tool descriptions, the server instructions, the command help and `docs/cli-reference.md` each open with the question the command answers and name the other one.
+
+**Direction:** rename on a breaking-change release: `validate_diagram` to `validate_structure` (the maintainer's preference) and `check_diagram` to a name about conformance, with the old names kept as aliases for a release. `validate_metamodel` stays, it validates a metamodel file. Do it if the confusion still shows up in practice, since assistants and pipelines already call the current names.
+
+**References:** `extension/createServer.mjs`, `resources/cli/chd.mjs`, `src/cli/checkCommand.ts`, [ADR 0182](decisions/0182-validate-diagram-takes-text-too.md)

@@ -105,6 +105,25 @@ test('validate: ok file exits 0, structural error exits 1, no file is a usage er
   assert.equal(run('validate').status, 2)
 })
 
+test('validate - reads the diagram from standard input and needs no file', () => {
+  const fromStdin = (input) =>
+    spawnSync(process.execPath, [cli, 'validate', '-'], { encoding: 'utf-8', input })
+  const ok = fromStdin(JSON.stringify({ version: 1, nodes: [{ id: 'a' }], edges: [] }))
+  assert.equal(ok.status, 0)
+  assert.ok(ok.stdout.includes('[(stdin)] OK'), ok.stdout)
+  assert.match(ok.stdout, /NOTE .*not checked/)
+  const bad = fromStdin(
+    JSON.stringify({
+      version: 1,
+      nodes: [{ id: 'a' }],
+      edges: [{ id: 'e', source: 'a', target: 'zzz' }]
+    })
+  )
+  assert.equal(bad.status, 1)
+  assert.ok(bad.stdout.includes('ERROR   [(stdin)] '), bad.stdout)
+  assert.equal(fromStdin('{ nope').status, 1)
+})
+
 test('an unknown command is a usage error', () => {
   const r = run('frobnicate')
   assert.equal(r.status, 2)

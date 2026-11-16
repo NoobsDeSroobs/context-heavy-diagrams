@@ -5,10 +5,10 @@
 | Command | What it does |
 |---|---|
 | [`spec`](#chd-spec) | Print the `.chd` file format reference |
-| [`validate`](#chd-validate) | Check diagram or metamodel files for problems |
+| [`validate`](#chd-validate) | Is a diagram or metamodel well-formed? (its structure) |
 | [`hash`](#chd-hash) | Print a file's fingerprint (SHA-256 of its bytes) |
 | [`export`](#chd-export) | Draw a diagram as an SVG image |
-| [`check`](#chd-check) | Check diagrams against a diagram metamodel |
+| [`check`](#chd-check) | Does a diagram follow the rules of a diagram metamodel? (its architecture) |
 | [`diff`](#chd-diff) | What changed between two versions of a diagram |
 | [`edit`](#chd-edit) | Build or change a diagram with a list of operations |
 | [`ask`](#chd-ask) | Ask about a diagram's layout while you build it |
@@ -28,9 +28,11 @@ On **Windows PowerShell 5.1**, text piped to a program is re-encoded and can dam
 
 ## `chd validate`
 
-`chd validate <file.chd|file.chdmeta>... [--recursive]`
+`chd validate <file.chd|file.chdmeta|->... [--recursive]`
 
 Reports duplicate ids, dangling edge endpoints, parent-before-child ordering and relative paths that do not resolve, and warns where an edge label does not fit in the gap between its two elements. A `.chdmeta` file is checked against the metamodel format. `--recursive` also follows linked diagrams. Warnings alone do not fail. Exit codes: `0`, `1` if any error was found, `2`.
+
+A single `-` reads one diagram from standard input, so a draft can be validated before it exists as a file. It has no folder, so the paths to icons, notes and linked diagrams are not checked and a `NOTE` line says so; every other check runs ([ADR 0182](decisions/0182-validate-diagram-takes-text-too.md)).
 
 ```
 $ chd validate shop.chd

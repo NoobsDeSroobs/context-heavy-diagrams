@@ -12,7 +12,7 @@ import type {
   MetadataEntry,
   RequiredTagDefinition
 } from '../diagram/index.ts'
-import { labelToFileStem } from '../labelFileName.ts'
+import { firstFreeName, labelToFileStem, truncateStem } from '../labelFileName.ts'
 import { highlightId } from '../tagging/highlights.ts'
 import { seedMetadata, syncElementMetadata } from '../tagging/metadataSync.ts'
 import {
@@ -443,11 +443,14 @@ function addNewLinkedDiagram(model: Model, reader: Reader): OperationResult {
     )
   }
   const stem = labelToFileStem(reader.optionalString('name') ?? node.data.label, 'diagram')
-  const taken = new Set(model.nodes.map((n) => n.data.linkedDiagram))
-  let path = `${folder}/${stem}.chd`
-  for (let n = 1; taken.has(path) || model.options.fileExists?.(path); n += 1) {
-    path = `${folder}/${stem}-${n}.chd`
-  }
+  const taken = new Set(model.nodes.map((n) => n.data.linkedDiagram?.toLowerCase()))
+  const path = `${folder}/${firstFreeName(
+    stem,
+    '.chd',
+    (name) =>
+      taken.has(`${folder}/${name}`.toLowerCase()) ||
+      !!model.options.fileExists?.(`${folder}/${name}`)
+  )}`
   const refusal = model.options.checkReference?.(path)
   if (refusal) reader.fail(refusal)
   node.data.linkedDiagram = path
@@ -471,8 +474,7 @@ function noteFileName(node: DiagramNode, name?: string): string {
     .join('')
     .replace(/\s+/g, ' ')
     .trim()
-    .slice(0, 60)
-  const base = cleaned.replace(/^[. ]+|[. ]+$/g, '')
+  const base = truncateStem(cleaned).replace(/^[. ]+|[. ]+$/g, '')
   return `${base || 'note'}-${node.id}.md`
 }
 

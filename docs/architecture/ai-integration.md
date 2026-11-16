@@ -40,7 +40,7 @@ The command line and the MCP server give the same answers ([ADR 0138](../decisio
 | Capability | `chd` | MCP tool | Shared code |
 |---|---|---|---|
 | Format rules | `chd spec [topic]` | `get_format_spec` | the skill files |
-| Validate | `chd validate` | `validate_diagram`, and on every write | `resources/ai/skills/chd-diagrams/scripts/validate_chd.mjs` |
+| Validate | `chd validate` (`-` reads a diagram from stdin) | `validate_diagram` (a file or text), and on every write | `resources/ai/skills/chd-diagrams/scripts/validate_chd.mjs` |
 | Validate a metamodel | `chd validate file.chdmeta` | `validate_metamodel`, and on every write | `metamodelProblems` in `src/shared/conformance/report.ts` |
 | Fingerprint | `chd hash` | returned by `read_file` | SHA-256 of the bytes |
 | Conformance check | `chd check` | `check_diagram` | `src/shared/conformance/report.ts` |
