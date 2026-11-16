@@ -165,3 +165,28 @@
 .edge-highlight-chips {
   z-index: 5;
 }
+
+/* The card shown by the pointer while Ctrl/Cmd is held over an edge that crosses a container (ADR 0185). */
+.crossing-peek {
+  position: fixed;
+  z-index: 60;
+  max-width: 280px;
+  padding: 6px 10px;
+  pointer-events: none;
+  background: var(--color-background-soft);
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  color: var(--color-text);
+  font-size: 12px;
+}
+
+.crossing-peek-route {
+  font-weight: bold;
+}
+
+.crossing-peek-count {
+  margin-top: 2px;
+  color: var(--ev-c-text-3);
+  font-size: 11px;
+}

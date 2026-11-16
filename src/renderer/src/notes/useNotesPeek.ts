@@ -4,6 +4,9 @@ export interface PeekTarget {
   nodeId: string
   // Viewport coordinates of the hovered node, captured when the peek (re)computes.
   rect: { left: number; top: number; right: number; bottom: number }
+  // Where the pointer was when it came onto the element, for a card that sits by the pointer (a
+  // long edge's own box is far from it).
+  pointer: { x: number; y: number }
 }
 
 // Only the id is read, so the compare window can hover an edge the same way.
@@ -18,7 +21,7 @@ export interface NotesPeekBindings {
 // recompute() that derives the visible target from all of them.
 export function useNotesPeek(): { peek: PeekTarget | null; bindings: NotesPeekBindings } {
   const [peek, setPeek] = useState<PeekTarget | null>(null)
-  const hoverRef = useRef<{ nodeId: string; el: HTMLElement } | null>(null)
+  const hoverRef = useRef<{ nodeId: string; el: HTMLElement; x: number; y: number } | null>(null)
   const modifierHeldRef = useRef(false)
   // A shortcut (Ctrl+A/C/V/Z…) or a Ctrl+click in progress; lasts until the
   // modifier is released, so the card never flashes over those gestures.
@@ -35,7 +38,8 @@ export function useNotesPeek(): { peek: PeekTarget | null; bindings: NotesPeekBi
     const r = hover.el.getBoundingClientRect()
     setPeek({
       nodeId: hover.nodeId,
-      rect: { left: r.left, top: r.top, right: r.right, bottom: r.bottom }
+      rect: { left: r.left, top: r.top, right: r.right, bottom: r.bottom },
+      pointer: { x: hover.x, y: hover.y }
     })
   }, [])
 
@@ -92,7 +96,12 @@ export function useNotesPeek(): { peek: PeekTarget | null; bindings: NotesPeekBi
 
   const onNodeMouseEnter = useCallback(
     (event: MouseEvent, node: { id: string }) => {
-      hoverRef.current = { nodeId: node.id, el: event.currentTarget as HTMLElement }
+      hoverRef.current = {
+        nodeId: node.id,
+        el: event.currentTarget as HTMLElement,
+        x: event.clientX,
+        y: event.clientY
+      }
       // The event itself says whether Ctrl/Cmd is down right now — covers a
       // keydown this window never saw.
       modifierHeldRef.current = event.ctrlKey || event.metaKey

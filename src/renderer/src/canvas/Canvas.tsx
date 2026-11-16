@@ -77,6 +77,7 @@ import { nodeTypes, edgeTypes, DEFAULT_EDGE_OPTIONS, HIDE_ATTRIBUTION } from './
 import DiagramSettingsPanel from '../diagram-settings/DiagramSettingsPanel'
 import { effectiveGravityPresets } from '../nodes/lineGravityPresets'
 import EdgeMarkerDefs from '../edges/edgeMarkers'
+import CrossingPeekOf from '../edges/CrossingPeekOf'
 import { useModifierHeldClass } from '../edges/useModifierHeldClass'
 import { usePrefersReducedMotion } from '../edges/usePrefersReducedMotion'
 import { edgeAnimationIsOn } from '@shared/preferences/preferences'
@@ -322,6 +323,9 @@ function CanvasInner(): React.JSX.Element {
   const connectionRadius = useZoomedConnectionHandles()
   const { peek, bindings: peekBindings } = useNotesPeek()
   const peekNode = peek ? rfInstance.getNode(peek.nodeId) : undefined
+  // The same hold-Ctrl peek on an edge, while crossings are marked (ADR 0185): which containers it
+  // goes between. It lives beside the note peek, as the one hook already tracks key and pointer.
+  const { peek: edgePeek, bindings: edgePeekBindings } = useNotesPeek()
   const updateNodeInternals = useUpdateNodeInternals()
   // Scopes the PNG export (ADR 0051) capture to this window's own
   // .react-flow__viewport rather than a bare document-wide query — no
@@ -399,6 +403,10 @@ function CanvasInner(): React.JSX.Element {
   // The legend rows for the kinds of step and event in use (ADR 0180). Hiding them is for this
   // session only: nothing about it is saved with the diagram.
   const [showStencilLegend, setShowStencilLegend] = useState(true)
+  // Gates on the edges that cross a container's border (ADR 0185): a switch for this session, off
+  // because most diagrams do not care about crossings and it adds to the canvas.
+  const [showCrossings, setShowCrossings] = useState(false)
+  const toggleCrossings = useCallback(() => setShowCrossings((on) => !on), [])
   const stencilKinds = useMemo(
     () =>
       stencilKindsUsed(
@@ -2568,6 +2576,7 @@ function CanvasInner(): React.JSX.Element {
     activeEdgeDirectionSetId,
     security,
     enabledHighlightIds,
+    showCrossings,
     theme,
     preferences,
     flowWrapperRef,
@@ -3401,6 +3410,8 @@ function CanvasInner(): React.JSX.Element {
     edgeAnimationOn,
     toggleMinimap,
     minimapOn,
+    toggleCrossings,
+    crossingsOn: showCrossings,
     toggleDiagramSettingsPanel,
     togglePreferencesPanel,
     setCommandPaletteOpen,
@@ -3465,6 +3476,7 @@ function CanvasInner(): React.JSX.Element {
       searchMatchIds,
       isolateActive,
       isolateOpacity: preferences.isolateOpacity,
+      showCrossings,
       selectAllOfType,
       pendingLabelEditId,
       clearPendingLabelEdit
@@ -3499,6 +3511,7 @@ function CanvasInner(): React.JSX.Element {
       searchMatchIds,
       isolateActive,
       preferences.isolateOpacity,
+      showCrossings,
       selectAllOfType,
       pendingLabelEditId,
       clearPendingLabelEdit
@@ -3634,6 +3647,9 @@ function CanvasInner(): React.JSX.Element {
                 onDrop={onCanvasDrop}
               >
                 <EdgeMarkerDefs />
+                {edgePeek && showCrossings && (
+                  <CrossingPeekOf peek={edgePeek} rfInstance={rfInstance} />
+                )}
                 {peek && peekNode && (
                   <PeekCard
                     key={peek.nodeId}
@@ -3674,6 +3690,8 @@ function CanvasInner(): React.JSX.Element {
                   onNodeDragStop={onNodeDragStop}
                   onNodeClick={onStyleBrushNodeClick}
                   onEdgeClick={onEdgeClick}
+                  onEdgeMouseEnter={edgePeekBindings.onNodeMouseEnter}
+                  onEdgeMouseLeave={edgePeekBindings.onNodeMouseLeave}
                   onNodeMouseEnter={peekBindings.onNodeMouseEnter}
                   onNodeMouseLeave={peekBindings.onNodeMouseLeave}
                   onConnect={onConnect}

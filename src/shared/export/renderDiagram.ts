@@ -5,6 +5,13 @@ import { flattenPath, pointAtRatio, type Point } from '../geometry/pathSampling.
 import { highlightId, matchingHighlights } from '../tagging/highlights.ts'
 import { styledNodeType } from '../styling/styleDefaults.ts'
 import {
+  edgeCrossing,
+  GATE_LENGTH,
+  GATE_WIDTH,
+  GATE_COLOR,
+  gatesOnPath
+} from '../crossings/crossings.ts'
+import {
   containerLabelPlace,
   containerLabelRoom,
   containerLabelSideOf,
@@ -89,6 +96,9 @@ export interface SvgExportOptions {
   fontFamily?: string
   // Written as the document <title>, for accessibility.
   title?: string
+  // A gate where an edge goes through the border of a container (ADR 0185). Off unless named here, as
+  // on the canvas, where it is a session switch.
+  crossings?: boolean
 }
 
 export const DEFAULT_SVG_EXPORT_OPTIONS = {
@@ -696,6 +706,25 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
   }
 
   // -- edges
+  // The gates where an edge goes through the border of a container (ADR 0185), drawn on the edge.
+  const gatesFor = (sourceId: string, targetId: string, path: Point[]): string => {
+    const crossing = edgeCrossing(sourceId, targetId, (id) => nodes.get(id)?.node.parentId)
+    if (!crossing) return ''
+    const boundaries = [...crossing.leaving, ...crossing.entering].flatMap((id) => {
+      const box = nodes.get(id)
+      return box ? [{ id, rect: { x: box.x, y: box.y, width: box.width, height: box.height } }] : []
+    })
+    const half = GATE_LENGTH / 2
+    return gatesOnPath(path, boundaries)
+      .map((g) => {
+        const [x1, y1, x2, y2] =
+          g.axis === 'horizontal'
+            ? [g.x - half, g.y, g.x + half, g.y]
+            : [g.x, g.y - half, g.x, g.y + half]
+        return `<line class="chd-crossing-gate" x1="${num(x1)}" y1="${num(y1)}" x2="${num(x2)}" y2="${num(y2)}" stroke="${GATE_COLOR[theme]}" stroke-width="${GATE_WIDTH}"/>`
+      })
+      .join('')
+  }
   const chipRing = tokens.background
   for (const laid of edges) {
     const { edge, from, to } = laid
@@ -709,13 +738,13 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
       edge.points ?? [],
       options.edgeStraightSegmentLength
     )
+    const flat = flattenPath(d)
     drawn.push({
       z: laid.z,
       layer: 0,
       order: laid.order,
-      svg: `<g class="chd-edge" data-id="${esc(edge.id)}"><path d="${d}" fill="none"${applyStroke(look)}/>${arrowheadsFor(d, look)}</g>`
+      svg: `<g class="chd-edge" data-id="${esc(edge.id)}"><path d="${d}" fill="none"${applyStroke(look)}/>${arrowheadsFor(d, look)}${options.crossings ? gatesFor(edge.source, edge.target, flat) : ''}</g>`
     })
-    const flat = flattenPath(d)
     const pad =
       look.strokeWidth / 2 +
       (look.startMarker !== 'none' || look.endMarker !== 'none' ? look.strokeWidth * 6 : 0) +

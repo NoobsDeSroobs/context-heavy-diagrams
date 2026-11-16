@@ -11,6 +11,7 @@ import {
 } from 'react'
 import { BaseEdge, EdgeLabelRenderer, useReactFlow, type EdgeProps } from '@xyflow/react'
 import type { EdgeStyle, LinePoint, MetadataEntry } from '@shared/diagram'
+import { GATE_COLOR, GATE_LENGTH, GATE_WIDTH } from '@shared/crossings/crossings'
 import { buildEdgePath } from '@shared/geometry/edgePath'
 import { ratioNearest } from '@shared/geometry/pathSampling'
 import {
@@ -22,6 +23,7 @@ import {
 import EditableLabel from '../ui/EditableLabel'
 import HighlightChips from '../tagging/HighlightChips'
 import { useDiagramContext } from '../canvas/useDiagramContext'
+import { useEdgeGates } from './useEdgeGates'
 import { HIGHLIGHT_BORDER_WIDTH } from '@shared/tagging/highlights'
 import { EDGE_STYLE_DEFAULTS } from '@shared/styling/styleDefaults'
 import {
@@ -104,6 +106,8 @@ function LabeledEdge({
   targetY,
   sourcePosition,
   targetPosition,
+  source,
+  target,
   style,
   markerEnd,
   markerStart,
@@ -122,7 +126,8 @@ function LabeledEdge({
     gravityPresets,
     searchMatchIds,
     isolateActive,
-    isolateOpacity
+    isolateOpacity,
+    showCrossings
   } = useDiagramContext()
   const edgeStyle = data?.style as EdgeStyle | undefined
   const routingStyle = edgeStyle?.routingStyle
@@ -460,6 +465,8 @@ function LabeledEdge({
     [orthoVertices, pushSnapshot, screenToFlowPosition, updateEdgeData, id]
   )
 
+  const gates = useEdgeGates(showCrossings, source, target, edgePath)
+
   return (
     <>
       <BaseEdge
@@ -492,6 +499,23 @@ function LabeledEdge({
             } as CSSProperties
           }
         />
+      )}
+      {gates.length > 0 && (
+        // Gates where the edge goes through the border of a container (ADR 0185): a bar lying along the
+        // border, so flat on a horizontal border and upright on a vertical one.
+        <g className="edge-crossing-gates" pointerEvents="none">
+          {gates.map((g, i) => (
+            <line
+              key={`${g.containerId}-${i}`}
+              x1={g.axis === 'horizontal' ? g.x - GATE_LENGTH / 2 : g.x}
+              y1={g.axis === 'horizontal' ? g.y : g.y - GATE_LENGTH / 2}
+              x2={g.axis === 'horizontal' ? g.x + GATE_LENGTH / 2 : g.x}
+              y2={g.axis === 'horizontal' ? g.y : g.y + GATE_LENGTH / 2}
+              stroke={GATE_COLOR[theme]}
+              strokeWidth={GATE_WIDTH}
+            />
+          ))}
+        </g>
       )}
       {/* Invisible hover surface — see HOVER_HIT_WIDTH. */}
       <path

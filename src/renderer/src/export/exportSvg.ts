@@ -24,6 +24,8 @@ export interface SvgExportParams {
   title?: string
   // The font the app draws this diagram in, when the diagram has none of its own (ADR 0130).
   fontFamily?: string
+  // Gates where an edge goes through the border of a container, as on the canvas (ADR 0185).
+  crossings?: boolean
 }
 
 // Resolves every icon the diagram draws, then renders. Built-in icons are bundled markup, drawn
@@ -60,6 +62,7 @@ export async function buildDiagramSvg(
     edgeStraightSegmentLength: params.edgeStraightSegmentLength,
     icons,
     fontFamily: params.fontFamily,
-    title: params.title
+    title: params.title,
+    crossings: params.crossings
   })
 }

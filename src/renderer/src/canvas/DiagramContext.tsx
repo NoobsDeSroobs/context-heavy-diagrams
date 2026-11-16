@@ -115,6 +115,8 @@ export interface DiagramContextValue {
   // threading convention as edgeStraightSegmentLength/
   // maxConnectionPointsPerSide above.
   isolateOpacity: number
+  // Gates are drawn on the edges that cross a container's border (ADR 0185).
+  showCrossings: boolean
   // See ADR 0065 — replaces the current selection with every element of one
   // type. Exposed here so each node type's own right-click context menu
   // can offer "Select all entities"/"...containers"/etc. without Canvas.tsx

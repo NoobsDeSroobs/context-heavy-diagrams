@@ -76,6 +76,7 @@ function useReadOnlyContext(diagramPath: string | null): DiagramContextValue {
       searchMatchIds: new Set<string>(),
       isolateActive: false,
       isolateOpacity: preferences.isolateOpacity,
+      showCrossings: false,
       selectAllOfType: noop,
       pendingLabelEditId: null,
       clearPendingLabelEdit: noop
