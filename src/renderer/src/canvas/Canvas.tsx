@@ -3449,7 +3449,6 @@ function CanvasInner(): React.JSX.Element {
       isolateActive,
       isolateOpacity: preferences.isolateOpacity,
       selectAllOfType,
-      setStencilKind,
       pendingLabelEditId,
       clearPendingLabelEdit
     }),
@@ -3484,7 +3483,6 @@ function CanvasInner(): React.JSX.Element {
       isolateActive,
       preferences.isolateOpacity,
       selectAllOfType,
-      setStencilKind,
       pendingLabelEditId,
       clearPendingLabelEdit
     ]

@@ -13,7 +13,6 @@ import type { ConnectionPoint, NodeStyle } from '@shared/diagram'
 import {
   HEAVY_BORDER_FACTOR,
   MARK_STROKE,
-  STENCIL_KINDS,
   STENCIL_MARK_PATHS,
   stencilKind,
   stencilLabelInsets,
@@ -46,7 +45,6 @@ function StencilNode({ id, data, selected }: NodeProps): React.JSX.Element {
     isolateActive,
     isolateOpacity,
     selectAllOfType,
-    setStencilKind,
     groupResize,
     pendingLabelEditId,
     clearPendingLabelEdit
@@ -106,13 +104,8 @@ function StencilNode({ id, data, selected }: NodeProps): React.JSX.Element {
       const detachItem = getNode(id)?.parentId
         ? [{ label: 'Detach from parent', onSelect: () => detachFromParent(id) }]
         : []
-      const kindItems = STENCIL_KINDS.filter((k) => k.id !== kind.id).map((k) => ({
-        label: `Change to ${k.name}`,
-        onSelect: () => setStencilKind([id], k.id)
-      }))
       openContextMenu(event.clientX, event.clientY, [
-        ...kindItems,
-        { ...linkItems[0], separatorBefore: true },
+        linkItems[0],
         ...linkItems.slice(1),
         ...detachItem,
         addConnectionPointItem(rect, event.clientX, event.clientY),
@@ -125,7 +118,6 @@ function StencilNode({ id, data, selected }: NodeProps): React.JSX.Element {
     },
     [
       id,
-      kind.id,
       openContextMenu,
       detachFromParent,
       getNode,
@@ -134,8 +126,7 @@ function StencilNode({ id, data, selected }: NodeProps): React.JSX.Element {
       updateNodeData,
       pushSnapshot,
       addConnectionPointItem,
-      selectAllOfType,
-      setStencilKind
+      selectAllOfType
     ]
   )
 

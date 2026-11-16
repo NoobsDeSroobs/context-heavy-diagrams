@@ -45,7 +45,7 @@ validated ([ADR 0080](../../decisions/0080-bpmn-as-adopted-vocabulary-not-metamo
 ## Tasks
 
 - [x] ADR 0180; the `stencil` node type with `data.kind`; the kinds table (step, decision, parallel, start, end) with shapes, marks and default colours; `docs/file-format.md`
-- [x] The canvas node, the palette entry with a kind list and filter, the property panel (kind, look, size, connection points), right-click kind swap, one link, inside containers
+- [x] The canvas node, the palette entry with a kind list and filter, the property panel (kind, look, size, connection points), the kind changed from the property panel (the right-click menu has no kind list: a flat list of thirteen is not usable), one link, inside containers
 - [x] The legend rows for the kinds in use with a session-only switch; search by kind and BPMN terms; the review of changes; SVG, PNG and draw.io export; conformance leaves them out
 - [x] Example `examples/process-flow-stencils.chd` with a drill-down diagram
 - [ ] Try it in the app on real flows (the app itself was not run in the build session): label position when an edge leaves the bottom of a small shape, the colours in the light theme, the palette list

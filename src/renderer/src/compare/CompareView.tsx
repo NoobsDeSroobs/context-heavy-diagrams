@@ -77,7 +77,6 @@ function useReadOnlyContext(diagramPath: string | null): DiagramContextValue {
       isolateActive: false,
       isolateOpacity: preferences.isolateOpacity,
       selectAllOfType: noop,
-      setStencilKind: noop,
       pendingLabelEditId: null,
       clearPendingLabelEdit: noop
     }),
