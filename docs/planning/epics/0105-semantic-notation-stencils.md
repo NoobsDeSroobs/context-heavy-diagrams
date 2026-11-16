@@ -50,7 +50,7 @@ validated ([ADR 0080](../../decisions/0080-bpmn-as-adopted-vocabulary-not-metamo
 - [x] Example `examples/process-flow-stencils.chd` with a drill-down diagram
 - [ ] Try it in the app on real flows (the app itself was not run in the build session): label position when an edge leaves the bottom of a small shape, the colours in the light theme, the palette list
 - [x] The palette entry's name: Behaviour; the step is a rectangle with an arrow band (no direction property: the edges give it)
-- [ ] More kinds before the pull request: which (inclusive choice, timer and message events, repeat marks, the sorts of step with a mark of their own)
+- [x] More kinds before the pull request: 13 now, with ids that say what the kind is, general first (`step-user`, `timer-event`); marks drawn from one shared table; later candidates (start and end variants with a mark, boundary events, data objects, pools with message flows, annotations) wait for real flows to need them
 - [ ] The assistant tools (`edit_diagram`, `chd edit`, the MCP server) and the build guide: stencils as a full member, once the design has settled
 - [ ] The lane hand-off check ([0088](later/0088-cross-container-edge-detection.md))
 - [ ] The BPMN specification's current version (2.0.2) and its terms, before release

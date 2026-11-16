@@ -3,11 +3,13 @@ import { NodeResizer, useReactFlow, type NodeProps } from '@xyflow/react'
 import type { ConnectionPoint, NodeStyle } from '@shared/diagram'
 import {
   HEAVY_BORDER_FACTOR,
+  MARK_STROKE,
   STENCIL_KINDS,
+  STENCIL_MARK_PATHS,
   stencilKind,
+  stencilLabelInsets,
   stencilLabelOutside,
-  stencilStyle,
-  type StencilMark
+  stencilStyle
 } from '@shared/stencils/kinds'
 import { NODE_STYLE_DEFAULTS } from '@shared/styling/styleDefaults'
 import EditableLabel from '../ui/EditableLabel'
@@ -21,12 +23,6 @@ import { useConnectionPointMenu } from './connectionPoints'
 // An event or a verb of a flow (ADR 0180): a base shape with an optional mark on it, taken from the
 // element's kind. Resizable, connectable, never rotated, no notes, tags or icons of its own, and one
 // link to another diagram. The small shapes carry their label below them; a step carries it inside.
-
-// Drawn by the app as vector graphics, in a 24-unit box that the CSS scales to the shape.
-const MARK_PATH: Record<StencilMark, string> = {
-  cross: 'M6 6L18 18M6 18L18 6',
-  plus: 'M5 12H19M12 5V19'
-}
 
 function StencilNode({ id, data, selected }: NodeProps): React.JSX.Element {
   const {
@@ -53,6 +49,7 @@ function StencilNode({ id, data, selected }: NodeProps): React.JSX.Element {
   const kindId = typeof data?.kind === 'string' ? data.kind : undefined
   const kind = stencilKind(kindId)
   const outside = stencilLabelOutside(kindId)
+  const insets = stencilLabelInsets(kindId)
   const ownStyle = data?.style as NodeStyle | undefined
   const style = stencilStyle(kindId, ownStyle)
   const { addConnectionPointItem, onPointContextMenu } = useConnectionPointMenu(id, customPoints)
@@ -155,6 +152,7 @@ function StencilNode({ id, data, selected }: NodeProps): React.JSX.Element {
       data-stencil-kind={kind.id}
       style={{
         ...frameCss,
+        ...(insets.right ? { paddingRight: 8 + insets.right } : {}),
         ...isolateStyle(id, isolateActive, searchMatchIds, isolateOpacity)
       }}
       onContextMenu={onContextMenu}
@@ -171,14 +169,29 @@ function StencilNode({ id, data, selected }: NodeProps): React.JSX.Element {
       />
       <ConnectionHandles storedPoints={customPoints} onPointContextMenu={onPointContextMenu} />
       {locked && <LockBadge />}
+      {kind.doubleBorder && (
+        <span
+          className="stencil-node-ring"
+          aria-hidden="true"
+          style={{
+            borderColor: frameCss.borderColor ?? 'var(--default-entity-stroke)',
+            borderWidth: frameCss.borderWidth
+          }}
+        />
+      )}
       {kind.mark && (
-        <svg className="stencil-node-mark" viewBox="0 0 24 24" aria-hidden="true">
+        <svg
+          className={`stencil-node-mark${kind.shape === 'arrow' ? ' stencil-node-mark--slot' : ''}${kind.doubleBorder ? ' stencil-node-mark--ringed' : ''}`}
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
           <path
-            d={MARK_PATH[kind.mark]}
+            d={STENCIL_MARK_PATHS[kind.mark]}
             fill="none"
             stroke="currentColor"
-            strokeWidth="2.5"
+            strokeWidth={MARK_STROKE}
             strokeLinecap="round"
+            strokeLinejoin="round"
           />
         </svg>
       )}

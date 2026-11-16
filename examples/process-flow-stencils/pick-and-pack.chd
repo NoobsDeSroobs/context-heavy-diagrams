@@ -14,7 +14,7 @@
       },
       "data": {
         "label": "Pick list printed",
-        "kind": "start"
+        "kind": "start-event"
       }
     },
     {
@@ -62,7 +62,7 @@
       },
       "data": {
         "label": "Handed to the carrier",
-        "kind": "end"
+        "kind": "end-event"
       }
     }
   ],

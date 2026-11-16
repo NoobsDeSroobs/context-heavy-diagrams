@@ -14,19 +14,19 @@ const step = (extra: Partial<Node> = {}, data: Record<string, unknown> = {}): No
 
 describe('swapStencilKind', () => {
   it('takes the new kind, its default label and its size, keeping the centre', () => {
-    const swapped = swapStencilKind(step(), 'decision')
-    expect(swapped.data).toMatchObject({ kind: 'decision', label: 'Decision' })
+    const swapped = swapStencilKind(step(), 'exclusive-choice')
+    expect(swapped.data).toMatchObject({ kind: 'exclusive-choice', label: 'Decision' })
     expect([swapped.width, swapped.height]).toEqual([48, 48])
     expect(swapped.position).toEqual({ x: 151, y: 104 })
   })
 
   it('keeps a label the person typed', () => {
-    const swapped = swapStencilKind(step({}, { label: 'Approve invoice' }), 'decision')
+    const swapped = swapStencilKind(step({}, { label: 'Approve invoice' }), 'exclusive-choice')
     expect(swapped.data?.label).toBe('Approve invoice')
   })
 
   it('keeps a size the person set', () => {
-    const swapped = swapStencilKind(step({ width: 200, height: 80 }), 'decision')
+    const swapped = swapStencilKind(step({ width: 200, height: 80 }), 'exclusive-choice')
     expect([swapped.width, swapped.height]).toEqual([200, 80])
     expect(swapped.position).toEqual({ x: 100, y: 100 })
   })
@@ -34,7 +34,7 @@ describe('swapStencilKind', () => {
   it('keeps the link, the style and the place of the element', () => {
     const swapped = swapStencilKind(
       step({}, { linkedDiagram: 'detail.chd', style: { stroke: '#fff' } }),
-      'parallel'
+      'parallel-split-join'
     )
     expect(swapped.data).toMatchObject({ linkedDiagram: 'detail.chd', style: { stroke: '#fff' } })
   })

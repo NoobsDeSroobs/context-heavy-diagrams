@@ -366,7 +366,9 @@ export function renderDiagramDrawio(
       kind === 'text'
         ? ['text']
         : sk?.shape === 'circle'
-          ? ['ellipse']
+          ? sk.doubleBorder
+            ? ['ellipse', 'shape=doubleEllipse']
+            : ['ellipse']
           : sk?.shape === 'square'
             ? ['rhombus']
             : []
@@ -602,7 +604,7 @@ function notesFor(diagram: DiagramFile, lost: Lost, enabled: Set<string>): strin
     )
   if (lost.stencilMarks > 0)
     out.push(
-      `${plural(lost.stencilMarks, 'behaviour element has', 'behaviour elements have')} a mark inside its shape (a cross, a plus or an arrow band) that draw.io does not show; the shape and the label are kept`
+      `${plural(lost.stencilMarks, 'behaviour element has', 'behaviour elements have')} a mark inside its shape (a cross, a plus, a clock, an arrow band and so on) that draw.io does not show; the shape and the label are kept`
     )
   const legendRows =
     (diagram.legend ?? []).length +

@@ -24,8 +24,8 @@ const stencil = (
 const flow = (): DiagramFile => ({
   version: 1,
   nodes: [
-    stencil('begin', 'start', 'Begin', 0),
-    stencil('check', 'decision', 'Approved?', 160),
+    stencil('begin', 'start-event', 'Begin', 0),
+    stencil('check', 'exclusive-choice', 'Approved?', 160),
     {
       ...stencil('work', 'step', 'Do the work', 320),
       size: { width: 140, height: 56 }
@@ -55,11 +55,28 @@ describe('stencils on the canvas (ADR 0180)', () => {
     await screen.findByText('Do the work')
     const shape = (kind: string): Element | null =>
       container.querySelector(`.stencil-node[data-stencil-kind="${kind}"]`)
-    expect(shape('start')?.className).toContain('stencil-node--circle')
-    expect(shape('decision')?.className).toContain('stencil-node--square')
+    expect(shape('start-event')?.className).toContain('stencil-node--circle')
+    expect(shape('exclusive-choice')?.className).toContain('stencil-node--square')
     expect(shape('step')?.className).toContain('stencil-node--arrow')
-    expect(shape('decision')?.querySelector('.stencil-node-mark')).not.toBeNull()
+    expect(shape('exclusive-choice')?.querySelector('.stencil-node-mark')).not.toBeNull()
     expect(shape('step')?.querySelector('.stencil-node-mark')).toBeNull()
+  })
+
+  it('draws a mark in the slot of a step and a second ring on an event in the middle of a flow', async () => {
+    const nodes = [
+      stencil('user', 'step-user', 'Review', 0),
+      stencil('wait', 'timer-event', 'Wait', 200),
+      stencil('plain', 'event', 'Happens', 300)
+    ]
+    const { container } = renderCanvas({ ...flow(), nodes })
+    await screen.findByText('Review')
+    const shape = (kind: string): Element | null =>
+      container.querySelector(`.stencil-node[data-stencil-kind="${kind}"]`)
+    expect(shape('step-user')?.querySelector('.stencil-node-mark--slot')).not.toBeNull()
+    expect(shape('timer-event')?.querySelector('.stencil-node-ring')).not.toBeNull()
+    expect(shape('timer-event')?.querySelector('.stencil-node-mark--ringed')).not.toBeNull()
+    expect(shape('event')?.querySelector('.stencil-node-mark')).toBeNull()
+    expect(shape('event')?.querySelector('.stencil-node-ring')).not.toBeNull()
   })
 
   it('adds a step from the palette, saves it with its kind, and undo takes it away', async () => {
@@ -76,7 +93,7 @@ describe('stencils on the canvas (ADR 0180)', () => {
     const added = sent.nodes[sent.nodes.length - 1]
     expect(added.type).toBe('stencil')
     expect(added.data.kind).toBe('step')
-    expect(sent.nodes[1].data.kind).toBe('decision')
+    expect(sent.nodes[1].data.kind).toBe('exclusive-choice')
 
     key('z')
     await waitFor(() => expect(container.querySelectorAll('.stencil-node')).toHaveLength(3))
@@ -87,16 +104,17 @@ describe('stencils on the canvas (ADR 0180)', () => {
     await screen.findByText('Do the work')
     fireEvent.click(screen.getByRole('button', { name: 'Choose a kind of behaviour' }))
     fireEvent.change(screen.getByPlaceholderText('Filter…'), { target: { value: 'gateway' } })
-    // The BPMN term finds both gateways, and the list stays in the app's own words.
+    // The BPMN term finds all three gateways, and the list stays in the app's own words.
     const list = within(screen.getByRole('listbox', { name: 'Kinds of behaviour' }))
     expect(list.getAllByRole('option').map((o) => o.textContent)).toEqual([
       'Decision',
+      'Inclusive choice',
       'Parallel split or join'
     ])
     fireEvent.click(list.getByRole('option', { name: 'Parallel split or join' }))
     await waitFor(() =>
       expect(
-        container.querySelectorAll('.stencil-node[data-stencil-kind="parallel"]')
+        container.querySelectorAll('.stencil-node[data-stencil-kind="parallel-split-join"]')
       ).toHaveLength(1)
     )
   })
@@ -111,7 +129,9 @@ describe('stencils on the canvas (ADR 0180)', () => {
     fireEvent.change(kind, { target: { value: 'gate' } })
     fireEvent.click(await screen.findByRole('option', { name: 'Decision' }))
     await waitFor(() =>
-      expect(container.querySelector('.stencil-node[data-stencil-kind="decision"]')).not.toBeNull()
+      expect(
+        container.querySelector('.stencil-node[data-stencil-kind="exclusive-choice"]')
+      ).not.toBeNull()
     )
     expect(screen.getByText('Do the work')).toBeTruthy()
   })

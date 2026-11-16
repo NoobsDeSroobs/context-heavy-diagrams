@@ -99,7 +99,7 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
 | `data.icons` | object | no | Only meaningful on `"entity"`/`"container"` nodes. Up to four keys — `topLeft`, `topRight`, `bottomLeft`, `bottomRight` — each an icon reference (see below). |
 | `data.notes` | string | no | The element's note: relative path to a Markdown file with free-form notes about this node (purpose, integration type, inputs/outputs, whatever's useful) — rendered in-app as a side panel, never a second canvas object. Same relative-path-from-the-diagram's-own-directory convention as custom icon paths. Absent means the node has no note yet. Files written before version 0.5.0 call this field `data.details`: a reader accepts both names (`notes` wins when both are present) and a writer writes only `notes` ([ADR 0140](decisions/0140-the-markdown-files-behind-an-element-are-called-notes.md)). This app names the file after the node's own `data.label` plus its `id`'s UUID suffix (e.g. `Web App-1a2b3c4d-....md`), for human recognizability in a file listing, and keeps it in sync on relabel — but a reader should treat the whole value as an opaque relative path and never try to parse or reconstruct it; only the path's target content matters. |
 | `data.linkedDiagram` | string | no | Relative path (from this diagram file's own directory) to another `.chd` file — a drill-down link. Resolved and opened on demand (e.g. Ctrl/Cmd+click in this app), never eagerly. Absent means the node has no link. See the Linking section below for the missing-target and directionality rules. |
-| `data.kind` | string | `"stencil"` only | The kind of step or event — `"step"`, `"decision"`, `"parallel"`, `"start"` or `"end"`. Absent or unknown is read as `"step"`. See [Stencils](#stencils). |
+| `data.kind` | string | `"stencil"` only | The kind of step, choice or event: `"step"`, `"step-user"`, `"step-automatic"`, `"step-sub-flow"`, `"step-repeat"`, `"exclusive-choice"`, `"inclusive-choice"`, `"parallel-split-join"`, `"start-event"`, `"event"`, `"timer-event"`, `"message-event"` or `"end-event"`. Absent or unknown is read as `"step"`. See [Stencils](#stencils). |
 | `data.points` | array of LinePoint | `"line"` only | The line's own shape — see [Line points](#line-points) below. Absent/empty on a `"line"` node means nothing has been drawn yet (this app never actually produces that — a freshly created line always has 2 points). Meaningless on every other node type. |
 | `data.references` | array of string | no | Only meaningful on `"entity"`/`"container"` nodes. Ordered list of relative paths (from this diagram file's own directory, same convention as `data.notes`) to reference images — screenshots, diagrams, photos kept as working reference material for the concept this node represents. This app keeps them under a sibling `assets/references/` folder and shows them only in transient floating viewer windows; they are **never drawn on the canvas and never included in image exports**. A reader that only renders the diagram can ignore this field entirely. Absent/empty means none. |
 | `data.security` | object | `"entity"` only | Threat/risk assessment for this entity — a sparse map keyed by a threat `id` from the top-level [`security`](#security)`.threats` catalog, each value a `RiskCell` (`{ "probability", "consequence", "probabilityNote"?, "consequenceNote"? }`). An entry exists only once that (entity, threat) pair has actually been assessed; a missing cell for a matrix member pair means "not yet assessed". Present only on entities listed in `security.matrixEntityIds`. Absent means this entity isn't in the security matrix. Purely analytical — has no effect on how the entity is drawn. |
@@ -125,19 +125,27 @@ A reader building the actual curve: for each point `Pi`, compute a tangent — `
 
 ### Stencils
 
-A node of `type: "stencil"` is an event or a verb of a flow: a step, a decision, a start, an end ([ADR 0180](decisions/0180-stencils-are-light-elements-for-events-and-verbs.md)). Things and concepts are entities; a stencil is never a thing in the system. `data.kind` names its kind from a closed list; an absent kind, or one a reader does not know (a later version may add some), is read as `"step"`.
+A node of `type: "stencil"` is an event or a verb of a flow: a step, a choice, a split or join, a start, an end ([ADR 0180](decisions/0180-stencils-are-light-elements-for-events-and-verbs.md)). Things and concepts are entities; a stencil is never a thing in the system. `data.kind` names its kind from a closed list; an absent kind, or one a reader does not know (a later version may add some), is read as `"step"`.
 
 A stencil carries `data.label`, `position`, `size`, `style`, `parentId`, `locked`, `connectionPoints` and `data.linkedDiagram`. It has no `metadata`, `data.icons`, `data.notes`, `data.references` or `data.security`: whatever needs context is an entity. A lane is a container, and a stencil in a lane is its child.
 
 | `kind` | Base shape | Mark | Default size | Label | Fill when `style.fill` is absent |
 |---|---|---|---|---|---|
-| `step` | rectangle with slightly rounded corners and an arrow-shaped band down its left side, in the border colour | none | 150 × 56 | inside, clear of the band | `#1d3b40` (border `#4e939e` when `style.stroke` is absent) |
-| `decision` | square with slightly rounded corners | a cross (×) | 48 × 48 | below the shape | `#4d3d14` |
-| `parallel` | square with slightly rounded corners | a plus (+) | 48 × 48 | below the shape | `#1c3550` |
-| `start` | circle | none | 40 × 40 | below the shape | `#1f3d26` |
-| `end` | circle, border drawn 2.5 times as wide | none | 40 × 40 | below the shape | `#4a2326` |
+| `step` | rectangle with slightly rounded corners and an arrow-shaped band down its left side, in the border colour | none | 150 × 56 | inside, between the band and the right edge | `#1d3b40` (border `#4e939e` when `style.stroke` is absent) |
+| `step-user` | as `step` | a person | 150 × 56 | inside, clear of the mark | as `step` |
+| `step-automatic` | as `step` | a gear | 150 × 56 | inside, clear of the mark | as `step` |
+| `step-sub-flow` | as `step` | a box with a plus | 150 × 56 | inside, clear of the mark | as `step` |
+| `step-repeat` | as `step` | a loop of two arrows | 150 × 56 | inside, clear of the mark | as `step` |
+| `exclusive-choice` | square with slightly rounded corners | a cross (×) | 48 × 48 | below the shape | `#4d3d14` |
+| `inclusive-choice` | square with slightly rounded corners | a ring (○) | 48 × 48 | below the shape | `#4d3d14` |
+| `parallel-split-join` | square with slightly rounded corners | a plus (+) | 48 × 48 | below the shape | `#1c3550` |
+| `start-event` | circle | none | 40 × 40 | below the shape | `#1f3d26` |
+| `event` | circle with a second ring inside it | none | 40 × 40 | below the shape | `#2f3350` |
+| `timer-event` | circle with a second ring inside it | a clock | 40 × 40 | below the shape | `#2f3350` |
+| `message-event` | circle with a second ring inside it | an envelope | 40 × 40 | below the shape | `#2f3350` |
+| `end-event` | circle, border drawn 2.5 times as wide | none | 40 × 40 | below the shape | `#4a2326` |
 
-The band is not a direction and is never turned: the way a flow goes is given by its edges. The default colours are in the stored form, the dark-theme colour that is flipped in lightness for the light theme like any stored colour. A reader that draws its own shapes and marks may do so; what it must keep is the `kind`. The legend rows for the kinds a diagram uses are derived and not stored.
+A kind's id says what it is, general first, so related kinds sort together and a later kind has room beside them. A step's mark sits in a slot on its right; the other marks are centred in their shape. The band is not a direction and is never turned: the way a flow goes is given by its edges. The default colours are in the stored form, the dark-theme colour that is flipped in lightness for the light theme like any stored colour. A reader that draws its own shapes and marks may do so; what it must keep is the `kind`. The legend rows for the kinds a diagram uses are derived and not stored.
 
 ### Icon reference
 

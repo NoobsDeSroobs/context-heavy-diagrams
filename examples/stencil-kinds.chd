@@ -18,7 +18,7 @@
         "textAlign": "center"
       },
       "data": {
-        "label": "Steps and events: every kind"
+        "label": "Behaviour: every kind"
       }
     },
     {
@@ -37,18 +37,18 @@
         "textAlign": "center"
       },
       "data": {
-        "label": "Events and verbs are steps and events; things and concepts are entities. Open the legend to see the kinds a diagram uses."
+        "label": "Events and verbs are behaviour; things and concepts are entities. Open the legend to see the kinds a diagram uses."
       }
     },
     {
       "id": "kind-step",
       "type": "stencil",
       "position": {
-        "x": 10,
+        "x": 5,
         "y": 82
       },
       "size": {
-        "width": 140,
+        "width": 150,
         "height": 56
       },
       "data": {
@@ -76,27 +76,27 @@
       }
     },
     {
-      "id": "kind-decision",
+      "id": "kind-step-user",
       "type": "stencil",
       "position": {
-        "x": 56,
-        "y": 186
+        "x": 5,
+        "y": 178
       },
       "size": {
-        "width": 48,
-        "height": 48
+        "width": 150,
+        "height": 56
       },
       "data": {
-        "label": "Decision",
-        "kind": "decision"
+        "label": "User step",
+        "kind": "step-user"
       }
     },
     {
-      "id": "what-decision",
+      "id": "what-step-user",
       "type": "text",
       "position": {
         "x": 190,
-        "y": 178
+        "y": 174
       },
       "size": {
         "width": 450,
@@ -107,15 +107,190 @@
         "textAlign": "center"
       },
       "data": {
-        "label": "A choice between ways on. Name it with a question, such as \"In stock?\", and label the edges that leave it (\"yes\", \"no\"). Found by searching for gateway, xor or choice."
+        "label": "A step done by a person, such as \"Approve the refund\". Found by searching for user task or manual."
       }
     },
     {
-      "id": "kind-parallel",
+      "id": "kind-step-automatic",
+      "type": "stencil",
+      "position": {
+        "x": 5,
+        "y": 274
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "data": {
+        "label": "Automatic step",
+        "kind": "step-automatic"
+      }
+    },
+    {
+      "id": "what-step-automatic",
+      "type": "text",
+      "position": {
+        "x": 190,
+        "y": 270
+      },
+      "size": {
+        "width": 450,
+        "height": 64
+      },
+      "style": {
+        "fontSize": 12,
+        "textAlign": "center"
+      },
+      "data": {
+        "label": "A step done by a system, such as \"Send the invoice\". Found by searching for service task or automated."
+      }
+    },
+    {
+      "id": "kind-step-sub-flow",
+      "type": "stencil",
+      "position": {
+        "x": 5,
+        "y": 370
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "data": {
+        "label": "Sub-flow",
+        "kind": "step-sub-flow"
+      }
+    },
+    {
+      "id": "what-step-sub-flow",
+      "type": "text",
+      "position": {
+        "x": 190,
+        "y": 366
+      },
+      "size": {
+        "width": 450,
+        "height": 64
+      },
+      "style": {
+        "fontSize": 12,
+        "textAlign": "center"
+      },
+      "data": {
+        "label": "A step that is a flow of its own. Link it to the diagram that shows it (right-click, Link to diagram). Found by searching for sub-process or call activity."
+      }
+    },
+    {
+      "id": "kind-step-repeat",
+      "type": "stencil",
+      "position": {
+        "x": 5,
+        "y": 466
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "data": {
+        "label": "Repeated step",
+        "kind": "step-repeat"
+      }
+    },
+    {
+      "id": "what-step-repeat",
+      "type": "text",
+      "position": {
+        "x": 190,
+        "y": 462
+      },
+      "size": {
+        "width": 450,
+        "height": 64
+      },
+      "style": {
+        "fontSize": 12,
+        "textAlign": "center"
+      },
+      "data": {
+        "label": "A step that is done again and again until something is met. Found by searching for loop or repeat."
+      }
+    },
+    {
+      "id": "kind-exclusive-choice",
       "type": "stencil",
       "position": {
         "x": 56,
-        "y": 286
+        "y": 566
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "data": {
+        "label": "Decision",
+        "kind": "exclusive-choice"
+      }
+    },
+    {
+      "id": "what-exclusive-choice",
+      "type": "text",
+      "position": {
+        "x": 190,
+        "y": 558
+      },
+      "size": {
+        "width": 450,
+        "height": 64
+      },
+      "style": {
+        "fontSize": 12,
+        "textAlign": "center"
+      },
+      "data": {
+        "label": "A choice of one way on out of several. Name it with a question, such as \"In stock?\", and label the edges that leave it (\"yes\", \"no\"). Found by searching for gateway, xor or choice."
+      }
+    },
+    {
+      "id": "kind-inclusive-choice",
+      "type": "stencil",
+      "position": {
+        "x": 56,
+        "y": 662
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "data": {
+        "label": "Inclusive choice",
+        "kind": "inclusive-choice"
+      }
+    },
+    {
+      "id": "what-inclusive-choice",
+      "type": "text",
+      "position": {
+        "x": 190,
+        "y": 654
+      },
+      "size": {
+        "width": 450,
+        "height": 64
+      },
+      "style": {
+        "fontSize": 12,
+        "textAlign": "center"
+      },
+      "data": {
+        "label": "A choice of one or more ways on: every branch whose condition holds is taken. Found by searching for inclusive gateway or or."
+      }
+    },
+    {
+      "id": "kind-parallel-split-join",
+      "type": "stencil",
+      "position": {
+        "x": 56,
+        "y": 758
       },
       "size": {
         "width": 48,
@@ -123,15 +298,15 @@
       },
       "data": {
         "label": "Parallel split or join",
-        "kind": "parallel"
+        "kind": "parallel-split-join"
       }
     },
     {
-      "id": "what-parallel",
+      "id": "what-parallel-split-join",
       "type": "text",
       "position": {
         "x": 190,
-        "y": 278
+        "y": 750
       },
       "size": {
         "width": 450,
@@ -146,11 +321,11 @@
       }
     },
     {
-      "id": "kind-start",
+      "id": "kind-start-event",
       "type": "stencil",
       "position": {
         "x": 60,
-        "y": 390
+        "y": 858
       },
       "size": {
         "width": 40,
@@ -158,15 +333,15 @@
       },
       "data": {
         "label": "Start",
-        "kind": "start"
+        "kind": "start-event"
       }
     },
     {
-      "id": "what-start",
+      "id": "what-start-event",
       "type": "text",
       "position": {
         "x": 190,
-        "y": 378
+        "y": 846
       },
       "size": {
         "width": 450,
@@ -181,11 +356,116 @@
       }
     },
     {
-      "id": "kind-end",
+      "id": "kind-event",
       "type": "stencil",
       "position": {
         "x": 60,
-        "y": 490
+        "y": 954
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "data": {
+        "label": "Event",
+        "kind": "event"
+      }
+    },
+    {
+      "id": "what-event",
+      "type": "text",
+      "position": {
+        "x": 190,
+        "y": 942
+      },
+      "size": {
+        "width": 450,
+        "height": 64
+      },
+      "style": {
+        "fontSize": 12,
+        "textAlign": "center"
+      },
+      "data": {
+        "label": "Something that happens in the middle of a flow, between a start and an end. Name it for what happens, such as \"Payment received\"."
+      }
+    },
+    {
+      "id": "kind-timer-event",
+      "type": "stencil",
+      "position": {
+        "x": 60,
+        "y": 1050
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "data": {
+        "label": "Timer",
+        "kind": "timer-event"
+      }
+    },
+    {
+      "id": "what-timer-event",
+      "type": "text",
+      "position": {
+        "x": 190,
+        "y": 1038
+      },
+      "size": {
+        "width": 450,
+        "height": 64
+      },
+      "style": {
+        "fontSize": 12,
+        "textAlign": "center"
+      },
+      "data": {
+        "label": "Waiting for a time or a deadline: \"after 3 days\", \"every Monday\". Found by searching for timer, wait or delay."
+      }
+    },
+    {
+      "id": "kind-message-event",
+      "type": "stencil",
+      "position": {
+        "x": 60,
+        "y": 1146
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "data": {
+        "label": "Message",
+        "kind": "message-event"
+      }
+    },
+    {
+      "id": "what-message-event",
+      "type": "text",
+      "position": {
+        "x": 190,
+        "y": 1134
+      },
+      "size": {
+        "width": 450,
+        "height": 64
+      },
+      "style": {
+        "fontSize": 12,
+        "textAlign": "center"
+      },
+      "data": {
+        "label": "Waiting for or sending a message, such as \"Order confirmation sent\". Found by searching for message, receive or send."
+      }
+    },
+    {
+      "id": "kind-end-event",
+      "type": "stencil",
+      "position": {
+        "x": 60,
+        "y": 1242
       },
       "size": {
         "width": 40,
@@ -193,15 +473,15 @@
       },
       "data": {
         "label": "End",
-        "kind": "end"
+        "kind": "end-event"
       }
     },
     {
-      "id": "what-end",
+      "id": "what-end-event",
       "type": "text",
       "position": {
         "x": 190,
-        "y": 478
+        "y": 1230
       },
       "size": {
         "width": 450,

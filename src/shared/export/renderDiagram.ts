@@ -6,10 +6,14 @@ import { highlightId, matchingHighlights } from '../tagging/highlights.ts'
 import { styledNodeType } from '../styling/styleDefaults.ts'
 import {
   arrowBandPath,
+  DOUBLE_BORDER_GAP,
   HEAVY_BORDER_FACTOR,
+  MARK_STROKE,
+  STENCIL_MARK_PATHS,
   stencilKind,
-  stencilLabelInset,
+  stencilLabelInsets,
   stencilLabelOutside,
+  stencilMarkBox,
   stencilStyle,
   type StencilKind
 } from '../stencils/kinds.ts'
@@ -141,14 +145,15 @@ function paintAttrs(name: 'fill' | 'stroke', paint: Paint | null): string {
   return ` ${name}="${esc(paint.color)}"${paint.opacity < 1 ? ` ${name}-opacity="${num(paint.opacity)}"` : ''}`
 }
 
-// A stencil's base shape with its mark on it (ADR 0180), drawn as vector shapes.
+// A stencil's base shape with its mark on it (ADR 0180), drawn as vector shapes. `small` is the
+// legend swatch: the arrow's band is narrower and the mark's line is a fixed 1.2 px.
 function stencilShape(
   kind: StencilKind,
   box: Rect,
   look: BoxLook,
   strokeWidth: number,
   markPaint: Paint,
-  bandScale = 1
+  small = false
 ): string {
   const { x, y, width, height } = box
   const inset = look.stroke ? strokeWidth / 2 : 0
@@ -158,22 +163,29 @@ function stencilShape(
     (look.stroke ? ` stroke-width="${num(strokeWidth)}"` : '')
   const cx = x + width / 2
   const cy = y + height / 2
-  const shape =
+  const radius = Math.max(0, Math.min(width, height) / 2 - inset)
+  let out =
     kind.shape === 'circle'
-      ? `<circle cx="${num(cx)}" cy="${num(cy)}" r="${num(Math.max(0, Math.min(width, height) / 2 - inset))}"${paint}/>`
+      ? `<circle cx="${num(cx)}" cy="${num(cy)}" r="${num(radius)}"${paint}/>`
       : `<rect x="${num(x + inset)}" y="${num(y + inset)}" width="${num(width - inset * 2)}" height="${num(height - inset * 2)}" rx="4"${paint}/>`
+  if (kind.shape === 'circle' && kind.doubleBorder && look.stroke) {
+    const inner = Math.max(0, radius - strokeWidth - (small ? 1.5 : DOUBLE_BORDER_GAP))
+    out += `<circle cx="${num(cx)}" cy="${num(cy)}" r="${num(inner)}" fill="none"${paintAttrs('stroke', look.stroke)} stroke-width="${num(strokeWidth)}"/>`
+  }
   if (kind.shape === 'arrow') {
     // The band takes the colour of the border (of the mark where the border is switched off).
-    const band = arrowBandPath(x + inset, y + inset, y + height - inset, 4, bandScale)
-    return `${shape}<path d="${band}"${paintAttrs('fill', look.stroke ?? markPaint)}/>`
+    const band = arrowBandPath(x + inset, y + inset, y + height - inset, 4, small ? 0.35 : 1)
+    out += `<path d="${band}"${paintAttrs('fill', look.stroke ?? markPaint)}/>`
   }
-  if (!kind.mark) return shape
-  const s = Math.min(width, height) * 0.22
-  const d =
-    kind.mark === 'cross'
-      ? `M${num(cx - s)} ${num(cy - s)}L${num(cx + s)} ${num(cy + s)}M${num(cx - s)} ${num(cy + s)}L${num(cx + s)} ${num(cy - s)}`
-      : `M${num(cx - s)} ${num(cy)}L${num(cx + s)} ${num(cy)}M${num(cx)} ${num(cy - s)}L${num(cx)} ${num(cy + s)}`
-  return `${shape}<path d="${d}" fill="none"${paintAttrs('stroke', markPaint)} stroke-width="2.5" stroke-linecap="round"/>`
+  if (!kind.mark) return out
+  const at = stencilMarkBox(kind, width, height, small)
+  const scale = Math.round((at.size / 24) * 10000) / 10000
+  const line = small ? 1.2 / scale : MARK_STROKE
+  return (
+    out +
+    `<g transform="translate(${num(x + at.x)} ${num(y + at.y)}) scale(${scale})">` +
+    `<path d="${STENCIL_MARK_PATHS[kind.mark]}" fill="none"${paintAttrs('stroke', markPaint)} stroke-width="${num(line)}" stroke-linecap="round" stroke-linejoin="round"/></g>`
+  )
 }
 
 // ---- arrowheads ------------------------------------------------------------------------------
@@ -394,7 +406,7 @@ function drawLegend(
       const box = wide
         ? { x: swatchX + 3, y: cy - 7, width: 22, height: 14 }
         : { x: swatchX + 7, y: cy - 7, width: 14, height: 14 }
-      parts.push(stencilShape(sk, box, look, 1.5, tokens.text, 0.35))
+      parts.push(stencilShape(sk, box, look, 1.5, tokens.text, true))
     } else if (swatch.kind === 'highlight') {
       const paint = plainColor(swatch.color)
       parts.push(
@@ -546,8 +558,8 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
     } else {
       const padding = 8
       // An arrow's band takes room on the left, so the label is centred in what is left.
-      const inset = kind === 'stencil' ? stencilLabelInset(node.data.kind) : 0
-      const available = Math.max(0, width - sw * 2 - padding * 2 - inset)
+      const insets = kind === 'stencil' ? stencilLabelInsets(node.data.kind) : { left: 0, right: 0 }
+      const available = Math.max(0, width - sw * 2 - padding * 2 - insets.left - insets.right)
       const lines = wrapText(text, available, labelLook.font)
       const blockWidth = Math.min(available, blockWidthOf(lines, labelLook.font))
       const blockHeight = lines.length * lineHeight
@@ -558,7 +570,7 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
       let content = textLines(
         lines,
         labelLook,
-        x + inset + (width - inset) / 2 - blockWidth / 2,
+        x + insets.left + (width - insets.left - insets.right) / 2 - blockWidth / 2,
         blockWidth,
         top
       )

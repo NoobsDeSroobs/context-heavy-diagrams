@@ -60,7 +60,7 @@
       "parentId": "lane-sales",
       "data": {
         "label": "Order received",
-        "kind": "start"
+        "kind": "start-event"
       }
     },
     {
@@ -94,7 +94,7 @@
       "parentId": "lane-sales",
       "data": {
         "label": "In stock?",
-        "kind": "decision"
+        "kind": "exclusive-choice"
       }
     },
     {
@@ -111,7 +111,7 @@
       "parentId": "lane-sales",
       "data": {
         "label": "",
-        "kind": "parallel"
+        "kind": "parallel-split-join"
       }
     },
     {
@@ -145,7 +145,7 @@
       "parentId": "lane-sales",
       "data": {
         "label": "",
-        "kind": "parallel"
+        "kind": "parallel-split-join"
       }
     },
     {
@@ -162,7 +162,7 @@
       "parentId": "lane-sales",
       "data": {
         "label": "Order closed",
-        "kind": "end"
+        "kind": "end-event"
       }
     },
     {
@@ -196,7 +196,7 @@
       "parentId": "lane-sales",
       "data": {
         "label": "Cancelled",
-        "kind": "end"
+        "kind": "end-event"
       }
     },
     {

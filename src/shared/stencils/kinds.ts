@@ -2,7 +2,9 @@ import type { NodeStyle } from '../styling/schema.ts'
 
 // The kinds a stencil can be (ADR 0180): events and verbs, not things. A kind is a base shape with an
 // optional mark on it, one row of this table. The list is closed and built in; a person cannot add
-// a kind, and the file stores only the id (`data.kind` of a node of type `stencil`).
+// a kind, and the file stores only the id (`data.kind` of a node of type `stencil`). An id says what
+// the kind is, general first (`step-user`, `timer-event`), so related kinds sort together and a later
+// kind has room beside them.
 
 // An arrow is a rectangle with an arrow-shaped band down its left side, so a step does not look like
 // an entity. The band is fixed, not a direction: the flow's direction is given by its edges.
@@ -31,8 +33,33 @@ export function arrowBandPath(
     `A${r} ${r} 0 0 1 ${left} ${bottom - r}V${top + r}A${r} ${r} 0 0 1 ${left + r} ${top}Z`
   )
 }
+
 // Drawn by the app as vector graphics, never an image.
-export type StencilMark = 'cross' | 'plus'
+export type StencilMark =
+  'cross' | 'plus' | 'ring' | 'clock' | 'envelope' | 'person' | 'gear' | 'sub-flow' | 'loop'
+
+// Each mark as stroked paths in a 24-unit box (no fill, round caps), so the canvas, the exports and
+// the legend draw the same shapes at any size.
+export const STENCIL_MARK_PATHS: Record<StencilMark, string> = {
+  cross: 'M6 6L18 18M6 18L18 6',
+  plus: 'M5 12H19M12 5V19',
+  ring: 'M12 5.5a6.5 6.5 0 1 0 0 13a6.5 6.5 0 1 0 0-13',
+  clock: 'M12 4a8 8 0 1 0 0 16a8 8 0 1 0 0-16M12 8v4.5l3 2',
+  envelope: 'M4 7h16v10H4zM4 7l8 6l8-6',
+  person: 'M12 5a3.2 3.2 0 1 0 0 6.4a3.2 3.2 0 1 0 0-6.4M5.5 20c0-4.2 3-6 6.5-6s6.5 1.8 6.5 6',
+  gear:
+    'M12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6M12 3v3M12 18v3M3 12h3M18 12h3' +
+    'M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1',
+  'sub-flow': 'M5 5h14v14H5zM12 8.5v7M8.5 12h7',
+  loop: 'M18.5 11a6.5 6.5 0 0 0-11-3.5M7 4v4h4M5.5 13a6.5 6.5 0 0 0 11 3.5M17 20v-4h-4'
+}
+
+// The line width of a mark, in the units of its 24-unit box.
+export const MARK_STROKE = 2
+
+// An arrow's mark sits in a slot on its right, mirroring the band: `size` px square, `margin` px from
+// the right edge.
+export const ARROW_MARK = { size: 20, margin: 8 } as const
 
 export interface StencilKind {
   id: string
@@ -44,6 +71,8 @@ export interface StencilKind {
   mark?: StencilMark
   // Drawn with a heavier border than other kinds (an end).
   heavyBorder?: boolean
+  // A circle drawn with a second ring inside the first (an event in the middle of a flow).
+  doubleBorder?: boolean
   // The size a new one gets.
   size: { width: number; height: number }
   // Fills the label of a new one when the person has not typed one.
@@ -58,27 +87,85 @@ export interface StencilKind {
   terms: readonly string[]
 }
 
+const STEP = {
+  group: 'Steps',
+  shape: 'arrow',
+  size: { width: 150, height: 56 },
+  fill: '#1d3b40',
+  stroke: '#4e939e'
+} as const
+
+const CHOICE = {
+  group: 'Gateways',
+  shape: 'square',
+  size: { width: 48, height: 48 },
+  fill: '#4d3d14'
+} as const
+
+const EVENT = { group: 'Events', shape: 'circle', size: { width: 40, height: 40 } } as const
+
 export const STENCIL_KINDS: readonly StencilKind[] = [
   {
+    ...STEP,
     id: 'step',
     name: 'Step',
-    group: 'Steps',
-    shape: 'arrow',
-    size: { width: 150, height: 56 },
     defaultLabel: 'Step',
-    fill: '#1d3b40',
-    stroke: '#4e939e',
     terms: ['task', 'activity', 'action', 'process step', 'bpmn task']
   },
   {
-    id: 'decision',
+    ...STEP,
+    id: 'step-user',
+    name: 'User step',
+    mark: 'person',
+    defaultLabel: 'User step',
+    terms: ['user task', 'manual task', 'manual', 'by hand', 'human', 'person', 'bpmn user task']
+  },
+  {
+    ...STEP,
+    id: 'step-automatic',
+    name: 'Automatic step',
+    mark: 'gear',
+    defaultLabel: 'Automatic step',
+    terms: [
+      'service task',
+      'script task',
+      'automated',
+      'automation',
+      'system',
+      'machine',
+      'bpmn service task'
+    ]
+  },
+  {
+    ...STEP,
+    id: 'step-sub-flow',
+    name: 'Sub-flow',
+    mark: 'sub-flow',
+    defaultLabel: 'Sub-flow',
+    terms: [
+      'sub-process',
+      'subprocess',
+      'call activity',
+      'collapsed sub-process',
+      'nested',
+      'drill down',
+      'bpmn sub-process'
+    ]
+  },
+  {
+    ...STEP,
+    id: 'step-repeat',
+    name: 'Repeated step',
+    mark: 'loop',
+    defaultLabel: 'Repeated step',
+    terms: ['loop', 'loop task', 'multi-instance', 'repeat', 'recurring', 'iterate', 'bpmn loop']
+  },
+  {
+    ...CHOICE,
+    id: 'exclusive-choice',
     name: 'Decision',
-    group: 'Gateways',
-    shape: 'square',
     mark: 'cross',
-    size: { width: 48, height: 48 },
     defaultLabel: 'Decision',
-    fill: '#4d3d14',
     terms: [
       'gateway',
       'exclusive gateway',
@@ -90,12 +177,27 @@ export const STENCIL_KINDS: readonly StencilKind[] = [
     ]
   },
   {
-    id: 'parallel',
+    ...CHOICE,
+    id: 'inclusive-choice',
+    name: 'Inclusive choice',
+    mark: 'ring',
+    defaultLabel: 'Inclusive choice',
+    terms: [
+      'gateway',
+      'inclusive gateway',
+      'or',
+      'one or more',
+      'some of',
+      'choice',
+      'branch',
+      'bpmn gateway'
+    ]
+  },
+  {
+    ...CHOICE,
+    id: 'parallel-split-join',
     name: 'Parallel split or join',
-    group: 'Gateways',
-    shape: 'square',
     mark: 'plus',
-    size: { width: 48, height: 48 },
     defaultLabel: 'Parallel',
     fill: '#1c3550',
     terms: [
@@ -110,22 +212,54 @@ export const STENCIL_KINDS: readonly StencilKind[] = [
     ]
   },
   {
-    id: 'start',
+    ...EVENT,
+    id: 'start-event',
     name: 'Start',
-    group: 'Events',
-    shape: 'circle',
-    size: { width: 40, height: 40 },
     defaultLabel: 'Start',
     fill: '#1f3d26',
     terms: ['start event', 'begin', 'trigger', 'bpmn start event']
   },
   {
-    id: 'end',
+    ...EVENT,
+    id: 'event',
+    name: 'Event',
+    doubleBorder: true,
+    defaultLabel: 'Event',
+    fill: '#2f3350',
+    terms: [
+      'intermediate event',
+      'intermediate',
+      'catch event',
+      'throw event',
+      'happens',
+      'bpmn event'
+    ]
+  },
+  {
+    ...EVENT,
+    id: 'timer-event',
+    name: 'Timer',
+    mark: 'clock',
+    doubleBorder: true,
+    defaultLabel: 'Timer',
+    fill: '#2f3350',
+    terms: ['timer event', 'wait', 'delay', 'deadline', 'schedule', 'clock', 'bpmn timer event']
+  },
+  {
+    ...EVENT,
+    id: 'message-event',
+    name: 'Message',
+    mark: 'envelope',
+    doubleBorder: true,
+    defaultLabel: 'Message',
+    fill: '#2f3350',
+    terms: ['message event', 'receive', 'send', 'notify', 'mail', 'signal', 'bpmn message event']
+  },
+  {
+    ...EVENT,
+    id: 'end-event',
     name: 'End',
-    group: 'Events',
-    shape: 'circle',
     heavyBorder: true,
-    size: { width: 40, height: 40 },
     defaultLabel: 'End',
     fill: '#4a2326',
     terms: ['end event', 'finish', 'stop', 'terminate', 'bpmn end event']
@@ -148,13 +282,37 @@ export function stencilLabelOutside(id: string | undefined): boolean {
   return stencilKind(id).shape !== 'arrow'
 }
 
-// The room an arrow's band takes on the left of the label, so the label is centred in what is left.
-export function stencilLabelInset(id: string | undefined): number {
-  return stencilKind(id).shape === 'arrow' ? ARROW_BAND.tip : 0
+// The room an arrow takes on each side of its label: the band on the left and, when the kind has a
+// mark, the mark's slot on the right. The label is centred in what is left.
+export function stencilLabelInsets(id: string | undefined): { left: number; right: number } {
+  const kind = stencilKind(id)
+  if (kind.shape !== 'arrow') return { left: 0, right: 0 }
+  return { left: ARROW_BAND.tip, right: kind.mark ? ARROW_MARK.size + ARROW_MARK.margin : 0 }
+}
+
+// Where a kind's mark goes inside its shape's box (`width` × `height`, origin at the box's corner):
+// centred for the small shapes, in the right-hand slot for an arrow. `small` is a legend swatch, where
+// the slot shrinks with the box.
+export function stencilMarkBox(
+  kind: StencilKind,
+  width: number,
+  height: number,
+  small = false
+): { x: number; y: number; size: number } {
+  if (kind.shape === 'arrow') {
+    const size = small ? height * 0.62 : ARROW_MARK.size
+    const margin = small ? 2.5 : ARROW_MARK.margin
+    return { x: width - margin - size, y: (height - size) / 2, size }
+  }
+  const size = Math.min(width, height) * (kind.doubleBorder ? 0.42 : 0.46)
+  return { x: (width - size) / 2, y: (height - size) / 2, size }
 }
 
 // A heavier border for the kinds that ask for it, as a multiple of the border width.
 export const HEAVY_BORDER_FACTOR = 2.5
+
+// The gap between the two rings of a double border, from line to line, beyond the line width.
+export const DOUBLE_BORDER_GAP = 3
 
 // What a search for this element also matches: its kind's name and terms.
 export function stencilSearchText(id: string | undefined): string {

@@ -4,6 +4,7 @@ import assert from 'node:assert/strict'
 import { DEFAULT_SVG_EXPORT_OPTIONS, renderDiagramSvg } from '../export/renderDiagram.ts'
 import { layoutNodes } from '../export/model.ts'
 import { layoutIssues } from '../edit/inspect.ts'
+import { STENCIL_KINDS, STENCIL_MARK_PATHS } from './kinds.ts'
 
 const render = (diagram) =>
   renderDiagramSvg(diagram, { ...DEFAULT_SVG_EXPORT_OPTIONS, icons: new Map() })
@@ -19,10 +20,10 @@ const stencil = (id, kind, x, y, extra = {}) => ({
 const flow = () => ({
   version: 1,
   nodes: [
-    stencil('begin', 'start', 0, 20),
-    stencil('check', 'decision', 120, 16),
+    stencil('begin', 'start-event', 0, 20),
+    stencil('check', 'exclusive-choice', 120, 16),
     stencil('work', 'step', 240, 8),
-    stencil('stop', 'end', 440, 20),
+    stencil('stop', 'end-event', 440, 20),
     {
       id: 'pad',
       type: 'entity',
@@ -82,4 +83,30 @@ test('a kind this version does not know is drawn as a step', () => {
 test('the layout check leaves a stencil label that sits outside its shape alone', () => {
   const issues = layoutIssues(flow())
   assert.equal(issues.filter((i) => i.kind === 'label-overflow').length, 0)
+})
+
+test('every kind is drawn, with its mark from the shared table and a second ring where it has one', () => {
+  for (const kind of STENCIL_KINDS) {
+    const svg = render({ version: 1, nodes: [stencil('k', kind.id, 0, 0)], edges: [] })
+    assert.match(svg, /class="chd-stencil" data-id="k"/, kind.id)
+    if (kind.mark) assert.ok(svg.includes(STENCIL_MARK_PATHS[kind.mark]), `${kind.id} mark`)
+    if (kind.shape === 'circle') {
+      const circles = svg
+        .split('class="chd-stencil"')[1]
+        .split('</g>')[0]
+        .match(/<circle/g)
+      assert.equal(circles.length, kind.doubleBorder ? 2 : 1, kind.id)
+    }
+  }
+})
+
+test('the label of a step with a mark keeps clear of the mark', () => {
+  const svg = render({
+    version: 1,
+    nodes: [{ ...stencil('u', 'step-user', 0, 0), data: { label: 'Review', kind: 'step-user' } }],
+    edges: []
+  })
+  const tx = Number(/data-id="u"[^]*?<tspan[^>]* x="([0-9.-]+)"/.exec(svg)[1])
+  const width = 150
+  assert.ok(tx > 28 && tx < width - 28 - 10, 'the text starts between the band and the mark')
 })
