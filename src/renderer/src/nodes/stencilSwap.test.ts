@@ -6,7 +6,7 @@ const step = (extra: Partial<Node> = {}, data: Record<string, unknown> = {}): No
   id: 's',
   type: 'stencil',
   position: { x: 100, y: 100 },
-  width: 140,
+  width: 150,
   height: 56,
   data: { label: 'Step', kind: 'step', ...data },
   ...extra
@@ -17,7 +17,7 @@ describe('swapStencilKind', () => {
     const swapped = swapStencilKind(step(), 'decision')
     expect(swapped.data).toMatchObject({ kind: 'decision', label: 'Decision' })
     expect([swapped.width, swapped.height]).toEqual([48, 48])
-    expect(swapped.position).toEqual({ x: 146, y: 104 })
+    expect(swapped.position).toEqual({ x: 151, y: 104 })
   })
 
   it('keeps a label the person typed', () => {

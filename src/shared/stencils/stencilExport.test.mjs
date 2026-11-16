@@ -42,15 +42,15 @@ test('a stencil takes the size of its kind when the file gives none', () => {
   const laid = layoutNodes(flow())
   assert.deepEqual([laid.get('begin').width, laid.get('begin').height], [40, 40])
   assert.deepEqual([laid.get('check').width, laid.get('check').height], [48, 48])
-  assert.deepEqual([laid.get('work').width, laid.get('work').height], [140, 56])
+  assert.deepEqual([laid.get('work').width, laid.get('work').height], [150, 56])
   assert.equal(laid.get('check').kind, 'stencil')
 })
 
-test('the kinds are drawn as a circle, a square with a mark and a pill', () => {
+test('the kinds are drawn as a circle, a square with a mark and a rectangle with an arrow band', () => {
   const svg = render(flow())
   assert.match(svg, /class="chd-stencil" data-id="begin"[^]*?<circle/)
   assert.match(svg, /class="chd-stencil" data-id="check"[^]*?<rect[^]*?<path d="M[^"]+L[^"]+M/)
-  assert.match(svg, /class="chd-stencil" data-id="work"[^]*?rx="27\.25"/)
+  assert.match(svg, /class="chd-stencil" data-id="work"[^]*?rx="4"[^]*?<path d="M[^"]+Z"/)
 })
 
 test('an end has a heavier border than a start', () => {
@@ -76,7 +76,7 @@ test('an edge to a stencil is drawn', () => {
 
 test('a kind this version does not know is drawn as a step', () => {
   const svg = render({ version: 1, nodes: [stencil('x', 'from-the-future', 0, 0)], edges: [] })
-  assert.match(svg, /data-id="x"[^]*?rx="27\.25"/)
+  assert.match(svg, /data-id="x"[^]*?rx="4"[^]*?<path d="M[^"]+Z"/)
 })
 
 test('the layout check leaves a stencil label that sits outside its shape alone', () => {

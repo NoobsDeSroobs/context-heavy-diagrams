@@ -78,28 +78,24 @@ function StencilPaletteButton({
           e.preventDefault()
           setOpen(true)
         }}
-        title={`Add ${kind.name}. Right-click to choose another kind of step or event.`}
+        title={`Add ${kind.name}. Right-click to choose another kind of behaviour.`}
       >
         <span
           className={`item-palette-icon item-palette-icon-stencil item-palette-icon-${kind.shape}`}
         />
-        {kind.name}
+        Behaviour
       </button>
       <button
         type="button"
         className="item-palette-stencil-more"
-        aria-label="Choose a kind of step or event"
-        title="Choose a kind of step or event"
+        aria-label="Choose a kind of behaviour"
+        title="Choose a kind of behaviour"
         onClick={() => setOpen((v) => !v)}
       >
         ▾
       </button>
       {open && (
-        <div
-          className="item-palette-stencil-list"
-          role="listbox"
-          aria-label="Kinds of step or event"
-        >
+        <div className="item-palette-stencil-list" role="listbox" aria-label="Kinds of behaviour">
           <input
             autoFocus
             className="item-palette-stencil-filter"

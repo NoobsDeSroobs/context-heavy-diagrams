@@ -46,8 +46,10 @@
   border-style: dashed;
 }
 
-.item-palette-icon-stencil.item-palette-icon-pill {
-  border-radius: 999px;
+.item-palette-icon-stencil.item-palette-icon-arrow {
+  border-radius: 2px;
+  /* The band, as a gradient edge on the left. */
+  background: linear-gradient(to right, currentColor 0 30%, transparent 30%);
 }
 
 .item-palette-icon-stencil.item-palette-icon-square {

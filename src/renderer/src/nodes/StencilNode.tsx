@@ -102,7 +102,7 @@ function StencilNode({ id, data, selected }: NodeProps): React.JSX.Element {
         ...detachItem,
         addConnectionPointItem(rect, event.clientX, event.clientY),
         {
-          label: 'Select all steps and events',
+          label: 'Select all behaviour',
           separatorBefore: true,
           onSelect: () => selectAllOfType('stencil')
         }
@@ -162,9 +162,9 @@ function StencilNode({ id, data, selected }: NodeProps): React.JSX.Element {
     >
       <NodeResizer
         isVisible={selected && !locked}
-        minWidth={kind.shape === 'pill' ? 60 : 24}
-        minHeight={kind.shape === 'pill' ? 32 : 24}
-        keepAspectRatio={kind.shape !== 'pill'}
+        minWidth={kind.shape === 'arrow' ? 80 : 24}
+        minHeight={kind.shape === 'arrow' ? 32 : 24}
+        keepAspectRatio={kind.shape !== 'arrow'}
         onResizeStart={() => groupResize.start(id)}
         onResize={(_, params) => groupResize.resize(id, params)}
         onResizeEnd={groupResize.end}
@@ -181,6 +181,13 @@ function StencilNode({ id, data, selected }: NodeProps): React.JSX.Element {
             strokeLinecap="round"
           />
         </svg>
+      )}
+      {kind.shape === 'arrow' && (
+        <span
+          className="stencil-node-band"
+          aria-hidden="true"
+          style={{ background: frameCss.borderColor ?? 'var(--default-entity-stroke)' }}
+        />
       )}
       {label}
     </div>

@@ -49,7 +49,7 @@ validated ([ADR 0080](../../decisions/0080-bpmn-as-adopted-vocabulary-not-metamo
 - [x] The legend rows for the kinds in use with a session-only switch; search by kind and BPMN terms; the review of changes; SVG, PNG and draw.io export; conformance leaves them out
 - [x] Example `examples/process-flow-stencils.chd` with a drill-down diagram
 - [ ] Try it in the app on real flows (the app itself was not run in the build session): label position when an edge leaves the bottom of a small shape, the colours in the light theme, the palette list
-- [ ] The palette entry's name (the working label is "Step", after the kind last used)
+- [x] The palette entry's name: Behaviour; the step is a rectangle with an arrow band (no direction property: the edges give it)
 - [ ] More kinds before the pull request: which (inclusive choice, timer and message events, repeat marks, the sorts of step with a mark of their own)
 - [ ] The assistant tools (`edit_diagram`, `chd edit`, the MCP server) and the build guide: stencils as a full member, once the design has settled
 - [ ] The lane hand-off check ([0088](later/0088-cross-container-edge-detection.md))

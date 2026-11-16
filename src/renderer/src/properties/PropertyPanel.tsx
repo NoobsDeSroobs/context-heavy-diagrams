@@ -63,7 +63,7 @@ const TYPE_LABELS: Record<string, string> = {
   container: 'Containers',
   text: 'Text',
   line: 'Lines',
-  stencil: 'Steps and events'
+  stencil: 'Behaviour'
 }
 const MIN_SIZE: Record<string, { width: number; height: number }> = {
   entity: { width: 60, height: 40 },

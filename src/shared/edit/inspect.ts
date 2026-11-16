@@ -18,7 +18,7 @@ import {
   labelTargetGap
 } from '../layout/labelClearance.ts'
 import { edgeIssues, type EdgeIssue } from './edgeRouting.ts'
-import { stencilLabelOutside } from '../stencils/kinds.ts'
+import { stencilLabelInset, stencilLabelOutside } from '../stencils/kinds.ts'
 import { LINE_HEIGHT_EM, measureText, wrapText, type FontSpec } from '../export/textLayout.ts'
 import { NODE_STYLE_DEFAULTS, styledNodeType } from '../styling/styleDefaults.ts'
 import { summarizeEdge, summarizeNode, type EdgeSummary, type NodeSummary } from './operations.ts'
@@ -201,9 +201,10 @@ export function layoutIssues(diagram: DiagramFile, diagramFont?: string): Layout
       family: node.style?.fontFamily ?? diagramFont
     }
     const stroke = node.style?.strokeWidth ?? defaults.strokeWidth
-    // A step is a pill, whose rounded ends leave less room (ADR 0180).
-    const margin = type === 'container' ? 8 : node.type === 'stencil' ? 32 : 16
-    const available = Math.max(0, node.size.width - stroke * 2 - margin)
+    // A step's arrow band takes room on the left (ADR 0180).
+    const inset = node.type === 'stencil' ? stencilLabelInset(node.data.kind) : 0
+    const margin = type === 'container' ? 8 : 16
+    const available = Math.max(0, node.size.width - stroke * 2 - margin - inset)
     const widest = node.data.label
       .split(/\s+/)
       .reduce((a, b) => (measureText(b, font) > measureText(a, font) ? b : a), '')

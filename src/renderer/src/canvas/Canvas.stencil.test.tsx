@@ -57,7 +57,7 @@ describe('stencils on the canvas (ADR 0180)', () => {
       container.querySelector(`.stencil-node[data-stencil-kind="${kind}"]`)
     expect(shape('start')?.className).toContain('stencil-node--circle')
     expect(shape('decision')?.className).toContain('stencil-node--square')
-    expect(shape('step')?.className).toContain('stencil-node--pill')
+    expect(shape('step')?.className).toContain('stencil-node--arrow')
     expect(shape('decision')?.querySelector('.stencil-node-mark')).not.toBeNull()
     expect(shape('step')?.querySelector('.stencil-node-mark')).toBeNull()
   })
@@ -67,7 +67,7 @@ describe('stencils on the canvas (ADR 0180)', () => {
     await screen.findByText('Do the work')
     expect(container.querySelectorAll('.stencil-node')).toHaveLength(3)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Step' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Behaviour' }))
     await waitFor(() => expect(container.querySelectorAll('.stencil-node')).toHaveLength(4))
 
     key('s')
@@ -85,10 +85,10 @@ describe('stencils on the canvas (ADR 0180)', () => {
   it('adds the kind chosen in the palette list', async () => {
     const { container } = renderCanvas(flow())
     await screen.findByText('Do the work')
-    fireEvent.click(screen.getByRole('button', { name: 'Choose a kind of step or event' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a kind of behaviour' }))
     fireEvent.change(screen.getByPlaceholderText('Filter…'), { target: { value: 'gateway' } })
     // The BPMN term finds both gateways, and the list stays in the app's own words.
-    const list = within(screen.getByRole('listbox', { name: 'Kinds of step or event' }))
+    const list = within(screen.getByRole('listbox', { name: 'Kinds of behaviour' }))
     expect(list.getAllByRole('option').map((o) => o.textContent)).toEqual([
       'Decision',
       'Parallel split or join'

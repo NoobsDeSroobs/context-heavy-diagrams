@@ -94,9 +94,23 @@
   padding: 2px 8px;
 }
 
-.stencil-node--pill {
-  border-radius: 9999px;
-  padding: 2px 18px;
+.stencil-node--arrow {
+  border-radius: 4px;
+  /* Room for the band on the left (ARROW_BAND.tip in kinds.ts). */
+  padding: 2px 8px 2px 36px;
+}
+
+/* The band of an arrow: flat, then a point, in the colour of the border. It sits inside the border,
+   so its left corners follow the box's. */
+.stencil-node-band {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 28px;
+  border-radius: 2px 0 0 2px;
+  clip-path: polygon(0 0, 16px 0, 28px 50%, 16px 100%, 0 100%);
+  pointer-events: none;
 }
 
 .stencil-node--square {

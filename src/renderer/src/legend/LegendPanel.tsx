@@ -18,8 +18,7 @@ import {
 import { dasharrayOf, dashPattern } from '@shared/styling/edgeDash'
 import { useTheme } from '../styling/theme'
 import { stencilKind } from '@shared/stencils/kinds'
-import { stencilSwatchSvg } from '@shared/stencils/swatch'
-import { themeAdaptiveColor } from '../styling/themeAdaptiveColor'
+import { stencilSwatchSvgFor } from '@shared/stencils/swatch'
 import IconSlotView from '../icons/IconSlotView'
 import StylePicker from '../styling/StylePicker'
 
@@ -387,11 +386,7 @@ export default function LegendPanel({
                 <span
                   className="legend-swatch-slot"
                   dangerouslySetInnerHTML={{
-                    __html: stencilSwatchSvg(id, {
-                      fill: kind.fill ? themeAdaptiveColor(kind.fill, theme) : 'transparent',
-                      stroke: 'currentColor',
-                      mark: 'currentColor'
-                    })
+                    __html: stencilSwatchSvgFor(id, theme)
                   }}
                 />
                 <span className="legend-row-label">{kind.name}</span>
@@ -401,7 +396,7 @@ export default function LegendPanel({
         {stencilKinds.length > 0 && (
           <label className="legend-stencil-toggle" title="For this session only">
             <input type="checkbox" checked={showStencilKinds} onChange={onToggleStencilKinds} />
-            Show steps and events
+            Show behaviour
           </label>
         )}
         {legend.map((entry) => (

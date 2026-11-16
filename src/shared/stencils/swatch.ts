@@ -1,4 +1,19 @@
-import { HEAVY_BORDER_FACTOR, stencilKind } from './kinds.ts'
+import type { Theme } from '../styling/theme.ts'
+import { paintColor } from '../export/color.ts'
+import { arrowBandPath, HEAVY_BORDER_FACTOR, stencilKind, stencilStyle } from './kinds.ts'
+
+// The swatch of a kind in the colours it is drawn in for the theme; what a kind does not colour takes
+// the text colour of the legend.
+export function stencilSwatchSvgFor(kindId: string, theme: Theme): string {
+  const style = stencilStyle(kindId, undefined)
+  const painted = (stored: string | undefined, fallback: string): string =>
+    stored ? paintColor(stored, theme).color : fallback
+  return stencilSwatchSvg(kindId, {
+    fill: painted(style?.fill, 'transparent'),
+    stroke: painted(style?.stroke, 'currentColor'),
+    mark: 'currentColor'
+  })
+}
 
 // A kind's shape and mark as a small SVG, for the legend (ADR 0180): the same drawing as on the
 // diagram at the size of a legend row. The colours are CSS colours already resolved for the theme.
@@ -7,7 +22,7 @@ export function stencilSwatchSvg(
   colors: { fill: string; stroke: string; mark: string }
 ): string {
   const kind = stencilKind(kindId)
-  const width = kind.shape === 'pill' ? 22 : 14
+  const width = kind.shape === 'arrow' ? 22 : 14
   const x = (28 - width) / 2
   const y = 1
   const height = 14
@@ -17,7 +32,11 @@ export function stencilSwatchSvg(
   const shape =
     kind.shape === 'circle'
       ? `<circle cx="14" cy="8" r="${7 - inset}" ${paint}/>`
-      : `<rect x="${x + inset}" y="${y + inset}" width="${width - sw}" height="${height - sw}" rx="${kind.shape === 'pill' ? (height - sw) / 2 : 2}" ${paint}/>`
+      : `<rect x="${x + inset}" y="${y + inset}" width="${width - sw}" height="${height - sw}" rx="2" ${paint}/>`
+  if (kind.shape === 'arrow') {
+    const band = arrowBandPath(x + inset, y + inset, y + height - inset, 2, 0.35)
+    return `<svg viewBox="0 0 28 16" width="28" height="16" aria-hidden="true">${shape}<path d="${band}" fill="${colors.stroke}"/></svg>`
+  }
   const s = 3
   const mark =
     kind.mark === 'cross'

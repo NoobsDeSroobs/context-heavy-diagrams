@@ -5,8 +5,10 @@ import { flattenPath, pointAtRatio, type Point } from '../geometry/pathSampling.
 import { highlightId, matchingHighlights } from '../tagging/highlights.ts'
 import { styledNodeType } from '../styling/styleDefaults.ts'
 import {
+  arrowBandPath,
   HEAVY_BORDER_FACTOR,
   stencilKind,
+  stencilLabelInset,
   stencilLabelOutside,
   stencilStyle,
   type StencilKind
@@ -145,7 +147,8 @@ function stencilShape(
   box: Rect,
   look: BoxLook,
   strokeWidth: number,
-  markPaint: Paint
+  markPaint: Paint,
+  bandScale = 1
 ): string {
   const { x, y, width, height } = box
   const inset = look.stroke ? strokeWidth / 2 : 0
@@ -158,7 +161,12 @@ function stencilShape(
   const shape =
     kind.shape === 'circle'
       ? `<circle cx="${num(cx)}" cy="${num(cy)}" r="${num(Math.max(0, Math.min(width, height) / 2 - inset))}"${paint}/>`
-      : `<rect x="${num(x + inset)}" y="${num(y + inset)}" width="${num(width - inset * 2)}" height="${num(height - inset * 2)}" rx="${num(kind.shape === 'pill' ? (height - inset * 2) / 2 : 4)}"${paint}/>`
+      : `<rect x="${num(x + inset)}" y="${num(y + inset)}" width="${num(width - inset * 2)}" height="${num(height - inset * 2)}" rx="4"${paint}/>`
+  if (kind.shape === 'arrow') {
+    // The band takes the colour of the border (of the mark where the border is switched off).
+    const band = arrowBandPath(x + inset, y + inset, y + height - inset, 4, bandScale)
+    return `${shape}<path d="${band}"${paintAttrs('fill', look.stroke ?? markPaint)}/>`
+  }
   if (!kind.mark) return shape
   const s = Math.min(width, height) * 0.22
   const d =
@@ -382,11 +390,11 @@ function drawLegend(
         options.theme,
         undefined
       )
-      const wide = sk.shape === 'pill'
+      const wide = sk.shape === 'arrow'
       const box = wide
         ? { x: swatchX + 3, y: cy - 7, width: 22, height: 14 }
         : { x: swatchX + 7, y: cy - 7, width: 14, height: 14 }
-      parts.push(stencilShape(sk, box, look, 1.5, tokens.text))
+      parts.push(stencilShape(sk, box, look, 1.5, tokens.text, 0.35))
     } else if (swatch.kind === 'highlight') {
       const paint = plainColor(swatch.color)
       parts.push(
@@ -536,9 +544,10 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
       const blockWidth = Math.min(available, blockWidthOf(lines, labelLook.font))
       parts.push(textLines(lines, labelLook, x + sw + 8, blockWidth, y + sw + 4))
     } else {
-      // A pill's rounded ends leave less room for the label.
-      const padding = sk?.shape === 'pill' ? 16 : 8
-      const available = Math.max(0, width - sw * 2 - padding * 2)
+      const padding = 8
+      // An arrow's band takes room on the left, so the label is centred in what is left.
+      const inset = kind === 'stencil' ? stencilLabelInset(node.data.kind) : 0
+      const available = Math.max(0, width - sw * 2 - padding * 2 - inset)
       const lines = wrapText(text, available, labelLook.font)
       const blockWidth = Math.min(available, blockWidthOf(lines, labelLook.font))
       const blockHeight = lines.length * lineHeight
@@ -546,7 +555,13 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
       // and is cut off at the bottom; every other label is centred, overflowing equally both ways.
       const clipped = kind === 'text' && blockHeight > height - sw * 2 - padding * 2
       const top = clipped ? y + sw + padding : y + height / 2 - blockHeight / 2
-      let content = textLines(lines, labelLook, x + width / 2 - blockWidth / 2, blockWidth, top)
+      let content = textLines(
+        lines,
+        labelLook,
+        x + inset + (width - inset) / 2 - blockWidth / 2,
+        blockWidth,
+        top
+      )
       if (clipped && content) {
         content = `<g clip-path="url(#chd-clip-${laid.order})">${content}</g>`
         parts.push(

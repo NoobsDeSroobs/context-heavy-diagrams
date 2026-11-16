@@ -131,13 +131,13 @@ A stencil carries `data.label`, `position`, `size`, `style`, `parentId`, `locked
 
 | `kind` | Base shape | Mark | Default size | Label | Fill when `style.fill` is absent |
 |---|---|---|---|---|---|
-| `step` | pill: a rectangle with fully rounded ends | none | 140 × 56 | inside | `#1d3b40` |
+| `step` | rectangle with slightly rounded corners and an arrow-shaped band down its left side, in the border colour | none | 150 × 56 | inside, clear of the band | `#1d3b40` (border `#4e939e` when `style.stroke` is absent) |
 | `decision` | square with slightly rounded corners | a cross (×) | 48 × 48 | below the shape | `#4d3d14` |
 | `parallel` | square with slightly rounded corners | a plus (+) | 48 × 48 | below the shape | `#1c3550` |
 | `start` | circle | none | 40 × 40 | below the shape | `#1f3d26` |
 | `end` | circle, border drawn 2.5 times as wide | none | 40 × 40 | below the shape | `#4a2326` |
 
-The default fills are in the stored form, the dark-theme colour that is flipped in lightness for the light theme like any stored colour. A reader that draws its own shapes and marks may do so; what it must keep is the `kind`. The legend rows for the kinds a diagram uses are derived and not stored.
+The band is not a direction and is never turned: the way a flow goes is given by its edges. The default colours are in the stored form, the dark-theme colour that is flipped in lightness for the light theme like any stored colour. A reader that draws its own shapes and marks may do so; what it must keep is the `kind`. The legend rows for the kinds a diagram uses are derived and not stored.
 
 ### Icon reference
 
