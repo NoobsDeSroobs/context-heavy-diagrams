@@ -8,7 +8,9 @@
 // Right-click on Entity/Container opens the bulk-create dialog instead —
 // see ADR 0089. onClick keeps its existing single-add meaning.
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { listPlace, type ListPlace } from './listPlace'
 import { STENCIL_KINDS, stencilKind, stencilSearchText } from '@shared/stencils/kinds'
 
 export type PaletteItemType = 'entity' | 'container' | 'text' | 'line' | 'stencil'
@@ -38,12 +40,15 @@ function StencilPaletteButton({
   const [open, setOpen] = useState(false)
   const [filter, setFilter] = useState('')
   const rootRef = useRef<HTMLDivElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
+  const [place, setPlace] = useState<ListPlace | null>(null)
   const kind = stencilKind(kindId)
 
   useEffect(() => {
     if (!open) return
     const onPointerDown = (event: PointerEvent): void => {
-      if (rootRef.current && !rootRef.current.contains(event.target as Node)) setOpen(false)
+      const target = event.target as Node
+      if (!rootRef.current?.contains(target) && !listRef.current?.contains(target)) setOpen(false)
     }
     const onKeyDown = (event: KeyboardEvent): void => {
       if (event.key === 'Escape') setOpen(false)
@@ -53,6 +58,21 @@ function StencilPaletteButton({
     return () => {
       window.removeEventListener('pointerdown', onPointerDown)
       window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [open])
+
+  // The list pops out to the side of the palette, over the canvas, wider than the palette is.
+  useLayoutEffect(() => {
+    if (!open || !rootRef.current) return
+    const update = (): void => {
+      if (rootRef.current) setPlace(listPlace(rootRef.current.getBoundingClientRect()))
+    }
+    update()
+    window.addEventListener('resize', update)
+    window.addEventListener('scroll', update, true)
+    return () => {
+      window.removeEventListener('resize', update)
+      window.removeEventListener('scroll', update, true)
     }
   }, [open])
 
@@ -94,42 +114,58 @@ function StencilPaletteButton({
       >
         ▾
       </button>
-      {open && (
-        <div className="item-palette-stencil-list" role="listbox" aria-label="Kinds of behaviour">
-          <input
-            autoFocus
-            className="item-palette-stencil-filter"
-            placeholder="Filter…"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-          />
-          {groups.map((group) => (
-            <div key={group}>
-              <div className="item-palette-stencil-group">{group}</div>
-              {shown
-                .filter((k) => k.group === group)
-                .map((k) => (
-                  <button
-                    key={k.id}
-                    type="button"
-                    role="option"
-                    aria-selected={k.id === kind.id}
-                    className="item-palette-stencil-option"
-                    onClick={() => {
-                      setKindId(k.id)
-                      setOpen(false)
-                      setFilter('')
-                      onAddStencil(k.id)
-                    }}
-                  >
-                    {k.name}
-                  </button>
-                ))}
-            </div>
-          ))}
-          {shown.length === 0 && <div className="item-palette-stencil-none">Nothing matches</div>}
-        </div>
-      )}
+      {open && place
+        ? createPortal(
+            <div
+              ref={listRef}
+              className="item-palette-stencil-list"
+              role="listbox"
+              aria-label="Kinds of behaviour"
+              style={{
+                left: place.left,
+                top: place.top,
+                width: place.width,
+                maxHeight: place.maxHeight
+              }}
+            >
+              <input
+                autoFocus
+                className="item-palette-stencil-filter"
+                placeholder="Filter…"
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+              />
+              {groups.map((group) => (
+                <div key={group}>
+                  <div className="item-palette-stencil-group">{group}</div>
+                  {shown
+                    .filter((k) => k.group === group)
+                    .map((k) => (
+                      <button
+                        key={k.id}
+                        type="button"
+                        role="option"
+                        aria-selected={k.id === kind.id}
+                        className="item-palette-stencil-option"
+                        onClick={() => {
+                          setKindId(k.id)
+                          setOpen(false)
+                          setFilter('')
+                          onAddStencil(k.id)
+                        }}
+                      >
+                        {k.name}
+                      </button>
+                    ))}
+                </div>
+              ))}
+              {shown.length === 0 && (
+                <div className="item-palette-stencil-none">Nothing matches</div>
+              )}
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   )
 }

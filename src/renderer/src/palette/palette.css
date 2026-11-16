@@ -86,15 +86,13 @@
 }
 
 .item-palette-stencil-list {
-  position: absolute;
-  z-index: 20;
-  top: 100%;
-  left: 0;
-  right: 0;
-  margin-top: 4px;
+  /* In a portal, so the dock cannot clip it; its place is set inline (listPlace in ItemPalette). */
+  position: fixed;
+  z-index: 2000;
+  box-sizing: border-box;
   padding: 6px;
-  max-height: 280px;
   overflow-y: auto;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
   background: var(--color-background-soft);
   border: 1px solid var(--ev-c-gray-2);
   border-radius: 6px;
