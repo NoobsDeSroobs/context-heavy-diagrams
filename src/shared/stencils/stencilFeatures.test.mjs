@@ -63,7 +63,7 @@ test('the SVG export draws the legend rows of the stencils in use', () => {
 test('a legend swatch has the shape and the mark of its kind', () => {
   const colors = { fill: '#123456', stroke: '#abcdef', mark: '#ffffff' }
   assert.match(stencilSwatchSvg('start', colors), /<circle/)
-  assert.match(stencilSwatchSvg('step', colors), /<rect[^>]*rx="5"/)
+  assert.match(stencilSwatchSvg('step', colors), /<rect[^>]*rx="6\.25"/)
   assert.match(stencilSwatchSvg('decision', colors), /<path/)
   assert.doesNotMatch(stencilSwatchSvg('start', colors), /<path/)
 })

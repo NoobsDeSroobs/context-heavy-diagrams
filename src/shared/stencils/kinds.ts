@@ -4,7 +4,8 @@ import type { NodeStyle } from '../styling/schema.ts'
 // optional mark on it, one row of this table. The list is closed and built in; a person cannot add
 // a kind, and the file stores only the id (`data.kind` of a node of type `stencil`).
 
-export type StencilShape = 'circle' | 'square' | 'rounded'
+// A pill is a rectangle with fully rounded ends, so a step does not look like an entity.
+export type StencilShape = 'circle' | 'square' | 'pill'
 // Drawn by the app as vector graphics, never an image.
 export type StencilMark = 'cross' | 'plus'
 
@@ -35,9 +36,10 @@ export const STENCIL_KINDS: readonly StencilKind[] = [
     id: 'step',
     name: 'Step',
     group: 'Steps',
-    shape: 'rounded',
+    shape: 'pill',
     size: { width: 140, height: 56 },
     defaultLabel: 'Step',
+    fill: '#1d3b40',
     terms: ['task', 'activity', 'action', 'process step', 'bpmn task']
   },
   {
@@ -115,7 +117,7 @@ export function stencilKind(id: string | undefined): StencilKind {
 // The small shapes carry their label below them, since text does not fit inside; a step's label
 // sits inside it.
 export function stencilLabelOutside(id: string | undefined): boolean {
-  return stencilKind(id).shape !== 'rounded'
+  return stencilKind(id).shape !== 'pill'
 }
 
 // A heavier border for the kinds that ask for it, as a multiple of the border width.

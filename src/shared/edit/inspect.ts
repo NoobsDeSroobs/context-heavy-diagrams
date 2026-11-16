@@ -201,7 +201,9 @@ export function layoutIssues(diagram: DiagramFile, diagramFont?: string): Layout
       family: node.style?.fontFamily ?? diagramFont
     }
     const stroke = node.style?.strokeWidth ?? defaults.strokeWidth
-    const available = Math.max(0, node.size.width - stroke * 2 - (type === 'container' ? 8 : 16))
+    // A step is a pill, whose rounded ends leave less room (ADR 0180).
+    const margin = type === 'container' ? 8 : node.type === 'stencil' ? 32 : 16
+    const available = Math.max(0, node.size.width - stroke * 2 - margin)
     const widest = node.data.label
       .split(/\s+/)
       .reduce((a, b) => (measureText(b, font) > measureText(a, font) ? b : a), '')

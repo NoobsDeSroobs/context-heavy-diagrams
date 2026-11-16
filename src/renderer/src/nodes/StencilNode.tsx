@@ -162,9 +162,9 @@ function StencilNode({ id, data, selected }: NodeProps): React.JSX.Element {
     >
       <NodeResizer
         isVisible={selected && !locked}
-        minWidth={kind.shape === 'rounded' ? 60 : 24}
-        minHeight={kind.shape === 'rounded' ? 32 : 24}
-        keepAspectRatio={kind.shape !== 'rounded'}
+        minWidth={kind.shape === 'pill' ? 60 : 24}
+        minHeight={kind.shape === 'pill' ? 32 : 24}
+        keepAspectRatio={kind.shape !== 'pill'}
         onResizeStart={() => groupResize.start(id)}
         onResize={(_, params) => groupResize.resize(id, params)}
         onResizeEnd={groupResize.end}

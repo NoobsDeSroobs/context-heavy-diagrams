@@ -1,0 +1,220 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "title",
+      "type": "text",
+      "position": {
+        "x": 0,
+        "y": -70
+      },
+      "size": {
+        "width": 640,
+        "height": 30
+      },
+      "style": {
+        "fontSize": 18,
+        "fontWeight": "bold",
+        "textAlign": "center"
+      },
+      "data": {
+        "label": "Steps and events: every kind"
+      }
+    },
+    {
+      "id": "intro",
+      "type": "text",
+      "position": {
+        "x": 0,
+        "y": -36
+      },
+      "size": {
+        "width": 640,
+        "height": 44
+      },
+      "style": {
+        "fontSize": 12,
+        "textAlign": "center"
+      },
+      "data": {
+        "label": "Events and verbs are steps and events; things and concepts are entities. Open the legend to see the kinds a diagram uses."
+      }
+    },
+    {
+      "id": "kind-step",
+      "type": "stencil",
+      "position": {
+        "x": 10,
+        "y": 82
+      },
+      "size": {
+        "width": 140,
+        "height": 56
+      },
+      "data": {
+        "label": "Step",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "what-step",
+      "type": "text",
+      "position": {
+        "x": 190,
+        "y": 78
+      },
+      "size": {
+        "width": 450,
+        "height": 64
+      },
+      "style": {
+        "fontSize": 12,
+        "textAlign": "center"
+      },
+      "data": {
+        "label": "Something that is done: an action or a task. Name it with a verb, such as \"Check the order\". Things and concepts are entities, not steps."
+      }
+    },
+    {
+      "id": "kind-decision",
+      "type": "stencil",
+      "position": {
+        "x": 56,
+        "y": 186
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "data": {
+        "label": "Decision",
+        "kind": "decision"
+      }
+    },
+    {
+      "id": "what-decision",
+      "type": "text",
+      "position": {
+        "x": 190,
+        "y": 178
+      },
+      "size": {
+        "width": 450,
+        "height": 64
+      },
+      "style": {
+        "fontSize": 12,
+        "textAlign": "center"
+      },
+      "data": {
+        "label": "A choice between ways on. Name it with a question, such as \"In stock?\", and label the edges that leave it (\"yes\", \"no\"). Found by searching for gateway, xor or choice."
+      }
+    },
+    {
+      "id": "kind-parallel",
+      "type": "stencil",
+      "position": {
+        "x": 56,
+        "y": 286
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "data": {
+        "label": "Parallel split or join",
+        "kind": "parallel"
+      }
+    },
+    {
+      "id": "what-parallel",
+      "type": "text",
+      "position": {
+        "x": 190,
+        "y": 278
+      },
+      "size": {
+        "width": 450,
+        "height": 64
+      },
+      "style": {
+        "fontSize": 12,
+        "textAlign": "center"
+      },
+      "data": {
+        "label": "Splits the flow into branches that all run, or joins them again once all are done. Found by searching for fork, join, split or gateway."
+      }
+    },
+    {
+      "id": "kind-start",
+      "type": "stencil",
+      "position": {
+        "x": 60,
+        "y": 390
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "data": {
+        "label": "Start",
+        "kind": "start"
+      }
+    },
+    {
+      "id": "what-start",
+      "type": "text",
+      "position": {
+        "x": 190,
+        "y": 378
+      },
+      "size": {
+        "width": 450,
+        "height": 64
+      },
+      "style": {
+        "fontSize": 12,
+        "textAlign": "center"
+      },
+      "data": {
+        "label": "Where a flow begins: the event that sets it going. A flow can have more than one."
+      }
+    },
+    {
+      "id": "kind-end",
+      "type": "stencil",
+      "position": {
+        "x": 60,
+        "y": 490
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "data": {
+        "label": "End",
+        "kind": "end"
+      }
+    },
+    {
+      "id": "what-end",
+      "type": "text",
+      "position": {
+        "x": 190,
+        "y": 478
+      },
+      "size": {
+        "width": 450,
+        "height": 64
+      },
+      "style": {
+        "fontSize": 12,
+        "textAlign": "center"
+      },
+      "data": {
+        "label": "Where a flow ends. It is drawn with a heavy border, so it reads apart from a start."
+      }
+    }
+  ],
+  "edges": []
+}

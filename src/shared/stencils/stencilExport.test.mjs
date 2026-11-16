@@ -46,11 +46,11 @@ test('a stencil takes the size of its kind when the file gives none', () => {
   assert.equal(laid.get('check').kind, 'stencil')
 })
 
-test('the kinds are drawn as a circle, a square with a mark and a rounded rectangle', () => {
+test('the kinds are drawn as a circle, a square with a mark and a pill', () => {
   const svg = render(flow())
   assert.match(svg, /class="chd-stencil" data-id="begin"[^]*?<circle/)
   assert.match(svg, /class="chd-stencil" data-id="check"[^]*?<rect[^]*?<path d="M[^"]+L[^"]+M/)
-  assert.match(svg, /class="chd-stencil" data-id="work"[^]*?rx="12"/)
+  assert.match(svg, /class="chd-stencil" data-id="work"[^]*?rx="27\.25"/)
 })
 
 test('an end has a heavier border than a start', () => {
@@ -76,7 +76,7 @@ test('an edge to a stencil is drawn', () => {
 
 test('a kind this version does not know is drawn as a step', () => {
   const svg = render({ version: 1, nodes: [stencil('x', 'from-the-future', 0, 0)], edges: [] })
-  assert.match(svg, /data-id="x"[^]*?rx="12"/)
+  assert.match(svg, /data-id="x"[^]*?rx="27\.25"/)
 })
 
 test('the layout check leaves a stencil label that sits outside its shape alone', () => {

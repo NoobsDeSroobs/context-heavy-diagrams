@@ -131,7 +131,7 @@ A stencil carries `data.label`, `position`, `size`, `style`, `parentId`, `locked
 
 | `kind` | Base shape | Mark | Default size | Label | Fill when `style.fill` is absent |
 |---|---|---|---|---|---|
-| `step` | rounded rectangle | none | 140 × 56 | inside | the entity default |
+| `step` | pill: a rectangle with fully rounded ends | none | 140 × 56 | inside | `#1d3b40` |
 | `decision` | square with slightly rounded corners | a cross (×) | 48 × 48 | below the shape | `#4d3d14` |
 | `parallel` | square with slightly rounded corners | a plus (+) | 48 × 48 | below the shape | `#1c3550` |
 | `start` | circle | none | 40 × 40 | below the shape | `#1f3d26` |

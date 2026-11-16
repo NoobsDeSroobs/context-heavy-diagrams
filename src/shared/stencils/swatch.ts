@@ -7,7 +7,7 @@ export function stencilSwatchSvg(
   colors: { fill: string; stroke: string; mark: string }
 ): string {
   const kind = stencilKind(kindId)
-  const width = kind.shape === 'rounded' ? 22 : 14
+  const width = kind.shape === 'pill' ? 22 : 14
   const x = (28 - width) / 2
   const y = 1
   const height = 14
@@ -17,7 +17,7 @@ export function stencilSwatchSvg(
   const shape =
     kind.shape === 'circle'
       ? `<circle cx="14" cy="8" r="${7 - inset}" ${paint}/>`
-      : `<rect x="${x + inset}" y="${y + inset}" width="${width - sw}" height="${height - sw}" rx="${kind.shape === 'rounded' ? 5 : 2}" ${paint}/>`
+      : `<rect x="${x + inset}" y="${y + inset}" width="${width - sw}" height="${height - sw}" rx="${kind.shape === 'pill' ? (height - sw) / 2 : 2}" ${paint}/>`
   const s = 3
   const mark =
     kind.mark === 'cross'

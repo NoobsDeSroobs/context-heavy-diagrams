@@ -57,7 +57,7 @@ describe('stencils on the canvas (ADR 0180)', () => {
       container.querySelector(`.stencil-node[data-stencil-kind="${kind}"]`)
     expect(shape('start')?.className).toContain('stencil-node--circle')
     expect(shape('decision')?.className).toContain('stencil-node--square')
-    expect(shape('step')?.className).toContain('stencil-node--rounded')
+    expect(shape('step')?.className).toContain('stencil-node--pill')
     expect(shape('decision')?.querySelector('.stencil-node-mark')).not.toBeNull()
     expect(shape('step')?.querySelector('.stencil-node-mark')).toBeNull()
   })

@@ -46,8 +46,8 @@
   border-style: dashed;
 }
 
-.item-palette-icon-stencil.item-palette-icon-rounded {
-  border-radius: 7px;
+.item-palette-icon-stencil.item-palette-icon-pill {
+  border-radius: 999px;
 }
 
 .item-palette-icon-stencil.item-palette-icon-square {

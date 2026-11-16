@@ -321,7 +321,7 @@ export function renderDiagramDrawio(
     const matches = matchingHighlights(node.metadata, highlights, enabled)
     if (matches.length >= 2) lost.chips += 1
     const type = styledNodeType(node.type)
-    // A stencil is an ellipse, a rhombus or a rounded box with its label below the small ones; the
+    // A stencil is an ellipse, a rhombus or a pill with its label below the small ones; the
     // mark on it has no counterpart here (ADR 0180).
     const sk = kind === 'stencil' ? stencilKind(node.data.kind) : undefined
     if (sk?.mark) lost.stencilMarks += 1
@@ -334,13 +334,13 @@ export function renderDiagramDrawio(
     )
     const labelLook = resolveLabelLook(type, styleSource, theme, family)
     const rotation = kind === 'text' ? (node.rotation ?? 0) : 0
-    const flat = kind === 'text' || (sk !== undefined && sk.shape !== 'rounded')
+    const flat = kind === 'text' || (sk !== undefined && sk.shape !== 'pill')
     const labelBelow = sk !== undefined && stencilLabelOutside(node.data.kind)
     const style = styleOf(
       [
         ['rounded', flat ? 0 : 1],
-        ['absoluteArcSize', flat ? undefined : 1],
-        ['arcSize', flat ? undefined : 12],
+        ['absoluteArcSize', flat || sk ? undefined : 1],
+        ['arcSize', flat ? undefined : sk ? 50 : 12],
         ['whiteSpace', 'wrap'],
         ['html', 1],
         ['fillColor', colorOf(look.fill)],

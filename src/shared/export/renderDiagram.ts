@@ -158,7 +158,7 @@ function stencilShape(
   const shape =
     kind.shape === 'circle'
       ? `<circle cx="${num(cx)}" cy="${num(cy)}" r="${num(Math.max(0, Math.min(width, height) / 2 - inset))}"${paint}/>`
-      : `<rect x="${num(x + inset)}" y="${num(y + inset)}" width="${num(width - inset * 2)}" height="${num(height - inset * 2)}" rx="${num(kind.shape === 'rounded' ? Math.min(12, height / 2) : 4)}"${paint}/>`
+      : `<rect x="${num(x + inset)}" y="${num(y + inset)}" width="${num(width - inset * 2)}" height="${num(height - inset * 2)}" rx="${num(kind.shape === 'pill' ? (height - inset * 2) / 2 : 4)}"${paint}/>`
   if (!kind.mark) return shape
   const s = Math.min(width, height) * 0.22
   const d =
@@ -382,7 +382,7 @@ function drawLegend(
         options.theme,
         undefined
       )
-      const wide = sk.shape === 'rounded'
+      const wide = sk.shape === 'pill'
       const box = wide
         ? { x: swatchX + 3, y: cy - 7, width: 22, height: 14 }
         : { x: swatchX + 7, y: cy - 7, width: 14, height: 14 }
@@ -536,7 +536,8 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
       const blockWidth = Math.min(available, blockWidthOf(lines, labelLook.font))
       parts.push(textLines(lines, labelLook, x + sw + 8, blockWidth, y + sw + 4))
     } else {
-      const padding = kind === 'text' ? 8 : 8
+      // A pill's rounded ends leave less room for the label.
+      const padding = sk?.shape === 'pill' ? 16 : 8
       const available = Math.max(0, width - sw * 2 - padding * 2)
       const lines = wrapText(text, available, labelLook.font)
       const blockWidth = Math.min(available, blockWidthOf(lines, labelLook.font))

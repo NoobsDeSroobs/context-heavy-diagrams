@@ -94,8 +94,9 @@
   padding: 2px 8px;
 }
 
-.stencil-node--rounded {
-  border-radius: 12px;
+.stencil-node--pill {
+  border-radius: 9999px;
+  padding: 2px 18px;
 }
 
 .stencil-node--square {
