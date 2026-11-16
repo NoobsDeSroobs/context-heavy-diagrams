@@ -27,7 +27,8 @@ export const CHECK_USAGE = `Usage: chd check <file.chd>... --metamodel <metamode
 
 Built-in metamodels: {BUILT_INS}
 
-Reports where a diagram breaks the rules of its diagram metamodel. It only reads the diagram.
+Asks whether a diagram follows the rules of a diagram metamodel (its architecture), and reports where it
+breaks them. It does not check that the file is well-formed: chd validate does that. It only reads the diagram.
 Errors fail the check; warnings and information are listed but do not.
 
 Exit codes: 0 every diagram conforms, 1 a diagram has an error or cannot be read, 2 the command or

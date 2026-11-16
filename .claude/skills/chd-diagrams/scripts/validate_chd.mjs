@@ -27,6 +27,10 @@
 // Usage:
 //   node validate_chd.mjs path/to/diagram.chd [more.chd ...]
 //   node validate_chd.mjs path/to/diagram.chd --recursive   # also follow linkedDiagram targets
+//   some-command | node validate_chd.mjs -                  # a diagram given as text on standard input
+//
+// A diagram given as text has no folder, so the checks that look for files (icons, notes, linked
+// diagrams, references) are skipped and the result says so; every structural check still runs.
 //
 // Exit code is 1 if any ERROR was found in any file, 0 otherwise (warnings
 // alone don't fail the run, but are always printed).
@@ -40,6 +44,14 @@ const SIDES = ['top', 'right', 'bottom', 'left']
 // Only these carry connection points; 'shape' is the legacy name the app still reads as 'entity'.
 const HANDLE_NODE_TYPES = new Set(['entity', 'container', 'shape'])
 
+function parseText(text) {
+  try {
+    return { data: JSON.parse(text), errors: [] }
+  } catch (e) {
+    return { data: null, errors: [`invalid JSON: ${e.message}`] }
+  }
+}
+
 function load(path) {
   let text
   try {
@@ -47,11 +59,7 @@ function load(path) {
   } catch (e) {
     return { data: null, errors: [`cannot read file: ${e.message}`] }
   }
-  try {
-    return { data: JSON.parse(text), errors: [] }
-  } catch (e) {
-    return { data: null, errors: [`invalid JSON: ${e.message}`] }
-  }
+  return parseText(text)
 }
 
 // Stored paths always use forward slashes; tolerate backslashes from
@@ -78,19 +86,37 @@ function hiddenLabelWarnings(prefix, nodes, edges, diagramFont) {
   return shown
 }
 
+export const NOT_CHECKED_NOTE =
+  'Paths to icons, notes, linked diagrams and references were not checked: a diagram given as text has no folder to look in.'
+
 export function validateFile(path, recursive = false, visited = new Set()) {
   const abs = resolve(path)
   if (visited.has(abs)) return { errors: [], warnings: [] }
   visited.add(abs)
 
+  const prefix = `[${path}]`
+  const { data, errors: loadErrors } = load(path)
+  if (loadErrors.length > 0) {
+    return { errors: loadErrors.map((e) => `${prefix} ${e}`), warnings: [] }
+  }
+  return validateData(data, prefix, dirname(abs), recursive, visited)
+}
+
+// A diagram given as its text (a draft, standard input), so with no folder: every structural check runs,
+// the ones that look for files do not, and `notes` says so. `name` is what the messages call the diagram.
+export function validateText(text, name = '(text)') {
+  const prefix = `[${name}]`
+  const { data, errors: loadErrors } = parseText(text)
+  if (loadErrors.length > 0) {
+    return { errors: loadErrors.map((e) => `${prefix} ${e}`), warnings: [], notes: [] }
+  }
+  return { ...validateData(data, prefix, null, false, new Set()), notes: [NOT_CHECKED_NOTE] }
+}
+
+// `baseDir` is the folder the diagram's relative paths resolve against; null skips the file checks.
+function validateData(data, prefix, baseDir, recursive, visited) {
   const errors = []
   const warnings = []
-  const prefix = `[${path}]`
-
-  const { data, errors: loadErrors } = load(path)
-  if (loadErrors.length > 0) return { errors: loadErrors.map((e) => `${prefix} ${e}`), warnings }
-
-  const baseDir = dirname(abs)
   const nodes = Array.isArray(data?.nodes) ? data.nodes : []
   const edges = Array.isArray(data?.edges) ? data.edges : []
 
@@ -244,7 +270,7 @@ export function validateFile(path, recursive = false, visited = new Set()) {
 
   // --- relative path resolution ---
   const checkPath = (context, ref) => {
-    if (!ref) return null
+    if (!ref || baseDir === null) return null
     const target = resolveRef(baseDir, ref)
     if (!existsSync(target)) {
       warnings.push(`${prefix} ${context} points to '${ref}' -> resolves to '${target}' which does not exist`)
@@ -299,22 +325,36 @@ export function validateFile(path, recursive = false, visited = new Set()) {
 }
 
 // Exported so the app's `chd validate` command (resources/cli) reuses it as-is.
+export const STDIN_NAME = '(stdin)'
+
 export function main(argv) {
   const recursive = argv.includes('--recursive')
   const files = argv.filter((a) => !a.startsWith('--'))
   if (files.length === 0) {
-    console.error('Usage: node validate_chd.mjs <file.chd> [more.chd ...] [--recursive]')
+    console.error('Usage: node validate_chd.mjs <file.chd | -> [more.chd ...] [--recursive]')
     return 2
   }
   let hadErrors = false
   for (const path of files) {
-    const { errors, warnings } = validateFile(path, recursive)
+    // A single "-" is the diagram's text on standard input.
+    let result
+    if (path === '-') {
+      try {
+        result = validateText(readFileSync(0, 'utf-8'), STDIN_NAME)
+      } catch (e) {
+        console.error(`cannot read standard input: ${e.message}`)
+        return 2
+      }
+    } else {
+      result = validateFile(path, recursive)
+    }
+    const { errors, warnings, notes = [] } = result
     if (errors.length === 0 && warnings.length === 0) {
-      console.log(`[${path}] OK`)
-      continue
+      console.log(`[${path === '-' ? STDIN_NAME : path}] OK`)
     }
     for (const e of errors) console.log(`ERROR   ${e}`)
     for (const w of warnings) console.log(`WARNING ${w}`)
+    for (const n of notes) console.log(`NOTE    ${n}`)
     if (errors.length > 0) hadErrors = true
   }
   return hadErrors ? 1 : 0

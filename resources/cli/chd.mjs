@@ -54,10 +54,10 @@ const HELP = `chd — command-line companion to Context-Heavy Diagrams
 
 Usage:
   chd spec [topic]                         Print the .chd file format reference
-  chd validate <file>... [--recursive]     Check diagram or metamodel files for problems
+  chd validate <file|->... [--recursive]   Is a diagram or metamodel well-formed? (- reads stdin)
   chd hash <file.chd>                      Print the file's fingerprint (SHA-256 of its bytes)
   chd export <file.chd> [options]          Draw the diagram as an SVG image
-  chd check <file.chd>... --metamodel <m>  Check diagrams against a diagram metamodel
+  chd check <file.chd>... --metamodel <m>  Does a diagram follow a metamodel's rules?
   chd diff <old.chd> <new.chd>             What changed between two versions (or against git)
   chd edit <file.chd> --base <hash>        Build or change a diagram with a list of operations
   chd ask inspect|room ...                 Ask about the layout of a diagram while you build it
@@ -91,13 +91,16 @@ ${SPEC_TOPIC_NAMES.map((name) => `  ${name.padEnd(12)} ${SPEC_TOPICS[name].about
 
 Exit codes: 0 ok, 2 unknown topic.
 `,
-  validate: `Usage: chd validate <file.chd|file.chdmeta>... [--recursive]
+  validate: `Usage: chd validate <file.chd|file.chdmeta|->... [--recursive]
 
-For a diagram: reports duplicate ids, dangling edge endpoints, parent-before-child ordering, and
+Asks whether a file is well-formed (its structure), not whether a diagram follows an architecture:
+chd check does that. For a diagram: reports duplicate ids, dangling edge endpoints, parent-before-child ordering, and
 relative paths (icons, notes, linked diagrams) that don't resolve. It also warns where an edge
 label does not fit in the gap between the two elements it joins, with the line showing either side of it.
 Run it after every edit to a diagram. For a diagram metamodel (.chdmeta): reports every way the file breaks its format.
 
+  -             Read one diagram from standard input instead of a file. It needs no file, but it has
+                no folder either, so the relative paths are not checked (a NOTE line says so)
   --recursive   Also follow linked diagrams (diagrams only)
 
 Exit codes: 0 ok (warnings alone don't fail), 1 if any ERROR was found, 2 usage error.
@@ -381,7 +384,7 @@ export async function run(argv) {
         return 0
       }
       if (rest.filter((a) => !a.startsWith('--')).length === 0) {
-        console.error('Usage: chd validate <file.chd|file.chdmeta>... [--recursive]')
+        console.error('Usage: chd validate <file.chd|file.chdmeta|->... [--recursive]')
         return 2
       }
       return validateCommand(rest)

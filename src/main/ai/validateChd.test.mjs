@@ -3,7 +3,10 @@ import assert from 'node:assert/strict'
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { validateFile } from '../../../resources/ai/skills/chd-diagrams/scripts/validate_chd.mjs'
+import {
+  validateFile,
+  validateText
+} from '../../../resources/ai/skills/chd-diagrams/scripts/validate_chd.mjs'
 
 let dir
 beforeEach(async () => {
@@ -263,4 +266,37 @@ test('an edge that leaves by the far side loops round, so its label is not in th
   assert.equal(labelWarnings(same.warnings).length, 1)
   const wrong = await check(narrow, [{ ...reverse, sourceHandle: 'right', targetHandle: 'left' }])
   assert.equal(labelWarnings(wrong.warnings).length, 0)
+})
+
+test('a diagram given as text gets every structural check, named as given', () => {
+  const text = JSON.stringify({
+    version: 1,
+    nodes: [node('a'), node('a')],
+    edges: [edge({ target: 'zzz' })]
+  })
+  const { errors } = validateText(text, '(inline)')
+  assert.equal(errors.length, 2)
+  const all = errors.join(' | ')
+  assert.ok(
+    errors.every((e) => e.startsWith('[(inline)] ')),
+    all
+  )
+  assert.match(all, /duplicate node id 'a'/)
+  assert.match(all, /doesn't match any node id/)
+  assert.match(validateText('{ nope', '(inline)').errors[0], /invalid JSON/)
+})
+
+test('text has no folder: a path to a missing file is not looked for, and the result says so', async () => {
+  const ref = { notes: 'notes/missing.md', linkedDiagram: 'gone.chd', references: ['no.png'] }
+  const diagram = { version: 1, nodes: [node('a', { data: ref })], edges: [] }
+  const asText = validateText(JSON.stringify(diagram))
+  assert.deepEqual(asText.errors, [])
+  assert.deepEqual(asText.warnings, [])
+  assert.equal(asText.notes.length, 1)
+  assert.match(asText.notes[0], /not checked/)
+  // The same diagram as a file in a folder does warn, so nothing else differs.
+  const file = join(dir, 'd.chd')
+  await writeFile(file, JSON.stringify(diagram))
+  assert.equal(validateFile(file).warnings.length, 3)
+  assert.equal(validateFile(file).notes, undefined)
 })

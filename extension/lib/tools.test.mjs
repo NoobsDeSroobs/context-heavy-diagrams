@@ -193,6 +193,29 @@ test('validate messages use diagram-relative paths, not the machine path', () =>
   refusal(() => make().validate_diagram({ path: 'notes/readme.md' }), /only validates .chd/)
 })
 
+test('validate_diagram takes the diagram as text, with no file in the folder', () => {
+  const tools = make()
+  const bad = tools.validate_diagram({ content: BROKEN })
+  assert.equal(bad.ok, false)
+  assert.ok(bad.errors[0].startsWith('[(inline)] '), bad.errors[0])
+  assert.match(bad.notes[0], /not checked/)
+  const withPath = JSON.stringify({
+    version: 1,
+    nodes: [{ id: 'a', data: { notes: 'notes/missing.md' } }],
+    edges: []
+  })
+  const good = tools.validate_diagram({ content: withPath })
+  assert.equal(good.ok, true)
+  assert.deepEqual(good.warnings, [], 'a path in text is not looked for')
+  refusal(() => tools.validate_diagram({ path: 'a.chd', content: VALID }), /not both/)
+  refusal(() => tools.validate_diagram({ content: 5 }), /must be text/)
+  // Nothing was written, not even a temporary file.
+  assert.deepEqual(
+    readdirSync(folder).filter((n) => n.startsWith('.chd-')),
+    []
+  )
+})
+
 test('update_file is refused unless the user turned it on', () => {
   refusal(
     () => make(false).update_file({ path: 'a.chd', content: VALID, base_fingerprint: sha(VALID) }),
