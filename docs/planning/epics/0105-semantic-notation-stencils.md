@@ -56,7 +56,7 @@ validated ([ADR 0080](../../decisions/0080-bpmn-as-adopted-vocabulary-not-metamo
 - [x] The assistant tools (`edit_diagram`, `chd edit`, the MCP server) and the build guide: `add_behaviour`, `set_behaviour_kind`, `set_label_position`, the kind and label position and the crossings in `inspect_diagram`, the skill's guides ([ADR 0187](../../decisions/0187-assistants-build-behaviours-and-read-crossings.md))
 - [x] The lane hand-off check ([0088](0088-cross-container-edge-detection.md))
 - Spun out of this epic: where a label goes ([0189](0189-where-a-label-goes.md)) and repetition and parallel policy ([0190](0190-behaviour-parameters-repetition-and-parallel-policy.md))
-- [ ] OMG's own terms for the name "BPMN" (trademark use in the search keywords, the docs and the notices) and for the specification (current version 2.0.2), read at the source, before release; then the credit to OMG in `THIRD-PARTY-NOTICES.md` or the about text, if the terms call for one
+- [ ] OMG's own terms for the name "BPMN" (trademark use in the search keywords, the docs and the notices) and for the specification (current version 2.0.2), read at the source, before release (the credit to OMG is already in `THIRD-PARTY-NOTICES.md`; add a trademark line there if the terms ask for one)
 
 ## Open questions (not yet designed)
 

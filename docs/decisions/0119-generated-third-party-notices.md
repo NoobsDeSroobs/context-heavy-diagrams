@@ -12,6 +12,7 @@ The app includes about 130 third-party packages (React, React Flow, the Markdown
 - **Every license is checked against an allowlist** of identifiers compatible with GPL-3.0-or-later (MIT, ISC, BSD-2/3, 0BSD, Apache-2.0, MPL-2.0, BlueOak-1.0.0, Python-2.0, CC0, Unlicense, GPL/LGPL v3+). An `OR` expression passes if one alternative is allowed, an `AND` needs all of them. A package with an unknown license, or with no license file in it, fails the run.
 - **`npm test` fails if the committed file is out of date** or the check finds a problem, so adding or updating a dependency forces a regenerate and a look at the new license. CI runs the same test.
 - **Tabler Icons is named explicitly** in the file even though it is loaded as data, not imported code.
+- **The notation the Behaviour elements are inspired by is credited** in a section of its own (BPMN and its owner, OMG), written in the generator like the Tabler line. It is an acknowledgement, not a license: no part of the specification is included.
 
 ## Alternatives considered
 - **A license-checker package.** Another dependency to trust and keep updated for a job that is 150 lines here, and it would not know that the renderer bundles `react` from a dev dependency, nor read the extension's real bundle.
