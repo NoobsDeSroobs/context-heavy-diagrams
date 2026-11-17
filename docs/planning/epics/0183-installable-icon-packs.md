@@ -18,8 +18,8 @@ Everything about where packs live, the reference form, drawing and cleaning icon
 ## Tasks
 - [x] Design pass and ADR 0188
 - [x] Icon cleaner (allowlist, per-icon prefix and per-use counter) with tests on hostile and on real vendor SVGs
-- [ ] Pack format: `pack.json`, `subset.json`, default metadata at install; `docs/icon-packs.md`
-- [ ] Install manager window: install, remove, update; staging, cancel, progress; trash with fallback
+- [x] Pack format: `pack.json`, `subset.json`, their reading, the default files and the icon path check (`src/shared/icons/pack.ts`); `docs/icon-packs.md`
+- [ ] Install manager window: install (writes the default metadata files), remove, update; staging, cancel, progress; trash with fallback
 - [ ] `IconRef` `installed`, optional used-packs list: schema, `docs/file-format.md`, validator, skill field reference
 - [ ] Picker: collapsible sections per pack and subset, search, lazy previews
 - [ ] Icons follow the text colour in both themes; colours fixed by a pack are kept
