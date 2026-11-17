@@ -35,7 +35,7 @@ https://github.com/user-attachments/assets/2e63dee5-85f8-4b32-a75a-f986084bd873
 
 ## Features
 
-Suits many kinds of diagrams, such as customer journeys, organisation goals and data models; see the [gallery](examples/gallery/README.md).
+Suits many kinds of diagrams, such as customer journeys, process flows in swim lanes, organisation goals and data models; see the [gallery](examples/gallery/README.md).
 
 ### Local and offline
 - **Works fully offline.** No server, no account, no sign-in. The app blocks its own network access, so this is enforced, not just promised ([ADR 0113](docs/decisions/0113-enforced-offline-behaviour.md)).
@@ -70,10 +70,16 @@ A diagram is a small, deterministic text file, so git can do for it what it does
 - **A security matrix view,** a threat/risk matrix over your entities whose scores roll up through linked diagrams (try [`security-rollup`](examples/gallery/technical/security-rollup/README.md)).
 - **Diagnostics** that flag problems such as missing files or an empty legend, plus a **layer panel** and a **minimap** for big diagrams.
 
+### Flows and swim lanes
+- **Behaviour elements for what happens in a flow.** Thirteen kinds in three families: **steps** (a plain step, or one done by a user, done automatically, expanding into a sub-flow, or repeated), **choices** (a decision, an inclusive choice, a parallel split or join) and **events** (a start, an end, and a timer, a message or a plain event in the middle). Each has its own shape and colour, and the legend explains the kinds a diagram uses. Things and concepts stay entities; a behaviour is deliberately context-light, with only a label, a shape, and one link to a deeper diagram, but no notes or tags ([ADR 0180](docs/decisions/0180-stencils-are-light-elements-for-events-and-verbs.md)). Inspired by BPMN, and not limited to it; the app is not BPMN-compliant, but searches still finds the elements by BPMN terms if desired (`gateway`, `user task`).
+- **A swim lane is a container,** with its label on the top, left, right or bottom, reading along the side it is on, and the behaviours inside it as its children. A small shape's label goes below, above, left or right, or anywhere, tied to the shape by a dotted line.
+- **See the hand-offs.** **View → Display → Mark crossings** puts a gate where an edge crosses the border of a container, and holding Ctrl (Cmd) over the edge says which lanes it goes between.
+- Examples: [`process-flow-all-behaviours.chd`](examples/process-flow-all-behaviours.chd) (all thirteen kinds in two lanes), [`process-flow-stencils.chd`](examples/process-flow-stencils.chd) (an order flow with a drill-down) and [`crossings.chd`](examples/crossings.chd).
+
 ### Elements, connections and styling
 - Entities, nestable **containers**, rotatable **text**, and freeform **curved lines**.
 - About 5,800 bundled [Tabler](https://tabler.io/icons) icons (MIT) plus your own SVG/PNG icons, in up to four corner slots per entity. Protected icon packs like AWS/Azure/GCP are sadly not bundled.
-- **Configurable edges.** Straight, step, smooth and curved routing, manual bend points, direction sets, and multi-connection wiring. Try moving the label if the 
+- **Configurable edges.** Straight, step, smooth and curved routing, manual bend points, direction sets, and multi-connection wiring. Drop an edge on the dashed target in the middle of an element and it **changes to auto mode**, where the connection point is dynamically updated as things move around following set rules. Further, connection points slide a little to straighten almost-straight edges. Hold Alt and drag a label to slide it along its edge. 
 - A full **style panel**, named style palettes you can share, alignment guides, snapping, align/distribute, and multi-select resize. It even has profiles to match the branding of your company or your clients.
 
 ### And more
@@ -81,7 +87,10 @@ A diagram is a small, deterministic text file, so git can do for it what it does
 - Edge direction sets
 - Per-element lock
 - Format painter
-- Alt+drag duplicate and bulk create (right click on an entity or container)
+- Alt+drag duplicate and bulk create (right click on an entity or container), including from a table pasted from a spreadsheet: one element per row, with its notes and tags from the columns
+- Save As that asks what to copy (notes, images, linked diagrams) into a folder named after the new diagram
+- A highlight can have no colour, to leave an element out (a system boundary, say)
+- Help → Glossary explains the terms the app uses
 - Isolate mode
 - Peek card (hold ctrl on hover)
 - Required tags that propagate to children
@@ -93,7 +102,7 @@ A diagram is a small, deterministic text file, so git can do for it what it does
 - Export to draw.io (diagrams.net) files, from the File menu or `chd export --format drawio`
 - Architecture checks: a diagram can be checked against the rules of a diagram metamodel (hexagonal and data-flow diagrams ship with the app, and you can write your own metamodels), from Diagnostics or with `chd check` in CI
 - Review what changed between two versions of a diagram, e.g. after an AI assistant edited it: a compare window draws the later version with added, removed, link-or-note-changed, modified and restyled (colour, line, marker, animation or icon) elements coloured and everything else dimmed. You also get a list of changes to step through and a per-change revert (View → Changes → Compare with git revision…, or **Review changes** when the file changes on disk); `chd diff` prints the same review for a terminal or CI
-- The `chd` command line tool (`spec`, `validate`, `hash`, `export`, `check`)
+- The `chd` command line tool (`spec`, `validate`, `hash`, `export`, `check`, `diff`, `edit`, `ask`, `mcp`; see the [reference](docs/cli-reference.md))
 
 ## Download
 
@@ -115,7 +124,7 @@ npm install
 npm run dev
 ```
 
-Then open a file from [`examples/`](examples/README.md) with **File → Open**, or drop it onto the window. (Double-clicking a `.chd` in your file manager only works with an installed build: the Windows installer offers to associate the file type, and Linux and macOS are unverified. A dev run from source never registers it.) `hello-world.chd` is the smallest example, and the [getting-started guide](docs/getting-started.md) walks through drawing your first diagram. The [gallery](examples/gallery/README.md) has a full fictional rail operator's landscape, a C4 drill-down, a customer journey, a Power BI star schema and more.
+Then open a file from [`examples/`](examples/README.md) with **File → Open**, or drop it onto the window. (Double-clicking a `.chd` in your file manager only works with an installed build: the Windows installer offers to associate the file type, and Linux and macOS are unverified. A dev run from source never registers it.) `hello-world.chd` is the smallest example, `process-flow-all-behaviours.chd` shows the flow elements in swim lanes, and the [getting-started guide](docs/getting-started.md) walks through drawing your first diagram. The [gallery](examples/gallery/README.md) has a full fictional rail operator's landscape, a C4 drill-down, a customer journey, a Power BI star schema and more.
 
 Other scripts: `npm test`, `npm run typecheck`, `npm run lint`. To build an installer for your own machine run `npm run build:win`, `build:mac` or `build:linux` (see [packaging](docs/architecture/packaging.md)). In VS Code, the **Debug All** launch configuration attaches to both the main and renderer processes.
 
@@ -131,7 +140,7 @@ Treat what an assistant produces as a draft. Give it the material and ask for a 
 
 > Read `docs/payments-overview.md` and `docs/integrations.md` and draw the systems and how they connect as a diagram in `payments.chd`. Tag each system with its owning team, add a note to every system with what the text says about it, and tell me what you were unsure of.
 
-The Claude Desktop extension reads any file in its folder except executables, installers, archives, disk images, video and audio: text comes over as text, pictures as images, and other files such as PDFs and spreadsheets as attachments. What Claude can make of an attachment depends on the client, so check the result, and convert a source it cannot use first. An agent in a folder reads whatever its own tools can. An assistant can also build a diagram step by step, by doing what a person does (add an entity, connect two, add a note or a link to a child diagram) and getting an answer after each step, through the extension's `edit_diagram` tool or `chd edit` on the command line; it decides where everything goes, so expect to tidy the layout. Then review the result instead of trusting it: the compare window (View → Changes → Compare with git revision…, or **Review changes** when the open file changes on disk) colours what was added, removed and modified, and `chd diff` prints the same review in a terminal or CI.
+The Claude Desktop extension reads any file in its folder except executables, installers, archives, disk images, video and audio: text comes over as text, pictures as images, and other files such as PDFs and spreadsheets as attachments. What Claude can make of an attachment depends on the client, so check the result, and convert a source it cannot use first. An agent in a folder reads whatever its own tools can. An assistant can also build a diagram step by step, by doing what a person does (add an entity, connect two, add a note or a link to a child diagram) and getting an answer after each step, through the extension's `edit_diagram` tool or `chd edit` on the command line. That includes flows: it can add behaviours of any kind, put them in lanes, move their labels and read back which edges hand over between lanes. It decides where everything goes, but each answer lists the layout problems it caused (an edge across an element, a label that does not fit, edges that cross) and it can route edges around elements. While the AI can do much of the work for you, expect some tidying up and tweaking. Then review the result instead of trusting it: the compare window (View → Changes → Compare with git revision…, or **Review changes** when the open file changes on disk) colours what was added, removed and modified, and `chd diff` prints the same review in a terminal or CI.
 
 ### Why the layout is manual
 
