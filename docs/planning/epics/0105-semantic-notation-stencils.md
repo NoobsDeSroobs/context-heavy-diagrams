@@ -9,8 +9,10 @@ was replaced by its own light node type, see "Decided".)
 
 ## Goal
 
-A new item-palette category of ready-to-drag semantic symbols — the BPMN-derived
-vocabulary (a choice/gateway, parallelism, events, …) delivered as
+A new item-palette category of ready-to-drag semantic symbols — a vocabulary
+inspired by BPMN and not limited to it (a choice/gateway, parallelism, events, …;
+other notations' good ideas and our own inventions join the closed list when they
+earn their place) delivered as
 pre-configured **rectangular** Shapes rather than a metamodel or new outlines.
 Someone who knows BPMN builds a recognisably-BPMN-flavoured diagram; someone who
 doesn't gets ordinary labelled-and-iconed shapes. Nothing is enforced or
@@ -39,7 +41,7 @@ validated ([ADR 0080](../../decisions/0080-bpmn-as-adopted-vocabulary-not-metamo
 - **Design pass (2026-11-15):** a stencil has a properties panel (its kind, label, number of connection points, look, size and place, and its one link; none of the notes, tags, metadata or references sections); it sits inside a container as a child, like an entity; **one link to another `.chd` file is allowed**, nothing else of the context an entity has; **the legend shows what each kind in the diagram means**, so nobody has to know the marks (derived from the kinds present; shown by default, with a switch in the app only, for the session, nothing in the file, to hide it when it clutters; settled once there are example diagrams); highlights and tags do not apply. **Shapes:** a start or end is a circle, a gateway a square with its mark, a step a rounded rectangle (the frame stays a rectangle for resize, containment and connection points). **Size of the first release:** Step, Decision, Parallel split/join, Start and End are the first slice, but the pull request waits for a fuller set. **Search and review:** a stencil is found by id, label and kind (its neutral name and BPMN terms), and its kind and link show in a review of changes as meaning, not look. **Leaning, not settled:** each kind has a built-in default colour, used unless the element has its own fill (see the design notes).
 - **Vector first.** The built-in stencil marks (a gateway's ×, + and ○, an event's ring, a step's corner) are drawn as SVG by the app, with no raster files in the base, so they follow the theme and stay sharp at any zoom. A person may install raster elements if they want them; that is an extension of [0183](0183-installable-icon-packs.md), which today takes SVG only (to decide there).
 - **Swim lanes need no new element.** A container is a lane, and a stencil's lane is its parent. What is missing is the functional half: seeing which edges cross lanes (a hand-off), which is [0088](0088-cross-container-edge-detection.md) and is worth re-reading with this one.
-- **Licence of the notation (read 2026-11-15, [ScanCode's entry](https://scancode-licensedb.aboutcode.org/omg-bpmn-2.0.html) for the BPMN 2.0 specification's terms; not legal advice).** They are the terms of the specification document, not of icons. They say nobody infringes the holders' copyright by using the specification or conforming software to it, and allow software based on it. The conditions are about copies of the document: its notice with every copy, no posting on a network, no modifying, no reselling. So: draw our own marks, copy nothing from the specification (text, figures or the XSD) into the repository, say "based on BPMN 2.0" and never "compliant" (only a full match to the compliance points may claim that), and credit OMG in the notices anyway. The terms are not an open-source licence; the Apache Software Foundation has had the question open with OMG since late 2024 (LEGAL-690). Check the current version of the specification (2.0.2) before release.
+- **Licence of the notation (read 2026-11-15, [ScanCode's entry](https://scancode-licensedb.aboutcode.org/omg-bpmn-2.0.html) for the BPMN 2.0 specification's terms; not legal advice).** They are the terms of the specification document, not of icons. They say nobody infringes the holders' copyright by using the specification or conforming software to it, and allow software based on it. The conditions are about copies of the document: its notice with every copy, no posting on a network, no modifying, no reselling. So: draw our own marks, copy nothing from the specification (text, figures or the XSD) into the repository, say "inspired by BPMN" and never "based on" or "compliant" (only a full match to the compliance points may claim that), and credit OMG in the notices anyway. The terms are not an open-source licence; the Apache Software Foundation has had the question open with OMG since late 2024 (LEGAL-690). Check OMG's own terms before release (see Tasks).
 - **A closed, built-in list:** no stencils made or installed by a person, so the category cannot grow nouns. [0183](0183-installable-icon-packs.md) gives entities icons; it does not add stencils.
 
 ## Tasks
@@ -54,7 +56,7 @@ validated ([ADR 0080](../../decisions/0080-bpmn-as-adopted-vocabulary-not-metamo
 - [x] The assistant tools (`edit_diagram`, `chd edit`, the MCP server) and the build guide: `add_behaviour`, `set_behaviour_kind`, `set_label_position`, the kind and label position and the crossings in `inspect_diagram`, the skill's guides ([ADR 0187](../../decisions/0187-assistants-build-behaviours-and-read-crossings.md))
 - [x] The lane hand-off check ([0088](0088-cross-container-edge-detection.md))
 - Spun out of this epic: where a label goes ([0189](0189-where-a-label-goes.md)) and repetition and parallel policy ([0190](0190-behaviour-parameters-repetition-and-parallel-policy.md))
-- [ ] The BPMN specification's current version (2.0.2) and its terms, before release
+- [ ] OMG's own terms for the name "BPMN" (trademark use in the search keywords, the docs and the notices) and for the specification (current version 2.0.2), read at the source, before release; then the credit to OMG in `THIRD-PARTY-NOTICES.md` or the about text, if the terms call for one
 
 ## Open questions (not yet designed)
 
