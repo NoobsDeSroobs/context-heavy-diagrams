@@ -10,7 +10,6 @@ Let a person install icon sets (a cloud vendor's, a company's own) once per mach
 Everything about where packs live, the reference form, drawing and cleaning icons, Tabler on first start, one-off icons, diagnostics and the picker is in the ADR. The maintainer chose inline SVG over image-plus-mask, Tabler installed through the manager, and a `My icons` pack over keeping `custom` for new icons.
 
 ## Still to settle while building
-- **Cleaner library and its version** (DOMPurify's SVG profile is the candidate): check it keeps gradients, clip paths, masks and strokes on real vendor SVGs, and that it runs in the renderer; `npm run notices`.
 - **The Tabler archive:** one file in the installer, unpacked by the manager; the format (zip needs a reader, a tar does not) and where the command-line export reads its bundled copy.
 - **Slow canvases:** measure a large diagram with many installed icons before adding the `<img>` fallback for fixed-colour icons.
 - **Same-name packs:** what the manager shows when a second folder has the name of an installed pack.
@@ -18,7 +17,7 @@ Everything about where packs live, the reference form, drawing and cleaning icon
 
 ## Tasks
 - [x] Design pass and ADR 0188
-- [ ] Icon cleaner (allowlist, per-icon prefix and per-use counter) with tests on hostile and on real vendor SVGs
+- [x] Icon cleaner (allowlist, per-icon prefix and per-use counter) with tests on hostile and on real vendor SVGs
 - [ ] Pack format: `pack.json`, `subset.json`, default metadata at install; `docs/icon-packs.md`
 - [ ] Install manager window: install, remove, update; staging, cancel, progress; trash with fallback
 - [ ] `IconRef` `installed`, optional used-packs list: schema, `docs/file-format.md`, validator, skill field reference
