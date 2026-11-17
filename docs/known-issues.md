@@ -24,6 +24,23 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 ---
 
+## A connection point was drawn but could not be connected, and removing points lost edges
+
+**Status:** Solved (2026-11-17)
+**Found:** 2026-11-17 by the maintainer, on an element with three points on its left side and four edges
+
+**Symptom:** raising the number of points on a side from three to four, the third point could not be used: the edge skipped to the fourth or sat on the second. Five points worked again. Lowering the count to one removed two of the four edges.
+
+**Cause:** two separate faults in the count change. (1) A new point's id came from a counter that starts at 1 in every session, while a saved diagram already holds `cp-1`, `cp-2`; two points with one id make React Flow keep one handle, so the other is drawn but not connectable. (2) Removing several points handed each one's edges to the point before it, and that point went next; the edges were handed once, so they kept a handle that no longer existed.
+
+**Fix:** a new point takes the lowest `cp-N` nobody on the element has, and a removed point maps to the point that is left at the end. A diagram already saved with two points of one id keeps them; the fix does not repair it.
+
+**Lesson:** an id made by a counter in memory is only unique within a session; take it from what the file holds.
+
+**References:** `src/renderer/src/nodes/connectionPoints.ts` (`freshPointId`, `setSideCustomPointCount`), `connectionPoints.test.ts`
+
+---
+
 ## The node tests failed in a batch with EPERM on a CLI bundle (Windows)
 
 **Status:** Solved (2026-11-16)
