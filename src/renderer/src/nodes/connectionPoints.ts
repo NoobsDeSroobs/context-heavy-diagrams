@@ -44,7 +44,15 @@ export function connectionPointStyle(
 export { effectiveConnectionPoints, pointCoordinates }
 export type { RectLike }
 
-let nextConnectionPointId = 1
+// A new point's id: the lowest cp-N that no point of the node has, on any side. A running counter
+// repeated ids after a diagram was reloaded (it starts at 1 in every session while the file holds cp-1,
+// cp-2, ...), and two points with one id leave one of them drawn but not connectable.
+function freshPointId(existing: ConnectionPoint[]): string {
+  const taken = new Set(existing.map((p) => p.id))
+  let n = 1
+  while (taken.has(`cp-${n}`)) n += 1
+  return `cp-${n}`
+}
 
 // The property panel's count field, and anything else that just needs "how
 // many points does this side have right now" without needing the points
@@ -166,7 +174,8 @@ export function reassignConnectionPointHandles(
 // (synthesizing the implicit centred point first if the side was never touched). Growing keeps
 // every existing point (same id, so its edges stay attached) and appends new empty ones at the
 // clockwise end; shrinking removes the clockwise-most points one at a time, each handing its edges
-// to the new clockwise-most survivor, never below one. Either way the final set is re-spaced
+// to the new clockwise-most survivor, never below one (an edge handed to a point that goes next is
+// handed on, so every removed point maps to a point that is left). Either way the final set is re-spaced
 // evenly. Only the touched side is written back in full; every other side's raw stored data,
 // including its still-implicit points, passes through untouched.
 export function setSideCustomPointCount(
@@ -183,12 +192,18 @@ export function setSideCustomPointCount(
     const lastIndex = survivors.length - 1
     const removed = survivors[lastIndex]
     const transferTarget = survivors[lastIndex - 1].id
+    for (const [from, to] of handleReassignments) {
+      if (to === removed.id) handleReassignments.set(from, transferTarget)
+    }
     handleReassignments.set(removed.id, transferTarget)
     survivors = survivors.slice(0, lastIndex)
   }
 
+  const ids = [...storedPoints]
   for (let i = survivors.length; i < target; i++) {
-    survivors.push({ id: `cp-${nextConnectionPointId++}`, side, offset: 0 })
+    const added: ConnectionPoint = { id: freshPointId(ids), side, offset: 0 }
+    ids.push(added)
+    survivors.push(added)
   }
 
   return { points: [...otherSides, ...respaceClockwise(survivors, side)], handleReassignments }
@@ -251,7 +266,7 @@ export function insertConnectionPointAt(
     }
   }
   const newPoint: ConnectionPoint = {
-    id: `cp-${nextConnectionPointId++}`,
+    id: freshPointId(storedPoints),
     side,
     offset: clickOffset
   }

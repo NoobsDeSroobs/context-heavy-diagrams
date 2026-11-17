@@ -2,6 +2,12 @@
 
 What changed for people using the tool, one entry per minor or major release. The reasons are in [docs/decisions/](docs/decisions/); the full history is in `git log`.
 
+## 0.11.1 (2026-11-17)
+
+### Fixed
+
+- **A connection point that was drawn but could not be connected, and edges lost when points were removed.** Raising the number of points on a side of a diagram that was opened again could give the new point the id of one it already had, so one of the two could not be used, and the edge went to the other. Lowering the number to one moved the edges of the point that was removed next to a point that was removed too, and they were lost. A new point now has an id nobody else on the element has, and every edge goes to a point that is left. A diagram already saved with two points of one id keeps them.
+
 ## 0.11.0 (2026-11-17)
 
 ### Added
