@@ -172,6 +172,11 @@ export function useMenus(inputs: MenuInputs): {
         }
 
   const preferencesItem: MenuBarItem = { label: 'Preferences', onSelect: togglePreferencesPanel }
+  // Its own window (ADR 0188); the same for every diagram, so it is on the menu with or without one.
+  const iconPacksItem: MenuBarItem = {
+    label: 'Icon packs…',
+    onSelect: () => void window.api.openIconPackManager()
+  }
 
   // Menu groups are marked off by a line (ADR 0157): open and create, then save and export, then
   // the open file itself.
@@ -357,6 +362,7 @@ export function useMenus(inputs: MenuInputs): {
             onSelect: toggleReferencesPanel
           },
           { label: 'Style Palette', onSelect: toggleStylePalettePanel },
+          iconPacksItem,
           // What the canvas shows, as switches: they are the person's, not the diagram's.
           {
             label: 'Display',
@@ -373,6 +379,7 @@ export function useMenus(inputs: MenuInputs): {
       : [
           commandPaletteItem,
           { ...animateEdgesItem, separatorBefore: true },
+          iconPacksItem,
           { ...preferencesItem, separatorBefore: true }
         ]
   }

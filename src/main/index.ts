@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, session } from 'electron'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import { registerDiagramHandlers } from './document/diagram'
 import { registerIconHandlers } from './icons/icons'
+import { registerIconPackHandlers } from './icons/packManager'
 import { registerReferenceHandlers } from './references/references'
 import { registerNotesHandlers } from './notes/notes'
 import { registerLinkHandlers } from './links/links'
@@ -80,6 +81,7 @@ app.whenReady().then(async () => {
 
   registerDiagramHandlers()
   registerIconHandlers()
+  registerIconPackHandlers()
   registerReferenceHandlers()
   registerNotesHandlers()
   registerLinkHandlers()

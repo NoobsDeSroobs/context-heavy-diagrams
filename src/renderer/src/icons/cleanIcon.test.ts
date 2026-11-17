@@ -1,7 +1,8 @@
 import { readdirSync, readFileSync } from 'fs'
 import { join } from 'path'
 import { describe, expect, it } from 'vitest'
-import { cleanIcon, iconIdPrefix, isolateIcon, MAX_ICON_SOURCE_LENGTH } from './cleanIcon'
+import { MAX_ICON_SOURCE_LENGTH } from '@shared/icons/pack'
+import { cleanIcon, iconIdPrefix, isolateIcon } from './cleanIcon'
 
 const svg = (inner: string, attrs = ''): string =>
   `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 24 24" ${attrs}>${inner}</svg>`

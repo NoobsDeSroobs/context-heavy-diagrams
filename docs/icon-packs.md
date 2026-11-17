@@ -1,6 +1,6 @@
 # Icon packs
 
-A standalone description of an installed icon pack: everything you need to make one by hand or with a script, without reading this project's source code or its decision history. A pack is a folder of SVG files. Install it with the app's icon pack manager, or copy the folder into the app's `icon-packs` folder.
+A standalone description of an installed icon pack: everything you need to make one by hand or with a script, without reading this project's source code or its decision history. A pack is a folder of SVG files. Install it with the app's icon pack manager (View > Icon packs), or copy the folder into the app's `icon-packs` folder. Installing a folder whose pack name is already installed updates that pack: new icons are added, icons of the same name are replaced, and its `pack.json` and `subset.json` are kept.
 
 ## Layout
 
@@ -17,7 +17,7 @@ icon-packs/
 ```
 
 - A pack is a folder in the `icon-packs` folder of the app's per-user data folder. The manager shows where that is.
-- A pack holds subset folders, a subset holds icons. That is all the depth there is: a folder inside a subset, and a file directly in the pack folder, are not read.
+- A pack holds subset folders, a subset holds icons. That is all the depth there is: a folder inside a subset, and a file directly in the pack folder, are not read, and the manager says so when it leaves them out.
 - An icon is a file ending in `.svg` (in any capitals). Other files are ignored.
 - Keep names to characters every system allows: no `\ : * ? " < > |`, no name that ends in a dot or a space, and no Windows device name (`CON`, `PRN`, `AUX`, `NUL`, `COM1` to `COM9`, `LPT1` to `LPT9`) as a name or the start of one before a dot. Two names that differ only in capitals are two files on Linux and one on Windows, so a pack must not have both.
 

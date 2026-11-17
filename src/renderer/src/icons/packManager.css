@@ -1,0 +1,122 @@
+/* The icon pack manager window (IconPackManager.tsx). */
+.packs-window {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100vh;
+  box-sizing: border-box;
+  padding: 16px 20px;
+  overflow-y: auto;
+  color: var(--color-text);
+  background: var(--color-background);
+  font-size: 14px;
+}
+
+.packs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.packs-header h1 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.packs-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.packs-hint,
+.packs-empty,
+.pack p,
+.packs-outcome p {
+  margin: 0;
+}
+
+.packs-hint,
+.pack-counts,
+.packs-folder {
+  opacity: 0.75;
+}
+
+.packs-folder {
+  margin: 0;
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.packs-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.packs-progress progress {
+  flex: 1;
+}
+
+.packs-outcome {
+  padding: 8px 12px;
+  border: 1px solid var(--color-border, var(--ev-c-gray-2));
+  border-radius: 6px;
+  background: var(--color-background-soft);
+}
+
+.packs-outcome ul {
+  margin: 6px 0 0;
+  padding-left: 20px;
+}
+
+.packs-failed {
+  border-color: #e5484d;
+}
+
+.packs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border, var(--ev-c-gray-2));
+  border-radius: 6px;
+}
+
+.pack-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.pack-name {
+  font-weight: 600;
+}
+
+.pack-version {
+  opacity: 0.7;
+  font-size: 12px;
+}
+
+.pack-remove {
+  margin-left: auto;
+}
+
+.pack-warning {
+  margin: 0;
+  color: #b45309;
+  font-size: 13px;
+}
+
+ul.pack-warning {
+  padding-left: 20px;
+}

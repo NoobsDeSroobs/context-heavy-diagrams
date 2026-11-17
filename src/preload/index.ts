@@ -26,6 +26,7 @@ import type {
   MetamodelListing,
   MetamodelsFolderInfo
 } from '@shared/conformance/metamodelsFolder'
+import type { PackList } from '@shared/icons/installedPacks'
 import type { AppPreferences } from '@shared/preferences/preferences'
 import type { SecurityCrawlResult } from '@shared/threat-matrix/threatMatrixMath'
 import type { LinkedSearchLink, LinkedSearchResult } from '@shared/search/linkedSearch'
@@ -71,6 +72,22 @@ const api = {
 
   readIconAsDataUrl(diagramPath: string, relativePath: string): Promise<string> {
     return ipcRenderer.invoke('icons:readAsDataUrl', diagramPath, relativePath)
+  },
+
+  // Installed icon packs (ADR 0188): read here, changed only in the icon pack manager, which is its
+  // own window with its own bridge (iconPacks.ts).
+  openIconPackManager(): Promise<void> {
+    return ipcRenderer.invoke('iconPacks:open')
+  },
+
+  listIconPacks(): Promise<PackList> {
+    return ipcRenderer.invoke('iconPacks:list')
+  },
+
+  onIconPacksChanged(callback: () => void): () => void {
+    const listener = (): void => callback()
+    ipcRenderer.on('iconPacks:changed', listener)
+    return () => ipcRenderer.off('iconPacks:changed', listener)
   },
 
   // Reference images (see ADR 0069) — same sibling-folder model as

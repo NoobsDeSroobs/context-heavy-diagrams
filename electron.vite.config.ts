@@ -18,10 +18,12 @@ export default defineConfig({
     },
     build: {
       rollupOptions: {
-        // Two bridges: the editor's, and the much smaller one of the compare window (ADR 0112).
+        // Three bridges: the editor's, and the much smaller ones of the compare window and of the
+        // icon pack manager (ADR 0112).
         input: {
           index: resolve('src/preload/index.ts'),
-          compare: resolve('src/preload/compare.ts')
+          compare: resolve('src/preload/compare.ts'),
+          iconPacks: resolve('src/preload/iconPacks.ts')
         }
       }
     }

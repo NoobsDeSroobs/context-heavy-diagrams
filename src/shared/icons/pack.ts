@@ -7,6 +7,10 @@ export const PACK_FILE = 'pack.json'
 export const SUBSET_FILE = 'subset.json'
 export const ICON_EXTENSION = '.svg'
 
+// A real vendor icon is a few tens of kilobytes; a file of more than this is not an icon and is
+// neither installed nor drawn.
+export const MAX_ICON_SOURCE_LENGTH = 1_000_000
+
 // A name is shown in the manager and the picker, and a pack's name is what a diagram refers to.
 const MAX_NAME_LENGTH = 100
 const MAX_TEXT_LENGTH = 1000
@@ -122,15 +126,18 @@ export function splitIconPath(path: unknown): { subset: string; file: string } |
   const parts = path.split('/')
   if (parts.length !== 2) return null
   const [subset, file] = parts
-  for (const part of parts) {
-    if (part === '' || part === '.' || part === '..') return null
-    // eslint-disable-next-line no-control-regex
-    if (/[\\:*?"<>|\u0000-\u001f]/.test(part)) return null
-    // Windows opens a device (`CON.svg`) and drops a trailing dot or space; a pack must not depend on it.
-    if (/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\..*)?$/i.test(part) || /[. ]$/.test(part))
-      return null
-  }
+  if (!isPlainName(subset) || !isPlainName(file)) return null
   return isIconFileName(file) ? { subset, file } : null
+}
+
+// A folder or file name that means the same on Linux and Windows and cannot leave its folder: not
+// empty, `.` or `..`, no separator, drive or control character, no trailing dot or space, and no
+// Windows device name (`CON.svg` opens the device there).
+export function isPlainName(name: string): boolean {
+  if (name === '' || name === '.' || name === '..') return false
+  // eslint-disable-next-line no-control-regex
+  if (/[\\/:*?"<>|\u0000-\u001f]/.test(name)) return false
+  return !/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\..*)?$/i.test(name) && !/[. ]$/.test(name)
 }
 
 // What a diagram knows an icon by, for the id prefix and for a message: pack, subset and file.

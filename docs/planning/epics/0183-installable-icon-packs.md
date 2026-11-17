@@ -12,14 +12,13 @@ Everything about where packs live, the reference form, drawing and cleaning icon
 ## Still to settle while building
 - **The Tabler archive:** one file in the installer, unpacked by the manager; the format (zip needs a reader, a tar does not) and where the command-line export reads its bundled copy.
 - **Slow canvases:** measure a large diagram with many installed icons before adding the `<img>` fallback for fixed-colour icons.
-- **Same-name packs:** what the manager shows when a second folder has the name of an installed pack.
 - **The CLI and tests** that open diagrams with built-in icons need the Tabler pack or its bundled copy.
 
 ## Tasks
 - [x] Design pass and ADR 0188
 - [x] Icon cleaner (allowlist, per-icon prefix and per-use counter) with tests on hostile and on real vendor SVGs
 - [x] Pack format: `pack.json`, `subset.json`, their reading, the default files and the icon path check (`src/shared/icons/pack.ts`); `docs/icon-packs.md`
-- [ ] Install manager window: install (writes the default metadata files), remove, update; staging, cancel, progress; trash with fallback
+- [x] Install manager window: install (writes the default metadata files), remove, update; staging, cancel, progress; trash with fallback (`src/main/icons/packStore.ts` and `packManager.ts`, own bridge `src/preload/iconPacks.ts`, View > Icon packs)
 - [ ] `IconRef` `installed`, optional used-packs list: schema, `docs/file-format.md`, validator, skill field reference
 - [ ] Picker: collapsible sections per pack and subset, search, lazy previews
 - [ ] Icons follow the text colour in both themes; colours fixed by a pack are kept

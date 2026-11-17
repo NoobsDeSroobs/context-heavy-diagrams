@@ -7,13 +7,11 @@
 // Both work on the HTML parse of the file, which is how the markup is drawn (innerHTML).
 
 import DOMPurify from 'dompurify'
+import { MAX_ICON_SOURCE_LENGTH } from '@shared/icons/pack'
 
 // Stands for the id prefix in cleaned markup. Anything else in the file that equals it is replaced
 // by a prefix made of safe characters too, which does no harm.
 const ID_MARK = '\u0001'
-
-// A real vendor icon is a few tens of kilobytes; more than this is not an icon.
-export const MAX_ICON_SOURCE_LENGTH = 1_000_000
 
 const FORBIDDEN_TAGS = [
   'script',
