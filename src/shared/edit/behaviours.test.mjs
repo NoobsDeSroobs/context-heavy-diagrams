@@ -40,7 +40,7 @@ test('add_behaviour makes a behaviour of the kind with its own size and default 
   )
   assert.throws(
     () => run(start(), { op: 'add_behaviour', x: 0, y: 0, tags: { a: 1 } }),
-    /carries no tags/
+    /a behaviour element carries no tags/
   )
 })
 
@@ -57,7 +57,10 @@ test('a behaviour can be connected, moved, resized, restyled, linked and removed
   )
   assert.equal(diagram.edges.length, 1)
   assert.equal(diagram.nodes[0].data.linkedDiagram, 'a/Sub.chd')
-  assert.throws(() => run(diagram, { op: 'set_tag', id: 'a', key: 'k', value: 1 }), /only entities/)
+  assert.throws(
+    () => run(diagram, { op: 'set_tag', id: 'a', key: 'k', value: 1 }),
+    /"a" is a behaviour; only entities/
+  )
   assert.throws(
     () => run(diagram, { op: 'set_note', id: 'a', text: 'x' }),
     /takes a link to another diagram but no note/

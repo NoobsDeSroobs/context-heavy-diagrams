@@ -83,9 +83,7 @@ function taggable(model: Model, reader: Reader): Tagged {
   const found = model.node(id) ?? model.edge(id)
   if (!found) reader.fail(`"${id}" is not an element of this diagram`)
   if (!carriesTags(found)) {
-    reader.fail(
-      `"${id}" is a ${(found as DiagramNode).type}; only entities, containers and edges carry tags`
-    )
+    reader.fail(`"${id}" is a ${named(found)}; only entities, containers and edges carry tags`)
   }
   return found
 }
@@ -123,7 +121,7 @@ function writeTag(
 export function startingTags(model: Model, reader: Reader, target: Tagged): void {
   const given = reader.raw('tags')
   if (!carriesTags(target)) {
-    if (given !== undefined) reader.fail(`a ${target.type ?? 'text'} element carries no tags`)
+    if (given !== undefined) reader.fail(`a ${named(target)} element carries no tags`)
     return
   }
   const seeded = seedMetadata(model.diagram.requiredTags ?? [])
@@ -389,6 +387,11 @@ function removeLegendEntry(model: Model, reader: Reader): OperationResult {
 }
 
 // --- a link to another diagram and a note
+
+// How an error names an element: the palette's word for a stencil is behaviour (ADR 0187).
+function named(target: Tagged): string {
+  return !isEdge(target) && target.type === 'stencil' ? 'behaviour' : (target.type ?? 'text')
+}
 
 // A behaviour (a stencil) takes a link but no note (ADR 0180).
 function linkable(model: Model, reader: Reader, note = false): DiagramNode {
