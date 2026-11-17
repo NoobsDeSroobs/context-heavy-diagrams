@@ -237,7 +237,7 @@ export function createServer({ root, allowUpdate, specSources, version = '0.0.0'
     {
       title: 'List the elements of a diagram',
       description:
-        'The elements of a .chd as they stand: id, type, label, absolute position and size, parent and connection point ids (left out when they are the four defaults); the edges with their ends; tags, links and note paths; the required tags, highlights and legend; the layout problems found so far (labels without room, overlaps, elements sticking out of a container, edges running over an element); and the fingerprint to pass to edit_diagram. Read-only. Use issues_only, ids or container for a short answer after an edit.',
+        'The elements of a .chd as they stand: id, type, label, absolute position and size, parent and connection point ids (left out when they are the four defaults), the kind of a behaviour and any label position other than the default; the edges with their ends and, for one that crosses the border of a container, its route ("Sales → Finance"; information, not a problem); tags, links and note paths; the required tags, highlights and legend; the layout problems found so far (labels without room, overlaps, elements sticking out of a container, edges running over an element); and the fingerprint to pass to edit_diagram. Read-only. Use issues_only, ids or container for a short answer after an edit.',
       inputSchema: {
         path,
         styles: z

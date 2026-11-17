@@ -21,6 +21,21 @@ import {
   respaceClockwise,
   sortClockwise
 } from '../geometry/connectionPoints.ts'
+import { CONTAINER_LABEL_SIDES, DEFAULT_CONTAINER_LABEL_SIDE } from '../nodes/containerLabel.ts'
+import {
+  DEFAULT_LABEL_POSITION,
+  LABEL_POSITIONS,
+  labelPositionOf,
+  offsetFrom,
+  offsetOf
+} from '../stencils/labelPlacement.ts'
+import {
+  DEFAULT_STENCIL_KIND,
+  STENCIL_KINDS,
+  stencilKind,
+  stencilLabelOutside,
+  type StencilKind
+} from '../stencils/kinds.ts'
 import { ANNOTATION_OPERATIONS, startingTags } from './annotations.ts'
 import { routeEdges } from './routeEdges.ts'
 import {
@@ -60,6 +75,8 @@ export {
   type ProducedFile
 } from './model.ts'
 
+const KIND_IDS = STENCIL_KINDS.map((k) => k.id).join(', ')
+
 // --- the operations
 
 function addNode(
@@ -87,8 +104,151 @@ function addNode(
     if (style) node.style = style
   }
   startingTags(model, reader, node)
+  if (kind === 'container' && reader.has('labelPosition')) {
+    applyLabelPosition(node, reader, reader.string('labelPosition'), reader.raw('offset'))
+  }
   model.nodes.push(node)
   return { op: `add_${kind}`, element: briefNode(model.diagram, node) }
+}
+
+// --- behaviours (stencils, ADR 0180): a step, a decision, a start, an end
+
+function kindOf(reader: Reader, key: string): StencilKind {
+  const id = reader.string(key)
+  const kind = STENCIL_KINDS.find((k) => k.id === id)
+  if (!kind) {
+    reader.fail(`"${key}": "${id}" is not a kind of behaviour (use one of ${KIND_IDS})`)
+  }
+  return kind
+}
+
+// Where a behaviour's label sits (small shapes only) or which side a container's label is on. As in the
+// app, the default (below, top) is stored as nothing, and a label made free keeps the place it had.
+function applyLabelPosition(
+  node: DiagramNode,
+  reader: Reader,
+  position: string,
+  offset: unknown
+): void {
+  if (node.type === 'container') {
+    if (!(CONTAINER_LABEL_SIDES as readonly string[]).includes(position)) {
+      reader.fail(`a container's label goes on one of ${CONTAINER_LABEL_SIDES.join(', ')}`)
+    }
+    if (offset !== undefined) reader.fail('"offset" is for a free label of a behaviour')
+    if (position === DEFAULT_CONTAINER_LABEL_SIDE) delete node.data.labelPosition
+    else node.data.labelPosition = position
+    return
+  }
+  if (node.type !== 'stencil') {
+    reader.fail(`"${node.id}" is not a behaviour or a container`)
+  }
+  if (!stencilLabelOutside(node.data.kind)) {
+    reader.fail(
+      `the label of a ${stencilKind(node.data.kind).name.toLowerCase()} sits inside it: only the small shapes (decisions, starts, ends, events) have a label position`
+    )
+  }
+  if (!(LABEL_POSITIONS as readonly string[]).includes(position)) {
+    reader.fail(`a behaviour's label goes ${LABEL_POSITIONS.join(', ')}`)
+  }
+  const was = labelPositionOf(node.data.labelPosition)
+  let free = offsetOf(node.data.labelOffset)
+  if (offset !== undefined) {
+    if (position !== 'free') reader.fail('"offset" only goes with position "free"')
+    free = offsetOf(offset)
+    if (!free)
+      reader.fail('"offset" must be {x, y}: where the label\'s centre is from the shape\'s centre')
+  } else if (position === 'free' && !free) {
+    const size = sizeOf(node)
+    free = offsetFrom(was, { x: 0, y: 0, ...size }, { width: 70, height: 16 })
+  }
+  if (position === DEFAULT_LABEL_POSITION) delete node.data.labelPosition
+  else node.data.labelPosition = position
+  if (position === 'free' && free) node.data.labelOffset = { x: round(free.x), y: round(free.y) }
+  else delete node.data.labelOffset
+}
+
+function addBehaviour(model: Model, reader: Reader): OperationResult {
+  const kind = reader.has('kind') ? kindOf(reader, 'kind') : stencilKind(DEFAULT_STENCIL_KIND)
+  const id = model.freshId(reader, 'behaviour')
+  const x = reader.number('x')
+  const y = reader.number('y')
+  const width = reader.positive('width') ?? kind.size.width
+  const height = reader.positive('height') ?? kind.size.height
+  const parent = placementParent(model, reader)
+  const origin = parent ? model.origin(parent) : { x: 0, y: 0 }
+  const given = reader.optionalString('label')
+  const node: DiagramNode = {
+    id,
+    type: 'stencil',
+    position: { x: round(x - origin.x), y: round(y - origin.y) },
+    size: { width, height },
+    data: { label: given ?? kind.defaultLabel, kind: kind.id }
+  }
+  if (parent) node.parentId = parent.id
+  if (reader.has('style')) {
+    const style = mergeStyle(undefined, checkedStyle(reader, reader.raw('style'), NODE_STYLE))
+    if (style) node.style = style
+  }
+  startingTags(model, reader, node)
+  if (reader.has('labelPosition')) {
+    applyLabelPosition(node, reader, reader.string('labelPosition'), reader.raw('offset'))
+  }
+  model.nodes.push(node)
+  return {
+    op: 'add_behaviour',
+    element: {
+      ...briefNode(model.diagram, node),
+      kind: kind.id,
+      ...(given === undefined ? { label: kind.defaultLabel } : {})
+    }
+  }
+}
+
+// What the app's kind change does (ADR 0180): the label and the size follow the new kind only while they
+// are still the old kind's own, and a resized box keeps its centre; place, edges, link and style stay.
+function setKind(model: Model, reader: Reader): OperationResult {
+  const node = nodeOnly(model, reader)
+  if (node.type !== 'stencil') {
+    reader.fail(`"${node.id}" is not a behaviour: only a behaviour has a kind`)
+  }
+  const to = kindOf(reader, 'kind')
+  const from = stencilKind(node.data.kind)
+  if (node.data.kind !== to.id) {
+    if (node.data.label === from.defaultLabel) node.data.label = to.defaultLabel
+    const size = sizeOf(node)
+    if (
+      size.width === from.size.width &&
+      size.height === from.size.height &&
+      (from.size.width !== to.size.width || from.size.height !== to.size.height)
+    ) {
+      node.position = {
+        x: round(node.position.x + (from.size.width - to.size.width) / 2),
+        y: round(node.position.y + (from.size.height - to.size.height) / 2)
+      }
+      node.size = { ...to.size }
+    }
+    node.data.kind = to.id
+  }
+  return {
+    op: 'set_kind',
+    element: { ...briefNode(model.diagram, node), kind: to.id, label: node.data.label }
+  }
+}
+
+function setLabelPosition(model: Model, reader: Reader): OperationResult {
+  const node = nodeOnly(model, reader)
+  applyLabelPosition(node, reader, reader.string('position'), reader.raw('offset'))
+  const position = node.data.labelPosition
+  return {
+    op: 'set_label_position',
+    element: {
+      id: node.id,
+      position:
+        position ??
+        (node.type === 'container' ? DEFAULT_CONTAINER_LABEL_SIDE : DEFAULT_LABEL_POSITION),
+      ...(node.data.labelOffset ? { offset: node.data.labelOffset } : {})
+    }
+  }
 }
 
 function placementParent(model: Model, reader: Reader): DiagramNode | undefined {
@@ -514,6 +674,9 @@ const OPERATIONS: Record<string, (model: Model, reader: Reader) => OperationResu
   add_entity: (m, r) => addNode(m, r, 'entity'),
   add_container: (m, r) => addNode(m, r, 'container'),
   add_text: (m, r) => addNode(m, r, 'text'),
+  add_behaviour: addBehaviour,
+  set_kind: setKind,
+  set_label_position: setLabelPosition,
   add_line: addLine,
   add_connection_point: addConnectionPoint,
   connect,

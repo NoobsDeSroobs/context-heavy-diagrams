@@ -12,6 +12,11 @@ Building a diagram with `edit_diagram` (or `chd edit`). About a page: what you n
 4. Read the problems in the answer and fix them with `move` and `resize` in the next call. An edge across an element is best fixed by moving the element or the edge's connection point; where that cannot be done, `route_edges` (the reported edges, or `ids`) gives the edge a right-angled route through the gaps, so leave gaps (20-60px) for it to use. It also puts each routed edge on a connection point of its own on the side facing its other end, in order along the side, so do not add points for those edges. A crossing is sometimes the clearest drawing: keep it and say so.
 5. Tags, links and notes last. At the end, `inspect_diagram` with `issues_only` shows everything still open.
 
+## Flows: behaviours
+A behaviour is what happens in a flow (a step, a decision, a split or join, a start, an end); a thing in the system is an entity. `add_behaviour {kind, label?, x, y, parent?}`: the kind sets the size and the default label, so leave those out. Use `step` unless a person (`step-user`), a machine (`step-automatic`), a nested flow (`step-sub-flow`) or a repetition (`step-repeat`) matters; `branch-exclusive` is a decision, `branch-inclusive` one or more ways, `branch-parallel` a split or join; events are `event-start`, `event-end`, `event-timer`, `event-message`, `event`. `set_kind` changes it; every other operation works as on an entity, but it has a link and no tags or note.
+- A lane is a container and a behaviour in it has it as `parent`. `inspect_diagram` gives an edge that crosses a lane's border a `crossing` ("Sales → Finance"), a hand-off: information, not a problem.
+- The small shapes (branches, events) carry their label outside: `labelPosition` below (default), above, left, right or free, set on `add_behaviour` or with `set_label_position`; put it away from the edges that leave the shape. `set_label_position` also takes a container side (top, left, right, bottom).
+
 ## Numbers
 - Elements in a group, not joined by an edge: **20px** apart. Distinct groups or layers: **60px**.
 - Inside a container: **24–40px** (use 30) from its edge to its nearest child on every side. A container does not grow by itself.
@@ -27,7 +32,7 @@ Building a diagram with `edit_diagram` (or `chd edit`). About a page: what you n
 - **Layers:** one full-width container per band, same `x` and `width`, 60px apart; entities left to right inside, 30px in. Edges between bands: `bottom` to `top`; in any vertical run pick `bottom` and `top`, not the sides.
 - **Hub and spoke:** hub first, spokes at the compass points (a ring beyond four), each the connection gap away, with connection points facing the hub.
 - **Pipeline:** one row, same `y`, each step a connection gap from the last; `right` to `left`.
-- **Swimlane:** one container per lane, same `x` and `width`, 60px apart; each step in its lane in call order.
+- **Swimlane:** one container per lane, same `x` and `width`, 60px apart; each step (a behaviour) in its lane in call order.
 - **Boundary nesting:** a container per level, each inset 30px from its parent. Connect edges to the component, not to the boundary.
 
 Once a person has arranged something on purpose, do not move it back toward a recipe.

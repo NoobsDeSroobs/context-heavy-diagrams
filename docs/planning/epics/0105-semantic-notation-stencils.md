@@ -51,7 +51,7 @@ validated ([ADR 0080](../../decisions/0080-bpmn-as-adopted-vocabulary-not-metamo
 - [x] Tried in the app on real flows by the maintainer (2026-11-17; the build sessions could not run it): label position when an edge leaves the bottom of a small shape, the colours in the light theme, the palette list
 - [x] The palette entry's name: Behaviour; the step is a rectangle with an arrow band (no direction property: the edges give it)
 - [x] More kinds before the pull request: 13 now, with ids that say what the kind is, general first (`step-user`, `event-timer`); marks drawn from one shared table; later candidates (start and end variants with a mark, boundary events, data objects, pools with message flows, annotations) wait for real flows to need them
-- [ ] The assistant tools (`edit_diagram`, `chd edit`, the MCP server) and the build guide: stencils as a full member, once the design has settled
+- [x] The assistant tools (`edit_diagram`, `chd edit`, the MCP server) and the build guide: `add_behaviour`, `set_kind`, `set_label_position`, the kind and label position and the crossings in `inspect_diagram`, the skill's guides ([ADR 0187](../../decisions/0187-assistants-build-behaviours-and-read-crossings.md))
 - [x] The lane hand-off check ([0088](0088-cross-container-edge-detection.md))
 - Spun out of this epic: where a label goes ([0189](0189-where-a-label-goes.md)) and repetition and parallel policy ([0190](0190-behaviour-parameters-repetition-and-parallel-policy.md))
 - [ ] The BPMN specification's current version (2.0.2) and its terms, before release
@@ -118,12 +118,3 @@ Deliberately light on design here — the interesting choices (category name,
 symbol set, icon sourcing, type-swap UX) want their own pass.
 
 Update 2026-10-21: covers the parallel-flow need (fork, join, choice) raised while writing the [comparison with other tools](../../comparison.md). Related: [epic 0148](0148-archimate-flavoured-vocabulary-kit.md). Sequence diagrams are a different problem and are not part of this epic.
-
-## The assistant tools task: where to start (surveyed 2026-11-17, nothing built yet)
-Scope: a person can make and change a behaviour, set the label position of a small shape and of a container, and see crossings; an assistant should be able to as well ([0175](../../decisions/0175-assistants-make-what-a-person-can-make.md)), with the stale-edit check unchanged ([0109](../../decisions/0109-stale-edit-check-for-every-ai-write-path.md)).
-- **Operations:** `src/shared/edit/operations.ts` (the table near line 514: `add_entity`, `add_container`, `add_text`, `add_line`, `connect`, `move`, `resize`, `set_label`, `set_style`, `reparent`, `remove`, ...; `addNode` takes `'entity' | 'container' | 'text'`). `src/shared/edit/model.ts` has `DEFAULT_SIZE`, `NodeSummary` and `ElementEcho`. Needed: an operation that adds a behaviour with a kind (take the kinds from `shared/stencils/kinds.ts`, never a second list), one that changes the kind or the label position (`data.labelPosition`, `data.labelOffset`; containers: `top|left|right|bottom`), and a check that `connect`, `move`, `resize`, `reparent`, `set_style` and `remove` accept a stencil.
-- **Help text:** `src/shared/edit/help.ts` (`OPERATIONS_HELP`; a test keeps it in step with the operations that exist).
-- **Reading:** `src/shared/edit/inspect.ts` (`layoutIssues` and the element descriptions) should say the kind and label position, and list the crossings (information, not an issue). `src/shared/crossings/crossings.ts` has `edgeCrossing` and `crossingText`.
-- **The three front doors:** the extension (`extension/lib/tools.mjs`, `extension/lib/formatSpec.mjs`, `specText.mjs`), the CLI (`src/cli/editCommand.ts`, with `cliReference.test.mjs` and `parity.test.mjs` keeping it equal to the extension) and the skill and build guide (`resources/ai/skills/chd-diagrams/` and its copy under `.claude/skills/`, `src/shared/ai/aiInstructions.ts`). After changing them: `npm run build:extension` and `npm run build:cli`.
-- **Decide first:** the operation names (`add_behaviour` is the working one), whether crossings belong in `inspect_diagram` or their own tool, and what `validate_diagram` says about an unknown kind or position (the app reads one as a step or as below).
-- **Not here:** a rule that forbids a crossing is a check of a diagram metamodel.

@@ -12,6 +12,7 @@ import type {
   RequiredTagDefinition
 } from '../diagram/index.ts'
 import { effectivePointsForSide } from '../geometry/connectionPoints.ts'
+import { stencilKind } from '../stencils/kinds.ts'
 
 export class OperationError extends Error {
   readonly index: number
@@ -35,6 +36,11 @@ export interface NodeSummary {
   // The connection point ids an edge can name. Absent when the element has the four default ones
   // (top, right, bottom, left) or, for a text or a line, none.
   handles?: string[]
+  // A behaviour (type "stencil"): its kind id. A behaviour's or container's label position, only when
+  // it is not the default (below / top); a free label's offset from the shape's centre.
+  kind?: string
+  labelPosition?: string
+  labelOffset?: { x: number; y: number }
 }
 
 export interface EdgeSummary {
@@ -315,7 +321,10 @@ export function summarizeNode(diagram: DiagramFile, node: DiagramNode): NodeSumm
     width: round(size.width),
     height: round(size.height),
     ...(node.parentId === undefined ? {} : { parent: node.parentId }),
-    ...(hasDefaultHandles(node) ? {} : { handles: handlesOf(node) })
+    ...(hasDefaultHandles(node) ? {} : { handles: handlesOf(node) }),
+    ...(node.type === 'stencil' ? { kind: stencilKind(node.data.kind).id } : {}),
+    ...(node.data.labelPosition ? { labelPosition: node.data.labelPosition } : {}),
+    ...(node.data.labelOffset ? { labelOffset: node.data.labelOffset } : {})
   }
 }
 

@@ -98,7 +98,7 @@ A left-to-right (or top-to-bottom) sequence of steps, each connected to the next
 Rows (or columns) by responsibility — one lane per actor/system — with steps placed into whichever lane owns them.
 
 - One Container per lane, full diagram width (or height, for vertical lanes), stacked with the **loose gap (60px)** between lanes, all sharing `x`/`width` (or `y`/`height`).
-- Entities representing a step go inside the lane Container that owns that step, positioned left-to-right (or top-to-bottom) in call order, the **connection gap** apart when an edge joins them — this is what makes "which lane is this in" read at a glance instead of needing a label lookup.
+- Steps go inside the lane Container that owns that step (behaviours: `add_behaviour`, see the build guide; entities only for the things the flow is about), positioned left-to-right (or top-to-bottom) in call order, the **connection gap** apart when an edge joins them — this is what makes "which lane is this in" read at a glance instead of needing a label lookup.
 - Cross-lane edges connect entities that have different `parentId`s directly by their node `id`s — the format doesn't require same-parent for an edge, only that both endpoint ids exist.
 
 ### Boundary / zone nesting
