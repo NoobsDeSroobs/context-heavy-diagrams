@@ -167,6 +167,7 @@ describe('stencils on the canvas (ADR 0180)', () => {
     const panel = container.querySelector('.react-flow__controls') as HTMLElement
     expect(panel.querySelector('.react-flow__controls-zoomin')).toBeNull()
     expect(panel.querySelector('.react-flow__controls-zoomout')).toBeNull()
+    expect(panel.querySelector('.react-flow__controls-interactive')).toBeNull()
     const labels = [...panel.querySelectorAll('button')].map((b) => b.getAttribute('aria-label'))
     expect(labels.slice(-3)).toEqual(['Show highlights', 'Mark crossings', 'Show legend'])
   })

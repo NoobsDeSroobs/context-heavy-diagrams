@@ -3764,8 +3764,9 @@ function CanvasInner(): React.JSX.Element {
                   <Background />
                   {/* The corner panel (ADR 0186): the canvas's own buttons, then what it can show on demand:
                       the highlights, the crossings and, last, the legend. The zoom buttons are off
-                      unless asked for in View -> Display. */}
-                  <Controls showZoom={zoomControlsOn}>
+                      unless asked for in View -> Display, and React Flow's own lock is hidden: it
+                      only stops what React Flow itself does (ADR 0186). */}
+                  <Controls showZoom={zoomControlsOn} showInteractive={false}>
                     <ControlButton
                       title={`Highlights${highlights.length > 0 ? ` (${highlights.length})` : ''}`}
                       aria-label="Show highlights"
