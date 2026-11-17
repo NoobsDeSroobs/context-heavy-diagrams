@@ -70,7 +70,8 @@ export const ASK_USAGE = `Usage: chd ask inspect <file.chd> [--styles] [--issues
 Questions about a diagram while you build it. Both only read; the answer is JSON.
 
   inspect   The elements as they stand, with absolute positions and the connection points an edge may
-            name, the tags, links, notes, required tags, highlights and legend, the fingerprint, and
+            name, a behaviour's kind and label position, the route of an edge that crosses a
+            container ("Sales → Finance"), the tags, links, notes, required tags, highlights and legend, the fingerprint, and
             what is wrong with the layout so far.
               --styles       Also the style fields each element sets
               --issues-only  Only the layout problems and the fingerprint, not the elements

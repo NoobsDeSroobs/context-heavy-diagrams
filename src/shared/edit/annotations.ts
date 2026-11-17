@@ -33,9 +33,10 @@ const MAX_NOTE_CHARS = 200_000
 
 const isEdge = (target: Tagged): target is DiagramEdge => 'source' in target
 
-// Text and line elements carry no tags, links or notes; an entity with no type is an entity.
+// Text and line elements carry no tags, links or notes, and a behaviour (a stencil) no tags or notes but
+// one link (ADR 0180); an entity with no type is an entity.
 const carriesTags = (target: Tagged): boolean =>
-  isEdge(target) || (target.type !== 'text' && target.type !== 'line')
+  isEdge(target) || (target.type !== 'text' && target.type !== 'line' && target.type !== 'stencil')
 
 function summaryOf(target: Tagged): OperationResult['element'] {
   return { id: target.id }
@@ -82,9 +83,7 @@ function taggable(model: Model, reader: Reader): Tagged {
   const found = model.node(id) ?? model.edge(id)
   if (!found) reader.fail(`"${id}" is not an element of this diagram`)
   if (!carriesTags(found)) {
-    reader.fail(
-      `"${id}" is a ${(found as DiagramNode).type}; only entities, containers and edges carry tags`
-    )
+    reader.fail(`"${id}" is a ${named(found)}; only entities, containers and edges carry tags`)
   }
   return found
 }
@@ -122,7 +121,7 @@ function writeTag(
 export function startingTags(model: Model, reader: Reader, target: Tagged): void {
   const given = reader.raw('tags')
   if (!carriesTags(target)) {
-    if (given !== undefined) reader.fail('a text element carries no tags')
+    if (given !== undefined) reader.fail(`a ${named(target)} element carries no tags`)
     return
   }
   const seeded = seedMetadata(model.diagram.requiredTags ?? [])
@@ -389,12 +388,23 @@ function removeLegendEntry(model: Model, reader: Reader): OperationResult {
 
 // --- a link to another diagram and a note
 
-function linkable(model: Model, reader: Reader): DiagramNode {
+// How an error names an element: the palette's word for a stencil is behaviour (ADR 0187).
+function named(target: Tagged): string {
+  return !isEdge(target) && target.type === 'stencil' ? 'behaviour' : (target.type ?? 'text')
+}
+
+// A behaviour (a stencil) takes a link but no note (ADR 0180).
+function linkable(model: Model, reader: Reader, note = false): DiagramNode {
   const id = reader.string('id')
   const node = model.node(id)
   if (!node) reader.fail(`"${id}" is not an element of this diagram`)
   if (node.type === 'text' || node.type === 'line') {
     reader.fail(`"${id}" is a ${node.type}; only entities and containers take a link or a note`)
+  }
+  if (note && node.type === 'stencil') {
+    reader.fail(
+      `"${id}" is a behaviour; it takes a link to another diagram but no note (a thing that needs context is an entity)`
+    )
   }
   return node
 }
@@ -479,7 +489,7 @@ function noteFileName(node: DiagramNode, name?: string): string {
 }
 
 function setNote(model: Model, reader: Reader): OperationResult {
-  const node = linkable(model, reader)
+  const node = linkable(model, reader, true)
   const text = nonBlank(reader, 'text')
   if (text.length > MAX_NOTE_CHARS)
     reader.fail(`"text" is longer than ${MAX_NOTE_CHARS} characters`)
@@ -500,7 +510,7 @@ function setNote(model: Model, reader: Reader): OperationResult {
 
 // Only the reference goes: the note file stays where it is, and this tool never deletes a file.
 function removeNote(model: Model, reader: Reader): OperationResult {
-  const node = linkable(model, reader)
+  const node = linkable(model, reader, true)
   if (!node.data.notes) reader.fail(`"${node.id}" has no note`)
   const was = node.data.notes
   delete node.data.notes

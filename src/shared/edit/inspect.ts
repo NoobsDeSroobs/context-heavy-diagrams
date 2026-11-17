@@ -19,6 +19,7 @@ import {
 } from '../layout/labelClearance.ts'
 import { edgeIssues, type EdgeIssue } from './edgeRouting.ts'
 import { containerLabelSideOf } from '../nodes/containerLabel.ts'
+import { crossingText, edgeCrossing } from '../crossings/crossings.ts'
 import { stencilLabelInsets, stencilLabelOutside } from '../stencils/kinds.ts'
 import { LINE_HEIGHT_EM, measureText, wrapText, type FontSpec } from '../export/textLayout.ts'
 import { NODE_STYLE_DEFAULTS, styledNodeType } from '../styling/styleDefaults.ts'
@@ -35,6 +36,9 @@ export interface DescribedNode extends NodeSummary {
 
 export interface DescribedEdge extends EdgeSummary {
   tags?: Record<string, JsonValue>
+  // Only for an edge that crosses the border of a container: the route by container name ("Sales →
+  // Finance", "outside" for none), information and not an issue (ADR 0185).
+  crossing?: string
   style?: Record<string, unknown>
 }
 
@@ -64,6 +68,13 @@ export function describeDiagram(
 ): DiagramDescription {
   const styleOf = (style: object | undefined): { style?: Record<string, unknown> } =>
     styles && style && Object.keys(style).length > 0 ? { style: { ...style } } : {}
+  const byId = new Map(diagram.nodes.map((n) => [n.id, n]))
+  const parentOf = (id: string): string | undefined => byId.get(id)?.parentId
+  const nameOf = (id: string): string => byId.get(id)?.data.label || id
+  const crossingOf = (e: DiagramFile['edges'][number]): { crossing?: string } => {
+    const crossing = edgeCrossing(e.source, e.target, parentOf)
+    return crossing ? { crossing: crossingText(crossing, nameOf) } : {}
+  }
   return {
     nodes: diagram.nodes.map((n) => ({
       ...summarizeNode(diagram, n),
@@ -74,6 +85,7 @@ export function describeDiagram(
     })),
     edges: diagram.edges.map((e) => ({
       ...summarizeEdge(e),
+      ...crossingOf(e),
       ...tagsOf(e.metadata),
       ...styleOf(e.style)
     })),

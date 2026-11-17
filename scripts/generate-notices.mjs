@@ -171,6 +171,11 @@ export async function generate() {
     'The built-in icon set is [Tabler Icons](https://tabler.io/icons) (`@tabler/icons`, MIT, copyright Paweł Kuna), listed with its license text below. The outline icons are loaded from the package at build time.',
     ''
   )
+  out.push('## Notation', '')
+  out.push(
+    'The Behaviour elements (steps, choices and events) are inspired by the Business Process Model and Notation (BPMN), a standard of the [Object Management Group](https://www.omg.org/spec/BPMN/) (OMG). The marks are our own drawings and nothing is copied from the specification. The app is not BPMN software and does not claim to conform to the standard. Ideas from other notations, and our own, are part of the same set.',
+    ''
+  )
   out.push('## Summary', '', '| Package | Version | License |', '|---|---|---|')
   for (const e of entries)
     out.push(

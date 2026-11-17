@@ -135,7 +135,7 @@ $ chd diff docs/arch.chd --exit-code
 
 Exit codes: `0` done, `1` not done (an operation was refused, the file changed, the result would be invalid), `2`. `chd help edit` lists every operation with its fields; they are the same as the Claude Desktop extension's `edit_diagram`:
 
-`add_entity` `add_container` `add_text` `add_line` `add_connection_point` `connect` `move` `resize` `set_label` `set_style` `reparent` `remove` `set_edge_points` `set_edge_handles` `route_edges` `set_tag` `remove_tag` `set_diagram_tag` `remove_diagram_tag` `set_required_tag` `remove_required_tag` `set_highlight` `remove_highlight` `add_legend_entry` `set_legend_entry` `remove_legend_entry` `link_to_existing_diagram` `add_new_linked_diagram` `remove_link` `set_note` `remove_note`
+`add_entity` `add_container` `add_text` `add_behaviour` `set_behaviour_kind` `set_label_position` `add_line` `add_connection_point` `connect` `move` `resize` `set_label` `set_style` `reparent` `remove` `set_edge_points` `set_edge_handles` `route_edges` `set_tag` `remove_tag` `set_diagram_tag` `remove_diagram_tag` `set_required_tag` `remove_required_tag` `set_highlight` `remove_highlight` `add_legend_entry` `set_legend_entry` `remove_legend_entry` `link_to_existing_diagram` `add_new_linked_diagram` `remove_link` `set_note` `remove_note`
 
 Create a diagram, then change it with the fingerprint of the answer before:
 

@@ -15,7 +15,7 @@ This follows the same line as the BPMN decision ([ADR 0080](../../decisions/0080
 - Relationships (composition, aggregation, assignment, realisation, serving, access, influence, triggering, flow, specialisation, association) are line styles plus end markers, probably as edge direction sets. Realisation and specialisation need a hollow triangle ([epic 0149](0149-hollow-triangle-edge-marker.md)).
 
 ## Decided (2026-11-15)
-ArchiMate's elements are nouns (actor, role, service, node, capability), and nouns are entities, not stencils ([0105](0105-semantic-notation-stencils.md)). The kit is a named style palette (layer colours, a corner icon) and relationship line styles; only the AND / OR junction is stencil-like. So this no longer depends on 0105 and can be tried first.
+ArchiMate's elements are nouns (actor, role, service, node, capability), and nouns are entities, not stencils ([0105](../completed-epics.md#0105-behaviour-the-flow-elements)). The kit is a named style palette (layer colours, a corner icon) and relationship line styles; only the AND / OR junction is stencil-like. So this no longer depends on 0105 and can be tried first.
 
 **Not an Archi clone (the maintainer, 2026-11-15).** No fixed layers, no metamodel holding all elements and relations; that is not what this tool is for. Entities, tags, highlights, icons, edge direction sets and named style palettes probably cover most of what is wanted already. So this epic shrinks to: the hollow triangle marker ([0149](0149-hollow-triangle-edge-marker.md)), and one example diagram that draws an ArchiMate-flavoured view with what exists, to find the real gaps before building any kit. Close the epic if that shows none.
 
@@ -25,4 +25,4 @@ ArchiMate's elements are nouns (actor, role, service, node, capability), and nou
 - Whether a later conformance profile ([epic 0138](../completed-epics.md#0138-architecture-conformance-checks)) could use ArchiMate's table of allowed relationships.
 
 ## Related
-[Epic 0105](0105-semantic-notation-stencils.md), [epic 0149](0149-hollow-triangle-edge-marker.md), [epic 0138](../completed-epics.md#0138-architecture-conformance-checks), `docs/diagram-and-architecture-types.md`.
+[Epic 0105](../completed-epics.md#0105-behaviour-the-flow-elements), [epic 0149](0149-hollow-triangle-edge-marker.md), [epic 0138](../completed-epics.md#0138-architecture-conformance-checks), `docs/diagram-and-architecture-types.md`.

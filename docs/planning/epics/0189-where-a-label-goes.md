@@ -4,7 +4,7 @@
 In Progress. Logged 2026-11-16, from using Behaviour in flows. The small shapes are done; the containers go with the lane hand-off check.
 
 ## Goal
-Let a person choose where an element's label sits, so it does not cover an edge: on the small shapes of [Behaviour](0105-semantic-notation-stencils.md) (start, end, events, choices) and on containers.
+Let a person choose where an element's label sits, so it does not cover an edge: on the small shapes of [Behaviour](../completed-epics.md#0105-behaviour-the-flow-elements) (start, end, events, choices) and on containers.
 
 ## Tasks
 - [x] Small shapes ([ADR 0183](../../decisions/0183-where-the-label-of-a-small-shape-goes.md)): a label position of below (today), above, left, right or free. Free puts the label anywhere, tied to its shape by a dotted line once it is not touching. Stored per element (a position and, for free, an offset from the shape); additive in `docs/file-format.md`.
