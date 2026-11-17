@@ -77,7 +77,7 @@ test('a required tag is not put on a behaviour', () => {
   assert.ok(diagram.nodes[1].metadata?.owner)
 })
 
-test("set_kind swaps the kind; the label and size follow only while they are the old kind's own", () => {
+test("set_behaviour_kind swaps the kind; the label and size follow only while they are the old kind's own", () => {
   const before = run(
     start(),
     { op: 'add_behaviour', id: 'a', kind: 'branch-exclusive', x: 100, y: 100 },
@@ -93,8 +93,8 @@ test("set_kind swaps the kind; the label and size follow only while they are the
   ).diagram
   const { diagram, results } = run(
     before,
-    { op: 'set_kind', id: 'a', kind: 'step' },
-    { op: 'set_kind', id: 'b', kind: 'branch-parallel' }
+    { op: 'set_behaviour_kind', id: 'a', kind: 'step' },
+    { op: 'set_behaviour_kind', id: 'b', kind: 'branch-parallel' }
   )
   const [a, b] = diagram.nodes
   assert.deepEqual(a.data, { label: 'Step', kind: 'step' })
@@ -103,13 +103,16 @@ test("set_kind swaps the kind; the label and size follow only while they are the
   assert.deepEqual(b.data, { label: 'Paid?', kind: 'branch-parallel' })
   assert.deepEqual(b.size, { width: 60, height: 48 })
   assert.equal(results[0].element.kind, 'step')
-  assert.throws(() => run(diagram, { op: 'set_kind', id: 'a', kind: 'nope' }), /not a kind/)
+  assert.throws(
+    () => run(diagram, { op: 'set_behaviour_kind', id: 'a', kind: 'nope' }),
+    /not a kind/
+  )
   assert.throws(
     () =>
       run(
         start(),
         { op: 'add_entity', id: 'e', x: 0, y: 0 },
-        { op: 'set_kind', id: 'e', kind: 'step' }
+        { op: 'set_behaviour_kind', id: 'e', kind: 'step' }
       ),
     /not a behaviour/
   )

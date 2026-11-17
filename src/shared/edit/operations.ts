@@ -230,7 +230,7 @@ function setKind(model: Model, reader: Reader): OperationResult {
     node.data.kind = to.id
   }
   return {
-    op: 'set_kind',
+    op: 'set_behaviour_kind',
     element: { ...briefNode(model.diagram, node), kind: to.id, label: node.data.label }
   }
 }
@@ -675,7 +675,7 @@ const OPERATIONS: Record<string, (model: Model, reader: Reader) => OperationResu
   add_container: (m, r) => addNode(m, r, 'container'),
   add_text: (m, r) => addNode(m, r, 'text'),
   add_behaviour: addBehaviour,
-  set_kind: setKind,
+  set_behaviour_kind: setKind,
   set_label_position: setLabelPosition,
   add_line: addLine,
   add_connection_point: addConnectionPoint,

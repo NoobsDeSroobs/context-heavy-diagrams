@@ -51,7 +51,7 @@ validated ([ADR 0080](../../decisions/0080-bpmn-as-adopted-vocabulary-not-metamo
 - [x] Tried in the app on real flows by the maintainer (2026-11-17; the build sessions could not run it): label position when an edge leaves the bottom of a small shape, the colours in the light theme, the palette list
 - [x] The palette entry's name: Behaviour; the step is a rectangle with an arrow band (no direction property: the edges give it)
 - [x] More kinds before the pull request: 13 now, with ids that say what the kind is, general first (`step-user`, `event-timer`); marks drawn from one shared table; later candidates (start and end variants with a mark, boundary events, data objects, pools with message flows, annotations) wait for real flows to need them
-- [x] The assistant tools (`edit_diagram`, `chd edit`, the MCP server) and the build guide: `add_behaviour`, `set_kind`, `set_label_position`, the kind and label position and the crossings in `inspect_diagram`, the skill's guides ([ADR 0187](../../decisions/0187-assistants-build-behaviours-and-read-crossings.md))
+- [x] The assistant tools (`edit_diagram`, `chd edit`, the MCP server) and the build guide: `add_behaviour`, `set_behaviour_kind`, `set_label_position`, the kind and label position and the crossings in `inspect_diagram`, the skill's guides ([ADR 0187](../../decisions/0187-assistants-build-behaviours-and-read-crossings.md))
 - [x] The lane hand-off check ([0088](0088-cross-container-edge-detection.md))
 - Spun out of this epic: where a label goes ([0189](0189-where-a-label-goes.md)) and repetition and parallel policy ([0190](0190-behaviour-parameters-repetition-and-parallel-policy.md))
 - [ ] The BPMN specification's current version (2.0.2) and its terms, before release
