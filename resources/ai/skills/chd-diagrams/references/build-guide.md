@@ -32,7 +32,7 @@ A behaviour is what happens in a flow (a step, a decision, a split or join, a st
 - **Layers:** one full-width container per band, same `x` and `width`, 60px apart; entities left to right inside, 30px in. Edges between bands: `bottom` to `top`; in any vertical run pick `bottom` and `top`, not the sides.
 - **Hub and spoke:** hub first, spokes at the compass points (a ring beyond four), each the connection gap away, with connection points facing the hub.
 - **Pipeline:** one row, same `y`, each step a connection gap from the last; `right` to `left`.
-- **Swimlane:** one container per lane, same `x` and `width`, 60px apart; each step (a behaviour) in its lane in call order.
+- **Swimlane:** one container per lane, same `x` and `width`, 60px apart; each step (a behaviour) in its lane in call order. A lane's title on its left (`labelPosition: "left"` on `add_container`) takes about 24px across: 30px from the edge to the children is enough.
 - **Boundary nesting:** a container per level, each inset 30px from its parent. Connect edges to the component, not to the boundary.
 
 Once a person has arranged something on purpose, do not move it back toward a recipe.
