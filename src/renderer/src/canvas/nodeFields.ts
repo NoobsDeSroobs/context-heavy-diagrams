@@ -90,7 +90,10 @@ export function applyZIndexBackfill(nodes: Node[]): Node[] {
 // node lands inside its tier like the backfilled default: behind entities if it's a container,
 // above them if it's text. Scoping to every node regardless of type, with no tier floor, put a
 // fresh diagram's first entity or container at 10 or 20 (see docs/known-issues.md).
-export function nextZIndex(nodes: Node[], type: 'entity' | 'text' | 'container' | 'line'): number {
+export function nextZIndex(
+  nodes: Node[],
+  type: 'entity' | 'text' | 'container' | 'line' | 'stencil'
+): number {
   const base = type === 'container' ? CONTAINER_BASE : type === 'text' ? TEXT_BASE : ENTITY_BASE
   const scoped = nodes.filter((n) => n.type === type)
   return nextZIndexAbove(
@@ -114,5 +117,5 @@ export function nodeMetadataEligible(type: string | undefined): boolean {
 // happens not to be connectable, rather than trying to resolve a
 // connection point that doesn't exist on it.
 export function isConnectableNodeType(type: string | undefined): boolean {
-  return type === 'entity' || type === 'container'
+  return type === 'entity' || type === 'container' || type === 'stencil'
 }

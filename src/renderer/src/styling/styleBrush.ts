@@ -7,7 +7,7 @@ import type { EdgeStyle, NodeStyle } from '@shared/diagram'
 // selection, so the source must not depend on it).
 
 // Node types that carry a `data.style`.
-const BRUSH_NODE_TYPES = ['entity', 'container', 'text', 'line'] as const
+const BRUSH_NODE_TYPES = ['entity', 'container', 'text', 'line', 'stencil'] as const
 
 export type StyleBrush =
   { kind: 'node'; nodeType: string; style: NodeStyle } | { kind: 'edge'; style: EdgeStyle }

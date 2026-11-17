@@ -1,0 +1,449 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "title",
+      "type": "text",
+      "position": {
+        "x": 0,
+        "y": -50
+      },
+      "size": {
+        "width": 1610,
+        "height": 30
+      },
+      "style": {
+        "fontSize": 18,
+        "fontWeight": "bold",
+        "textAlign": "center"
+      },
+      "data": {
+        "label": "Handling a refund request: every kind of behaviour"
+      }
+    },
+    {
+      "id": "lane-support",
+      "type": "container",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 1610,
+        "height": 300
+      },
+      "style": {
+        "textAlign": "center"
+      },
+      "data": {
+        "label": "Support",
+        "labelPosition": "left"
+      }
+    },
+    {
+      "id": "lane-finance",
+      "type": "container",
+      "position": {
+        "x": 0,
+        "y": 330
+      },
+      "size": {
+        "width": 1610,
+        "height": 190
+      },
+      "style": {
+        "textAlign": "center"
+      },
+      "data": {
+        "label": "Finance",
+        "labelPosition": "left"
+      }
+    },
+    {
+      "id": "start",
+      "type": "stencil",
+      "position": {
+        "x": 30,
+        "y": 150
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "parentId": "lane-support",
+      "data": {
+        "label": "Refund requested",
+        "kind": "event-start"
+      }
+    },
+    {
+      "id": "split",
+      "type": "stencil",
+      "position": {
+        "x": 126,
+        "y": 146
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "parentId": "lane-support",
+      "data": {
+        "label": "",
+        "kind": "branch-parallel"
+      }
+    },
+    {
+      "id": "log",
+      "type": "stencil",
+      "position": {
+        "x": 225,
+        "y": 32
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "parentId": "lane-support",
+      "data": {
+        "label": "Log the request",
+        "kind": "step-automatic"
+      }
+    },
+    {
+      "id": "review",
+      "type": "stencil",
+      "position": {
+        "x": 225,
+        "y": 142
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "parentId": "lane-support",
+      "data": {
+        "label": "Review the request",
+        "kind": "step-user"
+      }
+    },
+    {
+      "id": "join",
+      "type": "stencil",
+      "position": {
+        "x": 426,
+        "y": 146
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "parentId": "lane-support",
+      "data": {
+        "label": "",
+        "kind": "branch-parallel"
+      }
+    },
+    {
+      "id": "valid",
+      "type": "stencil",
+      "position": {
+        "x": 516,
+        "y": 146
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "parentId": "lane-support",
+      "data": {
+        "label": "Valid?",
+        "kind": "branch-exclusive"
+      }
+    },
+    {
+      "id": "reject",
+      "type": "stencil",
+      "position": {
+        "x": 585,
+        "y": 32
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "parentId": "lane-support",
+      "data": {
+        "label": "Tell the customer why",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "rejected",
+      "type": "stencil",
+      "position": {
+        "x": 780,
+        "y": 40
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "parentId": "lane-support",
+      "data": {
+        "label": "Rejected",
+        "kind": "event-end"
+      }
+    },
+    {
+      "id": "verify",
+      "type": "stencil",
+      "position": {
+        "x": 635,
+        "y": 142
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "parentId": "lane-support",
+      "data": {
+        "label": "Verify the purchase",
+        "linkedDiagram": "process-flow-all-behaviours/verify-the-purchase.chd",
+        "kind": "step-sub-flow"
+      }
+    },
+    {
+      "id": "remedy",
+      "type": "stencil",
+      "position": {
+        "x": 836,
+        "y": 146
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "parentId": "lane-support",
+      "data": {
+        "label": "",
+        "kind": "branch-inclusive"
+      }
+    },
+    {
+      "id": "ship",
+      "type": "stencil",
+      "position": {
+        "x": 975,
+        "y": 142
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "parentId": "lane-support",
+      "data": {
+        "label": "Ship a replacement",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "pay",
+      "type": "stencil",
+      "position": {
+        "x": 975,
+        "y": 102
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "parentId": "lane-finance",
+      "data": {
+        "label": "Pay out the refund",
+        "kind": "step-repeat"
+      }
+    },
+    {
+      "id": "paid",
+      "type": "stencil",
+      "position": {
+        "x": 1150,
+        "y": 110
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "parentId": "lane-finance",
+      "data": {
+        "label": "Refund paid",
+        "kind": "event"
+      }
+    },
+    {
+      "id": "merge",
+      "type": "stencil",
+      "position": {
+        "x": 1226,
+        "y": 146
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "parentId": "lane-support",
+      "data": {
+        "label": "",
+        "kind": "branch-inclusive"
+      }
+    },
+    {
+      "id": "wait",
+      "type": "stencil",
+      "position": {
+        "x": 1330,
+        "y": 150
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "parentId": "lane-support",
+      "data": {
+        "label": "14 days pass",
+        "kind": "event-timer"
+      }
+    },
+    {
+      "id": "confirm",
+      "type": "stencil",
+      "position": {
+        "x": 1430,
+        "y": 150
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "parentId": "lane-support",
+      "data": {
+        "label": "Confirmation sent",
+        "kind": "event-message"
+      }
+    },
+    {
+      "id": "done",
+      "type": "stencil",
+      "position": {
+        "x": 1530,
+        "y": 150
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "parentId": "lane-support",
+      "data": {
+        "label": "Closed",
+        "kind": "event-end"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "start",
+      "target": "split"
+    },
+    {
+      "id": "e2",
+      "source": "split",
+      "target": "log"
+    },
+    {
+      "id": "e3",
+      "source": "split",
+      "target": "review"
+    },
+    {
+      "id": "e4",
+      "source": "log",
+      "target": "join"
+    },
+    {
+      "id": "e5",
+      "source": "review",
+      "target": "join"
+    },
+    {
+      "id": "e6",
+      "source": "join",
+      "target": "valid"
+    },
+    {
+      "id": "e7",
+      "source": "valid",
+      "target": "reject",
+      "label": "no"
+    },
+    {
+      "id": "e8",
+      "source": "reject",
+      "target": "rejected"
+    },
+    {
+      "id": "e9",
+      "source": "valid",
+      "target": "verify",
+      "label": "yes"
+    },
+    {
+      "id": "e10",
+      "source": "verify",
+      "target": "remedy"
+    },
+    {
+      "id": "e11",
+      "source": "remedy",
+      "target": "ship",
+      "label": "replace"
+    },
+    {
+      "id": "e12",
+      "source": "remedy",
+      "target": "pay",
+      "label": "refund"
+    },
+    {
+      "id": "e13",
+      "source": "pay",
+      "target": "paid"
+    },
+    {
+      "id": "e14",
+      "source": "paid",
+      "target": "merge"
+    },
+    {
+      "id": "e15",
+      "source": "ship",
+      "target": "merge"
+    },
+    {
+      "id": "e16",
+      "source": "merge",
+      "target": "wait"
+    },
+    {
+      "id": "e17",
+      "source": "wait",
+      "target": "confirm"
+    },
+    {
+      "id": "e18",
+      "source": "confirm",
+      "target": "done"
+    }
+  ]
+}

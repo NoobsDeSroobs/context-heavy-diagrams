@@ -3,6 +3,14 @@ import { buildBendablePath } from '../geometry/bendablePath.ts'
 import { flattenPath } from '../geometry/pathSampling.ts'
 import { highlightId, matchingHighlights } from '../tagging/highlights.ts'
 import { styledNodeType } from '../styling/styleDefaults.ts'
+import {
+  HEAVY_BORDER_FACTOR,
+  stencilKind,
+  stencilLabelOutside,
+  stencilStyle
+} from '../stencils/kinds.ts'
+import { containerLabelSideOf } from '../nodes/containerLabel.ts'
+import { labelPositionOf } from '../stencils/labelPlacement.ts'
 import type { Theme } from '../styling/theme.ts'
 import {
   DEFAULT_FONT_FAMILY,
@@ -247,7 +255,10 @@ export function renderDiagramDrawio(
     references: 0,
     missingEnds: oriented.length - edges.length,
     shortLines: 0,
-    lockedTags: 0
+    lockedTags: 0,
+    stencilMarks: 0,
+    freeLabels: 0,
+    rightLabels: 0
   }
 
   // A node's parent cell: its container, unless that is missing or part of a cycle, when the node
@@ -314,38 +325,94 @@ export function renderDiagramDrawio(
     const matches = matchingHighlights(node.metadata, highlights, enabled)
     if (matches.length >= 2) lost.chips += 1
     const type = styledNodeType(node.type)
+    // A stencil is an ellipse, a rhombus or a rectangle with its label below the small ones; the
+    // mark or band on it has no counterpart here (ADR 0180).
+    const sk = kind === 'stencil' ? stencilKind(node.data.kind) : undefined
+    if (sk?.mark || sk?.shape === 'arrow') lost.stencilMarks += 1
+    const styleSource = sk ? stencilStyle(node.data.kind, node.style) : node.style
     const look = resolveBoxLook(
       type,
-      node.style,
+      styleSource,
       theme,
       matches.length === 1 ? matches[0] : undefined
     )
-    const labelLook = resolveLabelLook(type, node.style, theme, family)
+    const labelLook = resolveLabelLook(type, styleSource, theme, family)
     const rotation = kind === 'text' ? (node.rotation ?? 0) : 0
+    const flat = kind === 'text' || (sk !== undefined && sk.shape !== 'arrow')
+    const labelOutside = sk !== undefined && stencilLabelOutside(node.data.kind)
+    // Where a small shape's label sits (ADR 0183); a free one is exported below, as draw.io has no
+    // label with a leader line.
+    const placed = labelPositionOf(node.data.labelPosition)
+    if (labelOutside && placed === 'free') lost.freeLabels += 1
+    const position = placed === 'free' ? 'below' : placed
+    // The side a container's label is on (ADR 0184). Draw.io turns a label a quarter turn left only, so
+    // one on the right is drawn reading the other way.
+    const side = kind === 'container' ? containerLabelSideOf(node.data.labelPosition) : undefined
+    if (side === 'right') lost.rightLabels += 1
     const style = styleOf(
       [
-        ['rounded', kind === 'text' ? 0 : 1],
-        ['absoluteArcSize', kind === 'text' ? undefined : 1],
-        ['arcSize', kind === 'text' ? undefined : 12],
+        ['rounded', flat ? 0 : 1],
+        ['absoluteArcSize', flat ? undefined : 1],
+        ['arcSize', flat ? undefined : sk ? 4 : 12],
         ['whiteSpace', 'wrap'],
         ['html', 1],
         ['fillColor', colorOf(look.fill)],
         ['fillOpacity', opacityPercent(look.fill)],
         ['strokeColor', colorOf(look.stroke)],
         ['strokeOpacity', opacityPercent(look.stroke)],
-        ['strokeWidth', look.stroke ? look.strokeWidth : undefined],
+        [
+          'strokeWidth',
+          look.stroke ? look.strokeWidth * (sk?.heavyBorder ? HEAVY_BORDER_FACTOR : 1) : undefined
+        ],
         ['dashed', look.stroke && look.dashed ? 1 : undefined],
         ['dashPattern', look.stroke && look.dashed ? '3 2' : undefined],
         ...fontParts(labelLook),
-        ['align', ALIGN[labelLook.align]],
-        ['verticalAlign', kind === 'container' ? 'top' : 'middle'],
+        [
+          'align',
+          labelOutside && position === 'left'
+            ? 'right'
+            : labelOutside && position === 'right'
+              ? 'left'
+              : ALIGN[labelLook.align]
+        ],
+        [
+          'verticalAlign',
+          (kind === 'container' && side !== 'bottom' && side !== 'right') ||
+          (labelOutside && position === 'below')
+            ? 'top'
+            : (labelOutside && position === 'above') || kind === 'container'
+              ? 'bottom'
+              : 'middle'
+        ],
+        [
+          'verticalLabelPosition',
+          labelOutside && position === 'below'
+            ? 'bottom'
+            : labelOutside && position === 'above'
+              ? 'top'
+              : undefined
+        ],
+        [
+          'labelPosition',
+          labelOutside && (position === 'left' || position === 'right') ? position : undefined
+        ],
+        ['horizontal', side === 'left' || side === 'right' ? 0 : undefined],
         ['spacingLeft', kind === 'container' ? 8 : undefined],
-        ['spacingTop', kind === 'container' ? 4 : undefined],
+        ['spacingTop', side === 'top' || side === 'left' ? 4 : undefined],
+        ['spacingBottom', side === 'bottom' || side === 'right' ? 4 : undefined],
         ['container', kind === 'container' ? 1 : undefined],
         ['collapsible', kind === 'container' ? 0 : undefined],
         ['rotation', rotation % 360 !== 0 ? rotation : undefined]
       ],
-      kind === 'text' ? ['text'] : []
+      kind === 'text'
+        ? ['text']
+        : sk?.shape === 'circle'
+          ? sk.doubleBorder
+            ? ['ellipse', 'shape=doubleEllipse']
+            : ['ellipse']
+          : sk?.shape === 'square'
+            ? ['rhombus']
+            : []
     )
 
     const geometry = `<mxGeometry x="${num(at.x)}" y="${num(at.y)}" width="${num(width)}" height="${num(height)}" as="geometry"/>`
@@ -534,6 +601,9 @@ interface Lost {
   missingEnds: number
   shortLines: number
   lockedTags: number
+  stencilMarks: number
+  freeLabels: number
+  rightLabels: number
 }
 
 function notesFor(diagram: DiagramFile, lost: Lost, enabled: Set<string>): string[] {
@@ -574,6 +644,18 @@ function notesFor(diagram: DiagramFile, lost: Lost, enabled: Set<string>): strin
   if (lost.lockedTags > 0)
     out.push(
       `${plural(lost.lockedTags, 'locked tag', 'locked tags')} exported as plain data: draw.io does not enforce locks`
+    )
+  if (lost.rightLabels > 0)
+    out.push(
+      `${plural(lost.rightLabels, 'container label', 'container labels')} on the right drawn reading upward, as draw.io cannot turn text the other way`
+    )
+  if (lost.freeLabels > 0)
+    out.push(
+      `${plural(lost.freeLabels, 'behaviour label', 'behaviour labels')} placed freely, with its dotted line, drawn below the shape instead`
+    )
+  if (lost.stencilMarks > 0)
+    out.push(
+      `${plural(lost.stencilMarks, 'behaviour element has', 'behaviour elements have')} a mark inside its shape (a cross, a plus, a clock, an arrow band and so on) that draw.io does not show; the shape and the label are kept`
     )
   const legendRows =
     (diagram.legend ?? []).length +

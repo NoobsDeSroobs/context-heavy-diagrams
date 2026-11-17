@@ -4,6 +4,40 @@ import { buildBendablePath } from '../geometry/bendablePath.ts'
 import { flattenPath, pointAtRatio, type Point } from '../geometry/pathSampling.ts'
 import { highlightId, matchingHighlights } from '../tagging/highlights.ts'
 import { styledNodeType } from '../styling/styleDefaults.ts'
+import {
+  edgeCrossing,
+  GATE_HALF,
+  GATE_WIDTH,
+  GATE_COLOR,
+  gatesOnPath
+} from '../crossings/crossings.ts'
+import {
+  containerLabelPlace,
+  containerLabelRoom,
+  containerLabelSideOf,
+  containerLabelTurn
+} from '../nodes/containerLabel.ts'
+import {
+  labelAlign,
+  labelBox,
+  LABEL_GAP,
+  labelPositionOf,
+  leaderLine,
+  offsetOf
+} from '../stencils/labelPlacement.ts'
+import {
+  arrowBandPath,
+  DOUBLE_BORDER_GAP,
+  HEAVY_BORDER_FACTOR,
+  MARK_STROKE,
+  STENCIL_MARK_PATHS,
+  stencilKind,
+  stencilLabelInsets,
+  stencilLabelOutside,
+  stencilMarkBox,
+  stencilStyle,
+  type StencilKind
+} from '../stencils/kinds.ts'
 import { dasharrayOf, dashPattern } from '../styling/edgeDash.ts'
 import type { Theme } from '../styling/theme.ts'
 import {
@@ -14,6 +48,7 @@ import {
   resolveEdgeLook,
   resolveLabelLook,
   resolveLineNodeLook,
+  type BoxLook,
   type LabelLook,
   type LineLook,
   type Paint
@@ -22,6 +57,7 @@ import { MARKER_SHAPES, MARKER_STROKE_WIDTH } from './markerShapes.ts'
 import { plainColor } from './color.ts'
 import {
   buildExportLegendItems,
+  stencilKindsUsed,
   directionSetLegendRow,
   type ExportLegendItem
 } from '../legend/legendItems.ts'
@@ -60,6 +96,9 @@ export interface SvgExportOptions {
   fontFamily?: string
   // Written as the document <title>, for accessibility.
   title?: string
+  // A gate where an edge goes through the border of a container (ADR 0185). Off unless named here, as
+  // on the canvas, where it is a session switch.
+  crossings?: boolean
 }
 
 export const DEFAULT_SVG_EXPORT_OPTIONS = {
@@ -80,7 +119,8 @@ export function defaultLegendItems(
     diagram.legend ?? [],
     diagram.highlights ?? [],
     new Set(enabledHighlightIds),
-    directionSetLegendRow(sets, diagram.activeEdgeDirectionSetId)
+    directionSetLegendRow(sets, diagram.activeEdgeDirectionSetId),
+    stencilKindsUsed(diagram.nodes)
   )
 }
 
@@ -127,6 +167,49 @@ function num(n: number): string {
 function paintAttrs(name: 'fill' | 'stroke', paint: Paint | null): string {
   if (!paint) return ` ${name}="none"`
   return ` ${name}="${esc(paint.color)}"${paint.opacity < 1 ? ` ${name}-opacity="${num(paint.opacity)}"` : ''}`
+}
+
+// A stencil's base shape with its mark on it (ADR 0180), drawn as vector shapes. `small` is the
+// legend swatch: the arrow's band is narrower and the mark's line is a fixed 1.2 px.
+function stencilShape(
+  kind: StencilKind,
+  box: Rect,
+  look: BoxLook,
+  strokeWidth: number,
+  markPaint: Paint,
+  small = false
+): string {
+  const { x, y, width, height } = box
+  const inset = look.stroke ? strokeWidth / 2 : 0
+  const paint =
+    paintAttrs('fill', look.fill) +
+    paintAttrs('stroke', look.stroke) +
+    (look.stroke ? ` stroke-width="${num(strokeWidth)}"` : '')
+  const cx = x + width / 2
+  const cy = y + height / 2
+  const radius = Math.max(0, Math.min(width, height) / 2 - inset)
+  let out =
+    kind.shape === 'circle'
+      ? `<circle cx="${num(cx)}" cy="${num(cy)}" r="${num(radius)}"${paint}/>`
+      : `<rect x="${num(x + inset)}" y="${num(y + inset)}" width="${num(width - inset * 2)}" height="${num(height - inset * 2)}" rx="4"${paint}/>`
+  if (kind.shape === 'circle' && kind.doubleBorder && look.stroke) {
+    const inner = Math.max(0, radius - strokeWidth - (small ? 1.5 : DOUBLE_BORDER_GAP))
+    out += `<circle cx="${num(cx)}" cy="${num(cy)}" r="${num(inner)}" fill="none"${paintAttrs('stroke', look.stroke)} stroke-width="${num(strokeWidth)}"/>`
+  }
+  if (kind.shape === 'arrow') {
+    // The band takes the colour of the border (of the mark where the border is switched off).
+    const band = arrowBandPath(x + inset, y + inset, y + height - inset, 4, small ? 0.35 : 1)
+    out += `<path d="${band}"${paintAttrs('fill', look.stroke ?? markPaint)}/>`
+  }
+  if (!kind.mark) return out
+  const at = stencilMarkBox(kind, width, height, small)
+  const scale = Math.round((at.size / 24) * 10000) / 10000
+  const line = small ? 1.2 / scale : MARK_STROKE
+  return (
+    out +
+    `<g transform="translate(${num(x + at.x)} ${num(y + at.y)}) scale(${scale})">` +
+    `<path d="${STENCIL_MARK_PATHS[kind.mark]}" fill="none"${paintAttrs('stroke', markPaint)} stroke-width="${num(line)}" stroke-linecap="round" stroke-linejoin="round"/></g>`
+  )
 }
 
 // ---- arrowheads ------------------------------------------------------------------------------
@@ -334,6 +417,20 @@ function drawLegend(
       parts.push(
         `<circle cx="${num(swatchX + 14)}" cy="${num(cy)}" r="7"${paintAttrs('fill', paint)}/>`
       )
+    } else if (swatch.kind === 'stencil') {
+      // The kind's shape and mark in a small box, with the colour it is drawn in on the diagram.
+      const sk = stencilKind(swatch.stencilKind)
+      const look = resolveBoxLook(
+        'entity',
+        stencilStyle(sk.id, undefined),
+        options.theme,
+        undefined
+      )
+      const wide = sk.shape === 'arrow'
+      const box = wide
+        ? { x: swatchX + 3, y: cy - 7, width: 22, height: 14 }
+        : { x: swatchX + 7, y: cy - 7, width: 14, height: 14 }
+      parts.push(stencilShape(sk, box, look, 1.5, tokens.text, true))
     } else if (swatch.kind === 'highlight') {
       const paint = plainColor(swatch.color)
       parts.push(
@@ -444,12 +541,16 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
     }
 
     const type = styledNodeType(node.type)
-    const look = resolveBoxLook(type, node.style, theme, single)
-    const labelLook = resolveLabelLook(type, node.style, theme, family)
-    const sw = look.strokeWidth
+    const style = kind === 'stencil' ? stencilStyle(node.data.kind, node.style) : node.style
+    const look = resolveBoxLook(type, style, theme, single)
+    const labelLook = resolveLabelLook(type, style, theme, family)
+    const sk = kind === 'stencil' ? stencilKind(node.data.kind) : undefined
+    const sw = sk?.heavyBorder ? look.strokeWidth * HEAVY_BORDER_FACTOR : look.strokeWidth
     const text = node.data.label ?? ''
 
-    if (look.fill || look.stroke) {
+    if (sk && (look.fill || look.stroke)) {
+      parts.push(stencilShape(sk, { x, y, width, height }, look, sw, tokens.text))
+    } else if (look.fill || look.stroke) {
       const inset = look.stroke ? sw / 2 : 0
       const rx = Math.max(0, 6 - inset)
       parts.push(
@@ -461,14 +562,66 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
     }
 
     const lineHeight = labelLook.font.size * LINE_HEIGHT_EM
-    if (kind === 'container') {
-      const available = Math.max(0, width - sw * 2 - 8)
+    if (kind === 'stencil' && stencilLabelOutside(node.data.kind)) {
+      // The small shapes carry their label outside (ADR 0180): where the node says (ADR 0183), as
+      // wide as it needs. A free label is tied to its shape by a dotted line.
+      const position = labelPositionOf(node.data.labelPosition)
+      const beside = position === 'left' || position === 'right'
+      const available = beside ? 140 : Math.max(width, 120)
       const lines = wrapText(text, available, labelLook.font)
       const blockWidth = Math.min(available, blockWidthOf(lines, labelLook.font))
-      parts.push(textLines(lines, labelLook, x + sw + 8, blockWidth, y + sw + 4))
+      const blockHeight = lines.length * lineHeight
+      const box = labelBox(
+        position,
+        offsetOf(node.data.labelOffset),
+        { x, y, width, height },
+        { width: blockWidth, height: blockHeight },
+        sw / 2 + LABEL_GAP
+      )
+      if (text) {
+        if (position === 'free') {
+          const leader = leaderLine(
+            sk?.shape === 'circle' ? 'circle' : 'square',
+            { x, y, width, height },
+            box
+          )
+          if (leader)
+            parts.push(
+              `<line class="chd-label-leader" x1="${num(leader.x1)}" y1="${num(leader.y1)}" x2="${num(leader.x2)}" y2="${num(leader.y2)}"${paintAttrs('stroke', labelLook.fill)} stroke-width="1" stroke-dasharray="2 3"/>`
+            )
+        }
+        const look = { ...labelLook, align: labelAlign(position) }
+        parts.push(textLines(lines, look, box.x, blockWidth, box.y))
+        extent.rect(box.x, box.y, blockWidth, blockHeight)
+        obstacles.push({ x: box.x, y: box.y, width: blockWidth, height: blockHeight })
+      }
+    } else if (kind === 'container') {
+      // The label sits on the side the container says, turned to face it (ADR 0184): the top of the
+      // text points at the side, except at the bottom, where it stays upright.
+      const side = containerLabelSideOf(node.data.labelPosition)
+      const shape = { x, y, width, height }
+      const room = containerLabelRoom(side, shape, sw)
+      const lines = wrapText(text, room, labelLook.font)
+      const blockWidth = Math.min(room, blockWidthOf(lines, labelLook.font))
+      const at = containerLabelPlace(
+        side,
+        shape,
+        sw,
+        { width: blockWidth, height: lines.length * lineHeight },
+        labelLook.align
+      )
+      const drawn = textLines(lines, labelLook, at.left, blockWidth, at.top)
+      const turn = containerLabelTurn(side)
+      parts.push(
+        turn && drawn
+          ? `<g transform="rotate(${turn} ${num(at.cx)} ${num(at.cy)})">${drawn}</g>`
+          : drawn
+      )
     } else {
-      const padding = kind === 'text' ? 8 : 8
-      const available = Math.max(0, width - sw * 2 - padding * 2)
+      const padding = 8
+      // An arrow's band takes room on the left, so the label is centred in what is left.
+      const insets = kind === 'stencil' ? stencilLabelInsets(node.data.kind) : { left: 0, right: 0 }
+      const available = Math.max(0, width - sw * 2 - padding * 2 - insets.left - insets.right)
       const lines = wrapText(text, available, labelLook.font)
       const blockWidth = Math.min(available, blockWidthOf(lines, labelLook.font))
       const blockHeight = lines.length * lineHeight
@@ -476,7 +629,13 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
       // and is cut off at the bottom; every other label is centred, overflowing equally both ways.
       const clipped = kind === 'text' && blockHeight > height - sw * 2 - padding * 2
       const top = clipped ? y + sw + padding : y + height / 2 - blockHeight / 2
-      let content = textLines(lines, labelLook, x + width / 2 - blockWidth / 2, blockWidth, top)
+      let content = textLines(
+        lines,
+        labelLook,
+        x + insets.left + (width - insets.left - insets.right) / 2 - blockWidth / 2,
+        blockWidth,
+        top
+      )
       if (clipped && content) {
         content = `<g clip-path="url(#chd-clip-${laid.order})">${content}</g>`
         parts.push(
@@ -547,6 +706,25 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
   }
 
   // -- edges
+  // The gates where an edge goes through the border of a container (ADR 0185), drawn on the edge.
+  const gatesFor = (sourceId: string, targetId: string, path: Point[]): string => {
+    const crossing = edgeCrossing(sourceId, targetId, (id) => nodes.get(id)?.node.parentId)
+    if (!crossing) return ''
+    const boundaries = [...crossing.leaving, ...crossing.entering].flatMap((id) => {
+      const box = nodes.get(id)
+      return box ? [{ id, rect: { x: box.x, y: box.y, width: box.width, height: box.height } }] : []
+    })
+    const half = GATE_HALF
+    return gatesOnPath(path, boundaries)
+      .map((g) => {
+        const [x1, y1, x2, y2] =
+          g.axis === 'horizontal'
+            ? [g.x - half, g.y, g.x + half, g.y]
+            : [g.x, g.y - half, g.x, g.y + half]
+        return `<line class="chd-crossing-gate" x1="${num(x1)}" y1="${num(y1)}" x2="${num(x2)}" y2="${num(y2)}" stroke="${GATE_COLOR[theme]}" stroke-width="${GATE_WIDTH}" stroke-linecap="round"/>`
+      })
+      .join('')
+  }
   const chipRing = tokens.background
   for (const laid of edges) {
     const { edge, from, to } = laid
@@ -560,13 +738,13 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
       edge.points ?? [],
       options.edgeStraightSegmentLength
     )
+    const flat = flattenPath(d)
     drawn.push({
       z: laid.z,
       layer: 0,
       order: laid.order,
-      svg: `<g class="chd-edge" data-id="${esc(edge.id)}"><path d="${d}" fill="none"${applyStroke(look)}/>${arrowheadsFor(d, look)}</g>`
+      svg: `<g class="chd-edge" data-id="${esc(edge.id)}"><path d="${d}" fill="none"${applyStroke(look)}/>${arrowheadsFor(d, look)}${options.crossings ? gatesFor(edge.source, edge.target, flat) : ''}</g>`
     })
-    const flat = flattenPath(d)
     const pad =
       look.strokeWidth / 2 +
       (look.startMarker !== 'none' || look.endMarker !== 'none' ? look.strokeWidth * 6 : 0) +

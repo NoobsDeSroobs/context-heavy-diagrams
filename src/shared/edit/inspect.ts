@@ -18,6 +18,8 @@ import {
   labelTargetGap
 } from '../layout/labelClearance.ts'
 import { edgeIssues, type EdgeIssue } from './edgeRouting.ts'
+import { containerLabelSideOf } from '../nodes/containerLabel.ts'
+import { stencilLabelInsets, stencilLabelOutside } from '../stencils/kinds.ts'
 import { LINE_HEIGHT_EM, measureText, wrapText, type FontSpec } from '../export/textLayout.ts'
 import { NODE_STYLE_DEFAULTS, styledNodeType } from '../styling/styleDefaults.ts'
 import { summarizeEdge, summarizeNode, type EdgeSummary, type NodeSummary } from './operations.ts'
@@ -190,6 +192,8 @@ export function layoutIssues(diagram: DiagramFile, diagramFont?: string): Layout
   // box, which the canvas and the export break in the middle. The wrapping is the export's.
   for (const node of diagram.nodes) {
     if (node.type === 'line' || !node.data.label || !node.size) continue
+    // A stencil's small shapes carry their label below them, not inside (ADR 0180).
+    if (node.type === 'stencil' && stencilLabelOutside(node.data.kind)) continue
     const type = styledNodeType(node.type)
     const defaults = NODE_STYLE_DEFAULTS[type]
     const font: FontSpec = {
@@ -198,7 +202,14 @@ export function layoutIssues(diagram: DiagramFile, diagramFont?: string): Layout
       family: node.style?.fontFamily ?? diagramFont
     }
     const stroke = node.style?.strokeWidth ?? defaults.strokeWidth
-    const available = Math.max(0, node.size.width - stroke * 2 - (type === 'container' ? 8 : 16))
+    // A step's arrow band takes room on the left, and its mark on the right (ADR 0180).
+    const insets =
+      node.type === 'stencil' ? stencilLabelInsets(node.data.kind) : { left: 0, right: 0 }
+    const margin = 16
+    // A container's label runs along the side it is on, which for a turned label is its height (ADR 0184).
+    const side = node.type === 'container' ? containerLabelSideOf(node.data.labelPosition) : 'top'
+    const run = side === 'left' || side === 'right' ? node.size.height : node.size.width
+    const available = Math.max(0, run - stroke * 2 - margin - insets.left - insets.right)
     const widest = node.data.label
       .split(/\s+/)
       .reduce((a, b) => (measureText(b, font) > measureText(a, font) ? b : a), '')

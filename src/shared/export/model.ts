@@ -13,6 +13,7 @@ import type { EdgeEnd } from '../geometry/edgePath.ts'
 import { pointsBoundingBox } from '../geometry/bendablePath.ts'
 import { NODE_STYLE_DEFAULTS, styledNodeType } from '../styling/styleDefaults.ts'
 import { backfillZIndex } from '../canvas/zIndexOrdering.ts'
+import { stencilKind } from '../stencils/kinds.ts'
 import { resolveLabelLook } from './appearance.ts'
 import { DEFAULT_FONT_FAMILY } from './appearance.ts'
 import { LINE_HEIGHT_EM, measureText, wrapText } from './textLayout.ts'
@@ -21,7 +22,7 @@ import { LINE_HEIGHT_EM, measureText, wrapText } from './textLayout.ts'
 // stacking order, and every edge with its two endpoints on real connection points. The canvas gets
 // the same things from React Flow; this is the equivalent for output that has no canvas (ADR 0124).
 
-export type LaidOutKind = 'entity' | 'container' | 'text' | 'line'
+export type LaidOutKind = 'entity' | 'container' | 'text' | 'line' | 'stencil'
 
 export interface LaidOutNode {
   node: DiagramNode
@@ -52,8 +53,17 @@ const CONTAINER_MIN = { width: 160, height: 120 }
 const TEXT_MIN = { width: 40, height: 24 }
 
 function kindOf(type: string | undefined): LaidOutKind {
-  return type === 'container' || type === 'text' || type === 'line' ? type : 'entity'
+  return type === 'container' || type === 'text' || type === 'line' || type === 'stencil'
+    ? type
+    : 'entity'
 }
+
+// What an edge can be attached to: a node with connection points.
+// An element drawn as a box of its own that edges run round: an entity or a stencil.
+export const isEntityLike = (kind: LaidOutKind): boolean => kind === 'entity' || kind === 'stencil'
+
+export const hasConnectionPoints = (kind: LaidOutKind): boolean =>
+  kind === 'entity' || kind === 'container' || kind === 'stencil'
 
 // A node without a stored size is "sized to content" by the canvas. There is no layout engine
 // here, so the content is measured with the same estimate the wrapping uses (textLayout.ts); a
@@ -73,6 +83,7 @@ function estimateSize(
       height: box.maxY - box.minY + LINE_BOUNDS_PADDING * 2
     }
   }
+  if (kind === 'stencil') return stencilKind(node.data.kind).size
   const type = styledNodeType(node.type)
   const look = resolveLabelLook(type, node.style, 'light', defaultFontFamily)
   const lines = wrapText(node.data.label ?? '', 0, look.font)
@@ -191,7 +202,7 @@ function endpoint(
   handle: string | undefined,
   slides: Map<string, number>
 ): EdgeEnd | null {
-  if (!node || (node.kind !== 'entity' && node.kind !== 'container')) return null
+  if (!node || !hasConnectionPoints(node.kind)) return null
   const points: ConnectionPoint[] = effectiveConnectionPoints(node.node.connectionPoints ?? [])
   const point = points.length === 1 || !handle ? points[0] : points.find((p) => p.id === handle)
   if (!point) return null
@@ -218,7 +229,7 @@ export function layoutEdges(
   const out: LaidOutEdge[] = []
   // An end that names no point is attached by the rule in geometry/autoAttach.ts.
   const placed = [...nodes.values()]
-    .filter((n) => n.kind === 'entity' || n.kind === 'container')
+    .filter((n) => hasConnectionPoints(n.kind))
     .map((n) => ({
       id: n.node.id,
       x: n.x,

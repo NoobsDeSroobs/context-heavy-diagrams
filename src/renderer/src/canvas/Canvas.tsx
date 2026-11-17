@@ -73,10 +73,11 @@ import { TEXT_MIN_WIDTH, TEXT_MIN_HEIGHT } from '../nodes/TextNode'
 import { CONTAINER_MIN_WIDTH, CONTAINER_MIN_HEIGHT } from '../nodes/ContainerNode'
 import { scaleGroupMembers, type GroupResizeMember } from './groupResize'
 import { LINE_BOUNDS_PADDING } from '../nodes/LineNode'
-import { nodeTypes, edgeTypes, DEFAULT_EDGE_OPTIONS } from './flowTypes'
+import { nodeTypes, edgeTypes, DEFAULT_EDGE_OPTIONS, HIDE_ATTRIBUTION } from './flowTypes'
 import DiagramSettingsPanel from '../diagram-settings/DiagramSettingsPanel'
 import { effectiveGravityPresets } from '../nodes/lineGravityPresets'
 import EdgeMarkerDefs from '../edges/edgeMarkers'
+import CrossingPeekOf from '../edges/CrossingPeekOf'
 import { useModifierHeldClass } from '../edges/useModifierHeldClass'
 import { usePrefersReducedMotion } from '../edges/usePrefersReducedMotion'
 import { edgeAnimationIsOn } from '@shared/preferences/preferences'
@@ -127,7 +128,21 @@ import StylePalettePanel from '../styling/StylePalettePanel'
 import ReferenceWindow from '../references/ReferenceWindow'
 import ReferencesPanel from '../references/ReferencesPanel'
 import DiagramDock from '../DiagramDock'
-import { PALETTE_ITEM_DRAG_TYPE, type PaletteItemType } from '../palette/ItemPalette'
+import {
+  PALETTE_ITEM_DRAG_TYPE,
+  PALETTE_STENCIL_KIND_DRAG_TYPE,
+  type PaletteItemType
+} from '../palette/ItemPalette'
+import { swapStencilKind } from '../nodes/stencilSwap'
+import type { ContainerLabelSide } from '@shared/nodes/containerLabel'
+import { stencilKind, stencilLabelOutside } from '@shared/stencils/kinds'
+import {
+  labelPositionOf,
+  offsetFrom,
+  offsetOf,
+  type LabelPosition
+} from '@shared/stencils/labelPlacement'
+import { stencilKindsUsed } from '@shared/legend/legendItems'
 import UtilityDock from '../UtilityDock'
 import AlignmentGuides from '../alignment/AlignmentGuides'
 import { SNAP_THRESHOLD_PX, boundsFrom, computeSnap } from '../alignment/alignment'
@@ -276,6 +291,12 @@ function CanvasInner(): React.JSX.Element {
   // The minimap is a per-person display choice (ADR 0158): the corner button and View -> Minimap
   // flip it.
   const minimapOn = preferences.showMinimap
+  // The zoom buttons of the corner panel (ADR 0186): hidden unless the person asks for them.
+  const zoomControlsOn = preferences.showZoomControls
+  const toggleZoomControls = useCallback(
+    () => updatePreferences({ showZoomControls: !zoomControlsOn }),
+    [updatePreferences, zoomControlsOn]
+  )
   const toggleMinimap = useCallback(
     () => updatePreferences({ showMinimap: !minimapOn }),
     [updatePreferences, minimapOn]
@@ -308,6 +329,9 @@ function CanvasInner(): React.JSX.Element {
   const connectionRadius = useZoomedConnectionHandles()
   const { peek, bindings: peekBindings } = useNotesPeek()
   const peekNode = peek ? rfInstance.getNode(peek.nodeId) : undefined
+  // The same hold-Ctrl peek on an edge, while crossings are marked (ADR 0185): which containers it
+  // goes between. It lives beside the note peek, as the one hook already tracks key and pointer.
+  const { peek: edgePeek, bindings: edgePeekBindings } = useNotesPeek()
   const updateNodeInternals = useUpdateNodeInternals()
   // Scopes the PNG export (ADR 0051) capture to this window's own
   // .react-flow__viewport rather than a bare document-wide query — no
@@ -381,6 +405,24 @@ function CanvasInner(): React.JSX.Element {
     removeLegendEntry,
     toggleLegendPanel
   } = useLegend(canvasApi)
+
+  // The legend rows for the kinds of step and event in use (ADR 0180). Hiding them is for this
+  // session only: nothing about it is saved with the diagram.
+  const [showStencilLegend, setShowStencilLegend] = useState(true)
+  // Gates on the edges that cross a container's border (ADR 0185): a switch for this session, off
+  // because most diagrams do not care about crossings and it adds to the canvas.
+  const [showCrossings, setShowCrossings] = useState(false)
+  const toggleCrossings = useCallback(() => setShowCrossings((on) => !on), [])
+  const stencilKinds = useMemo(
+    () =>
+      stencilKindsUsed(
+        nodes.map((n) => ({
+          type: n.type,
+          data: { kind: typeof n.data?.kind === 'string' ? n.data.kind : undefined }
+        }))
+      ),
+    [nodes]
+  )
 
   const {
     highlights,
@@ -597,7 +639,7 @@ function CanvasInner(): React.JSX.Element {
   // deps array is evaluated at render time, unlike the callback body, so a later declaration would
   // be a real temporal-dead-zone error.
   const selectAllOfType = useCallback(
-    (type: 'entity' | 'container' | 'text' | 'line' | 'edge') => {
+    (type: 'entity' | 'container' | 'text' | 'line' | 'stencil' | 'edge') => {
       setNodes((nds) =>
         nds.map((n) => (n.selected === (n.type === type) ? n : { ...n, selected: n.type === type }))
       )
@@ -1286,7 +1328,12 @@ function CanvasInner(): React.JSX.Element {
   // `presetId` lets a caller that must reference the new node right away (spawnEntityAt, wiring an
   // edge to it) choose the id up front.
   const addNodeAtPosition = useCallback(
-    (type: PaletteItemType, dropPoint: { x: number; y: number }, presetId?: string) => {
+    (
+      type: PaletteItemType,
+      dropPoint: { x: number; y: number },
+      presetId?: string,
+      kindId?: string
+    ) => {
       pushSnapshot()
       setNodes((nds) => {
         const byId = new Map(nds.map((n) => [n.id, n]))
@@ -1350,6 +1397,18 @@ function CanvasInner(): React.JSX.Element {
               style: preferences.defaultStyles.text
             }
             break
+          case 'stencil': {
+            const kind = stencilKind(kindId)
+            width = kind.size.width
+            height = kind.size.height
+            nodeType = 'stencil'
+            data = {
+              label: kind.defaultLabel,
+              kind: kind.id,
+              zIndex: nextZIndex(nds, 'stencil')
+            }
+            break
+          }
           case 'line': {
             const lineLength = 160
             width = lineLength + LINE_BOUNDS_PADDING * 2
@@ -1501,7 +1560,9 @@ function CanvasInner(): React.JSX.Element {
       event.preventDefault()
       addNodeAtPosition(
         type,
-        rfInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY })
+        rfInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY }),
+        undefined,
+        type === 'stencil' ? event.dataTransfer.getData(PALETTE_STENCIL_KIND_DRAG_TYPE) : undefined
       )
     },
     [rfInstance, addNodeAtPosition]
@@ -1552,6 +1613,96 @@ function CanvasInner(): React.JSX.Element {
       }
     ])
   }, [setNodes, pushSnapshot, spawnPosition, preferences.defaultStyles.text])
+
+  // A stencil of the given kind (ADR 0180) near the viewport centre.
+  const addStencilNode = useCallback(
+    (kindId: string) => {
+      pushSnapshot()
+      const kind = stencilKind(kindId)
+      const id = newNodeId('stencil')
+      setNodes((nds) => [
+        ...nds,
+        {
+          id,
+          type: 'stencil',
+          position: spawnPosition(kind.size.width, kind.size.height, nds.length),
+          width: kind.size.width,
+          height: kind.size.height,
+          data: {
+            label: kind.defaultLabel,
+            kind: kind.id,
+            zIndex: nextZIndex(nds, 'stencil')
+          }
+        }
+      ])
+    },
+    [setNodes, pushSnapshot, spawnPosition]
+  )
+
+  // Changes the kind of these stencils, one undo step (ADR 0180).
+  const setStencilKind = useCallback(
+    (nodeIds: string[], kindId: string) => {
+      const ids = new Set(nodeIds)
+      pushSnapshot()
+      setNodes((nds) =>
+        nds.map((n) => (ids.has(n.id) && n.type === 'stencil' ? swapStencilKind(n, kindId) : n))
+      )
+    },
+    [setNodes, pushSnapshot]
+  )
+
+  // Moves the label of these small shapes to another side, or sets it free where it is, one undo
+  // step (ADR 0183). A label made free keeps its place, so it does not jump.
+  const setStencilLabelPosition = useCallback(
+    (nodeIds: string[], position: LabelPosition) => {
+      const ids = new Set(nodeIds)
+      pushSnapshot()
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (!ids.has(n.id) || n.type !== 'stencil') return n
+          const kind = stencilKind(typeof n.data?.kind === 'string' ? n.data.kind : undefined)
+          if (!stencilLabelOutside(kind.id)) return n
+          const was = labelPositionOf(n.data?.labelPosition)
+          if (was === position) return n
+          const shape = {
+            x: 0,
+            y: 0,
+            width: n.width ?? n.measured?.width ?? kind.size.width,
+            height: n.height ?? n.measured?.height ?? kind.size.height
+          }
+          const labelOffset =
+            position === 'free'
+              ? (offsetOf(n.data?.labelOffset) ?? offsetFrom(was, shape, { width: 70, height: 16 }))
+              : undefined
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              labelPosition: position === 'below' ? undefined : position,
+              labelOffset
+            }
+          }
+        })
+      )
+    },
+    [setNodes, pushSnapshot]
+  )
+
+  // Moves the label of these containers to another side, one undo step (ADR 0184).
+  const setContainerLabelSide = useCallback(
+    (nodeIds: string[], side: ContainerLabelSide) => {
+      const ids = new Set(nodeIds)
+      pushSnapshot()
+      setNodes((nds) =>
+        nds.map((n) =>
+          ids.has(n.id) && n.type === 'container'
+            ? { ...n, data: { ...n.data, labelPosition: side === 'top' ? undefined : side } }
+            : n
+        )
+      )
+    },
+    [setNodes, pushSnapshot]
+  )
 
   const addContainerNode = useCallback(() => {
     pushSnapshot()
@@ -2431,6 +2582,7 @@ function CanvasInner(): React.JSX.Element {
     activeEdgeDirectionSetId,
     security,
     enabledHighlightIds,
+    showCrossings,
     theme,
     preferences,
     flowWrapperRef,
@@ -2927,7 +3079,7 @@ function CanvasInner(): React.JSX.Element {
   const placedNodes = useMemo(() => {
     const byId = new Map(nodes.map((n) => [n.id, n]))
     return nodes
-      .filter((n) => n.type === 'entity' || n.type === 'container')
+      .filter((n) => n.type === 'entity' || n.type === 'container' || n.type === 'stencil')
       .map((n) => {
         const place = absolutePosition(n, byId)
         return {
@@ -3264,6 +3416,10 @@ function CanvasInner(): React.JSX.Element {
     edgeAnimationOn,
     toggleMinimap,
     minimapOn,
+    toggleCrossings,
+    crossingsOn: showCrossings,
+    toggleZoomControls,
+    zoomControlsOn,
     toggleDiagramSettingsPanel,
     togglePreferencesPanel,
     setCommandPaletteOpen,
@@ -3328,6 +3484,7 @@ function CanvasInner(): React.JSX.Element {
       searchMatchIds,
       isolateActive,
       isolateOpacity: preferences.isolateOpacity,
+      showCrossings,
       selectAllOfType,
       pendingLabelEditId,
       clearPendingLabelEdit
@@ -3362,6 +3519,7 @@ function CanvasInner(): React.JSX.Element {
       searchMatchIds,
       isolateActive,
       preferences.isolateOpacity,
+      showCrossings,
       selectAllOfType,
       pendingLabelEditId,
       clearPendingLabelEdit
@@ -3497,6 +3655,9 @@ function CanvasInner(): React.JSX.Element {
                 onDrop={onCanvasDrop}
               >
                 <EdgeMarkerDefs />
+                {edgePeek && showCrossings && (
+                  <CrossingPeekOf peek={edgePeek} rfInstance={rfInstance} />
+                )}
                 {peek && peekNode && (
                   <PeekCard
                     key={peek.nodeId}
@@ -3524,6 +3685,7 @@ function CanvasInner(): React.JSX.Element {
                   edges={orderedEdges}
                   nodeTypes={nodeTypes}
                   edgeTypes={edgeTypes}
+                  proOptions={HIDE_ATTRIBUTION}
                   // Only mount nodes/edges intersecting the viewport — see
                   // ADR 0073. Nodes carry width/height (fromDiagramFile) so
                   // their bounds are known before measurement. Disabled
@@ -3536,6 +3698,8 @@ function CanvasInner(): React.JSX.Element {
                   onNodeDragStop={onNodeDragStop}
                   onNodeClick={onStyleBrushNodeClick}
                   onEdgeClick={onEdgeClick}
+                  onEdgeMouseEnter={edgePeekBindings.onNodeMouseEnter}
+                  onEdgeMouseLeave={edgePeekBindings.onNodeMouseLeave}
                   onNodeMouseEnter={peekBindings.onNodeMouseEnter}
                   onNodeMouseLeave={peekBindings.onNodeMouseLeave}
                   onConnect={onConnect}
@@ -3598,7 +3762,59 @@ function CanvasInner(): React.JSX.Element {
                   fitView
                 >
                   <Background />
-                  <Controls>
+                  {/* The corner panel (ADR 0186): the canvas's own buttons, then what it can show on demand:
+                      the highlights, the crossings and, last, the legend. The zoom buttons are off
+                      unless asked for in View -> Display, and React Flow's own lock is hidden: it
+                      only stops what React Flow itself does (ADR 0186). */}
+                  <Controls showZoom={zoomControlsOn} showInteractive={false}>
+                    <ControlButton
+                      title={`Highlights${highlights.length > 0 ? ` (${highlights.length})` : ''}`}
+                      aria-label="Show highlights"
+                      onClick={(event) =>
+                        toggleHighlightsPanel(event.currentTarget.getBoundingClientRect())
+                      }
+                    >
+                      <svg viewBox="0 0 24 24" width="16" height="16">
+                        <path
+                          d="M12 3 L14.5 9.5 L21 12 L14.5 14.5 L12 21 L9.5 14.5 L3 12 L9.5 9.5 Z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </ControlButton>
+                    <ControlButton
+                      title={showCrossings ? 'Stop marking crossings' : 'Mark crossings'}
+                      aria-label="Mark crossings"
+                      aria-pressed={showCrossings}
+                      onClick={toggleCrossings}
+                    >
+                      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                        <line
+                          x1="2"
+                          y1="12"
+                          x2="22"
+                          y2="12"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeDasharray="3 3"
+                        />
+                        <path
+                          d="M12 3 V21 M8.5 17.5 L12 21 L15.5 17.5"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <line
+                          x1="7"
+                          y1="12"
+                          x2="17"
+                          y2="12"
+                          stroke="currentColor"
+                          strokeWidth="3.5"
+                        />
+                      </svg>
+                    </ControlButton>
                     <ControlButton
                       title="Show legend"
                       aria-label="Show legend"
@@ -3617,20 +3833,6 @@ function CanvasInner(): React.JSX.Element {
                           y2="17"
                           stroke="currentColor"
                           strokeWidth="2"
-                        />
-                      </svg>
-                    </ControlButton>
-                    <ControlButton
-                      title={`Highlights${highlights.length > 0 ? ` (${highlights.length})` : ''}`}
-                      aria-label="Show highlights"
-                      onClick={(event) =>
-                        toggleHighlightsPanel(event.currentTarget.getBoundingClientRect())
-                      }
-                    >
-                      <svg viewBox="0 0 24 24" width="16" height="16">
-                        <path
-                          d="M12 3 L14.5 9.5 L21 12 L14.5 14.5 L12 21 L9.5 14.5 L3 12 L9.5 9.5 Z"
-                          fill="currentColor"
                         />
                       </svg>
                     </ControlButton>
@@ -3674,6 +3876,10 @@ function CanvasInner(): React.JSX.Element {
                 onAddText={addTextNode}
                 onAddContainer={addContainerNode}
                 onAddLine={addLineNode}
+                onAddStencil={addStencilNode}
+                onSetStencilKind={setStencilKind}
+                onSetStencilLabelPosition={setStencilLabelPosition}
+                onSetContainerLabelSide={setContainerLabelSide}
                 onCreateMultipleEntities={() => setBulkCreateType('entity')}
                 onCreateMultipleContainers={() => setBulkCreateType('container')}
                 onUpdateNodeStyle={updateNodeStyle}
@@ -3795,6 +4001,9 @@ function CanvasInner(): React.JSX.Element {
               diagramPath={currentPath}
               legend={legend}
               directionSetRow={directionSetRow}
+              stencilKinds={stencilKinds}
+              showStencilKinds={showStencilLegend}
+              onToggleStencilKinds={() => setShowStencilLegend((v) => !v)}
               anchorRect={legendPanelAnchor}
               onAdd={addLegendEntry}
               onUpdate={updateLegendEntry}

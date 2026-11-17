@@ -13,6 +13,16 @@
    an authored-row shape, faintly set apart since it's not hand-editable
    here (its label is the set name, its swatch is styled in Diagram
    settings). */
+.legend-stencil-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--ev-c-text-3);
+  padding: 2px 4px;
+  cursor: pointer;
+}
+
 .legend-row-pinned {
   padding-bottom: 6px;
   margin-bottom: 4px;

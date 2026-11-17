@@ -33,6 +33,7 @@ function build() {
     'RequestExecutionLevel user',
     'SilentInstall silent',
     '!define CHD_ENV_ROOT HKCU',
+    '!define CHD_NO_BROADCAST',
     `!define CHD_ENV_KEY "${KEY}"`,
     `!include "${join(here, '..', 'build', 'chdPath.nsh')}"`,
     '!insertmacro ChdPathRemove ""',

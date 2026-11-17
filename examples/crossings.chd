@@ -1,0 +1,232 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "title",
+      "type": "text",
+      "position": {
+        "x": 0,
+        "y": -90
+      },
+      "size": {
+        "width": 980,
+        "height": 32
+      },
+      "style": {
+        "fontSize": 18,
+        "textAlign": "center",
+        "fontWeight": "bold"
+      },
+      "data": {
+        "label": "Edges that cross a container"
+      }
+    },
+    {
+      "id": "intro",
+      "type": "text",
+      "position": {
+        "x": 60,
+        "y": -54
+      },
+      "size": {
+        "width": 860,
+        "height": 46
+      },
+      "style": {
+        "fontSize": 12,
+        "textAlign": "center"
+      },
+      "data": {
+        "label": "Choose View, Display, Mark crossings: each edge that goes through the border of a container gets a gate, one for every border it crosses. Hold Ctrl (Cmd) over an edge to see which containers it goes between. The switch is for this session only."
+      }
+    },
+    {
+      "id": "sales",
+      "type": "container",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "width": 560,
+        "height": 300
+      },
+      "data": {
+        "label": "Sales"
+      }
+    },
+    {
+      "id": "billing",
+      "type": "container",
+      "position": {
+        "x": 320,
+        "y": 50
+      },
+      "size": {
+        "width": 210,
+        "height": 210
+      },
+      "parentId": "sales",
+      "data": {
+        "label": "Billing"
+      }
+    },
+    {
+      "id": "order",
+      "type": "entity",
+      "position": {
+        "x": 40,
+        "y": 120
+      },
+      "size": {
+        "width": 120,
+        "height": 56
+      },
+      "parentId": "sales",
+      "data": {
+        "label": "Order"
+      }
+    },
+    {
+      "id": "invoice",
+      "type": "entity",
+      "position": {
+        "x": 45,
+        "y": 75
+      },
+      "size": {
+        "width": 120,
+        "height": 56
+      },
+      "parentId": "billing",
+      "data": {
+        "label": "Invoice"
+      }
+    },
+    {
+      "id": "warehouse",
+      "type": "container",
+      "position": {
+        "x": 0,
+        "y": 360
+      },
+      "size": {
+        "width": 560,
+        "height": 200
+      },
+      "data": {
+        "label": "Warehouse"
+      }
+    },
+    {
+      "id": "pick",
+      "type": "entity",
+      "position": {
+        "x": 40,
+        "y": 80
+      },
+      "size": {
+        "width": 120,
+        "height": 56
+      },
+      "parentId": "warehouse",
+      "data": {
+        "label": "Pick"
+      }
+    },
+    {
+      "id": "pack",
+      "type": "entity",
+      "position": {
+        "x": 300,
+        "y": 80
+      },
+      "size": {
+        "width": 120,
+        "height": 56
+      },
+      "parentId": "warehouse",
+      "data": {
+        "label": "Pack"
+      }
+    },
+    {
+      "id": "finance",
+      "type": "container",
+      "position": {
+        "x": 640,
+        "y": 0
+      },
+      "size": {
+        "width": 340,
+        "height": 560
+      },
+      "data": {
+        "label": "Finance"
+      }
+    },
+    {
+      "id": "ledger",
+      "type": "entity",
+      "position": {
+        "x": 110,
+        "y": 250
+      },
+      "size": {
+        "width": 120,
+        "height": 56
+      },
+      "parentId": "finance",
+      "data": {
+        "label": "Ledger"
+      }
+    },
+    {
+      "id": "audit",
+      "type": "entity",
+      "position": {
+        "x": 700,
+        "y": 600
+      },
+      "size": {
+        "width": 120,
+        "height": 56
+      },
+      "data": {
+        "label": "Audit"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "order",
+      "target": "invoice"
+    },
+    {
+      "id": "e2",
+      "source": "order",
+      "target": "pick"
+    },
+    {
+      "id": "e3",
+      "source": "pick",
+      "target": "pack"
+    },
+    {
+      "id": "e4",
+      "source": "invoice",
+      "target": "ledger"
+    },
+    {
+      "id": "e5",
+      "source": "pack",
+      "target": "ledger"
+    },
+    {
+      "id": "e6",
+      "source": "ledger",
+      "target": "audit"
+    }
+  ]
+}

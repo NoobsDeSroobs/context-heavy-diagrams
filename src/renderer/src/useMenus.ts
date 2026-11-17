@@ -56,6 +56,12 @@ export interface MenuInputs {
   // Whether animated edges move now (ADR 0141), which is what the menu item's check mark shows.
   edgeAnimationOn: boolean
   toggleMinimap: () => void
+  // Marks the edges that cross a container's border with a gate (ADR 0185), for this session.
+  toggleCrossings: () => void
+  // Whether the zoom buttons are in the corner panel (ADR 0186), which is what the item's check mark shows.
+  toggleZoomControls: () => void
+  zoomControlsOn: boolean
+  crossingsOn: boolean
   // Whether the minimap is drawn (ADR 0158), which is what the menu item's check mark shows.
   minimapOn: boolean
   toggleDiagramSettingsPanel: () => void
@@ -124,6 +130,10 @@ export function useMenus(inputs: MenuInputs): {
     edgeAnimationOn,
     toggleMinimap,
     minimapOn,
+    toggleCrossings,
+    crossingsOn,
+    toggleZoomControls,
+    zoomControlsOn,
     toggleDiagramSettingsPanel,
     togglePreferencesPanel,
     setCommandPaletteOpen,
@@ -295,6 +305,22 @@ export function useMenus(inputs: MenuInputs): {
     onSelect: toggleMinimap
   }
 
+  const zoomControlsItem: MenuBarItem = {
+    label: 'Zoom controls',
+    checked: zoomControlsOn,
+    title:
+      'Show the zoom in and zoom out buttons in the corner panel. The wheel, a trackpad and the keyboard zoom without them',
+    onSelect: toggleZoomControls
+  }
+
+  const crossingsItem: MenuBarItem = {
+    label: 'Mark crossings',
+    checked: crossingsOn,
+    title:
+      'Mark each edge that goes through the border of a container with a gate. Hold Ctrl (Cmd) over an edge to see which containers it goes between. For this session only',
+    onSelect: toggleCrossings
+  }
+
   const viewMenu: MenuBarMenu = {
     label: 'View',
     items: isDiagramPersona
@@ -331,8 +357,12 @@ export function useMenus(inputs: MenuInputs): {
             onSelect: toggleReferencesPanel
           },
           { label: 'Style Palette', onSelect: toggleStylePalettePanel },
-          { ...animateEdgesItem, separatorBefore: true },
-          minimapItem,
+          // What the canvas shows, as switches: they are the person's, not the diagram's.
+          {
+            label: 'Display',
+            separatorBefore: true,
+            submenu: [animateEdgesItem, minimapItem, zoomControlsItem, crossingsItem]
+          },
           {
             label: 'Diagram settings',
             separatorBefore: true,

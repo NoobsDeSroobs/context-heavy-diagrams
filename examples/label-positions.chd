@@ -1,0 +1,258 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "title",
+      "type": "text",
+      "position": {
+        "x": 0,
+        "y": -40
+      },
+      "size": {
+        "width": 1000,
+        "height": 34
+      },
+      "style": {
+        "fontSize": 18,
+        "textAlign": "center",
+        "fontWeight": "bold"
+      },
+      "data": {
+        "label": "Where the label of a small shape goes"
+      }
+    },
+    {
+      "id": "intro",
+      "type": "text",
+      "position": {
+        "x": 100,
+        "y": 0
+      },
+      "size": {
+        "width": 800,
+        "height": 46
+      },
+      "style": {
+        "fontSize": 12,
+        "textAlign": "center"
+      },
+      "data": {
+        "label": "Below is the default. Above, left and right move the label to that side; free puts it anywhere (drag it while the shape is selected) and ties it to its shape with a dotted line."
+      }
+    },
+    {
+      "id": "p-below",
+      "type": "stencil",
+      "position": {
+        "x": 170,
+        "y": 70
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "data": {
+        "label": "Below (the default)",
+        "kind": "event-start"
+      }
+    },
+    {
+      "id": "p-above",
+      "type": "stencil",
+      "position": {
+        "x": 360,
+        "y": 70
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "data": {
+        "label": "Above",
+        "kind": "event-start",
+        "labelPosition": "above"
+      }
+    },
+    {
+      "id": "p-left",
+      "type": "stencil",
+      "position": {
+        "x": 550,
+        "y": 70
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "data": {
+        "label": "Left",
+        "kind": "event-start",
+        "labelPosition": "left"
+      }
+    },
+    {
+      "id": "p-right",
+      "type": "stencil",
+      "position": {
+        "x": 740,
+        "y": 70
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "data": {
+        "label": "Right",
+        "kind": "event-start",
+        "labelPosition": "right"
+      }
+    },
+    {
+      "id": "p-free",
+      "type": "stencil",
+      "position": {
+        "x": 930,
+        "y": 70
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "data": {
+        "label": "Free, with a dotted line",
+        "kind": "event-start",
+        "labelPosition": "free",
+        "labelOffset": {
+          "x": 70,
+          "y": -44
+        }
+      }
+    },
+    {
+      "id": "crowd",
+      "type": "text",
+      "position": {
+        "x": 100,
+        "y": 190
+      },
+      "size": {
+        "width": 800,
+        "height": 24
+      },
+      "style": {
+        "fontSize": 12,
+        "textAlign": "center"
+      },
+      "data": {
+        "label": "A shape with an edge on every side: a free label is the way to keep it off all four."
+      }
+    },
+    {
+      "id": "a",
+      "type": "stencil",
+      "position": {
+        "x": 125,
+        "y": 352
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "data": {
+        "label": "Collect",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "b",
+      "type": "stencil",
+      "position": {
+        "x": 445,
+        "y": 352
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "data": {
+        "label": "Approve",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "c",
+      "type": "stencil",
+      "position": {
+        "x": 285,
+        "y": 242
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "data": {
+        "label": "Escalate",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "d",
+      "type": "stencil",
+      "position": {
+        "x": 285,
+        "y": 462
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "data": {
+        "label": "Reject",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "choice",
+      "type": "stencil",
+      "position": {
+        "x": 336,
+        "y": 356
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "data": {
+        "label": "Approved?",
+        "kind": "branch-exclusive",
+        "labelPosition": "free",
+        "labelOffset": {
+          "x": 64,
+          "y": -50
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "a",
+      "target": "choice"
+    },
+    {
+      "id": "e2",
+      "source": "choice",
+      "target": "b"
+    },
+    {
+      "id": "e3",
+      "source": "choice",
+      "target": "c"
+    },
+    {
+      "id": "e4",
+      "source": "choice",
+      "target": "d"
+    }
+  ]
+}

@@ -1,6 +1,8 @@
 import { memo, useCallback, type CSSProperties, type MouseEvent } from 'react'
 import { NodeResizer, useReactFlow, type NodeProps } from '@xyflow/react'
 import type { ConnectionPoint, MetadataEntry, NodeStyle } from '@shared/diagram'
+import { containerLabelSideOf } from '@shared/nodes/containerLabel'
+import { NODE_STYLE_DEFAULTS } from '@shared/styling/styleDefaults'
 import EditableLabel from '../ui/EditableLabel'
 import HighlightChips from '../tagging/HighlightChips'
 import LockBadge from '../tagging/LockBadge'
@@ -44,6 +46,9 @@ function ContainerNode({ id, data, selected }: NodeProps): React.JSX.Element {
   const locked = data?.locked === true
   const customPoints = (data?.connectionPoints ?? []) as ConnectionPoint[]
   const style = data?.style as NodeStyle | undefined
+  // The side the label is on, and how its text lines up along that side (ADR 0184).
+  const side = containerLabelSideOf(data?.labelPosition)
+  const align = style?.textAlign ?? NODE_STYLE_DEFAULTS.container.textAlign
   const { addConnectionPointItem, onPointContextMenu } = useConnectionPointMenu(id, customPoints)
 
   // See EntityNode's identical treatment / ADR 0025.
@@ -111,17 +116,19 @@ function ContainerNode({ id, data, selected }: NodeProps): React.JSX.Element {
           <HighlightChips highlights={highlightMatches} />
         </div>
       )}
-      <EditableLabel
-        className="container-node-label"
-        inputClassName="container-node-label-input"
-        multiline
-        style={nodeLabelCss(style, theme)}
-        value={String(data?.label ?? '')}
-        onCommit={(label) => {
-          pushSnapshot()
-          updateNodeData(id, { label })
-        }}
-      />
+      <div className={`container-node-label-box container-node-label-box--${side}-${align}`}>
+        <EditableLabel
+          className="container-node-label"
+          inputClassName="container-node-label-input"
+          multiline
+          style={nodeLabelCss(style, theme)}
+          value={String(data?.label ?? '')}
+          onCommit={(label) => {
+            pushSnapshot()
+            updateNodeData(id, { label })
+          }}
+        />
+      </div>
     </div>
   )
 }

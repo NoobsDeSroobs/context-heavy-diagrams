@@ -2,6 +2,7 @@ import type { IconRef } from '@shared/diagram'
 import { loadBuiltinIconSvg } from '../icons/builtinIcons'
 import { markerUrl } from '../edges/markerIds'
 import type { ExportLegendItem } from '@shared/legend/legendItems'
+import { stencilSwatchSvgFor } from '@shared/stencils/swatch'
 import { dasharrayOf, dashPattern } from '@shared/styling/edgeDash'
 
 type ResolvedIcon = { type: 'svg'; markup: string } | { type: 'img'; dataUrl: string }
@@ -80,6 +81,14 @@ function buildSwatch(item: ExportLegendItem, iconMarkup: Map<string, ResolvedIco
     const dot = document.createElement('span')
     dot.style.cssText = `display: block; width: 14px; height: 14px; border-radius: 50%; background: ${swatch.color};`
     wrapper.appendChild(dot)
+    return wrapper
+  }
+  if (swatch.kind === 'stencil') {
+    const theme = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark'
+    const span = document.createElement('span')
+    span.style.cssText = 'display: block; width: 28px; height: 16px;'
+    span.innerHTML = stencilSwatchSvgFor(swatch.stencilKind, theme)
+    wrapper.appendChild(span)
     return wrapper
   }
   if (swatch.kind === 'highlight') {

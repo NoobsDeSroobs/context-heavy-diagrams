@@ -6,6 +6,8 @@ import type {
   NodeStyle,
   RequiredTagDefinition
 } from '@shared/diagram'
+import type { ContainerLabelSide } from '@shared/nodes/containerLabel'
+import type { LabelPosition } from '@shared/stencils/labelPlacement'
 import { CollapsibleSection } from '../ui/fields'
 import MetadataSection from '../tagging/MetadataSection'
 import ReferencesSection from '../references/ReferencesSection'
@@ -14,6 +16,8 @@ import { NodeStyleFields } from './NodeStyleFields'
 import { EdgeFields } from './EdgeFields'
 import { LineStyleFields } from './LineStyleFields'
 import { ConnectionPointFields } from './ConnectionPointFields'
+import { ContainerFields } from './ContainerFields'
+import { StencilFields } from './StencilFields'
 import { nodeStyleOf } from './styleAccess'
 import type { TransformPatch } from './transformPatch'
 
@@ -48,6 +52,12 @@ interface PropertyPanelProps {
   // and the exit; the brush itself lives in Canvas.
   styleBrushActive: boolean
   onToggleStyleBrush: () => void
+  // Changes the kind of the selected steps and events (ADR 0180).
+  onSetStencilKind: (nodeIds: string[], kindId: string) => void
+  // Moves the label of the selected small shapes (ADR 0183).
+  onSetStencilLabelPosition: (nodeIds: string[], position: LabelPosition) => void
+  // Moves the label of the selected containers to another side (ADR 0184).
+  onSetContainerLabelSide: (nodeIds: string[], side: ContainerLabelSide) => void
 }
 
 // Entity/container share NodeStyleFields' four groups; text gets the same
@@ -59,12 +69,14 @@ const TYPE_LABELS: Record<string, string> = {
   entity: 'Entities',
   container: 'Containers',
   text: 'Text',
-  line: 'Lines'
+  line: 'Lines',
+  stencil: 'Behaviours'
 }
 const MIN_SIZE: Record<string, { width: number; height: number }> = {
   entity: { width: 60, height: 40 },
   container: { width: 160, height: 120 },
-  text: { width: 40, height: 24 }
+  text: { width: 40, height: 24 },
+  stencil: { width: 24, height: 24 }
 }
 
 export default function PropertyPanel({
@@ -84,7 +96,10 @@ export default function PropertyPanel({
   pushSnapshot,
   onSetDefaultStyle,
   styleBrushActive,
-  onToggleStyleBrush
+  onToggleStyleBrush,
+  onSetStencilKind,
+  onSetStencilLabelPosition,
+  onSetContainerLabelSide
 }: PropertyPanelProps): React.JSX.Element {
   const byType = new Map<string, Node[]>()
   for (const n of selectedNodes) {
@@ -107,6 +122,17 @@ export default function PropertyPanel({
           : undefined
       : undefined
 
+  // Connection points: one selected entity, container or stencil (a stencil has no metadata or
+  // references, ADR 0180, so it has no `metadataTarget`).
+  const connectionPointTarget: Node | undefined =
+    metadataTarget?.kind === 'node'
+      ? metadataTarget.node
+      : selectedNodes.length === 1 &&
+          selectedEdges.length === 0 &&
+          selectedNodes[0].type === 'stencil'
+        ? selectedNodes[0]
+        : undefined
+
   const renderNodeGroup = (type: string, nodes: Node[]): React.JSX.Element => {
     const ids = nodes.map((n) => n.id)
     if (type === 'line') {
@@ -123,7 +149,7 @@ export default function PropertyPanel({
       )
     }
     const min = MIN_SIZE[type] ?? MIN_SIZE.entity
-    return (
+    const styleFields = (
       <NodeStyleFields
         key={type}
         nodes={nodes}
@@ -137,6 +163,27 @@ export default function PropertyPanel({
         endContinuousEdit={endContinuousEdit}
         pushSnapshot={pushSnapshot}
       />
+    )
+    if (type === 'container')
+      return (
+        <div key={type}>
+          <ContainerFields
+            nodes={nodes}
+            onSetLabelSide={(side) => onSetContainerLabelSide(ids, side)}
+          />
+          {styleFields}
+        </div>
+      )
+    if (type !== 'stencil') return styleFields
+    return (
+      <div key={type}>
+        <StencilFields
+          nodes={nodes}
+          onSetKind={(kindId) => onSetStencilKind(ids, kindId)}
+          onSetLabelPosition={(position) => onSetStencilLabelPosition(ids, position)}
+        />
+        {styleFields}
+      </div>
     )
   }
 
@@ -211,12 +258,12 @@ export default function PropertyPanel({
         {styleActions}
         {nodeGroups.map(([type, nodes]) => renderNodeGroup(type, nodes))}
         {selectedEdges.length > 0 && renderEdgeGroup()}
-        {metadataTarget?.kind === 'node' && (
+        {connectionPointTarget && (
           <ConnectionPointFields
-            node={metadataTarget.node}
+            node={connectionPointTarget}
             maxPerSide={maxConnectionPointsPerSide}
             onSetCount={(side, count) =>
-              onSetConnectionPointCount(metadataTarget.node.id, side, count)
+              onSetConnectionPointCount(connectionPointTarget.id, side, count)
             }
           />
         )}

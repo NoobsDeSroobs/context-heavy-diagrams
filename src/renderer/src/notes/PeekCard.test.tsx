@@ -6,7 +6,11 @@ import PeekCard from './PeekCard'
 
 afterEach(cleanup)
 
-const target = { nodeId: 'n', rect: { left: 10, top: 10, right: 100, bottom: 60 } }
+const target = {
+  nodeId: 'n',
+  rect: { left: 10, top: 10, right: 100, bottom: 60 },
+  pointer: { x: 50, y: 30 }
+}
 
 function card(
   icons: Partial<Record<IconSlot, IconRef>> | undefined,

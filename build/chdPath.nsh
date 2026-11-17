@@ -10,6 +10,15 @@
 !include LogicLib.nsh
 !include WinMessages.nsh
 
+; The change is announced to the open windows so a new terminal sees it. That waits up to 5 s for each
+; window that does not answer, which is most of a minute on a busy desktop, and says nothing for a
+; scratch key, so the test defines CHD_NO_BROADCAST.
+!macro ChdBroadcastEnvironment
+  !ifndef CHD_NO_BROADCAST
+    SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
+  !endif
+!macroend
+
 !ifndef CHD_ENV_ROOT
   !define CHD_ENV_ROOT HKCU
   !define CHD_ENV_KEY "Environment"
@@ -91,7 +100,7 @@
         ${Else}
           DeleteRegValue ${CHD_ENV_ROOT} "${CHD_ENV_KEY}" "Path"
         ${EndIf}
-        SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
+        !insertmacro ChdBroadcastEnvironment
       ${EndIf}
     ${EndIf}
 
@@ -135,7 +144,7 @@
         ${EndIf}
       ${EndIf}
       WriteRegExpandStr ${CHD_ENV_ROOT} "${CHD_ENV_KEY}" "Path" $R1
-      SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
+      !insertmacro ChdBroadcastEnvironment
     ${EndIf}
 
     Pop $R9

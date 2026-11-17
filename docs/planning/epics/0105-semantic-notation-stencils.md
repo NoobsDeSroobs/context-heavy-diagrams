@@ -2,10 +2,10 @@
 
 ## Status
 
-Not Started — scoped out of the [epic 0078](../completed-epics.md#0078-bpmn-as-a-basis-for-this-apps-visual-language)
+In Progress — the first slice is built on the branch `epic/0187-hide-react-flow-label` (ADR [0180](../../decisions/0180-stencils-are-light-elements-for-events-and-verbs.md)); the pull request waits for a fuller set. Scoped out of the [epic 0078](../completed-epics.md#0078-bpmn-as-a-basis-for-this-apps-visual-language)
 BPMN discussion (2026-08-31), see [ADR 0080](../../decisions/0080-bpmn-as-adopted-vocabulary-not-metamodel.md).
-Not blocked on anything — a stencil is a plain rectangular Shape pre-seeded
-with an icon + label.
+Not blocked on anything. (The first plan, a plain Shape pre-seeded with an icon and a label,
+was replaced by its own light node type, see "Decided".)
 
 ## Goal
 
@@ -30,7 +30,31 @@ validated ([ADR 0080](../../decisions/0080-bpmn-as-adopted-vocabulary-not-metamo
   the tool's own vocabulary stays notation-neutral.
 - **Shapes stay rectangular** — each stencil maps to an ordinary Shape with a
   distinguishing icon + a default label, not a non-rectangular outline
-  ([ADR 0031](../../decisions/0031-icon-annotation-is-a-standing-requirement.md)).
+  (decided in [ADR 0180](../../decisions/0180-stencils-are-light-elements-for-events-and-verbs.md)).
+
+## Decided (the maintainer, 2026-11-15)
+
+- **What is a stencil:** events and verbs (what happens, and how the flow behaves: a step, a decision, a split or join, a start, an end, a timer). **Nouns and concepts are entities** (a User, a service, a node, an ArchiMate element), already possible with an icon. A stencil is never a thing in the system.
+- **Stencils need no context:** no notes, tags, links, metadata or security data. That is also what keeps them from replacing entities: whatever needs context is an entity.
+- **Design pass (2026-11-15):** a stencil has a properties panel (its kind, label, number of connection points, look, size and place, and its one link; none of the notes, tags, metadata or references sections); it sits inside a container as a child, like an entity; **one link to another `.chd` file is allowed**, nothing else of the context an entity has; **the legend shows what each kind in the diagram means**, so nobody has to know the marks (derived from the kinds present; shown by default, with a switch in the app only, for the session, nothing in the file, to hide it when it clutters; settled once there are example diagrams); highlights and tags do not apply. **Shapes:** a start or end is a circle, a gateway a square with its mark, a step a rounded rectangle (the frame stays a rectangle for resize, containment and connection points). **Size of the first release:** Step, Decision, Parallel split/join, Start and End are the first slice, but the pull request waits for a fuller set. **Search and review:** a stencil is found by id, label and kind (its neutral name and BPMN terms), and its kind and link show in a review of changes as meaning, not look. **Leaning, not settled:** each kind has a built-in default colour, used unless the element has its own fill (see the design notes).
+- **Vector first.** The built-in stencil marks (a gateway's ×, + and ○, an event's ring, a step's corner) are drawn as SVG by the app, with no raster files in the base, so they follow the theme and stay sharp at any zoom. A person may install raster elements if they want them; that is an extension of [0183](0183-installable-icon-packs.md), which today takes SVG only (to decide there).
+- **Swim lanes need no new element.** A container is a lane, and a stencil's lane is its parent. What is missing is the functional half: seeing which edges cross lanes (a hand-off), which is [0088](0088-cross-container-edge-detection.md) and is worth re-reading with this one.
+- **Licence of the notation (read 2026-11-15, [ScanCode's entry](https://scancode-licensedb.aboutcode.org/omg-bpmn-2.0.html) for the BPMN 2.0 specification's terms; not legal advice).** They are the terms of the specification document, not of icons. They say nobody infringes the holders' copyright by using the specification or conforming software to it, and allow software based on it. The conditions are about copies of the document: its notice with every copy, no posting on a network, no modifying, no reselling. So: draw our own marks, copy nothing from the specification (text, figures or the XSD) into the repository, say "based on BPMN 2.0" and never "compliant" (only a full match to the compliance points may claim that), and credit OMG in the notices anyway. The terms are not an open-source licence; the Apache Software Foundation has had the question open with OMG since late 2024 (LEGAL-690). Check the current version of the specification (2.0.2) before release.
+- **A closed, built-in list:** no stencils made or installed by a person, so the category cannot grow nouns. [0183](0183-installable-icon-packs.md) gives entities icons; it does not add stencils.
+
+## Tasks
+
+- [x] ADR 0180; the `stencil` node type with `data.kind`; the kinds table (step, decision, parallel, start, end) with shapes, marks and default colours; `docs/file-format.md`
+- [x] The canvas node, the palette entry with a kind list and filter, the property panel (kind, look, size, connection points), the kind changed from the property panel (the right-click menu has no kind list: a flat list of thirteen is not usable), one link, inside containers
+- [x] The legend rows for the kinds in use with a session-only switch; search by kind and BPMN terms; the review of changes; SVG, PNG and draw.io export; conformance leaves them out
+- [x] Example `examples/process-flow-stencils.chd` with a drill-down diagram
+- [ ] Try it in the app on real flows (the app itself was not run in the build session): label position when an edge leaves the bottom of a small shape, the colours in the light theme, the palette list
+- [x] The palette entry's name: Behaviour; the step is a rectangle with an arrow band (no direction property: the edges give it)
+- [x] More kinds before the pull request: 13 now, with ids that say what the kind is, general first (`step-user`, `event-timer`); marks drawn from one shared table; later candidates (start and end variants with a mark, boundary events, data objects, pools with message flows, annotations) wait for real flows to need them
+- [ ] The assistant tools (`edit_diagram`, `chd edit`, the MCP server) and the build guide: stencils as a full member, once the design has settled
+- [x] The lane hand-off check ([0088](0088-cross-container-edge-detection.md))
+- Spun out of this epic: where a label goes ([0189](0189-where-a-label-goes.md)) and repetition and parallel policy ([0190](0190-behaviour-parameters-repetition-and-parallel-policy.md))
+- [ ] The BPMN specification's current version (2.0.2) and its terms, before release
 
 ## Open questions (not yet designed)
 
@@ -39,10 +63,13 @@ validated ([ADR 0080](../../decisions/0080-bpmn-as-adopted-vocabulary-not-metamo
 - **Which symbols ship** — at minimum: exclusive choice, parallel, inclusive
   choice; start event, end event, intermediate/message/timer event. How many
   event sub-types before it's bloat?
-- **Is a stencil a distinct thing in the `.chd`, or just a Shape?** Leaning:
-  just a Shape (style + icon + a default label) with no new schema — the
-  palette is a convenience, the file only ever sees Shapes. Confirm there's a
-  clean way to seed a Shape's icon slot + label from a palette item.
+- **Is a stencil a distinct thing in the `.chd`, or just a Shape?** The
+  decision above changes the earlier leaning (just a Shape, no schema). Now
+  leaning: **its own light node type** with a `kind` from the built-in list, so
+  it carries no notes or tags, conformance and required tags can leave it
+  alone, and a person or an assistant cannot mistake it for an entity. Costs: a
+  schema, `docs/file-format.md`, an edit operation, the exports (draw.io has
+  BPMN shapes to map to) and the checks. To settle first.
 - **Right-click type-swap** — swapping keeps size/position/label edits/edges,
   and just changes the icon (and maybe re-suggests the default label if the
   user hasn't customised it). Interaction with the existing icon controls in

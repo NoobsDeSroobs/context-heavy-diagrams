@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "d-start",
+      "type": "stencil",
+      "position": {
+        "x": 0,
+        "y": 20
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "data": {
+        "label": "Pick list printed",
+        "kind": "event-start"
+      }
+    },
+    {
+      "id": "d-scan",
+      "type": "stencil",
+      "position": {
+        "x": 120,
+        "y": 12
+      },
+      "size": {
+        "width": 140,
+        "height": 56
+      },
+      "data": {
+        "label": "Scan the items",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "d-pack",
+      "type": "stencil",
+      "position": {
+        "x": 320,
+        "y": 12
+      },
+      "size": {
+        "width": 140,
+        "height": 56
+      },
+      "data": {
+        "label": "Pack the box",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "d-end",
+      "type": "stencil",
+      "position": {
+        "x": 520,
+        "y": 20
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "data": {
+        "label": "Handed to the carrier",
+        "kind": "event-end"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "d1",
+      "source": "d-start",
+      "target": "d-scan"
+    },
+    {
+      "id": "d2",
+      "source": "d-scan",
+      "target": "d-pack"
+    },
+    {
+      "id": "d3",
+      "source": "d-pack",
+      "target": "d-end"
+    }
+  ]
+}

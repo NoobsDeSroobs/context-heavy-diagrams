@@ -8,7 +8,13 @@
 // container it does not belong to. Edges are routed one after the other, shortest first, each seeing
 // the ones before it.
 import type { ConnectionPoint, DiagramFile, LinePoint } from '../diagram/index.ts'
-import { layoutEdges, layoutNodes, type LaidOutNode } from '../export/model.ts'
+import {
+  hasConnectionPoints,
+  isEntityLike,
+  layoutEdges,
+  layoutNodes,
+  type LaidOutNode
+} from '../export/model.ts'
 import { automaticHandles } from '../geometry/autoAttach.ts'
 import { buildEdgePath, OUTWARD_DIRECTION } from '../geometry/edgePath.ts'
 import { flattenPath, type Point } from '../geometry/pathSampling.ts'
@@ -290,7 +296,7 @@ function simplify(points: Point[]): Point[] {
 // The diagram with every automatic end (ADR 0178) named: a routed edge is drawn from a point of its own.
 function withAutomaticHandles(diagram: DiagramFile): DiagramFile {
   const placed = [...layoutNodes(diagram).values()]
-    .filter((n) => n.kind === 'entity' || n.kind === 'container')
+    .filter((n) => hasConnectionPoints(n.kind))
     .map((n) => ({
       id: n.node.id,
       x: n.x,
@@ -395,8 +401,8 @@ export function routeEdges(
         a &&
         b &&
         edge.source !== edge.target &&
-        a.kind === 'entity' &&
-        b.kind === 'entity'
+        isEntityLike(a.kind) &&
+        isEntityLike(b.kind)
       ) {
         everything.add(id)
       }
@@ -449,7 +455,7 @@ function routeCandidates(
   const byId = new Map(laid.map((l) => [l.edge.id, l]))
   const routed = new Map<string, LinePoint[]>()
   const failed = new Map<string, string>()
-  const solid = [...nodes.values()].filter((n) => n.kind === 'entity' || n.kind === 'text')
+  const solid = [...nodes.values()].filter((n) => isEntityLike(n.kind) || n.kind === 'text')
   const containers = [...nodes.values()].filter((n) => n.kind === 'container')
   const rectOf = (n: LaidOutNode): Rect => ({ x: n.x, y: n.y, width: n.width, height: n.height })
 

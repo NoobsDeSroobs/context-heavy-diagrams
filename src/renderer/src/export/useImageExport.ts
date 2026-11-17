@@ -10,7 +10,7 @@ import type {
   LegendEntry,
   RequiredTagDefinition
 } from '@shared/diagram'
-import { buildExportLegendItems } from '@shared/legend/legendItems'
+import { buildExportLegendItems, stencilKindsUsed } from '@shared/legend/legendItems'
 import { effectiveDiagramFont } from '@shared/styling/fontStack'
 import { directionSetLegendRow } from '../edges/edgeDirectionSets'
 import { toDiagramFile } from '../document/diagramConversion'
@@ -37,6 +37,8 @@ export interface ImageExportInputs {
   activeEdgeDirectionSetId: string | undefined
   security: DiagramSecurity
   enabledHighlightIds: Set<string>
+  // The canvas marks the edges that cross a container's border, so an SVG export does too (ADR 0185).
+  showCrossings: boolean
   theme: Theme
   preferences: Pick<AppPreferences, 'edgeStraightSegmentLength' | 'defaultFontFamily'>
   flowWrapperRef: React.RefObject<HTMLDivElement | null>
@@ -70,6 +72,7 @@ export function useImageExport(
     activeEdgeDirectionSetId,
     security,
     enabledHighlightIds,
+    showCrossings,
     theme,
     preferences,
     flowWrapperRef,
@@ -120,7 +123,13 @@ export function useImageExport(
           legend,
           highlights,
           enabledHighlightIds,
-          directionSetLegendRow(edgeDirectionSets, activeEdgeDirectionSetId)
+          directionSetLegendRow(edgeDirectionSets, activeEdgeDirectionSetId),
+          stencilKindsUsed(
+            nodes.map((n) => ({
+              type: n.type,
+              data: { kind: typeof n.data?.kind === 'string' ? n.data.kind : undefined }
+            }))
+          )
         )
         const dataUrl = await captureDiagramPng(
           nodes,
@@ -226,6 +235,7 @@ export function useImageExport(
           backgroundColorHex: choice.backgroundColorOverride ?? exportPngEffectiveColorHex,
           legendCorner: choice.legendCorner,
           enabledHighlightIds: [...enabledHighlightIds],
+          crossings: showCrossings,
           edgeStraightSegmentLength: preferences.edgeStraightSegmentLength,
           diagramPath: currentPath,
           fontFamily: effectiveDiagramFont(diagramFontFamily, preferences.defaultFontFamily),
@@ -243,6 +253,7 @@ export function useImageExport(
       theme,
       exportPngEffectiveColorHex,
       enabledHighlightIds,
+      showCrossings,
       preferences.edgeStraightSegmentLength,
       preferences.defaultFontFamily
     ]

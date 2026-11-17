@@ -25,7 +25,13 @@ interface LayerPanelProps {
 // 'entity' | 'container' | 'text' | 'line' — anything unrecognized falls
 // back to its first letter uppercased, same lenient spirit as
 // docs/file-format.md's own node `type` handling.
-const TYPE_BADGE: Record<string, string> = { entity: 'S', container: 'C', text: 'T', line: 'L' }
+const TYPE_BADGE: Record<string, string> = {
+  entity: 'S',
+  container: 'C',
+  text: 'T',
+  line: 'L',
+  stencil: 'E'
+}
 
 // Same UtilityDock shell as Highlights/Required tags/Diagnostics/Settings —
 // see ADR 0035; unlike the legend panel this one is explicitly a

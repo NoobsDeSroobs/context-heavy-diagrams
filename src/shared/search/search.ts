@@ -1,4 +1,5 @@
 import type { IconRef, IconSlot, MetadataEntry } from '../diagram'
+import { stencilSearchText } from '../stencils/kinds.ts'
 
 // Pure free-text matcher behind ADR 0062's V1 search — one
 // combined query checked against id, label, and every tag key/value,
@@ -17,6 +18,8 @@ export interface SearchableElement {
   linkedDiagram?: string
   // Set for a connection, so a negated `has:` term can leave it out.
   edge?: boolean
+  // A stencil's kind name and the terms it is known by (ADR 0180), so "gateway" finds a decision.
+  kindText?: string
 }
 
 function stringifyMetadataValue(entry: MetadataEntry): string {
@@ -28,6 +31,7 @@ export function matchesSearchQuery(query: string, element: SearchableElement): b
   if (!q) return false
   if (element.id.toLowerCase().includes(q)) return true
   if (element.label && element.label.toLowerCase().includes(q)) return true
+  if (element.kindText && element.kindText.toLowerCase().includes(q)) return true
   if (element.metadata) {
     for (const [key, entry] of Object.entries(element.metadata)) {
       if (key.toLowerCase().includes(q)) return true
@@ -67,7 +71,8 @@ export function searchableFromData(
     icons: data?.icons as Partial<Record<IconSlot, IconRef>> | undefined,
     references: Array.isArray(data?.references) ? (data.references as string[]) : undefined,
     notes: typeof data?.notes === 'string' ? data.notes : undefined,
-    linkedDiagram: typeof data?.linkedDiagram === 'string' ? data.linkedDiagram : undefined
+    linkedDiagram: typeof data?.linkedDiagram === 'string' ? data.linkedDiagram : undefined,
+    kindText: typeof data?.kind === 'string' ? stencilSearchText(data.kind) : undefined
   }
 }
 

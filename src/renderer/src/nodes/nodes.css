@@ -78,6 +78,162 @@
   overflow-wrap: anywhere;
 }
 
+/* A stencil (ADR 0180): a base shape from the element's kind, with a mark on it. It reads the entity's
+   default look; a kind may bring its own fill (inline, from the kind). The small shapes carry their
+   label below them. */
+.stencil-node {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border: var(--default-entity-stroke-width) solid var(--default-entity-stroke);
+  background: var(--default-entity-fill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+}
+
+.stencil-node--arrow {
+  border-radius: 4px;
+  /* Room for the band on the left (ARROW_BAND.tip in kinds.ts). */
+  padding: 2px 8px 2px 36px;
+}
+
+/* The band of an arrow: flat, then a point, in the colour of the border. It sits inside the border,
+   so its left corners follow the box's. */
+.stencil-node-band {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 28px;
+  border-radius: 2px 0 0 2px;
+  clip-path: polygon(0 0, 16px 0, 28px 50%, 16px 100%, 0 100%);
+  pointer-events: none;
+}
+
+.stencil-node--square {
+  border-radius: 4px;
+}
+
+.stencil-node--circle {
+  border-radius: 50%;
+}
+
+.stencil-node-mark {
+  position: absolute;
+  top: 27%;
+  left: 27%;
+  width: 46%;
+  height: 46%;
+  color: var(--default-entity-font-color);
+  pointer-events: none;
+}
+
+.stencil-node-mark--ringed {
+  top: 29%;
+  left: 29%;
+  width: 42%;
+  height: 42%;
+}
+
+/* An arrow's mark sits in a slot on its right (ARROW_MARK in kinds.ts). */
+.stencil-node-mark--slot {
+  top: 50%;
+  left: auto;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  transform: translateY(-50%);
+}
+
+/* The second ring of an event in the middle of a flow, inside the border. */
+.stencil-node-ring {
+  position: absolute;
+  inset: 3px;
+  border: var(--default-entity-stroke-width) solid var(--default-entity-stroke);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.stencil-node-label {
+  font-size: var(--default-entity-font-size);
+  color: var(--default-entity-font-color);
+  font-weight: var(--default-entity-font-weight);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+/* The label of a small shape sits outside it, where its position says (ADR 0183). */
+.stencil-node-label-box {
+  position: absolute;
+  width: max-content;
+  max-width: 160px;
+}
+
+.stencil-node-label-box--below {
+  top: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.stencil-node-label-box--above {
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.stencil-node-label-box--left {
+  right: calc(100% + 4px);
+  top: 50%;
+  transform: translateY(-50%);
+  max-width: 140px;
+}
+
+.stencil-node-label-box--right {
+  left: calc(100% + 4px);
+  top: 50%;
+  transform: translateY(-50%);
+  max-width: 140px;
+}
+
+/* A free label: its left and top are set inline, from the centre of the shape. */
+.stencil-node-label-box--free {
+  transform: translate(-50%, -50%);
+}
+
+.stencil-node-label-box--left .stencil-node-label {
+  text-align: right;
+}
+
+.stencil-node-label-box--right .stencil-node-label {
+  text-align: left;
+}
+
+.stencil-node-label-box--draggable {
+  cursor: move;
+}
+
+/* The dotted line that ties a free label to its shape. */
+.stencil-node-leader {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  overflow: visible;
+  pointer-events: none;
+  color: var(--default-entity-font-color);
+}
+
+.stencil-node-leader line {
+  stroke: currentColor;
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+  opacity: 0.7;
+}
+
 .container-node {
   position: relative;
   width: 100%;
@@ -89,10 +245,99 @@
   padding: 4px 8px;
 }
 
-.container-node-label {
+/* The label of a container sits on the side the container says (ADR 0184), lined up along it by the
+   text alignment. On the left and right the text is turned so that its top points at the side: a
+   quarter turn left reads from the bottom up, a quarter turn right from the top down. At the bottom it
+   stays upright. */
+.container-node-label-box {
   position: absolute;
+  max-width: calc(100% - 16px);
+}
+
+.container-node-label-box--top-start {
   top: 4px;
   left: 8px;
+}
+.container-node-label-box--top-center {
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.container-node-label-box--top-end {
+  top: 4px;
+  right: 8px;
+}
+.container-node-label-box--bottom-start {
+  bottom: 4px;
+  left: 8px;
+}
+.container-node-label-box--bottom-center {
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.container-node-label-box--bottom-end {
+  bottom: 4px;
+  right: 8px;
+}
+
+.container-node-label-box--left-start,
+.container-node-label-box--left-center,
+.container-node-label-box--left-end,
+.container-node-label-box--right-start,
+.container-node-label-box--right-center,
+.container-node-label-box--right-end {
+  writing-mode: vertical-rl;
+  max-width: none;
+  max-height: calc(100% - 16px);
+}
+
+.container-node-label-box--left-start,
+.container-node-label-box--left-center,
+.container-node-label-box--left-end {
+  left: 4px;
+  transform: rotate(180deg);
+}
+.container-node-label-box--left-start {
+  bottom: 8px;
+}
+.container-node-label-box--left-center {
+  top: 50%;
+  transform: translateY(-50%) rotate(180deg);
+}
+.container-node-label-box--left-end {
+  top: 8px;
+}
+
+.container-node-label-box--right-start,
+.container-node-label-box--right-center,
+.container-node-label-box--right-end {
+  right: 4px;
+}
+.container-node-label-box--right-start {
+  top: 8px;
+}
+.container-node-label-box--right-center {
+  top: 50%;
+  transform: translateY(-50%);
+}
+.container-node-label-box--right-end {
+  bottom: 8px;
+}
+
+/* While the label is being edited it is a plain wide field across the top, however it is turned. */
+.container-node-label-box.container-node-label-box:focus-within {
+  writing-mode: horizontal-tb;
+  transform: none;
+  top: 4px;
+  bottom: auto;
+  left: 8px;
+  right: 8px;
+  max-width: none;
+  max-height: none;
+}
+
+.container-node-label {
   font-size: var(--default-container-font-size);
   color: var(--default-container-font-color);
   font-weight: var(--default-container-font-weight);
@@ -108,20 +353,23 @@
    visual containment — no extra "proximity margin" trick needed. Applies
    everywhere ConnectionHandles is used: EntityNode and ContainerNode. */
 .entity-node .react-flow__handle,
-.container-node .react-flow__handle {
+.container-node .react-flow__handle,
+.stencil-node .react-flow__handle {
   opacity: 0;
   transition: opacity 0.1s ease;
 }
 
 .entity-node:hover .react-flow__handle,
-.container-node:hover .react-flow__handle {
+.container-node:hover .react-flow__handle,
+.stencil-node:hover .react-flow__handle {
   opacity: 1;
 }
 
 /* Handles are in flow units, so they shrink with the zoom; below a zoom of about 0.6 they grow
    to stay 10 screen px (--canvas-zoom is set by useZoomedConnectionHandles). */
 .entity-node .react-flow__handle,
-.container-node .react-flow__handle {
+.container-node .react-flow__handle,
+.stencil-node .react-flow__handle {
   width: max(6px, calc(10px / var(--canvas-zoom, 1)));
   height: max(6px, calc(10px / var(--canvas-zoom, 1)));
 }
@@ -129,7 +377,8 @@
 /* The central target an edge is dropped on to attach to the element by itself (ADR 0178): out of the
    way and unreachable, except while a connection is being dragged. */
 .entity-node .react-flow__handle.chd-auto-target,
-.container-node .react-flow__handle.chd-auto-target {
+.container-node .react-flow__handle.chd-auto-target,
+.stencil-node .react-flow__handle.chd-auto-target {
   width: max(18px, calc(26px / var(--canvas-zoom, 1)));
   height: max(18px, calc(26px / var(--canvas-zoom, 1)));
   border: 1.5px dashed var(--ev-c-gray-1);
@@ -139,7 +388,8 @@
 }
 
 .entity-node .react-flow__handle.chd-auto-target.chd-auto-target--live,
-.container-node .react-flow__handle.chd-auto-target.chd-auto-target--live {
+.container-node .react-flow__handle.chd-auto-target.chd-auto-target--live,
+.stencil-node .react-flow__handle.chd-auto-target.chd-auto-target--live {
   opacity: 0.8;
   pointer-events: all;
 }
@@ -242,6 +492,7 @@
    both the selection outline and the property-highlight border override. */
 .entity-node.entity-highlighted,
 .container-node.entity-highlighted,
+.stencil-node.entity-highlighted,
 .text-node.entity-highlighted {
   outline: 2px dashed var(--ev-c-text-1);
   outline-offset: 2px;
@@ -255,6 +506,7 @@
    rather than fighting it for the same CSS property. */
 .entity-node.search-match,
 .container-node.search-match,
+.stencil-node.search-match,
 .text-node.search-match {
   outline: 3px dashed var(--search-match-color);
   outline-offset: 4px;

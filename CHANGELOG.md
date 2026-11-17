@@ -2,6 +2,26 @@
 
 What changed for people using the tool, one entry per minor or major release. The reasons are in [docs/decisions/](docs/decisions/); the full history is in `git log`.
 
+## 0.11.0 (unreleased)
+
+### Added
+
+- **Edges that cross a container can be marked.** **View → Display → Mark crossings** puts a gate, a short bar along the border, where each edge goes through the border of a container, one for every border it crosses (so an edge out of a group in a lane into another lane has three). Holding Ctrl (Cmd) over such an edge shows which containers it goes between. It is for this session only and off by default, and the SVG export draws the gates when it is on. ([ADR 0185](docs/decisions/0185-edges-that-cross-a-container-are-marked-with-a-gate.md))
+- **The label of a container can go on any side.** Top (as before), left, right or bottom; the top of the text points at that side, so a label on the left reads from the bottom up and one on the right from the top down (the bottom stays upright), as on a swim lane. The container's text alignment lines it up along the side. Set it from the property panel. ([ADR 0184](docs/decisions/0184-the-label-of-a-container-goes-on-any-side.md))
+- **Behaviour for flows.** A new element in the palette (right-click it, or use its arrow, to choose the kind): 13 kinds: five **steps** (a plain step and ones done by a user, done automatically, that expand into a sub-flow, or that repeat), three **choices** (a decision, an inclusive choice, a parallel split or join) and five **events** (a start, an end, and an event, a timer and a message in the middle of a flow). They are for what happens and how a flow behaves; things and concepts stay entities. Each kind has its own shape (a circle, a square with a mark, a rectangle with an arrow-shaped band) and a default colour; the small ones carry their label below. They can sit in a container (a lane), be connected like an entity, and carry one link to another diagram; they have no notes, tags or icons. The legend lists the kinds a diagram uses, with a switch to hide the rows for the session. The label of a small shape can go below (the default), above, left or right of it, or anywhere, tied to the shape by a dotted line (drag it while the shape is selected). Search finds them by kind, including the BPMN terms (try `gateway`, `user task` or `call activity`). The SVG, PNG and draw.io exports draw them. Based on BPMN 2.0, not compliant with it. ([ADR 0180](docs/decisions/0180-stencils-are-light-elements-for-events-and-verbs.md))
+
+### File format
+
+- A new node `type`, `"stencil"`, with `data.kind`, `data.labelPosition` and `data.labelOffset`, documented in [docs/file-format.md](docs/file-format.md). A version without it reads such a node as an entity.
+- A container may have `data.labelPosition` (`"left"`, `"right"` or `"bottom"`; absent is the top). An older version draws the label at the top.
+
+### Changed
+
+- **The View menu groups its display switches in a Display submenu:** Animate edges, Minimap, Zoom controls and the new Mark crossings.
+- **The corner panel of the canvas has no zoom in and zoom out buttons unless you ask for them** (View → Display → Zoom controls; the wheel, a trackpad and the keyboard still zoom). It now ends with the highlights, a Mark crossings switch and, last, the legend. ([ADR 0186](docs/decisions/0186-the-corner-panel-holds-what-the-canvas-shows-on-demand.md))
+- **Dropdowns can be typed into.** In the properties panel and the other panels with a list (kind, font, line style, end markers, routing and so on), click the box and start writing: what you type appears in the box and the list narrows to the options that contain it (`Dec` finds Decision). Arrow keys and Enter choose, Escape closes.
+- **The "React Flow" link in the corner of the canvas is hidden.** React Flow is credited in **Help → About** and in the third-party notices. ([ADR 0179](docs/decisions/0179-the-react-flow-link-is-hidden-and-the-library-is-credited-elsewhere.md))
+
 ## 0.10.0 (2026-11-15)
 
 ### Added

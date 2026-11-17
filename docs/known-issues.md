@@ -14,12 +14,42 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 ## Open and worked-around at a glance
 
 - [An edge that names a connection point its node does not have is not drawn](#an-edge-that-names-a-connection-point-its-node-does-not-have-is-not-drawn) — Worked around (the validator reports it; the compare window works around it for its own copy).
+- [The installer's PATH step waits for every window that does not answer](#the-installers-path-step-waits-for-every-window-that-does-not-answer) — Open, measured in the test only.
 - [Alt+drag duplicate may be swallowed by Linux window managers](#alt-drag-duplicate-may-be-swallowed-by-linux-window-managers) — Open, untested on Linux.
 - [A colour typed in light mode comes back changed (the theme flip is not exactly reversible)](#a-colour-typed-in-light-mode-comes-back-changed-the-theme-flip-is-not-exactly-reversible) — Won't fix.
 - [A native confirm() dialog left `<select>` elements unresponsive afterward](#a-native-confirm-dialog-left-select-elements-unresponsive-afterward) — Worked around.
 - [Clicking a container selects a different container that visually encloses it](#clicking-a-container-selects-a-different-container-that-visually-encloses-it) — Worked around.
 - [Edges start far from their elements after zooming out and in to a part of the diagram not seen up close](#edges-start-far-from-their-elements-after-zooming-out-and-in-to-a-part-of-the-diagram-not-seen-up-close) — Open.
 - [`validate` and `check` read as the same thing, and are not](#validate-and-check-read-as-the-same-thing-and-are-not) — Worked around (descriptions say which question each answers).
+
+---
+
+## The node tests failed in a batch with EPERM on a CLI bundle (Windows)
+
+**Status:** Solved (2026-11-16)
+**Found:** 2026-11-16, when a run of `npm run test:node` failed 19 to 23 tests and passed on the next
+
+**Symptom:** a whole group of CLI tests fail at once with `EPERM: operation not permitted, rename '...check.mjs.<pid>.tmp' -> '...check.mjs'`, and `resources/cli/*.tmp` files are left behind. The next run passes.
+
+**Cause:** several test files rebuild the same bundle in separate processes while others run it. Windows will not rename a file over one another process has open. The rename was atomic on purpose (a reader never sees half a file) but had no answer to being refused.
+
+**Fix:** `scripts/build-cli.mjs` writes nothing when the bundle is byte-identical, tries the rename again for up to two seconds on EPERM, EBUSY or EACCES, and removes its temp file whatever happens. Linux never had the problem, since a rename over an open file is allowed there.
+
+**References:** `scripts/build-cli.mjs` (`buildAtomically`)
+
+---
+
+## The installer's PATH step waits for every window that does not answer
+
+**Status:** Open (found 2026-11-16, measuring why `npm test` took five and a half minutes)
+
+**Symptom:** each test of the installer's PATH functions that wrote the registry took 46 s; the two that wrote nothing took 0.1 s.
+
+**Cause:** after a change the functions broadcast "environment changed" (`SendMessage` to `HWND_BROADCAST`, `/TIMEOUT=5000`). The timeout is per top-level window, so nine windows that did not answer cost 9 × 5 s. In the test the broadcast says nothing (a scratch key), so the test now defines `CHD_NO_BROADCAST`, and the suite runs in about a second.
+
+**Not fixed:** the real installer makes the same call, so on a desktop with unresponsive windows the PATH checkbox may make the install wait up to that long. Not measured there. Direction: a shorter timeout, or `SendMessageTimeout` with `SMTO_ABORTIFHUNG` through the System plug-in, which skips a hung window instead of waiting on it.
+
+**References:** `build/chdPath.nsh` (`ChdBroadcastEnvironment`), `scripts/installerPath.test.mjs`
 
 ---
 

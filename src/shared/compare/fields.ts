@@ -253,6 +253,25 @@ export const NODE_FIELDS: FieldSpec<DiagramNode>[] = [
     get: (n) => n.data.label,
     describe: describeLabel
   },
+  // What sort of step or event a stencil is says what it means in the flow (ADR 0180).
+  {
+    name: 'kind',
+    category: 'content',
+    get: (n) => (n.type === 'stencil' ? (n.data.kind ?? 'step') : undefined),
+    describe: (b, a) => change('kind', b, a)
+  },
+  // Where the label of a small shape or a container sits is a look, not a meaning.
+  {
+    name: 'label position',
+    category: 'style',
+    get: (n) =>
+      (n.type === 'stencil' || n.type === 'container') &&
+      n.data.labelPosition &&
+      n.data.labelPosition !== (n.type === 'container' ? 'top' : 'below')
+        ? { position: n.data.labelPosition, offset: n.data.labelOffset }
+        : undefined,
+    describe: (b, a) => change('label position', b, a)
+  },
   { name: 'icons', category: 'style', get: (n) => n.data.icons, describe: describeIcons },
   {
     name: 'note link',

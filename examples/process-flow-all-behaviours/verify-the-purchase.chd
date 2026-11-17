@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "d-start",
+      "type": "stencil",
+      "position": {
+        "x": 30,
+        "y": 40
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "data": {
+        "label": "Purchase to check",
+        "kind": "event-start"
+      }
+    },
+    {
+      "id": "d-find",
+      "type": "stencil",
+      "position": {
+        "x": 115,
+        "y": 12
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "data": {
+        "label": "Find the order",
+        "kind": "step-automatic"
+      }
+    },
+    {
+      "id": "d-compare",
+      "type": "stencil",
+      "position": {
+        "x": 315,
+        "y": 12
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "data": {
+        "label": "Check the claim",
+        "kind": "step-user"
+      }
+    },
+    {
+      "id": "d-end",
+      "type": "stencil",
+      "position": {
+        "x": 520,
+        "y": 40
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "data": {
+        "label": "Purchase verified",
+        "kind": "event-end"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "d1",
+      "source": "d-start",
+      "target": "d-find"
+    },
+    {
+      "id": "d2",
+      "source": "d-find",
+      "target": "d-compare"
+    },
+    {
+      "id": "d3",
+      "source": "d-compare",
+      "target": "d-end"
+    }
+  ]
+}

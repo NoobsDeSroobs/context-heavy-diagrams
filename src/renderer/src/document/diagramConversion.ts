@@ -24,6 +24,7 @@ import {
   refreshActiveDirectionSet,
   switchActiveDirectionSet
 } from '../edges/edgeDirectionSets'
+import { offsetOf } from '@shared/stencils/labelPlacement'
 import { applyZIndexBackfill, nodeMetadataEligible } from '../canvas/nodeFields'
 import { sortNodesForHierarchy, healHierarchy } from '../canvas/hierarchy'
 
@@ -100,6 +101,17 @@ export function toDiagramFile(
         notes: typeof n.data?.notes === 'string' ? (n.data.notes as string) : undefined,
         linkedDiagram:
           typeof n.data?.linkedDiagram === 'string' ? (n.data.linkedDiagram as string) : undefined,
+        kind:
+          n.type === 'stencil' && typeof n.data?.kind === 'string'
+            ? (n.data.kind as string)
+            : undefined,
+        labelPosition:
+          (n.type === 'stencil' || n.type === 'container') &&
+          typeof n.data?.labelPosition === 'string'
+            ? (n.data.labelPosition as string)
+            : undefined,
+        labelOffset:
+          n.type === 'stencil' ? (offsetOf(n.data?.labelOffset) ?? undefined) : undefined,
         points: Array.isArray(n.data?.points) ? (n.data.points as LinePoint[]) : undefined,
         references:
           Array.isArray(n.data?.references) && (n.data.references as string[]).length > 0
@@ -170,6 +182,11 @@ export function fromDiagramFile(diagram: DiagramFile): {
         ...(n.data.icons ? { icons: n.data.icons } : {}),
         ...(n.data.notes ? { notes: n.data.notes } : {}),
         ...(n.data.linkedDiagram ? { linkedDiagram: n.data.linkedDiagram } : {}),
+        ...(n.type === 'stencil' && n.data.kind ? { kind: n.data.kind } : {}),
+        ...((n.type === 'stencil' || n.type === 'container') && n.data.labelPosition
+          ? { labelPosition: n.data.labelPosition }
+          : {}),
+        ...(n.type === 'stencil' && n.data.labelOffset ? { labelOffset: n.data.labelOffset } : {}),
         ...(n.data.points && n.data.points.length > 0 ? { points: n.data.points } : {}),
         ...(Array.isArray(n.data.references) && n.data.references.length > 0
           ? { references: n.data.references }

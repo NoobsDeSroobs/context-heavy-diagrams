@@ -8,7 +8,7 @@ import type {
   DiagramFile,
   DiagramNode
 } from '../diagram/index.ts'
-import { layoutNodes, type LaidOutNode } from '../export/model.ts'
+import { isEntityLike, layoutNodes, type LaidOutNode } from '../export/model.ts'
 import {
   effectiveConnectionPoints,
   effectivePointsForSide,
@@ -109,7 +109,7 @@ export function choosePoints(
     if (!edge) continue
     const a = nodes.get(edge.source)
     const b = nodes.get(edge.target)
-    if (!a || !b || a.kind !== 'entity' || b.kind !== 'entity') continue
+    if (!a || !b || !isEntityLike(a.kind) || !isEntityLike(b.kind)) continue
     const now = {
       source: pointOf(a.node, edge.sourceHandle)?.side,
       target: pointOf(b.node, edge.targetHandle)?.side
