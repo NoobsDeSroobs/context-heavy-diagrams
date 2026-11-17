@@ -291,6 +291,12 @@ function CanvasInner(): React.JSX.Element {
   // The minimap is a per-person display choice (ADR 0158): the corner button and View -> Minimap
   // flip it.
   const minimapOn = preferences.showMinimap
+  // The zoom buttons of the corner panel (ADR 0186): hidden unless the person asks for them.
+  const zoomControlsOn = preferences.showZoomControls
+  const toggleZoomControls = useCallback(
+    () => updatePreferences({ showZoomControls: !zoomControlsOn }),
+    [updatePreferences, zoomControlsOn]
+  )
   const toggleMinimap = useCallback(
     () => updatePreferences({ showMinimap: !minimapOn }),
     [updatePreferences, minimapOn]
@@ -3412,6 +3418,8 @@ function CanvasInner(): React.JSX.Element {
     minimapOn,
     toggleCrossings,
     crossingsOn: showCrossings,
+    toggleZoomControls,
+    zoomControlsOn,
     toggleDiagramSettingsPanel,
     togglePreferencesPanel,
     setCommandPaletteOpen,
@@ -3754,7 +3762,58 @@ function CanvasInner(): React.JSX.Element {
                   fitView
                 >
                   <Background />
-                  <Controls>
+                  {/* The corner panel (ADR 0186): the canvas's own buttons, then what it can show on demand:
+                      the highlights, the crossings and, last, the legend. The zoom buttons are off
+                      unless asked for in View -> Display. */}
+                  <Controls showZoom={zoomControlsOn}>
+                    <ControlButton
+                      title={`Highlights${highlights.length > 0 ? ` (${highlights.length})` : ''}`}
+                      aria-label="Show highlights"
+                      onClick={(event) =>
+                        toggleHighlightsPanel(event.currentTarget.getBoundingClientRect())
+                      }
+                    >
+                      <svg viewBox="0 0 24 24" width="16" height="16">
+                        <path
+                          d="M12 3 L14.5 9.5 L21 12 L14.5 14.5 L12 21 L9.5 14.5 L3 12 L9.5 9.5 Z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </ControlButton>
+                    <ControlButton
+                      title={showCrossings ? 'Stop marking crossings' : 'Mark crossings'}
+                      aria-label="Mark crossings"
+                      aria-pressed={showCrossings}
+                      onClick={toggleCrossings}
+                    >
+                      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                        <line
+                          x1="2"
+                          y1="12"
+                          x2="22"
+                          y2="12"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeDasharray="3 3"
+                        />
+                        <path
+                          d="M12 3 V21 M8.5 17.5 L12 21 L15.5 17.5"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <line
+                          x1="7"
+                          y1="12"
+                          x2="17"
+                          y2="12"
+                          stroke="currentColor"
+                          strokeWidth="3.5"
+                        />
+                      </svg>
+                    </ControlButton>
                     <ControlButton
                       title="Show legend"
                       aria-label="Show legend"
@@ -3773,20 +3832,6 @@ function CanvasInner(): React.JSX.Element {
                           y2="17"
                           stroke="currentColor"
                           strokeWidth="2"
-                        />
-                      </svg>
-                    </ControlButton>
-                    <ControlButton
-                      title={`Highlights${highlights.length > 0 ? ` (${highlights.length})` : ''}`}
-                      aria-label="Show highlights"
-                      onClick={(event) =>
-                        toggleHighlightsPanel(event.currentTarget.getBoundingClientRect())
-                      }
-                    >
-                      <svg viewBox="0 0 24 24" width="16" height="16">
-                        <path
-                          d="M12 3 L14.5 9.5 L21 12 L14.5 14.5 L12 21 L9.5 14.5 L3 12 L9.5 9.5 Z"
-                          fill="currentColor"
                         />
                       </svg>
                     </ControlButton>

@@ -17,7 +17,8 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 ### Changed
 
-- **The View menu groups its display switches in a Display submenu:** Animate edges, Minimap and the new Mark crossings.
+- **The View menu groups its display switches in a Display submenu:** Animate edges, Minimap, Zoom controls and the new Mark crossings.
+- **The corner panel of the canvas has no zoom in and zoom out buttons unless you ask for them** (View → Display → Zoom controls; the wheel, a trackpad and the keyboard still zoom). It now ends with the highlights, a Mark crossings switch and, last, the legend. ([ADR 0186](docs/decisions/0186-the-corner-panel-holds-what-the-canvas-shows-on-demand.md))
 - **Dropdowns can be typed into.** In the properties panel and the other panels with a list (kind, font, line style, end markers, routing and so on), click the box and start writing: what you type appears in the box and the list narrows to the options that contain it (`Dec` finds Decision). Arrow keys and Enter choose, Escape closes.
 - **The "React Flow" link in the corner of the canvas is hidden.** React Flow is credited in **Help → About** and in the third-party notices. ([ADR 0179](docs/decisions/0179-the-react-flow-link-is-hidden-and-the-library-is-credited-elsewhere.md))
 

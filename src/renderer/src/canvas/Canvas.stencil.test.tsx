@@ -161,6 +161,26 @@ describe('stencils on the canvas (ADR 0180)', () => {
     )
   })
 
+  it('has no zoom buttons in the corner panel unless asked for, and the legend is its last button', async () => {
+    const { container } = renderCanvas(flow())
+    await screen.findByText('Do the work')
+    const panel = container.querySelector('.react-flow__controls') as HTMLElement
+    expect(panel.querySelector('.react-flow__controls-zoomin')).toBeNull()
+    expect(panel.querySelector('.react-flow__controls-zoomout')).toBeNull()
+    const labels = [...panel.querySelectorAll('button')].map((b) => b.getAttribute('aria-label'))
+    expect(labels.slice(-3)).toEqual(['Show highlights', 'Mark crossings', 'Show legend'])
+  })
+
+  it('turns the crossings switch on from the corner panel', async () => {
+    const { container } = renderCanvas(flow())
+    await screen.findByText('Do the work')
+    const button = screen.getByRole('button', { name: 'Mark crossings' })
+    expect(button.getAttribute('aria-pressed')).toBe('false')
+    fireEvent.click(button)
+    await waitFor(() => expect(button.getAttribute('aria-pressed')).toBe('true'))
+    expect(container.querySelector('.react-flow__controls')).not.toBeNull()
+  })
+
   it('changes the kind from the property panel, keeping the label a person typed', async () => {
     const { container } = renderCanvas(flow())
     await screen.findByText('Do the work')

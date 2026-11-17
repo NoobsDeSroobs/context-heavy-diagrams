@@ -6,7 +6,7 @@ import { highlightId, matchingHighlights } from '../tagging/highlights.ts'
 import { styledNodeType } from '../styling/styleDefaults.ts'
 import {
   edgeCrossing,
-  GATE_LENGTH,
+  GATE_HALF,
   GATE_WIDTH,
   GATE_COLOR,
   gatesOnPath
@@ -714,14 +714,14 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
       const box = nodes.get(id)
       return box ? [{ id, rect: { x: box.x, y: box.y, width: box.width, height: box.height } }] : []
     })
-    const half = GATE_LENGTH / 2
+    const half = GATE_HALF
     return gatesOnPath(path, boundaries)
       .map((g) => {
         const [x1, y1, x2, y2] =
           g.axis === 'horizontal'
             ? [g.x - half, g.y, g.x + half, g.y]
             : [g.x, g.y - half, g.x, g.y + half]
-        return `<line class="chd-crossing-gate" x1="${num(x1)}" y1="${num(y1)}" x2="${num(x2)}" y2="${num(y2)}" stroke="${GATE_COLOR[theme]}" stroke-width="${GATE_WIDTH}"/>`
+        return `<line class="chd-crossing-gate" x1="${num(x1)}" y1="${num(y1)}" x2="${num(x2)}" y2="${num(y2)}" stroke="${GATE_COLOR[theme]}" stroke-width="${GATE_WIDTH}" stroke-linecap="round"/>`
       })
       .join('')
   }

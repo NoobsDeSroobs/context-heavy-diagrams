@@ -145,6 +145,10 @@ export interface AppPreferences {
   // Whether the minimap is drawn in the corner of the canvas (ADR 0158). A per-person display
   // choice; nothing about it is stored in a diagram.
   showMinimap: boolean
+  // Whether the zoom in and zoom out buttons are in the corner panel of the canvas (ADR 0186). Off by
+  // default: the wheel, a trackpad and the keyboard zoom, so the buttons are for those without. A
+  // per-person display choice; nothing about it is stored in a diagram.
+  showZoomControls: boolean
   // Directory of the last opened or saved diagram, passed as `defaultPath` to File -> Open/Save As
   // so the dialogs start where the user was last working. Absent means no dialog opened yet this
   // install, deliberately not defaulted to e.g. the home directory. Written by main
@@ -228,6 +232,7 @@ export const DEFAULT_PREFERENCES: AppPreferences = {
   peekCardMaxHeight: PEEK_CARD_MAX_HEIGHT.default,
   utilityDockWidth: UTILITY_DOCK_WIDTH.default,
   showMinimap: true,
+  showZoomControls: false,
   recentDiagramsLimit: 10,
   aiFeaturesEnabled: true,
   animateEdges: 'system'
@@ -288,6 +293,7 @@ export function normalizePreferences(
   merged.peekCardMaxHeight = clampPeekSize(merged.peekCardMaxHeight, PEEK_CARD_MAX_HEIGHT)
   merged.utilityDockWidth = clampDockWidth(merged.utilityDockWidth)
   merged.showMinimap = merged.showMinimap !== false
+  merged.showZoomControls = merged.showZoomControls === true
   if (raw.defaultStyles?.shape && !raw.defaultStyles.entity) {
     merged.defaultStyles = { ...merged.defaultStyles, entity: raw.defaultStyles.shape }
   }

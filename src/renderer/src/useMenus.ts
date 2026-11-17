@@ -58,6 +58,9 @@ export interface MenuInputs {
   toggleMinimap: () => void
   // Marks the edges that cross a container's border with a gate (ADR 0185), for this session.
   toggleCrossings: () => void
+  // Whether the zoom buttons are in the corner panel (ADR 0186), which is what the item's check mark shows.
+  toggleZoomControls: () => void
+  zoomControlsOn: boolean
   crossingsOn: boolean
   // Whether the minimap is drawn (ADR 0158), which is what the menu item's check mark shows.
   minimapOn: boolean
@@ -129,6 +132,8 @@ export function useMenus(inputs: MenuInputs): {
     minimapOn,
     toggleCrossings,
     crossingsOn,
+    toggleZoomControls,
+    zoomControlsOn,
     toggleDiagramSettingsPanel,
     togglePreferencesPanel,
     setCommandPaletteOpen,
@@ -300,6 +305,14 @@ export function useMenus(inputs: MenuInputs): {
     onSelect: toggleMinimap
   }
 
+  const zoomControlsItem: MenuBarItem = {
+    label: 'Zoom controls',
+    checked: zoomControlsOn,
+    title:
+      'Show the zoom in and zoom out buttons in the corner panel. The wheel, a trackpad and the keyboard zoom without them',
+    onSelect: toggleZoomControls
+  }
+
   const crossingsItem: MenuBarItem = {
     label: 'Mark crossings',
     checked: crossingsOn,
@@ -348,7 +361,7 @@ export function useMenus(inputs: MenuInputs): {
           {
             label: 'Display',
             separatorBefore: true,
-            submenu: [animateEdgesItem, minimapItem, crossingsItem]
+            submenu: [animateEdgesItem, minimapItem, zoomControlsItem, crossingsItem]
           },
           {
             label: 'Diagram settings',

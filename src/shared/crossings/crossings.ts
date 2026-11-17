@@ -78,6 +78,9 @@ export interface Gate {
 export const GATE_COLOR = { dark: '#e0a43a', light: '#b8741a' } as const
 export const GATE_LENGTH = 18
 export const GATE_WIDTH = 4
+// A gate is drawn with round ends, like the rest of the diagram's corners; the ends add half a line
+// width each, so the line between them is this much to either side of the crossing.
+export const GATE_HALF = (GATE_LENGTH - GATE_WIDTH) / 2
 
 // Where a path (as points) crosses the borders of these containers. A crossing exactly on a corner is
 // counted once.

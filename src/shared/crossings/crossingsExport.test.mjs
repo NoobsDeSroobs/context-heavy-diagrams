@@ -2,6 +2,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { DEFAULT_SVG_EXPORT_OPTIONS, renderDiagramSvg } from '../export/renderDiagram.ts'
+import { GATE_LENGTH, GATE_WIDTH } from './crossings.ts'
 
 const options = { ...DEFAULT_SVG_EXPORT_OPTIONS, icons: new Map() }
 const entity = (id, x, y, parentId) => ({
@@ -82,6 +83,14 @@ test('an edge out of a nested container has a gate for each border it crosses', 
   const svg = renderDiagramSvg(diagram(), { ...options, crossings: true })
   // Billing, Sales and Warehouse: out, out, in.
   assert.equal(gates(svg, 'nested').length, 3)
+})
+
+test('a gate has round ends and the length of GATE_LENGTH with them', () => {
+  const svg = renderDiagramSvg(diagram(), { ...options, crossings: true })
+  const line = gates(svg, 'cross')[0]
+  assert.match(line, /stroke-linecap="round"/)
+  const [x1, x2] = ['x1', 'x2'].map((k) => Number(new RegExp(` ${k}="([0-9.-]+)"`).exec(line)[1]))
+  assert.ok(Math.abs(x2 - x1 + GATE_WIDTH - GATE_LENGTH) < 0.01)
 })
 
 test('the gate colour follows the theme', () => {

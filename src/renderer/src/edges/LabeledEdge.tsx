@@ -11,7 +11,7 @@ import {
 } from 'react'
 import { BaseEdge, EdgeLabelRenderer, useReactFlow, type EdgeProps } from '@xyflow/react'
 import type { EdgeStyle, LinePoint, MetadataEntry } from '@shared/diagram'
-import { GATE_COLOR, GATE_LENGTH, GATE_WIDTH } from '@shared/crossings/crossings'
+import { GATE_COLOR, GATE_HALF, GATE_WIDTH } from '@shared/crossings/crossings'
 import { buildEdgePath } from '@shared/geometry/edgePath'
 import { ratioNearest } from '@shared/geometry/pathSampling'
 import {
@@ -507,12 +507,13 @@ function LabeledEdge({
           {gates.map((g, i) => (
             <line
               key={`${g.containerId}-${i}`}
-              x1={g.axis === 'horizontal' ? g.x - GATE_LENGTH / 2 : g.x}
-              y1={g.axis === 'horizontal' ? g.y : g.y - GATE_LENGTH / 2}
-              x2={g.axis === 'horizontal' ? g.x + GATE_LENGTH / 2 : g.x}
-              y2={g.axis === 'horizontal' ? g.y : g.y + GATE_LENGTH / 2}
+              x1={g.axis === 'horizontal' ? g.x - GATE_HALF : g.x}
+              y1={g.axis === 'horizontal' ? g.y : g.y - GATE_HALF}
+              x2={g.axis === 'horizontal' ? g.x + GATE_HALF : g.x}
+              y2={g.axis === 'horizontal' ? g.y : g.y + GATE_HALF}
               stroke={GATE_COLOR[theme]}
               strokeWidth={GATE_WIDTH}
+              strokeLinecap="round"
             />
           ))}
         </g>
