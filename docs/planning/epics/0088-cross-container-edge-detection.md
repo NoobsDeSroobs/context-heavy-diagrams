@@ -19,7 +19,7 @@ Update 2026-11-15: for BPMN-style flows this is the functional half of a swim la
 - [ ] A list of the crossings with counts per pair of containers, each row selecting its edges
 - [ ] The assistant tools: the crossings in `inspect_diagram`, with the other tool work for Behaviour
 - [ ] A file setting, only if the need shows
-- [ ] Try it in the app on real flows
+- [x] Tried in the app on real flows by the maintainer (2026-11-17)
 
 ## Notes
 Raised by the user 2026-08-24 as a "for later" idea, logged without further design discussion — not scoped, not committed to any particular implementation shape yet.
