@@ -1,5 +1,6 @@
 import type { IconRef } from '@shared/diagram'
-import { loadBuiltinIconSvg } from '../icons/builtinIcons'
+import { installedIconOf } from '@shared/icons/iconRefs'
+import { loadInstalledIconMarkup } from '../icons/installedIcons'
 import { markerUrl } from '../edges/markerIds'
 import type { ExportLegendItem } from '@shared/legend/legendItems'
 import { stencilSwatchSvgFor } from '@shared/stencils/swatch'
@@ -12,8 +13,9 @@ function iconKey(icon: IconRef): string {
   return icon.source === 'custom' ? `c:${icon.path}` : `i:${icon.pack}:${icon.path}`
 }
 
-// Resolves every icon-kind legend entry up front — builtin icons load as
-// trusted, bundled SVG markup (inlined directly, same as IconSlotView);
+// Resolves every icon-kind legend entry up front — a pack's icons (the
+// built-in Tabler ones too) load as cleaned SVG markup (inlined directly,
+// same as IconSlotView);
 // custom icons load as a data URL (an <img>, never inlined — an arbitrary
 // user-supplied SVG could embed a script, same reasoning as IconSlotView).
 // Needed because building the actual legend DOM (buildLegendElement,
@@ -30,8 +32,9 @@ export async function resolveLegendIconMarkup(
       const icon = item.swatch.icon
       const key = iconKey(icon)
       if (result.has(key)) return
-      if (icon.source === 'builtin') {
-        const markup = await loadBuiltinIconSvg(icon.id)
+      const place = installedIconOf(icon)
+      if (place) {
+        const markup = await loadInstalledIconMarkup(place.pack, place.path)
         if (markup) result.set(key, { type: 'svg', markup })
       } else if (icon.source === 'custom' && diagramPath) {
         const dataUrl = await window.api.readIconAsDataUrl(diagramPath, icon.path)

@@ -24,6 +24,7 @@ import {
   type LineLook,
   type Paint
 } from './appearance.ts'
+import { iconParts } from './iconMarkup.ts'
 import { iconKey, type IconAsset } from './renderDiagram.ts'
 import { layoutEdges, layoutNodes, orientEdges, type LaidOutNode } from './model.ts'
 
@@ -582,11 +583,11 @@ function imageOf(asset: IconAsset, ink: string): string | null {
     const match = /^data:(image\/[a-z0-9.+-]+);base64,(.*)$/is.exec(asset.dataUrl)
     return match ? `data:${match[1]},${match[2]}` : null
   }
-  const inner = /<svg[^>]*>([\s\S]*)<\/svg>/i.exec(asset.markup)?.[1]
-  if (inner === undefined) return null
+  const parts = iconParts(asset.markup, ink)
+  if (!parts) return null
   const svg =
-    `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${ink}" ` +
-    `stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${inner.replace(/currentColor/g, ink)}</svg>`
+    `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="${parts.viewBox}"` +
+    `${parts.attrs}>${parts.inner}</svg>`
   return `data:image/svg+xml,${toBase64(svg)}`
 }
 

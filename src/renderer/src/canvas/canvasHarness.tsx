@@ -38,6 +38,7 @@ export function renderCanvas(diagram?: DiagramFile, over: Api = {}): CanvasHarne
     }),
     requestCloseDecision: vi.fn(async () => 'cancel'),
     closeApproved: vi.fn(),
+    listIconPacks: vi.fn(async () => ({ folder: '', packs: [] })),
     checkResourceFiles: vi.fn(async (_dir: string, paths: string[]) =>
       paths.map((relativePath) => ({ relativePath, resolvedPath: relativePath, found: true }))
     ),

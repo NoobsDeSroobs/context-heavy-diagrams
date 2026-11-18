@@ -2,7 +2,7 @@ import type { DiagramFile } from '@shared/diagram'
 import type { Theme } from '@shared/styling/theme'
 import { renderDiagramDrawio, type DrawioExport } from '@shared/export/drawio'
 import { collectIconRefs, iconKey, type IconAsset } from '@shared/export/renderDiagram'
-import { loadBuiltinIconSvg } from '../icons/builtinIcons'
+import { loadIconAsset } from './iconAssets'
 
 export interface DrawioExportParams {
   theme: Theme
@@ -22,17 +22,8 @@ export async function buildDiagramDrawio(
   const icons = new Map<string, IconAsset>()
   await Promise.all(
     collectIconRefs(diagram, []).map(async (icon) => {
-      try {
-        if (icon.source === 'builtin') {
-          const markup = await loadBuiltinIconSvg(icon.id)
-          if (markup) icons.set(iconKey(icon), { kind: 'svg', markup })
-        } else if (icon.source === 'custom' && params.diagramPath) {
-          const dataUrl = await window.api.readIconAsDataUrl(params.diagramPath, icon.path)
-          icons.set(iconKey(icon), { kind: 'image', dataUrl })
-        }
-      } catch {
-        // Missing or unreadable: the icon is simply not drawn.
-      }
+      const asset = await loadIconAsset(icon, params.diagramPath)
+      if (asset) icons.set(iconKey(icon), asset)
     })
   )
   return renderDiagramDrawio(diagram, {

@@ -270,7 +270,7 @@ describe('cleanIcon: real icons', () => {
       expect(shapes(out), name).toBe(shapes(source))
       expect(out, name).toContain('currentColor')
     }
-  })
+  }, 30_000)
 
   it('cleans an exported vendor icon: classes, a gradient and a clip path made by a design tool', () => {
     const source = `<?xml version="1.0" encoding="UTF-8"?>

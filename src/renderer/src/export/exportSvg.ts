@@ -8,7 +8,7 @@ import {
   renderDiagramSvg,
   type IconAsset
 } from '@shared/export/renderDiagram'
-import { loadBuiltinIconSvg } from '../icons/builtinIcons'
+import { loadIconAsset } from './iconAssets'
 
 export interface SvgExportParams {
   theme: Theme
@@ -28,7 +28,7 @@ export interface SvgExportParams {
   crossings?: boolean
 }
 
-// Resolves every icon the diagram draws, then renders. Built-in icons are bundled markup, drawn
+// Resolves every icon the diagram draws, then renders. A pack's icon is cleaned markup, drawn
 // inline; a custom icon comes over as a data URL, drawn as an <image> (never inlined, since a
 // user-supplied SVG may contain script). An icon that cannot be read is left out, not fatal.
 export async function buildDiagramSvg(
@@ -39,17 +39,8 @@ export async function buildDiagramSvg(
   const icons = new Map<string, IconAsset>()
   await Promise.all(
     collectIconRefs(diagram, legendItems).map(async (icon) => {
-      try {
-        if (icon.source === 'builtin') {
-          const markup = await loadBuiltinIconSvg(icon.id)
-          if (markup) icons.set(iconKey(icon), { kind: 'svg', markup })
-        } else if (icon.source === 'custom' && params.diagramPath) {
-          const dataUrl = await window.api.readIconAsDataUrl(params.diagramPath, icon.path)
-          icons.set(iconKey(icon), { kind: 'image', dataUrl })
-        }
-      } catch {
-        // Missing or unreadable: the icon is simply not drawn.
-      }
+      const asset = await loadIconAsset(icon, params.diagramPath)
+      if (asset) icons.set(iconKey(icon), asset)
     })
   )
   return renderDiagramSvg(diagram, {

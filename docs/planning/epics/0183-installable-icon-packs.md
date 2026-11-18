@@ -11,7 +11,8 @@ Everything about where packs live, the reference form, drawing and cleaning icon
 
 ## Still to settle while building
 - **Slow canvases:** measure a large diagram with many installed icons before adding the `<img>` fallback for fixed-colour icons.
-- **The CLI and tests** that open diagrams with built-in icons need the Tabler pack or its bundled copy.
+- **The CLI and tests** that open diagrams with built-in icons need the Tabler pack or its bundled copy. The command-line SVG and draw.io export reads Tabler from the package but leaves out an icon of any other pack: decide whether it finds the app's packs folder, takes a `--icon-packs` folder, or stays as it is.
+- **Duplicate ids in an SVG export:** one icon on several elements repeats its ids (a gradient, a clip path) in the file; the copies are identical so it draws right, but the file is not strictly valid. Isolate per use if a viewer objects.
 
 ## Tasks
 - [x] Design pass and ADR 0188
@@ -21,7 +22,7 @@ Everything about where packs live, the reference form, drawing and cleaning icon
 - [x] `IconRef` `installed`, optional used-packs list: schema, `docs/file-format.md`, validator (the skill's `validate_chd.mjs`), skill field reference; every place that switched on the icon source now names `installed` (nothing draws one yet)
 - [x] Picker: collapsible sections per pack and subset, search, lazy previews (`InstalledIconSections` inside `IconBrowser`, so the icon picker, the legend entry picker and the search-by-icon popup all have it; the legend picker now uses `IconBrowser` instead of its own copy)
 - [x] Icons follow the text colour in both themes; colours fixed by a pack are kept (installed icons are read through `iconPacks:readIcon`, cleaned and drawn inline by `IconSlotView`; the canvas, the legend panel and the compare window draw them)
-- [ ] Exports draw installed icons: SVG (a nested svg keeps the icon's own viewBox, ids isolated per icon), draw.io, the legend of an image export; the search-by-icon preview
+- [x] Exports draw installed icons: SVG and draw.io (a nested svg or picture keeps the icon's own viewBox and colours; `shared/export/iconMarkup.ts`), the legend of an image export, the search-by-icon preview. The command-line export does not draw installed icons yet (see the open point below)
 - [x] Diagnostics error for a missing pack, with a button to open the manager; write `iconPacks` on each save from the icons present and the installed list (the Icon packs section of the Diagnostics panel, counted in the View menu; the main process writes the list in `document:save`, `shared/icons/packNotes.ts`; an icon missing from an installed pack is listed per element)
 - [x] Tabler as a pack: written out from the bundled `@tabler/icons` package by the manager (no archive), first-start question, `builtin` as an alias in the drawing, the picker and the diagnostics, the command-line export unchanged (`src/main/icons/tablerPack.ts`, `shared/icons/iconRefs.ts`). Not done: offering an update when the app's Tabler is newer than the installed one
 - [ ] `My icons`: adding a one-off icon asks for a pack; existing `custom` icons keep working
