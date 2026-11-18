@@ -4,6 +4,8 @@ import LayoutSection, { type LayoutEntry } from '../layout/LayoutSection'
 import type { ConformanceState } from '../conformance/useConformance'
 import type { OrphanedNoteEdit } from '@shared/document/documentSave'
 import OrphanedNotesSection from './OrphanedNotesSection'
+import IconPacksSection from './IconPacksSection'
+import type { IconPackProblems } from './iconPackProblems'
 
 // One diagram element (node, or a legend entry) that references a file on
 // disk which no longer resolves — a linked diagram, a custom icon, a
@@ -62,6 +64,9 @@ interface DiagnosticsPanelProps {
   // Edge labels hidden behind the elements they join (ADR 0146), and the action to find one.
   layoutEntries: LayoutEntry[]
   onRevealEdge: (entry: LayoutEntry) => void
+  // Installed icons this machine cannot draw (ADR 0188), and the way to the icon pack manager.
+  iconPackProblems: IconPackProblems
+  onOpenIconPacks: () => void
   // Unsaved note text whose element is gone (ADR 0092), and what can be done with it.
   orphanedEdits: OrphanedNoteEdit[]
   onCopyOrphanedEdit: (edit: OrphanedNoteEdit) => void
@@ -103,6 +108,8 @@ export default function DiagnosticsPanel({
   conformanceResult,
   layoutEntries,
   onRevealEdge,
+  iconPackProblems,
+  onOpenIconPacks,
   orphanedEdits,
   onCopyOrphanedEdit,
   onDiscardOrphanedEdit,
@@ -113,6 +120,8 @@ export default function DiagnosticsPanel({
     missingFiles.length === 0 &&
     stagedRemovals.length === 0 &&
     layoutEntries.length === 0 &&
+    iconPackProblems.missingPacks.length === 0 &&
+    iconPackProblems.missingIcons.length === 0 &&
     orphanedEdits.length === 0
 
   return (
@@ -207,6 +216,12 @@ export default function DiagnosticsPanel({
             )}
           </div>
         )}
+
+        <IconPacksSection
+          problems={iconPackProblems}
+          onRevealNode={onRevealNode}
+          onOpenManager={onOpenIconPacks}
+        />
 
         <ConformanceSection
           conformance={conformance}

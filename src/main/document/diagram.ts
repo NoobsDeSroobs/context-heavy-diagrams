@@ -3,6 +3,10 @@ import { readFile } from 'fs/promises'
 import { dirname, join } from 'path'
 import { parseDiagram, serializeDiagram, type DiagramFile } from '@shared/diagram'
 import { stampSavedWith } from '@shared/appVersion'
+import { buildPackNotes, usedPackNames } from '@shared/icons/packNotes'
+import type { PackSummary } from '@shared/icons/installedPacks'
+import { iconPacksFolder } from '../icons/packManager'
+import { listPacks } from '../icons/packStore'
 import type { SaveDocumentRequest, SaveOutcome, Stamp } from '@shared/document/documentSave'
 import { DEFAULT_PREFERENCES, withRecentDiagram } from '@shared/preferences/preferences'
 import { registerWindowPath } from '../windows'
@@ -37,6 +41,23 @@ async function recordOpenedOrSaved(path: string): Promise<void> {
 // opening/saving depends on foldering at all; that's the whole point of
 // this model over the folder-based one it replaced (ADR 0003).
 const FILTERS = [{ name: 'Diagram', extensions: ['chd'] }]
+
+// The `iconPacks` list a save writes (ADR 0188): the packs the diagram's icons name, with what this
+// machine knows of each. Without a readable pack folder the notes the file came with are kept.
+async function iconPackNotes(diagram: DiagramFile): Promise<DiagramFile['iconPacks']> {
+  const used = usedPackNames([
+    ...diagram.nodes.flatMap((n) => Object.values(n.data.icons ?? {})),
+    ...(diagram.legend ?? []).map((entry) => entry.icon)
+  ])
+  if (used.length === 0) return undefined
+  let installed: PackSummary[] = []
+  try {
+    installed = await listPacks(iconPacksFolder())
+  } catch {
+    // Nothing installed that can be read: keep what the file says.
+  }
+  return buildPackNotes(used, installed, diagram.iconPacks)
+}
 
 // The one place that reads+parses a .chd off disk from an already-known
 // absolute path — used by diagram:openPath.
@@ -88,6 +109,7 @@ export function registerDiagramHandlers(): void {
     'document:save',
     async (event, request: SaveDocumentRequest): Promise<SaveOutcome> => {
       const { diagram, fallbackPaths } = request
+      diagram.iconPacks = await iconPackNotes(diagram)
       const outcome = await executeSave(
         {
           diagramPath: request.diagramPath,

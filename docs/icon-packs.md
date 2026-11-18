@@ -75,7 +75,7 @@ An element's icon is stored in the diagram as
 
 `pack` is the pack's name. `path` is the subset folder, a `/` and the file name, using folder and file names, not the names in the metadata. Nothing else is accepted: no `..`, no further folders, no other separator. The path is resolved inside the pack's folder and never outside it, whatever the file says. The same applies to a diagram written by hand or by another tool. The field is described, with the rest of the diagram, in [file-format.md](file-format.md).
 
-When a diagram refers to a pack that is not installed, the app shows no icon there and says in the diagnostics which pack it is and what its `ifMissing` text says, from the copy the diagram keeps of it. A pack that is installed but lacks that icon is reported like any other missing file.
+When a diagram refers to a pack that is not installed, the app shows no icon there and says in the diagnostics which pack it is and what its `ifMissing` text says, from the copy the diagram keeps of it. A pack that is installed but lacks that icon is reported like any other missing file. Each save rewrites the diagram's `iconPacks` list from the icons it holds: a pack installed here gives its own current version and text, one that is not installed keeps the note the file already had, and a pack no icon uses any more is dropped.
 
 ## Making a pack
 

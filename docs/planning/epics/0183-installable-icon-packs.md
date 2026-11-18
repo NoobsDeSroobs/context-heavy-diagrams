@@ -23,7 +23,7 @@ Everything about where packs live, the reference form, drawing and cleaning icon
 - [x] Picker: collapsible sections per pack and subset, search, lazy previews (`InstalledIconSections` inside `IconBrowser`, so the icon picker, the legend entry picker and the search-by-icon popup all have it; the legend picker now uses `IconBrowser` instead of its own copy)
 - [x] Icons follow the text colour in both themes; colours fixed by a pack are kept (installed icons are read through `iconPacks:readIcon`, cleaned and drawn inline by `IconSlotView`; the canvas, the legend panel and the compare window draw them)
 - [ ] Exports draw installed icons: SVG (a nested svg keeps the icon's own viewBox, ids isolated per icon), draw.io, the legend of an image export; the search-by-icon preview
-- [ ] Diagnostics error for a missing pack, with a button to open the manager; write `iconPacks` on each save from the icons present and the installed list
+- [x] Diagnostics error for a missing pack, with a button to open the manager; write `iconPacks` on each save from the icons present and the installed list (the Icon packs section of the Diagnostics panel, counted in the View menu; the main process writes the list in `document:save`, `shared/icons/packNotes.ts`; an icon missing from an installed pack is listed per element)
 - [ ] Tabler as a pack: archive in the installer, first-start question, `builtin` as an alias, the command-line export still drawing it
 - [ ] `My icons`: adding a one-off icon asks for a pack; existing `custom` icons keep working
 - [ ] Example diagram using a small pack made for the purpose ([ADR 0151](../../decisions/0151-every-visible-feature-has-an-example-diagram.md))
