@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import type { IconRef } from '@shared/diagram'
 import { loadBuiltinIconSvg } from '../icons/builtinIcons'
+import InstalledIconPreview from '../icons/InstalledIconPreview'
 import { iconRefKey } from './search'
 
 interface SearchOverlayProps {
@@ -157,7 +158,11 @@ export default function SearchOverlay({
             }
           }}
         >
-          {preview ? (
+          {searchIcon?.source === 'installed' ? (
+            <span className="search-overlay-icon-glyph">
+              <InstalledIconPreview pack={searchIcon.pack} path={searchIcon.path} />
+            </span>
+          ) : preview ? (
             searchIcon?.source === 'custom' ? (
               <img src={preview} alt="" />
             ) : (

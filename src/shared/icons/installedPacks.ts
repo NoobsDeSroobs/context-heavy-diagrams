@@ -7,6 +7,8 @@ export interface SubsetSummary {
   folder: string
   meta: SubsetMeta
   iconCount: number
+  // The icon files, by name, for the picker.
+  icons: string[]
 }
 
 export interface PackSummary {

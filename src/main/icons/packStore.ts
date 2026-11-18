@@ -88,11 +88,8 @@ export async function listPacks(root: string): Promise<PackSummary[]> {
       const subsetPath = join(path, subset)
       const parsed = readSubsetMeta(await readText(join(subsetPath, SUBSET_FILE), problems), subset)
       problems.push(...parsed.problems.map((p) => `${subset}/${p}`))
-      subsets.push({
-        folder: subset,
-        meta: parsed.meta,
-        iconCount: (await iconNames(subsetPath)).length
-      })
+      const icons = await iconNames(subsetPath)
+      subsets.push({ folder: subset, meta: parsed.meta, iconCount: icons.length, icons })
     }
     const duplicateOf = firstWithName.get(meta.name) ?? null
     if (duplicateOf === null) firstWithName.set(meta.name, folder)

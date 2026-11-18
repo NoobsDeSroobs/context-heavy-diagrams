@@ -34,7 +34,7 @@
 /* Only the grid scrolls — the search box (and, in IconPicker, the corner
    selector and actions row) always stay visible. Capped to ~3 rows. */
 .icon-browser-scroll {
-  max-height: 112px;
+  max-height: 150px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -100,6 +100,63 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
+}
+
+/* Installed icon packs (InstalledIconSections.tsx): a collapsible header per pack and subset. */
+.icon-browser-pack,
+.icon-browser-subset {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.icon-browser-subset {
+  padding-left: 10px;
+}
+
+.icon-browser-section,
+.icon-browser-more {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font: inherit;
+  font-size: 11px;
+  color: var(--ev-c-text-3);
+  background: none;
+  border: none;
+  padding: 2px 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.icon-browser-section-pack {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.icon-browser-section-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.icon-browser-section:hover,
+.icon-browser-more:hover {
+  color: var(--color-text);
+}
+
+.installed-icon-preview {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.installed-icon-preview svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .icon-picker-actions {

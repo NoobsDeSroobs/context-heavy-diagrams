@@ -1,7 +1,7 @@
 import { showAlert } from '../ui/alerts'
-import { useEffect, useMemo, useState, type CSSProperties, type MouseEvent } from 'react'
+import { useEffect, useState, type CSSProperties, type MouseEvent } from 'react'
 import type { IconRef, LegendEntry, LegendEntryKind } from '@shared/diagram'
-import { loadBuiltinIconSvg, searchBuiltinIconIds } from '../icons/builtinIcons'
+import IconBrowser from '../icons/IconBrowser'
 import { markerUrl } from '../edges/markerIds'
 import type { DirectionSetLegendRow } from '../edges/edgeDirectionSets'
 import type { LegendLineLook } from './legendLinePick'
@@ -49,8 +49,6 @@ interface LegendPanelProps {
 
 const PANEL_WIDTH = 300
 const DEFAULT_COLOR = '#e6194b'
-
-const MAX_ICON_RESULTS = 24
 
 // The line swatch: its stroke and the length of the line, for the pulse.
 const SWATCH_STROKE_WIDTH = 2
@@ -156,10 +154,8 @@ function LegendSwatch({
   )
 }
 
-// Compact icon search, deliberately not the full IconPicker component —
-// that one's built around assigning an icon to one of an entity's 4 corner
-// slots, which has no meaning for a legend entry. Reuses the same
-// builtin/custom icon data sources, just without the slot picker.
+// Icon search for a legend entry: the same browser as the icon picker (built-in, installed packs and
+// this diagram's custom icons), without the corner selector, which has no meaning here.
 function LegendIconPicker({
   diagramPath,
   onPick
@@ -167,42 +163,6 @@ function LegendIconPicker({
   diagramPath: string | null
   onPick: (icon: IconRef) => void
 }): React.JSX.Element {
-  const [query, setQuery] = useState('')
-  const [previews, setPreviews] = useState<Record<string, string>>({})
-  const [customIcons, setCustomIcons] = useState<string[]>([])
-  const [customPreviews, setCustomPreviews] = useState<Record<string, string>>({})
-
-  const results = useMemo(() => searchBuiltinIconIds(query).slice(0, MAX_ICON_RESULTS), [query])
-
-  useEffect(() => {
-    let cancelled = false
-    for (const id of results) {
-      loadBuiltinIconSvg(id)?.then((svg) => {
-        if (!cancelled) setPreviews((prev) => ({ ...prev, [id]: svg }))
-      })
-    }
-    return () => {
-      cancelled = true
-    }
-  }, [results])
-
-  useEffect(() => {
-    if (!diagramPath) return undefined
-    let cancelled = false
-    window.api.listCustomIcons(diagramPath).then((paths) => {
-      if (cancelled) return
-      setCustomIcons(paths)
-      for (const path of paths) {
-        window.api.readIconAsDataUrl(diagramPath, path).then((url) => {
-          if (!cancelled) setCustomPreviews((prev) => ({ ...prev, [path]: url }))
-        })
-      }
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [diagramPath])
-
   const handleUpload = async (): Promise<void> => {
     if (!diagramPath) {
       showAlert('Save the diagram before adding a custom icon.')
@@ -214,43 +174,7 @@ function LegendIconPicker({
 
   return (
     <div className="legend-icon-subpicker">
-      <input
-        className="icon-picker-search"
-        placeholder="Search icons…"
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        autoFocus
-      />
-      <div className="icon-picker-scroll">
-        <div className="icon-picker-grid">
-          {results.map((id) => (
-            <button
-              key={id}
-              type="button"
-              title={id}
-              onClick={() => onPick({ source: 'builtin', id })}
-              dangerouslySetInnerHTML={previews[id] ? { __html: previews[id] } : undefined}
-            />
-          ))}
-        </div>
-        {customIcons.length > 0 && (
-          <>
-            <div className="icon-picker-label">This diagram&apos;s custom icons</div>
-            <div className="icon-picker-grid">
-              {customIcons.map((path) => (
-                <button
-                  key={path}
-                  type="button"
-                  title={path}
-                  onClick={() => onPick({ source: 'custom', path })}
-                >
-                  {customPreviews[path] && <img src={customPreviews[path]} alt="" />}
-                </button>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
+      <IconBrowser diagramPath={diagramPath} onPick={onPick} />
       <button type="button" onClick={handleUpload}>
         Upload custom icon…
       </button>

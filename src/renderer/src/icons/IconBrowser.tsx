@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { IconRef } from '@shared/diagram'
 import { loadBuiltinIconSvg, searchBuiltinIconIds } from './builtinIcons'
+import InstalledIconSections from './InstalledIconSections'
 
 interface IconBrowserProps {
   diagramPath: string | null
@@ -12,7 +13,7 @@ const MAX_RESULTS = 60
 // The icon-browsing core shared by IconPicker (assign an icon to a node
 // corner) and SearchOverlay's icon search (find every node already using
 // this icon) — see ADR 0072 for icon search, ADR 0006 for the icon model.
-// Owns only the search box plus the built-in and this-diagram's-custom
+// Owns only the search box plus the built-in, installed-pack and this-diagram's-custom
 // grids; the caller owns everything wrapped around it (IconPicker's corner
 // selector, the search popup's shell, and what a pick actually does).
 export default function IconBrowser({ diagramPath, onPick }: IconBrowserProps): React.JSX.Element {
@@ -81,6 +82,7 @@ export default function IconBrowser({ diagramPath, onPick }: IconBrowserProps): 
             />
           ))}
         </div>
+        <InstalledIconSections query={query} onPick={onPick} />
         {filteredCustomIcons.length > 0 && (
           <>
             <div className="icon-browser-label">This diagram&apos;s custom icons</div>
