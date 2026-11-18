@@ -20,7 +20,7 @@ ArchiMate's elements are nouns (actor, role, service, node, capability), and nou
 **Not an Archi clone (the maintainer, 2026-11-15).** No fixed layers, no metamodel holding all elements and relations; that is not what this tool is for. Entities, tags, highlights, icons, edge direction sets and named style palettes probably cover most of what is wanted already. So this epic shrinks to: the hollow triangle marker ([0149](0149-hollow-triangle-edge-marker.md)), and one example diagram that draws an ArchiMate-flavoured view with what exists, to find the real gaps before building any kit. Close the epic if that shows none.
 
 ## Open questions
-- **Licence.** Whether the notation and its icons can be reused, and under what terms. This is the question that blocked vendor icon packs, which the person now installs from their own files ([epic 0183](0183-installable-icon-packs.md)).
+- **Licence.** Whether the notation and its icons can be reused, and under what terms. This is the question that blocked vendor icon packs, which the person now installs from their own files ([epic 0183](completed-epics.md#0183-installable-icon-packs)).
 - Which subset: strategy, business, application, technology, motivation layers and the core relationships.
 - Whether a later conformance profile ([epic 0138](../completed-epics.md#0138-architecture-conformance-checks)) could use ArchiMate's table of allowed relationships.
 
