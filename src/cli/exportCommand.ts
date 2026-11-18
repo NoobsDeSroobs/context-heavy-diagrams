@@ -2,6 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { basename, dirname, extname, join, resolve } from 'node:path'
 import { parseDiagram, type DiagramFile } from '../shared/diagram/index.ts'
 import { containedPath } from '../main/containedPath.ts'
+import { iconName } from '../shared/icons/names.ts'
 import { highlightId } from '../shared/tagging/highlights.ts'
 import type { LegendCorner } from '../shared/preferences/preferences.ts'
 import {
@@ -181,6 +182,14 @@ function loadIcons(
           icons.set(iconKey(icon), { kind: 'svg', markup: readFileSync(file, 'utf-8') })
         continue
       }
+      // An installed icon lives in the reading machine's icon packs, not in the diagram's folder,
+      // and the command line does not read them (ADR 0188).
+      if (icon.source === 'installed') {
+        warn(
+          `icon '${icon.pack}/${icon.path}' skipped: installed icons are not drawn by the command line`
+        )
+        continue
+      }
       const full = containedPath(diagramDir, icon.path)
       const ext = extname(icon.path).toLowerCase()
       if (!full || (ext !== '.png' && ext !== '.svg')) {
@@ -198,7 +207,7 @@ function loadIcons(
         dataUrl: `data:${mime};base64,${bytes.toString('base64')}`
       })
     } catch {
-      warn(`icon '${icon.source === 'custom' ? icon.path : icon.id}' skipped: not readable`)
+      warn(`icon '${iconName(icon)}' skipped: not readable`)
     }
   }
   return icons

@@ -8,7 +8,8 @@ import { dasharrayOf, dashPattern } from '@shared/styling/edgeDash'
 type ResolvedIcon = { type: 'svg'; markup: string } | { type: 'img'; dataUrl: string }
 
 function iconKey(icon: IconRef): string {
-  return icon.source === 'builtin' ? `b:${icon.id}` : `c:${icon.path}`
+  if (icon.source === 'builtin') return `b:${icon.id}`
+  return icon.source === 'custom' ? `c:${icon.path}` : `i:${icon.pack}:${icon.path}`
 }
 
 // Resolves every icon-kind legend entry up front — builtin icons load as
@@ -32,7 +33,7 @@ export async function resolveLegendIconMarkup(
       if (icon.source === 'builtin') {
         const markup = await loadBuiltinIconSvg(icon.id)
         if (markup) result.set(key, { type: 'svg', markup })
-      } else if (diagramPath) {
+      } else if (icon.source === 'custom' && diagramPath) {
         const dataUrl = await window.api.readIconAsDataUrl(diagramPath, icon.path)
         result.set(key, { type: 'img', dataUrl })
       }

@@ -75,7 +75,8 @@ import { LINE_HEIGHT_EM, measureText, wrapText, type FontSpec } from './textLayo
 export type IconAsset = { kind: 'svg'; markup: string } | { kind: 'image'; dataUrl: string }
 
 export function iconKey(icon: IconRef): string {
-  return icon.source === 'builtin' ? `b:${icon.id}` : `c:${icon.path}`
+  if (icon.source === 'builtin') return `b:${icon.id}`
+  return icon.source === 'custom' ? `c:${icon.path}` : `i:${icon.pack}:${icon.path}`
 }
 
 export interface SvgExportOptions {

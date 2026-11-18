@@ -29,7 +29,10 @@ const SLOTS = Object.keys(SLOT_CLASS) as IconSlot[]
 // own svg/dataUrl state mid-fetch to avoid a stale-icon flash.
 function iconSlotKey(slot: IconSlot, icon: IconRef | undefined): string {
   if (!icon) return `${slot}:none`
-  return icon.source === 'builtin' ? `${slot}:builtin:${icon.id}` : `${slot}:custom:${icon.path}`
+  if (icon.source === 'builtin') return `${slot}:builtin:${icon.id}`
+  return icon.source === 'custom'
+    ? `${slot}:custom:${icon.path}`
+    : `${slot}:installed:${icon.pack}:${icon.path}`
 }
 
 // Resizable, connectable, never rotated — see docs/decisions/0004-shape-text-node-split.md

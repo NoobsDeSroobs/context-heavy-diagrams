@@ -193,6 +193,14 @@ export function serializeDiagram(diagram: DiagramFile): string {
         : undefined,
     maxConnectionPointsPerSide: diagram.maxConnectionPointsPerSide,
     fontFamily: diagram.fontFamily || undefined,
+    iconPacks:
+      diagram.iconPacks && diagram.iconPacks.length > 0
+        ? diagram.iconPacks.map((p) => ({
+            name: p.name,
+            version: p.version || undefined,
+            ifMissing: p.ifMissing || undefined
+          }))
+        : undefined,
     edgeDirectionSets: hasDirectionSets
       ? diagram.edgeDirectionSets!.map((s) => ({
           id: s.id,

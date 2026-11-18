@@ -26,7 +26,7 @@ export async function buildDiagramDrawio(
         if (icon.source === 'builtin') {
           const markup = await loadBuiltinIconSvg(icon.id)
           if (markup) icons.set(iconKey(icon), { kind: 'svg', markup })
-        } else if (params.diagramPath) {
+        } else if (icon.source === 'custom' && params.diagramPath) {
           const dataUrl = await window.api.readIconAsDataUrl(params.diagramPath, icon.path)
           icons.set(iconKey(icon), { kind: 'image', dataUrl })
         }

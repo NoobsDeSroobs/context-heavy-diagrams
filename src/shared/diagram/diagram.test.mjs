@@ -119,3 +119,27 @@ test('an edge animation and its settings survive a save and a load, and no anima
   assert.deepEqual(out.edges[0].style, settings)
   for (const key of Object.keys(settings)) assert.equal(key in out.edges[1].style, false, key)
 })
+
+test('the list of icon packs and an installed icon survive a save and a load; an empty list writes no key', () => {
+  const icon = { source: 'installed', pack: 'AWS', path: 'Compute/EC2.svg' }
+  const node = {
+    id: 'n1',
+    type: 'entity',
+    position: { x: 0, y: 0 },
+    data: { label: '', icons: { topLeft: icon } }
+  }
+  const text = serializeDiagram(
+    parseDiagram(
+      minimal({
+        nodes: [node],
+        iconPacks: [{ name: 'AWS', version: '', ifMissing: 'Install it.', extra: 1 }]
+      })
+    )
+  )
+  const back = JSON.parse(text)
+  assert.deepEqual(back.iconPacks, [{ name: 'AWS', ifMissing: 'Install it.' }])
+  assert.deepEqual(back.nodes[0].data.icons.topLeft, icon)
+  assert.ok(
+    !('iconPacks' in JSON.parse(serializeDiagram(parseDiagram(minimal({ iconPacks: [] })))))
+  )
+})

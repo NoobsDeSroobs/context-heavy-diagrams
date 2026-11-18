@@ -6,6 +6,7 @@ import type {
   RevertKind,
   RevertResult
 } from '@shared/compare/revert'
+import type { InstalledIconResult } from '@shared/icons/installedPacks'
 import type { AppPreferences } from '@shared/preferences/preferences'
 
 // The bridge of the compare window, and only of the compare window (src/main/compare/). That
@@ -44,6 +45,17 @@ const api = {
     const listener = (_event: unknown, preferences: AppPreferences): void => callback(preferences)
     ipcRenderer.on('preferences:changed', listener)
     return () => ipcRenderer.off('preferences:changed', listener)
+  },
+
+  // An icon of an installed pack, and the news that the packs changed (ADR 0188).
+  readInstalledIcon(pack: string, path: string): Promise<InstalledIconResult> {
+    return ipcRenderer.invoke('iconPacks:readIcon', pack, path)
+  },
+
+  onIconPacksChanged(callback: () => void): () => void {
+    const listener = (): void => callback()
+    ipcRenderer.on('iconPacks:changed', listener)
+    return () => ipcRenderer.off('iconPacks:changed', listener)
   },
 
   // A custom icon of an element, read beside its diagram.

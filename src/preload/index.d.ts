@@ -25,6 +25,13 @@ import type {
   MetamodelsFolderInfo
 } from '@shared/conformance/metamodelsFolder'
 import type { PlanSaveAsRequest, SaveAsPlan } from '@shared/document/saveAsCopy'
+import type {
+  InstalledIconResult,
+  InstallProgress,
+  InstallResult,
+  PackList,
+  RemoveResult
+} from '@shared/icons/installedPacks'
 import type { AppPreferences } from '@shared/preferences/preferences'
 import type { SecurityCrawlResult } from '@shared/threat-matrix/threatMatrixMath'
 import type { LinkedSearchLink, LinkedSearchResult } from '@shared/search/linkedSearch'
@@ -45,6 +52,16 @@ export interface DiagramApi {
   pickAndCopyCustomIcon(diagramPath: string): Promise<string | null>
   listCustomIcons(diagramPath: string): Promise<string[]>
   readIconAsDataUrl(diagramPath: string, relativePath: string): Promise<string>
+  openIconPackManager(): Promise<void>
+  listIconPacks(): Promise<PackList>
+  readInstalledIcon(pack: string, path: string): Promise<InstalledIconResult>
+  onIconPacksChanged(callback: () => void): () => void
+  // Only the icon pack manager's own bridge (preload/iconPacks.ts) has these.
+  installIconPack(): Promise<InstallResult>
+  cancelIconPackInstall(): Promise<void>
+  removeIconPack(folder: string): Promise<RemoveResult>
+  showIconPacksFolder(): Promise<void>
+  onIconPackProgress(callback: (progress: InstallProgress) => void): () => void
   pickAndCopyReferences(diagramPath: string): Promise<string[] | null>
   readReferenceAsDataUrl(diagramPath: string, relativePath: string): Promise<string>
   readNotes(diagramPath: string, relativePath: string): Promise<string>
