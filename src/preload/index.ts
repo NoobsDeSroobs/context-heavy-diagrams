@@ -26,7 +26,7 @@ import type {
   MetamodelListing,
   MetamodelsFolderInfo
 } from '@shared/conformance/metamodelsFolder'
-import type { PackList } from '@shared/icons/installedPacks'
+import type { InstalledIconResult, PackList } from '@shared/icons/installedPacks'
 import type { AppPreferences } from '@shared/preferences/preferences'
 import type { SecurityCrawlResult } from '@shared/threat-matrix/threatMatrixMath'
 import type { LinkedSearchLink, LinkedSearchResult } from '@shared/search/linkedSearch'
@@ -82,6 +82,11 @@ const api = {
 
   listIconPacks(): Promise<PackList> {
     return ipcRenderer.invoke('iconPacks:list')
+  },
+
+  // One icon of an installed pack, as the file has it (ADR 0188); the page cleans it before drawing.
+  readInstalledIcon(pack: string, path: string): Promise<InstalledIconResult> {
+    return ipcRenderer.invoke('iconPacks:readIcon', pack, path)
   },
 
   onIconPacksChanged(callback: () => void): () => void {

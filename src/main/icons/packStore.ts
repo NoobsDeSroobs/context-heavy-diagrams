@@ -1,5 +1,15 @@
 import { randomUUID } from 'crypto'
-import { copyFile, mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'fs/promises'
+import {
+  copyFile,
+  mkdir,
+  readdir,
+  readFile,
+  realpath,
+  rename,
+  rm,
+  stat,
+  writeFile
+} from 'fs/promises'
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'path'
 import {
   MAX_ICON_SOURCE_LENGTH,
@@ -10,9 +20,11 @@ import {
   isIconFileName,
   isPlainName,
   readPackMeta,
-  readSubsetMeta
+  readSubsetMeta,
+  splitIconPath
 } from '@shared/icons/pack'
 import type {
+  InstalledIconResult,
   InstallProgress,
   InstallResult,
   PackSummary,
@@ -332,5 +344,42 @@ export async function removePack(
     } catch (error) {
       return { ok: false, message: error instanceof Error ? error.message : String(error) }
     }
+  }
+}
+
+// Which folder a pack name means: the first folder, by name, that gives it (a second folder with the
+// same name is not used, as in the list). Reads only the small pack.json files.
+export async function packFoldersByName(root: string): Promise<Map<string, string>> {
+  const byName = new Map<string, string>()
+  for (const folder of await folderNames(root)) {
+    const { meta } = readPackMeta(await readText(join(root, folder, PACK_FILE), []), folder)
+    if (!byName.has(meta.name)) byName.set(meta.name, folder)
+  }
+  return byName
+}
+
+// The text of one icon of a pack. The path comes from a diagram, so it is untrusted (ADR 0115): two
+// plain names, and the file that is read must really lie inside the pack's folder, so a link placed
+// in a pack cannot point out of it.
+export async function readPackIcon(
+  root: string,
+  folder: string,
+  path: unknown
+): Promise<InstalledIconResult> {
+  const parts = splitIconPath(path)
+  if (!parts || !isPlainName(folder)) return { ok: false, reason: 'refused' }
+  try {
+    const file = join(root, folder, parts.subset, parts.file)
+    const real = await realpath(file)
+    const inside = relative(await realpath(join(root, folder)), real)
+    if (inside === '' || inside.startsWith('..') || isAbsolute(inside)) {
+      return { ok: false, reason: 'refused' }
+    }
+    const info = await stat(real)
+    if (!info.isFile()) return { ok: false, reason: 'no-icon' }
+    if (info.size > MAX_ICON_SOURCE_LENGTH) return { ok: false, reason: 'too-large' }
+    return { ok: true, svg: await readFile(real, 'utf-8') }
+  } catch {
+    return { ok: false, reason: 'no-icon' }
   }
 }

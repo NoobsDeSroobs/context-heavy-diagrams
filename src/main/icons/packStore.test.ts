@@ -1,8 +1,16 @@
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import {
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { installPack, listPacks, removePack } from './packStore'
+import { installPack, listPacks, packFoldersByName, readPackIcon, removePack } from './packStore'
 import type { InstallProgress } from '@shared/icons/installedPacks'
 
 const SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><path d="M0 0h8v8z"/></svg>'
@@ -234,5 +242,81 @@ describe('removePack', () => {
       expect(result.ok, folder).toBe(false)
     }
     expect((await listPacks(root)).length).toBe(1)
+  })
+})
+
+describe('reading an icon of a pack', () => {
+  beforeEach(async () => {
+    await installPack(
+      root,
+      put('Vendor', { 'Compute/EC2.svg': SVG, 'pack.json': '{"name":"The Vendor"}' }),
+      quiet
+    )
+  })
+
+  it('finds a pack by its name, the first folder winning', async () => {
+    mkdirSync(join(root, 'A-copy'))
+    writeFileSync(join(root, 'A-copy', 'pack.json'), '{"name":"The Vendor"}')
+    const byName = await packFoldersByName(root)
+    expect(byName.get('The Vendor')).toBe('A-copy')
+    expect(byName.get('Vendor')).toBeUndefined()
+  })
+
+  it('reads the file of an icon', async () => {
+    expect(await readPackIcon(root, 'Vendor', 'Compute/EC2.svg')).toEqual({ ok: true, svg: SVG })
+  })
+
+  it('says when the icon is not there', async () => {
+    expect(await readPackIcon(root, 'Vendor', 'Compute/Nope.svg')).toEqual({
+      ok: false,
+      reason: 'no-icon'
+    })
+    expect(await readPackIcon(root, 'Missing', 'Compute/EC2.svg')).toEqual({
+      ok: false,
+      reason: 'no-icon'
+    })
+  })
+
+  it('refuses a path that is not a subset folder and a file', async () => {
+    writeFileSync(join(root, 'secret.svg'), SVG)
+    for (const path of [
+      '../secret.svg',
+      'Compute/../../secret.svg',
+      '/secret.svg',
+      'EC2.svg',
+      5,
+      undefined
+    ]) {
+      expect(await readPackIcon(root, 'Vendor', path), String(path)).toEqual({
+        ok: false,
+        reason: 'refused'
+      })
+    }
+    expect(await readPackIcon(root, '..', 'Compute/EC2.svg')).toEqual({
+      ok: false,
+      reason: 'refused'
+    })
+  })
+
+  it('refuses a link that leads out of the pack', async (context) => {
+    writeFileSync(join(base, 'outside.svg'), SVG)
+    try {
+      symlinkSync(join(base, 'outside.svg'), join(root, 'Vendor', 'Compute', 'Link.svg'))
+    } catch {
+      context.skip() // making a link needs a privilege on Windows
+      return
+    }
+    expect(await readPackIcon(root, 'Vendor', 'Compute/Link.svg')).toEqual({
+      ok: false,
+      reason: 'refused'
+    })
+  })
+
+  it('does not read a file over the size limit', async () => {
+    writeFileSync(join(root, 'Vendor', 'Compute', 'Huge.svg'), ' '.repeat(1_000_001))
+    expect(await readPackIcon(root, 'Vendor', 'Compute/Huge.svg')).toEqual({
+      ok: false,
+      reason: 'too-large'
+    })
   })
 })

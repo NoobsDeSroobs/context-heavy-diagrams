@@ -51,5 +51,11 @@ export type InstallResult =
       skipped: string[]
     }
 
+// One icon read from an installed pack (ADR 0188). The text is the file as it is: the renderer
+// cleans it before drawing. `no-pack` and `no-icon` are what a diagnostic tells apart; `refused` is a
+// path or file the app will not use at all.
+export type InstalledIconResult =
+  { ok: true; svg: string } | { ok: false; reason: 'no-pack' | 'no-icon' | 'too-large' | 'refused' }
+
 // 'trash' is the system's; 'kept' is a hidden folder in the packs folder, for a machine with none.
 export type RemoveResult = { ok: true; where: 'trash' | 'kept' } | { ok: false; message: string }

@@ -3,9 +3,14 @@ import { mkdir } from 'fs/promises'
 import { join } from 'path'
 import { is } from '@electron-toolkit/utils'
 import icon from '../../../resources/icon.png?asset'
-import type { InstallResult, PackList, RemoveResult } from '@shared/icons/installedPacks'
+import type {
+  InstalledIconResult,
+  InstallResult,
+  PackList,
+  RemoveResult
+} from '@shared/icons/installedPacks'
 import { isSafeExternalUrl, isSameDocument } from '../navigationGuard'
-import { installPack, listPacks, removePack } from './packStore'
+import { installPack, listPacks, packFoldersByName, readPackIcon, removePack } from './packStore'
 
 // The icon pack manager (ADR 0188): the one place packs are installed, updated and removed. Its own
 // window with its own small bridge (src/preload/iconPacks.ts); the editor windows can open it and
@@ -60,7 +65,20 @@ function openManager(): void {
   }
 }
 
+// Pack name -> folder, kept for a few seconds: a diagram with many installed icons asks once for each.
+// Dropped when a pack is installed or removed and when the manager lists the packs.
+const NAME_CACHE_MS = 5000
+let names: { at: number; byName: Promise<Map<string, string>> } | null = null
+
+function folderOf(pack: string): Promise<string | undefined> {
+  if (!names || Date.now() - names.at > NAME_CACHE_MS) {
+    names = { at: Date.now(), byName: packFoldersByName(iconPacksFolder()) }
+  }
+  return names.byName.then((byName) => byName.get(pack))
+}
+
 function announceChange(): void {
+  names = null
   for (const win of BrowserWindow.getAllWindows()) win.webContents.send('iconPacks:changed')
 }
 
@@ -74,7 +92,19 @@ function fromManager(event: IpcMainInvokeEvent): BrowserWindow | null {
 export function registerIconPackHandlers(): void {
   ipcMain.handle('iconPacks:open', () => openManager())
 
+  // One icon of a pack, by the pack's name and the path a diagram stores. Any window may read.
+  ipcMain.handle(
+    'iconPacks:readIcon',
+    async (_event, pack: unknown, path: unknown): Promise<InstalledIconResult> => {
+      if (typeof pack !== 'string') return { ok: false, reason: 'refused' }
+      const folder = await folderOf(pack)
+      if (folder === undefined) return { ok: false, reason: 'no-pack' }
+      return readPackIcon(iconPacksFolder(), folder, path)
+    }
+  )
+
   ipcMain.handle('iconPacks:list', async (): Promise<PackList> => {
+    names = null
     const folder = iconPacksFolder()
     return { folder, packs: await listPacks(folder) }
   })

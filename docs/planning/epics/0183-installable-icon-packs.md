@@ -21,7 +21,8 @@ Everything about where packs live, the reference form, drawing and cleaning icon
 - [x] Install manager window: install (writes the default metadata files), remove, update; staging, cancel, progress; trash with fallback (`src/main/icons/packStore.ts` and `packManager.ts`, own bridge `src/preload/iconPacks.ts`, View > Icon packs)
 - [x] `IconRef` `installed`, optional used-packs list: schema, `docs/file-format.md`, validator (the skill's `validate_chd.mjs`), skill field reference; every place that switched on the icon source now names `installed` (nothing draws one yet)
 - [ ] Picker: collapsible sections per pack and subset, search, lazy previews
-- [ ] Icons follow the text colour in both themes; colours fixed by a pack are kept
+- [x] Icons follow the text colour in both themes; colours fixed by a pack are kept (installed icons are read through `iconPacks:readIcon`, cleaned and drawn inline by `IconSlotView`; the canvas, the legend panel and the compare window draw them)
+- [ ] Exports draw installed icons: SVG (a nested svg keeps the icon's own viewBox, ids isolated per icon), draw.io, the legend of an image export; the search-by-icon preview
 - [ ] Diagnostics error for a missing pack, with a button to open the manager; write `iconPacks` on each save from the icons present and the installed list
 - [ ] Tabler as a pack: archive in the installer, first-start question, `builtin` as an alias, the command-line export still drawing it
 - [ ] `My icons`: adding a one-off icon asks for a pack; existing `custom` icons keep working

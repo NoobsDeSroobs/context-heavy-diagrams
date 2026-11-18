@@ -26,6 +26,7 @@ import type {
 } from '@shared/conformance/metamodelsFolder'
 import type { PlanSaveAsRequest, SaveAsPlan } from '@shared/document/saveAsCopy'
 import type {
+  InstalledIconResult,
   InstallProgress,
   InstallResult,
   PackList,
@@ -53,6 +54,7 @@ export interface DiagramApi {
   readIconAsDataUrl(diagramPath: string, relativePath: string): Promise<string>
   openIconPackManager(): Promise<void>
   listIconPacks(): Promise<PackList>
+  readInstalledIcon(pack: string, path: string): Promise<InstalledIconResult>
   onIconPacksChanged(callback: () => void): () => void
   // Only the icon pack manager's own bridge (preload/iconPacks.ts) has these.
   installIconPack(): Promise<InstallResult>
