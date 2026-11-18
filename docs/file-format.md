@@ -271,6 +271,8 @@ How the points are used depends on `style.routingStyle`:
 - **`"step"` / `"smoothstep"`** — orthogonal waypoints. The right-angled path is forced to pass through each point, with 90° corners synthesised between any two consecutive points (or between a point and an endpoint) that aren't already axis-aligned. `gravity` is not used.
 - **any other routing style** — ignored, but preserved on save so switching routing style away and back is lossless.
 
+When an application moves elements and both ends of an edge move by the same amount (a container with the edges between its children, a selection, an element's edge to itself), it moves the edge's points by that amount too, so a route round an element stays round it ([ADR 0189](decisions/0189-edge-points-move-with-elements-that-move-together.md)). The file stores nothing for this: a tool that writes points keeps them absolute.
+
 | Field | Type | Required | Meaning |
 |---|---|---|---|
 | `x` / `y` | number | yes | Absolute canvas coordinates. |

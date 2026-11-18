@@ -1,0 +1,115 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "checkout",
+      "type": "container",
+      "position": {
+        "x": 60,
+        "y": 60
+      },
+      "size": {
+        "width": 560,
+        "height": 300
+      },
+      "data": {
+        "label": "Checkout"
+      }
+    },
+    {
+      "id": "audit",
+      "type": "entity",
+      "position": {
+        "x": 760,
+        "y": 130
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "data": {
+        "label": "Audit log"
+      }
+    },
+    {
+      "id": "cart",
+      "type": "entity",
+      "position": {
+        "x": 50,
+        "y": 70
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "parentId": "checkout",
+      "data": {
+        "label": "Cart"
+      }
+    },
+    {
+      "id": "payment",
+      "type": "entity",
+      "position": {
+        "x": 350,
+        "y": 70
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "parentId": "checkout",
+      "data": {
+        "label": "Payment"
+      }
+    },
+    {
+      "id": "text-1",
+      "type": "text",
+      "position": {
+        "x": 60,
+        "y": 400
+      },
+      "size": {
+        "width": 560,
+        "height": 60
+      },
+      "data": {
+        "label": "Drag the Checkout container: the loop under Cart and Payment goes with them, and the edge to Audit log follows its end."
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "cart-payment",
+      "type": "labeled",
+      "source": "cart",
+      "target": "payment",
+      "sourceHandle": "bottom",
+      "targetHandle": "bottom",
+      "label": "charge",
+      "style": {
+        "routingStyle": "step"
+      },
+      "points": [
+        {
+          "x": 170,
+          "y": 300
+        },
+        {
+          "x": 470,
+          "y": 300
+        }
+      ]
+    },
+    {
+      "id": "payment-audit",
+      "type": "labeled",
+      "source": "payment",
+      "target": "audit",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "record"
+    }
+  ]
+}

@@ -16,6 +16,7 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 ### Changed
 
+- **Edge points move with the elements.** When both ends of an edge move by the same amount, as when a container is dragged, a selection is moved, nudged or aligned, or an assistant moves a container, the edge's bend points move too, so a loop drawn round an element stays round it. An edge with only one end moved keeps its points. Nothing in the file changes. ([ADR 0189](docs/decisions/0189-edge-points-move-with-elements-that-move-together.md))
 - The command-line export (`chd export`) draws the Tabler icons but leaves out icons from other installed packs, with a note.
 
 ## 0.11.1 (2026-11-17)

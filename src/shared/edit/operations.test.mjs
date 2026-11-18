@@ -447,3 +447,24 @@ test('layoutIssues finds a label that does not fit its own box, and leaves a fit
   const taller = run(diagram, { op: 'resize', id: 'tall', height: 160 }).diagram
   assert.equal(layoutIssues(taller).filter((i) => i.ids[0] === 'tall').length, 0)
 })
+
+test('moving a container takes the points of the edges between its children along, and leaves other edges alone', () => {
+  const built = run(
+    start(),
+    { op: 'add_container', id: 'box', label: 'Box', x: 100, y: 100, width: 400, height: 300 },
+    { op: 'add_entity', id: 'a', label: 'A', x: 120, y: 120 },
+    { op: 'add_entity', id: 'b', label: 'B', x: 340, y: 120 },
+    { op: 'add_entity', id: 'out', label: 'Out', x: 700, y: 120 },
+    { op: 'reparent', id: 'a', parent: 'box' },
+    { op: 'reparent', id: 'b', parent: 'box' },
+    { op: 'connect', id: 'inside', from: 'a', to: 'b' },
+    { op: 'connect', id: 'across', from: 'a', to: 'out' },
+    { op: 'set_edge_points', id: 'inside', routing: 'step', points: [{ x: 200, y: 360 }] },
+    { op: 'set_edge_points', id: 'across', routing: 'step', points: [{ x: 600, y: 80 }] }
+  ).diagram
+  const { diagram } = run(built, { op: 'move', id: 'box', x: 130, y: 90 })
+  const points = (id) => diagram.edges.find((e) => e.id === id).points
+  assert.deepEqual(points('inside'), [{ x: 230, y: 350 }])
+  assert.deepEqual(points('across'), [{ x: 600, y: 80 }])
+  assertValid(diagram)
+})

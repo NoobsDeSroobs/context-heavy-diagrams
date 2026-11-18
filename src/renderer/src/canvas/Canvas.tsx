@@ -79,6 +79,7 @@ import { effectiveGravityPresets } from '../nodes/lineGravityPresets'
 import EdgeMarkerDefs from '../edges/edgeMarkers'
 import CrossingPeekOf from '../edges/CrossingPeekOf'
 import { useModifierHeldClass } from '../edges/useModifierHeldClass'
+import { useCarryEdgePoints } from '../edges/useCarryEdgePoints'
 import { usePrefersReducedMotion } from '../edges/usePrefersReducedMotion'
 import { edgeAnimationIsOn } from '@shared/preferences/preferences'
 import DiagramContext, { type DiagramContextValue } from './DiagramContext'
@@ -216,6 +217,7 @@ function CanvasInner(): React.JSX.Element {
   const { theme, setTheme } = useTheme()
   const [nodes, setNodes, onNodesChangeBase] = useNodesState<Node>([])
   const [edges, setEdges, onEdgesChangeBase] = useEdgesState<Edge>([])
+  useCarryEdgePoints(nodes, edges, setEdges)
   const [currentPath, setCurrentPath] = useState<string | null>(null)
   // This window's crash-recovery identity before it's ever been saved —
   // see ADR 0040. Assigned by main at window creation, carried
