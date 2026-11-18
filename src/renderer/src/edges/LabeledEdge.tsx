@@ -442,8 +442,14 @@ function LabeledEdge({
   // moveOrthogonalSegment adds/removes waypoints under it; the result is only
   // simplified (redundant corners dropped) on release.
   const segmentHandles = useMemo<OrthoSegment[]>(
-    () => (orthoVertices ? orthogonalSegments(orthoVertices) : []),
-    [orthoVertices]
+    () =>
+      orthoVertices
+        ? orthogonalSegments(orthoVertices, {
+            sourceSide: sourcePosition,
+            targetSide: targetPosition
+          })
+        : [],
+    [orthoVertices, sourcePosition, targetPosition]
   )
 
   const onSegmentPointerDown = useCallback(
@@ -459,13 +465,29 @@ function LabeledEdge({
         const flowPoint = screenToFlowPosition({ x: moveEvent.clientX, y: moveEvent.clientY })
         const value = segment.axis === 'h' ? flowPoint.y : flowPoint.x
         updateEdgeData(id, {
-          points: moveOrthogonalSegment(frozen, segment.index, segment.axis, value, simplifyResult)
+          points: moveOrthogonalSegment(
+            frozen,
+            segment.index,
+            segment.axis,
+            value,
+            simplifyResult,
+            {
+              sourceSide: sourcePosition,
+              targetSide: targetPosition
+            }
+          )
         })
       }
       const onMove = (moveEvent: PointerEvent): void => apply(moveEvent, false)
       const onUp = (upEvent: PointerEvent): void => {
         apply(upEvent, true)
-        el.releasePointerCapture(event.pointerId)
+        // The handle under the pointer may have gone while the segment moved; the window listeners
+        // carry the drag, so a lost capture is harmless.
+        try {
+          el.releasePointerCapture(event.pointerId)
+        } catch {
+          // already released
+        }
         window.removeEventListener('pointermove', onMove)
         window.removeEventListener('pointerup', onUp)
         setDraggingSegmentIndex(null)
@@ -473,7 +495,15 @@ function LabeledEdge({
       window.addEventListener('pointermove', onMove)
       window.addEventListener('pointerup', onUp)
     },
-    [orthoVertices, pushSnapshot, screenToFlowPosition, updateEdgeData, id]
+    [
+      orthoVertices,
+      sourcePosition,
+      targetPosition,
+      pushSnapshot,
+      screenToFlowPosition,
+      updateEdgeData,
+      id
+    ]
   )
 
   const gates = useEdgeGates(showCrossings, source, target, edgePath)
@@ -574,21 +604,6 @@ function LabeledEdge({
             <HighlightChips highlights={highlightMatches} />
           </div>
         )}
-        {routingStyle === 'catmullRom' &&
-          bendPoints.map((point, index) => (
-            <div
-              key={index}
-              className={`edge-bend-point nodrag nopan${bendPointsVisible ? '' : ' edge-bend-point-hidden'}`}
-              style={{
-                position: 'absolute',
-                width: BEND_POINT_HANDLE_SIZE,
-                height: BEND_POINT_HANDLE_SIZE,
-                transform: `translate(-50%, -50%) translate(${point.x}px, ${point.y}px)`
-              }}
-              onPointerDown={(event) => onBendPointPointerDown(event, index)}
-              onContextMenu={(event) => onBendPointContextMenu(event, index)}
-            />
-          ))}
         {/* Unlike the catmull-rom bend points (always mounted, opacity-hidden),
             segment handles mount only while visible — an invisible handle
             still captures pointer events, and a busy diagram of step edges
@@ -613,6 +628,21 @@ function LabeledEdge({
               onPointerEnter={() => setHovered(true)}
               onPointerLeave={() => setHovered(false)}
               onPointerDown={(event) => onSegmentPointerDown(event, segment)}
+            />
+          ))}
+        {routingStyle === 'catmullRom' &&
+          bendPoints.map((point, index) => (
+            <div
+              key={index}
+              className={`edge-bend-point nodrag nopan${bendPointsVisible ? '' : ' edge-bend-point-hidden'}`}
+              style={{
+                position: 'absolute',
+                width: BEND_POINT_HANDLE_SIZE,
+                height: BEND_POINT_HANDLE_SIZE,
+                transform: `translate(-50%, -50%) translate(${point.x}px, ${point.y}px)`
+              }}
+              onPointerDown={(event) => onBendPointPointerDown(event, index)}
+              onContextMenu={(event) => onBendPointContextMenu(event, index)}
             />
           ))}
       </EdgeLabelRenderer>

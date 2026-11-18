@@ -1,7 +1,7 @@
 # 0196: Grab every segment of a right-angled edge, and no spikes
 
 ## Status
-Not Started. Build after 0195 is merged.
+Built (2026-11-19, [ADR 0191](../../decisions/0191-right-angled-edges-leave-and-arrive-by-their-side.md)); waiting for the maintainer to try it.
 
 ## Goal
 A step or smooth step edge can be bent by grabbing any of its straight segments, including the ones that touch the source and the target, so routing an edge round two elements is one drag instead of a hunt for a handle that is not there; a single point never makes a route double back on itself; and a right-click "Reset route" puts an edge back to its default.
@@ -28,14 +28,16 @@ Not included: making the default route of an edge that leaves an element away fr
 - Dragging a segment back to the line it came from should remove the points again (the on-release simplify pass); check it does with stubs.
 - Handles on a very short edge, where the middle handle of the only segment sits on top of the label.
 - The assistants' routing tools ([0168](0168-teach-assistants-to-reroute-edges.md)) write absolute points and are unaffected; the file format does not change.
-- Interaction with the points that follow elements ([0195](0195-edge-points-follow-the-elements-they-bend-around.md)): a stub's two corners are ordinary points and are carried like any other.
+- Interaction with the points that follow elements ([ADR 0189](../../decisions/0189-edge-points-move-with-elements-that-move-together.md)): a stub's two corners are ordinary points and are carried like any other.
 
 ## Tasks
-- [ ] Decide stub length and the short-segment rules, record in an ADR (amends 0077)
-- [ ] Stubs that honour the exit and entry sides in `orthogonalRouteVertices` (fixes the spike), with tests for one point above and below, on the line, and on all side pairs
-- [ ] Handles for end segments in `orthogonalSegments`, with tests
-- [ ] Outward stubs when an end segment, or the only segment, is dragged, with tests (both ends, all four sides)
-- [ ] Release simplification with stubs, with tests
-- [ ] "Reset route" in the edge context menu (single and multi-selection), with a test and the example below showing it
-- [ ] Example diagram: a backwards connection routed round two elements ([ADR 0151](../../decisions/0151-every-visible-feature-has-an-example-diagram.md))
-- [ ] Update the Edge routing wording in the shortcuts dialog and the docs if they describe segment handles
+- [x] Stub length (a fixed 20) and the short-segment rules (an end handle needs 40), ADR 0191 (amends 0077)
+- [x] Stubs that honour the exit and entry sides in `orthogonalRouteVertices` (the spike), with tests
+- [x] Handles for end segments in `orthogonalSegments`, with tests
+- [x] Outward stubs when an end segment, or the only segment, is dragged, with tests
+- [x] Release simplification with stubs, with tests (dragging back onto the line removes the points)
+- [x] "Reset route" in the edge context menu, single and multi-selection; checked live (no unit test: the menu lives in `Canvas.tsx`)
+- [x] A point on a straight run splits it into two segments that move independently, with a bridge at the point; "Add point here" snaps onto the route; no dots on the points of step edges (tried and removed: they gave spikes), "Remove point" by right-clicking near one
+- [x] Example `examples/right-angled-edges.chd`
+- [x] File format doc: the stub rule for step and smooth step routes
+- [ ] Maintainer tries it: dragging on a real diagram, short edges where the handle meets the label, ends on all four sides

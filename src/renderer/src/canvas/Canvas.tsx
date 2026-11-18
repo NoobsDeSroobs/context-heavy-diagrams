@@ -105,7 +105,12 @@ import {
   setSideCustomPointCount
 } from '../nodes/connectionPoints'
 import { nearestSegmentIndex, type PathPoint } from '@shared/geometry/bendablePath'
-import { nearestWaypointGap } from '@shared/geometry/orthogonalPath'
+import {
+  nearestPointOnRoute,
+  nearestWaypointGap,
+  orthogonalRouteVertices
+} from '@shared/geometry/orthogonalPath'
+import type { Side } from '@shared/geometry/side'
 import {
   activeDirectionSetStyle,
   directionSetLegendRow,
@@ -699,6 +704,39 @@ function CanvasInner(): React.JSX.Element {
         edge.selected && edges.some((e) => e.selected && e.id !== edge.id)
           ? edges.filter((e) => e.selected).map((e) => e.id)
           : [edge.id]
+      // A right-angled edge shows no dot on its points, so a point is removed by right-clicking
+      // close to it.
+      const edgeRouting = (edge.data?.style as EdgeStyle | undefined)?.routingStyle
+      const edgePoints = (edge.data?.points as LinePoint[] | undefined) ?? []
+      const reach = 14 / rfInstance.getViewport().zoom
+      const nearIndex =
+        edgeRouting === 'step' || edgeRouting === 'smoothstep'
+          ? edgePoints.findIndex((p) => Math.hypot(p.x - clickPoint.x, p.y - clickPoint.y) <= reach)
+          : -1
+      const removePointItems =
+        nearIndex >= 0
+          ? [
+              {
+                label: 'Remove point',
+                onSelect: () => {
+                  pushSnapshot()
+                  setEdges((eds) =>
+                    eds.map((e) =>
+                      e.id === edge.id
+                        ? {
+                            ...e,
+                            data: {
+                              ...e.data,
+                              points: edgePoints.filter((_, i) => i !== nearIndex)
+                            }
+                          }
+                        : e
+                    )
+                  )
+                }
+              }
+            ]
+          : []
       openContextMenu(event.clientX, event.clientY, [
         {
           label: 'Line style…',
@@ -774,7 +812,24 @@ function CanvasInner(): React.JSX.Element {
               // Keep the right-angled routing; the new waypoint just gets
               // forced into the orthogonal path (ADR 0077). Insert it in the
               // gap of [source, ...points, target] it's nearest to.
-              const gap = nearestWaypointGap(source, points, target, clickPoint)
+              //
+              // The point goes onto the drawn route, not where the pointer happened to be a few
+              // units beside it, which would give the stubs at each end a jog.
+              const sideOf = (d: { x: number; y: number } | undefined): Side =>
+                !d ? 'left' : d.x > 0 ? 'right' : d.x < 0 ? 'left' : d.y > 0 ? 'bottom' : 'top'
+              const onRoute = nearestPointOnRoute(
+                orthogonalRouteVertices(
+                  source,
+                  sideOf(source.direction),
+                  points,
+                  target,
+                  sideOf(target.direction)
+                ),
+                clickPoint
+              )
+              newPoint.x = onRoute.x
+              newPoint.y = onRoute.y
+              const gap = nearestWaypointGap(source, points, target, onRoute)
               newPoints = [...points]
               newPoints.splice(gap, 0, newPoint)
               newRoutingStyle = routingStyle
@@ -813,6 +868,28 @@ function CanvasInner(): React.JSX.Element {
                     }
                   : e
               )
+            )
+          }
+        },
+        ...removePointItems,
+        {
+          // Back to the routing's own default: every point (from "Add point here" or from dragging a
+          // segment) and the label's slide along the line go; the routing style, the connection
+          // points and the look stay.
+          label:
+            reverseTargetIds.length > 1
+              ? `Reset route (${reverseTargetIds.length})`
+              : 'Reset route',
+          onSelect: () => {
+            const ids = new Set(reverseTargetIds)
+            pushSnapshot()
+            setEdges((eds) =>
+              eds.map((e) => {
+                if (!ids.has(e.id)) return e
+                const style = { ...(e.data?.style as EdgeStyle | undefined) }
+                delete style.labelPosition
+                return { ...e, data: { ...e.data, points: [], style } }
+              })
             )
           }
         }
