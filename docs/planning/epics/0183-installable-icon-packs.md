@@ -1,7 +1,7 @@
 # 0183: Installable icon packs
 
 ## Status
-In progress. Logged 2026-11-07; replaces the closed epics 0019 (vendor icon packs), 0098 (configurable asset folders) and 0104 (central custom-icon library). Design settled 2026-11-17 in [ADR 0188](../../decisions/0188-icons-come-from-installed-packs-drawn-as-cleaned-inline-svg.md); the first version is the core below. Release 0.12.0.
+First version built (2026-11-18) and ready for the maintainer's pull request; the tasks under Parked are left for later. Logged 2026-11-07; replaces the closed epics 0019 (vendor icon packs), 0098 (configurable asset folders) and 0104 (central custom-icon library). Design settled 2026-11-17 in [ADR 0188](../../decisions/0188-icons-come-from-installed-packs-drawn-as-cleaned-inline-svg.md); the first version is the core below. Release 0.12.0.
 
 ## Goal
 Let a person install icon sets (a cloud vendor's, a company's own) once per machine, pick from them in any diagram, and be told when a diagram needs a pack this machine lacks. The app ships no vendor icons: the person supplies the files, so redistribution terms are not the app's question. The built-in Tabler set becomes a pack of the same kind.
@@ -9,7 +9,8 @@ Let a person install icon sets (a cloud vendor's, a company's own) once per mach
 ## Settled
 Everything about where packs live, the reference form, drawing and cleaning icons, Tabler on first start, one-off icons, diagnostics and the picker is in the ADR. The maintainer chose inline SVG over image-plus-mask, Tabler installed through the manager, and a `Misc icons` pack (not "My icons") over keeping `custom` for new icons.
 
-## Still to settle while building
+## Parked
+Left for after the first version was merged, by the maintainer's choice, except documentation that would be wrong without them (the assistant skill, the command-line reference).
 - **Slow canvases:** measure a large diagram with many installed icons before adding the `<img>` fallback for fixed-colour icons.
 - **The CLI and tests** that open diagrams with built-in icons need the Tabler pack or its bundled copy. The command-line SVG and draw.io export reads Tabler from the package but leaves out an icon of any other pack: decide whether it finds the app's packs folder, takes a `--icon-packs` folder, or stays as it is.
 - **Duplicate ids in an SVG export:** one icon on several elements repeats its ids (a gradient, a clip path) in the file; the copies are identical so it draws right, but the file is not strictly valid. Isolate per use if a viewer objects.
@@ -26,7 +27,10 @@ Everything about where packs live, the reference form, drawing and cleaning icon
 - [x] Diagnostics error for a missing pack, with a button to open the manager; write `iconPacks` on each save from the icons present and the installed list (the Icon packs section of the Diagnostics panel, counted in the View menu; the main process writes the list in `document:save`, `shared/icons/packNotes.ts`; an icon missing from an installed pack is listed per element)
 - [x] Tabler as a pack: written out from the bundled `@tabler/icons` package by the manager (no archive), first-start question, `builtin` as an alias in the drawing, the picker and the diagnostics, the command-line export unchanged (`src/main/icons/tablerPack.ts`, `shared/icons/iconRefs.ts`). Not done: offering an update when the app's Tabler is newer than the installed one
 - [x] `Misc icons`: adding a one-off icon (picker, legend picker, relinking a missing icon) puts it in that pack with no question about which; existing `custom` icons keep working (`main/icons/miscIcon.ts`, `renderer/icons/addMiscIcon.ts`)
-- [ ] Example diagram using a small pack made for the purpose ([ADR 0151](../../decisions/0151-every-visible-feature-has-an-example-diagram.md))
+- [ ] Parked: example diagram using a small pack made for the purpose ([ADR 0151](../../decisions/0151-every-visible-feature-has-an-example-diagram.md)), and `examples/README.md` naming it
+- [ ] Parked: offer an update when the app's Tabler is newer than the installed one
+- [ ] Parked: the maintainer's manual checks in the app: the first-start Tabler question, the manager's Tabler button, adding a one-off icon (picker, legend, relink, PNG), exports opened in draw.io, and a packaged build reading Tabler from `app.asar`
+- [x] Documentation made right: the skill's field reference, authoring guide and `SKILL.md` (both copies) no longer say new custom icons go in the diagram's `assets/` folder, and the command-line reference says installed-pack icons are left out of its exports
 
 ## Later
 Zip export of a pack, per-icon meanings in search, recolouring by the person, the extension and command line listing and writing installed icons, fetching packs from a central repository, a hash to tell two machines' `Misc icons` apart, choosing another pack when adding an icon.

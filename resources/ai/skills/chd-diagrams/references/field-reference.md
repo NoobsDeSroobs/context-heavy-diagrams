@@ -139,17 +139,17 @@ A `"stencil"` node is a behaviour of a flow, never a thing in the system. `data.
 ```json
 { "source": "builtin", "id": "server" }
 ```
-Bundled icon from [Tabler Icons](https://tabler.io/icons) (MIT, outline style) — `id` matches the filename minus extension (`"server"` → `server.svg`). Fully portable reference even without the icon set available to render it.
+Icon from [Tabler Icons](https://tabler.io/icons) (MIT, outline style) — `id` matches the filename minus extension (`"server"` → `server.svg`). It means the installed pack `Tabler`, `Outline/<id>.svg`; the app offers to install that pack, and on a machine without it the icon shows as missing like any other pack's.
 
 ```json
 { "source": "custom", "path": "hello-world/assets/logo.svg" }
 ```
-SVG or PNG, **relative to the diagram file's own directory** (not to the diagram file itself) — by convention inside a sibling folder named after the diagram. Same graceful-if-missing handling as any relative-path reference in this format.
+Legacy: SVG or PNG, **relative to the diagram file's own directory** (not to the diagram file itself). The app still reads these but no longer makes them: an icon the person adds one at a time goes into the installed pack `Misc icons` (an `installed` reference). Leave an existing one as it is; for a new icon, use `installed` when you know the pack, otherwise write none. Same graceful-if-missing handling as any relative-path reference in this format.
 
 ```json
 { "source": "installed", "pack": "AWS Architecture", "path": "Compute/EC2.svg" }
 ```
-An icon from an icon pack installed on the machine that opens the diagram: `pack` is the pack's name, `path` is `<subset folder>/<file>.svg` — exactly those two names, no `..`, no further folders, no backslash. Only write one when the person told you the pack and the path: you cannot list what is installed, and a pack that is missing on their machine shows no icon. Do not write the top-level `iconPacks` list (the app writes it on save) and leave an existing one as it is.
+An icon from an icon pack installed on the machine that opens the diagram: `pack` is the pack's name, `path` is `<subset folder>/<file>.svg` — exactly those two names, no `..`, no further folders, no backslash. Only write one when the person told you the pack and the path: you cannot list what is installed, and a pack that is missing on their machine shows no icon. `Misc icons` (subset `Icons`) is the pack the app makes for icons added one at a time. Do not write the top-level `iconPacks` list (the app writes it on save) and leave an existing one as it is.
 
 ---
 

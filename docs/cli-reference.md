@@ -63,7 +63,7 @@ $ chd hash shop.chd
 | `--no-legend` | SVG only: leave the legend out |
 | `--legend-corner <corner>` | SVG only: `bottom-left` (default), `bottom-right`, `top-left` or `top-right` |
 
-A draw.io file is plain XML with one cell per line. Containers, connections with their attachment points and waypoints, labels, colours, fonts, arrowheads, icons and tags (as draw.io data) come across; what draw.io has no place for, such as the legend, notes and the threat matrix, or can only approximate, such as curved routing, is listed on standard error as `chd: note: ...` and the exit code stays `0`.
+A draw.io file is plain XML with one cell per line. Containers, connections with their attachment points and waypoints, labels, colours, fonts, arrowheads, icons and tags (as draw.io data) come across (an icon from an installed pack other than the `builtin` Tabler set is left out, with a note: the command line does not read the packs folder); what draw.io has no place for, such as the legend, notes and the threat matrix, or can only approximate, such as curved routing, is listed on standard error as `chd: note: ...` and the exit code stays `0`.
 
 Exit codes: `0`, `1` if the file cannot be read or written, `2`.
 

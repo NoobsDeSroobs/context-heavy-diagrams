@@ -4,6 +4,20 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 ## 0.12.0 (unreleased)
 
+### Added
+
+- **Icon packs.** Install a set of icons (a cloud vendor's, your company's) once per machine with **View → Icon packs**, then pick from it in any diagram. A pack is a folder of SVG files; the app ships none of its own besides Tabler. The picker has a section per pack and subset, with search. Icons follow the text colour in both themes, and colours a pack fixes are kept. A diagram that uses a pack this machine lacks says which one, and what to do about it, in the Diagnostics panel. The SVG, PNG and draw.io exports draw them. The format of a pack is in [docs/icon-packs.md](docs/icon-packs.md). ([ADR 0188](docs/decisions/0188-icons-come-from-installed-packs-drawn-as-cleaned-inline-svg.md))
+- **Tabler is an installable pack.** The app asks on the first start whether to install it, and the manager can do it later. Existing diagrams that use the built-in icons are unchanged.
+- **An icon added one at a time goes into the pack `Misc icons`.** Adding an icon from the picker, the legend or when relinking a missing one no longer copies it into the diagram's `assets` folder; it is kept once per machine. Existing diagrams with icons in `assets` still show them.
+
+### File format
+
+- A new icon source, `"installed"` (`pack` and `path`), and a top-level `iconPacks` list the application writes on save, documented in [docs/file-format.md](docs/file-format.md). A version without them draws no icon there.
+
+### Changed
+
+- The command-line export (`chd export`) draws the Tabler icons but leaves out icons from other installed packs, with a note.
+
 ## 0.11.1 (2026-11-17)
 
 ### Fixed

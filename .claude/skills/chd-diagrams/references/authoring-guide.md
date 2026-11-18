@@ -4,7 +4,7 @@ This covers what happens *between* files — how multiple `.chd` files relate to
 
 ## The relative-path rule, in full
 
-Every relative path in the format — `data.icons.*.path` (custom icons), `data.notes`, `data.linkedDiagram`, `data.references` entries — resolves **relative to the directory containing the `.chd` file that holds the reference**. Not the project root. Not the diagram that originally "owned" the node. Not wherever the value happens to look like it came from.
+Every relative path in the format — `data.icons.*.path` (legacy `custom` icons), `data.notes`, `data.linkedDiagram`, `data.references` entries — resolves **relative to the directory containing the `.chd` file that holds the reference**. Not the project root. Not the diagram that originally "owned" the node. Not wherever the value happens to look like it came from.
 
 Stored paths use forward slashes; a writer should always emit forward slashes (for portability across host OSes), and a reader should tolerate backslashes in older or hand-edited files but never write them.
 
@@ -46,9 +46,9 @@ The bundled `scripts/validate_chd.mjs` resolves every relative path in a file ag
 
 ## Colocation folders
 
-By default, this app puts a diagram's own custom icons, reference images, notes, and newly-created linked diagrams into a sibling folder named after the diagram file: `my-diagram.chd` gets `my-diagram/assets/logo.svg`, `my-diagram/assets/references/screenshot.png`, `my-diagram/notes/<label>-<uuid>.md`, and `my-diagram/<label>.chd` for a freshly-created child link.
+By default, this app puts a diagram's reference images, notes, and newly-created linked diagrams into a sibling folder named after the diagram file: `my-diagram.chd` gets `my-diagram/assets/references/screenshot.png`, `my-diagram/notes/<label>-<uuid>.md`, and `my-diagram/<label>.chd` for a freshly-created child link.
 
-This folder is a **convention for creating new assets**, never a requirement and never detected by name — the stored path on the node is what actually matters. A diagram with no custom icons/notes/references/links has no such folder at all. Nothing stops a `linkedDiagram` from pointing anywhere on disk: outside the colocation folder, outside the parent diagram's directory tree entirely, or on another drive — the format has no notion of an enclosing project or repo boundary.
+This folder is a **convention for creating new assets**, never a requirement and never detected by name — the stored path on the node is what actually matters. A diagram with no notes/references/links has no such folder at all. Nothing stops a `linkedDiagram` from pointing anywhere on disk: outside the colocation folder, outside the parent diagram's directory tree entirely, or on another drive — the format has no notion of an enclosing project or repo boundary.
 
 Filenames within the folder follow conventions too (`<label>-<uuid-suffix>.md` for notes, `<label>.chd` for a newly-created link) but a reader should never rely on the naming pattern to *find* a reference — only the stored path is authoritative.
 
@@ -83,7 +83,7 @@ When you tag elements with the source file they were drawn from (a `source` or `
 
 ## Git and large assets
 
-The `.chd` file itself is deterministic JSON by design (fixed key order, no inline binaries — see [field-reference.md](field-reference.md#determinism--versioning)) specifically so it's git-friendly: diffs show real changes, not reformatting noise. Files under a colocation folder (`assets/*` especially) are ordinary binary/text files with no special handling — if a repo accumulates many or large custom icons, [Git LFS](https://git-lfs.com/) tracking `*.svg`/`*.png` under those folders is a reasonable, standard way to keep the repo light. The tool has no opinion on this either way; it never touches git directly.
+The `.chd` file itself is deterministic JSON by design (fixed key order, no inline binaries — see [field-reference.md](field-reference.md#determinism--versioning)) specifically so it's git-friendly: diffs show real changes, not reformatting noise. Files under a colocation folder (`assets/*` especially) are ordinary binary/text files with no special handling — if a repo accumulates many or large reference images, [Git LFS](https://git-lfs.com/) tracking `*.svg`/`*.png` under those folders is a reasonable, standard way to keep the repo light. The tool has no opinion on this either way; it never touches git directly.
 
 ## Quick checklist for a multi-file diagram project
 
