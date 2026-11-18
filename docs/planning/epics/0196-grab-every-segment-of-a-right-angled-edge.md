@@ -1,7 +1,7 @@
 # 0196: Grab every segment of a right-angled edge, and no spikes
 
 ## Status
-Not Started. Build after 0195 is merged.
+Not Started.
 
 ## Goal
 A step or smooth step edge can be bent by grabbing any of its straight segments, including the ones that touch the source and the target, so routing an edge round two elements is one drag instead of a hunt for a handle that is not there; a single point never makes a route double back on itself; and a right-click "Reset route" puts an edge back to its default.
@@ -28,7 +28,7 @@ Not included: making the default route of an edge that leaves an element away fr
 - Dragging a segment back to the line it came from should remove the points again (the on-release simplify pass); check it does with stubs.
 - Handles on a very short edge, where the middle handle of the only segment sits on top of the label.
 - The assistants' routing tools ([0168](0168-teach-assistants-to-reroute-edges.md)) write absolute points and are unaffected; the file format does not change.
-- Interaction with the points that follow elements ([0195](0195-edge-points-follow-the-elements-they-bend-around.md)): a stub's two corners are ordinary points and are carried like any other.
+- Interaction with the points that follow elements ([ADR 0189](../../decisions/0189-edge-points-move-with-elements-that-move-together.md)): a stub's two corners are ordinary points and are carried like any other.
 
 ## Tasks
 - [ ] Decide stub length and the short-segment rules, record in an ADR (amends 0077)
