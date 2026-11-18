@@ -105,7 +105,12 @@ import {
   setSideCustomPointCount
 } from '../nodes/connectionPoints'
 import { nearestSegmentIndex, type PathPoint } from '@shared/geometry/bendablePath'
-import { nearestWaypointGap } from '@shared/geometry/orthogonalPath'
+import {
+  nearestPointOnRoute,
+  nearestWaypointGap,
+  orthogonalRouteVertices
+} from '@shared/geometry/orthogonalPath'
+import type { Side } from '@shared/geometry/side'
 import {
   activeDirectionSetStyle,
   directionSetLegendRow,
@@ -774,7 +779,24 @@ function CanvasInner(): React.JSX.Element {
               // Keep the right-angled routing; the new waypoint just gets
               // forced into the orthogonal path (ADR 0077). Insert it in the
               // gap of [source, ...points, target] it's nearest to.
-              const gap = nearestWaypointGap(source, points, target, clickPoint)
+              //
+              // The point goes onto the drawn route, not where the pointer happened to be a few
+              // units beside it, which would give the stubs at each end a jog.
+              const sideOf = (d: { x: number; y: number } | undefined): Side =>
+                !d ? 'left' : d.x > 0 ? 'right' : d.x < 0 ? 'left' : d.y > 0 ? 'bottom' : 'top'
+              const onRoute = nearestPointOnRoute(
+                orthogonalRouteVertices(
+                  source,
+                  sideOf(source.direction),
+                  points,
+                  target,
+                  sideOf(target.direction)
+                ),
+                clickPoint
+              )
+              newPoint.x = onRoute.x
+              newPoint.y = onRoute.y
+              const gap = nearestWaypointGap(source, points, target, onRoute)
               newPoints = [...points]
               newPoints.splice(gap, 0, newPoint)
               newRoutingStyle = routingStyle

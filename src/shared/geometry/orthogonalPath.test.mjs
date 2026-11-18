@@ -1,7 +1,9 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
+  collapseCollinear,
   moveOrthogonalSegment,
+  nearestPointOnRoute,
   orthogonalRouteVertices,
   orthogonalSegments
 } from './orthogonalPath.ts'
@@ -201,4 +203,41 @@ test('dragging the last segment makes a stub into the target', () => {
     targetSide: 'left'
   })
   assert.deepEqual(points[points.length - 1], { x: 380, y: 340 })
+})
+
+test('a point on a straight run does not split it: one handle, and dragging it goes round both', () => {
+  const v = collapseCollinear(route([{ x: 300, y: 100 }]))
+  assert.deepEqual(xy(v), [
+    [500, 100],
+    [100, 100]
+  ])
+  const handles = orthogonalSegments(v, ends)
+  assert.equal(handles.length, 1)
+  assert.deepEqual(moveOrthogonalSegment(v, 0, 'h', 20, true, ends), [
+    { x: 520, y: 20 },
+    { x: 80, y: 20 }
+  ])
+})
+
+test('corners and the ends are kept when collapsing', () => {
+  const v = [
+    { x: 0, y: 0 },
+    { x: 50, y: 0 },
+    { x: 100, y: 0 },
+    { x: 100, y: 80 },
+    { x: 100, y: 160 },
+    { x: 200, y: 160 }
+  ]
+  assert.deepEqual(xy(collapseCollinear(v)), [
+    [0, 0],
+    [100, 0],
+    [100, 160],
+    [200, 160]
+  ])
+})
+
+test('a new point is put on the drawn route, not beside it', () => {
+  assert.deepEqual(nearestPointOnRoute(route([]), { x: 300, y: 97 }), { x: 300, y: 100 })
+  // Past the end of a segment it lands on the end.
+  assert.deepEqual(nearestPointOnRoute(route([]), { x: 90, y: 90 }), { x: 100, y: 100 })
 })

@@ -37,6 +37,7 @@ Not included: making the default route of an edge that leaves an element away fr
 - [x] Outward stubs when an end segment, or the only segment, is dragged, with tests
 - [x] Release simplification with stubs, with tests (dragging back onto the line removes the points)
 - [x] "Reset route" in the edge context menu, single and multi-selection; checked live (no unit test: the menu lives in `Canvas.tsx`)
+- [x] A point on a straight run no longer doubles the handles; "Add point here" snaps onto the route; the points of step edges have draggable dots (found when the maintainer added a point to a long edge)
 - [x] Example `examples/right-angled-edges.chd`
 - [x] File format doc: the stub rule for step and smooth step routes
 - [ ] Maintainer tries it: dragging on a real diagram, short edges where the handle meets the label, ends on all four sides

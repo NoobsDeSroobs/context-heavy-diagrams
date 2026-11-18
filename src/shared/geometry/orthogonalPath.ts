@@ -224,6 +224,49 @@ export function orthogonalPath(vertices: OrthoPoint[], borderRadius: number): st
   return d
 }
 
+// The same route with every vertex that only continues a straight run dropped, so a waypoint lying
+// on a straight line (one the person added there, say) does not split the run into two segments with
+// a handle each. The segment handles and the drag work on this list.
+export function collapseCollinear(vertices: OrthoPoint[]): OrthoPoint[] {
+  const out: OrthoPoint[] = []
+  for (const v of vertices) {
+    if (out.length > 0 && near(out[out.length - 1], v)) continue
+    while (out.length >= 2) {
+      const a = out[out.length - 2]
+      const b = out[out.length - 1]
+      if ((alignedH(a, b) && alignedH(b, v)) || (alignedV(a, b) && alignedV(b, v))) out.pop()
+      else break
+    }
+    out.push(v)
+  }
+  return out
+}
+
+// The point of the drawn route nearest `click`: where a new waypoint goes so it lies on a segment
+// instead of a few units beside it, which would draw a jog at each end of the stubs.
+export function nearestPointOnRoute(vertices: OrthoPoint[], click: OrthoPoint): OrthoPoint {
+  let best: OrthoPoint = vertices[0]
+  let bestDist = Infinity
+  for (let i = 0; i < vertices.length - 1; i++) {
+    const a = vertices[i]
+    const b = vertices[i + 1]
+    const dx = b.x - a.x
+    const dy = b.y - a.y
+    const lenSq = dx * dx + dy * dy
+    const t =
+      lenSq < EPS
+        ? 0
+        : Math.max(0, Math.min(1, ((click.x - a.x) * dx + (click.y - a.y) * dy) / lenSq))
+    const p = { x: a.x + t * dx, y: a.y + t * dy }
+    const d = dist(click, p)
+    if (d < bestDist) {
+      bestDist = d
+      best = p
+    }
+  }
+  return best
+}
+
 // Drag handles for the straight segments of the path. A segment between two bends gets one if it is
 // long enough to grab. A segment that touches the source or the target gets one too, but only when
 // it runs along the side the edge is attached to and has room for a stub as well: dragging it

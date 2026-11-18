@@ -15,6 +15,7 @@ import { GATE_COLOR, GATE_HALF, GATE_WIDTH } from '@shared/crossings/crossings'
 import { buildEdgePath } from '@shared/geometry/edgePath'
 import { ratioNearest } from '@shared/geometry/pathSampling'
 import {
+  collapseCollinear,
   orthogonalRouteVertices,
   orthogonalSegments,
   moveOrthogonalSegment,
@@ -376,10 +377,10 @@ function LabeledEdge({
     ...(edgeStyle?.fontFamily ? { fontFamily: edgeStyle.fontFamily } : {})
   }
 
-  // Manual bend points — catmull-rom routing only. Dragging repositions
+  // Manual bend points. Dragging repositions
   // data.points[index] directly, in the same absolute canvas coordinates
-  // the schema already stores them in. (step/smoothstep get draggable
-  // *segments* instead — see onSegmentPointerDown below.)
+  // the schema already stores them in. step/smoothstep edges have these too, and
+  // draggable *segments* besides (onSegmentPointerDown below).
   const onBendPointPointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>, index: number) => {
       event.stopPropagation()
@@ -418,13 +419,16 @@ function LabeledEdge({
         })
       }
       openContextMenu(event.clientX, event.clientY, [
-        ...gravityPresets.map((preset) => ({
-          label: preset.label,
-          onSelect: () => setGravity(preset.value)
-        })),
+        // Only a curve has a tension to set; a right-angled route just has the point.
+        ...(isOrthogonal
+          ? []
+          : gravityPresets.map((preset) => ({
+              label: preset.label,
+              onSelect: () => setGravity(preset.value)
+            }))),
         {
           label: 'Remove point',
-          separatorBefore: true,
+          separatorBefore: !isOrthogonal,
           onSelect: () => {
             pushSnapshot()
             updateEdgeData(id, { points: bendPoints.filter((_, i) => i !== index) })
@@ -432,7 +436,7 @@ function LabeledEdge({
         }
       ])
     },
-    [pushSnapshot, openContextMenu, gravityPresets, updateEdgeData, id, bendPoints]
+    [pushSnapshot, openContextMenu, gravityPresets, updateEdgeData, id, bendPoints, isOrthogonal]
   )
 
   // Draggable segments for step/smoothstep routing (ADR 0077). Each handle
@@ -441,22 +445,27 @@ function LabeledEdge({
   // pointer-down so the segment index the gesture holds stays valid even as
   // moveOrthogonalSegment adds/removes waypoints under it; the result is only
   // simplified (redundant corners dropped) on release.
+  // The vertices the handles and the drag work on: a waypoint on a straight run does not split it.
+  const handleVertices = useMemo(
+    () => (orthoVertices ? collapseCollinear(orthoVertices) : null),
+    [orthoVertices]
+  )
   const segmentHandles = useMemo<OrthoSegment[]>(
     () =>
-      orthoVertices
-        ? orthogonalSegments(orthoVertices, {
+      handleVertices
+        ? orthogonalSegments(handleVertices, {
             sourceSide: sourcePosition,
             targetSide: targetPosition
           })
         : [],
-    [orthoVertices, sourcePosition, targetPosition]
+    [handleVertices, sourcePosition, targetPosition]
   )
 
   const onSegmentPointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>, segment: OrthoSegment): void => {
       event.stopPropagation()
-      if (!orthoVertices) return
-      const frozen = orthoVertices
+      if (!handleVertices) return
+      const frozen = handleVertices
       pushSnapshot()
       setDraggingSegmentIndex(segment.index)
       const el = event.currentTarget
@@ -496,7 +505,7 @@ function LabeledEdge({
       window.addEventListener('pointerup', onUp)
     },
     [
-      orthoVertices,
+      handleVertices,
       sourcePosition,
       targetPosition,
       pushSnapshot,
@@ -604,21 +613,6 @@ function LabeledEdge({
             <HighlightChips highlights={highlightMatches} />
           </div>
         )}
-        {routingStyle === 'catmullRom' &&
-          bendPoints.map((point, index) => (
-            <div
-              key={index}
-              className={`edge-bend-point nodrag nopan${bendPointsVisible ? '' : ' edge-bend-point-hidden'}`}
-              style={{
-                position: 'absolute',
-                width: BEND_POINT_HANDLE_SIZE,
-                height: BEND_POINT_HANDLE_SIZE,
-                transform: `translate(-50%, -50%) translate(${point.x}px, ${point.y}px)`
-              }}
-              onPointerDown={(event) => onBendPointPointerDown(event, index)}
-              onContextMenu={(event) => onBendPointContextMenu(event, index)}
-            />
-          ))}
         {/* Unlike the catmull-rom bend points (always mounted, opacity-hidden),
             segment handles mount only while visible — an invisible handle
             still captures pointer events, and a busy diagram of step edges
@@ -643,6 +637,22 @@ function LabeledEdge({
               onPointerEnter={() => setHovered(true)}
               onPointerLeave={() => setHovered(false)}
               onPointerDown={(event) => onSegmentPointerDown(event, segment)}
+            />
+          ))}
+        {/* After the segment handles, so a point on a straight run lies over the handle at its middle. */}
+        {(routingStyle === 'catmullRom' || isOrthogonal) &&
+          bendPoints.map((point, index) => (
+            <div
+              key={index}
+              className={`edge-bend-point nodrag nopan${bendPointsVisible ? '' : ' edge-bend-point-hidden'}`}
+              style={{
+                position: 'absolute',
+                width: BEND_POINT_HANDLE_SIZE,
+                height: BEND_POINT_HANDLE_SIZE,
+                transform: `translate(-50%, -50%) translate(${point.x}px, ${point.y}px)`
+              }}
+              onPointerDown={(event) => onBendPointPointerDown(event, index)}
+              onContextMenu={(event) => onBendPointContextMenu(event, index)}
             />
           ))}
       </EdgeLabelRenderer>
