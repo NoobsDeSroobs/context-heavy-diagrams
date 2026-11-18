@@ -75,7 +75,19 @@ An element's icon is stored in the diagram as
 
 `pack` is the pack's name. `path` is the subset folder, a `/` and the file name, using folder and file names, not the names in the metadata. Nothing else is accepted: no `..`, no further folders, no other separator. The path is resolved inside the pack's folder and never outside it, whatever the file says. The same applies to a diagram written by hand or by another tool. The field is described, with the rest of the diagram, in [file-format.md](file-format.md).
 
-When a diagram refers to a pack that is not installed, the app shows no icon there and says in the diagnostics which pack it is and what its `ifMissing` text says, from the copy the diagram keeps of it. A pack that is installed but lacks that icon is reported like any other missing file.
+When a diagram refers to a pack that is not installed, the app shows no icon there and says in the diagnostics which pack it is and what its `ifMissing` text says, from the copy the diagram keeps of it. A pack that is installed but lacks that icon is reported like any other missing file. Each save rewrites the diagram's `iconPacks` list from the icons it holds: a pack installed here gives its own current version and text, one that is not installed keeps the note the file already had, and a pack no icon uses any more is dropped.
+
+## Adding one icon
+
+"Add an icon" in the icon picker asks for an SVG or PNG file and puts it in the pack named `Misc icons`, subset `Icons`, which the app makes the first time. It is an ordinary pack: open it in the manager, fill in its text, copy its folder to another machine. A PNG is written into an SVG file of its own size. A file of the same name is never replaced; the new one gets a number. Diagrams from before packs keep their `custom` icons, read from the diagram's own `assets` folder.
+
+## In exports
+
+The SVG and draw.io exports and the legend of an image export draw a pack's icon after the same cleaning, as a nested `<svg>` with the icon's own `viewBox`, so a vendor icon of any proportions keeps its shape and its colours; `currentColor` becomes the text colour of the exported theme. An icon of a pack that is not installed on the machine that exports is left out, as on the canvas.
+
+## The Tabler pack
+
+The app comes with the [Tabler Icons](https://tabler.io/icons) outline set (MIT licence) and writes it out as a pack named `Tabler` with one subset, `Outline`, when you install it: on the first start, when the app asks, or later with "Install Tabler icons" in the manager. A diagram's `{ "source": "builtin", "id": "server" }` means that pack's `Outline/server.svg`, and without the pack installed it is reported like any other missing pack. Picking an icon from that subset stores `builtin`, as always, so an older version and the command line (which reads the same files from the app) still draw it. The answer to the first-start question is remembered by a file named `.offered` in the packs folder; delete it, or the folder, to be asked again.
 
 ## Making a pack
 

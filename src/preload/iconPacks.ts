@@ -28,6 +28,11 @@ const api = {
     return ipcRenderer.invoke('iconPacks:install')
   },
 
+  // Installs the Tabler pack that comes with the app.
+  installTablerPack(): Promise<InstallResult> {
+    return ipcRenderer.invoke('iconPacks:installTabler')
+  },
+
   cancelIconPackInstall(): Promise<void> {
     return ipcRenderer.invoke('iconPacks:cancelInstall')
   },
@@ -38,6 +43,13 @@ const api = {
 
   showIconPacksFolder(): Promise<void> {
     return ipcRenderer.invoke('iconPacks:showFolder')
+  },
+
+  // An install the app started itself (the first-start question) has ended.
+  onIconPackInstallEnded(callback: (result: InstallResult) => void): () => void {
+    const listener = (_event: unknown, result: InstallResult): void => callback(result)
+    ipcRenderer.on('iconPacks:installEnded', listener)
+    return () => ipcRenderer.off('iconPacks:installEnded', listener)
   },
 
   onIconPackProgress(callback: (progress: InstallProgress) => void): () => void {

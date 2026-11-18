@@ -1,7 +1,7 @@
-import { showAlert } from '../ui/alerts'
 import { useEffect, useState, type CSSProperties, type MouseEvent } from 'react'
 import type { IconRef, LegendEntry, LegendEntryKind } from '@shared/diagram'
 import IconBrowser from '../icons/IconBrowser'
+import { addMiscIcon } from '../icons/addMiscIcon'
 import { markerUrl } from '../edges/markerIds'
 import type { DirectionSetLegendRow } from '../edges/edgeDirectionSets'
 import type { LegendLineLook } from './legendLinePick'
@@ -163,20 +163,16 @@ function LegendIconPicker({
   diagramPath: string | null
   onPick: (icon: IconRef) => void
 }): React.JSX.Element {
-  const handleUpload = async (): Promise<void> => {
-    if (!diagramPath) {
-      showAlert('Save the diagram before adding a custom icon.')
-      return
-    }
-    const path = await window.api.pickAndCopyCustomIcon(diagramPath)
-    if (path) onPick({ source: 'custom', path })
+  const handleAdd = async (): Promise<void> => {
+    const icon = await addMiscIcon()
+    if (icon) onPick(icon)
   }
 
   return (
     <div className="legend-icon-subpicker">
       <IconBrowser diagramPath={diagramPath} onPick={onPick} />
-      <button type="button" onClick={handleUpload}>
-        Upload custom icon…
+      <button type="button" onClick={handleAdd}>
+        Add an icon…
       </button>
     </div>
   )

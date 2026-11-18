@@ -26,6 +26,7 @@ import type {
 } from '@shared/conformance/metamodelsFolder'
 import type { PlanSaveAsRequest, SaveAsPlan } from '@shared/document/saveAsCopy'
 import type {
+  AddIconResult,
   InstalledIconResult,
   InstallProgress,
   InstallResult,
@@ -49,15 +50,17 @@ export interface DiagramApi {
   saveDocument(request: SaveDocumentRequest): Promise<SaveOutcome>
   pickSavePath(suggested?: string): Promise<string | null>
   planSaveAs(request: PlanSaveAsRequest): Promise<SaveAsPlan>
-  pickAndCopyCustomIcon(diagramPath: string): Promise<string | null>
   listCustomIcons(diagramPath: string): Promise<string[]>
   readIconAsDataUrl(diagramPath: string, relativePath: string): Promise<string>
   openIconPackManager(): Promise<void>
+  addMiscIcon(): Promise<AddIconResult>
   listIconPacks(): Promise<PackList>
   readInstalledIcon(pack: string, path: string): Promise<InstalledIconResult>
   onIconPacksChanged(callback: () => void): () => void
   // Only the icon pack manager's own bridge (preload/iconPacks.ts) has these.
   installIconPack(): Promise<InstallResult>
+  installTablerPack(): Promise<InstallResult>
+  onIconPackInstallEnded(callback: (result: InstallResult) => void): () => void
   cancelIconPackInstall(): Promise<void>
   removeIconPack(folder: string): Promise<RemoveResult>
   showIconPacksFolder(): Promise<void>

@@ -1,6 +1,6 @@
-import { showAlert } from '../ui/alerts'
 import { useState } from 'react'
 import type { IconRef, IconSlot } from '@shared/diagram'
+import { addMiscIcon } from './addMiscIcon'
 import IconBrowser from './IconBrowser'
 
 interface IconPickerProps {
@@ -43,13 +43,9 @@ export default function IconPicker({
 }: IconPickerProps): React.JSX.Element {
   const [slot, setSlot] = useState<IconSlot>(initialSlot)
 
-  const handleUpload = async (): Promise<void> => {
-    if (!diagramPath) {
-      showAlert('Save the diagram before adding a custom icon.')
-      return
-    }
-    const path = await window.api.pickAndCopyCustomIcon(diagramPath)
-    if (path) onPick(slot, { source: 'custom', path })
+  const handleAdd = async (): Promise<void> => {
+    const icon = await addMiscIcon()
+    if (icon) onPick(slot, icon)
   }
 
   // To the right of the shape by default, clamped so it doesn't run off the
@@ -74,8 +70,8 @@ export default function IconPicker({
       </div>
       <IconBrowser diagramPath={diagramPath} onPick={(icon) => onPick(slot, icon)} />
       <div className="icon-picker-actions">
-        <button type="button" onClick={handleUpload}>
-          Upload custom icon…
+        <button type="button" onClick={handleAdd}>
+          Add an icon…
         </button>
         {icons[slot] && (
           <button type="button" onClick={() => onRemove(slot)}>

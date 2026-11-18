@@ -36,10 +36,17 @@
    selected, or mid-drag (LabeledEdge.tsx). A horizontal segment is dragged
    vertically and vice versa. */
 .edge-segment-handle {
-  border-radius: 3px;
-  background: var(--color-background-soft);
-  border: 1.5px solid var(--ev-c-gray-1);
+  box-sizing: border-box;
+  border-radius: 5px;
+  /* Solid in the text colour with a ring in the page colour, as the reconnect dots below: the quiet
+     grey a bend point has disappeared against a thick or highlighted line. */
+  background: var(--color-text);
+  border: 2px solid var(--color-background);
   pointer-events: auto;
+}
+
+.edge-segment-handle:hover {
+  background: var(--ev-c-gray-1);
 }
 
 .edge-segment-handle-h {

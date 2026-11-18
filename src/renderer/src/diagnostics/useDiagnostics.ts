@@ -5,6 +5,7 @@ import type { CanvasApi } from '../canvas/canvasApi'
 import { syncEdgeMetadata, syncNodeMetadata } from '../tagging/syncElements'
 import type { MissingFileEntry } from './DiagnosticsPanel'
 import { collectResourceRefs } from './resourceRefs'
+import { addMiscIcon } from '../icons/addMiscIcon'
 
 export interface DiagnosticsState {
   diagnostics: string[]
@@ -141,12 +142,13 @@ export function useDiagnostics({
     async (entry: MissingFileEntry) => {
       if (!currentPath || entry.ownerKind !== 'node') return
       let newPath: string | null = null
+      let newIcon: IconRef | null = null
       if (entry.resourceKind === 'linkedDiagram') {
         newPath = await window.api.pickExistingLinkedDiagram(currentPath)
       } else if (entry.resourceKind === 'icon') {
-        newPath = await window.api.pickAndCopyCustomIcon(currentPath)
+        newIcon = await addMiscIcon()
       }
-      if (!newPath) return
+      if (!newPath && !newIcon) return
       pushSnapshot()
       setNodes((nds) =>
         nds.map((n) => {
@@ -156,7 +158,7 @@ export function useDiagnostics({
             d.linkedDiagram = newPath
           } else if (entry.resourceKind === 'icon' && entry.iconSlot) {
             const icons = { ...(d.icons as Partial<Record<IconSlot, IconRef>> | undefined) }
-            icons[entry.iconSlot as IconSlot] = { source: 'custom', path: newPath! }
+            if (newIcon) icons[entry.iconSlot as IconSlot] = newIcon
             d.icons = icons
           }
           return { ...n, data: d }

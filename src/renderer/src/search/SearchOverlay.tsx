@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import type { IconRef } from '@shared/diagram'
-import { loadBuiltinIconSvg } from '../icons/builtinIcons'
+import { installedIconOf } from '@shared/icons/iconRefs'
 import InstalledIconPreview from '../icons/InstalledIconPreview'
 import { iconRefKey } from './search'
 
@@ -92,9 +92,7 @@ export default function SearchOverlay({
     const set = (svg: string): void => {
       if (!cancelled) setIconPreview({ key, svg })
     }
-    if (searchIcon.source === 'builtin') {
-      loadBuiltinIconSvg(searchIcon.id)?.then(set)
-    } else if (searchIcon.source === 'custom' && diagramPath) {
+    if (searchIcon.source === 'custom' && diagramPath) {
       window.api.readIconAsDataUrl(diagramPath, searchIcon.path).then(set)
     }
     return () => {
@@ -102,6 +100,8 @@ export default function SearchOverlay({
     }
   }, [searchIcon, diagramPath])
 
+  // A built-in icon is one of the Tabler pack, drawn like any installed one.
+  const place = searchIcon ? installedIconOf(searchIcon) : undefined
   const preview =
     searchIcon && iconPreview && iconPreview.key === iconRefKey(searchIcon) ? iconPreview.svg : null
 
@@ -158,9 +158,9 @@ export default function SearchOverlay({
             }
           }}
         >
-          {searchIcon?.source === 'installed' ? (
+          {place ? (
             <span className="search-overlay-icon-glyph">
-              <InstalledIconPreview pack={searchIcon.pack} path={searchIcon.path} />
+              <InstalledIconPreview pack={place.pack} path={place.path} />
             </span>
           ) : preview ? (
             searchIcon?.source === 'custom' ? (

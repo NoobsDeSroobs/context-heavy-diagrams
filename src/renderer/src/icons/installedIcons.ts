@@ -55,6 +55,16 @@ export function loadInstalledIcon(pack: string, path: string): Promise<LoadedIco
 // Each drawing of an icon has a number of its own, so two drawings of one icon never share an id.
 let nextDrawing = 0
 
+// The markup of one drawing of an installed icon, for what is not drawn by a component (an export);
+// undefined when the pack or the icon is not there.
+export async function loadInstalledIconMarkup(
+  pack: string,
+  path: string
+): Promise<string | undefined> {
+  const icon = await loadInstalledIcon(pack, path)
+  return icon.ok ? isolateIcon(icon.cleaned, iconPlace(pack, path), nextDrawing++) : undefined
+}
+
 export type InstalledIcon =
   | { state: 'loading' }
   | { state: 'ready'; markup: string }

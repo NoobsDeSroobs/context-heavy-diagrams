@@ -162,6 +162,8 @@ import { useLegendLinePick } from '../legend/useLegendLinePick'
 import { useLegend } from '../legend/useLegend'
 import { useHighlights } from '../tagging/useHighlights'
 import { useDiagnostics } from '../diagnostics/useDiagnostics'
+import { useIconPackProblems } from '../diagnostics/useIconPackProblems'
+import type { IconPackNote } from '@shared/icons/schema'
 import { useEdgeDirectionSets } from '../edges/useEdgeDirectionSets'
 import { useThreatMatrix } from '../threat-matrix/useThreatMatrix'
 import { useDirtyState } from '../document/useDirtyState'
@@ -243,6 +245,9 @@ function CanvasInner(): React.JSX.Element {
   // The `savedWith` of the file that was loaded (ADR 0118); undefined for a new or
   // marker-less diagram. A ref, not state: nothing renders from it.
   const loadedSavedWithRef = useRef<string | undefined>(undefined)
+  // What the loaded file says about the installed icon packs it uses (ADR 0188): the text the
+  // Diagnostics panel shows for a pack this machine lacks, and what a save keeps for it.
+  const [iconPackNotes, setIconPackNotes] = useState<IconPackNote[]>([])
   const [diagramMetadata, setDiagramMetadata] = useState<Record<string, JsonValue>>({})
   const [requiredTags, setRequiredTags] = useState<RequiredTagDefinition[]>([])
   // Line bend preset catalog (ADR 0050) — same file-scoped,
@@ -2554,6 +2559,7 @@ function CanvasInner(): React.JSX.Element {
       setCurrentPath,
       sessionIdRef,
       loadedSavedWithRef,
+      iconPackNotes,
       reloadHubRef,
       hubBaselineRef,
       clearOutsideChanges
@@ -2640,13 +2646,14 @@ function CanvasInner(): React.JSX.Element {
         openedSecurity,
         openedFontFamily
       )
-      // savedWith is stamped by the save itself, and a zIndex the file leaves out is a default (ADR
-      // 0035) that never changes how the diagram looks (diagrams written by hand or by an assistant
-      // usually omit it), so neither counts.
+      // savedWith and iconPacks are written by the save itself, and a zIndex the file leaves out is a
+      // default (ADR 0035) that never changes how the diagram looks (diagrams written by hand or by
+      // an assistant usually omit it), so none of them counts.
       const filledZIndex = new Map(wouldSave.nodes.map((n) => [n.id, n.zIndex]))
       const asRead: DiagramFile = {
         ...diagram,
         savedWith: undefined,
+        iconPacks: undefined,
         nodes: diagram.nodes.map((n) =>
           n.zIndex === undefined ? { ...n, zIndex: filledZIndex.get(n.id) } : n
         )
@@ -2696,6 +2703,7 @@ function CanvasInner(): React.JSX.Element {
       // The version that last wrote this file (ADR 0118): kept so a save does not
       // lower it, and compared with this app's to warn about a newer file.
       loadedSavedWithRef.current = diagram.savedWith
+      setIconPackNotes(diagram.iconPacks ?? [])
       void warnIfSavedWithNewer(path, diagram.savedWith)
       if (opts?.keepNoteShadows) {
         // A reload replaces the diagram only — notes are independent files with their
@@ -3355,13 +3363,18 @@ function CanvasInner(): React.JSX.Element {
     () => orphanedNoteEdits(noteShadows, new Set(nodes.map((n) => n.id))),
     [noteShadows, nodes]
   )
+  // Installed icons this machine cannot draw: a pack that is not installed, an icon not in one.
+  const iconPackProblems = useIconPackProblems(nodes, legend, iconPackNotes)
   // Count on the View-menu "Diagnostics (N)" label — undecided missing
-  // files + staged removals (a nudge to save) + orphaned note edits, never dismissed ones.
+  // files + staged removals (a nudge to save) + orphaned note edits + icon pack problems, never
+  // dismissed ones.
   const diagnosticsCount =
     displayedDiagnostics.length +
     visibleMissingFiles.length +
     stagedFileRemovals.length +
-    orphanedEdits.length
+    orphanedEdits.length +
+    iconPackProblems.missingPacks.length +
+    iconPackProblems.missingIcons.length
 
   // Mode-aware menu bar (ADR 0079): what the Security Matrix persona hides is decided in
   // buildMenus.
@@ -4107,6 +4120,8 @@ function CanvasInner(): React.JSX.Element {
               conformanceResult={conformanceResult}
               layoutEntries={layoutEntries}
               onRevealEdge={revealEdge}
+              iconPackProblems={iconPackProblems}
+              onOpenIconPacks={() => void window.api.openIconPackManager()}
               orphanedEdits={orphanedEdits}
               onCopyOrphanedEdit={(edit) => window.api.copyToClipboard(edit.content)}
               onDiscardOrphanedEdit={(edit) =>

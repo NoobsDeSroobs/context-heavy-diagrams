@@ -31,6 +31,7 @@ import type {
   LegendEntry,
   RequiredTagDefinition
 } from '@shared/diagram'
+import type { IconPackNote } from '@shared/icons/schema'
 import { showAlert } from '../ui/alerts'
 import type { CanvasApi } from '../canvas/canvasApi'
 import { applyMissingFileRemoval } from '../diagnostics/resourceRefs'
@@ -66,6 +67,9 @@ export interface SaveInputs {
   setCurrentPath: React.Dispatch<React.SetStateAction<string | null>>
   sessionIdRef: React.MutableRefObject<string>
   loadedSavedWithRef: React.MutableRefObject<string | undefined>
+  // What the loaded file said about the icon packs it uses; the save rewrites the list (ADR 0188)
+  // and keeps these notes for a pack this machine does not have.
+  iconPackNotes: IconPackNote[]
   // Reloads the diagram file from disk keeping unsaved note edits — set once
   // loadDiagramIntoCanvas exists (it is declared after persistDiagram).
   reloadHubRef: React.MutableRefObject<((path: string) => Promise<void>) | null>
@@ -113,6 +117,7 @@ export function useSave(
     setCurrentPath,
     sessionIdRef,
     loadedSavedWithRef,
+    iconPackNotes,
     reloadHubRef,
     hubBaselineRef,
     clearOutsideChanges
@@ -223,7 +228,8 @@ export function useSave(
           security,
           diagramFontFamily
         ),
-        savedWith: loadedSavedWithRef.current
+        savedWith: loadedSavedWithRef.current,
+        iconPacks: iconPackNotes
       })
       const request: SaveDocumentRequest = {
         diagramPath: path,
@@ -444,6 +450,7 @@ export function useSave(
       clearOutsideChanges,
       sessionIdRef,
       loadedSavedWithRef,
+      iconPackNotes,
       reloadHubRef
     ]
   )

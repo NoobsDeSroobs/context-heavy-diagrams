@@ -55,6 +55,7 @@ import {
 } from './appearance.ts'
 import { MARKER_SHAPES, MARKER_STROKE_WIDTH } from './markerShapes.ts'
 import { plainColor } from './color.ts'
+import { iconParts } from './iconMarkup.ts'
 import {
   buildExportLegendItems,
   stencilKindsUsed,
@@ -69,9 +70,9 @@ import { LINE_HEIGHT_EM, measureText, wrapText, type FontSpec } from './textLayo
 // app and the `chd export` command produce the same image and neither needs a display. Everything
 // here is deterministic: the same inputs give the same bytes.
 
-// A resolved icon. Built-in icons are trusted markup bundled with the app and drawn inline as
-// vector; a custom icon is a data URL drawn as an <image> and never inlined, since a user-supplied
-// SVG may contain script (the canvas's IconSlotView makes the same split).
+// A resolved icon. A pack's icon (the built-in Tabler ones too) is markup the app has already
+// cleaned (ADR 0188) and is drawn inline as vector; a custom icon is a data URL drawn as an <image>
+// and never inlined, since a user-supplied SVG may contain script.
 export type IconAsset = { kind: 'svg'; markup: string } | { kind: 'image'; dataUrl: string }
 
 export function iconKey(icon: IconRef): string {
@@ -321,15 +322,16 @@ function blockWidthOf(lines: string[], font: FontSpec): number {
 
 const ICON_SIZE = 18
 
-// Tabler's outline icons are 24x24 line drawings in `currentColor`.
+// A pack's icon is drawn as a nested <svg> with its own viewBox and the colours it sets; a shape in
+// `currentColor` takes the text colour of the export (ADR 0188).
 function iconElement(asset: IconAsset, x: number, y: number, size: number, ink: Paint): string {
   if (asset.kind === 'image') {
     if (!/^data:image\//i.test(asset.dataUrl)) return ''
     return `<image href="${esc(asset.dataUrl)}" x="${num(x)}" y="${num(y)}" width="${size}" height="${size}" preserveAspectRatio="xMidYMid meet"/>`
   }
-  const inner = /<svg[^>]*>([\s\S]*)<\/svg>/i.exec(asset.markup)?.[1]
-  if (inner === undefined) return ''
-  return `<svg x="${num(x)}" y="${num(y)}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none"${paintAttrs('stroke', ink)} stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${inner.replace(/currentColor/g, ink.color)}</svg>`
+  const parts = iconParts(asset.markup, esc(ink.color))
+  if (!parts) return ''
+  return `<svg x="${num(x)}" y="${num(y)}" width="${size}" height="${size}" viewBox="${parts.viewBox}" preserveAspectRatio="xMidYMid meet"${parts.attrs}>${parts.inner}</svg>`
 }
 
 const SLOT_OFFSET: Record<IconSlot, (box: LaidOutNode, border: number) => Point> = {

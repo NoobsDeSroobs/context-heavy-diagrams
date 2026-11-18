@@ -10,7 +10,7 @@ The application runs on [Electron](https://www.electronjs.org/) (MIT), which bun
 
 ## Icons
 
-The built-in icon set is [Tabler Icons](https://tabler.io/icons) (`@tabler/icons`, MIT, copyright Paweł Kuna), listed with its license text below. The outline icons are loaded from the package at build time.
+The built-in icon set is [Tabler Icons](https://tabler.io/icons) (`@tabler/icons`, MIT, copyright Paweł Kuna), listed with its license text below. The outline icons come with the app and are installed as the Tabler icon pack.
 
 ## Notation
 

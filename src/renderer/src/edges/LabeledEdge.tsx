@@ -56,8 +56,8 @@ const SELECTED_STROKE_WIDTH_DELTA = 2
 const BEND_POINT_HANDLE_SIZE = 10
 // Draggable segment handle for step/smoothstep routing (ADR 0077) — a short
 // bar laid along the segment, long side across the drag direction.
-const SEGMENT_HANDLE_LONG = 20
-const SEGMENT_HANDLE_SHORT = 6
+const SEGMENT_HANDLE_LONG = 28
+const SEGMENT_HANDLE_SHORT = 10
 // Width of the invisible hover hit-path (ADR 0073) — matches React Flow's
 // own default edge interactionWidth (20) so hovering near the edge behaves
 // the same as clicking near it. Rendered on top of BaseEdge so it, not
@@ -65,6 +65,7 @@ const SEGMENT_HANDLE_SHORT = 6
 // and its pointerenter/leave actually fire; clicks/right-clicks bubble up
 // to React Flow's own `.react-flow__edge` <g> handler unchanged.
 const HOVER_HIT_WIDTH = 20
+const HOVER_GRACE_MS = 150
 
 // Point at an arbitrary fraction of the path's arc length (ADR 0045),
 // also used for the plain midpoint (ratio 0.5), so a label
@@ -141,7 +142,17 @@ function LabeledEdge({
   // rendered below — it used to be a single hoveredEdgeId in Canvas.tsx
   // materialized onto edge.data, which rewrote the whole edges array on
   // every hover.
-  const [hovered, setHovered] = useState(false)
+  const [hovered, setHoveredNow] = useState(false)
+  // Leaving the hover surface ends the hover a moment later, not at once: the segment handles lie
+  // over it, so the pointer leaves the surface just before it lands on a handle, and a handle that
+  // vanished on the way could not be grabbed.
+  const hoverEnd = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const setHovered = useCallback((on: boolean) => {
+    clearTimeout(hoverEnd.current)
+    if (on) setHoveredNow(true)
+    else hoverEnd.current = setTimeout(() => setHoveredNow(false), HOVER_GRACE_MS)
+  }, [])
+  useEffect(() => () => clearTimeout(hoverEnd.current), [])
   const [draggingPointIndex, setDraggingPointIndex] = useState<number | null>(null)
   const [draggingSegmentIndex, setDraggingSegmentIndex] = useState<number | null>(null)
   const bendPointsVisible = hovered || selected || draggingPointIndex !== null
@@ -597,6 +608,10 @@ function LabeledEdge({
                 height: segment.axis === 'h' ? SEGMENT_HANDLE_SHORT : SEGMENT_HANDLE_LONG,
                 transform: `translate(-50%, -50%) translate(${segment.mid.x}px, ${segment.mid.y}px)`
               }}
+              // The handle lies over the edge's hover surface, so reaching it ends the hover there;
+              // it keeps itself shown while the pointer is on it.
+              onPointerEnter={() => setHovered(true)}
+              onPointerLeave={() => setHovered(false)}
               onPointerDown={(event) => onSegmentPointerDown(event, segment)}
             />
           ))}
