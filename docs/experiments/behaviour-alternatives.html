@@ -46,6 +46,11 @@
   .today { outline: 1px dashed var(--muted); outline-offset: -1px; }
   svg text { font-family: system-ui, 'Segoe UI', sans-serif; }
   .mark { color: var(--text); }
+  .triple { margin: 14px 0 22px; }
+  .ttitle { font-weight: 600; margin-bottom: 2px; }
+  .mini { display: flex; gap: 4px; margin-left: 18px; align-items: flex-start; }
+  .mini .cell { padding: 2px; }
+  .mini .cell svg { width: calc(85px * var(--zoom, 1)); }
 </style>
 </head>
 <body data-theme="dark">
@@ -71,9 +76,13 @@
   <p class="note">Each row starts with today's drawing, then ideas borrowed from other places: media players, forms, logic diagrams, UML, signs and everyday icons. Marks are stroked in a 24-unit box, the way the app draws its own. A few change the colour or the outline as well as the mark, and say so.</p>
   <div id="alts"></div>
 
-  <h2>3. One candidate set put together</h2>
-  <p class="note">A pick from each row, so the set can be judged as a whole: user and automatic steps differ by colour as well as mark, the three choices are diamonds told apart by their mark, and start and end differ by shape (a play triangle, a stop square) and not only by green and red. Try Greyscale and Deuteranopia above.</p>
+  <h2>3. Your picks so far</h2>
+  <p class="note">The step shape stays. Stacked layers for the sub-flow, the robot for the automatic step, the play triangle for start and the tick for end are in. The plain circle stays the event; the signal is shown as a trial. The kinds not yet discussed are as today (dashed outline), and so are the three choices until round two below is settled.</p>
   <div id="set"></div>
+
+  <h2>4. Choices, round two</h2>
+  <p class="note">The aim: marks as simple as the originals, with a meaning, and not turned copies of each other (a plus and a cross are the same lines at a different angle). Each set is decision, inclusive choice and parallel, at full size and, to the right of it, at half size, which is how they look zoomed out. Judge the half-size ones first.</p>
+  <div id="triples"></div>
 </main>
 
 <script>
@@ -107,6 +116,16 @@ const MARKS = {
   gateAnd: '<text x="12" y="17" text-anchor="middle" font-size="15" font-weight="700" fill="currentColor" stroke="none">&amp;</text>',
   gateOr: '<text x="12" y="16.5" text-anchor="middle" font-size="12.5" font-weight="700" fill="currentColor" stroke="none">&#8805;1</text>',
   gateXor: '<text x="12" y="16.5" text-anchor="middle" font-size="12.5" font-weight="700" fill="currentColor" stroke="none">=1</text>',
+  // choices, round two: simple silhouettes that cannot be mistaken for a turned copy of each other
+  forkPlain: '<path d="M3 12h7M10 12L20 5M10 12L20 19" stroke-width="2.4"/>',
+  venn: '<circle cx="8.8" cy="12" r="5.6" stroke-width="2.2"/><circle cx="15.2" cy="12" r="5.6" stroke-width="2.2"/>',
+  bars: '<path d="M4 8.5h16M4 15.5h16" stroke-width="2.8"/>',
+  dots1: '<circle cx="5.5" cy="12" r="3" ' + FILLED + '/><circle cx="12" cy="12" r="3"/><circle cx="18.5" cy="12" r="3"/>',
+  dots2: '<circle cx="5.5" cy="12" r="3" ' + FILLED + '/><circle cx="12" cy="12" r="3"/><circle cx="18.5" cy="12" r="3" ' + FILLED + '/>',
+  dots3: '<circle cx="5.5" cy="12" r="3" ' + FILLED + '/><circle cx="12" cy="12" r="3" ' + FILLED + '/><circle cx="18.5" cy="12" r="3" ' + FILLED + '/>',
+  one: '<text x="12" y="18" text-anchor="middle" font-size="19" font-weight="700" fill="currentColor" stroke="none">1</text>',
+  oneOrMore: '<text x="12" y="17.5" text-anchor="middle" font-size="14" font-weight="700" fill="currentColor" stroke="none">1+</text>',
+  every: '<text x="12" y="17.5" text-anchor="middle" font-size="14" font-weight="700" fill="currentColor" stroke="none">all</text>',
   // events
   play: '<path d="M8 5l11 7-11 7z" ' + FILLED + '/>',
   flag: '<path d="M6 21V4M6 5h11l-2.5 4 2.5 4H6"/>',
@@ -174,11 +193,14 @@ function draw(spec) {
       body += `<rect x="${cx - 23.25}" y="${cy - 23.25}" width="46.5" height="46.5" rx="4" fill="${f}" stroke="${strokeCol}" stroke-width="1.5"/>`;
     } else if (spec.out === 'diamond') {
       body += `<path d="M${cx} ${cy - 24}L${cx + 24} ${cy}L${cx} ${cy + 24}L${cx - 24} ${cy}Z" fill="${f}" stroke="${strokeCol}" stroke-width="1.5" stroke-linejoin="round"/>`;
+      if (spec.inner) body += `<path d="M${cx} ${cy - 15}L${cx + 15} ${cy}L${cx} ${cy + 15}L${cx - 15} ${cy}Z" fill="none" stroke="${strokeCol}" stroke-width="1.5" stroke-linejoin="round"/>`;
+    } else if (spec.out === 'bar') {
+      body += `<rect x="${cx - 6}" y="${cy - 24}" width="12" height="48" rx="3" fill="${f}" stroke="${strokeCol}" stroke-width="1.5"/>`;
     } else {
       body += `<circle cx="${cx}" cy="${cy}" r="${20 - sw / 2}" fill="${f}" stroke="${strokeCol}" stroke-width="${sw}"/>`;
       if (spec.double) body += `<circle cx="${cx}" cy="${cy}" r="${20 - 1.5 - 3 - 1.5}" fill="none" stroke="${strokeCol}" stroke-width="1.5"/>`;
     }
-    if (spec.mark) {
+    if (spec.mark && spec.out !== 'bar') {
       const base = spec.out === 'circle' ? (spec.double ? 0.42 : 0.46) * 40 : spec.out === 'diamond' ? 0.4 * 48 : 0.46 * 48;
       body += markSvg(spec.mark, cx, cy, base * (spec.markScale || 1));
     }
@@ -267,25 +289,35 @@ const ALTS = [
 document.getElementById('alts').innerHTML = ALTS.map(([id, name, today, alts]) =>
   `<div class="row"><div class="name">${name}<em>${today}</em></div>${cell(TODAY[id], 'today', true)}${alts.map(([spec, note]) => cell(spec, note)).join('')}</div>`).join('');
 
-// ---- one candidate set ----
-const diamond = (id, mark, extra = {}) => ({ ...TODAY[id], out: 'diamond', mark, ...extra });
-const SET = {
-  'step': TODAY.step,
-  'step-user': { ...TODAY['step-user'], fill: 'user', stroke: 'user', mark: 'person' },
-  'step-automatic': { ...TODAY['step-automatic'], fill: 'auto', stroke: 'auto', mark: 'terminal' },
-  'step-sub-flow': { ...TODAY['step-sub-flow'], mark: 'nested' },
-  'step-repeat': { ...TODAY['step-repeat'], mark: 'repeat' },
-  'branch-exclusive': diamond('branch-exclusive', 'forkOne'),
-  'branch-inclusive': diamond('branch-inclusive', 'checks'),
-  'branch-parallel': diamond('branch-parallel', 'doubleArrow'),
-  'event-start': { ...TODAY['event-start'], mark: 'play' },
-  'event': { ...TODAY.event, mark: 'bell' },
-  'event-timer': { ...TODAY['event-timer'], mark: 'stopwatch' },
-  'event-message': { ...TODAY['event-message'], mark: 'plane' },
-  'event-end': { ...TODAY['event-end'], mark: 'stop' }
+// ---- your picks so far ----
+const PICK = {
+  'step': TODAY.step, 'step-user': TODAY['step-user'], 'step-automatic': { ...TODAY['step-automatic'], mark: 'robot' },
+  'step-sub-flow': { ...TODAY['step-sub-flow'], mark: 'layers' }, 'step-repeat': TODAY['step-repeat'],
+  'branch-exclusive': TODAY['branch-exclusive'], 'branch-inclusive': TODAY['branch-inclusive'], 'branch-parallel': TODAY['branch-parallel'],
+  'event-start': { ...TODAY['event-start'], mark: 'play' }, 'event': TODAY.event,
+  'event-timer': TODAY['event-timer'], 'event-message': TODAY['event-message'],
+  'event-end': { ...TODAY['event-end'], mark: 'check' }
 };
+const PICKED = new Set(['step', 'step-automatic', 'step-sub-flow', 'event-start', 'event', 'event-end']);
 document.getElementById('set').innerHTML = FAMILIES.map(([name, ids]) =>
-  `<div class="family">${name}</div><div class="strip">${ids.map((id) => cell(SET[id])).join('')}</div>`).join('');
+  `<div class="family">${name}</div><div class="strip">${ids.map((id) => cell(PICK[id], PICKED.has(id) ? 'picked' : 'as today', !PICKED.has(id))).join('')}${name === 'Events' ? cell({ ...TODAY.event, mark: 'ripple' }, 'trial: the signal') : ''}</div>`).join('');
+
+// ---- choices, round two ----
+const ch = (label, mark, out, fill, extra = {}) => ({ out, mark, fill, label, ...extra });
+const TRIPLES = [
+  ['A. Fork, overlap, lines', 'Decision is a sideways fork (one way in, two out). Inclusive is two overlapping circles, the "one or both" of a Venn diagram. Parallel is two lines side by side. Three unrelated silhouettes: a branch, two rings, two bars.',
+    [ch('Decision', 'forkPlain', 'square', 'choice', { markScale: 1.2 }), ch('Inclusive choice', 'venn', 'square', 'choice', { markScale: 1.2 }), ch('Parallel', 'bars', 'square', 'parallel', { markScale: 1.2 })]],
+  ['B. Flowchart and UML shapes', 'The shapes do the work. Decision is the plain diamond every flow chart has. Inclusive is a diamond inside a diamond ("a decision, but more than one may be taken"). Parallel is the thick bar UML uses for a fork or a join. A bar is not a square, so it would need its own frame (ADR 0180 kept the frames square for resizing and connection points).',
+    [ch('Decision', null, 'diamond', 'choice'), ch('Inclusive choice', null, 'diamond', 'choice', { inner: true }), ch('Parallel', null, 'bar', 'parallel')]],
+  ['C. Diamonds with the simple marks', 'The diamond says "decision" before the mark is read, so the marks only have to tell the three apart: fork, overlap, lines.',
+    [ch('Decision', 'forkPlain', 'diamond', 'choice', { markScale: 1.3 }), ch('Inclusive choice', 'venn', 'diamond', 'choice', { markScale: 1.3 }), ch('Parallel', 'bars', 'diamond', 'parallel', { markScale: 1.3 })]],
+  ['D. Dots', 'Three dots, as a radio group or a rating shows a choice: one filled is one chosen, some filled is some, all filled is all. Plain circles, nothing to turn into anything else, but the least distinct at half size.',
+    [ch('Decision', 'dots1', 'square', 'choice', { markScale: 1.2 }), ch('Inclusive choice', 'dots2', 'square', 'choice', { markScale: 1.2 }), ch('Parallel', 'dots3', 'square', 'parallel', { markScale: 1.2 })]],
+  ['E. Counting', 'The number of paths taken: 1, 1+ and all. Short words, readable wherever digits are. The 1 and the 1+ differ only by a plus, which is the problem this round tries to avoid, so this one is here to be rejected or not.',
+    [ch('Decision', 'one', 'square', 'choice', { markScale: 1.1 }), ch('Inclusive choice', 'oneOrMore', 'square', 'choice', { markScale: 1.2 }), ch('Parallel', 'every', 'square', 'parallel', { markScale: 1.25 })]]
+];
+document.getElementById('triples').innerHTML = TRIPLES.map(([title, note, specs]) =>
+  `<div class="triple"><div class="ttitle">${title}</div><p class="note">${note}</p><div class="strip">${specs.map((sp) => cell(sp)).join('')}<div class="mini">${specs.map((sp) => `<div class="cell">${draw(sp)}</div>`).join('')}</div></div></div>`).join('');
 
 // ---- controls ----
 const body = document.body, sheet = document.getElementById('sheet');
