@@ -55,6 +55,7 @@ Complete field-by-field reference. Read the relevant section rather than the who
 | `gravityPresets` | array of GravityPreset | Named bend values for line-node/catmull-rom-edge points — see [Gravity presets](#gravity-presets). Absent/empty means the built-in four shown above. |
 | `maxConnectionPointsPerSide` | number | Per-diagram cap on connection points per side. Absent means "use the opening app's own preference." Lowering it never removes existing points, only stops adding more. |
 | `fontFamily` | string | Font for every label unless the element sets its own `style.fontFamily`. A CSS font-family stack with a generic fallback, e.g. `"'Georgia', serif"`. Absent means "use the opening app's own default font." |
+| `iconPacks` | array | Written by the app on save: the installed icon packs the diagram's icons come from, each `{ "name", "version"?, "ifMissing"? }`. Never write it; leave an existing one as it is. |
 | `edgeDirectionSets` | array of EdgeDirectionSet | Named readings of edge direction — see [Edge direction sets](#edge-direction-sets). Absent/empty means unused. |
 | `activeEdgeDirectionSetId` | string | Which `edgeDirectionSets` entry is currently displayed. Absent means the first set. Edges on disk are always written in the *first* set's orientation regardless of this value once there are 2+ sets. |
 | `security` | object | Threat/risk model — see [Security](#security). Absent means unused (no node has `data.security` either). |
@@ -144,6 +145,11 @@ Bundled icon from [Tabler Icons](https://tabler.io/icons) (MIT, outline style) �
 { "source": "custom", "path": "hello-world/assets/logo.svg" }
 ```
 SVG or PNG, **relative to the diagram file's own directory** (not to the diagram file itself) — by convention inside a sibling folder named after the diagram. Same graceful-if-missing handling as any relative-path reference in this format.
+
+```json
+{ "source": "installed", "pack": "AWS Architecture", "path": "Compute/EC2.svg" }
+```
+An icon from an icon pack installed on the machine that opens the diagram: `pack` is the pack's name, `path` is `<subset folder>/<file>.svg` — exactly those two names, no `..`, no further folders, no backslash. Only write one when the person told you the pack and the path: you cannot list what is installed, and a pack that is missing on their machine shows no icon. Do not write the top-level `iconPacks` list (the app writes it on save) and leave an existing one as it is.
 
 ---
 

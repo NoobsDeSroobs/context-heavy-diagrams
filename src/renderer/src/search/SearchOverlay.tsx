@@ -93,7 +93,7 @@ export default function SearchOverlay({
     }
     if (searchIcon.source === 'builtin') {
       loadBuiltinIconSvg(searchIcon.id)?.then(set)
-    } else if (diagramPath) {
+    } else if (searchIcon.source === 'custom' && diagramPath) {
       window.api.readIconAsDataUrl(diagramPath, searchIcon.path).then(set)
     }
     return () => {

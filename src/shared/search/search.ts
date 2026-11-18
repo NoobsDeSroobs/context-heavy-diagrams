@@ -42,12 +42,14 @@ export function matchesSearchQuery(query: string, element: SearchableElement): b
 }
 
 // Icon-identity search (ADR 0072): pick an icon placed in the diagram and find every node carrying
-// the same one. A built-in icon is identified by its id, a custom one by its relative asset path
-// (both plain strings on IconRef), so "same icon" is exact equality on the (source, id|path) pair,
+// the same one. A built-in icon is identified by its id, a custom one by its relative asset path, an
+// installed one by its pack and path (all plain strings on IconRef), so "same icon" is exact
+// equality on the (source, id|path) pair,
 // with no fuzzy name matching. It is its own one-dimension search, not combined with the free-text
 // query; ADR 0062 defers criteria-combining to a real query language.
 export function iconRefKey(icon: IconRef): string {
-  return icon.source === 'builtin' ? `builtin:${icon.id}` : `custom:${icon.path}`
+  if (icon.source === 'builtin') return `builtin:${icon.id}`
+  return icon.source === 'custom' ? `custom:${icon.path}` : `installed:${icon.pack}:${icon.path}`
 }
 
 export function nodeHasIcon(

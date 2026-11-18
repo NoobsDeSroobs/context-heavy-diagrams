@@ -19,10 +19,10 @@ Everything about where packs live, the reference form, drawing and cleaning icon
 - [x] Icon cleaner (allowlist, per-icon prefix and per-use counter) with tests on hostile and on real vendor SVGs
 - [x] Pack format: `pack.json`, `subset.json`, their reading, the default files and the icon path check (`src/shared/icons/pack.ts`); `docs/icon-packs.md`
 - [x] Install manager window: install (writes the default metadata files), remove, update; staging, cancel, progress; trash with fallback (`src/main/icons/packStore.ts` and `packManager.ts`, own bridge `src/preload/iconPacks.ts`, View > Icon packs)
-- [ ] `IconRef` `installed`, optional used-packs list: schema, `docs/file-format.md`, validator, skill field reference
+- [x] `IconRef` `installed`, optional used-packs list: schema, `docs/file-format.md`, validator (the skill's `validate_chd.mjs`), skill field reference; every place that switched on the icon source now names `installed` (nothing draws one yet)
 - [ ] Picker: collapsible sections per pack and subset, search, lazy previews
 - [ ] Icons follow the text colour in both themes; colours fixed by a pack are kept
-- [ ] Diagnostics error for a missing pack, with a button to open the manager
+- [ ] Diagnostics error for a missing pack, with a button to open the manager; write `iconPacks` on each save from the icons present and the installed list
 - [ ] Tabler as a pack: archive in the installer, first-start question, `builtin` as an alias, the command-line export still drawing it
 - [ ] `My icons`: adding a one-off icon asks for a pack; existing `custom` icons keep working
 - [ ] Example diagram using a small pack made for the purpose ([ADR 0151](../../decisions/0151-every-visible-feature-has-an-example-diagram.md))

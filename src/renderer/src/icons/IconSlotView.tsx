@@ -32,7 +32,7 @@ export default function IconSlotView({
       loadBuiltinIconSvg(icon.id)?.then((s) => {
         if (!cancelled) setSvg(s)
       })
-    } else if (diagramPath) {
+    } else if (icon.source === 'custom' && diagramPath) {
       // A missing custom-icon file just renders nothing (the fallback
       // <span> below) — the Diagnostics "missing files" section is where a
       // dead reference is surfaced (ADR 0084), not an uncaught rejection.

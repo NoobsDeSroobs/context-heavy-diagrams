@@ -300,3 +300,45 @@ test('text has no folder: a path to a missing file is not looked for, and the re
   assert.equal(validateFile(file).warnings.length, 3)
   assert.equal(validateFile(file).notes, undefined)
 })
+
+test('an installed icon needs a pack name and a path of a subset folder and an .svg file', async () => {
+  const icon = (pack, path) => ({ icons: { topLeft: { source: 'installed', pack, path } } })
+  const good = await check([node('a', { data: icon('AWS', 'Compute/EC2.svg') })], [])
+  assert.deepEqual(good.warnings, [])
+  assert.deepEqual(good.errors, [])
+  for (const [pack, path] of [
+    ['AWS', '../EC2.svg'],
+    ['AWS', 'EC2.svg'],
+    ['AWS', 'a/b/c.svg'],
+    ['AWS', 'Compute\\EC2.svg'],
+    ['AWS', 'Compute/EC2.png'],
+    ['AWS', 'Compute/.svg'],
+    ['AWS', 'Compute/CON.svg'],
+    ['AWS', 'Compute/EC2.svg '],
+    ['AWS', '/Compute/EC2.svg'],
+    ['', 'Compute/EC2.svg']
+  ]) {
+    const { warnings, errors } = await check([node('a', { data: icon(pack, path) })], [])
+    assert.deepEqual(errors, [])
+    assert.equal(warnings.length, 1, JSON.stringify([pack, path]))
+    assert.match(warnings[0], /icons\.topLeft.*the icon is not drawn/)
+  }
+})
+
+test('an installed icon is checked in a diagram given as text, and in the legend', () => {
+  const text = JSON.stringify({
+    version: 1,
+    nodes: [],
+    edges: [],
+    legend: [
+      {
+        id: 'l1',
+        kind: 'icon',
+        label: 'x',
+        icon: { source: 'installed', pack: 'AWS', path: '../x.svg' }
+      }
+    ]
+  })
+  const { warnings } = validateText(text)
+  assert.ok(warnings.some((w) => /legend entry 'l1' icon.*not drawn/.test(w)))
+})

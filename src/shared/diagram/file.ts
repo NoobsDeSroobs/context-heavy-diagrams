@@ -3,6 +3,7 @@
 // not as a rewrite. `size`/`rotation` (see ADR 0004), `icons` (see ADR 0006).
 
 import type { EdgeDirectionSet, DiagramEdge } from '../edges/schema.ts'
+import type { IconPackNote } from '../icons/schema.ts'
 import type { LegendEntry } from '../legend/schema.ts'
 import type { DiagramNode, GravityPreset } from '../nodes/schema.ts'
 import type { HighlightDefinition, JsonValue, RequiredTagDefinition } from '../tagging/schema.ts'
@@ -48,6 +49,10 @@ export interface DiagramFile {
   // A raw CSS font-family value, like NodeStyle.fontFamily. Absent means the opening app's own
   // personal default, then the built-in font.
   fontFamily?: string
+  // The installed icon packs the diagram's icons come from, as the app saw them at the last save
+  // (ADR 0188). Information for a machine that lacks a pack, never needed to draw: written from the
+  // icons present on each save, so a reader may leave it out.
+  iconPacks?: IconPackNote[]
   // Named readings of the diagram's edges that differ only in arrow
   // direction — see ADR 0081 and EdgeDirectionSet above. Absent/empty means
   // the feature is unused. A single set names the current reading, adds a
