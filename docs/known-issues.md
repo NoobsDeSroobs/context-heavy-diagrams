@@ -125,7 +125,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **Deliberately not fixed yet:** the author would rather not have OS-dependent hotkeys, so Alt ships on all platforms and this is logged as a potential problem to verify on a Linux machine.
 
-**If it bites:** switch `DUPLICATE_DRAG_MODIFIER` in `src/renderer/src/canvas/useModifierDragDuplicate.ts` to `'ctrlKey'` (one line; also update the `create.duplicateDrag` label in `commands.ts`) — Ctrl+drag is not grabbed by those window managers and nothing else in the app uses it. Choosing the modifier per OS is the alternative the author wants to avoid. Also verify on Linux that `setMenuBarVisibility(false)` in `src/main/windows.ts` keeps Alt from revealing the native menu.
+**If it bites:** switch `DUPLICATE_DRAG_MODIFIER` in `src/renderer/src/canvas/useModifierDragDuplicate.ts` to `'ctrlKey'` (one line; also update the `create.duplicateDrag` label in `commands.ts`) — Ctrl+drag is not grabbed by those window managers and no click or hover use of it conflicts (but Ctrl+drag now also takes along the bend points nearest the dragged element; the two would need telling apart, for example Ctrl+Shift). Choosing the modifier per OS is the alternative the author wants to avoid. Also verify on Linux that `setMenuBarVisibility(false)` in `src/main/windows.ts` keeps Alt from revealing the native menu.
 
 **References:** [ADR 0099](decisions/0099-modifier-drag-duplicate.md), `src/renderer/src/canvas/useModifierDragDuplicate.ts`
 

@@ -38,6 +38,7 @@ import {
 } from '../stencils/kinds.ts'
 import { ANNOTATION_OPERATIONS, startingTags } from './annotations.ts'
 import { routeEdges } from './routeEdges.ts'
+import { edgeShift, nodeShifts, shiftPoints, type PlacedNode } from '../edges/carryPoints.ts'
 import {
   DEFAULT_SIZE,
   EDGE_STYLE,
@@ -469,13 +470,41 @@ function setParentAndKeepPlace(
   node.position = { x: round(origin.x - parentOrigin.x), y: round(origin.y - parentOrigin.y) }
 }
 
+// The points of an edge whose two ends moved by the same amount go with them (ADR 0189): moving a
+// container takes the edges between its children along, so a loop round an element stays round it.
+function carryEdgePoints(model: Model, before: PlacedNode[]): void {
+  const shifts = nodeShifts(before, placedNodes(model))
+  if (shifts.size === 0) return
+  for (const edge of model.edges) {
+    if (!edge.points?.length) continue
+    const by = edgeShift(shifts, edge.source, edge.target)
+    if (by)
+      edge.points = shiftPoints(edge.points, by).map((p) => ({
+        ...p,
+        x: round(p.x),
+        y: round(p.y)
+      }))
+  }
+}
+
+function placedNodes(model: Model): PlacedNode[] {
+  return model.nodes.map((n) => ({
+    id: n.id,
+    position: { ...n.position },
+    ...(n.parentId === undefined ? {} : { parentId: n.parentId }),
+    ...(n.size ? { width: n.size.width, height: n.size.height } : {})
+  }))
+}
+
 function move(model: Model, reader: Reader): OperationResult {
   const node = nodeOnly(model, reader)
   const x = reader.number('x')
   const y = reader.number('y')
   const parent = model.parentOf(node)
   const origin = parent ? model.origin(parent) : { x: 0, y: 0 }
+  const before = placedNodes(model)
   node.position = { x: round(x - origin.x), y: round(y - origin.y) }
+  carryEdgePoints(model, before)
   return { op: 'move', element: briefNode(model.diagram, node) }
 }
 

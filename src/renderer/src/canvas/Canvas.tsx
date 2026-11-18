@@ -79,6 +79,7 @@ import { effectiveGravityPresets } from '../nodes/lineGravityPresets'
 import EdgeMarkerDefs from '../edges/edgeMarkers'
 import CrossingPeekOf from '../edges/CrossingPeekOf'
 import { useModifierHeldClass } from '../edges/useModifierHeldClass'
+import { useCarryEdgePoints } from '../edges/useCarryEdgePoints'
 import { usePrefersReducedMotion } from '../edges/usePrefersReducedMotion'
 import { edgeAnimationIsOn } from '@shared/preferences/preferences'
 import DiagramContext, { type DiagramContextValue } from './DiagramContext'
@@ -216,6 +217,7 @@ function CanvasInner(): React.JSX.Element {
   const { theme, setTheme } = useTheme()
   const [nodes, setNodes, onNodesChangeBase] = useNodesState<Node>([])
   const [edges, setEdges, onEdgesChangeBase] = useEdgesState<Edge>([])
+  const carryPoints = useCarryEdgePoints(nodes, edges, setEdges)
   const [currentPath, setCurrentPath] = useState<string | null>(null)
   // This window's crash-recovery identity before it's ever been saved —
   // see ADR 0040. Assigned by main at window creation, carried
@@ -1950,6 +1952,7 @@ function CanvasInner(): React.JSX.Element {
   // the unsnapped position on release.
   const onNodeDragStop = useCallback(
     (_event: unknown, draggedNode: Node, draggedNodes: Node[]) => {
+      carryPoints.endDrag()
       setAlignmentGuides(null)
       const rawNodesToProcess = draggedNodes.length > 0 ? draggedNodes : [draggedNode]
       const { dx, dy } = computeGroupSnap(draggedNode, rawNodesToProcess)
@@ -1998,7 +2001,16 @@ function CanvasInner(): React.JSX.Element {
         return sortNodesForHierarchy(result)
       })
     },
-    [rfInstance, setNodes, computeGroupSnap]
+    [rfInstance, setNodes, computeGroupSnap, carryPoints]
+  )
+
+  // Ctrl/Cmd held when a drag starts: the points of an edge with only one end in the drag follow
+  // the end they are nearest to.
+  const onNodeDragStart = useCallback(
+    (event: { ctrlKey: boolean; metaKey: boolean }) => {
+      carryPoints.beginDrag(event.ctrlKey || event.metaKey)
+    },
+    [carryPoints]
   )
 
   // Bulk version of the drag-in reparenting above, for a container's
@@ -3707,6 +3719,7 @@ function CanvasInner(): React.JSX.Element {
                   onNodesChange={onNodesChange}
                   onEdgesChange={onEdgesChange}
                   onBeforeDelete={onBeforeDelete}
+                  onNodeDragStart={onNodeDragStart}
                   onNodeDrag={onNodeDrag}
                   onNodeDragStop={onNodeDragStop}
                   onNodeClick={onStyleBrushNodeClick}

@@ -259,6 +259,13 @@ export const COMMANDS = [
     keys: 'Alt+Drag'
   },
   {
+    id: 'create.dragPointsNearest',
+    title:
+      'Drag an element and take along the bend points of its edges that are nearer to it than to the other end',
+    category: 'Connections & creation',
+    keys: 'Ctrl+Drag'
+  },
+  {
     id: 'create.bulk',
     title: 'Create many shapes or containers from a pasted list or table',
     category: 'Connections & creation',
