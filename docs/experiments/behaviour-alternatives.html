@@ -83,6 +83,10 @@
   <h2>4. Choices, round two</h2>
   <p class="note">The aim: marks as simple as the originals, with a meaning, and not turned copies of each other (a plus and a cross are the same lines at a different angle). Each set is decision, inclusive choice and parallel, at full size and, to the right of it, at half size, which is how they look zoomed out. Judge the half-size ones first.</p>
   <div id="triples"></div>
+
+  <h2>5. Choices, round three: one symbol, a count</h2>
+  <p class="note">A fork, a diamond or a square says "this branches"; a count says how many of the paths are taken. <b>1</b> is exactly one (a decision), <b>1+</b> or <b>1&ndash;n</b> is one or more (inclusive), <b>n</b> or <b>all</b> is every one (parallel). The count is the only thing that differs, so there is no turned copy to mix up. Same layout as before: full size, then half size.</p>
+  <div id="counts"></div>
 </main>
 
 <script>
@@ -126,6 +130,22 @@ const MARKS = {
   one: '<text x="12" y="18" text-anchor="middle" font-size="19" font-weight="700" fill="currentColor" stroke="none">1</text>',
   oneOrMore: '<text x="12" y="17.5" text-anchor="middle" font-size="14" font-weight="700" fill="currentColor" stroke="none">1+</text>',
   every: '<text x="12" y="17.5" text-anchor="middle" font-size="14" font-weight="700" fill="currentColor" stroke="none">all</text>',
+  // round three: the same symbol with a count, which says how many paths are taken
+  n1: '<text x="12" y="18" text-anchor="middle" font-size="19" font-weight="700" fill="currentColor" stroke="none">1</text>',
+  n1plus: '<text x="12" y="17.5" text-anchor="middle" font-size="15" font-weight="700" fill="currentColor" stroke="none">1+</text>',
+  n1toN: '<text x="12" y="17" text-anchor="middle" font-size="12" font-weight="700" fill="currentColor" stroke="none">1&#8211;n</text>',
+  nN: '<text x="12" y="17.5" text-anchor="middle" font-size="17" font-weight="700" font-style="italic" fill="currentColor" stroke="none">n</text>',
+  nGe1: '<text x="12" y="17" text-anchor="middle" font-size="13" font-weight="700" fill="currentColor" stroke="none">&#8805;1</text>',
+  nAll: '<text x="12" y="17" text-anchor="middle" font-size="13" font-weight="700" fill="currentColor" stroke="none">all</text>',
+  forkSide1: '<path d="M2 12h4M6 12L11 7.5M6 12l5 4.5" stroke-width="2.2"/><text x="19" y="16.5" text-anchor="middle" font-size="12" font-weight="700" fill="currentColor" stroke="none">1</text>',
+  forkSide1p: '<path d="M2 12h4M6 12L11 7.5M6 12l5 4.5" stroke-width="2.2"/><text x="18.5" y="16" text-anchor="middle" font-size="10.5" font-weight="700" fill="currentColor" stroke="none">1+</text>',
+  forkSideN: '<path d="M2 12h4M6 12L11 7.5M6 12l5 4.5" stroke-width="2.2"/><text x="19" y="16.5" text-anchor="middle" font-size="12" font-weight="700" font-style="italic" fill="currentColor" stroke="none">n</text>',
+  forkOver1: '<path d="M4 7h5M9 7L17 2.8M9 7l8 4.2" stroke-width="2"/><text x="12" y="22" text-anchor="middle" font-size="12" font-weight="700" fill="currentColor" stroke="none">1</text>',
+  forkOver1p: '<path d="M4 7h5M9 7L17 2.8M9 7l8 4.2" stroke-width="2"/><text x="12" y="22" text-anchor="middle" font-size="11" font-weight="700" fill="currentColor" stroke="none">1+</text>',
+  forkOverN: '<path d="M4 7h5M9 7L17 2.8M9 7l8 4.2" stroke-width="2"/><text x="12" y="22" text-anchor="middle" font-size="12" font-weight="700" font-style="italic" fill="currentColor" stroke="none">n</text>',
+  bold1: '<path d="M3 12h6" stroke-width="2"/><path d="M9 12L20 4" stroke-width="3.2"/><path d="M9 12h11" stroke-width="1.2"/><path d="M9 12L20 20" stroke-width="1.2"/>',
+  boldSome: '<path d="M3 12h6" stroke-width="2"/><path d="M9 12L20 4" stroke-width="3.2"/><path d="M9 12h11" stroke-width="1.2"/><path d="M9 12L20 20" stroke-width="3.2"/>',
+  boldAll: '<path d="M3 12h6" stroke-width="2"/><path d="M9 12L20 4" stroke-width="3.2"/><path d="M9 12h11" stroke-width="3.2"/><path d="M9 12L20 20" stroke-width="3.2"/>',
   // events
   play: '<path d="M8 5l11 7-11 7z" ' + FILLED + '/>',
   flag: '<path d="M6 21V4M6 5h11l-2.5 4 2.5 4H6"/>',
@@ -305,19 +325,38 @@ document.getElementById('set').innerHTML = FAMILIES.map(([name, ids]) =>
 // ---- choices, round two ----
 const ch = (label, mark, out, fill, extra = {}) => ({ out, mark, fill, label, ...extra });
 const TRIPLES = [
-  ['A. Fork, overlap, lines', 'Decision is a sideways fork (one way in, two out). Inclusive is two overlapping circles, the "one or both" of a Venn diagram. Parallel is two lines side by side. Three unrelated silhouettes: a branch, two rings, two bars.',
+  ['A. Fork, overlap, lines', 'Decision is a sideways fork (one way in, two out). Inclusive is two overlapping circles, the "one or both" of a Venn diagram. Parallel is two lines side by side. Three unrelated silhouettes: a branch, two rings, two bars. <b>Set aside:</b> a fork is what all three of them do, so it cannot tell them apart.',
     [ch('Decision', 'forkPlain', 'square', 'choice', { markScale: 1.2 }), ch('Inclusive choice', 'venn', 'square', 'choice', { markScale: 1.2 }), ch('Parallel', 'bars', 'square', 'parallel', { markScale: 1.2 })]],
   ['B. Flowchart and UML shapes', 'The shapes do the work. Decision is the plain diamond every flow chart has. Inclusive is a diamond inside a diamond ("a decision, but more than one may be taken"). Parallel is the thick bar UML uses for a fork or a join. A bar is not a square, so it would need its own frame (ADR 0180 kept the frames square for resizing and connection points).',
     [ch('Decision', null, 'diamond', 'choice'), ch('Inclusive choice', null, 'diamond', 'choice', { inner: true }), ch('Parallel', null, 'bar', 'parallel')]],
-  ['C. Diamonds with the simple marks', 'The diamond says "decision" before the mark is read, so the marks only have to tell the three apart: fork, overlap, lines.',
+  ['C. Diamonds with the simple marks', 'The diamond says "decision" before the mark is read, so the marks only have to tell the three apart: fork, overlap, lines. <b>Set aside</b> for the same reason as A.',
     [ch('Decision', 'forkPlain', 'diamond', 'choice', { markScale: 1.3 }), ch('Inclusive choice', 'venn', 'diamond', 'choice', { markScale: 1.3 }), ch('Parallel', 'bars', 'diamond', 'parallel', { markScale: 1.3 })]],
   ['D. Dots', 'Three dots, as a radio group or a rating shows a choice: one filled is one chosen, some filled is some, all filled is all. Plain circles, nothing to turn into anything else, but the least distinct at half size.',
     [ch('Decision', 'dots1', 'square', 'choice', { markScale: 1.2 }), ch('Inclusive choice', 'dots2', 'square', 'choice', { markScale: 1.2 }), ch('Parallel', 'dots3', 'square', 'parallel', { markScale: 1.2 })]],
   ['E. Counting', 'The number of paths taken: 1, 1+ and all. Short words, readable wherever digits are. The 1 and the 1+ differ only by a plus, which is the problem this round tries to avoid, so this one is here to be rejected or not.',
     [ch('Decision', 'one', 'square', 'choice', { markScale: 1.1 }), ch('Inclusive choice', 'oneOrMore', 'square', 'choice', { markScale: 1.2 }), ch('Parallel', 'every', 'square', 'parallel', { markScale: 1.25 })]]
 ];
-document.getElementById('triples').innerHTML = TRIPLES.map(([title, note, specs]) =>
+const renderTriples = (list) => list.map(([title, note, specs]) =>
   `<div class="triple"><div class="ttitle">${title}</div><p class="note">${note}</p><div class="strip">${specs.map((sp) => cell(sp)).join('')}<div class="mini">${specs.map((sp) => `<div class="cell">${draw(sp)}</div>`).join('')}</div></div></div>`).join('');
+document.getElementById('triples').innerHTML = renderTriples(TRIPLES);
+
+const COUNTS = [
+  ['F. Diamond and a digit', 'The flow chart diamond for all three, a digit for the count: 1, 1+, n.',
+    [ch('Decision', 'n1', 'diamond', 'choice', { markScale: 0.95 }), ch('Inclusive choice', 'n1plus', 'diamond', 'choice', { markScale: 0.95 }), ch('Parallel', 'nN', 'diamond', 'parallel', { markScale: 0.95 })]],
+  ['G. Square and a digit', 'The same in the square frames of today, where the mark can be larger.',
+    [ch('Decision', 'n1', 'square', 'choice', { markScale: 1.05 }), ch('Inclusive choice', 'n1plus', 'square', 'choice', { markScale: 1.05 }), ch('Parallel', 'nN', 'square', 'parallel', { markScale: 1.05 })]],
+  ['H. Diamond, words and signs', 'The diamond with 1, &ge;1 and "all": the last reads without knowing the convention.',
+    [ch('Decision', 'n1', 'diamond', 'choice', { markScale: 0.95 }), ch('Inclusive choice', 'nGe1', 'diamond', 'choice', { markScale: 0.95 }), ch('Parallel', 'nAll', 'diamond', 'parallel', { markScale: 0.95 })]],
+  ['I. Square, a range', 'Square frames with 1, 1&ndash;n and n: a range for the in-between case.',
+    [ch('Decision', 'n1', 'square', 'choice', { markScale: 1.05 }), ch('Inclusive choice', 'n1toN', 'square', 'choice', { markScale: 1.1 }), ch('Parallel', 'nN', 'square', 'parallel', { markScale: 1.05 })]],
+  ['J. Fork with the count beside it', 'The fork shows it branches, the count beside it how many branches are taken. In a square frame, so a little smaller.',
+    [ch('Decision', 'forkSide1', 'square', 'choice', { markScale: 1.15 }), ch('Inclusive choice', 'forkSide1p', 'square', 'choice', { markScale: 1.15 }), ch('Parallel', 'forkSideN', 'square', 'parallel', { markScale: 1.15 })]],
+  ['K. Fork with the count under it', 'The same, the count under the fork.',
+    [ch('Decision', 'forkOver1', 'square', 'choice', { markScale: 1.1 }), ch('Inclusive choice', 'forkOver1p', 'square', 'choice', { markScale: 1.1 }), ch('Parallel', 'forkOverN', 'square', 'parallel', { markScale: 1.1 })]],
+  ['L. Fork with the branches drawn bold', 'No digit: of three branches one is bold, some are bold, all are bold. The count is the number of heavy lines. The least readable at half size, here to compare.',
+    [ch('Decision', 'bold1', 'square', 'choice', { markScale: 1.2 }), ch('Inclusive choice', 'boldSome', 'square', 'choice', { markScale: 1.2 }), ch('Parallel', 'boldAll', 'square', 'parallel', { markScale: 1.2 })]]
+];
+document.getElementById('counts').innerHTML = renderTriples(COUNTS);
 
 // ---- controls ----
 const body = document.body, sheet = document.getElementById('sheet');
