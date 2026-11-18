@@ -1,7 +1,7 @@
 # 0190: Ctrl+drag takes the bend points nearest the dragged element along
 
 ## Status
-Accepted (2026-11-19)
+Accepted (2026-11-18)
 Amends: [0189](0189-edge-points-move-with-elements-that-move-together.md) (which leaves the points of an edge with one moved end where they are).
 Superseded by: none
 

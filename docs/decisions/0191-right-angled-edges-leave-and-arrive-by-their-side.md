@@ -1,7 +1,7 @@
 # 0191: Right-angled edges leave and arrive by their side, and every segment can be dragged
 
 ## Status
-Accepted (2026-11-19)
+Accepted (2026-11-18)
 Amends: [0077](0077-orthogonal-edge-segment-dragging.md) (which offered handles only on the segments between two bends, and left the segments touching the source or the target for later).
 Superseded by: none
 
