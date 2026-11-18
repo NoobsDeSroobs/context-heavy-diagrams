@@ -29,7 +29,7 @@ Left for after the first version was merged, by the maintainer's choice, except 
 - [x] `Misc icons`: adding a one-off icon (picker, legend picker, relinking a missing icon) puts it in that pack with no question about which; existing `custom` icons keep working (`main/icons/miscIcon.ts`, `renderer/icons/addMiscIcon.ts`)
 - [ ] Parked: example diagram using a small pack made for the purpose ([ADR 0151](../../decisions/0151-every-visible-feature-has-an-example-diagram.md)), and `examples/README.md` naming it
 - [ ] Parked: offer an update when the app's Tabler is newer than the installed one
-- [ ] Parked: the maintainer's manual checks in the app (the icon pack manager is checked): the first-start Tabler question, adding a one-off icon (picker, legend, relink, PNG), exports opened in draw.io, and a packaged build reading Tabler from `app.asar`
+- [ ] Parked: the maintainer's manual checks in the app (the icon pack manager and the first-start Tabler question are checked): adding a one-off icon (picker, legend, relink, PNG), exports opened in draw.io, and a packaged build reading Tabler from `app.asar`
 - [x] Documentation made right: the skill's field reference, authoring guide and `SKILL.md` (both copies) no longer say new custom icons go in the diagram's `assets/` folder, and the command-line reference says installed-pack icons are left out of its exports
 
 ## Later
