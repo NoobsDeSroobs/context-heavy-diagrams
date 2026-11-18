@@ -26,7 +26,7 @@ import type {
   MetamodelListing,
   MetamodelsFolderInfo
 } from '@shared/conformance/metamodelsFolder'
-import type { InstalledIconResult, PackList } from '@shared/icons/installedPacks'
+import type { AddIconResult, InstalledIconResult, PackList } from '@shared/icons/installedPacks'
 import type { AppPreferences } from '@shared/preferences/preferences'
 import type { SecurityCrawlResult } from '@shared/threat-matrix/threatMatrixMath'
 import type { LinkedSearchLink, LinkedSearchResult } from '@shared/search/linkedSearch'
@@ -60,12 +60,8 @@ const api = {
     return ipcRenderer.invoke('document:planSaveAs', request)
   },
 
-  // Custom icons — see docs/decisions/0006-icon-storage-model.md. All three
-  // need the diagram's own path to resolve its sibling assets/ folder.
-  pickAndCopyCustomIcon(diagramPath: string): Promise<string | null> {
-    return ipcRenderer.invoke('icons:pickAndCopyCustom', diagramPath)
-  },
-
+  // Custom icons (docs/decisions/0006-icon-storage-model.md) are only read and listed now: both need
+  // the diagram's own path to resolve its sibling assets/ folder. A new icon goes into a pack.
   listCustomIcons(diagramPath: string): Promise<string[]> {
     return ipcRenderer.invoke('icons:listCustom', diagramPath)
   },
@@ -87,6 +83,12 @@ const api = {
   // One icon of an installed pack, as the file has it (ADR 0188); the page cleans it before drawing.
   readInstalledIcon(pack: string, path: string): Promise<InstalledIconResult> {
     return ipcRenderer.invoke('iconPacks:readIcon', pack, path)
+  },
+
+  // Asks the person for an icon file and adds it to the Misc icons pack (ADR 0188). It sends nothing
+  // and can write into that one pack only; every other change to a pack is the manager's.
+  addMiscIcon(): Promise<AddIconResult> {
+    return ipcRenderer.invoke('iconPacks:addMisc')
   },
 
   onIconPacksChanged(callback: () => void): () => void {

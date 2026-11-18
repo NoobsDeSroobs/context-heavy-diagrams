@@ -1,10 +1,11 @@
 import { app, BrowserWindow, dialog, ipcMain, shell, type IpcMainInvokeEvent } from 'electron'
 import { randomUUID } from 'crypto'
-import { mkdir, readFile, rm, writeFile } from 'fs/promises'
-import { join } from 'path'
+import { mkdir, readFile, rm, stat, writeFile } from 'fs/promises'
+import { basename, join } from 'path'
 import { is } from '@electron-toolkit/utils'
 import icon from '../../../resources/icon.png?asset'
 import type {
+  AddIconResult,
   InstalledIconResult,
   InstallProgress,
   InstallResult,
@@ -14,6 +15,7 @@ import type {
 import { TABLER_PACK } from '@shared/icons/iconRefs'
 import { isSafeExternalUrl, isSameDocument } from '../navigationGuard'
 import { installPack, listPacks, packFoldersByName, readPackIcon, removePack } from './packStore'
+import { addMiscIcon, iconSvgFromFile } from './miscIcon'
 import { stageTablerPack, tablerPackageFolder } from './tablerPack'
 
 // The icon pack manager (ADR 0188): the one place packs are installed, updated and removed. Its own
@@ -24,6 +26,9 @@ import { stageTablerPack, tablerPackageFolder } from './tablerPack'
 export function iconPacksFolder(): string {
   return join(app.getPath('userData'), 'icon-packs')
 }
+
+// A chosen file bigger than this is not read: a PNG grows by a third once written into an SVG.
+const MAX_PICKED_ICON_BYTES = 2_000_000
 
 let managerWindow: BrowserWindow | null = null
 // The install under way, if any: the manager runs one at a time.
@@ -199,6 +204,34 @@ export function registerIconPackHandlers(): void {
       return readPackIcon(iconPacksFolder(), folder, path)
     }
   )
+
+  // Adds one icon the person chooses to the Misc icons pack. The editor window sends nothing: the
+  // file comes from a native dialog, and it can only ever be written into that one pack.
+  ipcMain.handle('iconPacks:addMisc', async (event): Promise<AddIconResult> => {
+    const parent = BrowserWindow.fromWebContents(event.sender) ?? undefined
+    const options = {
+      title: 'Choose an icon',
+      properties: ['openFile' as const],
+      filters: [{ name: 'Icon', extensions: ['svg', 'png'] }]
+    }
+    const picked = parent
+      ? await dialog.showOpenDialog(parent, options)
+      : await dialog.showOpenDialog(options)
+    if (picked.canceled || picked.filePaths.length === 0) return { status: 'cancelled' }
+    const file = picked.filePaths[0]
+    try {
+      if ((await stat(file)).size > MAX_PICKED_ICON_BYTES) {
+        return { status: 'failed', message: `${basename(file)} is larger than an icon may be.` }
+      }
+      const svg = iconSvgFromFile(basename(file), await readFile(file))
+      if (!svg.ok) return { status: 'failed', message: svg.message }
+      const result = await addMiscIcon(iconPacksFolder(), basename(file), svg.svg)
+      if (result.status === 'added') announceChange()
+      return result
+    } catch (error) {
+      return { status: 'failed', message: error instanceof Error ? error.message : String(error) }
+    }
+  })
 
   ipcMain.handle('iconPacks:list', async (): Promise<PackList> => {
     names = null

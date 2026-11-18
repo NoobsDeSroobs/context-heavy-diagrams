@@ -53,6 +53,12 @@ export type InstallResult =
       skipped: string[]
     }
 
+// The outcome of adding one icon to the Misc icons pack: what a diagram stores to refer to it.
+export type AddIconResult =
+  | { status: 'cancelled' }
+  | { status: 'failed'; message: string }
+  | { status: 'added'; pack: string; path: string }
+
 // One icon read from an installed pack (ADR 0188). The text is the file as it is: the renderer
 // cleans it before drawing. `no-pack` and `no-icon` are what a diagnostic tells apart; `refused` is a
 // path or file the app will not use at all.

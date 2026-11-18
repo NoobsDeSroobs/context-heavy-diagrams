@@ -2,7 +2,7 @@
 // The icon pack manager has its own bridge (iconPacks.ts, ADR 0112): the only one that installs and
 // removes packs. This keeps it honest: it exposes exactly what the manager's code can reach, shares
 // its channels with the editor's bridge where the methods are shared, and the editor's bridge has
-// no way to change a pack.
+// no way to change a pack except adding one icon the person chooses to the Misc icons pack.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { existsSync, readFileSync, statSync } from 'node:fs'
@@ -101,6 +101,22 @@ test('only the manager can install, cancel or remove a pack', () => {
   ])
   const editorChannels = new Set(editor.values())
   for (const name of only) assert.ok(!editorChannels.has(manager.get(name)), name)
+})
+
+test('the editor bridge can write one thing to the packs: an icon the person picks, with no argument', () => {
+  const text = readFileSync(join(src, 'preload', 'index.ts'), 'utf-8')
+  const channels = [...editor.values()].filter((c) => c?.startsWith('iconPacks:'))
+  assert.deepEqual(channels.sort(), [
+    'iconPacks:addMisc',
+    'iconPacks:changed',
+    'iconPacks:list',
+    'iconPacks:open',
+    'iconPacks:readIcon'
+  ])
+  assert.match(
+    text,
+    /addMiscIcon\(\): Promise<AddIconResult> \{\s+return ipcRenderer\.invoke\('iconPacks:addMisc'\)/
+  )
 })
 
 test('the manager bridge reads and writes nothing but packs', () => {
