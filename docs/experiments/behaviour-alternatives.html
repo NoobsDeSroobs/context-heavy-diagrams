@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Behaviour kinds: today and alternatives</title>
+<!--
+  A design sheet for the Behaviour kinds (the 13 steps, choices and events): what they look like today at
+  the top, then alternative marks, shapes and colours kind by kind, then one candidate set put together.
+  Nothing here is wired into the app; it is for looking at. Open the file in a browser. The switches at
+  the top change the theme, the size (to judge them at canvas size and zoomed out) and simulate
+  greyscale and colour blindness.
+-->
+<style>
+  :root { color-scheme: dark; }
+  [data-theme='dark'] {
+    --bg: #141414; --card: #1b1b1b; --line: #2c2c2c; --text: #e8e8dd; --muted: #8e949b; --stroke: #515c67; --entity-fill: #222222;
+    --f-step: #1d3b40; --s-step: #4e939e; --f-choice: #4d3d14; --f-parallel: #1c3550; --f-start: #1f3d26;
+    --f-event: #2f3350; --f-end: #4a2326; --f-user: #4a3217; --s-user: #c98a45; --f-auto: #1f2f4a; --s-auto: #5c88c4;
+  }
+  [data-theme='light'] {
+    color-scheme: light;
+    --bg: #ffffff; --card: #f6f6f4; --line: #dcdcd6; --text: #222222; --muted: #6b7078; --stroke: #8a929a; --entity-fill: #f8f8f8;
+    --f-step: #d3e9ec; --s-step: #3c7c87; --f-choice: #f2e3b4; --f-parallel: #cddff0; --f-start: #cde8d2;
+    --f-event: #d8dbef; --f-end: #f1cfd1; --f-user: #f6dcbb; --s-user: #b5702b; --f-auto: #d3def2; --s-auto: #3f6aa8;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, 'Segoe UI', sans-serif; }
+  header { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); padding: 10px 20px; display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; }
+  header h1 { font-size: 15px; margin: 0 8px 0 0; font-weight: 600; }
+  .group { display: flex; align-items: center; gap: 6px; }
+  .group span { color: var(--muted); font-size: 12px; margin-right: 2px; }
+  button { font: inherit; font-size: 12px; color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 5px; padding: 3px 9px; cursor: pointer; }
+  button[aria-pressed='true'] { border-color: var(--s-step); background: var(--f-step); }
+  main { padding: 18px 20px 60px; max-width: 1180px; }
+  h2 { font-size: 16px; margin: 34px 0 4px; }
+  p.note { color: var(--muted); margin: 0 0 12px; max-width: 80ch; }
+  .family { margin: 14px 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .strip { display: flex; flex-wrap: wrap; gap: 6px; }
+  .cell { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 4px 4px 8px; text-align: center; }
+  .cell svg { display: block; width: calc(170px * var(--zoom, 1)); height: auto; }
+  .cell small { display: block; color: var(--muted); font-size: 11px; line-height: 1.3; padding: 0 6px; max-width: calc(170px * var(--zoom, 1)); margin: 0 auto; }
+  .row { display: flex; align-items: flex-start; gap: 6px; margin: 6px 0; flex-wrap: wrap; }
+  .row .name { width: 120px; flex: none; padding-top: 10px; font-weight: 600; }
+  .row .name em { display: block; font-weight: 400; font-style: normal; color: var(--muted); font-size: 11px; }
+  .today { outline: 1px dashed var(--muted); outline-offset: -1px; }
+  svg text { font-family: system-ui, 'Segoe UI', sans-serif; }
+  .mark { color: var(--text); }
+</style>
+</head>
+<body data-theme="dark">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="f-deut"><feColorMatrix type="matrix" values="0.625 0.375 0 0 0  0.7 0.3 0 0 0  0 0.3 0.7 0 0  0 0 0 1 0"/></filter>
+  <filter id="f-prot"><feColorMatrix type="matrix" values="0.567 0.433 0 0 0  0.558 0.442 0 0 0  0 0.242 0.758 0 0  0 0 0 1 0"/></filter>
+  <filter id="f-trit"><feColorMatrix type="matrix" values="0.95 0.05 0 0 0  0 0.433 0.567 0 0  0 0.475 0.525 0 0  0 0 0 1 0"/></filter>
+</svg>
+<header>
+  <h1>Behaviour kinds: today and alternatives</h1>
+  <div class="group" data-ctl="theme"><span>Theme</span><button data-v="dark" aria-pressed="true">Dark</button><button data-v="light" aria-pressed="false">Light</button></div>
+  <div class="group" data-ctl="vision"><span>Vision</span>
+    <button data-v="none" aria-pressed="true">Normal</button><button data-v="grey" aria-pressed="false">Greyscale</button>
+    <button data-v="deut" aria-pressed="false">Deuteranopia</button><button data-v="prot" aria-pressed="false">Protanopia</button><button data-v="trit" aria-pressed="false">Tritanopia</button></div>
+  <div class="group" data-ctl="zoom"><span>Size</span><button data-v="0.5" aria-pressed="false">50%</button><button data-v="1" aria-pressed="true">100%</button><button data-v="1.5" aria-pressed="false">150%</button></div>
+</header>
+<main id="sheet">
+  <h2>1. Today</h2>
+  <p class="note">The 13 kinds as the app draws them now, at the sizes a new one gets (steps 150 &times; 56, choices 48, events 40). The dashed outline marks the current design wherever it appears below.</p>
+  <div id="today"></div>
+
+  <h2>2. Alternatives, kind by kind</h2>
+  <p class="note">Each row starts with today's drawing, then ideas borrowed from other places: media players, forms, logic diagrams, UML, signs and everyday icons. Marks are stroked in a 24-unit box, the way the app draws its own. A few change the colour or the outline as well as the mark, and say so.</p>
+  <div id="alts"></div>
+
+  <h2>3. One candidate set put together</h2>
+  <p class="note">A pick from each row, so the set can be judged as a whole: user and automatic steps differ by colour as well as mark, the three choices are diamonds told apart by their mark, and start and end differ by shape (a play triangle, a stop square) and not only by green and red. Try Greyscale and Deuteranopia above.</p>
+  <div id="set"></div>
+</main>
+
+<script>
+// ---- marks: raw SVG in a 24-unit box; stroke is inherited, `fill` is set where a part is solid ----
+const FILLED = 'fill="currentColor"';
+function arrow(x1, y1, x2, y2, opts = {}) {
+  const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy), ux = dx / len, uy = dy / len;
+  const h = 4.2, w = 2.4, bx = x2 - ux * h, by = y2 - uy * h;
+  const dash = opts.dash ? ' stroke-dasharray="1.6 2.6"' : '';
+  return `<path d="M${x1} ${y1}L${bx.toFixed(2)} ${by.toFixed(2)}"${dash}/>` +
+    `<path d="M${x2} ${y2}L${(bx - uy * w).toFixed(2)} ${(by + ux * w).toFixed(2)}L${(bx + uy * w).toFixed(2)} ${(by - ux * w).toFixed(2)}z" ${FILLED} stroke-width="1"/>`;
+}
+const MARKS = {
+  // today
+  cross: '<path d="M6 6L18 18M6 18L18 6"/>',
+  plus: '<path d="M5 12H19M12 5V19"/>',
+  ring: '<circle cx="12" cy="12" r="6.5"/>',
+  clock: '<circle cx="12" cy="12" r="8"/><path d="M12 8v4.5l3 2"/>',
+  envelope: '<path d="M4 7h16v10H4zM4 7l8 6l8-6"/>',
+  person: '<path d="M12 5a3.2 3.2 0 1 0 0 6.4a3.2 3.2 0 1 0 0-6.4M5.5 20c0-4.2 3-6 6.5-6s6.5 1.8 6.5 6"/>',
+  gear: '<path d="M12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/>',
+  'sub-flow': '<path d="M5 5h14v14H5zM12 8.5v7M8.5 12h7"/>',
+  loop: '<path d="M18.5 11a6.5 6.5 0 0 0-11-3.5M7 4v4h4M5.5 13a6.5 6.5 0 0 0 11 3.5M17 20v-4h-4"/>',
+  // choices
+  forkOne: '<path d="M3 12h6"/>' + arrow(9, 12, 20.5, 5.5) + arrow(9, 12, 20.5, 18.5, { dash: true }),
+  forkBoth: '<path d="M3 12h6"/>' + arrow(9, 12, 20.5, 5.5) + arrow(9, 12, 20.5, 18.5),
+  forkRing: '<path d="M3 12h4"/><circle cx="9" cy="12" r="2.2"/>' + arrow(10.6, 11, 20.5, 5.5) + arrow(10.6, 13, 20.5, 18.5),
+  radio: [5.5, 12, 18.5].map((y, i) => `<circle cx="6" cy="${y}" r="2.8" ${i === 0 ? FILLED : ''}/><path d="M12 ${y}H20.5"/>`).join(''),
+  checks: [5.5, 12, 18.5].map((y, i) => `<rect x="3" y="${y - 3}" width="6" height="6" rx="1"/>${i !== 1 ? `<path d="M4.4 ${y}l1.5 1.6 2.3-3.1" stroke-width="1.4"/>` : ''}<path d="M12.5 ${y}H21"/>`).join(''),
+  doubleArrow: arrow(3, 7.5, 20.5, 7.5) + arrow(3, 16.5, 20.5, 16.5),
+  gateAnd: '<text x="12" y="17" text-anchor="middle" font-size="15" font-weight="700" fill="currentColor" stroke="none">&amp;</text>',
+  gateOr: '<text x="12" y="16.5" text-anchor="middle" font-size="12.5" font-weight="700" fill="currentColor" stroke="none">&#8805;1</text>',
+  gateXor: '<text x="12" y="16.5" text-anchor="middle" font-size="12.5" font-weight="700" fill="currentColor" stroke="none">=1</text>',
+  // events
+  play: '<path d="M8 5l11 7-11 7z" ' + FILLED + '/>',
+  flag: '<path d="M6 21V4M6 5h11l-2.5 4 2.5 4H6"/>',
+  power: '<path d="M12 3v8M7.2 6.5a7 7 0 1 0 9.6 0"/>',
+  stop: '<rect x="6" y="6" width="12" height="12" rx="1.5" ' + FILLED + '/>',
+  umlFinal: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.2" ' + FILLED + '/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  bell: '<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/>',
+  bolt: '<path d="M13 3L5.5 13.5H11L10 21l8-11h-5.5z"/>',
+  ripple: '<circle cx="12" cy="12" r="1.8" ' + FILLED + '/><path d="M8 8a5.7 5.7 0 0 0 0 8M16 8a5.7 5.7 0 0 1 0 8M5.2 5.2a9.6 9.6 0 0 0 0 13.6M18.8 5.2a9.6 9.6 0 0 1 0 13.6"/>',
+  stopwatch: '<circle cx="12" cy="13.5" r="7"/><path d="M12 13.5V9.5M9.5 3h5M12 3v3.5M18 7l1.5-1.5"/>',
+  hourglass: '<path d="M7 4h10M7 20h10M8 4c0 5 4 5 4 8s-4 3-4 8M16 4c0 5-4 5-4 8s4 3 4 8"/>',
+  calendar: '<path d="M4 6.5h16v13.5H4zM4 11h16M8.5 3.5v4M15.5 3.5v4"/>',
+  plane: '<path d="M20.5 3.5L3.5 10.5l6 2.5 2.5 6zM9.5 13L20.5 3.5"/>',
+  bubble: '<path d="M5 5h14v10H11l-4.5 4v-4H5z"/>',
+  // steps
+  cursor: '<path d="M6 3.5l11 8-4.8 1 2.8 5.6-2.4 1.2-2.8-5.6L6 16z"/>',
+  terminal: '<path d="M4.5 7.5l5 4.5-5 4.5M12 18h7.5"/>',
+  chip: '<rect x="7" y="7" width="10" height="10" rx="1.5"/><rect x="10" y="10" width="4" height="4"/><path d="M10 3.5v3.5M14 3.5v3.5M10 17v3.5M14 17v3.5M3.5 10h3.5M3.5 14h3.5M17 10h3.5M17 14h3.5"/>',
+  robot: '<rect x="5" y="8" width="14" height="11" rx="2.5"/><path d="M12 8V4.5M9.5 16.5h5"/><circle cx="9.5" cy="12.5" r="1" ' + FILLED + '/><circle cx="14.5" cy="12.5" r="1" ' + FILLED + '/>',
+  nested: '<rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><rect x="8" y="9" width="8" height="6" rx="1"/>',
+  expand: '<path d="M14 4h6v6M10 20H4v-6M20 4l-6.5 6.5M4 20l6.5-6.5"/>',
+  layers: '<path d="M12 4l8.5 4.5L12 13 3.5 8.5zM3.5 13l8.5 4.5 8.5-4.5"/>',
+  repeat: '<path d="M17 2.5l3.5 3.5L17 9.5M3.5 11V9.5A3.5 3.5 0 0 1 7 6h13M7 21.5L3.5 18 7 14.5M20.5 13v1.5A3.5 3.5 0 0 1 17 18H3.5"/>',
+  circArrow: '<path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3M19.5 4.5v4h-4"/>',
+  timesN: '<text x="12" y="17" text-anchor="middle" font-size="13" font-weight="700" fill="currentColor" stroke="none">&#215;n</text>'
+};
+
+// ---- drawing ----
+// spec: { out: 'arrow'|'pentagon'|'stripe'|'square'|'diamond'|'circle', mark, fill, stroke, double, heavy, label, size }
+const BAND = { flat: 16, tip: 28 };
+function arrowBand(left, top, bottom, r) {
+  const mid = (top + bottom) / 2;
+  return `M${left + r} ${top}H${left + BAND.flat}L${left + BAND.tip} ${mid}L${left + BAND.flat} ${bottom}H${left + r}A${r} ${r} 0 0 1 ${left} ${bottom - r}V${top + r}A${r} ${r} 0 0 1 ${left + r} ${top}Z`;
+}
+function markSvg(name, cx, cy, size) {
+  return `<g class="mark" transform="translate(${(cx - size / 2).toFixed(1)} ${(cy - size / 2).toFixed(1)}) scale(${(size / 24).toFixed(3)})" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${MARKS[name]}</g>`;
+}
+const fillVar = (k) => `var(--f-${k})`;
+function draw(spec) {
+  const W = 170, H = 96;
+  let body = '';
+  const strokeCol = spec.stroke ? `var(--s-${spec.stroke})` : 'var(--stroke)';
+  const label = (txt, x, y, anchor = 'middle', size = 11) => `<text x="${x}" y="${y}" text-anchor="${anchor}" font-size="${size}" fill="var(--text)" opacity=".86">${txt}</text>`;
+  if (['arrow', 'pentagon', 'stripe'].includes(spec.out)) {
+    const x = 10, y = 20, w = 150, h = 56, hasMark = !!spec.mark;
+    const f = fillVar(spec.fill);
+    if (spec.out === 'arrow') {
+      body += `<rect x="${x + .75}" y="${y + .75}" width="${w - 1.5}" height="${h - 1.5}" rx="4" fill="${f}" stroke="var(--stroke)" stroke-width="1.5"/>`;
+      body += `<path d="${arrowBand(x + 1, y + 1, y + h - 1, 3)}" fill="${strokeCol}" stroke="none"/>`;
+      body += label(spec.label, hasMark ? (38 + 132) / 2 + 1 : (38 + 158) / 2, y + h / 2 + 4);
+    } else if (spec.out === 'pentagon') {
+      body += `<path d="M${x + 4} ${y + .75}H${x + w - 24}L${x + w - .75} ${y + h / 2}L${x + w - 24} ${y + h - .75}H${x + 4}a3.25 3.25 0 0 1-3.25-3.25V${y + 4}a3.25 3.25 0 0 1 3.25-3.25z" fill="${f}" stroke="${strokeCol}" stroke-width="1.5" stroke-linejoin="round"/>`;
+      body += label(spec.label, hasMark ? 70 : 78, y + h / 2 + 4);
+    } else {
+      body += `<rect x="${x + .75}" y="${y + .75}" width="${w - 1.5}" height="${h - 1.5}" rx="6" fill="${f}" stroke="var(--stroke)" stroke-width="1.5"/>`;
+      body += `<path d="M${x + 7} ${y + .75}H${x + 7}V${y + h - .75}H${x + 7}" stroke="none"/><rect x="${x + 1}" y="${y + 1}" width="7" height="${h - 2}" rx="4" fill="${strokeCol}"/>`;
+      body += label(spec.label, hasMark ? 74 : 86, y + h / 2 + 4);
+    }
+    if (hasMark) body += markSvg(spec.mark, x + w - 8 - 10, y + h / 2, 20);
+  } else {
+    const cx = W / 2, cy = 36, f = fillVar(spec.fill);
+    const sw = spec.heavy ? 3.75 : 1.5;
+    if (spec.out === 'square') {
+      body += `<rect x="${cx - 23.25}" y="${cy - 23.25}" width="46.5" height="46.5" rx="4" fill="${f}" stroke="${strokeCol}" stroke-width="1.5"/>`;
+    } else if (spec.out === 'diamond') {
+      body += `<path d="M${cx} ${cy - 24}L${cx + 24} ${cy}L${cx} ${cy + 24}L${cx - 24} ${cy}Z" fill="${f}" stroke="${strokeCol}" stroke-width="1.5" stroke-linejoin="round"/>`;
+    } else {
+      body += `<circle cx="${cx}" cy="${cy}" r="${20 - sw / 2}" fill="${f}" stroke="${strokeCol}" stroke-width="${sw}"/>`;
+      if (spec.double) body += `<circle cx="${cx}" cy="${cy}" r="${20 - 1.5 - 3 - 1.5}" fill="none" stroke="${strokeCol}" stroke-width="1.5"/>`;
+    }
+    if (spec.mark) {
+      const base = spec.out === 'circle' ? (spec.double ? 0.42 : 0.46) * 40 : spec.out === 'diamond' ? 0.4 * 48 : 0.46 * 48;
+      body += markSvg(spec.mark, cx, cy, base * (spec.markScale || 1));
+    }
+    body += label(spec.label, cx, 82);
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${spec.label}">${body}</svg>`;
+}
+const cell = (spec, note, isToday) => `<div class="cell${isToday ? ' today' : ''}">${draw(spec)}${note ? `<small>${note}</small>` : ''}</div>`;
+
+// ---- the kinds as they are today ----
+const S = (label, mark) => ({ out: 'arrow', mark, fill: 'step', stroke: 'step', label });
+const C = (label, mark, fill = 'choice') => ({ out: 'square', mark, fill, label });
+const E = (label, fill, extra = {}) => ({ out: 'circle', fill, label, ...extra });
+const TODAY = {
+  'step': S('Step'), 'step-user': S('User step', 'person'), 'step-automatic': S('Automatic step', 'gear'),
+  'step-sub-flow': S('Sub-flow', 'sub-flow'), 'step-repeat': S('Repeated step', 'loop'),
+  'branch-exclusive': C('Decision', 'cross'), 'branch-inclusive': C('Inclusive choice', 'ring'), 'branch-parallel': C('Parallel', 'plus', 'parallel'),
+  'event-start': E('Start', 'start'), 'event': E('Event', 'event', { double: true }),
+  'event-timer': E('Timer', 'event', { double: true, mark: 'clock' }), 'event-message': E('Message', 'event', { double: true, mark: 'envelope' }),
+  'event-end': E('End', 'end', { heavy: true })
+};
+const FAMILIES = [
+  ['Steps', ['step', 'step-user', 'step-automatic', 'step-sub-flow', 'step-repeat']],
+  ['Branches', ['branch-exclusive', 'branch-inclusive', 'branch-parallel']],
+  ['Events', ['event-start', 'event', 'event-timer', 'event-message', 'event-end']]
+];
+document.getElementById('today').innerHTML = FAMILIES.map(([name, ids]) =>
+  `<div class="family">${name}</div><div class="strip">${ids.map((id) => cell(TODAY[id], '', true)).join('')}</div>`).join('');
+
+// ---- the alternatives ----
+// each: [spec, note]
+const withMark = (id, mark, over = {}, note = '') => [{ ...TODAY[id], mark, ...over }, note];
+const ALTS = [
+  ['step', 'Step', 'a plain step has no mark', [
+    [{ ...TODAY.step, out: 'pentagon' }, 'A pointed box, like the process arrows in slide software: the outline says "a step in a flow".'],
+    [{ ...TODAY.step, out: 'stripe' }, 'A card with a coloured stripe on the left: quieter, and the stripe colour can carry the actor.']]],
+  ['step-user', 'User step', 'today: person', [
+    withMark('step-user', 'person', { fill: 'user', stroke: 'user' }, 'The same person, but the whole step is warm: the human / machine split is the most important one in a process, so it should be the loudest.'),
+    withMark('step-user', 'cursor', { fill: 'user', stroke: 'user' }, 'A mouse pointer: someone clicks, types, decides.')]],
+  ['step-automatic', 'Automatic step', 'today: gear', [
+    withMark('step-automatic', 'terminal', { fill: 'auto', stroke: 'auto' }, 'A command prompt, in a cool colour that is the opposite of the user step.'),
+    withMark('step-automatic', 'chip', { fill: 'auto', stroke: 'auto' }, 'A chip: hardware, a system.'),
+    withMark('step-automatic', 'robot', { fill: 'auto', stroke: 'auto' }, 'A robot: friendlier, says "done by something automatic".')]],
+  ['step-sub-flow', 'Sub-flow', 'today: square with a plus', [
+    withMark('step-sub-flow', 'nested', {}, 'A box inside a box: it contains another flow. Frees the plus for parallel only.'),
+    withMark('step-sub-flow', 'expand', {}, 'Corners pulling outwards: "open this".'),
+    withMark('step-sub-flow', 'layers', {}, 'A stack: layers of detail underneath.')]],
+  ['step-repeat', 'Repeated step', 'today: two arrows round', [
+    withMark('step-repeat', 'repeat', {}, 'The repeat button of every media player.'),
+    withMark('step-repeat', 'circArrow', {}, 'One arrow round: simpler at small size.'),
+    withMark('step-repeat', 'timesN', {}, 'A count, "&times;n": says how, not only that.')]],
+  ['branch-exclusive', 'Decision', 'today: square with a cross', [
+    withMark('branch-exclusive', 'forkOne', {}, 'One way in, two out, one of them dashed: only one path is taken. The cross also read as "cancel".'),
+    withMark('branch-exclusive', 'forkOne', { out: 'diamond' }, 'The same fork in the diamond everyone already knows from flow charts.'),
+    withMark('branch-exclusive', 'radio', {}, 'Radio buttons from every form: pick exactly one.'),
+    withMark('branch-exclusive', 'gateXor', { markScale: 1.2 }, 'The IEC logic-gate label for "exactly one". Exact, but only for engineers.')]],
+  ['branch-inclusive', 'Inclusive choice', 'today: square with a ring', [
+    withMark('branch-inclusive', 'checks', {}, 'Checkboxes from every form: pick any number, including all.'),
+    withMark('branch-inclusive', 'checks', { out: 'diamond' }, 'Checkboxes in a diamond.'),
+    withMark('branch-inclusive', 'forkRing', {}, 'The fork with both paths drawn and a ring on the junction (an "or" node).'),
+    withMark('branch-inclusive', 'gateOr', { markScale: 1.2 }, 'The IEC logic-gate label for "one or more".')]],
+  ['branch-parallel', 'Parallel', 'today: square with a plus', [
+    withMark('branch-parallel', 'doubleArrow', {}, 'Two arrows side by side: both at the same time. No plus, so no clash with sub-flow.'),
+    withMark('branch-parallel', 'forkBoth', {}, 'The fork with both paths solid: all are taken.'),
+    withMark('branch-parallel', 'gateAnd', { markScale: 1.2 }, 'The logic-gate "and".')]],
+  ['event-start', 'Start', 'today: plain circle, green', [
+    withMark('event-start', 'play', {}, 'A play triangle: the start of a recording, instantly understood.'),
+    withMark('event-start', 'flag', {}, 'A flag at the start of a race.'),
+    withMark('event-start', 'power', {}, 'A power button.')]],
+  ['event', 'Event', 'today: plain double ring', [
+    withMark('event', 'bell', {}, 'A bell: something happened and you are told.'),
+    withMark('event', 'bolt', {}, 'A bolt: a trigger.'),
+    withMark('event', 'ripple', {}, 'A signal arriving.')]],
+  ['event-timer', 'Timer', 'today: clock', [
+    withMark('event-timer', 'stopwatch', {}, 'A stopwatch: a clock face can be a wall clock or a timeout; this is a duration.'),
+    withMark('event-timer', 'hourglass', {}, 'An hourglass: waiting.'),
+    withMark('event-timer', 'calendar', {}, 'A calendar: a date or a schedule.')]],
+  ['event-message', 'Message', 'today: envelope', [
+    withMark('event-message', 'plane', {}, 'A paper plane: sent.'),
+    withMark('event-message', 'bubble', {}, 'A speech bubble: a message in the chat sense.')]],
+  ['event-end', 'End', 'today: heavy red circle', [
+    withMark('event-end', 'stop', {}, 'A stop square: the stop button, and different from the start by shape, not only by colour.'),
+    withMark('event-end', 'umlFinal', {}, 'The UML final node: a ring with a dot.'),
+    withMark('event-end', 'check', {}, 'A tick: done.')]]
+];
+document.getElementById('alts').innerHTML = ALTS.map(([id, name, today, alts]) =>
+  `<div class="row"><div class="name">${name}<em>${today}</em></div>${cell(TODAY[id], 'today', true)}${alts.map(([spec, note]) => cell(spec, note)).join('')}</div>`).join('');
+
+// ---- one candidate set ----
+const diamond = (id, mark, extra = {}) => ({ ...TODAY[id], out: 'diamond', mark, ...extra });
+const SET = {
+  'step': TODAY.step,
+  'step-user': { ...TODAY['step-user'], fill: 'user', stroke: 'user', mark: 'person' },
+  'step-automatic': { ...TODAY['step-automatic'], fill: 'auto', stroke: 'auto', mark: 'terminal' },
+  'step-sub-flow': { ...TODAY['step-sub-flow'], mark: 'nested' },
+  'step-repeat': { ...TODAY['step-repeat'], mark: 'repeat' },
+  'branch-exclusive': diamond('branch-exclusive', 'forkOne'),
+  'branch-inclusive': diamond('branch-inclusive', 'checks'),
+  'branch-parallel': diamond('branch-parallel', 'doubleArrow'),
+  'event-start': { ...TODAY['event-start'], mark: 'play' },
+  'event': { ...TODAY.event, mark: 'bell' },
+  'event-timer': { ...TODAY['event-timer'], mark: 'stopwatch' },
+  'event-message': { ...TODAY['event-message'], mark: 'plane' },
+  'event-end': { ...TODAY['event-end'], mark: 'stop' }
+};
+document.getElementById('set').innerHTML = FAMILIES.map(([name, ids]) =>
+  `<div class="family">${name}</div><div class="strip">${ids.map((id) => cell(SET[id])).join('')}</div>`).join('');
+
+// ---- controls ----
+const body = document.body, sheet = document.getElementById('sheet');
+document.querySelectorAll('[data-ctl]').forEach((group) => {
+  group.addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    group.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    const v = b.dataset.v, ctl = group.dataset.ctl;
+    if (ctl === 'theme') body.dataset.theme = v;
+    if (ctl === 'zoom') sheet.style.setProperty('--zoom', v);
+    if (ctl === 'vision') sheet.style.filter = { none: '', grey: 'grayscale(1)', deut: 'url(#f-deut)', prot: 'url(#f-prot)', trit: 'url(#f-trit)' }[v];
+  });
+});
+</script>
+</body>
+</html>
