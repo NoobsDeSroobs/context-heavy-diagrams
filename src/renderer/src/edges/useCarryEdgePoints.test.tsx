@@ -2,7 +2,7 @@ import { act, renderHook } from '@testing-library/react'
 import { useState, type Dispatch, type SetStateAction } from 'react'
 import { describe, expect, it } from 'vitest'
 import type { Edge, Node } from '@xyflow/react'
-import { useCarryEdgePoints } from './useCarryEdgePoints'
+import { useCarryEdgePoints, type CarryEdgePoints } from './useCarryEdgePoints'
 
 const node = (id: string, x: number, y: number, parentId?: string): Node => ({
   id,
@@ -22,6 +22,7 @@ const looped: Edge = {
 interface Harness {
   n: Node[]
   e: Edge[]
+  carry: CarryEdgePoints
   setNodes: Dispatch<SetStateAction<Node[]>>
   setEdges: Dispatch<SetStateAction<Edge[]>>
 }
@@ -30,8 +31,8 @@ function setup(nodes: Node[], edges: Edge[]): ReturnType<typeof renderHook<Harne
   return renderHook((): Harness => {
     const [n, setNodes] = useState(nodes)
     const [e, setEdges] = useState(edges)
-    useCarryEdgePoints(n, e, setEdges)
-    return { n, e, setNodes, setEdges }
+    const carry = useCarryEdgePoints(n, e, setEdges)
+    return { n, e, carry, setNodes, setEdges }
   })
 }
 const pointsOf = (edges: Edge[]): unknown => edges[0].data?.points
@@ -91,5 +92,76 @@ describe('useCarryEdgePoints', () => {
       )
     }
     expect(pointsOf(result.current.e)).toEqual([{ x: 80, y: 200 }])
+  })
+
+  describe('with the nearest-end rule (Ctrl held at drag start)', () => {
+    const twoPoints: Edge = {
+      id: 'e',
+      source: 'a',
+      target: 'b',
+      data: {
+        points: [
+          { x: 110, y: 25 },
+          { x: 290, y: 25 }
+        ]
+      }
+    }
+    const moveA = (ns: Node[]): Node[] =>
+      ns.map((n) =>
+        n.id === 'a' ? { ...n, position: { x: n.position.x, y: n.position.y + 50 } } : n
+      )
+
+    it('moves the points nearest the end that moved and leaves the others', () => {
+      const { result } = setup([node('a', 0, 0), node('b', 300, 0)], [twoPoints])
+      act(() => result.current.carry.beginDrag(true))
+      act(() => result.current.setNodes(moveA))
+      expect(pointsOf(result.current.e)).toEqual([
+        { x: 110, y: 75 },
+        { x: 290, y: 25 }
+      ])
+    })
+
+    it('keeps each point tied to its end for the whole drag', () => {
+      const { result } = setup([node('a', 0, 0), node('b', 300, 0)], [twoPoints])
+      act(() => result.current.carry.beginDrag(true))
+      // Drag a to the right until it is closer to the second point than to its own first one.
+      for (let i = 0; i < 6; i += 1) {
+        act(() =>
+          result.current.setNodes((ns) =>
+            ns.map((n) =>
+              n.id === 'a' ? { ...n, position: { x: n.position.x + 30, y: n.position.y } } : n
+            )
+          )
+        )
+      }
+      expect(pointsOf(result.current.e)).toEqual([
+        { x: 290, y: 25 },
+        { x: 290, y: 25 }
+      ])
+    })
+
+    it('does nothing for a one-end move without the key, or after the drag has ended', () => {
+      const { result } = setup([node('a', 0, 0), node('b', 300, 0)], [twoPoints])
+      act(() => result.current.setNodes(moveA))
+      expect(pointsOf(result.current.e)).toEqual(twoPoints.data?.points)
+      act(() => result.current.carry.beginDrag(true))
+      act(() => result.current.carry.endDrag())
+      act(() => result.current.setNodes(moveA))
+      expect(pointsOf(result.current.e)).toEqual(twoPoints.data?.points)
+    })
+
+    it('still carries everything when both ends move by the same amount', () => {
+      const { result } = setup([node('a', 0, 0), node('b', 300, 0)], [twoPoints])
+      act(() => result.current.carry.beginDrag(true))
+      act(() =>
+        result.current.setNodes((ns) =>
+          ns.map((n) => ({ ...n, position: { x: n.position.x, y: n.position.y + 20 } }))
+        )
+      )
+      expect(pointsOf(result.current.e)).toEqual([
+        { x: 110, y: 45 },
+        { x: 290, y: 45 }
+      ])
+    })
   })
 })

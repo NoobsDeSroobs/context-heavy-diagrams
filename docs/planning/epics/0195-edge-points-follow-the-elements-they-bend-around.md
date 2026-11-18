@@ -1,7 +1,7 @@
 # 0195: Edge points follow the elements they bend around
 
 ## Status
-Case 1 built (2026-11-18, [ADR 0189](../../decisions/0189-edge-points-move-with-elements-that-move-together.md)); case 2 (the nearest-end rule) and its key are open.
+Case 1 built (2026-11-18, [ADR 0189](../../decisions/0189-edge-points-move-with-elements-that-move-together.md)); case 2 (the nearest-end rule) is built on Ctrl+drag for trying out; its ADR waits until the maintainer has used it for a few days.
 
 ## Goal
 When elements move, the bend points of the edges between them should move too, so a route that went around an element still goes around it. Today a manual point is an absolute canvas position and stays put.
@@ -43,9 +43,9 @@ The maintainer suggests a key that decides between following and staying put dur
 - [x] Discuss and decide case 1: A as the default, no key; recorded in ADR 0189
 - [x] Cover every way of moving: the editor watches node positions (`useCarryEdgePoints`) so drag, container drag, multi-select, arrow keys, align and a typed position all count; the assistants' `move` uses the same rule (`shared/edges/carryPoints.ts`)
 - [x] Case 1 in one undo step, with tests (pure rule, hook, assistant `move`) and a live check of a container drag, undo and redo
-- [ ] Decide case 2 (the nearest-end rule) and the key, record it in an ADR
-- [ ] The chosen answer to case 2, if any
-- [ ] The key, or whatever replaces it, and its mention in the shortcuts dialog
+- [x] Case 2 trial: nearest end, decided once at drag start, only when Ctrl/Cmd is held then (`useCarryEdgePoints` `beginDrag`, mouse drags only); in the shortcuts dialog
+- [ ] Try it for a few days, then decide: keep, change (key, default, a spike on a two-point step edge when only one of them moves) or remove, and write the ADR
+- [ ] If kept: example diagram and changelog line; the Linux Alt-drag fallback in known-issues also wants Ctrl+drag
 - [x] Example `examples/edge-points-follow.chd` ([ADR 0151](../../decisions/0151-every-visible-feature-has-an-example-diagram.md)); the file format is unchanged, its doc has a note
 
 ## Notes

@@ -78,6 +78,61 @@ export function edgeShift(
   return a
 }
 
+// The opt-in rule for an edge whose ends move differently ("nearest end"): each point is tied to the
+// end whose box it is closest to and takes that end's shift, so a detour round the end that moved
+// stays the same distance from it while a point nearer the other end stays put. Decided once, from
+// the positions before a gesture starts, so a point cannot change ends part-way through a drag.
+export type End = 'source' | 'target'
+
+export interface Box {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+export function absoluteBoxes(nodes: readonly PlacedNode[]): Map<string, Box> {
+  const at = absolutePositions(nodes)
+  const out = new Map<string, Box>()
+  for (const node of nodes) {
+    const pos = at.get(node.id)
+    if (pos) out.set(node.id, { ...pos, width: node.width ?? 0, height: node.height ?? 0 })
+  }
+  return out
+}
+
+function distanceToBox(p: { x: number; y: number }, box: Box): number {
+  const dx = Math.max(box.x - p.x, 0, p.x - (box.x + box.width))
+  const dy = Math.max(box.y - p.y, 0, p.y - (box.y + box.height))
+  return Math.hypot(dx, dy)
+}
+
+// A point equally near both ends belongs to neither.
+export function nearestEnds(
+  points: readonly { x: number; y: number }[],
+  source: Box,
+  target: Box
+): (End | null)[] {
+  return points.map((p) => {
+    const s = distanceToBox(p, source)
+    const t = distanceToBox(p, target)
+    if (Math.abs(s - t) <= SAME) return null
+    return s < t ? 'source' : 'target'
+  })
+}
+
+export function shiftNearestEnds<P extends { x: number; y: number }>(
+  points: readonly P[],
+  ends: readonly (End | null)[],
+  shifts: { source?: Shift; target?: Shift }
+): P[] {
+  return points.map((p, i) => {
+    const end = ends[i]
+    const by = end ? shifts[end] : undefined
+    return by ? { ...p, x: p.x + by.dx, y: p.y + by.dy } : p
+  })
+}
+
 export function shiftPoints<P extends { x: number; y: number }>(
   points: readonly P[],
   by: Shift

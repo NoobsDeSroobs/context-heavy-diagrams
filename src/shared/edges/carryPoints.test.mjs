@@ -1,6 +1,13 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { edgeShift, nodeShifts, shiftPoints } from './carryPoints.ts'
+import {
+  absoluteBoxes,
+  edgeShift,
+  nearestEnds,
+  nodeShifts,
+  shiftNearestEnds,
+  shiftPoints
+} from './carryPoints.ts'
 
 const node = (id, x, y, extra = {}) => ({
   id,
@@ -74,4 +81,39 @@ test('a resized node is not counted as moved', () => {
 test('nodes in only one of the two states are ignored', () => {
   const shifts = nodeShifts([node('a', 0, 0)], [node('a', 10, 0), node('c', 5, 5)])
   assert.deepEqual([...shifts.keys()], ['a'])
+})
+
+test('each point is tied to the end whose box it is nearest, and a tie belongs to neither', () => {
+  const boxes = absoluteBoxes([node('a', 0, 0), node('b', 400, 0)])
+  const a = boxes.get('a')
+  const b = boxes.get('b')
+  const ends = nearestEnds(
+    [
+      { x: 110, y: 25 },
+      { x: 390, y: 25 },
+      { x: 250, y: 25 }
+    ],
+    a,
+    b
+  )
+  assert.deepEqual(ends, ['source', 'target', null])
+})
+
+test('distance is measured to the box, not its corner', () => {
+  const boxes = absoluteBoxes([node('a', 0, 0), node('b', 400, 0)])
+  // 10 px below the left box, 340 px from the right one.
+  assert.deepEqual(nearestEnds([{ x: 60, y: 60 }], boxes.get('a'), boxes.get('b')), ['source'])
+})
+
+test('nearest-end carrying moves only the points tied to an end that moved', () => {
+  const points = [
+    { x: 110, y: 25, gravity: 1 },
+    { x: 390, y: 25 }
+  ]
+  const ends = ['source', 'target']
+  assert.deepEqual(shiftNearestEnds(points, ends, { source: { dx: 0, dy: 50 } }), [
+    { x: 110, y: 75, gravity: 1 },
+    { x: 390, y: 25 }
+  ])
+  assert.deepEqual(shiftNearestEnds(points, [null, null], { source: { dx: 5, dy: 5 } }), points)
 })
