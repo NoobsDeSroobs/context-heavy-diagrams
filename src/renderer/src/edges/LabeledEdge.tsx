@@ -376,10 +376,10 @@ function LabeledEdge({
     ...(edgeStyle?.fontFamily ? { fontFamily: edgeStyle.fontFamily } : {})
   }
 
-  // Manual bend points. Dragging repositions
+  // Manual bend points — catmull-rom routing only. Dragging repositions
   // data.points[index] directly, in the same absolute canvas coordinates
-  // the schema already stores them in. step/smoothstep edges have these too, and
-  // draggable *segments* besides (onSegmentPointerDown below).
+  // the schema already stores them in. (step/smoothstep get draggable
+  // *segments* instead — see onSegmentPointerDown below.)
   const onBendPointPointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>, index: number) => {
       event.stopPropagation()
@@ -418,16 +418,13 @@ function LabeledEdge({
         })
       }
       openContextMenu(event.clientX, event.clientY, [
-        // Only a curve has a tension to set; a right-angled route just has the point.
-        ...(isOrthogonal
-          ? []
-          : gravityPresets.map((preset) => ({
-              label: preset.label,
-              onSelect: () => setGravity(preset.value)
-            }))),
+        ...gravityPresets.map((preset) => ({
+          label: preset.label,
+          onSelect: () => setGravity(preset.value)
+        })),
         {
           label: 'Remove point',
-          separatorBefore: !isOrthogonal,
+          separatorBefore: true,
           onSelect: () => {
             pushSnapshot()
             updateEdgeData(id, { points: bendPoints.filter((_, i) => i !== index) })
@@ -435,7 +432,7 @@ function LabeledEdge({
         }
       ])
     },
-    [pushSnapshot, openContextMenu, gravityPresets, updateEdgeData, id, bendPoints, isOrthogonal]
+    [pushSnapshot, openContextMenu, gravityPresets, updateEdgeData, id, bendPoints]
   )
 
   // Draggable segments for step/smoothstep routing (ADR 0077). Each handle
@@ -633,8 +630,7 @@ function LabeledEdge({
               onPointerDown={(event) => onSegmentPointerDown(event, segment)}
             />
           ))}
-        {/* After the segment handles, so a point on a straight run lies over the handle at its middle. */}
-        {(routingStyle === 'catmullRom' || isOrthogonal) &&
+        {routingStyle === 'catmullRom' &&
           bendPoints.map((point, index) => (
             <div
               key={index}

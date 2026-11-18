@@ -704,6 +704,39 @@ function CanvasInner(): React.JSX.Element {
         edge.selected && edges.some((e) => e.selected && e.id !== edge.id)
           ? edges.filter((e) => e.selected).map((e) => e.id)
           : [edge.id]
+      // A right-angled edge shows no dot on its points, so a point is removed by right-clicking
+      // close to it.
+      const edgeRouting = (edge.data?.style as EdgeStyle | undefined)?.routingStyle
+      const edgePoints = (edge.data?.points as LinePoint[] | undefined) ?? []
+      const reach = 14 / rfInstance.getViewport().zoom
+      const nearIndex =
+        edgeRouting === 'step' || edgeRouting === 'smoothstep'
+          ? edgePoints.findIndex((p) => Math.hypot(p.x - clickPoint.x, p.y - clickPoint.y) <= reach)
+          : -1
+      const removePointItems =
+        nearIndex >= 0
+          ? [
+              {
+                label: 'Remove point',
+                onSelect: () => {
+                  pushSnapshot()
+                  setEdges((eds) =>
+                    eds.map((e) =>
+                      e.id === edge.id
+                        ? {
+                            ...e,
+                            data: {
+                              ...e.data,
+                              points: edgePoints.filter((_, i) => i !== nearIndex)
+                            }
+                          }
+                        : e
+                    )
+                  )
+                }
+              }
+            ]
+          : []
       openContextMenu(event.clientX, event.clientY, [
         {
           label: 'Line style…',
@@ -838,6 +871,7 @@ function CanvasInner(): React.JSX.Element {
             )
           }
         },
+        ...removePointItems,
         {
           // Back to the routing's own default: every point (from "Add point here" or from dragging a
           // segment) and the label's slide along the line go; the routing style, the connection
