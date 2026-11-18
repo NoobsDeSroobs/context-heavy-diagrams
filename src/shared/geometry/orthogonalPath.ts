@@ -224,24 +224,6 @@ export function orthogonalPath(vertices: OrthoPoint[], borderRadius: number): st
   return d
 }
 
-// The same route with every vertex that only continues a straight run dropped, so a waypoint lying
-// on a straight line (one the person added there, say) does not split the run into two segments with
-// a handle each. The segment handles and the drag work on this list.
-export function collapseCollinear(vertices: OrthoPoint[]): OrthoPoint[] {
-  const out: OrthoPoint[] = []
-  for (const v of vertices) {
-    if (out.length > 0 && near(out[out.length - 1], v)) continue
-    while (out.length >= 2) {
-      const a = out[out.length - 2]
-      const b = out[out.length - 1]
-      if ((alignedH(a, b) && alignedH(b, v)) || (alignedV(a, b) && alignedV(b, v))) out.pop()
-      else break
-    }
-    out.push(v)
-  }
-  return out
-}
-
 // The point of the drawn route nearest `click`: where a new waypoint goes so it lies on a segment
 // instead of a few units beside it, which would draw a jog at each end of the stubs.
 export function nearestPointOnRoute(vertices: OrthoPoint[], click: OrthoPoint): OrthoPoint {
@@ -267,6 +249,10 @@ export function nearestPointOnRoute(vertices: OrthoPoint[], click: OrthoPoint): 
   return best
 }
 
+function segmentAxis(a: OrthoPoint, b: OrthoPoint): Axis {
+  return Math.abs(a.y - b.y) <= Math.abs(a.x - b.x) ? 'h' : 'v'
+}
+
 // Drag handles for the straight segments of the path. A segment between two bends gets one if it is
 // long enough to grab. A segment that touches the source or the target gets one too, but only when
 // it runs along the side the edge is attached to and has room for a stub as well: dragging it
@@ -279,7 +265,7 @@ export function orthogonalSegments(vertices: OrthoPoint[], ends?: OrthoEnds): Or
     const a = vertices[i]
     const b = vertices[i + 1]
     const length = dist(a, b)
-    const axis: Axis = Math.abs(a.y - b.y) <= Math.abs(a.x - b.x) ? 'h' : 'v'
+    const axis = segmentAxis(a, b)
     const touchesSource = i === 0
     const touchesTarget = i === lastIndex
     if (touchesSource || touchesTarget) {
@@ -321,6 +307,33 @@ function simplify(vertices: OrthoPoint[]): OrthoPoint[] {
   return out
 }
 
+// The corner right outside the source (or the target), where the route turns off the side it is
+// attached to, is drawn by orthogonalRouteVertices whenever the next point is a column (or row)
+// away, so it need not be stored.
+function dropImpliedCorners(vertices: OrthoPoint[], ends: OrthoEnds): OrthoPoint[] {
+  const out = [...vertices]
+  if (out.length >= 4) {
+    const [s, w1, w2] = out
+    const d = outward(ends.sourceSide)
+    const along = axisForSide(ends.sourceSide)
+    const onSide = along === 'h' ? alignedH(s, w1) : alignedV(s, w1)
+    const forward = (w1.x - s.x) * d.x + (w1.y - s.y) * d.y > 0
+    const turns = along === 'h' ? alignedV(w1, w2) : alignedH(w1, w2)
+    if (onSide && forward && turns) out.splice(1, 1)
+  }
+  if (out.length >= 4) {
+    const n = out.length
+    const [w2, w1, t] = [out[n - 3], out[n - 2], out[n - 1]]
+    const d = outward(ends.targetSide)
+    const along = axisForSide(ends.targetSide)
+    const onSide = along === 'h' ? alignedH(t, w1) : alignedV(t, w1)
+    const forward = (w1.x - t.x) * d.x + (w1.y - t.y) * d.y > 0
+    const turns = along === 'h' ? alignedV(w1, w2) : alignedH(w1, w2)
+    if (onSide && forward && turns) out.splice(n - 2, 1)
+  }
+  return out
+}
+
 // Move one segment of the expanded path along its normal to `value` (a y for a
 // horizontal segment, an x for a vertical one) and return the new manual
 // waypoint list (interior vertices only). `simplifyResult` is false during an
@@ -354,6 +367,14 @@ export function moveOrthogonalSegment(
   const isFirst = k === 0
   const isLast = k + 1 === vertices.length - 1
 
+  // A neighbour on the same line (a waypoint on a straight run splits it in two) is not carried
+  // along: the point where the two met stays, so a bridge across the gap the move opens is kept
+  // there instead of the moved row growing to cover the neighbour.
+  const parallel = (i: number): boolean =>
+    i >= 0 && i + 1 < vertices.length && segmentAxis(vertices[i], vertices[i + 1]) === axis
+  const bridgeBefore = !isFirst && parallel(k - 1) ? [vertices[k]] : []
+  const bridgeAfter = !isLast && parallel(k + 1) ? [vertices[k + 1]] : []
+
   let inner: OrthoPoint[]
   if (isFirst && isLast) {
     inner = [stubAt(source, ends.sourceSide), stubAt(target, ends.targetSide)]
@@ -361,21 +382,29 @@ export function moveOrthogonalSegment(
     inner = [
       stubAt(source, ends.sourceSide),
       moved(vertices[1]),
+      ...bridgeAfter,
       ...vertices.slice(2, vertices.length - 1)
     ]
   } else if (isLast) {
-    inner = [...vertices.slice(1, k), moved(vertices[k]), stubAt(target, ends.targetSide)]
+    inner = [
+      ...vertices.slice(1, k),
+      ...bridgeBefore,
+      moved(vertices[k]),
+      stubAt(target, ends.targetSide)
+    ]
   } else {
     inner = [
       ...vertices.slice(1, k),
+      ...bridgeBefore,
       moved(vertices[k]),
       moved(vertices[k + 1]),
+      ...bridgeAfter,
       ...vertices.slice(k + 2, vertices.length - 1)
     ]
   }
 
   const next = [source, ...inner, target]
-  const resolved = simplifyResult ? simplify(next) : next
+  const resolved = simplifyResult ? dropImpliedCorners(simplify(next), ends) : next
   return resolved.slice(1, -1).map((p) => ({ x: p.x, y: p.y }))
 }
 

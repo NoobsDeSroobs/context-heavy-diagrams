@@ -15,7 +15,6 @@ import { GATE_COLOR, GATE_HALF, GATE_WIDTH } from '@shared/crossings/crossings'
 import { buildEdgePath } from '@shared/geometry/edgePath'
 import { ratioNearest } from '@shared/geometry/pathSampling'
 import {
-  collapseCollinear,
   orthogonalRouteVertices,
   orthogonalSegments,
   moveOrthogonalSegment,
@@ -445,27 +444,22 @@ function LabeledEdge({
   // pointer-down so the segment index the gesture holds stays valid even as
   // moveOrthogonalSegment adds/removes waypoints under it; the result is only
   // simplified (redundant corners dropped) on release.
-  // The vertices the handles and the drag work on: a waypoint on a straight run does not split it.
-  const handleVertices = useMemo(
-    () => (orthoVertices ? collapseCollinear(orthoVertices) : null),
-    [orthoVertices]
-  )
   const segmentHandles = useMemo<OrthoSegment[]>(
     () =>
-      handleVertices
-        ? orthogonalSegments(handleVertices, {
+      orthoVertices
+        ? orthogonalSegments(orthoVertices, {
             sourceSide: sourcePosition,
             targetSide: targetPosition
           })
         : [],
-    [handleVertices, sourcePosition, targetPosition]
+    [orthoVertices, sourcePosition, targetPosition]
   )
 
   const onSegmentPointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>, segment: OrthoSegment): void => {
       event.stopPropagation()
-      if (!handleVertices) return
-      const frozen = handleVertices
+      if (!orthoVertices) return
+      const frozen = orthoVertices
       pushSnapshot()
       setDraggingSegmentIndex(segment.index)
       const el = event.currentTarget
@@ -505,7 +499,7 @@ function LabeledEdge({
       window.addEventListener('pointerup', onUp)
     },
     [
-      handleVertices,
+      orthoVertices,
       sourcePosition,
       targetPosition,
       pushSnapshot,

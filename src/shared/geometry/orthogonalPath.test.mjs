@@ -1,7 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  collapseCollinear,
   moveOrthogonalSegment,
   nearestPointOnRoute,
   orthogonalRouteVertices,
@@ -186,7 +185,8 @@ test('dragging a segment that touches the source moves the rest of the route wit
   // Out of the source by a stub, along the moved row to the old bend, then on as before.
   assert.deepEqual(points[0], { x: 20, y: -50 })
   assert.deepEqual(points[1], { x: 200, y: -50 })
-  assert.deepEqual(points[points.length - 1], { x: 200, y: 300 })
+  // The column down to the target's row is drawn by the route and is not stored.
+  assert.equal(points.length, 2)
 })
 
 test('dragging the last segment makes a stub into the target', () => {
@@ -205,34 +205,42 @@ test('dragging the last segment makes a stub into the target', () => {
   assert.deepEqual(points[points.length - 1], { x: 380, y: 340 })
 })
 
-test('a point on a straight run does not split it: one handle, and dragging it goes round both', () => {
-  const v = collapseCollinear(route([{ x: 300, y: 100 }]))
-  assert.deepEqual(xy(v), [
+test('a point on a straight run splits it in two, and each half moves on its own with a bridge at the point', () => {
+  const v = route([{ x: 300, y: 100 }])
+  assert.equal(orthogonalSegments(v, ends).length, 2)
+  // The half next to the source goes up; the half next to the target stays, joined by a bridge at the point.
+  const points = moveOrthogonalSegment(v, 0, 'h', 20, true, ends)
+  assert.deepEqual(points, [
+    { x: 520, y: 20 },
+    { x: 300, y: 20 },
+    { x: 300, y: 100 }
+  ])
+  assert.deepEqual(xy(route(points)), [
     [500, 100],
+    [520, 100],
+    [520, 20],
+    [300, 20],
+    [300, 100],
     [100, 100]
   ])
-  const handles = orthogonalSegments(v, ends)
-  assert.equal(handles.length, 1)
-  assert.deepEqual(moveOrthogonalSegment(v, 0, 'h', 20, true, ends), [
-    { x: 520, y: 20 },
+  // Likewise the half next to the target.
+  const other = moveOrthogonalSegment(v, 1, 'h', 20, true, ends)
+  assert.deepEqual(other, [
+    { x: 300, y: 100 },
+    { x: 300, y: 20 },
     { x: 80, y: 20 }
   ])
 })
 
-test('corners and the ends are kept when collapsing', () => {
-  const v = [
-    { x: 0, y: 0 },
-    { x: 50, y: 0 },
-    { x: 100, y: 0 },
-    { x: 100, y: 80 },
-    { x: 100, y: 160 },
-    { x: 200, y: 160 }
-  ]
-  assert.deepEqual(xy(collapseCollinear(v)), [
-    [0, 0],
-    [100, 0],
-    [100, 160],
-    [200, 160]
+test('moving the second half too leaves one run: the bridge and the extra points collapse', () => {
+  const v = route([{ x: 300, y: 100 }])
+  const first = moveOrthogonalSegment(v, 0, 'h', 20, true, ends)
+  const next = route(first)
+  const last = next.length - 2
+  const both = moveOrthogonalSegment(next, last, 'h', 20, true, ends)
+  assert.deepEqual(both, [
+    { x: 520, y: 20 },
+    { x: 80, y: 20 }
   ])
 })
 
