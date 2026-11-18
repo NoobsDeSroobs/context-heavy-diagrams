@@ -77,6 +77,51 @@
       "data": {
         "label": "Drag the Checkout container: the loop under Cart and Payment goes with them, and the edge to Audit log follows its end."
       }
+    },
+    {
+      "id": "billing",
+      "type": "entity",
+      "position": {
+        "x": 60,
+        "y": 540
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "data": {
+        "label": "Billing"
+      }
+    },
+    {
+      "id": "ledger",
+      "type": "entity",
+      "position": {
+        "x": 460,
+        "y": 540
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "data": {
+        "label": "Ledger"
+      }
+    },
+    {
+      "id": "text-2",
+      "type": "text",
+      "position": {
+        "x": 60,
+        "y": 740
+      },
+      "size": {
+        "width": 560,
+        "height": 60
+      },
+      "data": {
+        "label": "Drag Billing alone and the curve under it stays put. Hold Ctrl as you start the drag and the points nearer Billing than Ledger come with it, the one nearer Ledger stays."
+      }
     }
   ],
   "edges": [
@@ -110,6 +155,32 @@
       "sourceHandle": "right",
       "targetHandle": "left",
       "label": "record"
+    },
+    {
+      "id": "billing-ledger",
+      "type": "labeled",
+      "source": "billing",
+      "target": "ledger",
+      "sourceHandle": "bottom",
+      "targetHandle": "bottom",
+      "label": "post",
+      "style": {
+        "routingStyle": "catmullRom"
+      },
+      "points": [
+        {
+          "x": 120,
+          "y": 690
+        },
+        {
+          "x": 330,
+          "y": 720
+        },
+        {
+          "x": 520,
+          "y": 690
+        }
+      ]
     }
   ]
 }
