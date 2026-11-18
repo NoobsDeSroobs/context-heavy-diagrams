@@ -18,7 +18,7 @@ Raised 2026-11-18. Put A on the left and B on the right, connect B's right side 
 - `moveOrthogonalSegment` already has first- and last-segment branches, but they leave the stub running along the element's border instead of outward, so they are rewritten rather than switched on.
 
 - **Honour the sides the edge leaves and enters by (the spike).** A leg that would run back into the element it leaves gets a short outward stub first, and likewise into the target. Then one point above the line gives B's right side, out, up, across, down, into A's left side, not an up-and-back spike, and the stubs of the drag above are the same stubs. Where the old route reversed on itself the drawn route changes for existing diagrams; the file does not, and the SVG export follows because both use `buildEdgePath` ([ADR 0124](../../decisions/0124-svg-export-from-a-shared-pure-renderer.md)). A point exactly on the straight line still collapses to a straight line.
-- **"Reset route" in the edge's right-click menu**: removes all the edge's points and its label position (`style.labelPosition`, the only custom offset an edge stores), one undo step. It keeps the routing style, the connection points the ends use ("Attach automatically" already clears those), colour and the rest. For several selected edges it resets all of them, as "Reverse direction" does.
+- **"Reset route" in the edge's right-click menu**: removes all the edge's points (those from "Add point here" and from dragging segments) and its label position (`style.labelPosition`, the label's offset along the edge), one undo step. It keeps the routing style, the connection points the ends use ("Attach automatically" already clears those), colour and the rest. For several selected edges it resets all of them, as "Reverse direction" does.
 
 Not included: making the default route of an edge that leaves an element away from its target (B's right side to an element on B's left) wrap round by itself. That is automatic routing, a bigger feature, and out of scope here.
 
@@ -28,7 +28,6 @@ Not included: making the default route of an edge that leaves an element away fr
 - Dragging a segment back to the line it came from should remove the points again (the on-release simplify pass); check it does with stubs.
 - Handles on a very short edge, where the middle handle of the only segment sits on top of the label.
 - The assistants' routing tools ([0168](0168-teach-assistants-to-reroute-edges.md)) write absolute points and are unaffected; the file format does not change.
-- What else "custom offsets" could mean: if the maintainer meant something besides `labelPosition`, add it to what Reset clears.
 - Interaction with the points that follow elements ([0195](0195-edge-points-follow-the-elements-they-bend-around.md)): a stub's two corners are ordinary points and are carried like any other.
 
 ## Tasks
