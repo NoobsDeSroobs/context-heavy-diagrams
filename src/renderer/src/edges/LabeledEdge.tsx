@@ -442,8 +442,14 @@ function LabeledEdge({
   // moveOrthogonalSegment adds/removes waypoints under it; the result is only
   // simplified (redundant corners dropped) on release.
   const segmentHandles = useMemo<OrthoSegment[]>(
-    () => (orthoVertices ? orthogonalSegments(orthoVertices) : []),
-    [orthoVertices]
+    () =>
+      orthoVertices
+        ? orthogonalSegments(orthoVertices, {
+            sourceSide: sourcePosition,
+            targetSide: targetPosition
+          })
+        : [],
+    [orthoVertices, sourcePosition, targetPosition]
   )
 
   const onSegmentPointerDown = useCallback(
@@ -459,13 +465,29 @@ function LabeledEdge({
         const flowPoint = screenToFlowPosition({ x: moveEvent.clientX, y: moveEvent.clientY })
         const value = segment.axis === 'h' ? flowPoint.y : flowPoint.x
         updateEdgeData(id, {
-          points: moveOrthogonalSegment(frozen, segment.index, segment.axis, value, simplifyResult)
+          points: moveOrthogonalSegment(
+            frozen,
+            segment.index,
+            segment.axis,
+            value,
+            simplifyResult,
+            {
+              sourceSide: sourcePosition,
+              targetSide: targetPosition
+            }
+          )
         })
       }
       const onMove = (moveEvent: PointerEvent): void => apply(moveEvent, false)
       const onUp = (upEvent: PointerEvent): void => {
         apply(upEvent, true)
-        el.releasePointerCapture(event.pointerId)
+        // The handle under the pointer may have gone while the segment moved; the window listeners
+        // carry the drag, so a lost capture is harmless.
+        try {
+          el.releasePointerCapture(event.pointerId)
+        } catch {
+          // already released
+        }
         window.removeEventListener('pointermove', onMove)
         window.removeEventListener('pointerup', onUp)
         setDraggingSegmentIndex(null)
@@ -473,7 +495,15 @@ function LabeledEdge({
       window.addEventListener('pointermove', onMove)
       window.addEventListener('pointerup', onUp)
     },
-    [orthoVertices, pushSnapshot, screenToFlowPosition, updateEdgeData, id]
+    [
+      orthoVertices,
+      sourcePosition,
+      targetPosition,
+      pushSnapshot,
+      screenToFlowPosition,
+      updateEdgeData,
+      id
+    ]
   )
 
   const gates = useEdgeGates(showCrossings, source, target, edgePath)

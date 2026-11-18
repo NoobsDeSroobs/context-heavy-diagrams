@@ -48,6 +48,31 @@ function axisForSide(side: Side): Axis {
   return side === 'left' || side === 'right' ? 'h' : 'v'
 }
 
+// The length of the short run that takes an edge out of an element, or into one, when the route has
+// to turn at once: out along the side the edge is attached to before it goes anywhere else.
+export const END_STUB = 20
+// A handle on a segment that touches the source or the target needs room for a stub besides.
+const MIN_END_HANDLE_LENGTH = 2 * END_STUB
+
+// The unit vector pointing out of an element through `side`.
+function outward(side: Side): OrthoPoint {
+  switch (side) {
+    case 'right':
+      return { x: 1, y: 0 }
+    case 'left':
+      return { x: -1, y: 0 }
+    case 'bottom':
+      return { x: 0, y: 1 }
+    default:
+      return { x: 0, y: -1 }
+  }
+}
+
+export interface OrthoEnds {
+  sourceSide: Side
+  targetSide: Side
+}
+
 function near(a: OrthoPoint, b: OrthoPoint): boolean {
   return Math.abs(a.x - b.x) < EPS && Math.abs(a.y - b.y) < EPS
 }
@@ -101,6 +126,13 @@ function defaultVertices(
 // passes through every manual waypoint, inserting one synthetic corner between
 // any two consecutive anchors that aren't already axis-aligned. Synthetic
 // corners are never persisted — only `waypoints` is.
+//
+// An edge leaves its source along the side it is attached to and arrives at its target along the
+// target's side. When the leg to the first (or from the last) waypoint would run back into the
+// element it joins, the route first takes a stub of END_STUB straight out of the element, so a
+// single waypoint above two facing elements goes round them instead of up and straight back down.
+// A leg already in line with the end stays as it is: a straight line through the elements is what
+// the person drew.
 export function orthogonalRouteVertices(
   source: OrthoPoint,
   sourceSide: Side,
@@ -110,12 +142,40 @@ export function orthogonalRouteVertices(
 ): OrthoPoint[] {
   if (waypoints.length === 0) return defaultVertices(source, sourceSide, target, targetSide)
 
-  const anchors = [source, ...waypoints, target]
+  const sAxis = axisForSide(sourceSide)
+  const tAxis = axisForSide(targetSide)
+  const sOut = outward(sourceSide)
+  const tOut = outward(targetSide)
+  const inLine = (a: OrthoPoint, b: OrthoPoint): boolean => alignedH(a, b) || alignedV(a, b)
+
+  // `first`: the axis the leg into this anchor travels along first; absent means the axis the route
+  // was already travelling along.
+  const anchors: { p: OrthoPoint; first?: Axis }[] = waypoints.map((p) => ({ p }))
   const out: OrthoPoint[] = [source]
-  let lastAxis: Axis = axisForSide(sourceSide)
-  for (let i = 1; i < anchors.length; i++) {
+  let lastAxis: Axis = sAxis
+
+  const firstWaypoint = waypoints[0]
+  const sourceLeg = sAxis === 'h' ? firstWaypoint.x - source.x : firstWaypoint.y - source.y
+  const sourceDir = sAxis === 'h' ? sOut.x : sOut.y
+  if (!inLine(source, firstWaypoint) && sourceLeg * sourceDir < 0) {
+    out.push({ x: source.x + sOut.x * END_STUB, y: source.y + sOut.y * END_STUB })
+    lastAxis = sAxis === 'h' ? 'v' : 'h'
+  }
+
+  const lastWaypoint = waypoints[waypoints.length - 1]
+  const targetLeg = tAxis === 'h' ? target.x - lastWaypoint.x : target.y - lastWaypoint.y
+  const targetDir = tAxis === 'h' ? tOut.x : tOut.y
+  if (!inLine(lastWaypoint, target) && targetLeg * targetDir > 0) {
+    anchors.push({
+      p: { x: target.x + tOut.x * END_STUB, y: target.y + tOut.y * END_STUB },
+      first: tAxis
+    })
+  }
+  anchors.push({ p: target })
+
+  for (let i = 0; i < anchors.length; i++) {
     const prev = out[out.length - 1]
-    const p = anchors[i]
+    const { p, first } = anchors[i]
     if (near(prev, p)) continue
     if (alignedH(prev, p) || alignedV(prev, p)) {
       out.push(p)
@@ -125,8 +185,8 @@ export function orthogonalRouteVertices(
     // The leg into the target should arrive along the target's own axis;
     // every other corner just continues on the axis the previous leg used,
     // which keeps the number of corners minimal.
-    const firstAxis: Axis =
-      i === anchors.length - 1 ? (axisForSide(targetSide) === 'h' ? 'v' : 'h') : lastAxis
+    const isTarget = i === anchors.length - 1
+    const firstAxis: Axis = first ?? (isTarget ? (tAxis === 'h' ? 'v' : 'h') : lastAxis)
     const corner: OrthoPoint = firstAxis === 'h' ? { x: p.x, y: prev.y } : { x: prev.x, y: p.y }
     if (!near(corner, prev) && !near(corner, p)) out.push(corner)
     out.push(p)
@@ -164,29 +224,30 @@ export function orthogonalPath(vertices: OrthoPoint[], borderRadius: number): st
   return d
 }
 
-// Drag handles for the "interior" segments of the path: those whose two ends are both bend
-// vertices, never the edge's fixed source or target. This is a deliberate v1 scope line (ADR 0077):
-// moving a segment attached to a fixed endpoint means synthesising a perpendicular stub so the
-// endpoint stays put, which is where the fiddliness and risk live. The common case, the mid
-// crossbar of a step edge between two facing shapes, is an interior segment. An L-shaped edge
-// (perpendicular sides, no interior segment) has no draggable segment until a waypoint is added via
-// "Add point here". Segments shorter than MIN_HANDLE_SEGMENT_LENGTH are skipped too (nothing usable
-// to grab).
-export function orthogonalSegments(vertices: OrthoPoint[]): OrthoSegment[] {
+// Drag handles for the straight segments of the path. A segment between two bends gets one if it is
+// long enough to grab. A segment that touches the source or the target gets one too, but only when
+// it runs along the side the edge is attached to and has room for a stub as well: dragging it
+// sideways moves it and the edge leaves the element by a stub (see moveOrthogonalSegment). Without
+// `ends` only the segments between bends are offered.
+export function orthogonalSegments(vertices: OrthoPoint[], ends?: OrthoEnds): OrthoSegment[] {
   const segments: OrthoSegment[] = []
-  for (let i = 1; i < vertices.length - 2; i++) {
+  const lastIndex = vertices.length - 2
+  for (let i = 0; i <= lastIndex; i++) {
     const a = vertices[i]
     const b = vertices[i + 1]
     const length = dist(a, b)
-    if (length < MIN_HANDLE_SEGMENT_LENGTH) continue
-    segments.push({
-      index: i,
-      a,
-      b,
-      axis: Math.abs(a.y - b.y) <= Math.abs(a.x - b.x) ? 'h' : 'v',
-      mid: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 },
-      length
-    })
+    const axis: Axis = Math.abs(a.y - b.y) <= Math.abs(a.x - b.x) ? 'h' : 'v'
+    const touchesSource = i === 0
+    const touchesTarget = i === lastIndex
+    if (touchesSource || touchesTarget) {
+      if (!ends) continue
+      if (touchesSource && axis !== axisForSide(ends.sourceSide)) continue
+      if (touchesTarget && axis !== axisForSide(ends.targetSide)) continue
+      if (length < MIN_END_HANDLE_LENGTH) continue
+    } else if (length < MIN_HANDLE_SEGMENT_LENGTH) {
+      continue
+    }
+    segments.push({ index: i, a, b, axis, mid: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, length })
   }
   return segments
 }
@@ -223,37 +284,54 @@ function simplify(vertices: OrthoPoint[]): OrthoPoint[] {
 // in-progress drag (keeps vertex indices stable so the handle a gesture holds
 // keeps meaning the same segment) and true on drop (redundant corners dropped).
 //
-// The isFirst / isLast branches synthesise a perpendicular stub so a fixed
-// endpoint stays put. orthogonalSegments() never emits a handle for an
-// endpoint-adjacent segment in v1, so from the UI only the `else` branch runs;
-// the stub branches are kept as a correct fallback for any future caller.
+// A segment that touches the source or the target cannot move that end, so the edge leaves the
+// element by a stub of END_STUB along its side and turns onto the moved segment there; dragging
+// the only segment of a straight edge makes a stub at each end.
 export function moveOrthogonalSegment(
   vertices: OrthoPoint[],
   segmentIndex: number,
   axis: Axis,
   value: number,
-  simplifyResult: boolean
+  simplifyResult: boolean,
+  ends: OrthoEnds
 ): LinePoint[] {
   const k = segmentIndex
-  const left = vertices[k]
-  const right = vertices[k + 1]
-  const movedLeft: OrthoPoint = axis === 'h' ? { x: left.x, y: value } : { x: value, y: left.y }
-  const movedRight: OrthoPoint = axis === 'h' ? { x: right.x, y: value } : { x: value, y: right.y }
+  const source = vertices[0]
+  const target = vertices[vertices.length - 1]
+  const moved = (v: OrthoPoint): OrthoPoint =>
+    axis === 'h' ? { x: v.x, y: value } : { x: value, y: v.y }
+  // Where the moved segment meets the stub out of an end.
+  const stubAt = (end: OrthoPoint, side: Side): OrthoPoint => {
+    const d = outward(side)
+    return axis === 'h'
+      ? { x: end.x + d.x * END_STUB, y: value }
+      : { x: value, y: end.y + d.y * END_STUB }
+  }
 
   const isFirst = k === 0
   const isLast = k + 1 === vertices.length - 1
 
-  let next: OrthoPoint[]
+  let inner: OrthoPoint[]
   if (isFirst && isLast) {
-    next = [vertices[0], movedLeft, movedRight, vertices[vertices.length - 1]]
+    inner = [stubAt(source, ends.sourceSide), stubAt(target, ends.targetSide)]
   } else if (isFirst) {
-    next = [vertices[0], movedLeft, movedRight, ...vertices.slice(2)]
+    inner = [
+      stubAt(source, ends.sourceSide),
+      moved(vertices[1]),
+      ...vertices.slice(2, vertices.length - 1)
+    ]
   } else if (isLast) {
-    next = [...vertices.slice(0, k), movedLeft, movedRight, vertices[vertices.length - 1]]
+    inner = [...vertices.slice(1, k), moved(vertices[k]), stubAt(target, ends.targetSide)]
   } else {
-    next = [...vertices.slice(0, k), movedLeft, movedRight, ...vertices.slice(k + 2)]
+    inner = [
+      ...vertices.slice(1, k),
+      moved(vertices[k]),
+      moved(vertices[k + 1]),
+      ...vertices.slice(k + 2, vertices.length - 1)
+    ]
   }
 
+  const next = [source, ...inner, target]
   const resolved = simplifyResult ? simplify(next) : next
   return resolved.slice(1, -1).map((p) => ({ x: p.x, y: p.y }))
 }

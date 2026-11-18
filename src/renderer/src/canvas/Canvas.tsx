@@ -815,6 +815,27 @@ function CanvasInner(): React.JSX.Element {
               )
             )
           }
+        },
+        {
+          // Back to the routing's own default: every point (from "Add point here" or from dragging a
+          // segment) and the label's slide along the line go; the routing style, the connection
+          // points and the look stay.
+          label:
+            reverseTargetIds.length > 1
+              ? `Reset route (${reverseTargetIds.length})`
+              : 'Reset route',
+          onSelect: () => {
+            const ids = new Set(reverseTargetIds)
+            pushSnapshot()
+            setEdges((eds) =>
+              eds.map((e) => {
+                if (!ids.has(e.id)) return e
+                const style = { ...(e.data?.style as EdgeStyle | undefined) }
+                delete style.labelPosition
+                return { ...e, data: { ...e.data, points: [], style } }
+              })
+            )
+          }
         }
       ])
     },

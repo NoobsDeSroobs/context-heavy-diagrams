@@ -54,7 +54,7 @@ function draw(routingStyle: string, selected: boolean, to = { x: 300, y: 180 }):
   ).container
 }
 
-// The crossbar handle of a step or smooth step edge (ADR 0077) is shown while the edge is selected or
+// The segment handles of a step or smooth step edge (ADR 0077; the ones on the ends are ADR 0191) are shown while the edge is selected or
 // hovered, and stays while the pointer is on the handle itself, which lies over the edge's hover surface.
 describe('segment handles of step edges', () => {
   Object.defineProperty(SVGElement.prototype, 'getTotalLength', { value: () => 100 })
@@ -75,7 +75,7 @@ describe('segment handles of step edges', () => {
       act(() => vi.advanceTimersByTime(20))
       fireEvent.pointerEnter(container.querySelector('.edge-segment-handle')!)
       act(() => vi.advanceTimersByTime(500))
-      expect(container.querySelectorAll('.edge-segment-handle')).toHaveLength(1)
+      expect(container.querySelectorAll('.edge-segment-handle')).toHaveLength(3)
       fireEvent.pointerLeave(container.querySelector('.edge-segment-handle')!)
       act(() => vi.advanceTimersByTime(500))
       expect(container.querySelectorAll('.edge-segment-handle')).toHaveLength(0)
@@ -85,8 +85,8 @@ describe('segment handles of step edges', () => {
   })
 
   for (const style of ['step', 'smoothstep']) {
-    it(`${style}: a selected edge shows its crossbar handle`, () => {
-      expect(draw(style, true).querySelectorAll('.edge-segment-handle')).toHaveLength(1)
+    it(`${style}: a selected edge shows a handle on each of its three segments`, () => {
+      expect(draw(style, true).querySelectorAll('.edge-segment-handle')).toHaveLength(3)
     })
     it(`${style}: an unselected edge shows it while hovered`, () => {
       const container = draw(style, false)
@@ -95,7 +95,7 @@ describe('segment handles of step edges', () => {
         (p) => p.getAttribute('stroke') === 'transparent'
       )!
       fireEvent.pointerEnter(hit)
-      expect(container.querySelectorAll('.edge-segment-handle')).toHaveLength(1)
+      expect(container.querySelectorAll('.edge-segment-handle')).toHaveLength(3)
     })
   }
 })

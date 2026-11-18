@@ -1,0 +1,127 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "queue",
+      "type": "entity",
+      "position": {
+        "x": 60,
+        "y": 100
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "data": {
+        "label": "Queue"
+      }
+    },
+    {
+      "id": "worker",
+      "type": "entity",
+      "position": {
+        "x": 460,
+        "y": 100
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "data": {
+        "label": "Worker"
+      }
+    },
+    {
+      "id": "text-1",
+      "type": "text",
+      "position": {
+        "x": 60,
+        "y": 220
+      },
+      "size": {
+        "width": 520,
+        "height": 60
+      },
+      "data": {
+        "label": "Worker answers Queue on a smooth step line that runs straight through both. Select it and drag the handle in the middle of the line: it goes round both elements in one drag, leaving and entering each by a short stub."
+      }
+    },
+    {
+      "id": "api",
+      "type": "entity",
+      "position": {
+        "x": 60,
+        "y": 380
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "data": {
+        "label": "API"
+      }
+    },
+    {
+      "id": "db",
+      "type": "entity",
+      "position": {
+        "x": 460,
+        "y": 380
+      },
+      "size": {
+        "width": 120,
+        "height": 80
+      },
+      "data": {
+        "label": "Database"
+      }
+    },
+    {
+      "id": "text-2",
+      "type": "text",
+      "position": {
+        "x": 60,
+        "y": 500
+      },
+      "size": {
+        "width": 520,
+        "height": 60
+      },
+      "data": {
+        "label": "The same line with one point added above it (right-click, Add point here): it goes round both elements too, not up and back down. Right-click the line and choose Reset route to remove the points and start over."
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "worker-queue",
+      "type": "labeled",
+      "source": "worker",
+      "target": "queue",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "ack",
+      "style": {
+        "routingStyle": "smoothstep"
+      }
+    },
+    {
+      "id": "db-api",
+      "type": "labeled",
+      "source": "db",
+      "target": "api",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "rows",
+      "style": {
+        "routingStyle": "smoothstep"
+      },
+      "points": [
+        {
+          "x": 320,
+          "y": 330
+        }
+      ]
+    }
+  ]
+}
