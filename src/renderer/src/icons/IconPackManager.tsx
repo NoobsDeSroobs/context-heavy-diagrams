@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { InstallProgress, InstallResult, PackList } from '@shared/icons/installedPacks'
+import { TABLER_PACK } from '@shared/icons/iconRefs'
 import { useTheme } from '../styling/theme'
 import './packManager.css'
 
@@ -49,22 +50,32 @@ export default function IconPackManager(): React.JSX.Element {
     window.addEventListener('focus', refresh)
     const stop = window.api.onIconPacksChanged(refresh)
     const stopProgress = window.api.onIconPackProgress(setProgress)
+    // An install the app started itself (the first-start question) ends here too.
+    const stopEnded = window.api.onIconPackInstallEnded((result) => {
+      setProgress(null)
+      setOutcome(outcomeText(result))
+      refresh()
+    })
     return () => {
       window.removeEventListener('focus', refresh)
       stop()
       stopProgress()
+      stopEnded()
     }
   }, [refresh])
 
-  const install = (): void => {
+  const run = (start: () => Promise<InstallResult>): void => {
     setOutcome(null)
     setProgress({ phase: 'reading', done: 0, total: 0 })
-    void window.api.installIconPack().then((result) => {
+    void start().then((result) => {
       setProgress(null)
       setOutcome(outcomeText(result))
       refresh()
     })
   }
+  const install = (): void => run(() => window.api.installIconPack())
+  const installTabler = (): void => run(() => window.api.installTablerPack())
+  const hasTabler = list?.packs.some((p) => p.meta.name === TABLER_PACK && p.duplicateOf === null)
 
   const remove = (folder: string): void => {
     setOutcome(null)
@@ -93,6 +104,11 @@ export default function IconPackManager(): React.JSX.Element {
           <button type="button" onClick={install} disabled={busy}>
             Install a pack…
           </button>
+          {list && !hasTabler && (
+            <button type="button" onClick={installTabler} disabled={busy}>
+              Install Tabler icons
+            </button>
+          )}
           <button type="button" onClick={() => void window.api.showIconPacksFolder()}>
             Show the folder
           </button>

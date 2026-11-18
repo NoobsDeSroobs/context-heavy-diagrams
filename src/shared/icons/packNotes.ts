@@ -3,6 +3,8 @@ import type { IconPackNote, IconRef } from './schema.ts'
 
 // The packs a set of icon references names, each once, in name order (so the saved list does not
 // move around in git).
+// A built-in icon is the Tabler pack, but it is not noted: Tabler is the default pack, the app knows
+// what to do when it is missing, and a note would change every older diagram on its next save.
 export function usedPackNames(icons: readonly (IconRef | undefined)[]): string[] {
   const names = new Set<string>()
   for (const icon of icons) if (icon?.source === 'installed') names.add(icon.pack)

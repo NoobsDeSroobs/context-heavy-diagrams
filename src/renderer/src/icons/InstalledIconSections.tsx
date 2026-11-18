@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { IconRef } from '@shared/diagram'
 import type { PackSummary } from '@shared/icons/installedPacks'
+import { refForInstalledIcon } from '@shared/icons/iconRefs'
 import InstalledIconPreview from './InstalledIconPreview'
 import { iconTitle, matchingIcons, SUBSET_ROW_CAP, usablePacks } from './installedIconSearch'
 
@@ -34,7 +35,7 @@ function IconCell({
       ref={ref}
       type="button"
       title={iconTitle(path.slice(path.indexOf('/') + 1))}
-      onClick={() => onPick({ source: 'installed', pack, path })}
+      onClick={() => onPick(refForInstalledIcon(pack, path))}
     >
       {seen && <InstalledIconPreview pack={pack} path={path} />}
     </button>

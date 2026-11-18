@@ -93,6 +93,8 @@ test('only the manager can install, cancel or remove a pack', () => {
   assert.deepEqual(only.sort(), [
     'cancelIconPackInstall',
     'installIconPack',
+    'installTablerPack',
+    'onIconPackInstallEnded',
     'onIconPackProgress',
     'removeIconPack',
     'showIconPacksFolder'

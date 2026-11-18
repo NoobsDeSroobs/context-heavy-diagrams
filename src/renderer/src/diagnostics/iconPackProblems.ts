@@ -1,9 +1,10 @@
 import type { Node } from '@xyflow/react'
 import type { IconRef, IconSlot, LegendEntry } from '@shared/diagram'
 import type { PackSummary } from '@shared/icons/installedPacks'
+import { installedIconOf } from '../../../shared/icons/iconRefs.ts'
 import type { IconPackNote } from '@shared/icons/schema'
 
-// An element that draws an installed icon (ADR 0188).
+// An element that draws an icon from a pack (ADR 0188); a built-in icon is one of the Tabler pack.
 export interface InstalledIconUse {
   pack: string
   path: string
@@ -37,10 +38,11 @@ export function collectInstalledIcons(nodes: Node[], legend: LegendEntry[]): Ins
   for (const n of nodes) {
     const icons = n.data?.icons as Partial<Record<IconSlot, IconRef>> | undefined
     for (const ref of Object.values(icons ?? {})) {
-      if (ref?.source !== 'installed') continue
+      const place = ref && installedIconOf(ref)
+      if (!place) continue
       uses.push({
-        pack: ref.pack,
-        path: ref.path,
+        pack: place.pack,
+        path: place.path,
         ownerKind: 'node',
         ownerId: n.id,
         ownerLabel: String(n.data?.label ?? ''),
@@ -49,10 +51,11 @@ export function collectInstalledIcons(nodes: Node[], legend: LegendEntry[]): Ins
     }
   }
   for (const entry of legend) {
-    if (entry.kind !== 'icon' || entry.icon?.source !== 'installed') continue
+    const place = entry.kind === 'icon' && entry.icon ? installedIconOf(entry.icon) : undefined
+    if (!place) continue
     uses.push({
-      pack: entry.icon.pack,
-      path: entry.icon.path,
+      pack: place.pack,
+      path: place.path,
       ownerKind: 'legend',
       ownerId: entry.id,
       ownerLabel: entry.label,

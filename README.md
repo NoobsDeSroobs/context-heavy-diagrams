@@ -78,7 +78,7 @@ A diagram is a small, deterministic text file, so git can do for it what it does
 
 ### Elements, connections and styling
 - Entities, nestable **containers**, rotatable **text**, and freeform **curved lines**.
-- About 5,800 bundled [Tabler](https://tabler.io/icons) icons (MIT) plus your own SVG/PNG icons, in up to four corner slots per entity. Protected icon packs like AWS/Azure/GCP are sadly not bundled.
+- Icon packs you install from folders of SVG files (a cloud vendor's, your company's), in up to four corner slots per entity. About 5,000 [Tabler](https://tabler.io/icons) outline icons (MIT) come with the app and are offered as a pack on the first start. Vendor packs like AWS/Azure/GCP are not bundled: you install them from your own files.
 - **Configurable edges.** Straight, step, smooth and curved routing, manual bend points, direction sets, and multi-connection wiring. Drop an edge on the dashed target in the middle of an element and it **changes to auto mode**, where the connection point is dynamically updated as things move around following set rules. Further, connection points slide a little to straighten almost-straight edges. Hold Alt and drag a label to slide it along its edge. 
 - A full **style panel**, named style palettes you can share, alignment guides, snapping, align/distribute, and multi-select resize. It even has profiles to match the branding of your company or your clients.
 

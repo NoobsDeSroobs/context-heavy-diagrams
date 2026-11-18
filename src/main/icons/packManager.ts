@@ -1,16 +1,20 @@
 import { app, BrowserWindow, dialog, ipcMain, shell, type IpcMainInvokeEvent } from 'electron'
-import { mkdir } from 'fs/promises'
+import { randomUUID } from 'crypto'
+import { mkdir, readFile, rm, writeFile } from 'fs/promises'
 import { join } from 'path'
 import { is } from '@electron-toolkit/utils'
 import icon from '../../../resources/icon.png?asset'
 import type {
   InstalledIconResult,
+  InstallProgress,
   InstallResult,
   PackList,
   RemoveResult
 } from '@shared/icons/installedPacks'
+import { TABLER_PACK } from '@shared/icons/iconRefs'
 import { isSafeExternalUrl, isSameDocument } from '../navigationGuard'
 import { installPack, listPacks, packFoldersByName, readPackIcon, removePack } from './packStore'
+import { stageTablerPack, tablerPackageFolder } from './tablerPack'
 
 // The icon pack manager (ADR 0188): the one place packs are installed, updated and removed. Its own
 // window with its own small bridge (src/preload/iconPacks.ts); the editor windows can open it and
@@ -89,6 +93,99 @@ function fromManager(event: IpcMainInvokeEvent): BrowserWindow | null {
     : null
 }
 
+// Runs one install at a time and tells the manager how far it is. `prepare` gives the folder to
+// install, and a function that removes what it made once the install is over.
+async function runInstall(
+  win: BrowserWindow,
+  prepare: (progress: (progress: InstallProgress) => void) => Promise<{
+    source: string
+    cleanUp?: () => Promise<void>
+  }>
+): Promise<InstallResult> {
+  const job = { cancelled: false }
+  running = job
+  const send = (progress: InstallProgress): void => {
+    if (!win.isDestroyed()) win.webContents.send('iconPacks:progress', progress)
+  }
+  let cleanUp: (() => Promise<void>) | undefined
+  try {
+    const prepared = await prepare(send)
+    cleanUp = prepared.cleanUp
+    const result = await installPack(iconPacksFolder(), prepared.source, {
+      onProgress: send,
+      isCancelled: () => job.cancelled
+    })
+    if (result.status === 'installed') announceChange()
+    return ended(win, result)
+  } catch (error) {
+    return ended(win, {
+      status: 'failed',
+      message: error instanceof Error ? error.message : String(error)
+    })
+  } finally {
+    running = null
+    await cleanUp?.().catch(() => undefined)
+  }
+}
+
+// An install the app started itself has no caller waiting for its answer, so the manager is told.
+function ended(win: BrowserWindow, result: InstallResult): InstallResult {
+  if (!win.isDestroyed()) win.webContents.send('iconPacks:installEnded', result)
+  return result
+}
+
+// The Tabler pack, written out from the package that comes with the app into a temporary folder.
+async function stagedTabler(
+  progress: (progress: InstallProgress) => void
+): Promise<{ source: string; cleanUp: () => Promise<void> }> {
+  progress({ phase: 'reading', done: 0, total: 0 })
+  const parent = join(app.getPath('temp'), `chd-tabler-${randomUUID()}`)
+  const cleanUp = (): Promise<void> => rm(parent, { recursive: true, force: true })
+  try {
+    const staged = await stageTablerPack(tablerPackageFolder(app.getAppPath()), parent)
+    return { source: staged.folder, cleanUp }
+  } catch (error) {
+    await cleanUp().catch(() => undefined)
+    throw error
+  }
+}
+
+// The first-start question (ADR 0188): offer the Tabler pack once. Either answer is remembered by a
+// file in the packs folder, so the question is not asked again, and deleting the folder resets it.
+const OFFERED_FILE = '.offered'
+
+export async function offerDefaultPacks(win: BrowserWindow): Promise<void> {
+  // A launch for automated driving has nobody to answer a dialog.
+  if (app.commandLine.hasSwitch('remote-debugging-port')) return
+  const folder = iconPacksFolder()
+  const asked = await readFile(join(folder, OFFERED_FILE), 'utf-8').then(
+    () => true,
+    () => false
+  )
+  if (asked || win.isDestroyed()) return
+  const installed = (await listPacks(folder).catch(() => [])).some(
+    (pack) => pack.meta.name === TABLER_PACK && pack.duplicateOf === null
+  )
+  if (installed) return
+  const answer = await dialog.showMessageBox(win, {
+    type: 'question',
+    buttons: ['Install', 'Not now'],
+    defaultId: 0,
+    cancelId: 1,
+    title: 'Icon packs',
+    message: 'Install the default icon pack?',
+    detail:
+      'The app draws icons from installed packs. The Tabler Icons set (about 5,000 line icons, MIT licence) comes with it and can be installed now. Diagrams that use these icons show nothing until it is. You can do it later from View > Icon packs.'
+  })
+  await mkdir(folder, { recursive: true })
+  await writeFile(join(folder, OFFERED_FILE), '', 'utf-8')
+  if (answer.response !== 0 || running) return
+  openManager()
+  const manager = managerWindow
+  if (!manager || manager.isDestroyed()) return
+  await runInstall(manager, stagedTabler)
+}
+
 export function registerIconPackHandlers(): void {
   ipcMain.handle('iconPacks:open', () => openManager())
 
@@ -118,20 +215,14 @@ export function registerIconPackHandlers(): void {
       properties: ['openDirectory']
     })
     if (picked.canceled || picked.filePaths.length === 0) return { status: 'cancelled' }
-    const job = { cancelled: false }
-    running = job
-    try {
-      const result = await installPack(iconPacksFolder(), picked.filePaths[0], {
-        onProgress: (progress) => {
-          if (!win.isDestroyed()) win.webContents.send('iconPacks:progress', progress)
-        },
-        isCancelled: () => job.cancelled
-      })
-      if (result.status === 'installed') announceChange()
-      return result
-    } finally {
-      running = null
-    }
+    return runInstall(win, () => Promise.resolve({ source: picked.filePaths[0] }))
+  })
+
+  ipcMain.handle('iconPacks:installTabler', async (event): Promise<InstallResult> => {
+    const win = fromManager(event)
+    if (!win) return { status: 'failed', message: 'Packs are installed in the icon pack manager.' }
+    if (running) return { status: 'failed', message: 'An install is already running.' }
+    return runInstall(win, stagedTabler)
   })
 
   ipcMain.handle('iconPacks:cancelInstall', (event) => {

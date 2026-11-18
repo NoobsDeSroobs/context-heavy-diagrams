@@ -1,3 +1,4 @@
+import { TABLER_PACK } from '@shared/icons/iconRefs'
 import type { IconPackProblems } from './iconPackProblems'
 
 // The "Icon packs" part of the Diagnostics panel (ADR 0188): the installed packs the diagram's icons
@@ -33,7 +34,9 @@ export default function IconPacksSection({
               </span>
               <span className="diagnostics-missing-file-error">
                 {pack.note?.ifMissing ||
-                  'Install the pack from its files, or the icons are left empty.'}{' '}
+                  (pack.name === TABLER_PACK
+                    ? 'The built-in icons: install them with "Install Tabler icons" in the icon pack manager.'
+                    : 'Install the pack from its files, or the icons are left empty.')}{' '}
                 Used by {pack.uses.length} icon{pack.uses.length === 1 ? '' : 's'}.
               </span>
               <div className="diagnostics-missing-file-actions">

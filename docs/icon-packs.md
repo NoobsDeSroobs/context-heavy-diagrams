@@ -77,6 +77,10 @@ An element's icon is stored in the diagram as
 
 When a diagram refers to a pack that is not installed, the app shows no icon there and says in the diagnostics which pack it is and what its `ifMissing` text says, from the copy the diagram keeps of it. A pack that is installed but lacks that icon is reported like any other missing file. Each save rewrites the diagram's `iconPacks` list from the icons it holds: a pack installed here gives its own current version and text, one that is not installed keeps the note the file already had, and a pack no icon uses any more is dropped.
 
+## The Tabler pack
+
+The app comes with the [Tabler Icons](https://tabler.io/icons) outline set (MIT licence) and writes it out as a pack named `Tabler` with one subset, `Outline`, when you install it: on the first start, when the app asks, or later with "Install Tabler icons" in the manager. A diagram's `{ "source": "builtin", "id": "server" }` means that pack's `Outline/server.svg`, and without the pack installed it is reported like any other missing pack. Picking an icon from that subset stores `builtin`, as always, so an older version and the command line (which reads the same files from the app) still draw it. The answer to the first-start question is remembered by a file named `.offered` in the packs folder; delete it, or the folder, to be asked again.
+
 ## Making a pack
 
 1. Make a folder named for the pack and a folder inside it for each group of icons.

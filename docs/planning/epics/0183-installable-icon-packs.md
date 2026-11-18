@@ -10,7 +10,6 @@ Let a person install icon sets (a cloud vendor's, a company's own) once per mach
 Everything about where packs live, the reference form, drawing and cleaning icons, Tabler on first start, one-off icons, diagnostics and the picker is in the ADR. The maintainer chose inline SVG over image-plus-mask, Tabler installed through the manager, and a `My icons` pack over keeping `custom` for new icons.
 
 ## Still to settle while building
-- **The Tabler archive:** one file in the installer, unpacked by the manager; the format (zip needs a reader, a tar does not) and where the command-line export reads its bundled copy.
 - **Slow canvases:** measure a large diagram with many installed icons before adding the `<img>` fallback for fixed-colour icons.
 - **The CLI and tests** that open diagrams with built-in icons need the Tabler pack or its bundled copy.
 
@@ -24,7 +23,7 @@ Everything about where packs live, the reference form, drawing and cleaning icon
 - [x] Icons follow the text colour in both themes; colours fixed by a pack are kept (installed icons are read through `iconPacks:readIcon`, cleaned and drawn inline by `IconSlotView`; the canvas, the legend panel and the compare window draw them)
 - [ ] Exports draw installed icons: SVG (a nested svg keeps the icon's own viewBox, ids isolated per icon), draw.io, the legend of an image export; the search-by-icon preview
 - [x] Diagnostics error for a missing pack, with a button to open the manager; write `iconPacks` on each save from the icons present and the installed list (the Icon packs section of the Diagnostics panel, counted in the View menu; the main process writes the list in `document:save`, `shared/icons/packNotes.ts`; an icon missing from an installed pack is listed per element)
-- [ ] Tabler as a pack: archive in the installer, first-start question, `builtin` as an alias, the command-line export still drawing it
+- [x] Tabler as a pack: written out from the bundled `@tabler/icons` package by the manager (no archive), first-start question, `builtin` as an alias in the drawing, the picker and the diagnostics, the command-line export unchanged (`src/main/icons/tablerPack.ts`, `shared/icons/iconRefs.ts`). Not done: offering an update when the app's Tabler is newer than the installed one
 - [ ] `My icons`: adding a one-off icon asks for a pack; existing `custom` icons keep working
 - [ ] Example diagram using a small pack made for the purpose ([ADR 0151](../../decisions/0151-every-visible-feature-has-an-example-diagram.md))
 

@@ -81,6 +81,33 @@ describe('an installed icon', () => {
     expect(second.container.querySelector('svg')).toBeNull()
   })
 
+  it('draws a built-in icon from the installed Tabler pack, and says when that is not installed', async () => {
+    readInstalledIcon.mockResolvedValue({ ok: true, svg: SHAPE })
+    const first = render(
+      <IconSlotView
+        icon={{ source: 'builtin', id: 'server-rack' }}
+        diagramPath={null}
+        className="slot"
+      />
+    )
+    await waitFor(() => expect(first.container.querySelector('span.slot svg')).not.toBeNull())
+    expect(readInstalledIcon).toHaveBeenCalledWith('Tabler', 'Outline/server-rack.svg')
+    cleanup()
+    readInstalledIcon.mockResolvedValue({ ok: false, reason: 'no-pack' })
+    const second = render(
+      <IconSlotView
+        icon={{ source: 'builtin', id: 'database' }}
+        diagramPath={null}
+        className="slot"
+      />
+    )
+    await waitFor(() =>
+      expect(second.container.querySelector('span.slot')?.getAttribute('title')).toContain(
+        '"Tabler"'
+      )
+    )
+  })
+
   it('is read again when the packs change', async () => {
     readInstalledIcon.mockResolvedValueOnce({ ok: false, reason: 'no-pack' })
     const { container } = render(installed('New', 'Set/a.svg'))

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { IconRef } from '@shared/diagram'
-import { loadBuiltinIconSvg } from './builtinIcons'
+import { installedIconOf } from '@shared/icons/iconRefs'
 import { useInstalledIcon } from './installedIcons'
 
 interface IconSlotViewProps {
@@ -9,9 +9,10 @@ interface IconSlotViewProps {
   className?: string
 }
 
-// Built-in icons render as inline SVG (trusted, bundled at build time, ADR 0006). Custom icons
-// render through <img src="data:..."> and are never inlined: an arbitrary user-supplied SVG could
-// embed a script, and <img> doesn't execute embedded scripts the way dangerouslySetInnerHTML would.
+// Icons of a pack, the built-in Tabler ones included, are cleaned and drawn inline (ADR 0188). A
+// custom icon renders through <img src="data:..."> and is never inlined: an arbitrary user-supplied
+// SVG could embed a script, and <img> doesn't execute embedded scripts the way
+// dangerouslySetInnerHTML would.
 //
 // There is no manual "reset before fetching": the caller keys this component by icon identity
 // (EntityNode.tsx's iconSlotKey), so React mounts a fresh instance whenever the icon changes,
@@ -19,8 +20,10 @@ interface IconSlotViewProps {
 // setState-in-effect the lint rules reject).
 export default function IconSlotView(props: IconSlotViewProps): React.JSX.Element | null {
   const { icon } = props
-  return icon?.source === 'installed' ? (
-    <InstalledIconSlot pack={icon.pack} path={icon.path} className={props.className} />
+  // A built-in icon is one of the Tabler pack, drawn like any installed one.
+  const place = icon ? installedIconOf(icon) : undefined
+  return place ? (
+    <InstalledIconSlot pack={place.pack} path={place.path} className={props.className} />
   ) : (
     <StoredIconSlot {...props} />
   )
@@ -57,18 +60,13 @@ function StoredIconSlot({
   diagramPath,
   className
 }: IconSlotViewProps): React.JSX.Element | null {
-  const [svg, setSvg] = useState<string | null>(null)
   const [dataUrl, setDataUrl] = useState<string | null>(null)
 
   useEffect(() => {
     if (!icon) return undefined
 
     let cancelled = false
-    if (icon.source === 'builtin') {
-      loadBuiltinIconSvg(icon.id)?.then((s) => {
-        if (!cancelled) setSvg(s)
-      })
-    } else if (icon.source === 'custom' && diagramPath) {
+    if (icon.source === 'custom' && diagramPath) {
       // A missing custom-icon file just renders nothing (the fallback
       // <span> below) — the Diagnostics "missing files" section is where a
       // dead reference is surfaced (ADR 0084), not an uncaught rejection.
@@ -85,7 +83,6 @@ function StoredIconSlot({
   }, [icon, diagramPath])
 
   if (!icon) return null
-  if (svg) return <span className={className} dangerouslySetInnerHTML={{ __html: svg }} />
   if (dataUrl) return <img className={className} src={dataUrl} alt="" />
   return <span className={className} />
 }

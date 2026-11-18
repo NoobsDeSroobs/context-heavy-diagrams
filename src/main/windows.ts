@@ -7,6 +7,7 @@ import { deleteRecoverySnapshot, newSessionId } from './document/recovery'
 import { readPreferences, updatePreferences } from './preferences/appPreferences'
 import { resolveLinkPath } from './links/linkPaths'
 import { isSafeExternalUrl, isSameDocument } from './navigationGuard'
+import { offerDefaultPacks } from './icons/packManager'
 
 const FILTERS = [{ name: 'Diagram', extensions: ['chd'] }]
 
@@ -87,6 +88,20 @@ function attachCloseGuard(win: BrowserWindow): void {
   })
 }
 
+// The first-start question about the default icon pack (ADR 0188) is asked once per run, from the
+// first window, a moment after its page has loaded so a diagram opened from the file manager is
+// already on screen.
+let offeredDefaultPacks = false
+function offerDefaultIconPacksOnce(win: BrowserWindow): void {
+  if (offeredDefaultPacks) return
+  offeredDefaultPacks = true
+  win.webContents.once('did-finish-load', () => {
+    setTimeout(() => {
+      if (!win.isDestroyed()) void offerDefaultPacks(win)
+    }, 1500)
+  })
+}
+
 // initialPath, when given, is passed to the renderer via a ?path= query
 // string rather than read here — the new window's own mount effect loads
 // it through the existing diagram:openPath IPC, reusing tested code
@@ -117,6 +132,7 @@ export function createWindow(initialPath?: string): BrowserWindow {
     lastFocusedWindow = win
   })
   attachCloseGuard(win)
+  offerDefaultIconPacksOnce(win)
 
   // The window must never show anything but the app's own page: a link in a
   // note or diagram would otherwise load a remote page in a window that has
