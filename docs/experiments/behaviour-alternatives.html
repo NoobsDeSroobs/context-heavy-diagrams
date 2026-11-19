@@ -99,6 +99,10 @@
   <h2>8. A human event: a person starts a flow, or the flow waits for one (picked: the person)</h2>
   <p class="note">A person's act as the trigger or the thing awaited: someone files a request (a start), or the flow stops until someone approves (in the flow). It is the event twin of the user step, which is the work a person does. Three candidate marks, each as "starts a flow" then "in the flow", at full and half size: the person (the same mark as the user step, since it means "a human"), a raised hand ("stop, a person must act"), and a pointer (a click).</p>
   <div id="humans"></div>
+
+  <h2>9. Timer, message and repeat: the marks on the settled palette</h2>
+  <p class="note">The three marks not yet picked, drawn in the colours of set 2 of section 6. Each row is the candidates at full size with a note, then the same at half size. The first of each row is what the app draws today. A timer can mean a duration ("wait 2 days"), a moment ("at 02:00") or a schedule ("every Monday"), and as a start it is the trigger of the flow; a message is something arriving or being sent; repeat is a step that runs again.</p>
+  <div id="rest"></div>
 </main>
 
 <script>
@@ -429,6 +433,17 @@ document.getElementById('humans').innerHTML = `<div class="triple p-shades"><div
 }<div class="mini">${
   HUMAN.map(([mark, name]) => [false, true].map((f) => `<div class="cell">${draw(humanSpec(mark, name, f))}</div>`).join('')).join('')
 }</div></div></div>`;
+
+// ---- timer, message, repeat ----
+const REST = [
+  ['Timer', 'event-timer', [['clock', 'Today: a clock face. Reads as time at once, but also as "a time of day".'], ['stopwatch', 'A stopwatch: a duration or a timeout.'], ['hourglass', 'An hourglass: waiting.'], ['calendar', 'A calendar: a date or a schedule.']]],
+  ['Message', 'event-message', [['envelope', 'Today: an envelope. The universal sign for a message.'], ['plane', 'A paper plane: sent.'], ['bubble', 'A speech bubble: a message in the chat sense.']]],
+  ['Repeated step', 'step-repeat', [['loop', 'Today: two arrows chasing each other round.'], ['repeat', 'The repeat button of every media player.'], ['circArrow', 'One arrow round: simpler at small size.'], ['timesN', 'A count, "&times;n": says how often, not only that.']]]
+];
+document.getElementById('rest').innerHTML = REST.map(([title, id, marks]) => {
+  const specs = marks.map(([mark, note]) => [evRing({ ...PICK[id], mark, label: title }, id), note]);
+  return `<div class="triple p-shades"><div class="ttitle">${title}</div><div class="strip">${specs.map(([sp, note]) => cell(sp, note, false)).join('')}<div class="mini">${specs.map(([sp]) => `<div class="cell">${draw(sp)}</div>`).join('')}</div></div></div>`;
+}).join('');
 
 // ---- controls ----
 const body = document.body, sheet = document.getElementById('sheet');
