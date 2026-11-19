@@ -175,6 +175,7 @@ import { useThreatMatrix } from '../threat-matrix/useThreatMatrix'
 import { useDirtyState } from '../document/useDirtyState'
 import { useOutsideChanges } from '../document/useOutsideChanges'
 import OutsideChangeNotice from '../document/OutsideChangeNotice'
+import IconPackOffer from '../icons/IconPackOffer'
 import { useSave } from '../document/useSave'
 import { useWindowLifecycle } from '../document/useWindowLifecycle'
 import { useWindowTitle } from '../document/useWindowTitle'
@@ -3634,6 +3635,7 @@ function CanvasInner(): React.JSX.Element {
           not flat — see ADR 0013. */}
       <div className="app-shell">
         <div className={`canvas-view${edgeAnimationOn ? '' : ' edges-still'}`}>
+          <IconPackOffer />
           <div className="toolbar">
             <MenuBar menus={menus} />
             {/* Persona selector sits after the File/Edit/View/Help menus, not

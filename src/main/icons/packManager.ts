@@ -157,10 +157,15 @@ async function stagedTabler(
 
 // The first-start question (ADR 0188): offer the Tabler pack once. Either answer is remembered by a
 // file in the packs folder, so the question is not asked again, and deleting the folder resets it.
+// It is asked as a strip inside the window that was opened, not as a box in front of it, so the
+// window is visible whether or not anyone answers (ADR 0192).
 const OFFERED_FILE = '.offered'
 
+// The window that has been shown the question and has not answered. Only its answer counts.
+let pendingOffer: BrowserWindow | null = null
+
 export async function offerDefaultPacks(win: BrowserWindow): Promise<void> {
-  // A launch for automated driving has nobody to answer a dialog.
+  // A launch for automated driving has nobody to answer the question.
   if (app.commandLine.hasSwitch('remote-debugging-port')) return
   const folder = iconPacksFolder()
   const asked = await readFile(join(folder, OFFERED_FILE), 'utf-8').then(
@@ -172,19 +177,20 @@ export async function offerDefaultPacks(win: BrowserWindow): Promise<void> {
     (pack) => pack.meta.name === TABLER_PACK && pack.duplicateOf === null
   )
   if (installed) return
-  const answer = await dialog.showMessageBox(win, {
-    type: 'question',
-    buttons: ['Install', 'Not now'],
-    defaultId: 0,
-    cancelId: 1,
-    title: 'Icon packs',
-    message: 'Install the default icon pack?',
-    detail:
-      'The app draws icons from installed packs. The Tabler Icons set (about 5,000 line icons, MIT licence) comes with it and can be installed now. Diagrams that use these icons show nothing until it is. You can do it later from View > Icon packs.'
-  })
+  pendingOffer = win
+  win.webContents.send('iconPacks:offer')
+}
+
+// The answer of the window that was asked. "Install" opens the manager and installs the bundled
+// Tabler pack there; either answer is remembered.
+async function answerOffer(event: IpcMainInvokeEvent, accept: unknown): Promise<void> {
+  const win = pendingOffer
+  if (!win || win.isDestroyed() || event.sender !== win.webContents) return
+  pendingOffer = null
+  const folder = iconPacksFolder()
   await mkdir(folder, { recursive: true })
   await writeFile(join(folder, OFFERED_FILE), '', 'utf-8')
-  if (answer.response !== 0 || running) return
+  if (accept !== true || running) return
   openManager()
   const manager = managerWindow
   if (!manager || manager.isDestroyed()) return
@@ -193,6 +199,7 @@ export async function offerDefaultPacks(win: BrowserWindow): Promise<void> {
 
 export function registerIconPackHandlers(): void {
   ipcMain.handle('iconPacks:open', () => openManager())
+  ipcMain.handle('iconPacks:answerOffer', answerOffer)
 
   // One icon of a pack, by the pack's name and the path a diagram stores. Any window may read.
   ipcMain.handle(

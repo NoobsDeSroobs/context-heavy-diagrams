@@ -97,6 +97,19 @@ const api = {
     return () => ipcRenderer.off('iconPacks:changed', listener)
   },
 
+  // The first-start question about the default icon pack (ADR 0192): main asks once, the window
+  // shows it and answers. Yes installs the pack that comes with the app, in the manager; nothing
+  // else can be installed this way, and an answer from a window that was not asked is ignored.
+  onIconPackOffer(callback: () => void): () => void {
+    const listener = (): void => callback()
+    ipcRenderer.on('iconPacks:offer', listener)
+    return () => ipcRenderer.off('iconPacks:offer', listener)
+  },
+
+  answerIconPackOffer(accept: boolean): Promise<void> {
+    return ipcRenderer.invoke('iconPacks:answerOffer', accept)
+  },
+
   // Reference images (see ADR 0069) — same sibling-folder model as
   // custom icons, into assets/references/. pickAndCopy allows multi-select
   // and returns every copied file's relative path (null on cancel).

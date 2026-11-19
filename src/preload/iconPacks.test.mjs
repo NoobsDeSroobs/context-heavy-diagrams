@@ -108,8 +108,10 @@ test('the editor bridge can write one thing to the packs: an icon the person pic
   const channels = [...editor.values()].filter((c) => c?.startsWith('iconPacks:'))
   assert.deepEqual(channels.sort(), [
     'iconPacks:addMisc',
+    'iconPacks:answerOffer',
     'iconPacks:changed',
     'iconPacks:list',
+    'iconPacks:offer',
     'iconPacks:open',
     'iconPacks:readIcon'
   ])

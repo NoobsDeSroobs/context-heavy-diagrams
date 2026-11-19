@@ -260,6 +260,44 @@ body {
   cursor: pointer;
 }
 
+/* The first-start question about the default icon pack (ADR 0192): a strip over the bottom edge of
+   the canvas, out of the way of the toolbar at the top and the controls at the corners. */
+.icon-pack-offer {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(720px, calc(100% - 32px));
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--color-background-soft);
+  border: 1px solid var(--ev-c-gray-2);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  font-size: 13px;
+}
+
+.icon-pack-offer-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.icon-pack-offer-detail {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.icon-pack-offer button {
+  font-size: 12px;
+  padding: 3px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
 @keyframes toolbar-saved-flash-in {
   from {
     opacity: 0;
