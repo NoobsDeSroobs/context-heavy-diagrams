@@ -77,7 +77,7 @@
   <div id="alts"></div>
 
   <h2>3. Your picks so far</h2>
-  <p class="note">The step shape stays. Stacked layers for the sub-flow, the robot for the automatic step, the play triangle for start and the tick for end are in. The plain circle stays the event; the signal is shown as a trial. The kinds not yet discussed (timer, message, repeat) are as today (dashed outline). The three choices are set A of round two: a sideways fork, two overlapping rings, two bars.</p>
+  <p class="note">The step shape stays. Stacked layers for the sub-flow, the robot for the automatic step, the play triangle for start and the tick for end are in. The plain circle stays the event; the signal is shown as a trial. Timer (clock) and message (envelope) stay as today, and the repeated step takes the media repeat mark. The three choices are set A of round two: a sideways fork, two overlapping rings, two bars.</p>
   <div id="set"></div>
 
   <h2>4. Choices, round two</h2>
@@ -329,13 +329,13 @@ document.getElementById('alts').innerHTML = ALTS.map(([id, name, today, alts]) =
 // ---- your picks so far ----
 const PICK = {
   'step': TODAY.step, 'step-user': TODAY['step-user'], 'step-automatic': { ...TODAY['step-automatic'], mark: 'robot' },
-  'step-sub-flow': { ...TODAY['step-sub-flow'], mark: 'layers' }, 'step-repeat': TODAY['step-repeat'],
+  'step-sub-flow': { ...TODAY['step-sub-flow'], mark: 'layers' }, 'step-repeat': { ...TODAY['step-repeat'], mark: 'repeat' },
   'branch-exclusive': { ...TODAY['branch-exclusive'], mark: 'forkPlain', markScale: 1.2 }, 'branch-inclusive': { ...TODAY['branch-inclusive'], mark: 'venn', markScale: 1.2 }, 'branch-parallel': { ...TODAY['branch-parallel'], mark: 'bars', markScale: 1.2 },
   'event-start': { ...TODAY['event-start'], mark: 'play' }, 'event': TODAY.event,
   'event-timer': TODAY['event-timer'], 'event-message': TODAY['event-message'],
   'event-end': { ...TODAY['event-end'], mark: 'check' }
 };
-const PICKED = new Set(['step', 'step-automatic', 'step-sub-flow', 'event-start', 'event', 'event-end', 'branch-exclusive', 'branch-inclusive', 'branch-parallel']);
+const PICKED = new Set(['step', 'step-automatic', 'step-sub-flow', 'step-repeat', 'event-timer', 'event-message', 'event-start', 'event', 'event-end', 'branch-exclusive', 'branch-inclusive', 'branch-parallel']);
 document.getElementById('set').innerHTML = FAMILIES.map(([name, ids]) =>
   `<div class="family">${name}</div><div class="strip">${ids.map((id) => cell(PICK[id], PICKED.has(id) ? 'picked' : 'as today', !PICKED.has(id))).join('')}${name === 'Events' ? cell({ ...TODAY.event, mark: 'ripple' }, 'trial: the signal') : ''}</div>`).join('');
 
