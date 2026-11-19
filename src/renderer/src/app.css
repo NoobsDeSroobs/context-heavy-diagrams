@@ -10,14 +10,22 @@ body {
   overflow: hidden;
 }
 
+/* A strip above the app shell, such as the first-start icon pack question (ADR 0192), takes its line and
+   the shell the rest. */
+#root {
+  display: flex;
+  flex-direction: column;
+}
+
 /* Two-slot dock layout — see ADR 0013. Nested, not flat:
    [canvas-view [diagram-dock]] [utility-dock]. Both docks are real flex
    layout (React Flow auto-resizes via ResizeObserver), zero-width when
    empty. */
 .app-shell {
   display: flex;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .diagram-dock {
@@ -258,6 +266,37 @@ body {
   font-size: 12px;
   padding: 1px 8px;
   cursor: pointer;
+}
+
+/* The first-start question about the default icon pack (ADR 0192): one line across the top of the
+   window, above the canvas, which gets a line shorter while it is there. */
+.icon-pack-offer {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  padding: 4px 12px;
+  background: var(--color-background-soft);
+  border-bottom: 1px solid var(--ev-c-gray-2);
+  font-size: 12px;
+}
+
+.icon-pack-offer-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.icon-pack-offer-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-pack-offer button {
+  font-size: 12px;
+  padding: 1px 10px;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 @keyframes toolbar-saved-flash-in {

@@ -57,6 +57,8 @@ export interface DiagramApi {
   listIconPacks(): Promise<PackList>
   readInstalledIcon(pack: string, path: string): Promise<InstalledIconResult>
   onIconPacksChanged(callback: () => void): () => void
+  onIconPackOffer(callback: () => void): () => void
+  answerIconPackOffer(accept: boolean): Promise<void>
   // Only the icon pack manager's own bridge (preload/iconPacks.ts) has these.
   installIconPack(): Promise<InstallResult>
   installTablerPack(): Promise<InstallResult>

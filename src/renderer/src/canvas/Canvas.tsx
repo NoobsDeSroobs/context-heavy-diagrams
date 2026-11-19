@@ -175,6 +175,7 @@ import { useThreatMatrix } from '../threat-matrix/useThreatMatrix'
 import { useDirtyState } from '../document/useDirtyState'
 import { useOutsideChanges } from '../document/useOutsideChanges'
 import OutsideChangeNotice from '../document/OutsideChangeNotice'
+import IconPackOffer from '../icons/IconPackOffer'
 import { useSave } from '../document/useSave'
 import { useWindowLifecycle } from '../document/useWindowLifecycle'
 import { useWindowTitle } from '../document/useWindowTitle'
@@ -3632,6 +3633,7 @@ function CanvasInner(): React.JSX.Element {
     <DiagramContext.Provider value={diagramContextValue}>
       {/* Outer app shell: [canvas view [diagram dock]] [utility dock], nested
           not flat — see ADR 0013. */}
+      <IconPackOffer />
       <div className="app-shell">
         <div className={`canvas-view${edgeAnimationOn ? '' : ' edges-still'}`}>
           <div className="toolbar">
