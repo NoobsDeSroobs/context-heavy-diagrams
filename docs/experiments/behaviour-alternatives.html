@@ -87,6 +87,10 @@
   <h2>5. Choices, round three: one symbol, a count</h2>
   <p class="note">A fork, a diamond or a square says "this branches"; a count says how many of the paths are taken. <b>1</b> is exactly one (a decision), <b>1+</b> or <b>1&ndash;n</b> is one or more (inclusive), <b>n</b> or <b>all</b> is every one (parallel). The count is the only thing that differs, so there is no turned copy to mix up. Same layout as before: full size, then half size.</p>
   <div id="counts"></div>
+
+  <h2>6. Colours, on the picks so far</h2>
+  <p class="note">The marks now say what a kind is, so colour has less to do. Each block below shows the whole set as picked (set A for the choices) under one palette. What to judge: can a <b>user</b> step and an <b>automatic</b> step be told apart at a glance; do the three <b>choices</b> need three colours now their marks differ; are <b>start</b> and <b>end</b> apart without red against green. Switch Vision to Deuteranopia, Protanopia or Greyscale, and Size to 50%, before deciding. Diamonds are not on this sheet: set A keeps the square frames.</p>
+  <div id="palettes"></div>
 </main>
 
 <script>
@@ -357,6 +361,34 @@ const COUNTS = [
     [ch('Decision', 'bold1', 'square', 'choice', { markScale: 1.2 }), ch('Inclusive choice', 'boldSome', 'square', 'choice', { markScale: 1.2 }), ch('Parallel', 'boldAll', 'square', 'parallel', { markScale: 1.2 })]]
 ];
 document.getElementById('counts').innerHTML = renderTriples(COUNTS);
+
+// ---- colours, round four ----
+const hexRgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+const mixHex = (h, base, a) => '#' + hexRgb(h).map((c, i) => Math.round(c * a + hexRgb(base)[i] * (1 - a)).toString(16).padStart(2, '0')).join('');
+const palCss = (cls, hues) => [['dark', '#141414', 0.32], ['light', '#ffffff', 0.3]].map(([theme, base, a]) => {
+  let v = '';
+  for (const [k, h] of Object.entries(hues)) {
+    v += `--f-${k}:${mixHex(h, base, a)};`;
+    if (['step', 'user', 'auto'].includes(k)) v += `--s-${k}:${theme === 'dark' ? h : mixHex(h, '#000000', 0.75)};`;
+  }
+  return `[data-theme='${theme}'] .${cls}{${v}}`;
+}).join('\n');
+const actors = (spec, id) => id === 'step-user' ? { ...spec, fill: 'user', stroke: 'user' } : id === 'step-automatic' ? { ...spec, fill: 'auto', stroke: 'auto' } : spec;
+const PALETTES = [
+  ['p-today', "1. Today's colours", 'The baseline: one teal for every step, amber for decision and inclusive, blue for parallel, green start, one indigo for the events, red end.', null, null],
+  ['p-family', '2. Family colours, the marks do the work', 'One colour per family. The three choices share amber, since the fork, the rings and the bars already tell them apart. The end is a heavy dark-grey circle instead of red, so start and end differ by outline weight and lightness, not red against green.',
+    { step: '#4e939e', choice: '#d8a93a', parallel: '#d8a93a', start: '#4caf62', event: '#7b82d6', end: '#9aa3ad' }, null],
+  ['p-actors', '3. Family colours, and a colour for who does the step', 'As 2, but the user step is warm orange and the automatic step blue, with the plain step teal: the difference that matters most in a process is the loudest one.',
+    { step: '#4e939e', user: '#d98a3a', auto: '#4f86d6', choice: '#d8a93a', parallel: '#d8a93a', start: '#4caf62', event: '#7b82d6', end: '#9aa3ad' }, actors],
+  ['p-safe', '4. Colour-blind safe (Okabe and Ito hues)', 'The hues chosen so that they stay apart under the common kinds of colour blindness: sky blue, orange, blue, yellow, bluish green, reddish purple, vermilion. Start is bluish green and end vermilion, which stay distinct where red and green do not.',
+    { step: '#56b4e9', user: '#e69f00', auto: '#0072b2', choice: '#f0e442', parallel: '#f0e442', start: '#009e73', event: '#cc79a7', end: '#d55e00' }, actors]
+];
+const palStyle = document.createElement('style');
+palStyle.textContent = PALETTES.filter((q) => q[3]).map((q) => palCss(q[0], q[3])).join('\n');
+document.head.appendChild(palStyle);
+document.getElementById('palettes').innerHTML = PALETTES.map(([cls, title, note, , tweak]) =>
+  `<div class="triple ${cls}"><div class="ttitle">${title}</div><p class="note">${note}</p>${FAMILIES.map(([name, ids]) =>
+    `<div class="family">${name}</div><div class="strip">${ids.map((id) => cell(tweak ? tweak(PICK[id], id) : PICK[id], '', false)).join('')}</div>`).join('')}</div>`).join('');
 
 // ---- controls ----
 const body = document.body, sheet = document.getElementById('sheet');
