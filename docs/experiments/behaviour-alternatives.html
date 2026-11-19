@@ -91,6 +91,10 @@
   <h2>6. Colours, on the picks so far</h2>
   <p class="note">The marks now say what a kind is, so colour has less to do. Each block below shows the whole set as picked (set A for the choices) under one palette. What to judge: are the three families apart at a glance and in greyscale; is a <b>user</b> step told from an <b>automatic</b> one by its icon alone; are <b>start</b> and <b>end</b> apart by their marks and rings, with no red against green. The maintainer's rules for this round: each family has one lightness, evenly spaced from the others, so the families differ without colour; shape and icon are the main differentiator; and the end is not red, since red reads as an error. Switch Vision to Greyscale, and Size to 50%, before deciding. Diamonds are not on this sheet: set A keeps the square frames.</p>
   <div id="palettes"></div>
+
+  <h2>7. Events: starting a flow, and inside one</h2>
+  <p class="note">A toggle on the three events that can be either (event, timer, message): <b>starts a flow</b> draws one ring, <b>in the flow</b> two. The generic start (play triangle) and the end (tick, heavy ring) have no toggle. The palette is set 2 of section 6. Each pair is "starts a flow" then "in the flow".</p>
+  <div id="rings"></div>
 </main>
 
 <script>
@@ -402,6 +406,15 @@ document.head.appendChild(palStyle);
 document.getElementById('palettes').innerHTML = PALETTES.map(([cls, title, note, hues, tweak]) =>
   `<div class="triple ${cls}"><div class="ttitle">${title}</div><p class="note">${note}</p>${hues ? `<p class="note"><b>Lightness (0 to 100):</b> ${lightnessLine(hues)}</p>` : ''}${FAMILIES.map(([name, ids]) =>
     `<div class="family">${name}</div><div class="strip">${ids.map((id) => cell(tweak ? tweak(PICK[id], id) : PICK[id], '', false)).join('')}</div>`).join('')}</div>`).join('');
+
+// ---- events at the start and inside a flow ----
+document.getElementById('rings').innerHTML = `<div class="triple p-shades"><div class="strip">${
+  [['event', 'Event'], ['event-timer', 'Timer'], ['event-message', 'Message']].map(([id, name]) =>
+    [false, true].map((inFlow) => cell(evRing({ ...PICK[id], double: inFlow, label: name + (inFlow ? ', in the flow' : ', starts a flow') }, id), '', false)).join('')).join('')
+}<div class="mini">${
+  [['event', 'Event'], ['event-timer', 'Timer'], ['event-message', 'Message']].map(([id, name]) =>
+    [false, true].map((inFlow) => `<div class="cell">${draw(evRing({ ...PICK[id], double: inFlow, label: name }, id))}</div>`).join('')).join('')
+}</div></div></div>`;
 
 // ---- controls ----
 const body = document.body, sheet = document.getElementById('sheet');
