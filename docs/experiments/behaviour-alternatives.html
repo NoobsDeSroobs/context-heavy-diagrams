@@ -89,7 +89,7 @@
   <div id="counts"></div>
 
   <h2>6. Colours, on the picks so far</h2>
-  <p class="note">The marks now say what a kind is, so colour has less to do. Each block below shows the whole set as picked (set A for the choices) under one palette. What to judge: can a <b>user</b> step and an <b>automatic</b> step be told apart at a glance; do the three <b>choices</b> need three colours now their marks differ; are <b>start</b> and <b>end</b> apart without red against green. Switch Vision to Deuteranopia, Protanopia or Greyscale, and Size to 50%, before deciding. Diamonds are not on this sheet: set A keeps the square frames.</p>
+  <p class="note">The marks now say what a kind is, so colour has less to do. Each block below shows the whole set as picked (set A for the choices) under one palette. What to judge: can a <b>user</b> step and an <b>automatic</b> step be told apart at a glance; do the three <b>choices</b> need three colours now their marks differ; are <b>start</b> and <b>end</b> apart without red against green. The maintainer's rules for this round: the families must differ in lightness, so they differ without colour; shape and icon are the main differentiator; and the end is not red, since red reads as an error. Switch Vision to Greyscale, and Size to 50%, before deciding. Diamonds are not on this sheet: set A keeps the square frames.</p>
   <div id="palettes"></div>
 </main>
 
@@ -365,29 +365,48 @@ document.getElementById('counts').innerHTML = renderTriples(COUNTS);
 // ---- colours, round four ----
 const hexRgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
 const mixHex = (h, base, a) => '#' + hexRgb(h).map((c, i) => Math.round(c * a + hexRgb(base)[i] * (1 - a)).toString(16).padStart(2, '0')).join('');
-const palCss = (cls, hues) => [['dark', '#141414', 0.32], ['light', '#ffffff', 0.3]].map(([theme, base, a]) => {
+// perceived lightness, 0 (black) to 100 (white), of a fill: the number that survives greyscale
+const lstar = (h) => {
+  const [r, g, b] = hexRgb(h).map((c) => { const v = c / 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
+  const y = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return Math.round(y > 0.008856 ? 116 * Math.cbrt(y) - 16 : 903.3 * y);
+};
+const THEMES = [['dark', '#141414'], ['light', '#ffffff']];
+// a hue is a colour, or [colour, strength in dark, strength in light]: how much of it is mixed into the background
+const fillOf = (spec, ti, base) => Array.isArray(spec) ? mixHex(spec[0], base, spec[1 + ti]) : mixHex(spec, base, ti === 0 ? 0.32 : 0.3);
+const hueOf = (spec) => Array.isArray(spec) ? spec[0] : spec;
+const palCss = (cls, hues) => THEMES.map(([theme, base], ti) => {
   let v = '';
-  for (const [k, h] of Object.entries(hues)) {
-    v += `--f-${k}:${mixHex(h, base, a)};`;
-    if (['step', 'user', 'auto'].includes(k)) v += `--s-${k}:${theme === 'dark' ? h : mixHex(h, '#000000', 0.75)};`;
+  for (const [k, spec] of Object.entries(hues)) {
+    v += `--f-${k}:${fillOf(spec, ti, base)};`;
+    if (['step', 'user', 'auto'].includes(k)) v += `--s-${k}:${theme === 'dark' ? hueOf(spec) : mixHex(hueOf(spec), '#000000', 0.75)};`;
+    // the outline of an event: clearly lighter (dark theme) or darker (light theme) than its fill, so the rings show
+    if (k === 'event') v += `--s-event:${theme === 'dark' ? mixHex(hueOf(spec), '#ffffff', 0.55) : mixHex(hueOf(spec), '#000000', 0.55)};`;
   }
   return `[data-theme='${theme}'] .${cls}{${v}}`;
 }).join('\n');
-const actors = (spec, id) => id === 'step-user' ? { ...spec, fill: 'user', stroke: 'user' } : id === 'step-automatic' ? { ...spec, fill: 'auto', stroke: 'auto' } : spec;
+const FAM = { steps: ['step', 'user', 'auto'], choices: ['choice', 'parallel'], events: ['start', 'event', 'end'] };
+const lightnessLine = (hues) => THEMES.map(([theme, base], ti) =>
+  `${theme}: ` + Object.entries(FAM).map(([name, keys]) => `${name} ${[...new Set(keys.filter((k) => hues[k]).map((k) => lstar(fillOf(hues[k], ti, base))))].join(' / ')}`).join(', ')).join('; ');
+const evRing = (spec, id) => id.startsWith('event') ? { ...spec, stroke: 'event' } : spec;
+const actors = (spec, id) => evRing(id === 'step-user' ? { ...spec, fill: 'user', stroke: 'user' } : id === 'step-automatic' ? { ...spec, fill: 'auto', stroke: 'auto' } : spec, id);
+const TEAL = '#4e939e', AMBER = '#d8a93a', SLATE = '#939dac';
+const BASE = { step: [TEAL, 0.52, 0.54], choice: [AMBER, 0.66, 0.21], parallel: [AMBER, 0.66, 0.21], start: [SLATE, 0.22, 1], event: [SLATE, 0.22, 1], end: [SLATE, 0.22, 1] };
+const SHADES = { user: [TEAL, 0.72, 0.33], auto: [TEAL, 0.36, 0.75] };
 const PALETTES = [
   ['p-today', "1. Today's colours", 'The baseline: one teal for every step, amber for decision and inclusive, blue for parallel, green start, one indigo for the events, red end.', null, null],
-  ['p-family', '2. Family colours, the marks do the work', 'One colour per family. The three choices share amber, since the fork, the rings and the bars already tell them apart. The end is a heavy dark-grey circle instead of red, so start and end differ by outline weight and lightness, not red against green.',
-    { step: '#4e939e', choice: '#d8a93a', parallel: '#d8a93a', start: '#4caf62', event: '#7b82d6', end: '#9aa3ad' }, null],
-  ['p-actors', '3. Family colours, and a colour for who does the step', 'As 2, but the user step is warm orange and the automatic step blue, with the plain step teal: the difference that matters most in a process is the loudest one.',
-    { step: '#4e939e', user: '#d98a3a', auto: '#4f86d6', choice: '#d8a93a', parallel: '#d8a93a', start: '#4caf62', event: '#7b82d6', end: '#9aa3ad' }, actors],
-  ['p-safe', '4. Colour-blind safe (Okabe and Ito hues)', 'The hues chosen so that they stay apart under the common kinds of colour blindness: sky blue, orange, blue, yellow, bluish green, reddish purple, vermilion. Start is bluish green and end vermilion, which stay distinct where red and green do not.',
-    { step: '#56b4e9', user: '#e69f00', auto: '#0072b2', choice: '#f0e442', parallel: '#f0e442', start: '#009e73', event: '#cc79a7', end: '#d55e00' }, actors]
+  ['p-shades', '2. Three families, three lightness levels', 'Colour only says which family: teal for steps, amber for choices, slate for events. The families sit at three different lightnesses (from lightest to darkest: choices, steps, events, in both themes), so they still differ in greyscale. Inside a family every kind has the same fill and the mark, the outline and the icon do the rest. The end is plain slate, not red: its heavy ring and tick carry it.',
+    { ...BASE }, evRing],
+  ['p-actor', '3. As 2, the actor as a shade', 'The user step is a lighter teal and the automatic step a darker one: the same hue, so the difference is a shade and holds in greyscale (user lighter than the plain step, automatic darker, all below the choices), with the person and the robot icons doing the naming.',
+    { ...BASE, ...SHADES }, actors],
+  ['p-start', '4. As 3, the start with a green tint', 'As 3, but the start circle leans a little green (a muted sage, the same lightness as the other events), a hint of "go" without making the end a red "stop".',
+    { ...BASE, ...SHADES, start: ['#5f8f6c', 0.26, 1] }, actors]
 ];
 const palStyle = document.createElement('style');
 palStyle.textContent = PALETTES.filter((q) => q[3]).map((q) => palCss(q[0], q[3])).join('\n');
 document.head.appendChild(palStyle);
-document.getElementById('palettes').innerHTML = PALETTES.map(([cls, title, note, , tweak]) =>
-  `<div class="triple ${cls}"><div class="ttitle">${title}</div><p class="note">${note}</p>${FAMILIES.map(([name, ids]) =>
+document.getElementById('palettes').innerHTML = PALETTES.map(([cls, title, note, hues, tweak]) =>
+  `<div class="triple ${cls}"><div class="ttitle">${title}</div><p class="note">${note}</p>${hues ? `<p class="note"><b>Lightness (0 to 100):</b> ${lightnessLine(hues)}</p>` : ''}${FAMILIES.map(([name, ids]) =>
     `<div class="family">${name}</div><div class="strip">${ids.map((id) => cell(tweak ? tweak(PICK[id], id) : PICK[id], '', false)).join('')}</div>`).join('')}</div>`).join('');
 
 // ---- controls ----
