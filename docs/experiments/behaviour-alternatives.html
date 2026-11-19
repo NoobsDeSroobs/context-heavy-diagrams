@@ -103,6 +103,10 @@
   <h2>9. Timer, message and repeat: the marks on the settled palette</h2>
   <p class="note">The three marks not yet picked, drawn in the colours of set 2 of section 6. Each row is the candidates at full size with a note, then the same at half size. The first of each row is what the app draws today. A timer can mean a duration ("wait 2 days"), a moment ("at 02:00") or a schedule ("every Monday"), and as a start it is the trigger of the flow; a message is something arriving or being sent; repeat is a step that runs again.</p>
   <div id="rest"></div>
+
+  <h2>10. How an end finishes: the outcome, and how far it reaches</h2>
+  <p class="note">Two separate questions about an end. <b>Outcome</b> (a dropdown, absent = success): success, success with warnings, failed, aborted. <b>Reach</b> (a dropdown, absent = this path): this path only, or the whole flow, which stops every path still running at once (the "terminate" end of BPMN). Reach applies to every outcome: a race where the first path to finish wins is a success that stops the others, and an abort usually stops everything. The old "fail gracefully / fail hard" is a failed outcome with a narrow or a wide reach. Top row: this path, the heavy ring as today. Bottom row: the whole flow, the same ring filled solid with the mark cut out of it. Each row is full size, then half size.</p>
+  <div id="ends"></div>
 </main>
 
 <script>
@@ -169,6 +173,7 @@ const MARKS = {
   stop: '<rect x="6" y="6" width="12" height="12" rx="1.5" ' + FILLED + '/>',
   umlFinal: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.2" ' + FILLED + '/>',
   check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  checkWarn: '<path d="M2.5 13.5l3.8 3.8L13 9.5"/><path d="M19.5 5.5v7.5"/><circle cx="19.5" cy="18" r="1.1" ' + FILLED + ' stroke-width="0.8"/>',
   bell: '<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/>',
   bolt: '<path d="M13 3L5.5 13.5H11L10 21l8-11h-5.5z"/>',
   ripple: '<circle cx="12" cy="12" r="1.8" ' + FILLED + '/><path d="M8 8a5.7 5.7 0 0 0 0 8M16 8a5.7 5.7 0 0 1 0 8M5.2 5.2a9.6 9.6 0 0 0 0 13.6M18.8 5.2a9.6 9.6 0 0 1 0 13.6"/>',
@@ -198,8 +203,8 @@ function arrowBand(left, top, bottom, r) {
   const mid = (top + bottom) / 2;
   return `M${left + r} ${top}H${left + BAND.flat}L${left + BAND.tip} ${mid}L${left + BAND.flat} ${bottom}H${left + r}A${r} ${r} 0 0 1 ${left} ${bottom - r}V${top + r}A${r} ${r} 0 0 1 ${left + r} ${top}Z`;
 }
-function markSvg(name, cx, cy, size) {
-  return `<g class="mark" transform="translate(${(cx - size / 2).toFixed(1)} ${(cy - size / 2).toFixed(1)}) scale(${(size / 24).toFixed(3)})" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${MARKS[name]}</g>`;
+function markSvg(name, cx, cy, size, color) {
+  return `<g class="mark"${color ? ` style="color:${color}"` : ''} transform="translate(${(cx - size / 2).toFixed(1)} ${(cy - size / 2).toFixed(1)}) scale(${(size / 24).toFixed(3)})" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${MARKS[name]}</g>`;
 }
 const fillVar = (k) => `var(--f-${k})`;
 function draw(spec) {
@@ -234,12 +239,12 @@ function draw(spec) {
     } else if (spec.out === 'bar') {
       body += `<rect x="${cx - 6}" y="${cy - 24}" width="12" height="48" rx="3" fill="${f}" stroke="${strokeCol}" stroke-width="1.5"/>`;
     } else {
-      body += `<circle cx="${cx}" cy="${cy}" r="${20 - sw / 2}" fill="${f}" stroke="${strokeCol}" stroke-width="${sw}"/>`;
+      body += `<circle cx="${cx}" cy="${cy}" r="${20 - sw / 2}" fill="${spec.solid ? strokeCol : f}" stroke="${strokeCol}" stroke-width="${sw}"/>`;
       if (spec.double) body += `<circle cx="${cx}" cy="${cy}" r="${20 - 1.5 - 3 - 1.5}" fill="none" stroke="${strokeCol}" stroke-width="1.5"/>`;
     }
     if (spec.mark && spec.out !== 'bar') {
       const base = spec.out === 'circle' ? (spec.double ? 0.42 : 0.46) * 40 : spec.out === 'diamond' ? 0.4 * 48 : 0.46 * 48;
-      body += markSvg(spec.mark, cx, cy, base * (spec.markScale || 1));
+      body += markSvg(spec.mark, cx, cy, base * (spec.markScale || 1), spec.solid ? 'var(--bg)' : '');
     }
     body += label(spec.label, cx, 82);
   }
@@ -444,6 +449,16 @@ document.getElementById('rest').innerHTML = REST.map(([title, id, marks]) => {
   const specs = marks.map(([mark, note]) => [evRing({ ...PICK[id], mark, label: title }, id), note]);
   return `<div class="triple p-shades"><div class="ttitle">${title}</div><div class="strip">${specs.map(([sp, note]) => cell(sp, note, false)).join('')}<div class="mini">${specs.map(([sp]) => `<div class="cell">${draw(sp)}</div>`).join('')}</div></div></div>`;
 }).join('');
+
+// ---- how an end finishes ----
+const OUTCOMES = [['check', 'Success'], ['checkWarn', 'Success, warnings'], ['cross', 'Failed'], ['stop', 'Aborted']];
+const endSpec = (mark, name, solid) => evRing({ ...PICK['event-end'], mark, solid, markScale: mark === 'stop' ? 0.85 : mark === 'checkWarn' ? 1.15 : 1, label: name }, 'event-end');
+document.getElementById('ends').innerHTML = [[false, 'This path ends'], [true, 'The whole flow stops']].map(([solid, title]) =>
+  `<div class="triple p-shades"><div class="ttitle">${title}</div><div class="strip">${
+    OUTCOMES.map(([mark, name]) => cell(endSpec(mark, name, solid), '', false)).join('')
+  }<div class="mini">${
+    OUTCOMES.map(([mark, name]) => `<div class="cell">${draw(endSpec(mark, name, solid))}</div>`).join('')
+  }</div></div></div>`).join('');
 
 // ---- controls ----
 const body = document.body, sheet = document.getElementById('sheet');
