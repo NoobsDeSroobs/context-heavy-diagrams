@@ -95,6 +95,10 @@
   <h2>7. Events: starting a flow, and inside one</h2>
   <p class="note">A toggle on the three events that can be either (event, timer, message): <b>starts a flow</b> draws one ring, <b>in the flow</b> two. The generic start (play triangle) and the end (tick, heavy ring) have no toggle. The palette is set 2 of section 6. Each pair is "starts a flow" then "in the flow".</p>
   <div id="rings"></div>
+
+  <h2>8. A human event: a person starts a flow, or the flow waits for one</h2>
+  <p class="note">A person's act as the trigger or the thing awaited: someone files a request (a start), or the flow stops until someone approves (in the flow). It is the event twin of the user step, which is the work a person does. Three candidate marks, each as "starts a flow" then "in the flow", at full and half size: the person (the same mark as the user step, since it means "a human"), a raised hand ("stop, a person must act"), and a pointer (a click).</p>
+  <div id="humans"></div>
 </main>
 
 <script>
@@ -170,6 +174,7 @@ const MARKS = {
   plane: '<path d="M20.5 3.5L3.5 10.5l6 2.5 2.5 6zM9.5 13L20.5 3.5"/>',
   bubble: '<path d="M5 5h14v10H11l-4.5 4v-4H5z"/>',
   // steps
+  hand: '<path d="M8.5 12V6.8a1.4 1.4 0 0 1 2.8 0V11M11.3 10.5V5.3a1.4 1.4 0 0 1 2.8 0v5.2M14.1 10.5V6.3a1.4 1.4 0 0 1 2.8 0v6.9c0 4-2.4 6.8-6 6.8-2.6 0-4-1.2-5.2-3.4L5 14.2a1.3 1.3 0 0 1 2.2-1.3l1.3 1.6"/>',
   cursor: '<path d="M6 3.5l11 8-4.8 1 2.8 5.6-2.4 1.2-2.8-5.6L6 16z"/>',
   terminal: '<path d="M4.5 7.5l5 4.5-5 4.5M12 18h7.5"/>',
   chip: '<rect x="7" y="7" width="10" height="10" rx="1.5"/><rect x="10" y="10" width="4" height="4"/><path d="M10 3.5v3.5M14 3.5v3.5M10 17v3.5M14 17v3.5M3.5 10h3.5M3.5 14h3.5M17 10h3.5M17 14h3.5"/>',
@@ -414,6 +419,15 @@ document.getElementById('rings').innerHTML = `<div class="triple p-shades"><div 
 }<div class="mini">${
   [['event', 'Event'], ['event-timer', 'Timer'], ['event-message', 'Message']].map(([id, name]) =>
     [false, true].map((inFlow) => `<div class="cell">${draw(evRing({ ...PICK[id], double: inFlow, label: name }, id))}</div>`).join('')).join('')
+}</div></div></div>`;
+
+// ---- a human event ----
+const HUMAN = [['person', 'Person'], ['hand', 'Raised hand'], ['cursor', 'Pointer']];
+const humanSpec = (mark, name, inFlow) => evRing({ ...PICK.event, mark, double: inFlow, label: name + (inFlow ? ', waits' : ', starts') }, 'event');
+document.getElementById('humans').innerHTML = `<div class="triple p-shades"><div class="strip">${
+  HUMAN.map(([mark, name]) => [false, true].map((f) => cell(humanSpec(mark, name, f))).join('')).join('')
+}<div class="mini">${
+  HUMAN.map(([mark, name]) => [false, true].map((f) => `<div class="cell">${draw(humanSpec(mark, name, f))}</div>`).join('')).join('')
 }</div></div></div>`;
 
 // ---- controls ----

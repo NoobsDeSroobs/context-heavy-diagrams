@@ -38,7 +38,7 @@ The table is `src/shared/stencils/kinds.ts`; the file stores only the kind id, s
 - [ ] Propose revised marks, colours and shapes for the pairs that failed, and try them on the same sheet and on [process-flow-all-behaviours](../../../examples/process-flow-all-behaviours.chd).
 - [ ] Decide, including whether choices become diamonds (an ADR that supersedes the shape part of 0180 if so).
 - [ ] Implement in the kinds table and the drawing, then the legend, the SVG and draw.io exports, and the docs and assistant guidance that describe the marks.
-- [ ] A toggle in the properties panel for the event, timer and message kinds: "starts a flow" draws one ring, "in the flow" (the default, as today) two. A new optional field on the node's data, so an additive file-format change: `schema.ts`, `docs/file-format.md`, the panel, the canvas, the legend, the SVG and draw.io exports, the assistant guidance, the CLI, and an ADR. The generic start and the end have no toggle.
+- [ ] The toggle for "starts a flow" or "in the flow" on the events is specified and built in [0199](0199-event-position-toggle.md), a file-format change of its own.
 - [ ] Update the examples that show the kinds ([ADR 0151](../../decisions/0151-every-visible-feature-has-an-example-diagram.md)).
 
 ## Notes
