@@ -32,9 +32,10 @@ import {
   MARK_STROKE,
   STENCIL_MARK_PATHS,
   STENCIL_MARK_SOLID,
+  stencilDoubleBorder,
   stencilMarkOf,
   stencilSolid,
-  type StencilEnding,
+  type StencilState,
   type StencilMark,
   stencilKind,
   stencilLabelInsets,
@@ -186,7 +187,7 @@ function stencilShape(
   strokeWidth: number,
   markPaint: Paint,
   small = false,
-  ending?: StencilEnding
+  ending?: StencilState
 ): string {
   const { x, y, width, height } = box
   const inset = look.stroke ? strokeWidth / 2 : 0
@@ -205,7 +206,8 @@ function stencilShape(
     kind.shape === 'circle'
       ? `<circle cx="${num(cx)}" cy="${num(cy)}" r="${num(radius)}"${paint}/>`
       : `<rect x="${num(x + inset)}" y="${num(y + inset)}" width="${num(width - inset * 2)}" height="${num(height - inset * 2)}" rx="4"${paint}/>`
-  if (kind.shape === 'circle' && kind.doubleBorder && look.stroke) {
+  const doubled = stencilDoubleBorder(kind, ending)
+  if (kind.shape === 'circle' && doubled && look.stroke) {
     const inner = Math.max(0, radius - strokeWidth - (small ? 1.5 : DOUBLE_BORDER_GAP))
     out += `<circle cx="${num(cx)}" cy="${num(cy)}" r="${num(inner)}" fill="none"${paintAttrs('stroke', look.stroke)} stroke-width="${num(strokeWidth)}"/>`
   }
@@ -215,7 +217,7 @@ function stencilShape(
     out += `<path d="${band}"${paintAttrs('fill', look.stroke ?? markPaint)}/>`
   }
   if (!mark) return out
-  const at = stencilMarkBox(kind, width, height, small, mark)
+  const at = stencilMarkBox(kind, width, height, small, mark, doubled)
   const scale = Math.round((at.size / 24) * 10000) / 10000
   const line = small ? 1.2 / scale : MARK_STROKE
   return (

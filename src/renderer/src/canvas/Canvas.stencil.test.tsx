@@ -139,6 +139,33 @@ describe('stencils on the canvas (ADR 0180)', () => {
     )
   })
 
+  it('says from the property panel whether an event starts a flow, which takes away its second ring; the plain start has no such field', async () => {
+    const { container } = renderCanvas({
+      version: 1,
+      nodes: [
+        stencil('begin', 'event-start', 'Begin', 0),
+        stencil('wait', 'event-timer', 'Wait', 160),
+        stencil('done', 'event-end', 'Done', 320)
+      ],
+      edges: []
+    })
+    await screen.findByText('Wait')
+    const node = (id: string): HTMLElement =>
+      container.querySelector(`.react-flow__node[data-id="${id}"]`) as HTMLElement
+    expect(node('wait').querySelector('.stencil-node-ring')).not.toBeNull()
+    fireEvent.click(node('wait'))
+    const position = await screen.findByRole('combobox', { name: 'Position' })
+    fireEvent.focus(position)
+    fireEvent.change(position, { target: { value: 'Starts' } })
+    fireEvent.click(await screen.findByRole('option', { name: 'Starts a flow' }))
+    await waitFor(() => expect(node('wait').querySelector('.stencil-node-ring')).toBeNull())
+    fireEvent.click(node('begin'))
+    await waitFor(() => expect(screen.queryByRole('combobox', { name: 'Position' })).toBeNull())
+    fireEvent.click(node('done'))
+    expect(await screen.findByRole('combobox', { name: 'Outcome' })).toBeTruthy()
+    expect(screen.queryByRole('combobox', { name: 'Position' })).toBeNull()
+  })
+
   it('moves the label of a container to another side from the property panel', async () => {
     const lane = {
       id: 'lane',

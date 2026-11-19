@@ -15,6 +15,7 @@ import {
   MARK_STROKE,
   STENCIL_MARK_PATHS,
   STENCIL_MARK_SOLID,
+  stencilDoubleBorder,
   stencilKind,
   stencilLabelInsets,
   stencilLightColors,
@@ -76,6 +77,8 @@ function StencilNode({ id, data, selected }: NodeProps): React.JSX.Element {
   const style = stencilStyle(kindId, ownStyle)
   const mark = stencilMarkOf(kind, data)
   const solid = stencilSolid(kind, data)
+  // An event in the flow has a second ring inside the first; one that starts a flow has one.
+  const doubled = stencilDoubleBorder(kind, data)
   const { addConnectionPointItem, onPointContextMenu } = useConnectionPointMenu(id, customPoints)
 
   // The kind's heavier border (an end) is a multiple of the border width the element has.
@@ -99,7 +102,7 @@ function StencilNode({ id, data, selected }: NodeProps): React.JSX.Element {
   }
   // A mark that reads better larger or smaller than the standard size grows from its centre.
   const markScale = stencilMarkScale(mark)
-  const markPercent = (kind.doubleBorder ? 42 : 46) * markScale
+  const markPercent = (doubled ? 42 : 46) * markScale
   const markBox: CSSProperties | undefined =
     kind.shape !== 'arrow' && markScale !== 1
       ? {
@@ -284,7 +287,7 @@ function StencilNode({ id, data, selected }: NodeProps): React.JSX.Element {
       />
       <ConnectionHandles storedPoints={customPoints} onPointContextMenu={onPointContextMenu} />
       {locked && <LockBadge />}
-      {kind.doubleBorder && (
+      {doubled && (
         <span
           className="stencil-node-ring"
           aria-hidden="true"
@@ -296,7 +299,7 @@ function StencilNode({ id, data, selected }: NodeProps): React.JSX.Element {
       )}
       {mark && (
         <svg
-          className={`stencil-node-mark${kind.shape === 'arrow' ? ' stencil-node-mark--slot' : ''}${kind.doubleBorder ? ' stencil-node-mark--ringed' : ''}`}
+          className={`stencil-node-mark${kind.shape === 'arrow' ? ' stencil-node-mark--slot' : ''}${doubled ? ' stencil-node-mark--ringed' : ''}`}
           style={{ ...markBox, ...(markColor ? { color: markColor } : {}) }}
           viewBox="0 0 24 24"
           aria-hidden="true"

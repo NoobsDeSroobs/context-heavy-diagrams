@@ -118,20 +118,41 @@ export function endReachOf(value: unknown): EndReach {
   return END_REACHES.find((r) => r.id === value)?.id ?? DEFAULT_END_REACH
 }
 
-// What a node's own data changes in how its kind is drawn: only an end has an outcome and a reach.
-export interface StencilEnding {
+// Whether an event begins a flow or sits inside one (the node's `flowPosition`, absent is `in-flow`): a
+// named state, not a flag, so a third can be added. An unknown value is drawn as `in-flow`.
+export const FLOW_POSITIONS = [
+  { id: 'start', name: 'Starts a flow' },
+  { id: 'in-flow', name: 'In the flow' }
+] as const
+export type FlowPosition = (typeof FLOW_POSITIONS)[number]['id']
+export const DEFAULT_FLOW_POSITION: FlowPosition = 'in-flow'
+export function flowPositionOf(value: unknown): FlowPosition {
+  return FLOW_POSITIONS.find((p) => p.id === value)?.id ?? DEFAULT_FLOW_POSITION
+}
+
+// What a node's own data changes in how its kind is drawn: an end's outcome and reach, an event's
+// position in the flow.
+export interface StencilState {
   outcome?: unknown
   reach?: unknown
+  flowPosition?: unknown
+}
+
+// Whether a node is drawn with a second ring inside the first: an event in the flow, not one that
+// starts it. Only the kinds with a position can start a flow; the plain start has one ring always.
+export function stencilDoubleBorder(kind: StencilKind, data?: StencilState): boolean {
+  if (!kind.doubleBorder) return false
+  return !(kind.positioned && flowPositionOf(data?.flowPosition) === 'start')
 }
 
 // The mark a node is drawn with: its kind's, or for an end the one of its outcome.
-export function stencilMarkOf(kind: StencilKind, data?: StencilEnding): StencilMark | undefined {
+export function stencilMarkOf(kind: StencilKind, data?: StencilState): StencilMark | undefined {
   if (!kind.endsFlow) return kind.mark
   return END_OUTCOMES.find((o) => o.id === endOutcomeOf(data?.outcome))?.mark
 }
 
 // Whether a node is drawn as a solid disc with its mark cut out: an end that stops the whole flow.
-export function stencilSolid(kind: StencilKind, data?: StencilEnding): boolean {
+export function stencilSolid(kind: StencilKind, data?: StencilState): boolean {
   return kind.endsFlow === true && endReachOf(data?.reach) === 'flow'
 }
 
@@ -154,6 +175,8 @@ export interface StencilKind {
   heavyBorder?: boolean
   // A circle drawn with a second ring inside the first (an event in the middle of a flow).
   doubleBorder?: boolean
+  // Has a `flowPosition`: it can start a flow (one ring) or sit in one (two rings, the default).
+  positioned?: boolean
   // An end: it has an outcome and a reach (see END_OUTCOMES), which set its mark and its disc.
   endsFlow?: boolean
   // The size a new one gets.
@@ -329,6 +352,7 @@ export const STENCIL_KINDS: readonly StencilKind[] = [
     id: 'event',
     name: 'Event',
     doubleBorder: true,
+    positioned: true,
     defaultLabel: 'Event',
     terms: [
       'intermediate event',
@@ -345,6 +369,7 @@ export const STENCIL_KINDS: readonly StencilKind[] = [
     name: 'Timer',
     mark: 'clock',
     doubleBorder: true,
+    positioned: true,
     defaultLabel: 'Timer',
     terms: ['timer event', 'wait', 'delay', 'deadline', 'schedule', 'clock', 'bpmn timer event']
   },
@@ -354,6 +379,7 @@ export const STENCIL_KINDS: readonly StencilKind[] = [
     name: 'Message',
     mark: 'envelope',
     doubleBorder: true,
+    positioned: true,
     defaultLabel: 'Message',
     terms: ['message event', 'receive', 'send', 'notify', 'mail', 'signal', 'bpmn message event']
   },
@@ -363,6 +389,7 @@ export const STENCIL_KINDS: readonly StencilKind[] = [
     name: 'Human action',
     mark: 'person',
     doubleBorder: true,
+    positioned: true,
     defaultLabel: 'Human action',
     terms: [
       'user action',
@@ -428,7 +455,8 @@ export function stencilMarkBox(
   width: number,
   height: number,
   small = false,
-  mark: StencilMark | undefined = kind.mark
+  mark: StencilMark | undefined = kind.mark,
+  doubled: boolean | undefined = kind.doubleBorder
 ): { x: number; y: number; size: number } {
   if (kind.shape === 'arrow') {
     const size = small ? height * 0.62 : ARROW_MARK.size
@@ -436,9 +464,7 @@ export function stencilMarkBox(
     return { x: width - margin - size, y: (height - size) / 2, size }
   }
   const size =
-    Math.min(width, height) *
-    (kind.doubleBorder ? 0.42 : 0.46) *
-    (mark ? (MARK_SCALE[mark] ?? 1) : 1)
+    Math.min(width, height) * (doubled ? 0.42 : 0.46) * (mark ? (MARK_SCALE[mark] ?? 1) : 1)
   return { x: (width - size) / 2, y: (height - size) / 2, size }
 }
 

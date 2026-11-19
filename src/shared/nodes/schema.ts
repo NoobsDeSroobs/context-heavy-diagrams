@@ -72,6 +72,10 @@ export interface DiagramNode {
     // every path still running). Stored only when not the default; an unknown value is drawn as it.
     outcome?: string
     reach?: string
+    // 'stencil' nodes of an event kind that can start a flow (`event`, `event-timer`, `event-message`,
+    // `event-human`): `start` (one ring) or `in-flow` (two rings, absent). Stored only when `start`;
+    // an unknown value is drawn as `in-flow` and kept.
+    flowPosition?: string
     // 'stencil' nodes whose label sits outside the shape: where it sits — 'below' (absent), 'above',
     // 'left', 'right' or 'free'; a free label's centre is `labelOffset` from the shape's centre.
     labelPosition?: string

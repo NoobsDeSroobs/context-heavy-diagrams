@@ -270,6 +270,13 @@ export const NODE_FIELDS: FieldSpec<DiagramNode>[] = [
         : undefined,
     describe: (b, a) => change('ending', b, a)
   },
+  // Whether an event starts a flow or sits in one changes what it means.
+  {
+    name: 'position in the flow',
+    category: 'content',
+    get: (n) => (n.type === 'stencil' ? n.data.flowPosition : undefined),
+    describe: (b, a) => change('position in the flow', b, a)
+  },
   // Where the label of a small shape or a container sits is a look, not a meaning.
   {
     name: 'label position',

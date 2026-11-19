@@ -57,7 +57,10 @@ interface PropertyPanelProps {
   // Moves the label of the selected small shapes (ADR 0183).
   onSetStencilLabelPosition: (nodeIds: string[], position: LabelPosition) => void
   // How the selected ends finish and how far they reach.
-  onSetStencilEnding: (nodeIds: string[], change: { outcome?: string; reach?: string }) => void
+  onSetStencilState: (
+    nodeIds: string[],
+    change: { outcome?: string; reach?: string; flowPosition?: string }
+  ) => void
   // Moves the label of the selected containers to another side (ADR 0184).
   onSetContainerLabelSide: (nodeIds: string[], side: ContainerLabelSide) => void
 }
@@ -101,7 +104,7 @@ export default function PropertyPanel({
   onToggleStyleBrush,
   onSetStencilKind,
   onSetStencilLabelPosition,
-  onSetStencilEnding,
+  onSetStencilState,
   onSetContainerLabelSide
 }: PropertyPanelProps): React.JSX.Element {
   const byType = new Map<string, Node[]>()
@@ -184,7 +187,7 @@ export default function PropertyPanel({
           nodes={nodes}
           onSetKind={(kindId) => onSetStencilKind(ids, kindId)}
           onSetLabelPosition={(position) => onSetStencilLabelPosition(ids, position)}
-          onSetEnding={(change) => onSetStencilEnding(ids, change)}
+          onSetState={(change) => onSetStencilState(ids, change)}
         />
         {styleFields}
       </div>

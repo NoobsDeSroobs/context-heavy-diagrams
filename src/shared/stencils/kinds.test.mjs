@@ -5,8 +5,10 @@ import {
   END_OUTCOMES,
   endOutcomeOf,
   endReachOf,
+  flowPositionOf,
   STENCIL_KINDS,
   STENCIL_MARK_PATHS,
+  stencilDoubleBorder,
   stencilKind,
   stencilLabelInsets,
   stencilLabelOutside,
@@ -111,4 +113,29 @@ test('the light theme has its own default colours, used only where the node has 
   assert.deepEqual(stencilLightColors('step', undefined), { fill: '#a5c8ce', stroke: '#3b6e77' })
   assert.deepEqual(stencilLightColors('branch-exclusive', undefined), { fill: '#f7edd6' })
   assert.deepEqual(stencilLightColors('step', { fill: '#ff0000' }), { stroke: '#3b6e77' })
+})
+
+test('an event that starts a flow has one ring and one in the flow two; the plain start and the end have no position', () => {
+  for (const id of ['event', 'event-timer', 'event-message', 'event-human']) {
+    const kind = stencilKind(id)
+    assert.equal(kind.positioned, true, id)
+    assert.equal(stencilDoubleBorder(kind, {}), true, `${id} defaults to in the flow`)
+    assert.equal(stencilDoubleBorder(kind, { flowPosition: 'in-flow' }), true)
+    assert.equal(stencilDoubleBorder(kind, { flowPosition: 'start' }), false)
+    assert.equal(
+      stencilDoubleBorder(kind, { flowPosition: 'from-the-future' }),
+      true,
+      'unknown is in the flow'
+    )
+  }
+  assert.equal(flowPositionOf(undefined), 'in-flow')
+  for (const id of ['event-start', 'event-end', 'step', 'branch-parallel']) {
+    const kind = stencilKind(id)
+    assert.ok(!kind.positioned, id)
+    assert.equal(
+      stencilDoubleBorder(kind, { flowPosition: 'start' }),
+      false,
+      `${id} is drawn as itself`
+    )
+  }
 })

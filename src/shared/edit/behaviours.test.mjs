@@ -248,3 +248,41 @@ test('a file that calls the human step step-user is read as step-human and writt
   })
   assert.equal(viaOld.nodes[0].data.kind, 'step-human', 'a stale assistant skill still works')
 })
+
+test('an event says whether it starts a flow; the default is stored as nothing and only some kinds have it', () => {
+  const { diagram, results } = run(
+    start(),
+    { op: 'add_behaviour', id: 't', kind: 'event-timer', x: 0, y: 0, flowPosition: 'start' },
+    { op: 'add_behaviour', id: 'm', kind: 'event-message', x: 100, y: 0 },
+    { op: 'set_behaviour_position', id: 'm', position: 'start' },
+    { op: 'set_behaviour_position', id: 't', position: 'in-flow' }
+  )
+  const [t, m] = diagram.nodes
+  assert.equal('flowPosition' in t.data, false, 'the default leaves no trace')
+  assert.equal(m.data.flowPosition, 'start')
+  assert.deepEqual(results[3].element, { id: 't', position: 'in-flow' })
+  assertRoundTrips(diagram)
+  assert.throws(
+    () => run(diagram, { op: 'set_behaviour_position', id: 'm', position: 'sideways' }),
+    /in-flow/
+  )
+  const { diagram: other } = run(
+    start(),
+    { op: 'add_behaviour', id: 's', kind: 'event-start', x: 0, y: 0 },
+    { op: 'add_behaviour', id: 'e', kind: 'event-end', x: 0, y: 0 }
+  )
+  assert.throws(
+    () => run(other, { op: 'set_behaviour_position', id: 's', position: 'start' }),
+    /cannot start a flow/
+  )
+  assert.throws(
+    () => run(other, { op: 'set_behaviour_position', id: 'e', position: 'start' }),
+    /cannot start a flow/
+  )
+  const { diagram: changed } = run(diagram, { op: 'set_behaviour_kind', id: 'm', kind: 'step' })
+  assert.equal(
+    'flowPosition' in changed.nodes[1].data,
+    false,
+    'a kind without a position clears it'
+  )
+})

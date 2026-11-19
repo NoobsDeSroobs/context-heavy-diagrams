@@ -1,7 +1,7 @@
 # 0199: Event position: starts a flow, or in the flow
 
 ## Status
-Not Started. The specification below is settled; the work is to implement it. Comes after the marks and colours of [0194](0194-improve-on-the-bpmn-notation.md) are chosen, since the toggle draws with them.
+Built with the marks and colours of [0194](0194-improve-on-the-bpmn-notation.md), awaiting the maintainer's check in the app; the decision is in [ADR 0193](../../decisions/0193-behaviour-symbols-one-colour-per-family-and-an-end-that-says-how-it-ended.md). The operation is `set_behaviour_position`. The example shows a timer that starts a flow next to one in a flow.
 
 ## Goal
 Let a person say whether an event begins a flow or sits inside one, with a dropdown in the properties panel, and draw the difference: one ring for a start, two for an event in the flow.

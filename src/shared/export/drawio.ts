@@ -7,6 +7,7 @@ import {
   HEAVY_BORDER_FACTOR,
   stencilKind,
   stencilLabelOutside,
+  stencilDoubleBorder,
   stencilMarkOf,
   stencilSolid,
   stencilStyle
@@ -418,7 +419,7 @@ export function renderDiagramDrawio(
       kind === 'text'
         ? ['text']
         : sk?.shape === 'circle'
-          ? sk.doubleBorder
+          ? stencilDoubleBorder(sk, node.data)
             ? ['ellipse', 'shape=doubleEllipse']
             : ['ellipse']
           : sk?.shape === 'square'

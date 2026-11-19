@@ -184,3 +184,26 @@ test('an end that stops the whole flow is a solid disc with its mark cut out; th
   assert.equal(path(render(end({ outcome: 'aborted' }))), STENCIL_MARK_PATHS.stop)
   assert.equal(path(render(end({ outcome: 'warnings' }))), STENCIL_MARK_PATHS['check-warn'])
 })
+
+test('an event that starts a flow is drawn with one ring, one in the flow with two', () => {
+  const rings = (extra) => {
+    const svg = render({
+      version: 1,
+      nodes: [
+        {
+          ...stencil('t', 'event-timer', 0, 0),
+          data: { label: 't', kind: 'event-timer', ...extra }
+        }
+      ],
+      edges: []
+    })
+    return svg
+      .split('class="chd-stencil"')[1]
+      .split('</g>')[0]
+      .match(/<circle/g).length
+  }
+  assert.equal(rings({}), 2)
+  assert.equal(rings({ flowPosition: 'in-flow' }), 2)
+  assert.equal(rings({ flowPosition: 'start' }), 1)
+  assert.equal(rings({ flowPosition: 'from-the-future' }), 2)
+})

@@ -429,7 +429,8 @@
       "zIndex": 100250,
       "data": {
         "label": "Customer cancels",
-        "kind": "event-message"
+        "kind": "event-message",
+        "flowPosition": "start"
       }
     },
     {
@@ -452,6 +453,58 @@
       }
     },
     {
+      "id": "nightly",
+      "type": "stencil",
+      "position": {
+        "x": 500,
+        "y": 590
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "zIndex": 100270,
+      "data": {
+        "label": "Every night at 02:00",
+        "kind": "event-timer",
+        "flowPosition": "start"
+      }
+    },
+    {
+      "id": "sync",
+      "type": "stencil",
+      "position": {
+        "x": 585,
+        "y": 582
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100280,
+      "data": {
+        "label": "Sync the stock",
+        "kind": "step-automatic"
+      }
+    },
+    {
+      "id": "synced",
+      "type": "stencil",
+      "position": {
+        "x": 780,
+        "y": 590
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "zIndex": 100290,
+      "data": {
+        "label": "Stock in sync",
+        "kind": "event-end"
+      }
+    },
+    {
       "id": "cancel-note",
       "type": "text",
       "position": {
@@ -462,9 +515,25 @@
         "width": 360,
         "height": 64
       },
-      "zIndex": 100270,
+      "zIndex": 100300,
       "data": {
         "label": "A cancellation stops every path still running, the payment and the picking included."
+      }
+    },
+    {
+      "id": "start-note",
+      "type": "text",
+      "position": {
+        "x": 470,
+        "y": 675
+      },
+      "size": {
+        "width": 400,
+        "height": 64
+      },
+      "zIndex": 100310,
+      "data": {
+        "label": "One ring: this event begins a flow, so nothing leads into it. Two rings: it happens inside one, like the five-day wait above."
       }
     }
   ],
@@ -605,6 +674,16 @@
       "id": "e26",
       "source": "cancel",
       "target": "stopped"
+    },
+    {
+      "id": "e27",
+      "source": "nightly",
+      "target": "sync"
+    },
+    {
+      "id": "e28",
+      "source": "sync",
+      "target": "synced"
     }
   ]
 }

@@ -144,6 +144,7 @@ import type { ContainerLabelSide } from '@shared/nodes/containerLabel'
 import {
   DEFAULT_END_OUTCOME,
   DEFAULT_END_REACH,
+  DEFAULT_FLOW_POSITION,
   stencilKind,
   stencilLabelOutside
 } from '@shared/stencils/kinds'
@@ -1740,24 +1741,27 @@ function CanvasInner(): React.JSX.Element {
     [setNodes, pushSnapshot]
   )
 
-  // Sets how these ends finish and how far they reach, one undo step. The defaults (success, this
-  // path) are stored as nothing.
-  const setStencilEnding = useCallback(
-    (nodeIds: string[], change: { outcome?: string; reach?: string }) => {
+  // Sets how these ends finish and how far they reach, and whether these events start a flow or sit
+  // in one, one undo step. The defaults (success, this path, in the flow) are stored as nothing, and a
+  // field is only set on the kinds that have it.
+  const setStencilState = useCallback(
+    (nodeIds: string[], change: { outcome?: string; reach?: string; flowPosition?: string }) => {
       const ids = new Set(nodeIds)
       pushSnapshot()
       setNodes((nds) =>
         nds.map((n) => {
           if (!ids.has(n.id) || n.type !== 'stencil') return n
-          if (!stencilKind(typeof n.data?.kind === 'string' ? n.data.kind : undefined).endsFlow) {
-            return n
-          }
+          const kind = stencilKind(typeof n.data?.kind === 'string' ? n.data.kind : undefined)
           const data = { ...n.data }
-          if (change.outcome !== undefined) {
+          if (kind.endsFlow && change.outcome !== undefined) {
             data.outcome = change.outcome === DEFAULT_END_OUTCOME ? undefined : change.outcome
           }
-          if (change.reach !== undefined) {
+          if (kind.endsFlow && change.reach !== undefined) {
             data.reach = change.reach === DEFAULT_END_REACH ? undefined : change.reach
+          }
+          if (kind.positioned && change.flowPosition !== undefined) {
+            data.flowPosition =
+              change.flowPosition === DEFAULT_FLOW_POSITION ? undefined : change.flowPosition
           }
           return { ...n, data }
         })
@@ -4013,7 +4017,7 @@ function CanvasInner(): React.JSX.Element {
                 onAddStencil={addStencilNode}
                 onSetStencilKind={setStencilKind}
                 onSetStencilLabelPosition={setStencilLabelPosition}
-                onSetStencilEnding={setStencilEnding}
+                onSetStencilState={setStencilState}
                 onSetContainerLabelSide={setContainerLabelSide}
                 onCreateMultipleEntities={() => setBulkCreateType('entity')}
                 onCreateMultipleContainers={() => setBulkCreateType('container')}

@@ -2,6 +2,8 @@ import type { Node } from '@xyflow/react'
 import {
   END_OUTCOMES,
   END_REACHES,
+  FLOW_POSITIONS,
+  flowPositionOf,
   endOutcomeOf,
   endReachOf,
   STENCIL_KINDS,
@@ -23,12 +25,12 @@ export function StencilFields({
   nodes,
   onSetKind,
   onSetLabelPosition,
-  onSetEnding
+  onSetState
 }: {
   nodes: Node[]
   onSetKind: (kindId: string) => void
   onSetLabelPosition: (position: LabelPosition) => void
-  onSetEnding: (change: { outcome?: string; reach?: string }) => void
+  onSetState: (change: { outcome?: string; reach?: string; flowPosition?: string }) => void
 }): React.JSX.Element {
   const kindOf = (n: Node): string =>
     stencilKind(typeof n.data?.kind === 'string' ? n.data.kind : undefined).id
@@ -42,6 +44,11 @@ export function StencilFields({
   const ends = nodes.filter(
     (n) => stencilKind(typeof n.data?.kind === 'string' ? n.data.kind : undefined).endsFlow
   )
+  // Only an event can start a flow or sit in one.
+  const events = nodes.filter(
+    (n) => stencilKind(typeof n.data?.kind === 'string' ? n.data.kind : undefined).positioned
+  )
+  const flowPositions = new Set(events.map((n) => flowPositionOf(n.data?.flowPosition)))
   const outcomes = new Set(ends.map((n) => endOutcomeOf(n.data?.outcome)))
   const reaches = new Set(ends.map((n) => endReachOf(n.data?.reach)))
   return (
@@ -60,6 +67,16 @@ export function StencilFields({
         pushSnapshot={() => undefined}
         onChange={onSetKind}
       />
+      {events.length > 0 && (
+        <SelectField
+          label="Position"
+          value={flowPositions.size === 1 ? [...flowPositions][0] : undefined}
+          mixed={flowPositions.size > 1}
+          options={FLOW_POSITIONS.map((p) => ({ value: p.id, label: p.name }))}
+          pushSnapshot={() => undefined}
+          onChange={(flowPosition) => onSetState({ flowPosition })}
+        />
+      )}
       {ends.length > 0 && (
         <>
           <SelectField
@@ -68,7 +85,7 @@ export function StencilFields({
             mixed={outcomes.size > 1}
             options={END_OUTCOMES.map((o) => ({ value: o.id, label: o.name }))}
             pushSnapshot={() => undefined}
-            onChange={(outcome) => onSetEnding({ outcome })}
+            onChange={(outcome) => onSetState({ outcome })}
           />
           <SelectField
             label="Reach"
@@ -76,7 +93,7 @@ export function StencilFields({
             mixed={reaches.size > 1}
             options={END_REACHES.map((r) => ({ value: r.id, label: r.name }))}
             pushSnapshot={() => undefined}
-            onChange={(reach) => onSetEnding({ reach })}
+            onChange={(reach) => onSetState({ reach })}
           />
         </>
       )}
