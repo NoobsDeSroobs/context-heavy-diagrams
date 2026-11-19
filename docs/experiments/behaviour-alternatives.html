@@ -89,7 +89,7 @@
   <div id="counts"></div>
 
   <h2>6. Colours, on the picks so far</h2>
-  <p class="note">The marks now say what a kind is, so colour has less to do. Each block below shows the whole set as picked (set A for the choices) under one palette. What to judge: can a <b>user</b> step and an <b>automatic</b> step be told apart at a glance; do the three <b>choices</b> need three colours now their marks differ; are <b>start</b> and <b>end</b> apart without red against green. The maintainer's rules for this round: the families must differ in lightness, so they differ without colour; shape and icon are the main differentiator; and the end is not red, since red reads as an error. Switch Vision to Greyscale, and Size to 50%, before deciding. Diamonds are not on this sheet: set A keeps the square frames.</p>
+  <p class="note">The marks now say what a kind is, so colour has less to do. Each block below shows the whole set as picked (set A for the choices) under one palette. What to judge: are the three families apart at a glance and in greyscale; is a <b>user</b> step told from an <b>automatic</b> one by its icon alone; are <b>start</b> and <b>end</b> apart by their marks and rings, with no red against green. The maintainer's rules for this round: each family has one lightness, evenly spaced from the others, so the families differ without colour; shape and icon are the main differentiator; and the end is not red, since red reads as an error. Switch Vision to Greyscale, and Size to 50%, before deciding. Diamonds are not on this sheet: set A keeps the square frames.</p>
   <div id="palettes"></div>
 </main>
 
@@ -389,18 +389,14 @@ const FAM = { steps: ['step', 'user', 'auto'], choices: ['choice', 'parallel'], 
 const lightnessLine = (hues) => THEMES.map(([theme, base], ti) =>
   `${theme}: ` + Object.entries(FAM).map(([name, keys]) => `${name} ${[...new Set(keys.filter((k) => hues[k]).map((k) => lstar(fillOf(hues[k], ti, base))))].join(' / ')}`).join(', ')).join('; ');
 const evRing = (spec, id) => id.startsWith('event') ? { ...spec, stroke: 'event' } : spec;
-const actors = (spec, id) => evRing(id === 'step-user' ? { ...spec, fill: 'user', stroke: 'user' } : id === 'step-automatic' ? { ...spec, fill: 'auto', stroke: 'auto' } : spec, id);
 const TEAL = '#4e939e', AMBER = '#d8a93a', INDIGO = '#8f96e2';
-const BASE = { step: [TEAL, 0.52, 0.54], choice: [AMBER, 0.66, 0.21], parallel: [AMBER, 0.66, 0.21], start: [INDIGO, 0.22, 1], event: [INDIGO, 0.22, 1], end: [INDIGO, 0.22, 1] };
-const SHADES = { user: [TEAL, 0.72, 0.33], auto: [TEAL, 0.36, 0.75] };
+const BASE = { step: [TEAL, 0.55, 0.51], choice: [AMBER, 0.67, 0.21], parallel: [AMBER, 0.67, 0.21], start: [INDIGO, 0.22, 1], event: [INDIGO, 0.22, 1], end: [INDIGO, 0.22, 1] };
 const PALETTES = [
   ['p-today', "1. Today's colours", 'The baseline: one teal for every step, amber for decision and inclusive, blue for parallel, green start, one indigo for the events, red end.', null, null],
-  ['p-shades', '2. Three families, three lightness levels', 'Colour only says which family: teal for steps, amber for choices, a soft indigo blue for events. The families sit at three different lightnesses (from lightest to darkest: choices, steps, events, in both themes), so they still differ in greyscale. Inside a family every kind has the same fill and the mark, the outline and the icon do the rest. The end is the same blue, not red: its heavy ring and tick carry it.',
+  ['p-shades', '2. One shade per family, evenly spaced', 'Colour only says which family: teal for steps, amber for choices, a soft indigo blue for events. Each family has exactly one fill, and the three sit about 15 lightness points apart (from lightest to darkest: choices, steps, events, in both themes), so they differ in greyscale and for colour-blind readers. Inside a family nothing varies: the user and automatic steps are told apart by their person and robot icons, the three choices by their fork, rings and bars, and the events by their rings and marks. The end is the same blue, not red: its heavy ring and tick carry it.',
     { ...BASE }, evRing],
-  ['p-actor', '3. As 2, the actor as a shade', 'The user step is a lighter teal and the automatic step a darker one: the same hue, so the difference is a shade and holds in greyscale (user lighter than the plain step, automatic darker, all below the choices), with the person and the robot icons doing the naming.',
-    { ...BASE, ...SHADES }, actors],
-  ['p-start', '4. As 3, the start with a green tint', 'As 3, but the start circle leans a little green (a muted sage, the same lightness as the other events), a hint of "go" without making the end a red "stop".',
-    { ...BASE, ...SHADES, start: ['#74a582', 0.24, 1] }, actors]
+  ['p-start', '3. As 2, the start with a green tint', 'As 2, but the start circle leans a little green (a muted sage at the same lightness as the other events): a hint of "go" without making the end a red "stop". The only thing that varies inside a family.',
+    { ...BASE, start: ['#74a582', 0.24, 1] }, evRing]
 ];
 const palStyle = document.createElement('style');
 palStyle.textContent = PALETTES.filter((q) => q[3]).map((q) => palCss(q[0], q[3])).join('\n');
