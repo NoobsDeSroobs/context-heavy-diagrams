@@ -39,6 +39,11 @@ The table is `src/shared/stencils/kinds.ts`; the file stores only the kind id, s
 - [ ] Decide, including whether choices become diamonds (an ADR that supersedes the shape part of 0180 if so).
 - [ ] Implement in the kinds table and the drawing, then the legend, the SVG and draw.io exports, and the docs and assistant guidance that describe the marks.
 - [ ] The toggle for "starts a flow" or "in the flow" on the events is specified and built in [0199](0199-event-position-toggle.md), a file-format change of its own.
+- [ ] Rename `step-user` to `step-human`, and its display name "User step" to "Human step" ("user" implies the people in control of the application; the step's neighbour "Automatic step" is the only reason it read as right). The rules, agreed:
+  1. **Ratify the name when this is built,** not before; nothing ships until then, and an id is permanent once released.
+  2. **The reader maps the old id to the new one** as it loads (the way `parseDiagram` reads `details` as `notes`), and the writer emits only `step-human`, so the rest of the code sees one id and a stale assistant skill that writes `step-user` still works. The alias stays until at least 1.0.0.
+  3. **No deprecation warning:** the id is invisible to the person. A changelog note under File format, marked as a break, says the first save rewrites every user step in a file, and that an older app or a pinned CLI draws a human step as a plain step.
+  4. **Released with [0199](0199-event-position-toggle.md),** so one File format section covers both. Touches the kinds table, `docs/file-format.md`, the CLI and AI guidance, the extension, `.claude/skills`, the two examples that use it, and one ADR.
 - [ ] Update the examples that show the kinds ([ADR 0151](../../decisions/0151-every-visible-feature-has-an-example-diagram.md)).
 
 ## Notes
