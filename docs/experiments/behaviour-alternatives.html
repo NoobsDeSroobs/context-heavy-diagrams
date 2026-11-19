@@ -390,17 +390,17 @@ const lightnessLine = (hues) => THEMES.map(([theme, base], ti) =>
   `${theme}: ` + Object.entries(FAM).map(([name, keys]) => `${name} ${[...new Set(keys.filter((k) => hues[k]).map((k) => lstar(fillOf(hues[k], ti, base))))].join(' / ')}`).join(', ')).join('; ');
 const evRing = (spec, id) => id.startsWith('event') ? { ...spec, stroke: 'event' } : spec;
 const actors = (spec, id) => evRing(id === 'step-user' ? { ...spec, fill: 'user', stroke: 'user' } : id === 'step-automatic' ? { ...spec, fill: 'auto', stroke: 'auto' } : spec, id);
-const TEAL = '#4e939e', AMBER = '#d8a93a', SLATE = '#939dac';
-const BASE = { step: [TEAL, 0.52, 0.54], choice: [AMBER, 0.66, 0.21], parallel: [AMBER, 0.66, 0.21], start: [SLATE, 0.22, 1], event: [SLATE, 0.22, 1], end: [SLATE, 0.22, 1] };
+const TEAL = '#4e939e', AMBER = '#d8a93a', INDIGO = '#8f96e2';
+const BASE = { step: [TEAL, 0.52, 0.54], choice: [AMBER, 0.66, 0.21], parallel: [AMBER, 0.66, 0.21], start: [INDIGO, 0.22, 1], event: [INDIGO, 0.22, 1], end: [INDIGO, 0.22, 1] };
 const SHADES = { user: [TEAL, 0.72, 0.33], auto: [TEAL, 0.36, 0.75] };
 const PALETTES = [
   ['p-today', "1. Today's colours", 'The baseline: one teal for every step, amber for decision and inclusive, blue for parallel, green start, one indigo for the events, red end.', null, null],
-  ['p-shades', '2. Three families, three lightness levels', 'Colour only says which family: teal for steps, amber for choices, slate for events. The families sit at three different lightnesses (from lightest to darkest: choices, steps, events, in both themes), so they still differ in greyscale. Inside a family every kind has the same fill and the mark, the outline and the icon do the rest. The end is plain slate, not red: its heavy ring and tick carry it.',
+  ['p-shades', '2. Three families, three lightness levels', 'Colour only says which family: teal for steps, amber for choices, a soft indigo blue for events. The families sit at three different lightnesses (from lightest to darkest: choices, steps, events, in both themes), so they still differ in greyscale. Inside a family every kind has the same fill and the mark, the outline and the icon do the rest. The end is the same blue, not red: its heavy ring and tick carry it.',
     { ...BASE }, evRing],
   ['p-actor', '3. As 2, the actor as a shade', 'The user step is a lighter teal and the automatic step a darker one: the same hue, so the difference is a shade and holds in greyscale (user lighter than the plain step, automatic darker, all below the choices), with the person and the robot icons doing the naming.',
     { ...BASE, ...SHADES }, actors],
   ['p-start', '4. As 3, the start with a green tint', 'As 3, but the start circle leans a little green (a muted sage, the same lightness as the other events), a hint of "go" without making the end a red "stop".',
-    { ...BASE, ...SHADES, start: ['#5f8f6c', 0.26, 1] }, actors]
+    { ...BASE, ...SHADES, start: ['#74a582', 0.24, 1] }, actors]
 ];
 const palStyle = document.createElement('style');
 palStyle.textContent = PALETTES.filter((q) => q[3]).map((q) => palCss(q[0], q[3])).join('\n');
