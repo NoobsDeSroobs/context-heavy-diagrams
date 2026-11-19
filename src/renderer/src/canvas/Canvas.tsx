@@ -3633,9 +3633,9 @@ function CanvasInner(): React.JSX.Element {
     <DiagramContext.Provider value={diagramContextValue}>
       {/* Outer app shell: [canvas view [diagram dock]] [utility dock], nested
           not flat — see ADR 0013. */}
+      <IconPackOffer />
       <div className="app-shell">
         <div className={`canvas-view${edgeAnimationOn ? '' : ' edges-still'}`}>
-          <IconPackOffer />
           <div className="toolbar">
             <MenuBar menus={menus} />
             {/* Persona selector sits after the File/Edit/View/Help menus, not
