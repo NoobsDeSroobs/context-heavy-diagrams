@@ -26,3 +26,4 @@ Let a person draw and read the Behaviour kinds in one of two styles, **CHD** (th
 ## Notes
 - A new kind needs a look in both styles from then on; that is the standing cost, accepted for the study and the audiences.
 - Kind ids and the file format do not change; an older app ignores the setting.
+- The cross of a failed end in the CHD style can be taken for the minimalist decision (an X in a diamond). Look at the two side by side in the comparison sheet, and in the study ask whether it is mixed up; the minimalist style may need a different mark for a failed end.
