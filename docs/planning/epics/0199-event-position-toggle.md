@@ -1,7 +1,7 @@
 # 0199: Event position: starts a flow, or in the flow
 
 ## Status
-Built with the marks and colours of [0194](0194-improve-on-the-bpmn-notation.md), awaiting the maintainer's check in the app; the decision is in [ADR 0193](../../decisions/0193-behaviour-symbols-one-colour-per-family-and-an-end-that-says-how-it-ended.md). The operation is `set_behaviour_position`. The example shows a timer that starts a flow next to one in a flow.
+Built with the marks and colours of [0194](0194-improve-on-the-bpmn-notation.md), and with the maintainer; the decision is in [ADR 0193](../../decisions/0193-behaviour-symbols-one-colour-per-family-and-an-end-that-says-how-it-ended.md). The operation is `set_behaviour_position`. The example shows a timer that starts a flow next to one in a flow.
 
 ## Goal
 Let a person say whether an event begins a flow or sits inside one, with a dropdown in the properties panel, and draw the difference: one ring for a start, two for an event in the flow.
@@ -16,10 +16,10 @@ Let a person say whether an event begins a flow or sits inside one, with a dropd
 - **Format:** an additive change, a MINOR bump with the next release; `docs/file-format.md` and `schema.ts` change together.
 
 ## Tasks
-- [ ] ADR: the field, the kinds it applies to, why stored and not derived from edges (it survives a filtered view and states intent), why a named state and not a boolean, and the alternatives (a ring drawn from the edges; separate kinds for a starting timer and message)
-- [ ] `schema.ts` and `docs/file-format.md`
-- [ ] Properties panel row, with a test
-- [ ] Canvas and legend drawing, the SVG, PNG and draw.io exports
-- [ ] CLI, extension and assistant guidance
-- [ ] An example diagram that shows a timer start next to an in-flow timer, and `examples/README.md` ([ADR 0151](../../decisions/0151-every-visible-feature-has-an-example-diagram.md))
-- [ ] Changelog under File format and Added
+- [x] ADR: the field, the kinds it applies to, why stored and not derived from edges (it survives a filtered view and states intent), why a named state and not a boolean, and the alternatives (a ring drawn from the edges; separate kinds for a starting timer and message)
+- [x] `schema.ts` and `docs/file-format.md`
+- [x] Properties panel row, with a test
+- [x] Canvas and legend drawing, the SVG, PNG and draw.io exports
+- [x] CLI, extension and assistant guidance
+- [x] An example diagram that shows a timer start next to an in-flow timer, and `examples/README.md` ([ADR 0151](../../decisions/0151-every-visible-feature-has-an-example-diagram.md))
+- [x] Changelog under File format and Added
