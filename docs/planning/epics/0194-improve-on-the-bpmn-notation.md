@@ -33,7 +33,7 @@ The table is `src/shared/stencils/kinds.ts`; the file stores only the kind id, s
 - Our own drawings, nothing copied from the specification.
 
 ## Tasks
-- [x] Draw all 13 kinds on one sheet, light and dark, at the canvas size and zoomed out, in greyscale and with a colour-blind simulation (`docs/experiments/behaviour-alternatives.html`: today at the top, alternatives per kind, one candidate set; open it in a browser). Still to do: the maintainer's pick from it and what blurs.
+- [x] Draw all 13 kinds on one sheet, light and dark, at the canvas size and zoomed out, in greyscale and with a colour-blind simulation (`docs/experiments/behaviour-alternatives.html`: today at the top, alternatives per kind, one candidate set; open it in a browser). Picks so far: stacked layers for the sub-flow, a robot for the automatic step, a play triangle for start, a tick for end, a plain circle for the event, and for the three choices set A of round two (sideways fork, two overlapping rings, two bars; the count notations of round three were not picked). Still to do: timer, message, repeat, the colours, and whether choices become diamonds (A keeps the squares).
 - [ ] Show the kinds without the legend to a few people who do not know BPMN, ask them to name each and to say which pairs they would mix up; note the answers here.
 - [ ] Propose revised marks, colours and shapes for the pairs that failed, and try them on the same sheet and on [process-flow-all-behaviours](../../../examples/process-flow-all-behaviours.chd).
 - [ ] Decide, including whether choices become diamonds (an ADR that supersedes the shape part of 0180 if so).
