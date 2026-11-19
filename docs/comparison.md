@@ -134,7 +134,7 @@ For a market view, Gartner's 2026 Magic Quadrant for Enterprise Architecture Too
 - **Team workflow.** Collaboration, ownership, prioritisation and publishing for people who are not diagram authors.
 
 **Where this tool is better**
-- **Any journey or process, in any shape.** A journey is a sequence of boxes with notes and tags behind each step, with no fixed template to fit. A process can use the flow elements: 13 kinds of step, choice and event, inspired by BPMN, in swim lanes (containers whose label can sit on any side), with a mark where an edge hands over from one lane to another. This is a vocabulary, not the standard: there are no pools and message flows, data objects or boundary events, no import or export of BPMN files, no validation of the flow and nothing that runs it.
+- **Any journey or process, in any shape.** A journey is a sequence of boxes with notes and tags behind each step, with no fixed template to fit. A process can use the flow elements: 14 kinds of step, choice and event, inspired by BPMN, in swim lanes (containers whose label can sit on any side), with a mark where an edge hands over from one lane to another. This is a vocabulary, not the standard: there are no pools and message flows, data objects or boundary events, no import or export of BPMN files, no validation of the flow and nothing that runs it.
 - **Links into the rest of the picture.** A step can link to the system diagram behind it, so a business view and a technical view stay connected.
 - **Free, offline and file-based.**
 

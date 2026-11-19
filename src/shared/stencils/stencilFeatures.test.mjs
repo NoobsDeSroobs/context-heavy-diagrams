@@ -68,7 +68,8 @@ test('a legend swatch has the shape and the mark of its kind', () => {
     /<rect[^>]*rx="2"[^]*<path d="M[^"]+Z" fill="#abcdef"/
   )
   assert.match(stencilSwatchSvg('branch-exclusive', colors), /<path/)
-  assert.doesNotMatch(stencilSwatchSvg('event-start', colors), /<path/)
+  assert.doesNotMatch(stencilSwatchSvg('event', colors), /<path/)
+  assert.match(stencilSwatchSvg('event-start', colors), /<path d="M8 5l11 7-11 7z" fill="#ffffff"/)
 })
 
 test('the draw.io export keeps the shape and says the mark is lost', () => {

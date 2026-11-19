@@ -7,6 +7,8 @@ import {
   HEAVY_BORDER_FACTOR,
   stencilKind,
   stencilLabelOutside,
+  stencilMarkOf,
+  stencilSolid,
   stencilStyle
 } from '../stencils/kinds.ts'
 import { containerLabelSideOf } from '../nodes/containerLabel.ts'
@@ -16,6 +18,7 @@ import {
   DEFAULT_FONT_FAMILY,
   PAGE_TOKENS,
   resolveBoxLook,
+  withStencilLightColors,
   resolveEdgeLabelLook,
   resolveEdgeLook,
   resolveLabelLook,
@@ -329,14 +332,17 @@ export function renderDiagramDrawio(
     // A stencil is an ellipse, a rhombus or a rectangle with its label below the small ones; the
     // mark or band on it has no counterpart here (ADR 0180).
     const sk = kind === 'stencil' ? stencilKind(node.data.kind) : undefined
-    if (sk?.mark || sk?.shape === 'arrow') lost.stencilMarks += 1
+    if ((sk && stencilMarkOf(sk, node.data)) || sk?.shape === 'arrow') lost.stencilMarks += 1
     const styleSource = sk ? stencilStyle(node.data.kind, node.style) : node.style
-    const look = resolveBoxLook(
+    const boxLook = resolveBoxLook(
       type,
       styleSource,
       theme,
       matches.length === 1 ? matches[0] : undefined
     )
+    const look = sk
+      ? withStencilLightColors(boxLook, node.data.kind, node.style, theme, matches.length === 1)
+      : boxLook
     const labelLook = resolveLabelLook(type, styleSource, theme, family)
     const rotation = kind === 'text' ? (node.rotation ?? 0) : 0
     const flat = kind === 'text' || (sk !== undefined && sk.shape !== 'arrow')
@@ -357,8 +363,12 @@ export function renderDiagramDrawio(
         ['arcSize', flat ? undefined : sk ? 4 : 12],
         ['whiteSpace', 'wrap'],
         ['html', 1],
-        ['fillColor', colorOf(look.fill)],
-        ['fillOpacity', opacityPercent(look.fill)],
+        // An end that stops the whole flow is a solid disc, the border colour filling it.
+        ['fillColor', colorOf(sk && stencilSolid(sk, node.data) ? look.stroke : look.fill)],
+        [
+          'fillOpacity',
+          opacityPercent(sk && stencilSolid(sk, node.data) ? look.stroke : look.fill)
+        ],
         ['strokeColor', colorOf(look.stroke)],
         ['strokeOpacity', opacityPercent(look.stroke)],
         [

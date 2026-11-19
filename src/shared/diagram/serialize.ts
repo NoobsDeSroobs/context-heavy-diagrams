@@ -229,6 +229,8 @@ export function serializeDiagram(diagram: DiagramFile): string {
         notes: n.data.notes,
         linkedDiagram: n.data.linkedDiagram,
         kind: n.data.kind,
+        outcome: n.data.outcome,
+        reach: n.data.reach,
         labelPosition: n.data.labelPosition,
         labelOffset: n.data.labelOffset,
         points: n.data.points && n.data.points.length > 0 ? n.data.points : undefined,

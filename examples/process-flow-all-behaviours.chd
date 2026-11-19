@@ -124,7 +124,7 @@
       "parentId": "lane-support",
       "data": {
         "label": "Review the request",
-        "kind": "step-user"
+        "kind": "step-human"
       }
     },
     {

@@ -14,9 +14,14 @@ import {
   HEAVY_BORDER_FACTOR,
   MARK_STROKE,
   STENCIL_MARK_PATHS,
+  STENCIL_MARK_SOLID,
   stencilKind,
   stencilLabelInsets,
+  stencilLightColors,
   stencilLabelOutside,
+  stencilMarkOf,
+  stencilMarkScale,
+  stencilSolid,
   stencilStyle
 } from '@shared/stencils/kinds'
 import { labelBox, labelPositionOf, leaderLine, offsetOf } from '@shared/stencils/labelPlacement'
@@ -25,6 +30,7 @@ import EditableLabel from '../ui/EditableLabel'
 import LockBadge from '../tagging/LockBadge'
 import { useDiagramContext } from '../canvas/useDiagramContext'
 import { isolateStyle } from '../search/search'
+import { withOpacity } from '../styling/colorOpacity'
 import { nodeContainerCss, nodeLabelCss } from '../styling/nodeStyleCss'
 import { ConnectionHandles } from './ConnectionHandles'
 import { useConnectionPointMenu } from './connectionPoints'
@@ -68,14 +74,41 @@ function StencilNode({ id, data, selected }: NodeProps): React.JSX.Element {
   const draggableLabel = free && selected && !locked
   const ownStyle = data?.style as NodeStyle | undefined
   const style = stencilStyle(kindId, ownStyle)
+  const mark = stencilMarkOf(kind, data)
+  const solid = stencilSolid(kind, data)
   const { addConnectionPointItem, onPointContextMenu } = useConnectionPointMenu(id, customPoints)
 
   // The kind's heavier border (an end) is a multiple of the border width the element has.
   const frameCss: CSSProperties = nodeContainerCss(style, theme)
+  // In the light theme the kind's own light colours, which a flip of the stored ones would not give.
+  if (theme === 'light') {
+    const own = stencilLightColors(kindId, ownStyle)
+    if (own.fill) frameCss.background = withOpacity(own.fill, ownStyle?.fillOpacity)
+    if (own.stroke) frameCss.borderColor = withOpacity(own.stroke, ownStyle?.strokeOpacity)
+  }
   if (kind.heavyBorder) {
     const width = ownStyle?.strokeWidth ?? NODE_STYLE_DEFAULTS.entity.strokeWidth
     frameCss.borderWidth = width * HEAVY_BORDER_FACTOR
   }
+  // An end that stops the whole flow is a solid disc: the border colour fills it and the mark takes the
+  // colour the fill had.
+  let markColor: string | undefined
+  if (solid) {
+    markColor = String(frameCss.background ?? 'var(--default-entity-fill)')
+    frameCss.background = frameCss.borderColor ?? 'var(--default-entity-stroke)'
+  }
+  // A mark that reads better larger or smaller than the standard size grows from its centre.
+  const markScale = stencilMarkScale(mark)
+  const markPercent = (kind.doubleBorder ? 42 : 46) * markScale
+  const markBox: CSSProperties | undefined =
+    kind.shape !== 'arrow' && markScale !== 1
+      ? {
+          top: `${(100 - markPercent) / 2}%`,
+          left: `${(100 - markPercent) / 2}%`,
+          width: `${markPercent}%`,
+          height: `${markPercent}%`
+        }
+      : undefined
 
   const onContextMenu = useCallback(
     (event: MouseEvent<HTMLDivElement>) => {
@@ -261,15 +294,16 @@ function StencilNode({ id, data, selected }: NodeProps): React.JSX.Element {
           }}
         />
       )}
-      {kind.mark && (
+      {mark && (
         <svg
           className={`stencil-node-mark${kind.shape === 'arrow' ? ' stencil-node-mark--slot' : ''}${kind.doubleBorder ? ' stencil-node-mark--ringed' : ''}`}
+          style={{ ...markBox, ...(markColor ? { color: markColor } : {}) }}
           viewBox="0 0 24 24"
           aria-hidden="true"
         >
           <path
-            d={STENCIL_MARK_PATHS[kind.mark]}
-            fill="none"
+            d={STENCIL_MARK_PATHS[mark]}
+            fill={STENCIL_MARK_SOLID.has(mark) ? 'currentColor' : 'none'}
             stroke="currentColor"
             strokeWidth={MARK_STROKE}
             strokeLinecap="round"

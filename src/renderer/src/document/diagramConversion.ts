@@ -105,6 +105,14 @@ export function toDiagramFile(
           n.type === 'stencil' && typeof n.data?.kind === 'string'
             ? (n.data.kind as string)
             : undefined,
+        outcome:
+          n.type === 'stencil' && typeof n.data?.outcome === 'string'
+            ? (n.data.outcome as string)
+            : undefined,
+        reach:
+          n.type === 'stencil' && typeof n.data?.reach === 'string'
+            ? (n.data.reach as string)
+            : undefined,
         labelPosition:
           (n.type === 'stencil' || n.type === 'container') &&
           typeof n.data?.labelPosition === 'string'
@@ -183,6 +191,8 @@ export function fromDiagramFile(diagram: DiagramFile): {
         ...(n.data.notes ? { notes: n.data.notes } : {}),
         ...(n.data.linkedDiagram ? { linkedDiagram: n.data.linkedDiagram } : {}),
         ...(n.type === 'stencil' && n.data.kind ? { kind: n.data.kind } : {}),
+        ...(n.type === 'stencil' && n.data.outcome ? { outcome: n.data.outcome } : {}),
+        ...(n.type === 'stencil' && n.data.reach ? { reach: n.data.reach } : {}),
         ...((n.type === 'stencil' || n.type === 'container') && n.data.labelPosition
           ? { labelPosition: n.data.labelPosition }
           : {}),

@@ -4,7 +4,9 @@ import {
   arrowBandPath,
   HEAVY_BORDER_FACTOR,
   STENCIL_MARK_PATHS,
+  STENCIL_MARK_SOLID,
   stencilKind,
+  stencilLightColors,
   stencilMarkBox,
   stencilStyle
 } from './kinds.ts'
@@ -13,11 +15,12 @@ import {
 // the text colour of the legend.
 export function stencilSwatchSvgFor(kindId: string, theme: Theme): string {
   const style = stencilStyle(kindId, undefined)
+  const light = theme === 'light' ? stencilLightColors(kindId, undefined) : {}
   const painted = (stored: string | undefined, fallback: string): string =>
     stored ? paintColor(stored, theme).color : fallback
   return stencilSwatchSvg(kindId, {
-    fill: painted(style?.fill, 'transparent'),
-    stroke: painted(style?.stroke, 'currentColor'),
+    fill: light.fill ?? painted(style?.fill, 'transparent'),
+    stroke: light.stroke ?? painted(style?.stroke, 'currentColor'),
     mark: 'currentColor'
   })
 }
@@ -52,7 +55,7 @@ export function stencilSwatchSvg(
     const scale = Math.round((at.size / 24) * 10000) / 10000
     body +=
       `<g transform="translate(${x + at.x} ${y + at.y}) scale(${scale})">` +
-      `<path d="${STENCIL_MARK_PATHS[kind.mark]}" fill="none" stroke="${colors.mark}" stroke-width="${Math.round((1.2 / scale) * 100) / 100}" stroke-linecap="round" stroke-linejoin="round"/></g>`
+      `<path d="${STENCIL_MARK_PATHS[kind.mark]}" fill="${STENCIL_MARK_SOLID.has(kind.mark) ? colors.mark : 'none'}" stroke="${colors.mark}" stroke-width="${Math.round((1.2 / scale) * 100) / 100}" stroke-linecap="round" stroke-linejoin="round"/></g>`
   }
   return `<svg viewBox="0 0 28 16" width="28" height="16" aria-hidden="true">${body}</svg>`
 }

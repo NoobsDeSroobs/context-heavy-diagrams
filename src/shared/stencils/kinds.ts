@@ -36,22 +36,103 @@ export function arrowBandPath(
 
 // Drawn by the app as vector graphics, never an image.
 export type StencilMark =
-  'cross' | 'plus' | 'ring' | 'clock' | 'envelope' | 'person' | 'gear' | 'sub-flow' | 'loop'
+  | 'fork'
+  | 'overlap'
+  | 'bars'
+  | 'robot'
+  | 'layers'
+  | 'repeat'
+  | 'person'
+  | 'play'
+  | 'clock'
+  | 'envelope'
+  | 'check'
+  | 'check-warn'
+  | 'cross'
+  | 'stop'
 
-// Each mark as stroked paths in a 24-unit box (no fill, round caps), so the canvas, the exports and
-// the legend draw the same shapes at any size.
+// Each mark as stroked paths in a 24-unit box (round caps), so the canvas, the exports and the legend
+// draw the same shapes at any size. A dot is a stroked point (`h.01`), which the round caps swell.
 export const STENCIL_MARK_PATHS: Record<StencilMark, string> = {
-  cross: 'M6 6L18 18M6 18L18 6',
-  plus: 'M5 12H19M12 5V19',
-  ring: 'M12 5.5a6.5 6.5 0 1 0 0 13a6.5 6.5 0 1 0 0-13',
+  fork: 'M3 12h7M10 12L20 5M10 12L20 19',
+  overlap:
+    'M8.8 6.4a5.6 5.6 0 1 0 0 11.2a5.6 5.6 0 1 0 0-11.2M15.2 6.4a5.6 5.6 0 1 0 0 11.2a5.6 5.6 0 1 0 0-11.2',
+  bars: 'M4 8.5h16M4 15.5h16',
+  robot:
+    'M7.5 8h9a2.5 2.5 0 0 1 2.5 2.5v6a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 5 16.5v-6A2.5 2.5 0 0 1 7.5 8z' +
+    'M12 8V4.5M9.5 16.5h5M9.5 12.5h.01M14.5 12.5h.01',
+  layers: 'M12 4l8.5 4.5L12 13 3.5 8.5zM3.5 13l8.5 4.5 8.5-4.5',
+  repeat:
+    'M17 2.5l3.5 3.5L17 9.5M3.5 11V9.5A3.5 3.5 0 0 1 7 6h13M7 21.5L3.5 18 7 14.5M20.5 13v1.5A3.5 3.5 0 0 1 17 18H3.5',
+  person: 'M12 5a3.2 3.2 0 1 0 0 6.4a3.2 3.2 0 1 0 0-6.4M5.5 20c0-4.2 3-6 6.5-6s6.5 1.8 6.5 6',
+  play: 'M8 5l11 7-11 7z',
   clock: 'M12 4a8 8 0 1 0 0 16a8 8 0 1 0 0-16M12 8v4.5l3 2',
   envelope: 'M4 7h16v10H4zM4 7l8 6l8-6',
-  person: 'M12 5a3.2 3.2 0 1 0 0 6.4a3.2 3.2 0 1 0 0-6.4M5.5 20c0-4.2 3-6 6.5-6s6.5 1.8 6.5 6',
-  gear:
-    'M12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6M12 3v3M12 18v3M3 12h3M18 12h3' +
-    'M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1',
-  'sub-flow': 'M5 5h14v14H5zM12 8.5v7M8.5 12h7',
-  loop: 'M18.5 11a6.5 6.5 0 0 0-11-3.5M7 4v4h4M5.5 13a6.5 6.5 0 0 0 11 3.5M17 20v-4h-4'
+  check: 'M5 12.5l4.5 4.5L19 7.5',
+  'check-warn': 'M2.5 13.5l3.8 3.8L13 9.5M19.5 5.5v7.5M19.5 18h.01',
+  cross: 'M6 6L18 18M6 18L18 6',
+  stop: 'M7.5 6h9A1.5 1.5 0 0 1 18 7.5v9a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 6 16.5v-9A1.5 1.5 0 0 1 7.5 6z'
+}
+
+// The marks that are solid shapes: drawn filled with the mark's colour as well as stroked.
+export const STENCIL_MARK_SOLID: ReadonlySet<StencilMark> = new Set(['play', 'stop'])
+
+// Some marks read better a little larger or smaller than the standard size.
+const MARK_SCALE: Partial<Record<StencilMark, number>> = {
+  fork: 1.2,
+  overlap: 1.2,
+  bars: 1.2,
+  'check-warn': 1.15,
+  stop: 0.85
+}
+
+export function stencilMarkScale(mark: StencilMark | undefined): number {
+  return mark ? (MARK_SCALE[mark] ?? 1) : 1
+}
+
+// How an end finishes (the end's `outcome`, absent is `success`) and how far it reaches (its `reach`,
+// absent is `path`): two named states, not flags, so a later value has room. An outcome is told by
+// the mark; a reach of the whole flow by a solid disc with the mark cut out of it.
+export const END_OUTCOMES = [
+  { id: 'success', name: 'Success', mark: 'check' },
+  { id: 'warnings', name: 'Success with warnings', mark: 'check-warn' },
+  { id: 'failed', name: 'Failed', mark: 'cross' },
+  { id: 'aborted', name: 'Aborted', mark: 'stop' }
+] as const satisfies readonly { id: string; name: string; mark: StencilMark }[]
+
+export type EndOutcome = (typeof END_OUTCOMES)[number]['id']
+export const DEFAULT_END_OUTCOME: EndOutcome = 'success'
+
+export const END_REACHES = [
+  { id: 'path', name: 'This path ends' },
+  { id: 'flow', name: 'The whole flow stops' }
+] as const
+export type EndReach = (typeof END_REACHES)[number]['id']
+export const DEFAULT_END_REACH: EndReach = 'path'
+
+// An outcome or a reach this version does not know (from a newer one) is drawn as the default.
+export function endOutcomeOf(value: unknown): EndOutcome {
+  return END_OUTCOMES.find((o) => o.id === value)?.id ?? DEFAULT_END_OUTCOME
+}
+export function endReachOf(value: unknown): EndReach {
+  return END_REACHES.find((r) => r.id === value)?.id ?? DEFAULT_END_REACH
+}
+
+// What a node's own data changes in how its kind is drawn: only an end has an outcome and a reach.
+export interface StencilEnding {
+  outcome?: unknown
+  reach?: unknown
+}
+
+// The mark a node is drawn with: its kind's, or for an end the one of its outcome.
+export function stencilMarkOf(kind: StencilKind, data?: StencilEnding): StencilMark | undefined {
+  if (!kind.endsFlow) return kind.mark
+  return END_OUTCOMES.find((o) => o.id === endOutcomeOf(data?.outcome))?.mark
+}
+
+// Whether a node is drawn as a solid disc with its mark cut out: an end that stops the whole flow.
+export function stencilSolid(kind: StencilKind, data?: StencilEnding): boolean {
+  return kind.endsFlow === true && endReachOf(data?.reach) === 'flow'
 }
 
 // The line width of a mark, in the units of its 24-unit box.
@@ -73,6 +154,8 @@ export interface StencilKind {
   heavyBorder?: boolean
   // A circle drawn with a second ring inside the first (an event in the middle of a flow).
   doubleBorder?: boolean
+  // An end: it has an outcome and a reach (see END_OUTCOMES), which set its mark and its disc.
+  endsFlow?: boolean
   // The size a new one gets.
   size: { width: number; height: number }
   // Fills the label of a new one when the person has not typed one.
@@ -82,27 +165,41 @@ export interface StencilKind {
   fill?: string
   // The same for the border; an arrow's band takes this colour.
   stroke?: string
+  // The colours as they look in the light theme (final colours, see stencilLightColors): the flip of the
+  // dark ones above would not keep the three families at their own lightness.
+  light?: { fill?: string; stroke?: string }
   // What the kind is called elsewhere, for the picker's search: BPMN terms live here and nowhere
   // else, the app's own words stay neutral (ADR 0080).
   terms: readonly string[]
 }
 
+// One colour per family, so the families differ in lightness (for readers who do not see colour) and
+// nothing varies inside one: a kind is told by its shape and mark. No red: it reads as an error.
 const STEP = {
   group: 'Steps',
   shape: 'arrow',
   size: { width: 150, height: 56 },
-  fill: '#1d3b40',
-  stroke: '#4e939e'
+  fill: '#345a60',
+  stroke: '#4e939e',
+  light: { fill: '#a5c8ce', stroke: '#3b6e77' }
 } as const
 
 const CHOICE = {
   group: 'Branches',
   shape: 'square',
   size: { width: 48, height: 48 },
-  fill: '#4d3d14'
+  fill: '#97782d',
+  light: { fill: '#f7edd6' }
 } as const
 
-const EVENT = { group: 'Events', shape: 'circle', size: { width: 40, height: 40 } } as const
+const EVENT = {
+  group: 'Events',
+  shape: 'circle',
+  size: { width: 40, height: 40 },
+  fill: '#2f3141',
+  stroke: '#c1c5ef',
+  light: { fill: '#8f96e2', stroke: '#4f537c' }
+} as const
 
 export const STENCIL_KINDS: readonly StencilKind[] = [
   {
@@ -114,17 +211,26 @@ export const STENCIL_KINDS: readonly StencilKind[] = [
   },
   {
     ...STEP,
-    id: 'step-user',
-    name: 'User step',
+    id: 'step-human',
+    name: 'Human step',
     mark: 'person',
-    defaultLabel: 'User step',
-    terms: ['user task', 'manual task', 'manual', 'by hand', 'human', 'person', 'bpmn user task']
+    defaultLabel: 'Human step',
+    terms: [
+      'user step',
+      'user task',
+      'manual task',
+      'manual',
+      'by hand',
+      'human',
+      'person',
+      'bpmn user task'
+    ]
   },
   {
     ...STEP,
     id: 'step-automatic',
     name: 'Automatic step',
-    mark: 'gear',
+    mark: 'robot',
     defaultLabel: 'Automatic step',
     terms: [
       'service task',
@@ -140,7 +246,7 @@ export const STENCIL_KINDS: readonly StencilKind[] = [
     ...STEP,
     id: 'step-sub-flow',
     name: 'Sub-flow',
-    mark: 'sub-flow',
+    mark: 'layers',
     defaultLabel: 'Sub-flow',
     terms: [
       'sub-process',
@@ -156,7 +262,7 @@ export const STENCIL_KINDS: readonly StencilKind[] = [
     ...STEP,
     id: 'step-repeat',
     name: 'Repeated step',
-    mark: 'loop',
+    mark: 'repeat',
     defaultLabel: 'Repeated step',
     terms: ['loop', 'loop task', 'multi-instance', 'repeat', 'recurring', 'iterate', 'bpmn loop']
   },
@@ -164,7 +270,7 @@ export const STENCIL_KINDS: readonly StencilKind[] = [
     ...CHOICE,
     id: 'branch-exclusive',
     name: 'Decision',
-    mark: 'cross',
+    mark: 'fork',
     defaultLabel: 'Decision',
     terms: [
       'gateway',
@@ -180,7 +286,7 @@ export const STENCIL_KINDS: readonly StencilKind[] = [
     ...CHOICE,
     id: 'branch-inclusive',
     name: 'Inclusive choice',
-    mark: 'ring',
+    mark: 'overlap',
     defaultLabel: 'Inclusive choice',
     terms: [
       'gateway',
@@ -197,9 +303,8 @@ export const STENCIL_KINDS: readonly StencilKind[] = [
     ...CHOICE,
     id: 'branch-parallel',
     name: 'Parallel split or join',
-    mark: 'plus',
+    mark: 'bars',
     defaultLabel: 'Parallel',
-    fill: '#1c3550',
     terms: [
       'gateway',
       'parallel gateway',
@@ -215,8 +320,8 @@ export const STENCIL_KINDS: readonly StencilKind[] = [
     ...EVENT,
     id: 'event-start',
     name: 'Start',
+    mark: 'play',
     defaultLabel: 'Start',
-    fill: '#1f3d26',
     terms: ['start event', 'begin', 'trigger', 'bpmn start event']
   },
   {
@@ -225,7 +330,6 @@ export const STENCIL_KINDS: readonly StencilKind[] = [
     name: 'Event',
     doubleBorder: true,
     defaultLabel: 'Event',
-    fill: '#2f3350',
     terms: [
       'intermediate event',
       'intermediate',
@@ -242,7 +346,6 @@ export const STENCIL_KINDS: readonly StencilKind[] = [
     mark: 'clock',
     doubleBorder: true,
     defaultLabel: 'Timer',
-    fill: '#2f3350',
     terms: ['timer event', 'wait', 'delay', 'deadline', 'schedule', 'clock', 'bpmn timer event']
   },
   {
@@ -252,16 +355,35 @@ export const STENCIL_KINDS: readonly StencilKind[] = [
     mark: 'envelope',
     doubleBorder: true,
     defaultLabel: 'Message',
-    fill: '#2f3350',
     terms: ['message event', 'receive', 'send', 'notify', 'mail', 'signal', 'bpmn message event']
+  },
+  {
+    ...EVENT,
+    id: 'event-human',
+    name: 'Human action',
+    mark: 'person',
+    doubleBorder: true,
+    defaultLabel: 'Human action',
+    terms: [
+      'user action',
+      'user event',
+      'approval',
+      'approve',
+      'request',
+      'waits for a person',
+      'manual',
+      'human',
+      'person'
+    ]
   },
   {
     ...EVENT,
     id: 'event-end',
     name: 'End',
     heavyBorder: true,
+    endsFlow: true,
+    mark: 'check',
     defaultLabel: 'End',
-    fill: '#4a2326',
     terms: ['end event', 'finish', 'stop', 'terminate', 'bpmn end event']
   }
 ]
@@ -270,10 +392,18 @@ export const DEFAULT_STENCIL_KIND = 'step'
 
 const BY_ID = new Map(STENCIL_KINDS.map((kind) => [kind.id, kind]))
 
+// Ids a kind had before it was renamed, read as the current one and never written. `step-user` became
+// `step-human`: the person a step waits for is often part of the system, not the one using it.
+export const LEGACY_KIND_IDS: Readonly<Record<string, string>> = { 'step-user': 'step-human' }
+
+export function currentKindId(id: string | undefined): string | undefined {
+  return id === undefined ? undefined : (LEGACY_KIND_IDS[id] ?? id)
+}
+
 // A kind id this version does not know (a file from a newer one) is drawn as a step, so the element
 // is still there and can still be connected.
 export function stencilKind(id: string | undefined): StencilKind {
-  return BY_ID.get(id ?? '') ?? (BY_ID.get(DEFAULT_STENCIL_KIND) as StencilKind)
+  return BY_ID.get(currentKindId(id) ?? '') ?? (BY_ID.get(DEFAULT_STENCIL_KIND) as StencilKind)
 }
 
 // The small shapes carry their label below them, since text does not fit inside; a step's label
@@ -297,14 +427,18 @@ export function stencilMarkBox(
   kind: StencilKind,
   width: number,
   height: number,
-  small = false
+  small = false,
+  mark: StencilMark | undefined = kind.mark
 ): { x: number; y: number; size: number } {
   if (kind.shape === 'arrow') {
     const size = small ? height * 0.62 : ARROW_MARK.size
     const margin = small ? 2.5 : ARROW_MARK.margin
     return { x: width - margin - size, y: (height - size) / 2, size }
   }
-  const size = Math.min(width, height) * (kind.doubleBorder ? 0.42 : 0.46)
+  const size =
+    Math.min(width, height) *
+    (kind.doubleBorder ? 0.42 : 0.46) *
+    (mark ? (MARK_SCALE[mark] ?? 1) : 1)
   return { x: (width - size) / 2, y: (height - size) / 2, size }
 }
 
@@ -320,7 +454,22 @@ export function stencilSearchText(id: string | undefined): string {
   return [kind.name, ...kind.terms].join(' ')
 }
 
-// The style a stencil is drawn with: its own, with the kind's default colours where it has none.
+// The colours a kind's defaults have in the light theme, as final colours and not stored ones: a stored
+// colour is flipped in lightness for the light theme, and a warm pale one cannot be stored in a form
+// that flips back to itself. Only where the style has no colour of its own.
+export function stencilLightColors(
+  id: string | undefined,
+  style: NodeStyle | undefined
+): { fill?: string; stroke?: string } {
+  const { light } = stencilKind(id)
+  return {
+    ...(light?.fill && !style?.fill ? { fill: light.fill } : {}),
+    ...(light?.stroke && !style?.stroke ? { stroke: light.stroke } : {})
+  }
+}
+
+// The style a stencil is drawn with: its own, with the kind's default colours where it has none (in
+// the stored form, the dark-theme colour; the light theme takes `stencilLightColors` instead).
 export function stencilStyle(
   id: string | undefined,
   style: NodeStyle | undefined

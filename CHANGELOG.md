@@ -2,6 +2,24 @@
 
 What changed for people using the tool, one entry per minor or major release. The reasons are in [docs/decisions/](docs/decisions/); the full history is in `git log`.
 
+## 0.13.0 (unreleased)
+
+### Added
+
+- **Behaviour symbols of our own.** Each kind has one mark and one meaning: a robot for the automatic step, a person for the human step, stacked layers for the sub-flow, the repeat symbol for the repeated step, a sideways fork for the decision, two overlapping rings for the inclusive choice, two bars for the parallel split or join, a play triangle for a start, a clock for a timer and an envelope for a message. [Why](docs/decisions/0193-behaviour-symbols-one-colour-per-family-and-an-end-that-says-how-it-ended.md).
+- **A human action** (the 14th kind), for the moment a person starts a flow or the flow waits for one.
+- **An end says how it finished and how far it reaches.** **Outcome** (Properties): success, success with warnings, failed or aborted, told by a tick, a tick with an exclamation mark, a cross or a stop square. **Reach**: this path only, or the whole flow, drawn as a solid disc, which stops every path still running at once. Assistants set both with `add_behaviour` and the new `set_behaviour_ending`. See `examples/process-flow-order-to-delivery.chd`.
+
+### Changed
+
+- **New colours for behaviour: one per family** (teal steps, amber choices, indigo blue events), so the families differ in lightness and without colour. There is no red or green any more. Diagrams that did not colour a behaviour themselves take the new colours; one you coloured is unchanged.
+- **The user step is now the human step** (`step-human`, "Human step"). A person's steps are often part of the system, not its users.
+
+### File format
+
+- **Breaking for older apps:** the id `step-user` is now `step-human`. This version reads both and writes only the new one, so the first save rewrites every user step in a file; an older app or command line draws a human step as a plain step.
+- New optional fields `data.outcome` and `data.reach` on an end, and a new kind `event-human`, documented in [docs/file-format.md](docs/file-format.md). An older app draws an end with an outcome as a tick, so a failure looks like a success there.
+
 ## 0.12.0 (2026-11-18)
 
 ### Added

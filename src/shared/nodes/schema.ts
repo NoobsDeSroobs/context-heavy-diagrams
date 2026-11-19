@@ -67,6 +67,11 @@ export interface DiagramNode {
     // 'stencil' nodes only — the id of its kind in the app's built-in list (shared/stencils/kinds.ts).
     // Absent, or an id this version does not know, is a step.
     kind?: string
+    // 'stencil' nodes of the kind `event-end` only — how the end finishes (`success`, absent;
+    // `warnings`, `failed`, `aborted`) and how far it reaches (`path`, absent; `flow`, which stops
+    // every path still running). Stored only when not the default; an unknown value is drawn as it.
+    outcome?: string
+    reach?: string
     // 'stencil' nodes whose label sits outside the shape: where it sits — 'below' (absent), 'above',
     // 'left', 'right' or 'free'; a free label's centre is `labelOffset` from the shape's centre.
     labelPosition?: string

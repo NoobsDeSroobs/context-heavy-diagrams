@@ -1,6 +1,7 @@
 import type { DiagramSecurity } from '../threat-matrix/schema.ts'
 import type { DiagramNode } from '../nodes/schema.ts'
 import type { DiagramFile } from './file.ts'
+import { LEGACY_KIND_IDS } from '../stencils/kinds.ts'
 
 // Legacy field/value names from before the Shape -> Entity rename — accepted on
 // load so a file saved before the rename keeps opening
@@ -21,12 +22,23 @@ export function normalizeLegacyFields(diagram: DiagramFile): DiagramFile {
       })
     : diagram.nodes
 
-  const hasLegacyNodeType = withNotes.some((n) => (n.type as string | undefined) === 'shape')
-  const nodes = hasLegacyNodeType
+  // A kind renamed since the file was written is read as its current id and written as that.
+  const withKinds = withNotes.some(
+    (n) => n.data.kind !== undefined && Object.hasOwn(LEGACY_KIND_IDS, n.data.kind)
+  )
     ? withNotes.map((n) =>
-        (n.type as string | undefined) === 'shape' ? { ...n, type: 'entity' } : n
+        n.data.kind !== undefined && Object.hasOwn(LEGACY_KIND_IDS, n.data.kind)
+          ? { ...n, data: { ...n.data, kind: LEGACY_KIND_IDS[n.data.kind] } }
+          : n
       )
     : withNotes
+
+  const hasLegacyNodeType = withKinds.some((n) => (n.type as string | undefined) === 'shape')
+  const nodes = hasLegacyNodeType
+    ? withKinds.map((n) =>
+        (n.type as string | undefined) === 'shape' ? { ...n, type: 'entity' } : n
+      )
+    : withKinds
 
   const hasLegacyLegendKind = diagram.legend?.some((entry) => (entry.kind as string) === 'shape')
   const legend = hasLegacyLegendKind
@@ -52,7 +64,13 @@ export function normalizeLegacyFields(diagram: DiagramFile): DiagramFile {
       })()
     : diagram.security
 
-  if (!hasLegacyNotesKey && !hasLegacyNodeType && !hasLegacyLegendKind && !hasLegacySecurityIds) {
+  if (
+    withKinds === withNotes &&
+    !hasLegacyNotesKey &&
+    !hasLegacyNodeType &&
+    !hasLegacyLegendKind &&
+    !hasLegacySecurityIds
+  ) {
     return diagram
   }
   return {

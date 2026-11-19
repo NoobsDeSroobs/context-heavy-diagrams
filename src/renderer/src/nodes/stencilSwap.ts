@@ -25,6 +25,12 @@ export function swapStencilKind(node: Node, kindId: string): Node {
           }
         }
       : {}),
-    data: { ...node.data, kind: to.id, label }
+    // Only an end has an outcome and a reach.
+    data: {
+      ...node.data,
+      kind: to.id,
+      label,
+      ...(to.endsFlow ? {} : { outcome: undefined, reach: undefined })
+    }
   }
 }

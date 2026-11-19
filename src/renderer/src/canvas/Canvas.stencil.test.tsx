@@ -64,7 +64,7 @@ describe('stencils on the canvas (ADR 0180)', () => {
 
   it('draws a mark in the slot of a step and a second ring on an event in the middle of a flow', async () => {
     const nodes = [
-      stencil('user', 'step-user', 'Review', 0),
+      stencil('user', 'step-human', 'Review', 0),
       stencil('wait', 'event-timer', 'Wait', 200),
       stencil('plain', 'event', 'Happens', 300)
     ]
@@ -72,7 +72,7 @@ describe('stencils on the canvas (ADR 0180)', () => {
     await screen.findByText('Review')
     const shape = (kind: string): Element | null =>
       container.querySelector(`.stencil-node[data-stencil-kind="${kind}"]`)
-    expect(shape('step-user')?.querySelector('.stencil-node-mark--slot')).not.toBeNull()
+    expect(shape('step-human')?.querySelector('.stencil-node-mark--slot')).not.toBeNull()
     expect(shape('event-timer')?.querySelector('.stencil-node-ring')).not.toBeNull()
     expect(shape('event-timer')?.querySelector('.stencil-node-mark--ringed')).not.toBeNull()
     expect(shape('event')?.querySelector('.stencil-node-mark')).toBeNull()

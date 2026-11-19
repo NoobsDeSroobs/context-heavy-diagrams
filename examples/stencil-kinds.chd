@@ -76,7 +76,7 @@
       }
     },
     {
-      "id": "kind-step-user",
+      "id": "kind-step-human",
       "type": "stencil",
       "position": {
         "x": 5,
@@ -87,12 +87,12 @@
         "height": 56
       },
       "data": {
-        "label": "User step",
-        "kind": "step-user"
+        "label": "Human step",
+        "kind": "step-human"
       }
     },
     {
-      "id": "what-step-user",
+      "id": "what-step-human",
       "type": "text",
       "position": {
         "x": 190,
@@ -107,7 +107,7 @@
         "textAlign": "center"
       },
       "data": {
-        "label": "A step done by a person, such as \"Approve the refund\". Found by searching for user task or manual."
+        "label": "A step done by a person, such as \"Approve the refund\". Found by searching for human, user task or manual."
       }
     },
     {
@@ -352,7 +352,7 @@
         "textAlign": "center"
       },
       "data": {
-        "label": "Where a flow begins: the event that sets it going. A flow can have more than one."
+        "label": "Where a flow begins when it is not known or does not matter what sets it going. A flow can have more than one start; a timer, message or human action with nothing leading into it begins one too."
       }
     },
     {
@@ -465,7 +465,7 @@
       "type": "stencil",
       "position": {
         "x": 60,
-        "y": 1242
+        "y": 1338
       },
       "size": {
         "width": 40,
@@ -481,6 +481,41 @@
       "type": "text",
       "position": {
         "x": 190,
+        "y": 1326
+      },
+      "size": {
+        "width": 450,
+        "height": 64
+      },
+      "style": {
+        "fontSize": 12,
+        "textAlign": "center"
+      },
+      "data": {
+        "label": "Where a flow ends: a path that finishes here starts nothing more. It is drawn with a heavy border, and its mark tells how it ended (the rows below)."
+      }
+    },
+    {
+      "id": "kind-event-human",
+      "type": "stencil",
+      "position": {
+        "x": 60,
+        "y": 1242
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "data": {
+        "label": "Human action",
+        "kind": "event-human"
+      }
+    },
+    {
+      "id": "what-event-human",
+      "type": "text",
+      "position": {
+        "x": 190,
         "y": 1230
       },
       "size": {
@@ -492,7 +527,152 @@
         "textAlign": "center"
       },
       "data": {
-        "label": "Where a flow ends. It is drawn with a heavy border, so it reads apart from a start."
+        "label": "A person's act as a trigger, or the flow waiting for a person, such as \"Customer confirms the address\". Found by searching for approval or human."
+      }
+    },
+    {
+      "id": "kind-end-warnings",
+      "type": "stencil",
+      "position": {
+        "x": 60,
+        "y": 1434
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "data": {
+        "label": "End, with warnings",
+        "kind": "event-end",
+        "outcome": "warnings"
+      }
+    },
+    {
+      "id": "what-end-warnings",
+      "type": "text",
+      "position": {
+        "x": 190,
+        "y": 1422
+      },
+      "size": {
+        "width": 450,
+        "height": 64
+      },
+      "style": {
+        "fontSize": 12,
+        "textAlign": "center"
+      },
+      "data": {
+        "label": "Done, but something deserves a look: a tick with an exclamation mark."
+      }
+    },
+    {
+      "id": "kind-end-failed",
+      "type": "stencil",
+      "position": {
+        "x": 60,
+        "y": 1530
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "data": {
+        "label": "End, failed",
+        "kind": "event-end",
+        "outcome": "failed"
+      }
+    },
+    {
+      "id": "what-end-failed",
+      "type": "text",
+      "position": {
+        "x": 190,
+        "y": 1518
+      },
+      "size": {
+        "width": 450,
+        "height": 64
+      },
+      "style": {
+        "fontSize": 12,
+        "textAlign": "center"
+      },
+      "data": {
+        "label": "The path failed: a cross. Other paths carry on."
+      }
+    },
+    {
+      "id": "kind-end-aborted",
+      "type": "stencil",
+      "position": {
+        "x": 60,
+        "y": 1626
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "data": {
+        "label": "End, aborted",
+        "kind": "event-end",
+        "outcome": "aborted"
+      }
+    },
+    {
+      "id": "what-end-aborted",
+      "type": "text",
+      "position": {
+        "x": 190,
+        "y": 1614
+      },
+      "size": {
+        "width": 450,
+        "height": 64
+      },
+      "style": {
+        "fontSize": 12,
+        "textAlign": "center"
+      },
+      "data": {
+        "label": "Stopped on purpose, nothing is wrong: a stop square."
+      }
+    },
+    {
+      "id": "kind-end-flow",
+      "type": "stencil",
+      "position": {
+        "x": 60,
+        "y": 1722
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "data": {
+        "label": "End, the whole flow",
+        "kind": "event-end",
+        "outcome": "failed",
+        "reach": "flow"
+      }
+    },
+    {
+      "id": "what-end-flow",
+      "type": "text",
+      "position": {
+        "x": 190,
+        "y": 1710
+      },
+      "size": {
+        "width": 450,
+        "height": 64
+      },
+      "style": {
+        "fontSize": 12,
+        "textAlign": "center"
+      },
+      "data": {
+        "label": "Reach set to the whole flow: a solid disc, and every path still running stops at once. Any outcome can have it."
       }
     }
   ],

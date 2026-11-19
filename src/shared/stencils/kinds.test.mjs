@@ -2,13 +2,20 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
   DEFAULT_STENCIL_KIND,
+  END_OUTCOMES,
+  endOutcomeOf,
+  endReachOf,
   STENCIL_KINDS,
   STENCIL_MARK_PATHS,
   stencilKind,
   stencilLabelInsets,
   stencilLabelOutside,
   stencilMarkBox,
-  stencilSearchText
+  stencilMarkOf,
+  stencilSearchText,
+  stencilLightColors,
+  stencilSolid,
+  stencilStyle
 } from './kinds.ts'
 
 test('the kind ids are unique and the default is one of them', () => {
@@ -42,25 +49,32 @@ test('an id is the base word first and the subtype after, so related kinds sort 
   const branches = STENCIL_KINDS.filter((k) => k.group === 'Branches').map((k) => k.id)
   assert.ok(branches.length === 3 && branches.every((id) => id.startsWith('branch-')))
   const events = STENCIL_KINDS.filter((k) => k.group === 'Events').map((k) => k.id)
-  assert.deepEqual(events, ['event-start', 'event', 'event-timer', 'event-message', 'event-end'])
+  assert.deepEqual(events, [
+    'event-start',
+    'event',
+    'event-timer',
+    'event-message',
+    'event-human',
+    'event-end'
+  ])
 })
 
 test('every mark a kind uses has a drawing, and a step keeps its mark in the slot on the right', () => {
   for (const kind of STENCIL_KINDS) {
     if (kind.mark) assert.ok(STENCIL_MARK_PATHS[kind.mark], kind.id)
   }
-  const user = stencilKind('step-user')
+  const user = stencilKind('step-human')
   const at = stencilMarkBox(user, user.size.width, user.size.height)
   assert.ok(at.x > user.size.width / 2 && at.x + at.size <= user.size.width)
   const small = stencilMarkBox(user, 22, 14, true)
   assert.ok(small.size < 14 && small.x + small.size <= 22, 'a swatch mark stays inside the swatch')
-  assert.deepEqual(stencilLabelInsets('step-user'), { left: 28, right: 28 })
+  assert.deepEqual(stencilLabelInsets('step-human'), { left: 28, right: 28 })
   assert.deepEqual(stencilLabelInsets('step'), { left: 28, right: 0 })
 })
 
 test('the BPMN names of the new kinds find them', () => {
   const finds = (id, word) => stencilSearchText(id).toLowerCase().includes(word)
-  assert.ok(finds('step-user', 'user task'))
+  assert.ok(finds('step-human', 'user task'))
   assert.ok(finds('step-automatic', 'service task'))
   assert.ok(finds('step-sub-flow', 'call activity'))
   assert.ok(finds('step-repeat', 'loop'))
@@ -68,4 +82,33 @@ test('the BPMN names of the new kinds find them', () => {
   assert.ok(finds('event', 'intermediate event'))
   assert.ok(finds('event-timer', 'timer'))
   assert.ok(finds('event-message', 'message'))
+})
+
+test('the old id of the human step is read as the new one', () => {
+  assert.equal(stencilKind('step-user').id, 'step-human')
+  assert.equal(stencilKind('step-user').name, 'Human step')
+})
+
+test('only an end has an outcome and a reach: the outcome sets its mark, a reach of the flow a solid disc', () => {
+  const end = stencilKind('event-end')
+  assert.equal(stencilMarkOf(end, {}), 'check')
+  for (const outcome of END_OUTCOMES) {
+    assert.equal(stencilMarkOf(end, { outcome: outcome.id }), outcome.mark)
+    assert.ok(STENCIL_MARK_PATHS[outcome.mark], outcome.id)
+  }
+  assert.equal(stencilMarkOf(end, { outcome: 'from-the-future' }), 'check', 'unknown is success')
+  assert.equal(endOutcomeOf(undefined), 'success')
+  assert.equal(endReachOf('from-the-future'), 'path')
+  assert.equal(stencilSolid(end, {}), false)
+  assert.equal(stencilSolid(end, { reach: 'flow' }), true)
+  const step = stencilKind('step-human')
+  assert.equal(stencilMarkOf(step, { outcome: 'failed' }), 'person', 'a step ignores an outcome')
+  assert.equal(stencilSolid(step, { reach: 'flow' }), false)
+})
+
+test('the light theme has its own default colours, used only where the node has none', () => {
+  assert.equal(stencilStyle('step', undefined)?.fill, '#345a60')
+  assert.deepEqual(stencilLightColors('step', undefined), { fill: '#a5c8ce', stroke: '#3b6e77' })
+  assert.deepEqual(stencilLightColors('branch-exclusive', undefined), { fill: '#f7edd6' })
+  assert.deepEqual(stencilLightColors('step', { fill: '#ff0000' }), { stroke: '#3b6e77' })
 })

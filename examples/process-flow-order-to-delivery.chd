@@ -1,0 +1,610 @@
+{
+  "version": 1,
+  "savedWith": "0.13.0",
+  "nodes": [
+    {
+      "id": "title",
+      "type": "text",
+      "position": {
+        "x": 20,
+        "y": 20
+      },
+      "size": {
+        "width": 560,
+        "height": 28
+      },
+      "zIndex": 100010,
+      "data": {
+        "label": "Order to delivery: a webshop order from the click to the doorstep"
+      }
+    },
+    {
+      "id": "start",
+      "type": "stencil",
+      "position": {
+        "x": 20,
+        "y": 280
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "zIndex": 100020,
+      "data": {
+        "label": "Order placed",
+        "kind": "event-start"
+      }
+    },
+    {
+      "id": "validate",
+      "type": "stencil",
+      "position": {
+        "x": 90,
+        "y": 272
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100030,
+      "data": {
+        "label": "Validate the order",
+        "kind": "step-automatic"
+      }
+    },
+    {
+      "id": "valid",
+      "type": "stencil",
+      "position": {
+        "x": 281,
+        "y": 276
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "zIndex": 100040,
+      "data": {
+        "label": "Valid?",
+        "kind": "branch-exclusive"
+      }
+    },
+    {
+      "id": "rejected",
+      "type": "stencil",
+      "position": {
+        "x": 285,
+        "y": 390
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "zIndex": 100050,
+      "data": {
+        "label": "Order rejected",
+        "kind": "event-end",
+        "outcome": "failed"
+      }
+    },
+    {
+      "id": "record",
+      "type": "stencil",
+      "position": {
+        "x": 365,
+        "y": 272
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100060,
+      "data": {
+        "label": "Record the order",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "split",
+      "type": "stencil",
+      "position": {
+        "x": 541,
+        "y": 276
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "zIndex": 100070,
+      "data": {
+        "label": "",
+        "kind": "branch-parallel"
+      }
+    },
+    {
+      "id": "charge",
+      "type": "stencil",
+      "position": {
+        "x": 625,
+        "y": 112
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100080,
+      "data": {
+        "label": "Charge the card",
+        "kind": "step-automatic"
+      }
+    },
+    {
+      "id": "paid",
+      "type": "stencil",
+      "position": {
+        "x": 821,
+        "y": 116
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "zIndex": 100090,
+      "data": {
+        "label": "Paid?",
+        "kind": "branch-exclusive"
+      }
+    },
+    {
+      "id": "declined",
+      "type": "stencil",
+      "position": {
+        "x": 825,
+        "y": 20
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "zIndex": 100100,
+      "data": {
+        "label": "Payment declined",
+        "kind": "event-end",
+        "outcome": "failed",
+        "reach": "flow",
+        "labelPosition": "right"
+      }
+    },
+    {
+      "id": "address",
+      "type": "stencil",
+      "position": {
+        "x": 680,
+        "y": 280
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "zIndex": 100110,
+      "data": {
+        "label": "Customer confirms the address",
+        "kind": "event-human"
+      }
+    },
+    {
+      "id": "pick",
+      "type": "stencil",
+      "position": {
+        "x": 625,
+        "y": 432
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100120,
+      "data": {
+        "label": "Pick each item",
+        "kind": "step-repeat"
+      }
+    },
+    {
+      "id": "pack",
+      "type": "stencil",
+      "position": {
+        "x": 805,
+        "y": 432
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100130,
+      "data": {
+        "label": "Pack the parcel",
+        "kind": "step-sub-flow"
+      }
+    },
+    {
+      "id": "join",
+      "type": "stencil",
+      "position": {
+        "x": 961,
+        "y": 276
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "zIndex": 100140,
+      "data": {
+        "label": "",
+        "kind": "branch-parallel"
+      }
+    },
+    {
+      "id": "notify",
+      "type": "stencil",
+      "position": {
+        "x": 1071,
+        "y": 276
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "zIndex": 100150,
+      "data": {
+        "label": "Notify by",
+        "kind": "branch-inclusive"
+      }
+    },
+    {
+      "id": "email",
+      "type": "stencil",
+      "position": {
+        "x": 1185,
+        "y": 210
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "zIndex": 100160,
+      "data": {
+        "label": "Customer emailed",
+        "kind": "event-message"
+      }
+    },
+    {
+      "id": "sms",
+      "type": "stencil",
+      "position": {
+        "x": 1185,
+        "y": 350
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "zIndex": 100170,
+      "data": {
+        "label": "Customer texted",
+        "kind": "event-message"
+      }
+    },
+    {
+      "id": "informed",
+      "type": "stencil",
+      "position": {
+        "x": 1295,
+        "y": 280
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "zIndex": 100180,
+      "data": {
+        "label": "Customer informed",
+        "kind": "event"
+      }
+    },
+    {
+      "id": "courier",
+      "type": "stencil",
+      "position": {
+        "x": 1365,
+        "y": 272
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100190,
+      "data": {
+        "label": "Hand to the courier",
+        "kind": "step-human"
+      }
+    },
+    {
+      "id": "wait",
+      "type": "stencil",
+      "position": {
+        "x": 1550,
+        "y": 280
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "zIndex": 100200,
+      "data": {
+        "label": "Up to 5 days",
+        "kind": "event-timer"
+      }
+    },
+    {
+      "id": "delivered",
+      "type": "stencil",
+      "position": {
+        "x": 1641,
+        "y": 276
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "zIndex": 100210,
+      "data": {
+        "label": "Delivered?",
+        "kind": "branch-exclusive"
+      }
+    },
+    {
+      "id": "done",
+      "type": "stencil",
+      "position": {
+        "x": 1770,
+        "y": 280
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "zIndex": 100220,
+      "data": {
+        "label": "Delivered",
+        "kind": "event-end"
+      }
+    },
+    {
+      "id": "late",
+      "type": "stencil",
+      "position": {
+        "x": 1770,
+        "y": 180
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "zIndex": 100230,
+      "data": {
+        "label": "Delivered late",
+        "kind": "event-end",
+        "outcome": "warnings"
+      }
+    },
+    {
+      "id": "lost",
+      "type": "stencil",
+      "position": {
+        "x": 1770,
+        "y": 380
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "zIndex": 100240,
+      "data": {
+        "label": "Lost in transit",
+        "kind": "event-end",
+        "outcome": "failed"
+      }
+    },
+    {
+      "id": "cancel",
+      "type": "stencil",
+      "position": {
+        "x": 20,
+        "y": 590
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "zIndex": 100250,
+      "data": {
+        "label": "Customer cancels",
+        "kind": "event-message"
+      }
+    },
+    {
+      "id": "stopped",
+      "type": "stencil",
+      "position": {
+        "x": 180,
+        "y": 590
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "zIndex": 100260,
+      "data": {
+        "label": "Order cancelled",
+        "kind": "event-end",
+        "outcome": "aborted",
+        "reach": "flow"
+      }
+    },
+    {
+      "id": "cancel-note",
+      "type": "text",
+      "position": {
+        "x": 20,
+        "y": 675
+      },
+      "size": {
+        "width": 360,
+        "height": 64
+      },
+      "zIndex": 100270,
+      "data": {
+        "label": "A cancellation stops every path still running, the payment and the picking included."
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "start",
+      "target": "validate"
+    },
+    {
+      "id": "e2",
+      "source": "validate",
+      "target": "valid"
+    },
+    {
+      "id": "e3",
+      "source": "valid",
+      "target": "rejected",
+      "label": "no"
+    },
+    {
+      "id": "e4",
+      "source": "valid",
+      "target": "record",
+      "label": "yes"
+    },
+    {
+      "id": "e5",
+      "source": "record",
+      "target": "split"
+    },
+    {
+      "id": "e6",
+      "source": "split",
+      "target": "charge"
+    },
+    {
+      "id": "e7",
+      "source": "split",
+      "target": "address"
+    },
+    {
+      "id": "e8",
+      "source": "split",
+      "target": "pick"
+    },
+    {
+      "id": "e9",
+      "source": "charge",
+      "target": "paid"
+    },
+    {
+      "id": "e10",
+      "source": "paid",
+      "target": "declined",
+      "label": "no"
+    },
+    {
+      "id": "e11",
+      "source": "paid",
+      "target": "join",
+      "label": "yes"
+    },
+    {
+      "id": "e12",
+      "source": "address",
+      "target": "join"
+    },
+    {
+      "id": "e13",
+      "source": "pick",
+      "target": "pack"
+    },
+    {
+      "id": "e14",
+      "source": "pack",
+      "target": "join"
+    },
+    {
+      "id": "e15",
+      "source": "join",
+      "target": "notify"
+    },
+    {
+      "id": "e16",
+      "source": "notify",
+      "target": "email"
+    },
+    {
+      "id": "e17",
+      "source": "notify",
+      "target": "sms"
+    },
+    {
+      "id": "e18",
+      "source": "email",
+      "target": "informed"
+    },
+    {
+      "id": "e19",
+      "source": "sms",
+      "target": "informed"
+    },
+    {
+      "id": "e20",
+      "source": "informed",
+      "target": "courier"
+    },
+    {
+      "id": "e21",
+      "source": "courier",
+      "target": "wait"
+    },
+    {
+      "id": "e22",
+      "source": "wait",
+      "target": "delivered"
+    },
+    {
+      "id": "e23",
+      "source": "delivered",
+      "target": "done",
+      "label": "on time"
+    },
+    {
+      "id": "e24",
+      "source": "delivered",
+      "target": "late",
+      "label": "late"
+    },
+    {
+      "id": "e25",
+      "source": "delivered",
+      "target": "lost",
+      "label": "never"
+    },
+    {
+      "id": "e26",
+      "source": "cancel",
+      "target": "stopped"
+    }
+  ]
+}

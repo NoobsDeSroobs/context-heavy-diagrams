@@ -141,7 +141,12 @@ import {
 } from '../palette/ItemPalette'
 import { swapStencilKind } from '../nodes/stencilSwap'
 import type { ContainerLabelSide } from '@shared/nodes/containerLabel'
-import { stencilKind, stencilLabelOutside } from '@shared/stencils/kinds'
+import {
+  DEFAULT_END_OUTCOME,
+  DEFAULT_END_REACH,
+  stencilKind,
+  stencilLabelOutside
+} from '@shared/stencils/kinds'
 import {
   labelPositionOf,
   offsetFrom,
@@ -1730,6 +1735,32 @@ function CanvasInner(): React.JSX.Element {
       pushSnapshot()
       setNodes((nds) =>
         nds.map((n) => (ids.has(n.id) && n.type === 'stencil' ? swapStencilKind(n, kindId) : n))
+      )
+    },
+    [setNodes, pushSnapshot]
+  )
+
+  // Sets how these ends finish and how far they reach, one undo step. The defaults (success, this
+  // path) are stored as nothing.
+  const setStencilEnding = useCallback(
+    (nodeIds: string[], change: { outcome?: string; reach?: string }) => {
+      const ids = new Set(nodeIds)
+      pushSnapshot()
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (!ids.has(n.id) || n.type !== 'stencil') return n
+          if (!stencilKind(typeof n.data?.kind === 'string' ? n.data.kind : undefined).endsFlow) {
+            return n
+          }
+          const data = { ...n.data }
+          if (change.outcome !== undefined) {
+            data.outcome = change.outcome === DEFAULT_END_OUTCOME ? undefined : change.outcome
+          }
+          if (change.reach !== undefined) {
+            data.reach = change.reach === DEFAULT_END_REACH ? undefined : change.reach
+          }
+          return { ...n, data }
+        })
       )
     },
     [setNodes, pushSnapshot]
@@ -3982,6 +4013,7 @@ function CanvasInner(): React.JSX.Element {
                 onAddStencil={addStencilNode}
                 onSetStencilKind={setStencilKind}
                 onSetStencilLabelPosition={setStencilLabelPosition}
+                onSetStencilEnding={setStencilEnding}
                 onSetContainerLabelSide={setContainerLabelSide}
                 onCreateMultipleEntities={() => setBulkCreateType('entity')}
                 onCreateMultipleContainers={() => setBulkCreateType('container')}

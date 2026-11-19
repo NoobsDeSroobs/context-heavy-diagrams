@@ -1,5 +1,13 @@
 import type { Node } from '@xyflow/react'
-import { STENCIL_KINDS, stencilKind, stencilLabelOutside } from '@shared/stencils/kinds'
+import {
+  END_OUTCOMES,
+  END_REACHES,
+  endOutcomeOf,
+  endReachOf,
+  STENCIL_KINDS,
+  stencilKind,
+  stencilLabelOutside
+} from '@shared/stencils/kinds'
 import {
   LABEL_POSITIONS,
   LABEL_POSITION_NAMES,
@@ -14,11 +22,13 @@ import { SelectField } from '../ui/fields'
 export function StencilFields({
   nodes,
   onSetKind,
-  onSetLabelPosition
+  onSetLabelPosition,
+  onSetEnding
 }: {
   nodes: Node[]
   onSetKind: (kindId: string) => void
   onSetLabelPosition: (position: LabelPosition) => void
+  onSetEnding: (change: { outcome?: string; reach?: string }) => void
 }): React.JSX.Element {
   const kindOf = (n: Node): string =>
     stencilKind(typeof n.data?.kind === 'string' ? n.data.kind : undefined).id
@@ -28,6 +38,12 @@ export function StencilFields({
   const outside = nodes.filter((n) => stencilLabelOutside(kindOf(n)))
   const positions = new Set(outside.map((n) => labelPositionOf(n.data?.labelPosition)))
   const position = positions.size === 1 ? [...positions][0] : undefined
+  // Only an end has an outcome and a reach: how it finishes and how far it reaches.
+  const ends = nodes.filter(
+    (n) => stencilKind(typeof n.data?.kind === 'string' ? n.data.kind : undefined).endsFlow
+  )
+  const outcomes = new Set(ends.map((n) => endOutcomeOf(n.data?.outcome)))
+  const reaches = new Set(ends.map((n) => endReachOf(n.data?.reach)))
   return (
     <>
       <SelectField
@@ -44,6 +60,26 @@ export function StencilFields({
         pushSnapshot={() => undefined}
         onChange={onSetKind}
       />
+      {ends.length > 0 && (
+        <>
+          <SelectField
+            label="Outcome"
+            value={outcomes.size === 1 ? [...outcomes][0] : undefined}
+            mixed={outcomes.size > 1}
+            options={END_OUTCOMES.map((o) => ({ value: o.id, label: o.name }))}
+            pushSnapshot={() => undefined}
+            onChange={(outcome) => onSetEnding({ outcome })}
+          />
+          <SelectField
+            label="Reach"
+            value={reaches.size === 1 ? [...reaches][0] : undefined}
+            mixed={reaches.size > 1}
+            options={END_REACHES.map((r) => ({ value: r.id, label: r.name }))}
+            pushSnapshot={() => undefined}
+            onChange={(reach) => onSetEnding({ reach })}
+          />
+        </>
+      )}
       {outside.length > 0 && (
         <SelectField
           label="Label position"

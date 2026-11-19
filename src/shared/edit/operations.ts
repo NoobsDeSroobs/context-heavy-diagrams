@@ -30,7 +30,12 @@ import {
   offsetOf
 } from '../stencils/labelPlacement.ts'
 import {
+  currentKindId,
+  DEFAULT_END_OUTCOME,
+  DEFAULT_END_REACH,
   DEFAULT_STENCIL_KIND,
+  END_OUTCOMES,
+  END_REACHES,
   STENCIL_KINDS,
   stencilKind,
   stencilLabelOutside,
@@ -115,7 +120,7 @@ function addNode(
 // --- behaviours (stencils, ADR 0180): a step, a decision, a start, an end
 
 function kindOf(reader: Reader, key: string): StencilKind {
-  const id = reader.string(key)
+  const id = currentKindId(reader.string(key))
   const kind = STENCIL_KINDS.find((k) => k.id === id)
   if (!kind) {
     reader.fail(`"${key}": "${id}" is not a kind of behaviour (use one of ${KIND_IDS})`)
@@ -168,6 +173,26 @@ function applyLabelPosition(
   else delete node.data.labelOffset
 }
 
+// How an end finishes and how far it reaches. The defaults (success, this path) are stored as nothing,
+// as the app does; only an end has them.
+function applyEnding(node: DiagramNode, reader: Reader): void {
+  if (!stencilKind(node.data.kind).endsFlow) {
+    reader.fail(`"${node.id}" is not an end: only an end (event-end) has an outcome and a reach`)
+  }
+  for (const [key, list, fallback] of [
+    ['outcome', END_OUTCOMES, DEFAULT_END_OUTCOME],
+    ['reach', END_REACHES, DEFAULT_END_REACH]
+  ] as const) {
+    if (!reader.has(key)) continue
+    const value = reader.string(key)
+    if (!list.some((entry) => entry.id === value)) {
+      reader.fail(`"${key}": "${value}" is not one of ${list.map((entry) => entry.id).join(', ')}`)
+    }
+    if (value === fallback) delete node.data[key]
+    else node.data[key] = value
+  }
+}
+
 function addBehaviour(model: Model, reader: Reader): OperationResult {
   const kind = reader.has('kind') ? kindOf(reader, 'kind') : stencilKind(DEFAULT_STENCIL_KIND)
   const id = model.freshId(reader, 'behaviour')
@@ -194,6 +219,7 @@ function addBehaviour(model: Model, reader: Reader): OperationResult {
   if (reader.has('labelPosition')) {
     applyLabelPosition(node, reader, reader.string('labelPosition'), reader.raw('offset'))
   }
+  if (reader.has('outcome') || reader.has('reach')) applyEnding(node, reader)
   model.nodes.push(node)
   return {
     op: 'add_behaviour',
@@ -233,6 +259,23 @@ function setKind(model: Model, reader: Reader): OperationResult {
   return {
     op: 'set_behaviour_kind',
     element: { ...briefNode(model.diagram, node), kind: to.id, label: node.data.label }
+  }
+}
+
+function setEnding(model: Model, reader: Reader): OperationResult {
+  const node = nodeOnly(model, reader)
+  if (node.type !== 'stencil') reader.fail(`"${node.id}" is not a behaviour`)
+  if (!reader.has('outcome') && !reader.has('reach')) {
+    reader.fail('give an "outcome", a "reach" or both')
+  }
+  applyEnding(node, reader)
+  return {
+    op: 'set_behaviour_ending',
+    element: {
+      id: node.id,
+      outcome: node.data.outcome ?? DEFAULT_END_OUTCOME,
+      reach: node.data.reach ?? DEFAULT_END_REACH
+    }
   }
 }
 
@@ -705,6 +748,7 @@ const OPERATIONS: Record<string, (model: Model, reader: Reader) => OperationResu
   add_text: (m, r) => addNode(m, r, 'text'),
   add_behaviour: addBehaviour,
   set_behaviour_kind: setKind,
+  set_behaviour_ending: setEnding,
   set_label_position: setLabelPosition,
   add_line: addLine,
   add_connection_point: addConnectionPoint,
