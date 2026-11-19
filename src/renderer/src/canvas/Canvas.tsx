@@ -154,7 +154,7 @@ import {
   offsetOf,
   type LabelPosition
 } from '@shared/stencils/labelPlacement'
-import { stencilKindsUsed } from '@shared/legend/legendItems'
+import { stencilLegendRows } from '@shared/legend/legendItems'
 import UtilityDock from '../UtilityDock'
 import AlignmentGuides from '../alignment/AlignmentGuides'
 import { SNAP_THRESHOLD_PX, boundsFrom, computeSnap } from '../alignment/alignment'
@@ -431,12 +431,16 @@ function CanvasInner(): React.JSX.Element {
   // because most diagrams do not care about crossings and it adds to the canvas.
   const [showCrossings, setShowCrossings] = useState(false)
   const toggleCrossings = useCallback(() => setShowCrossings((on) => !on), [])
-  const stencilKinds = useMemo(
+  const stencilRows = useMemo(
     () =>
-      stencilKindsUsed(
+      stencilLegendRows(
         nodes.map((n) => ({
           type: n.type,
-          data: { kind: typeof n.data?.kind === 'string' ? n.data.kind : undefined }
+          data: {
+            kind: typeof n.data?.kind === 'string' ? n.data.kind : undefined,
+            outcome: n.data?.outcome,
+            reach: n.data?.reach
+          }
         }))
       ),
     [nodes]
@@ -4140,7 +4144,7 @@ function CanvasInner(): React.JSX.Element {
               diagramPath={currentPath}
               legend={legend}
               directionSetRow={directionSetRow}
-              stencilKinds={stencilKinds}
+              stencilRows={stencilRows}
               showStencilKinds={showStencilLegend}
               onToggleStencilKinds={() => setShowStencilLegend((v) => !v)}
               anchorRect={legendPanelAnchor}

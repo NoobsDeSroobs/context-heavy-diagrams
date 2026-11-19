@@ -8,7 +8,16 @@ import type {
   MarkerKind
 } from '../diagram/index.ts'
 import { highlightId, isTransparentHighlight } from '../tagging/highlights.ts'
-import { STENCIL_KINDS, stencilKind } from '../stencils/kinds.ts'
+import {
+  DEFAULT_END_OUTCOME,
+  DEFAULT_END_REACH,
+  END_OUTCOMES,
+  END_REACHES,
+  endOutcomeOf,
+  endReachOf,
+  STENCIL_KINDS,
+  stencilKind
+} from '../stencils/kinds.ts'
 
 // The legend row the active direction set contributes (ADR 0081): its name
 // drawn as an arrow, shown in the Legend panel and prepended to the image
@@ -56,16 +65,56 @@ export type ExportLegendSwatch =
   | { kind: 'entity'; color: string }
   | { kind: 'icon'; icon: IconRef }
   | { kind: 'highlight'; color: string }
-  // A kind of stencil the diagram uses (ADR 0180): its shape and mark, in the kind's own colour.
-  | { kind: 'stencil'; stencilKind: string }
+  // A kind of stencil the diagram uses (ADR 0180): its shape and mark, in the kind's own colour. An
+  // end carries the outcome and reach it is drawn with (ADR 0193).
+  | { kind: 'stencil'; stencilKind: string; state?: { outcome: string; reach: string } }
 
-// The kinds of stencil a diagram uses, in the order of the built-in list. Each gets a legend row, so
-// what a mark means does not have to be known (ADR 0180). The rows are derived, never stored.
-export function stencilKindsUsed(nodes: { type?: string; data: { kind?: string } }[]): string[] {
-  const used = new Set(
-    nodes.filter((n) => n.type === 'stencil').map((n) => stencilKind(n.data.kind).id)
-  )
-  return STENCIL_KINDS.filter((k) => used.has(k.id)).map((k) => k.id)
+// One row of the legend for a kind of stencil, or for one way an end finishes.
+export interface StencilLegendRow {
+  kind: string
+  state?: { outcome: string; reach: string }
+  label: string
+}
+
+export function stencilLegendRowKey(row: StencilLegendRow): string {
+  return row.state ? `${row.kind}:${row.state.outcome}:${row.state.reach}` : row.kind
+}
+
+// The rows of the legend for the stencils a diagram uses, in the order of the built-in list, so what
+// a mark means does not have to be known (ADR 0180). A kind is one row; an end is one row for each
+// outcome and reach it is used with (ADR 0193). The rows are derived, never stored.
+export function stencilLegendRows(
+  nodes: { type?: string; data: { kind?: string; outcome?: unknown; reach?: unknown } }[]
+): StencilLegendRow[] {
+  const used = nodes.filter((n) => n.type === 'stencil')
+  const rows: StencilLegendRow[] = []
+  for (const kind of STENCIL_KINDS) {
+    const mine = used.filter((n) => stencilKind(n.data.kind).id === kind.id)
+    if (mine.length === 0) continue
+    if (!kind.endsFlow) {
+      rows.push({ kind: kind.id, label: kind.name })
+      continue
+    }
+    for (const outcome of END_OUTCOMES) {
+      for (const reach of END_REACHES) {
+        const taken = mine.some(
+          (n) =>
+            endOutcomeOf(n.data.outcome) === outcome.id && endReachOf(n.data.reach) === reach.id
+        )
+        if (!taken) continue
+        const how = [
+          outcome.id === DEFAULT_END_OUTCOME ? undefined : outcome.name,
+          reach.id === DEFAULT_END_REACH ? undefined : reach.name.toLowerCase()
+        ].filter((part) => part !== undefined)
+        rows.push({
+          kind: kind.id,
+          state: { outcome: outcome.id, reach: reach.id },
+          label: how.length === 0 ? kind.name : `${kind.name}: ${how.join(', ')}`
+        })
+      }
+    }
+  }
+  return rows
 }
 
 export interface ExportLegendItem {
@@ -97,7 +146,7 @@ export function buildExportLegendItems(
   highlights: HighlightDefinition[],
   enabledHighlightIds: Set<string>,
   directionSetRow?: DirectionSetLegendRow | null,
-  stencilKinds: string[] = []
+  stencilRows: StencilLegendRow[] = []
 ): ExportLegendItem[] {
   const directionItems: ExportLegendItem[] = directionSetRow
     ? [
@@ -145,9 +194,9 @@ export function buildExportLegendItems(
         : stringifyValue(h.value)
   }))
 
-  const stencilItems: ExportLegendItem[] = stencilKinds.map((id) => ({
-    swatch: { kind: 'stencil', stencilKind: id },
-    label: stencilKind(id).name
+  const stencilItems: ExportLegendItem[] = stencilRows.map((row) => ({
+    swatch: { kind: 'stencil', stencilKind: row.kind, state: row.state },
+    label: row.label
   }))
 
   return [...directionItems, ...legendItems, ...stencilItems, ...highlightItems]

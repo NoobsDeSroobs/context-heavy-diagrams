@@ -17,7 +17,7 @@ import {
 } from '@shared/styling/edgeAnimation'
 import { dasharrayOf, dashPattern } from '@shared/styling/edgeDash'
 import { useTheme } from '../styling/theme'
-import { stencilKind } from '@shared/stencils/kinds'
+import { stencilLegendRowKey, type StencilLegendRow } from '@shared/legend/legendItems'
 import { stencilSwatchSvgFor } from '@shared/stencils/swatch'
 import IconSlotView from '../icons/IconSlotView'
 import StylePicker from '../styling/StylePicker'
@@ -30,9 +30,10 @@ interface LegendPanelProps {
   // and its swatch is edited in the Edge direction sets section. `null`
   // when the diagram has no direction set.
   directionSetRow: DirectionSetLegendRow | null
-  // The kinds of step and event the diagram uses (ADR 0180), shown as rows of their own that nobody
-  // maintains. `showStencilKinds` is for this session only and is not saved with the diagram.
-  stencilKinds: string[]
+  // The kinds of step and event the diagram uses, and each way an end finishes (ADR 0180, 0193),
+  // shown as rows of their own that nobody maintains. `showStencilKinds` is for this session only and
+  // is not saved with the diagram.
+  stencilRows: StencilLegendRow[]
   showStencilKinds: boolean
   onToggleStencilKinds: () => void
   anchorRect: DOMRect | null
@@ -192,7 +193,7 @@ export default function LegendPanel({
   diagramPath,
   legend,
   directionSetRow,
-  stencilKinds,
+  stencilRows,
   showStencilKinds,
   onToggleStencilKinds,
   anchorRect,
@@ -275,7 +276,7 @@ export default function LegendPanel({
       <div className="legend-panel-body">
         {legend.length === 0 &&
           !directionSetRow &&
-          stencilKinds.length === 0 &&
+          stencilRows.length === 0 &&
           !draft &&
           !pickingKind &&
           !pickingLine && <p className="legend-panel-hint">No legend entries yet.</p>}
@@ -299,21 +300,22 @@ export default function LegendPanel({
           </div>
         )}
         {showStencilKinds &&
-          stencilKinds.map((id) => {
-            const kind = stencilKind(id)
-            return (
-              <div key={`stencil-${id}`} className="legend-row legend-row-pinned" title={kind.name}>
-                <span
-                  className="legend-swatch-slot"
-                  dangerouslySetInnerHTML={{
-                    __html: stencilSwatchSvgFor(id, theme)
-                  }}
-                />
-                <span className="legend-row-label">{kind.name}</span>
-              </div>
-            )
-          })}
-        {stencilKinds.length > 0 && (
+          stencilRows.map((row) => (
+            <div
+              key={`stencil-${stencilLegendRowKey(row)}`}
+              className="legend-row legend-row-pinned"
+              title={row.label}
+            >
+              <span
+                className="legend-swatch-slot"
+                dangerouslySetInnerHTML={{
+                  __html: stencilSwatchSvgFor(row.kind, theme, row.state)
+                }}
+              />
+              <span className="legend-row-label">{row.label}</span>
+            </div>
+          ))}
+        {stencilRows.length > 0 && (
           <label className="legend-stencil-toggle" title="For this session only">
             <input type="checkbox" checked={showStencilKinds} onChange={onToggleStencilKinds} />
             Show behaviours

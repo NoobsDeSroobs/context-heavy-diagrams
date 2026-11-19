@@ -65,7 +65,7 @@ import { plainColor } from './color.ts'
 import { iconParts } from './iconMarkup.ts'
 import {
   buildExportLegendItems,
-  stencilKindsUsed,
+  stencilLegendRows,
   directionSetLegendRow,
   type ExportLegendItem
 } from '../legend/legendItems.ts'
@@ -129,7 +129,7 @@ export function defaultLegendItems(
     diagram.highlights ?? [],
     new Set(enabledHighlightIds),
     directionSetLegendRow(sets, diagram.activeEdgeDirectionSetId),
-    stencilKindsUsed(diagram.nodes)
+    stencilLegendRows(diagram.nodes)
   )
 }
 
@@ -446,7 +446,7 @@ function drawLegend(
       const box = wide
         ? { x: swatchX + 3, y: cy - 7, width: 22, height: 14 }
         : { x: swatchX + 7, y: cy - 7, width: 14, height: 14 }
-      parts.push(stencilShape(sk, box, look, 1.5, tokens.text, true))
+      parts.push(stencilShape(sk, box, look, 1.5, tokens.text, true, swatch.state))
     } else if (swatch.kind === 'highlight') {
       const paint = plainColor(swatch.color)
       parts.push(

@@ -10,7 +10,7 @@ import type {
   LegendEntry,
   RequiredTagDefinition
 } from '@shared/diagram'
-import { buildExportLegendItems, stencilKindsUsed } from '@shared/legend/legendItems'
+import { buildExportLegendItems, stencilLegendRows } from '@shared/legend/legendItems'
 import { effectiveDiagramFont } from '@shared/styling/fontStack'
 import { directionSetLegendRow } from '../edges/edgeDirectionSets'
 import { toDiagramFile } from '../document/diagramConversion'
@@ -124,10 +124,14 @@ export function useImageExport(
           highlights,
           enabledHighlightIds,
           directionSetLegendRow(edgeDirectionSets, activeEdgeDirectionSetId),
-          stencilKindsUsed(
+          stencilLegendRows(
             nodes.map((n) => ({
               type: n.type,
-              data: { kind: typeof n.data?.kind === 'string' ? n.data.kind : undefined }
+              data: {
+                kind: typeof n.data?.kind === 'string' ? n.data.kind : undefined,
+                outcome: n.data?.outcome,
+                reach: n.data?.reach
+              }
             }))
           )
         )

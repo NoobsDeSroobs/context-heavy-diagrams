@@ -7,8 +7,8 @@ What changed for people using the tool, one entry per minor or major release. Th
 ### Added
 
 - **Behaviour symbols of our own.** Each kind has one mark and one meaning: a robot for the automatic step, a person for the human step, stacked layers for the sub-flow, the repeat symbol for the repeated step, a sideways fork for the decision, two overlapping rings for the inclusive choice, two bars for the parallel split or join, a play triangle for a start, a clock for a timer and an envelope for a message. [Why](docs/decisions/0193-behaviour-symbols-one-colour-per-family-and-an-end-that-says-how-it-ended.md).
-- **An event can begin a flow or sit in one.** **Position** (Properties) on an event, timer, message or human action: *Starts a flow* draws one ring, *In the flow* (the default, as before) two. Assistants set it with `set_behaviour_position`., for the moment a person starts a flow or the flow waits for one.
-- **An end says how it finished and how far it reaches.** **Outcome** (Properties): success, success with warnings, failed or aborted, told by a tick, a tick with an exclamation mark, a cross or a stop square. **Reach**: this path only, or the whole flow, drawn as a solid disc, which stops every path still running at once. Assistants set both with `add_behaviour` and the new `set_behaviour_ending`. See `examples/process-flow-order-to-delivery.chd`.
+- **An event can begin a flow or sit in one.** **Position** (Properties) on an event, timer, message or human action: *Starts a flow* draws one ring, *In the flow* (the default, as before) two. Assistants set it with `set_behaviour_position`.
+- **An end says how it finished and how far it reaches.** **Outcome** (Properties): success, success with warnings, failed or aborted, told by a tick, a tick with an exclamation mark, a cross or a stop square. **Reach**: this path only, or the whole flow, drawn as a solid disc, which stops every path still running at once. Assistants set both with `add_behaviour` and the new `set_behaviour_ending`. The legend has a row for each way an end finishes that the diagram uses. See `examples/process-flow-order-to-delivery.chd`.
 
 ### Changed
 

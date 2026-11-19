@@ -1,7 +1,7 @@
 # 0194: Improve on the BPMN notation: symbols, colours and shapes
 
 ## Status
-Built (marks, colours, human kinds, end outcome and reach, the example) and with the maintainer. Left: the user study, and a legend row per end outcome if wanted. Logged 2026-11-18.
+Built (marks, colours, human kinds, end outcome and reach, the example) and with the maintainer. Left: the user study, an ongoing one that runs beside the other epics. Logged 2026-11-18.
 
 ## Goal
 Make the Behaviour elements (steps, choices, events) easier to grasp at a glance and harder to misread or mis-pick, by choosing their marks, colours and shapes better than BPMN does. BPMN stays a source of vocabulary, not a standard to follow ([ADR 0080](../../decisions/0080-bpmn-as-adopted-vocabulary-not-metamodel.md), [ADR 0180](../../decisions/0180-stencils-are-light-elements-for-events-and-verbs.md)): where its symbols are hard to learn or easy to confuse, we draw our own.
@@ -37,7 +37,7 @@ The table is `src/shared/stencils/kinds.ts`; the file stores only the kind id, s
 - [ ] Show the kinds without the legend to a few people who do not know BPMN, ask them to name each and to say which pairs they would mix up; note the answers here.
 - [x] Propose revised marks, colours and shapes for the pairs that failed and try them on the sheet (sections 3 to 9). Still to do: try them on [process-flow-all-behaviours](../../../examples/process-flow-all-behaviours.chd) when implemented.
 - [x] Decide: see Decided design below. The shapes stay (choices stay square, so no change to ADR 0180's shape rule); the ADR for the new marks, colours and kinds is written with the implementation.
-- [x] Implement in the kinds table and the drawing, the SVG and draw.io exports, the legend swatches, and the docs and assistant guidance that describe the marks ([ADR 0193](../../decisions/0193-behaviour-symbols-one-colour-per-family-and-an-end-that-says-how-it-ended.md)). The end's outcome and reach are built too (Properties, `add_behaviour`, `set_behaviour_ending`, file format). Not built: a legend row per outcome an end uses (the legend has one End row).
+- [x] Implement in the kinds table and the drawing, the SVG and draw.io exports, the legend swatches, and the docs and assistant guidance that describe the marks ([ADR 0193](../../decisions/0193-behaviour-symbols-one-colour-per-family-and-an-end-that-says-how-it-ended.md)). The end's outcome and reach are built too (Properties, `add_behaviour`, `set_behaviour_ending`, file format). The legend, the image exports and the SVG have a row for each outcome and reach an end is used with.
 - [x] The toggle for "starts a flow" or "in the flow" on the events is specified and built in [0199](0199-event-position-toggle.md), a file-format change of its own.
 - [x] Rename `step-user` to `step-human`, and its display name "User step" to "Human step" ("user" implies the people in control of the application; the step's neighbour "Automatic step" is the only reason it read as right). The rules, agreed:
   1. **Ratify the name when this is built,** not before; nothing ships until then, and an id is permanent once released.

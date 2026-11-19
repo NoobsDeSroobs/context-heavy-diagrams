@@ -26,7 +26,7 @@ The thirteen kinds took their marks and colours from BPMN or from nowhere in par
 - **Keeping `step-user` and only changing its name in the picker:** the id would stay wrong for good; the rename costs one alias.
 
 ## Consequences
-- The legend shows one row per kind, so it does not list the outcomes an end has.
+- The legend shows one row per kind, and for an end one row for each outcome and reach the diagram uses ("End", "End: Failed", "End: Aborted, the whole flow stops"). The rows are derived from the nodes, as before; an event's position is not a row, the swatch shows the kind's default.
 - A file that uses `outcome` or `reach` or the human action shows a plain end or a step in an older app.
 - Assistants set the two states with `add_behaviour` and `set_behaviour_ending`, under the same stale-edit check as every other write ([0109](0109-stale-edit-check-for-every-ai-write-path.md)).
 - A later kind (a signal, an escalation) follows the same rules: its own mark, the family colour, no red.
