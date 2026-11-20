@@ -148,6 +148,13 @@ function orderedDiagramSecurity(
   }
 }
 
+// A node's or an edge's visibility set ids (ADR 0194): sorted and without repeats, so the file does
+// not change when the same sets are joined in another order. Dropped when empty.
+function sortedSetIds(ids: string[] | undefined): string[] | undefined {
+  if (!ids || ids.length === 0) return undefined
+  return [...new Set(ids)].sort()
+}
+
 function sortedMetadata(
   metadata: Record<string, MetadataEntry> | undefined
 ): Record<string, MetadataEntry> | undefined {
@@ -210,6 +217,11 @@ export function serializeDiagram(diagram: DiagramFile): string {
       : undefined,
     activeEdgeDirectionSetId: hasDirectionSets ? diagram.activeEdgeDirectionSetId : undefined,
     security: orderedDiagramSecurity(diagram.security),
+    // The order of the catalogue is the order shown to the person, so it is kept (ADR 0194).
+    visibilitySets:
+      diagram.visibilitySets && diagram.visibilitySets.length > 0
+        ? diagram.visibilitySets.map((v) => ({ id: v.id, name: v.name }))
+        : undefined,
     nodes: diagram.nodes.map((n) => ({
       id: n.id,
       type: n.type,
@@ -221,6 +233,7 @@ export function serializeDiagram(diagram: DiagramFile): string {
         n.connectionPoints && n.connectionPoints.length > 0 ? n.connectionPoints : undefined,
       parentId: n.parentId,
       locked: n.locked,
+      visibilitySetIds: sortedSetIds(n.visibilitySetIds),
       style: n.style,
       metadata: sortedMetadata(n.metadata),
       data: {
@@ -254,7 +267,8 @@ export function serializeDiagram(diagram: DiagramFile): string {
       style: e.style,
       metadata: sortedMetadata(e.metadata),
       points: e.points && e.points.length > 0 ? e.points : undefined,
-      directionSets: sortedDirectionSets(e.directionSets, hasMultipleDirectionSets)
+      directionSets: sortedDirectionSets(e.directionSets, hasMultipleDirectionSets),
+      visibilitySetIds: sortedSetIds(e.visibilitySetIds)
     }))
   }
   return JSON.stringify(ordered, null, 2) + '\n'

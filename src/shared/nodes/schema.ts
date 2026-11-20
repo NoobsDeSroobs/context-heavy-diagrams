@@ -53,6 +53,9 @@ export interface DiagramNode {
   // connection points, notes) stays allowed. Not meaningful on edges (no
   // position of their own to accidentally relocate). Absent means unlocked.
   locked?: boolean
+  // The visibility sets this node is in, by id (ADR 0194). Absent or empty means in none, so
+  // always shown. Ids not in `DiagramFile.visibilitySets` are ignored.
+  visibilitySetIds?: string[]
   style?: NodeStyle
   // Only 'entity'/'container' meaningfully have this — see ADR 0022.
   // 'text' and 'line' nodes never get seeded or edited here.

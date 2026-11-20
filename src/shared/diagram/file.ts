@@ -8,6 +8,7 @@ import type { LegendEntry } from '../legend/schema.ts'
 import type { DiagramNode, GravityPreset } from '../nodes/schema.ts'
 import type { HighlightDefinition, JsonValue, RequiredTagDefinition } from '../tagging/schema.ts'
 import type { DiagramSecurity } from '../threat-matrix/schema.ts'
+import type { VisibilitySet } from '../visibility/schema.ts'
 
 export interface DiagramFile {
   version: 1
@@ -68,6 +69,10 @@ export interface DiagramFile {
   // Threat/risk model — see ADR 0082 and DiagramSecurity above. Absent
   // means the Security Matrix has never been used for this diagram.
   security?: DiagramSecurity
+  // The catalogue of visibility sets (ADR 0194); nodes and edges join one through
+  // `visibilitySetIds`. Absent or empty means the feature is unused. Which sets are shown is
+  // session state and is not stored.
+  visibilitySets?: VisibilitySet[]
   nodes: DiagramNode[]
   edges: DiagramEdge[]
 }

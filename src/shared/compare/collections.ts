@@ -101,6 +101,13 @@ export function diffCollections(base: DiagramFile, next: DiagramFile): Collectio
       (s) => s.name
     ),
     diffEntries(
+      'Visibility sets',
+      base.visibilitySets,
+      next.visibilitySets,
+      (v) => v.id,
+      (v) => v.name
+    ),
+    diffEntries(
       'Security threats',
       base.security?.threats,
       next.security?.threats,
