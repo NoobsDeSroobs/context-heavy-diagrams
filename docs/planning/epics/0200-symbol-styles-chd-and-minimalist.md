@@ -21,7 +21,7 @@ Let a person draw and read the Behaviour kinds in one of two styles, **CHD** (th
 - [ ] A second look for each kind in the kinds table and the drawing, the legend, the SVG, PNG and draw.io exports, the export dialogs' option and the CLI flag.
 - [ ] The extension and assistant guidance: say which style an assistant's export uses and how to pick it.
 - [ ] An example that shows the same flow in both ([ADR 0151](../../decisions/0151-every-visible-feature-has-an-example-diagram.md)), and `examples/README.md`.
-- [ ] The user study: a few people, the same flows in both styles, which they read faster and prefer, why, what they mix up; notes kept here, and the findings feed back into both sets.
+- [ ] The user study: a few people, the same flows in both styles, which they read faster and prefer, why, what they mix up; notes kept here, and the findings feed back into both sets. The comparison page ends in a survey (in Norwegian: ease of reading and how welcoming, a 1 to 5 slider for each of A, B and C, and familiarity with BPMN) that posts to a Google Sheet through an Apps Script web app, [symbol-styles-survey-endpoint.gs](../../experiments/symbol-styles-survey-endpoint.gs); the endpoint address is passed in when the page is built and is not kept in the repo.
 - [ ] Changelog.
 
 ## Notes
