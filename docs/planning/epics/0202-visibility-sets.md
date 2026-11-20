@@ -7,7 +7,7 @@ In Progress: design decided 2026-11-20, nothing built. Logged 2026-11-20. The st
 Let a person mark nodes and edges as members of named **visibility sets**, and show or hide each set on demand in the ordinary diagram, like the layers of a drawing tool. The use: one diagram that holds how things are today and how they could be, shown one at a time. It is useful without any story.
 
 ## Decided
-- **A new field, not tags.** Tags describe the architecture (the security matrix, diffs and required tags read them); a visibility set is presentation. The diagram has a catalogue of sets (an id and a name each), and every node and edge may list the sets it belongs to. An element can be in several sets. The field names are for the ADR.
+- **A new field, not tags.** Tags describe the architecture (the security matrix, diffs and required tags read them); a visibility set is presentation. The diagram has a catalogue of sets (an id and a name each), and every node and edge may list the sets it belongs to. An element can be in several sets. The fields and the rule are in [ADR 0194](../../decisions/0194-visibility-sets-hide-and-show-parts-of-a-diagram.md).
 - **The rule.** An element in no set is always visible. Otherwise it is visible when any of its sets is shown, so a service in both "today" and "proposed" survives hiding "today". Nothing is inferred: an edge is shown or hidden by its own sets alone, not by its ends, and a child by its own sets, not by its container. An edge left hanging, or a child on an empty canvas, is for the author to fix.
 - **Hidden elements still exist, and the editor treats them as not there.** They stay in the file and the diagram and are not drawn. A person cannot select them in any way: not by clicking, not by drag select, not by select all. An edge whose end is moved still follows it while hidden, so it is in the right place when its set is shown again (or is updated at the latest when it is shown).
 - **The panel** sits in the bottom left corner next to the highlights and the other panels of that corner. How sets are added, renamed and put onto elements is designed after the first version has been tried; the first version only needs enough to try it.
@@ -24,7 +24,7 @@ Let a person mark nodes and edges as members of named **visibility sets**, and s
 - **The assistants.** The CLI and the extension can list sets, put elements in them and read membership, with the stale-edit check ([ADR 0109](../../decisions/0109-stale-edit-check-for-every-ai-write-path.md)).
 
 ## Tasks
-- [ ] ADR: the field and the catalogue, the visibility rule (no set means always visible, any shown set shows it, nothing inferred), session state for what is shown, and the alternatives (tags; numbers on elements).
+- [x] ADR 0194: the field and the catalogue, the visibility rule, session state for what is shown, and the alternatives (kept up to date as the design is tried)
 - [ ] `schema.ts` and `docs/file-format.md`.
 - [ ] The visibility rule as one pure function in `src/shared/`, with tests for several sets, none, edges and containers.
 - [ ] Hiding in the canvas: not drawn, not interactable, skipped by selection and the other views.
