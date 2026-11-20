@@ -26,7 +26,7 @@ Let a person mark nodes and edges as members of named **visibility sets**, and s
 ## Tasks
 - [x] ADR 0194: the field and the catalogue, the visibility rule, session state for what is shown, and the alternatives (kept up to date as the design is tried)
 - [x] `schema.ts`, `serialize.ts`, the review and the changes-since-save lists, `docs/file-format.md`, and tests (shared code only).
-- [ ] Carry the fields through the app: `diagramConversion.ts` in both directions, the catalogue as state in the canvas and in save, change detection, window lifecycle and image export, copy, paste and duplicate; a round-trip test that opens and saves a file with sets. Until this is done the app drops the fields on save, so a diagram with sets is not safe to open and save in it yet.
+- [x] Carried through the app: `diagramConversion.ts` in both directions, the catalogue as canvas state, and the save, autosave, close summary, changes list, checks panel and image export that build the file; copy and paste keep the ids; a round-trip test with sets in the fixture. There is no way yet to make a set in the app, so a file with sets is made by hand or by the command line.
 - [ ] The visibility rule as one pure function in `src/shared/`, with tests for several sets, none, edges and containers.
 - [ ] Hiding in the canvas: not drawn, not interactable, skipped by selection and the other views.
 - [ ] The sets panel and the commands to put elements in and out of a set.

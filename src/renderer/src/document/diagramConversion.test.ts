@@ -20,7 +20,8 @@ const roundTrip = (file: DiagramFile): DiagramFile => {
     r.edgeDirectionSets,
     r.activeEdgeDirectionSetId,
     r.security,
-    r.fontFamily
+    r.fontFamily,
+    r.visibilitySets
   )
 }
 
@@ -33,6 +34,10 @@ const fixture = (): DiagramFile => ({
   gravityPresets: [{ id: 'g1', label: 'Tight', value: 0.2 }],
   maxConnectionPointsPerSide: 3,
   fontFamily: "'Georgia', serif",
+  visibilitySets: [
+    { id: 'vis-1', name: 'Today' },
+    { id: 'vis-2', name: 'Proposed' }
+  ],
   security: {
     threats: [{ id: 't1', name: 'Spoofing' }],
     matrixEntityIds: ['a'],
@@ -55,6 +60,7 @@ const fixture = (): DiagramFile => ({
       zIndex: 40,
       parentId: 'box',
       locked: true,
+      visibilitySetIds: ['vis-1', 'vis-2'],
       connectionPoints: [{ id: 'cp1', side: 'right', offset: 0.25 }],
       style: { fill: '#112233', fontSize: 14 },
       metadata: { env: { value: 'prod', lock: 'lockedEditable' } },
@@ -99,6 +105,7 @@ const fixture = (): DiagramFile => ({
       target: 'b',
       sourceHandle: 'cp1',
       label: 'calls',
+      visibilitySetIds: ['vis-2'],
       style: { stroke: '#336699', endMarker: 'arrowClosed', routingStyle: 'catmullRom' },
       points: [{ x: 90, y: 60, gravity: 0.5 }]
     }

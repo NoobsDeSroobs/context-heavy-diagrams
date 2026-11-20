@@ -58,6 +58,7 @@ import {
   type DiagramFile,
   type EdgeStyle,
   type GravityPreset,
+  type VisibilitySet,
   type IconRef,
   type IconSlot,
   type JsonValue,
@@ -277,6 +278,9 @@ function CanvasInner(): React.JSX.Element {
   >(undefined)
   // The diagram's own font (ADR 0130), same file-scoped treatment as the override above.
   const [diagramFontFamily, setDiagramFontFamily] = useState<string | undefined>(undefined)
+  // The catalogue of visibility sets (ADR 0194): file-scoped and persisted like the legend, reset
+  // on load. Which sets are shown is session state and is not kept here.
+  const [visibilitySets, setVisibilitySets] = useState<VisibilitySet[]>([])
   // Edge hover (the hover-revealed bend-point handles of catmull-rom edges, ADR 0057) is tracked
   // per edge inside LabeledEdge, not here (ADR 0073): one shared hoveredEdgeId materialized onto
   // edge.data rebuilt the whole edges array on every hover.
@@ -938,7 +942,8 @@ function CanvasInner(): React.JSX.Element {
         edgeDirectionSets,
         activeEdgeDirectionSetId,
         security,
-        diagramFontFamily
+        diagramFontFamily,
+        visibilitySets
       ),
     [
       nodes,
@@ -950,6 +955,7 @@ function CanvasInner(): React.JSX.Element {
       gravityPresets,
       diagramMaxConnectionPointsPerSide,
       diagramFontFamily,
+      visibilitySets,
       edgeDirectionSets,
       activeEdgeDirectionSetId,
       security
@@ -2675,6 +2681,7 @@ function CanvasInner(): React.JSX.Element {
       gravityPresets,
       diagramMaxConnectionPointsPerSide,
       diagramFontFamily,
+      visibilitySets,
       edgeDirectionSets,
       activeEdgeDirectionSetId,
       security,
@@ -2713,6 +2720,7 @@ function CanvasInner(): React.JSX.Element {
     gravityPresets,
     diagramMaxConnectionPointsPerSide,
     diagramFontFamily,
+    visibilitySets,
     edgeDirectionSets,
     activeEdgeDirectionSetId,
     security,
@@ -2755,6 +2763,7 @@ function CanvasInner(): React.JSX.Element {
         edgeDirectionSets: openedEdgeDirectionSets,
         activeEdgeDirectionSetId: openedActiveEdgeDirectionSetId,
         security: openedSecurity,
+        visibilitySets: openedVisibilitySets,
         hierarchyNotes: openedHierarchyNotes
       } = fromDiagramFile(diagram)
       // Anything the load repaired by itself (a dangling container reference, a missing zIndex, a
@@ -2773,7 +2782,8 @@ function CanvasInner(): React.JSX.Element {
         openedEdgeDirectionSets,
         openedActiveEdgeDirectionSetId,
         openedSecurity,
-        openedFontFamily
+        openedFontFamily,
+        openedVisibilitySets
       )
       // savedWith and iconPacks are written by the save itself, and a zIndex the file leaves out is a
       // default (ADR 0035) that never changes how the diagram looks (diagrams written by hand or by
@@ -2825,6 +2835,7 @@ function CanvasInner(): React.JSX.Element {
       setGravityPresets(openedGravityPresets)
       setDiagramMaxConnectionPointsPerSide(openedMaxConnectionPointsPerSide)
       setDiagramFontFamily(openedFontFamily)
+      setVisibilitySets(openedVisibilitySets)
       setEdgeDirectionSets(openedEdgeDirectionSets)
       setActiveEdgeDirectionSetId(openedActiveEdgeDirectionSetId)
       setSecurity(openedSecurity)
@@ -2887,6 +2898,7 @@ function CanvasInner(): React.JSX.Element {
       resetSearch,
       setLegend,
       setLegendPanelOpen,
+      setVisibilitySets,
       setHighlights,
       setEnabledHighlightIds,
       setHighlightsPanelOpen,
@@ -2924,6 +2936,7 @@ function CanvasInner(): React.JSX.Element {
     gravityPresets,
     diagramMaxConnectionPointsPerSide,
     diagramFontFamily,
+    visibilitySets,
     edgeDirectionSets,
     activeEdgeDirectionSetId,
     security,
@@ -3448,7 +3461,8 @@ function CanvasInner(): React.JSX.Element {
             edgeDirectionSets,
             activeEdgeDirectionSetId,
             security,
-            diagramFontFamily
+            diagramFontFamily,
+            visibilitySets
           )
         : null,
     [
@@ -3464,7 +3478,8 @@ function CanvasInner(): React.JSX.Element {
       edgeDirectionSets,
       activeEdgeDirectionSetId,
       security,
-      diagramFontFamily
+      diagramFontFamily,
+      visibilitySets
     ]
   )
   const conformanceResult = useMemo(

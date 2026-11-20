@@ -5,6 +5,7 @@ import type {
   DiagramSecurity,
   EdgeDirectionSet,
   GravityPreset,
+  VisibilitySet,
   HighlightDefinition,
   JsonValue,
   LegendEntry,
@@ -33,6 +34,7 @@ export interface ImageExportInputs {
   gravityPresets: GravityPreset[]
   diagramMaxConnectionPointsPerSide: number | undefined
   diagramFontFamily: string | undefined
+  visibilitySets: VisibilitySet[]
   edgeDirectionSets: EdgeDirectionSet[]
   activeEdgeDirectionSetId: string | undefined
   security: DiagramSecurity
@@ -68,6 +70,7 @@ export function useImageExport(
     gravityPresets,
     diagramMaxConnectionPointsPerSide,
     diagramFontFamily,
+    visibilitySets,
     edgeDirectionSets,
     activeEdgeDirectionSetId,
     security,
@@ -210,7 +213,8 @@ export function useImageExport(
       edgeDirectionSets,
       activeEdgeDirectionSetId,
       security,
-      diagramFontFamily
+      diagramFontFamily,
+      visibilitySets
     )
   }, [
     nodes,
@@ -222,6 +226,7 @@ export function useImageExport(
     gravityPresets,
     diagramMaxConnectionPointsPerSide,
     diagramFontFamily,
+    visibilitySets,
     edgeDirectionSets,
     activeEdgeDirectionSetId,
     security
