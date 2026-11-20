@@ -6,7 +6,7 @@
  *  1. Create a Google Sheet, then Extensions > Apps Script, and paste this file in.
  *  2. Deploy > New deployment > Web app. Execute as: Me. Who has access: Anyone.
  *  3. Copy the web app URL (it ends in /exec) and build the page with it:
- *       SURVEY_ENDPOINT=<the url> node gen_styles.mjs out.html
+ *       SURVEY_ENDPOINT=<the url> node docs/experiments/build-symbol-styles-comparison.mjs out.html
  *     Do not commit the URL: anyone who has it can write rows.
  *  4. After editing this script, Deploy > Manage deployments > edit > New version, or the old code keeps running.
  *

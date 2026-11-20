@@ -10,3 +10,4 @@ THIRD-PARTY-NOTICES.md
 resources/cli/export.mjs
 resources/cli/check.mjs
 resources/extension/server.mjs
+docs/experiments

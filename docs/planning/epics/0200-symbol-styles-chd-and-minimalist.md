@@ -1,7 +1,7 @@
 # 0200: Symbol styles: CHD and minimalist
 
 ## Status
-Not Started. Logged 2026-11-19. Follows the implementation of [0194](0194-improve-on-the-bpmn-notation.md), whose symbols become the "CHD" style; the first task here can be done before that.
+In Progress, paused 2026-11-20 until the survey answers are in. Logged 2026-11-19. Follows the implementation of [0194](0194-improve-on-the-bpmn-notation.md), whose symbols become the "CHD" style. The comparison page and its survey are built and live; nothing in the app changes until the answers say whether a second style is worth its standing cost.
 
 ## Goal
 Let a person draw and read the Behaviour kinds in one of two styles, **CHD** (the symbols of 0194) and **minimalist** (plain, familiar flowchart-like shapes and marks), chosen to suit themselves and the audience, and compare how people fare with each, as a small user study.
@@ -25,6 +25,7 @@ Let a person draw and read the Behaviour kinds in one of two styles, **CHD** (th
 - [ ] Changelog.
 
 ## Notes
+- **Picking it up after the study.** The tasks from the ADR down wait for the answers; they build a second style, which every later kind has to be drawn in too. The answers are in the sheet's `Svar` tab, one row per person, round `symbols-3`. Ratings are stored by style (`bpmn`, `min`, `chd`); `rekkefolge` says which style was A, B and C for that person, which is also how to read a comment that says "A". Compare the three styles on welcoming (the first impression, asked before the person studied the drawings) and on ease of reading, and split by `kjent_nivaa` (BPMN familiarity) and `tema`. Rows with round `test` are setup tests. The page is `docs/experiments/symbol-styles-comparison.html`, built by `build-symbol-styles-comparison.mjs` next to it; the copy in the repo has no endpoint, and the hosted copy was built with `SURVEY_ENDPOINT` set (the address is the maintainer's, not kept here). A changed page needs a new round id (`SURVEY_ROUND` in the script) so old and new answers stay apart.
 - A new kind needs a look in both styles from then on; that is the standing cost, accepted for the study and the audiences.
 - Kind ids and the file format do not change; an older app ignores the setting.
 - The cross of a failed end in the CHD style can be taken for the minimalist decision (an X in a diamond). Look at the two side by side in the comparison sheet, and in the study ask whether it is mixed up; the minimalist style may need a different mark for a failed end.

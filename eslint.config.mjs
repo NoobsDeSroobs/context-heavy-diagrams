@@ -19,6 +19,7 @@ export default defineConfig(
       'resources/cli/diff.mjs',
       'resources/cli/edit.mjs',
       'resources/extension/server.mjs',
+      'docs/experiments/**',
       '.claude/**'
     ]
   },
