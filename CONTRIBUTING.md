@@ -2,6 +2,8 @@
 
 Thanks for your interest.
 
+People are expected to treat each other decently: see the [code of conduct](CODE_OF_CONDUCT.md).
+
 ## Whose project this is
 
 This is the author's personal tool. It is built for the author's own use and shared in case it is useful to others. It is not a community-governed project: what goes in, and how it works, is decided by the author alone.

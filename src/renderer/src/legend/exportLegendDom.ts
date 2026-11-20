@@ -91,7 +91,7 @@ function buildSwatch(item: ExportLegendItem, iconMarkup: Map<string, ResolvedIco
     const theme = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark'
     const span = document.createElement('span')
     span.style.cssText = 'display: block; width: 28px; height: 16px;'
-    span.innerHTML = stencilSwatchSvgFor(swatch.stencilKind, theme)
+    span.innerHTML = stencilSwatchSvgFor(swatch.stencilKind, theme, swatch.state)
     wrapper.appendChild(span)
     return wrapper
   }

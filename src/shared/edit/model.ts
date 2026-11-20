@@ -39,6 +39,11 @@ export interface NodeSummary {
   // A behaviour (type "stencil"): its kind id. A behaviour's or container's label position, only when
   // it is not the default (below / top); a free label's offset from the shape's centre.
   kind?: string
+  // An end: how it finishes and how far it reaches, only when not the default (success / path).
+  outcome?: string
+  reach?: string
+  // An event that starts a flow (`start`); absent is in the flow.
+  flowPosition?: string
   labelPosition?: string
   labelOffset?: { x: number; y: number }
 }
@@ -323,6 +328,9 @@ export function summarizeNode(diagram: DiagramFile, node: DiagramNode): NodeSumm
     ...(node.parentId === undefined ? {} : { parent: node.parentId }),
     ...(hasDefaultHandles(node) ? {} : { handles: handlesOf(node) }),
     ...(node.type === 'stencil' ? { kind: stencilKind(node.data.kind).id } : {}),
+    ...(node.data.outcome ? { outcome: node.data.outcome } : {}),
+    ...(node.data.reach ? { reach: node.data.reach } : {}),
+    ...(node.data.flowPosition ? { flowPosition: node.data.flowPosition } : {}),
     ...(node.data.labelPosition ? { labelPosition: node.data.labelPosition } : {}),
     ...(node.data.labelOffset ? { labelOffset: node.data.labelOffset } : {})
   }

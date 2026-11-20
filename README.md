@@ -74,7 +74,7 @@ A diagram is a small, deterministic text file, so git can do for it what it does
 - **Behaviour elements for what happens in a flow.** Thirteen kinds in three families: **steps** (a plain step, or one done by a user, done automatically, expanding into a sub-flow, or repeated), **choices** (a decision, an inclusive choice, a parallel split or join) and **events** (a start, an end, and a timer, a message or a plain event in the middle). Each has its own shape and colour, and the legend explains the kinds a diagram uses. Things and concepts stay entities; a behaviour is deliberately context-light, with only a label, a shape, and one link to a deeper diagram, but no notes or tags ([ADR 0180](docs/decisions/0180-stencils-are-light-elements-for-events-and-verbs.md)). Inspired by BPMN, and not limited to it; the app is not BPMN-compliant, but searches still finds the elements by BPMN terms if desired (`gateway`, `user task`).
 - **A swim lane is a container,** with its label on the top, left, right or bottom, reading along the side it is on, and the behaviours inside it as its children. A small shape's label goes below, above, left or right, or anywhere, tied to the shape by a dotted line.
 - **See the hand-offs.** **View → Display → Mark crossings** puts a gate where an edge crosses the border of a container, and holding Ctrl (Cmd) over the edge says which lanes it goes between.
-- Examples: [`process-flow-all-behaviours.chd`](examples/process-flow-all-behaviours.chd) (all thirteen kinds in two lanes), [`process-flow-stencils.chd`](examples/process-flow-stencils.chd) (an order flow with a drill-down) and [`crossings.chd`](examples/crossings.chd).
+- Examples: [`process-flow-all-behaviours.chd`](examples/process-flow-all-behaviours.chd) (thirteen of the fourteen kinds in two lanes), [`process-flow-stencils.chd`](examples/process-flow-stencils.chd) (an order flow with a drill-down), [`process-flow-order-to-delivery.chd`](examples/process-flow-order-to-delivery.chd) (all 14 kinds and every way an end can finish) and [`crossings.chd`](examples/crossings.chd).
 
 ### Elements, connections and styling
 - Entities, nestable **containers**, rotatable **text**, and freeform **curved lines**.
@@ -175,7 +175,7 @@ A large share of the code, especially the user interface, was written by an AI a
 
 ## Contributing
 
-This is a personal tool, built for the author's own use: forks are welcome, and suggestions are welcome, but the author alone decides what goes in and how it works. A good argument can change that decision. See [CONTRIBUTING.md](CONTRIBUTING.md), including the terms under which contributions are given, and please open an issue before writing code. Bug reports and feedback are very welcome. Security problems go to [SECURITY.md](SECURITY.md), not a public issue.
+This is a personal tool, built for the author's own use: forks are welcome, and suggestions are welcome, but the author alone decides what goes in and how it works. A good argument can change that decision. See [CONTRIBUTING.md](CONTRIBUTING.md), including the terms under which contributions are given, and please open an issue before writing code. Bug reports and feedback are very welcome, under the [code of conduct](CODE_OF_CONDUCT.md). Security problems go to [SECURITY.md](SECURITY.md), not a public issue.
 
 ## License
 

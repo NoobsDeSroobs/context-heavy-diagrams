@@ -260,6 +260,23 @@ export const NODE_FIELDS: FieldSpec<DiagramNode>[] = [
     get: (n) => (n.type === 'stencil' ? (n.data.kind ?? 'step') : undefined),
     describe: (b, a) => change('kind', b, a)
   },
+  // How an end finishes and how far it reaches changes what the flow means.
+  {
+    name: 'ending',
+    category: 'content',
+    get: (n) =>
+      n.type === 'stencil' && (n.data.outcome || n.data.reach)
+        ? { outcome: n.data.outcome ?? 'success', reach: n.data.reach ?? 'path' }
+        : undefined,
+    describe: (b, a) => change('ending', b, a)
+  },
+  // Whether an event starts a flow or sits in one changes what it means.
+  {
+    name: 'position in the flow',
+    category: 'content',
+    get: (n) => (n.type === 'stencil' ? n.data.flowPosition : undefined),
+    describe: (b, a) => change('position in the flow', b, a)
+  },
   // Where the label of a small shape or a container sits is a look, not a meaning.
   {
     name: 'label position',

@@ -2,7 +2,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { matchesSearchQuery, searchableFromData } from '../search/search.ts'
-import { buildExportLegendItems, stencilKindsUsed } from '../legend/legendItems.ts'
+import { buildExportLegendItems, stencilLegendRows } from '../legend/legendItems.ts'
 import {
   DEFAULT_SVG_EXPORT_OPTIONS,
   defaultLegendItems,
@@ -39,14 +39,17 @@ test('the legend lists the kinds a diagram uses, once each, in the order of the 
     stencil('d', 'event-start'),
     { id: 'e', type: 'entity', position: { x: 0, y: 0 }, data: { label: 'E' } }
   ]
-  assert.deepEqual(stencilKindsUsed(nodes), ['branch-exclusive', 'event-start', 'event-end'])
+  assert.deepEqual(
+    stencilLegendRows(nodes).map((r) => r.kind),
+    ['branch-exclusive', 'event-start', 'event-end']
+  )
   const items = defaultLegendItems(diagram(nodes))
   assert.deepEqual(
     items.map((i) => i.label),
     ['Decision', 'Start', 'End']
   )
   assert.equal(items[0].swatch.kind, 'stencil')
-  assert.deepEqual(stencilKindsUsed([]), [])
+  assert.deepEqual(stencilLegendRows([]), [])
   assert.equal(buildExportLegendItems([], [], new Set(), null).length, 0)
 })
 
@@ -68,7 +71,8 @@ test('a legend swatch has the shape and the mark of its kind', () => {
     /<rect[^>]*rx="2"[^]*<path d="M[^"]+Z" fill="#abcdef"/
   )
   assert.match(stencilSwatchSvg('branch-exclusive', colors), /<path/)
-  assert.doesNotMatch(stencilSwatchSvg('event-start', colors), /<path/)
+  assert.doesNotMatch(stencilSwatchSvg('event', colors), /<path/)
+  assert.match(stencilSwatchSvg('event-start', colors), /<path d="M8 5l11 7-11 7z" fill="#ffffff"/)
 })
 
 test('the draw.io export keeps the shape and says the mark is lost', () => {
@@ -118,4 +122,57 @@ test("where a small shape's label sits is a look in the review of changes, and g
   const free = xml({ labelPosition: 'free', labelOffset: { x: 50, y: 50 } })
   assert.match(free.xml, /verticalLabelPosition=bottom/)
   assert.ok(free.notes.some((n) => /placed freely/.test(n)))
+})
+
+test('the legend has a row for each way an end finishes that the diagram uses, in a fixed order', () => {
+  const end = (id, data = {}) => ({
+    ...stencil(id, 'event-end'),
+    data: { label: id, kind: 'event-end', ...data }
+  })
+  const rows = stencilLegendRows([
+    end('a', { outcome: 'aborted', reach: 'flow' }),
+    end('b'),
+    end('c', { outcome: 'failed' }),
+    end('d', { outcome: 'failed' }),
+    end('e', { outcome: 'from-the-future', reach: 'sideways' })
+  ])
+  assert.deepEqual(
+    rows.map((r) => r.label),
+    ['End', 'End: Failed', 'End: Aborted, the whole flow stops']
+  )
+  assert.deepEqual(rows[2].state, { outcome: 'aborted', reach: 'flow' })
+  assert.deepEqual(
+    stencilLegendRows([end('only')]).map((r) => r.label),
+    ['End']
+  )
+  const items = defaultLegendItems(diagram([end('x', { outcome: 'warnings' })]))
+  assert.deepEqual(items[0].swatch, {
+    kind: 'stencil',
+    stencilKind: 'event-end',
+    state: { outcome: 'warnings', reach: 'path' }
+  })
+})
+
+test('a legend swatch of an end shows its outcome and, for the whole flow, a solid disc', () => {
+  const colors = { fill: '#123456', stroke: '#abcdef', mark: '#ffffff' }
+  const circle = (svg) => svg.match(/<circle[^>]*>/)[0]
+  const plain = stencilSwatchSvg('event-end', colors, { outcome: 'success', reach: 'path' })
+  const failed = stencilSwatchSvg('event-end', colors, { outcome: 'failed', reach: 'path' })
+  const solid = stencilSwatchSvg('event-end', colors, { outcome: 'failed', reach: 'flow' })
+  assert.match(circle(plain), /fill="#123456"/)
+  assert.notEqual(plain.match(/<path[^>]*>/)[0], failed.match(/<path[^>]*>/)[0])
+  assert.match(circle(solid), /fill="#abcdef"/)
+  assert.match(solid, /<path[^>]*stroke="#123456"/, 'the mark is cut out in the fill colour')
+})
+
+test('the SVG export draws a row for each way an end finishes', () => {
+  const d = diagram([
+    { ...stencil('a', 'event-end'), data: { label: 'a', kind: 'event-end', outcome: 'failed' } }
+  ])
+  const svg = renderDiagramSvg(d, {
+    ...DEFAULT_SVG_EXPORT_OPTIONS,
+    icons: new Map(),
+    legend: { items: defaultLegendItems(d), corner: 'bottom-right' }
+  })
+  assert.match(svg, />End: Failed<\/tspan>/)
 })

@@ -8,6 +8,7 @@ import {
 } from '../styling/styleDefaults.ts'
 import { dasharrayOf, dashPattern } from '../styling/edgeDash.ts'
 import type { Theme } from '../styling/theme.ts'
+import { stencilLightColors } from '../stencils/kinds.ts'
 import { paintColor, plainColor } from './color.ts'
 import type { FontSpec } from './textLayout.ts'
 
@@ -105,6 +106,26 @@ export function resolveBoxLook(
     stroke: strokeWidth > 0 ? visible(stroke) : null,
     strokeWidth,
     dashed: type === 'container'
+  }
+}
+
+// A behaviour's look in the light theme: the kind's own light colours where the node has none of its
+// own (and, for the border, no highlight). The dark theme needs nothing: the stored default is its colour.
+export function withStencilLightColors(
+  look: BoxLook,
+  kindId: string | undefined,
+  ownStyle: NodeStyle | undefined,
+  theme: Theme,
+  highlighted = false
+): BoxLook {
+  if (theme !== 'light') return look
+  const own = stencilLightColors(kindId, ownStyle)
+  return {
+    ...look,
+    ...(own.fill ? { fill: plainColor(own.fill, ownStyle?.fillOpacity) } : {}),
+    ...(own.stroke && !highlighted && look.stroke
+      ? { stroke: plainColor(own.stroke, ownStyle?.strokeOpacity) }
+      : {})
   }
 }
 

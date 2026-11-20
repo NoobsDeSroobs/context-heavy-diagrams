@@ -32,6 +32,7 @@ function DiagramDock({
   onAddStencil,
   onSetStencilKind,
   onSetStencilLabelPosition,
+  onSetStencilState,
   onSetContainerLabelSide,
   onCreateMultipleEntities,
   onCreateMultipleContainers,
@@ -60,6 +61,10 @@ function DiagramDock({
   onAddStencil: (kindId: string) => void
   onSetStencilKind: (nodeIds: string[], kindId: string) => void
   onSetStencilLabelPosition: (nodeIds: string[], position: LabelPosition) => void
+  onSetStencilState: (
+    nodeIds: string[],
+    change: { outcome?: string; reach?: string; flowPosition?: string }
+  ) => void
   onSetContainerLabelSide: (nodeIds: string[], side: ContainerLabelSide) => void
   onCreateMultipleEntities: () => void
   onCreateMultipleContainers: () => void
@@ -114,6 +119,7 @@ function DiagramDock({
           onToggleStyleBrush={onToggleStyleBrush}
           onSetStencilKind={onSetStencilKind}
           onSetStencilLabelPosition={onSetStencilLabelPosition}
+          onSetStencilState={onSetStencilState}
           onSetContainerLabelSide={onSetContainerLabelSide}
         />
       ) : (

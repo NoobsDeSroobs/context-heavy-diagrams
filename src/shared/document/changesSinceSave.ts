@@ -43,6 +43,14 @@ export const NODE_FIELDS: FieldSpec<DiagramNode>[] = [
   { name: 'label', get: (n) => n.data.label },
   { name: 'kind', get: (n) => (n.type === 'stencil' ? (n.data.kind ?? 'step') : undefined) },
   {
+    name: 'ending',
+    get: (n) => (n.type === 'stencil' ? [n.data.outcome, n.data.reach] : undefined)
+  },
+  {
+    name: 'position in the flow',
+    get: (n) => (n.type === 'stencil' ? n.data.flowPosition : undefined)
+  },
+  {
     name: 'label position',
     get: (n) =>
       (n.type === 'stencil' || n.type === 'container') &&

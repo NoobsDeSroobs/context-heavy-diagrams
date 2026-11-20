@@ -31,6 +31,12 @@ import {
   HEAVY_BORDER_FACTOR,
   MARK_STROKE,
   STENCIL_MARK_PATHS,
+  STENCIL_MARK_SOLID,
+  stencilDoubleBorder,
+  stencilMarkOf,
+  stencilSolid,
+  type StencilState,
+  type StencilMark,
   stencilKind,
   stencilLabelInsets,
   stencilLabelOutside,
@@ -44,6 +50,7 @@ import {
   DEFAULT_FONT_FAMILY,
   PAGE_TOKENS,
   resolveBoxLook,
+  withStencilLightColors,
   resolveEdgeLabelLook,
   resolveEdgeLook,
   resolveLabelLook,
@@ -58,7 +65,7 @@ import { plainColor } from './color.ts'
 import { iconParts } from './iconMarkup.ts'
 import {
   buildExportLegendItems,
-  stencilKindsUsed,
+  stencilLegendRows,
   directionSetLegendRow,
   type ExportLegendItem
 } from '../legend/legendItems.ts'
@@ -122,7 +129,7 @@ export function defaultLegendItems(
     diagram.highlights ?? [],
     new Set(enabledHighlightIds),
     directionSetLegendRow(sets, diagram.activeEdgeDirectionSetId),
-    stencilKindsUsed(diagram.nodes)
+    stencilLegendRows(diagram.nodes)
   )
 }
 
@@ -179,12 +186,17 @@ function stencilShape(
   look: BoxLook,
   strokeWidth: number,
   markPaint: Paint,
-  small = false
+  small = false,
+  ending?: StencilState
 ): string {
   const { x, y, width, height } = box
   const inset = look.stroke ? strokeWidth / 2 : 0
+  // An end that stops the whole flow is a solid disc: the border colour fills it, the mark is cut out.
+  const solid = stencilSolid(kind, ending) && look.stroke !== null
+  const mark: StencilMark | undefined = stencilMarkOf(kind, ending)
+  const cutOut = solid ? (look.fill ?? markPaint) : markPaint
   const paint =
-    paintAttrs('fill', look.fill) +
+    paintAttrs('fill', solid ? look.stroke : look.fill) +
     paintAttrs('stroke', look.stroke) +
     (look.stroke ? ` stroke-width="${num(strokeWidth)}"` : '')
   const cx = x + width / 2
@@ -194,7 +206,8 @@ function stencilShape(
     kind.shape === 'circle'
       ? `<circle cx="${num(cx)}" cy="${num(cy)}" r="${num(radius)}"${paint}/>`
       : `<rect x="${num(x + inset)}" y="${num(y + inset)}" width="${num(width - inset * 2)}" height="${num(height - inset * 2)}" rx="4"${paint}/>`
-  if (kind.shape === 'circle' && kind.doubleBorder && look.stroke) {
+  const doubled = stencilDoubleBorder(kind, ending)
+  if (kind.shape === 'circle' && doubled && look.stroke) {
     const inner = Math.max(0, radius - strokeWidth - (small ? 1.5 : DOUBLE_BORDER_GAP))
     out += `<circle cx="${num(cx)}" cy="${num(cy)}" r="${num(inner)}" fill="none"${paintAttrs('stroke', look.stroke)} stroke-width="${num(strokeWidth)}"/>`
   }
@@ -203,14 +216,14 @@ function stencilShape(
     const band = arrowBandPath(x + inset, y + inset, y + height - inset, 4, small ? 0.35 : 1)
     out += `<path d="${band}"${paintAttrs('fill', look.stroke ?? markPaint)}/>`
   }
-  if (!kind.mark) return out
-  const at = stencilMarkBox(kind, width, height, small)
+  if (!mark) return out
+  const at = stencilMarkBox(kind, width, height, small, mark, doubled)
   const scale = Math.round((at.size / 24) * 10000) / 10000
   const line = small ? 1.2 / scale : MARK_STROKE
   return (
     out +
     `<g transform="translate(${num(x + at.x)} ${num(y + at.y)}) scale(${scale})">` +
-    `<path d="${STENCIL_MARK_PATHS[kind.mark]}" fill="none"${paintAttrs('stroke', markPaint)} stroke-width="${num(line)}" stroke-linecap="round" stroke-linejoin="round"/></g>`
+    `<path d="${STENCIL_MARK_PATHS[mark]}"${paintAttrs('fill', STENCIL_MARK_SOLID.has(mark) ? cutOut : null)}${paintAttrs('stroke', cutOut)} stroke-width="${num(line)}" stroke-linecap="round" stroke-linejoin="round"/></g>`
   )
 }
 
@@ -423,17 +436,17 @@ function drawLegend(
     } else if (swatch.kind === 'stencil') {
       // The kind's shape and mark in a small box, with the colour it is drawn in on the diagram.
       const sk = stencilKind(swatch.stencilKind)
-      const look = resolveBoxLook(
-        'entity',
-        stencilStyle(sk.id, undefined),
-        options.theme,
-        undefined
+      const look = withStencilLightColors(
+        resolveBoxLook('entity', stencilStyle(sk.id, undefined), options.theme, undefined),
+        sk.id,
+        undefined,
+        options.theme
       )
       const wide = sk.shape === 'arrow'
       const box = wide
         ? { x: swatchX + 3, y: cy - 7, width: 22, height: 14 }
         : { x: swatchX + 7, y: cy - 7, width: 14, height: 14 }
-      parts.push(stencilShape(sk, box, look, 1.5, tokens.text, true))
+      parts.push(stencilShape(sk, box, look, 1.5, tokens.text, true, swatch.state))
     } else if (swatch.kind === 'highlight') {
       const paint = plainColor(swatch.color)
       parts.push(
@@ -545,14 +558,18 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
 
     const type = styledNodeType(node.type)
     const style = kind === 'stencil' ? stencilStyle(node.data.kind, node.style) : node.style
-    const look = resolveBoxLook(type, style, theme, single)
+    const boxLook = resolveBoxLook(type, style, theme, single)
+    const look =
+      kind === 'stencil'
+        ? withStencilLightColors(boxLook, node.data.kind, node.style, theme, single !== undefined)
+        : boxLook
     const labelLook = resolveLabelLook(type, style, theme, family)
     const sk = kind === 'stencil' ? stencilKind(node.data.kind) : undefined
     const sw = sk?.heavyBorder ? look.strokeWidth * HEAVY_BORDER_FACTOR : look.strokeWidth
     const text = node.data.label ?? ''
 
     if (sk && (look.fill || look.stroke)) {
-      parts.push(stencilShape(sk, { x, y, width, height }, look, sw, tokens.text))
+      parts.push(stencilShape(sk, { x, y, width, height }, look, sw, tokens.text, false, node.data))
     } else if (look.fill || look.stroke) {
       const inset = look.stroke ? sw / 2 : 0
       const rx = Math.max(0, 6 - inset)

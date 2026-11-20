@@ -103,7 +103,7 @@ test('every kind is drawn, with its mark from the shared table and a second ring
 test('the label of a step with a mark keeps clear of the mark', () => {
   const svg = render({
     version: 1,
-    nodes: [{ ...stencil('u', 'step-user', 0, 0), data: { label: 'Review', kind: 'step-user' } }],
+    nodes: [{ ...stencil('u', 'step-human', 0, 0), data: { label: 'Review', kind: 'step-human' } }],
     edges: []
   })
   const tx = Number(/data-id="u"[^]*?<tspan[^>]* x="([0-9.-]+)"/.exec(svg)[1])
@@ -120,8 +120,8 @@ const one = (extra) => ({
   version: 1,
   nodes: [
     {
-      ...stencil('s', 'event-start', 200, 200),
-      data: { label: 'Begin', kind: 'event-start', ...extra }
+      ...stencil('s', 'event', 200, 200),
+      data: { label: 'Begin', kind: 'event', ...extra }
     }
   ],
   edges: []
@@ -163,4 +163,47 @@ test('an unknown label position is read as below, and a step ignores the positio
   }
   assert.doesNotMatch(render(step), /chd-label-leader/)
   assert.ok(labelOf(render(step), 'w').x > 28, 'the label stays inside the step')
+})
+
+test('an end that stops the whole flow is a solid disc with its mark cut out; the outcome sets the mark', () => {
+  const end = (extra) => ({
+    version: 1,
+    nodes: [
+      { ...stencil('e', 'event-end', 0, 0), data: { label: 'e', kind: 'event-end', ...extra } }
+    ],
+    edges: []
+  })
+  const circle = (svg) => /<circle[^>]*fill="(#[0-9a-f]{6})"[^>]*stroke="(#[0-9a-f]{6})"/.exec(svg)
+  const path = (svg) => /<g transform="translate[^"]*"><path d="([^"]+)"/.exec(svg)[1]
+  const hollow = render(end({}))
+  assert.notEqual(circle(hollow)[1], circle(hollow)[2], 'a path that ends is hollow')
+  assert.equal(path(hollow), STENCIL_MARK_PATHS.check, 'success is a tick')
+  const solid = render(end({ outcome: 'failed', reach: 'flow' }))
+  assert.equal(circle(solid)[1], circle(solid)[2], 'the border colour fills the disc')
+  assert.equal(path(solid), STENCIL_MARK_PATHS.cross)
+  assert.equal(path(render(end({ outcome: 'aborted' }))), STENCIL_MARK_PATHS.stop)
+  assert.equal(path(render(end({ outcome: 'warnings' }))), STENCIL_MARK_PATHS['check-warn'])
+})
+
+test('an event that starts a flow is drawn with one ring, one in the flow with two', () => {
+  const rings = (extra) => {
+    const svg = render({
+      version: 1,
+      nodes: [
+        {
+          ...stencil('t', 'event-timer', 0, 0),
+          data: { label: 't', kind: 'event-timer', ...extra }
+        }
+      ],
+      edges: []
+    })
+    return svg
+      .split('class="chd-stencil"')[1]
+      .split('</g>')[0]
+      .match(/<circle/g).length
+  }
+  assert.equal(rings({}), 2)
+  assert.equal(rings({ flowPosition: 'in-flow' }), 2)
+  assert.equal(rings({ flowPosition: 'start' }), 1)
+  assert.equal(rings({ flowPosition: 'from-the-future' }), 2)
 })

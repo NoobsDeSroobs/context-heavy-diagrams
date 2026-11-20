@@ -199,3 +199,90 @@ test('inspect says the kind and label position of an element and the route of an
   ).diagram
   assert.equal(describeDiagram(inside).edges.find((e) => e.id === 'e3').crossing, undefined)
 })
+
+test('an end says how it finished and how far it reaches; the defaults are stored as nothing', () => {
+  const { diagram, results } = run(
+    start(),
+    { op: 'add_behaviour', id: 'ok', kind: 'event-end', x: 0, y: 0 },
+    {
+      op: 'add_behaviour',
+      id: 'bad',
+      kind: 'event-end',
+      x: 100,
+      y: 0,
+      outcome: 'failed',
+      reach: 'flow'
+    },
+    { op: 'set_behaviour_ending', id: 'ok', outcome: 'warnings' },
+    { op: 'set_behaviour_ending', id: 'bad', outcome: 'success', reach: 'path' }
+  )
+  const [ok, bad] = diagram.nodes
+  assert.equal(ok.data.outcome, 'warnings')
+  assert.equal(ok.data.reach, undefined)
+  assert.equal('outcome' in bad.data || 'reach' in bad.data, false, 'the defaults leave no trace')
+  assert.deepEqual(results[2].element, { id: 'ok', outcome: 'warnings', reach: 'path' })
+  assertRoundTrips(diagram)
+  assert.throws(
+    () => run(diagram, { op: 'set_behaviour_ending', id: 'ok', outcome: 'exploded' }),
+    /warnings/
+  )
+  assert.throws(() => run(diagram, { op: 'set_behaviour_ending', id: 'ok' }), /outcome/)
+  const { diagram: withStep } = run(start(), { op: 'add_behaviour', id: 's', x: 0, y: 0 })
+  assert.throws(
+    () => run(withStep, { op: 'set_behaviour_ending', id: 's', outcome: 'failed' }),
+    /not an end/
+  )
+})
+
+test('a file that calls the human step step-user is read as step-human and written so', () => {
+  const { diagram } = run(start(), { op: 'add_behaviour', id: 'h', kind: 'step-human', x: 0, y: 0 })
+  const old = serializeDiagram(diagram).replace('"step-human"', '"step-user"')
+  assert.equal(parseDiagram(old).nodes[0].data.kind, 'step-human')
+  assert.match(serializeDiagram(parseDiagram(old)), /"step-human"/)
+  const { diagram: viaOld } = run(start(), {
+    op: 'add_behaviour',
+    id: 'h',
+    kind: 'step-user',
+    x: 0,
+    y: 0
+  })
+  assert.equal(viaOld.nodes[0].data.kind, 'step-human', 'a stale assistant skill still works')
+})
+
+test('an event says whether it starts a flow; the default is stored as nothing and only some kinds have it', () => {
+  const { diagram, results } = run(
+    start(),
+    { op: 'add_behaviour', id: 't', kind: 'event-timer', x: 0, y: 0, flowPosition: 'start' },
+    { op: 'add_behaviour', id: 'm', kind: 'event-message', x: 100, y: 0 },
+    { op: 'set_behaviour_position', id: 'm', position: 'start' },
+    { op: 'set_behaviour_position', id: 't', position: 'in-flow' }
+  )
+  const [t, m] = diagram.nodes
+  assert.equal('flowPosition' in t.data, false, 'the default leaves no trace')
+  assert.equal(m.data.flowPosition, 'start')
+  assert.deepEqual(results[3].element, { id: 't', position: 'in-flow' })
+  assertRoundTrips(diagram)
+  assert.throws(
+    () => run(diagram, { op: 'set_behaviour_position', id: 'm', position: 'sideways' }),
+    /in-flow/
+  )
+  const { diagram: other } = run(
+    start(),
+    { op: 'add_behaviour', id: 's', kind: 'event-start', x: 0, y: 0 },
+    { op: 'add_behaviour', id: 'e', kind: 'event-end', x: 0, y: 0 }
+  )
+  assert.throws(
+    () => run(other, { op: 'set_behaviour_position', id: 's', position: 'start' }),
+    /cannot start a flow/
+  )
+  assert.throws(
+    () => run(other, { op: 'set_behaviour_position', id: 'e', position: 'start' }),
+    /cannot start a flow/
+  )
+  const { diagram: changed } = run(diagram, { op: 'set_behaviour_kind', id: 'm', kind: 'step' })
+  assert.equal(
+    'flowPosition' in changed.nodes[1].data,
+    false,
+    'a kind without a position clears it'
+  )
+})

@@ -141,14 +141,20 @@ import {
 } from '../palette/ItemPalette'
 import { swapStencilKind } from '../nodes/stencilSwap'
 import type { ContainerLabelSide } from '@shared/nodes/containerLabel'
-import { stencilKind, stencilLabelOutside } from '@shared/stencils/kinds'
+import {
+  DEFAULT_END_OUTCOME,
+  DEFAULT_END_REACH,
+  DEFAULT_FLOW_POSITION,
+  stencilKind,
+  stencilLabelOutside
+} from '@shared/stencils/kinds'
 import {
   labelPositionOf,
   offsetFrom,
   offsetOf,
   type LabelPosition
 } from '@shared/stencils/labelPlacement'
-import { stencilKindsUsed } from '@shared/legend/legendItems'
+import { stencilLegendRows } from '@shared/legend/legendItems'
 import UtilityDock from '../UtilityDock'
 import AlignmentGuides from '../alignment/AlignmentGuides'
 import { SNAP_THRESHOLD_PX, boundsFrom, computeSnap } from '../alignment/alignment'
@@ -426,12 +432,16 @@ function CanvasInner(): React.JSX.Element {
   // because most diagrams do not care about crossings and it adds to the canvas.
   const [showCrossings, setShowCrossings] = useState(false)
   const toggleCrossings = useCallback(() => setShowCrossings((on) => !on), [])
-  const stencilKinds = useMemo(
+  const stencilRows = useMemo(
     () =>
-      stencilKindsUsed(
+      stencilLegendRows(
         nodes.map((n) => ({
           type: n.type,
-          data: { kind: typeof n.data?.kind === 'string' ? n.data.kind : undefined }
+          data: {
+            kind: typeof n.data?.kind === 'string' ? n.data.kind : undefined,
+            outcome: n.data?.outcome,
+            reach: n.data?.reach
+          }
         }))
       ),
     [nodes]
@@ -1731,6 +1741,35 @@ function CanvasInner(): React.JSX.Element {
       pushSnapshot()
       setNodes((nds) =>
         nds.map((n) => (ids.has(n.id) && n.type === 'stencil' ? swapStencilKind(n, kindId) : n))
+      )
+    },
+    [setNodes, pushSnapshot]
+  )
+
+  // Sets how these ends finish and how far they reach, and whether these events start a flow or sit
+  // in one, one undo step. The defaults (success, this path, in the flow) are stored as nothing, and a
+  // field is only set on the kinds that have it.
+  const setStencilState = useCallback(
+    (nodeIds: string[], change: { outcome?: string; reach?: string; flowPosition?: string }) => {
+      const ids = new Set(nodeIds)
+      pushSnapshot()
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (!ids.has(n.id) || n.type !== 'stencil') return n
+          const kind = stencilKind(typeof n.data?.kind === 'string' ? n.data.kind : undefined)
+          const data = { ...n.data }
+          if (kind.endsFlow && change.outcome !== undefined) {
+            data.outcome = change.outcome === DEFAULT_END_OUTCOME ? undefined : change.outcome
+          }
+          if (kind.endsFlow && change.reach !== undefined) {
+            data.reach = change.reach === DEFAULT_END_REACH ? undefined : change.reach
+          }
+          if (kind.positioned && change.flowPosition !== undefined) {
+            data.flowPosition =
+              change.flowPosition === DEFAULT_FLOW_POSITION ? undefined : change.flowPosition
+          }
+          return { ...n, data }
+        })
       )
     },
     [setNodes, pushSnapshot]
@@ -3984,6 +4023,7 @@ function CanvasInner(): React.JSX.Element {
                 onAddStencil={addStencilNode}
                 onSetStencilKind={setStencilKind}
                 onSetStencilLabelPosition={setStencilLabelPosition}
+                onSetStencilState={setStencilState}
                 onSetContainerLabelSide={setContainerLabelSide}
                 onCreateMultipleEntities={() => setBulkCreateType('entity')}
                 onCreateMultipleContainers={() => setBulkCreateType('container')}
@@ -4106,7 +4146,7 @@ function CanvasInner(): React.JSX.Element {
               diagramPath={currentPath}
               legend={legend}
               directionSetRow={directionSetRow}
-              stencilKinds={stencilKinds}
+              stencilRows={stencilRows}
               showStencilKinds={showStencilLegend}
               onToggleStencilKinds={() => setShowStencilLegend((v) => !v)}
               anchorRect={legendPanelAnchor}

@@ -46,7 +46,7 @@
       },
       "data": {
         "label": "Check the claim",
-        "kind": "step-user"
+        "kind": "step-human"
       }
     },
     {
