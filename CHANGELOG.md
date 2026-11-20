@@ -2,7 +2,7 @@
 
 What changed for people using the tool, one entry per minor or major release. The reasons are in [docs/decisions/](docs/decisions/); the full history is in `git log`.
 
-## 0.13.0 (unreleased)
+## 0.13.0 (2026-11-20)
 
 ### Added
 
@@ -12,6 +12,7 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 ### Changed
 
+- **The first-start question about the icon pack is a banner across the top of the window,** not a box over it ([ADR 0192](docs/decisions/0192-the-first-start-question-is-a-banner-at-the-top.md)). Answer it, or leave it, and the app is usable either way; closing the window without answering asks again on the next start.
 - **New colours for behaviour: one per family** (teal steps, amber choices, indigo blue events), so the families differ in lightness and without colour. There is no red or green any more. Diagrams that did not colour a behaviour themselves take the new colours; one you coloured is unchanged.
 - **The user step is now the human step** (`step-human`, "Human step"). A person's steps are often part of the system, not its users.
 
