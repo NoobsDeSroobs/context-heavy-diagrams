@@ -8,6 +8,7 @@ A complex diagram becomes criss-crossed. A **portal** lets an edge go in at one 
 
 ## The idea
 - **A portalled edge is still one ordinary edge:** one source, one target, its tags, style, visibility sets and review behaviour, so the two-ended edge model everything is built on stays. It is drawn broken: a short stub leaves the source with a mark and a name, and a matching stub arrives at the target.
+- **Leaning (2026-11-21): a portal is a routing style,** in the same dropdown as straight, step, smooth step and curved, stored as `routingStyle: "portal"` with a few optional fields (the name, the stub length). No new concept in the panel; draw.io maps it to a straight edge. The cost is that a routing style replaces the path shape, so a portal cannot also be a stepped line; with the straight stub below that is fine for a first version. `route_edges` and the edge operations of the assistant tools must know the value, and the mock-up should show what the default edge style does with it.
 - **First leaning: each portal is part of a straight line.** The first part of the line can then be aimed, and shows where it would go.
 - **Ctrl hover and selection** on a portalled edge always show the whole edge, drawn over everything else.
 - **draw.io** gets the whole edge, with all its clutter: it has no portals.

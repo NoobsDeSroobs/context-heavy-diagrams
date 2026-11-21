@@ -4,6 +4,14 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 ## 0.15.0 (unreleased)
 
+### Added
+
+- **New edges follow a line of the diagram's legend.** The edge-style button at the top now lists the diagram's own legend lines first, so a new edge is "Data flow" from the moment it is drawn, not "a dashed arrow". Pick a line to draw new edges with it (it is ticked; pick it again to stop), or a preset below for every diagram as before. The button shows the line in use. Edges already drawn keep their own style, and a direction set's own style still wins ([ADR 0196](docs/decisions/0196-new-edges-follow-a-line-of-the-diagrams-legend.md)). `edit_diagram` and `chd edit` have `set_new_edge_line`, and `connect` without a style uses the line.
+
+### File format
+
+- A legend entry of kind `line` may have `forNewEdges: true`, documented in [docs/file-format.md](docs/file-format.md). Left out when not set. An older app ignores it.
+
 ## 0.14.0 (2026-11-21)
 
 ### Added

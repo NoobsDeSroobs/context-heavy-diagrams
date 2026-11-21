@@ -1,7 +1,7 @@
 # 0191: The default edge style is picked from the diagram's own line styles
 
 ## Status
-Not Started. Logged 2026-11-16, from using the app. Not scheduled.
+Built on the branch `chore/version-0.15.0-and-epic-cleanup`. Logged 2026-11-16, from using the app; decided 2026-11-21 ([ADR 0196](../../decisions/0196-new-edges-follow-a-line-of-the-diagrams-legend.md)).
 
 ## Goal
 Make the edge-style button at the top useful: pick the style of new edges from the line styles the diagram already uses (its legend's line entries), and add a new one from the same place, instead of choosing from seven built-in presets.
@@ -23,6 +23,8 @@ The picker lists the diagram's line entries by name, with a way to add one (the 
 - **A file-format change** (which entry is the default) is additive; `docs/file-format.md`, the compare view and the assistant tools follow.
 
 ## Tasks
-- [ ] Design pass on the questions above; an ADR that supersedes the preference in [0045](../../decisions/0045-default-edge-style-setting.md).
-- [ ] The picker, the stored default, migration of an existing `defaultEdgeStyle`.
-- [ ] The file format, the compare view, the tools and an example.
+- [x] Design pass on the questions above; an ADR that supersedes the preference in [0045](../../decisions/0045-default-edge-style-setting.md) in part ([0196](../../decisions/0196-new-edges-follow-a-line-of-the-diagrams-legend.md)).
+- [x] The picker with the diagram's lines first, the mark on a legend entry, the toolbar swatch. The personal `defaultEdgeStyle` stays as the fallback, so nothing is migrated.
+- [x] The file format, the validator and the tools (`set_new_edge_line`, `connect`).
+- [ ] Follow-ups: the compare view does not show a change of the mark (the legend list compares entries by id), and the legend panel does not mark the row.
+- [x] An example (`examples/new-edge-line.chd`) and the changelog.

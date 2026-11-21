@@ -45,6 +45,7 @@ import {
 } from '../stencils/kinds.ts'
 import { ANNOTATION_OPERATIONS, startingTags } from './annotations.ts'
 import { routeEdges } from './routeEdges.ts'
+import { edgeStyleFromLegendLine, newEdgeLineEntry } from '../legend/newEdgeLine.ts'
 import { STORY_OPERATIONS } from './stories.ts'
 import { VISIBILITY_OPERATIONS } from './visibilitySets.ts'
 import { edgeShift, nodeShifts, shiftPoints, type PlacedNode } from '../edges/carryPoints.ts'
@@ -447,6 +448,14 @@ function connect(model: Model, reader: Reader): OperationResult {
   if (reader.has('style')) {
     const style = mergeStyle(undefined, checkedStyle(reader, reader.raw('style'), EDGE_STYLE))
     if (style) edge.style = style
+  } else {
+    // An edge with no style of its own takes the look of the diagram's line for new edges (ADR 0196),
+    // as one drawn by a person does. The colour is the one the legend shows, stored as it is.
+    const line = newEdgeLineEntry(model.diagram.legend)
+    if (line) {
+      const style = edgeStyleFromLegendLine(line, line.color)
+      if (Object.keys(style).length > 0) edge.style = style as DiagramEdge['style']
+    }
   }
   startingTags(model, reader, edge)
   model.edges.push(edge)

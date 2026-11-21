@@ -24,6 +24,8 @@ export interface LegendEntry extends LineMotion {
   lineStyle?: LineStyleKind
   startMarker?: MarkerKind
   endMarker?: MarkerKind
+  // 'line' kind only: new edges are drawn with this line (ADR 0196). At most one entry has it.
+  forNewEdges?: boolean
   // 'icon' kind only.
   icon?: IconRef
 }

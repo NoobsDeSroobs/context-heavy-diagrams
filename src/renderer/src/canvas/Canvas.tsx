@@ -209,6 +209,11 @@ import { effectiveStylePalette, usePreferences } from '../preferences/preference
 import ThreatMatrixView from '../threat-matrix/ThreatMatrixView'
 import { themeAdaptiveColor } from '../styling/themeAdaptiveColor'
 import {
+  edgeStyleFromLegendLine,
+  newEdgeLineEntry,
+  withNewEdgeLine
+} from '@shared/legend/newEdgeLine'
+import {
   deriveNodeFields,
   deriveEdgeFields,
   newNodeId,
@@ -1349,12 +1354,28 @@ function CanvasInner(): React.JSX.Element {
   // set's own default style if one is set. An edge drawn while a reading is
   // active is thus born in that reading's look; existing edges are never
   // touched.
+  // The legend line new edges follow (ADR 0196), when the diagram has marked one: its look replaces the
+  // personal default, so a new edge means what the legend says. The colour is the one the legend shows
+  // in the theme now, stored the way an edge stores a colour.
+  const newEdgeLine = useMemo(() => newEdgeLineEntry(legend), [legend])
+  const defaultEdgeLook = useMemo<EdgeStyle>(
+    () =>
+      newEdgeLine
+        ? edgeStyleFromLegendLine(
+            newEdgeLine,
+            newEdgeLine.color !== undefined
+              ? themeAdaptiveColor(newEdgeLine.color, theme)
+              : undefined
+          )
+        : preferences.defaultEdgeStyle,
+    [newEdgeLine, theme, preferences.defaultEdgeStyle]
+  )
   const newEdgeStyle = useMemo<EdgeStyle>(
     () => ({
-      ...preferences.defaultEdgeStyle,
+      ...defaultEdgeLook,
       ...activeDirectionSetStyle(edgeDirectionSets, activeEdgeDirectionSetId)
     }),
-    [preferences.defaultEdgeStyle, edgeDirectionSets, activeEdgeDirectionSetId]
+    [defaultEdgeLook, edgeDirectionSets, activeEdgeDirectionSetId]
   )
 
   // Multi-connection-line, after xyflow's documented pattern
@@ -3916,7 +3937,11 @@ function CanvasInner(): React.JSX.Element {
               <button
                 type="button"
                 className="toolbar-edge-style-swatch"
-                title="Default style for newly drawn edges"
+                title={
+                  newEdgeLine
+                    ? `New edges are drawn as "${newEdgeLine.label}" (this diagram's legend)`
+                    : 'Default style for newly drawn edges'
+                }
                 aria-label="Default style for newly drawn edges"
                 onClick={(event) =>
                   setDefaultEdgeStylePicker(event.currentTarget.getBoundingClientRect())
@@ -3926,18 +3951,16 @@ function CanvasInner(): React.JSX.Element {
                   <line
                     x1="2"
                     y1="8"
-                    x2={preferences.defaultEdgeStyle.endMarker === 'none' ? 26 : 20}
+                    x2={defaultEdgeLook.endMarker === 'none' ? 26 : 20}
                     y2="8"
-                    stroke={preferences.defaultEdgeStyle.stroke ?? 'currentColor'}
-                    strokeWidth={preferences.defaultEdgeStyle.strokeWidth ?? 2}
-                    strokeDasharray={
-                      DEFAULT_EDGE_SWATCH_DASH[preferences.defaultEdgeStyle.lineStyle ?? 'solid']
-                    }
+                    stroke={defaultEdgeLook.stroke ?? 'currentColor'}
+                    strokeWidth={defaultEdgeLook.strokeWidth ?? 2}
+                    strokeDasharray={DEFAULT_EDGE_SWATCH_DASH[defaultEdgeLook.lineStyle ?? 'solid']}
                   />
-                  {preferences.defaultEdgeStyle.endMarker !== 'none' && (
+                  {defaultEdgeLook.endMarker !== 'none' && (
                     <polygon
                       points="20,3 26,8 20,13"
-                      fill={preferences.defaultEdgeStyle.stroke ?? 'currentColor'}
+                      fill={defaultEdgeLook.stroke ?? 'currentColor'}
                     />
                   )}
                 </svg>
@@ -4359,6 +4382,19 @@ function CanvasInner(): React.JSX.Element {
                 // now the default," same as picking one for a single edge
                 // replaces that edge's look rather than layering on top.
                 updatePreferences({ defaultEdgeStyle: patch })
+                // A preset is the look of new edges from now on, so the diagram's marked line stops
+                // being it (ADR 0196).
+                if (newEdgeLine) {
+                  setLegend((prev) => withNewEdgeLine(prev, null))
+                  markDirty()
+                }
+                setDefaultEdgeStylePicker(null)
+              }}
+              lines={legend.filter((entry) => entry.kind === 'line')}
+              currentLineId={newEdgeLine?.id}
+              onPickLine={(id) => {
+                setLegend((prev) => withNewEdgeLine(prev, id === newEdgeLine?.id ? null : id))
+                markDirty()
                 setDefaultEdgeStylePicker(null)
               }}
               onClose={() => setDefaultEdgeStylePicker(null)}

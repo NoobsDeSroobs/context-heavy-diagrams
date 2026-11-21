@@ -376,6 +376,7 @@ A saved catalog of legend entries — `legend` on the top-level object — each 
 | `animation`, `animationSpeed`, `animationDirection`, `pulseDistance`, `dashLength`, `dashGap` | as in Edge style | no | `"line"` kind only. The same fields with the same meaning as in [Edge style](#edge-style), so the legend arrow moves like the edge it stands for. An image export draws it still. |
 | `lineStyle` | `"solid"` \| `"dashed"` \| `"dotted"` | no | `"line"` kind only. Same vocabulary as an Edge's own `style.lineStyle` — see [Edge](#edge) above. |
 | `startMarker` / `endMarker` | MarkerKind | no | `"line"` kind only. Same vocabulary as an Edge's own `style.startMarker`/`style.endMarker`. |
+| `forNewEdges` | boolean | no | `"line"` kind only. `true` makes this the line new edges are drawn with ([ADR 0196](decisions/0196-new-edges-follow-a-line-of-the-diagrams-legend.md)): the app gives a new edge this entry's line style, markers, colour and motion fields. Only one entry has it; if a file marks several, a reader uses the first, and on another kind it is ignored. Left out when not `true`. |
 | `icon` | IconRef | no (yes for `"icon"` kind) | `"icon"` kind only. Same shape as a Node's `data.icons.*` entries — see [Node](#node) above. |
 
 **Shown/hidden state is deliberately not part of this file**, same treatment as highlight enablement above — the catalog is shared, whether the legend panel is currently open is local, in-memory, per-session UI state, always starting closed.

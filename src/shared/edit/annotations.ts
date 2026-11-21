@@ -14,6 +14,7 @@ import type {
 } from '../diagram/index.ts'
 import { firstFreeName, labelToFileStem, truncateStem } from '../labelFileName.ts'
 import { highlightId } from '../tagging/highlights.ts'
+import { withNewEdgeLine } from '../legend/newEdgeLine.ts'
 import { seedMetadata, syncElementMetadata } from '../tagging/metadataSync.ts'
 import {
   EDGE_STYLE,
@@ -304,7 +305,7 @@ const LEGEND_FIELDS: Record<string, StyleRule> = {
   ...LEGEND_LINE_FIELDS
 }
 // The order the file writes an entry's fields in.
-const LEGEND_ORDER = ['id', 'kind', 'label', ...Object.keys(LEGEND_FIELDS)]
+const LEGEND_ORDER = ['id', 'kind', 'label', ...Object.keys(LEGEND_FIELDS), 'forNewEdges']
 
 function orderedLegend(entry: Record<string, unknown>): LegendEntry {
   const out: Record<string, unknown> = {}
@@ -361,6 +362,27 @@ function addLegendEntry(model: Model, reader: Reader): OperationResult {
   const entry = orderedLegend({ id, kind, label, ...present })
   model.diagram.legend = [...(model.diagram.legend ?? []), entry]
   return { op: 'add_legend_entry', legendEntry: entry }
+}
+
+// Makes one line entry the look of new edges, or none with a null id. Only one entry has it.
+function setNewEdgeLine(model: Model, reader: Reader): OperationResult {
+  const legend = model.diagram.legend ?? []
+  if (reader.raw('id') === null) {
+    const cleared = withNewEdgeLine(legend, null)
+    if (legend.length > 0) model.diagram.legend = cleared
+    return { op: 'set_new_edge_line' }
+  }
+  const current = legendOf(model, reader)
+  if (current.kind !== 'line') {
+    reader.fail(
+      `"${current.id}" is a legend entry of kind "${current.kind}"; only a "line" entry can be the look of new edges`
+    )
+  }
+  model.diagram.legend = withNewEdgeLine(legend, current.id)
+  return {
+    op: 'set_new_edge_line',
+    legendEntry: model.diagram.legend.find((e) => e.id === current.id)
+  }
 }
 
 function setLegendEntry(model: Model, reader: Reader): OperationResult {
@@ -531,6 +553,7 @@ export const ANNOTATION_OPERATIONS: Record<
   remove_highlight: removeHighlight,
   add_legend_entry: addLegendEntry,
   set_legend_entry: setLegendEntry,
+  set_new_edge_line: setNewEdgeLine,
   remove_legend_entry: removeLegendEntry,
   link_to_existing_diagram: linkToExistingDiagram,
   add_new_linked_diagram: addNewLinkedDiagram,
