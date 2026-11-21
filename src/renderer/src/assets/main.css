@@ -27,6 +27,7 @@
 @import '../search/search.css';
 @import '../tagging/tagging-highlights-panel.css';
 @import '../visibility/visibility-sets-panel.css';
+@import '../stories/stories.css';
 @import '../legend/legend-row.css';
 @import '../diagnostics/diagnostics.css';
 @import '../app-about-dialog-overlay.css';

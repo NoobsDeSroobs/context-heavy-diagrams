@@ -23,6 +23,7 @@ import { crossingText, edgeCrossing } from '../crossings/crossings.ts'
 import { stencilLabelInsets, stencilLabelOutside } from '../stencils/kinds.ts'
 import { LINE_HEIGHT_EM, measureText, wrapText, type FontSpec } from '../export/textLayout.ts'
 import { NODE_STYLE_DEFAULTS, styledNodeType } from '../styling/styleDefaults.ts'
+import { describeStep } from '../visibility/story.ts'
 import { summarizeEdge, summarizeNode, type EdgeSummary, type NodeSummary } from './operations.ts'
 
 export interface DescribedNode extends NodeSummary {
@@ -55,6 +56,8 @@ export interface DiagramDescription {
   legend?: LegendEntry[]
   // The visibility sets of the diagram and how many elements are in each (ADR 0194).
   visibilitySets?: { name: string; elements: number }[]
+  // Each story with its steps in words, by the names of the sets (ADR 0195).
+  stories?: { name: string; start?: string; steps: string[] }[]
 }
 
 function tagsOf(
@@ -115,6 +118,17 @@ export function describeDiagram(
             elements: [...diagram.nodes, ...diagram.edges].filter((el) =>
               el.visibilitySetIds?.includes(set.id)
             ).length
+          }))
+        }
+      : {}),
+    ...(diagram.stories?.length
+      ? {
+          stories: diagram.stories.map((story) => ({
+            name: story.name,
+            ...(story.start?.actions?.length
+              ? { start: describeStep(story.start, setNameById) }
+              : {}),
+            steps: story.steps.map((step) => describeStep(step, setNameById))
           }))
         }
       : {})

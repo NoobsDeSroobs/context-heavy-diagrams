@@ -19,8 +19,9 @@ Complete field-by-field reference. Read the relevant section rather than the who
 13. [Gravity presets](#gravity-presets)
 14. [Edge direction sets](#edge-direction-sets)
 15. [Visibility sets](#visibility-sets)
-16. [Security](#security)
-17. [Determinism & versioning](#determinism--versioning)
+16. [Stories](#stories)
+17. [Security](#security)
+18. [Determinism & versioning](#determinism--versioning)
 
 ---
 
@@ -60,6 +61,7 @@ Complete field-by-field reference. Read the relevant section rather than the who
 | `edgeDirectionSets` | array of EdgeDirectionSet | Named readings of edge direction — see [Edge direction sets](#edge-direction-sets). Absent/empty means unused. |
 | `activeEdgeDirectionSetId` | string | Which `edgeDirectionSets` entry is currently displayed. Absent means the first set. Edges on disk are always written in the *first* set's orientation regardless of this value once there are 2+ sets. |
 | `visibilitySets` | array of `{ id, name }` | The catalogue of named sets of nodes and edges that a person can show or hide together — see [Visibility sets](#visibility-sets). Absent or empty means unused; leave it out. Which sets are hidden is never stored. |
+| `stories` | array of `{ id, name, steps }` | Stories told over the visibility sets, one step at a time — see [Stories](#stories). Absent or empty means none. |
 | `security` | object | Threat/risk model — see [Security](#security). Absent means unused (no node has `data.security` either). |
 | `nodes` | array of Node | See [Node](#node). |
 | `edges` | array of Edge | See [Edge](#edge). |
@@ -401,6 +403,31 @@ Absent/empty `edgeDirectionSets` = the whole mechanism dormant — no `direction
 - Nothing is inferred: an edge is not hidden because an end is, and a child is not hidden because its container is.
 - Which sets are hidden is not stored; a diagram opens with everything shown.
 - With the `edit_diagram` operations, name a set by its name: `add_visibility_set`, `rename_visibility_set`, `remove_visibility_set`, `add_to_visibility_set {set, ids}`, `remove_from_visibility_set {set, ids}`. Do not write ids by hand unless you are writing the file directly.
+
+## Stories
+
+`stories` (top-level) is a list of stories: ways to tell the diagram one step at a time over the visibility sets, in the app's presenter view. Each has a name and an ordered list of steps; a step is an ordered list of actions (show a set, hide a set), applied on top of what the steps before it left.
+
+```json
+"stories": [
+  { "id": "story-1", "name": "Integration problem", "steps": [
+    { "actions": [ { "action": "show", "set": "vis-1" } ] },
+    { "actions": [ { "action": "hide", "set": "vis-1" }, { "action": "show", "set": "vis-2" } ] }
+  ] }
+]
+```
+
+| Field | Type | Required | Meaning |
+|---|---|---|---|
+| `id` | string | yes | Opaque and unique among the stories; the person never sees it. |
+| `name` | string | yes | What the person sees. Unique ignoring case (the app refuses a duplicate). |
+| `steps` | array of `{ actions? }` | yes | In the order they are told. `actions` is left out when empty; `{}` does nothing. |
+
+An action is `{ "action": "show" | "hide", "set": <visibility set id> }`. A later version may add actions with fields of their own; a reader ignores an action it does not know and a tool that rewrites the file keeps it as it was.
+
+- Step 0 is the start state, before the first step: every set is hidden and then the optional `start` step of the story (the same shape as a step) runs; an element in no set is always shown. Step *n* is step *n* − 1 with the *n*th step applied: its actions run in order, so the last action on a set wins.
+- Which step is on screen is not stored.
+- With the `edit_diagram` operations, name a story and its sets by their names: `add_story {name}`, `rename_story {story, name}`, `remove_story {story}`, `add_story_step {story, at?, actions?: [{action, set}]}` (an action is about `all: true` instead of `set` for all sets), `remove_story_step {story, step}`, `add_story_action {story, step, action, set | all: true, at?}`, `remove_story_action {story, step, number}` (step 0 is the start state). Steps and actions are numbered from 1.
 
 ## Security
 

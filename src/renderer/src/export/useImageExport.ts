@@ -229,7 +229,9 @@ export function useImageExport(
       activeEdgeDirectionSetId,
       security,
       diagramFontFamily,
-      visibilitySets
+      visibilitySets,
+      // Exports draw the diagram, not its stories (ADR 0195).
+      []
     )
     return filterToVisible(file, hiddenSetIds)
   }, [

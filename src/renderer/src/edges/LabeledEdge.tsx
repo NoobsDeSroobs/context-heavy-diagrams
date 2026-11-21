@@ -572,7 +572,7 @@ function LabeledEdge({
       <EdgeLabelRenderer>
         <div
           ref={labelRef}
-          className={`edge-label${data?.compareClass ? ` ${data.compareClass}` : ''}`}
+          className={`edge-label${data?.compareClass ? ` ${data.compareClass}` : ''}${data?.fadeClass ? ` ${data.fadeClass}` : ''}`}
           style={{
             position: 'absolute',
             transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,

@@ -1,4 +1,6 @@
 // The rule of visibility sets (ADR 0194), the one place that decides whether an element is visible.
+// Words: an element is visible or hidden (the result of the rule); a set is shown or hidden (what a
+// person does with it).
 // Which sets are hidden is session state held by the editor; the catalogue and the elements'
 // `visibilitySetIds` come from the file.
 import type { VisibilitySet } from './schema.ts'

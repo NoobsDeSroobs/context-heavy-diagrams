@@ -94,6 +94,8 @@ export interface OperationResult {
   // Visibility set operations (ADR 0194): the set as it now stands, and the ids of the elements in it.
   visibilitySet?: VisibilitySet
   members?: string[]
+  // Story operations (ADR 0195): the story as it now stands, each step in words by the names of its sets.
+  story?: { name: string; start?: string; steps: string[] }
   // link_to_existing_diagram / set_note: the path now stored on the element (relative to the diagram, with "/").
   link?: string
   note?: string

@@ -24,6 +24,8 @@ export interface PanelsState {
   setDiagramSettingsPanelOpen: React.Dispatch<React.SetStateAction<boolean>>
   referencesPanelOpen: boolean
   setReferencesPanelOpen: React.Dispatch<React.SetStateAction<boolean>>
+  storiesPanelOpen: boolean
+  setStoriesPanelOpen: React.Dispatch<React.SetStateAction<boolean>>
   changesPanelOpen: boolean
   setChangesPanelOpen: React.Dispatch<React.SetStateAction<boolean>>
   changesDiff: ChangesSinceSave | null
@@ -37,6 +39,7 @@ export interface PanelsState {
   toggleLayerPanel: () => void
   toggleDiagramSettingsPanel: () => void
   toggleReferencesPanel: () => void
+  toggleStoriesPanel: () => void
   toggleChangesPanelWith: (computeChangesDiff: () => void) => void
   handlePersonaChange: (next: 'diagram' | 'matrix') => void
 }
@@ -79,6 +82,8 @@ export function usePanels(
   // only. null means "not computed yet" (opening the panel triggers the
   // async reread), distinct from an empty diff (no changes).
   const [changesPanelOpen, setChangesPanelOpen] = useState(false)
+  // The stories panel (ADR 0195): the right-hand dock, one of the family.
+  const [storiesPanelOpen, setStoriesPanelOpen] = useState(false)
   const [changesDiff, setChangesDiff] = useState<ChangesSinceSave | null>(null)
   // Persona switch (see ADR 0055) — akin to FreeCAD's workbench
   // switcher/Affinity's persona tabs: swaps the entire main view, not a
@@ -105,6 +110,7 @@ export function usePanels(
       setDiagramSettingsPanelOpen(false)
       setReferencesPanelOpen(false)
       setChangesPanelOpen(false)
+      setStoriesPanelOpen(false)
       setNotesPanelNodeId(nodeId)
       // With no existing file (or nothing saved yet to resolve one against), the shadow is seeded
       // synchronously here, not in the effect below: nothing asynchronous happens in this branch.
@@ -126,6 +132,7 @@ export function usePanels(
 
   const toggleDiagnosticsPanel = useCallback(() => {
     setNotesPanelNodeId(null)
+    setStoriesPanelOpen(false)
     setPreferencesPanelOpen(false)
     setLayerPanelOpen(false)
     setStylePalettePanelOpen(false)
@@ -138,6 +145,7 @@ export function usePanels(
 
   const togglePreferencesPanel = useCallback(() => {
     setNotesPanelNodeId(null)
+    setStoriesPanelOpen(false)
     setDiagnosticsPanelOpen(false)
     setLayerPanelOpen(false)
     setStylePalettePanelOpen(false)
@@ -150,6 +158,7 @@ export function usePanels(
 
   const toggleStylePalettePanel = useCallback(() => {
     setNotesPanelNodeId(null)
+    setStoriesPanelOpen(false)
     setDiagnosticsPanelOpen(false)
     setPreferencesPanelOpen(false)
     setLayerPanelOpen(false)
@@ -162,6 +171,7 @@ export function usePanels(
 
   const toggleAlignDistributePanel = useCallback(() => {
     setNotesPanelNodeId(null)
+    setStoriesPanelOpen(false)
     setDiagnosticsPanelOpen(false)
     setPreferencesPanelOpen(false)
     setLayerPanelOpen(false)
@@ -174,6 +184,7 @@ export function usePanels(
 
   const toggleLayerPanel = useCallback(() => {
     setNotesPanelNodeId(null)
+    setStoriesPanelOpen(false)
     setDiagnosticsPanelOpen(false)
     setPreferencesPanelOpen(false)
     setStylePalettePanelOpen(false)
@@ -187,6 +198,7 @@ export function usePanels(
 
   const toggleDiagramSettingsPanel = useCallback(() => {
     setNotesPanelNodeId(null)
+    setStoriesPanelOpen(false)
     setDiagnosticsPanelOpen(false)
     setPreferencesPanelOpen(false)
     setLayerPanelOpen(false)
@@ -199,6 +211,7 @@ export function usePanels(
 
   const toggleReferencesPanel = useCallback(() => {
     setNotesPanelNodeId(null)
+    setStoriesPanelOpen(false)
     setDiagnosticsPanelOpen(false)
     setPreferencesPanelOpen(false)
     setLayerPanelOpen(false)
@@ -209,8 +222,22 @@ export function usePanels(
     setReferencesPanelOpen((open) => !open)
   }, [])
 
+  const toggleStoriesPanel = useCallback(() => {
+    setNotesPanelNodeId(null)
+    setDiagnosticsPanelOpen(false)
+    setPreferencesPanelOpen(false)
+    setLayerPanelOpen(false)
+    setStylePalettePanelOpen(false)
+    setAlignDistributePanelOpen(false)
+    setDiagramSettingsPanelOpen(false)
+    setReferencesPanelOpen(false)
+    setChangesPanelOpen(false)
+    setStoriesPanelOpen((open) => !open)
+  }, [])
+
   const toggleChangesPanelWith = useCallback((computeChangesDiff: () => void) => {
     setNotesPanelNodeId(null)
+    setStoriesPanelOpen(false)
     setDiagnosticsPanelOpen(false)
     setPreferencesPanelOpen(false)
     setLayerPanelOpen(false)
@@ -237,6 +264,7 @@ export function usePanels(
       setPersona(next)
       if (next === 'matrix') {
         setNotesPanelNodeId(null)
+        setStoriesPanelOpen(false)
         setDiagnosticsPanelOpen(false)
         setLayerPanelOpen(false)
         setStylePalettePanelOpen(false)
@@ -269,6 +297,8 @@ export function usePanels(
     setDiagramSettingsPanelOpen,
     referencesPanelOpen,
     setReferencesPanelOpen,
+    storiesPanelOpen,
+    setStoriesPanelOpen,
     changesPanelOpen,
     setChangesPanelOpen,
     changesDiff,
@@ -282,6 +312,7 @@ export function usePanels(
     toggleLayerPanel,
     toggleDiagramSettingsPanel,
     toggleReferencesPanel,
+    toggleStoriesPanel,
     toggleChangesPanelWith,
     handlePersonaChange
   }

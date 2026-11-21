@@ -45,6 +45,7 @@ import {
 } from '../stencils/kinds.ts'
 import { ANNOTATION_OPERATIONS, startingTags } from './annotations.ts'
 import { routeEdges } from './routeEdges.ts'
+import { STORY_OPERATIONS } from './stories.ts'
 import { VISIBILITY_OPERATIONS } from './visibilitySets.ts'
 import { edgeShift, nodeShifts, shiftPoints, type PlacedNode } from '../edges/carryPoints.ts'
 import {
@@ -800,7 +801,8 @@ const OPERATIONS: Record<string, (model: Model, reader: Reader) => OperationResu
   set_edge_handles: setEdgeHandles,
   route_edges: routeEdgesOperation,
   ...ANNOTATION_OPERATIONS,
-  ...VISIBILITY_OPERATIONS
+  ...VISIBILITY_OPERATIONS,
+  ...STORY_OPERATIONS
 }
 
 export const OPERATION_NAMES: readonly string[] = Object.keys(OPERATIONS)

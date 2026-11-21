@@ -31,6 +31,9 @@ export interface VisibilitySetsState {
   renameSet: (id: string, name: string) => string | null
   deleteSet: (id: string) => void
   toggleShown: (id: string) => void
+  // Hides exactly these sets, as a story does (ADR 0195); what that leaves selected and hidden leaves
+  // the selection, like toggling a set.
+  setHidden: (hidden: Set<string>) => void
   addSelectionTo: (id: string) => void
   removeSelectionFrom: (id: string) => void
   // Takes one element out of a set, and selects one (when it is shown).
@@ -89,6 +92,14 @@ export function useVisibilitySets(
       deselectHidden(visibilitySets, next)
     },
     [hiddenSetIds, setHiddenSetIds, visibilitySets, deselectHidden]
+  )
+
+  const setHidden = useCallback(
+    (hidden: Set<string>) => {
+      setHiddenSetIds(hidden)
+      deselectHidden(visibilitySets, hidden)
+    },
+    [setHiddenSetIds, visibilitySets, deselectHidden]
   )
 
   const addSet = useCallback(
@@ -331,6 +342,7 @@ export function useVisibilitySets(
     renameSet,
     deleteSet,
     toggleShown,
+    setHidden,
     addSelectionTo,
     removeSelectionFrom,
     removeMemberFrom,

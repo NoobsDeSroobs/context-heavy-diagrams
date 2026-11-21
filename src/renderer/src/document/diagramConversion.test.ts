@@ -21,7 +21,8 @@ const roundTrip = (file: DiagramFile): DiagramFile => {
     r.activeEdgeDirectionSetId,
     r.security,
     r.fontFamily,
-    r.visibilitySets
+    r.visibilitySets,
+    r.stories
   )
 }
 
@@ -37,6 +38,21 @@ const fixture = (): DiagramFile => ({
   visibilitySets: [
     { id: 'vis-1', name: 'Today' },
     { id: 'vis-2', name: 'Proposed' }
+  ],
+  stories: [
+    {
+      id: 'story-1',
+      name: 'Integration',
+      steps: [
+        { actions: [{ action: 'show', set: 'vis-1' }] },
+        {
+          actions: [
+            { action: 'hide', set: 'vis-1' },
+            { action: 'show', set: 'vis-2' }
+          ]
+        }
+      ]
+    }
   ],
   security: {
     threats: [{ id: 't1', name: 'Spoofing' }],

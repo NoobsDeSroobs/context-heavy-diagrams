@@ -59,6 +59,7 @@ import {
   type EdgeStyle,
   type GravityPreset,
   type VisibilitySet,
+  type Story,
   type IconRef,
   type IconSlot,
   type JsonValue,
@@ -175,9 +176,15 @@ import { useLegendLinePick } from '../legend/useLegendLinePick'
 import { useLegend } from '../legend/useLegend'
 import { useHighlights } from '../tagging/useHighlights'
 import { visibleFilter, strayAdvisory } from '@shared/visibility/visibility'
-import { withVisibility, setIdsOf } from '../visibility/hiding'
+import { lockedForPresenting, withVisibility, setIdsOf } from '../visibility/hiding'
 import { useVisibilitySets } from '../visibility/useVisibilitySets'
 import VisibilitySetsPanel from '../visibility/VisibilitySetsPanel'
+import { useStories } from '../stories/useStories'
+import { useStoryFade } from '../stories/useStoryFade'
+import { usePresenterActivity } from '../stories/usePresenterActivity'
+import { storyStrayAdvisory } from '@shared/visibility/story'
+import StoriesPanel from '../stories/StoriesPanel'
+import PresenterBar from '../stories/PresenterBar'
 import { useDiagnostics } from '../diagnostics/useDiagnostics'
 import { useIconPackProblems } from '../diagnostics/useIconPackProblems'
 import type { IconPackNote } from '@shared/icons/schema'
@@ -285,6 +292,9 @@ function CanvasInner(): React.JSX.Element {
   // The catalogue of visibility sets (ADR 0194): file-scoped and persisted like the legend, reset
   // on load. Which sets are shown is session state and is not kept here.
   const [visibilitySets, setVisibilitySets] = useState<VisibilitySet[]>([])
+  // The stories told over those sets (ADR 0195): file-scoped and persisted the same way. The step
+  // being shown is session state and lives in the story hook.
+  const [stories, setStories] = useState<Story[]>([])
   // Which sets are hidden right now: session state, never saved, empty when a diagram opens.
   const [hiddenSetIds, setHiddenSetIds] = useState<Set<string>>(() => new Set())
   // The rule of ADR 0194 for the current catalogue and choice: whether an element is visible.
@@ -438,6 +448,11 @@ function CanvasInner(): React.JSX.Element {
     setHiddenSetIds
   )
   const setVisibilitySetsPanelOpen = visibilitySetsUi.setPanelOpen
+  // The elements in no set, which a story cannot hide (ADR 0194): the Stories panel says how many.
+  const unassignedCount = useMemo(
+    () => [...nodes, ...edges].filter((e) => (setIdsOf(e)?.length ?? 0) === 0).length,
+    [nodes, edges]
+  )
   // Search and isolate do not see what the sets hide (ADR 0194).
   const searchableNodes = useMemo(
     () => (hiddenSetIds.size === 0 ? nodes : nodes.filter((n) => isVisibleElement(setIdsOf(n)))),
@@ -547,6 +562,8 @@ function CanvasInner(): React.JSX.Element {
     setDiagramSettingsPanelOpen,
     referencesPanelOpen,
     setReferencesPanelOpen,
+    storiesPanelOpen,
+    setStoriesPanelOpen,
     changesPanelOpen,
     setChangesPanelOpen,
     changesDiff,
@@ -560,9 +577,34 @@ function CanvasInner(): React.JSX.Element {
     toggleLayerPanel,
     toggleDiagramSettingsPanel,
     toggleReferencesPanel,
+    toggleStoriesPanel,
     toggleChangesPanelWith,
     handlePersonaChange
   } = usePanels(canvasApi, { setNoteShadows, setDefaultEdgeStylePicker })
+
+  // Stories drive which sets are hidden (ADR 0195).
+  const storiesUi = useStories(
+    canvasApi,
+    stories,
+    setStories,
+    visibilitySets,
+    hiddenSetIds,
+    visibilitySetsUi.setHidden,
+    storiesPanelOpen
+  )
+  const storiesPresenting = storiesUi.presenting
+  // The presenter fades what appears and disappears between steps (ADR 0195).
+  const storyFade = useStoryFade(storiesPresenting, nodes, edges, visibilitySets, hiddenSetIds)
+  // The presenter's bar shows when the mouse moves and goes when it is still (ADR 0195).
+  const presenterAwake = usePresenterActivity(storiesPresenting)
+  const handlePresenterKey = storiesUi.handlePresenterKey
+  const resetStories = storiesUi.reset
+  // The floating sets panel is put away before the presentation starts.
+  const presentStoryFrom = storiesUi.present
+  const presentStory = useCallback(() => {
+    setVisibilitySetsPanelOpen(false)
+    presentStoryFrom()
+  }, [presentStoryFrom, setVisibilitySetsPanelOpen])
 
   // One notice for the diagram and every note that changed outside the app (ADR 0159).
   const outsideChanges = useOutsideChanges({
@@ -981,7 +1023,8 @@ function CanvasInner(): React.JSX.Element {
         activeEdgeDirectionSetId,
         security,
         diagramFontFamily,
-        visibilitySets
+        visibilitySets,
+        stories
       ),
     [
       nodes,
@@ -994,6 +1037,7 @@ function CanvasInner(): React.JSX.Element {
       diagramMaxConnectionPointsPerSide,
       diagramFontFamily,
       visibilitySets,
+      stories,
       edgeDirectionSets,
       activeEdgeDirectionSetId,
       security
@@ -2725,6 +2769,7 @@ function CanvasInner(): React.JSX.Element {
       diagramMaxConnectionPointsPerSide,
       diagramFontFamily,
       visibilitySets,
+      stories,
       edgeDirectionSets,
       activeEdgeDirectionSetId,
       security,
@@ -2808,6 +2853,7 @@ function CanvasInner(): React.JSX.Element {
         activeEdgeDirectionSetId: openedActiveEdgeDirectionSetId,
         security: openedSecurity,
         visibilitySets: openedVisibilitySets,
+        stories: openedStories,
         hierarchyNotes: openedHierarchyNotes
       } = fromDiagramFile(diagram)
       // Anything the load repaired by itself (a dangling container reference, a missing zIndex, a
@@ -2827,7 +2873,8 @@ function CanvasInner(): React.JSX.Element {
         openedActiveEdgeDirectionSetId,
         openedSecurity,
         openedFontFamily,
-        openedVisibilitySets
+        openedVisibilitySets,
+        openedStories
       )
       // savedWith and iconPacks are written by the save itself, and a zIndex the file leaves out is a
       // default (ADR 0035) that never changes how the diagram looks (diagrams written by hand or by
@@ -2880,8 +2927,11 @@ function CanvasInner(): React.JSX.Element {
       setDiagramMaxConnectionPointsPerSide(openedMaxConnectionPointsPerSide)
       setDiagramFontFamily(openedFontFamily)
       setVisibilitySets(openedVisibilitySets)
+      setStories(openedStories)
       setHiddenSetIds(new Set())
       setVisibilitySetsPanelOpen(false)
+      setStoriesPanelOpen(false)
+      resetStories()
       setEdgeDirectionSets(openedEdgeDirectionSets)
       setActiveEdgeDirectionSetId(openedActiveEdgeDirectionSetId)
       setSecurity(openedSecurity)
@@ -2945,8 +2995,11 @@ function CanvasInner(): React.JSX.Element {
       setLegend,
       setLegendPanelOpen,
       setVisibilitySets,
+      setStories,
       setHiddenSetIds,
       setVisibilitySetsPanelOpen,
+      setStoriesPanelOpen,
+      resetStories,
       setHighlights,
       setEnabledHighlightIds,
       setHighlightsPanelOpen,
@@ -2985,6 +3038,7 @@ function CanvasInner(): React.JSX.Element {
     diagramMaxConnectionPointsPerSide,
     diagramFontFamily,
     visibilitySets,
+    stories,
     edgeDirectionSets,
     activeEdgeDirectionSetId,
     security,
@@ -3083,6 +3137,7 @@ function CanvasInner(): React.JSX.Element {
       'edit.undo': undo,
       'edit.redo': redo,
       'view.fit': () => rfInstance.fitView(),
+      'view.present': presentStory,
       'selection.escape': () => {
         if (commandPaletteOpen) {
           // The palette also has its own window-level Escape listener
@@ -3109,6 +3164,8 @@ function CanvasInner(): React.JSX.Element {
           setHighlightsPanelOpen(false)
         } else if (visibilitySetsUi.panelOpen) {
           setVisibilitySetsPanelOpen(false)
+        } else if (storiesPanelOpen) {
+          setStoriesPanelOpen(false)
         } else if (preferencesPanelOpen) {
           setPreferencesPanelOpen(false)
         } else if (stylePalettePanelOpen) {
@@ -3139,6 +3196,11 @@ function CanvasInner(): React.JSX.Element {
       }
     }
     const onKeyDown = (event: KeyboardEvent): void => {
+      // While presenting, the presenter's keys are the only shortcuts (ADR 0195).
+      if (storiesPresenting) {
+        if (handlePresenterKey(event)) event.preventDefault()
+        return
+      }
       const target = event.target as HTMLElement | null
       // Ctrl+A/D/C/V/X/Z are text-editing conventions — commands flagged
       // deferToTextField are skipped while a text field has focus rather than
@@ -3203,6 +3265,11 @@ function CanvasInner(): React.JSX.Element {
     setHighlightsPanelOpen,
     visibilitySetsUi.panelOpen,
     setVisibilitySetsPanelOpen,
+    storiesPresenting,
+    handlePresenterKey,
+    presentStory,
+    storiesPanelOpen,
+    setStoriesPanelOpen,
     preferencesPanelOpen,
     stylePalettePanelOpen,
     alignDistributePanelOpen,
@@ -3350,14 +3417,14 @@ function CanvasInner(): React.JSX.Element {
   // `hidden` (ADR 0194). All of them are sent to React Flow, since a child needs its container in the
   // list; it does not draw the hidden ones. The state keeps them, in place, so an edge still follows
   // an element that is hidden.
-  const nodesWithVisibility = useMemo(
-    () => withVisibility(nodes, isVisibleElement),
-    [nodes, isVisibleElement]
-  )
-  const edgesWithVisibility = useMemo(
-    () => withVisibility(orderedEdges, isVisibleElement),
-    [orderedEdges, isVisibleElement]
-  )
+  const nodesWithVisibility = useMemo(() => {
+    const visible = withVisibility(nodes, isVisibleElement, storyFade)
+    return storiesPresenting ? lockedForPresenting(visible) : visible
+  }, [nodes, isVisibleElement, storyFade, storiesPresenting])
+  const edgesWithVisibility = useMemo(() => {
+    const visible = withVisibility(orderedEdges, isVisibleElement, storyFade)
+    return storiesPresenting ? lockedForPresenting(visible) : visible
+  }, [orderedEdges, isVisibleElement, storyFade, storiesPresenting])
 
   // An edge has no zIndex of its own (ADR 0035 scoped that to Entity/Container/Text): it sits at
   // the midpoint of its endpoints' current stacking, computed here next to orderedEdges and never
@@ -3497,7 +3564,9 @@ function CanvasInner(): React.JSX.Element {
       ...hierarchyLoadNotes,
       ...hierarchyAnalysis.outgrownAdvisories,
       ...legendEmptyAdvisory,
-      ...strayLines
+      ...strayLines,
+      // Set ids in stories that no set holds (ADR 0195): ignored, never removed.
+      ...storyStrayAdvisory(stories, visibilitySets)
     ]
   }, [
     diagnostics,
@@ -3506,7 +3575,8 @@ function CanvasInner(): React.JSX.Element {
     legend.length,
     nodes,
     edges,
-    visibilitySets
+    visibilitySets,
+    stories
   ])
 
   // "Changes since last save" Notes bucket (ADR 0102) — reuses
@@ -3541,7 +3611,8 @@ function CanvasInner(): React.JSX.Element {
             activeEdgeDirectionSetId,
             security,
             diagramFontFamily,
-            visibilitySets
+            visibilitySets,
+            stories
           )
         : null,
     [
@@ -3558,7 +3629,8 @@ function CanvasInner(): React.JSX.Element {
       activeEdgeDirectionSetId,
       security,
       diagramFontFamily,
-      visibilitySets
+      visibilitySets,
+      stories
     ]
   )
   const conformanceResult = useMemo(
@@ -3647,6 +3719,9 @@ function CanvasInner(): React.JSX.Element {
     openRevisionDialog: () => setRevisionDialogOpen(true),
     toggleLayerPanel,
     toggleReferencesPanel,
+    toggleStoriesPanel,
+    presentStory,
+    hasStoryToPresent: (storiesUi.story?.steps.length ?? 0) > 0,
     toggleStylePalettePanel,
     toggleEdgeAnimation,
     edgeAnimationOn,
@@ -3767,7 +3842,11 @@ function CanvasInner(): React.JSX.Element {
       {/* Outer app shell: [canvas view [diagram dock]] [utility dock], nested
           not flat — see ADR 0013. */}
       <IconPackOffer />
-      <div className="app-shell">
+      <div
+        className={`app-shell${storiesPresenting ? ' is-presenting' : ''}${
+          storiesPresenting && !presenterAwake ? ' is-idle' : ''
+        }`}
+      >
         <div className={`canvas-view${edgeAnimationOn ? '' : ' edges-still'}`}>
           <div className="toolbar">
             <MenuBar menus={menus} />
@@ -3784,6 +3863,19 @@ function CanvasInner(): React.JSX.Element {
               <option value="diagram">Diagram</option>
               <option value="matrix">Security Matrix (prototype)</option>
             </select>
+            {/* Stories (ADR 0195): opens the panel where a story is written and presented. */}
+            {isDiagramPersona && (
+              <button
+                type="button"
+                className="toolbar-stories"
+                title="Stories: tell the diagram one step at a time"
+                aria-label="Stories"
+                aria-pressed={storiesPanelOpen}
+                onClick={toggleStoriesPanel}
+              >
+                ▶ Stories
+              </button>
+            )}
             {styleBrush && (
               <span className="toolbar-style-brush" role="status">
                 Applying style — click{' '}
@@ -3946,7 +4038,13 @@ function CanvasInner(): React.JSX.Element {
                   onReconnect={onReconnect}
                   onReconnectStart={onReconnectStart}
                   onReconnectEnd={onReconnectEnd}
-                  edgesReconnectable
+                  edgesReconnectable={!storiesPresenting}
+                  // The presenter only shows (ADR 0195): nothing is picked up, drawn, deleted or selected.
+                  nodesDraggable={!storiesPresenting}
+                  nodesConnectable={!storiesPresenting}
+                  elementsSelectable={!storiesPresenting}
+                  nodesFocusable={!storiesPresenting}
+                  edgesFocusable={!storiesPresenting}
                   // A little smaller than React Flow's own default (10) — and
                   // kept equal to main.css's `.react-flow__edgeupdater` `r`
                   // value, so the visible dot on a selected edge
@@ -3969,7 +4067,7 @@ function CanvasInner(): React.JSX.Element {
                       ? SelectionMode.Full
                       : SelectionMode.Partial
                   }
-                  deleteKeyCode={['Delete', 'Backspace']}
+                  deleteKeyCode={storiesPresenting ? null : ['Delete', 'Backspace']}
                   multiSelectionKeyCode="Shift" // frees Ctrl/Cmd+click for linked-diagram navigation
                   colorMode={theme}
                   // Overrides React Flow's light/dark default background (ADR 0048). Plain
@@ -4315,6 +4413,17 @@ function CanvasInner(): React.JSX.Element {
               onClose={() => setVisibilitySetsPanelOpen(false)}
             />
           )}
+          {storiesPresenting && storiesUi.story && (
+            <PresenterBar
+              name={storiesUi.story.name}
+              step={storiesUi.presentStep}
+              steps={storiesUi.story.steps.length}
+              awake={presenterAwake}
+              onPrevious={storiesUi.previous}
+              onNext={storiesUi.next}
+              onLeave={storiesUi.leave}
+            />
+          )}
           {searchOverlayOpen && (
             <SearchOverlay
               query={searchQuery}
@@ -4429,6 +4538,31 @@ function CanvasInner(): React.JSX.Element {
                 setEntityHighlightNodeId(null)
                 setLayerPanelOpen(false)
               }}
+            />
+          )}
+          {storiesPanelOpen && (
+            <StoriesPanel
+              stories={stories}
+              story={storiesUi.story}
+              sets={visibilitySets}
+              unassigned={unassignedCount}
+              step={storiesUi.step}
+              onAddStory={storiesUi.addStory}
+              onRenameStory={storiesUi.renameStory}
+              onSelectStory={storiesUi.selectStory}
+              onDeleteStory={storiesUi.deleteStory}
+              onSelectStep={storiesUi.selectStep}
+              onAddStep={storiesUi.addStep}
+              onDuplicateStep={storiesUi.duplicateStep}
+              onDeleteStep={storiesUi.deleteStep}
+              onMoveStep={storiesUi.moveStep}
+              onAddAction={storiesUi.addAction}
+              onChangeAction={storiesUi.changeAction}
+              onRemoveAction={storiesUi.removeAction}
+              onMoveAction={storiesUi.moveAction}
+              onFromSets={storiesUi.fromSets}
+              onPresent={presentStory}
+              onClose={() => setStoriesPanelOpen(false)}
             />
           )}
           {referencesPanelOpen && (

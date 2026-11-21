@@ -6,6 +6,7 @@ import type {
 } from '../edges/schema.ts'
 import type { JsonValue, MetadataEntry } from '../tagging/schema.ts'
 import type { DiagramSecurity, RiskCell } from '../threat-matrix/schema.ts'
+import type { StoryAction } from '../visibility/schema.ts'
 import type { DiagramFile } from './file.ts'
 
 // Recursively sorts object keys alphabetically — applied to metadata dicts
@@ -148,6 +149,15 @@ function orderedDiagramSecurity(
   }
 }
 
+// One action of a story step (ADR 0195): `action` and `set` first, then any fields this version does not
+// know in a fixed order, so a file written by a newer version keeps them and does not churn.
+function orderedAction(action: StoryAction): StoryAction {
+  const { action: kind, set, ...rest } = action
+  const out: StoryAction = { action: kind, set }
+  for (const key of Object.keys(rest).sort()) out[key] = rest[key]
+  return out
+}
+
 // A node's or an edge's visibility set ids (ADR 0194): sorted and without repeats, so the file does
 // not change when the same sets are joined in another order. Dropped when empty.
 function sortedSetIds(ids: string[] | undefined): string[] | undefined {
@@ -221,6 +231,24 @@ export function serializeDiagram(diagram: DiagramFile): string {
     visibilitySets:
       diagram.visibilitySets && diagram.visibilitySets.length > 0
         ? diagram.visibilitySets.map((v) => ({ id: v.id, name: v.name }))
+        : undefined,
+    // The order of the stories, and of each story's steps, is what a person made, so it is kept (ADR 0195).
+    stories:
+      diagram.stories && diagram.stories.length > 0
+        ? diagram.stories.map((s) => ({
+            id: s.id,
+            name: s.name,
+            start:
+              s.start?.actions && s.start.actions.length > 0
+                ? { actions: s.start.actions.map(orderedAction) }
+                : undefined,
+            steps: s.steps.map((step) => ({
+              actions:
+                step.actions && step.actions.length > 0
+                  ? step.actions.map(orderedAction)
+                  : undefined
+            }))
+          }))
         : undefined,
     nodes: diagram.nodes.map((n) => ({
       id: n.id,
