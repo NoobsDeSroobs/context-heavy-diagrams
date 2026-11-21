@@ -17,6 +17,8 @@ Merging, pushing, tagging and anything else on the remote is the maintainer's ow
 
 ## Notes for the next task
 
+- **Visibility sets PR (0202):** the branch `epic/0202-visibility-sets` starts with the `Open 0.14.0` bump commit, so rebase it if the bump was merged on its own. Before merging, try an SVG, a PNG and a draw.io export with a set hidden, and an assistant run of the five `*_visibility_set` operations; nothing has driven those in the running app or an assistant yet. Words: an element is visible or hidden, a set is shown or hidden.
+- **Symbol study (0200):** the comparison page is live and the epic is paused until its answers are in; how to rebuild the page and read the sheet is in the epic's notes. The survey endpoint address is the maintainer's and is not in the repo.
 - **Live-testing the compare window:** copy an example into the session scratchpad, run `npx electron-vite dev -- --remote-debugging-port=9222`, drive the pages over the DevTools protocol (the helper scripts were throwaway; the page order changes, so find the window by its URL). Stopping the background task does not stop Electron: kill the process whose command line has the debugging-port flag. A reload with unsaved edits opens a leave-page prompt that blocks the page.
 - **Editing in a shell:** a heredoc loses backslashes (`\n` became a real newline and broke two files); use the Edit or Write tools for text with escapes. Prettier breaks the line after `window.api`, so searches for `window.api.method` need to allow whitespace.
 
