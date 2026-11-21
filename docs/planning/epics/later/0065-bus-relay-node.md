@@ -20,3 +20,5 @@ Upgrade the existing placeholder `AnchorNode` (epic 0014 — the small draggable
 
 ## Notes
 Not scheduled into any current batch — logged the same day it was raised, purely to avoid losing it. The user was explicit this needs real research/testing before any design conversation can even start, so this file deliberately stops at capturing the idea rather than proposing a shape for it.
+
+Update 2026-11-21: the crossings of a busy diagram are better attacked by portals, see [0205](../0205-portals-continue-an-edge-elsewhere.md). A bus node stays an idea of its own, parked.

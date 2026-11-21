@@ -15,5 +15,5 @@ Let a person choose where an element's label sits, so it does not cover an edge:
 
 ## Notes
 - A free label that moves with its shape and a dotted leader line cost nothing when the label is close, so the line is drawn only when there is a gap.
-- Containers matter for lanes: a vertical lane wants its name on the left, turned. That makes this a companion of the lane hand-off check ([0088](0088-cross-container-edge-detection.md)).
+- Containers matter for lanes: a vertical lane wants its name on the left, turned. That makes this a companion of the lane hand-off check ([0088](../completed-epics.md#0088-detecthighlight-edges-crossing-container-boundaries)).
 - An automatic position (the app picks the side with no edge on it) was considered: it spares the work but moves labels when an edge is added, and the file would not say where the label is. An explicit position with a free choice is more predictable; the layout check can suggest one.
