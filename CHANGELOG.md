@@ -4,6 +4,16 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 ## 0.14.0 (unreleased)
 
+### Added
+
+- **Visibility sets: show or hide parts of a diagram.** Make named sets in the new panel in the bottom left corner (the eye button, before the highlights), put the selected elements in a set with **Add selected**, and tick or untick a set to show or hide everything in it. One diagram can then hold how things are today and how they could be, shown one at a time. An element in no set is always shown, and one in several is shown while any of them is. A hidden element is out of the way: it is not drawn, cannot be selected in any way and is left out of search. An edge goes by its own sets, so put an edge in too when it belongs to a picture. A caret beside each set lists what is in it, with a way to select an element, go to it, or take it out. Set names are unique, ignoring case. Which sets are hidden is not saved: a diagram opens with everything shown. SVG, PNG and draw.io exports draw what is shown; the command-line export draws everything ([ADR 0194](docs/decisions/0194-visibility-sets-hide-and-show-parts-of-a-diagram.md)).
+- **Assistants can use visibility sets.** `edit_diagram` and `chd edit` have `add_visibility_set`, `rename_visibility_set`, `remove_visibility_set`, `add_to_visibility_set` and `remove_from_visibility_set`; a set is named by its name. `inspect_diagram` lists the sets and names the sets of each element, and `validate_diagram` and the checks warn about two sets with one name and about an id with no set.
+- **Diagnostics lists ids that belong to no set.** An element can name a set the diagram does not hold (an undo, or a file made by another tool). It is ignored and kept, and Diagnostics says so.
+
+### File format
+
+- A new optional top-level `visibilitySets` (the catalogue: `id`, `name`) and an optional `visibilitySetIds` on each node and edge, documented in [docs/file-format.md](docs/file-format.md). Both are left out when empty. An older app shows everything and warns on save, like for any newer field.
+
 ## 0.13.0 (2026-11-20)
 
 ### Added

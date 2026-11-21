@@ -18,8 +18,9 @@ Complete field-by-field reference. Read the relevant section rather than the who
 12. [Legend](#legend)
 13. [Gravity presets](#gravity-presets)
 14. [Edge direction sets](#edge-direction-sets)
-15. [Security](#security)
-16. [Determinism & versioning](#determinism--versioning)
+15. [Visibility sets](#visibility-sets)
+16. [Security](#security)
+17. [Determinism & versioning](#determinism--versioning)
 
 ---
 
@@ -58,6 +59,7 @@ Complete field-by-field reference. Read the relevant section rather than the who
 | `iconPacks` | array | Written by the app on save: the installed icon packs the diagram's icons come from, each `{ "name", "version"?, "ifMissing"? }`. Never write it; leave an existing one as it is. |
 | `edgeDirectionSets` | array of EdgeDirectionSet | Named readings of edge direction — see [Edge direction sets](#edge-direction-sets). Absent/empty means unused. |
 | `activeEdgeDirectionSetId` | string | Which `edgeDirectionSets` entry is currently displayed. Absent means the first set. Edges on disk are always written in the *first* set's orientation regardless of this value once there are 2+ sets. |
+| `visibilitySets` | array of `{ id, name }` | The catalogue of named sets of nodes and edges that a person can show or hide together — see [Visibility sets](#visibility-sets). Absent or empty means unused; leave it out. Which sets are hidden is never stored. |
 | `security` | object | Threat/risk model — see [Security](#security). Absent means unused (no node has `data.security` either). |
 | `nodes` | array of Node | See [Node](#node). |
 | `edges` | array of Edge | See [Edge](#edge). |
@@ -100,6 +102,7 @@ Complete field-by-field reference. Read the relevant section rather than the who
 | `connectionPoints` | array | no | Only meaningful on `"entity"`/`"container"`. Every side always has ≥1 point. No entries for a side → implicit single centered point (`offset` 0.5, `id` = side name `"top"`/`"right"`/`"bottom"`/`"left"`). Once edited, may appear explicitly with any `offset`; a side can never be reduced to zero entries. Entry: `id` (string, unique in node, referenced by edge `sourceHandle`/`targetHandle`), `side` (`"top"`\|`"right"`\|`"bottom"`\|`"left"`), `offset` (0–1 fraction along the side, not pixels — stays correct across resize). |
 | `parentId` | string | no | Another node's `id` — this node is its child. Absent = top-level. **Parent must appear earlier in the `nodes` array than its children.** Nesting to any depth is allowed. Deleting a container reparents children rather than deleting them. A reader should repair (not choke on) a `parentId` that doesn't resolve (drop it, node becomes top-level) or a parent cycle (cut one link) — a writer shouldn't produce either. |
 | `locked` | boolean | no | Blocks drag/resize/rotate/accidental-delete in the app's UI only — every other edit (style, tags, label, connection points, notes) stays allowed. Absent = `false`. Not meaningful on edges. Locking a container does not cascade to children. |
+| `visibilitySetIds` | array of string | no | The `id`s of the [visibility sets](#visibility-sets) this node is in. Absent means in none, so always shown. Leave it out when empty. |
 | `style` | object | no | See [Node style](#node-style). Absent = current hardcoded look. |
 | `metadata` | object | no | Only on `"entity"`/`"container"` — never on `"text"`. See [Metadata](#metadata). |
 | `data.label` | string | yes | Display text. May be empty. |
@@ -206,6 +209,7 @@ Every field optional; absent = current hardcoded look, same as `style` being abs
 | `metadata` | object | no | Same shape/rules as Node metadata — see [Metadata](#metadata). |
 | `points` | array of LinePoint | no | Manual routing — see [Edge points](#edge-points). Meaningful for `"catmullRom"` (interior control points, `gravity` respected) or `"step"`/`"smoothstep"` (orthogonal waypoints, `gravity` unused). Ignored (but preserved) for other routing styles. |
 | `directionSets` | object | no | Only present when top-level `edgeDirectionSets` has 2+ entries. Maps each set `id` → `EdgeDirection` (`{source, target, sourceHandle?, targetHandle?}`). See [Edge direction sets](#edge-direction-sets). |
+| `visibilitySetIds` | array of string | no | The `id`s of the [visibility sets](#visibility-sets) this edge is in. An edge is shown or hidden by its own sets alone, never because an end is: put the edges of a set in it too. |
 
 ### Edge style
 
@@ -379,6 +383,24 @@ Top-level `edgeDirectionSets` — named *readings* of a diagram's edges differin
 Absent/empty `edgeDirectionSets` = the whole mechanism dormant — no `directionSets` on any edge; direction is simply the edge's own `source`/`target`/handles.
 
 ---
+
+## Visibility sets
+
+`visibilitySets` (top-level) is a catalogue of named sets, so one diagram can hold more than one picture ("Today", "Proposed") that a person shows one at a time. A node or an edge is in a set when its own `visibilitySetIds` lists the set's `id`.
+
+```json
+"visibilitySets": [ { "id": "vis-1", "name": "Today" }, { "id": "vis-2", "name": "Proposed" } ]
+```
+
+| Field | Type | Required | Meaning |
+|---|---|---|---|
+| `id` | string | yes | Opaque and unique in the file; the person never sees it. |
+| `name` | string | yes | What the person sees. Unique ignoring case (the app refuses a duplicate). |
+
+- An element in no set is always shown. Otherwise it is shown while any of its sets is shown, so an element in "Today" and "Proposed" stays while either is.
+- Nothing is inferred: an edge is not hidden because an end is, and a child is not hidden because its container is.
+- Which sets are hidden is not stored; a diagram opens with everything shown.
+- With the `edit_diagram` operations, name a set by its name: `add_visibility_set`, `rename_visibility_set`, `remove_visibility_set`, `add_to_visibility_set {set, ids}`, `remove_from_visibility_set {set, ids}`. Do not write ids by hand unless you are writing the file directly.
 
 ## Security
 

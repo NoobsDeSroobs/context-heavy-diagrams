@@ -12,6 +12,7 @@ import type {
   RequiredTagDefinition
 } from '../diagram/index.ts'
 import { effectivePointsForSide } from '../geometry/connectionPoints.ts'
+import type { VisibilitySet } from '../visibility/schema.ts'
 import { stencilKind } from '../stencils/kinds.ts'
 
 export class OperationError extends Error {
@@ -90,6 +91,9 @@ export interface OperationResult {
   requiredTag?: RequiredTagDefinition
   highlight?: HighlightDefinition
   legendEntry?: LegendEntry
+  // Visibility set operations (ADR 0194): the set as it now stands, and the ids of the elements in it.
+  visibilitySet?: VisibilitySet
+  members?: string[]
   // link_to_existing_diagram / set_note: the path now stored on the element (relative to the diagram, with "/").
   link?: string
   note?: string

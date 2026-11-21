@@ -342,3 +342,40 @@ test('an installed icon is checked in a diagram given as text, and in the legend
   const { warnings } = validateText(text)
   assert.ok(warnings.some((w) => /legend entry 'l1' icon.*not drawn/.test(w)))
 })
+
+test('visibility sets: a sound catalogue and membership pass without a word', async () => {
+  const { errors, warnings } = await check(
+    [node('a', { visibilitySetIds: ['s1'] }), node('b')],
+    [edge({ visibilitySetIds: ['s1'] })],
+    { visibilitySets: [{ id: 's1', name: 'Today' }] }
+  )
+  assert.deepEqual(errors, [])
+  assert.deepEqual(warnings, [])
+})
+
+test('visibility sets: a malformed catalogue or membership is an error', async () => {
+  const bad = await check([node('a', { visibilitySetIds: 'today' }), node('b')], [], {
+    visibilitySets: [{ id: 's1', name: ' ' }, { name: 'No id' }, { id: 's1', name: 'Twice' }]
+  })
+  assert.ok(bad.errors.some((e) => /needs a name/.test(e)))
+  assert.ok(bad.errors.some((e) => /has no id/.test(e)))
+  assert.ok(bad.errors.some((e) => /visibilitySetIds must be a list/.test(e)))
+  const notAList = await check([node('a'), node('b')], [], { visibilitySets: {} })
+  assert.ok(notAList.errors.some((e) => /visibilitySets must be a list/.test(e)))
+})
+
+test('visibility sets: two names alike, and ids with no set, are warnings, not errors', async () => {
+  const { errors, warnings } = await check(
+    [node('a', { visibilitySetIds: ['gone'] }), node('b')],
+    [],
+    {
+      visibilitySets: [
+        { id: 's1', name: 'Today' },
+        { id: 's2', name: 'TODAY' }
+      ]
+    }
+  )
+  assert.deepEqual(errors, [])
+  assert.ok(warnings.some((w) => /two visibility sets are named/.test(w)))
+  assert.ok(warnings.some((w) => /not in visibilitySets.*gone/.test(w)))
+})

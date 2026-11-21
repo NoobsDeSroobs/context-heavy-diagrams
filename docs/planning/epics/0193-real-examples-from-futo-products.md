@@ -6,6 +6,9 @@ Not Started. Logged 2026-11-17. FUTO replied to the maintainer (received 2026-11
 ## Goal
 Make the examples easy to find and trustworthy: sort the feature fixtures from the showcase diagrams, and add real systems drawn from FUTO's public source and documentation next to the fictional Meridian Rail gallery, so a reader sees the tool on something they can check.
 
+## Direction (2026-11-21)
+The maintainer wants a complete revamp of the examples: a few strong ones modelled on real products such as Immich, in place of many small contrived ones. The visibility sets (today and proposed) and the behaviour symbols should be shown in them.
+
 ## Tasks
 - [ ] **Record the go-ahead in the repo** (`docs/licensing.md`): the date and what the reply covers (analysis and publication of the analysis, no reselling), paraphrased, with no names or contact details; and how the examples credit the products (names only, no logos, no suggestion that FUTO endorses the tool).
 - [ ] **Survey the examples folder:** classify every file as a feature fixture (one feature, small), a round-trip fixture, a gallery diagram or a limits test; list overlaps (`stencil-kinds`, `process-flow-stencils` and `process-flow-all-behaviours` show much the same), dead files and names that say nothing. Features keep an example ([ADR 0151](../../decisions/0151-every-visible-feature-has-an-example-diagram.md)); the round-trip fixtures stay.
