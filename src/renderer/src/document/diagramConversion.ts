@@ -16,7 +16,8 @@ import type {
   MetadataEntry,
   NodeStyle,
   RequiredTagDefinition,
-  RiskCell
+  RiskCell,
+  VisibilitySet
 } from '@shared/diagram'
 import {
   ensureDirectionSets,
@@ -27,6 +28,12 @@ import {
 import { offsetOf } from '@shared/stencils/labelPlacement'
 import { applyZIndexBackfill, nodeMetadataEligible } from '../canvas/nodeFields'
 import { sortNodesForHierarchy, healHierarchy } from '../canvas/hierarchy'
+
+// The visibility set ids of a node or an edge as the canvas holds them (ADR 0194): a list of
+// strings, or nothing when there are none.
+function setIdsOf(value: unknown): string[] | undefined {
+  return Array.isArray(value) && value.length > 0 ? (value as string[]) : undefined
+}
 
 export function toDiagramFile(
   nodes: Node[],
@@ -40,7 +47,8 @@ export function toDiagramFile(
   edgeDirectionSets: EdgeDirectionSet[],
   activeEdgeDirectionSetId: string | undefined,
   security: DiagramSecurity,
-  fontFamily: string | undefined
+  fontFamily: string | undefined,
+  visibilitySets: VisibilitySet[]
 ): DiagramFile {
   // Edge direction sets (ADR 0081): on disk, every edge is stored in the
   // *base* (first) set's orientation regardless of which set is active, so
@@ -79,6 +87,8 @@ export function toDiagramFile(
     security:
       security.threats.length > 0 || security.matrixEntityIds.length > 0 ? security : undefined,
     requiredTags: requiredTags.length > 0 ? requiredTags : undefined,
+    // serializeDiagram drops this when it is empty (ADR 0194).
+    visibilitySets: visibilitySets.length > 0 ? visibilitySets : undefined,
     nodes: nodes.map((n) => ({
       id: n.id,
       type: n.type,
@@ -91,6 +101,7 @@ export function toDiagramFile(
         : undefined,
       parentId: n.parentId,
       locked: n.data?.locked === true ? true : undefined,
+      visibilitySetIds: setIdsOf(n.data?.visibilitySetIds),
       style: n.data?.style as NodeStyle | undefined,
       metadata: nodeMetadataEligible(n.type)
         ? (n.data?.metadata as Record<string, MetadataEntry> | undefined)
@@ -149,7 +160,8 @@ export function toDiagramFile(
         Array.isArray(e.data?.points) && (e.data.points as LinePoint[]).length > 0
           ? (e.data.points as LinePoint[])
           : undefined,
-      directionSets: e.data?.directionSets as Record<string, EdgeDirection> | undefined
+      directionSets: e.data?.directionSets as Record<string, EdgeDirection> | undefined,
+      visibilitySetIds: setIdsOf(e.data?.visibilitySetIds)
     }))
   }
 }
@@ -167,6 +179,7 @@ export function fromDiagramFile(diagram: DiagramFile): {
   edgeDirectionSets: EdgeDirectionSet[]
   activeEdgeDirectionSetId: string | undefined
   security: DiagramSecurity
+  visibilitySets: VisibilitySet[]
   hierarchyNotes: string[]
 } {
   // healHierarchy repairs a dangling/cyclic parentId before the nodes reach
@@ -188,6 +201,9 @@ export function fromDiagramFile(diagram: DiagramFile): {
         ...(n.rotation != null ? { rotation: n.rotation } : {}),
         ...(n.zIndex != null ? { zIndex: n.zIndex } : {}),
         ...(n.locked ? { locked: true } : {}),
+        ...(n.visibilitySetIds && n.visibilitySetIds.length > 0
+          ? { visibilitySetIds: n.visibilitySetIds }
+          : {}),
         ...(n.connectionPoints && n.connectionPoints.length > 0
           ? { connectionPoints: n.connectionPoints }
           : {}),
@@ -242,6 +258,9 @@ export function fromDiagramFile(diagram: DiagramFile): {
       ...(e.points && e.points.length > 0 ? { points: e.points } : {}),
       ...(e.directionSets && Object.keys(e.directionSets).length > 0
         ? { directionSets: e.directionSets }
+        : {}),
+      ...(e.visibilitySetIds && e.visibilitySetIds.length > 0
+        ? { visibilitySetIds: e.visibilitySetIds }
         : {})
     }
   }))
@@ -329,6 +348,7 @@ export function fromDiagramFile(diagram: DiagramFile): {
     edgeDirectionSets: directionSets.length >= 1 ? directionSets : [],
     activeEdgeDirectionSetId,
     security,
+    visibilitySets: diagram.visibilitySets ?? [],
     hierarchyNotes: [...healed.notes, ...securityNotes],
     nodes: securedNodes,
     edges,

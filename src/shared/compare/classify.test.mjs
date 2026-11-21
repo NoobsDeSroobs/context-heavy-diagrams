@@ -466,3 +466,28 @@ test('connections that came or went with an element sit under it, others stay th
   assert.equal(c.counts.added.edges, 2)
   assert.ok(flattenReview(c.review).some((r) => r.id === 'e2'))
 })
+
+test('joining or leaving a visibility set is a change in a review, for nodes and edges (ADR 0194)', () => {
+  const base = diagram([node('a'), node('b')], [edge('e', 'a', 'b')])
+  const next = diagram(
+    [node('a', { visibilitySetIds: ['vis-1'] }), node('b')],
+    [edge('e', 'a', 'b', { visibilitySetIds: ['vis-1'] })]
+  )
+  const c = classifyDiagrams(base, next)
+  assert.equal(statusOf(c, 'a'), 'content')
+  assert.deepEqual(
+    c.nodes.get('a').fields.map((f) => f.field),
+    ['visibility sets']
+  )
+  assert.equal(c.edges.get('e').status, 'content')
+})
+
+test('a new visibility set is listed as a diagram-level change', () => {
+  const base = diagram()
+  const next = diagram([], [], { visibilitySets: [{ id: 'vis-1', name: 'Today' }] })
+  const changes = diffCollections(base, next)
+  assert.deepEqual(
+    changes.map((x) => [x.name, x.added]),
+    [['Visibility sets', ['Today']]]
+  )
+})

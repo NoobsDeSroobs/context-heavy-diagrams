@@ -27,6 +27,8 @@ import { summarizeEdge, summarizeNode, type EdgeSummary, type NodeSummary } from
 
 export interface DescribedNode extends NodeSummary {
   tags?: Record<string, JsonValue>
+  // The names of the visibility sets it is in (ADR 0194).
+  visibilitySets?: string[]
   // The relative paths stored on the element: the diagram it links to, the Markdown file of its note.
   link?: string
   note?: string
@@ -36,6 +38,7 @@ export interface DescribedNode extends NodeSummary {
 
 export interface DescribedEdge extends EdgeSummary {
   tags?: Record<string, JsonValue>
+  visibilitySets?: string[]
   // Only for an edge that crosses the border of a container: the route by container name ("Sales →
   // Finance", "outside" for none), information and not an issue (ADR 0185).
   crossing?: string
@@ -50,6 +53,8 @@ export interface DiagramDescription {
   requiredTags?: RequiredTagDefinition[]
   highlights?: HighlightDefinition[]
   legend?: LegendEntry[]
+  // The visibility sets of the diagram and how many elements are in each (ADR 0194).
+  visibilitySets?: { name: string; elements: number }[]
 }
 
 function tagsOf(
@@ -68,6 +73,12 @@ export function describeDiagram(
 ): DiagramDescription {
   const styleOf = (style: object | undefined): { style?: Record<string, unknown> } =>
     styles && style && Object.keys(style).length > 0 ? { style: { ...style } } : {}
+  const setNameById = new Map((diagram.visibilitySets ?? []).map((s) => [s.id, s.name]))
+  // Only the sets the diagram holds are named; an id with no set is left out here (it hides nothing).
+  const setNamesOf = (ids: string[] | undefined): { visibilitySets?: string[] } => {
+    const names = (ids ?? []).flatMap((id) => setNameById.get(id) ?? [])
+    return names.length > 0 ? { visibilitySets: names } : {}
+  }
   const byId = new Map(diagram.nodes.map((n) => [n.id, n]))
   const parentOf = (id: string): string | undefined => byId.get(id)?.parentId
   const nameOf = (id: string): string => byId.get(id)?.data.label || id
@@ -78,6 +89,7 @@ export function describeDiagram(
   return {
     nodes: diagram.nodes.map((n) => ({
       ...summarizeNode(diagram, n),
+      ...setNamesOf(n.visibilitySetIds),
       ...tagsOf(n.metadata),
       ...(n.data.linkedDiagram ? { link: n.data.linkedDiagram } : {}),
       ...(n.data.notes ? { note: n.data.notes } : {}),
@@ -86,6 +98,7 @@ export function describeDiagram(
     edges: diagram.edges.map((e) => ({
       ...summarizeEdge(e),
       ...crossingOf(e),
+      ...setNamesOf(e.visibilitySetIds),
       ...tagsOf(e.metadata),
       ...styleOf(e.style)
     })),
@@ -94,7 +107,17 @@ export function describeDiagram(
       : {}),
     ...(diagram.requiredTags?.length ? { requiredTags: diagram.requiredTags } : {}),
     ...(diagram.highlights?.length ? { highlights: diagram.highlights } : {}),
-    ...(diagram.legend?.length ? { legend: diagram.legend } : {})
+    ...(diagram.legend?.length ? { legend: diagram.legend } : {}),
+    ...(diagram.visibilitySets?.length
+      ? {
+          visibilitySets: diagram.visibilitySets.map((set) => ({
+            name: set.name,
+            elements: [...diagram.nodes, ...diagram.edges].filter((el) =>
+              el.visibilitySetIds?.includes(set.id)
+            ).length
+          }))
+        }
+      : {})
   }
 }
 

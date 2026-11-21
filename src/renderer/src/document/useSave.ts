@@ -26,6 +26,7 @@ import type {
   DiagramSecurity,
   EdgeDirectionSet,
   GravityPreset,
+  VisibilitySet,
   HighlightDefinition,
   JsonValue,
   LegendEntry,
@@ -54,6 +55,7 @@ export interface SaveInputs {
   gravityPresets: GravityPreset[]
   diagramMaxConnectionPointsPerSide: number | undefined
   diagramFontFamily: string | undefined
+  visibilitySets: VisibilitySet[]
   edgeDirectionSets: EdgeDirectionSet[]
   activeEdgeDirectionSetId: string | undefined
   security: DiagramSecurity
@@ -104,6 +106,7 @@ export function useSave(
     gravityPresets,
     diagramMaxConnectionPointsPerSide,
     diagramFontFamily,
+    visibilitySets,
     edgeDirectionSets,
     activeEdgeDirectionSetId,
     security,
@@ -226,7 +229,8 @@ export function useSave(
           edgeDirectionSets,
           activeEdgeDirectionSetId,
           security,
-          diagramFontFamily
+          diagramFontFamily,
+          visibilitySets
         ),
         savedWith: loadedSavedWithRef.current,
         iconPacks: iconPackNotes
@@ -437,6 +441,7 @@ export function useSave(
       gravityPresets,
       diagramMaxConnectionPointsPerSide,
       diagramFontFamily,
+      visibilitySets,
       edgeDirectionSets,
       activeEdgeDirectionSetId,
       security,

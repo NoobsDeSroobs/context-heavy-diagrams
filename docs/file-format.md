@@ -38,6 +38,10 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
     { "id": "set-2", "name": "Trigger direction" }
   ],
   "activeEdgeDirectionSetId": "set-1",
+  "visibilitySets": [
+    { "id": "vis-1", "name": "Today" },
+    { "id": "vis-2", "name": "Proposed" }
+  ],
   "nodes": [ /* Node objects */ ],
   "edges": [ /* Edge objects */ ]
 }
@@ -57,6 +61,7 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
 | `iconPacks` | array of IconPackNote | The installed icon packs the diagram's icons come from, written by the application each time it saves, from the icons the diagram holds, so it cannot go stale. Each entry is `{ "name", "version"?, "ifMissing"? }`: the pack's name (what an [installed icon](#icon-reference) refers to it by) and, when the pack says so, its version label and what a person should do if they do not have it. It exists so a machine without the pack can say which one is missing and what to do; nothing is drawn from it, and a reader that does not know installed icons ignores it. Absent is valid and means nothing was recorded: a missing pack is then found from the icon references alone. A tool that writes a diagram may leave it out. See [docs/icon-packs.md](icon-packs.md). |
 | `edgeDirectionSets` | array of EdgeDirectionSet | Named readings of the diagram's edges that differ only in arrow direction — e.g. "Data flow" vs. "Trigger direction". See [Edge direction sets](#edge-direction-sets) below. Absent/empty means the feature is unused. A single set names the current reading, gives it a legend row, and its `style` seeds edges drawn while it is active; two or more can be switched between and add per-edge `directionSets` records. |
 | `activeEdgeDirectionSetId` | string | Which entry of `edgeDirectionSets` is currently displayed. With two or more sets the edges on disk are always written in the *first* set's orientation regardless of this value (see [Edge direction sets](#edge-direction-sets)); this only says which reading to show on open. Absent means the first set. |
+| `visibilitySets` | array of VisibilitySet | The catalogue of named sets of nodes and edges that can be shown or hidden together — see [Visibility sets](#visibility-sets) below. Absent or empty means the feature is unused, and is left out of the file. Which sets are shown is not stored. |
 | `security` | object | Threat/risk model — the threat catalog, which entities are in the security matrix, calculation settings — see [Security](#security) below. Absent means the Security Matrix has never been used for this diagram (and no node has `data.security`). |
 | `nodes` | array of Node | See below. |
 | `edges` | array of Edge | See below. |
@@ -97,6 +102,7 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
 | `connectionPoints` | array | no | Only meaningful on `"entity"`/`"container"`/`"stencil"` nodes. Every side always has at least one connection point. If a side has no entries here at all, it implicitly has exactly one: centered (`offset` 0.5), using the side's own name as its `id` (`"top"`/`"right"`/`"bottom"`/`"left"`) — a reader that's never seen this field before can treat those 4 as always-present defaults, same as older versions of this app did. Once a side's points have been edited by this app, that implicit point (and any others on the side) may appear here explicitly, with any `offset`, and behave like any other entry — freely repositionable and removable, with the one rule that a side can never be reduced to zero entries (removing a side's last point isn't a valid edit). Each entry: `id` (string, unique within this node, referenced by edges' `sourceHandle`/`targetHandle` — `"top"`/`"right"`/`"bottom"`/`"left"` are conventional, not reserved: they just happen to be the ids a side's implicit point resolves to, so old files' edges keep working, but they carry no other special meaning once explicit), `side` (`"top"`/`"right"`/`"bottom"`/`"left"`), `offset` (number 0–1, fraction along that side — not a pixel value, so it stays correct across a resize). The app may draw an edge's end up to 10 px along the side from this place so that an edge between two facing elements runs straight ([ADR 0176](decisions/0176-connection-points-slide-a-little-to-straighten-edges.md)); nothing is stored for it, and a reader may ignore it. |
 | `parentId` | string | no | Another node's `id` — this node is a child of that container. Absent means top-level. A parent node must appear earlier in the `nodes` array than its children (React Flow's own requirement — a reader building the same in-memory model needs to preserve this ordering). Nesting containers inside containers is allowed, to any depth. Deleting a container reparents its children (to the container's own `parentId`, or top-level) rather than deleting them. On load, this app repairs two corrupt states rather than choke on them: a `parentId` that doesn't resolve to any node in the file is dropped (the node becomes top-level, its `position` numbers kept as-is), and a parent *cycle* (A inside B inside A) has one link cut. A writer isn't required to do this, but shouldn't produce either state. |
 | `locked` | boolean | no | Blocks drag/resize/rotate and accidental delete via this app's own UI — not a read-only mode, every other edit (style, tags, label, connection points, notes) stays allowed. Absent means unlocked (`false`). Not meaningful on edges (no position of their own to accidentally relocate) — a reader can ignore it there. Locking a container does *not* cascade to its children; each element's lock state is independent. |
+| `visibilitySetIds` | array of string | no | The `id`s of the [visibility sets](#visibility-sets) this node is in. Absent or empty means in none, so always shown; empty is left out of the file. Written sorted and without repeats. |
 | `style` | object | no | Visual overrides — see Node style below. Absent means "use the current hardcoded look." |
 | `metadata` | object | no | Only meaningful on `"entity"`/`"container"` nodes — `"text"` never carries this. Key/value entries, each either free (human-added) or diagram-required — see [Metadata](#metadata) below. Absent means none set. |
 | `data.label` | string | yes | Display text. May be empty. |
@@ -236,6 +242,7 @@ Every field is optional; an absent field means "use the current hardcoded look,"
 | `metadata` | object | no | Same shape and rules as a node's `metadata` — see [Metadata](#metadata) below. Absent means none set. |
 | `points` | array of LinePoint | no | Manual routing points — see [Edge points](#edge-points) below. Meaningful when `style.routingStyle` is `"catmullRom"` (interior curve control points, `gravity` respected) or `"step"` / `"smoothstep"` (orthogonal waypoints the right-angled path is forced through, `gravity` unused). Ignored for any other routing style (including absent/bezier). Absent/empty means the routing style's own unbent default between the two endpoints. |
 | `directionSets` | object | no | Only present when the top-level `edgeDirectionSets` has two or more entries. Maps each set `id` to an `EdgeDirection` — `{ "source", "target", "sourceHandle"?, "targetHandle"? }` — giving this edge's orientation and connection points *in that reading*. The endpoint *nodes* are the same in every set; only which end is `source` and which connection point each end uses may differ. The entry for the first set always matches the edge's own top-level `source`/`target`/handles. See [Edge direction sets](#edge-direction-sets). |
+| `visibilitySetIds` | array of string | no | The `id`s of the [visibility sets](#visibility-sets) this edge is in. Same rules as on a node. An edge is shown or hidden by its own sets alone, never by its ends. |
 
 ### Edge style
 
@@ -416,6 +423,28 @@ Named bend values — `gravityPresets` on the top-level object — offered on a 
 
 This is diagram-level data, not an app preference — reproducing the diagram for any reader means the readings, and which one is shown, have to live in the file.
 
+## Visibility sets
+
+`visibilitySets` (top-level) is a catalogue of named sets of nodes and edges that can be shown or hidden together, so one diagram can hold more than one picture ("Today", "Proposed"). A node or an edge joins a set through its own `visibilitySetIds` ([ADR 0194](decisions/0194-visibility-sets-hide-and-show-parts-of-a-diagram.md)).
+
+```json
+"visibilitySets": [
+  { "id": "vis-1", "name": "Today" },
+  { "id": "vis-2", "name": "Proposed" }
+]
+```
+
+| Field | Type | Required | Meaning |
+|---|---|---|---|
+| `id` | string | yes | Opaque and unique within the file (this app writes `vis-` and six characters). Never shown to the person: the `name` is. Referenced by `visibilitySetIds` on nodes and edges. |
+| `name` | string | yes | Shown to the person. Free text, can change without touching any element. Unique in the file ignoring case: this app refuses a duplicate, but the file does not enforce it. |
+
+**What is shown.** An element in no set is always shown. Otherwise it is shown when any of its sets is shown, so an element in both "Today" and "Proposed" stays while either is shown. An id that is not in the catalogue is ignored. Nothing is inferred: an edge is not hidden because an end is, and a child is not hidden because its container is.
+
+**Which sets are shown is not stored.** Every set is shown when a diagram is opened; hiding one is something a person does while looking, not part of the diagram. A reader that does not know the fields shows everything. A hidden element is still in the file and keeps its place, so edges stay attached to it.
+
+**Order.** The order of `visibilitySets` is the order shown to the person and is kept. The ids in an element's `visibilitySetIds` are written sorted, without repeats.
+
 ## Security
 
 `security` (top-level) holds a threat/risk model over the diagram's entities. The per-entity assessments live on each entity's [`data.security`](#node); this block is the shared configuration: the threat catalog, which entities are in the matrix, and the scale definitions.
@@ -468,7 +497,7 @@ The `.chd` file itself is always plain, deterministic JSON — kept git-friendly
 
 Everything below this point is about the format `version`.
 
-`version` is currently always `1`. Fields have been added over time (`size`, `rotation`, `connectionPoints`, `parentId`, `style` on both Node and Edge, edge `type`/`label`, `data.icons`, `data.notes` (first `data.details`), `data.linkedDiagram`, top-level `metadata`/`requiredTags`/`highlights`/`legend`, `metadata` on both Node and Edge, Edge style's `labelPosition`, Node's `zIndex`, Node's `locked`, the `"line"` node `type` with its `data.points`, the `"stencil"` node `type` with its `data.kind`, Node style's `lineStyle`/`startMarker`/`endMarker`, top-level `gravityPresets`, Edge style's `routingStyle` with its own `points`, top-level `maxConnectionPointsPerSide`, `data.references`, top-level `edgeDirectionSets` / `activeEdgeDirectionSetId` with each edge's `directionSets`, and top-level `security` with each entity's `data.security`, the `"installed"` icon source, and top-level `iconPacks`) but always additively — a reader from an earlier point in this project's history can still open a newer file and just won't recognize the newer fields. The same holds in reverse: this app's own current code must still open a file from *before* one of these fields existed, without failing or requiring migration — see [ADR 0029](decisions/0029-backward-compatible-loading-is-a-standing-rule.md), which makes this a standing rule for every future field, not just an incidental property of the fields added so far. A breaking change to the meaning of an existing field would bump `version`; nothing has required that yet.
+`version` is currently always `1`. Fields have been added over time (`size`, `rotation`, `connectionPoints`, `parentId`, `style` on both Node and Edge, edge `type`/`label`, `data.icons`, `data.notes` (first `data.details`), `data.linkedDiagram`, top-level `metadata`/`requiredTags`/`highlights`/`legend`, `metadata` on both Node and Edge, Edge style's `labelPosition`, Node's `zIndex`, Node's `locked`, the `"line"` node `type` with its `data.points`, the `"stencil"` node `type` with its `data.kind`, Node style's `lineStyle`/`startMarker`/`endMarker`, top-level `gravityPresets`, Edge style's `routingStyle` with its own `points`, top-level `maxConnectionPointsPerSide`, `data.references`, top-level `edgeDirectionSets` / `activeEdgeDirectionSetId` with each edge's `directionSets`, and top-level `security` with each entity's `data.security`, the `"installed"` icon source, top-level `iconPacks`, and top-level `visibilitySets` with each node's and edge's `visibilitySetIds`) but always additively — a reader from an earlier point in this project's history can still open a newer file and just won't recognize the newer fields. The same holds in reverse: this app's own current code must still open a file from *before* one of these fields existed, without failing or requiring migration — see [ADR 0029](decisions/0029-backward-compatible-loading-is-a-standing-rule.md), which makes this a standing rule for every future field, not just an incidental property of the fields added so far. A breaking change to the meaning of an existing field would bump `version`; nothing has required that yet.
 
 **One value/field rename, same standing rule applied:** the node `type` value `"shape"`, a legend entry's `kind` value `"shape"`, and `DiagramSecurity`'s `matrixShapeIds`/`hiddenShapeIds` field names were all renamed to `"entity"`/`matrixEntityIds`/`hiddenEntityIds` (see [ADR 0101](decisions/0101-shape-to-entity-rename.md)), and a node's `data.details` to `data.notes` ([ADR 0140](decisions/0140-the-markdown-files-behind-an-element-are-called-notes.md)). Not a `version` bump — the old names are accepted as synonyms on read (never written), the same additive spirit as every field above. A build from before the `notes` rename ignores that field, and drops the link to a note when it saves a file that has it.
 

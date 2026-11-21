@@ -74,6 +74,9 @@ export interface DiagramEdge {
   // is *not* stored per set — it's single-copy in base orientation and
   // transformed at set-switch time.
   directionSets?: Record<string, EdgeDirection>
+  // The visibility sets this edge is in, by id (ADR 0194). Absent or empty means in none, so
+  // always shown. An edge is shown or hidden by its own sets alone, not by its ends.
+  visibilitySetIds?: string[]
   // Manual routing points, absolute canvas coordinates. Meaning depends on
   // style.routingStyle (see ADR 0057, ADR 0077):
   //   - 'catmullRom': interior control points of a smooth curve, each

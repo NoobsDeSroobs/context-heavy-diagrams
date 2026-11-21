@@ -1,0 +1,166 @@
+import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { DiagramFile } from '@shared/diagram'
+import { renderCanvas } from './canvasHarness'
+
+afterEach(() => {
+  cleanup()
+  vi.unstubAllGlobals()
+})
+
+const entity = (
+  id: string,
+  label: string,
+  x: number,
+  visibilitySetIds?: string[]
+): DiagramFile['nodes'][number] => ({
+  id,
+  type: 'entity',
+  position: { x, y: 0 },
+  size: { width: 120, height: 60 },
+  zIndex: 40,
+  ...(visibilitySetIds ? { visibilitySetIds } : {}),
+  data: { label }
+})
+
+const diagram = (): DiagramFile => ({
+  version: 1,
+  visibilitySets: [{ id: 'today', name: 'Today' }],
+  nodes: [entity('a', 'Alpha', 0, ['today']), entity('b', 'Beta', 200), entity('c', 'Gamma', 400)],
+  edges: [{ id: 'e1', source: 'a', target: 'b' }]
+})
+
+const openPanel = (): void => {
+  fireEvent.click(screen.getByRole('button', { name: 'Show visibility sets' }))
+}
+
+describe('visibility sets on the canvas (ADR 0194)', () => {
+  it('shows everything when a diagram opens, and hides a set with its checkbox', async () => {
+    renderCanvas(diagram())
+    await screen.findByText('Alpha')
+    openPanel()
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Show Today' }))
+    // Alpha is in the hidden set; the elements in no set stay
+    await waitFor(() => expect(screen.queryByText('Alpha')).toBeNull())
+    expect(screen.getByText('Beta')).toBeTruthy()
+    expect(screen.getByText('Gamma')).toBeTruthy()
+    // and it comes back
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Show Today' }))
+    await screen.findByText('Alpha')
+  })
+
+  it('makes a set, puts the selected element in it, and hides it with the set', async () => {
+    renderCanvas(diagram())
+    await screen.findByText('Gamma')
+    fireEvent.click(screen.getByText('Gamma').closest('.react-flow__node') as Element)
+    openPanel()
+    fireEvent.change(screen.getByRole('textbox', { name: 'New set name' }), {
+      target: { value: 'Proposed' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Add set' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Add the selection to Proposed' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Show Proposed' }))
+    await waitFor(() => expect(screen.queryByText('Gamma')).toBeNull())
+    expect(screen.getByText('Beta')).toBeTruthy()
+    expect(screen.getByText('Alpha')).toBeTruthy()
+  })
+
+  it('does not select what is hidden, with select all', async () => {
+    renderCanvas(diagram())
+    await screen.findByText('Alpha')
+    openPanel()
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Show Today' }))
+    await waitFor(() => expect(screen.queryByText('Alpha')).toBeNull())
+    fireEvent.keyDown(window, { key: 'a', ctrlKey: true })
+    fireEvent.change(screen.getByRole('textbox', { name: 'New set name' }), {
+      target: { value: 'Everything shown' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Add set' }))
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Add the selection to Everything shown' })
+    )
+    // Beta, Gamma and the edge between Alpha and Beta have no set, so they are shown and selected;
+    // Alpha is hidden, so select all did not reach it
+    fireEvent.click(screen.getByRole('button', { name: 'Show what is in Everything shown' }))
+    const list = screen.getByRole('list', { name: 'In Everything shown' })
+    const labels = within(list)
+      .getAllByTitle('Select it')
+      .map((el) => el.textContent)
+    expect(labels).toHaveLength(3)
+    // (the edge is listed by the elements it joins, Alpha among them, so only elements are checked)
+    expect(labels.filter((label) => label?.startsWith('Element')).join(' ')).not.toContain('Alpha')
+  })
+
+  it('lists what is in a set, and takes one element out of it', async () => {
+    renderCanvas(diagram())
+    await screen.findByText('Alpha')
+    openPanel()
+    expect(screen.queryByRole('list', { name: 'In Today' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Show what is in Today' }))
+    const list = screen.getByRole('list', { name: 'In Today' })
+    expect(within(list).getByTitle('Select it').textContent).toContain('Alpha')
+    fireEvent.click(screen.getByRole('button', { name: 'Take Alpha out of Today' }))
+    // Alpha stays on the canvas, now in no set
+    expect(within(list).queryByTitle('Select it')).toBeNull()
+    expect(screen.getByText('Alpha')).toBeTruthy()
+    expect(document.querySelector('.visibility-set-count')?.textContent).toBe('0')
+  })
+
+  it('has Add selected and Remove selected buttons', async () => {
+    renderCanvas(diagram())
+    await screen.findByText('Alpha')
+    openPanel()
+    const add = screen.getByRole('button', { name: 'Add the selection to Today' })
+    const remove = screen.getByRole('button', { name: 'Remove the selection from Today' })
+    expect(add.textContent).toBe('Add selected')
+    expect(remove.textContent).toBe('Remove selected')
+  })
+
+  it('selects an element from the list of a set', async () => {
+    const { container } = renderCanvas(diagram())
+    await screen.findByText('Alpha')
+    openPanel()
+    fireEvent.click(screen.getByRole('button', { name: 'Show what is in Today' }))
+    expect(container.querySelector('.react-flow__node.selected')).toBeNull()
+    fireEvent.click(within(screen.getByRole('list', { name: 'In Today' })).getByTitle('Select it'))
+    await waitFor(() =>
+      expect(container.querySelector('.react-flow__node.selected')?.textContent).toContain('Alpha')
+    )
+  })
+
+  it('refuses a second set with the same name, ignoring case', async () => {
+    renderCanvas(diagram())
+    await screen.findByText('Alpha')
+    openPanel()
+    fireEvent.change(screen.getByRole('textbox', { name: 'New set name' }), {
+      target: { value: 'TODAY' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Add set' }))
+    expect((await screen.findByRole('alert')).textContent).toContain('already exists')
+    expect(screen.getAllByRole('textbox', { name: 'Set name' })).toHaveLength(1)
+  })
+
+  it('puts the old name back when a rename is refused', async () => {
+    renderCanvas(diagram())
+    await screen.findByText('Alpha')
+    openPanel()
+    fireEvent.change(screen.getByRole('textbox', { name: 'New set name' }), {
+      target: { value: 'Proposed' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Add set' }))
+    const names = await screen.findAllByRole('textbox', { name: 'Set name' })
+    expect(names).toHaveLength(2)
+    fireEvent.change(names[1], { target: { value: 'today' } })
+    fireEvent.blur(names[1])
+    expect((await screen.findByRole('alert')).textContent).toContain('already exists')
+    expect((names[1] as HTMLInputElement).value).toBe('Proposed')
+  })
+
+  it('cannot put anything in a set with nothing selected', async () => {
+    renderCanvas(diagram())
+    await screen.findByText('Alpha')
+    openPanel()
+    const add = screen.getByRole('button', { name: 'Add the selection to Today' })
+    expect((add as HTMLButtonElement).disabled).toBe(true)
+  })
+})

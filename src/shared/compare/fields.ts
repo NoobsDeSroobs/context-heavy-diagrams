@@ -244,6 +244,13 @@ export const NODE_FIELDS: FieldSpec<DiagramNode>[] = [
     describe: describeNodeRef('container')
   },
   { name: 'locked', category: 'layout', get: (n) => n.locked },
+  // Which sets an element is in decides when it is shown, so it is a change in a review (ADR 0194).
+  {
+    name: 'visibility sets',
+    category: 'content',
+    get: (n) => n.visibilitySetIds,
+    describe: describeList('visibility set')
+  },
   ...NODE_STYLE_KEYS.map(([key, name, absent]) => styleSpec<DiagramNode>(key, name, absent)),
   cosmeticLook<DiagramNode>(NODE_STYLE_KEYS),
   { name: 'tags', category: 'content', get: (n) => n.metadata, describe: describeTags },
@@ -337,6 +344,12 @@ export const EDGE_FIELDS: FieldSpec<DiagramEdge>[] = [
   ...EDGE_STYLE_KEYS.map(([key, name, absent]) => styleSpec<DiagramEdge>(key, name, absent)),
   cosmeticLook<DiagramEdge>(EDGE_STYLE_KEYS),
   { name: 'tags', category: 'content', get: (e) => e.metadata, describe: describeTags },
+  {
+    name: 'visibility sets',
+    category: 'content',
+    get: (e) => e.visibilitySetIds,
+    describe: describeList('visibility set')
+  },
   {
     name: 'direction sets',
     category: 'content',

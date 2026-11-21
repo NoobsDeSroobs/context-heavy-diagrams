@@ -38,6 +38,7 @@ export const NODE_FIELDS: FieldSpec<DiagramNode>[] = [
   { name: 'connection points', get: (n) => n.connectionPoints },
   { name: 'parent', get: (n) => n.parentId },
   { name: 'locked', get: (n) => n.locked },
+  { name: 'visibility sets', get: (n) => n.visibilitySetIds },
   { name: 'style', get: (n) => n.style },
   { name: 'tags', get: (n) => n.metadata },
   { name: 'label', get: (n) => n.data.label },
@@ -76,6 +77,7 @@ export const EDGE_FIELDS: FieldSpec<DiagramEdge>[] = [
   { name: 'label', get: (e) => e.label },
   { name: 'style', get: (e) => e.style },
   { name: 'tags', get: (e) => e.metadata },
+  { name: 'visibility sets', get: (e) => e.visibilitySetIds },
   { name: 'direction sets', get: (e) => e.directionSets },
   { name: 'points', get: (e) => e.points }
 ]
