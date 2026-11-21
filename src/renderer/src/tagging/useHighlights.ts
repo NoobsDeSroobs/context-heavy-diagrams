@@ -26,6 +26,7 @@ export interface HighlightsState {
   addHighlight: (key: string, value: JsonValue, color: string) => void
   updateHighlightColor: (id: string, color: string) => void
   removeHighlight: (id: string) => void
+  removeHighlightGroup: (key: string) => void
   toggleHighlightEnabled: (id: string) => void
   toggleHighlightGroup: (ids: string[], enable: boolean) => void
   usedTags: { key: string; value: JsonValue }[]
@@ -98,6 +99,23 @@ export function useHighlights(
       markDirty()
     },
     [markDirty]
+  )
+
+  // Takes a whole group out: every highlight of the key, and their enabled ids. The automatic resync
+  // below only follows keys that still have a highlight, so with none left the group stays gone until
+  // "Add group" makes it again (ADR 0026).
+  const removeHighlightGroup = useCallback(
+    (key: string) => {
+      const doomed = new Set(highlights.filter((h) => h.key === key).map(highlightId))
+      if (doomed.size === 0) return
+      setHighlights((prev) => prev.filter((h) => h.key !== key))
+      setEnabledHighlightIds((prev) => {
+        const kept = new Set([...prev].filter((id) => !doomed.has(id)))
+        return kept.size === prev.size ? prev : kept
+      })
+      markDirty()
+    },
+    [highlights, markDirty]
   )
 
   const toggleHighlightEnabled = useCallback((id: string) => {
@@ -212,6 +230,7 @@ export function useHighlights(
     addHighlight,
     updateHighlightColor,
     removeHighlight,
+    removeHighlightGroup,
     toggleHighlightEnabled,
     toggleHighlightGroup,
     usedTags,

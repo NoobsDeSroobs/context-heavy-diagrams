@@ -363,8 +363,20 @@
   padding: 2px 4px;
 }
 
-.highlight-group-resync:hover {
+.highlight-group-resync:hover,
+.highlight-group-remove:hover {
   color: var(--color-text);
+}
+
+.highlight-group-remove {
+  cursor: pointer;
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: var(--ev-c-text-3);
+  font-size: 12px;
+  line-height: 1;
+  padding: 2px 4px;
 }
 
 .highlight-group-rows {

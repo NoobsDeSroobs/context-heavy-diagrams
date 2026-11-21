@@ -509,6 +509,7 @@ function CanvasInner(): React.JSX.Element {
     addHighlight,
     updateHighlightColor,
     removeHighlight,
+    removeHighlightGroup,
     toggleHighlightEnabled,
     toggleHighlightGroup,
     usedTags,
@@ -4389,6 +4390,7 @@ function CanvasInner(): React.JSX.Element {
               onAdd={addHighlight}
               onUpdateColor={updateHighlightColor}
               onRemove={removeHighlight}
+              onRemoveGroup={removeHighlightGroup}
               onToggle={toggleHighlightEnabled}
               onToggleGroup={toggleHighlightGroup}
               onAddOrResyncGroup={addOrResyncHighlightGroup}
