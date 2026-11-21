@@ -1,7 +1,13 @@
 import { useCallback, useMemo, useState } from 'react'
 import type { Edge, Node } from '@xyflow/react'
 import type { VisibilitySet } from '@shared/diagram'
-import { newSetId, shownFilter, withSet, withoutSet } from '@shared/visibility/visibility'
+import {
+  nameTaken,
+  newSetId,
+  shownFilter,
+  withSet,
+  withoutSet
+} from '@shared/visibility/visibility'
 import type { CanvasApi } from '../canvas/canvasApi'
 import { absolutePosition } from '../nodes/nodePosition'
 import { setIdsOf } from './hiding'
@@ -20,8 +26,9 @@ export interface VisibilitySetsState {
   setPanelOpen: React.Dispatch<React.SetStateAction<boolean>>
   panelAnchor: DOMRect | null
   togglePanel: (anchorRect: DOMRect) => void
-  addSet: (name: string) => void
-  renameSet: (id: string, name: string) => void
+  // Both return why the name was refused, or null when it was taken (a name is unique, ignoring case).
+  addSet: (name: string) => string | null
+  renameSet: (id: string, name: string) => string | null
   deleteSet: (id: string) => void
   toggleShown: (id: string) => void
   addSelectionTo: (id: string) => void
@@ -85,26 +92,30 @@ export function useVisibilitySets(
   )
 
   const addSet = useCallback(
-    (name: string) => {
+    (name: string): string | null => {
       const trimmed = name.trim()
-      if (!trimmed) return
+      if (!trimmed) return 'A set needs a name.'
+      if (nameTaken(visibilitySets, trimmed)) return `A set named "${trimmed}" already exists.`
       const listed = [...nodes, ...edges].flatMap((el) => setIdsOf(el) ?? [])
       setVisibilitySets((prev) => [...prev, { id: newSetId(prev, listed), name: trimmed }])
       markDirty()
+      return null
     },
-    [nodes, edges, setVisibilitySets, markDirty]
+    [nodes, edges, visibilitySets, setVisibilitySets, markDirty]
   )
 
   const renameSet = useCallback(
-    (id: string, name: string) => {
+    (id: string, name: string): string | null => {
       const trimmed = name.trim()
-      if (!trimmed) return
+      if (!trimmed) return 'A set needs a name.'
+      if (nameTaken(visibilitySets, trimmed, id)) return `A set named "${trimmed}" already exists.`
       setVisibilitySets((prev) =>
         prev.map((s) => (s.id === id && s.name !== trimmed ? { ...s, name: trimmed } : s))
       )
       markDirty()
+      return null
     },
-    [setVisibilitySets, markDirty]
+    [visibilitySets, setVisibilitySets, markDirty]
   )
 
   const members = useMemo(() => {

@@ -103,7 +103,7 @@ describe('visibility sets on the canvas (ADR 0194)', () => {
     // Alpha stays on the canvas, now in no set
     expect(within(list).queryByTitle('Select it')).toBeNull()
     expect(screen.getByText('Alpha')).toBeTruthy()
-    expect(document.querySelector('.visibility-set-count')?.textContent).toBe('today')
+    expect(document.querySelector('.visibility-set-count')?.textContent).toBe('0')
   })
 
   it('has Add selected and Remove selected buttons', async () => {
@@ -126,6 +126,34 @@ describe('visibility sets on the canvas (ADR 0194)', () => {
     await waitFor(() =>
       expect(container.querySelector('.react-flow__node.selected')?.textContent).toContain('Alpha')
     )
+  })
+
+  it('refuses a second set with the same name, ignoring case', async () => {
+    renderCanvas(diagram())
+    await screen.findByText('Alpha')
+    openPanel()
+    fireEvent.change(screen.getByRole('textbox', { name: 'New set name' }), {
+      target: { value: 'TODAY' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Add set' }))
+    expect((await screen.findByRole('alert')).textContent).toContain('already exists')
+    expect(screen.getAllByRole('textbox', { name: 'Set name' })).toHaveLength(1)
+  })
+
+  it('puts the old name back when a rename is refused', async () => {
+    renderCanvas(diagram())
+    await screen.findByText('Alpha')
+    openPanel()
+    fireEvent.change(screen.getByRole('textbox', { name: 'New set name' }), {
+      target: { value: 'Proposed' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Add set' }))
+    const names = await screen.findAllByRole('textbox', { name: 'Set name' })
+    expect(names).toHaveLength(2)
+    fireEvent.change(names[1], { target: { value: 'today' } })
+    fireEvent.blur(names[1])
+    expect((await screen.findByRole('alert')).textContent).toContain('already exists')
+    expect((names[1] as HTMLInputElement).value).toBe('Proposed')
   })
 
   it('cannot put anything in a set with nothing selected', async () => {

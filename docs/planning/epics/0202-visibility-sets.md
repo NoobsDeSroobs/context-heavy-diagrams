@@ -23,6 +23,8 @@ Let a person mark nodes and edges as members of named **visibility sets**, and s
 - **Review and diff.** Adding an element to a set is a change in a review (compare [ADR 0153](../../decisions/0153-a-look-that-carries-meaning-is-a-change-in-a-review.md)).
 - **The assistants.** The CLI and the extension can list sets, put elements in them and read membership, with the stale-edit check ([ADR 0109](../../decisions/0109-stale-edit-check-for-every-ai-write-path.md)).
 
+- **Undo of the sets themselves** (making, renaming, deleting a set) is left out of the first version; whether to put the catalogue in the undo history or to take a new look at how undo works is decided later.
+
 ## Tasks
 - [x] ADR 0194: the field and the catalogue, the visibility rule, session state for what is shown, and the alternatives (kept up to date as the design is tried)
 - [x] `schema.ts`, `serialize.ts`, the review and the changes-since-save lists, `docs/file-format.md`, and tests (shared code only).

@@ -174,7 +174,7 @@ import { useStyleBrush } from '../styling/useStyleBrush'
 import { useLegendLinePick } from '../legend/useLegendLinePick'
 import { useLegend } from '../legend/useLegend'
 import { useHighlights } from '../tagging/useHighlights'
-import { shownFilter } from '@shared/visibility/visibility'
+import { shownFilter, strayAdvisory } from '@shared/visibility/visibility'
 import { applyHidden, setIdsOf } from '../visibility/hiding'
 import { useVisibilitySets } from '../visibility/useVisibilitySets'
 import VisibilitySetsPanel from '../visibility/VisibilitySetsPanel'
@@ -3481,13 +3481,27 @@ function CanvasInner(): React.JSX.Element {
             'Legend is empty — consider adding at least a definition for the arrows/edges used in this diagram.'
           ]
         : []
+    // Ids in elements that no set of the diagram holds (ADR 0194): ignored, never removed.
+    const strayLines = strayAdvisory(
+      visibilitySets,
+      [...nodes, ...edges].map((el) => setIdsOf(el))
+    )
     return [
       ...diagnostics,
       ...hierarchyLoadNotes,
       ...hierarchyAnalysis.outgrownAdvisories,
-      ...legendEmptyAdvisory
+      ...legendEmptyAdvisory,
+      ...strayLines
     ]
-  }, [diagnostics, hierarchyLoadNotes, hierarchyAnalysis, legend.length, edges.length])
+  }, [
+    diagnostics,
+    hierarchyLoadNotes,
+    hierarchyAnalysis,
+    legend.length,
+    nodes,
+    edges,
+    visibilitySets
+  ])
 
   // "Changes since last save" Notes bucket (ADR 0102) — reuses
   // noteShadows' existing dirty flag (ADR 0092) directly, no new tracking.

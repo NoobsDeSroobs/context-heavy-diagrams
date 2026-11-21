@@ -8,8 +8,9 @@ interface VisibilitySetsPanelProps {
   members: Map<string, SetMember[]>
   selectionCount: number
   anchorRect: DOMRect | null
-  onAdd: (name: string) => void
-  onRename: (id: string, name: string) => void
+  // Both return why a name was refused, or null.
+  onAdd: (name: string) => string | null
+  onRename: (id: string, name: string) => string | null
   onDelete: (id: string) => void
   onToggle: (id: string) => void
   onAddSelection: (id: string) => void
@@ -38,7 +39,7 @@ function SetRow({
   shown: boolean
   members: SetMember[]
   hasSelection: boolean
-  onRename: (name: string) => void
+  onRename: (name: string) => string | null
   onDelete: () => void
   onToggle: () => void
   onAddSelection: () => void
@@ -50,8 +51,9 @@ function SetRow({
   const [draft, setDraft] = useState(set.name)
   const [open, setOpen] = useState(false)
   const commit = (): void => {
-    if (draft.trim() && draft.trim() !== set.name) onRename(draft)
-    else setDraft(set.name)
+    if (draft.trim() === set.name) return
+    // A refused name (empty, or taken by another set) puts the old one back.
+    if (onRename(draft) !== null) setDraft(set.name)
   }
   return (
     <div className="visibility-set">
@@ -65,6 +67,9 @@ function SetRow({
           onClick={() => setOpen((v) => !v)}
         >
           <span className={open ? 'highlight-group-caret open' : 'highlight-group-caret'}>▸</span>
+          <span className="visibility-set-count" title="Elements in this set">
+            {members.length}
+          </span>
         </button>
         <input
           type="checkbox"
@@ -87,9 +92,6 @@ function SetRow({
             }
           }}
         />
-        <span className="visibility-set-count" title="The ID of this set">
-          {set.id}
-        </span>
         <button
           type="button"
           title="Put the selected elements in this set"
@@ -175,14 +177,17 @@ export default function VisibilitySetsPanel({
   onClose
 }: VisibilitySetsPanelProps): React.JSX.Element {
   const [name, setName] = useState('')
+  // Why the last name was refused; cleared by the next one that is taken.
+  const [message, setMessage] = useState<string | null>(null)
   const rect = anchorRect ?? new DOMRect(0, 0, 0, 0)
   const left = Math.min(rect.right + 8, window.innerWidth - PANEL_WIDTH - 8)
   const bottom = Math.max(window.innerHeight - rect.bottom, 8)
   const maxHeight = Math.max(window.innerHeight - bottom - 16, 200)
   const submit = (): void => {
     if (!name.trim()) return
-    onAdd(name)
-    setName('')
+    const refused = onAdd(name)
+    setMessage(refused)
+    if (!refused) setName('')
   }
   return (
     <div
@@ -210,7 +215,11 @@ export default function VisibilitySetsPanel({
             shown={!hiddenIds.has(set.id)}
             members={members.get(set.id) ?? []}
             hasSelection={selectionCount > 0}
-            onRename={(next) => onRename(set.id, next)}
+            onRename={(next) => {
+              const refused = onRename(set.id, next)
+              setMessage(refused)
+              return refused
+            }}
             onDelete={() => onDelete(set.id)}
             onToggle={() => onToggle(set.id)}
             onAddSelection={() => onAddSelection(set.id)}
@@ -225,7 +234,10 @@ export default function VisibilitySetsPanel({
             placeholder="New set, for example Today"
             value={name}
             aria-label="New set name"
-            onChange={(event) => setName(event.target.value)}
+            onChange={(event) => {
+              setName(event.target.value)
+              setMessage(null)
+            }}
             onKeyDown={(event) => {
               if (event.key === 'Enter') submit()
             }}
@@ -234,6 +246,11 @@ export default function VisibilitySetsPanel({
             Add set
           </button>
         </div>
+        {message && (
+          <p className="visibility-set-message" role="alert">
+            {message}
+          </p>
+        )}
       </div>
     </div>
   )

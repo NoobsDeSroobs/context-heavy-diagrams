@@ -436,8 +436,8 @@ This is diagram-level data, not an app preference — reproducing the diagram fo
 
 | Field | Type | Required | Meaning |
 |---|---|---|---|
-| `id` | string | yes | Unique within the file. This app writes whole numbers as strings (`"1"`, `"2"`) and shows them to the person; another writer may use any string. Not reused while an element still lists it. Referenced by `visibilitySetIds` on nodes and edges. |
-| `name` | string | yes | Shown to the person. Free text, can change without touching any element. |
+| `id` | string | yes | Opaque and unique within the file (this app writes `vis-` and six characters). Never shown to the person: the `name` is. Referenced by `visibilitySetIds` on nodes and edges. |
+| `name` | string | yes | Shown to the person. Free text, can change without touching any element. Unique in the file ignoring case: this app refuses a duplicate, but the file does not enforce it. |
 
 **What is shown.** An element in no set is always shown. Otherwise it is shown when any of its sets is shown, so an element in both "Today" and "Proposed" stays while either is shown. An id that is not in the catalogue is ignored. Nothing is inferred: an edge is not hidden because an end is, and a child is not hidden because its container is.
 

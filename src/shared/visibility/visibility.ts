@@ -47,17 +47,53 @@ export function withoutSet(
   return rest.length > 0 ? rest : undefined
 }
 
-// A new id: the next whole number above every number in use, as a string ("1", "2", ...), so a set
-// has a short id a person can read and say. `referenced` holds the ids elements still list, so an id
-// that only an element refers to (a set deleted and then restored by an undo) is not handed out
-// again. Ids that are not numbers are ignored when counting.
+// A new id, unique in the catalogue and among the ids elements still list. Opaque: nothing reads it
+// and a person never sees it; the name is what is shown, so renaming a set changes no id.
 export function newSetId(
   catalogue: readonly VisibilitySet[],
   referenced: Iterable<string> = []
 ): string {
-  let highest = 0
-  for (const id of [...catalogue.map((s) => s.id), ...referenced]) {
-    if (/^[0-9]+$/.test(id)) highest = Math.max(highest, Number(id))
+  const taken = new Set([...catalogue.map((s) => s.id), ...referenced])
+  let id: string
+  do {
+    id = `vis-${Math.random().toString(36).slice(2, 8)}`
+  } while (taken.has(id))
+  return id
+}
+
+// Whether a name is already used by another set, ignoring case and the space around it. A set's
+// name is unique in the diagram (ADR 0194); `exceptId` is the set being renamed.
+export function nameTaken(
+  catalogue: readonly VisibilitySet[],
+  name: string,
+  exceptId?: string
+): boolean {
+  const wanted = name.trim().toLowerCase()
+  return catalogue.some((s) => s.id !== exceptId && s.name.trim().toLowerCase() === wanted)
+}
+
+// The ids that elements list but the catalogue does not hold, each once. They are ignored by the
+// rule; Diagnostics lists them.
+export function strayIds(
+  catalogue: readonly VisibilitySet[],
+  lists: Iterable<readonly string[] | undefined>
+): string[] {
+  const known = new Set(catalogue.map((s) => s.id))
+  const stray = new Set<string>()
+  for (const ids of lists) {
+    for (const id of ids ?? []) if (!known.has(id)) stray.add(id)
   }
-  return String(highest + 1)
+  return [...stray]
+}
+
+// The line Diagnostics shows for stray ids, or none (ADR 0194): nothing is removed or changed.
+export function strayAdvisory(
+  catalogue: readonly VisibilitySet[],
+  lists: Iterable<readonly string[] | undefined>
+): string[] {
+  const stray = strayIds(catalogue, lists)
+  if (stray.length === 0) return []
+  return [
+    `Visibility sets: ${stray.length} id(s) in elements belong to no set of this diagram (${stray.join(', ')}). They are ignored, so those elements are never hidden by them, and they are kept in the file.`
+  ]
 }
