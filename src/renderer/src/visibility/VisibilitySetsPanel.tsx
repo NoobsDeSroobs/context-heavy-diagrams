@@ -19,7 +19,7 @@ interface VisibilitySetsPanelProps {
   onClose: () => void
 }
 
-const PANEL_WIDTH = 380
+const PANEL_WIDTH = 470
 
 function SetRow({
   set,
@@ -97,7 +97,7 @@ function SetRow({
           disabled={!hasSelection}
           onClick={onAddSelection}
         >
-          Add
+          Add selected
         </button>
         <button
           type="button"
@@ -106,7 +106,7 @@ function SetRow({
           disabled={!hasSelection}
           onClick={onRemoveSelection}
         >
-          Remove
+          Remove selected
         </button>
         <button
           type="button"

@@ -106,14 +106,26 @@ describe('visibility sets on the canvas (ADR 0194)', () => {
     expect(document.querySelector('.visibility-set-count')?.textContent).toBe('today')
   })
 
-  it('has Add and Remove buttons for the selection', async () => {
+  it('has Add selected and Remove selected buttons', async () => {
     renderCanvas(diagram())
     await screen.findByText('Alpha')
     openPanel()
     const add = screen.getByRole('button', { name: 'Add the selection to Today' })
     const remove = screen.getByRole('button', { name: 'Remove the selection from Today' })
-    expect(add.textContent).toBe('Add')
-    expect(remove.textContent).toBe('Remove')
+    expect(add.textContent).toBe('Add selected')
+    expect(remove.textContent).toBe('Remove selected')
+  })
+
+  it('selects an element from the list of a set', async () => {
+    const { container } = renderCanvas(diagram())
+    await screen.findByText('Alpha')
+    openPanel()
+    fireEvent.click(screen.getByRole('button', { name: 'Show what is in Today' }))
+    expect(container.querySelector('.react-flow__node.selected')).toBeNull()
+    fireEvent.click(within(screen.getByRole('list', { name: 'In Today' })).getByTitle('Select it'))
+    await waitFor(() =>
+      expect(container.querySelector('.react-flow__node.selected')?.textContent).toContain('Alpha')
+    )
   })
 
   it('cannot put anything in a set with nothing selected', async () => {

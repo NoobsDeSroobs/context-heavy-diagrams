@@ -3,6 +3,7 @@ import type { Edge, Node } from '@xyflow/react'
 import type { VisibilitySet } from '@shared/diagram'
 import { newSetId, shownFilter, withSet, withoutSet } from '@shared/visibility/visibility'
 import type { CanvasApi } from '../canvas/canvasApi'
+import { absolutePosition } from '../nodes/nodePosition'
 import { setIdsOf } from './hiding'
 
 // One element of a set, as the panel lists it.
@@ -38,7 +39,7 @@ export interface VisibilitySetsState {
 // is drawn and who can be selected, so it is not an edit; making, renaming and deleting a set, and
 // joining or leaving one, are.
 export function useVisibilitySets(
-  { setNodes, setEdges, pushSnapshot, markDirty }: CanvasApi,
+  { rfInstance, setNodes, setEdges, pushSnapshot, markDirty }: CanvasApi,
   nodes: Node[],
   edges: Edge[],
   visibilitySets: VisibilitySet[],
@@ -231,10 +232,69 @@ export function useVisibilitySets(
     [pushSnapshot, setNodes, setEdges]
   )
 
-  // Selects just this element; a hidden one cannot be selected.
+  // The part of the canvas an element takes up, in flow coordinates; an edge takes up the two
+  // elements it joins.
+  const boxOf = useCallback(
+    (member: SetMember): { x: number; y: number; width: number; height: number } | null => {
+      const byId = new Map(nodes.map((n) => [n.id, n]))
+      const boxOfNode = (
+        id: string
+      ): { x: number; y: number; width: number; height: number } | null => {
+        const n = byId.get(id)
+        if (!n) return null
+        const at = absolutePosition(n, byId)
+        return {
+          x: at.x,
+          y: at.y,
+          width: n.measured?.width ?? n.width ?? 0,
+          height: n.measured?.height ?? n.height ?? 0
+        }
+      }
+      if (member.kind === 'node') return boxOfNode(member.id)
+      const edge = edges.find((e) => e.id === member.id)
+      const ends = edge ? [boxOfNode(edge.source), boxOfNode(edge.target)] : []
+      const found = ends.filter((b): b is NonNullable<typeof b> => b !== null)
+      if (found.length === 0) return null
+      const left = Math.min(...found.map((b) => b.x))
+      const top = Math.min(...found.map((b) => b.y))
+      const right = Math.max(...found.map((b) => b.x + b.width))
+      const bottom = Math.max(...found.map((b) => b.y + b.height))
+      return { x: left, y: top, width: right - left, height: bottom - top }
+    },
+    [nodes, edges]
+  )
+
+  // Moves the view to an element that is not fully in it, keeping the zoom; one already in view
+  // leaves the view alone.
+  const revealMember = useCallback(
+    (member: SetMember) => {
+      const box = boxOf(member)
+      const pane = document.querySelector('.react-flow')?.getBoundingClientRect()
+      if (!box || !pane || pane.width <= 0 || pane.height <= 0) return
+      const topLeft = rfInstance.flowToScreenPosition({ x: box.x, y: box.y })
+      const bottomRight = rfInstance.flowToScreenPosition({
+        x: box.x + box.width,
+        y: box.y + box.height
+      })
+      const inView =
+        topLeft.x >= pane.left &&
+        topLeft.y >= pane.top &&
+        bottomRight.x <= pane.right &&
+        bottomRight.y <= pane.bottom
+      if (inView) return
+      void rfInstance.setCenter(box.x + box.width / 2, box.y + box.height / 2, {
+        zoom: rfInstance.getZoom(),
+        duration: 300
+      })
+    },
+    [boxOf, rfInstance]
+  )
+
+  // Selects just this element and brings it into view; a hidden one cannot be selected.
   const selectMember = useCallback(
     (member: SetMember) => {
       if (!member.shown) return
+      revealMember(member)
       setNodes((nds) =>
         nds.map((n) => {
           const want = member.kind === 'node' && n.id === member.id
@@ -248,7 +308,7 @@ export function useVisibilitySets(
         })
       )
     },
-    [setNodes, setEdges]
+    [setNodes, setEdges, revealMember]
   )
 
   return {
