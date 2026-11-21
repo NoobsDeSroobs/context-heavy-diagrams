@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { EdgeStyle, LegendEntry } from '@shared/diagram'
 import { searchLineStylePresets } from './builtinLineStylePresets'
+import EdgeLinePreview from './EdgeLinePreview'
 
 interface StylePickerProps {
   anchorRect: DOMRect
@@ -67,8 +68,16 @@ export default function StylePicker({
                   }
                   onClick={() => onPickLine(line.id)}
                 >
-                  <span
-                    className={`style-picker-swatch style-picker-swatch-${line.lineStyle ?? 'solid'}`}
+                  <EdgeLinePreview
+                    look={{
+                      stroke: line.color,
+                      strokeWidth: line.strokeWidth,
+                      lineStyle: line.lineStyle,
+                      startMarker: line.startMarker,
+                      endMarker: line.endMarker,
+                      dashLength: line.dashLength,
+                      dashGap: line.dashGap
+                    }}
                   />
                   {line.label}
                   {line.id === currentLineId ? ' ✓' : ''}
@@ -84,9 +93,7 @@ export default function StylePicker({
               className="style-picker-item"
               onClick={() => onPick(preset.style)}
             >
-              <span
-                className={`style-picker-swatch style-picker-swatch-${preset.style.lineStyle ?? 'solid'}`}
-              />
+              <EdgeLinePreview look={preset.style} />
               {preset.label}
             </button>
           ))}

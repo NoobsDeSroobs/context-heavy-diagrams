@@ -16,6 +16,7 @@ const diagram = (marked?: string): DiagramFile => ({
       kind: 'line',
       label: 'Data flow',
       color: '#4a90d9',
+      strokeWidth: 3,
       lineStyle: 'solid',
       endMarker: 'arrowClosed',
       ...(marked === 'data' ? { forNewEdges: true } : {})
@@ -88,6 +89,33 @@ describe('the line new edges are drawn with (ADR 0196)', () => {
     await waitFor(() =>
       expect(swatch().getAttribute('title')).toBe('Default style for newly drawn edges')
     )
+  })
+
+  it('previews each line as it will look: colour, thickness and ends (ADR 0197)', async () => {
+    renderCanvas(diagram('data'))
+    await screen.findByText('Alpha')
+    // the button shows the line in use, not a name
+    const swatchLine = swatch().querySelector('line')!
+    // its colour is the one a new edge is stored with, adapted to the theme
+    expect(swatchLine.getAttribute('stroke')).toMatch(/^#[0-9a-f]{6}$/)
+    expect(swatchLine.getAttribute('stroke-width')).toBe('3')
+    expect(swatchLine.getAttribute('marker-end')).toContain('chd-marker-arrow-closed')
+
+    fireEvent.click(swatch())
+    const row = (await screen.findByRole('button', { name: /Data flow/ })).querySelector('line')!
+    expect(row.getAttribute('stroke')).toBe('#4a90d9')
+    expect(row.getAttribute('stroke-width')).toBe('3')
+    expect(row.getAttribute('marker-end')).toContain('chd-marker-arrow-closed')
+    // the line stops short of the tip of the pointed head, which stays where the line used to end
+    const x2 = Number(row.getAttribute('x2'))
+    expect(x2).toBeLessThan(44 - 3)
+    // a line with no colour of its own is drawn in the default edge colour, dashed as it says
+    const event = screen.getByRole('button', { name: 'Event' }).querySelector('line')!
+    expect(event.getAttribute('stroke')).toBe('var(--xy-edge-stroke-default)')
+    expect(event.getAttribute('stroke-dasharray')).toBeTruthy()
+    // a preset is a preview too
+    const plain = screen.getByRole('button', { name: 'Plain line' }).querySelector('line')!
+    expect(plain.getAttribute('marker-end')).toBeNull()
   })
 
   it('offers only the presets when the diagram has no line', async () => {

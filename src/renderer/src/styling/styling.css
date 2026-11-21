@@ -64,17 +64,3 @@
   background: var(--ev-button-alt-hover-bg);
 }
 
-.style-picker-swatch {
-  flex: 0 0 auto;
-  width: 28px;
-  height: 0;
-  border-top: 2px solid var(--ev-c-text-2);
-}
-
-.style-picker-swatch-dashed {
-  border-top-style: dashed;
-}
-
-.style-picker-swatch-dotted {
-  border-top-style: dotted;
-}

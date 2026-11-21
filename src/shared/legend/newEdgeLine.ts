@@ -12,14 +12,15 @@ export function newEdgeLineEntry(
   return legend?.find((entry) => entry.kind === 'line' && entry.forNewEdges === true)
 }
 
-// What a new edge gets from the entry. The line style and the markers are what the entry says; an
-// entry with none leaves the field out, so the built-in or the personal default fills it in. Width and
-// opacity are not in an entry and so are never set from it. `stroke` is the colour to store on the
-// edge: the caller decides it, since an edge's stored colour is flipped for the light theme and a
+// What a new edge gets from the entry. The thickness, the line style and the markers are what the
+// entry says; an entry with none leaves the field out, so the built-in or the personal default fills
+// it in. Opacity is not in an entry and so is never set from it. `stroke` is the colour to store on
+// the edge: the caller decides it, since an edge's stored colour is flipped for the light theme and a
 // legend colour is not (ADR 0034, ADR 0123).
 export function edgeStyleFromLegendLine(entry: LegendEntry, stroke?: string): EdgeStyle {
   return {
     ...(stroke !== undefined ? { stroke } : {}),
+    ...(entry.strokeWidth !== undefined ? { strokeWidth: entry.strokeWidth } : {}),
     ...(entry.lineStyle !== undefined ? { lineStyle: entry.lineStyle } : {}),
     ...(entry.startMarker !== undefined ? { startMarker: entry.startMarker } : {}),
     ...(entry.endMarker !== undefined ? { endMarker: entry.endMarker } : {}),

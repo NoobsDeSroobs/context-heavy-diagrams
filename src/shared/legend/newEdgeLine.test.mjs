@@ -31,13 +31,15 @@ test('the entry new edges follow is the first marked line, and nothing marks an 
   assert.equal(newEdgeLineEntry([{ ...dot, forNewEdges: true }]), undefined)
 })
 
-test('an edge gets the fields the entry has, the colour the caller gives, and no width or opacity', () => {
+test('an edge gets the fields the entry has, the colour the caller gives, and no opacity', () => {
   assert.deepEqual(edgeStyleFromLegendLine(dataFlow, '#123456'), {
     stroke: '#123456',
     lineStyle: 'solid',
     startMarker: 'none',
     endMarker: 'arrowClosed'
   })
+  // the thickness is the entry's too (ADR 0197)
+  assert.equal(edgeStyleFromLegendLine({ ...dataFlow, strokeWidth: 5 }).strokeWidth, 5)
   // an entry that leaves a field out leaves it out, motion included
   assert.deepEqual(edgeStyleFromLegendLine(event), { lineStyle: 'dashed', animation: 'flow' })
 })

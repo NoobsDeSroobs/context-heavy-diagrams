@@ -22,6 +22,9 @@ export interface LegendEntry extends LineMotion {
   // existing named line-style preset picker (ADR 0010) rather than a
   // parallel one.
   lineStyle?: LineStyleKind
+  // How thick the line is drawn, in pixels, as an edge's `style.strokeWidth` (ADR 0197). Absent means
+  // the built-in thickness.
+  strokeWidth?: number
   startMarker?: MarkerKind
   endMarker?: MarkerKind
   // 'line' kind only: new edges are drawn with this line (ADR 0196). At most one entry has it.

@@ -13,6 +13,8 @@ import { BaseEdge, EdgeLabelRenderer, useReactFlow, type EdgeProps } from '@xyfl
 import type { EdgeStyle, LinePoint, MetadataEntry } from '@shared/diagram'
 import { GATE_COLOR, GATE_HALF, GATE_WIDTH } from '@shared/crossings/crossings'
 import { buildEdgePath } from '@shared/geometry/edgePath'
+import { trimPath } from '@shared/geometry/trimPath'
+import { markerTrim } from '@shared/export/markerShapes'
 import { ratioNearest } from '@shared/geometry/pathSampling'
 import {
   orthogonalRouteVertices,
@@ -364,6 +366,18 @@ function LabeledEdge({
     edgeStyle?.endMarker !== undefined ? markerUrl(edgeStyle.endMarker) : markerEnd
   const computedMarkerStart =
     edgeStyle?.startMarker !== undefined ? markerUrl(edgeStyle.startMarker) : markerStart
+  // The line stops short of the tip of a pointed head, so the tip is not blunted by the end of the
+  // line (ADR 0197). An edge with no marker of its own is drawn with the built-in ones.
+  const drawnWidth = Number(computedStyle.strokeWidth)
+  const drawnPath = useMemo(
+    () =>
+      trimPath(
+        edgePath,
+        markerTrim(edgeStyle?.startMarker ?? EDGE_STYLE_DEFAULTS.startMarker, drawnWidth),
+        markerTrim(edgeStyle?.endMarker ?? EDGE_STYLE_DEFAULTS.endMarker, drawnWidth)
+      ),
+    [edgePath, edgeStyle?.startMarker, edgeStyle?.endMarker, drawnWidth]
+  )
 
   const labelStyle: CSSProperties = {
     ...(edgeStyle?.fontSize != null ? { fontSize: edgeStyle.fontSize } : {}),
@@ -512,7 +526,7 @@ function LabeledEdge({
     <>
       <BaseEdge
         id={id}
-        path={edgePath}
+        path={drawnPath}
         style={computedStyle}
         markerEnd={computedMarkerEnd}
         markerStart={computedMarkerStart}

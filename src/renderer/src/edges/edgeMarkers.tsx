@@ -40,7 +40,9 @@ function EdgeMarkerDefs(): React.JSX.Element {
             key={shape.id}
             id={shape.id}
             viewBox={shape.viewBox}
-            refX={shape.refX}
+            // The line stops `trim` short of the tip (markerTrim), so the marker reaches that far
+            // past the end of the line to put its tip where the line used to end.
+            refX={shape.refX - (shape.trim ?? 0)}
             refY={shape.refY}
             markerWidth={shape.markerWidth}
             markerHeight={shape.markerHeight}

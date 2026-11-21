@@ -28,3 +28,4 @@ The picker lists the diagram's line entries by name, with a way to add one (the 
 - [x] The file format, the validator and the tools (`set_new_edge_line`, `connect`).
 - [ ] Follow-ups: the compare view does not show a change of the mark (the legend list compares entries by id), and the legend panel does not mark the row.
 - [x] An example (`examples/new-edge-line.chd`) and the changelog.
+- [x] From trying it: the legend line carries a thickness, the arrowhead tip is no longer blunted by a thick line, and the picker previews each line as it looks ([ADR 0197](../../decisions/0197-pointed-arrowheads-keep-their-tip-and-lines-carry-a-thickness.md)).

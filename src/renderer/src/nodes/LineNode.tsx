@@ -13,6 +13,8 @@ import { withOpacity } from '../styling/colorOpacity'
 import { themeAdaptiveColor } from '../styling/themeAdaptiveColor'
 import { LINE_STYLE_DEFAULTS } from '@shared/styling/styleDefaults'
 import { markerUrl } from '../edges/markerIds'
+import { trimPath } from '@shared/geometry/trimPath'
+import { markerTrim } from '@shared/export/markerShapes'
 import {
   buildBendablePath,
   nearestSegmentIndex,
@@ -269,7 +271,11 @@ function LineNode({ id, data, selected }: NodeProps): React.JSX.Element {
           />
         )}
         <path
-          d={path}
+          d={trimPath(
+            path,
+            markerTrim(style.startMarker, Number(computedStyle.strokeWidth)),
+            markerTrim(style.endMarker, Number(computedStyle.strokeWidth))
+          )}
           style={{ ...computedStyle, pointerEvents: 'none' }}
           markerStart={markerUrl(style.startMarker)}
           markerEnd={markerUrl(style.endMarker)}

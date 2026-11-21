@@ -3,6 +3,7 @@ import type { IconRef, LegendEntry, LegendEntryKind } from '@shared/diagram'
 import IconBrowser from '../icons/IconBrowser'
 import { addMiscIcon } from '../icons/addMiscIcon'
 import { markerUrl } from '../edges/markerIds'
+import { markerTrim } from '@shared/export/markerShapes'
 import type { DirectionSetLegendRow } from '../edges/edgeDirectionSets'
 import type { LegendLineLook } from './legendLinePick'
 import { EDGE_STYLE_DEFAULTS } from '@shared/styling/styleDefaults'
@@ -52,7 +53,10 @@ const PANEL_WIDTH = 300
 const DEFAULT_COLOR = '#e6194b'
 
 // The line swatch: its stroke and the length of the line, for the pulse.
+// A thicker line is drawn at this thickness at most: the ends scale with it, and the swatch is one
+// row of the panel.
 const SWATCH_STROKE_WIDTH = 2
+const MAX_SWATCH_STROKE_WIDTH = 3
 const SWATCH_LENGTH = 40
 
 // Small swatch previewing what a legend entry actually looks like on
@@ -92,19 +96,30 @@ function LegendSwatch({
   const flowPattern = animation === 'flow' ? dashPattern(entry, true) : undefined
   const flow = flowPattern ? flowLoop(flowPattern, speed) : null
   const linePattern = flowPattern ?? dashPattern(entry)
-  const dots = pulseRadius(SWATCH_STROKE_WIDTH)
+  const strokeWidth = Math.min(
+    MAX_SWATCH_STROKE_WIDTH,
+    Math.max(1, entry.strokeWidth ?? SWATCH_STROKE_WIDTH)
+  )
+  const dots = pulseRadius(strokeWidth)
   const pulse =
     animation === 'pulse'
       ? pulseLoop(SWATCH_LENGTH, knownPulseDistance(entry.pulseDistance, dots), dots, speed)
       : null
   const stroke = entry.color ?? 'var(--xy-edge-stroke-default)'
   return (
-    <svg className="legend-swatch legend-swatch-line" viewBox="0 0 48 16" width="48" height="16">
+    <svg
+      className="legend-swatch legend-swatch-line"
+      viewBox="0 0 48 16"
+      width="48"
+      height="16"
+      style={{ overflow: 'visible' }}
+    >
       <line
         className={flow ? 'edge-flow' : undefined}
-        x1="3"
+        // The line stops short of the tip of a pointed head (ADR 0197).
+        x1={3 + markerTrim(entry.startMarker, strokeWidth)}
         y1="8"
-        x2="43"
+        x2={43 - markerTrim(entry.endMarker, strokeWidth)}
         y2="8"
         // Absent color means "this diagram's default edge look" (same
         // convention as an edge/node with no explicit style — see
@@ -115,7 +130,7 @@ function LegendSwatch({
         // in-app "add entry" flow always seeds one, so this never surfaced
         // before) rendered completely blank.
         stroke={stroke}
-        strokeWidth={SWATCH_STROKE_WIDTH}
+        strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeDasharray={dasharrayOf(linePattern)}
         markerStart={markerUrl(entry.startMarker)}
@@ -289,6 +304,7 @@ export default function LegendPanel({
                   kind: 'line',
                   label: directionSetRow.label,
                   color: directionSetRow.color,
+                  strokeWidth: directionSetRow.strokeWidth,
                   lineStyle: directionSetRow.lineStyle,
                   startMarker: directionSetRow.startMarker,
                   endMarker: directionSetRow.endMarker

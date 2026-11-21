@@ -60,7 +60,8 @@ import {
   type LineLook,
   type Paint
 } from './appearance.ts'
-import { MARKER_SHAPES, MARKER_STROKE_WIDTH } from './markerShapes.ts'
+import { MARKER_SHAPES, MARKER_STROKE_WIDTH, markerTrim } from './markerShapes.ts'
+import { trimPath } from '../geometry/trimPath.ts'
 import { plainColor } from './color.ts'
 import { iconParts } from './iconMarkup.ts'
 import {
@@ -276,6 +277,16 @@ function endAngles(d: string): { start: number; end: number } | null {
   }
 }
 
+// The path a line is stroked along: `d` stopped short of the tip of a pointed head, which is drawn
+// at the end of `d` itself (ADR 0197).
+function strokedPath(d: string, look: LineLook): string {
+  return trimPath(
+    d,
+    markerTrim(look.startMarker, look.strokeWidth),
+    markerTrim(look.endMarker, look.strokeWidth)
+  )
+}
+
 // The start and end markers of a line along path `d`, as shapes.
 function arrowheadsFor(d: string, look: LineLook): string {
   if (look.startMarker === 'none' && look.endMarker === 'none') return ''
@@ -458,12 +469,16 @@ function drawLegend(
     } else {
       const paint = plainColor(swatch.color)
       const dash = dasharrayOf(dashPattern(swatch))
+      // At most 3 thick, as in the legend panel; the line stops short of a pointed head (ADR 0197).
+      const width = Math.min(3, Math.max(1, swatch.strokeWidth ?? 2))
+      const x1 = swatchX + 2 + markerTrim(swatch.startMarker, width)
+      const x2 = swatchX + 26 - markerTrim(swatch.endMarker, width)
       parts.push(
-        `<line x1="${num(swatchX + 2)}" y1="${num(cy)}" x2="${num(swatchX + 26)}" y2="${num(cy)}"${paintAttrs('stroke', paint)} stroke-width="2" stroke-linecap="round"` +
+        `<line x1="${num(x1)}" y1="${num(cy)}" x2="${num(x2)}" y2="${num(cy)}"${paintAttrs('stroke', paint)} stroke-width="${num(width)}" stroke-linecap="round"` +
           (dash ? ` stroke-dasharray="${dash}"` : '') +
           '/>',
-        arrowhead(swatch.startMarker ?? 'none', { x: swatchX + 2, y: cy }, 180, paint, 2),
-        arrowhead(swatch.endMarker ?? 'none', { x: swatchX + 26, y: cy }, 0, paint, 2)
+        arrowhead(swatch.startMarker ?? 'none', { x: swatchX + 2, y: cy }, 180, paint, width),
+        arrowhead(swatch.endMarker ?? 'none', { x: swatchX + 26, y: cy }, 0, paint, width)
       )
     }
     parts.push(
@@ -537,7 +552,7 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
       const d = buildBendablePath(node.data.points ?? [])
       if (d) {
         parts.push(
-          `<g transform="translate(${num(x)} ${num(y)})"><path d="${d}" fill="none"${applyStroke(look)}/>${arrowheadsFor(d, look)}</g>`
+          `<g transform="translate(${num(x)} ${num(y)})"><path d="${strokedPath(d, look)}" fill="none"${applyStroke(look)}/>${arrowheadsFor(d, look)}</g>`
         )
         const pad =
           look.strokeWidth / 2 +
@@ -763,7 +778,7 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
       z: laid.z,
       layer: 0,
       order: laid.order,
-      svg: `<g class="chd-edge" data-id="${esc(edge.id)}"><path d="${d}" fill="none"${applyStroke(look)}/>${arrowheadsFor(d, look)}${options.crossings ? gatesFor(edge.source, edge.target, flat) : ''}</g>`
+      svg: `<g class="chd-edge" data-id="${esc(edge.id)}"><path d="${strokedPath(d, look)}" fill="none"${applyStroke(look)}/>${arrowheadsFor(d, look)}${options.crossings ? gatesFor(edge.source, edge.target, flat) : ''}</g>`
     })
     const pad =
       look.strokeWidth / 2 +

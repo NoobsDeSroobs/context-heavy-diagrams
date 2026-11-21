@@ -289,6 +289,7 @@ function removeHighlight(model: Model, reader: Reader): OperationResult {
 
 const LEGEND_LINE_FIELDS: Record<string, StyleRule> = Object.fromEntries(
   [
+    'strokeWidth',
     'lineStyle',
     'startMarker',
     'endMarker',

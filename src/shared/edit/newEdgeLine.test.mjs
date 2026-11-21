@@ -51,7 +51,14 @@ const base = () =>
       lineStyle: 'solid',
       endMarker: 'arrowClosed'
     },
-    { op: 'add_legend_entry', id: 'event', kind: 'line', label: 'Event', lineStyle: 'dashed' },
+    {
+      op: 'add_legend_entry',
+      id: 'event',
+      kind: 'line',
+      label: 'Event',
+      lineStyle: 'dashed',
+      strokeWidth: 4
+    },
     { op: 'add_legend_entry', id: 'dot', kind: 'entity', label: 'GDPR', color: '#e6194b' }
   ).diagram
 
@@ -99,6 +106,27 @@ test('connect without a style takes the marked line, and a style of its own wins
     endMarker: 'arrowClosed'
   })
   assert.deepEqual(byId.own, { stroke: '#ff0000' })
+})
+
+test('the thickness of the legend line is kept by the file and given to new edges (ADR 0197)', () => {
+  const { diagram } = run(
+    base(),
+    { op: 'set_new_edge_line', id: 'event' },
+    { op: 'connect', id: 'thick', from: 'a', to: 'b' }
+  )
+  assert.equal(diagram.legend.find((e) => e.id === 'event').strokeWidth, 4)
+  assert.deepEqual(diagram.edges[0].style, { strokeWidth: 4, lineStyle: 'dashed' })
+  assert.deepEqual(check(diagram).errors, [])
+  refused(
+    base(),
+    { op: 'add_legend_entry', kind: 'entity', label: 'X', color: '#000', strokeWidth: 3 },
+    /only apply to a legend entry of kind "line"/
+  )
+  // and it can be changed and taken away
+  const changed = run(base(), { op: 'set_legend_entry', id: 'event', strokeWidth: 2 }).diagram
+  assert.equal(changed.legend.find((e) => e.id === 'event').strokeWidth, 2)
+  const removed = run(changed, { op: 'set_legend_entry', id: 'event', strokeWidth: null }).diagram
+  assert.equal('strokeWidth' in removed.legend.find((e) => e.id === 'event'), false)
 })
 
 test('with no marked line, connect leaves the edge unstyled as before', () => {

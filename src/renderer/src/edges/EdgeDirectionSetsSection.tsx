@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { EdgeDirectionSet, EdgeDirectionSetStyle, EdgeStyle } from '@shared/diagram'
 import { markerUrl } from './markerIds'
+import { markerTrim } from '@shared/export/markerShapes'
 import { DEFAULT_DIRECTION_SET_LEGEND_COLOR } from './edgeDirectionSets'
 import EdgeDirectionSetStyleEditor from './EdgeDirectionSetStyleEditor'
 
@@ -38,9 +39,10 @@ function DirectionSwatch({
   return (
     <svg viewBox="0 0 40 14" width="40" height="14">
       <line
-        x1="3"
+        // The line stops short of the tip of a pointed head (ADR 0197).
+        x1={3 + markerTrim(style?.startMarker, width)}
         y1="7"
-        x2="35"
+        x2={35 - markerTrim(style?.endMarker, width)}
         y2="7"
         stroke={color}
         strokeWidth={width}

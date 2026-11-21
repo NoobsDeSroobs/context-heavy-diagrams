@@ -34,14 +34,22 @@ test('an explicit "none" marker is kept, not replaced by the default arrow', () 
   assert.equal(look.endMarker, 'none')
 })
 
-test('width and opacity are not part of a legend entry', () => {
+test('the thickness is copied when the edge sets one; opacity is not part of a legend entry', () => {
   const look = legendLineFromEdgeStyle(
     { strokeWidth: 5, strokeOpacity: 40, labelPosition: 0.2 },
     'dark',
     flip,
     defaults
   )
-  assert.deepEqual(Object.keys(look).sort(), ['endMarker', 'lineStyle', 'startMarker'])
+  assert.deepEqual(Object.keys(look).sort(), [
+    'endMarker',
+    'lineStyle',
+    'startMarker',
+    'strokeWidth'
+  ])
+  assert.equal(look.strokeWidth, 5)
+  // an edge with the built-in thickness leaves it out, so the entry follows the built-in one
+  assert.equal('strokeWidth' in legendLineFromEdgeStyle({}, 'dark', flip, defaults), false)
 })
 
 test('an edge’s animation and dash settings are copied, and an edge without them adds none', () => {

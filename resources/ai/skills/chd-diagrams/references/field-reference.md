@@ -332,6 +332,7 @@ Top-level `legend` — manually-authored entries explaining the diagram's own vi
 | `label` | string | yes | Free-text explanation. |
 | `color` | CSS color | no | `"line"`/`"entity"` only — never set for `"icon"` (icons are fixed multi-color assets, not tintable; ignore if present). |
 | `animation`, `animationSpeed`, `animationDirection`, `pulseDistance`, `dashLength`, `dashGap` | as in Edge style | no | `"line"` kind only; the legend arrow moves like the edge it stands for. Not drawn in an image export. |
+| `strokeWidth` | pixels | no | `"line"` kind only; how thick the line is, as an edge's `style.strokeWidth`. New edges drawn with this line (`forNewEdges`) get it. |
 | `lineStyle` | `"solid"` \| `"dashed"` \| `"dotted"` | no | `"line"` kind only. |
 | `startMarker` / `endMarker` | marker kind | no | `"line"` kind only. |
 | `icon` | IconRef | conditionally | Required for `"icon"` kind — same shape as `data.icons.*` (see [Icon reference](#icon-reference)). |

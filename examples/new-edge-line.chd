@@ -6,6 +6,7 @@
       "kind": "line",
       "label": "Data flow",
       "color": "#4a90d9",
+      "strokeWidth": 3,
       "lineStyle": "solid",
       "startMarker": "none",
       "endMarker": "arrowClosed",
@@ -16,6 +17,7 @@
       "kind": "line",
       "label": "Event",
       "color": "#e6a23c",
+      "strokeWidth": 2,
       "lineStyle": "dashed",
       "startMarker": "none",
       "endMarker": "arrowClosed"
@@ -94,6 +96,7 @@
       "label": "invoice",
       "style": {
         "stroke": "#4a90d9",
+        "strokeWidth": 3,
         "lineStyle": "solid",
         "startMarker": "none",
         "endMarker": "arrowClosed"
@@ -109,6 +112,7 @@
       "label": "pick list",
       "style": {
         "stroke": "#4a90d9",
+        "strokeWidth": 3,
         "lineStyle": "solid",
         "startMarker": "none",
         "endMarker": "arrowClosed"
@@ -124,6 +128,7 @@
       "label": "shipped",
       "style": {
         "stroke": "#e6a23c",
+        "strokeWidth": 2,
         "lineStyle": "dashed",
         "startMarker": "none",
         "endMarker": "arrowClosed"

@@ -90,6 +90,7 @@ import IconPicker from '../icons/IconPicker'
 import IconBrowser from '../icons/IconBrowser'
 import ColorPickerPopup from '../styling/ColorPickerPopup'
 import StylePicker from '../styling/StylePicker'
+import EdgeLinePreview from '../styling/EdgeLinePreview'
 import NotesPanel from '../notes/NotesPanel'
 import DiagnosticsPanel from '../diagnostics/DiagnosticsPanel'
 import type { LayoutEntry } from '../layout/LayoutSection'
@@ -227,15 +228,6 @@ import { notesPanelTitle, noteName, noteSaveState } from '../notes/notesLabels'
 import { toDiagramFile, fromDiagramFile } from '../document/diagramConversion'
 import { seedMetadata } from '@shared/tagging/metadataSync'
 import { syncEdgeMetadata, syncNodeMetadata } from '../tagging/syncElements'
-
-// Toolbar default-edge-style swatch preview only — deliberately a scaled-
-// down echo of LabeledEdge.tsx's own DASH_ARRAY, not a shared import; the
-// swatch is a small honest preview, not a real edge render.
-const DEFAULT_EDGE_SWATCH_DASH: Record<'solid' | 'dashed' | 'dotted', string | undefined> = {
-  solid: undefined,
-  dashed: '4 3',
-  dotted: '1.5 2'
-}
 
 // The minimap's size in pixels (React Flow's own default), fixed so the corner button knows where
 // the minimap's top-right corner is.
@@ -3947,23 +3939,7 @@ function CanvasInner(): React.JSX.Element {
                   setDefaultEdgeStylePicker(event.currentTarget.getBoundingClientRect())
                 }
               >
-                <svg width="28" height="16" viewBox="0 0 28 16">
-                  <line
-                    x1="2"
-                    y1="8"
-                    x2={defaultEdgeLook.endMarker === 'none' ? 26 : 20}
-                    y2="8"
-                    stroke={defaultEdgeLook.stroke ?? 'currentColor'}
-                    strokeWidth={defaultEdgeLook.strokeWidth ?? 2}
-                    strokeDasharray={DEFAULT_EDGE_SWATCH_DASH[defaultEdgeLook.lineStyle ?? 'solid']}
-                  />
-                  {defaultEdgeLook.endMarker !== 'none' && (
-                    <polygon
-                      points="20,3 26,8 20,13"
-                      fill={defaultEdgeLook.stroke ?? 'currentColor'}
-                    />
-                  )}
-                </svg>
+                <EdgeLinePreview look={defaultEdgeLook} width={34} height={20} />
               </button>
             )}
             <button
