@@ -15,6 +15,10 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 - **Pointed arrowheads keep their tip.** The line now stops just short of a filled arrow or diamond, so the tip is no longer blunted by the end of a thick line. Drawn the same way in the SVG and image exports ([ADR 0197](docs/decisions/0197-pointed-arrowheads-keep-their-tip-and-lines-carry-a-thickness.md)).
 
+### Fixed
+
+- **Dragging an edge from an unselected shape no longer wires the selected one too.** After moving A, dragging from B onto A gave an edge from A to A as well. Only a drag that starts from a selected shape now wires the whole selection, and a shape is never wired to itself ([ADR 0059](docs/decisions/0059-multi-connection-line.md)).
+
 ### File format
 
 - A legend entry of kind `line` may have `forNewEdges: true` and `strokeWidth`, documented in [docs/file-format.md](docs/file-format.md). Left out when not set. An older app ignores them.

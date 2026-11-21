@@ -214,13 +214,8 @@ import {
   newEdgeLineEntry,
   withNewEdgeLine
 } from '@shared/legend/newEdgeLine'
-import {
-  deriveNodeFields,
-  deriveEdgeFields,
-  newNodeId,
-  nextZIndex,
-  isConnectableNodeType
-} from './nodeFields'
+import { deriveNodeFields, deriveEdgeFields, newNodeId, nextZIndex } from './nodeFields'
+import { connectionSourceIds } from './multiConnection'
 import { isVoidDrop, pointFromEvent, visibleCanvasCenter } from './screenGeometry'
 import { sortNodesForHierarchy, removeContainerReparenting } from './hierarchy'
 import { resolveEndpointPosition } from '../edges/endpointPosition'
@@ -1372,9 +1367,9 @@ function CanvasInner(): React.JSX.Element {
 
   // Multi-connection-line, after xyflow's documented pattern
   // (reactflow.dev/examples/edges/multi-connection-line) adapted to explicit connection-point ids:
-  // if other connectable nodes are selected when a drag completes, each gets its own edge to the
-  // same target. Dragging from an unselected node wires only that node, so this never happens as a
-  // side effect of an ordinary drag.
+  // if the node a drag starts from is selected along with other connectable nodes, each gets its
+  // own edge to the same target. Dragging from an unselected node wires only that node, so this
+  // never happens as a side effect of an ordinary drag (connectionSourceIds).
   //
   // The dragged node's edge keeps the exact handle dropped onto (connection.sourceHandle). Every
   // other selected node reuses that handle's clockwise ordinal on the same side
@@ -1401,11 +1396,7 @@ function CanvasInner(): React.JSX.Element {
                 connection.sourceHandle
               )
             : undefined
-        const sourceIds = nodes
-          .filter(
-            (n) => n.id === connection.source || (n.selected && isConnectableNodeType(n.type))
-          )
-          .map((n) => n.id)
+        const sourceIds = connectionSourceIds(nodes, connection.source, connection.target)
         const withNew = sourceIds.reduce((acc, sourceId) => {
           const otherNode = byId.get(sourceId)
           const sourceHandle =
