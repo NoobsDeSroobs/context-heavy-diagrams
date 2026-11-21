@@ -73,7 +73,7 @@ An architecture style is a set of rules about what may depend on what. A diagram
 - **C** Containment: elements of role A must (or must not) sit inside a container of kind C.
 - **D** Direction or cycles: dependencies run one way only, checked over the whole graph.
 - **N** Cardinality (not in the sketch): an element has at most or exactly one of something.
-- **X** Crossing (not in the sketch): an edge that crosses a container boundary must go through an element of a given role ([epic 0088](planning/epics/0088-cross-container-edge-detection.md)).
+- **X** Crossing (not in the sketch): an edge that crosses a container boundary must go through an element of a given role ([epic 0088](planning/completed-epics.md#0088-detecthighlight-edges-crossing-container-boundaries)).
 
 Every style also depends on **what an edge means**. In a "depends on" diagram an arrow points from the user to the thing used; in a "flows to" diagram it follows the data or the call. A style's rules only make sense if the diagram says which it is.
 

@@ -1,7 +1,9 @@
 # 0201: Waiting for the first of several, and joins that wait for some
 
 ## Status
-Not Started. Logged 2026-11-19. Later in the batch, after [0194](0194-improve-on-the-bpmn-notation.md), [0199](0199-event-position-toggle.md) and [0200](0200-symbol-styles-chd-and-minimalist.md). Design and mockup first; no code in the pull request that holds 0194 and 0199.
+Not Started. Logged 2026-11-19. Later in the batch, after [0194](0194-improve-on-the-bpmn-notation.md), [0199](../completed-epics.md#0199-event-position-starts-a-flow-or-in-the-flow) and [0200](0200-symbol-styles-chd-and-minimalist.md). Design and mockup first; no code in the pull request that holds 0194 and 0199.
+
+Update 2026-11-21: the maintainer wants to design this himself, later: after 0191, and together with the parameter question of 0190.
 
 ## Goal
 Let a diagram say that a flow waits for whichever of several things happens first (a confirmation or a timeout), and how many of the parallel paths a join waits for (all, any one, at least n of m).
@@ -15,7 +17,7 @@ Let a diagram say that a flow waits for whichever of several things happens firs
   ```
 
   Proposal: one new kind in the choice family, **Wait for the first of** (`branch-event`), the choice square in the choice colour with an hourglass mark. Each exit goes to an event (message, timer, human action); the first to happen continues, the others are cancelled. n exits is waiting for any of n. The exits may lead to one step (no closing merge needed, since the loser is cancelled) or to different ones (confirmed goes on, timeout escalates).
-- **A join that waits for some of its paths, drawn at the join.** The parallel join means all, the inclusive join all that were started. Neither says "any one" or "2 of 3". Proposal: not a kind per variant but a property on the join, stored only when not the default like an end's outcome and reach (a named state, [0199](0199-event-position-toggle.md)): **Waits for** *All paths* (default), *Any one path*, *At least N paths*, with the count stored for the last.
+- **A join that waits for some of its paths, drawn at the join.** The parallel join means all, the inclusive join all that were started. Neither says "any one" or "2 of 3". Proposal: not a kind per variant but a property on the join, stored only when not the default like an end's outcome and reach (a named state, [0199](../completed-epics.md#0199-event-position-starts-a-flow-or-in-the-flow)): **Waits for** *All paths* (default), *Any one path*, *At least N paths*, with the count stored for the last.
 
 ## Open design questions (to settle on the mockup)
 - **How the count is shown** on the join: a subscript or badge such as ≥ 1/n, a plain number replacing the bars, or only the label text. The first number drawn inside a stencil, so it needs the drawing work and the mockup before any decision. Compare with the other counts already rejected in 0194 (1, 1+, n).

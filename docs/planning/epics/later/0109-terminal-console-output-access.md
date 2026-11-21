@@ -33,3 +33,5 @@ is a good example) — without attaching a debugger.
 Related: epic 0108 added the Diagnostics "missing files" section, which
 surfaces *one* class of the errors this would otherwise only show in a
 console. This epic is the general-purpose version.
+
+Update 2026-11-21: still wanted. The cheapest first slice is an Open DevTools menu item, then a log file with Reveal log file.

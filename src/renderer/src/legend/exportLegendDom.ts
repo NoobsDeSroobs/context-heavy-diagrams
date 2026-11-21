@@ -2,6 +2,7 @@ import type { IconRef } from '@shared/diagram'
 import { installedIconOf } from '@shared/icons/iconRefs'
 import { loadInstalledIconMarkup } from '../icons/installedIcons'
 import { markerUrl } from '../edges/markerIds'
+import { markerTrim } from '@shared/export/markerShapes'
 import type { ExportLegendItem } from '@shared/legend/legendItems'
 import { stencilSwatchSvgFor } from '@shared/stencils/swatch'
 import { dasharrayOf, dashPattern } from '@shared/styling/edgeDash'
@@ -121,13 +122,17 @@ function buildSwatch(item: ExportLegendItem, iconMarkup: Map<string, ResolvedIco
   svg.setAttribute('viewBox', '0 0 28 16')
   svg.setAttribute('width', '28')
   svg.setAttribute('height', '16')
+  // At most 3 thick, as in the legend panel: the heads scale with it and the swatch is one row.
+  const strokeWidth = Math.min(3, Math.max(1, swatch.strokeWidth ?? 2))
+  svg.style.overflow = 'visible'
   const line = document.createElementNS(SVG_NS, 'line')
-  line.setAttribute('x1', '2')
+  // The line stops short of the tip of a pointed head (ADR 0197).
+  line.setAttribute('x1', String(2 + markerTrim(swatch.startMarker, strokeWidth)))
   line.setAttribute('y1', '8')
-  line.setAttribute('x2', '26')
+  line.setAttribute('x2', String(26 - markerTrim(swatch.endMarker, strokeWidth)))
   line.setAttribute('y2', '8')
   line.setAttribute('stroke', swatch.color)
-  line.setAttribute('stroke-width', '2')
+  line.setAttribute('stroke-width', String(strokeWidth))
   line.setAttribute('stroke-linecap', 'round')
   const dash = dasharrayOf(dashPattern(swatch))
   if (dash) line.setAttribute('stroke-dasharray', dash)

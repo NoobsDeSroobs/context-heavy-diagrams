@@ -3,7 +3,7 @@
 ## Status
 Not Started — idea bucket, logged 2026-09-19. The user is **hesitant**: risk
 of adding noise/complexity without enough strong use cases. If built, it
-should sit behind the [feature toggle system (0124)](0124-feature-toggle-system.md),
+should sit behind the [feature toggle system (0124)](../0124-feature-toggle-system.md),
 default off.
 
 ## Goal

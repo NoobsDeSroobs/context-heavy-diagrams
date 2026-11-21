@@ -1,7 +1,7 @@
 # 0045: Default edge style as a toolbar-visible setting
 
 ## Status
-Accepted
+Accepted. Partly superseded by [0196](0196-new-edges-follow-a-line-of-the-diagrams-legend.md): a legend line of the diagram can be the look of new edges, and this personal default is the fallback.
 
 ## Context
 `<ReactFlow defaultEdgeOptions={{ type: 'labeled', markerEnd: {...} }}>` (`Canvas.tsx`) already governs what a freshly drawn edge looks like, but it's hardcoded — not a user-adjustable setting, and not shown anywhere. A real, toolbar-visible control was asked for — closer to how drawing tools persistently show a "current pen style" indicator than a setting buried in a dialog.

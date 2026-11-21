@@ -25,6 +25,11 @@ export interface MarkerShape {
   markerWidth: number
   markerHeight: number
   elements: MarkerElement[]
+  // For a shape that comes to a point: how far, in marker units, the line stops short of the tip, so
+  // the line is not wider than the shape where it ends and the tip stays sharp. The line is drawn
+  // that much shorter and the marker's reference point moves back by the same amount, which leaves
+  // the tip where the line used to end (see markerTrim).
+  trim?: number
 }
 
 export const MARKER_STROKE_WIDTH = 1.5
@@ -63,6 +68,9 @@ export const MARKER_SHAPES: Record<Exclude<MarkerKind, 'none'>, MarkerShape> = {
     refY: 5,
     markerWidth: 8,
     markerHeight: 8,
+    // The head is half as wide as it is far from the tip, so it is as wide as the line (half a stroke
+    // width, 0.625 units) a little over 1.25 units back; 1.5 leaves margin.
+    trim: 1.5,
     elements: [solid('M1,1 L9,5 L1,9 Z')]
   },
   circle: {
@@ -99,6 +107,7 @@ export const MARKER_SHAPES: Record<Exclude<MarkerKind, 'none'>, MarkerShape> = {
     refY: 5,
     markerWidth: 9,
     markerHeight: 8,
+    trim: 0.9,
     elements: [solid('M1,5 L5,1 L9,5 L5,9 Z')]
   },
   crowsFootOne: {
@@ -146,6 +155,18 @@ export const MARKER_SHAPES: Record<Exclude<MarkerKind, 'none'>, MarkerShape> = {
     markerHeight: 8,
     elements: [line('M13,5 L7,1 M13,5 L7,5 M13,5 L7,9'), ring(3.5, 5, 3)]
   }
+}
+
+// How far a line of `strokeWidth` stops short of its end for this marker, in the line's own units (a
+// marker is scaled by the stroke width, like markerUnits="strokeWidth"). Zero for no marker and for
+// a shape whose own outline already covers the end of the line.
+export function markerTrim(kind: MarkerKind | undefined, strokeWidth: number): number {
+  if (!kind || kind === 'none') return 0
+  const shape = MARKER_SHAPES[kind]
+  if (!shape.trim) return 0
+  const [, , viewWidth, viewHeight] = shape.viewBox.split(' ').map(Number)
+  const scale = Math.min(shape.markerWidth / viewWidth, shape.markerHeight / viewHeight)
+  return shape.trim * scale * strokeWidth
 }
 
 export const MARKER_ID: Record<Exclude<MarkerKind, 'none'>, string> = Object.fromEntries(

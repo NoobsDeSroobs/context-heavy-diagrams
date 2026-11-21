@@ -1,0 +1,138 @@
+{
+  "version": 1,
+  "legend": [
+    {
+      "id": "data-flow",
+      "kind": "line",
+      "label": "Data flow",
+      "color": "#4a90d9",
+      "strokeWidth": 3,
+      "lineStyle": "solid",
+      "startMarker": "none",
+      "endMarker": "arrowClosed",
+      "forNewEdges": true
+    },
+    {
+      "id": "event",
+      "kind": "line",
+      "label": "Event",
+      "color": "#e6a23c",
+      "strokeWidth": 2,
+      "lineStyle": "dashed",
+      "startMarker": "none",
+      "endMarker": "arrowClosed"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "orders",
+      "type": "entity",
+      "position": {
+        "x": 0,
+        "y": 120
+      },
+      "size": {
+        "width": 160,
+        "height": 70
+      },
+      "data": {
+        "label": "Orders API"
+      }
+    },
+    {
+      "id": "billing",
+      "type": "entity",
+      "position": {
+        "x": 320,
+        "y": 0
+      },
+      "size": {
+        "width": 160,
+        "height": 70
+      },
+      "data": {
+        "label": "Billing"
+      }
+    },
+    {
+      "id": "warehouse",
+      "type": "entity",
+      "position": {
+        "x": 320,
+        "y": 240
+      },
+      "size": {
+        "width": 160,
+        "height": 70
+      },
+      "data": {
+        "label": "Warehouse"
+      }
+    },
+    {
+      "id": "bus",
+      "type": "entity",
+      "position": {
+        "x": 640,
+        "y": 120
+      },
+      "size": {
+        "width": 160,
+        "height": 70
+      },
+      "data": {
+        "label": "Event bus"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "orders-billing",
+      "type": "labeled",
+      "source": "orders",
+      "target": "billing",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "invoice",
+      "style": {
+        "stroke": "#4a90d9",
+        "strokeWidth": 3,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowClosed"
+      }
+    },
+    {
+      "id": "orders-warehouse",
+      "type": "labeled",
+      "source": "orders",
+      "target": "warehouse",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "pick list",
+      "style": {
+        "stroke": "#4a90d9",
+        "strokeWidth": 3,
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowClosed"
+      }
+    },
+    {
+      "id": "warehouse-bus",
+      "type": "labeled",
+      "source": "warehouse",
+      "target": "bus",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "shipped",
+      "style": {
+        "stroke": "#e6a23c",
+        "strokeWidth": 2,
+        "lineStyle": "dashed",
+        "startMarker": "none",
+        "endMarker": "arrowClosed"
+      }
+    }
+  ]
+}

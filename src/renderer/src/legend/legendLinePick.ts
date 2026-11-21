@@ -8,7 +8,7 @@ import { lineMotionOf, type LineMotion } from '../../../shared/styling/edgeAnima
 
 export type LegendLineLook = Pick<
   LegendEntry,
-  'color' | 'lineStyle' | 'startMarker' | 'endMarker'
+  'color' | 'strokeWidth' | 'lineStyle' | 'startMarker' | 'endMarker'
 > &
   LineMotion
 
@@ -16,7 +16,8 @@ export type LegendLineLook = Pick<
 // (an unset field means the built-in default, which the legend cannot know about); the colour is
 // the one shown for the current theme, because a legend colour is a plain value that is never
 // flipped for the theme. An edge with no colour of its own leaves it unset, so the entry keeps
-// following the default edge colour in both themes. Width and opacity have no legend field.
+// following the default edge colour in both themes. The thickness is copied only when the edge sets
+// one; opacity has no legend field.
 export function legendLineFromEdgeStyle(
   style: EdgeStyle | undefined,
   theme: Theme,
@@ -25,6 +26,7 @@ export function legendLineFromEdgeStyle(
 ): LegendLineLook {
   return {
     ...(style?.stroke !== undefined ? { color: flip(style.stroke, theme) } : {}),
+    ...(style?.strokeWidth !== undefined ? { strokeWidth: style.strokeWidth } : {}),
     lineStyle: style?.lineStyle ?? defaults.lineStyle,
     startMarker: style?.startMarker ?? defaults.startMarker,
     endMarker: style?.endMarker ?? defaults.endMarker,

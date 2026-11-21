@@ -2,6 +2,23 @@
 
 What changed for people using the tool, one entry per minor or major release. The reasons are in [docs/decisions/](docs/decisions/); the full history is in `git log`.
 
+## 0.15.0 (unreleased)
+
+### Added
+
+- **New edges follow a line of the diagram's legend.** The edge-style button at the top now lists the diagram's own legend lines first, so a new edge is "Data flow" from the moment it is drawn, not "a dashed arrow". Pick a line to draw new edges with it (it is ticked; pick it again to stop), or a preset below for every diagram as before. The button shows the line in use. Edges already drawn keep their own style, and a direction set's own style still wins ([ADR 0196](docs/decisions/0196-new-edges-follow-a-line-of-the-diagrams-legend.md)). `edit_diagram` and `chd edit` have `set_new_edge_line`, and `connect` without a style uses the line.
+
+- **A legend line has a thickness.** Copying an edge into the legend, and drawing new edges with a legend line, now keep how thick it is. `set_legend_entry` and `add_legend_entry` take `strokeWidth` ([ADR 0197](docs/decisions/0197-pointed-arrowheads-keep-their-tip-and-lines-carry-a-thickness.md)).
+- **The edge-style picker shows the lines as they look.** Each row, and the button, is drawn with the line's colour, thickness, dashes and ends instead of a grey bar.
+
+### Changed
+
+- **Pointed arrowheads keep their tip.** The line now stops just short of a filled arrow or diamond, so the tip is no longer blunted by the end of a thick line. Drawn the same way in the SVG and image exports ([ADR 0197](docs/decisions/0197-pointed-arrowheads-keep-their-tip-and-lines-carry-a-thickness.md)).
+
+### File format
+
+- A legend entry of kind `line` may have `forNewEdges: true` and `strokeWidth`, documented in [docs/file-format.md](docs/file-format.md). Left out when not set. An older app ignores them.
+
 ## 0.14.0 (2026-11-21)
 
 ### Added

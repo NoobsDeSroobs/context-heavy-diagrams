@@ -1,10 +1,16 @@
 import { useMemo, useState } from 'react'
-import type { EdgeStyle } from '@shared/diagram'
+import type { EdgeStyle, LegendEntry } from '@shared/diagram'
 import { searchLineStylePresets } from './builtinLineStylePresets'
+import EdgeLinePreview from './EdgeLinePreview'
 
 interface StylePickerProps {
   anchorRect: DOMRect
   onPick: (style: Partial<EdgeStyle>) => void
+  // The diagram's own line entries, offered first when the picker sets the look of new edges
+  // (ADR 0196); `currentLineId` is the one new edges follow now. Picking it again stops that.
+  lines?: LegendEntry[]
+  currentLineId?: string
+  onPickLine?: (id: string) => void
   onClose: () => void
 }
 
@@ -20,10 +26,17 @@ const PICKER_WIDTH = 220
 export default function StylePicker({
   anchorRect,
   onPick,
+  lines = [],
+  currentLineId,
+  onPickLine,
   onClose
 }: StylePickerProps): React.JSX.Element {
   const [query, setQuery] = useState('')
   const results = useMemo(() => searchLineStylePresets(query), [query])
+  const matchingLines = useMemo(
+    () => lines.filter((line) => line.label.toLowerCase().includes(query.trim().toLowerCase())),
+    [lines, query]
+  )
 
   const left = Math.min(anchorRect.right + 8, window.innerWidth - PICKER_WIDTH - 8)
   const top = Math.min(anchorRect.top, window.innerHeight - 280)
@@ -39,6 +52,40 @@ export default function StylePicker({
       />
       <div className="icon-picker-scroll">
         <div className="style-picker-list">
+          {onPickLine && matchingLines.length > 0 && (
+            <>
+              <div className="icon-picker-label">Lines of this diagram</div>
+              {matchingLines.map((line) => (
+                <button
+                  key={line.id}
+                  type="button"
+                  className="style-picker-item"
+                  aria-pressed={line.id === currentLineId}
+                  title={
+                    line.id === currentLineId
+                      ? 'New edges are drawn with this line. Pick it again to stop.'
+                      : 'Draw new edges with this line'
+                  }
+                  onClick={() => onPickLine(line.id)}
+                >
+                  <EdgeLinePreview
+                    look={{
+                      stroke: line.color,
+                      strokeWidth: line.strokeWidth,
+                      lineStyle: line.lineStyle,
+                      startMarker: line.startMarker,
+                      endMarker: line.endMarker,
+                      dashLength: line.dashLength,
+                      dashGap: line.dashGap
+                    }}
+                  />
+                  {line.label}
+                  {line.id === currentLineId ? ' ✓' : ''}
+                </button>
+              ))}
+              <div className="icon-picker-label">Presets, for every diagram</div>
+            </>
+          )}
           {results.map((preset) => (
             <button
               key={preset.id}
@@ -46,9 +93,7 @@ export default function StylePicker({
               className="style-picker-item"
               onClick={() => onPick(preset.style)}
             >
-              <span
-                className={`style-picker-swatch style-picker-swatch-${preset.style.lineStyle ?? 'solid'}`}
-              />
+              <EdgeLinePreview look={preset.style} />
               {preset.label}
             </button>
           ))}

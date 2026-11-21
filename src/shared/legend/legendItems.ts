@@ -25,6 +25,7 @@ import {
 export interface DirectionSetLegendRow {
   label: string
   color: string
+  strokeWidth?: number
   lineStyle?: LineStyleKind
   startMarker?: MarkerKind
   endMarker?: MarkerKind
@@ -43,9 +44,9 @@ export function directionSetLegendRow(
   if (!active) return null
   return {
     label: active.name,
-    // The legend row shows the set's own default edge style (ADR 0083).
-    // `strokeWidth` is deliberately not reflected in the swatch in v1.
+    // The legend row shows the set's own default edge style (ADR 0083), thickness included.
     color: active.style?.stroke ?? DEFAULT_DIRECTION_SET_LEGEND_COLOR,
+    strokeWidth: active.style?.strokeWidth,
     lineStyle: active.style?.lineStyle,
     startMarker: active.style?.startMarker,
     endMarker: active.style?.endMarker
@@ -56,6 +57,7 @@ export type ExportLegendSwatch =
   | {
       kind: 'line'
       color: string
+      strokeWidth?: number
       lineStyle?: LineStyleKind
       dashLength?: number
       dashGap?: number
@@ -154,6 +156,7 @@ export function buildExportLegendItems(
           swatch: {
             kind: 'line',
             color: directionSetRow.color,
+            strokeWidth: directionSetRow.strokeWidth,
             lineStyle: directionSetRow.lineStyle,
             startMarker: directionSetRow.startMarker,
             endMarker: directionSetRow.endMarker
@@ -170,6 +173,7 @@ export function buildExportLegendItems(
         : {
             kind: entry.kind,
             color: entry.color ?? '#000000',
+            strokeWidth: entry.strokeWidth,
             lineStyle: entry.lineStyle,
             dashLength: entry.dashLength,
             dashGap: entry.dashGap,

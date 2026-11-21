@@ -8,3 +8,5 @@ Some form of plugin or integration letting a diagram (or a view of one) be embed
 
 ## Notes
 Nothing scoped: not which tool(s) first, not whether this means a Confluence/Notion/etc. plugin calling out to this app, an export format tailored to one tool's macro system, a live-updating embed, or something else entirely. Purely a placeholder so the idea isn't lost before epic 0010 (the immediate, much smaller ask) is picked up.
+
+Update 2026-11-21: the maintainer wants a spike soon to gauge the different integrations and what each costs and gives. For each candidate: what it needs from this app, whom it serves, the effort and the upkeep. The app stays offline ([ADR 0113](../../../decisions/0113-enforced-offline-behaviour.md)), so an integration is a plugin or a file step in the other tool, working from `chd export` and the file format, not code in the app that calls out. The result is a short comparison, then an ADR for any that go ahead.
