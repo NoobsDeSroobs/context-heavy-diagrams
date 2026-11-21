@@ -15,6 +15,8 @@ interface HighlightsPanelProps {
   onAdd: (key: string, value: JsonValue, color: string) => void
   onUpdateColor: (id: string, color: string) => void
   onRemove: (id: string) => void
+  // Removes every highlight of a key, which ends its group (ADR 0026).
+  onRemoveGroup: (key: string) => void
   onToggle: (id: string) => void
   // Bulk set (not toggle) for a group's "select all" checkbox.
   onToggleGroup: (ids: string[], enable: boolean) => void
@@ -142,6 +144,7 @@ export default function HighlightsPanel({
   onAdd,
   onUpdateColor,
   onRemove,
+  onRemoveGroup,
   onToggle,
   onToggleGroup,
   onAddOrResyncGroup,
@@ -264,6 +267,21 @@ export default function HighlightsPanel({
                   onClick={() => onAddOrResyncGroup(key)}
                 >
                   ↻
+                </button>
+                <button
+                  type="button"
+                  className="highlight-group-remove"
+                  title="Remove the whole group: every highlight of this key. Add the group again to bring it back."
+                  aria-label={`Remove group ${key}`}
+                  onClick={() => {
+                    if (
+                      confirm(`Remove the group "${key}" and its ${members.length} highlights?`)
+                    ) {
+                      onRemoveGroup(key)
+                    }
+                  }}
+                >
+                  ✕
                 </button>
               </div>
               {!collapsed && (
