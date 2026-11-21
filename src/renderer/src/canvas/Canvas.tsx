@@ -2764,6 +2764,7 @@ function CanvasInner(): React.JSX.Element {
     diagramMaxConnectionPointsPerSide,
     diagramFontFamily,
     visibilitySets,
+    hiddenSetIds,
     edgeDirectionSets,
     activeEdgeDirectionSetId,
     security,

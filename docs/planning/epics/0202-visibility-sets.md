@@ -32,7 +32,7 @@ Let a person mark nodes and edges as members of named **visibility sets**, and s
 - [x] The visibility rule as one pure function in `src/shared/visibility/`, with tests.
 - [x] Hiding in the canvas: not drawn, not selectable by click, box or select all, left out of search and isolate; a selected element that is hidden leaves the selection.
 - [x] The sets panel, first version: make, rename, delete, show or hide, and put the selection in or out of a set. To be tried and refined.
-- [ ] Exports draw what is shown.
+- [x] Exports draw what is shown: SVG and draw.io from the diagram with the hidden left out (`shownDiagram`), PNG from the shown elements only, its bounds and legend included.
 - [ ] CLI, extension and assistant guidance.
 - [ ] An example with a diagram that shows today and a target as two sets, and `examples/README.md` ([ADR 0151](../../decisions/0151-every-visible-feature-has-an-example-diagram.md)).
 - [ ] Changelog under File format and Added.
