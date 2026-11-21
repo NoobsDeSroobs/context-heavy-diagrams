@@ -184,6 +184,14 @@ export const COMMANDS = [
     title: 'Show changes since last save',
     category: 'View'
   },
+  // Stories (ADR 0195). In the presentation the arrow keys, space, Home, End and Escape step through
+  // the story and leave it; they are handled by the presenter, not dispatched from here.
+  {
+    id: 'view.present',
+    title: 'Present the story (then arrows or space for the next step, Esc to leave)',
+    category: 'View',
+    binding: { key: 'f5' }
+  },
   // Animated edges (ADR 0141). Off, an edge still moves while Mod is held over it.
   {
     id: 'view.toggleEdgeAnimation',

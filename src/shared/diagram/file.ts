@@ -8,7 +8,7 @@ import type { LegendEntry } from '../legend/schema.ts'
 import type { DiagramNode, GravityPreset } from '../nodes/schema.ts'
 import type { HighlightDefinition, JsonValue, RequiredTagDefinition } from '../tagging/schema.ts'
 import type { DiagramSecurity } from '../threat-matrix/schema.ts'
-import type { VisibilitySet } from '../visibility/schema.ts'
+import type { Story, VisibilitySet } from '../visibility/schema.ts'
 
 export interface DiagramFile {
   version: 1
@@ -73,6 +73,9 @@ export interface DiagramFile {
   // `visibilitySetIds`. Absent or empty means the feature is unused. Which sets are shown is
   // session state and is not stored.
   visibilitySets?: VisibilitySet[]
+  // Stories told over the visibility sets in the presenter view (ADR 0195). Absent or empty means
+  // none. Which step is shown is session state and is not stored.
+  stories?: Story[]
   nodes: DiagramNode[]
   edges: DiagramEdge[]
 }

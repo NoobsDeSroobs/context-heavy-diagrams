@@ -1,0 +1,248 @@
+/* The stories panel (ADR 0195) is a right-hand dock panel like the layers panel: a toolbar and a
+   scrolling body. The presenter's bar floats over the canvas. */
+.stories-panel {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-background-soft);
+}
+
+.stories-panel-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  border-bottom: 1px solid var(--ev-c-gray-2);
+}
+
+.stories-panel-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.stories-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stories-panel-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ev-c-text-2);
+}
+
+.stories-heading {
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--ev-c-text-3);
+}
+
+.stories-message {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ev-c-danger, #d9534f);
+}
+
+.stories-panel button,
+.stories-panel select {
+  cursor: pointer;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 12px;
+  min-width: 24px;
+}
+
+.stories-panel button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.stories-panel button:not(:disabled):hover {
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.stories-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.stories-name {
+  flex: 1;
+  min-width: 80px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--ev-c-text-1);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 3px 4px;
+}
+
+.stories-name:hover,
+.stories-name:focus {
+  border-color: var(--ev-c-gray-2);
+  background: var(--color-background);
+}
+
+.stories-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* a step in the list: its number, and what it does */
+.stories-panel .stories-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  padding: 5px 6px;
+  border-color: transparent;
+  background: transparent;
+}
+
+.stories-panel .stories-step.is-current {
+  border-color: var(--ev-c-text-2);
+  background: var(--ev-button-alt-hover-bg);
+}
+
+.stories-step-number {
+  flex: 0 0 auto;
+  min-width: 18px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ev-c-text-2);
+}
+
+.stories-step-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stories-set {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stories-set-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.stories-choices {
+  display: inline-flex;
+}
+
+.stories-panel .stories-choices button {
+  border-radius: 0;
+  margin-left: -1px;
+}
+
+.stories-panel .stories-choices button:first-child {
+  border-radius: 4px 0 0 4px;
+  margin-left: 0;
+}
+
+.stories-panel .stories-choices button:last-child {
+  border-radius: 0 4px 4px 0;
+}
+
+.stories-panel .stories-choices button.is-on {
+  background: var(--ev-c-text-2);
+  color: var(--color-background);
+}
+
+/* the presenter (ADR 0195): the editor's frame steps aside, and nothing on the canvas is touched */
+.app-shell.is-presenting .toolbar,
+.app-shell.is-presenting .diagram-dock,
+.app-shell.is-presenting .utility-dock,
+.app-shell.is-presenting .react-flow__controls,
+.app-shell.is-presenting .react-flow__minimap {
+  display: none;
+}
+
+.app-shell.is-presenting .react-flow__node,
+.app-shell.is-presenting .react-flow__edge,
+.app-shell.is-presenting .react-flow__handle {
+  pointer-events: none;
+}
+
+.presenter-bar {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--ev-c-gray-2);
+  border-radius: 8px;
+  background: var(--color-background-soft);
+  color: var(--ev-c-text-1);
+  font-size: 13px;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 25%);
+  opacity: 0.35;
+  transition: opacity 0.15s;
+}
+
+.presenter-bar:hover,
+.presenter-bar:focus-within {
+  opacity: 1;
+}
+
+.presenter-bar button {
+  cursor: pointer;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 3px 10px;
+  font-size: 13px;
+}
+
+.presenter-bar button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.presenter-bar-name {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.presenter-bar-count {
+  min-width: 56px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}

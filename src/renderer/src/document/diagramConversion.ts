@@ -17,7 +17,8 @@ import type {
   NodeStyle,
   RequiredTagDefinition,
   RiskCell,
-  VisibilitySet
+  VisibilitySet,
+  Story
 } from '@shared/diagram'
 import {
   ensureDirectionSets,
@@ -48,7 +49,8 @@ export function toDiagramFile(
   activeEdgeDirectionSetId: string | undefined,
   security: DiagramSecurity,
   fontFamily: string | undefined,
-  visibilitySets: VisibilitySet[]
+  visibilitySets: VisibilitySet[],
+  stories: Story[]
 ): DiagramFile {
   // Edge direction sets (ADR 0081): on disk, every edge is stored in the
   // *base* (first) set's orientation regardless of which set is active, so
@@ -89,6 +91,8 @@ export function toDiagramFile(
     requiredTags: requiredTags.length > 0 ? requiredTags : undefined,
     // serializeDiagram drops this when it is empty (ADR 0194).
     visibilitySets: visibilitySets.length > 0 ? visibilitySets : undefined,
+    // serializeDiagram drops this when it is empty (ADR 0195).
+    stories: stories.length > 0 ? stories : undefined,
     nodes: nodes.map((n) => ({
       id: n.id,
       type: n.type,
@@ -180,6 +184,7 @@ export function fromDiagramFile(diagram: DiagramFile): {
   activeEdgeDirectionSetId: string | undefined
   security: DiagramSecurity
   visibilitySets: VisibilitySet[]
+  stories: Story[]
   hierarchyNotes: string[]
 } {
   // healHierarchy repairs a dangling/cyclic parentId before the nodes reach
@@ -349,6 +354,7 @@ export function fromDiagramFile(diagram: DiagramFile): {
     activeEdgeDirectionSetId,
     security,
     visibilitySets: diagram.visibilitySets ?? [],
+    stories: diagram.stories ?? [],
     hierarchyNotes: [...healed.notes, ...securityNotes],
     nodes: securedNodes,
     edges,

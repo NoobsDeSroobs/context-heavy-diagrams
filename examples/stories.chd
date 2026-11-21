@@ -1,0 +1,220 @@
+{
+  "version": 1,
+  "visibilitySets": [
+    {
+      "id": "vis-t0d4y1",
+      "name": "Today"
+    },
+    {
+      "id": "vis-l1nk5a",
+      "name": "Connections today"
+    },
+    {
+      "id": "vis-pr0p5d",
+      "name": "Proposed"
+    }
+  ],
+  "stories": [
+    {
+      "id": "story-intg01",
+      "name": "Integration problem",
+      "steps": [
+        {
+          "show": [
+            "vis-t0d4y1"
+          ]
+        },
+        {
+          "show": [
+            "vis-l1nk5a"
+          ]
+        },
+        {
+          "show": [
+            "vis-pr0p5d"
+          ],
+          "hide": [
+            "vis-l1nk5a"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "story-syst02",
+      "name": "Systems only",
+      "steps": [
+        {
+          "show": [
+            "vis-t0d4y1"
+          ]
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "id": "customer",
+      "type": "entity",
+      "position": {
+        "x": 0,
+        "y": 150
+      },
+      "size": {
+        "width": 160,
+        "height": 70
+      },
+      "zIndex": 40,
+      "data": {
+        "label": "Customer"
+      }
+    },
+    {
+      "id": "shop",
+      "type": "entity",
+      "position": {
+        "x": 300,
+        "y": 0
+      },
+      "size": {
+        "width": 160,
+        "height": 70
+      },
+      "zIndex": 40,
+      "visibilitySetIds": [
+        "vis-t0d4y1"
+      ],
+      "data": {
+        "label": "Webshop"
+      }
+    },
+    {
+      "id": "erp",
+      "type": "entity",
+      "position": {
+        "x": 300,
+        "y": 300
+      },
+      "size": {
+        "width": 160,
+        "height": 70
+      },
+      "zIndex": 40,
+      "visibilitySetIds": [
+        "vis-t0d4y1"
+      ],
+      "data": {
+        "label": "ERP"
+      }
+    },
+    {
+      "id": "warehouse",
+      "type": "entity",
+      "position": {
+        "x": 700,
+        "y": 150
+      },
+      "size": {
+        "width": 160,
+        "height": 70
+      },
+      "zIndex": 40,
+      "visibilitySetIds": [
+        "vis-t0d4y1"
+      ],
+      "data": {
+        "label": "Warehouse system"
+      }
+    },
+    {
+      "id": "hub",
+      "type": "entity",
+      "position": {
+        "x": 540,
+        "y": 430
+      },
+      "size": {
+        "width": 160,
+        "height": 70
+      },
+      "zIndex": 40,
+      "visibilitySetIds": [
+        "vis-pr0p5d"
+      ],
+      "data": {
+        "label": "Integration hub"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-customer-shop",
+      "type": "labeled",
+      "source": "customer",
+      "target": "shop",
+      "label": "orders",
+      "visibilitySetIds": [
+        "vis-t0d4y1"
+      ]
+    },
+    {
+      "id": "e-shop-erp",
+      "type": "labeled",
+      "source": "shop",
+      "target": "erp",
+      "label": "invoices",
+      "visibilitySetIds": [
+        "vis-l1nk5a"
+      ]
+    },
+    {
+      "id": "e-shop-warehouse",
+      "type": "labeled",
+      "source": "shop",
+      "target": "warehouse",
+      "label": "pick lists",
+      "visibilitySetIds": [
+        "vis-l1nk5a"
+      ]
+    },
+    {
+      "id": "e-erp-warehouse",
+      "type": "labeled",
+      "source": "erp",
+      "target": "warehouse",
+      "label": "stock levels",
+      "visibilitySetIds": [
+        "vis-l1nk5a"
+      ]
+    },
+    {
+      "id": "e-shop-hub",
+      "type": "labeled",
+      "source": "shop",
+      "target": "hub",
+      "label": "events",
+      "visibilitySetIds": [
+        "vis-pr0p5d"
+      ]
+    },
+    {
+      "id": "e-erp-hub",
+      "type": "labeled",
+      "source": "erp",
+      "target": "hub",
+      "label": "events",
+      "visibilitySetIds": [
+        "vis-pr0p5d"
+      ]
+    },
+    {
+      "id": "e-warehouse-hub",
+      "type": "labeled",
+      "source": "warehouse",
+      "target": "hub",
+      "label": "events",
+      "visibilitySetIds": [
+        "vis-pr0p5d"
+      ]
+    }
+  ]
+}

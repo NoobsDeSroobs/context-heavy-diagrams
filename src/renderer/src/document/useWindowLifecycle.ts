@@ -13,6 +13,7 @@ import {
   type EdgeDirectionSet,
   type GravityPreset,
   type VisibilitySet,
+  type Story,
   type HighlightDefinition,
   type JsonValue,
   type LegendEntry,
@@ -36,6 +37,7 @@ export interface WindowLifecycleInputs {
   diagramMaxConnectionPointsPerSide: number | undefined
   diagramFontFamily: string | undefined
   visibilitySets: VisibilitySet[]
+  stories: Story[]
   edgeDirectionSets: EdgeDirectionSet[]
   activeEdgeDirectionSetId: string | undefined
   security: DiagramSecurity
@@ -68,6 +70,7 @@ export function useWindowLifecycle(
     diagramMaxConnectionPointsPerSide,
     diagramFontFamily,
     visibilitySets,
+    stories,
     edgeDirectionSets,
     activeEdgeDirectionSetId,
     security,
@@ -152,6 +155,7 @@ export function useWindowLifecycle(
     diagramMaxConnectionPointsPerSide,
     diagramFontFamily,
     visibilitySets,
+    stories,
     edgeDirectionSets,
     activeEdgeDirectionSetId,
     security,
@@ -171,6 +175,7 @@ export function useWindowLifecycle(
       diagramMaxConnectionPointsPerSide,
       diagramFontFamily,
       visibilitySets,
+      stories,
       edgeDirectionSets,
       activeEdgeDirectionSetId,
       security,
@@ -199,7 +204,8 @@ export function useWindowLifecycle(
           s.activeEdgeDirectionSetId,
           s.security,
           s.diagramFontFamily,
-          s.visibilitySets
+          s.visibilitySets,
+          s.stories
         ),
         savedWith: loadedSavedWithRef.current
       }
@@ -250,7 +256,8 @@ export function useWindowLifecycle(
         s.activeEdgeDirectionSetId,
         s.security,
         s.diagramFontFamily,
-        s.visibilitySets
+        s.visibilitySets,
+        s.stories
       )
       return summarizeChanges(diffDiagrams(saved, current)) || undefined
     } catch {

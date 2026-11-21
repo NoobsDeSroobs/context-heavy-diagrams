@@ -51,6 +51,10 @@ export interface MenuInputs {
   openRevisionDialog: () => void
   toggleLayerPanel: () => void
   toggleReferencesPanel: () => void
+  toggleStoriesPanel: () => void
+  presentStory: () => void
+  // Whether a story with at least one step can be presented now (ADR 0195).
+  hasStoryToPresent: boolean
   toggleStylePalettePanel: () => void
   toggleEdgeAnimation: () => void
   // Whether animated edges move now (ADR 0141), which is what the menu item's check mark shows.
@@ -125,6 +129,9 @@ export function useMenus(inputs: MenuInputs): {
     openRevisionDialog,
     toggleLayerPanel,
     toggleReferencesPanel,
+    toggleStoriesPanel,
+    presentStory,
+    hasStoryToPresent,
     toggleStylePalettePanel,
     toggleEdgeAnimation,
     edgeAnimationOn,
@@ -357,6 +364,13 @@ export function useMenus(inputs: MenuInputs): {
             ]
           },
           { label: 'Layers', onSelect: toggleLayerPanel },
+          { label: 'Stories', onSelect: toggleStoriesPanel },
+          {
+            label: 'Present story',
+            accelerator: acceleratorFor('view.present'),
+            disabled: !hasStoryToPresent,
+            onSelect: presentStory
+          },
           {
             label: `References${referenceCount > 0 ? ` (${referenceCount})` : ''}`,
             onSelect: toggleReferencesPanel

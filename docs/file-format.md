@@ -42,6 +42,9 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
     { "id": "vis-1", "name": "Today" },
     { "id": "vis-2", "name": "Proposed" }
   ],
+  "stories": [
+    { "id": "story-1", "name": "Integration", "steps": [ { "show": ["vis-1"] }, { "hide": ["vis-1"], "show": ["vis-2"] } ] }
+  ],
   "nodes": [ /* Node objects */ ],
   "edges": [ /* Edge objects */ ]
 }
@@ -62,6 +65,7 @@ A `.chd` file is plain JSON (the extension is cosmetic — any text/JSON tool ca
 | `edgeDirectionSets` | array of EdgeDirectionSet | Named readings of the diagram's edges that differ only in arrow direction — e.g. "Data flow" vs. "Trigger direction". See [Edge direction sets](#edge-direction-sets) below. Absent/empty means the feature is unused. A single set names the current reading, gives it a legend row, and its `style` seeds edges drawn while it is active; two or more can be switched between and add per-edge `directionSets` records. |
 | `activeEdgeDirectionSetId` | string | Which entry of `edgeDirectionSets` is currently displayed. With two or more sets the edges on disk are always written in the *first* set's orientation regardless of this value (see [Edge direction sets](#edge-direction-sets)); this only says which reading to show on open. Absent means the first set. |
 | `visibilitySets` | array of VisibilitySet | The catalogue of named sets of nodes and edges that can be shown or hidden together — see [Visibility sets](#visibility-sets) below. Absent or empty means the feature is unused, and is left out of the file. Which sets are shown is not stored. |
+| `stories` | array of Story | Stories told over the visibility sets, one step at a time in the presenter view — see [Stories](#stories) below. Absent or empty means none, and is left out of the file. Which step is shown is not stored. |
 | `security` | object | Threat/risk model — the threat catalog, which entities are in the security matrix, calculation settings — see [Security](#security) below. Absent means the Security Matrix has never been used for this diagram (and no node has `data.security`). |
 | `nodes` | array of Node | See below. |
 | `edges` | array of Edge | See below. |
@@ -444,6 +448,43 @@ This is diagram-level data, not an app preference — reproducing the diagram fo
 **Which sets are shown is not stored.** Every set is shown when a diagram is opened; hiding one is something a person does while looking, not part of the diagram. A reader that does not know the fields shows everything. A hidden element is still in the file and keeps its place, so edges stay attached to it.
 
 **Order.** The order of `visibilitySets` is the order shown to the person and is kept. The ids in an element's `visibilitySetIds` are written sorted, without repeats.
+
+## Stories
+
+`stories` (top-level) is a list of stories: ways to tell the diagram one step at a time, over the [visibility sets](#visibility-sets) ([ADR 0195](decisions/0195-stories-are-steps-over-the-visibility-sets.md)). Each is a name and an ordered list of steps; a step says which sets to show and which to hide, on top of what the steps before it left.
+
+```json
+"stories": [
+  {
+    "id": "story-1",
+    "name": "Integration problem",
+    "steps": [
+      { "show": ["vis-1"] },
+      { "show": ["vis-3"] },
+      { "hide": ["vis-1"], "show": ["vis-2"] }
+    ]
+  }
+]
+```
+
+| Field | Type | Required | Meaning |
+|---|---|---|---|
+| `id` | string | yes | Opaque and unique among the stories (this app writes `story-` and six characters). Never shown to the person: the `name` is. |
+| `name` | string | yes | Shown to the person. Free text. Unique in the file ignoring case: this app refuses a duplicate, but the file does not enforce it. |
+| `steps` | array of Step | yes | In the order they are told. May be empty. |
+
+A step:
+
+| Field | Type | Required | Meaning |
+|---|---|---|---|
+| `show` | array of string | no | The `id`s of visibility sets to show in this step. Left out when empty. |
+| `hide` | array of string | no | The `id`s of visibility sets to hide in this step. Left out when empty. |
+
+A step that changes nothing is `{}`.
+
+**The state at a step.** Step 0 is the state before the first step: every set the story names in any `show` or `hide` is hidden, and every other set is shown. Step *n* is step *n* − 1 with the *n*th step applied: the sets in `hide` are hidden first, then the sets in `show` are shown, so a set in both ends shown. The state depends only on the step number, so going back or jumping to a step is the same replay from step 0. Which elements that makes visible is the [rule of visibility sets](#visibility-sets). An id that is not in the `visibilitySets` catalogue is ignored.
+
+**Which step is shown is not stored.** The presenter view starts at step 0 and the step is session state. A reader that does not know the field ignores it. The order of the stories and of the steps is kept.
 
 ## Security
 

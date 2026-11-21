@@ -1,33 +1,35 @@
 # 0203: Stories and the presenter view
 
 ## Status
-Not Started. Design decided 2026-11-20; builds on [0202](0202-visibility-sets.md) and waits for it.
+Built on the branch `epic/0203-stories-and-the-presenter-view`. Builds on [0202](0202-visibility-sets.md) (merged).
 
 ## Goal
-Tell a diagram as a story: first this, then that. "This is what we have today", "this is how it is connected now", "to fix the integration problem we can connect it like this". A story is a sequence of steps over the visibility sets of 0202, stepped through in a presenter view that grows, and shrinks, the diagram one step at a time.
+Tell a diagram as a story: first this, then that. "This is what we have today", "this is how it is connected now", "to fix the integration problem we can connect it like this". A story is a sequence of steps over the visibility sets of 0202, stepped through in a presenter view that grows, and shrinks, the diagram one step at a time. Reasons and alternatives: [ADR 0195](../../decisions/0195-stories-are-steps-over-the-visibility-sets.md).
 
 ## Decided
-- **A story is an ordered list of steps; a step is a list of operations**, such as "show today" or "hide today, show proposed". The operations are cumulative: the state at step n is the result of applying steps 1 to n in order, starting from the state before step 1. Stepping back or jumping to a step is a replay, and inserting a step does not mean redoing the later ones.
-- **Before step 1.** Every set the story names starts hidden, so only the elements in no set are shown. A story can say otherwise.
-- **The presenter view.** Entering it sets the step to 0; next and previous change the step and run the one visibility function of 0202 over the diagram. Hidden elements still exist but nothing is interactable in the view.
-- **Session state.** The current step is not saved and is not an edit. The stories themselves are authored content and go in the `.chd` file.
-- **Exports** draw the current step (see 0202).
-- **A shortcut for the simplest story.** Number elements 1, 2, 3 and get one set per number and a story that shows the next set at each step and hides nothing.
+- **A story is an ordered list of steps; a step is `{ show, hide }`**, two lists of set ids. The state at step n is the result of applying steps 1 to n in order. Stepping back or jumping to a step is a replay, and inserting a step does not mean redoing the later ones.
+- **Before step 1.** Every set the story names starts hidden, so only the elements in no set (and in sets the story leaves alone) are shown.
+- **Several stories in one diagram,** each with a name (decided 2026-11-21).
+- **No captions** on steps in the first version (decided 2026-11-21).
+- **The camera stays where it is** when a step changes (decided 2026-11-21).
+- **Writing a story:** a play-button "Stories" button in the toolbar opens a panel in the right-hand dock, laid out like the slide list of a presentation program, simplified: the steps in order, and for the step picked a show / hide / leave-alone choice per set. Picking a step shows its state on the canvas. Add, duplicate, move and delete steps. No "record" button (decided 2026-11-21).
+- **The presenter view** takes the window over (toolbar and docks out of the way), starts at step 0, steps with the arrow keys, space, Home, End, and leaves with Esc; nothing can be selected or edited, and no editor shortcut runs. Session state: the step is not saved and is not an edit; leaving puts the hidden sets back as they were.
+- **Exports** draw the step on screen (0202).
+- **Format.** An additive change, a MINOR bump (0.14.0, already open): `stories` in `schema.ts` and `docs/file-format.md`.
 
 ## Open questions
-- **Several stories in one diagram,** each with a name, or one.
-- **How a story is written.** A step editor beside the sets panel that shows the state after each step; recording a story by toggling sets and pressing "add step".
-- **The controls.** Previous, next, the step of the total, jump to a step, leave; keyboard shortcuts; whether the view fits what is shown or stays where it is; a short caption for each step ("this is what we have today") shown in the view.
 - **Exports of a whole story,** one image per step or a slide per step, is a follow-up and is not part of the first version.
-- **Format.** An additive change to `schema.ts`, a MINOR bump; `docs/file-format.md` changes with it. An older app ignores the stories.
+- **Full screen.** The presenter fills the window, not the screen; a real full-screen toggle (F11) may be wanted.
+- **Captions.** A text per step shown in the view, additive in the file when wanted.
+- **Undo.** Making, renaming and deleting a story and editing steps cannot be undone yet, like the sets themselves.
 
 ## Tasks
-- [ ] ADR: the story and its steps as operations, accumulation from a start state, the presenter view, and the alternatives (a snapshot of the visible sets at each step).
-- [ ] `schema.ts` and `docs/file-format.md`.
-- [ ] The state at a step as one pure function in `src/shared/`, with tests for accumulation, hide and show in one step, jumping and going back.
-- [ ] The presenter view: the controls, the shortcuts, no interaction.
-- [ ] The step editor and recording.
-- [ ] The numbered shortcut.
-- [ ] CLI, extension and assistant guidance.
-- [ ] An example diagram with a story, and `examples/README.md` ([ADR 0151](../../decisions/0151-every-visible-feature-has-an-example-diagram.md)).
-- [ ] Changelog under File format and Added.
+- [x] ADR: the story and its steps as operations, accumulation from a start state, the presenter view, and the alternatives (a snapshot of the visible sets at each step) ([0195](../../decisions/0195-stories-are-steps-over-the-visibility-sets.md)).
+- [x] `schema.ts` and `docs/file-format.md`.
+- [x] The state at a step as one pure function in `src/shared/`, with tests for accumulation, hide and show in one step, jumping and going back.
+- [x] The presenter view: the controls, the shortcuts, no interaction.
+- [x] The step editor.
+- [x] The numbered shortcut: **Make steps from the sets**, one step per set in catalogue order.
+- [x] CLI, extension and assistant guidance (`add_story`, `rename_story`, `remove_story`, `add_story_step`, `set_story_step`, `remove_story_step`; inspect; validator; skill docs).
+- [x] An example diagram with a story (`examples/stories.chd`), and `examples/README.md` ([ADR 0151](../../decisions/0151-every-visible-feature-has-an-example-diagram.md)).
+- [x] Changelog under File format and Added.

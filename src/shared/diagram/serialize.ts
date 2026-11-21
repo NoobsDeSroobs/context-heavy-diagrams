@@ -222,6 +222,18 @@ export function serializeDiagram(diagram: DiagramFile): string {
       diagram.visibilitySets && diagram.visibilitySets.length > 0
         ? diagram.visibilitySets.map((v) => ({ id: v.id, name: v.name }))
         : undefined,
+    // The order of the stories, and of each story's steps, is what a person made, so it is kept (ADR 0195).
+    stories:
+      diagram.stories && diagram.stories.length > 0
+        ? diagram.stories.map((s) => ({
+            id: s.id,
+            name: s.name,
+            steps: s.steps.map((step) => ({
+              show: step.show && step.show.length > 0 ? [...new Set(step.show)] : undefined,
+              hide: step.hide && step.hide.length > 0 ? [...new Set(step.hide)] : undefined
+            }))
+          }))
+        : undefined,
     nodes: diagram.nodes.map((n) => ({
       id: n.id,
       type: n.type,

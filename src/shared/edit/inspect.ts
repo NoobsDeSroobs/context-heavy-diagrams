@@ -55,6 +55,8 @@ export interface DiagramDescription {
   legend?: LegendEntry[]
   // The visibility sets of the diagram and how many elements are in each (ADR 0194).
   visibilitySets?: { name: string; elements: number }[]
+  // Each story with its steps in words, by the names of the sets (ADR 0195).
+  stories?: { name: string; steps: string[] }[]
 }
 
 function tagsOf(
@@ -115,6 +117,22 @@ export function describeDiagram(
             elements: [...diagram.nodes, ...diagram.edges].filter((el) =>
               el.visibilitySetIds?.includes(set.id)
             ).length
+          }))
+        }
+      : {}),
+    ...(diagram.stories?.length
+      ? {
+          stories: diagram.stories.map((story) => ({
+            name: story.name,
+            steps: story.steps.map((step) => {
+              const list = (ids: string[] | undefined): string =>
+                (ids ?? []).flatMap((id) => setNameById.get(id) ?? []).join(', ')
+              const parts = [
+                list(step.hide) && `hide ${list(step.hide)}`,
+                list(step.show) && `show ${list(step.show)}`
+              ].filter(Boolean)
+              return parts.length > 0 ? parts.join('; ') : 'no change'
+            })
           }))
         }
       : {})
