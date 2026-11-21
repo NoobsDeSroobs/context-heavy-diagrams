@@ -174,6 +174,10 @@ import { useStyleBrush } from '../styling/useStyleBrush'
 import { useLegendLinePick } from '../legend/useLegendLinePick'
 import { useLegend } from '../legend/useLegend'
 import { useHighlights } from '../tagging/useHighlights'
+import { shownFilter } from '@shared/visibility/visibility'
+import { applyHidden, setIdsOf } from '../visibility/hiding'
+import { useVisibilitySets } from '../visibility/useVisibilitySets'
+import VisibilitySetsPanel from '../visibility/VisibilitySetsPanel'
 import { useDiagnostics } from '../diagnostics/useDiagnostics'
 import { useIconPackProblems } from '../diagnostics/useIconPackProblems'
 import type { IconPackNote } from '@shared/icons/schema'
@@ -281,6 +285,13 @@ function CanvasInner(): React.JSX.Element {
   // The catalogue of visibility sets (ADR 0194): file-scoped and persisted like the legend, reset
   // on load. Which sets are shown is session state and is not kept here.
   const [visibilitySets, setVisibilitySets] = useState<VisibilitySet[]>([])
+  // Which sets are hidden right now: session state, never saved, empty when a diagram opens.
+  const [hiddenSetIds, setHiddenSetIds] = useState<Set<string>>(() => new Set())
+  // The rule of ADR 0194 for the current catalogue and choice: whether an element is shown.
+  const isShownElement = useMemo(
+    () => shownFilter(visibilitySets, hiddenSetIds),
+    [visibilitySets, hiddenSetIds]
+  )
   // Edge hover (the hover-revealed bend-point handles of catmull-rom edges, ADR 0057) is tracked
   // per edge inside LabeledEdge, not here (ADR 0073): one shared hoveredEdgeId materialized onto
   // edge.data rebuilt the whole edges array on every hover.
@@ -416,6 +427,26 @@ function CanvasInner(): React.JSX.Element {
     markDirty,
     currentPath
   }
+
+  const visibilitySetsUi = useVisibilitySets(
+    canvasApi,
+    nodes,
+    edges,
+    visibilitySets,
+    setVisibilitySets,
+    hiddenSetIds,
+    setHiddenSetIds
+  )
+  const setVisibilitySetsPanelOpen = visibilitySetsUi.setPanelOpen
+  // Search and isolate do not see what the sets hide (ADR 0194).
+  const searchableNodes = useMemo(
+    () => (hiddenSetIds.size === 0 ? nodes : nodes.filter((n) => isShownElement(setIdsOf(n)))),
+    [nodes, hiddenSetIds, isShownElement]
+  )
+  const searchableEdges = useMemo(
+    () => (hiddenSetIds.size === 0 ? edges : edges.filter((e) => isShownElement(setIdsOf(e)))),
+    [edges, hiddenSetIds, isShownElement]
+  )
 
   const {
     legend,
@@ -667,14 +698,21 @@ function CanvasInner(): React.JSX.Element {
   // be a real temporal-dead-zone error.
   const selectAllOfType = useCallback(
     (type: 'entity' | 'container' | 'text' | 'line' | 'stencil' | 'edge') => {
+      // A hidden element is never selected (ADR 0194).
       setNodes((nds) =>
-        nds.map((n) => (n.selected === (n.type === type) ? n : { ...n, selected: n.type === type }))
+        nds.map((n) => {
+          const want = n.type === type && isShownElement(setIdsOf(n))
+          return n.selected === want ? n : { ...n, selected: want }
+        })
       )
       setEdges((eds) =>
-        eds.map((e) => (e.selected === (type === 'edge') ? e : { ...e, selected: type === 'edge' }))
+        eds.map((e) => {
+          const want = type === 'edge' && isShownElement(setIdsOf(e))
+          return e.selected === want ? e : { ...e, selected: want }
+        })
       )
     },
-    [setNodes, setEdges]
+    [setNodes, setEdges, isShownElement]
   )
 
   // Flips the direction of every edge in `ids` in one action (ADR 0087). reverseEdgeDirection
@@ -1173,7 +1211,7 @@ function CanvasInner(): React.JSX.Element {
     toggleSearchIconPicker,
     clearSearchIcon,
     resetSearch
-  } = useSearch(canvasApi, nodes, edges, noteShadowsRef)
+  } = useSearch(canvasApi, searchableNodes, searchableEdges, noteShadowsRef)
 
   // Gathers this diagram's own direct linked-node relative paths (deeper
   // levels are discovered from disk during the walk — see ADR 0024),
@@ -2216,9 +2254,14 @@ function CanvasInner(): React.JSX.Element {
   )
 
   const selectAll = useCallback(() => {
-    setNodes((nds) => nds.map((n) => (n.selected ? n : { ...n, selected: true })))
-    setEdges((eds) => eds.map((e) => (e.selected ? e : { ...e, selected: true })))
-  }, [setNodes, setEdges])
+    // A hidden element is never selected (ADR 0194).
+    setNodes((nds) =>
+      nds.map((n) => (n.selected || !isShownElement(setIdsOf(n)) ? n : { ...n, selected: true }))
+    )
+    setEdges((eds) =>
+      eds.map((e) => (e.selected || !isShownElement(setIdsOf(e)) ? e : { ...e, selected: true }))
+    )
+  }, [setNodes, setEdges, isShownElement])
 
   const deselectAll = useCallback(() => {
     setNodes((nds) => nds.map((n) => (n.selected ? { ...n, selected: false } : n)))
@@ -2836,6 +2879,8 @@ function CanvasInner(): React.JSX.Element {
       setDiagramMaxConnectionPointsPerSide(openedMaxConnectionPointsPerSide)
       setDiagramFontFamily(openedFontFamily)
       setVisibilitySets(openedVisibilitySets)
+      setHiddenSetIds(new Set())
+      setVisibilitySetsPanelOpen(false)
       setEdgeDirectionSets(openedEdgeDirectionSets)
       setActiveEdgeDirectionSetId(openedActiveEdgeDirectionSetId)
       setSecurity(openedSecurity)
@@ -2899,6 +2944,8 @@ function CanvasInner(): React.JSX.Element {
       setLegend,
       setLegendPanelOpen,
       setVisibilitySets,
+      setHiddenSetIds,
+      setVisibilitySetsPanelOpen,
       setHighlights,
       setEnabledHighlightIds,
       setHighlightsPanelOpen,
@@ -3059,6 +3106,8 @@ function CanvasInner(): React.JSX.Element {
           setDiagnosticsPanelOpen(false)
         } else if (highlightsPanelOpen) {
           setHighlightsPanelOpen(false)
+        } else if (visibilitySetsUi.panelOpen) {
+          setVisibilitySetsPanelOpen(false)
         } else if (preferencesPanelOpen) {
           setPreferencesPanelOpen(false)
         } else if (stylePalettePanelOpen) {
@@ -3151,6 +3200,8 @@ function CanvasInner(): React.JSX.Element {
     setStylePalettePanelOpen,
     highlightsPanelOpen,
     setHighlightsPanelOpen,
+    visibilitySetsUi.panelOpen,
+    setVisibilitySetsPanelOpen,
     preferencesPanelOpen,
     stylePalettePanelOpen,
     alignDistributePanelOpen,
@@ -3293,6 +3344,14 @@ function CanvasInner(): React.JSX.Element {
     if (!attachedEdges.some((e) => e.selected)) return attachedEdges
     return [...attachedEdges.filter((e) => !e.selected), ...attachedEdges.filter((e) => e.selected)]
   }, [attachedEdges])
+
+  // What React Flow draws: the elements the visibility sets hide are marked hidden (ADR 0194). The
+  // state keeps them, in place, so an edge still follows an element that is hidden.
+  const shownNodes = useMemo(() => applyHidden(nodes, isShownElement), [nodes, isShownElement])
+  const shownEdges = useMemo(
+    () => applyHidden(orderedEdges, isShownElement),
+    [orderedEdges, isShownElement]
+  )
 
   // An edge has no zIndex of its own (ADR 0035 scoped that to Entity/Container/Text): it sits at
   // the midpoint of its endpoints' current stacking, computed here next to orderedEdges and never
@@ -3839,8 +3898,8 @@ function CanvasInner(): React.JSX.Element {
                   />
                 )}
                 <ReactFlow
-                  nodes={nodes}
-                  edges={orderedEdges}
+                  nodes={shownNodes}
+                  edges={shownEdges}
                   nodeTypes={nodeTypes}
                   edgeTypes={edgeTypes}
                   proOptions={HIDE_ATTRIBUTION}
@@ -3926,6 +3985,36 @@ function CanvasInner(): React.JSX.Element {
                       unless asked for in View -> Display, and React Flow's own lock is hidden: it
                       only stops what React Flow itself does (ADR 0186). */}
                   <Controls showZoom={zoomControlsOn} showInteractive={false}>
+                    <ControlButton
+                      title={`Visibility sets${visibilitySets.length > 0 ? ` (${visibilitySets.length})` : ''}${hiddenSetIds.size > 0 ? ', some hidden' : ''}`}
+                      aria-label="Show visibility sets"
+                      aria-pressed={hiddenSetIds.size > 0}
+                      onClick={(event) =>
+                        visibilitySetsUi.togglePanel(event.currentTarget.getBoundingClientRect())
+                      }
+                    >
+                      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                        <path
+                          d="M2 12 C5 6.5 8.5 4.5 12 4.5 C15.5 4.5 19 6.5 22 12 C19 17.5 15.5 19.5 12 19.5 C8.5 19.5 5 17.5 2 12 Z"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinejoin="round"
+                        />
+                        <circle cx="12" cy="12" r="3.2" fill="currentColor" />
+                        {hiddenSetIds.size > 0 && (
+                          <line
+                            x1="4"
+                            y1="20"
+                            x2="20"
+                            y2="4"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                          />
+                        )}
+                      </svg>
+                    </ControlButton>
                     <ControlButton
                       title={`Highlights${highlights.length > 0 ? ` (${highlights.length})` : ''}`}
                       aria-label="Show highlights"
@@ -4186,6 +4275,22 @@ function CanvasInner(): React.JSX.Element {
               onToggleGroup={toggleHighlightGroup}
               onAddOrResyncGroup={addOrResyncHighlightGroup}
               onClose={() => setHighlightsPanelOpen(false)}
+            />
+          )}
+          {visibilitySetsUi.panelOpen && (
+            <VisibilitySetsPanel
+              sets={visibilitySets}
+              hiddenIds={hiddenSetIds}
+              memberCounts={visibilitySetsUi.memberCounts}
+              selectionCount={visibilitySetsUi.selectionCount}
+              anchorRect={visibilitySetsUi.panelAnchor}
+              onAdd={visibilitySetsUi.addSet}
+              onRename={visibilitySetsUi.renameSet}
+              onDelete={visibilitySetsUi.deleteSet}
+              onToggle={visibilitySetsUi.toggleShown}
+              onAddSelection={visibilitySetsUi.addSelectionTo}
+              onRemoveSelection={visibilitySetsUi.removeSelectionFrom}
+              onClose={() => setVisibilitySetsPanelOpen(false)}
             />
           )}
           {searchOverlayOpen && (

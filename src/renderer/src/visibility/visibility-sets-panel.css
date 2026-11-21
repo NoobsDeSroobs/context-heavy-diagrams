@@ -1,0 +1,56 @@
+/* The visibility sets panel (ADR 0194) reuses the floating box of the highlights panel; only the
+   rows are its own. */
+.visibility-set-row,
+.visibility-set-add {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.visibility-set-name {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 12px;
+  color: var(--ev-c-text-1);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 3px 4px;
+}
+
+.visibility-set-name:hover,
+.visibility-set-name:focus {
+  border-color: var(--ev-c-gray-2);
+  background: var(--color-background);
+}
+
+.visibility-set-count {
+  min-width: 18px;
+  text-align: right;
+  font-size: 11px;
+  color: var(--ev-c-text-3);
+}
+
+.visibility-set-row button,
+.visibility-set-add button {
+  cursor: pointer;
+  border: 1px solid var(--ev-c-gray-2);
+  background: var(--ev-button-alt-bg);
+  color: var(--ev-button-alt-text);
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-size: 12px;
+  min-width: 24px;
+}
+
+.visibility-set-row button:disabled,
+.visibility-set-add button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.visibility-set-row button:not(:disabled):hover,
+.visibility-set-add button:not(:disabled):hover {
+  background: var(--ev-button-alt-hover-bg);
+}

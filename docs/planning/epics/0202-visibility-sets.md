@@ -27,9 +27,9 @@ Let a person mark nodes and edges as members of named **visibility sets**, and s
 - [x] ADR 0194: the field and the catalogue, the visibility rule, session state for what is shown, and the alternatives (kept up to date as the design is tried)
 - [x] `schema.ts`, `serialize.ts`, the review and the changes-since-save lists, `docs/file-format.md`, and tests (shared code only).
 - [x] Carried through the app: `diagramConversion.ts` in both directions, the catalogue as canvas state, and the save, autosave, close summary, changes list, checks panel and image export that build the file; copy and paste keep the ids; a round-trip test with sets in the fixture. There is no way yet to make a set in the app, so a file with sets is made by hand or by the command line.
-- [ ] The visibility rule as one pure function in `src/shared/`, with tests for several sets, none, edges and containers.
-- [ ] Hiding in the canvas: not drawn, not interactable, skipped by selection and the other views.
-- [ ] The sets panel and the commands to put elements in and out of a set.
+- [x] The visibility rule as one pure function in `src/shared/visibility/`, with tests.
+- [x] Hiding in the canvas: not drawn, not selectable by click, box or select all, left out of search and isolate; a selected element that is hidden leaves the selection.
+- [x] The sets panel, first version: make, rename, delete, show or hide, and put the selection in or out of a set. To be tried and refined.
 - [ ] Exports draw what is shown.
 - [ ] CLI, extension and assistant guidance.
 - [ ] An example with a diagram that shows today and a target as two sets, and `examples/README.md` ([ADR 0151](../../decisions/0151-every-visible-feature-has-an-example-diagram.md)).
