@@ -1,11 +1,13 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
-import type { Story, VisibilitySet } from '@shared/diagram'
+import type { Story, StoryAction, VisibilitySet } from '@shared/diagram'
 import {
   hiddenAtStep,
   newStoryId,
   storyFromSets,
-  withStepChange,
-  type StepChange
+  withAction,
+  withActionChanged,
+  withActionMoved,
+  withoutAction
 } from '@shared/visibility/story'
 import { nameTaken } from '@shared/visibility/visibility'
 import type { CanvasApi } from '../canvas/canvasApi'
@@ -25,8 +27,12 @@ export interface StoriesState {
   duplicateStep: () => void
   deleteStep: () => void
   moveStep: (from: number, to: number) => void
-  // What step `index` (1 is the first) does to one set.
-  setChange: (index: number, setId: string, change: StepChange) => void
+  // The actions of step `index` (1 is the first); an action is told apart by its place (0-based). A new
+  // action is a Show of the first set the step does not name yet.
+  addAction: (index: number) => void
+  changeAction: (index: number, at: number, change: Partial<StoryAction>) => void
+  removeAction: (index: number, at: number) => void
+  moveAction: (index: number, from: number, to: number) => void
   fromSets: () => void
   presenting: boolean
   // The step the presenter is on, 0 to the number of steps.
@@ -166,10 +172,7 @@ export function useStories(
     if (!story || step < 1) return
     const source = story.steps[step - 1]
     const steps = [...story.steps]
-    steps.splice(step, 0, {
-      ...(source.show ? { show: [...source.show] } : {}),
-      ...(source.hide ? { hide: [...source.hide] } : {})
-    })
+    steps.splice(step, 0, source.actions ? { actions: source.actions.map((a) => ({ ...a })) } : {})
     edit({ ...story, steps }, step + 1)
   }, [story, step, edit])
 
@@ -193,15 +196,40 @@ export function useStories(
     [story, edit]
   )
 
-  const setChange = useCallback(
-    (index: number, setId: string, change: StepChange) => {
+  // Changes one step of the story picked and keeps the editor on it.
+  const editStep = useCallback(
+    (index: number, change: (step: Story['steps'][number]) => Story['steps'][number]) => {
       if (!story || index < 1 || index > story.steps.length) return
-      const steps = story.steps.map((s, i) =>
-        i === index - 1 ? withStepChange(s, setId, change) : s
-      )
+      const steps = story.steps.map((s, i) => (i === index - 1 ? change(s) : s))
       edit({ ...story, steps }, index)
     },
     [story, edit]
+  )
+
+  const addAction = useCallback(
+    (index: number) => {
+      if (visibilitySets.length === 0) return
+      editStep(index, (step) => {
+        const named = new Set((step.actions ?? []).map((a) => a.set))
+        const set = visibilitySets.find((s) => !named.has(s.id)) ?? visibilitySets[0]
+        return withAction(step, { action: 'show', set: set.id })
+      })
+    },
+    [editStep, visibilitySets]
+  )
+  const changeAction = useCallback(
+    (index: number, at: number, change: Partial<StoryAction>) =>
+      editStep(index, (step) => withActionChanged(step, at, change)),
+    [editStep]
+  )
+  const removeAction = useCallback(
+    (index: number, at: number) => editStep(index, (step) => withoutAction(step, at)),
+    [editStep]
+  )
+  const moveAction = useCallback(
+    (index: number, from: number, to: number) =>
+      editStep(index, (step) => withActionMoved(step, from, to)),
+    [editStep]
   )
 
   const fromSets = useCallback(() => {
@@ -308,7 +336,10 @@ export function useStories(
     duplicateStep,
     deleteStep,
     moveStep,
-    setChange,
+    addAction,
+    changeAction,
+    removeAction,
+    moveAction,
     fromSets,
     presenting,
     presentStep,

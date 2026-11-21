@@ -406,11 +406,14 @@ Absent/empty `edgeDirectionSets` = the whole mechanism dormant — no `direction
 
 ## Stories
 
-`stories` (top-level) is a list of stories: ways to tell the diagram one step at a time over the visibility sets, in the app's presenter view. Each has a name and an ordered list of steps; a step says which sets to show and which to hide, on top of what the steps before it left.
+`stories` (top-level) is a list of stories: ways to tell the diagram one step at a time over the visibility sets, in the app's presenter view. Each has a name and an ordered list of steps; a step is an ordered list of actions (show a set, hide a set), applied on top of what the steps before it left.
 
 ```json
 "stories": [
-  { "id": "story-1", "name": "Integration problem", "steps": [ { "show": ["vis-1"] }, { "hide": ["vis-1"], "show": ["vis-2"] } ] }
+  { "id": "story-1", "name": "Integration problem", "steps": [
+    { "actions": [ { "action": "show", "set": "vis-1" } ] },
+    { "actions": [ { "action": "hide", "set": "vis-1" }, { "action": "show", "set": "vis-2" } ] }
+  ] }
 ]
 ```
 
@@ -418,11 +421,13 @@ Absent/empty `edgeDirectionSets` = the whole mechanism dormant — no `direction
 |---|---|---|---|
 | `id` | string | yes | Opaque and unique among the stories; the person never sees it. |
 | `name` | string | yes | What the person sees. Unique ignoring case (the app refuses a duplicate). |
-| `steps` | array of `{ show?, hide? }` | yes | In the order they are told. `show` and `hide` are lists of visibility set `id`s, left out when empty; `{}` changes nothing. |
+| `steps` | array of `{ actions? }` | yes | In the order they are told. `actions` is left out when empty; `{}` does nothing. |
 
-- Step 0 is before the first step: every set the story names is hidden and every other set is shown. Step *n* is step *n* − 1 with the *n*th step applied: the sets in `hide` are hidden first, then the sets in `show` are shown.
+An action is `{ "action": "show" | "hide", "set": <visibility set id> }`. A later version may add actions with fields of their own; a reader ignores an action it does not know and a tool that rewrites the file keeps it as it was.
+
+- Step 0 is before the first step: every set the story shows or hides is hidden and every other set is shown. Step *n* is step *n* − 1 with the *n*th step applied: its actions run in order, so the last action on a set wins.
 - Which step is on screen is not stored.
-- With the `edit_diagram` operations, name a story and its sets by their names: `add_story {name}`, `rename_story {story, name}`, `remove_story {story}`, `add_story_step {story, show?, hide?, at?}`, `set_story_step {story, step, show?, hide?}`, `remove_story_step {story, step}`. Steps are numbered from 1. A step cannot show and hide the same set.
+- With the `edit_diagram` operations, name a story and its sets by their names: `add_story {name}`, `rename_story {story, name}`, `remove_story {story}`, `add_story_step {story, at?, actions?: [{action, set}]}`, `remove_story_step {story, step}`, `add_story_action {story, step, action, set, at?}`, `remove_story_action {story, step, number}`. Steps and actions are numbered from 1.
 
 ## Security
 

@@ -20,21 +20,31 @@
       "name": "Integration problem",
       "steps": [
         {
-          "show": [
-            "vis-t0d4y1"
+          "actions": [
+            {
+              "action": "show",
+              "set": "vis-t0d4y1"
+            }
           ]
         },
         {
-          "show": [
-            "vis-l1nk5a"
+          "actions": [
+            {
+              "action": "show",
+              "set": "vis-l1nk5a"
+            }
           ]
         },
         {
-          "show": [
-            "vis-pr0p5d"
-          ],
-          "hide": [
-            "vis-l1nk5a"
+          "actions": [
+            {
+              "action": "hide",
+              "set": "vis-l1nk5a"
+            },
+            {
+              "action": "show",
+              "set": "vis-pr0p5d"
+            }
           ]
         }
       ]
@@ -44,8 +54,11 @@
       "name": "Systems only",
       "steps": [
         {
-          "show": [
-            "vis-t0d4y1"
+          "actions": [
+            {
+              "action": "show",
+              "set": "vis-t0d4y1"
+            }
           ]
         }
       ]

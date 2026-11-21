@@ -1,9 +1,15 @@
-// The editing operations on stories (ADR 0195): make, rename and remove a story, and add, change and
-// remove its steps. A story and a set are named by their names, as the editor shows them (the ids are
-// hidden and an assistant never needs them); a story name is unique ignoring case, as the editor
-// insists. Part of the same pure core as operations.ts.
-import type { Story, StoryStep, VisibilitySet } from '../visibility/schema.ts'
-import { newStoryId, withStepChange } from '../visibility/story.ts'
+// The editing operations on stories (ADR 0195): make, rename and remove a story, add and remove its
+// steps, and add and remove the actions of a step. A story and a set are named by their names, as the
+// editor shows them (the ids are hidden and an assistant never needs them); a story name is unique
+// ignoring case, as the editor insists. Part of the same pure core as operations.ts.
+import type { Story, StoryAction, StoryStep, VisibilitySet } from '../visibility/schema.ts'
+import {
+  describeStep,
+  newStoryId,
+  STORY_ACTIONS,
+  withAction,
+  withoutAction
+} from '../visibility/story.ts'
 import { nameTaken } from '../visibility/visibility.ts'
 import type { Model, OperationResult, Reader } from './model.ts'
 
@@ -33,77 +39,57 @@ function storyNamed(model: Model, reader: Reader): Story {
   return found
 }
 
-// The ids of the sets a list of names points at, each once, in the order given.
-function setIdsNamed(model: Model, reader: Reader, key: string): string[] | undefined {
-  if (!reader.has(key)) return undefined
-  const raw = reader.raw(key)
-  if (!Array.isArray(raw) || !raw.every((n) => typeof n === 'string')) {
-    reader.fail(`"${key}" must be a list of visibility set names`)
-  }
+// The set a name points at, ignoring case; the id works too.
+function setNamed(model: Model, reader: Reader, wanted: string): VisibilitySet {
   const sets = setsOf(model)
-  const ids = (raw as string[]).map((name) => {
-    const wanted = name.trim()
-    const found =
-      sets.find((s) => s.name.trim().toLowerCase() === wanted.toLowerCase()) ??
-      sets.find((s) => s.id === wanted)
-    if (!found) {
-      reader.fail(
-        sets.length === 0
-          ? `there is no visibility set "${wanted}": this diagram has none (make one with add_visibility_set)`
-          : `there is no visibility set "${wanted}" (the sets are ${sets.map((s) => `"${s.name}"`).join(', ')})`
-      )
-    }
-    return found.id
-  })
-  return [...new Set(ids)]
+  const found =
+    sets.find((s) => s.name.trim().toLowerCase() === wanted.trim().toLowerCase()) ??
+    sets.find((s) => s.id === wanted.trim())
+  if (!found) {
+    reader.fail(
+      sets.length === 0
+        ? `there is no visibility set "${wanted}": this diagram has none (make one with add_visibility_set)`
+        : `there is no visibility set "${wanted}" (the sets are ${sets.map((s) => `"${s.name}"`).join(', ')})`
+    )
+  }
+  return found
 }
 
-// A step from the two lists an operation gave. A set named in both is refused: a step shows a set or
-// hides it, and the order of the two lists must not be what decides.
-function stepFrom(model: Model, reader: Reader): StoryStep {
-  const show = setIdsNamed(model, reader, 'show') ?? []
-  const hide = setIdsNamed(model, reader, 'hide') ?? []
-  const both = show.filter((id) => hide.includes(id))
-  if (both.length > 0) {
-    const names = both.map((id) => `"${setsOf(model).find((s) => s.id === id)?.name}"`)
-    reader.fail(`a step cannot both show and hide ${names.join(', ')}`)
+// An action from the name of what to do and the name of the set it is about.
+function actionFrom(model: Model, reader: Reader, kind: unknown, setName: unknown): StoryAction {
+  const known = STORY_ACTIONS.map((a) => a.id)
+  if (typeof kind !== 'string' || !known.some((id) => id === kind.toLowerCase())) {
+    reader.fail(`"action" must be one of ${known.map((id) => `"${id}"`).join(', ')}`)
   }
-  let step: StoryStep = {}
-  for (const id of show) step = withStepChange(step, id, 'show')
-  for (const id of hide) step = withStepChange(step, id, 'hide')
-  return step
+  if (typeof setName !== 'string') reader.fail('"set" must be the name of a visibility set')
+  return { action: kind.toLowerCase(), set: setNamed(model, reader, setName).id }
+}
+
+// The actions of an `actions` list, each `{ action, set }` by name.
+function actionsFrom(model: Model, reader: Reader): StoryAction[] {
+  if (!reader.has('actions')) return []
+  const raw = reader.raw('actions')
+  if (!Array.isArray(raw)) reader.fail('"actions" must be a list of { action, set }')
+  return raw.map((item) => {
+    if (typeof item !== 'object' || item === null) {
+      reader.fail('each of "actions" must be { action: "show" | "hide", set: <set name> }')
+    }
+    const { action, set } = item as Record<string, unknown>
+    return actionFrom(model, reader, action, set)
+  })
 }
 
 // The story in the words an assistant can read back: each step by the names of its sets.
 function describe(model: Model, story: Story): { name: string; steps: string[] } {
   const names = new Map(setsOf(model).map((s) => [s.id, s.name]))
-  const list = (ids: string[] | undefined): string =>
-    (ids ?? [])
-      .flatMap((id) => names.get(id) ?? [])
-      .map((n) => `"${n}"`)
-      .join(', ')
-  return {
-    name: story.name,
-    steps: story.steps.map((step) => {
-      const parts = [
-        list(step.hide) && `hide ${list(step.hide)}`,
-        list(step.show) && `show ${list(step.show)}`
-      ].filter(Boolean)
-      return parts.length > 0 ? parts.join(', ') : 'no change'
-    })
-  }
+  return { name: story.name, steps: story.steps.map((step) => describeStep(step, names)) }
 }
 
 // One-based, as the editor numbers the steps.
-function stepNumber(reader: Reader, story: Story, key = 'step', extra = 0): number {
+function numberOf(reader: Reader, key: string, last: number, empty: string): number {
   const n = reader.number(key)
-  const last = story.steps.length + extra
   if (!Number.isInteger(n) || n < 1 || n > last) {
-    reader.fail(
-      last === 0
-        ? `"${story.name}" has no steps yet (add one with add_story_step)`
-        : `"${key}" must be a whole number from 1 to ${last}`
-    )
+    reader.fail(last === 0 ? empty : `"${key}" must be a whole number from 1 to ${last}`)
   }
   return n
 }
@@ -141,11 +127,15 @@ function removeStory(model: Model, reader: Reader): OperationResult {
   return { op: 'remove_story', removed: [current.id], story: describe(model, current) }
 }
 
-// Adds a step at the end, or at `at` (one-based) so the later steps move down.
+// Adds a step at the end, or at `at` (one-based) so the later steps move down. It starts with the
+// actions given, or empty.
 function addStoryStep(model: Model, reader: Reader): OperationResult {
   const story = storyNamed(model, reader)
-  const step = stepFrom(model, reader)
-  const at = reader.has('at') ? stepNumber(reader, story, 'at', 1) : story.steps.length + 1
+  const actions = actionsFrom(model, reader)
+  const at = reader.has('at')
+    ? numberOf(reader, 'at', story.steps.length + 1, '')
+    : story.steps.length + 1
+  const step: StoryStep = actions.length > 0 ? { actions } : {}
   const steps = [...story.steps]
   steps.splice(at - 1, 0, step)
   const changed = { ...story, steps }
@@ -153,22 +143,57 @@ function addStoryStep(model: Model, reader: Reader): OperationResult {
   return { op: 'add_story_step', story: describe(model, changed) }
 }
 
-// Replaces what a step does: both lists, so a list left out is emptied.
-function setStoryStep(model: Model, reader: Reader): OperationResult {
-  const story = storyNamed(model, reader)
-  const n = stepNumber(reader, story)
-  const step = stepFrom(model, reader)
-  const changed = { ...story, steps: story.steps.map((s, i) => (i === n - 1 ? step : s)) }
-  replace(model, changed)
-  return { op: 'set_story_step', story: describe(model, changed) }
-}
-
 function removeStoryStep(model: Model, reader: Reader): OperationResult {
   const story = storyNamed(model, reader)
-  const n = stepNumber(reader, story)
+  const n = numberOf(
+    reader,
+    'step',
+    story.steps.length,
+    `"${story.name}" has no steps yet (add one with add_story_step)`
+  )
   const changed = { ...story, steps: story.steps.filter((_, i) => i !== n - 1) }
   replace(model, changed)
   return { op: 'remove_story_step', story: describe(model, changed) }
+}
+
+// Adds an action to a step: at the end, or at `at` (one-based) among its actions.
+function addStoryAction(model: Model, reader: Reader): OperationResult {
+  const story = storyNamed(model, reader)
+  const n = numberOf(
+    reader,
+    'step',
+    story.steps.length,
+    `"${story.name}" has no steps yet (add one with add_story_step)`
+  )
+  const action = actionFrom(model, reader, reader.raw('action'), reader.raw('set'))
+  const inStep = story.steps[n - 1].actions?.length ?? 0
+  const at = reader.has('at') ? numberOf(reader, 'at', inStep + 1, '') - 1 : undefined
+  const steps = story.steps.map((s, i) => (i === n - 1 ? withAction(s, action, at) : s))
+  const changed = { ...story, steps }
+  replace(model, changed)
+  return { op: 'add_story_action', story: describe(model, changed) }
+}
+
+// Takes one action out of a step, by its number among the step's actions (one-based).
+function removeStoryAction(model: Model, reader: Reader): OperationResult {
+  const story = storyNamed(model, reader)
+  const n = numberOf(
+    reader,
+    'step',
+    story.steps.length,
+    `"${story.name}" has no steps yet (add one with add_story_step)`
+  )
+  const inStep = story.steps[n - 1].actions?.length ?? 0
+  const number = numberOf(
+    reader,
+    'number',
+    inStep,
+    `step ${n} of "${story.name}" has no actions yet (add one with add_story_action)`
+  )
+  const steps = story.steps.map((s, i) => (i === n - 1 ? withoutAction(s, number - 1) : s))
+  const changed = { ...story, steps }
+  replace(model, changed)
+  return { op: 'remove_story_action', story: describe(model, changed) }
 }
 
 export const STORY_OPERATIONS: Record<string, (model: Model, reader: Reader) => OperationResult> = {
@@ -176,6 +201,7 @@ export const STORY_OPERATIONS: Record<string, (model: Model, reader: Reader) => 
   rename_story: renameStory,
   remove_story: removeStory,
   add_story_step: addStoryStep,
-  set_story_step: setStoryStep,
-  remove_story_step: removeStoryStep
+  remove_story_step: removeStoryStep,
+  add_story_action: addStoryAction,
+  remove_story_action: removeStoryAction
 }

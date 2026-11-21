@@ -3,13 +3,17 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   applyStep,
+  describeAction,
+  describeStep,
   hiddenAtStep,
   newStoryId,
-  stepChangeOf,
   storyFromSets,
   storySetIds,
   storyStrayAdvisory,
-  withStepChange
+  withAction,
+  withActionChanged,
+  withActionMoved,
+  withoutAction
 } from './story.ts'
 
 const catalogue = [
@@ -18,14 +22,20 @@ const catalogue = [
   { id: 'proposed', name: 'Proposed' },
   { id: 'other', name: 'Other' }
 ]
+const show = (set) => ({ action: 'show', set })
+const hide = (set) => ({ action: 'hide', set })
 const story = {
   id: 's1',
   name: 'Integration',
-  steps: [{ show: ['today'] }, { show: ['links'] }, { hide: ['today'], show: ['proposed'] }]
+  steps: [
+    { actions: [show('today')] },
+    { actions: [show('links')] },
+    { actions: [hide('today'), show('proposed')] }
+  ]
 }
 const sorted = (set) => [...set].sort()
 
-test('a story controls the sets its steps name, and no others', () => {
+test('a story controls the sets its actions name, and no others', () => {
   assert.deepEqual(sorted(storySetIds(story)), ['links', 'proposed', 'today'])
 })
 
@@ -50,10 +60,7 @@ test('going back or jumping is the same replay, so the state depends only on the
 })
 
 test('inserting a step does not mean redoing the later ones', () => {
-  const longer = {
-    ...story,
-    steps: [story.steps[0], {}, story.steps[1], story.steps[2]]
-  }
+  const longer = { ...story, steps: [story.steps[0], {}, story.steps[1], story.steps[2]] }
   assert.deepEqual(
     sorted(hiddenAtStep(longer, catalogue, 4)),
     sorted(hiddenAtStep(story, catalogue, 3))
@@ -62,26 +69,38 @@ test('inserting a step does not mean redoing the later ones', () => {
 
 test('a step beyond the ends is clamped to them', () => {
   assert.deepEqual(sorted(hiddenAtStep(story, catalogue, 99)), ['today'])
-  assert.deepEqual(sorted(hiddenAtStep(story, catalogue, -3)), ['links', 'proposed', 'today'])
-  assert.deepEqual(sorted(hiddenAtStep(story, catalogue, Number.NaN)), [
-    'links',
-    'proposed',
-    'today'
-  ])
+  const start = ['links', 'proposed', 'today']
+  assert.deepEqual(sorted(hiddenAtStep(story, catalogue, -3)), start)
+  assert.deepEqual(sorted(hiddenAtStep(story, catalogue, Number.NaN)), start)
 })
 
-test('a set in both lists of a step ends shown', () => {
-  assert.deepEqual([...applyStep(new Set(), { hide: ['a'], show: ['a'] })], [])
+test('the actions of a step run in order, so the last one on a set wins', () => {
+  assert.deepEqual([...applyStep(new Set(), { actions: [hide('a'), show('a')] })], [])
+  assert.deepEqual([...applyStep(new Set(), { actions: [show('a'), hide('a')] })], ['a'])
 })
 
 test('applying a step leaves the sets it was given alone', () => {
   const before = new Set(['a'])
-  applyStep(before, { show: ['a'], hide: ['b'] })
+  applyStep(before, { actions: [show('a'), hide('b')] })
   assert.deepEqual([...before], ['a'])
 })
 
+test('an action this version does not know is ignored, and names no set', () => {
+  const later = {
+    id: 's',
+    name: 'S',
+    steps: [{ actions: [{ action: 'grow', set: 'other', factor: 2 }, show('today')] }]
+  }
+  assert.deepEqual(sorted(storySetIds(later)), ['today'])
+  assert.deepEqual(sorted(hiddenAtStep(later, catalogue, 1)), [])
+})
+
 test('an id that is not in the catalogue is ignored, so a deleted set hides nothing', () => {
-  const stray = { id: 's', name: 'S', steps: [{ show: ['gone'] }, { hide: ['gone', 'today'] }] }
+  const stray = {
+    id: 's',
+    name: 'S',
+    steps: [{ actions: [show('gone')] }, { actions: [hide('gone'), hide('today')] }]
+  }
   assert.deepEqual(sorted(hiddenAtStep(stray, catalogue, 0)), ['today'])
   assert.deepEqual(sorted(hiddenAtStep(stray, catalogue, 2)), ['today'])
 })
@@ -90,31 +109,43 @@ test('a story with no steps hides nothing', () => {
   assert.deepEqual([...hiddenAtStep({ id: 's', name: 'S', steps: [] }, catalogue, 0)], [])
 })
 
-test('the editor reads and writes what a step does to one set', () => {
-  const step = { show: ['a'], hide: ['b'] }
-  assert.equal(stepChangeOf(step, 'a'), 'show')
-  assert.equal(stepChangeOf(step, 'b'), 'hide')
-  assert.equal(stepChangeOf(step, 'c'), 'none')
-  assert.deepEqual(withStepChange(step, 'a', 'hide'), { hide: ['b', 'a'] })
-  assert.deepEqual(withStepChange(step, 'b', 'none'), { show: ['a'] })
-  assert.deepEqual(withStepChange({ show: ['a'] }, 'a', 'none'), {})
+test('the editor adds, changes, moves and removes the actions of a step', () => {
+  let step = withAction({}, show('a'))
+  step = withAction(step, hide('b'))
+  step = withAction(step, show('c'), 0)
+  assert.deepEqual(step.actions, [show('c'), show('a'), hide('b')])
+  step = withActionChanged(step, 1, { action: 'hide' })
+  assert.deepEqual(step.actions[1], hide('a'))
+  step = withActionMoved(step, 0, 2)
+  assert.deepEqual(step.actions, [hide('a'), hide('b'), show('c')])
+  assert.equal(withActionMoved(step, 0, 9), step)
+  step = withoutAction(step, 0)
+  assert.deepEqual(step.actions, [hide('b'), show('c')])
+})
+
+test('the actions field goes with the last action, so no empty list is left', () => {
+  const step = withoutAction({ actions: [show('a')] }, 0)
+  assert.deepEqual(step, {})
+  assert.equal('actions' in step, false)
+})
+
+test('a step is described in words by the names of its sets', () => {
+  const names = new Map(catalogue.map((s) => [s.id, s.name]))
+  assert.equal(describeStep(story.steps[2], names), 'Hide Today · Show Proposed')
+  assert.equal(describeStep({}, names), 'No actions')
+  assert.equal(describeAction(show('gone'), names), 'Show (deleted set)')
+  assert.equal(describeAction({ action: 'grow', set: 'today' }, names), 'grow')
 })
 
 test('the simplest story shows the next set at each step and hides nothing', () => {
   const steps = storyFromSets(catalogue)
-  assert.deepEqual(steps, [
-    { show: ['today'] },
-    { show: ['links'] },
-    { show: ['proposed'] },
-    { show: ['other'] }
-  ])
+  assert.deepEqual(
+    steps.map((s) => s.actions),
+    [[show('today')], [show('links')], [show('proposed')], [show('other')]]
+  )
   const made = { id: 's', name: 'S', steps }
-  assert.deepEqual(sorted(hiddenAtStep(made, catalogue, 0)), [
-    'links',
-    'other',
-    'proposed',
-    'today'
-  ])
+  const all = ['links', 'other', 'proposed', 'today']
+  assert.deepEqual(sorted(hiddenAtStep(made, catalogue, 0)), all)
   assert.deepEqual([...hiddenAtStep(made, catalogue, 4)], [])
 })
 
@@ -124,10 +155,10 @@ test('a new story id is not one that is taken', () => {
   assert.match(id, /^story-/)
 })
 
-test('ids in steps that no set holds are listed once, and nothing else is', () => {
+test('ids in actions that no set holds are listed once, and nothing else is', () => {
   assert.deepEqual(storyStrayAdvisory([story], catalogue), [])
   const lines = storyStrayAdvisory(
-    [{ id: 'a', name: 'A', steps: [{ show: ['gone'] }, { hide: ['gone'] }] }],
+    [{ id: 'a', name: 'A', steps: [{ actions: [show('gone'), hide('gone')] }] }],
     catalogue
   )
   assert.equal(lines.length, 1)

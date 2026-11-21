@@ -43,7 +43,15 @@ const fixture = (): DiagramFile => ({
     {
       id: 'story-1',
       name: 'Integration',
-      steps: [{ show: ['vis-1'] }, { hide: ['vis-1'], show: ['vis-2'] }]
+      steps: [
+        { actions: [{ action: 'show', set: 'vis-1' }] },
+        {
+          actions: [
+            { action: 'hide', set: 'vis-1' },
+            { action: 'show', set: 'vis-2' }
+          ]
+        }
+      ]
     }
   ],
   security: {

@@ -180,6 +180,8 @@ import { withVisibility, setIdsOf } from '../visibility/hiding'
 import { useVisibilitySets } from '../visibility/useVisibilitySets'
 import VisibilitySetsPanel from '../visibility/VisibilitySetsPanel'
 import { useStories } from '../stories/useStories'
+import { useStoryFade } from '../stories/useStoryFade'
+import { storyStrayAdvisory } from '@shared/visibility/story'
 import StoriesPanel from '../stories/StoriesPanel'
 import PresenterBar from '../stories/PresenterBar'
 import { useDiagnostics } from '../diagnostics/useDiagnostics'
@@ -455,6 +457,8 @@ function CanvasInner(): React.JSX.Element {
     visibilitySetsUi.setHidden
   )
   const storiesPresenting = storiesUi.presenting
+  // The presenter fades what appears and disappears between steps (ADR 0195).
+  const storyFade = useStoryFade(storiesPresenting, nodes, edges, visibilitySets, hiddenSetIds)
   const handlePresenterKey = storiesUi.handlePresenterKey
   const resetStories = storiesUi.reset
   // The floating sets panel is put away before the presentation starts.
@@ -3404,12 +3408,12 @@ function CanvasInner(): React.JSX.Element {
   // list; it does not draw the hidden ones. The state keeps them, in place, so an edge still follows
   // an element that is hidden.
   const nodesWithVisibility = useMemo(
-    () => withVisibility(nodes, isVisibleElement),
-    [nodes, isVisibleElement]
+    () => withVisibility(nodes, isVisibleElement, storyFade),
+    [nodes, isVisibleElement, storyFade]
   )
   const edgesWithVisibility = useMemo(
-    () => withVisibility(orderedEdges, isVisibleElement),
-    [orderedEdges, isVisibleElement]
+    () => withVisibility(orderedEdges, isVisibleElement, storyFade),
+    [orderedEdges, isVisibleElement, storyFade]
   )
 
   // An edge has no zIndex of its own (ADR 0035 scoped that to Entity/Container/Text): it sits at
@@ -3550,7 +3554,9 @@ function CanvasInner(): React.JSX.Element {
       ...hierarchyLoadNotes,
       ...hierarchyAnalysis.outgrownAdvisories,
       ...legendEmptyAdvisory,
-      ...strayLines
+      ...strayLines,
+      // Set ids in stories that no set holds (ADR 0195): ignored, never removed.
+      ...storyStrayAdvisory(stories, visibilitySets)
     ]
   }, [
     diagnostics,
@@ -3559,7 +3565,8 @@ function CanvasInner(): React.JSX.Element {
     legend.length,
     nodes,
     edges,
-    visibilitySets
+    visibilitySets,
+    stories
   ])
 
   // "Changes since last save" Notes bucket (ADR 0102) — reuses
@@ -4531,7 +4538,10 @@ function CanvasInner(): React.JSX.Element {
               onDuplicateStep={storiesUi.duplicateStep}
               onDeleteStep={storiesUi.deleteStep}
               onMoveStep={storiesUi.moveStep}
-              onChange={storiesUi.setChange}
+              onAddAction={storiesUi.addAction}
+              onChangeAction={storiesUi.changeAction}
+              onRemoveAction={storiesUi.removeAction}
+              onMoveAction={storiesUi.moveAction}
               onFromSets={storiesUi.fromSets}
               onPresent={presentStory}
               onClose={() => setStoriesPanelOpen(false)}

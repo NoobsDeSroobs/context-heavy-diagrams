@@ -140,42 +140,66 @@
   white-space: nowrap;
 }
 
-.stories-set {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+
+.stories-step-count {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: var(--ev-c-text-3);
+  font-variant-numeric: tabular-nums;
 }
 
-.stories-set-name {
+.stories-actions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stories-action {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-top: 2px solid transparent;
+}
+
+.stories-action select {
+  min-width: 0;
+}
+
+/* the second choice, the set, takes the room that is left */
+.stories-action select:nth-of-type(2) {
+  flex: 1;
+}
+
+.stories-handle {
+  flex: 0 0 auto;
+  cursor: grab;
+  user-select: none;
+  color: var(--ev-c-text-3);
+  font-size: 12px;
+  letter-spacing: -2px;
+}
+
+.stories-action-unknown {
   flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 12px;
+  color: var(--ev-c-text-3);
 }
 
-.stories-choices {
-  display: inline-flex;
+/* where a dragged row or step would land */
+.stories-action[data-drop='true'],
+.stories-step-item[data-drop='true'] {
+  border-top-color: var(--ev-c-text-1);
 }
 
-.stories-panel .stories-choices button {
-  border-radius: 0;
-  margin-left: -1px;
-}
-
-.stories-panel .stories-choices button:first-child {
-  border-radius: 4px 0 0 4px;
-  margin-left: 0;
-}
-
-.stories-panel .stories-choices button:last-child {
-  border-radius: 0 4px 4px 0;
-}
-
-.stories-panel .stories-choices button.is-on {
-  background: var(--ev-c-text-2);
-  color: var(--color-background);
+.stories-step-item {
+  border-top: 2px solid transparent;
 }
 
 /* the presenter (ADR 0195): the editor's frame steps aside, and nothing on the canvas is touched */
@@ -190,6 +214,35 @@
 .app-shell.is-presenting .react-flow__node,
 .app-shell.is-presenting .react-flow__edge,
 .app-shell.is-presenting .react-flow__handle {
+  pointer-events: none;
+}
+
+/* the fade between steps (ADR 0195); the time is STORY_FADE_MS in useStoryFade.ts. An edge's label is
+   outside the edge's own element and carries the class itself. */
+@keyframes story-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes story-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.story-fading-in {
+  animation: story-fade-in 250ms ease-out both;
+}
+
+.story-fading-out {
+  animation: story-fade-out 250ms ease-in both;
   pointer-events: none;
 }
 

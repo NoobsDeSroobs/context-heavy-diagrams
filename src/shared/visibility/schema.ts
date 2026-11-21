@@ -20,10 +20,18 @@ export interface Story {
   steps: StoryStep[]
 }
 
-// What one step does to the sets, on top of the state the earlier steps left. Both lists hold set
-// ids. The sets in `hide` are hidden first, then the sets in `show` are shown, so a set in both ends
-// shown. Both are left out of the file when empty; a step that changes nothing is `{}`.
+// What one step does, as an ordered list of actions applied on top of the state the earlier steps
+// left. A step that does nothing is `{}`: `actions` is left out of the file when empty.
 export interface StoryStep {
-  show?: string[]
-  hide?: string[]
+  actions?: StoryAction[]
+}
+
+// One action of a step. `action` says what to do and the other fields say to what: `show` and `hide`
+// name a visibility set by id. A reader ignores an action it does not know, so a later version can add
+// actions (and their own fields) without breaking an older one; the fields it does not know are kept.
+export interface StoryAction {
+  action: string
+  // The visibility set the action is about; present for every action that is about one.
+  set?: string
+  [other: string]: unknown
 }

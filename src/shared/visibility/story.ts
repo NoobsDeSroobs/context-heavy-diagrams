@@ -1,24 +1,40 @@
 // The state of a story at a step (ADR 0195), the one place that decides which sets a story hides.
 // Words as in visibility.ts: a set is shown or hidden. The result feeds `visibleFilter`, so the rule
 // of ADR 0194 is still the only thing that decides whether an element is visible.
-import type { Story, StoryStep, VisibilitySet } from './schema.ts'
+import type { Story, StoryAction, StoryStep, VisibilitySet } from './schema.ts'
 
-// The sets a story names in any step, each once. These are the sets the story controls.
+// The actions this version knows, in the order a person is offered them. Each is about a set. An
+// action that is not here is ignored when a story is played and kept in the file.
+export const STORY_ACTIONS = [
+  { id: 'show', label: 'Show' },
+  { id: 'hide', label: 'Hide' }
+] as const
+
+export type StoryActionId = (typeof STORY_ACTIONS)[number]['id']
+
+export const isKnownAction = (action: StoryAction): boolean =>
+  STORY_ACTIONS.some((a) => a.id === action.action) && typeof action.set === 'string'
+
+const actionsOf = (step: StoryStep): StoryAction[] => step.actions ?? []
+
+// The sets a story shows or hides in any step, each once. These are the sets the story controls.
 export function storySetIds(story: Story): Set<string> {
   const ids = new Set<string>()
   for (const step of story.steps) {
-    for (const id of step.hide ?? []) ids.add(id)
-    for (const id of step.show ?? []) ids.add(id)
+    for (const action of actionsOf(step)) if (isKnownAction(action)) ids.add(action.set as string)
   }
   return ids
 }
 
-// One step applied to the hidden sets: the sets it hides, then the sets it shows. A new set; the
-// argument is left alone.
+// One step applied to the hidden sets, its actions in order: a hide adds the set, a show takes it
+// out. A new set; the argument is left alone.
 export function applyStep(hidden: ReadonlySet<string>, step: StoryStep): Set<string> {
   const next = new Set(hidden)
-  for (const id of step.hide ?? []) next.add(id)
-  for (const id of step.show ?? []) next.delete(id)
+  for (const action of actionsOf(step)) {
+    if (!isKnownAction(action)) continue
+    if (action.action === 'hide') next.add(action.set as string)
+    else next.delete(action.set as string)
+  }
   return next
 }
 
@@ -40,51 +56,69 @@ export function hiddenAtStep(
   return hidden
 }
 
-// What a step does to one set, as the editor shows it.
-export type StepChange = 'show' | 'hide' | 'none'
-
-export function stepChangeOf(step: StoryStep, setId: string): StepChange {
-  if (step.show?.includes(setId)) return 'show'
-  if (step.hide?.includes(setId)) return 'hide'
-  return 'none'
+// A step after an action is added to it, at the end or at a place (0-based).
+export function withAction(step: StoryStep, action: StoryAction, at?: number): StoryStep {
+  const actions = [...actionsOf(step)]
+  actions.splice(
+    at === undefined ? actions.length : Math.max(0, Math.min(at, actions.length)),
+    0,
+    action
+  )
+  return { ...step, actions }
 }
 
-// The step after the person sets what it does to one set. A set is in one list at most, and an empty
-// list is left out, so the file stays free of empty arrays.
-export function withStepChange(step: StoryStep, setId: string, change: StepChange): StoryStep {
-  const show = (step.show ?? []).filter((id) => id !== setId)
-  const hide = (step.hide ?? []).filter((id) => id !== setId)
-  if (change === 'show') show.push(setId)
-  if (change === 'hide') hide.push(setId)
-  const next: StoryStep = {}
-  if (show.length > 0) next.show = show
-  if (hide.length > 0) next.hide = hide
-  return next
+// A step after the action at a place is replaced by its change; the fields the change leaves out stay.
+export function withActionChanged(
+  step: StoryStep,
+  at: number,
+  change: Partial<StoryAction>
+): StoryStep {
+  return { ...step, actions: actionsOf(step).map((a, i) => (i === at ? { ...a, ...change } : a)) }
 }
 
-// The sets of a story with the ids that no longer belong to the catalogue taken out of every step.
-// For the editor to show; the file keeps them.
-export function stepsWithoutStray(story: Story, catalogue: readonly VisibilitySet[]): StoryStep[] {
-  const known = new Set(catalogue.map((s) => s.id))
-  return story.steps.map((step) => withKnown(step, known))
+// A step after the action at a place is taken out; the field goes with the last action.
+export function withoutAction(step: StoryStep, at: number): StoryStep {
+  const actions = actionsOf(step).filter((_, i) => i !== at)
+  if (actions.length > 0) return { ...step, actions }
+  const rest = { ...step }
+  delete rest.actions
+  return rest
 }
 
-function withKnown(step: StoryStep, known: ReadonlySet<string>): StoryStep {
-  const next: StoryStep = {}
-  const show = (step.show ?? []).filter((id) => known.has(id))
-  const hide = (step.hide ?? []).filter((id) => known.has(id))
-  if (show.length > 0) next.show = show
-  if (hide.length > 0) next.hide = hide
-  return next
+// A step after the action at `from` moves to `to` (both 0-based); the same step when either is out.
+export function withActionMoved(step: StoryStep, from: number, to: number): StoryStep {
+  const actions = [...actionsOf(step)]
+  if (from < 0 || from >= actions.length || to < 0 || to >= actions.length || from === to) {
+    return step
+  }
+  const [moved] = actions.splice(from, 1)
+  actions.splice(to, 0, moved)
+  return { ...step, actions }
+}
+
+// The action in words for the person: "Show Today". A set the catalogue no longer holds is named by
+// what it is, and an action this version does not know is named as it was written.
+export function describeAction(action: StoryAction, names: ReadonlyMap<string, string>): string {
+  const known = STORY_ACTIONS.find((a) => a.id === action.action)
+  if (!known || typeof action.set !== 'string') return String(action.action)
+  return `${known.label} ${names.get(action.set) ?? '(deleted set)'}`
+}
+
+// The step in words: its actions one after the other, or "No actions".
+export function describeStep(step: StoryStep, names: ReadonlyMap<string, string>): string {
+  const actions = actionsOf(step)
+  return actions.length > 0
+    ? actions.map((a) => describeAction(a, names)).join(' · ')
+    : 'No actions'
 }
 
 // The simplest story (ADR 0195): one step per set, in the order of the catalogue, each showing the
 // next set and hiding nothing.
 export function storyFromSets(catalogue: readonly VisibilitySet[]): StoryStep[] {
-  return catalogue.map((set) => ({ show: [set.id] }))
+  return catalogue.map((set) => ({ actions: [{ action: 'show', set: set.id }] }))
 }
 
-// A new id, unique among the stories and the ids the file already uses. Opaque, like a set's.
+// A new id, unique among the stories. Opaque, like a set's.
 export function newStoryId(stories: readonly Story[]): string {
   const taken = new Set(stories.map((s) => s.id))
   let id: string

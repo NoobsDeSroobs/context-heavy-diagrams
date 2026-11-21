@@ -15,13 +15,19 @@ let counter = 0
 const options = { newId: (prefix) => `${prefix}-${(counter += 1)}` }
 const run = (diagram, ...ops) => applyOperations(diagram, ops, options)
 
-function check(diagram) {
+// Writes the diagram as text and validates that file; `raw` is written as it is, for what the app's
+// own writer would repair.
+function check(diagram, raw = false) {
   const dir = mkdtempSync(join(tmpdir(), 'chd-stories-'))
   try {
-    const text = serializeDiagram(diagram)
-    assert.deepEqual(serializeDiagram(parseDiagram(text)), text, 'round-trips through the app')
     const file = join(dir, 'd.chd')
-    writeFileSync(file, text)
+    if (raw) {
+      writeFileSync(file, JSON.stringify(diagram))
+    } else {
+      const text = serializeDiagram(diagram)
+      assert.deepEqual(serializeDiagram(parseDiagram(text)), text, 'round-trips through the app')
+      writeFileSync(file, text)
+    }
     return validateFile(file)
   } finally {
     rmSync(dir, { recursive: true, force: true })
@@ -47,51 +53,76 @@ test('the story operations are known and described in the help', () => {
     'rename_story',
     'remove_story',
     'add_story_step',
-    'set_story_step',
-    'remove_story_step'
+    'remove_story_step',
+    'add_story_action',
+    'remove_story_action'
   ]) {
     assert.ok(OPERATION_NAMES.includes(name), name)
     assert.ok(OPERATIONS_HELP.includes(name), name)
   }
 })
 
-test('a story is made, given steps by set name, and read back', () => {
+test('a story is made, given steps and actions by set name, and read back', () => {
   const { diagram, results } = run(
     base(),
     { op: 'add_story', name: 'Integration' },
-    { op: 'add_story_step', story: 'integration', show: ['today'] },
-    { op: 'add_story_step', story: 'Integration', hide: ['Today'], show: ['Proposed'] }
+    { op: 'add_story_step', story: 'integration', actions: [{ action: 'show', set: 'today' }] },
+    { op: 'add_story_step', story: 'Integration' },
+    { op: 'add_story_action', story: 'Integration', step: 2, action: 'Hide', set: 'Today' },
+    { op: 'add_story_action', story: 'Integration', step: 2, action: 'show', set: 'Proposed' }
   )
-  assert.deepEqual(results[2].story, {
+  assert.deepEqual(results[4].story, {
     name: 'Integration',
-    steps: ['show "Today"', 'hide "Today", show "Proposed"']
+    steps: ['Show Today', 'Hide Today · Show Proposed']
   })
   const [today, proposed] = diagram.visibilitySets.map((s) => s.id)
   assert.deepEqual(diagram.stories[0].steps, [
-    { show: [today] },
-    { show: [proposed], hide: [today] }
+    { actions: [{ action: 'show', set: today }] },
+    {
+      actions: [
+        { action: 'hide', set: today },
+        { action: 'show', set: proposed }
+      ]
+    }
   ])
   const { errors, warnings } = check(diagram)
   assert.deepEqual(errors, [])
   assert.deepEqual(warnings, [])
 })
 
-test('a step is inserted, replaced and removed by its number', () => {
+test('a step starts empty, and steps and actions are inserted and removed by number', () => {
   const { diagram } = run(
     base(),
     { op: 'add_story', name: 'S' },
-    { op: 'add_story_step', story: 'S', show: ['Today'] },
-    { op: 'add_story_step', story: 'S', show: ['Proposed'] },
-    { op: 'add_story_step', story: 'S', at: 1, show: ['Proposed'], hide: ['Today'] },
-    { op: 'set_story_step', story: 'S', step: 2, hide: ['Proposed'] },
+    { op: 'add_story_step', story: 'S' },
+    { op: 'add_story_step', story: 'S', actions: [{ action: 'show', set: 'Proposed' }] },
+    { op: 'add_story_step', story: 'S', at: 1, actions: [{ action: 'show', set: 'Today' }] },
+    { op: 'add_story_action', story: 'S', step: 1, action: 'hide', set: 'Proposed', at: 1 },
+    { op: 'add_story_action', story: 'S', step: 1, action: 'hide', set: 'Today' },
+    { op: 'remove_story_action', story: 'S', step: 1, number: 2 },
     { op: 'remove_story_step', story: 'S', step: 3 }
   )
   const [today, proposed] = diagram.visibilitySets.map((s) => s.id)
   assert.deepEqual(diagram.stories[0].steps, [
-    { show: [proposed], hide: [today] },
-    { hide: [proposed] }
+    {
+      actions: [
+        { action: 'hide', set: proposed },
+        { action: 'hide', set: today }
+      ]
+    },
+    {}
   ])
   assert.deepEqual(check(diagram).errors, [])
+})
+
+test('the last action of a step takes the field with it', () => {
+  const { diagram } = run(
+    base(),
+    { op: 'add_story', name: 'S' },
+    { op: 'add_story_step', story: 'S', actions: [{ action: 'show', set: 'Today' }] },
+    { op: 'remove_story_action', story: 'S', step: 1, number: 1 }
+  )
+  assert.deepEqual(diagram.stories[0].steps, [{}])
 })
 
 test('a story is renamed and removed, and the last one takes the field with it', () => {
@@ -105,21 +136,39 @@ test('a story is renamed and removed, and the last one takes the field with it',
   assert.equal('stories' in gone, false)
 })
 
-test('a duplicate story name, an unknown story or set, and a set in both lists are refused', () => {
-  const made = run(base(), { op: 'add_story', name: 'S' }).diagram
+test('a duplicate name, an unknown story, set or action, and a bad number are refused', () => {
+  const made = run(
+    base(),
+    { op: 'add_story', name: 'S' },
+    { op: 'add_story_step', story: 'S' }
+  ).diagram
   refused(made, { op: 'add_story', name: 's' }, /already a story named/)
-  refused(made, { op: 'add_story_step', story: 'Nope', show: ['Today'] }, /no story "Nope"/)
-  refused(made, { op: 'add_story_step', story: 'S', show: ['Nope'] }, /no visibility set "Nope"/)
+  refused(made, { op: 'add_story_step', story: 'Nope' }, /no story "Nope"/)
   refused(
     made,
-    { op: 'add_story_step', story: 'S', show: ['Today'], hide: ['today'] },
-    /both show and hide/
+    { op: 'add_story_action', story: 'S', step: 1, action: 'show', set: 'Nope' },
+    /no visibility set "Nope"/
   )
-  refused(made, { op: 'set_story_step', story: 'S', step: 1, show: ['Today'] }, /no steps yet/)
   refused(
-    run(made, { op: 'add_story_step', story: 'S' }).diagram,
-    { op: 'remove_story_step', story: 'S', step: 2 },
+    made,
+    { op: 'add_story_action', story: 'S', step: 1, action: 'grow', set: 'Today' },
+    /"action" must be one of "show", "hide"/
+  )
+  refused(
+    made,
+    { op: 'add_story_action', story: 'S', step: 2, action: 'show', set: 'Today' },
     /from 1 to 1/
+  )
+  refused(made, { op: 'remove_story_action', story: 'S', step: 1, number: 1 }, /no actions yet/)
+  refused(
+    made,
+    { op: 'add_story_step', story: 'S', actions: [{ action: 'show' }] },
+    /"set" must be the name/
+  )
+  refused(
+    run(createEmptyDiagram(), { op: 'add_story', name: 'T' }).diagram,
+    { op: 'remove_story_step', story: 'T', step: 1 },
+    /has no steps yet/
   )
   refused(createEmptyDiagram(), { op: 'add_story_step', story: 'S' }, /this diagram has none/)
 })
@@ -128,32 +177,28 @@ test('inspect lists the stories with their steps by set name', () => {
   const { diagram } = run(
     base(),
     { op: 'add_story', name: 'S' },
-    { op: 'add_story_step', story: 'S', show: ['Today'] },
+    { op: 'add_story_step', story: 'S', actions: [{ action: 'show', set: 'Today' }] },
     { op: 'add_story_step', story: 'S' }
   )
   assert.deepEqual(describeDiagram(diagram).stories, [
-    { name: 'S', steps: ['show Today', 'no change'] }
+    { name: 'S', steps: ['Show Today', 'No actions'] }
   ])
   assert.equal('stories' in describeDiagram(base()), false)
 })
 
-test('the validator reports a malformed story and warns about ids that no set holds', () => {
-  // written as raw text: the app's own writer would turn a string into a list
-  const dir = mkdtempSync(join(tmpdir(), 'chd-stories-'))
-  try {
-    const file = join(dir, 'bad.chd')
-    writeFileSync(
-      file,
-      JSON.stringify({ ...base(), stories: [{ id: 's', name: 'S', steps: [{ show: 'Today' }] }] })
-    )
-    assert.ok(validateFile(file).errors.some((e) => /show must be a list/.test(e)))
-  } finally {
-    rmSync(dir, { recursive: true, force: true })
-  }
-  const stray = { ...base(), stories: [{ id: 's', name: 'S', steps: [{ show: ['gone'] }] }] }
-  const result = check(stray)
-  assert.deepEqual(result.errors, [])
-  assert.ok(result.warnings.some((w) => /stories list 1 visibility set id/.test(w)))
+test('the validator reports a malformed story, and warns about what it ignores', () => {
+  const [today] = base().visibilitySets.map((s) => s.id)
+  const story = (steps) => ({ ...base(), stories: [{ id: 's', name: 'S', steps }] })
+  const errors = (steps) => check(story(steps), true).errors
+  assert.ok(errors([{ actions: 'show' }]).some((e) => /actions must be a list/.test(e)))
+  assert.ok(errors([{ actions: [{ action: 'show' }] }]).some((e) => /needs a 'set'/.test(e)))
+  assert.ok(errors([{ actions: [{ set: today }] }]).some((e) => /'action' name/.test(e)))
+  const later = check(story([{ actions: [{ action: 'grow', set: today, factor: 2 }] }]), true)
+  assert.deepEqual(later.errors, [])
+  assert.ok(later.warnings.some((w) => /does not know/.test(w)))
+  const stray = check(story([{ actions: [{ action: 'show', set: 'gone' }] }]))
+  assert.deepEqual(stray.errors, [])
+  assert.ok(stray.warnings.some((w) => /stories list 1 visibility set id/.test(w)))
   const twice = {
     ...base(),
     stories: [

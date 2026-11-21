@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import type { Story, VisibilitySet } from '@shared/diagram'
-import { stepChangeOf, type StepChange } from '@shared/visibility/story'
+import { useState, type DragEvent } from 'react'
+import type { Story, StoryAction, VisibilitySet } from '@shared/diagram'
+import { describeStep, hiddenAtStep, STORY_ACTIONS } from '@shared/visibility/story'
 
 interface StoriesPanelProps {
   stories: Story[]
@@ -18,24 +18,54 @@ interface StoriesPanelProps {
   onDuplicateStep: () => void
   onDeleteStep: () => void
   onMoveStep: (from: number, to: number) => void
-  onChange: (index: number, setId: string, change: StepChange) => void
+  // The actions of a step (1 is the first); an action is told apart by its place, 0-based.
+  onAddAction: (index: number) => void
+  onChangeAction: (index: number, at: number, change: Partial<StoryAction>) => void
+  onRemoveAction: (index: number, at: number) => void
+  onMoveAction: (index: number, from: number, to: number) => void
   onFromSets: () => void
   onPresent: () => void
   onClose: () => void
 }
 
-// What a step does, in words, for its row in the list.
-function describe(step: Story['steps'][number], names: Map<string, string>): string {
-  const list = (ids: string[] | undefined): string =>
-    (ids ?? [])
-      .map((id) => names.get(id))
-      .filter((n): n is string => n !== undefined)
-      .join(', ')
-  const parts = [
-    list(step.hide) && `Hide ${list(step.hide)}`,
-    list(step.show) && `Show ${list(step.show)}`
-  ].filter(Boolean)
-  return parts.length > 0 ? parts.join(' · ') : 'No change'
+// Drag to reorder a list: `handle(i)` goes on what is grabbed and `target(i)` on what it can be
+// dropped on. The buttons beside each row do the same without a pointer drag.
+function useReorder(onMove: (from: number, to: number) => void): {
+  handle: (i: number) => React.HTMLAttributes<HTMLElement>
+  target: (i: number) => React.HTMLAttributes<HTMLElement> & { 'data-drop'?: string }
+} {
+  const [from, setFrom] = useState<number | null>(null)
+  const [over, setOver] = useState<number | null>(null)
+  const end = (): void => {
+    setFrom(null)
+    setOver(null)
+  }
+  return {
+    handle: (i) => ({
+      draggable: true,
+      onDragStart: (event: DragEvent<HTMLElement>) => {
+        setFrom(i)
+        if (event.dataTransfer) {
+          event.dataTransfer.effectAllowed = 'move'
+          event.dataTransfer.setData('text/plain', String(i))
+        }
+      },
+      onDragEnd: end
+    }),
+    target: (i) => ({
+      onDragOver: (event: DragEvent<HTMLElement>) => {
+        if (from === null) return
+        event.preventDefault()
+        setOver(i)
+      },
+      onDrop: (event: DragEvent<HTMLElement>) => {
+        event.preventDefault()
+        if (from !== null && from !== i) onMove(from, i)
+        end()
+      },
+      'data-drop': from !== null && over === i && from !== i ? 'true' : undefined
+    })
+  }
 }
 
 // The name of the story picked, edited in place and kept when the field loses focus or Enter is
@@ -68,15 +98,103 @@ function StoryNameField({
   )
 }
 
-const CHOICES: { change: StepChange; label: string; title: string }[] = [
-  { change: 'show', label: 'Show', title: 'This step shows the set' },
-  { change: 'hide', label: 'Hide', title: 'This step hides the set' },
-  { change: 'none', label: '–', title: 'This step leaves the set as it was' }
-]
+// One action of a step: what to do, and to which set. An action this version does not know is shown
+// as it was written and can only be moved or removed, so it survives an edit.
+function ActionRow({
+  action,
+  sets,
+  index,
+  count,
+  handle,
+  onChange,
+  onMove,
+  onRemove
+}: {
+  action: StoryAction
+  sets: VisibilitySet[]
+  index: number
+  count: number
+  handle: React.HTMLAttributes<HTMLElement>
+  onChange: (change: Partial<StoryAction>) => void
+  onMove: (to: number) => void
+  onRemove: () => void
+}): React.JSX.Element {
+  const known = STORY_ACTIONS.some((a) => a.id === action.action)
+  const set = typeof action.set === 'string' ? action.set : ''
+  return (
+    <>
+      <span
+        className="stories-handle"
+        title="Drag to move the action"
+        aria-hidden="true"
+        {...handle}
+      >
+        ⋮⋮
+      </span>
+      {known ? (
+        <>
+          <select
+            value={action.action}
+            aria-label="Action"
+            onChange={(event) => onChange({ action: event.target.value })}
+          >
+            {STORY_ACTIONS.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.label}
+              </option>
+            ))}
+          </select>
+          <select
+            value={set}
+            aria-label="Set"
+            onChange={(event) => onChange({ set: event.target.value })}
+          >
+            {!sets.some((s) => s.id === set) && <option value={set}>(deleted set)</option>}
+            {sets.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </>
+      ) : (
+        <span className="stories-action-unknown" title="A later version made this action">
+          {action.action} (not known to this version)
+        </span>
+      )}
+      <button
+        type="button"
+        title="Move the action up"
+        aria-label="Move the action up"
+        disabled={index === 0}
+        onClick={() => onMove(index - 1)}
+      >
+        ↑
+      </button>
+      <button
+        type="button"
+        title="Move the action down"
+        aria-label="Move the action down"
+        disabled={index >= count - 1}
+        onClick={() => onMove(index + 1)}
+      >
+        ↓
+      </button>
+      <button
+        type="button"
+        title="Remove the action"
+        aria-label="Remove the action"
+        onClick={onRemove}
+      >
+        ×
+      </button>
+    </>
+  )
+}
 
 // The right-hand dock panel for stories (ADR 0195), laid out like the slide list of a presentation
-// program, simplified: the steps of the story in order, and for the step picked what it does to each
-// set. Picking a step shows its state on the canvas, so the person sees what the audience will.
+// program, simplified: the steps of the story in order, and for the step picked its actions, one
+// row each. Picking a step shows its state on the canvas, so the person sees what the audience will.
 export default function StoriesPanel({
   stories,
   story,
@@ -91,7 +209,10 @@ export default function StoriesPanel({
   onDuplicateStep,
   onDeleteStep,
   onMoveStep,
-  onChange,
+  onAddAction,
+  onChangeAction,
+  onRemoveAction,
+  onMoveAction,
   onFromSets,
   onPresent,
   onClose
@@ -102,12 +223,54 @@ export default function StoriesPanel({
   const names = new Map(sets.map((s) => [s.id, s.name]))
   const count = story?.steps.length ?? 0
   const clamped = Math.min(step, count)
+  const current = clamped >= 1 ? story?.steps[clamped - 1] : undefined
+  const actions = current?.actions ?? []
+  const stepOrder = useReorder((from, to) => onMoveStep(from + 1, to + 1))
+  const actionOrder = useReorder((from, to) => onMoveAction(clamped, from, to))
+
+  // What the audience sees after a step, for its tooltip: which sets are shown, out of how many.
+  const shownAfter = (at: number): { text: string; title: string } => {
+    if (!story || sets.length === 0) return { text: '', title: '' }
+    const hidden = hiddenAtStep(story, sets, at)
+    const shown = sets.filter((s) => !hidden.has(s.id)).map((s) => s.name)
+    return {
+      text: `${shown.length}/${sets.length}`,
+      title:
+        shown.length === 0
+          ? 'Nothing from the sets is shown'
+          : `Shown: ${shown.join(', ')}${
+              hidden.size > 0
+                ? `. Hidden: ${sets
+                    .filter((s) => hidden.has(s.id))
+                    .map((s) => s.name)
+                    .join(', ')}`
+                : ''
+            }`
+    }
+  }
 
   const submit = (): void => {
     if (!newName.trim()) return
     const refused = onAddStory(newName)
     setMessage(refused)
     if (!refused) setNewName('')
+  }
+
+  const renderStepButton = (at: number, label: string, text: string): React.JSX.Element => {
+    const shown = shownAfter(at)
+    return (
+      <button
+        type="button"
+        className={clamped === at ? 'stories-step is-current' : 'stories-step'}
+        aria-current={clamped === at ? 'step' : undefined}
+        title={shown.title}
+        onClick={() => onSelectStep(at)}
+      >
+        <span className="stories-step-number">{label}</span>
+        <span className="stories-step-text">{text}</span>
+        <span className="stories-step-count">{shown.text}</span>
+      </button>
+    )
   }
 
   return (
@@ -121,8 +284,9 @@ export default function StoriesPanel({
       </div>
       <div className="stories-panel-body">
         <p className="stories-panel-hint">
-          A story shows a diagram one step at a time. Each step shows or hides sets, on top of what
-          the steps before it did. Before the first step, the sets the story names are hidden.
+          A story shows a diagram one step at a time. A step has actions, such as show a set or hide
+          one, run in order on top of what the steps before it did. Before the first step, the sets
+          the story names are hidden.
         </p>
 
         {story && (
@@ -197,28 +361,15 @@ export default function StoriesPanel({
           <>
             <div className="stories-heading">Steps</div>
             <ol className="stories-steps" aria-label="Steps">
-              <li>
-                <button
-                  type="button"
-                  className={clamped === 0 ? 'stories-step is-current' : 'stories-step'}
-                  aria-current={clamped === 0 ? 'step' : undefined}
-                  onClick={() => onSelectStep(0)}
-                >
-                  <span className="stories-step-number">▸</span>
-                  <span className="stories-step-text">Start</span>
-                </button>
-              </li>
+              <li>{renderStepButton(0, '▸', 'Start')}</li>
               {story.steps.map((s, i) => (
-                <li key={i}>
-                  <button
-                    type="button"
-                    className={clamped === i + 1 ? 'stories-step is-current' : 'stories-step'}
-                    aria-current={clamped === i + 1 ? 'step' : undefined}
-                    onClick={() => onSelectStep(i + 1)}
-                  >
-                    <span className="stories-step-number">{i + 1}</span>
-                    <span className="stories-step-text">{describe(s, names)}</span>
-                  </button>
+                <li
+                  key={i}
+                  className="stories-step-item"
+                  {...stepOrder.target(i)}
+                  {...stepOrder.handle(i)}
+                >
+                  {renderStepButton(i + 1, String(i + 1), describeStep(s, names))}
                 </li>
               ))}
             </ol>
@@ -263,39 +414,40 @@ export default function StoriesPanel({
               </button>
             </div>
 
-            {clamped >= 1 && story.steps[clamped - 1] && (
+            {current && (
               <>
-                <div className="stories-heading">Step {clamped}: what it does to each set</div>
-                {sets.length === 0 && (
-                  <p className="stories-panel-hint">
-                    There are no visibility sets yet. Make some with the eye button in the bottom
-                    left corner.
-                  </p>
-                )}
-                {sets.map((set) => {
-                  const current = stepChangeOf(story.steps[clamped - 1], set.id)
-                  return (
-                    <div className="stories-set" key={set.id}>
-                      <span className="stories-set-name" title={set.name}>
-                        {set.name}
-                      </span>
-                      <span className="stories-choices" role="group" aria-label={set.name}>
-                        {CHOICES.map((c) => (
-                          <button
-                            key={c.change}
-                            type="button"
-                            title={c.title}
-                            aria-pressed={current === c.change}
-                            className={current === c.change ? 'is-on' : undefined}
-                            onClick={() => onChange(clamped, set.id, c.change)}
-                          >
-                            {c.label}
-                          </button>
-                        ))}
-                      </span>
-                    </div>
-                  )
-                })}
+                <div className="stories-heading">Step {clamped}: actions</div>
+                {actions.length === 0 && <p className="stories-panel-hint">No actions yet.</p>}
+                <ul className="stories-actions" aria-label={`Actions of step ${clamped}`}>
+                  {actions.map((action, i) => (
+                    <li key={i} className="stories-action" {...actionOrder.target(i)}>
+                      <ActionRow
+                        action={action}
+                        sets={sets}
+                        index={i}
+                        count={actions.length}
+                        handle={actionOrder.handle(i)}
+                        onChange={(change) => onChangeAction(clamped, i, change)}
+                        onMove={(to) => onMoveAction(clamped, i, to)}
+                        onRemove={() => onRemoveAction(clamped, i)}
+                      />
+                    </li>
+                  ))}
+                </ul>
+                <div className="stories-row">
+                  <button
+                    type="button"
+                    onClick={() => onAddAction(clamped)}
+                    disabled={sets.length === 0}
+                    title={
+                      sets.length === 0
+                        ? 'Make a visibility set first: the eye button in the bottom left corner'
+                        : 'Add an action to this step'
+                    }
+                  >
+                    + Add action
+                  </button>
+                </div>
               </>
             )}
 

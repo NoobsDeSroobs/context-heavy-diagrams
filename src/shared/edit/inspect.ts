@@ -23,6 +23,7 @@ import { crossingText, edgeCrossing } from '../crossings/crossings.ts'
 import { stencilLabelInsets, stencilLabelOutside } from '../stencils/kinds.ts'
 import { LINE_HEIGHT_EM, measureText, wrapText, type FontSpec } from '../export/textLayout.ts'
 import { NODE_STYLE_DEFAULTS, styledNodeType } from '../styling/styleDefaults.ts'
+import { describeStep } from '../visibility/story.ts'
 import { summarizeEdge, summarizeNode, type EdgeSummary, type NodeSummary } from './operations.ts'
 
 export interface DescribedNode extends NodeSummary {
@@ -124,15 +125,7 @@ export function describeDiagram(
       ? {
           stories: diagram.stories.map((story) => ({
             name: story.name,
-            steps: story.steps.map((step) => {
-              const list = (ids: string[] | undefined): string =>
-                (ids ?? []).flatMap((id) => setNameById.get(id) ?? []).join(', ')
-              const parts = [
-                list(step.hide) && `hide ${list(step.hide)}`,
-                list(step.show) && `show ${list(step.show)}`
-              ].filter(Boolean)
-              return parts.length > 0 ? parts.join('; ') : 'no change'
-            })
+            steps: story.steps.map((step) => describeStep(step, setNameById))
           }))
         }
       : {})
