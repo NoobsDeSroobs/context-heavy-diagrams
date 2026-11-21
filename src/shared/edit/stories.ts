@@ -94,9 +94,13 @@ function actionsFrom(model: Model, reader: Reader): StoryAction[] {
 }
 
 // The story in the words an assistant can read back: each step by the names of its sets.
-function describe(model: Model, story: Story): { name: string; steps: string[] } {
+function describe(model: Model, story: Story): { name: string; start?: string; steps: string[] } {
   const names = new Map(setsOf(model).map((s) => [s.id, s.name]))
-  return { name: story.name, steps: story.steps.map((step) => describeStep(step, names)) }
+  return {
+    name: story.name,
+    ...(story.start?.actions?.length ? { start: describeStep(story.start, names) } : {}),
+    steps: story.steps.map((step) => describeStep(step, names))
+  }
 }
 
 // One-based, as the editor numbers the steps.
@@ -106,6 +110,26 @@ function numberOf(reader: Reader, key: string, last: number, empty: string): num
     reader.fail(last === 0 ? empty : `"${key}" must be a whole number from 1 to ${last}`)
   }
   return n
+}
+
+// A step number where 0 is the start state, which every story has, empty until it gets actions.
+function stepNumberOrStart(reader: Reader, story: Story): number {
+  const n = reader.number('step')
+  if (!Number.isInteger(n) || n < 0 || n > story.steps.length) {
+    reader.fail(`"step" must be a whole number from 0 (the start state) to ${story.steps.length}`)
+  }
+  return n
+}
+
+const stepAt = (story: Story, n: number): StoryStep =>
+  n === 0 ? (story.start ?? {}) : story.steps[n - 1]
+
+// The story with step `n` replaced; step 0 is the start state, which is left out when it has no actions.
+function withStepAt(story: Story, n: number, step: StoryStep): Story {
+  if (n > 0) return { ...story, steps: story.steps.map((s, i) => (i === n - 1 ? step : s)) }
+  const rest = { ...story }
+  delete rest.start
+  return step.actions?.length ? { ...rest, start: step } : rest
 }
 
 function replace(model: Model, story: Story): void {
@@ -170,15 +194,10 @@ function removeStoryStep(model: Model, reader: Reader): OperationResult {
   return { op: 'remove_story_step', story: describe(model, changed) }
 }
 
-// Adds an action to a step: at the end, or at `at` (one-based) among its actions.
+// Adds an action to a step: at the end, or at `at` (one-based) among its actions. Step 0 is the start state.
 function addStoryAction(model: Model, reader: Reader): OperationResult {
   const story = storyNamed(model, reader)
-  const n = numberOf(
-    reader,
-    'step',
-    story.steps.length,
-    `"${story.name}" has no steps yet (add one with add_story_step)`
-  )
+  const n = stepNumberOrStart(reader, story)
   const action = actionFrom(
     model,
     reader,
@@ -186,32 +205,25 @@ function addStoryAction(model: Model, reader: Reader): OperationResult {
     reader.has('set') ? reader.raw('set') : undefined,
     reader.has('all') ? reader.raw('all') : undefined
   )
-  const inStep = story.steps[n - 1].actions?.length ?? 0
+  const inStep = stepAt(story, n).actions?.length ?? 0
   const at = reader.has('at') ? numberOf(reader, 'at', inStep + 1, '') - 1 : undefined
-  const steps = story.steps.map((s, i) => (i === n - 1 ? withAction(s, action, at) : s))
-  const changed = { ...story, steps }
+  const changed = withStepAt(story, n, withAction(stepAt(story, n), action, at))
   replace(model, changed)
   return { op: 'add_story_action', story: describe(model, changed) }
 }
 
-// Takes one action out of a step, by its number among the step's actions (one-based).
+// Takes one action out of a step, by its number among the step's actions (one-based). Step 0 is the start state.
 function removeStoryAction(model: Model, reader: Reader): OperationResult {
   const story = storyNamed(model, reader)
-  const n = numberOf(
-    reader,
-    'step',
-    story.steps.length,
-    `"${story.name}" has no steps yet (add one with add_story_step)`
-  )
-  const inStep = story.steps[n - 1].actions?.length ?? 0
+  const n = stepNumberOrStart(reader, story)
+  const inStep = stepAt(story, n).actions?.length ?? 0
   const number = numberOf(
     reader,
     'number',
     inStep,
-    `step ${n} of "${story.name}" has no actions yet (add one with add_story_action)`
+    `${n === 0 ? 'the start state' : `step ${n}`} of "${story.name}" has no actions yet (add one with add_story_action)`
   )
-  const steps = story.steps.map((s, i) => (i === n - 1 ? withoutAction(s, number - 1) : s))
-  const changed = { ...story, steps }
+  const changed = withStepAt(story, n, withoutAction(stepAt(story, n), number - 1))
   replace(model, changed)
   return { op: 'remove_story_action', story: describe(model, changed) }
 }

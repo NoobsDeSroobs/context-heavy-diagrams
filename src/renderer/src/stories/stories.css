@@ -154,7 +154,6 @@
   white-space: nowrap;
 }
 
-
 .stories-step-count {
   flex: 0 0 auto;
   font-size: 11px;
@@ -221,14 +220,21 @@
 .app-shell.is-presenting .diagram-dock,
 .app-shell.is-presenting .utility-dock,
 .app-shell.is-presenting .react-flow__controls,
-.app-shell.is-presenting .react-flow__minimap {
+.app-shell.is-presenting .react-flow__minimap,
+.app-shell.is-presenting .minimap-toggle-panel {
   display: none;
 }
 
+/* React Flow and the nodes set pointer-events inline, and a line or an edge label on a child, so only
+   !important on the element and everything in it makes the diagram click-through: a drag then pans
+   the canvas, and nothing is picked, opened or hovered. */
 .app-shell.is-presenting .react-flow__node,
+.app-shell.is-presenting .react-flow__node *,
 .app-shell.is-presenting .react-flow__edge,
+.app-shell.is-presenting .react-flow__edge *,
+.app-shell.is-presenting .react-flow__edgelabel-renderer *,
 .app-shell.is-presenting .react-flow__handle {
-  pointer-events: none;
+  pointer-events: none !important;
 }
 
 /* the fade between steps (ADR 0195); the time is STORY_FADE_MS in useStoryFade.ts. An edge's label is
@@ -276,13 +282,36 @@
   color: var(--ev-c-text-1);
   font-size: 13px;
   box-shadow: 0 2px 10px rgb(0 0 0 / 25%);
-  opacity: 0.35;
-  transition: opacity 0.15s;
+  /* out of sight until the mouse moves (usePresenterActivity) */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
 }
 
-.presenter-bar:hover,
+.presenter-bar.is-awake,
 .presenter-bar:focus-within {
   opacity: 1;
+  pointer-events: auto;
+}
+
+/* the step count, always there but easy to overlook, in the corner the minimap button leaves free */
+.presenter-count {
+  position: absolute;
+  right: 14px;
+  bottom: 10px;
+  z-index: 20;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ev-c-text-1);
+  opacity: 0.4;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* the pointer goes with the bar when it has been still */
+.app-shell.is-presenting.is-idle,
+.app-shell.is-presenting.is-idle * {
+  cursor: none;
 }
 
 .presenter-bar button {
@@ -306,10 +335,4 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-weight: 600;
-}
-
-.presenter-bar-count {
-  min-width: 56px;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
 }

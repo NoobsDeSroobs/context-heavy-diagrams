@@ -57,7 +57,7 @@ export interface DiagramDescription {
   // The visibility sets of the diagram and how many elements are in each (ADR 0194).
   visibilitySets?: { name: string; elements: number }[]
   // Each story with its steps in words, by the names of the sets (ADR 0195).
-  stories?: { name: string; steps: string[] }[]
+  stories?: { name: string; start?: string; steps: string[] }[]
 }
 
 function tagsOf(
@@ -125,6 +125,9 @@ export function describeDiagram(
       ? {
           stories: diagram.stories.map((story) => ({
             name: story.name,
+            ...(story.start?.actions?.length
+              ? { start: describeStep(story.start, setNameById) }
+              : {}),
             steps: story.steps.map((step) => describeStep(step, setNameById))
           }))
         }

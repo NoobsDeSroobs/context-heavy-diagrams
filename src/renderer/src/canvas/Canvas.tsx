@@ -176,11 +176,12 @@ import { useLegendLinePick } from '../legend/useLegendLinePick'
 import { useLegend } from '../legend/useLegend'
 import { useHighlights } from '../tagging/useHighlights'
 import { visibleFilter, strayAdvisory } from '@shared/visibility/visibility'
-import { withVisibility, setIdsOf } from '../visibility/hiding'
+import { lockedForPresenting, withVisibility, setIdsOf } from '../visibility/hiding'
 import { useVisibilitySets } from '../visibility/useVisibilitySets'
 import VisibilitySetsPanel from '../visibility/VisibilitySetsPanel'
 import { useStories } from '../stories/useStories'
 import { useStoryFade } from '../stories/useStoryFade'
+import { usePresenterActivity } from '../stories/usePresenterActivity'
 import { storyStrayAdvisory } from '@shared/visibility/story'
 import StoriesPanel from '../stories/StoriesPanel'
 import PresenterBar from '../stories/PresenterBar'
@@ -594,6 +595,8 @@ function CanvasInner(): React.JSX.Element {
   const storiesPresenting = storiesUi.presenting
   // The presenter fades what appears and disappears between steps (ADR 0195).
   const storyFade = useStoryFade(storiesPresenting, nodes, edges, visibilitySets, hiddenSetIds)
+  // The presenter's bar shows when the mouse moves and goes when it is still (ADR 0195).
+  const presenterAwake = usePresenterActivity(storiesPresenting)
   const handlePresenterKey = storiesUi.handlePresenterKey
   const resetStories = storiesUi.reset
   // The floating sets panel is put away before the presentation starts.
@@ -3414,14 +3417,14 @@ function CanvasInner(): React.JSX.Element {
   // `hidden` (ADR 0194). All of them are sent to React Flow, since a child needs its container in the
   // list; it does not draw the hidden ones. The state keeps them, in place, so an edge still follows
   // an element that is hidden.
-  const nodesWithVisibility = useMemo(
-    () => withVisibility(nodes, isVisibleElement, storyFade),
-    [nodes, isVisibleElement, storyFade]
-  )
-  const edgesWithVisibility = useMemo(
-    () => withVisibility(orderedEdges, isVisibleElement, storyFade),
-    [orderedEdges, isVisibleElement, storyFade]
-  )
+  const nodesWithVisibility = useMemo(() => {
+    const visible = withVisibility(nodes, isVisibleElement, storyFade)
+    return storiesPresenting ? lockedForPresenting(visible) : visible
+  }, [nodes, isVisibleElement, storyFade, storiesPresenting])
+  const edgesWithVisibility = useMemo(() => {
+    const visible = withVisibility(orderedEdges, isVisibleElement, storyFade)
+    return storiesPresenting ? lockedForPresenting(visible) : visible
+  }, [orderedEdges, isVisibleElement, storyFade, storiesPresenting])
 
   // An edge has no zIndex of its own (ADR 0035 scoped that to Entity/Container/Text): it sits at
   // the midpoint of its endpoints' current stacking, computed here next to orderedEdges and never
@@ -3839,7 +3842,11 @@ function CanvasInner(): React.JSX.Element {
       {/* Outer app shell: [canvas view [diagram dock]] [utility dock], nested
           not flat — see ADR 0013. */}
       <IconPackOffer />
-      <div className={`app-shell${storiesPresenting ? ' is-presenting' : ''}`}>
+      <div
+        className={`app-shell${storiesPresenting ? ' is-presenting' : ''}${
+          storiesPresenting && !presenterAwake ? ' is-idle' : ''
+        }`}
+      >
         <div className={`canvas-view${edgeAnimationOn ? '' : ' edges-still'}`}>
           <div className="toolbar">
             <MenuBar menus={menus} />
@@ -4036,6 +4043,8 @@ function CanvasInner(): React.JSX.Element {
                   nodesDraggable={!storiesPresenting}
                   nodesConnectable={!storiesPresenting}
                   elementsSelectable={!storiesPresenting}
+                  nodesFocusable={!storiesPresenting}
+                  edgesFocusable={!storiesPresenting}
                   // A little smaller than React Flow's own default (10) — and
                   // kept equal to main.css's `.react-flow__edgeupdater` `r`
                   // value, so the visible dot on a selected edge
@@ -4409,6 +4418,7 @@ function CanvasInner(): React.JSX.Element {
               name={storiesUi.story.name}
               step={storiesUi.presentStep}
               steps={storiesUi.story.steps.length}
+              awake={presenterAwake}
               onPrevious={storiesUi.previous}
               onNext={storiesUi.next}
               onLeave={storiesUi.leave}

@@ -27,8 +27,8 @@ export interface StoriesState {
   duplicateStep: () => void
   deleteStep: () => void
   moveStep: (from: number, to: number) => void
-  // The actions of step `index` (1 is the first); an action is told apart by its place (0-based). A new
-  // action is a Show of the first set the step does not name yet.
+  // The actions of step `index` (1 is the first, 0 the start state); an action is told apart by its place
+  // (0-based). A new action is a Show of the first set the step does not name yet.
   addAction: (index: number) => void
   changeAction: (index: number, at: number, change: Partial<StoryAction>) => void
   removeAction: (index: number, at: number) => void
@@ -227,7 +227,15 @@ export function useStories(
   // Changes one step of the story picked and keeps the editor on it.
   const editStep = useCallback(
     (index: number, change: (step: Story['steps'][number]) => Story['steps'][number]) => {
-      if (!story || index < 1 || index > story.steps.length) return
+      if (!story || index < 0 || index > story.steps.length) return
+      if (index === 0) {
+        // The start state: kept in the story only while it has actions.
+        const start = change(story.start ?? {})
+        const rest = { ...story }
+        delete rest.start
+        edit(start.actions?.length ? { ...rest, start } : rest, 0)
+        return
+      }
       const steps = story.steps.map((s, i) => (i === index - 1 ? change(s) : s))
       edit({ ...story, steps }, index)
     },

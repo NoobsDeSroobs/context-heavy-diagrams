@@ -17,6 +17,9 @@ export interface Story {
   id: string
   // Free text, shown to the person.
   name: string
+  // The start state: actions that run first, on top of every set hidden, when the story begins. Left
+  // out when it has none.
+  start?: StoryStep
   steps: StoryStep[]
 }
 

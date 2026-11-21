@@ -244,3 +244,18 @@ test('"All sets" is described in words and is never a stray id', () => {
     []
   )
 })
+
+test('the start state runs its actions on top of every set hidden, before step 1', () => {
+  const framed = {
+    id: 's4',
+    name: 'Framed',
+    start: { actions: [show('other')] },
+    steps: [{ actions: [show('today')] }]
+  }
+  assert.deepEqual(sorted(hiddenAtStep(framed, catalogue, 0)), ['links', 'proposed', 'today'])
+  assert.deepEqual(sorted(hiddenAtStep(framed, catalogue, 1)), ['links', 'proposed'])
+  // its sets are the story's sets, so a deleted one is advised about
+  assert.deepEqual(sorted(storySetIds(framed)), ['other', 'today'])
+  const everything = { id: 's5', name: 'All', start: { actions: [show(ALL_SETS)] }, steps: [] }
+  assert.deepEqual([...hiddenAtStep(everything, catalogue, 0)], [])
+})

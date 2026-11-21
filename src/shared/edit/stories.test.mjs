@@ -157,7 +157,7 @@ test('a duplicate name, an unknown story, set or action, and a bad number are re
   refused(
     made,
     { op: 'add_story_action', story: 'S', step: 2, action: 'show', set: 'Today' },
-    /from 1 to 1/
+    /from 0 .the start state. to 1/
   )
   refused(made, { op: 'remove_story_action', story: 'S', step: 1, number: 1 }, /no actions yet/)
   refused(
@@ -246,5 +246,55 @@ test('an action can be about all sets with all: true, and the file stays valid',
       set: 'Today'
     },
     /either "set" or "all"/
+  )
+})
+
+test('step 0 is the start state: actions are added and removed there, and the file stays valid', () => {
+  const { diagram, results } = run(
+    base(),
+    { op: 'add_story', name: 'Frame first' },
+    { op: 'add_story_action', story: 'Frame first', step: 0, action: 'show', set: 'Today' },
+    { op: 'add_story_step', story: 'Frame first', actions: [{ action: 'show', set: 'Proposed' }] }
+  )
+  const [today] = diagram.visibilitySets.map((s) => s.id)
+  assert.deepEqual(diagram.stories[0].start, { actions: [{ action: 'show', set: today }] })
+  assert.deepEqual(results[2].story, {
+    name: 'Frame first',
+    start: 'Show Today',
+    steps: ['Show Proposed']
+  })
+  assert.deepEqual(describeDiagram(diagram).stories[0], {
+    name: 'Frame first',
+    start: 'Show Today',
+    steps: ['Show Proposed']
+  })
+  assert.deepEqual(check(diagram).errors, [])
+  // the last action takes the field with it, so no empty start is left
+  const emptied = run(diagram, {
+    op: 'remove_story_action',
+    story: 'Frame first',
+    step: 0,
+    number: 1
+  }).diagram
+  assert.equal('start' in emptied.stories[0], false)
+  refused(
+    emptied,
+    { op: 'remove_story_action', story: 'Frame first', step: 0, number: 1 },
+    /the start state of "Frame first" has no actions yet/
+  )
+  refused(diagram, { op: 'remove_story_step', story: 'Frame first', step: 0 }, /from 1 to 1/)
+})
+
+test('the validator checks the start state like a step', () => {
+  const { diagram } = run(base(), { op: 'add_story', name: 'S' })
+  diagram.stories[0].start = { actions: [{ action: 'show' }, { action: 'grow', set: 'x' }] }
+  const result = check(diagram, true)
+  assert.ok(
+    result.errors.some((e) => /start state action 1/.test(e)),
+    result.errors.join('\n')
+  )
+  assert.ok(
+    result.warnings.some((w) => /start state action 2/.test(w)),
+    result.warnings.join('\n')
   )
 })

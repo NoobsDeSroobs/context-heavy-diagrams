@@ -107,12 +107,12 @@ export function diffCollections(base: DiagramFile, next: DiagramFile): Collectio
       (v) => v.id,
       (v) => v.name
     ),
-    // A story is its name and its steps, so editing a step shows as the story removed and added.
+    // A story is its name, its start state and its steps, so editing a step shows as the story removed and added.
     diffEntries(
       'Stories',
       base.stories,
       next.stories,
-      (s) => `${s.id}=${JSON.stringify(s.steps)}`,
+      (s) => `${s.id}=${JSON.stringify([s.start, s.steps])}`,
       (s) => s.name
     ),
     diffEntries(

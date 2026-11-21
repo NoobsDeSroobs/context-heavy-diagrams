@@ -471,6 +471,7 @@ This is diagram-level data, not an app preference — reproducing the diagram fo
 |---|---|---|---|
 | `id` | string | yes | Opaque and unique among the stories (this app writes `story-` and six characters). Never shown to the person: the `name` is. |
 | `name` | string | yes | Shown to the person. Free text. Unique in the file ignoring case: this app refuses a duplicate, but the file does not enforce it. |
+| `start` | Step | no | The start state: actions that run first, on top of every set hidden, when the story begins (step 0). Left out when it has no actions. |
 | `steps` | array of Step | yes | In the order they are told. May be empty. |
 
 A step:
@@ -488,7 +489,7 @@ An action:
 
 A later version may add actions, with fields of their own. A reader ignores an action it does not know, and a tool that rewrites the file keeps its fields as they were. This app writes `action` and `set` first and any other fields in alphabetical order.
 
-**The state at a step.** Step 0 is the state before the first step: every set in the catalogue is hidden, so only the elements in no set are visible. Step *n* is step *n* − 1 with the *n*th step applied: its actions run in order, a `hide` hides the set and a `show` shows it, so the last action on a set wins. The state depends only on the step number, so going back or jumping to a step is the same replay from step 0. Which elements that makes visible is the [rule of visibility sets](#visibility-sets). An id that is not in the `visibilitySets` catalogue is ignored.
+**The state at a step.** Step 0 is the start state, before the first step: every set in the catalogue is hidden and then the actions of `start` run, so only the elements in no set and in the sets `start` shows are visible. Step *n* is step *n* − 1 with the *n*th step applied: its actions run in order, a `hide` hides the set and a `show` shows it, so the last action on a set wins. The state depends only on the step number, so going back or jumping to a step is the same replay from step 0. Which elements that makes visible is the [rule of visibility sets](#visibility-sets). An id that is not in the `visibilitySets` catalogue is ignored.
 
 **Which step is shown is not stored.** The presenter view starts at step 0 and the step is session state. A reader that does not know the field ignores it. The order of the stories and of the steps is kept.
 

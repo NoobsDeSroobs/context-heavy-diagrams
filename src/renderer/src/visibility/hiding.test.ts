@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Edge, Node } from '@xyflow/react'
 import { visibleFilter } from '@shared/visibility/visibility'
-import { fadeBetween, withVisibility } from './hiding'
+import { fadeBetween, lockedForPresenting, withVisibility } from './hiding'
 
 const catalogue = [
   { id: 'today', name: 'Today' },
@@ -100,5 +100,27 @@ describe('the fade of the presenter (ADR 0195)', () => {
     expect([...(fade?.leaving ?? [])]).toEqual(['c'])
     const same = visibleFilter(catalogue, new Set(['today']))
     expect(fadeBetween(elements, same, same)).toBeNull()
+  })
+})
+
+describe('lockedForPresenting', () => {
+  it('takes away what a node or an edge could be picked up, selected, deleted or connected by', () => {
+    const nodes = lockedForPresenting([{ ...node('a'), draggable: true, selected: true }])
+    expect(nodes[0]).toMatchObject({
+      selected: false,
+      draggable: false,
+      selectable: false,
+      deletable: false,
+      focusable: false,
+      connectable: false
+    })
+    const edges = lockedForPresenting([{ ...edge('e'), selected: true }])
+    expect(edges[0]).toMatchObject({
+      selected: false,
+      selectable: false,
+      deletable: false,
+      focusable: false,
+      reconnectable: false
+    })
   })
 })

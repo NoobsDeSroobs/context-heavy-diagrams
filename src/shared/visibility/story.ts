@@ -25,7 +25,7 @@ const actionsOf = (step: StoryStep): StoryAction[] => step.actions ?? []
 // The sets a story shows or hides in any step, each once. "All sets" is not one of them.
 export function storySetIds(story: Story): Set<string> {
   const ids = new Set<string>()
-  for (const step of story.steps) {
+  for (const step of story.start ? [story.start, ...story.steps] : story.steps) {
     for (const action of actionsOf(step)) {
       if (isKnownAction(action) && action.set !== ALL_SETS) ids.add(action.set as string)
     }
@@ -52,8 +52,9 @@ export function applyStep(
   return next
 }
 
-// The sets hidden at a step. Step 0 is before the first step: every set is hidden, so only the
-// elements in no set are visible. Step n is step n-1 with the nth step applied, so going back or
+// The sets hidden at a step. Step 0 is the start state, before the first step: every set is hidden and
+// then the story's start actions run, so only the elements in no set and in the sets they show are
+// visible. Step n is step n-1 with the nth step applied, so going back or
 // jumping is the same replay from step 0. A step beyond the ends is clamped to them. Ids that are not
 // in the catalogue are left out, like everywhere else (ADR 0194).
 export function hiddenAtStep(
@@ -62,7 +63,7 @@ export function hiddenAtStep(
   step: number
 ): Set<string> {
   const known = new Set(catalogue.map((s) => s.id))
-  let hidden = new Set(known)
+  let hidden = story.start ? applyStep(known, story.start, known) : new Set(known)
   const upTo = Math.max(0, Math.min(Math.trunc(step) || 0, story.steps.length))
   for (let i = 0; i < upTo; i += 1) hidden = applyStep(hidden, story.steps[i], known)
   for (const id of hidden) if (!known.has(id)) hidden.delete(id)

@@ -62,3 +62,21 @@ test('an action a later version wrote keeps its own fields, in a fixed order', (
   })
   assert.equal(serializeDiagram(parseDiagram(text)), text)
 })
+
+test('the start state is written before the steps, and left out when it has no actions', () => {
+  const stories = [
+    {
+      id: 's',
+      name: 'Framed',
+      start: { actions: [show('vis-1'), show('vis-2')] },
+      steps: [{ actions: [show('vis-3')] }]
+    },
+    { id: 't', name: 'Plain', start: { actions: [] }, steps: [] }
+  ]
+  const text = serializeDiagram(file({ stories }))
+  const back = parseDiagram(text)
+  assert.deepEqual(back.stories[0].start, stories[0].start)
+  assert.equal('start' in back.stories[1], false)
+  assert.ok(text.indexOf('"start"') < text.indexOf('"steps"'))
+  assert.equal(serializeDiagram(parseDiagram(text)), text)
+})

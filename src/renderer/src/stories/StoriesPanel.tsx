@@ -233,8 +233,10 @@ export default function StoriesPanel({
   const names = new Map(sets.map((s) => [s.id, s.name]))
   const count = story?.steps.length ?? 0
   const clamped = Math.min(step, count)
-  const current = clamped >= 1 ? story?.steps[clamped - 1] : undefined
+  // The step picked: the start state (0) or a numbered one; both are a list of actions.
+  const current = clamped >= 1 ? story?.steps[clamped - 1] : story?.start
   const actions = current?.actions ?? []
+  const startActions = story?.start?.actions ?? []
   const stepOrder = useReorder((from, to) => onMoveStep(from + 1, to + 1))
   const actionOrder = useReorder((from, to) => onMoveAction(clamped, from, to))
 
@@ -295,8 +297,9 @@ export default function StoriesPanel({
       <div className="stories-panel-body">
         <p className="stories-panel-hint">
           A story shows a diagram one step at a time. A step has actions, such as show a set or hide
-          one, run in order on top of what the steps before it did. Before the first step, all sets
-          are hidden. Only while this panel is open does the canvas show the step picked.
+          one, run in order on top of what the steps before it did. The start state runs first, on
+          top of every set hidden. Only while this panel is open does the canvas show the step
+          picked.
         </p>
         {unassigned > 0 && (
           <p className="stories-panel-hint" role="note">
@@ -378,7 +381,15 @@ export default function StoriesPanel({
           <>
             <div className="stories-heading">Steps</div>
             <ol className="stories-steps" aria-label="Steps">
-              <li>{renderStepButton(0, '▸', 'Start: all sets hidden')}</li>
+              <li>
+                {renderStepButton(
+                  0,
+                  '▸',
+                  startActions.length > 0
+                    ? `Start state: ${describeStep(story.start ?? {}, names)}`
+                    : 'Start state: all sets hidden'
+                )}
+              </li>
               {story.steps.map((s, i) => (
                 <li
                   key={i}
@@ -431,11 +442,23 @@ export default function StoriesPanel({
               </button>
             </div>
 
-            {current && (
+            {(current || clamped === 0) && (
               <>
-                <div className="stories-heading">Step {clamped}: actions</div>
+                <div className="stories-heading">
+                  {clamped === 0 ? 'Start state: actions' : `Step ${clamped}: actions`}
+                </div>
+                {clamped === 0 && (
+                  <p className="stories-panel-hint">
+                    Run when the presenter opens, before step 1, on top of every set hidden.
+                  </p>
+                )}
                 {actions.length === 0 && <p className="stories-panel-hint">No actions yet.</p>}
-                <ul className="stories-actions" aria-label={`Actions of step ${clamped}`}>
+                <ul
+                  className="stories-actions"
+                  aria-label={
+                    clamped === 0 ? 'Actions of the start state' : `Actions of step ${clamped}`
+                  }
+                >
                   {actions.map((action, i) => (
                     <li key={i} className="stories-action" {...actionOrder.target(i)}>
                       <ActionRow

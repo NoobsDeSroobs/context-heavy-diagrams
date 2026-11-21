@@ -238,6 +238,10 @@ export function serializeDiagram(diagram: DiagramFile): string {
         ? diagram.stories.map((s) => ({
             id: s.id,
             name: s.name,
+            start:
+              s.start?.actions && s.start.actions.length > 0
+                ? { actions: s.start.actions.map(orderedAction) }
+                : undefined,
             steps: s.steps.map((step) => ({
               actions:
                 step.actions && step.actions.length > 0

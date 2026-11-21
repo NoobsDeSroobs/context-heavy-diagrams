@@ -52,15 +52,15 @@
     {
       "id": "story-syst02",
       "name": "Systems only",
+      "start": {
+        "actions": [
+          {
+            "action": "show",
+            "set": "vis-t0d4y1"
+          }
+        ]
+      },
       "steps": [
-        {
-          "actions": [
-            {
-              "action": "show",
-              "set": "vis-t0d4y1"
-            }
-          ]
-        },
         {
           "actions": [
             {

@@ -58,6 +58,21 @@ export function withVisibility<T extends Node | Edge>(
   return changed ? next : elements
 }
 
+// The elements as the presenter shows them (ADR 0195): nothing can be picked up, selected, deleted,
+// connected or focused. The global switches of React Flow are not enough, since a node's own
+// `draggable` (set for every node, from its lock) wins over them.
+export function lockedForPresenting<T extends Node | Edge>(elements: T[]): T[] {
+  return elements.map((element) => ({
+    ...element,
+    selected: false,
+    draggable: false,
+    selectable: false,
+    deletable: false,
+    focusable: false,
+    ...('source' in element ? { reconnectable: false } : { connectable: false })
+  }))
+}
+
 // What changes between two choices of hidden sets, for the fade: the elements that were visible and
 // are not, and the ones that were not and are. The rule is the caller's (visibleFilter for each).
 export function fadeBetween(

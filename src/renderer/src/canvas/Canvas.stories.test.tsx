@@ -83,18 +83,18 @@ describe('stories on the canvas (ADR 0195)', () => {
     fireEvent.click(await screen.findByRole('button', { name: /Present/ }))
     await waitFor(() => expect(screen.queryByText('Alpha')).toBeNull())
     expect(container.querySelector('.app-shell')?.classList.contains('is-presenting')).toBe(true)
-    expect(screen.getByRole('toolbar', { name: 'Presenter' }).textContent).toContain('0 / 2')
+    expect(screen.getByRole('status', { name: 'Step 0 of 2' }).textContent).toBe('0/2')
 
     fireEvent.keyDown(window, { key: 'ArrowRight' })
     await screen.findByText('Alpha')
-    expect(screen.getByRole('toolbar', { name: 'Presenter' }).textContent).toContain('1 / 2')
+    expect(screen.getByRole('status', { name: 'Step 1 of 2' }).textContent).toBe('1/2')
     fireEvent.keyDown(window, { key: ' ' })
     await screen.findByText('Beta')
     // what is hidden fades out first, so it goes a moment later
     await waitFor(() => expect(screen.queryByText('Alpha')).toBeNull())
     // past the end stays on the last step, and back is a replay
     fireEvent.keyDown(window, { key: 'ArrowRight' })
-    expect(screen.getByRole('toolbar', { name: 'Presenter' }).textContent).toContain('2 / 2')
+    expect(screen.getByRole('status', { name: 'Step 2 of 2' }).textContent).toBe('2/2')
     fireEvent.keyDown(window, { key: 'ArrowLeft' })
     await screen.findByText('Alpha')
     await waitFor(() => expect(screen.queryByText('Beta')).toBeNull())
@@ -172,11 +172,82 @@ describe('stories on the canvas (ADR 0195)', () => {
     expect(sets.selectedOptions[0].textContent).toBe('All sets')
   })
 
+  it('locks the diagram while presenting: nothing is picked up, selected or deleted', async () => {
+    renderCanvas(diagram())
+    await screen.findByText('Alpha')
+    openPanel()
+    fireEvent.click(await screen.findByRole('button', { name: /Present/ }))
+    await waitFor(() => expect(screen.queryByText('Alpha')).toBeNull())
+    const base = screen.getByText('Base').closest('.react-flow__node') as HTMLElement
+    // a node's own draggable would win over the global switch, so it is turned off on each node
+    expect(base.classList.contains('draggable')).toBe(false)
+    expect(base.classList.contains('selectable')).toBe(false)
+    fireEvent.mouseDown(base)
+    fireEvent.click(base)
+    fireEvent.keyDown(base, { key: 'Delete' })
+    fireEvent.keyDown(window, { key: 'Delete' })
+    expect(base.classList.contains('selected')).toBe(false)
+    expect(screen.getByText('Base')).toBeTruthy()
+  })
+
+  it('shows the presenter bar only after the mouse moves, and always the step count', async () => {
+    renderCanvas(diagram())
+    await screen.findByText('Alpha')
+    openPanel()
+    fireEvent.click(await screen.findByRole('button', { name: /Present/ }))
+    const bar = await screen.findByRole('toolbar', { name: 'Presenter' })
+    expect(bar.classList.contains('is-awake')).toBe(false)
+    expect(screen.getByRole('status', { name: 'Step 0 of 2' })).toBeTruthy()
+    // stepping with the keys does not bring the bar up
+    fireEvent.keyDown(window, { key: 'ArrowRight' })
+    expect(bar.classList.contains('is-awake')).toBe(false)
+    expect(screen.getByRole('status', { name: 'Step 1 of 2' })).toBeTruthy()
+    fireEvent.mouseMove(window)
+    await waitFor(() => expect(bar.classList.contains('is-awake')).toBe(true))
+  })
+
+  it('runs the start state when the presenter opens, on top of every set hidden', async () => {
+    const framed = diagram()
+    framed.stories![0].start = { actions: [{ action: 'show', set: 'proposed' }] }
+    renderCanvas(framed)
+    await screen.findByText('Alpha')
+    openPanel()
+    // the start row says what it does, and its actions are edited like a step's
+    const start = await screen.findByRole('button', { name: /Start state: Show Proposed/ })
+    fireEvent.click(start)
+    await screen.findByText('Beta')
+    expect(screen.queryByText('Alpha')).toBeNull()
+    expect(screen.getByRole('list', { name: 'Actions of the start state' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /Present/ }))
+    await screen.findByRole('toolbar', { name: 'Presenter' })
+    expect(screen.getByText('Beta')).toBeTruthy()
+    expect(screen.queryByText('Alpha')).toBeNull()
+    // the first step shows Today on top of that
+    fireEvent.keyDown(window, { key: 'ArrowRight' })
+    await screen.findByText('Alpha')
+    expect(screen.getByText('Beta')).toBeTruthy()
+  })
+
+  it('adds actions to the start state, and takes the field away with the last one', async () => {
+    const empty = diagram()
+    empty.stories![0].steps = []
+    renderCanvas(empty)
+    await screen.findByText('Alpha')
+    openPanel()
+    fireEvent.click(await screen.findByRole('button', { name: /Start state: all sets hidden/ }))
+    fireEvent.click(screen.getByRole('button', { name: '+ Add action' }))
+    await screen.findByRole('button', { name: /Start state: Show Today/ })
+    await screen.findByText('Alpha')
+    fireEvent.click(screen.getByRole('button', { name: 'Remove the action' }))
+    await screen.findByRole('button', { name: /Start state: all sets hidden/ })
+    await waitFor(() => expect(screen.queryByText('Alpha')).toBeNull())
+  })
+
   it('names the start row, and says how many elements are in no set', async () => {
     renderCanvas(diagram())
     await screen.findByText('Alpha')
     openPanel()
-    const start = await screen.findByRole('button', { name: /Start: all sets hidden/ })
+    const start = await screen.findByRole('button', { name: /Start state: all sets hidden/ })
     expect(start.getAttribute('title')).toBe('Nothing from the sets is shown')
     // Base is in no set, so it is shown at the start whatever the story does
     expect((await screen.findByRole('note')).textContent).toContain('1 element is in no set')
