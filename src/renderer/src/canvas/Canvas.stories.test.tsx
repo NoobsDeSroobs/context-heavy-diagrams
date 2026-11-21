@@ -182,7 +182,6 @@ describe('stories on the canvas (ADR 0195)', () => {
     // a node's own draggable would win over the global switch, so it is turned off on each node
     expect(base.classList.contains('draggable')).toBe(false)
     expect(base.classList.contains('selectable')).toBe(false)
-    fireEvent.mouseDown(base)
     fireEvent.click(base)
     fireEvent.keyDown(base, { key: 'Delete' })
     fireEvent.keyDown(window, { key: 'Delete' })
