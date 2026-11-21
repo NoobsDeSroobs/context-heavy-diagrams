@@ -427,7 +427,7 @@ An action is `{ "action": "show" | "hide", "set": <visibility set id> }`. A late
 
 - Step 0 is before the first step: every set the story shows or hides is hidden and every other set is shown. Step *n* is step *n* − 1 with the *n*th step applied: its actions run in order, so the last action on a set wins.
 - Which step is on screen is not stored.
-- With the `edit_diagram` operations, name a story and its sets by their names: `add_story {name}`, `rename_story {story, name}`, `remove_story {story}`, `add_story_step {story, at?, actions?: [{action, set}]}`, `remove_story_step {story, step}`, `add_story_action {story, step, action, set, at?}`, `remove_story_action {story, step, number}`. Steps and actions are numbered from 1.
+- With the `edit_diagram` operations, name a story and its sets by their names: `add_story {name}`, `rename_story {story, name}`, `remove_story {story}`, `add_story_step {story, at?, actions?: [{action, set}]}` (an action is about `all: true` instead of `set` for all sets), `remove_story_step {story, step}`, `add_story_action {story, step, action, set | all: true, at?}`, `remove_story_action {story, step, number}`. Steps and actions are numbered from 1.
 
 ## Security
 

@@ -56,6 +56,10 @@
         {
           "actions": [
             {
+              "action": "hide",
+              "set": "*"
+            },
+            {
               "action": "show",
               "set": "vis-t0d4y1"
             }

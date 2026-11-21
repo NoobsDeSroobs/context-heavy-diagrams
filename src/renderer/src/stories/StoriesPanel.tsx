@@ -1,6 +1,6 @@
 import { useState, type DragEvent } from 'react'
 import type { Story, StoryAction, VisibilitySet } from '@shared/diagram'
-import { describeStep, hiddenAtStep, STORY_ACTIONS } from '@shared/visibility/story'
+import { ALL_SETS, describeStep, hiddenAtStep, STORY_ACTIONS } from '@shared/visibility/story'
 
 interface StoriesPanelProps {
   stories: Story[]
@@ -149,7 +149,14 @@ function ActionRow({
             aria-label="Set"
             onChange={(event) => onChange({ set: event.target.value })}
           >
-            {!sets.some((s) => s.id === set) && <option value={set}>(deleted set)</option>}
+            {set !== ALL_SETS && !sets.some((s) => s.id === set) && (
+              <option value={set}>(deleted set)</option>
+            )}
+            {/* the meta choice, apart from the real sets so it cannot be taken for one */}
+            <option value={ALL_SETS} className="stories-option-meta">
+              All sets
+            </option>
+            <option disabled>──────────</option>
             {sets.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
@@ -286,7 +293,8 @@ export default function StoriesPanel({
         <p className="stories-panel-hint">
           A story shows a diagram one step at a time. A step has actions, such as show a set or hide
           one, run in order on top of what the steps before it did. Before the first step, the sets
-          the story names are hidden.
+          the story names are hidden. Only while this panel is open does the canvas show the step
+          picked; elements in no set are always shown.
         </p>
 
         {story && (
@@ -450,21 +458,22 @@ export default function StoriesPanel({
                 </div>
               </>
             )}
-
-            <div className="stories-row">
-              <button
-                type="button"
-                onClick={onFromSets}
-                disabled={sets.length === 0}
-                title="One step per set, in the order of the sets, each showing the next set"
-              >
-                Make steps from the sets
-              </button>
-            </div>
           </>
         )}
         {!story && <p className="stories-panel-hint">No story yet. Name one above to start.</p>}
       </div>
+      {story && (
+        <div className="stories-panel-footer">
+          <button
+            type="button"
+            onClick={onFromSets}
+            disabled={sets.length === 0}
+            title="One step per set, in the order of the sets, each showing the next set"
+          >
+            Make steps from the sets
+          </button>
+        </div>
+      )}
     </div>
   )
 }

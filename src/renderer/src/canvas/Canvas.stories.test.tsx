@@ -99,12 +99,86 @@ describe('stories on the canvas (ADR 0195)', () => {
     await screen.findByText('Alpha')
     await waitFor(() => expect(screen.queryByText('Beta')).toBeNull())
 
-    // leaving puts back what was hidden before: nothing
+    // leaving with the panel open leaves the editor on the step the presenter ended on (step 1)
     fireEvent.keyDown(window, { key: 'Escape' })
     await waitFor(() => expect(screen.queryByRole('toolbar', { name: 'Presenter' })).toBeNull())
+    await screen.findByText('Alpha')
+    expect(screen.queryByText('Beta')).toBeNull()
+    expect(container.querySelector('.app-shell')?.classList.contains('is-presenting')).toBe(false)
+    // and closing the panel puts back what was hidden before: nothing
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }))
     await screen.findByText('Beta')
     expect(screen.getByText('Alpha')).toBeTruthy()
-    expect(container.querySelector('.app-shell')?.classList.contains('is-presenting')).toBe(false)
+  })
+
+  it('previews a step only while the panel is open', async () => {
+    renderCanvas(diagram())
+    await screen.findByText('Alpha')
+    expect(screen.getByText('Beta')).toBeTruthy()
+    // opening the panel previews the step it is on (Start)
+    openPanel()
+    await waitFor(() => expect(screen.queryByText('Alpha')).toBeNull())
+    fireEvent.click(await screen.findByRole('button', { name: /^2s*Hide Today/ }))
+    await screen.findByText('Beta')
+    expect(screen.queryByText('Alpha')).toBeNull()
+    // closing it shows everything again
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+    await screen.findByText('Alpha')
+    expect(screen.getByText('Beta')).toBeTruthy()
+    expect(screen.getByText('Base')).toBeTruthy()
+    // opening it again previews the same step
+    openPanel()
+    await waitFor(() => expect(screen.queryByText('Alpha')).toBeNull())
+    expect(screen.getByText('Beta')).toBeTruthy()
+  })
+
+  it('offers All sets apart from the sets, and hides every set with it', async () => {
+    const blank = diagram()
+    blank.stories = [
+      {
+        id: 's1',
+        name: 'Blank start',
+        steps: [
+          {
+            actions: [
+              { action: 'hide', set: '*' },
+              { action: 'show', set: 'today' }
+            ]
+          }
+        ]
+      }
+    ]
+    renderCanvas(blank)
+    await screen.findByText('Alpha')
+    openPanel()
+    // the story names all sets, so before step 1 every set is hidden
+    await waitFor(() => expect(screen.queryByText('Alpha')).toBeNull())
+    expect(screen.queryByText('Beta')).toBeNull()
+    expect(screen.getByText('Base')).toBeTruthy()
+    // step 1: hide all sets, then show Today
+    fireEvent.click(await screen.findByRole('button', { name: /^1s*Hide All sets · Show Today/ }))
+    await screen.findByText('Alpha')
+    expect(screen.queryByText('Beta')).toBeNull()
+    // the meta choice comes first in the list of sets, in its own colour and above a line
+    const sets = screen.getAllByRole('combobox', { name: 'Set' })[0] as HTMLSelectElement
+    expect([...sets.options].map((o) => o.textContent)).toEqual([
+      'All sets',
+      '──────────',
+      'Today',
+      'Proposed'
+    ])
+    expect(sets.options[0].classList.contains('stories-option-meta')).toBe(true)
+    expect(sets.options[1].disabled).toBe(true)
+    expect(sets.selectedOptions[0].textContent).toBe('All sets')
+  })
+
+  it('keeps "Make steps from the sets" at the bottom of the panel, below the scrolling part', async () => {
+    renderCanvas(diagram())
+    await screen.findByText('Alpha')
+    openPanel()
+    const make = await screen.findByRole('button', { name: 'Make steps from the sets' })
+    expect(make.closest('.stories-panel-footer')).not.toBeNull()
+    expect(make.closest('.stories-panel-body')).toBeNull()
   })
 
   it('fades what appears and what disappears between steps, in the presenter only', async () => {

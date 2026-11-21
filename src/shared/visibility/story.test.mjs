@@ -2,10 +2,12 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
+  ALL_SETS,
   applyStep,
   describeAction,
   describeStep,
   hiddenAtStep,
+  namesAllSets,
   newStoryId,
   storyFromSets,
   storySetIds,
@@ -163,4 +165,47 @@ test('ids in actions that no set holds are listed once, and nothing else is', ()
   )
   assert.equal(lines.length, 1)
   assert.match(lines[0], /1 id/)
+})
+
+test('"All sets" in an action is every set of the catalogue, so a hide-all starts a story blank', () => {
+  const blank = {
+    id: 's2',
+    name: 'Blank',
+    steps: [{ actions: [hide(ALL_SETS), show('today')] }, { actions: [show(ALL_SETS)] }]
+  }
+  // it is not a set of its own, and a story that uses it names every set
+  assert.deepEqual([...storySetIds(blank)], ['today'])
+  assert.equal(namesAllSets(blank), true)
+  assert.equal(namesAllSets(story), false)
+  assert.deepEqual(sorted(hiddenAtStep(blank, catalogue, 0)), [
+    'links',
+    'other',
+    'proposed',
+    'today'
+  ])
+  assert.deepEqual(sorted(hiddenAtStep(blank, catalogue, 1)), ['links', 'other', 'proposed'])
+  assert.deepEqual([...hiddenAtStep(blank, catalogue, 2)], [])
+  // the last action wins, as with any set
+  assert.deepEqual(
+    sorted(applyStep(new Set(), { actions: [show('today'), hide(ALL_SETS)] }, ['today', 'links'])),
+    ['links', 'today']
+  )
+})
+
+test('a set added later is included by "All sets"', () => {
+  const blank = { id: 's2', name: 'Blank', steps: [{ actions: [hide(ALL_SETS), show('today')] }] }
+  const later = [...catalogue, { id: 'new', name: 'New' }]
+  assert.deepEqual(sorted(hiddenAtStep(blank, later, 1)), ['links', 'new', 'other', 'proposed'])
+})
+
+test('"All sets" is described in words and is never a stray id', () => {
+  const names = new Map(catalogue.map((s) => [s.id, s.name]))
+  assert.equal(describeAction(hide(ALL_SETS), names), 'Hide All sets')
+  assert.deepEqual(
+    storyStrayAdvisory(
+      [{ id: 's2', name: 'B', steps: [{ actions: [hide(ALL_SETS)] }] }],
+      catalogue
+    ),
+    []
+  )
 })

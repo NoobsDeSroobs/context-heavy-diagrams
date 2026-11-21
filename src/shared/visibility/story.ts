@@ -12,28 +12,47 @@ export const STORY_ACTIONS = [
 
 export type StoryActionId = (typeof STORY_ACTIONS)[number]['id']
 
+// The meta target "All sets": in place of a set id, an action is about every set the diagram has when
+// the step runs, so one added later is included. Set ids are generated, so this can never be one.
+// A reader that does not know it finds an id no set holds and ignores the action (ADR 0194).
+export const ALL_SETS = '*'
+
 export const isKnownAction = (action: StoryAction): boolean =>
   STORY_ACTIONS.some((a) => a.id === action.action) && typeof action.set === 'string'
 
 const actionsOf = (step: StoryStep): StoryAction[] => step.actions ?? []
 
-// The sets a story shows or hides in any step, each once. These are the sets the story controls.
+// The sets a story shows or hides in any step, each once. These are the sets the story controls;
+// "All sets" is not one of them, see `namesAllSets`.
 export function storySetIds(story: Story): Set<string> {
   const ids = new Set<string>()
   for (const step of story.steps) {
-    for (const action of actionsOf(step)) if (isKnownAction(action)) ids.add(action.set as string)
+    for (const action of actionsOf(step)) {
+      if (isKnownAction(action) && action.set !== ALL_SETS) ids.add(action.set as string)
+    }
   }
   return ids
 }
 
+// Whether any action of the story is about "All sets".
+export const namesAllSets = (story: Story): boolean =>
+  story.steps.some((step) => actionsOf(step).some((a) => isKnownAction(a) && a.set === ALL_SETS))
+
 // One step applied to the hidden sets, its actions in order: a hide adds the set, a show takes it
-// out. A new set; the argument is left alone.
-export function applyStep(hidden: ReadonlySet<string>, step: StoryStep): Set<string> {
+// out. "All sets" is every id in `all`. A new set; the argument is left alone.
+export function applyStep(
+  hidden: ReadonlySet<string>,
+  step: StoryStep,
+  all: Iterable<string> = []
+): Set<string> {
   const next = new Set(hidden)
   for (const action of actionsOf(step)) {
     if (!isKnownAction(action)) continue
-    if (action.action === 'hide') next.add(action.set as string)
-    else next.delete(action.set as string)
+    const ids = action.set === ALL_SETS ? all : [action.set as string]
+    for (const id of ids) {
+      if (action.action === 'hide') next.add(id)
+      else next.delete(id)
+    }
   }
   return next
 }
@@ -41,17 +60,20 @@ export function applyStep(hidden: ReadonlySet<string>, step: StoryStep): Set<str
 // The sets hidden at a step. Step 0 is before the first step: every set the story names is hidden
 // and every other set is shown, so only the elements in no set and in sets the story leaves alone
 // are visible. Step n is step n-1 with the nth step applied, so going back or jumping is the same
-// replay from step 0. A step beyond the ends is clamped to them. Ids that are not in the catalogue
-// are left out, like everywhere else (ADR 0194).
+// replay from step 0. A story with an "All sets" action names every set, so it starts with all of
+// them hidden. A step beyond the ends is clamped to them. Ids that are not in the catalogue are left
+// out, like everywhere else (ADR 0194).
 export function hiddenAtStep(
   story: Story,
   catalogue: readonly VisibilitySet[],
   step: number
 ): Set<string> {
   const known = new Set(catalogue.map((s) => s.id))
-  let hidden = new Set([...storySetIds(story)].filter((id) => known.has(id)))
+  let hidden = new Set(
+    namesAllSets(story) ? known : [...storySetIds(story)].filter((id) => known.has(id))
+  )
   const upTo = Math.max(0, Math.min(Math.trunc(step) || 0, story.steps.length))
-  for (let i = 0; i < upTo; i += 1) hidden = applyStep(hidden, story.steps[i])
+  for (let i = 0; i < upTo; i += 1) hidden = applyStep(hidden, story.steps[i], known)
   for (const id of hidden) if (!known.has(id)) hidden.delete(id)
   return hidden
 }
@@ -101,7 +123,7 @@ export function withActionMoved(step: StoryStep, from: number, to: number): Stor
 export function describeAction(action: StoryAction, names: ReadonlyMap<string, string>): string {
   const known = STORY_ACTIONS.find((a) => a.id === action.action)
   if (!known || typeof action.set !== 'string') return String(action.action)
-  return `${known.label} ${names.get(action.set) ?? '(deleted set)'}`
+  return `${known.label} ${action.set === ALL_SETS ? 'All sets' : (names.get(action.set) ?? '(deleted set)')}`
 }
 
 // The step in words: its actions one after the other, or "No actions".

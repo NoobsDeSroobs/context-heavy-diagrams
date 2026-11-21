@@ -208,3 +208,43 @@ test('the validator reports a malformed story, and warns about what it ignores',
   }
   assert.ok(check(twice).warnings.some((w) => /two stories are named/.test(w)))
 })
+
+test('an action can be about all sets with all: true, and the file stays valid', () => {
+  const { diagram } = run(
+    base(),
+    { op: 'add_story', name: 'Blank start' },
+    {
+      op: 'add_story_step',
+      story: 'Blank start',
+      actions: [
+        { action: 'hide', all: true },
+        { action: 'show', set: 'Today' }
+      ]
+    },
+    { op: 'add_story_step', story: 'Blank start' },
+    { op: 'add_story_action', story: 'Blank start', step: 2, action: 'show', all: true }
+  )
+  assert.deepEqual(
+    diagram.stories[0].steps.map((s) => s.actions.map((a) => a.set)),
+    [['*', diagram.visibilitySets[0].id], ['*']]
+  )
+  assert.deepEqual(describeDiagram(diagram).stories[0].steps, [
+    'Hide All sets · Show Today',
+    'Show All sets'
+  ])
+  const result = check(diagram)
+  assert.deepEqual(result.errors, [])
+  assert.deepEqual(result.warnings, [])
+  refused(
+    diagram,
+    {
+      op: 'add_story_action',
+      story: 'Blank start',
+      step: 1,
+      action: 'show',
+      all: true,
+      set: 'Today'
+    },
+    /either "set" or "all"/
+  )
+})

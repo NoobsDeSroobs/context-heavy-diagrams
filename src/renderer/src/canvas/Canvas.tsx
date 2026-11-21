@@ -447,26 +447,6 @@ function CanvasInner(): React.JSX.Element {
     setHiddenSetIds
   )
   const setVisibilitySetsPanelOpen = visibilitySetsUi.setPanelOpen
-  // Stories drive which sets are hidden (ADR 0195).
-  const storiesUi = useStories(
-    canvasApi,
-    stories,
-    setStories,
-    visibilitySets,
-    hiddenSetIds,
-    visibilitySetsUi.setHidden
-  )
-  const storiesPresenting = storiesUi.presenting
-  // The presenter fades what appears and disappears between steps (ADR 0195).
-  const storyFade = useStoryFade(storiesPresenting, nodes, edges, visibilitySets, hiddenSetIds)
-  const handlePresenterKey = storiesUi.handlePresenterKey
-  const resetStories = storiesUi.reset
-  // The floating sets panel is put away before the presentation starts.
-  const presentStoryFrom = storiesUi.present
-  const presentStory = useCallback(() => {
-    setVisibilitySetsPanelOpen(false)
-    presentStoryFrom()
-  }, [presentStoryFrom, setVisibilitySetsPanelOpen])
   // Search and isolate do not see what the sets hide (ADR 0194).
   const searchableNodes = useMemo(
     () => (hiddenSetIds.size === 0 ? nodes : nodes.filter((n) => isVisibleElement(setIdsOf(n)))),
@@ -595,6 +575,28 @@ function CanvasInner(): React.JSX.Element {
     toggleChangesPanelWith,
     handlePersonaChange
   } = usePanels(canvasApi, { setNoteShadows, setDefaultEdgeStylePicker })
+
+  // Stories drive which sets are hidden (ADR 0195).
+  const storiesUi = useStories(
+    canvasApi,
+    stories,
+    setStories,
+    visibilitySets,
+    hiddenSetIds,
+    visibilitySetsUi.setHidden,
+    storiesPanelOpen
+  )
+  const storiesPresenting = storiesUi.presenting
+  // The presenter fades what appears and disappears between steps (ADR 0195).
+  const storyFade = useStoryFade(storiesPresenting, nodes, edges, visibilitySets, hiddenSetIds)
+  const handlePresenterKey = storiesUi.handlePresenterKey
+  const resetStories = storiesUi.reset
+  // The floating sets panel is put away before the presentation starts.
+  const presentStoryFrom = storiesUi.present
+  const presentStory = useCallback(() => {
+    setVisibilitySetsPanelOpen(false)
+    presentStoryFrom()
+  }, [presentStoryFrom, setVisibilitySetsPanelOpen])
 
   // One notice for the diagram and every note that changed outside the app (ADR 0159).
   const outsideChanges = useOutsideChanges({

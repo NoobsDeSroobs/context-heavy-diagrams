@@ -4,6 +4,7 @@
 // ignoring case, as the editor insists. Part of the same pure core as operations.ts.
 import type { Story, StoryAction, StoryStep, VisibilitySet } from '../visibility/schema.ts'
 import {
+  ALL_SETS,
   describeStep,
   newStoryId,
   STORY_ACTIONS,
@@ -55,17 +56,30 @@ function setNamed(model: Model, reader: Reader, wanted: string): VisibilitySet {
   return found
 }
 
-// An action from the name of what to do and the name of the set it is about.
-function actionFrom(model: Model, reader: Reader, kind: unknown, setName: unknown): StoryAction {
+// An action from the name of what to do and the name of the set it is about, or `all: true` for the
+// meta target "All sets" (every set the diagram has when the step runs).
+function actionFrom(
+  model: Model,
+  reader: Reader,
+  kind: unknown,
+  setName: unknown,
+  all: unknown
+): StoryAction {
   const known = STORY_ACTIONS.map((a) => a.id)
   if (typeof kind !== 'string' || !known.some((id) => id === kind.toLowerCase())) {
     reader.fail(`"action" must be one of ${known.map((id) => `"${id}"`).join(', ')}`)
   }
-  if (typeof setName !== 'string') reader.fail('"set" must be the name of a visibility set')
+  if (all === true) {
+    if (setName !== undefined) reader.fail('give either "set" or "all": true, not both')
+    return { action: kind.toLowerCase(), set: ALL_SETS }
+  }
+  if (typeof setName !== 'string') {
+    reader.fail('"set" must be the name of a visibility set, or give "all": true for all sets')
+  }
   return { action: kind.toLowerCase(), set: setNamed(model, reader, setName).id }
 }
 
-// The actions of an `actions` list, each `{ action, set }` by name.
+// The actions of an `actions` list, each `{ action, set }` by name, or `{ action, all: true }`.
 function actionsFrom(model: Model, reader: Reader): StoryAction[] {
   if (!reader.has('actions')) return []
   const raw = reader.raw('actions')
@@ -74,8 +88,8 @@ function actionsFrom(model: Model, reader: Reader): StoryAction[] {
     if (typeof item !== 'object' || item === null) {
       reader.fail('each of "actions" must be { action: "show" | "hide", set: <set name> }')
     }
-    const { action, set } = item as Record<string, unknown>
-    return actionFrom(model, reader, action, set)
+    const { action, set, all } = item as Record<string, unknown>
+    return actionFrom(model, reader, action, set, all)
   })
 }
 
@@ -165,7 +179,13 @@ function addStoryAction(model: Model, reader: Reader): OperationResult {
     story.steps.length,
     `"${story.name}" has no steps yet (add one with add_story_step)`
   )
-  const action = actionFrom(model, reader, reader.raw('action'), reader.raw('set'))
+  const action = actionFrom(
+    model,
+    reader,
+    reader.raw('action'),
+    reader.has('set') ? reader.raw('set') : undefined,
+    reader.has('all') ? reader.raw('all') : undefined
+  )
   const inStep = story.steps[n - 1].actions?.length ?? 0
   const at = reader.has('at') ? numberOf(reader, 'at', inStep + 1, '') - 1 : undefined
   const steps = story.steps.map((s, i) => (i === n - 1 ? withAction(s, action, at) : s))

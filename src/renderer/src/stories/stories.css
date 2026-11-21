@@ -31,6 +31,20 @@
   gap: 8px;
 }
 
+/* what is always at the bottom of the panel, below the scrolling part */
+.stories-panel-footer {
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  border-top: 1px solid var(--ev-c-gray-2);
+}
+
+/* "All sets" in a set list: a different colour, so it is never taken for a set of the diagram */
+.stories-panel option.stories-option-meta {
+  color: #4a8fd9;
+  font-style: italic;
+}
+
 .stories-panel-hint {
   margin: 0;
   font-size: 12px;

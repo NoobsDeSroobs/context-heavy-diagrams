@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Story, StoryAction, VisibilitySet } from '@shared/diagram'
 import {
   hiddenAtStep,
@@ -52,14 +52,16 @@ export interface StoriesState {
 // Stories (ADR 0195). The stories are file content and live in the canvas next to the sets; which
 // step is on screen is session state and never saved. A story only drives which sets are hidden,
 // so what it draws goes through the one rule of ADR 0194, and the editor's preview and the presenter
-// are the same thing seen from two places.
+// are the same thing seen from two places. The editor previews a step only while its panel is open
+// (`panelOpen`): closing the panel puts the hidden sets back as they were before the preview.
 export function useStories(
   { setNodes, setEdges, markDirty }: CanvasApi,
   stories: Story[],
   setStories: React.Dispatch<React.SetStateAction<Story[]>>,
   visibilitySets: VisibilitySet[],
   hiddenSetIds: Set<string>,
-  setHidden: (hidden: Set<string>) => void
+  setHidden: (hidden: Set<string>) => void,
+  panelOpen: boolean
 ): StoriesState {
   const [storyId, setStoryId] = useState<string | null>(null)
   const [step, setStep] = useState(0)
@@ -81,13 +83,39 @@ export function useStories(
     [setHidden, visibilitySets]
   )
 
+  // What was hidden before the editor began to preview, put back when the panel closes. Null while
+  // nothing is being previewed.
+  const beforePreview = useRef<Set<string> | null>(null)
+  // The editor's preview: shows a step and remembers what was hidden before the first one.
+  const preview = useCallback(
+    (of: Story | null, at: number) => {
+      if (!of) return
+      if (beforePreview.current === null) beforePreview.current = new Set(hiddenSetIds)
+      show(of, at)
+    },
+    [hiddenSetIds, show]
+  )
+  // The panel opens: the step the editor is on is previewed. It closes: the sets are put back. Both
+  // wait for the presenter, which has its own way back (see `leave`).
+  const wasOpen = useRef(false)
+  useEffect(() => {
+    const opened = panelOpen && !wasOpen.current
+    wasOpen.current = panelOpen
+    if (presenting) return
+    if (opened) preview(story, step)
+    if (!panelOpen && beforePreview.current) {
+      setHidden(beforePreview.current)
+      beforePreview.current = null
+    }
+  }, [panelOpen, presenting, story, step, preview, setHidden])
+
   const selectStory = useCallback(
     (id: string) => {
       setStoryId(id)
       setStep(0)
-      show(stories.find((s) => s.id === id) ?? null, 0)
+      preview(stories.find((s) => s.id === id) ?? null, 0)
     },
-    [stories, show]
+    [stories, preview]
   )
 
   const selectStep = useCallback(
@@ -95,9 +123,9 @@ export function useStories(
       if (!story) return
       const clamped = Math.max(0, Math.min(at, story.steps.length))
       setStep(clamped)
-      show(story, clamped)
+      preview(story, clamped)
     },
-    [story, show]
+    [story, preview]
   )
 
   // Replaces one story, marks the file changed and shows the step the editor is on.
@@ -106,9 +134,9 @@ export function useStories(
       setStories((prev) => prev.map((s) => (s.id === changed.id ? changed : s)))
       markDirty()
       setStep(at)
-      show(changed, at)
+      preview(changed, at)
     },
-    [setStories, markDirty, show]
+    [setStories, markDirty, preview]
   )
 
   const addStory = useCallback(
@@ -121,10 +149,10 @@ export function useStories(
       markDirty()
       setStoryId(made.id)
       setStep(0)
-      show(made, 0)
+      preview(made, 0)
       return null
     },
-    [stories, setStories, markDirty, show]
+    [stories, setStories, markDirty, preview]
   )
 
   const renameStory = useCallback(
@@ -246,10 +274,14 @@ export function useStories(
   }, [story, visibilitySets, edit])
 
   // The presenter. Entering shows step 0; the story's own sets start hidden, so the person sees
-  // what the audience will, and leaving puts back what was hidden before.
+  // what the audience will, and leaving puts back what was hidden before: from before the editor's
+  // preview, when there is one.
   const present = useCallback(() => {
     if (!story || presenting) return
-    beforePresenting.current = new Set(hiddenSetIds)
+    // With the panel open, what is hidden now is what the presenter returns to, so the editor can
+    // put the sets back when the panel closes.
+    if (panelOpen && beforePreview.current === null) beforePreview.current = new Set(hiddenSetIds)
+    beforePresenting.current = new Set(beforePreview.current ?? hiddenSetIds)
     // Nothing is selectable in the presenter, so nothing stays selected either.
     setNodes((nds) =>
       nds.some((n) => n.selected) ? nds.map((n) => ({ ...n, selected: false })) : nds
@@ -260,16 +292,22 @@ export function useStories(
     setPresentStep(0)
     setPresenting(true)
     show(story, 0)
-  }, [story, presenting, hiddenSetIds, setNodes, setEdges, show])
+  }, [story, presenting, panelOpen, hiddenSetIds, setNodes, setEdges, show])
 
   const leave = useCallback(() => {
     if (!presenting) return
     setPresenting(false)
-    if (beforePresenting.current) setHidden(beforePresenting.current)
+    // With the panel open the editor shows the step the presenter ended on; without it the sets go
+    // back to what they were.
+    if (panelOpen) {
+      setStep(presentStep)
+      show(story, presentStep)
+    } else if (beforePresenting.current) {
+      setHidden(beforePresenting.current)
+      beforePreview.current = null
+    }
     beforePresenting.current = null
-    // The editor shows the step the presenter ended on.
-    setStep(presentStep)
-  }, [presenting, presentStep, setHidden])
+  }, [presenting, presentStep, panelOpen, story, show, setHidden])
 
   const goTo = useCallback(
     (at: number) => {
@@ -319,6 +357,7 @@ export function useStories(
   const reset = useCallback(() => {
     setPresenting(false)
     beforePresenting.current = null
+    beforePreview.current = null
     setStoryId(null)
     setStep(0)
     setPresentStep(0)

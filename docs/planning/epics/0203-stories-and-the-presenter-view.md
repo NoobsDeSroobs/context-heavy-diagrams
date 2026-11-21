@@ -14,6 +14,7 @@ Tell a diagram as a story: first this, then that. "This is what we have today", 
 - **The camera stays where it is** when a step changes (decided 2026-11-21).
 - **Writing a story:** a play-button "Stories" button in the toolbar opens a panel in the right-hand dock, laid out like the slide list of a presentation program, simplified: the steps in order, and for the step picked its actions, one row each, a pair of choices (action, then set); a new step is empty. Picking a step shows its state on the canvas, and its tooltip says which sets are shown after it. Add, duplicate, move (drag or arrows) and delete steps and actions. No "record" button (decided 2026-11-21).
 - **The presenter view** takes the window over (toolbar and docks out of the way), starts at step 0, steps with the arrow keys, space, Home, End, and leaves with Esc; nothing can be selected or edited, and no editor shortcut runs. Session state: the step is not saved and is not an edit; leaving puts the hidden sets back as they were.
+- **All sets** is a meta target in the set list, above the real sets and apart from them, reserved value `*` in `set` (decided 2026-11-21); a story that uses it starts with every set hidden. The editor previews a step on the canvas only while the panel is open, and **Make steps from the sets** sits at the bottom of the panel.
 - **Fade** in the presenter when an element appears or disappears; the editor is immediate.
 - **Exports** draw the step on screen (0202).
 - **Format.** An additive change, a MINOR bump (0.14.0, already open): `stories` in `schema.ts` and `docs/file-format.md`.
@@ -35,3 +36,4 @@ Tell a diagram as a story: first this, then that. "This is what we have today", 
 - [x] CLI, extension and assistant guidance (`add_story`, `rename_story`, `remove_story`, `add_story_step`, `remove_story_step`, `add_story_action`, `remove_story_action`; inspect; validator; skill docs).
 - [x] An example diagram with a story (`examples/stories.chd`), and `examples/README.md` ([ADR 0151](../../decisions/0151-every-visible-feature-has-an-example-diagram.md)).
 - [x] Changelog under File format and Added.
+- [x] The "All sets" meta target (state, editor, assistant operations, validator, docs), the preview only while the panel is open, and **Make steps from the sets** at the bottom.
