@@ -4281,7 +4281,7 @@ function CanvasInner(): React.JSX.Element {
             <VisibilitySetsPanel
               sets={visibilitySets}
               hiddenIds={hiddenSetIds}
-              memberCounts={visibilitySetsUi.memberCounts}
+              members={visibilitySetsUi.members}
               selectionCount={visibilitySetsUi.selectionCount}
               anchorRect={visibilitySetsUi.panelAnchor}
               onAdd={visibilitySetsUi.addSet}
@@ -4290,6 +4290,8 @@ function CanvasInner(): React.JSX.Element {
               onToggle={visibilitySetsUi.toggleShown}
               onAddSelection={visibilitySetsUi.addSelectionTo}
               onRemoveSelection={visibilitySetsUi.removeSelectionFrom}
+              onRemoveMember={visibilitySetsUi.removeMemberFrom}
+              onSelectMember={visibilitySetsUi.selectMember}
               onClose={() => setVisibilitySetsPanelOpen(false)}
             />
           )}

@@ -5,6 +5,15 @@ import { newSetId, shownFilter, withSet, withoutSet } from '@shared/visibility/v
 import type { CanvasApi } from '../canvas/canvasApi'
 import { setIdsOf } from './hiding'
 
+// One element of a set, as the panel lists it.
+export interface SetMember {
+  kind: 'node' | 'edge'
+  id: string
+  label: string
+  // Whether the rule shows it now; a hidden element cannot be selected.
+  shown: boolean
+}
+
 export interface VisibilitySetsState {
   panelOpen: boolean
   setPanelOpen: React.Dispatch<React.SetStateAction<boolean>>
@@ -16,8 +25,11 @@ export interface VisibilitySetsState {
   toggleShown: (id: string) => void
   addSelectionTo: (id: string) => void
   removeSelectionFrom: (id: string) => void
-  // How many elements are in each set, and how many elements are selected, for the panel.
-  memberCounts: Map<string, number>
+  // Takes one element out of a set, and selects one (when it is shown).
+  removeMemberFrom: (setId: string, member: SetMember) => void
+  selectMember: (member: SetMember) => void
+  // The elements in each set, and how many elements are selected, for the panel.
+  members: Map<string, SetMember[]>
   selectionCount: number
 }
 
@@ -93,13 +105,36 @@ export function useVisibilitySets(
     [setVisibilitySets, markDirty]
   )
 
-  const memberCounts = useMemo(() => {
-    const counts = new Map<string, number>()
-    for (const el of [...nodes, ...edges]) {
-      for (const id of setIdsOf(el) ?? []) counts.set(id, (counts.get(id) ?? 0) + 1)
+  const members = useMemo(() => {
+    const shown = shownFilter(visibilitySets, hiddenSetIds)
+    const nodeLabel = new Map(
+      nodes.map((n) => [
+        n.id,
+        String(n.data?.label ?? '')
+          .split('\n')[0]
+          .trim() || '(unlabeled)'
+      ])
+    )
+    const bySet = new Map<string, SetMember[]>()
+    const add = (setId: string, member: SetMember): void => {
+      const list = bySet.get(setId)
+      if (list) list.push(member)
+      else bySet.set(setId, [member])
     }
-    return counts
-  }, [nodes, edges])
+    for (const n of nodes) {
+      const ids = setIdsOf(n)
+      for (const id of ids ?? []) {
+        add(id, { kind: 'node', id: n.id, label: nodeLabel.get(n.id)!, shown: shown(ids) })
+      }
+    }
+    for (const e of edges) {
+      const ids = setIdsOf(e)
+      const text = typeof e.data?.label === 'string' ? e.data.label.split('\n')[0].trim() : ''
+      const label = `${text ? `${text}: ` : ''}${nodeLabel.get(e.source) ?? e.source} → ${nodeLabel.get(e.target) ?? e.target}`
+      for (const id of ids ?? []) add(id, { kind: 'edge', id: e.id, label, shown: shown(ids) })
+    }
+    return bySet
+  }, [nodes, edges, visibilitySets, hiddenSetIds])
   const selectionCount = useMemo(
     () => nodes.filter((n) => n.selected).length + edges.filter((e) => e.selected).length,
     [nodes, edges]
@@ -109,15 +144,15 @@ export function useVisibilitySets(
   // an undo brings their membership back, and an id with no set in the catalogue is ignored.
   const deleteSet = useCallback(
     (id: string) => {
-      const members = memberCounts.get(id) ?? 0
+      const count = members.get(id)?.length ?? 0
       const name = visibilitySets.find((s) => s.id === id)?.name ?? ''
       if (
-        members > 0 &&
-        !confirm(`Delete the set "${name}"? Its ${members} element(s) stay in the diagram.`)
+        count > 0 &&
+        !confirm(`Delete the set "${name}"? Its ${count} element(s) stay in the diagram.`)
       ) {
         return
       }
-      if (members > 0) {
+      if (count > 0) {
         pushSnapshot()
         const strip = <T extends Node | Edge>(el: T): T => {
           const ids = setIdsOf(el)
@@ -141,7 +176,7 @@ export function useVisibilitySets(
       markDirty()
     },
     [
-      memberCounts,
+      members,
       visibilitySets,
       pushSnapshot,
       setNodes,
@@ -178,6 +213,43 @@ export function useVisibilitySets(
     [changeSelection]
   )
 
+  const removeMemberFrom = useCallback(
+    (setId: string, member: SetMember) => {
+      pushSnapshot()
+      const change = <T extends Node | Edge>(el: T): T => {
+        if (el.id !== member.id) return el
+        const ids = withoutSet(setIdsOf(el), setId)
+        const data = { ...el.data }
+        if (ids) data.visibilitySetIds = ids
+        else delete data.visibilitySetIds
+        return { ...el, data }
+      }
+      if (member.kind === 'node') setNodes((nds) => nds.map(change))
+      else setEdges((eds) => eds.map(change))
+    },
+    [pushSnapshot, setNodes, setEdges]
+  )
+
+  // Selects just this element; a hidden one cannot be selected.
+  const selectMember = useCallback(
+    (member: SetMember) => {
+      if (!member.shown) return
+      setNodes((nds) =>
+        nds.map((n) => {
+          const want = member.kind === 'node' && n.id === member.id
+          return n.selected === want ? n : { ...n, selected: want }
+        })
+      )
+      setEdges((eds) =>
+        eds.map((e) => {
+          const want = member.kind === 'edge' && e.id === member.id
+          return e.selected === want ? e : { ...e, selected: want }
+        })
+      )
+    },
+    [setNodes, setEdges]
+  )
+
   return {
     panelOpen,
     setPanelOpen,
@@ -189,7 +261,9 @@ export function useVisibilitySets(
     toggleShown,
     addSelectionTo,
     removeSelectionFrom,
-    memberCounts,
+    removeMemberFrom,
+    selectMember,
+    members,
     selectionCount
   }
 }

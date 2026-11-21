@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { DiagramFile } from '@shared/diagram'
 import { renderCanvas } from './canvasHarness'
@@ -87,6 +87,31 @@ describe('visibility sets on the canvas (ADR 0194)', () => {
       )
       expect(counts).toEqual(['1', '3'])
     })
+  })
+
+  it('lists what is in a set, and takes one element out of it', async () => {
+    renderCanvas(diagram())
+    await screen.findByText('Alpha')
+    openPanel()
+    expect(screen.queryByRole('list', { name: 'In Today' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Show what is in Today' }))
+    const list = screen.getByRole('list', { name: 'In Today' })
+    expect(within(list).getByTitle('Select it').textContent).toContain('Alpha')
+    fireEvent.click(screen.getByRole('button', { name: 'Take Alpha out of Today' }))
+    // Alpha stays on the canvas, now in no set
+    expect(within(list).queryByTitle('Select it')).toBeNull()
+    expect(screen.getByText('Alpha')).toBeTruthy()
+    expect(document.querySelector('.visibility-set-count')?.textContent).toBe('0')
+  })
+
+  it('has Add and Remove buttons for the selection', async () => {
+    renderCanvas(diagram())
+    await screen.findByText('Alpha')
+    openPanel()
+    const add = screen.getByRole('button', { name: 'Add the selection to Today' })
+    const remove = screen.getByRole('button', { name: 'Remove the selection from Today' })
+    expect(add.textContent).toBe('Add')
+    expect(remove.textContent).toBe('Remove')
   })
 
   it('cannot put anything in a set with nothing selected', async () => {
