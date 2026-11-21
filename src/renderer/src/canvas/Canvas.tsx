@@ -174,8 +174,8 @@ import { useStyleBrush } from '../styling/useStyleBrush'
 import { useLegendLinePick } from '../legend/useLegendLinePick'
 import { useLegend } from '../legend/useLegend'
 import { useHighlights } from '../tagging/useHighlights'
-import { shownFilter, strayAdvisory } from '@shared/visibility/visibility'
-import { applyHidden, setIdsOf } from '../visibility/hiding'
+import { visibleFilter, strayAdvisory } from '@shared/visibility/visibility'
+import { withVisibility, setIdsOf } from '../visibility/hiding'
 import { useVisibilitySets } from '../visibility/useVisibilitySets'
 import VisibilitySetsPanel from '../visibility/VisibilitySetsPanel'
 import { useDiagnostics } from '../diagnostics/useDiagnostics'
@@ -287,9 +287,9 @@ function CanvasInner(): React.JSX.Element {
   const [visibilitySets, setVisibilitySets] = useState<VisibilitySet[]>([])
   // Which sets are hidden right now: session state, never saved, empty when a diagram opens.
   const [hiddenSetIds, setHiddenSetIds] = useState<Set<string>>(() => new Set())
-  // The rule of ADR 0194 for the current catalogue and choice: whether an element is shown.
-  const isShownElement = useMemo(
-    () => shownFilter(visibilitySets, hiddenSetIds),
+  // The rule of ADR 0194 for the current catalogue and choice: whether an element is visible.
+  const isVisibleElement = useMemo(
+    () => visibleFilter(visibilitySets, hiddenSetIds),
     [visibilitySets, hiddenSetIds]
   )
   // Edge hover (the hover-revealed bend-point handles of catmull-rom edges, ADR 0057) is tracked
@@ -440,12 +440,12 @@ function CanvasInner(): React.JSX.Element {
   const setVisibilitySetsPanelOpen = visibilitySetsUi.setPanelOpen
   // Search and isolate do not see what the sets hide (ADR 0194).
   const searchableNodes = useMemo(
-    () => (hiddenSetIds.size === 0 ? nodes : nodes.filter((n) => isShownElement(setIdsOf(n)))),
-    [nodes, hiddenSetIds, isShownElement]
+    () => (hiddenSetIds.size === 0 ? nodes : nodes.filter((n) => isVisibleElement(setIdsOf(n)))),
+    [nodes, hiddenSetIds, isVisibleElement]
   )
   const searchableEdges = useMemo(
-    () => (hiddenSetIds.size === 0 ? edges : edges.filter((e) => isShownElement(setIdsOf(e)))),
-    [edges, hiddenSetIds, isShownElement]
+    () => (hiddenSetIds.size === 0 ? edges : edges.filter((e) => isVisibleElement(setIdsOf(e)))),
+    [edges, hiddenSetIds, isVisibleElement]
   )
 
   const {
@@ -701,18 +701,18 @@ function CanvasInner(): React.JSX.Element {
       // A hidden element is never selected (ADR 0194).
       setNodes((nds) =>
         nds.map((n) => {
-          const want = n.type === type && isShownElement(setIdsOf(n))
+          const want = n.type === type && isVisibleElement(setIdsOf(n))
           return n.selected === want ? n : { ...n, selected: want }
         })
       )
       setEdges((eds) =>
         eds.map((e) => {
-          const want = type === 'edge' && isShownElement(setIdsOf(e))
+          const want = type === 'edge' && isVisibleElement(setIdsOf(e))
           return e.selected === want ? e : { ...e, selected: want }
         })
       )
     },
-    [setNodes, setEdges, isShownElement]
+    [setNodes, setEdges, isVisibleElement]
   )
 
   // Flips the direction of every edge in `ids` in one action (ADR 0087). reverseEdgeDirection
@@ -2256,12 +2256,12 @@ function CanvasInner(): React.JSX.Element {
   const selectAll = useCallback(() => {
     // A hidden element is never selected (ADR 0194).
     setNodes((nds) =>
-      nds.map((n) => (n.selected || !isShownElement(setIdsOf(n)) ? n : { ...n, selected: true }))
+      nds.map((n) => (n.selected || !isVisibleElement(setIdsOf(n)) ? n : { ...n, selected: true }))
     )
     setEdges((eds) =>
-      eds.map((e) => (e.selected || !isShownElement(setIdsOf(e)) ? e : { ...e, selected: true }))
+      eds.map((e) => (e.selected || !isVisibleElement(setIdsOf(e)) ? e : { ...e, selected: true }))
     )
-  }, [setNodes, setEdges, isShownElement])
+  }, [setNodes, setEdges, isVisibleElement])
 
   const deselectAll = useCallback(() => {
     setNodes((nds) => nds.map((n) => (n.selected ? { ...n, selected: false } : n)))
@@ -3346,12 +3346,17 @@ function CanvasInner(): React.JSX.Element {
     return [...attachedEdges.filter((e) => !e.selected), ...attachedEdges.filter((e) => e.selected)]
   }, [attachedEdges])
 
-  // What React Flow draws: the elements the visibility sets hide are marked hidden (ADR 0194). The
-  // state keeps them, in place, so an edge still follows an element that is hidden.
-  const shownNodes = useMemo(() => applyHidden(nodes, isShownElement), [nodes, isShownElement])
-  const shownEdges = useMemo(
-    () => applyHidden(orderedEdges, isShownElement),
-    [orderedEdges, isShownElement]
+  // Every node and edge, each with its visibility decided: the ones the visibility sets hide are marked
+  // `hidden` (ADR 0194). All of them are sent to React Flow, since a child needs its container in the
+  // list; it does not draw the hidden ones. The state keeps them, in place, so an edge still follows
+  // an element that is hidden.
+  const nodesWithVisibility = useMemo(
+    () => withVisibility(nodes, isVisibleElement),
+    [nodes, isVisibleElement]
+  )
+  const edgesWithVisibility = useMemo(
+    () => withVisibility(orderedEdges, isVisibleElement),
+    [orderedEdges, isVisibleElement]
   )
 
   // An edge has no zIndex of its own (ADR 0035 scoped that to Entity/Container/Text): it sits at
@@ -3913,8 +3918,8 @@ function CanvasInner(): React.JSX.Element {
                   />
                 )}
                 <ReactFlow
-                  nodes={shownNodes}
-                  edges={shownEdges}
+                  nodes={nodesWithVisibility}
+                  edges={edgesWithVisibility}
                   nodeTypes={nodeTypes}
                   edgeTypes={edgeTypes}
                   proOptions={HIDE_ATTRIBUTION}

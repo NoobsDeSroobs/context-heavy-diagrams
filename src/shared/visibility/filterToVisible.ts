@@ -6,18 +6,21 @@
 //   drawn, or on the canvas, at the place it has on screen.
 import type { DiagramFile } from '../diagram/file.ts'
 import type { DiagramNode } from '../nodes/schema.ts'
-import { shownFilter } from './visibility.ts'
+import { visibleFilter } from './visibility.ts'
 
-export function shownDiagram(diagram: DiagramFile, hiddenSetIds: ReadonlySet<string>): DiagramFile {
-  const shown = shownFilter(diagram.visibilitySets ?? [], hiddenSetIds)
+export function filterToVisible(
+  diagram: DiagramFile,
+  hiddenSetIds: ReadonlySet<string>
+): DiagramFile {
+  const visible = visibleFilter(diagram.visibilitySets ?? [], hiddenSetIds)
   if (
-    diagram.nodes.every((n) => shown(n.visibilitySetIds)) &&
-    diagram.edges.every((e) => shown(e.visibilitySetIds))
+    diagram.nodes.every((n) => visible(n.visibilitySetIds)) &&
+    diagram.edges.every((e) => visible(e.visibilitySetIds))
   ) {
     return diagram
   }
   const byId = new Map(diagram.nodes.map((n) => [n.id, n]))
-  const kept = new Set(diagram.nodes.filter((n) => shown(n.visibilitySetIds)).map((n) => n.id))
+  const kept = new Set(diagram.nodes.filter((n) => visible(n.visibilitySetIds)).map((n) => n.id))
 
   const nodes = diagram.nodes
     .filter((n) => kept.has(n.id))
@@ -44,7 +47,7 @@ export function shownDiagram(diagram: DiagramFile, hiddenSetIds: ReadonlySet<str
     })
 
   const edges = diagram.edges.filter(
-    (e) => shown(e.visibilitySetIds) && kept.has(e.source) && kept.has(e.target)
+    (e) => visible(e.visibilitySetIds) && kept.has(e.source) && kept.has(e.target)
   )
   return { ...diagram, nodes, edges }
 }

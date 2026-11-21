@@ -10,13 +10,13 @@ export function setIdsOf(element: { data?: Record<string, unknown> }): string[] 
 // not drawn and cannot be selected, while staying in the canvas state, where they keep their place
 // and everything attached to them follows. The same array comes back when nothing changes, so
 // nothing re-renders for a set that was never hidden.
-export function applyHidden<T extends Node | Edge>(
+export function withVisibility<T extends Node | Edge>(
   elements: T[],
-  shown: (setIds: readonly string[] | undefined) => boolean
+  visible: (setIds: readonly string[] | undefined) => boolean
 ): T[] {
   let changed = false
   const next = elements.map((element) => {
-    const hide = !shown(setIdsOf(element))
+    const hide = !visible(setIdsOf(element))
     if (hide === (element.hidden === true)) return element
     changed = true
     return { ...element, hidden: hide }

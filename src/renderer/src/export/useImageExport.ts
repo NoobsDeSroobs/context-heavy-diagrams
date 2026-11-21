@@ -20,8 +20,8 @@ import type { CanvasApi } from '../canvas/canvasApi'
 import type { AppPreferences } from '../preferences/preferences'
 import type { Theme } from '../styling/theme'
 import type { ImageExportChoice } from './ExportImageDialog'
-import { shownDiagram } from '@shared/visibility/shownDiagram'
-import { shownFilter } from '@shared/visibility/visibility'
+import { filterToVisible } from '@shared/visibility/filterToVisible'
+import { visibleFilter } from '@shared/visibility/visibility'
 import { setIdsOf } from '../visibility/hiding'
 import { buildDiagramSvg } from './exportSvg'
 import { buildDiagramDrawio } from './exportDrawio'
@@ -110,11 +110,11 @@ export function useImageExport(
       const viewportEl = flowWrapperRef.current?.querySelector<HTMLElement>('.react-flow__viewport')
       if (!viewportEl) return
       // What is hidden is left out of the picture, its bounds and its legend (ADR 0194).
-      const shown = shownFilter(visibilitySets, hiddenSetIds)
-      const shownNodes = nodes.filter((n) => shown(setIdsOf(n)))
-      const shownIds = new Set(shownNodes.map((n) => n.id))
-      const shownEdges = edges.filter(
-        (e) => shown(setIdsOf(e)) && shownIds.has(e.source) && shownIds.has(e.target)
+      const visible = visibleFilter(visibilitySets, hiddenSetIds)
+      const visibleNodes = nodes.filter((n) => visible(setIdsOf(n)))
+      const visibleIds = new Set(visibleNodes.map((n) => n.id))
+      const visibleEdges = edges.filter(
+        (e) => visible(setIdsOf(e)) && visibleIds.has(e.source) && visibleIds.has(e.target)
       )
       const previouslySelectedNodeIds = nodes.filter((n) => n.selected).map((n) => n.id)
       const previouslySelectedEdgeIds = edges.filter((e) => e.selected).map((e) => e.id)
@@ -141,7 +141,7 @@ export function useImageExport(
           enabledHighlightIds,
           directionSetLegendRow(edgeDirectionSets, activeEdgeDirectionSetId),
           stencilLegendRows(
-            shownNodes.map((n) => ({
+            visibleNodes.map((n) => ({
               type: n.type,
               data: {
                 kind: typeof n.data?.kind === 'string' ? n.data.kind : undefined,
@@ -152,8 +152,8 @@ export function useImageExport(
           )
         )
         const dataUrl = await captureDiagramPng(
-          shownNodes,
-          shownEdges.map((e) => ({ source: e.source, target: e.target })),
+          visibleNodes,
+          visibleEdges.map((e) => ({ source: e.source, target: e.target })),
           viewportEl,
           {
             paddingPx: choice.paddingPx,
@@ -231,7 +231,7 @@ export function useImageExport(
       diagramFontFamily,
       visibilitySets
     )
-    return shownDiagram(file, hiddenSetIds)
+    return filterToVisible(file, hiddenSetIds)
   }, [
     nodes,
     edges,

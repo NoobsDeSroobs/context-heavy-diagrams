@@ -126,13 +126,15 @@ function SetRow({
           {members.map((member) => (
             <li
               key={`${member.kind}-${member.id}`}
-              className={member.shown ? 'visibility-set-member' : 'visibility-set-member is-hidden'}
+              className={
+                member.visible ? 'visibility-set-member' : 'visibility-set-member is-hidden'
+              }
             >
               <button
                 type="button"
                 className="visibility-set-member-label"
-                disabled={!member.shown}
-                title={member.shown ? 'Select it' : 'Hidden, so it cannot be selected'}
+                disabled={!member.visible}
+                title={member.visible ? 'Select it' : 'Hidden, so it cannot be selected'}
                 onClick={() => onSelectMember(member)}
               >
                 <span className="visibility-set-member-kind">

@@ -4,7 +4,7 @@ import type { VisibilitySet } from '@shared/diagram'
 import {
   nameTaken,
   newSetId,
-  shownFilter,
+  visibleFilter,
   withSet,
   withoutSet
 } from '@shared/visibility/visibility'
@@ -18,7 +18,7 @@ export interface SetMember {
   id: string
   label: string
   // Whether the rule shows it now; a hidden element cannot be selected.
-  shown: boolean
+  visible: boolean
 }
 
 export interface VisibilitySetsState {
@@ -65,15 +65,15 @@ export function useVisibilitySets(
   // reached in any way (ADR 0194).
   const deselectHidden = useCallback(
     (sets: VisibilitySet[], hidden: Set<string>) => {
-      const shown = shownFilter(sets, hidden)
+      const visible = visibleFilter(sets, hidden)
       setNodes((nds) =>
-        nds.some((n) => n.selected && !shown(setIdsOf(n)))
-          ? nds.map((n) => (n.selected && !shown(setIdsOf(n)) ? { ...n, selected: false } : n))
+        nds.some((n) => n.selected && !visible(setIdsOf(n)))
+          ? nds.map((n) => (n.selected && !visible(setIdsOf(n)) ? { ...n, selected: false } : n))
           : nds
       )
       setEdges((eds) =>
-        eds.some((e) => e.selected && !shown(setIdsOf(e)))
-          ? eds.map((e) => (e.selected && !shown(setIdsOf(e)) ? { ...e, selected: false } : e))
+        eds.some((e) => e.selected && !visible(setIdsOf(e)))
+          ? eds.map((e) => (e.selected && !visible(setIdsOf(e)) ? { ...e, selected: false } : e))
           : eds
       )
     },
@@ -119,7 +119,7 @@ export function useVisibilitySets(
   )
 
   const members = useMemo(() => {
-    const shown = shownFilter(visibilitySets, hiddenSetIds)
+    const visible = visibleFilter(visibilitySets, hiddenSetIds)
     const nodeLabel = new Map(
       nodes.map((n) => [
         n.id,
@@ -137,14 +137,14 @@ export function useVisibilitySets(
     for (const n of nodes) {
       const ids = setIdsOf(n)
       for (const id of ids ?? []) {
-        add(id, { kind: 'node', id: n.id, label: nodeLabel.get(n.id)!, shown: shown(ids) })
+        add(id, { kind: 'node', id: n.id, label: nodeLabel.get(n.id)!, visible: visible(ids) })
       }
     }
     for (const e of edges) {
       const ids = setIdsOf(e)
       const text = typeof e.data?.label === 'string' ? e.data.label.split('\n')[0].trim() : ''
       const label = `${text ? `${text}: ` : ''}${nodeLabel.get(e.source) ?? e.source} → ${nodeLabel.get(e.target) ?? e.target}`
-      for (const id of ids ?? []) add(id, { kind: 'edge', id: e.id, label, shown: shown(ids) })
+      for (const id of ids ?? []) add(id, { kind: 'edge', id: e.id, label, visible: visible(ids) })
     }
     return bySet
   }, [nodes, edges, visibilitySets, hiddenSetIds])
@@ -206,14 +206,14 @@ export function useVisibilitySets(
     (id: string, join: boolean) => {
       if (selectionCount === 0) return
       pushSnapshot()
-      const shown = shownFilter(visibilitySets, hiddenSetIds)
+      const visible = visibleFilter(visibilitySets, hiddenSetIds)
       const change = <T extends Node | Edge>(el: T): T => {
         if (!el.selected) return el
         const ids = join ? withSet(setIdsOf(el), id) : withoutSet(setIdsOf(el), id)
         const data = { ...el.data }
         if (ids) data.visibilitySetIds = ids
         else delete data.visibilitySetIds
-        return { ...el, selected: shown(ids) ? el.selected : false, data }
+        return { ...el, selected: visible(ids) ? el.selected : false, data }
       }
       setNodes((nds) => nds.map(change))
       setEdges((eds) => eds.map(change))
@@ -287,12 +287,12 @@ export function useVisibilitySets(
         x: box.x + box.width,
         y: box.y + box.height
       })
-      const inView =
+      const isFullyInViewport =
         topLeft.x >= pane.left &&
         topLeft.y >= pane.top &&
         bottomRight.x <= pane.right &&
         bottomRight.y <= pane.bottom
-      if (inView) return
+      if (isFullyInViewport) return
       void rfInstance.setCenter(box.x + box.width / 2, box.y + box.height / 2, {
         zoom: rfInstance.getZoom(),
         duration: 300
@@ -304,7 +304,7 @@ export function useVisibilitySets(
   // Selects just this element and brings it into view; a hidden one cannot be selected.
   const selectMember = useCallback(
     (member: SetMember) => {
-      if (!member.shown) return
+      if (!member.visible) return
       revealMember(member)
       setNodes((nds) =>
         nds.map((n) => {

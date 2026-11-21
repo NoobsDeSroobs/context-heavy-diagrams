@@ -2,10 +2,10 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  isShown,
+  isVisible,
   nameTaken,
   newSetId,
-  shownFilter,
+  visibleFilter,
   strayAdvisory,
   strayIds,
   withSet,
@@ -19,41 +19,41 @@ const catalogue = [
 const hide = (...ids) => new Set(ids)
 
 test('an element in no set is always shown, whatever is hidden', () => {
-  const shown = shownFilter(catalogue, hide('today', 'proposed'))
-  assert.equal(shown(undefined), true)
-  assert.equal(shown([]), true)
+  const visible = visibleFilter(catalogue, hide('today', 'proposed'))
+  assert.equal(visible(undefined), true)
+  assert.equal(visible([]), true)
 })
 
 test('an element in one set follows that set', () => {
-  const shown = shownFilter(catalogue, hide('today'))
-  assert.equal(shown(['today']), false)
-  assert.equal(shown(['proposed']), true)
+  const visible = visibleFilter(catalogue, hide('today'))
+  assert.equal(visible(['today']), false)
+  assert.equal(visible(['proposed']), true)
 })
 
 test('an element in several sets is shown while any of them is shown', () => {
-  assert.equal(shownFilter(catalogue, hide('today'))(['today', 'proposed']), true)
-  assert.equal(shownFilter(catalogue, hide('proposed'))(['today', 'proposed']), true)
-  assert.equal(shownFilter(catalogue, hide('today', 'proposed'))(['today', 'proposed']), false)
+  assert.equal(visibleFilter(catalogue, hide('today'))(['today', 'proposed']), true)
+  assert.equal(visibleFilter(catalogue, hide('proposed'))(['today', 'proposed']), true)
+  assert.equal(visibleFilter(catalogue, hide('today', 'proposed'))(['today', 'proposed']), false)
 })
 
 test('an id that is not in the catalogue is ignored, so it can hide nothing', () => {
-  const shown = shownFilter(catalogue, hide('gone', 'today'))
-  assert.equal(shown(['gone']), true)
+  const visible = visibleFilter(catalogue, hide('gone', 'today'))
+  assert.equal(visible(['gone']), true)
   // an unknown id next to a hidden set does not keep the element on show either
-  assert.equal(shown(['gone', 'today']), false)
+  assert.equal(visible(['gone', 'today']), false)
 })
 
 test('with nothing hidden every element is shown', () => {
-  const shown = shownFilter(catalogue, hide())
-  assert.equal(shown(['today']), true)
-  assert.equal(shown(['today', 'proposed']), true)
+  const visible = visibleFilter(catalogue, hide())
+  assert.equal(visible(['today']), true)
+  assert.equal(visible(['today', 'proposed']), true)
 })
 
-test('isShown is the rule behind the filter', () => {
+test('isVisible is the rule behind the filter', () => {
   const known = new Set(['a', 'b'])
-  assert.equal(isShown(['a'], known, new Set(['a'])), false)
-  assert.equal(isShown(['a', 'b'], known, new Set(['a'])), true)
-  assert.equal(isShown(undefined, known, new Set(['a'])), true)
+  assert.equal(isVisible(['a'], known, new Set(['a'])), false)
+  assert.equal(isVisible(['a', 'b'], known, new Set(['a'])), true)
+  assert.equal(isVisible(undefined, known, new Set(['a'])), true)
 })
 
 test('joining a set adds it once, leaving removes it and gives nothing when it was the last', () => {
