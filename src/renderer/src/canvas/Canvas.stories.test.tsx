@@ -62,7 +62,7 @@ describe('stories on the canvas (ADR 0195)', () => {
     renderCanvas(diagram())
     await screen.findByText('Alpha')
     openPanel()
-    // Start: the sets the story names are hidden
+    // Start: every set is hidden
     fireEvent.click(await screen.findByRole('button', { name: /Start/ }))
     await waitFor(() => expect(screen.queryByText('Alpha')).toBeNull())
     expect(screen.queryByText('Beta')).toBeNull()
@@ -151,7 +151,7 @@ describe('stories on the canvas (ADR 0195)', () => {
     renderCanvas(blank)
     await screen.findByText('Alpha')
     openPanel()
-    // the story names all sets, so before step 1 every set is hidden
+    // before step 1 every set is hidden
     await waitFor(() => expect(screen.queryByText('Alpha')).toBeNull())
     expect(screen.queryByText('Beta')).toBeNull()
     expect(screen.getByText('Base')).toBeTruthy()
@@ -170,6 +170,17 @@ describe('stories on the canvas (ADR 0195)', () => {
     expect(sets.options[0].classList.contains('stories-option-meta')).toBe(true)
     expect(sets.options[1].disabled).toBe(true)
     expect(sets.selectedOptions[0].textContent).toBe('All sets')
+  })
+
+  it('names the start row, and says how many elements are in no set', async () => {
+    renderCanvas(diagram())
+    await screen.findByText('Alpha')
+    openPanel()
+    const start = await screen.findByRole('button', { name: /Start: all sets hidden/ })
+    expect(start.getAttribute('title')).toBe('Nothing from the sets is shown')
+    // Base is in no set, so it is shown at the start whatever the story does
+    expect((await screen.findByRole('note')).textContent).toContain('1 element is in no set')
+    expect(screen.getByText('Base')).toBeTruthy()
   })
 
   it('keeps "Make steps from the sets" at the bottom of the panel, below the scrolling part', async () => {
@@ -258,16 +269,16 @@ describe('stories on the canvas (ADR 0195)', () => {
     const set = screen.getByRole('combobox', { name: 'Set' }) as HTMLSelectElement
     expect(action.value).toBe('show')
     expect(set.selectedOptions[0].textContent).toBe('Today')
-    // the story names only Today, so Proposed is not part of it and stays shown
+    // every set starts hidden and the step shows Today
     await screen.findByText('Alpha')
-    expect(screen.getByText('Beta')).toBeTruthy()
+    expect(screen.queryByText('Beta')).toBeNull()
     fireEvent.change(set, { target: { value: 'proposed' } })
-    // now it names Proposed: hidden before the step, and the step shows it
     await screen.findByText('Beta')
-    // hiding it instead
+    expect(screen.queryByText('Alpha')).toBeNull()
+    // hiding it instead leaves both hidden, as they were at the start
     fireEvent.change(action, { target: { value: 'hide' } })
     await waitFor(() => expect(screen.queryByText('Beta')).toBeNull())
-    expect(screen.getByText('Alpha')).toBeTruthy()
+    expect(screen.queryByText('Alpha')).toBeNull()
     expect(screen.getByRole('button', { name: /^1s*Hide Proposed/ })).toBeTruthy()
   })
 

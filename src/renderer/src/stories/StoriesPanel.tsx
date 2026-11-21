@@ -6,6 +6,8 @@ interface StoriesPanelProps {
   stories: Story[]
   story: Story | null
   sets: VisibilitySet[]
+  // How many elements are in no set: they are always shown, so they show even at the start.
+  unassigned: number
   // The step the canvas shows: 0 is before the first step.
   step: number
   // Both return why a name was refused, or null.
@@ -206,6 +208,7 @@ export default function StoriesPanel({
   stories,
   story,
   sets,
+  unassigned,
   step,
   onAddStory,
   onRenameStory,
@@ -292,10 +295,16 @@ export default function StoriesPanel({
       <div className="stories-panel-body">
         <p className="stories-panel-hint">
           A story shows a diagram one step at a time. A step has actions, such as show a set or hide
-          one, run in order on top of what the steps before it did. Before the first step, the sets
-          the story names are hidden. Only while this panel is open does the canvas show the step
-          picked; elements in no set are always shown.
+          one, run in order on top of what the steps before it did. Before the first step, all sets
+          are hidden. Only while this panel is open does the canvas show the step picked.
         </p>
+        {unassigned > 0 && (
+          <p className="stories-panel-hint" role="note">
+            {unassigned === 1 ? '1 element is' : `${unassigned} elements are`} in no set, so{' '}
+            {unassigned === 1 ? 'it is' : 'they are'} always shown, also at the start. Put{' '}
+            {unassigned === 1 ? 'it' : 'them'} in a set to tell it in a step.
+          </p>
+        )}
 
         {story && (
           <div className="stories-row">
@@ -369,7 +378,7 @@ export default function StoriesPanel({
           <>
             <div className="stories-heading">Steps</div>
             <ol className="stories-steps" aria-label="Steps">
-              <li>{renderStepButton(0, '▸', 'Start')}</li>
+              <li>{renderStepButton(0, '▸', 'Start: all sets hidden')}</li>
               {story.steps.map((s, i) => (
                 <li
                   key={i}

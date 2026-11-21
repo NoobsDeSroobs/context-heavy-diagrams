@@ -22,8 +22,7 @@ export const isKnownAction = (action: StoryAction): boolean =>
 
 const actionsOf = (step: StoryStep): StoryAction[] => step.actions ?? []
 
-// The sets a story shows or hides in any step, each once. These are the sets the story controls;
-// "All sets" is not one of them, see `namesAllSets`.
+// The sets a story shows or hides in any step, each once. "All sets" is not one of them.
 export function storySetIds(story: Story): Set<string> {
   const ids = new Set<string>()
   for (const step of story.steps) {
@@ -33,10 +32,6 @@ export function storySetIds(story: Story): Set<string> {
   }
   return ids
 }
-
-// Whether any action of the story is about "All sets".
-export const namesAllSets = (story: Story): boolean =>
-  story.steps.some((step) => actionsOf(step).some((a) => isKnownAction(a) && a.set === ALL_SETS))
 
 // One step applied to the hidden sets, its actions in order: a hide adds the set, a show takes it
 // out. "All sets" is every id in `all`. A new set; the argument is left alone.
@@ -57,21 +52,17 @@ export function applyStep(
   return next
 }
 
-// The sets hidden at a step. Step 0 is before the first step: every set the story names is hidden
-// and every other set is shown, so only the elements in no set and in sets the story leaves alone
-// are visible. Step n is step n-1 with the nth step applied, so going back or jumping is the same
-// replay from step 0. A story with an "All sets" action names every set, so it starts with all of
-// them hidden. A step beyond the ends is clamped to them. Ids that are not in the catalogue are left
-// out, like everywhere else (ADR 0194).
+// The sets hidden at a step. Step 0 is before the first step: every set is hidden, so only the
+// elements in no set are visible. Step n is step n-1 with the nth step applied, so going back or
+// jumping is the same replay from step 0. A step beyond the ends is clamped to them. Ids that are not
+// in the catalogue are left out, like everywhere else (ADR 0194).
 export function hiddenAtStep(
   story: Story,
   catalogue: readonly VisibilitySet[],
   step: number
 ): Set<string> {
   const known = new Set(catalogue.map((s) => s.id))
-  let hidden = new Set(
-    namesAllSets(story) ? known : [...storySetIds(story)].filter((id) => known.has(id))
-  )
+  let hidden = new Set(known)
   const upTo = Math.max(0, Math.min(Math.trunc(step) || 0, story.steps.length))
   for (let i = 0; i < upTo; i += 1) hidden = applyStep(hidden, story.steps[i], known)
   for (const id of hidden) if (!known.has(id)) hidden.delete(id)

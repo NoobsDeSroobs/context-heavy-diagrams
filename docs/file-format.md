@@ -488,7 +488,7 @@ An action:
 
 A later version may add actions, with fields of their own. A reader ignores an action it does not know, and a tool that rewrites the file keeps its fields as they were. This app writes `action` and `set` first and any other fields in alphabetical order.
 
-**The state at a step.** Step 0 is the state before the first step: every set the story shows or hides in any step is hidden (all of them when the story has an action on `"*"`), and every other set is shown. Step *n* is step *n* − 1 with the *n*th step applied: its actions run in order, a `hide` hides the set and a `show` shows it, so the last action on a set wins. The state depends only on the step number, so going back or jumping to a step is the same replay from step 0. Which elements that makes visible is the [rule of visibility sets](#visibility-sets). An id that is not in the `visibilitySets` catalogue is ignored.
+**The state at a step.** Step 0 is the state before the first step: every set in the catalogue is hidden, so only the elements in no set are visible. Step *n* is step *n* − 1 with the *n*th step applied: its actions run in order, a `hide` hides the set and a `show` shows it, so the last action on a set wins. The state depends only on the step number, so going back or jumping to a step is the same replay from step 0. Which elements that makes visible is the [rule of visibility sets](#visibility-sets). An id that is not in the `visibilitySets` catalogue is ignored.
 
 **Which step is shown is not stored.** The presenter view starts at step 0 and the step is session state. A reader that does not know the field ignores it. The order of the stories and of the steps is kept.
 

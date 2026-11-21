@@ -8,7 +8,7 @@ Tell a diagram as a story: first this, then that. "This is what we have today", 
 
 ## Decided
 - **A story is an ordered list of steps; a step is an ordered list of actions**, each `{ action, set }` (show or hide a set; the list is open to more kinds, decided 2026-11-21). The state at step n is the result of applying steps 1 to n in order. Stepping back or jumping to a step is a replay, and inserting a step does not mean redoing the later ones.
-- **Before step 1.** Every set the story names starts hidden, so only the elements in no set (and in sets the story leaves alone) are shown.
+- **Before step 1.** Every set is hidden (decided 2026-11-21), so only the elements in no set are shown; the editor's start row says so and the panel counts the elements in no set.
 - **Several stories in one diagram,** each with a name (decided 2026-11-21).
 - **No captions** on steps in the first version (decided 2026-11-21).
 - **The camera stays where it is** when a step changes (decided 2026-11-21).

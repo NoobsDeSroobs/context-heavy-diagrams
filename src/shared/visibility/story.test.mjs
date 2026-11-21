@@ -7,7 +7,6 @@ import {
   describeAction,
   describeStep,
   hiddenAtStep,
-  namesAllSets,
   newStoryId,
   storyFromSets,
   storySetIds,
@@ -41,24 +40,34 @@ test('a story controls the sets its actions name, and no others', () => {
   assert.deepEqual(sorted(storySetIds(story)), ['links', 'proposed', 'today'])
 })
 
-test('before step 1 every set the story names is hidden and the others are shown', () => {
-  assert.deepEqual(sorted(hiddenAtStep(story, catalogue, 0)), ['links', 'proposed', 'today'])
+test('before step 1 every set is hidden, whether the story names it or not', () => {
+  assert.deepEqual(sorted(hiddenAtStep(story, catalogue, 0)), [
+    'links',
+    'other',
+    'proposed',
+    'today'
+  ])
 })
 
 test('the steps accumulate: each starts from what the one before left', () => {
-  assert.deepEqual(sorted(hiddenAtStep(story, catalogue, 1)), ['links', 'proposed'])
-  assert.deepEqual(sorted(hiddenAtStep(story, catalogue, 2)), ['proposed'])
+  assert.deepEqual(sorted(hiddenAtStep(story, catalogue, 1)), ['links', 'other', 'proposed'])
+  assert.deepEqual(sorted(hiddenAtStep(story, catalogue, 2)), ['other', 'proposed'])
 })
 
 test('one step can hide and show: today gives way to proposed', () => {
-  assert.deepEqual(sorted(hiddenAtStep(story, catalogue, 3)), ['today'])
+  assert.deepEqual(sorted(hiddenAtStep(story, catalogue, 3)), ['other', 'today'])
 })
 
 test('going back or jumping is the same replay, so the state depends only on the step', () => {
   const forward = hiddenAtStep(story, catalogue, 2)
   hiddenAtStep(story, catalogue, 3)
   assert.deepEqual(sorted(hiddenAtStep(story, catalogue, 2)), sorted(forward))
-  assert.deepEqual(sorted(hiddenAtStep(story, catalogue, 0)), ['links', 'proposed', 'today'])
+  assert.deepEqual(sorted(hiddenAtStep(story, catalogue, 0)), [
+    'links',
+    'other',
+    'proposed',
+    'today'
+  ])
 })
 
 test('inserting a step does not mean redoing the later ones', () => {
@@ -70,8 +79,8 @@ test('inserting a step does not mean redoing the later ones', () => {
 })
 
 test('a step beyond the ends is clamped to them', () => {
-  assert.deepEqual(sorted(hiddenAtStep(story, catalogue, 99)), ['today'])
-  const start = ['links', 'proposed', 'today']
+  assert.deepEqual(sorted(hiddenAtStep(story, catalogue, 99)), ['other', 'today'])
+  const start = ['links', 'other', 'proposed', 'today']
   assert.deepEqual(sorted(hiddenAtStep(story, catalogue, -3)), start)
   assert.deepEqual(sorted(hiddenAtStep(story, catalogue, Number.NaN)), start)
 })
@@ -94,7 +103,7 @@ test('an action this version does not know is ignored, and names no set', () => 
     steps: [{ actions: [{ action: 'grow', set: 'other', factor: 2 }, show('today')] }]
   }
   assert.deepEqual(sorted(storySetIds(later)), ['today'])
-  assert.deepEqual(sorted(hiddenAtStep(later, catalogue, 1)), [])
+  assert.deepEqual(sorted(hiddenAtStep(later, catalogue, 1)), ['links', 'other', 'proposed'])
 })
 
 test('an id that is not in the catalogue is ignored, so a deleted set hides nothing', () => {
@@ -103,12 +112,27 @@ test('an id that is not in the catalogue is ignored, so a deleted set hides noth
     name: 'S',
     steps: [{ actions: [show('gone')] }, { actions: [hide('gone'), hide('today')] }]
   }
-  assert.deepEqual(sorted(hiddenAtStep(stray, catalogue, 0)), ['today'])
-  assert.deepEqual(sorted(hiddenAtStep(stray, catalogue, 2)), ['today'])
+  assert.deepEqual(sorted(hiddenAtStep(stray, catalogue, 0)), [
+    'links',
+    'other',
+    'proposed',
+    'today'
+  ])
+  assert.deepEqual(sorted(hiddenAtStep(stray, catalogue, 2)), [
+    'links',
+    'other',
+    'proposed',
+    'today'
+  ])
 })
 
-test('a story with no steps hides nothing', () => {
-  assert.deepEqual([...hiddenAtStep({ id: 's', name: 'S', steps: [] }, catalogue, 0)], [])
+test('a story with no steps is only its start: every set hidden', () => {
+  assert.deepEqual(sorted(hiddenAtStep({ id: 's', name: 'S', steps: [] }, catalogue, 0)), [
+    'links',
+    'other',
+    'proposed',
+    'today'
+  ])
 })
 
 test('the editor adds, changes, moves and removes the actions of a step', () => {
@@ -167,16 +191,14 @@ test('ids in actions that no set holds are listed once, and nothing else is', ()
   assert.match(lines[0], /1 id/)
 })
 
-test('"All sets" in an action is every set of the catalogue, so a hide-all starts a story blank', () => {
+test('"All sets" in an action is every set of the catalogue, whenever it runs', () => {
   const blank = {
     id: 's2',
     name: 'Blank',
     steps: [{ actions: [hide(ALL_SETS), show('today')] }, { actions: [show(ALL_SETS)] }]
   }
-  // it is not a set of its own, and a story that uses it names every set
+  // it is not a set of its own
   assert.deepEqual([...storySetIds(blank)], ['today'])
-  assert.equal(namesAllSets(blank), true)
-  assert.equal(namesAllSets(story), false)
   assert.deepEqual(sorted(hiddenAtStep(blank, catalogue, 0)), [
     'links',
     'other',
@@ -185,6 +207,19 @@ test('"All sets" in an action is every set of the catalogue, so a hide-all start
   ])
   assert.deepEqual(sorted(hiddenAtStep(blank, catalogue, 1)), ['links', 'other', 'proposed'])
   assert.deepEqual([...hiddenAtStep(blank, catalogue, 2)], [])
+  // in the middle of a story it hides what the steps before showed
+  const middle = {
+    id: 's3',
+    name: 'Middle',
+    steps: [{ actions: [show('today'), show('links')] }, { actions: [hide(ALL_SETS)] }]
+  }
+  assert.deepEqual(sorted(hiddenAtStep(middle, catalogue, 1)), ['other', 'proposed'])
+  assert.deepEqual(sorted(hiddenAtStep(middle, catalogue, 2)), [
+    'links',
+    'other',
+    'proposed',
+    'today'
+  ])
   // the last action wins, as with any set
   assert.deepEqual(
     sorted(applyStep(new Set(), { actions: [show('today'), hide(ALL_SETS)] }, ['today', 'links'])),

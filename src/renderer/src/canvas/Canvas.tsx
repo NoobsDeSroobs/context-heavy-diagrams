@@ -447,6 +447,11 @@ function CanvasInner(): React.JSX.Element {
     setHiddenSetIds
   )
   const setVisibilitySetsPanelOpen = visibilitySetsUi.setPanelOpen
+  // The elements in no set, which a story cannot hide (ADR 0194): the Stories panel says how many.
+  const unassignedCount = useMemo(
+    () => [...nodes, ...edges].filter((e) => (setIdsOf(e)?.length ?? 0) === 0).length,
+    [nodes, edges]
+  )
   // Search and isolate do not see what the sets hide (ADR 0194).
   const searchableNodes = useMemo(
     () => (hiddenSetIds.size === 0 ? nodes : nodes.filter((n) => isVisibleElement(setIdsOf(n)))),
@@ -4530,6 +4535,7 @@ function CanvasInner(): React.JSX.Element {
               stories={stories}
               story={storiesUi.story}
               sets={visibilitySets}
+              unassigned={unassignedCount}
               step={storiesUi.step}
               onAddStory={storiesUi.addStory}
               onRenameStory={storiesUi.renameStory}

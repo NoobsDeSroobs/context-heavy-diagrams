@@ -56,12 +56,16 @@
         {
           "actions": [
             {
-              "action": "hide",
-              "set": "*"
-            },
-            {
               "action": "show",
               "set": "vis-t0d4y1"
+            }
+          ]
+        },
+        {
+          "actions": [
+            {
+              "action": "show",
+              "set": "*"
             }
           ]
         }
@@ -81,6 +85,9 @@
         "height": 70
       },
       "zIndex": 40,
+      "visibilitySetIds": [
+        "vis-t0d4y1"
+      ],
       "data": {
         "label": "Customer"
       }
