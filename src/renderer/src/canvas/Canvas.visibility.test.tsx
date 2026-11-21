@@ -79,14 +79,16 @@ describe('visibility sets on the canvas (ADR 0194)', () => {
     fireEvent.click(
       await screen.findByRole('button', { name: 'Add the selection to Everything shown' })
     )
-    // Beta, Gamma and the edge between Alpha and Beta have no set, so they are shown and selected
-    // (3); Alpha is hidden, so it was not selected and is not counted with them
-    await waitFor(() => {
-      const counts = Array.from(document.querySelectorAll('.visibility-set-count')).map(
-        (el) => el.textContent
-      )
-      expect(counts).toEqual(['1', '3'])
-    })
+    // Beta, Gamma and the edge between Alpha and Beta have no set, so they are shown and selected;
+    // Alpha is hidden, so select all did not reach it
+    fireEvent.click(screen.getByRole('button', { name: 'Show what is in Everything shown' }))
+    const list = screen.getByRole('list', { name: 'In Everything shown' })
+    const labels = within(list)
+      .getAllByTitle('Select it')
+      .map((el) => el.textContent)
+    expect(labels).toHaveLength(3)
+    // (the edge is listed by the elements it joins, Alpha among them, so only elements are checked)
+    expect(labels.filter((label) => label?.startsWith('Element')).join(' ')).not.toContain('Alpha')
   })
 
   it('lists what is in a set, and takes one element out of it', async () => {
@@ -101,7 +103,7 @@ describe('visibility sets on the canvas (ADR 0194)', () => {
     // Alpha stays on the canvas, now in no set
     expect(within(list).queryByTitle('Select it')).toBeNull()
     expect(screen.getByText('Alpha')).toBeTruthy()
-    expect(document.querySelector('.visibility-set-count')?.textContent).toBe('0')
+    expect(document.querySelector('.visibility-set-count')?.textContent).toBe('today')
   })
 
   it('has Add and Remove buttons for the selection', async () => {

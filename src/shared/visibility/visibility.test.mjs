@@ -56,11 +56,18 @@ test('joining a set adds it once, leaving removes it and gives nothing when it w
   assert.equal(withoutSet(undefined, 'a'), undefined)
 })
 
-test('a new id is not one already in the catalogue', () => {
-  const id = newSetId(catalogue)
-  assert.match(id, /^vis-/)
+test('a new id is the next number above every one in use', () => {
+  assert.equal(newSetId([]), '1')
   assert.equal(
-    catalogue.some((s) => s.id === id),
-    false
+    newSetId([
+      { id: '1', name: 'A' },
+      { id: '3', name: 'B' }
+    ]),
+    '4'
   )
+})
+
+test('a new id skips numbers elements still list, and ignores ids that are not numbers', () => {
+  assert.equal(newSetId([{ id: '1', name: 'A' }], ['2', '7']), '8')
+  assert.equal(newSetId(catalogue, ['not-a-number']), '1')
 })

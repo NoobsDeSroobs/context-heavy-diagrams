@@ -87,8 +87,8 @@ function SetRow({
             }
           }}
         />
-        <span className="visibility-set-count" title="Elements in this set">
-          {members.length}
+        <span className="visibility-set-count" title="The ID of this set">
+          {set.id}
         </span>
         <button
           type="button"

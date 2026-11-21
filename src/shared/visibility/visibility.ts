@@ -47,13 +47,17 @@ export function withoutSet(
   return rest.length > 0 ? rest : undefined
 }
 
-// A new id, unique in the catalogue. Opaque: nothing reads it, and it never changes when the
-// set is renamed.
-export function newSetId(catalogue: readonly VisibilitySet[]): string {
-  const taken = new Set(catalogue.map((s) => s.id))
-  let id: string
-  do {
-    id = `vis-${Math.random().toString(36).slice(2, 8)}`
-  } while (taken.has(id))
-  return id
+// A new id: the next whole number above every number in use, as a string ("1", "2", ...), so a set
+// has a short id a person can read and say. `referenced` holds the ids elements still list, so an id
+// that only an element refers to (a set deleted and then restored by an undo) is not handed out
+// again. Ids that are not numbers are ignored when counting.
+export function newSetId(
+  catalogue: readonly VisibilitySet[],
+  referenced: Iterable<string> = []
+): string {
+  let highest = 0
+  for (const id of [...catalogue.map((s) => s.id), ...referenced]) {
+    if (/^[0-9]+$/.test(id)) highest = Math.max(highest, Number(id))
+  }
+  return String(highest + 1)
 }

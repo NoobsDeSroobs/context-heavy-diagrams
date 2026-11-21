@@ -87,10 +87,11 @@ export function useVisibilitySets(
     (name: string) => {
       const trimmed = name.trim()
       if (!trimmed) return
-      setVisibilitySets((prev) => [...prev, { id: newSetId(prev), name: trimmed }])
+      const listed = [...nodes, ...edges].flatMap((el) => setIdsOf(el) ?? [])
+      setVisibilitySets((prev) => [...prev, { id: newSetId(prev, listed), name: trimmed }])
       markDirty()
     },
-    [setVisibilitySets, markDirty]
+    [nodes, edges, setVisibilitySets, markDirty]
   )
 
   const renameSet = useCallback(
