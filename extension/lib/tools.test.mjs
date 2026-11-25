@@ -299,7 +299,7 @@ test('get_format_spec "build" is the short page for edit_diagram, without the co
   assert.match(build, /room_for_label/)
   assert.doesNotMatch(build, /# \.chd diagram format/)
   // About a page: the point of the topic is that it is cheap to read.
-  assert.ok(build.length < 6700, `${build.length} characters`)
+  assert.ok(build.length < 6500, `${build.length} characters`)
 })
 
 test('get_format_spec "all" is the core rules plus an index, small enough for one result', () => {
@@ -793,10 +793,19 @@ test('diff_diagrams refuses a draft with nothing to compare with, and two earlie
 
 // --- building a diagram step by step: edit_diagram, inspect_diagram, room_for_label
 
+// What a call made, by the handle it was given: the tool makes every id, and a handle only lives
+// inside the call that made it.
+const madeBy = (result) =>
+  Object.fromEntries(
+    result.results
+      .filter((r) => r.as)
+      .map((r) => [r.as.slice(1), r.element?.id ?? r.legendEntry?.id])
+  )
+
 const TWO_BOXES = [
-  { op: 'add_entity', id: 'web', label: 'Web', x: 0, y: 0 },
-  { op: 'add_entity', id: 'api', label: 'API', x: 320, y: 0 },
-  { op: 'connect', id: 'calls', from: 'web', to: 'api', label: 'requests' }
+  { op: 'add_entity', as: '$web', label: 'Web', x: 0, y: 0 },
+  { op: 'add_entity', as: '$api', label: 'API', x: 320, y: 0 },
+  { op: 'connect', as: '$calls', from: '$web', to: '$api', label: 'requests' }
 ]
 
 test('edit_diagram creates a diagram, answers with what it made, and the file is valid', () => {
@@ -804,8 +813,14 @@ test('edit_diagram creates a diagram, answers with what it made, and the file is
   const made = tools.edit_diagram({ path: 'new.chd', operations: TWO_BOXES })
   assert.equal(made.path, 'new.chd')
   assert.deepEqual(
-    made.results.map((r) => r.element.id),
-    ['web', 'api', 'calls']
+    made.results.map((r) => r.as),
+    ['$web', '$api', '$calls']
+  )
+  assert.match(madeBy(made).web, /^entity-[0-9a-f-]{36}$/)
+  assert.equal(
+    readFileSync(join(folder, 'new.chd'), 'utf-8').includes('$'),
+    false,
+    'no handle is saved'
   )
   assert.deepEqual(made.issues, [])
   assert.equal(made.fingerprint, sha(readFileSync(join(folder, 'new.chd'))))
@@ -819,15 +834,16 @@ test('edit_diagram can go on editing what it made, with the fingerprint, even wh
     path: 'new.chd',
     base_fingerprint: first.fingerprint,
     operations: [
-      { op: 'move', id: 'api', x: 200, y: 0 },
-      { op: 'add_entity', id: 'db', label: 'DB', x: 320, y: 200 }
+      { op: 'move', id: madeBy(first).api, x: 200, y: 0 },
+      { op: 'add_entity', as: '$db', label: 'DB', x: 320, y: 200 }
     ]
   })
   // 200 - 120 = 80px between Web and API: "requests" needs more room than that.
   assert.ok(second.issues.some((issue) => /requests/.test(issue)))
   assert.notEqual(second.fingerprint, first.fingerprint)
+  const db = madeBy(second).db
   refusal(
-    () => tools.edit_diagram({ path: 'new.chd', operations: [{ op: 'remove', id: 'db' }] }),
+    () => tools.edit_diagram({ path: 'new.chd', operations: [{ op: 'remove', id: db }] }),
     /base_fingerprint is required/
   )
   refusal(
@@ -835,7 +851,7 @@ test('edit_diagram can go on editing what it made, with the fingerprint, even wh
       tools.edit_diagram({
         path: 'new.chd',
         base_fingerprint: first.fingerprint,
-        operations: [{ op: 'remove', id: 'db' }]
+        operations: [{ op: 'remove', id: db }]
       }),
     /has changed since you read it/
   )
@@ -861,9 +877,10 @@ test('edit_diagram does not touch a diagram it did not make unless changing file
   const allowed = make(true).edit_diagram({
     path: 'real.chd',
     base_fingerprint: fingerprintNow,
-    operations: [{ op: 'add_entity', id: 'extra', label: 'Extra', x: 500, y: 500 }]
+    operations: [{ op: 'add_entity', as: '$extra', label: 'Extra', x: 500, y: 500 }]
   })
-  assert.equal(allowed.results[0].element.id, 'extra')
+  assert.equal(allowed.results[0].as, '$extra')
+  assert.match(allowed.results[0].element.id, /^entity-/)
 })
 
 test('edit_diagram refuses a bad batch whole and names the operation', () => {
@@ -873,8 +890,8 @@ test('edit_diagram refuses a bad batch whole and names the operation', () => {
       tools.edit_diagram({
         path: 'bad.chd',
         operations: [
-          { op: 'add_entity', id: 'a', label: 'A', x: 0, y: 0 },
-          { op: 'connect', from: 'a', to: 'ghost' }
+          { op: 'add_entity', as: '$a', label: 'A', x: 0, y: 0 },
+          { op: 'connect', from: '$a', to: 'ghost' }
         ]
       }),
     /operation 2: "to": "ghost" is not an element.*Nothing was changed/
@@ -895,13 +912,13 @@ test('edit_diagram refuses a bad batch whole and names the operation', () => {
 
 test('inspect_diagram lists the elements and the problems, and room_for_label answers in pixels', () => {
   const tools = make()
-  tools.edit_diagram({ path: 'new.chd', operations: TWO_BOXES })
+  const made = madeBy(tools.edit_diagram({ path: 'new.chd', operations: TWO_BOXES }))
   const seen = tools.inspect_diagram({ path: 'new.chd' })
   assert.deepEqual(
     seen.nodes.map((n) => [n.id, n.x, n.y]),
     [
-      ['web', 0, 0],
-      ['api', 320, 0]
+      [made.web, 0, 0],
+      [made.api, 320, 0]
     ]
   )
   assert.equal(seen.edges[0].label, 'requests')
@@ -913,31 +930,33 @@ test('inspect_diagram lists the elements and the problems, and room_for_label an
 
 test('inspect_diagram can be narrowed to the problems, some ids or one container', () => {
   const tools = make()
-  tools.edit_diagram({
-    path: 'zones.chd',
-    operations: [
-      { op: 'add_container', id: 'zone', label: 'Zone', x: 0, y: 0, width: 400, height: 300 },
-      { op: 'add_entity', id: 'web', label: 'Web', x: 20, y: 60, parent: 'zone' },
-      { op: 'add_entity', id: 'db', label: 'DB', x: 700, y: 60 },
-      { op: 'connect', id: 'calls', from: 'web', to: 'db' }
-    ]
-  })
+  const made = madeBy(
+    tools.edit_diagram({
+      path: 'zones.chd',
+      operations: [
+        { op: 'add_container', as: '$zone', label: 'Zone', x: 0, y: 0, width: 400, height: 300 },
+        { op: 'add_entity', as: '$web', label: 'Web', x: 20, y: 60, parent: '$zone' },
+        { op: 'add_entity', as: '$db', label: 'DB', x: 700, y: 60 },
+        { op: 'connect', as: '$calls', from: '$web', to: '$db' }
+      ]
+    })
+  )
   const issues = tools.inspect_diagram({ path: 'zones.chd', issues_only: true })
   assert.deepEqual(Object.keys(issues).sort(), ['fingerprint', 'issues', 'path'])
-  const some = tools.inspect_diagram({ path: 'zones.chd', ids: ['db', 'nope'] })
+  const some = tools.inspect_diagram({ path: 'zones.chd', ids: [made.db, 'nope'] })
   assert.deepEqual(
     some.nodes.map((n) => n.id),
-    ['db']
+    [made.db]
   )
   assert.deepEqual(some.unknown, ['nope'])
-  const zone = tools.inspect_diagram({ path: 'zones.chd', container: 'zone' })
+  const zone = tools.inspect_diagram({ path: 'zones.chd', container: made.zone })
   assert.deepEqual(
     zone.nodes.map((n) => n.id),
-    ['zone', 'web']
+    [made.zone, made.web]
   )
   assert.deepEqual(
     zone.edges.map((e) => e.id),
-    ['calls']
+    [made.calls]
   )
   refusal(() => tools.inspect_diagram({ path: 'zones.chd', ids: 'db' }), /list of element ids/)
   refusal(() => tools.inspect_diagram({ path: 'zones.chd', container: 7 }), /id of a container/)
@@ -956,43 +975,43 @@ test('edit_diagram writes a note beside the diagram, and inspect_diagram shows t
         allowedValues: ['dev', 'prod'],
         defaultValue: 'dev'
       },
-      { op: 'add_entity', id: 'api', label: 'API', x: 0, y: 0, tags: { owner: 'platform' } },
-      { op: 'set_note', id: 'api', text: '# API\nTakes requests.' },
+      { op: 'add_entity', as: '$api', label: 'API', x: 0, y: 0, tags: { owner: 'platform' } },
+      { op: 'set_note', id: '$api', text: '# API\nTakes requests.' },
       { op: 'set_highlight', key: 'environment', value: 'prod', color: '#e6194b' },
-      { op: 'add_legend_entry', id: 'l1', kind: 'entity', label: 'Prod', color: '#e6194b' }
+      { op: 'add_legend_entry', as: '$l1', kind: 'entity', label: 'Prod', color: '#e6194b' }
     ]
   })
-  assert.equal(made.results[2].note, 'shop/notes/API-api.md')
-  const notePath = join(folder, 'sub', 'shop', 'notes', 'API-api.md')
+  const note = made.results[2].note
+  assert.match(note, /^shop\/notes\/API-[0-9a-f]{6}\.md$/)
+  const notePath = join(folder, 'sub', note)
   assert.equal(readFileSync(notePath, 'utf-8'), '# API\nTakes requests.\n')
   assert.deepEqual(made.warnings, [], 'the stored path resolves to the file just written')
 
   const seen = tools.inspect_diagram({ path: 'sub/shop.chd' })
   assert.deepEqual(seen.nodes[0].tags, { environment: 'dev', owner: 'platform' })
-  assert.equal(seen.nodes[0].note, 'shop/notes/API-api.md')
+  assert.equal(seen.nodes[0].note, note)
   assert.equal(seen.requiredTags[0].key, 'environment')
   assert.equal(seen.highlights.length, 1)
-  assert.equal(seen.legend[0].id, 'l1')
+  assert.equal(seen.legend[0].id, madeBy(made).l1)
   // The assistant reads the note with the file tools, by the path the answer gave.
-  assert.equal(
-    tools.read_file({ path: 'sub/shop/notes/API-api.md' }).content,
-    '# API\nTakes requests.\n'
-  )
+  assert.equal(tools.read_file({ path: `sub/${note}` }).content, '# API\nTakes requests.\n')
 })
 
 test('a refused diagram leaves no note behind, and an existing note file is never overwritten', () => {
   const tools = make()
   const first = tools.edit_diagram({
     path: 'shop.chd',
-    operations: [{ op: 'add_entity', id: 'api', label: 'API', x: 0, y: 0 }]
+    operations: [{ op: 'add_entity', as: '$api', label: 'API', x: 0, y: 0 }]
   })
+  const api = madeBy(first).api
+  const noteFile = `API-${api.slice(-6)}.md`
   // A stale fingerprint is refused after the note would have been written: nothing remains.
   refusal(
     () =>
       tools.edit_diagram({
         path: 'shop.chd',
         base_fingerprint: 'a'.repeat(64),
-        operations: [{ op: 'set_note', id: 'api', text: 'x' }]
+        operations: [{ op: 'set_note', id: api, text: 'x' }]
       }),
     /has changed since you read it/
   )
@@ -1000,17 +1019,17 @@ test('a refused diagram leaves no note behind, and an existing note file is neve
 
   // A file already at the note's path stays as it is.
   mkdirSync(join(folder, 'shop', 'notes'), { recursive: true })
-  writeFileSync(join(folder, 'shop', 'notes', 'API-api.md'), 'mine')
+  writeFileSync(join(folder, 'shop', 'notes', noteFile), 'mine')
   refusal(
     () =>
       tools.edit_diagram({
         path: 'shop.chd',
         base_fingerprint: first.fingerprint,
-        operations: [{ op: 'set_note', id: 'api', text: 'x' }]
+        operations: [{ op: 'set_note', id: api, text: 'x' }]
       }),
     /already exists/
   )
-  assert.equal(readFileSync(join(folder, 'shop', 'notes', 'API-api.md'), 'utf-8'), 'mine')
+  assert.equal(readFileSync(join(folder, 'shop', 'notes', noteFile), 'utf-8'), 'mine')
   assert.equal(
     sha(readFileSync(join(folder, 'shop.chd'))),
     first.fingerprint,
@@ -1021,8 +1040,8 @@ test('a refused diagram leaves no note behind, and an existing note file is neve
 test('a link may only lead somewhere the extension may use', () => {
   const tools = make()
   const ops = (path) => [
-    { op: 'add_entity', id: 'api', label: 'API', x: 0, y: 0 },
-    { op: 'link_to_existing_diagram', id: 'api', path }
+    { op: 'add_entity', as: '$api', label: 'API', x: 0, y: 0 },
+    { op: 'link_to_existing_diagram', id: '$api', path }
   ]
   refusal(
     () => tools.edit_diagram({ path: 'sub/a.chd', operations: ops('../../outside.chd') }),
@@ -1048,16 +1067,16 @@ test('a new linked diagram goes in the folder named after its parent, one level 
   const top = tools.edit_diagram({
     path: 'shop.chd',
     operations: [
-      { op: 'add_entity', id: 'orders', label: 'Orders', x: 0, y: 0 },
-      { op: 'add_new_linked_diagram', id: 'orders' }
+      { op: 'add_entity', as: '$orders', label: 'Orders', x: 0, y: 0 },
+      { op: 'add_new_linked_diagram', id: '$orders' }
     ]
   })
   assert.equal(top.results[1].link, 'shop/Orders.chd')
   const child = tools.edit_diagram({
     path: top.results[1].link,
     operations: [
-      { op: 'add_entity', id: 'items', label: 'Items', x: 0, y: 0 },
-      { op: 'add_new_linked_diagram', id: 'items' }
+      { op: 'add_entity', as: '$items', label: 'Items', x: 0, y: 0 },
+      { op: 'add_new_linked_diagram', id: '$items' }
     ]
   })
   assert.equal(child.results[1].link, 'Orders/Items.chd')
@@ -1071,8 +1090,8 @@ test('a new linked diagram goes in the folder named after its parent, one level 
     path: 'shop.chd',
     base_fingerprint: top.fingerprint,
     operations: [
-      { op: 'add_entity', id: 'orders2', label: 'Orders', x: 0, y: 200 },
-      { op: 'add_new_linked_diagram', id: 'orders2' }
+      { op: 'add_entity', as: '$orders2', label: 'Orders', x: 0, y: 200 },
+      { op: 'add_new_linked_diagram', id: '$orders2' }
     ]
   })
   assert.equal(again.results[1].link, 'shop/Orders-1.chd')

@@ -9,10 +9,11 @@ import { validateFile } from '../../../resources/ai/skills/chd-diagrams/scripts/
 import { createEmptyDiagram, parseDiagram, serializeDiagram } from '../diagram/index.ts'
 import { OPERATIONS_HELP } from './help.ts'
 import { applyOperations, OPERATION_NAMES, OperationError } from './operations.ts'
+import { applyNamed } from './testNames.mjs'
 
 let counter = 0
 const options = { newId: (prefix) => `${prefix}-${(counter += 1)}` }
-const run = (diagram, ...ops) => applyOperations(diagram, ops, options)
+const run = (diagram, ...ops) => applyNamed(applyOperations, diagram, ops, options)
 
 function check(diagram, raw = false) {
   const dir = mkdtempSync(join(tmpdir(), 'chd-newline-'))
@@ -40,11 +41,11 @@ const refused = (diagram, op, pattern) =>
 const base = () =>
   run(
     createEmptyDiagram(),
-    { op: 'add_entity', id: 'a', label: 'A', x: 0, y: 0 },
-    { op: 'add_entity', id: 'b', label: 'B', x: 300, y: 0 },
+    { op: 'add_entity', as: '$a', label: 'A', x: 0, y: 0 },
+    { op: 'add_entity', as: '$b', label: 'B', x: 300, y: 0 },
     {
       op: 'add_legend_entry',
-      id: 'data',
+      as: '$data',
       kind: 'line',
       label: 'Data flow',
       color: '#4a90d9',
@@ -53,13 +54,13 @@ const base = () =>
     },
     {
       op: 'add_legend_entry',
-      id: 'event',
+      as: '$event',
       kind: 'line',
       label: 'Event',
       lineStyle: 'dashed',
       strokeWidth: 4
     },
-    { op: 'add_legend_entry', id: 'dot', kind: 'entity', label: 'GDPR', color: '#e6194b' }
+    { op: 'add_legend_entry', as: '$dot', kind: 'entity', label: 'GDPR', color: '#e6194b' }
   ).diagram
 
 test('the operation is known and described in the help', () => {
@@ -96,8 +97,8 @@ test('connect without a style takes the marked line, and a style of its own wins
   const { diagram } = run(
     base(),
     { op: 'set_new_edge_line', id: 'data' },
-    { op: 'connect', id: 'plain', from: 'a', to: 'b' },
-    { op: 'connect', id: 'own', from: 'a', to: 'b', style: { stroke: '#ff0000' } }
+    { op: 'connect', as: '$plain', from: 'a', to: 'b' },
+    { op: 'connect', as: '$own', from: 'a', to: 'b', style: { stroke: '#ff0000' } }
   )
   const byId = Object.fromEntries(diagram.edges.map((e) => [e.id, e.style]))
   assert.deepEqual(byId.plain, {
@@ -112,7 +113,7 @@ test('the thickness of the legend line is kept by the file and given to new edge
   const { diagram } = run(
     base(),
     { op: 'set_new_edge_line', id: 'event' },
-    { op: 'connect', id: 'thick', from: 'a', to: 'b' }
+    { op: 'connect', as: '$thick', from: 'a', to: 'b' }
   )
   assert.equal(diagram.legend.find((e) => e.id === 'event').strokeWidth, 4)
   assert.deepEqual(diagram.edges[0].style, { strokeWidth: 4, lineStyle: 'dashed' })
@@ -134,7 +135,7 @@ test('the routing of the legend line is kept by the file and given to new edges 
     base(),
     { op: 'set_legend_entry', id: 'event', routingStyle: 'step' },
     { op: 'set_new_edge_line', id: 'event' },
-    { op: 'connect', id: 'routed', from: 'a', to: 'b' }
+    { op: 'connect', as: '$routed', from: 'a', to: 'b' }
   )
   assert.equal(diagram.legend.find((e) => e.id === 'event').routingStyle, 'step')
   assert.equal(diagram.edges[0].style.routingStyle, 'step')
@@ -143,7 +144,7 @@ test('the routing of the legend line is kept by the file and given to new edges 
 })
 
 test('with no marked line, connect leaves the edge unstyled as before', () => {
-  const { diagram } = run(base(), { op: 'connect', id: 'plain', from: 'a', to: 'b' })
+  const { diagram } = run(base(), { op: 'connect', as: '$plain', from: 'a', to: 'b' })
   assert.equal(diagram.edges[0].style, undefined)
 })
 

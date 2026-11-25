@@ -75,6 +75,8 @@ export interface OperationResult {
   op: string
   // What the operation made or changed: its id, and for a geometry operation the new place and size.
   element?: ElementEcho
+  // The handle the operation gave what it made ("as"), so the answer ties it to the id it got.
+  as?: string
   // For `remove`: everything that went with the element (its edges).
   removed?: string[]
   // For `add_connection_point`: the id of the new point.
@@ -138,6 +140,11 @@ export const DEFAULT_SIZE = {
 export const MIN_SIZE = 10
 export const MAX_POINTS_PER_SIDE = 12
 export const ID_PATTERN = /^[A-Za-z0-9._-]{1,64}$/
+// A handle names what an operation makes, for the other operations of the same call (ADR 0199): never
+// saved, and not an id, which cannot start with "$".
+export const HANDLE_PATTERN = /^\$[A-Za-z0-9._-]{1,32}$/
+// The fields of an operation that name an element (or a list of them) that is already there.
+const REFERENCE_KEYS = ['id', 'from', 'to', 'parent', 'ids'] as const
 
 export const MARKERS = [
   'none',
@@ -209,9 +216,31 @@ export const round = (value: number): number => Math.round(value * 1000) / 1000
 export class Reader {
   private readonly index: number
   private readonly op: Record<string, unknown>
-  constructor(index: number, op: Record<string, unknown>) {
+  // `handles` are the ones the earlier operations of this call made; a reference to one is read as the id
+  // it stands for.
+  constructor(
+    index: number,
+    op: Record<string, unknown>,
+    handles: ReadonlyMap<string, string> = new Map()
+  ) {
     this.index = index
-    this.op = op
+    this.op = { ...op }
+    const resolve = (value: unknown): unknown => {
+      if (typeof value !== 'string' || !value.startsWith('$')) return value
+      const id = handles.get(value)
+      if (id === undefined) {
+        throw new OperationError(
+          index,
+          `"${value}" is not a handle made earlier in this call: give the element "as": "${value}" when it is added`
+        )
+      }
+      return id
+    }
+    for (const key of REFERENCE_KEYS) {
+      const value = this.op[key]
+      if (value !== undefined)
+        this.op[key] = Array.isArray(value) ? value.map(resolve) : resolve(value)
+    }
   }
   fail(message: string): never {
     throw new OperationError(this.index, message)
@@ -258,6 +287,8 @@ export class Model {
   readonly options: ApplyOptions
   // Files the operations asked the caller to write (notes), in the order they were asked for.
   readonly files: ProducedFile[] = []
+  // The handles made so far in this call, and the ids they stand for. Never part of the diagram.
+  readonly handles = new Map<string, string>()
   constructor(diagram: DiagramFile, options: ApplyOptions) {
     this.diagram = diagram
     this.nodes = diagram.nodes
@@ -293,17 +324,32 @@ export class Model {
     }
     return false
   }
-  freshId(reader: Reader, prefix: string): string {
-    const given = reader.optionalString('id')
-    if (given !== undefined) {
-      if (!ID_PATTERN.test(given))
-        reader.fail('"id" may use letters, digits, ".", "_" and "-" (up to 64)')
-      if (this.has(given)) reader.fail(`"${given}" is already an id in this diagram`)
-      return given
+  // The id of something an operation makes: always the tool's own. "as" gives it a handle for the
+  // rest of the call.
+  freshId(
+    reader: Reader,
+    prefix: string,
+    taken: (id: string) => boolean = (id) => this.has(id)
+  ): string {
+    if (reader.has('id')) {
+      reader.fail(
+        'ids are made by the tool, so leave out "id"; to refer to what this makes later in the same call, give it a handle: "as": "$name"'
+      )
+    }
+    const handle = reader.optionalString('as')
+    if (handle !== undefined) {
+      if (!HANDLE_PATTERN.test(handle)) {
+        reader.fail(
+          '"as" is "$" and then letters, digits, ".", "_" or "-" (up to 32), such as "$api"'
+        )
+      }
+      if (this.handles.has(handle)) reader.fail(`"${handle}" is already a handle in this call`)
     }
     for (let attempt = 0; attempt < 5; attempt += 1) {
       const id = this.options.newId(prefix)
-      if (!this.has(id)) return id
+      if (taken(id)) continue
+      if (handle !== undefined) this.handles.set(handle, id)
+      return id
     }
     return reader.fail('could not make a unique id')
   }

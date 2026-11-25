@@ -840,7 +840,10 @@ export function applyOperations(
         `unknown op "${raw.op}" (use one of ${OPERATION_NAMES.join(', ')})`
       )
     }
-    results.push(run(model, new Reader(index, raw)))
+    const handles = model.handles.size
+    const result = run(model, new Reader(index, raw, model.handles))
+    if (model.handles.size > handles) result.as = raw.as as string
+    results.push(result)
   })
   return { diagram: copy, results, files: model.files }
 }

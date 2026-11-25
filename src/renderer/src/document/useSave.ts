@@ -20,7 +20,7 @@ import {
   type SaveAsOptions,
   type SaveAsPlan
 } from '@shared/document/saveAsCopy'
-import { derivedNotesPath } from '@shared/notes/notePaths'
+import { derivedNotesPaths, type NoteOwner } from '@shared/notes/notePaths'
 import type {
   DiagramFile,
   DiagramSecurity,
@@ -179,19 +179,21 @@ export function useSave(
       // Save As / first save: paths relative to the old location are meaningless.
       const baseline = hubBaselineRef.current
       const newLocation = baseline.path !== path
-      const notes: PlanNoteInput[] = []
+      const owners: (NoteOwner & { nodeNotesPath: string | null })[] = []
       for (const n of dropNotes ? [] : savedNodes) {
         const nodeNotesPath = typeof n.data?.notes === 'string' ? n.data.notes : null
-        const shadow = noteShadows[n.id]
-        if (nodeNotesPath === null && !shadow) continue
+        if (nodeNotesPath === null && !noteShadows[n.id]) continue
         const label = typeof n.data?.label === 'string' ? n.data.label : ''
-        notes.push({
-          nodeId: n.id,
-          desiredPath: derivedNotesPath(path, n.id, label),
-          nodeNotesPath,
-          shadow
-        })
+        owners.push({ id: n.id, label, nodeNotesPath })
       }
+      // Names are made for all the notes together, so two never end up with the same one.
+      const desiredPaths = derivedNotesPaths(path, owners)
+      const notes: PlanNoteInput[] = owners.map((o) => ({
+        nodeId: o.id,
+        desiredPath: desiredPaths.get(o.id) as string,
+        nodeNotesPath: o.nodeNotesPath,
+        shadow: noteShadows[o.id]
+      }))
       const plan = planSave({
         hubDirty: hubDirty || !!opts?.forceHub || newLocation || stagedFileRemovals.length > 0,
         newLocation,

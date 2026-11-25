@@ -400,27 +400,49 @@ test('every server tool is either behind a chd command or listed as server-only'
 // works in a folder of its own with the same file name, so what an operation stores is the same.
 
 const BUILD = [
-  { op: 'add_entity', id: 'web', label: 'Web', x: 0, y: 0 },
-  { op: 'add_entity', id: 'api', label: 'API', x: 140, y: 0, width: 150 },
-  { op: 'add_container', id: 'zone', label: 'Zone', x: -20, y: -40, width: 500, height: 200 },
-  { op: 'connect', id: 'calls', from: 'web', to: 'api', label: 'a long label for a short gap' },
-  { op: 'add_connection_point', id: 'api', side: 'bottom', offset: 0.25, pointId: 'low' },
-  { op: 'set_tag', id: 'api', key: 'owner', value: 'platform' },
-  { op: 'set_note', id: 'api', text: '# API\nTakes requests.' },
-  { op: 'add_new_linked_diagram', id: 'api', name: 'API internals' },
-  { op: 'add_entity', id: 'db', label: 'DB', x: 300, y: 300 },
-  { op: 'connect', id: 'reads', from: 'api', to: 'db' },
-  { op: 'set_edge_points', id: 'reads', points: [{ x: 215, y: 250 }], routing: 'step' },
-  { op: 'route_edges', ids: ['reads'] }
+  { op: 'add_entity', as: '$web', label: 'Web', x: 0, y: 0 },
+  { op: 'add_entity', as: '$api', label: 'API', x: 140, y: 0, width: 150 },
+  { op: 'add_container', as: '$zone', label: 'Zone', x: -20, y: -40, width: 500, height: 200 },
+  { op: 'connect', as: '$calls', from: '$web', to: '$api', label: 'a long label for a short gap' },
+  { op: 'add_connection_point', id: '$api', side: 'bottom', offset: 0.25, pointId: 'low' },
+  { op: 'set_tag', id: '$api', key: 'owner', value: 'platform' },
+  { op: 'set_note', id: '$api', text: '# API\nTakes requests.' },
+  { op: 'add_new_linked_diagram', id: '$api', name: 'API internals' },
+  { op: 'add_entity', as: '$db', label: 'DB', x: 300, y: 300 },
+  { op: 'connect', as: '$reads', from: '$api', to: '$db' },
+  { op: 'set_edge_points', id: '$reads', points: [{ x: 215, y: 250 }], routing: 'step' },
+  { op: 'route_edges', ids: ['$reads'] }
 ]
+
+// The tool makes every id, so the two front doors make different ones for the same build. What they
+// must agree on is everything else: the ids are compared by where they first appear, and the six
+// characters of an id that end a note's file name by what they are.
+const ID_FORM =
+  /\b(entity|container|text|edge|stencil|line|legend)-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/g
+const sameShape = (text) => {
+  const seen = new Map()
+  return (
+    text
+      .replace(ID_FORM, (id, type) => {
+        if (!seen.has(id)) seen.set(id, `${type}-#${seen.size + 1}`)
+        return seen.get(id)
+      })
+      .replace(/-[0-9a-f]{6}\.md\b/g, '-TAIL.md')
+      // A fingerprint is of the bytes, and the bytes hold the ids.
+      .replace(/"fingerprint":"[0-9a-f]{64}"/g, '"fingerprint":"#"')
+  )
+}
+// What a call made, by the handle it was given.
+const madeBy = (result) =>
+  Object.fromEntries(result.results.filter((r) => r.as).map((r) => [r.as.slice(1), r.element.id]))
 
 const sameAs = (served, fromCli) => {
   const { path: servedPath, ...rest } = asJson(served)
   const { path: cliPath, ...cliRest } = fromCli
   assert.ok(servedPath && cliPath)
   // A warning names the file: the server's is in the folder srv, the command line's is in its own.
-  const unprefixed = JSON.parse(JSON.stringify(rest).replaceAll('srv/', ''))
-  assert.deepEqual(unprefixed, cliRest)
+  const unprefixed = JSON.parse(sameShape(JSON.stringify(rest).replaceAll('srv/', '')))
+  assert.deepEqual(unprefixed, JSON.parse(sameShape(JSON.stringify(cliRest))))
 }
 
 let cliDir
@@ -437,46 +459,53 @@ test('chd edit and edit_diagram give the same answer and write the same bytes, c
   assert.equal(fromCli.status, 0, fromCli.stderr)
   const served = tools.edit_diagram({ path: 'srv/shop.chd', operations: BUILD })
   sameAs(served, JSON.parse(fromCli.stdout))
-  assert.deepEqual(
-    readFileSync(join(dir, 'srv', 'shop.chd')),
-    readFileSync(join(cliDir, 'shop.chd'))
+  assert.equal(
+    sameShape(readFileSync(join(dir, 'srv', 'shop.chd'), 'utf8')),
+    sameShape(readFileSync(join(cliDir, 'shop.chd'), 'utf8'))
   )
-  const note = JSON.parse(readFileSync(join(cliDir, 'shop.chd'), 'utf8')).nodes.find(
-    (n) => n.id === 'api'
-  ).data.notes
-  assert.deepEqual(readFileSync(join(dir, 'srv', note)), readFileSync(join(cliDir, note)))
+  const noteOf = (folder) =>
+    JSON.parse(readFileSync(join(folder, 'shop.chd'), 'utf8')).nodes.find(
+      (n) => n.data.label === 'API'
+    ).data.notes
+  assert.deepEqual(
+    readFileSync(join(dir, 'srv', noteOf(join(dir, 'srv')))),
+    readFileSync(join(cliDir, noteOf(cliDir)))
+  )
   assert.ok(served.issues.length > 0, 'the build has layout problems to compare')
 
-  const more = [
-    { op: 'move', id: 'web', x: 10, y: 10 },
-    { op: 'set_label', id: 'web', label: 'Web app' }
+  const more = (ids) => [
+    { op: 'move', id: ids.web, x: 10, y: 10 },
+    { op: 'set_label', id: ids.web, label: 'Web app' }
   ]
   const nextCli = runCli(
     ['edit', 'shop.chd', '--base', JSON.parse(fromCli.stdout).fingerprint],
-    JSON.stringify(more)
+    JSON.stringify(more(madeBy(JSON.parse(fromCli.stdout))))
   )
   assert.equal(nextCli.status, 0, nextCli.stderr)
   const nextServed = tools.edit_diagram({
     path: 'srv/shop.chd',
-    operations: more,
+    operations: more(madeBy(asJson(served))),
     base_fingerprint: served.fingerprint
   })
   sameAs(nextServed, JSON.parse(nextCli.stdout))
 })
 
 test('chd edit and edit_diagram refuse a bad operation, a stale base and a stored path outside the folder alike', () => {
-  const refusals = [[{ op: 'connect', from: 'web', to: 'ghost' }]]
-  const setup = [{ op: 'add_entity', id: 'web', label: 'Web', x: 0, y: 0 }]
-  const cliBase = JSON.parse(runCli(['edit', 'shop.chd'], JSON.stringify(setup)).stdout).fingerprint
+  const refusals = [(ids) => [{ op: 'connect', from: ids.web, to: 'ghost' }]]
+  const setup = [{ op: 'add_entity', as: '$web', label: 'Web', x: 0, y: 0 }]
+  const cliFirst = JSON.parse(runCli(['edit', 'shop.chd'], JSON.stringify(setup)).stdout)
+  const cliBase = cliFirst.fingerprint
   const served = tools.edit_diagram({ path: 'srv/shop.chd', operations: setup })
-  for (const operations of refusals) {
-    const cliRun = runCli(['edit', 'shop.chd', '--base', cliBase], JSON.stringify(operations))
+  const cliIds = madeBy(cliFirst)
+  const servedIds = madeBy(asJson(served))
+  for (const refusal of refusals) {
+    const cliRun = runCli(['edit', 'shop.chd', '--base', cliBase], JSON.stringify(refusal(cliIds)))
     assert.equal(cliRun.status, 1)
     let message = ''
     try {
       tools.edit_diagram({
         path: 'srv/shop.chd',
-        operations,
+        operations: refusal(servedIds),
         base_fingerprint: served.fingerprint
       })
     } catch (error) {
@@ -491,15 +520,20 @@ test('chd edit and edit_diagram refuse a bad operation, a stale base and a store
   }
   // A path that leads out of the folder is refused by both, naming the path (the words about the
   // folder differ: the server's is the one the person chose).
-  const outside = [{ op: 'link_to_existing_diagram', id: 'web', path: '../../outside.chd' }]
-  const cliOutside = runCli(['edit', 'shop.chd', '--base', cliBase], JSON.stringify(outside))
+  const outside = (ids) => [
+    { op: 'link_to_existing_diagram', id: ids.web, path: '../../outside.chd' }
+  ]
+  const cliOutside = runCli(
+    ['edit', 'shop.chd', '--base', cliBase],
+    JSON.stringify(outside(cliIds))
+  )
   assert.equal(cliOutside.status, 1)
   assert.ok(cliOutside.stderr.includes('../../outside.chd'))
   assert.throws(
     () =>
       tools.edit_diagram({
         path: 'srv/shop.chd',
-        operations: outside,
+        operations: outside(servedIds),
         base_fingerprint: served.fingerprint
       }),
     /\.\.\/\.\.\/outside\.chd/
@@ -518,16 +552,19 @@ test('chd ask inspect and inspect_diagram give the same answer, with and without
 })
 
 test('chd ask inspect and inspect_diagram give the same narrowed answers', () => {
-  runCli(['edit', 'shop.chd'], JSON.stringify(BUILD))
-  tools.edit_diagram({ path: 'srv/shop.chd', operations: BUILD })
+  const cliIds = madeBy(JSON.parse(runCli(['edit', 'shop.chd'], JSON.stringify(BUILD)).stdout))
+  const servedIds = madeBy(asJson(tools.edit_diagram({ path: 'srv/shop.chd', operations: BUILD })))
   const cases = [
-    [['--issues-only'], { issues_only: true }],
-    [['--ids', 'api,reads,nope'], { ids: ['api', 'reads', 'nope'] }],
-    [['--container', 'zone'], { container: 'zone' }]
+    [() => ['--issues-only'], () => ({ issues_only: true })],
+    [
+      (ids) => ['--ids', `${ids.api},${ids.reads},nope`],
+      (ids) => ({ ids: [ids.api, ids.reads, 'nope'] })
+    ],
+    [(ids) => ['--container', ids.zone], (ids) => ({ container: ids.zone })]
   ]
   for (const [flags, args] of cases) {
-    const fromCli = JSON.parse(runCli(['ask', 'inspect', 'shop.chd', ...flags]).stdout)
-    sameAs(tools.inspect_diagram({ path: 'srv/shop.chd', ...args }), fromCli)
+    const fromCli = JSON.parse(runCli(['ask', 'inspect', 'shop.chd', ...flags(cliIds)]).stdout)
+    sameAs(tools.inspect_diagram({ path: 'srv/shop.chd', ...args(servedIds) }), fromCli)
   }
 })
 

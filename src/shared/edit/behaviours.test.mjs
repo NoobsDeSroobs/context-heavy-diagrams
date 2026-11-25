@@ -5,10 +5,11 @@ import test from 'node:test'
 import { createEmptyDiagram, parseDiagram, serializeDiagram } from '../diagram/index.ts'
 import { describeDiagram } from './inspect.ts'
 import { applyOperations } from './operations.ts'
+import { applyNamed } from './testNames.mjs'
 
 let counter = 0
 const options = { newId: (prefix) => `${prefix}-${(counter += 1)}` }
-const run = (diagram, ...ops) => applyOperations(diagram, ops, options)
+const run = (diagram, ...ops) => applyNamed(applyOperations, diagram, ops, options)
 const start = () => createEmptyDiagram()
 
 function assertRoundTrips(diagram) {
@@ -19,9 +20,9 @@ function assertRoundTrips(diagram) {
 test('add_behaviour makes a behaviour of the kind with its own size and default label; a bad kind lists the kinds', () => {
   const { diagram, results } = run(
     start(),
-    { op: 'add_container', id: 'lane', label: 'Sales', x: 0, y: 0, width: 400, height: 200 },
-    { op: 'add_behaviour', id: 'go', kind: 'event-start', x: 20, y: 40, parent: 'lane' },
-    { op: 'add_behaviour', id: 'do', label: 'Check order', x: 100, y: 40, parent: 'lane' }
+    { op: 'add_container', as: '$lane', label: 'Sales', x: 0, y: 0, width: 400, height: 200 },
+    { op: 'add_behaviour', as: '$go', kind: 'event-start', x: 20, y: 40, parent: 'lane' },
+    { op: 'add_behaviour', as: '$do', label: 'Check order', x: 100, y: 40, parent: 'lane' }
   )
   const [, go, doIt] = diagram.nodes
   assert.deepEqual(go.data, { label: 'Start', kind: 'event-start' })
@@ -47,8 +48,8 @@ test('add_behaviour makes a behaviour of the kind with its own size and default 
 test('a behaviour can be connected, moved, resized, restyled, linked and removed; no note, no tag', () => {
   const { diagram } = run(
     start(),
-    { op: 'add_behaviour', id: 'a', x: 0, y: 0 },
-    { op: 'add_behaviour', id: 'b', kind: 'branch-exclusive', x: 300, y: 0 },
+    { op: 'add_behaviour', as: '$a', x: 0, y: 0 },
+    { op: 'add_behaviour', as: '$b', kind: 'branch-exclusive', x: 300, y: 0 },
     { op: 'connect', from: 'a', to: 'b' },
     { op: 'move', id: 'b', x: 320, y: 10 },
     { op: 'resize', id: 'a', width: 200 },
@@ -72,8 +73,8 @@ test('a behaviour can be connected, moved, resized, restyled, linked and removed
 test('a required tag is not put on a behaviour', () => {
   const { diagram } = run(
     start(),
-    { op: 'add_behaviour', id: 'a', x: 0, y: 0 },
-    { op: 'add_entity', id: 'e', x: 200, y: 0 },
+    { op: 'add_behaviour', as: '$a', x: 0, y: 0 },
+    { op: 'add_entity', as: '$e', x: 200, y: 0 },
     { op: 'set_required_tag', key: 'owner' }
   )
   assert.equal(diagram.nodes[0].metadata, undefined)
@@ -83,10 +84,10 @@ test('a required tag is not put on a behaviour', () => {
 test("set_behaviour_kind swaps the kind; the label and size follow only while they are the old kind's own", () => {
   const before = run(
     start(),
-    { op: 'add_behaviour', id: 'a', kind: 'branch-exclusive', x: 100, y: 100 },
+    { op: 'add_behaviour', as: '$a', kind: 'branch-exclusive', x: 100, y: 100 },
     {
       op: 'add_behaviour',
-      id: 'b',
+      as: '$b',
       kind: 'branch-exclusive',
       label: 'Paid?',
       x: 200,
@@ -114,7 +115,7 @@ test("set_behaviour_kind swaps the kind; the label and size follow only while th
     () =>
       run(
         start(),
-        { op: 'add_entity', id: 'e', x: 0, y: 0 },
+        { op: 'add_entity', as: '$e', x: 0, y: 0 },
         { op: 'set_behaviour_kind', id: 'e', kind: 'step' }
       ),
     /not a behaviour/
@@ -124,10 +125,10 @@ test("set_behaviour_kind swaps the kind; the label and size follow only while th
 test('set_label_position moves the label of a small behaviour or a container; the default is stored as nothing', () => {
   const base = run(
     start(),
-    { op: 'add_behaviour', id: 'd', kind: 'branch-exclusive', x: 0, y: 0 },
-    { op: 'add_behaviour', id: 's', x: 100, y: 0 },
-    { op: 'add_container', id: 'lane', label: 'L', x: 0, y: 200 },
-    { op: 'add_entity', id: 'e', x: 0, y: 500 }
+    { op: 'add_behaviour', as: '$d', kind: 'branch-exclusive', x: 0, y: 0 },
+    { op: 'add_behaviour', as: '$s', x: 100, y: 0 },
+    { op: 'add_container', as: '$lane', label: 'L', x: 0, y: 200 },
+    { op: 'add_entity', as: '$e', x: 0, y: 500 }
   ).diagram
   const set = (diagram, id, position, offset) =>
     run(diagram, { op: 'set_label_position', id, position, ...(offset ? { offset } : {}) }).diagram
@@ -158,8 +159,8 @@ test('set_label_position moves the label of a small behaviour or a container; th
   )
   const made = run(
     start(),
-    { op: 'add_container', id: 'c', label: 'C', x: 0, y: 0, labelPosition: 'right' },
-    { op: 'add_behaviour', id: 'g', kind: 'event-end', x: 0, y: 0, labelPosition: 'above' }
+    { op: 'add_container', as: '$c', label: 'C', x: 0, y: 0, labelPosition: 'right' },
+    { op: 'add_behaviour', as: '$g', kind: 'event-end', x: 0, y: 0, labelPosition: 'above' }
   ).diagram
   assert.equal(made.nodes[0].data.labelPosition, 'right')
   assert.equal(made.nodes[1].data.labelPosition, 'above')
@@ -168,21 +169,21 @@ test('set_label_position moves the label of a small behaviour or a container; th
 test('inspect says the kind and label position of an element and the route of an edge that crosses a container', () => {
   const { diagram } = run(
     start(),
-    { op: 'add_container', id: 'sales', label: 'Sales', x: 0, y: 0, width: 300, height: 200 },
-    { op: 'add_container', id: 'fin', label: 'Finance', x: 400, y: 0, width: 300, height: 200 },
-    { op: 'add_behaviour', id: 'a', x: 20, y: 60, parent: 'sales' },
+    { op: 'add_container', as: '$sales', label: 'Sales', x: 0, y: 0, width: 300, height: 200 },
+    { op: 'add_container', as: '$fin', label: 'Finance', x: 400, y: 0, width: 300, height: 200 },
+    { op: 'add_behaviour', as: '$a', x: 20, y: 60, parent: 'sales' },
     {
       op: 'add_behaviour',
-      id: 'b',
+      as: '$b',
       kind: 'event-end',
       x: 500,
       y: 60,
       parent: 'fin',
       labelPosition: 'above'
     },
-    { op: 'add_behaviour', id: 'c', x: 200, y: 400 },
-    { op: 'connect', id: 'e1', from: 'a', to: 'b' },
-    { op: 'connect', id: 'e2', from: 'a', to: 'c' }
+    { op: 'add_behaviour', as: '$c', x: 200, y: 400 },
+    { op: 'connect', as: '$e1', from: 'a', to: 'b' },
+    { op: 'connect', as: '$e2', from: 'a', to: 'c' }
   )
   const described = describeDiagram(diagram)
   const node = (id) => described.nodes.find((n) => n.id === id)
@@ -194,8 +195,8 @@ test('inspect says the kind and label position of an element and the route of an
   assert.equal(edge('e2').crossing, 'Sales → outside')
   const inside = run(
     diagram,
-    { op: 'add_behaviour', id: 'a2', x: 150, y: 60, parent: 'sales' },
-    { op: 'connect', id: 'e3', from: 'a', to: 'a2' }
+    { op: 'add_behaviour', as: '$a2', x: 150, y: 60, parent: 'sales' },
+    { op: 'connect', as: '$e3', from: 'a', to: 'a2' }
   ).diagram
   assert.equal(describeDiagram(inside).edges.find((e) => e.id === 'e3').crossing, undefined)
 })
@@ -203,10 +204,10 @@ test('inspect says the kind and label position of an element and the route of an
 test('an end says how it finished and how far it reaches; the defaults are stored as nothing', () => {
   const { diagram, results } = run(
     start(),
-    { op: 'add_behaviour', id: 'ok', kind: 'event-end', x: 0, y: 0 },
+    { op: 'add_behaviour', as: '$ok', kind: 'event-end', x: 0, y: 0 },
     {
       op: 'add_behaviour',
-      id: 'bad',
+      as: '$bad',
       kind: 'event-end',
       x: 100,
       y: 0,
@@ -227,7 +228,7 @@ test('an end says how it finished and how far it reaches; the defaults are store
     /warnings/
   )
   assert.throws(() => run(diagram, { op: 'set_behaviour_ending', id: 'ok' }), /outcome/)
-  const { diagram: withStep } = run(start(), { op: 'add_behaviour', id: 's', x: 0, y: 0 })
+  const { diagram: withStep } = run(start(), { op: 'add_behaviour', as: '$s', x: 0, y: 0 })
   assert.throws(
     () => run(withStep, { op: 'set_behaviour_ending', id: 's', outcome: 'failed' }),
     /not an end/
@@ -235,13 +236,19 @@ test('an end says how it finished and how far it reaches; the defaults are store
 })
 
 test('a file that calls the human step step-user is read as step-human and written so', () => {
-  const { diagram } = run(start(), { op: 'add_behaviour', id: 'h', kind: 'step-human', x: 0, y: 0 })
+  const { diagram } = run(start(), {
+    op: 'add_behaviour',
+    as: '$h',
+    kind: 'step-human',
+    x: 0,
+    y: 0
+  })
   const old = serializeDiagram(diagram).replace('"step-human"', '"step-user"')
   assert.equal(parseDiagram(old).nodes[0].data.kind, 'step-human')
   assert.match(serializeDiagram(parseDiagram(old)), /"step-human"/)
   const { diagram: viaOld } = run(start(), {
     op: 'add_behaviour',
-    id: 'h',
+    as: '$h',
     kind: 'step-user',
     x: 0,
     y: 0
@@ -252,8 +259,8 @@ test('a file that calls the human step step-user is read as step-human and writt
 test('an event says whether it starts a flow; the default is stored as nothing and only some kinds have it', () => {
   const { diagram, results } = run(
     start(),
-    { op: 'add_behaviour', id: 't', kind: 'event-timer', x: 0, y: 0, flowPosition: 'start' },
-    { op: 'add_behaviour', id: 'm', kind: 'event-message', x: 100, y: 0 },
+    { op: 'add_behaviour', as: '$t', kind: 'event-timer', x: 0, y: 0, flowPosition: 'start' },
+    { op: 'add_behaviour', as: '$m', kind: 'event-message', x: 100, y: 0 },
     { op: 'set_behaviour_position', id: 'm', position: 'start' },
     { op: 'set_behaviour_position', id: 't', position: 'in-flow' }
   )
@@ -268,8 +275,8 @@ test('an event says whether it starts a flow; the default is stored as nothing a
   )
   const { diagram: other } = run(
     start(),
-    { op: 'add_behaviour', id: 's', kind: 'event-start', x: 0, y: 0 },
-    { op: 'add_behaviour', id: 'e', kind: 'event-end', x: 0, y: 0 }
+    { op: 'add_behaviour', as: '$s', kind: 'event-start', x: 0, y: 0 },
+    { op: 'add_behaviour', as: '$e', kind: 'event-end', x: 0, y: 0 }
   )
   assert.throws(
     () => run(other, { op: 'set_behaviour_position', id: 's', position: 'start' }),

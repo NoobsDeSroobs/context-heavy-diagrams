@@ -4,11 +4,21 @@ import test from 'node:test'
 import { createEmptyDiagram } from '../diagram/index.ts'
 import { effectiveConnectionPoints } from '../geometry/connectionPoints.ts'
 import { applyOperations } from './operations.ts'
+import { applyNamed } from './testNames.mjs'
 
-const run = (diagram, ...ops) => applyOperations(diagram, ops, { newId: (p) => p })
+let counter = 0
+const run = (diagram, ...ops) =>
+  applyNamed(applyOperations, diagram, ops, { newId: (p) => `${p}-${(counter += 1)}` })
 const build = (...ops) => run(createEmptyDiagram(), ...ops).diagram
-const entity = (id, x, y, extra = {}) => ({ op: 'add_entity', id, label: id, x, y, ...extra })
-const connect = (id, from, to, extra = {}) => ({ op: 'connect', id, from, to, ...extra })
+const entity = (id, x, y, extra = {}) => ({
+  op: 'add_entity',
+  as: `$${id}`,
+  label: id,
+  x,
+  y,
+  ...extra
+})
+const connect = (id, from, to, extra = {}) => ({ op: 'connect', as: `$${id}`, from, to, ...extra })
 const nodeOf = (d, id) => d.nodes.find((n) => n.id === id)
 const edgeOf = (d, id) => d.edges.find((e) => e.id === id)
 const pointOf = (d, nodeId, handle) =>

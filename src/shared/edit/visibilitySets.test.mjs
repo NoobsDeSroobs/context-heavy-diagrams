@@ -10,10 +10,11 @@ import { createEmptyDiagram, parseDiagram, serializeDiagram } from '../diagram/i
 import { describeDiagram } from './inspect.ts'
 import { OPERATIONS_HELP } from './help.ts'
 import { applyOperations, OPERATION_NAMES, OperationError } from './operations.ts'
+import { applyNamed } from './testNames.mjs'
 
 let counter = 0
 const options = { newId: (prefix) => `${prefix}-${(counter += 1)}` }
-const run = (diagram, ...ops) => applyOperations(diagram, ops, options)
+const run = (diagram, ...ops) => applyNamed(applyOperations, diagram, ops, options)
 
 function assertValid(diagram) {
   const dir = mkdtempSync(join(tmpdir(), 'chd-sets-'))
@@ -37,9 +38,9 @@ const refused = (diagram, op, pattern) =>
 const base = () =>
   run(
     createEmptyDiagram(),
-    { op: 'add_entity', id: 'api', label: 'API', x: 0, y: 0 },
-    { op: 'add_entity', id: 'db', label: 'DB', x: 300, y: 0 },
-    { op: 'connect', id: 'e1', from: 'api', to: 'db', label: 'reads' }
+    { op: 'add_entity', as: '$api', label: 'API', x: 0, y: 0 },
+    { op: 'add_entity', as: '$db', label: 'DB', x: 300, y: 0 },
+    { op: 'connect', as: '$e1', from: 'api', to: 'db', label: 'reads' }
   ).diagram
 
 test('a set is made by name, and the answer says what it made', () => {
