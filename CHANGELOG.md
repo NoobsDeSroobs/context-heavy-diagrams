@@ -14,6 +14,7 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 ### Changed
 
+- **A note's file name ends in six characters, not a whole UUID.** A note is now `<label>-6789ab.md`, and an assistant writing a note gets exactly the name the editor would give it (`set_note` no longer takes a `name`, and the type prefix of an id never reaches the file name). Notes that already exist are renamed the next time their diagram is saved. [Why](docs/decisions/0060-detail-file-naming-convention.md).
 - **Pointed arrowheads keep their tip.** The line now stops just short of a filled arrow or diamond, so the tip is no longer blunted by the end of a thick line. Drawn the same way in the SVG and image exports ([ADR 0197](docs/decisions/0197-pointed-arrowheads-keep-their-tip-and-lines-carry-a-thickness.md)).
 
 ### Fixed

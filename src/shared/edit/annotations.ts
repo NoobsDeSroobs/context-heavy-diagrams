@@ -12,7 +12,8 @@ import type {
   MetadataEntry,
   RequiredTagDefinition
 } from '../diagram/index.ts'
-import { firstFreeName, labelToFileStem, truncateStem } from '../labelFileName.ts'
+import { firstFreeName, labelToFileStem } from '../labelFileName.ts'
+import { derivedNoteFileNames } from '../notes/notePaths.ts'
 import { highlightId } from '../tagging/highlights.ts'
 import { withNewEdgeLine } from '../legend/newEdgeLine.ts'
 import { seedMetadata, syncElementMetadata } from '../tagging/metadataSync.ts'
@@ -499,20 +500,26 @@ function removeLink(model: Model, reader: Reader): OperationResult {
   return { op: 'remove_link', element: { id: node.id }, removed: [was] }
 }
 
-// "<first line of the label, or of the name given>-<id>.md", the app's own naming with the id in place
-// of its UUID suffix.
-function noteFileName(node: DiagramNode, name?: string): string {
-  const first = (name ?? node.data.label).split(/\r?\n/)[0]
-  const cleaned = [...first]
-    .map((c) => (c.charCodeAt(0) < 32 || '\\/:*?"<>|'.includes(c) ? ' ' : c))
-    .join('')
-    .replace(/\s+/g, ' ')
-    .trim()
-  const base = truncateStem(cleaned).replace(/^[. ]+|[. ]+$/g, '')
-  return `${base || 'note'}-${node.id}.md`
+// The file name of a note is the editor's own (ADR 0060, notes/notePaths.ts), made for the notes the
+// diagram has and this one together; no operation takes a name for a note file. Another note that
+// already points at the name takes the next free number.
+function noteFileName(model: Model, node: DiagramNode, folder: string): string {
+  const owners = model.nodes
+    .filter((n) => n.data.notes || n.id === node.id)
+    .map((n) => ({ id: n.id, label: n.data.label }))
+  const name = derivedNoteFileNames(owners).get(node.id) as string
+  const used = new Set(model.nodes.map((n) => n.data.notes?.toLowerCase()))
+  return firstFreeName(name.slice(0, -'.md'.length), '.md', (n) =>
+    used.has(`${folder}/${n}`.toLowerCase())
+  )
 }
 
 function setNote(model: Model, reader: Reader): OperationResult {
+  if (reader.has('name')) {
+    reader.fail(
+      'a note\'s file name is made from the element\'s label: leave out "name" (set_label changes the label)'
+    )
+  }
   const node = linkable(model, reader, true)
   const text = nonBlank(reader, 'text')
   if (text.length > MAX_NOTE_CHARS)
@@ -524,7 +531,7 @@ function setNote(model: Model, reader: Reader): OperationResult {
   }
   const folder = model.options.notesFolder
   if (folder === undefined) reader.fail('notes cannot be written here')
-  const path = `${folder}/${noteFileName(node, reader.optionalString('name'))}`
+  const path = `${folder}/${noteFileName(model, node, folder)}`
   const refusal = model.options.checkReference?.(path)
   if (refusal) reader.fail(refusal)
   model.files.push({ path, content: text.endsWith('\n') ? text : `${text}\n` })

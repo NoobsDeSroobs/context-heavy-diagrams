@@ -340,14 +340,8 @@ test('a note is a Markdown file the caller writes, named after the label and the
     /notes cannot be written here/
   )
 
-  // A long label makes an unwieldy file name; the name given stands in for it.
-  const named = run(base(), {
-    op: 'set_note',
-    id: 'db',
-    name: 'Database: why Postgres?',
-    text: 'x'
-  })
-  assert.equal(named.results[0].note, 'd/notes/Database why Postgres-db.md')
+  // The tool makes the file name from the element's label; the caller cannot give one.
+  refused(base(), { op: 'set_note', id: 'db', name: 'Database', text: 'x' }, /leave out "name"/)
 
   // Removing the note drops the reference only; the file is never deleted.
   const removed = run(diagram, { op: 'remove_note', id: 'api' })
@@ -361,11 +355,29 @@ test('a note file name is safe whatever the label says', () => {
   const name = (label, id = 'n') =>
     run(start(), { op: 'add_entity', id, label, x: 0, y: 0 }, { op: 'set_note', id, text: 'x' })
       .files[0].path
-  assert.equal(name('What/Why: "both"?'), 'd/notes/What Why both-n.md')
-  assert.equal(name('..'), 'd/notes/note-n.md')
-  assert.equal(name(''), 'd/notes/note-n.md')
+  assert.equal(name('What/Why: "both"?'), 'd/notes/What-Why- -both---n.md')
+  assert.equal(name('..'), 'd/notes/untitled-n.md')
+  assert.equal(name(''), 'd/notes/untitled-n.md')
   assert.equal(name('First line\nsecond line'), 'd/notes/First line-n.md')
   assert.equal(name('x'.repeat(100)), `d/notes/${'x'.repeat(60)}-n.md`)
+})
+
+test('an assistant names a note exactly as the editor does, and two notes never share a name', () => {
+  const uuid = (last) => `3f9a1b2c-4d5e-4f60-8a7b-${last}`
+  const a = `entity-${uuid('0123456789ab')}`
+  const b = `entity-${uuid('ffff006789ab')}`
+  const { results } = run(
+    start(),
+    { op: 'add_entity', id: a, label: 'Queue', x: 0, y: 0 },
+    { op: 'add_entity', id: b, label: 'Queue', x: 200, y: 0 },
+    { op: 'set_note', id: a, text: 'first' },
+    { op: 'set_note', id: b, text: 'second' }
+  )
+  const notes = results.filter((r) => r.op === 'set_note').map((r) => r.note)
+  // The editor's rule (notes/notePaths.ts): the label, then the last six characters of the id's UUID,
+  // and a longer tail for the second note because the six are the same (the first file keeps the name
+  // it was written with; the editor gives it the longer one on its next save).
+  assert.deepEqual(notes, ['d/notes/Queue-6789ab.md', 'd/notes/Queue-006789ab.md'])
 })
 
 test('a failing operation after a note changes nothing and asks for no file', () => {
