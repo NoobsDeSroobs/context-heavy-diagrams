@@ -8,10 +8,20 @@ import { flattenPath } from '../geometry/pathSampling.ts'
 import { segmentHits } from './edgeRouting.ts'
 import { layoutIssues } from './inspect.ts'
 import { applyOperations } from './operations.ts'
+import { applyNamed } from './testNames.mjs'
 
-const run = (diagram, ...ops) => applyOperations(diagram, ops, { newId: (p) => p })
+let counter = 0
+const run = (diagram, ...ops) =>
+  applyNamed(applyOperations, diagram, ops, { newId: (p) => `${p}-${(counter += 1)}` })
 const build = (...ops) => run(createEmptyDiagram(), ...ops).diagram
-const entity = (id, x, y, extra = {}) => ({ op: 'add_entity', id, label: id, x, y, ...extra })
+const entity = (id, x, y, extra = {}) => ({
+  op: 'add_entity',
+  as: `$${id}`,
+  label: id,
+  x,
+  y,
+  ...extra
+})
 const across = { fromHandle: 'right', toHandle: 'left' }
 const kinds = (diagram, kind) => layoutIssues(diagram).filter((i) => i.kind === kind)
 const edgeOf = (diagram, id) => diagram.edges.find((e) => e.id === id)
@@ -22,7 +32,7 @@ const walled = () =>
     entity('a', 0, 100),
     entity('b', 500, 100),
     entity('wall', 240, 0, { width: 20, height: 300 }),
-    { op: 'connect', id: 'e', from: 'a', to: 'b', ...across }
+    { op: 'connect', as: '$e', from: 'a', to: 'b', ...across }
   )
 
 test('an edge drawn across an element is routed round it, with right angles', () => {
@@ -41,7 +51,7 @@ test('an edge drawn across an element is routed round it, with right angles', ()
 test('only the edges named are routed when ids are given', () => {
   const two = run(walled(), entity('c', 0, 400), entity('d', 500, 400), {
     op: 'connect',
-    id: 'e2',
+    as: '$e2',
     from: 'c',
     to: 'd',
     ...across
@@ -54,7 +64,7 @@ test('only the edges named are routed when ids are given', () => {
 test('an edge that is already clear is left as it is', () => {
   const clear = build(entity('a', 0, 0), entity('b', 300, 0), {
     op: 'connect',
-    id: 'e',
+    as: '$e',
     from: 'a',
     to: 'b',
     ...across
@@ -68,8 +78,8 @@ test('an edge that is already clear is left as it is', () => {
 test('an edge to a container, an unknown id and an edge to itself are not routed', () => {
   const diagram = build(
     entity('a', 0, 0),
-    { op: 'add_container', id: 'zone', label: 'Zone', x: 400, y: 0, width: 300, height: 200 },
-    { op: 'connect', id: 'toZone', from: 'a', to: 'zone', ...across }
+    { op: 'add_container', as: '$zone', label: 'Zone', x: 400, y: 0, width: 300, height: 200 },
+    { op: 'connect', as: '$toZone', from: 'a', to: 'zone', ...across }
   )
   const { results } = run(diagram, { op: 'route_edges', ids: ['toZone'] })
   assert.deepEqual(results[0].routed, [])
@@ -82,7 +92,7 @@ test("a route never runs through the edge's own elements", () => {
   // The target lies behind the source: the plain right-angled way would cross the source box.
   const diagram = build(entity('a', 300, 0), entity('b', 0, 0), {
     op: 'connect',
-    id: 'e',
+    as: '$e',
     from: 'a',
     to: 'b',
     fromHandle: 'right',
@@ -110,8 +120,8 @@ test('edges sharing one gap get lanes of their own', () => {
     entity('c', 0, 120),
     entity('d', 500, 120),
     entity('wall', 240, -60, { width: 20, height: 360 }),
-    { op: 'connect', id: 'e1', from: 'a', to: 'b', ...across },
-    { op: 'connect', id: 'e2', from: 'c', to: 'd', ...across }
+    { op: 'connect', as: '$e1', from: 'a', to: 'b', ...across },
+    { op: 'connect', as: '$e2', from: 'c', to: 'd', ...across }
   )
   const { diagram: routed } = run(diagram, { op: 'route_edges' })
   const nodes = layoutNodes(routed)

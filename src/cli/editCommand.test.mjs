@@ -22,10 +22,15 @@ const answer = (result) => {
 // A usage error, with what the command said if it was something else.
 const usageError = (result) => assert.equal(result.status, 2, result.stderr)
 
+// What a call made, by the handle it was given: { web: 'entity-…', calls: 'edge-…' }. The tool makes
+// every id; a handle only lives inside the call that made it.
+const madeBy = (result) =>
+  Object.fromEntries(result.results.filter((r) => r.as).map((r) => [r.as.slice(1), r.element.id]))
+
 const BUILD = [
-  { op: 'add_entity', id: 'web', label: 'Web', x: 0, y: 0 },
-  { op: 'add_entity', id: 'api', label: 'API', x: 320, y: 0 },
-  { op: 'connect', id: 'calls', from: 'web', to: 'api', label: 'requests' }
+  { op: 'add_entity', as: '$web', label: 'Web', x: 0, y: 0 },
+  { op: 'add_entity', as: '$api', label: 'API', x: 320, y: 0 },
+  { op: 'connect', as: '$calls', from: '$web', to: '$api', label: 'requests' }
 ]
 
 before(async () => {
@@ -45,10 +50,18 @@ test('chd edit creates a diagram, answers with what each operation made, and the
   assert.equal(result.path, 'shop.chd')
   assert.match(result.fingerprint, /^[0-9a-f]{64}$/)
   assert.deepEqual(
-    result.results.map((r) => r.element?.id),
-    ['web', 'api', 'calls']
+    result.results.map((r) => r.as),
+    ['$web', '$api', '$calls']
   )
-  assert.deepEqual(result.results[0].element, { id: 'web', x: 0, y: 0, width: 120, height: 80 })
+  const made = madeBy(result)
+  assert.match(made.web, /^entity-[0-9a-f-]{36}$/)
+  assert.match(made.calls, /^edge-[0-9a-f-]{36}$/)
+  assert.deepEqual(result.results[0].element, { id: made.web, x: 0, y: 0, width: 120, height: 80 })
+  assert.equal(
+    JSON.stringify(JSON.parse(readFileSync(join(dir, 'shop.chd'), 'utf-8'))).includes('$'),
+    false,
+    'no handle is saved'
+  )
   assert.equal(run(['hash', 'shop.chd']).stdout.trim(), result.fingerprint)
   assert.equal(run(['validate', 'shop.chd']).status, 0)
 })
@@ -62,7 +75,7 @@ test('chd edit reads the operations from a file, as a list or as {"operations": 
 
 test('a create fails if the file exists, and a change needs the fingerprint it is based on', () => {
   const first = answer(edit('shop.chd', BUILD))
-  const more = [{ op: 'add_entity', id: 'db', label: 'DB', x: 640, y: 0 }]
+  const more = [{ op: 'add_entity', as: '$db', label: 'DB', x: 640, y: 0 }]
 
   const without = edit('shop.chd', more)
   assert.equal(without.status, 2)
@@ -75,7 +88,7 @@ test('a create fails if the file exists, and a change needs the fingerprint it i
   const ok = edit('shop.chd', more, '--base', first.fingerprint)
   assert.equal(ok.status, 0, ok.stderr)
   assert.notEqual(answer(ok).fingerprint, first.fingerprint)
-  assert.match(readFileSync(join(dir, 'shop.chd'), 'utf-8'), /"db"/)
+  assert.ok(readFileSync(join(dir, 'shop.chd'), 'utf-8').includes(madeBy(answer(ok)).db))
 
   // The first fingerprint is stale now.
   assert.equal(edit('shop.chd', more, '--base', first.fingerprint).status, 1)
@@ -91,8 +104,8 @@ test('a refused operation changes nothing and says which one', () => {
   const bad = edit(
     'shop.chd',
     [
-      { op: 'add_entity', id: 'db', label: 'DB', x: 640, y: 0 },
-      { op: 'connect', from: 'db', to: 'ghost' }
+      { op: 'add_entity', as: '$db', label: 'DB', x: 640, y: 0 },
+      { op: 'connect', from: '$db', to: 'ghost' }
     ],
     '--base',
     first.fingerprint
@@ -104,20 +117,20 @@ test('a refused operation changes nothing and says which one', () => {
 
 test('notes and linked diagrams go in a folder named after the diagram, and nothing leaves the folder', () => {
   const done = edit('shop.chd', [
-    { op: 'add_entity', id: 'api', label: 'API', x: 0, y: 0 },
-    { op: 'set_note', id: 'api', text: '# API\nTakes requests.' },
-    { op: 'add_new_linked_diagram', id: 'api', name: 'API internals' }
+    { op: 'add_entity', as: '$api', label: 'API', x: 0, y: 0 },
+    { op: 'set_note', id: '$api', text: '# API\nTakes requests.' },
+    { op: 'add_new_linked_diagram', id: '$api', name: 'API internals' }
   ])
   assert.equal(done.status, 0, done.stderr)
   const diagram = JSON.parse(readFileSync(join(dir, 'shop.chd'), 'utf-8'))
-  const api = diagram.nodes.find((n) => n.id === 'api')
-  assert.match(api.data.notes, /^shop\/notes\/.+\.md$/)
+  const api = diagram.nodes.find((n) => n.data.label === 'API')
+  assert.match(api.data.notes, /^shop\/notes\/API-[0-9a-f]{6}\.md$/)
   assert.equal(readFileSync(join(dir, api.data.notes), 'utf-8'), '# API\nTakes requests.\n')
   assert.equal(api.data.linkedDiagram, 'shop/API internals.chd')
 
   const outside = edit(
     'shop.chd',
-    [{ op: 'link_to_existing_diagram', id: 'api', path: '../elsewhere.chd' }],
+    [{ op: 'link_to_existing_diagram', id: api.id, path: '../elsewhere.chd' }],
     '--base',
     answer(run(['ask', 'inspect', 'shop.chd'])).fingerprint
   )
@@ -127,11 +140,11 @@ test('notes and linked diagrams go in a folder named after the diagram, and noth
 
 test('a refused edit takes back the notes it made', () => {
   const first = answer(
-    edit('shop.chd', [{ op: 'add_entity', id: 'api', label: 'API', x: 0, y: 0 }])
+    edit('shop.chd', [{ op: 'add_entity', as: '$api', label: 'API', x: 0, y: 0 }])
   )
   const stale = edit(
     'shop.chd',
-    [{ op: 'set_note', id: 'api', text: 'x' }],
+    [{ op: 'set_note', id: madeBy(first).api, text: 'x' }],
     '--base',
     '1'.repeat(64)
   )
@@ -157,7 +170,7 @@ test('chd edit works inside the current folder, on .chd files, and says how to u
 
 test('chd ask inspect lists the elements, and --styles adds the style fields', () => {
   edit('shop.chd', [
-    { op: 'add_entity', id: 'api', label: 'API', x: 0, y: 0, style: { fill: '#ccddee' } }
+    { op: 'add_entity', as: '$api', label: 'API', x: 0, y: 0, style: { fill: '#ccddee' } }
   ])
   const plain = answer(run(['ask', 'inspect', 'shop.chd']))
   assert.equal(plain.nodes.length, 1)
@@ -169,29 +182,35 @@ test('chd ask inspect lists the elements, and --styles adds the style fields', (
 })
 
 test('chd ask inspect can be narrowed to the problems, some ids or one container', () => {
-  edit('shop.chd', [
-    { op: 'add_container', id: 'zone', label: 'Zone', x: 0, y: 0, width: 400, height: 300 },
-    { op: 'add_entity', id: 'web', label: 'Web', x: 20, y: 60, parent: 'zone' },
-    { op: 'add_entity', id: 'api', label: 'API', x: 200, y: 60, parent: 'zone' },
-    { op: 'add_entity', id: 'db', label: 'DB', x: 700, y: 60 },
-    { op: 'connect', id: 'calls', from: 'web', to: 'api' }
-  ])
+  const made = madeBy(
+    answer(
+      edit('shop.chd', [
+        { op: 'add_container', as: '$zone', label: 'Zone', x: 0, y: 0, width: 400, height: 300 },
+        { op: 'add_entity', as: '$web', label: 'Web', x: 20, y: 60, parent: '$zone' },
+        { op: 'add_entity', as: '$api', label: 'API', x: 200, y: 60, parent: '$zone' },
+        { op: 'add_entity', as: '$db', label: 'DB', x: 700, y: 60 },
+        { op: 'connect', as: '$calls', from: '$web', to: '$api' }
+      ])
+    )
+  )
   const issues = answer(run(['ask', 'inspect', 'shop.chd', '--issues-only']))
   assert.deepEqual(Object.keys(issues).sort(), ['fingerprint', 'issues', 'path'])
-  const some = answer(run(['ask', 'inspect', 'shop.chd', '--ids', 'web, calls,nope']))
+  const some = answer(
+    run(['ask', 'inspect', 'shop.chd', '--ids', `${made.web}, ${made.calls},nope`])
+  )
   assert.deepEqual(
     some.nodes.map((n) => n.id),
-    ['web']
+    [made.web]
   )
   assert.deepEqual(
     some.edges.map((e) => e.id),
-    ['calls']
+    [made.calls]
   )
   assert.deepEqual(some.unknown, ['nope'])
-  const zone = answer(run(['ask', 'inspect', 'shop.chd', '--container', 'zone']))
+  const zone = answer(run(['ask', 'inspect', 'shop.chd', '--container', made.zone]))
   assert.deepEqual(
     zone.nodes.map((n) => n.id),
-    ['zone', 'web', 'api']
+    [made.zone, made.web, made.api]
   )
   usageError(run(['ask', 'inspect', 'shop.chd', '--ids']))
   usageError(run(['ask', 'inspect', 'shop.chd', '--container']))

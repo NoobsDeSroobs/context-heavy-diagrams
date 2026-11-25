@@ -9,10 +9,11 @@ import { validateFile } from '../../../resources/ai/skills/chd-diagrams/scripts/
 import { createEmptyDiagram, parseDiagram, serializeDiagram } from '../diagram/index.ts'
 import { describeDiagram, layoutIssues, roomForLabel } from './inspect.ts'
 import { applyOperations, OperationError } from './operations.ts'
+import { applyNamed } from './testNames.mjs'
 
 let counter = 0
 const options = { newId: (prefix) => `${prefix}-${(counter += 1)}` }
-const run = (diagram, ...ops) => applyOperations(diagram, ops, options)
+const run = (diagram, ...ops) => applyNamed(applyOperations, diagram, ops, options)
 const start = () => createEmptyDiagram()
 
 // The result of a build is a valid file: serialised as the app does, it passes the validator.
@@ -63,8 +64,8 @@ test('add_entity, add_container and add_text make elements with the editor defau
 test('a child is given in absolute coordinates and stored relative to its container', () => {
   const { diagram, results } = run(
     start(),
-    { op: 'add_container', id: 'box', label: 'Box', x: 100, y: 50 },
-    { op: 'add_entity', id: 'in', label: 'In', x: 130, y: 90, parent: 'box' }
+    { op: 'add_container', as: '$box', label: 'Box', x: 100, y: 50 },
+    { op: 'add_entity', as: '$in', label: 'In', x: 130, y: 90, parent: 'box' }
   )
   assert.deepEqual(diagram.nodes[1].position, { x: 30, y: 40 })
   assert.equal(diagram.nodes[1].parentId, 'box')
@@ -76,9 +77,9 @@ test('a child is given in absolute coordinates and stored relative to its contai
 test('connect picks the facing sides, checks handles and writes a labelled edge', () => {
   const base = run(
     start(),
-    { op: 'add_entity', id: 'a', label: 'A', x: 0, y: 0 },
-    { op: 'add_entity', id: 'b', label: 'B', x: 300, y: 0 },
-    { op: 'add_entity', id: 'c', label: 'C', x: 0, y: 300 }
+    { op: 'add_entity', as: '$a', label: 'A', x: 0, y: 0 },
+    { op: 'add_entity', as: '$b', label: 'B', x: 300, y: 0 },
+    { op: 'add_entity', as: '$c', label: 'C', x: 0, y: 300 }
   ).diagram
   const { diagram, results } = run(
     base,
@@ -101,8 +102,8 @@ test('connect picks the facing sides, checks handles and writes a labelled edge'
 test('a text or a line cannot be connected', () => {
   const base = run(
     start(),
-    { op: 'add_entity', id: 'a', label: 'A', x: 0, y: 0 },
-    { op: 'add_text', id: 't', label: 'T', x: 200, y: 0 }
+    { op: 'add_entity', as: '$a', label: 'A', x: 0, y: 0 },
+    { op: 'add_text', as: '$t', label: 'T', x: 200, y: 0 }
   ).diagram
   assert.throws(
     () => run(base, { op: 'connect', from: 'a', to: 't' }),
@@ -113,8 +114,8 @@ test('a text or a line cannot be connected', () => {
 test('add_connection_point keeps the side name valid for edges that already use it', () => {
   const base = run(
     start(),
-    { op: 'add_entity', id: 'a', label: 'A', x: 0, y: 0 },
-    { op: 'add_entity', id: 'b', label: 'B', x: 300, y: 0 },
+    { op: 'add_entity', as: '$a', label: 'A', x: 0, y: 0 },
+    { op: 'add_entity', as: '$b', label: 'B', x: 300, y: 0 },
     { op: 'connect', from: 'a', to: 'b' }
   ).diagram
   const { diagram, results } = run(base, {
@@ -150,8 +151,8 @@ test('add_connection_point keeps the side name valid for edges that already use 
 test('move and reparent keep the absolute place, and a parent stays before its children', () => {
   const base = run(
     start(),
-    { op: 'add_entity', id: 'e', label: 'E', x: 120, y: 120 },
-    { op: 'add_container', id: 'c', label: 'C', x: 100, y: 100 }
+    { op: 'add_entity', as: '$e', label: 'E', x: 120, y: 120 },
+    { op: 'add_container', as: '$c', label: 'C', x: 100, y: 100 }
   ).diagram
   const { diagram, results } = run(base, { op: 'reparent', id: 'e', parent: 'c' })
   assert.deepEqual(
@@ -173,10 +174,10 @@ test('move and reparent keep the absolute place, and a parent stays before its c
 test('remove drops the edges with an element and lifts what was inside a container', () => {
   const base = run(
     start(),
-    { op: 'add_container', id: 'c', label: 'C', x: 100, y: 100 },
-    { op: 'add_entity', id: 'in', label: 'In', x: 130, y: 130, parent: 'c' },
-    { op: 'add_entity', id: 'out', label: 'Out', x: 600, y: 130 },
-    { op: 'connect', id: 'e1', from: 'in', to: 'out' }
+    { op: 'add_container', as: '$c', label: 'C', x: 100, y: 100 },
+    { op: 'add_entity', as: '$in', label: 'In', x: 130, y: 130, parent: 'c' },
+    { op: 'add_entity', as: '$out', label: 'Out', x: 600, y: 130 },
+    { op: 'connect', as: '$e1', from: 'in', to: 'out' }
   ).diagram
   const { diagram, results } = run(base, { op: 'remove', id: 'c' })
   assert.deepEqual(results[0].removed, ['c'])
@@ -192,9 +193,9 @@ test('remove drops the edges with an element and lifts what was inside a contain
 test('set_label and set_style change nodes and edges, check the fields and null removes one', () => {
   const base = run(
     start(),
-    { op: 'add_entity', id: 'a', label: 'A', x: 0, y: 0, style: { fill: '#112233' } },
-    { op: 'add_entity', id: 'b', label: 'B', x: 300, y: 0 },
-    { op: 'connect', id: 'e', from: 'a', to: 'b' }
+    { op: 'add_entity', as: '$a', label: 'A', x: 0, y: 0, style: { fill: '#112233' } },
+    { op: 'add_entity', as: '$b', label: 'B', x: 300, y: 0 },
+    { op: 'connect', as: '$e', from: 'a', to: 'b' }
   ).diagram
   const { diagram } = run(
     base,
@@ -241,10 +242,10 @@ test('add_line stores the points relative to the line and its bounding box', () 
 test('set_edge_handles moves an edge to another connection point and keeps everything else', () => {
   const base = run(
     createEmptyDiagram(),
-    { op: 'add_entity', id: 'a', label: 'A', x: 0, y: 0 },
-    { op: 'add_entity', id: 'b', label: 'B', x: 300, y: 0 },
+    { op: 'add_entity', as: '$a', label: 'A', x: 0, y: 0 },
+    { op: 'add_entity', as: '$b', label: 'B', x: 300, y: 0 },
     { op: 'add_connection_point', id: 'b', side: 'left', offset: 0.25, pointId: 'high' },
-    { op: 'connect', id: 'e', from: 'a', to: 'b', label: 'calls', tags: { owner: 'x' } }
+    { op: 'connect', as: '$e', from: 'a', to: 'b', label: 'calls', tags: { owner: 'x' } }
   ).diagram
   const moved = run(base, { op: 'set_edge_handles', id: 'e', toHandle: 'high' })
   const edge = moved.diagram.edges.find((e) => e.id === 'e')
@@ -266,9 +267,9 @@ test('set_edge_handles moves an edge to another connection point and keeps every
 test('set_edge_points replaces, clears and explains when the routing would ignore the points', () => {
   const { diagram, results } = run(
     start(),
-    { op: 'add_entity', id: 'a', label: 'A', x: 0, y: 0 },
-    { op: 'add_entity', id: 'b', label: 'B', x: 400, y: 300 },
-    { op: 'connect', id: 'e', from: 'a', to: 'b' },
+    { op: 'add_entity', as: '$a', label: 'A', x: 0, y: 0 },
+    { op: 'add_entity', as: '$b', label: 'B', x: 400, y: 300 },
+    { op: 'connect', as: '$e', from: 'a', to: 'b' },
     {
       op: 'set_edge_points',
       id: 'e',
@@ -315,13 +316,13 @@ test('set_edge_points replaces, clears and explains when the routing would ignor
 })
 
 test('a batch is all or nothing and the error names the operation', () => {
-  const base = run(start(), { op: 'add_entity', id: 'a', label: 'A', x: 0, y: 0 }).diagram
+  const base = run(start(), { op: 'add_entity', as: '$a', label: 'A', x: 0, y: 0 }).diagram
   const before = JSON.stringify(base)
   assert.throws(
     () =>
       run(
         base,
-        { op: 'add_entity', id: 'b', label: 'B', x: 5, y: 5 },
+        { op: 'add_entity', as: '$b', label: 'B', x: 5, y: 5 },
         { op: 'move', id: 'nope', x: 1, y: 1 }
       ),
     (error) =>
@@ -330,7 +331,10 @@ test('a batch is all or nothing and the error names the operation', () => {
       /operation 2: "nope"/.test(error.message)
   )
   assert.equal(JSON.stringify(base), before, 'the diagram it was given is untouched')
-  assert.throws(() => run(base, { op: 'add_entity', id: 'a', x: 1, y: 1 }), /already an id/)
+  assert.throws(
+    () => run(base, { op: 'add_entity', id: 'a', x: 1, y: 1 }),
+    /ids are made by the tool/
+  )
   assert.throws(() => run(base, { op: 'dance' }), /unknown op "dance"/)
   assert.throws(() => run(base, { op: 'add_entity', label: 'X' }), /"x" must be a number/)
 })
@@ -338,8 +342,8 @@ test('a batch is all or nothing and the error names the operation', () => {
 test('describeDiagram lists elements in absolute coordinates', () => {
   const { diagram } = run(
     start(),
-    { op: 'add_container', id: 'c', label: 'C', x: 100, y: 100 },
-    { op: 'add_entity', id: 'e', label: 'E', x: 140, y: 150, parent: 'c' }
+    { op: 'add_container', as: '$c', label: 'C', x: 100, y: 100 },
+    { op: 'add_entity', as: '$e', label: 'E', x: 140, y: 150, parent: 'c' }
   )
   const { nodes } = describeDiagram(diagram)
   assert.deepEqual(
@@ -365,15 +369,15 @@ test('roomForLabel gives the minimum and the target, by direction and end graphi
 test('layoutIssues finds a label without room, an overlap, an element sticking out and an edge over an element', () => {
   const { diagram } = run(
     start(),
-    { op: 'add_container', id: 'c', label: 'C', x: 0, y: 400, width: 200, height: 100 },
-    { op: 'add_entity', id: 'a', label: 'A', x: 0, y: 0 },
-    { op: 'add_entity', id: 'dup', label: 'Dup', x: 60, y: 30 },
-    { op: 'add_entity', id: 'b', label: 'B', x: 150, y: 0 },
-    { op: 'add_entity', id: 'mid', label: 'Mid', x: 400, y: 0 },
-    { op: 'add_entity', id: 'far', label: 'Far', x: 700, y: 0 },
-    { op: 'add_entity', id: 'out', label: 'Out', x: 150, y: 450, parent: 'c' },
-    { op: 'connect', id: 'near', from: 'a', to: 'b', label: 'reads from' },
-    { op: 'connect', id: 'over', from: 'b', to: 'far', fromHandle: 'right', toHandle: 'left' }
+    { op: 'add_container', as: '$c', label: 'C', x: 0, y: 400, width: 200, height: 100 },
+    { op: 'add_entity', as: '$a', label: 'A', x: 0, y: 0 },
+    { op: 'add_entity', as: '$dup', label: 'Dup', x: 60, y: 30 },
+    { op: 'add_entity', as: '$b', label: 'B', x: 150, y: 0 },
+    { op: 'add_entity', as: '$mid', label: 'Mid', x: 400, y: 0 },
+    { op: 'add_entity', as: '$far', label: 'Far', x: 700, y: 0 },
+    { op: 'add_entity', as: '$out', label: 'Out', x: 150, y: 450, parent: 'c' },
+    { op: 'connect', as: '$near', from: 'a', to: 'b', label: 'reads from' },
+    { op: 'connect', as: '$over', from: 'b', to: 'far', fromHandle: 'right', toHandle: 'left' }
   )
   const kinds = layoutIssues(diagram).map((issue) => issue.kind)
   assert.ok(kinds.includes('label-room'))
@@ -382,8 +386,8 @@ test('layoutIssues finds a label without room, an overlap, an element sticking o
   assert.ok(kinds.includes('edge-through-element'))
   const clean = run(
     start(),
-    { op: 'add_entity', id: 'a', label: 'A', x: 0, y: 0 },
-    { op: 'add_entity', id: 'b', label: 'B', x: 320, y: 0 },
+    { op: 'add_entity', as: '$a', label: 'A', x: 0, y: 0 },
+    { op: 'add_entity', as: '$b', label: 'B', x: 320, y: 0 },
     { op: 'connect', from: 'a', to: 'b', label: 'reads from' }
   ).diagram
   assert.deepEqual(layoutIssues(clean), [])
@@ -392,11 +396,11 @@ test('layoutIssues finds a label without room, an overlap, an element sticking o
 test('describeDiagram gives the styles only when asked for them', () => {
   const { diagram } = run(
     start(),
-    { op: 'add_entity', id: 'a', label: 'A', x: 0, y: 0, style: { fill: '#ff0000' } },
-    { op: 'add_entity', id: 'b', label: 'B', x: 300, y: 0 },
+    { op: 'add_entity', as: '$a', label: 'A', x: 0, y: 0, style: { fill: '#ff0000' } },
+    { op: 'add_entity', as: '$b', label: 'B', x: 300, y: 0 },
     {
       op: 'connect',
-      id: 'e',
+      as: '$e',
       from: 'a',
       to: 'b',
       style: { lineStyle: 'dashed', labelPosition: 0.3 }
@@ -414,10 +418,10 @@ test('describeDiagram gives the styles only when asked for them', () => {
 test('layoutIssues finds a label that does not fit its own box, and leaves a fitting one alone', () => {
   const { diagram } = run(
     start(),
-    { op: 'add_entity', id: 'ok', label: 'Orders', x: 0, y: 0 },
+    { op: 'add_entity', as: '$ok', label: 'Orders', x: 0, y: 0 },
     {
       op: 'add_entity',
-      id: 'tall',
+      as: '$tall',
       label: 'Handles every incoming request from the mobile app and the web app and the CLI',
       x: 200,
       y: 0,
@@ -426,13 +430,13 @@ test('layoutIssues finds a label that does not fit its own box, and leaves a fit
     },
     {
       op: 'add_entity',
-      id: 'wide',
+      as: '$wide',
       label: 'AbsurdlyLongIdentifierNameWithoutBreaks',
       x: 400,
       y: 0,
       width: 100
     },
-    { op: 'add_container', id: 'box', label: 'Container', x: 0, y: 200 }
+    { op: 'add_container', as: '$box', label: 'Container', x: 0, y: 200 }
   )
   const found = layoutIssues(diagram).filter((i) => i.kind === 'label-overflow')
   assert.deepEqual(found.map((i) => i.ids).sort(), [['tall'], ['wide']])
@@ -451,14 +455,14 @@ test('layoutIssues finds a label that does not fit its own box, and leaves a fit
 test('moving a container takes the points of the edges between its children along, and leaves other edges alone', () => {
   const built = run(
     start(),
-    { op: 'add_container', id: 'box', label: 'Box', x: 100, y: 100, width: 400, height: 300 },
-    { op: 'add_entity', id: 'a', label: 'A', x: 120, y: 120 },
-    { op: 'add_entity', id: 'b', label: 'B', x: 340, y: 120 },
-    { op: 'add_entity', id: 'out', label: 'Out', x: 700, y: 120 },
+    { op: 'add_container', as: '$box', label: 'Box', x: 100, y: 100, width: 400, height: 300 },
+    { op: 'add_entity', as: '$a', label: 'A', x: 120, y: 120 },
+    { op: 'add_entity', as: '$b', label: 'B', x: 340, y: 120 },
+    { op: 'add_entity', as: '$out', label: 'Out', x: 700, y: 120 },
     { op: 'reparent', id: 'a', parent: 'box' },
     { op: 'reparent', id: 'b', parent: 'box' },
-    { op: 'connect', id: 'inside', from: 'a', to: 'b' },
-    { op: 'connect', id: 'across', from: 'a', to: 'out' },
+    { op: 'connect', as: '$inside', from: 'a', to: 'b' },
+    { op: 'connect', as: '$across', from: 'a', to: 'out' },
     { op: 'set_edge_points', id: 'inside', routing: 'step', points: [{ x: 200, y: 360 }] },
     { op: 'set_edge_points', id: 'across', routing: 'step', points: [{ x: 600, y: 80 }] }
   ).diagram
@@ -467,4 +471,80 @@ test('moving a container takes the points of the edges between its children alon
   assert.deepEqual(points('inside'), [{ x: 230, y: 350 }])
   assert.deepEqual(points('across'), [{ x: 600, y: 80 }])
   assertValid(diagram)
+})
+
+test('a handle names what an operation makes, for the rest of that call only (ADR 0199)', () => {
+  const { diagram, results } = applyOperations(
+    start(),
+    [
+      { op: 'add_container', as: '$zone', label: 'Zone', x: 0, y: 0, width: 400, height: 300 },
+      { op: 'add_entity', as: '$a', label: 'A', x: 20, y: 40, parent: '$zone' },
+      { op: 'add_entity', as: '$b', label: 'B', x: 200, y: 40, parent: '$zone' },
+      { op: 'connect', as: '$ab', from: '$a', to: '$b' },
+      { op: 'set_label', id: '$ab', label: 'reads' },
+      { op: 'add_visibility_set', name: 'Today' },
+      { op: 'add_to_visibility_set', set: 'Today', ids: ['$a', '$ab'] }
+    ],
+    options
+  )
+  const [zone, a, b, ab] = results
+  // The answer ties each handle to the id the tool made, which is what a later call must use.
+  assert.deepEqual([zone.as, a.as, b.as, ab.as], ['$zone', '$a', '$b', '$ab'])
+  assert.match(zone.element.id, /^container-/)
+  assert.equal(diagram.nodes[1].parentId, zone.element.id)
+  assert.equal(diagram.edges[0].source, a.element.id)
+  assert.equal(diagram.edges[0].target, b.element.id)
+  assert.equal(diagram.edges[0].label, 'reads')
+  assert.equal(results[6].members.length, 2)
+  // A handle is never saved: the file has no trace of one.
+  assert.equal(JSON.stringify(diagram).includes('$'), false)
+  assertValid(diagram)
+
+  // Nor does it outlive the call: the next call must use the ids it was given.
+  assert.throws(
+    () => applyOperations(diagram, [{ op: 'move', id: '$a', x: 1, y: 1 }], options),
+    /"\$a" is not a handle made earlier in this call/
+  )
+  assert.doesNotThrow(() =>
+    applyOperations(diagram, [{ op: 'move', id: a.element.id, x: 1, y: 1 }], options)
+  )
+})
+
+test('a handle must be made before it is used, once, and be written as a handle', () => {
+  const made =
+    (...ops) =>
+    () =>
+      applyOperations(start(), ops, options)
+  assert.throws(
+    made({ op: 'set_label', id: '$a', label: 'x' }, { op: 'add_entity', as: '$a', x: 0, y: 0 }),
+    (error) =>
+      error instanceof OperationError &&
+      error.index === 0 &&
+      /not a handle made earlier/.test(error.message)
+  )
+  assert.throws(
+    made({ op: 'add_entity', as: '$a', x: 0, y: 0 }, { op: 'add_text', as: '$a', x: 0, y: 0 }),
+    /"\$a" is already a handle in this call/
+  )
+  assert.throws(made({ op: 'add_entity', as: 'a', x: 0, y: 0 }), /"as" is "\$" and then/)
+  assert.throws(made({ op: 'add_entity', as: '$a b', x: 0, y: 0 }), /"as" is "\$" and then/)
+  assert.throws(made({ op: 'add_entity', id: 'a', x: 0, y: 0 }), /ids are made by the tool/)
+  assert.throws(
+    made({ op: 'add_entity', as: '$a', x: 0, y: 0 }, { op: 'connect', from: '$a', to: '$gone' }),
+    /"\$gone" is not a handle/
+  )
+})
+
+test('a legend entry takes a handle too, and nothing but its own call can use it', () => {
+  const { diagram, results } = applyOperations(
+    start(),
+    [
+      { op: 'add_legend_entry', as: '$data', kind: 'line', label: 'Data' },
+      { op: 'set_legend_entry', id: '$data', label: 'Data flow' }
+    ],
+    options
+  )
+  assert.equal(results[0].as, '$data')
+  assert.equal(diagram.legend[0].label, 'Data flow')
+  assert.equal(diagram.legend[0].id, results[0].legendEntry.id)
 })

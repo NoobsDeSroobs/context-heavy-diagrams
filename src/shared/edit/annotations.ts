@@ -19,7 +19,6 @@ import { withNewEdgeLine } from '../legend/newEdgeLine.ts'
 import { seedMetadata, syncElementMetadata } from '../tagging/metadataSync.ts'
 import {
   EDGE_STYLE,
-  ID_PATTERN,
   checkedStyle,
   isRecord,
   type Model,
@@ -344,23 +343,15 @@ function addLegendEntry(model: Model, reader: Reader): OperationResult {
     reader.fail('"kind" must be "line" (a sample line) or "entity" (a coloured dot)')
   }
   const label = nonBlank(reader, 'label')
-  const fields = checkedStyle(reader, reader.rest(['op', 'id', 'kind', 'label']), LEGEND_FIELDS)
+  const fields = checkedStyle(
+    reader,
+    reader.rest(['op', 'id', 'as', 'kind', 'label']),
+    LEGEND_FIELDS
+  )
   checkLegendFields(reader, kind, fields)
-  const given = reader.optionalString('id')
-  let id = given
-  if (id !== undefined) {
-    if (!ID_PATTERN.test(id))
-      reader.fail('"id" may use letters, digits, ".", "_" and "-" (up to 64)')
-    if ((model.diagram.legend ?? []).some((e) => e.id === id)) {
-      reader.fail(`"${id}" is already a legend entry`)
-    }
-  } else {
-    for (let attempt = 0; attempt < 5 && id === undefined; attempt += 1) {
-      const candidate = model.options.newId('legend')
-      if (!(model.diagram.legend ?? []).some((e) => e.id === candidate)) id = candidate
-    }
-    if (id === undefined) reader.fail('could not make a unique id')
-  }
+  const id = model.freshId(reader, 'legend', (candidate) =>
+    (model.diagram.legend ?? []).some((e) => e.id === candidate)
+  )
   const present = Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== null))
   const entry = orderedLegend({ id, kind, label, ...present })
   model.diagram.legend = [...(model.diagram.legend ?? []), entry]

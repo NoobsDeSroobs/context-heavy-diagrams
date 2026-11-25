@@ -1,7 +1,7 @@
 # 0060: Detail file naming convention
 
 ## Status
-Accepted. Amended (2026-11-25): the tail of the name is the last six characters of the UUID, not all of it; see the Decision.
+Accepted. Amended (2026-11-25): the tail of the name is the last six characters of the UUID, not all of it; see the Decision. Amended again by [0199](0199-the-tool-makes-every-id-and-an-operation-names-what-it-makes-with-a-handle.md): an assistant cannot choose the id the name is made from.
 
 ## Context
 Detail files (free-form Markdown notes attached to a Shape/Container) were named `<node-id>.md`, e.g. `shape-3f9a1b2c-....md` — the node's own id, which is always `<type-prefix>-<uuid>`. Reported live by the user: with enough elements, it's very hard to tell which file on disk belongs to which element in the diagram, since the filename carries the element's *type* (not useful — you can already see the type from the folder structure/context) and a raw UUID (meaningless to a human), but never the element's actual label, which is the one thing a person would recognize it by.

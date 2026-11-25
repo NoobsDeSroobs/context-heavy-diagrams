@@ -14,6 +14,7 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 ### Changed
 
+- **An assistant no longer chooses ids.** The tool makes every id; the add operations (`add_entity`, `connect`, `add_legend_entry` and the rest) take `"as": "$name"` instead of `id`, a handle that later operations of the same call can use and that is never saved. An `id` on an add operation is refused. [Why](docs/decisions/0199-the-tool-makes-every-id-and-an-operation-names-what-it-makes-with-a-handle.md).
 - **A note's file name ends in six characters, not a whole UUID.** A note is now `<label>-6789ab.md`, and an assistant writing a note gets exactly the name the editor would give it (`set_note` no longer takes a `name`, and the type prefix of an id never reaches the file name). Notes that already exist are renamed the next time their diagram is saved. [Why](docs/decisions/0060-detail-file-naming-convention.md).
 - **Pointed arrowheads keep their tip.** The line now stops just short of a filled arrow or diamond, so the tip is no longer blunted by the end of a thick line. Drawn the same way in the SVG and image exports ([ADR 0197](docs/decisions/0197-pointed-arrowheads-keep-their-tip-and-lines-carry-a-thickness.md)).
 

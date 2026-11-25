@@ -5,19 +5,21 @@ import test from 'node:test'
 import { createEmptyDiagram } from '../diagram/index.ts'
 import { inspectAnswer } from './answers.ts'
 import { applyOperations } from './operations.ts'
+import { applyNamed } from './testNames.mjs'
 
 let counter = 0
 const build = () =>
-  applyOperations(
+  applyNamed(
+    applyOperations,
     createEmptyDiagram(),
     [
-      { op: 'add_container', id: 'zone', label: 'Zone', x: 0, y: 0, width: 500, height: 400 },
-      { op: 'add_entity', id: 'a', label: 'A', x: 20, y: 60, parent: 'zone' },
+      { op: 'add_container', as: '$zone', label: 'Zone', x: 0, y: 0, width: 500, height: 400 },
+      { op: 'add_entity', as: '$a', label: 'A', x: 20, y: 60, parent: 'zone' },
       // Overlaps a, so there is one problem and it involves exactly a and b.
-      { op: 'add_entity', id: 'b', label: 'B', x: 60, y: 90, parent: 'zone' },
+      { op: 'add_entity', as: '$b', label: 'B', x: 60, y: 90, parent: 'zone' },
       {
         op: 'add_container',
-        id: 'inner',
+        as: '$inner',
         label: 'Inner',
         x: 250,
         y: 200,
@@ -25,13 +27,13 @@ const build = () =>
         height: 160,
         parent: 'zone'
       },
-      { op: 'add_entity', id: 'c', label: 'C', x: 270, y: 240, parent: 'inner' },
-      { op: 'add_entity', id: 'out', label: 'Out', x: 800, y: 0 },
-      { op: 'add_entity', id: 'out2', label: 'Out 2', x: 800, y: 300 },
-      { op: 'connect', id: 'ab', from: 'a', to: 'b' },
-      { op: 'connect', id: 'bo', from: 'b', to: 'out' },
-      { op: 'connect', id: 'co', from: 'c', to: 'out' },
-      { op: 'connect', id: 'far', from: 'out', to: 'out2' }
+      { op: 'add_entity', as: '$c', label: 'C', x: 270, y: 240, parent: 'inner' },
+      { op: 'add_entity', as: '$out', label: 'Out', x: 800, y: 0 },
+      { op: 'add_entity', as: '$out2', label: 'Out 2', x: 800, y: 300 },
+      { op: 'connect', as: '$ab', from: 'a', to: 'b' },
+      { op: 'connect', as: '$bo', from: 'b', to: 'out' },
+      { op: 'connect', as: '$co', from: 'c', to: 'out' },
+      { op: 'connect', as: '$far', from: 'out', to: 'out2' }
     ],
     { newId: (prefix) => `${prefix}-${(counter += 1)}` }
   ).diagram

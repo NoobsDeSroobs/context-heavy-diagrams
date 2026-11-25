@@ -1,14 +1,14 @@
 Building a diagram with `edit_diagram` (or `chd edit`). About a page: what you need beyond the tool's own description. For hand-writing the JSON, read the core rules and the field reference instead.
 
 ## What the tool does and does not do
-- It keeps ids unique, parents before children, paths relative and the file valid. You never write the JSON.
+- It makes every id and keeps parents before children, paths relative and the file valid; you never write the JSON. To use something later in the same call, give it a handle (`"as": "$web"`); in the next call use the ids from the answer.
 - It places no element. Every `x` and `y` is yours, **absolute on the canvas, even inside a container** (the tool converts). Sizes: entity 120 × 80, container 320 × 180 (size a real one to fit its contents), text 120 × 48.
 - Its answer lists the problems involving what the call touched (label without room, overlap, element sticking out of its container, an edge across an element, crossing edges, a label on something) and how many others remain. It cannot judge alignment, even gaps or grouping: the recipes below are for that.
 
 ## Order
 1. Decide the grid on paper first: the rows and columns, and the gap each pair of neighbours needs.
 2. Ask `room_for_label` (or `chd ask room`) for each edge that has a label, with its direction and font, and take `target` as the gap. Do not use the plain gaps for elements joined by an edge.
-3. One call per section (a container and what is in it, then the edges), not one per element. Containers first, then their children with `parent`, then `connect`. Pass the fingerprint of the last answer as `base_fingerprint`, and send the calls one at a time: calls on one file with the same fingerprint fail after the first.
+3. One call per section (a container and what is in it, then the edges), not one per element. Containers first, then their children with `parent: "$zone"`, then `connect`. Pass the fingerprint of the last answer as `base_fingerprint`, and send the calls one at a time: calls on one file with the same fingerprint fail after the first.
 4. Read the problems in the answer and fix them with `move` and `resize` in the next call. An edge across an element is best fixed by moving the element or the edge's connection point; where that cannot be done, `route_edges` (the reported edges, or `ids`) gives the edge a right-angled route through the gaps, so leave gaps (20-60px) for it to use. It also puts each routed edge on a connection point of its own on the side facing its other end, in order along the side, so do not add points for those edges. A crossing is sometimes the clearest drawing: keep it and say so.
 5. Tags, links and notes last. At the end, `inspect_diagram` with `issues_only` shows everything still open.
 

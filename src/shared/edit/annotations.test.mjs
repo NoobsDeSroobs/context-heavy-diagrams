@@ -9,10 +9,11 @@ import { validateFile } from '../../../resources/ai/skills/chd-diagrams/scripts/
 import { createEmptyDiagram, parseDiagram, serializeDiagram } from '../diagram/index.ts'
 import { describeDiagram } from './inspect.ts'
 import { applyOperations, OperationError } from './operations.ts'
+import { applyNamed } from './testNames.mjs'
 
 let counter = 0
 const options = { newId: (prefix) => `${prefix}-${(counter += 1)}`, notesFolder: 'd/notes' }
-const run = (diagram, ...ops) => applyOperations(diagram, ops, options)
+const run = (diagram, ...ops) => applyNamed(applyOperations, diagram, ops, options)
 const start = () => createEmptyDiagram()
 
 function assertValid(diagram) {
@@ -37,10 +38,10 @@ const refused = (diagram, op, pattern) =>
 const base = () =>
   run(
     start(),
-    { op: 'add_entity', id: 'api', label: 'API', x: 0, y: 0, tags: { owner: 'platform' } },
-    { op: 'add_entity', id: 'db', label: 'DB', x: 300, y: 0 },
-    { op: 'add_text', id: 'note', label: 'Hello', x: 0, y: 200 },
-    { op: 'connect', id: 'e1', from: 'api', to: 'db', label: 'reads' }
+    { op: 'add_entity', as: '$api', label: 'API', x: 0, y: 0, tags: { owner: 'platform' } },
+    { op: 'add_entity', as: '$db', label: 'DB', x: 300, y: 0 },
+    { op: 'add_text', as: '$note', label: 'Hello', x: 0, y: 200 },
+    { op: 'connect', as: '$e1', from: 'api', to: 'db', label: 'reads' }
   ).diagram
 
 test('tags are given when an element is made, set, changed and removed, on entities and edges', () => {
@@ -81,7 +82,7 @@ test('a required tag is seeded on new elements, backfilled on existing ones and 
       allowedValues: ['dev', 'prod'],
       defaultValue: 'dev'
     },
-    { op: 'add_entity', id: 'cache', label: 'Cache', x: 600, y: 0, tags: { environment: 'prod' } },
+    { op: 'add_entity', as: '$cache', label: 'Cache', x: 600, y: 0, tags: { environment: 'prod' } },
     { op: 'set_tag', id: 'db', key: 'environment', value: 'prod' }
   )
   assert.deepEqual(results[0].requiredTag, {
@@ -208,7 +209,7 @@ test('legend entries are added with the editor field order, changed, and removed
     base(),
     {
       op: 'add_legend_entry',
-      id: 'async',
+      as: '$async',
       kind: 'line',
       label: 'Asynchronous',
       endMarker: 'arrowOpen',
@@ -240,14 +241,14 @@ test('legend entries are added with the editor field order, changed, and removed
 })
 
 test('a legend entry is checked', () => {
-  const d = run(start(), { op: 'add_legend_entry', id: 'a', kind: 'entity', label: 'A' }).diagram
+  const d = run(start(), { op: 'add_legend_entry', as: '$a', kind: 'entity', label: 'A' }).diagram
   refused(d, { op: 'add_legend_entry', kind: 'icon', label: 'x' }, /icon are not supported/)
   refused(d, { op: 'add_legend_entry', kind: 'box', label: 'x' }, /"kind" must be/)
   refused(d, { op: 'add_legend_entry', kind: 'line', label: ' ' }, /must not be empty/)
   refused(
     d,
     { op: 'add_legend_entry', id: 'a', kind: 'line', label: 'x' },
-    /already a legend entry/
+    /ids are made by the tool/
   )
   refused(
     d,
@@ -352,9 +353,11 @@ test('a note is a Markdown file the caller writes, named after the label and the
 })
 
 test('a note file name is safe whatever the label says', () => {
-  const name = (label, id = 'n') =>
-    run(start(), { op: 'add_entity', id, label, x: 0, y: 0 }, { op: 'set_note', id, text: 'x' })
-      .files[0].path
+  // The element is made in one call (and so named n by the test helper), the note in the next.
+  const name = (label) => {
+    const { diagram } = run(start(), { op: 'add_entity', as: '$n', label, x: 0, y: 0 })
+    return run(diagram, { op: 'set_note', id: 'n', text: 'x' }).files[0].path
+  }
   assert.equal(name('What/Why: "both"?'), 'd/notes/What-Why- -both---n.md')
   assert.equal(name('..'), 'd/notes/untitled-n.md')
   assert.equal(name(''), 'd/notes/untitled-n.md')
@@ -363,15 +366,20 @@ test('a note file name is safe whatever the label says', () => {
 })
 
 test('an assistant names a note exactly as the editor does, and two notes never share a name', () => {
-  const uuid = (last) => `3f9a1b2c-4d5e-4f60-8a7b-${last}`
-  const a = `entity-${uuid('0123456789ab')}`
-  const b = `entity-${uuid('ffff006789ab')}`
-  const { results } = run(
+  // Ids as the app makes them, <type>-<uuid>; the last six characters of the two UUIDs are the same.
+  const ids = ['0123456789ab', 'ffff006789ab'].map(
+    (last) => `entity-3f9a1b2c-4d5e-4f60-8a7b-${last}`
+  )
+  let next = 0
+  const { results } = applyOperations(
     start(),
-    { op: 'add_entity', id: a, label: 'Queue', x: 0, y: 0 },
-    { op: 'add_entity', id: b, label: 'Queue', x: 200, y: 0 },
-    { op: 'set_note', id: a, text: 'first' },
-    { op: 'set_note', id: b, text: 'second' }
+    [
+      { op: 'add_entity', as: '$a', label: 'Queue', x: 0, y: 0 },
+      { op: 'add_entity', as: '$b', label: 'Queue', x: 200, y: 0 },
+      { op: 'set_note', id: '$a', text: 'first' },
+      { op: 'set_note', id: '$b', text: 'second' }
+    ],
+    { ...options, newId: () => ids[next++] }
   )
   const notes = results.filter((r) => r.op === 'set_note').map((r) => r.note)
   // The editor's rule (notes/notePaths.ts): the label, then the last six characters of the id's UUID,
@@ -403,7 +411,7 @@ test('describeDiagram shows tags, links, notes and the catalogs, and leaves out 
     base(),
     { op: 'set_required_tag', key: 'environment', defaultValue: 'dev' },
     { op: 'set_highlight', key: 'environment', value: 'dev', color: '#00ff00' },
-    { op: 'add_legend_entry', id: 'l1', kind: 'entity', label: 'Dev', color: '#00ff00' },
+    { op: 'add_legend_entry', as: '$l1', kind: 'entity', label: 'Dev', color: '#00ff00' },
     { op: 'set_diagram_tag', key: 'sourceBase', value: 'src/' },
     { op: 'link_to_existing_diagram', id: 'api', path: 'Api.chd' },
     { op: 'set_note', id: 'api', text: 'x' }
@@ -421,11 +429,12 @@ test('describeDiagram shows tags, links, notes and the catalogs, and leaves out 
 
 test('add_new_linked_diagram treats names that differ only by case as taken (ADR 0181)', () => {
   const linked = { ...options, linkedFolder: 'd' }
-  const { results } = applyOperations(
+  const { results } = applyNamed(
+    applyOperations,
     base(),
     [
-      { op: 'add_entity', id: 'o1', label: 'Orders', x: 0, y: 0 },
-      { op: 'add_entity', id: 'o2', label: 'ORDERS', x: 0, y: 0 },
+      { op: 'add_entity', as: '$o1', label: 'Orders', x: 0, y: 0 },
+      { op: 'add_entity', as: '$o2', label: 'ORDERS', x: 0, y: 0 },
       { op: 'add_new_linked_diagram', id: 'o1' },
       { op: 'add_new_linked_diagram', id: 'o2' }
     ],
@@ -440,12 +449,13 @@ test('add_new_linked_diagram treats names that differ only by case as taken (ADR
 test('add_new_linked_diagram names the file after the label in the folder of this diagram, never twice the same', () => {
   const taken = new Set(['d/Orders-1.chd'])
   const linked = { ...options, linkedFolder: 'd', fileExists: (path) => taken.has(path) }
-  const { diagram, results } = applyOperations(
+  const { diagram, results } = applyNamed(
+    applyOperations,
     base(),
     [
-      { op: 'add_entity', id: 'o1', label: 'Orders\nthe order service', x: 0, y: 0 },
-      { op: 'add_entity', id: 'o2', label: 'Orders', x: 0, y: 0 },
-      { op: 'add_entity', id: 'o3', label: 'Orders', x: 0, y: 0 },
+      { op: 'add_entity', as: '$o1', label: 'Orders\nthe order service', x: 0, y: 0 },
+      { op: 'add_entity', as: '$o2', label: 'Orders', x: 0, y: 0 },
+      { op: 'add_entity', as: '$o3', label: 'Orders', x: 0, y: 0 },
       { op: 'add_new_linked_diagram', id: 'o1' },
       { op: 'add_new_linked_diagram', id: 'o2' },
       { op: 'add_new_linked_diagram', id: 'o3', name: 'A/B?' },

@@ -4,9 +4,14 @@ import test from 'node:test'
 import { createEmptyDiagram } from '../diagram/index.ts'
 import { layoutIssues } from './inspect.ts'
 import { applyOperations } from './operations.ts'
+import { applyNamed } from './testNames.mjs'
 
-const build = (...ops) => applyOperations(createEmptyDiagram(), ops, { newId: (p) => p }).diagram
-const entity = (id, x, y) => ({ op: 'add_entity', id, label: id, x, y })
+let counter = 0
+const build = (...ops) =>
+  applyNamed(applyOperations, createEmptyDiagram(), ops, {
+    newId: (p) => `${p}-${(counter += 1)}`
+  }).diagram
+const entity = (id, x, y) => ({ op: 'add_entity', as: `$${id}`, label: id, x, y })
 const side = { fromHandle: 'right', toHandle: 'left' }
 const issuesOf = (diagram, kind) => layoutIssues(diagram).filter((i) => i.kind === kind)
 
@@ -14,7 +19,7 @@ test('a bent edge is judged on its route: through an element it does not join, o
   const base = [entity('a', 0, 0), entity('b', 300, 0), entity('c', 600, 0)]
   const through = build(
     ...base,
-    { op: 'connect', id: 'e', from: 'a', to: 'c', ...side },
+    { op: 'connect', as: '$e', from: 'a', to: 'c', ...side },
     { op: 'set_edge_points', id: 'e', routing: 'smoothstep', points: [{ x: 360, y: 40 }] }
   )
   assert.deepEqual(
@@ -23,7 +28,7 @@ test('a bent edge is judged on its route: through an element it does not join, o
   )
   const round = build(
     ...base,
-    { op: 'connect', id: 'e', from: 'a', to: 'c', ...side },
+    { op: 'connect', as: '$e', from: 'a', to: 'c', ...side },
     {
       op: 'set_edge_points',
       id: 'e',
@@ -43,10 +48,10 @@ test('two edges that cross are reported once, and edges that share a connection 
     entity('c', 600, 0),
     entity('d', 0, 300),
     entity('e', 600, 300),
-    { op: 'connect', id: 'ac', from: 'a', to: 'c', ...side },
-    { op: 'connect', id: 'ae', from: 'a', to: 'e', ...side },
-    { op: 'connect', id: 'dc', from: 'd', to: 'c', ...side },
-    { op: 'connect', id: 'de', from: 'd', to: 'e', ...side }
+    { op: 'connect', as: '$ac', from: 'a', to: 'c', ...side },
+    { op: 'connect', as: '$ae', from: 'a', to: 'e', ...side },
+    { op: 'connect', as: '$dc', from: 'd', to: 'c', ...side },
+    { op: 'connect', as: '$de', from: 'd', to: 'e', ...side }
   )
   assert.deepEqual(
     issuesOf(diagram, 'edge-crossing').map((i) => i.ids),
@@ -58,8 +63,8 @@ test('a label on an element, on another edge or on another label is reported', (
   const over = build(
     entity('a', 0, 0),
     entity('b', 400, 0),
-    { op: 'add_entity', id: 'block', label: 'block', x: 230, y: 10, width: 60, height: 60 },
-    { op: 'connect', id: 'ab', from: 'a', to: 'b', label: 'goes through the middle', ...side }
+    { op: 'add_entity', as: '$block', label: 'block', x: 230, y: 10, width: 60, height: 60 },
+    { op: 'connect', as: '$ab', from: 'a', to: 'b', label: 'goes through the middle', ...side }
   )
   assert.deepEqual(
     issuesOf(over, 'label-over-element').map((i) => i.ids),
@@ -71,8 +76,8 @@ test('a label on an element, on another edge or on another label is reported', (
     entity('b', 400, 0),
     entity('p', 200, -200),
     entity('q', 200, 200),
-    { op: 'connect', id: 'ab', from: 'a', to: 'b', label: 'reads', ...side },
-    { op: 'connect', id: 'pq', from: 'p', to: 'q', fromHandle: 'bottom', toHandle: 'top' }
+    { op: 'connect', as: '$ab', from: 'a', to: 'b', label: 'reads', ...side },
+    { op: 'connect', as: '$pq', from: 'p', to: 'q', fromHandle: 'bottom', toHandle: 'top' }
   )
   assert.deepEqual(
     issuesOf(crossed, 'label-over-edge').map((i) => i.ids),
@@ -84,10 +89,10 @@ test('a label on an element, on another edge or on another label is reported', (
     entity('b', 400, 0),
     entity('p', 200, -200),
     entity('q', 200, 200),
-    { op: 'connect', id: 'ab', from: 'a', to: 'b', label: 'reads', ...side },
+    { op: 'connect', as: '$ab', from: 'a', to: 'b', label: 'reads', ...side },
     {
       op: 'connect',
-      id: 'pq',
+      as: '$pq',
       from: 'p',
       to: 'q',
       label: 'writes',
@@ -100,10 +105,10 @@ test('a label on an element, on another edge or on another label is reported', (
 
 test('an edge label on a container wall or on its title is reported, and sliding it clear fixes it', () => {
   const wallOps = [
-    { op: 'add_container', id: 'zone', label: '', x: 200, y: 0, width: 300, height: 200 },
-    { op: 'add_entity', id: 'out', label: 'out', x: 0, y: 60 },
-    { op: 'add_entity', id: 'in', label: 'in', x: 260, y: 60, parent: 'zone' },
-    { op: 'connect', id: 'calls', from: 'out', to: 'in', label: 'calls', ...side }
+    { op: 'add_container', as: '$zone', label: '', x: 200, y: 0, width: 300, height: 200 },
+    { op: 'add_entity', as: '$out', label: 'out', x: 0, y: 60 },
+    { op: 'add_entity', as: '$in', label: 'in', x: 260, y: 60, parent: 'zone' },
+    { op: 'connect', as: '$calls', from: 'out', to: 'in', label: 'calls', ...side }
   ]
   const onWall = build(...wallOps)
   assert.deepEqual(
@@ -117,16 +122,16 @@ test('an edge label on a container wall or on its title is reported, and sliding
   const titled = build(
     {
       op: 'add_container',
-      id: 'net',
+      as: '$net',
       label: 'Production network zone',
       x: 0,
       y: 0,
       width: 400,
       height: 120
     },
-    { op: 'add_entity', id: 'a', label: 'a', x: 10, y: 10, width: 40, height: 20, parent: 'net' },
-    { op: 'add_entity', id: 'b', label: 'b', x: 140, y: 10, width: 40, height: 20, parent: 'net' },
-    { op: 'connect', id: 'ab', from: 'a', to: 'b', label: 'x', ...side }
+    { op: 'add_entity', as: '$a', label: 'a', x: 10, y: 10, width: 40, height: 20, parent: 'net' },
+    { op: 'add_entity', as: '$b', label: 'b', x: 140, y: 10, width: 40, height: 20, parent: 'net' },
+    { op: 'connect', as: '$ab', from: 'a', to: 'b', label: 'x', ...side }
   )
   assert.deepEqual(
     issuesOf(titled, 'label-over-container-title').map((i) => i.ids),
@@ -135,16 +140,16 @@ test('an edge label on a container wall or on its title is reported, and sliding
   const wide = build(
     {
       op: 'add_container',
-      id: 'net',
+      as: '$net',
       label: 'Production network zone',
       x: 0,
       y: 0,
       width: 400,
       height: 200
     },
-    { op: 'add_entity', id: 'a', label: 'a', x: 30, y: 100, parent: 'net' },
-    { op: 'add_entity', id: 'b', label: 'b', x: 230, y: 100, parent: 'net' },
-    { op: 'connect', id: 'ab', from: 'a', to: 'b', label: 'x', ...side }
+    { op: 'add_entity', as: '$a', label: 'a', x: 30, y: 100, parent: 'net' },
+    { op: 'add_entity', as: '$b', label: 'b', x: 230, y: 100, parent: 'net' },
+    { op: 'connect', as: '$ab', from: 'a', to: 'b', label: 'x', ...side }
   )
   assert.deepEqual(issuesOf(wide, 'label-over-container-title'), [])
   assert.deepEqual(issuesOf(wide, 'label-on-container-border'), [])
@@ -155,8 +160,8 @@ test('a tidy diagram has nothing to report', () => {
     entity('a', 0, 0),
     entity('b', 400, 0),
     entity('c', 800, 0),
-    { op: 'connect', id: 'ab', from: 'a', to: 'b', label: 'reads', ...side },
-    { op: 'connect', id: 'bc', from: 'b', to: 'c', label: 'writes', ...side }
+    { op: 'connect', as: '$ab', from: 'a', to: 'b', label: 'reads', ...side },
+    { op: 'connect', as: '$bc', from: 'b', to: 'c', label: 'writes', ...side }
   )
   assert.deepEqual(layoutIssues(diagram), [])
 })
@@ -167,14 +172,14 @@ test('an element named by a paragraph is quoted on one line, cut short', () => {
     entity('b', 400, 0),
     {
       op: 'add_entity',
-      id: 'long',
+      as: '$long',
       label: 'Line one\nline two '.repeat(8),
       x: 150,
       y: 10,
       width: 200,
       height: 60
     },
-    { op: 'connect', id: 'ab', from: 'a', to: 'b', ...side }
+    { op: 'connect', as: '$ab', from: 'a', to: 'b', ...side }
   )
   const [found] = issuesOf(diagram, 'edge-through-element')
   assert.doesNotMatch(found.message, /\n/)
