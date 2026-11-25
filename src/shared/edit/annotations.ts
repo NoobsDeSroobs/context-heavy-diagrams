@@ -293,6 +293,7 @@ const LEGEND_LINE_FIELDS: Record<string, StyleRule> = Object.fromEntries(
     'lineStyle',
     'startMarker',
     'endMarker',
+    'routingStyle',
     'animation',
     'animationSpeed',
     'animationDirection',

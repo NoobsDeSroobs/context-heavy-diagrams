@@ -366,7 +366,8 @@
 }
 
 /* Handles are in flow units, so they shrink with the zoom; below a zoom of about 0.6 they grow
-   to stay 10 screen px (--canvas-zoom is set by useZoomedConnectionHandles). */
+   to stay 10 screen px (--canvas-zoom is set by useZoomedConnectionHandles, which also measures the
+   nodes again once the zoom rests; the size is handleSizeForZoom in screenGeometry.ts). */
 .entity-node .react-flow__handle,
 .container-node .react-flow__handle,
 .stencil-node .react-flow__handle {

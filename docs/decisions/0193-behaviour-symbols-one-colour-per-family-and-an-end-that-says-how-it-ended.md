@@ -3,6 +3,7 @@
 ## Status
 Accepted (2026-11-19)
 Amends: [0180](0180-stencils-are-light-elements-for-events-and-verbs.md) (the marks and default colours of the kinds, and the kind `step-user`, now `step-human`). The shapes of 0180 stay.
+Amended by: [0198](0198-parallel-paths-are-closed-by-a-wait-and-decisions-by-a-decision.md) (the parallel kinds are a fourth colour family).
 Superseded by: none
 
 ## Context

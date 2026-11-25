@@ -19,7 +19,6 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 - [A colour typed in light mode comes back changed (the theme flip is not exactly reversible)](#a-colour-typed-in-light-mode-comes-back-changed-the-theme-flip-is-not-exactly-reversible) — Won't fix.
 - [A native confirm() dialog left `<select>` elements unresponsive afterward](#a-native-confirm-dialog-left-select-elements-unresponsive-afterward) — Worked around.
 - [Clicking a container selects a different container that visually encloses it](#clicking-a-container-selects-a-different-container-that-visually-encloses-it) — Worked around.
-- [Edges start far from their elements after zooming out and in to a part of the diagram not seen up close](#edges-start-far-from-their-elements-after-zooming-out-and-in-to-a-part-of-the-diagram-not-seen-up-close) — Open.
 - [`validate` and `check` read as the same thing, and are not](#validate-and-check-read-as-the-same-thing-and-are-not) — Worked around (descriptions say which question each answers).
 
 ---
@@ -852,20 +851,20 @@ Fixed by the paste rework described under "Pasting a copied child-of-a-container
 
 ---
 
-## Edges start far from their elements after zooming out and in to a part of the diagram not seen up close
+## Edges end far from their elements after zooming
 
-**Status:** Open (2026-11-06)
-**Found:** 2026-11-06, while moving elements in a test diagram to calibrate edge labels
+**Status:** Solved (2026-11-22), not yet confirmed in the app
+**Found:** 2026-11-06, while moving elements in a test diagram to calibrate edge labels; again 2026-11-22 as a gap that grows with every zoom until the element leaves the window and comes back
 
-**Symptom:** zoom out, then zoom in on a part of the diagram that was not on screen before: the line of every edge there starts and ends a long way from its element, instead of at the connection point. Panning so the elements leave the window and come back draws them right.
+**Symptom:** after zooming, the line of an edge starts and ends a distance from its element instead of at the connection point, the larger the further the zoom has moved. Panning so the elements leave the window and return draws them right.
 
-**Cause (not yet confirmed):** the canvas mounts only the nodes and edges inside the window (`onlyRenderVisibleElements`, [ADR 0073](decisions/0073-react-flow-render-performance-round-2.md)), so the elements of the new view mount at the new zoom, and an edge's end seems to be placed from connection point positions that are stale or measured at another zoom until the element leaves and re-enters the window. Nothing has been measured; this is what the trigger points to.
+**Cause:** an edge ends on the outer rim of its handle, and React Flow measures a handle once, when its node is measured. The handle is sized with the zoom (`max(6px, 10px / zoom)`, [ADR 0129](decisions/0129-connection-handles-keep-a-minimum-screen-size.md)), so after a zoom the measured rim is stale. A node that leaves the window and mounts again (`onlyRenderVisibleElements`, [ADR 0073](decisions/0073-react-flow-render-performance-round-2.md)) is measured at the new zoom, which is why that "fixed" it.
 
-**Workaround:** pan or zoom so the affected elements leave the window and return.
+**Fix:** `useZoomedConnectionHandles` measures every node again once the zoom has rested for 50 ms and the handle size has changed. During the zoom itself the gap is still off.
 
-**Direction:** reproduce on a diagram of a few dozen elements, then compare the measured connection point positions of a freshly mounted node with one that stayed on screen, and check whether the gap disappears with `onlyRenderVisibleElements` off. If it does, the fix is where the positions are measured or re-measured on mount, not turning the option off (it is what keeps a large diagram fast).
+**Lesson:** a size that changes with the zoom must not be something React Flow measures only once.
 
-**References:** `src/renderer/src/canvas/Canvas.tsx` (`onlyRenderVisibleElements`)
+**References:** `src/renderer/src/canvas/useZoomedConnectionHandles.ts`
 
 ---
 

@@ -212,15 +212,11 @@ import { themeAdaptiveColor } from '../styling/themeAdaptiveColor'
 import {
   edgeStyleFromLegendLine,
   newEdgeLineEntry,
+  withRoutingOf,
   withNewEdgeLine
 } from '@shared/legend/newEdgeLine'
-import {
-  deriveNodeFields,
-  deriveEdgeFields,
-  newNodeId,
-  nextZIndex,
-  isConnectableNodeType
-} from './nodeFields'
+import { deriveNodeFields, deriveEdgeFields, newNodeId, nextZIndex } from './nodeFields'
+import { connectionSourceIds } from './multiConnection'
 import { isVoidDrop, pointFromEvent, visibleCanvasCenter } from './screenGeometry'
 import { sortNodesForHierarchy, removeContainerReparenting } from './hierarchy'
 import { resolveEndpointPosition } from '../edges/endpointPosition'
@@ -780,6 +776,19 @@ function CanvasInner(): React.JSX.Element {
       setColorPicker({ nodeId, kind, anchorRect })
     },
     []
+  )
+
+  // A double-click on a behaviour or an edge opens its label for writing, empty or not: the label of
+  // a small shape sits outside it and an empty one has nothing to hit. A double-click on a label
+  // already open is the text field's own (selecting a word), and is left alone.
+  const onLabelDoubleClick = useCallback(
+    (event: React.MouseEvent, element: Node | Edge): void => {
+      if (storiesPresenting) return
+      if (element.type !== 'stencil' && !('source' in element)) return
+      if ((event.target as HTMLElement).closest('textarea, input')) return
+      setPendingLabelEditId(element.id)
+    },
+    [storiesPresenting]
   )
 
   // Edges have no single DOM element with a natural bounding rect the way
@@ -1353,11 +1362,14 @@ function CanvasInner(): React.JSX.Element {
   const defaultEdgeLook = useMemo<EdgeStyle>(
     () =>
       newEdgeLine
-        ? edgeStyleFromLegendLine(
-            newEdgeLine,
-            newEdgeLine.color !== undefined
-              ? themeAdaptiveColor(newEdgeLine.color, theme)
-              : undefined
+        ? withRoutingOf(
+            edgeStyleFromLegendLine(
+              newEdgeLine,
+              newEdgeLine.color !== undefined
+                ? themeAdaptiveColor(newEdgeLine.color, theme)
+                : undefined
+            ),
+            preferences.defaultEdgeStyle
           )
         : preferences.defaultEdgeStyle,
     [newEdgeLine, theme, preferences.defaultEdgeStyle]
@@ -1372,9 +1384,9 @@ function CanvasInner(): React.JSX.Element {
 
   // Multi-connection-line, after xyflow's documented pattern
   // (reactflow.dev/examples/edges/multi-connection-line) adapted to explicit connection-point ids:
-  // if other connectable nodes are selected when a drag completes, each gets its own edge to the
-  // same target. Dragging from an unselected node wires only that node, so this never happens as a
-  // side effect of an ordinary drag.
+  // if the node a drag starts from is selected along with other connectable nodes, each gets its
+  // own edge to the same target. Dragging from an unselected node wires only that node, so this
+  // never happens as a side effect of an ordinary drag (connectionSourceIds).
   //
   // The dragged node's edge keeps the exact handle dropped onto (connection.sourceHandle). Every
   // other selected node reuses that handle's clockwise ordinal on the same side
@@ -1401,11 +1413,7 @@ function CanvasInner(): React.JSX.Element {
                 connection.sourceHandle
               )
             : undefined
-        const sourceIds = nodes
-          .filter(
-            (n) => n.id === connection.source || (n.selected && isConnectableNodeType(n.type))
-          )
-          .map((n) => n.id)
+        const sourceIds = connectionSourceIds(nodes, connection.source, connection.target)
         const withNew = sourceIds.reduce((acc, sourceId) => {
           const otherNode = byId.get(sourceId)
           const sourceHandle =
@@ -4028,6 +4036,8 @@ function CanvasInner(): React.JSX.Element {
                   onNodeDragStop={onNodeDragStop}
                   onNodeClick={onStyleBrushNodeClick}
                   onEdgeClick={onEdgeClick}
+                  onNodeDoubleClick={onLabelDoubleClick}
+                  onEdgeDoubleClick={onLabelDoubleClick}
                   onEdgeMouseEnter={edgePeekBindings.onNodeMouseEnter}
                   onEdgeMouseLeave={edgePeekBindings.onNodeMouseLeave}
                   onNodeMouseEnter={peekBindings.onNodeMouseEnter}
@@ -4357,7 +4367,10 @@ function CanvasInner(): React.JSX.Element {
                 // default — picking a preset here means "this preset is
                 // now the default," same as picking one for a single edge
                 // replaces that edge's look rather than layering on top.
-                updatePreferences({ defaultEdgeStyle: patch })
+                // The routing type is not part of a preset, so it stays (ADR 0196).
+                updatePreferences({
+                  defaultEdgeStyle: withRoutingOf(patch, preferences.defaultEdgeStyle)
+                })
                 // A preset is the look of new edges from now on, so the diagram's marked line stops
                 // being it (ADR 0196).
                 if (newEdgeLine) {

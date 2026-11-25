@@ -52,6 +52,15 @@ interface LegendPanelProps {
 const PANEL_WIDTH = 300
 const DEFAULT_COLOR = '#e6194b'
 
+// The routing a line can carry (ADR 0196); none means the personal default routing.
+const ROUTING_CHOICES: { value: NonNullable<LegendEntry['routingStyle']> | ''; label: string }[] = [
+  { value: '', label: 'Personal default' },
+  { value: 'straight', label: 'Straight' },
+  { value: 'step', label: 'Step' },
+  { value: 'smoothstep', label: 'Smoothstep' },
+  { value: 'catmullRom', label: 'Catmull-Rom (gravity)' }
+]
+
 // The line swatch: its stroke and the length of the line, for the pulse.
 // A thicker line is drawn at this thickness at most: the ends scale with it, and the swatch is one
 // row of the panel.
@@ -323,7 +332,7 @@ export default function LegendPanel({
               title={row.label}
             >
               <span
-                className="legend-swatch-slot"
+                className="legend-swatch-slot legend-swatch-stencil"
                 dangerouslySetInnerHTML={{
                   __html: stencilSwatchSvgFor(row.kind, theme, row.state)
                 }}
@@ -448,6 +457,29 @@ export default function LegendPanel({
                       setDraft((prev) => (prev ? { ...prev, color: event.target.value } : prev))
                     }
                   />
+                </label>
+              )}
+              {draft.kind === 'line' && (
+                <label className="legend-draft-color legend-draft-routing">
+                  Routing
+                  <select
+                    value={draft.routingStyle ?? ''}
+                    onChange={(event) =>
+                      setDraft((prev) => {
+                        if (!prev) return prev
+                        const rest = { ...prev }
+                        delete rest.routingStyle
+                        const value = event.target.value as LegendEntry['routingStyle'] | ''
+                        return value === '' ? rest : { ...rest, routingStyle: value }
+                      })
+                    }
+                  >
+                    {ROUTING_CHOICES.map((choice) => (
+                      <option key={choice.value} value={choice.value}>
+                        {choice.label}
+                      </option>
+                    ))}
+                  </select>
                 </label>
               )}
               <input

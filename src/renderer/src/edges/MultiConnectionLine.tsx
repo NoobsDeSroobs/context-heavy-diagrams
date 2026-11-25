@@ -2,16 +2,7 @@ import { useNodes, type Node } from '@xyflow/react'
 import type { ConnectionPoint } from '@shared/diagram'
 import { absolutePosition } from '../nodes/nodePosition'
 import { connectionPointAtOrdinal, pointCoordinates, pointOrdinal } from '../nodes/connectionPoints'
-
-// Same two types as Canvas.tsx's isConnectableNodeType — kept as its own
-// copy (not imported) since importing from Canvas.tsx just for this one
-// helper would pull in that whole module's side effects for no reason;
-// this is small and stable enough that a duplicate is cheaper than the
-// coupling. If it ever drifts out of sync, both call sites are one grep
-// for "isConnectableNodeType" away from each other.
-function isConnectableNodeType(type: string | undefined): boolean {
-  return type === 'entity' || type === 'container' || type === 'stencil'
-}
+import { connectionSourceIds } from '../canvas/multiConnection'
 
 interface MultiConnectionLineProps {
   fromNode?: { id: string } | null
@@ -46,9 +37,9 @@ export default function MultiConnectionLine({
 }: MultiConnectionLineProps): React.JSX.Element {
   const nodes = useNodes()
   const byId = new Map(nodes.map((n: Node) => [n.id, n]))
-  const others = nodes.filter(
-    (n: Node) => n.id !== fromNode?.id && n.selected && isConnectableNodeType(n.type)
-  )
+  // The same rule as the drop, so the preview shows only the edges that will be made.
+  const wired = new Set(fromNode ? connectionSourceIds(nodes, fromNode.id) : [])
+  const others = nodes.filter((n: Node) => n.id !== fromNode?.id && wired.has(n.id))
   const draggedFrom = fromNode ? byId.get(fromNode.id) : undefined
   const fromOrdinal =
     draggedFrom && fromHandle?.id

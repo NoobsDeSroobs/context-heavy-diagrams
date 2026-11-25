@@ -130,7 +130,9 @@ function LabeledEdge({
     searchMatchIds,
     isolateActive,
     isolateOpacity,
-    showCrossings
+    showCrossings,
+    pendingLabelEditId,
+    clearPendingLabelEdit
   } = useDiagramContext()
   const edgeStyle = data?.style as EdgeStyle | undefined
   const routingStyle = edgeStyle?.routingStyle
@@ -597,6 +599,8 @@ function LabeledEdge({
             className="edge-label-text"
             inputClassName="edge-label-input"
             multiline
+            autoEdit={pendingLabelEditId === id}
+            onAutoEditStarted={clearPendingLabelEdit}
             style={labelStyle}
             value={String(data?.label ?? '')}
             onCommit={(label) => updateEdgeData(id, { label })}

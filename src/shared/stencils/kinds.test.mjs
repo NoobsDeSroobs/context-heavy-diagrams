@@ -48,8 +48,10 @@ test('an id is the base word first and the subtype after, so related kinds sort 
   for (const kind of STENCIL_KINDS) assert.match(kind.id, /^[a-z]+(-[a-z]+)*$/)
   const steps = STENCIL_KINDS.filter((k) => k.group === 'Steps').map((k) => k.id)
   assert.ok(steps.every((id) => id === 'step' || id.startsWith('step-')))
-  const branches = STENCIL_KINDS.filter((k) => k.group === 'Branches').map((k) => k.id)
-  assert.ok(branches.length === 3 && branches.every((id) => id.startsWith('branch-')))
+  const decisions = STENCIL_KINDS.filter((k) => k.group === 'Decisions').map((k) => k.id)
+  assert.deepEqual(decisions, ['branch-exclusive', 'branch-inclusive'])
+  const parallel = STENCIL_KINDS.filter((k) => k.group === 'Parallel').map((k) => k.id)
+  assert.deepEqual(parallel, ['branch-parallel', 'branch-all', 'branch-one'])
   const events = STENCIL_KINDS.filter((k) => k.group === 'Events').map((k) => k.id)
   assert.deepEqual(events, [
     'event-start',
@@ -113,6 +115,27 @@ test('the light theme has its own default colours, used only where the node has 
   assert.deepEqual(stencilLightColors('step', undefined), { fill: '#a5c8ce', stroke: '#3b6e77' })
   assert.deepEqual(stencilLightColors('branch-exclusive', undefined), { fill: '#f7edd6' })
   assert.deepEqual(stencilLightColors('step', { fill: '#ff0000' }), { stroke: '#3b6e77' })
+})
+
+test('the parallel kinds share a plum of their own, away from the decisions in lightness in both themes', () => {
+  for (const id of ['branch-parallel', 'branch-all', 'branch-one']) {
+    assert.equal(stencilStyle(id, undefined)?.fill, '#2f0f34', id)
+    assert.deepEqual(stencilLightColors(id, undefined), { fill: '#ae62b3', stroke: '#6b2a72' }, id)
+  }
+  // Families told apart without colour: at least 20 grey levels (of 255) between neighbours.
+  const grey = (hex) => {
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16))
+    return 0.299 * r + 0.587 * g + 0.114 * b
+  }
+  const families = ['event-start', 'branch-parallel', 'step', 'branch-exclusive']
+  const dark = families.map((id) => grey(stencilStyle(id, undefined).fill)).sort((a, b) => a - b)
+  const light = families
+    .map((id) => grey(stencilLightColors(id, undefined).fill))
+    .sort((a, b) => a - b)
+  for (const levels of [dark, light]) {
+    for (let i = 1; i < levels.length; i += 1)
+      assert.ok(levels[i] - levels[i - 1] >= 20, String(levels))
+  }
 })
 
 test('an event that starts a flow has one ring and one in the flow two; the plain start and the end have no position', () => {

@@ -24,8 +24,18 @@ export function edgeStyleFromLegendLine(entry: LegendEntry, stroke?: string): Ed
     ...(entry.lineStyle !== undefined ? { lineStyle: entry.lineStyle } : {}),
     ...(entry.startMarker !== undefined ? { startMarker: entry.startMarker } : {}),
     ...(entry.endMarker !== undefined ? { endMarker: entry.endMarker } : {}),
+    ...(entry.routingStyle !== undefined ? { routingStyle: entry.routingStyle } : {}),
     ...lineMotionOf(entry)
   }
+}
+
+// A look chosen for new edges that says nothing about the routing type (a preset, or a legend line
+// with none) keeps the routing of the personal default; one that sets it wins (ADR 0196).
+export function withRoutingOf(look: EdgeStyle, personal: EdgeStyle): EdgeStyle {
+  const { routingStyle } = personal
+  return look.routingStyle === undefined && routingStyle !== undefined
+    ? { ...look, routingStyle }
+    : look
 }
 
 // The legend with `id` as the line for new edges and no other entry; null for none. An id that is

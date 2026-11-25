@@ -4,9 +4,13 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import {
+  DECISION_KINDS,
   validateFile,
-  validateText
+  validateText,
+  WAIT_FOR_ALL_KINDS,
+  WAIT_FOR_FIRST_KINDS
 } from '../../../resources/ai/skills/chd-diagrams/scripts/validate_chd.mjs'
+import { STENCIL_KINDS } from '../../shared/stencils/kinds.ts'
 
 let dir
 beforeEach(async () => {
@@ -378,4 +382,145 @@ test('visibility sets: two names alike, and ids with no set, are warnings, not e
   assert.deepEqual(errors, [])
   assert.ok(warnings.some((w) => /two visibility sets are named/.test(w)))
   assert.ok(warnings.some((w) => /not in visibilitySets.*gone/.test(w)))
+})
+
+// A flow of behaviours: `gate` makes a gateway of the kind, `link` joins ids by edges.
+const stencil = (id, kind, label) =>
+  node(id, { type: 'stencil', data: { kind, label: label ?? id } })
+const flow = (nodes, links) =>
+  check(
+    nodes,
+    links.map(([source, target], i) => ({ id: `e${i}`, source, target }))
+  )
+const joinWarnings = (warnings) => warnings.filter((w) => /waits for every arrow/.test(w))
+
+test('every gateway kind of the app is classified as a decision, a wait for all or a wait for first', () => {
+  const known = new Set([...DECISION_KINDS, ...WAIT_FOR_ALL_KINDS, ...WAIT_FOR_FIRST_KINDS])
+  for (const kind of STENCIL_KINDS) {
+    if (kind.id.startsWith('branch-')) assert.ok(known.has(kind.id), kind.id)
+  }
+  for (const id of known)
+    assert.ok(
+      STENCIL_KINDS.some((k) => k.id === id),
+      id
+    )
+})
+
+test('two ways of one decision meeting at a wait for all are a warning', async () => {
+  // Yes goes straight to the join; No goes through two parallel steps that a wait for first gathers.
+  const { errors, warnings } = await flow(
+    [
+      stencil('d', 'branch-exclusive', 'Can finance alone?'),
+      stencil('j', 'branch-all'),
+      stencil('s', 'branch-parallel'),
+      stencil('x', 'step'),
+      stencil('y', 'step'),
+      stencil('w', 'branch-one')
+    ],
+    [
+      ['d', 'j'],
+      ['d', 's'],
+      ['s', 'x'],
+      ['s', 'y'],
+      ['x', 'w'],
+      ['y', 'w'],
+      ['w', 'j']
+    ]
+  )
+  assert.deepEqual(errors, [])
+  const found = joinWarnings(warnings)
+  assert.equal(found.length, 1)
+  assert.match(found[0], /'j'.*decision 'd' \("Can finance alone\?"\)/)
+})
+
+test('a decision closed by a decision symbol before the join is fine', async () => {
+  const { warnings } = await flow(
+    [
+      stencil('d', 'branch-exclusive'),
+      stencil('a', 'step'),
+      stencil('b', 'step'),
+      stencil('m', 'branch-exclusive'),
+      stencil('j', 'branch-parallel'),
+      stencil('other', 'step')
+    ],
+    [
+      ['d', 'a'],
+      ['d', 'b'],
+      ['a', 'm'],
+      ['b', 'm'],
+      ['m', 'j'],
+      ['other', 'j']
+    ]
+  )
+  assert.deepEqual(joinWarnings(warnings), [])
+})
+
+test('a wait for first, or a plain step taking two arrows, also gathers the ways of a decision', async () => {
+  for (const gatherer of [stencil('m', 'branch-one'), stencil('m', 'step')]) {
+    const { warnings } = await flow(
+      [
+        stencil('d', 'branch-inclusive'),
+        stencil('a', 'step'),
+        stencil('b', 'step'),
+        gatherer,
+        stencil('j', 'branch-all'),
+        stencil('other', 'step')
+      ],
+      [
+        ['d', 'a'],
+        ['d', 'b'],
+        ['a', 'm'],
+        ['b', 'm'],
+        ['m', 'j'],
+        ['other', 'j']
+      ]
+    )
+    assert.deepEqual(joinWarnings(warnings), [], gatherer.data.kind)
+  }
+})
+
+test('a decision into a wait for first, a parallel split into a wait for all and a loop are fine', async () => {
+  const { warnings } = await flow(
+    [
+      stencil('d', 'branch-exclusive'),
+      stencil('a', 'step'),
+      stencil('b', 'step'),
+      stencil('first', 'branch-one'),
+      stencil('p', 'branch-parallel'),
+      stencil('x', 'step'),
+      stencil('y', 'step'),
+      stencil('all', 'branch-all')
+    ],
+    [
+      ['d', 'a'],
+      ['d', 'b'],
+      ['a', 'first'],
+      ['b', 'first'],
+      ['first', 'p'],
+      ['p', 'x'],
+      ['p', 'y'],
+      ['x', 'all'],
+      ['y', 'all'],
+      ['all', 'd']
+    ]
+  )
+  assert.deepEqual(joinWarnings(warnings), [])
+})
+
+test('a Run in parallel with one arrow in is a split, not a join', async () => {
+  const { warnings } = await flow(
+    [
+      stencil('d', 'branch-exclusive'),
+      stencil('a', 'branch-parallel'),
+      stencil('b', 'step'),
+      stencil('x', 'step')
+    ],
+    [
+      ['d', 'a'],
+      ['d', 'b'],
+      ['a', 'x'],
+      ['b', 'x']
+    ]
+  )
+  assert.deepEqual(joinWarnings(warnings), [])
 })

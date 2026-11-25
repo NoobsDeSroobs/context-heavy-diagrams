@@ -4,7 +4,7 @@ import { loadInstalledIconMarkup } from '../icons/installedIcons'
 import { markerUrl } from '../edges/markerIds'
 import { markerTrim } from '@shared/export/markerShapes'
 import type { ExportLegendItem } from '@shared/legend/legendItems'
-import { stencilSwatchSvgFor } from '@shared/stencils/swatch'
+import { STENCIL_SWATCH_SIZE, stencilSwatchSvgFor } from '@shared/stencils/swatch'
 import { dasharrayOf, dashPattern } from '@shared/styling/edgeDash'
 
 type ResolvedIcon = { type: 'svg'; markup: string } | { type: 'img'; dataUrl: string }
@@ -76,10 +76,14 @@ export function resolveLegendColors(probeParent: HTMLElement): {
 
 const SVG_NS = 'http://www.w3.org/2000/svg'
 
-function buildSwatch(item: ExportLegendItem, iconMarkup: Map<string, ResolvedIcon>): HTMLElement {
+function buildSwatch(
+  item: ExportLegendItem,
+  iconMarkup: Map<string, ResolvedIcon>,
+  // The column is wider when the legend has a behaviour in it (its swatch is larger, as in the panel).
+  columnWidth: number
+): HTMLElement {
   const wrapper = document.createElement('span')
-  wrapper.style.cssText =
-    'display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 18px; flex: none;'
+  wrapper.style.cssText = `display: inline-flex; align-items: center; justify-content: center; width: ${columnWidth}px; min-height: 18px; flex: none;`
 
   const { swatch } = item
   if (swatch.kind === 'entity') {
@@ -91,8 +95,12 @@ function buildSwatch(item: ExportLegendItem, iconMarkup: Map<string, ResolvedIco
   if (swatch.kind === 'stencil') {
     const theme = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark'
     const span = document.createElement('span')
-    span.style.cssText = 'display: block; width: 28px; height: 16px;'
+    const { width, height } = STENCIL_SWATCH_SIZE
+    span.style.cssText = `display: block; width: ${width}px; height: ${height}px;`
     span.innerHTML = stencilSwatchSvgFor(swatch.stencilKind, theme, swatch.state)
+    // The drawing has its own fixed size; its viewBox scales it to the larger one.
+    span.querySelector('svg')?.setAttribute('width', String(width))
+    span.querySelector('svg')?.setAttribute('height', String(height))
     wrapper.appendChild(span)
     return wrapper
   }
@@ -159,10 +167,13 @@ export function buildLegendElement(
   const container = document.createElement('div')
   container.style.cssText = `display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border-radius: 6px; background: ${colors.background}; border: 1px solid ${colors.border}; color: ${colors.text}; font: 12px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; width: max-content;`
 
+  const columnWidth = items.some((item) => item.swatch.kind === 'stencil')
+    ? Math.max(28, STENCIL_SWATCH_SIZE.width)
+    : 28
   for (const item of items) {
     const row = document.createElement('div')
     row.style.cssText = 'display: flex; align-items: center; gap: 6px;'
-    row.appendChild(buildSwatch(item, iconMarkup))
+    row.appendChild(buildSwatch(item, iconMarkup, columnWidth))
     const label = document.createElement('span')
     label.textContent = item.label
     row.appendChild(label)

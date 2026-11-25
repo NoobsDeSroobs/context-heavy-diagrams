@@ -1,7 +1,12 @@
 // Run with `npm test`. The legend line new edges are drawn with (ADR 0196).
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { edgeStyleFromLegendLine, newEdgeLineEntry, withNewEdgeLine } from './newEdgeLine.ts'
+import {
+  edgeStyleFromLegendLine,
+  newEdgeLineEntry,
+  withNewEdgeLine,
+  withRoutingOf
+} from './newEdgeLine.ts'
 
 const dataFlow = {
   id: 'data',
@@ -42,6 +47,24 @@ test('an edge gets the fields the entry has, the colour the caller gives, and no
   assert.equal(edgeStyleFromLegendLine({ ...dataFlow, strokeWidth: 5 }).strokeWidth, 5)
   // an entry that leaves a field out leaves it out, motion included
   assert.deepEqual(edgeStyleFromLegendLine(event), { lineStyle: 'dashed', animation: 'flow' })
+})
+
+test('a line carries its routing to new edges', () => {
+  assert.equal(edgeStyleFromLegendLine({ ...dataFlow, routingStyle: 'step' }).routingStyle, 'step')
+  assert.equal('routingStyle' in edgeStyleFromLegendLine(dataFlow), false)
+})
+
+test('a look with no routing keeps the routing of the personal default, and one with routing wins', () => {
+  const look = edgeStyleFromLegendLine(dataFlow, '#123456')
+  assert.deepEqual(withRoutingOf(look, { routingStyle: 'step', stroke: '#fff' }), {
+    ...look,
+    routingStyle: 'step'
+  })
+  // no personal routing leaves the look as it is, the same object
+  assert.equal(withRoutingOf(look, { stroke: '#fff' }), look)
+  // the line's own routing is not overruled by the personal one
+  const routed = edgeStyleFromLegendLine({ ...dataFlow, routingStyle: 'straight' })
+  assert.equal(withRoutingOf(routed, { routingStyle: 'step' }), routed)
 })
 
 test('marking one line clears the others, and none clears all', () => {

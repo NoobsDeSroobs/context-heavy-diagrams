@@ -104,14 +104,16 @@ describe('stencils on the canvas (ADR 0180)', () => {
     await screen.findByText('Do the work')
     fireEvent.click(screen.getByRole('button', { name: 'Choose a kind of behaviour' }))
     fireEvent.change(screen.getByPlaceholderText('Filter…'), { target: { value: 'gateway' } })
-    // The BPMN term finds all three gateways, and the list stays in the app's own words.
+    // The BPMN term finds all the gateways, and the list stays in the app's own words.
     const list = within(screen.getByRole('listbox', { name: 'Kinds of behaviour' }))
     expect(list.getAllByRole('option').map((o) => o.textContent)).toEqual([
       'Decision',
       'Inclusive choice',
-      'Parallel split or join'
+      'Run in parallel',
+      'Wait for all',
+      'Wait for first'
     ])
-    fireEvent.click(list.getByRole('option', { name: 'Parallel split or join' }))
+    fireEvent.click(list.getByRole('option', { name: 'Run in parallel' }))
     await waitFor(() =>
       expect(
         container.querySelectorAll('.stencil-node[data-stencil-kind="branch-parallel"]')
@@ -186,6 +188,91 @@ describe('stencils on the canvas (ADR 0180)', () => {
     await waitFor(() =>
       expect(node.querySelector('.container-node-label-box--left-start')).not.toBeNull()
     )
+  })
+
+  // The same request opens the label of an edge, but edges are not drawn in this test environment.
+  it('opens the label of a behaviour on a double-click, written or not', async () => {
+    const { container } = renderCanvas({
+      version: 1,
+      nodes: [
+        stencil('begin', 'event-start', 'Begin', 0),
+        stencil('check', 'branch-exclusive', '', 160)
+      ],
+      edges: []
+    })
+    await screen.findByText('Begin')
+    const editor = (within: string): Promise<HTMLTextAreaElement> =>
+      waitFor(() => {
+        const field = container.querySelector(`${within} textarea`)
+        expect(field).not.toBeNull()
+        return field as HTMLTextAreaElement
+      })
+    // an empty label has nothing to hit, so the shape itself takes the double-click
+    fireEvent.doubleClick(container.querySelector('.react-flow__node[data-id="check"]') as Element)
+    const field = await editor('.react-flow__node[data-id="check"]')
+    fireEvent.change(field, { target: { value: 'Approved?' } })
+    fireEvent.keyDown(field, { key: 'Enter' })
+    await screen.findByText('Approved?')
+    // a double-click on the open editor is the editor's own and leaves it as it is
+    fireEvent.doubleClick(container.querySelector('.react-flow__node[data-id="begin"]') as Element)
+    const begin = await editor('.react-flow__node[data-id="begin"]')
+    fireEvent.change(begin, { target: { value: 'Start here' } })
+    fireEvent.doubleClick(begin)
+    expect((await editor('.react-flow__node[data-id="begin"]')).value).toBe('Start here')
+  })
+
+  it('copies a selected behaviour with Ctrl+C', async () => {
+    const copyToClipboard = vi.fn()
+    const { container } = renderCanvas(flow(), { copyToClipboard })
+    await screen.findByText('Do the work')
+    for (const id of ['check', 'work']) {
+      fireEvent.click(container.querySelector(`.react-flow__node[data-id="${id}"]`) as Element)
+      key('c')
+      const payload = JSON.parse(copyToClipboard.mock.calls.at(-1)?.[0] as string)
+      expect(payload.nodes.map((n: { id: string }) => n.id)).toEqual([id])
+    }
+  })
+
+  it('still copies and pastes a behaviour after its label was opened with a double-click', async () => {
+    let clipboard = ''
+    const { container } = renderCanvas(flow(), {
+      copyToClipboard: vi.fn((text: string) => {
+        clipboard = text
+      }),
+      readClipboardText: vi.fn(() => clipboard)
+    })
+    await screen.findByText('Do the work')
+    const node = container.querySelector('.react-flow__node[data-id="check"]') as Element
+    fireEvent.click(node)
+    fireEvent.doubleClick(node)
+    const field = await waitFor(() => {
+      const found = node.querySelector('textarea')
+      expect(found).not.toBeNull()
+      return found as HTMLTextAreaElement
+    })
+    fireEvent.change(field, { target: { value: 'Ok?' } })
+    fireEvent.keyDown(field, { key: 'Enter' })
+    await screen.findByText('Ok?')
+    expect(window.getSelection()?.toString()).toBe('')
+    fireEvent.click(node)
+    key('c')
+    key('v')
+    await waitFor(() => expect(container.querySelectorAll('.stencil-node')).toHaveLength(4))
+  })
+
+  it('pastes a copied behaviour as a new one', async () => {
+    let clipboard = ''
+    const { container } = renderCanvas(flow(), {
+      copyToClipboard: vi.fn((text: string) => {
+        clipboard = text
+      }),
+      readClipboardText: vi.fn(() => clipboard)
+    })
+    await screen.findByText('Do the work')
+    fireEvent.click(container.querySelector('.react-flow__node[data-id="check"]') as Element)
+    key('c')
+    key('v')
+    await waitFor(() => expect(container.querySelectorAll('.stencil-node')).toHaveLength(4))
   })
 
   it('has no zoom buttons in the corner panel unless asked for, and the legend is its last button', async () => {
