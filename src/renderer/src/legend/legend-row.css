@@ -24,6 +24,14 @@
   height: 28px;
 }
 
+/* A behaviour's swatch is drawn on a 28 by 16 box; shown larger so the mark inside a small shape can
+   be told apart. The viewBox scales shape, border and mark together. The size is
+   STENCIL_SWATCH_SIZE (swatch.ts), which the exported legends use too. */
+.legend-swatch-stencil svg {
+  width: 44.8px;
+  height: 25.6px;
+}
+
 /* A circle, deliberately never a box — see ADR 0033's reasoning: a
    rectangle risks implying the meaning only applies to rectangular
    shapes, where a plain color chip reads as "this color means X." */
@@ -136,6 +144,11 @@
   justify-content: space-between;
   font-size: 12px;
   color: var(--color-text);
+}
+
+.legend-draft-routing select {
+  max-width: 180px;
+  font-size: 12px;
 }
 
 .legend-draft-color input {

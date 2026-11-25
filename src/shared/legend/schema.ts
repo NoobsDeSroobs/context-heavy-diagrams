@@ -27,6 +27,9 @@ export interface LegendEntry extends LineMotion {
   strokeWidth?: number
   startMarker?: MarkerKind
   endMarker?: MarkerKind
+  // How an edge drawn with this line is laid out, as an edge's `style.routingStyle` (ADR 0196). Absent
+  // means the personal default routing. The legend sample is always drawn straight.
+  routingStyle?: 'straight' | 'step' | 'smoothstep' | 'catmullRom'
   // 'line' kind only: new edges are drawn with this line (ADR 0196). At most one entry has it.
   forNewEdges?: boolean
   // 'icon' kind only.

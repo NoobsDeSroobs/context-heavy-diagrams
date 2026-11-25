@@ -10,6 +10,7 @@
       "lineStyle": "solid",
       "startMarker": "none",
       "endMarker": "arrowClosed",
+      "routingStyle": "step",
       "forNewEdges": true
     },
     {
@@ -99,7 +100,8 @@
         "strokeWidth": 3,
         "lineStyle": "solid",
         "startMarker": "none",
-        "endMarker": "arrowClosed"
+        "endMarker": "arrowClosed",
+        "routingStyle": "step"
       }
     },
     {
@@ -115,7 +117,8 @@
         "strokeWidth": 3,
         "lineStyle": "solid",
         "startMarker": "none",
-        "endMarker": "arrowClosed"
+        "endMarker": "arrowClosed",
+        "routingStyle": "step"
       }
     },
     {

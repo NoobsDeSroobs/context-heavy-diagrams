@@ -39,6 +39,8 @@ export type StencilMark =
   | 'fork'
   | 'overlap'
   | 'bars'
+  | 'merge'
+  | 'first'
   | 'robot'
   | 'layers'
   | 'repeat'
@@ -57,7 +59,11 @@ export const STENCIL_MARK_PATHS: Record<StencilMark, string> = {
   fork: 'M3 12h7M10 12L20 5M10 12L20 19',
   overlap:
     'M8.8 6.4a5.6 5.6 0 1 0 0 11.2a5.6 5.6 0 1 0 0-11.2M15.2 6.4a5.6 5.6 0 1 0 0 11.2a5.6 5.6 0 1 0 0-11.2',
-  bars: 'M4 8.5h16M4 15.5h16',
+  // Parallel paths, and the two ways to close them: every path meets in the middle, or two paths of
+  // which the second stops (one is enough). The three share the lanes at 7 and 17.
+  bars: 'M4 7h16M4 17h16',
+  merge: 'M3 7H8C13 7 13 12 16 12M3 17H8C13 17 13 12 16 12M16 12H21',
+  first: 'M3 7h18M3 17h11M14 14v6',
   robot:
     'M7.5 8h9a2.5 2.5 0 0 1 2.5 2.5v6a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 5 16.5v-6A2.5 2.5 0 0 1 7.5 8z' +
     'M12 8V4.5M9.5 16.5h5M9.5 12.5h.01M14.5 12.5h.01',
@@ -82,6 +88,8 @@ const MARK_SCALE: Partial<Record<StencilMark, number>> = {
   fork: 1.2,
   overlap: 1.2,
   bars: 1.2,
+  merge: 1.2,
+  first: 1.2,
   'check-warn': 1.15,
   stop: 0.85
 }
@@ -196,7 +204,7 @@ export interface StencilKind {
   terms: readonly string[]
 }
 
-// One colour per family, so the families differ in lightness (for readers who do not see colour) and
+// One colour per family (four: steps, decisions, parallel, events), so the families differ in lightness (for readers who do not see colour) and
 // nothing varies inside one: a kind is told by its shape and mark. No red: it reads as an error.
 const STEP = {
   group: 'Steps',
@@ -208,11 +216,22 @@ const STEP = {
 } as const
 
 const CHOICE = {
-  group: 'Branches',
+  group: 'Decisions',
   shape: 'square',
   size: { width: 48, height: 48 },
   fill: '#97782d',
   light: { fill: '#f7edd6' }
+} as const
+
+// The branches that run side by side and the joins that wait for them, told from the decisions by
+// colour: a plum, a hue none of the other families has, and darker than they are in both themes (the
+// light theme stops where its dark marks would lose contrast).
+const PARALLEL = {
+  ...CHOICE,
+  group: 'Parallel',
+  fill: '#2f0f34',
+  stroke: '#c27fcb',
+  light: { fill: '#ae62b3', stroke: '#6b2a72' }
 } as const
 
 const EVENT = {
@@ -323,19 +342,61 @@ export const STENCIL_KINDS: readonly StencilKind[] = [
     ]
   },
   {
-    ...CHOICE,
+    ...PARALLEL,
     id: 'branch-parallel',
-    name: 'Parallel split or join',
+    name: 'Run in parallel',
     mark: 'bars',
     defaultLabel: 'Parallel',
     terms: [
       'gateway',
       'parallel gateway',
+      'parallel split or join',
       'and',
       'fork',
       'join',
       'split',
       'concurrent',
+      'bpmn gateway'
+    ]
+  },
+  // The two ways to close parallel paths: when every path has arrived, or when the first has.
+  {
+    ...PARALLEL,
+    id: 'branch-all',
+    name: 'Wait for all',
+    mark: 'merge',
+    defaultLabel: 'All',
+    terms: [
+      'gateway',
+      'and',
+      'all of',
+      'every path',
+      'join',
+      'merge',
+      'synchronise',
+      'wait for all',
+      'pick all',
+      'bpmn gateway'
+    ]
+  },
+  {
+    ...PARALLEL,
+    id: 'branch-one',
+    name: 'Wait for first',
+    mark: 'first',
+    defaultLabel: 'First',
+    terms: [
+      'gateway',
+      'or',
+      'any',
+      'any of',
+      'one of',
+      'first of',
+      'race',
+      'discriminator',
+      'pick one',
+      'join',
+      'merge',
       'bpmn gateway'
     ]
   },

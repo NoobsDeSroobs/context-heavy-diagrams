@@ -44,6 +44,7 @@ import {
   stencilStyle,
   type StencilKind
 } from '../stencils/kinds.ts'
+import { STENCIL_SWATCH_SIZE, STENCIL_SWATCH_ZOOM } from '../stencils/swatch.ts'
 import { dasharrayOf, dashPattern } from '../styling/edgeDash.ts'
 import type { Theme } from '../styling/theme.ts'
 import {
@@ -188,7 +189,9 @@ function stencilShape(
   strokeWidth: number,
   markPaint: Paint,
   small = false,
-  ending?: StencilState
+  ending?: StencilState,
+  // A legend swatch drawn larger (LEGEND_STENCIL_ZOOM): its fixed small-size details grow with it.
+  zoom = 1
 ): string {
   const { x, y, width, height } = box
   const inset = look.stroke ? strokeWidth / 2 : 0
@@ -209,18 +212,18 @@ function stencilShape(
       : `<rect x="${num(x + inset)}" y="${num(y + inset)}" width="${num(width - inset * 2)}" height="${num(height - inset * 2)}" rx="4"${paint}/>`
   const doubled = stencilDoubleBorder(kind, ending)
   if (kind.shape === 'circle' && doubled && look.stroke) {
-    const inner = Math.max(0, radius - strokeWidth - (small ? 1.5 : DOUBLE_BORDER_GAP))
+    const inner = Math.max(0, radius - strokeWidth - (small ? 1.5 * zoom : DOUBLE_BORDER_GAP))
     out += `<circle cx="${num(cx)}" cy="${num(cy)}" r="${num(inner)}" fill="none"${paintAttrs('stroke', look.stroke)} stroke-width="${num(strokeWidth)}"/>`
   }
   if (kind.shape === 'arrow') {
     // The band takes the colour of the border (of the mark where the border is switched off).
-    const band = arrowBandPath(x + inset, y + inset, y + height - inset, 4, small ? 0.35 : 1)
+    const band = arrowBandPath(x + inset, y + inset, y + height - inset, 4, small ? 0.35 * zoom : 1)
     out += `<path d="${band}"${paintAttrs('fill', look.stroke ?? markPaint)}/>`
   }
   if (!mark) return out
   const at = stencilMarkBox(kind, width, height, small, mark, doubled)
   const scale = Math.round((at.size / 24) * 10000) / 10000
-  const line = small ? 1.2 / scale : MARK_STROKE
+  const line = small ? (1.2 * zoom) / scale : MARK_STROKE
   return (
     out +
     `<g transform="translate(${num(x + at.x)} ${num(y + at.y)}) scale(${scale})">` +
@@ -414,12 +417,32 @@ const LEGEND_SWATCH_WIDTH = 28
 const LEGEND_SWATCH_GAP = 6
 const LEGEND_MARGIN = 16
 
+// A legend with a behaviour in it has a wider swatch column and taller rows for the behaviours, so
+// their larger swatches fit as they do in the legend panel; one without keeps the plain sizes.
+function legendMetrics(items: ExportLegendItem[]): {
+  swatchWidth: number
+  rowHeights: number[]
+} {
+  const stencils = items.some((item) => item.swatch.kind === 'stencil')
+  return {
+    swatchWidth: stencils
+      ? Math.max(LEGEND_SWATCH_WIDTH, STENCIL_SWATCH_SIZE.width)
+      : LEGEND_SWATCH_WIDTH,
+    rowHeights: items.map((item) =>
+      item.swatch.kind === 'stencil'
+        ? Math.max(LEGEND_ROW_HEIGHT, Math.ceil(STENCIL_SWATCH_SIZE.height) + 2)
+        : LEGEND_ROW_HEIGHT
+    )
+  }
+}
+
 function legendSize(items: ExportLegendItem[]): { width: number; height: number } {
   const textWidth = Math.max(0, ...items.map((item) => measureText(item.label, LEGEND_FONT)))
+  const { swatchWidth, rowHeights } = legendMetrics(items)
+  const rows = rowHeights.reduce((sum, h) => sum + h, 0)
   return {
-    width: Math.ceil(LEGEND_PAD_X * 2 + LEGEND_SWATCH_WIDTH + LEGEND_SWATCH_GAP + textWidth) + 2,
-    height:
-      LEGEND_PAD_Y * 2 + items.length * LEGEND_ROW_HEIGHT + (items.length - 1) * LEGEND_ROW_GAP + 2
+    width: Math.ceil(LEGEND_PAD_X * 2 + swatchWidth + LEGEND_SWATCH_GAP + textWidth) + 2,
+    height: LEGEND_PAD_Y * 2 + rows + (items.length - 1) * LEGEND_ROW_GAP + 2
   }
 }
 
@@ -434,10 +457,16 @@ function drawLegend(
     `<rect x="${num(at.x + 0.5)}" y="${num(at.y + 0.5)}" width="${size.width - 1}" height="${size.height - 1}" rx="6" fill="${tokens.soft}" stroke="${tokens.border}"/>`
   ]
   const textLook: LabelLook = { font: LEGEND_FONT, fill: tokens.text, align: 'start' }
+  const { swatchWidth, rowHeights } = legendMetrics(items)
+  const columnX = at.x + 1 + LEGEND_PAD_X
+  let nextRowTop = at.y + 1 + LEGEND_PAD_Y
   items.forEach((item, i) => {
-    const rowTop = at.y + 1 + LEGEND_PAD_Y + i * (LEGEND_ROW_HEIGHT + LEGEND_ROW_GAP)
-    const swatchX = at.x + 1 + LEGEND_PAD_X
-    const cy = rowTop + LEGEND_ROW_HEIGHT / 2
+    const rowTop = nextRowTop
+    const rowHeight = rowHeights[i]
+    nextRowTop += rowHeight + LEGEND_ROW_GAP
+    // The plain swatches are 28 wide and sit in the middle of a wider column.
+    const swatchX = columnX + (swatchWidth - LEGEND_SWATCH_WIDTH) / 2
+    const cy = rowTop + rowHeight / 2
     const { swatch } = item
     if (swatch.kind === 'entity') {
       const paint = plainColor(swatch.color)
@@ -453,11 +482,11 @@ function drawLegend(
         undefined,
         options.theme
       )
-      const wide = sk.shape === 'arrow'
-      const box = wide
-        ? { x: swatchX + 3, y: cy - 7, width: 22, height: 14 }
-        : { x: swatchX + 7, y: cy - 7, width: 14, height: 14 }
-      parts.push(stencilShape(sk, box, look, 1.5, tokens.text, true, swatch.state))
+      const zoom = STENCIL_SWATCH_ZOOM
+      const width = (sk.shape === 'arrow' ? 22 : 14) * zoom
+      const height = 14 * zoom
+      const box = { x: columnX + (swatchWidth - width) / 2, y: cy - height / 2, width, height }
+      parts.push(stencilShape(sk, box, look, 1.5 * zoom, tokens.text, true, swatch.state, zoom))
     } else if (swatch.kind === 'highlight') {
       const paint = plainColor(swatch.color)
       parts.push(
@@ -485,9 +514,9 @@ function drawLegend(
       textLines(
         [item.label],
         textLook,
-        swatchX + LEGEND_SWATCH_WIDTH + LEGEND_SWATCH_GAP,
+        columnX + swatchWidth + LEGEND_SWATCH_GAP,
         measureText(item.label, LEGEND_FONT),
-        rowTop + (LEGEND_ROW_HEIGHT - LEGEND_FONT.size * LINE_HEIGHT_EM) / 2
+        rowTop + (rowHeight - LEGEND_FONT.size * LINE_HEIGHT_EM) / 2
       )
     )
   })

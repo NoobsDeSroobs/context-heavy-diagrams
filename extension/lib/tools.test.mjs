@@ -299,7 +299,7 @@ test('get_format_spec "build" is the short page for edit_diagram, without the co
   assert.match(build, /room_for_label/)
   assert.doesNotMatch(build, /# \.chd diagram format/)
   // About a page: the point of the topic is that it is cheap to read.
-  assert.ok(build.length < 6500, `${build.length} characters`)
+  assert.ok(build.length < 6700, `${build.length} characters`)
 })
 
 test('get_format_spec "all" is the core rules plus an index, small enough for one result', () => {

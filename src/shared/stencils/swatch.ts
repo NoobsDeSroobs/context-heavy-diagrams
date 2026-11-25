@@ -15,6 +15,14 @@ import {
   type StencilState
 } from './kinds.ts'
 
+// A kind's swatch is drawn on a 28 by 16 box and shown this much larger in the legend, on screen and in
+// the exports, so the mark inside a small shape can be told apart.
+export const STENCIL_SWATCH_ZOOM = 1.6
+export const STENCIL_SWATCH_SIZE = {
+  width: 28 * STENCIL_SWATCH_ZOOM,
+  height: 16 * STENCIL_SWATCH_ZOOM
+}
+
 // The swatch of a kind in the colours it is drawn in for the theme; what a kind does not colour takes
 // the text colour of the legend.
 export function stencilSwatchSvgFor(kindId: string, theme: Theme, state?: StencilState): string {

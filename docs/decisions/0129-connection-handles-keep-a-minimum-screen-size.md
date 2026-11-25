@@ -10,6 +10,8 @@ React Flow sizes handles, and the radius within which a dropped edge snaps to on
 - The handle size is `max(6px, 10px / zoom)` in CSS, so a handle is at least 10 screen px and unchanged when zoomed in. The zoom reaches the CSS as `--canvas-zoom` on the canvas element, written straight to the DOM from the React Flow store, so zooming re-renders nothing.
 - `connectionRadius` doubles per halving of the zoom (rounded to a step), which keeps the screen radius between about 14 and 28 px. It is a prop, so it must be state; stepping it keeps the canvas from re-rendering on every zoom tick.
 
+- An edge ends on the outer rim of its handle, and React Flow measures a handle once, when its node is measured. The nodes are therefore measured again once the zoom has rested for a moment and the handle size has changed (`useZoomedConnectionHandles`); without it an edge ends further from its element the more the zoom has moved since the measurement.
+
 ## Alternatives considered
 - **Scale the handles with a CSS transform.** The handle position and the hit area React Flow measures would disagree.
 - **A continuous `connectionRadius` of `20 / zoom`.** Exact, but re-renders the whole canvas on every wheel tick.

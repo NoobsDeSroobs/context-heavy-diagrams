@@ -27,6 +27,13 @@ export function connectionRadiusForZoom(zoom: number): number {
   return DEFAULT_CONNECTION_RADIUS * 2 ** Math.round(Math.log2(1 / zoom))
 }
 
+// The size of a connection handle in flow units at a zoom: at least 10 screen px, never under 6. The
+// same formula as the handle rule in nodes.css (ADR 0129).
+export function handleSizeForZoom(zoom: number): number {
+  if (!(zoom > 0)) return 10
+  return Math.max(6, 10 / zoom)
+}
+
 // MouseEvent and TouchEvent expose the release coordinates differently.
 export function pointFromEvent(event: MouseEvent | TouchEvent): {
   clientX: number

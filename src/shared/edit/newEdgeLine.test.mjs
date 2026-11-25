@@ -129,6 +129,19 @@ test('the thickness of the legend line is kept by the file and given to new edge
   assert.equal('strokeWidth' in removed.legend.find((e) => e.id === 'event'), false)
 })
 
+test('the routing of the legend line is kept by the file and given to new edges (ADR 0196)', () => {
+  const { diagram } = run(
+    base(),
+    { op: 'set_legend_entry', id: 'event', routingStyle: 'step' },
+    { op: 'set_new_edge_line', id: 'event' },
+    { op: 'connect', id: 'routed', from: 'a', to: 'b' }
+  )
+  assert.equal(diagram.legend.find((e) => e.id === 'event').routingStyle, 'step')
+  assert.equal(diagram.edges[0].style.routingStyle, 'step')
+  assert.deepEqual(check(diagram).errors, [])
+  refused(base(), { op: 'set_legend_entry', id: 'event', routingStyle: 'zigzag' }, /routingStyle/)
+})
+
 test('with no marked line, connect leaves the edge unstyled as before', () => {
   const { diagram } = run(base(), { op: 'connect', id: 'plain', from: 'a', to: 'b' })
   assert.equal(diagram.edges[0].style, undefined)

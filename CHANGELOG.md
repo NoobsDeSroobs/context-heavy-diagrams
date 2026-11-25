@@ -9,6 +9,7 @@ What changed for people using the tool, one entry per minor or major release. Th
 - **New edges follow a line of the diagram's legend.** The edge-style button at the top now lists the diagram's own legend lines first, so a new edge is "Data flow" from the moment it is drawn, not "a dashed arrow". Pick a line to draw new edges with it (it is ticked; pick it again to stop), or a preset below for every diagram as before. The button shows the line in use. Edges already drawn keep their own style, and a direction set's own style still wins ([ADR 0196](docs/decisions/0196-new-edges-follow-a-line-of-the-diagrams-legend.md)). `edit_diagram` and `chd edit` have `set_new_edge_line`, and `connect` without a style uses the line.
 
 - **A legend line has a thickness.** Copying an edge into the legend, and drawing new edges with a legend line, now keep how thick it is. `set_legend_entry` and `add_legend_entry` take `strokeWidth` ([ADR 0197](docs/decisions/0197-pointed-arrowheads-keep-their-tip-and-lines-carry-a-thickness.md)).
+- **Parallel paths have their own symbols.** *Run in parallel* opens paths that run side by side, *Wait for all* goes on when every path has arrived, and *Wait for first* goes on with the first. They are plum, apart from the amber decisions, and a decision is closed by a decision symbol. `chd validate` and the assistant tools warn when the ways of a decision meet at a join that waits for all of them, which would never finish. [Why](docs/decisions/0198-parallel-paths-are-closed-by-a-wait-and-decisions-by-a-decision.md).
 - **The edge-style picker shows the lines as they look.** Each row, and the button, is drawn with the line's colour, thickness, dashes and ends instead of a grey bar.
 
 ### Changed
@@ -17,11 +18,14 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 ### Fixed
 
+- **The standard edge respects the routing type.** A legend line can now carry a routing type (straight, step, smoothstep, curved): picking a line from an edge copies it, the legend's Routing choice sets it, and new edges drawn with that line are laid out that way. A line without one, or a preset, no longer loses the routing set in the preferences ([ADR 0196](docs/decisions/0196-new-edges-follow-a-line-of-the-diagrams-legend.md)).
+- **Edges no longer drift away from their elements when you zoom.** The gap grew with every zoom until the element left the window and came back; the connection points are now measured again once the zoom rests ([ADR 0129](docs/decisions/0129-connection-handles-keep-a-minimum-screen-size.md)).
+- **A double-click on a behaviour or an edge opens its label for writing**, empty or not. Before, a decision or a parallel shape with no label had nothing to click.
 - **Dragging an edge from an unselected shape no longer wires the selected one too.** After moving A, dragging from B onto A gave an edge from A to A as well. Only a drag that starts from a selected shape now wires the whole selection, and a shape is never wired to itself ([ADR 0059](docs/decisions/0059-multi-connection-line.md)).
 
 ### File format
 
-- A legend entry of kind `line` may have `forNewEdges: true` and `strokeWidth`, documented in [docs/file-format.md](docs/file-format.md). Left out when not set. An older app ignores them.
+- A legend entry of kind `line` may have `forNewEdges: true`, `strokeWidth` and `routingStyle`, documented in [docs/file-format.md](docs/file-format.md). Left out when not set. An older app ignores them.
 
 ## 0.14.0 (2026-11-21)
 

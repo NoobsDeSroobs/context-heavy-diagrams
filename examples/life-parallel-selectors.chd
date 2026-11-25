@@ -1,0 +1,1821 @@
+{
+  "version": 1,
+  "savedWith": "0.15.0",
+  "legend": [
+    {
+      "kind": "line",
+      "lineStyle": "solid",
+      "startMarker": "none",
+      "endMarker": "arrowClosed",
+      "routingStyle": "step",
+      "label": "Leads to",
+      "id": "legend-8467b6b1-9195-40e7-8aba-2fef13fbca8c",
+      "forNewEdges": true
+    }
+  ],
+  "nodes": [
+    {
+      "id": "title",
+      "type": "text",
+      "position": {
+        "x": 0,
+        "y": -120
+      },
+      "size": {
+        "width": 900,
+        "height": 30
+      },
+      "zIndex": 200010,
+      "style": {
+        "fontSize": 18,
+        "fontWeight": "bold",
+        "textAlign": "left"
+      },
+      "data": {
+        "label": "Succeeding in life: Run in parallel, Wait for all, Wait for first"
+      }
+    },
+    {
+      "id": "intro",
+      "type": "text",
+      "position": {
+        "x": 0,
+        "y": -84
+      },
+      "size": {
+        "width": 900,
+        "height": 60
+      },
+      "zIndex": 200020,
+      "style": {
+        "fontSize": 12,
+        "textAlign": "left"
+      },
+      "data": {
+        "label": "Run in parallel starts the paths and says nothing about how they finish. Wait for all closes them when every path has arrived; Wait for first closes them when the first has. Open the legend to see the three marks."
+      }
+    },
+    {
+      "id": "leave",
+      "type": "stencil",
+      "position": {
+        "x": 0,
+        "y": 172
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100010,
+      "data": {
+        "label": "Leave school",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "p1",
+      "type": "stencil",
+      "position": {
+        "x": 190,
+        "y": 176
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "zIndex": 100020,
+      "data": {
+        "label": "",
+        "kind": "branch-parallel"
+      }
+    },
+    {
+      "id": "edu0",
+      "type": "stencil",
+      "position": {
+        "x": 290,
+        "y": 92
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100030,
+      "data": {
+        "label": "Pass the exams",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "edu1",
+      "type": "stencil",
+      "position": {
+        "x": 290,
+        "y": 172
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100040,
+      "data": {
+        "label": "Write the thesis",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "edu2",
+      "type": "stencil",
+      "position": {
+        "x": 290,
+        "y": 252
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100050,
+      "data": {
+        "label": "Do a placement",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "all1",
+      "type": "stencil",
+      "position": {
+        "x": 490,
+        "y": 176
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "zIndex": 100060,
+      "data": {
+        "label": "",
+        "kind": "branch-all"
+      }
+    },
+    {
+      "id": "graduate",
+      "type": "stencil",
+      "position": {
+        "x": 590,
+        "y": 172
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100070,
+      "data": {
+        "label": "Graduate",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "note1",
+      "type": "text",
+      "position": {
+        "x": 290,
+        "y": 330
+      },
+      "size": {
+        "width": 300,
+        "height": 24
+      },
+      "zIndex": 200030,
+      "style": {
+        "fontSize": 12
+      },
+      "data": {
+        "label": "All three are needed to graduate."
+      }
+    },
+    {
+      "id": "p2",
+      "type": "stencil",
+      "position": {
+        "x": 780,
+        "y": 176
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "zIndex": 100080,
+      "data": {
+        "label": "",
+        "kind": "branch-parallel"
+      }
+    },
+    {
+      "id": "firm0",
+      "type": "stencil",
+      "position": {
+        "x": 880,
+        "y": 92
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100090,
+      "data": {
+        "label": "Land a job at firm A",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "firm1",
+      "type": "stencil",
+      "position": {
+        "x": 880,
+        "y": 172
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100100,
+      "data": {
+        "label": "Land a job at firm B",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "firm2",
+      "type": "stencil",
+      "position": {
+        "x": 880,
+        "y": 252
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100110,
+      "data": {
+        "label": "Land a job at firm C",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "one2",
+      "type": "stencil",
+      "position": {
+        "x": 1080,
+        "y": 176
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "zIndex": 100120,
+      "data": {
+        "label": "",
+        "kind": "branch-one"
+      }
+    },
+    {
+      "id": "job",
+      "type": "stencil",
+      "position": {
+        "x": 1180,
+        "y": 172
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100130,
+      "data": {
+        "label": "Start the job",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "note2",
+      "type": "text",
+      "position": {
+        "x": 880,
+        "y": 330
+      },
+      "size": {
+        "width": 300,
+        "height": 24
+      },
+      "zIndex": 200040,
+      "style": {
+        "fontSize": 12
+      },
+      "data": {
+        "label": "One offer is enough."
+      }
+    },
+    {
+      "id": "p3",
+      "type": "stencil",
+      "position": {
+        "x": 1370,
+        "y": 176
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "zIndex": 100140,
+      "data": {
+        "label": "",
+        "kind": "branch-parallel"
+      }
+    },
+    {
+      "id": "home0",
+      "type": "stencil",
+      "position": {
+        "x": 1504.5607050783226,
+        "y": 89.70258735817004
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100150,
+      "data": {
+        "label": "Save a deposit",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "home1",
+      "type": "stencil",
+      "position": {
+        "x": 1504.5607050783226,
+        "y": 169.70258735817004
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100160,
+      "data": {
+        "label": "Find a home",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "home2",
+      "type": "stencil",
+      "position": {
+        "x": 1740.0263477758904,
+        "y": 257.70258735817004
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100170,
+      "data": {
+        "label": "Ask bank X",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "home3",
+      "type": "stencil",
+      "position": {
+        "x": 1740.0263477758904,
+        "y": 337.70258735817004
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100180,
+      "data": {
+        "label": "Ask bank Y",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "one3",
+      "type": "stencil",
+      "position": {
+        "x": 1938.3470949036646,
+        "y": 301.70258735817004
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "zIndex": 100190,
+      "connectionPoints": [
+        {
+          "id": "left",
+          "side": "left",
+          "offset": 0.6666666666666666
+        },
+        {
+          "id": "cp-1",
+          "side": "left",
+          "offset": 0.3333333333333333
+        }
+      ],
+      "data": {
+        "label": "",
+        "kind": "branch-one"
+      }
+    },
+    {
+      "id": "all3",
+      "type": "stencil",
+      "position": {
+        "x": 2318.2077517195735,
+        "y": 173.70258735817004
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "zIndex": 100200,
+      "connectionPoints": [
+        {
+          "id": "left",
+          "side": "left",
+          "offset": 0.75
+        },
+        {
+          "id": "cp-1",
+          "side": "left",
+          "offset": 0.5
+        },
+        {
+          "id": "cp-2",
+          "side": "left",
+          "offset": 0.25
+        }
+      ],
+      "data": {
+        "label": "",
+        "kind": "branch-all"
+      }
+    },
+    {
+      "id": "house",
+      "type": "stencil",
+      "position": {
+        "x": 2418.2077517195735,
+        "y": 169.70258735817004
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100210,
+      "data": {
+        "label": "Buy the house",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "family",
+      "type": "stencil",
+      "position": {
+        "x": 2618.2077517195735,
+        "y": 177.70258735817004
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "zIndex": 100220,
+      "data": {
+        "label": "Start a family",
+        "kind": "event-end"
+      }
+    },
+    {
+      "id": "note3",
+      "type": "text",
+      "position": {
+        "x": 1445.4656426975678,
+        "y": 447
+      },
+      "size": {
+        "width": 460,
+        "height": 60
+      },
+      "zIndex": 200050,
+      "style": {
+        "fontSize": 12
+      },
+      "data": {
+        "label": "The deposit and the home are both needed, and the mortgage needs just one of the two banks."
+      }
+    },
+    {
+      "id": "stencil-eafa2c09-2a07-41f8-ad86-cd70a7738a27",
+      "type": "stencil",
+      "position": {
+        "x": 1488.1687042499277,
+        "y": 301.70258735817004
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "zIndex": 100170,
+      "data": {
+        "label": "Can finance alone?",
+        "kind": "branch-exclusive",
+        "labelPosition": "above"
+      }
+    },
+    {
+      "id": "stencil-7071e72d-64dd-405b-852a-7c276c868e1d",
+      "type": "stencil",
+      "position": {
+        "x": 1643.2405506276787,
+        "y": 301.70258735817004
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "zIndex": 100140,
+      "connectionPoints": [
+        {
+          "id": "right",
+          "side": "right",
+          "offset": 0.3333333333333333
+        },
+        {
+          "id": "cp-1",
+          "side": "right",
+          "offset": 0.6666666666666666
+        }
+      ],
+      "data": {
+        "label": "",
+        "kind": "branch-parallel"
+      }
+    },
+    {
+      "id": "text-9948df95-ee1d-46c6-9777-2c1aaaaf246c",
+      "type": "text",
+      "position": {
+        "x": 26.32074712777421,
+        "y": 477.1863293411302
+      },
+      "size": {
+        "width": 900,
+        "height": 30
+      },
+      "zIndex": 200010,
+      "style": {
+        "fontSize": 18,
+        "fontWeight": "bold",
+        "textAlign": "left"
+      },
+      "data": {
+        "label": "Succeeding in life: Run in parallel, Wait for all, Wait for first"
+      }
+    },
+    {
+      "id": "text-6cc39e02-5bb3-42d8-b8a5-4d43dbc4ede2",
+      "type": "text",
+      "position": {
+        "x": 26.32074712777421,
+        "y": 513.1863293411302
+      },
+      "size": {
+        "width": 900,
+        "height": 60
+      },
+      "zIndex": 200020,
+      "style": {
+        "fontSize": 12,
+        "textAlign": "left"
+      },
+      "data": {
+        "label": "Run in parallel starts the paths and says nothing about how they finish. Wait for all closes them when every path has arrived; Wait for first closes them when the first has. Open the legend to see the three marks."
+      }
+    },
+    {
+      "id": "stencil-8c548786-58b3-4028-8953-b36e98481cfd",
+      "type": "stencil",
+      "position": {
+        "x": 0,
+        "y": 652.9228880517419
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100010,
+      "data": {
+        "label": "Leave school",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "stencil-7f12dc17-f5ed-4d5e-9f0d-5a13b5d375c9",
+      "type": "stencil",
+      "position": {
+        "x": 190,
+        "y": 656.9228880517419
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "zIndex": 100020,
+      "data": {
+        "label": "",
+        "kind": "branch-parallel"
+      }
+    },
+    {
+      "id": "stencil-8ba4aa9b-b6f3-4801-8d24-45111149568f",
+      "type": "stencil",
+      "position": {
+        "x": 290,
+        "y": 572.9228880517419
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100030,
+      "data": {
+        "label": "Pass the exams",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "stencil-3833a5da-6b13-42f0-b8ef-24ab82506549",
+      "type": "stencil",
+      "position": {
+        "x": 290,
+        "y": 652.9228880517419
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100040,
+      "data": {
+        "label": "Write the thesis",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "stencil-cabdbc0a-9329-429b-9bb9-030096633db0",
+      "type": "stencil",
+      "position": {
+        "x": 290,
+        "y": 732.9228880517419
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100050,
+      "data": {
+        "label": "Do a placement",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "stencil-83e897e9-d1d1-4dd6-8a9b-1bb6fed716d2",
+      "type": "stencil",
+      "position": {
+        "x": 490,
+        "y": 656.9228880517419
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "zIndex": 100060,
+      "data": {
+        "label": "",
+        "kind": "branch-parallel"
+      }
+    },
+    {
+      "id": "stencil-26afd027-056d-472a-a300-6f0b276fb340",
+      "type": "stencil",
+      "position": {
+        "x": 590.0000000000001,
+        "y": 652.9228880517419
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100070,
+      "data": {
+        "label": "Graduate",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "text-dec5db47-559f-4e2a-89c0-fd266ddb13f0",
+      "type": "text",
+      "position": {
+        "x": 290,
+        "y": 810.9228880517419
+      },
+      "size": {
+        "width": 300,
+        "height": 24
+      },
+      "zIndex": 200030,
+      "style": {
+        "fontSize": 12
+      },
+      "data": {
+        "label": "All three are needed to graduate."
+      }
+    },
+    {
+      "id": "stencil-34134405-60f5-43a2-a7a4-1a7c8fcae036",
+      "type": "stencil",
+      "position": {
+        "x": 780.0000000000001,
+        "y": 656.9228880517419
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "zIndex": 100080,
+      "data": {
+        "label": "",
+        "kind": "branch-one"
+      }
+    },
+    {
+      "id": "stencil-73a803ea-909d-4922-9805-f4f6c010693f",
+      "type": "stencil",
+      "position": {
+        "x": 880.0000000000001,
+        "y": 572.9228880517419
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100090,
+      "data": {
+        "label": "Land a job at firm A",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "stencil-7a2d4b07-4205-4ec2-8a46-f6ef785b9246",
+      "type": "stencil",
+      "position": {
+        "x": 880.0000000000001,
+        "y": 652.9228880517419
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100100,
+      "data": {
+        "label": "Land a job at firm B",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "stencil-4cc97e53-1696-451a-bcc2-e3f0deccb4ee",
+      "type": "stencil",
+      "position": {
+        "x": 880.0000000000001,
+        "y": 732.9228880517419
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100110,
+      "data": {
+        "label": "Land a job at firm C",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "stencil-306f8a1e-0efc-49af-9a12-d4c4e39a7bc7",
+      "type": "stencil",
+      "position": {
+        "x": 1080,
+        "y": 656.9228880517419
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "zIndex": 100120,
+      "data": {
+        "label": "",
+        "kind": "branch-one"
+      }
+    },
+    {
+      "id": "stencil-9a13793e-7f3e-4f2b-9440-b6f9602eec1a",
+      "type": "stencil",
+      "position": {
+        "x": 1180,
+        "y": 652.9228880517419
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100130,
+      "data": {
+        "label": "Start the job",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "text-b2ed4c47-c79c-4d72-8965-edd8192d5216",
+      "type": "text",
+      "position": {
+        "x": 880.0000000000001,
+        "y": 810.9228880517419
+      },
+      "size": {
+        "width": 300,
+        "height": 24
+      },
+      "zIndex": 200040,
+      "style": {
+        "fontSize": 12
+      },
+      "data": {
+        "label": "One offer is enough."
+      }
+    },
+    {
+      "id": "stencil-fe62cea3-7a39-4cb6-84ca-64f56dc723e9",
+      "type": "stencil",
+      "position": {
+        "x": 1370,
+        "y": 656.9228880517419
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "zIndex": 100140,
+      "data": {
+        "label": "",
+        "kind": "branch-parallel"
+      }
+    },
+    {
+      "id": "stencil-f9d06b7a-6c8b-4f00-85af-b4ed058be031",
+      "type": "stencil",
+      "position": {
+        "x": 1483.0929285157779,
+        "y": 572.9228880517419
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100150,
+      "data": {
+        "label": "Save a deposit",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "stencil-8f209747-943e-47e1-aa8e-bdc901ea871b",
+      "type": "stencil",
+      "position": {
+        "x": 1483.0929285157779,
+        "y": 652.9228880517419
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100160,
+      "data": {
+        "label": "Find a home",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "stencil-f1129c45-2cfa-45b9-b26e-607701139dd6",
+      "type": "stencil",
+      "position": {
+        "x": 1718.5585712133457,
+        "y": 740.9228880517419
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100170,
+      "data": {
+        "label": "Ask bank X",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "stencil-c7138010-8eb2-4faf-9b88-a79ae5df3995",
+      "type": "stencil",
+      "position": {
+        "x": 1718.5585712133457,
+        "y": 820.9228880517419
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100180,
+      "data": {
+        "label": "Ask bank Y",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "stencil-8da04449-4690-4498-b6ee-ae91497daf8a",
+      "type": "stencil",
+      "position": {
+        "x": 1910.5985905196762,
+        "y": 784.9228880517419
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "zIndex": 100190,
+      "data": {
+        "label": "",
+        "kind": "branch-one"
+      }
+    },
+    {
+      "id": "stencil-d5800419-6696-44b4-8ca8-aca824022c29",
+      "type": "stencil",
+      "position": {
+        "x": 2223.8870045917993,
+        "y": 656.9228880517419
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "zIndex": 100200,
+      "connectionPoints": [
+        {
+          "id": "left",
+          "side": "left",
+          "offset": 0.75
+        },
+        {
+          "id": "cp-1",
+          "side": "left",
+          "offset": 0.5
+        },
+        {
+          "id": "cp-2",
+          "side": "left",
+          "offset": 0.25
+        }
+      ],
+      "data": {
+        "label": "",
+        "kind": "branch-parallel"
+      }
+    },
+    {
+      "id": "stencil-a745c9b0-1010-43ad-87f7-8c696931dfc0",
+      "type": "stencil",
+      "position": {
+        "x": 2323.8870045917993,
+        "y": 652.9228880517419
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100210,
+      "data": {
+        "label": "Buy the house",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "stencil-6d60aacf-1187-42bb-a6be-f259f65c010f",
+      "type": "stencil",
+      "position": {
+        "x": 2523.8870045917993,
+        "y": 660.9228880517419
+      },
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "zIndex": 100220,
+      "data": {
+        "label": "Start a family",
+        "kind": "event-end"
+      }
+    },
+    {
+      "id": "text-ec5488bd-17fb-4fe8-a75a-1bee058d9ab1",
+      "type": "text",
+      "position": {
+        "x": 1445.4656426975678,
+        "y": 927.9228880517419
+      },
+      "size": {
+        "width": 460,
+        "height": 60
+      },
+      "zIndex": 200050,
+      "style": {
+        "fontSize": 12
+      },
+      "data": {
+        "label": "The deposit and the home are both needed, and the mortgage needs just one of the two banks."
+      }
+    },
+    {
+      "id": "stencil-10573a17-fc13-427a-b568-e9f1bf58019a",
+      "type": "stencil",
+      "position": {
+        "x": 1466.700927687383,
+        "y": 784.9228880517419
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "zIndex": 100170,
+      "data": {
+        "label": "Can finance alone?",
+        "kind": "branch-exclusive",
+        "labelPosition": "above"
+      }
+    },
+    {
+      "id": "stencil-90dd222a-5a3b-4930-a4ec-598201d8f1b5",
+      "type": "stencil",
+      "position": {
+        "x": 1621.772774065134,
+        "y": 784.9228880517419
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "zIndex": 100140,
+      "data": {
+        "label": "",
+        "kind": "branch-one"
+      }
+    },
+    {
+      "id": "stencil-a1edc3e8-5a13-4916-abb2-17a67f0538a9",
+      "type": "stencil",
+      "position": {
+        "x": 2176.4065283354994,
+        "y": 784.9228880517419
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "zIndex": 100170,
+      "data": {
+        "label": "",
+        "kind": "branch-exclusive",
+        "labelPosition": "above"
+      }
+    },
+    {
+      "id": "stencil-b4bfa467-6695-4a3e-8c36-c2940107ea68",
+      "type": "stencil",
+      "position": {
+        "x": 1991.882990258636,
+        "y": 780.9228880517419
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100170,
+      "data": {
+        "label": "Select Mortgage",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "stencil-d675c49a-173a-42c5-b329-981acfa4d69b",
+      "type": "stencil",
+      "position": {
+        "x": 2074.0799917160502,
+        "y": 297.70258735817004
+      },
+      "size": {
+        "width": 150,
+        "height": 56
+      },
+      "zIndex": 100170,
+      "data": {
+        "label": "Select Mortgage",
+        "kind": "step"
+      }
+    },
+    {
+      "id": "stencil-3c325a98-04af-4fe8-be47-cab3374efed0",
+      "type": "stencil",
+      "position": {
+        "x": 2264.6635278526765,
+        "y": 301.70258735817004
+      },
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "zIndex": 100170,
+      "data": {
+        "label": "",
+        "kind": "branch-exclusive",
+        "labelPosition": "above"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "leave",
+      "target": "p1",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "e2",
+      "source": "p1",
+      "target": "edu0",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "e3",
+      "source": "edu0",
+      "target": "all1",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "e4",
+      "source": "p1",
+      "target": "edu1",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "e5",
+      "source": "edu1",
+      "target": "all1",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "e6",
+      "source": "p1",
+      "target": "edu2",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "e7",
+      "source": "edu2",
+      "target": "all1",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "e8",
+      "source": "all1",
+      "target": "graduate",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "e9",
+      "source": "graduate",
+      "target": "p2",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "e10",
+      "source": "p2",
+      "target": "firm0",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "e11",
+      "source": "firm0",
+      "target": "one2",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "e12",
+      "source": "p2",
+      "target": "firm1",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "e13",
+      "source": "firm1",
+      "target": "one2",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "e14",
+      "source": "p2",
+      "target": "firm2",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "e15",
+      "source": "firm2",
+      "target": "one2",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "e16",
+      "source": "one2",
+      "target": "job",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "e17",
+      "source": "job",
+      "target": "p3",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "e19",
+      "source": "p3",
+      "target": "home1",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "e23",
+      "source": "home1",
+      "target": "all3",
+      "sourceHandle": "right",
+      "targetHandle": "cp-1",
+      "style": {
+        "routingStyle": "step"
+      },
+      "points": [
+        {
+          "x": 1952.0351650800362,
+          "y": 199.76559930653121
+        }
+      ]
+    },
+    {
+      "id": "e24",
+      "source": "home2",
+      "target": "one3",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "e25",
+      "source": "home3",
+      "target": "one3",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "e27",
+      "source": "all3",
+      "target": "house",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "e28",
+      "source": "house",
+      "target": "family",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "xy-edge__stencil-eafa2c09-2a07-41f8-ad86-cd70a7738a27right-stencil-7071e72d-64dd-405b-852a-7c276c868e1dleft",
+      "type": "labeled",
+      "source": "stencil-eafa2c09-2a07-41f8-ad86-cd70a7738a27",
+      "target": "stencil-7071e72d-64dd-405b-852a-7c276c868e1d",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "No",
+      "style": {
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowClosed",
+        "routingStyle": "step",
+        "labelPosition": 0.42
+      }
+    },
+    {
+      "id": "xy-edge__p3bottom-stencil-eafa2c09-2a07-41f8-ad86-cd70a7738a27left",
+      "type": "labeled",
+      "source": "p3",
+      "target": "stencil-eafa2c09-2a07-41f8-ad86-cd70a7738a27",
+      "sourceHandle": "bottom",
+      "targetHandle": "left",
+      "style": {
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowClosed",
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "edge-e67d1cb7-b01f-4ece-b0c1-87b2d9e556e4",
+      "source": "stencil-8c548786-58b3-4028-8953-b36e98481cfd",
+      "target": "stencil-7f12dc17-f5ed-4d5e-9f0d-5a13b5d375c9",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "edge-d78460cc-bd48-4956-8e60-10c22fd95f89",
+      "source": "stencil-7f12dc17-f5ed-4d5e-9f0d-5a13b5d375c9",
+      "target": "stencil-8ba4aa9b-b6f3-4801-8d24-45111149568f",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "edge-f17d8d0e-f153-4882-aa13-3c68a2af6fbb",
+      "source": "stencil-8ba4aa9b-b6f3-4801-8d24-45111149568f",
+      "target": "stencil-83e897e9-d1d1-4dd6-8a9b-1bb6fed716d2",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "edge-bdfd162f-0fd9-4ab6-ba94-f297da53e118",
+      "source": "stencil-7f12dc17-f5ed-4d5e-9f0d-5a13b5d375c9",
+      "target": "stencil-3833a5da-6b13-42f0-b8ef-24ab82506549",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "edge-39c00ab8-56de-4844-865f-c7ff4190eaf3",
+      "source": "stencil-3833a5da-6b13-42f0-b8ef-24ab82506549",
+      "target": "stencil-83e897e9-d1d1-4dd6-8a9b-1bb6fed716d2",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "edge-21b02cb8-f26b-426c-baad-791ba2c2e3c0",
+      "source": "stencil-7f12dc17-f5ed-4d5e-9f0d-5a13b5d375c9",
+      "target": "stencil-cabdbc0a-9329-429b-9bb9-030096633db0",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "edge-8cbcfa90-1eff-4c7f-9bf6-c6adc1af13f0",
+      "source": "stencil-cabdbc0a-9329-429b-9bb9-030096633db0",
+      "target": "stencil-83e897e9-d1d1-4dd6-8a9b-1bb6fed716d2",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "edge-2d7e5c4d-6f7c-48ae-85a0-10c9026196a8",
+      "source": "stencil-83e897e9-d1d1-4dd6-8a9b-1bb6fed716d2",
+      "target": "stencil-26afd027-056d-472a-a300-6f0b276fb340",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "edge-b8c808e9-8011-4295-8c3d-04ef06d7fe10",
+      "source": "stencil-26afd027-056d-472a-a300-6f0b276fb340",
+      "target": "stencil-34134405-60f5-43a2-a7a4-1a7c8fcae036",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "edge-edd9b3ba-94c1-4905-b5b9-16bb3f219013",
+      "source": "stencil-34134405-60f5-43a2-a7a4-1a7c8fcae036",
+      "target": "stencil-73a803ea-909d-4922-9805-f4f6c010693f",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "edge-6924aac3-8fd3-4625-9937-a3a1c34f92cd",
+      "source": "stencil-73a803ea-909d-4922-9805-f4f6c010693f",
+      "target": "stencil-306f8a1e-0efc-49af-9a12-d4c4e39a7bc7",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "edge-ffb55c69-8006-47f9-abab-e69c3827fde5",
+      "source": "stencil-34134405-60f5-43a2-a7a4-1a7c8fcae036",
+      "target": "stencil-7a2d4b07-4205-4ec2-8a46-f6ef785b9246",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "edge-f9abaf4e-a1d2-42c8-870c-7744510b04cc",
+      "source": "stencil-7a2d4b07-4205-4ec2-8a46-f6ef785b9246",
+      "target": "stencil-306f8a1e-0efc-49af-9a12-d4c4e39a7bc7",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "edge-a1d2218f-3f5f-447c-a034-873497a31c83",
+      "source": "stencil-34134405-60f5-43a2-a7a4-1a7c8fcae036",
+      "target": "stencil-4cc97e53-1696-451a-bcc2-e3f0deccb4ee",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "edge-83c51904-698d-4e93-a28e-3ce28f2a7e33",
+      "source": "stencil-4cc97e53-1696-451a-bcc2-e3f0deccb4ee",
+      "target": "stencil-306f8a1e-0efc-49af-9a12-d4c4e39a7bc7",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "edge-bafcf179-9b13-4eeb-9b53-7ba051c0c593",
+      "source": "stencil-306f8a1e-0efc-49af-9a12-d4c4e39a7bc7",
+      "target": "stencil-9a13793e-7f3e-4f2b-9440-b6f9602eec1a",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "edge-59097c58-38dc-4ce6-8040-0ba971c0a569",
+      "source": "stencil-9a13793e-7f3e-4f2b-9440-b6f9602eec1a",
+      "target": "stencil-fe62cea3-7a39-4cb6-84ca-64f56dc723e9",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "edge-2728f488-c012-4959-b474-981a02393593",
+      "source": "stencil-fe62cea3-7a39-4cb6-84ca-64f56dc723e9",
+      "target": "stencil-8f209747-943e-47e1-aa8e-bdc901ea871b",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "edge-76ff66ce-7d76-419c-92b0-b3bf8fba98a3",
+      "source": "stencil-8f209747-943e-47e1-aa8e-bdc901ea871b",
+      "target": "stencil-d5800419-6696-44b4-8ca8-aca824022c29",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "edge-7e5ebc61-1b5d-425c-b01e-d3c8a9a5a84d",
+      "source": "stencil-f1129c45-2cfa-45b9-b26e-607701139dd6",
+      "target": "stencil-8da04449-4690-4498-b6ee-ae91497daf8a",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "edge-d5c35a76-31cd-481f-9549-e6629e759d25",
+      "source": "stencil-c7138010-8eb2-4faf-9b88-a79ae5df3995",
+      "target": "stencil-8da04449-4690-4498-b6ee-ae91497daf8a",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "edge-0c500cfb-7e51-4410-a3f2-23a71c25adcd",
+      "source": "stencil-d5800419-6696-44b4-8ca8-aca824022c29",
+      "target": "stencil-a745c9b0-1010-43ad-87f7-8c696931dfc0",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "edge-0fdcfab2-bf22-4972-b6a3-2dd8e01a02be",
+      "source": "stencil-a745c9b0-1010-43ad-87f7-8c696931dfc0",
+      "target": "stencil-6d60aacf-1187-42bb-a6be-f259f65c010f",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "edge-be1871d0-17cc-45ab-93b2-6ecd3efe88cb",
+      "type": "labeled",
+      "source": "stencil-10573a17-fc13-427a-b568-e9f1bf58019a",
+      "target": "stencil-90dd222a-5a3b-4930-a4ec-598201d8f1b5",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "label": "No",
+      "style": {
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowClosed",
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "edge-46c00c59-afd4-43ec-b1e3-c9c687838496",
+      "type": "labeled",
+      "source": "stencil-90dd222a-5a3b-4930-a4ec-598201d8f1b5",
+      "target": "stencil-c7138010-8eb2-4faf-9b88-a79ae5df3995",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "edge-011c7718-1631-49c0-96f6-975ca4344d14",
+      "type": "labeled",
+      "source": "stencil-90dd222a-5a3b-4930-a4ec-598201d8f1b5",
+      "target": "stencil-f1129c45-2cfa-45b9-b26e-607701139dd6",
+      "sourceHandle": "right",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "edge-6b320c07-489d-405e-af24-1a296bb016e0",
+      "type": "labeled",
+      "source": "stencil-fe62cea3-7a39-4cb6-84ca-64f56dc723e9",
+      "target": "stencil-10573a17-fc13-427a-b568-e9f1bf58019a",
+      "sourceHandle": "bottom",
+      "targetHandle": "left",
+      "style": {
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowClosed",
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "xy-edge__stencil-10573a17-fc13-427a-b568-e9f1bf58019abottom-stencil-a1edc3e8-5a13-4916-abb2-17a67f0538a9bottom",
+      "type": "labeled",
+      "source": "stencil-10573a17-fc13-427a-b568-e9f1bf58019a",
+      "target": "stencil-a1edc3e8-5a13-4916-abb2-17a67f0538a9",
+      "sourceHandle": "bottom",
+      "targetHandle": "bottom",
+      "label": "Yes",
+      "style": {
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowClosed",
+        "routingStyle": "step",
+        "labelPosition": 0.027
+      },
+      "points": [
+        {
+          "x": 2054.766271399671,
+          "y": 896.5403057381147
+        }
+      ]
+    },
+    {
+      "id": "xy-edge__stencil-a1edc3e8-5a13-4916-abb2-17a67f0538a9right-stencil-d5800419-6696-44b4-8ca8-aca824022c29bottom",
+      "type": "labeled",
+      "source": "stencil-a1edc3e8-5a13-4916-abb2-17a67f0538a9",
+      "target": "stencil-d5800419-6696-44b4-8ca8-aca824022c29",
+      "sourceHandle": "right",
+      "targetHandle": "bottom",
+      "style": {
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowClosed",
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "xy-edge__stencil-8da04449-4690-4498-b6ee-ae91497daf8aright-stencil-b4bfa467-6695-4a3e-8c36-c2940107ea68left",
+      "type": "labeled",
+      "source": "stencil-8da04449-4690-4498-b6ee-ae91497daf8a",
+      "target": "stencil-b4bfa467-6695-4a3e-8c36-c2940107ea68",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "xy-edge__stencil-b4bfa467-6695-4a3e-8c36-c2940107ea68right-stencil-a1edc3e8-5a13-4916-abb2-17a67f0538a9left",
+      "type": "labeled",
+      "source": "stencil-b4bfa467-6695-4a3e-8c36-c2940107ea68",
+      "target": "stencil-a1edc3e8-5a13-4916-abb2-17a67f0538a9",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "style": {
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowClosed",
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "xy-edge__one3right-stencil-d675c49a-173a-42c5-b329-981acfa4d69bleft",
+      "type": "labeled",
+      "source": "one3",
+      "target": "stencil-d675c49a-173a-42c5-b329-981acfa4d69b",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "style": {
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowClosed",
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "xy-edge__p3top-home0left",
+      "type": "labeled",
+      "source": "p3",
+      "target": "home0",
+      "sourceHandle": "top",
+      "targetHandle": "left",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "xy-edge__home0right-all3top",
+      "type": "labeled",
+      "source": "home0",
+      "target": "all3",
+      "targetHandle": "top",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "xy-edge__stencil-7071e72d-64dd-405b-852a-7c276c868e1d-home3left",
+      "type": "labeled",
+      "source": "stencil-7071e72d-64dd-405b-852a-7c276c868e1d",
+      "target": "home3",
+      "targetHandle": "left",
+      "style": {
+        "routingStyle": "step"
+      },
+      "points": [
+        {
+          "x": 1715.3466999981906,
+          "y": 365.4682170075813
+        }
+      ]
+    },
+    {
+      "id": "xy-edge__stencil-7071e72d-64dd-405b-852a-7c276c868e1d-home2left",
+      "type": "labeled",
+      "source": "stencil-7071e72d-64dd-405b-852a-7c276c868e1d",
+      "target": "home2",
+      "targetHandle": "left",
+      "style": {
+        "routingStyle": "step"
+      },
+      "points": [
+        {
+          "x": 1719.5358763713207,
+          "y": 285.4682010271478
+        }
+      ]
+    },
+    {
+      "id": "xy-edge__stencil-f9d06b7a-6c8b-4f00-85af-b4ed058be031right-stencil-d5800419-6696-44b4-8ca8-aca824022c29top",
+      "type": "labeled",
+      "source": "stencil-f9d06b7a-6c8b-4f00-85af-b4ed058be031",
+      "target": "stencil-d5800419-6696-44b4-8ca8-aca824022c29",
+      "sourceHandle": "right",
+      "targetHandle": "top",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "xy-edge__stencil-fe62cea3-7a39-4cb6-84ca-64f56dc723e9top-stencil-f9d06b7a-6c8b-4f00-85af-b4ed058be031left",
+      "type": "labeled",
+      "source": "stencil-fe62cea3-7a39-4cb6-84ca-64f56dc723e9",
+      "target": "stencil-f9d06b7a-6c8b-4f00-85af-b4ed058be031",
+      "sourceHandle": "top",
+      "targetHandle": "left",
+      "style": {
+        "routingStyle": "step"
+      },
+      "points": [
+        {
+          "x": 1451.434075403824,
+          "y": 600.9229367570888
+        }
+      ]
+    },
+    {
+      "id": "xy-edge__stencil-d675c49a-173a-42c5-b329-981acfa4d69bright-stencil-3c325a98-04af-4fe8-be47-cab3374efed0left",
+      "type": "labeled",
+      "source": "stencil-d675c49a-173a-42c5-b329-981acfa4d69b",
+      "target": "stencil-3c325a98-04af-4fe8-be47-cab3374efed0",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "style": {
+        "routingStyle": "step"
+      }
+    },
+    {
+      "id": "xy-edge__stencil-eafa2c09-2a07-41f8-ad86-cd70a7738a27bottom-stencil-3c325a98-04af-4fe8-be47-cab3374efed0bottom",
+      "type": "labeled",
+      "source": "stencil-eafa2c09-2a07-41f8-ad86-cd70a7738a27",
+      "target": "stencil-3c325a98-04af-4fe8-be47-cab3374efed0",
+      "sourceHandle": "bottom",
+      "targetHandle": "bottom",
+      "label": "Yes",
+      "style": {
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowClosed",
+        "routingStyle": "step",
+        "labelPosition": 0.03
+      },
+      "points": [
+        {
+          "x": 2288.5853314126966,
+          "y": 412.87374041003653
+        }
+      ]
+    },
+    {
+      "id": "xy-edge__stencil-3c325a98-04af-4fe8-be47-cab3374efed0right-all3bottom",
+      "type": "labeled",
+      "source": "stencil-3c325a98-04af-4fe8-be47-cab3374efed0",
+      "target": "all3",
+      "sourceHandle": "right",
+      "targetHandle": "bottom",
+      "style": {
+        "lineStyle": "solid",
+        "startMarker": "none",
+        "endMarker": "arrowClosed",
+        "routingStyle": "step"
+      }
+    }
+  ]
+}

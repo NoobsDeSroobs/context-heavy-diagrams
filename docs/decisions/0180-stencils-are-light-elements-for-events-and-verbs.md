@@ -3,6 +3,7 @@
 ## Status
 Accepted (2026-11-15)
 Supersedes: none. Builds on [0080](0080-bpmn-as-adopted-vocabulary-not-metamodel.md) (BPMN as vocabulary, not metamodel). [0031](0031-icon-annotation-is-a-standing-requirement.md) (icons) concerns entities only and does not apply to stencils.
+Amended by: [0198](0198-parallel-paths-are-closed-by-a-wait-and-decisions-by-a-decision.md) (the kind "Parallel split or join" is now three kinds).
 Superseded by: none
 
 ## Context

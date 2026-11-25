@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import type { FinalConnectionState } from '@xyflow/react'
 import {
   connectionRadiusForZoom,
+  handleSizeForZoom,
   isVoidDrop,
   pointFromEvent,
   visibleCanvasCenter
@@ -50,6 +51,16 @@ describe('connectionRadiusForZoom', () => {
   it('falls back to the default for a zoom that is not a positive number', () => {
     expect(connectionRadiusForZoom(0)).toBe(20)
     expect(connectionRadiusForZoom(Number.NaN)).toBe(20)
+  })
+})
+
+describe('handleSizeForZoom', () => {
+  it('is 10 flow units at a zoom of 1, grows when zoomed out and stops shrinking at 6', () => {
+    expect(handleSizeForZoom(1)).toBe(10)
+    expect(handleSizeForZoom(0.5)).toBe(20)
+    expect(handleSizeForZoom(0.1)).toBeCloseTo(100)
+    expect(handleSizeForZoom(2)).toBe(6)
+    expect(handleSizeForZoom(Number.NaN)).toBe(10)
   })
 })
 
