@@ -1,7 +1,7 @@
 # 0199: The tool makes every id, and an operation names what it makes with a handle
 
 ## Status
-Accepted (2026-11-26)
+Accepted (2026-11-25)
 Amends: [0148](0148-an-assistant-builds-a-diagram-by-operations-that-answer.md) (the operations no longer take an `id` for what they add) and [0060](0060-detail-file-naming-convention.md) (the name of a note comes from an id the tool made).
 Superseded by: none
 
