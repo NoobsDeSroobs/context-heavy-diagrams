@@ -1,7 +1,7 @@
 # 0205: Portals: continue an edge somewhere else
 
 ## Status
-Not Started. Logged 2026-11-21 with the maintainer. Leanings below (2026-11-25); mock-up and try first, no design is settled.
+In progress, on the mock-up (branch `epic/0205-portals`). Logged 2026-11-21 with the maintainer. Leanings below (2026-11-25); mock-up and try first, no design is settled.
 
 ## Goal
 A complex diagram becomes criss-crossed. A **portal** lets an edge go in at one place and come out at another, so it does not have to run across the diagram and over everything else.
@@ -31,7 +31,8 @@ A complex diagram becomes criss-crossed. A **portal** lets an edge go in at one 
 
 ## Tasks
 - [x] First sheet: [portals-on-a-real-diagram.html](../../experiments/portals-on-a-real-diagram.html), built by `docs/experiments/build-portals-on-a-real-diagram.mjs` from the Meridian Rail landscape of the gallery: six portals cut where edges cross edges or run across elements, drawn with a tilde and with an oval, light and dark, with a zoom. Edges are drawn straight there; still to mock are step and curved edges on it and the other tasks below.
-- [ ] Mock it on a messy real diagram, on a sheet like `docs/experiments/behaviour-alternatives.html`: the broken edge with its stubs on straight, step and curved edges, the badge as a colour per pair with a number and as one light blue with a number, the Add portals button, the portal point, and line hops as a sketch; light and dark, at canvas size and zoomed out.
+- [x] Second sheet, same page (rebuilt by the same script): straight, step and curved edges on the Meridian Rail landscape, each as it is and with portals cut; toggles for the mark (tilde or oval), the colour (one light blue or one per pair) and the theme, plus a zoom; hovering a mark draws the whole edge dashed; line hops as a sketch; a gap-setting demo (two sliders, clamped, and an Add portals button that cuts at the first crossing); and one reading of a portal point. Not mocked: the drag handles on the canvas, a number typed by the person, how a label moves.
+- [ ] Look at the sheet and decide the mark and the colour. Finding from it: on step and curved edges the crossings pile up along an edge, so the cut grows to 230 to 270 units (on straight edges 76 to 180), against the leaning that the hidden part is short. Either one gap per crossing (several small portals on an edge, which the one `portal: { start, end }` field cannot hold), or accept a longer gap, or only offer Add portals at the first crossing.
 - [ ] Try it with real diagrams, decide, and write the ADR.
 - [ ] Implement: the field, the drawing, the hover and selection, the exports, the panel, the tools and guidance, `docs/file-format.md`.
 - [ ] An example ([ADR 0151](../../decisions/0151-every-visible-feature-has-an-example-diagram.md)) and the changelog.
