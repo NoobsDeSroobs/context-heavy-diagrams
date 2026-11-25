@@ -650,3 +650,7 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 ### 0051: Non-rectangular shapes and a large-icon category
 
 *Cancelled* (will not do, closed 2026-11-21). Shapes other than rectangles, and a node that is one large icon. Shapes stay rectangular and carry an icon ([ADR 0031](../decisions/0031-icon-annotation-is-a-standing-requirement.md), [ADR 0080](../decisions/0080-bpmn-as-adopted-vocabulary-not-metamodel.md)); the freeform line was split out as 0064, and behaviours have their own stencils. A need for large icon-only nodes would come back as a new epic.
+
+### 0206: Note file names with a short tail
+
+*Done* (live-tested 2026-11-25; not yet merged). A note file is named `<label>-<last six characters of the id's UUID>.md`, made by one function that the editor's save and an assistant's `set_note` both use, so one element gets one name and the type prefix of an id never reaches it. The names are made for all the notes of a diagram together, so two never share a file (a clash takes a longer tail), and `set_note` takes no name. The tool now makes every id: the add operations take a handle (`"as": "$name"`) that the rest of the same call can use, and refuse an `id`. ADR: [0060](../decisions/0060-detail-file-naming-convention.md) (amended), [0199](../decisions/0199-the-tool-makes-every-id-and-an-operation-names-what-it-makes-with-a-handle.md). What is left of the principle behind it, that an assistant and a person do the same things, is 0207.
