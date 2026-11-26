@@ -39,6 +39,7 @@ import {
   useNodesState,
   useEdgesState,
   useReactFlow,
+  useStore,
   useUpdateNodeInternals,
   type Connection,
   type Edge,
@@ -47,7 +48,8 @@ import {
   type Node,
   type NodeChange,
   type OnBeforeDelete,
-  type OnConnectStartParams
+  type OnConnectStartParams,
+  type ReactFlowState
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import {
@@ -163,6 +165,7 @@ import UtilityDock from '../UtilityDock'
 import AlignmentGuides from '../alignment/AlignmentGuides'
 import { SNAP_THRESHOLD_PX, boundsFrom, computeSnap } from '../alignment/alignment'
 import { buildClipboardPayload, parseClipboardPayload, remapForPaste } from './clipboard'
+import { waypointEdgeHidden } from './edgeCulling'
 import { resolveDeletion } from './containerRemoval'
 import { warnIfSavedWithNewer } from '../document/fileVersionWarning'
 import type { TransformPatch } from '../properties/transformPatch'
@@ -3469,6 +3472,55 @@ function CanvasInner(): React.JSX.Element {
     return storiesPresenting ? lockedForPresenting(visible) : visible
   }, [orderedEdges, isVisibleElement, storyFade, storiesPresenting])
 
+  // React Flow drops an edge when the box round its two ends is off screen, however far the path
+  // between them runs. While an edge with waypoints reaches into the window and its ends do not,
+  // everything is drawn (edgeCulling.ts, docs/known-issues.md).
+  const waypointEdges = useMemo(
+    () =>
+      edges
+        .map((e) => ({
+          source: e.source,
+          target: e.target,
+          points: (e.data?.points as LinePoint[] | undefined) ?? []
+        }))
+        .filter((e) => e.points.length > 0),
+    [edges]
+  )
+  const waypointEdgeOffScreen = useStore(
+    useCallback(
+      (state: ReactFlowState): boolean => {
+        if (waypointEdges.length === 0) return false
+        const [tx, ty, zoom] = state.transform
+        const view = {
+          x: -tx / zoom,
+          y: -ty / zoom,
+          x2: (state.width - tx) / zoom,
+          y2: (state.height - ty) / zoom
+        }
+        return waypointEdgeHidden(
+          waypointEdges.map((e) => ({
+            points: e.points,
+            ends: [e.source, e.target].flatMap((id) => {
+              const node = state.nodeLookup.get(id)
+              if (!node) return []
+              const { x, y } = node.internals.positionAbsolute
+              return [
+                {
+                  x,
+                  y,
+                  x2: x + (node.measured.width ?? node.width ?? 0),
+                  y2: y + (node.measured.height ?? node.height ?? 0)
+                }
+              ]
+            })
+          })),
+          view
+        )
+      },
+      [waypointEdges]
+    )
+  )
+
   // An edge has no zIndex of its own (ADR 0035 scoped that to Entity/Container/Text): it sits at
   // the midpoint of its endpoints' current stacking, computed here next to orderedEdges and never
   // persisted.
@@ -4061,8 +4113,9 @@ function CanvasInner(): React.JSX.Element {
                   // Only mount nodes/edges intersecting the viewport — see
                   // ADR 0073. Nodes carry width/height (fromDiagramFile) so
                   // their bounds are known before measurement. Disabled
-                  // during PNG export so the capture sees the whole diagram.
-                  onlyRenderVisibleElements={!isExportingPng}
+                  // during PNG export so the capture sees the whole diagram, and while a
+                  // waypoint edge would be dropped though part of it is in view.
+                  onlyRenderVisibleElements={!isExportingPng && !waypointEdgeOffScreen}
                   onNodesChange={onNodesChange}
                   onEdgesChange={onEdgesChange}
                   onBeforeDelete={onBeforeDelete}
