@@ -2243,7 +2243,7 @@ function CanvasInner(): React.JSX.Element {
         // (a parent cycle → React Flow can't position the nodes → they
         // collapse to the canvas origin), and a candidate whose bounds
         // *enclose* the container shouldn't be swallowed by it either — see
-        // ADR 0075. getIntersectingNodes(_, false) matches a node that fully
+        // ADR 0012. getIntersectingNodes(_, false) matches a node that fully
         // covers the container as well as one fully inside it.
         const containerIsDescendantOf = (ofId: string): boolean => {
           let current: Node | undefined = container
@@ -2287,7 +2287,7 @@ function CanvasInner(): React.JSX.Element {
     [pushSnapshot, rfInstance, setNodes]
   )
 
-  // One-click inverse of drag-out / "Attach contained entities" (ADR 0075):
+  // One-click inverse of drag-out / "Attach contained entities" (ADR 0012):
   // clears a node's parentId and rebases its position from parent-relative
   // to absolute so it doesn't jump. Any node type can be a container child.
   const detachFromParent = useCallback(
@@ -2559,7 +2559,7 @@ function CanvasInner(): React.JSX.Element {
     pushSnapshot()
     // sortNodesForHierarchy: a pasted container + its children can arrive in
     // any order, and React Flow requires a parent earlier in the array than
-    // its children — see remapForPaste (ADR 0075). Captured out of the
+    // its children — see remapForPaste (ADR 0012). Captured out of the
     // updater (rather than closing over `nodes`) so the post-paste scan
     // below sees the actual applied result, not a possibly-stale snapshot.
     let nextNodes: Node[] = []
@@ -3511,7 +3511,7 @@ function CanvasInner(): React.JSX.Element {
 
   // Plain-data projection for LayerPanel, keeping it decoupled from React Flow's Node type. Sorted
   // highest zIndex first, matching the panel's top-is-frontmost convention.
-  // Container-nesting analysis for the Layers panel and Diagnostics (ADR 0075):
+  // Container-nesting analysis for the Layers panel and Diagnostics (ADR 0012):
   // - parentLabelById: the immediate parent's label, for the "in: X" badge
   // - invertedZIds: nodes React Flow renders above their own parent even though raw data.zIndex
   //   would put them below (the parentZ + 1 rule in @xyflow/system's calculateChildXYZ). The Layers

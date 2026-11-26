@@ -19,7 +19,7 @@ export function sortNodesForHierarchy(nodes: Node[]): Node[] {
   return result
 }
 
-// Load-time repair of a corrupt container hierarchy (ADR 0075). Runs once per
+// Load-time repair of a corrupt container hierarchy (ADR 0012). Runs once per
 // load, before the nodes reach React Flow — an in-session edit can't produce
 // either of these states (every parentId write is guarded). Silent, but each
 // class of repair returns a note for the Diagnostics panel. `.chd` unchanged;

@@ -40,7 +40,7 @@ export function useDiagnostics({
   // not appended: they show what the last backfill had to correct, not a history log. A file with
   // nothing to correct clears the list.
   const [diagnostics, setDiagnostics] = useState<string[]>([])
-  // Notices from healHierarchy at load time (ADR 0075) — a dangling or cyclic
+  // Notices from healHierarchy at load time (ADR 0012) — a dangling or cyclic
   // parentId that was silently repaired. Session-only, replaced on every load,
   // kept separate from `diagnostics` so a later required-tags sync doesn't
   // wipe it; combined for display in `displayedDiagnostics`.

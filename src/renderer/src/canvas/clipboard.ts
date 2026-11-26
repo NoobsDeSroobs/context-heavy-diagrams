@@ -136,7 +136,7 @@ function retargetNodeData(
   return next
 }
 
-// `parentId` (container nesting, ADR 0012 / ADR 0075): if the node's parent
+// `parentId` (container nesting, ADR 0012): if the node's parent
 // container is also in the payload, the link is remapped through `idMap` and
 // the child's parent-relative `position` is left untouched (still valid
 // relative to the remapped parent). If it isn't — an orphaned child, or a

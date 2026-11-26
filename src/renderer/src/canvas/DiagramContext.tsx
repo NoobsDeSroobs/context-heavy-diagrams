@@ -56,7 +56,7 @@ export interface DiagramContextValue {
   // A node's "Detach from parent" menu item (shown only when it has a
   // parentId) — clears parentId and rebases the node's position from
   // parent-relative to absolute so it stays put visually. The one-click
-  // inverse of drag-out / "Attach contained entities" — see ADR 0075.
+  // inverse of drag-out / "Attach contained entities" — see ADR 0012.
   detachFromParent: (nodeId: string) => void
   // Every currently-enabled highlight matching this element's metadata —
   // see ADR 0025. Bound to Canvas's own highlights/enabled-set

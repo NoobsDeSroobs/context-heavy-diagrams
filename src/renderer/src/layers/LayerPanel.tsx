@@ -5,12 +5,12 @@ export interface LayerRow {
   type: string
   label: string
   zIndex: number
-  // Immediate parent container (ADR 0075), or null for a top-level node.
+  // Immediate parent container (ADR 0012), or null for a top-level node.
   parentLabel: string | null
   parentId: string | null
   // React Flow renders this node above its own parent even though its raw
   // zIndex (what this list sorts on, and what drag-to-restack edits) would
-  // put it below — the parentZ + 1 rule. See ADR 0075.
+  // put it below — the parentZ + 1 rule. See ADR 0012.
   rendersAboveParent: boolean
 }
 

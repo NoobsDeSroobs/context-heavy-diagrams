@@ -188,7 +188,7 @@ export function fromDiagramFile(diagram: DiagramFile): {
   hierarchyNotes: string[]
 } {
   // healHierarchy repairs a dangling/cyclic parentId before the nodes reach
-  // React Flow (ADR 0075); sortNodesForHierarchy then defensively re-orders in
+  // React Flow (ADR 0012); sortNodesForHierarchy then defensively re-orders in
   // case an external writer didn't honor the parent-before-child requirement
   // (see docs/file-format.md's parentId entry). applyZIndexBackfill runs on
   // that *final* order, not the raw file order, so "array position" means the
