@@ -42,8 +42,14 @@ export function useHistory({
   const interactionInProgressRef = useRef(false)
 
   const pushSnapshot = useCallback(() => {
+    const snapshot = { ...graphRef.current }
     setPast((prev) => {
-      const next = [...prev, { ...graphRef.current }]
+      // An edit made through updateNodeData is snapshotted by its caller and again when React Flow
+      // reports the change as a `replace` (onNodesChange). The second one holds the very same
+      // graph, so Undo would seem to do nothing once. A graph already on top is not pushed again.
+      const top = prev[prev.length - 1]
+      if (top && top.nodes === snapshot.nodes && top.edges === snapshot.edges) return prev
+      const next = [...prev, snapshot]
       return next.length > MAX_HISTORY ? next.slice(next.length - MAX_HISTORY) : next
     })
     setFuture([])
