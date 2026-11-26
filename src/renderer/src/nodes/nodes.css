@@ -78,7 +78,7 @@
   overflow-wrap: anywhere;
 }
 
-/* A stencil: a base shape from the element's kind, with a mark on it. It reads the entity's
+/* A stencil (ADR 0080): a base shape from the element's kind, with a mark on it. It reads the entity's
    default look; a kind may bring its own fill (inline, from the kind). The small shapes carry their
    label below them. */
 .stencil-node {

@@ -31,7 +31,7 @@ interface LegendPanelProps {
   // and its swatch is edited in the Edge direction sets section. `null`
   // when the diagram has no direction set.
   directionSetRow: DirectionSetLegendRow | null
-  // The kinds of step and event the diagram uses, and each way an end finishes (ADR 0193),
+  // The kinds of step and event the diagram uses, and each way an end finishes (ADR 0080),
   // shown as rows of their own that nobody maintains. `showStencilKinds` is for this session only and
   // is not saved with the diagram.
   stencilRows: StencilLegendRow[]

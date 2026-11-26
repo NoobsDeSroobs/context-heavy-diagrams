@@ -333,7 +333,7 @@ export function renderDiagramDrawio(
     if (matches.length >= 2) lost.chips += 1
     const type = styledNodeType(node.type)
     // A stencil is an ellipse, a rhombus or a rectangle with its label below the small ones; the
-    // mark or band on it has no counterpart here.
+    // mark or band on it has no counterpart here (ADR 0080).
     const sk = kind === 'stencil' ? stencilKind(node.data.kind) : undefined
     if ((sk && stencilMarkOf(sk, node.data)) || sk?.shape === 'arrow') lost.stencilMarks += 1
     const styleSource = sk ? stencilStyle(node.data.kind, node.style) : node.style

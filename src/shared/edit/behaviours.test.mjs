@@ -1,5 +1,5 @@
 // The editing operations for behaviours (stencils), label positions and the crossings an inspection
-// reports.
+// reports (ADR 0080).
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { createEmptyDiagram, parseDiagram, serializeDiagram } from '../diagram/index.ts'

@@ -20,7 +20,7 @@ export type PaletteItemType = 'entity' | 'container' | 'text' | 'line' | 'stenci
 // somewhere else in the OS (a file, browser text selection, etc.) landing
 // on the canvas by accident.
 export const PALETTE_ITEM_DRAG_TYPE = 'application/x-chd-item-type'
-// The kind of a stencil being dragged, beside PALETTE_ITEM_DRAG_TYPE's 'stencil'.
+// The kind of a stencil being dragged (ADR 0080), beside PALETTE_ITEM_DRAG_TYPE's 'stencil'.
 export const PALETTE_STENCIL_KIND_DRAG_TYPE = 'application/x-chd-stencil-kind'
 
 function onItemDragStart(event: React.DragEvent<HTMLButtonElement>, type: PaletteItemType): void {
@@ -28,7 +28,7 @@ function onItemDragStart(event: React.DragEvent<HTMLButtonElement>, type: Palett
   event.dataTransfer.effectAllowed = 'copy'
 }
 
-// The palette's entry for stencils: click adds the kind last used (a step to begin
+// The palette's entry for stencils (ADR 0080): click adds the kind last used (a step to begin
 // with), drag places it, and right-click or the arrow opens a short list with a filter, whose search
 // also matches the BPMN terms of each kind.
 function StencilPaletteButton({

@@ -41,9 +41,9 @@ export function stencilSwatchSvgFor(kindId: string, theme: Theme, state?: Stenci
   )
 }
 
-// A kind's shape and mark as a small SVG, for the legend: the same drawing as on the
+// A kind's shape and mark as a small SVG, for the legend (ADR 0080): the same drawing as on the
 // diagram at the size of a legend row. The colours are CSS colours already resolved for the theme. An
-// end is drawn with the outcome and reach in `state` (ADR 0193).
+// end is drawn with the outcome and reach in `state` (ADR 0080).
 export function stencilSwatchSvg(
   kindId: string,
   colors: { fill: string; stroke: string; mark: string },

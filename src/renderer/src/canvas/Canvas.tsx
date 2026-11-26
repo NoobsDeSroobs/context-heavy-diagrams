@@ -470,7 +470,7 @@ function CanvasInner(): React.JSX.Element {
     toggleLegendPanel
   } = useLegend(canvasApi)
 
-  // The legend rows for the kinds of step and event in use. Hiding them is for this
+  // The legend rows for the kinds of step and event in use (ADR 0080). Hiding them is for this
   // session only: nothing about it is saved with the diagram.
   const [showStencilLegend, setShowStencilLegend] = useState(true)
   // Gates on the edges that cross a container's border: a switch for this session, off
@@ -1805,7 +1805,7 @@ function CanvasInner(): React.JSX.Element {
     ])
   }, [setNodes, pushSnapshot, spawnPosition, preferences.defaultStyles.text])
 
-  // A stencil of the given kind near the viewport centre.
+  // A stencil of the given kind (ADR 0080) near the viewport centre.
   const addStencilNode = useCallback(
     (kindId: string) => {
       pushSnapshot()
@@ -1830,7 +1830,7 @@ function CanvasInner(): React.JSX.Element {
     [setNodes, pushSnapshot, spawnPosition]
   )
 
-  // Changes the kind of these stencils, one undo step.
+  // Changes the kind of these stencils, one undo step (ADR 0080).
   const setStencilKind = useCallback(
     (nodeIds: string[], kindId: string) => {
       const ids = new Set(nodeIds)

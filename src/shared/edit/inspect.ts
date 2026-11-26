@@ -241,7 +241,7 @@ export function layoutIssues(diagram: DiagramFile, diagramFont?: string): Layout
   // box, which the canvas and the export break in the middle. The wrapping is the export's.
   for (const node of diagram.nodes) {
     if (node.type === 'line' || !node.data.label || !node.size) continue
-    // A stencil's small shapes carry their label below them, not inside.
+    // A stencil's small shapes carry their label below them, not inside (ADR 0080).
     if (node.type === 'stencil' && stencilLabelOutside(node.data.kind)) continue
     const type = styledNodeType(node.type)
     const defaults = NODE_STYLE_DEFAULTS[type]
@@ -251,7 +251,7 @@ export function layoutIssues(diagram: DiagramFile, diagramFont?: string): Layout
       family: node.style?.fontFamily ?? diagramFont
     }
     const stroke = node.style?.strokeWidth ?? defaults.strokeWidth
-    // A step's arrow band takes room on the left, and its mark on the right.
+    // A step's arrow band takes room on the left, and its mark on the right (ADR 0080).
     const insets =
       node.type === 'stencil' ? stencilLabelInsets(node.data.kind) : { left: 0, right: 0 }
     const margin = 16

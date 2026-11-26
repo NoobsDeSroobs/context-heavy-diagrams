@@ -195,7 +195,7 @@ function paintAttrs(name: 'fill' | 'stroke', paint: Paint | null): string {
   return ` ${name}="${esc(paint.color)}"${paint.opacity < 1 ? ` ${name}-opacity="${num(paint.opacity)}"` : ''}`
 }
 
-// A stencil's base shape with its mark on it, drawn as vector shapes. `small` is the
+// A stencil's base shape with its mark on it (ADR 0080), drawn as vector shapes. `small` is the
 // legend swatch: the arrow's band is narrower and the mark's line is a fixed 1.2 px.
 function stencilShape(
   kind: StencilKind,
@@ -670,7 +670,7 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
 
     const lineHeight = labelLook.font.size * LINE_HEIGHT_EM
     if (kind === 'stencil' && stencilLabelOutside(node.data.kind)) {
-      // The small shapes carry their label outside: where the node says, as
+      // The small shapes carry their label outside (ADR 0080): where the node says, as
       // wide as it needs. A free label is tied to its shape by a dotted line.
       const position = labelPositionOf(node.data.labelPosition)
       const beside = position === 'left' || position === 'right'

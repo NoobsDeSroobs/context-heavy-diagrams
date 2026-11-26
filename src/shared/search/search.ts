@@ -18,7 +18,7 @@ export interface SearchableElement {
   linkedDiagram?: string
   // Set for a connection, so a negated `has:` term can leave it out.
   edge?: boolean
-  // A stencil's kind name and the terms it is known by, so "gateway" finds a decision.
+  // A stencil's kind name and the terms it is known by (ADR 0080), so "gateway" finds a decision.
   kindText?: string
 }
 

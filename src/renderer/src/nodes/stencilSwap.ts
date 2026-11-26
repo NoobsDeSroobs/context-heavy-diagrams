@@ -1,7 +1,7 @@
 import type { Node } from '@xyflow/react'
 import { stencilKind } from '@shared/stencils/kinds'
 
-// Changing a stencil's kind keeps its place, its edges, its link and its style. The label
+// Changing a stencil's kind keeps its place, its edges, its link and its style (ADR 0080). The label
 // and the size follow the new kind only while they are still the old kind's own defaults, so a label
 // the person typed or a box they resized is left alone; a resized one keeps its centre.
 export function swapStencilKind(node: Node, kindId: string): Node {

@@ -122,7 +122,7 @@ function addNode(
   return { op: `add_${kind}`, element: briefNode(model.diagram, node) }
 }
 
-// --- behaviours (stencils): a step, a decision, a start, an end
+// --- behaviours (stencils, ADR 0080): a step, a decision, a start, an end
 
 function kindOf(reader: Reader, key: string): StencilKind {
   const id = currentKindId(reader.string(key))
@@ -253,7 +253,7 @@ function addBehaviour(model: Model, reader: Reader): OperationResult {
   }
 }
 
-// What the app's kind change does: the label and the size follow the new kind only while they
+// What the app's kind change does (ADR 0080): the label and the size follow the new kind only while they
 // are still the old kind's own, and a resized box keeps its centre; place, edges, link and style stay.
 function setKind(model: Model, reader: Reader): OperationResult {
   const node = nodeOnly(model, reader)

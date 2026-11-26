@@ -35,7 +35,7 @@ const MAX_NOTE_CHARS = 200_000
 const isEdge = (target: Tagged): target is DiagramEdge => 'source' in target
 
 // Text and line elements carry no tags, links or notes, and a behaviour (a stencil) no tags or notes but
-// one link; an entity with no type is an entity.
+// one link (ADR 0080); an entity with no type is an entity.
 const carriesTags = (target: Tagged): boolean =>
   isEdge(target) || (target.type !== 'text' && target.type !== 'line' && target.type !== 'stencil')
 
@@ -409,7 +409,7 @@ function named(target: Tagged): string {
   return !isEdge(target) && target.type === 'stencil' ? 'behaviour' : (target.type ?? 'text')
 }
 
-// A behaviour (a stencil) takes a link but no note.
+// A behaviour (a stencil) takes a link but no note (ADR 0080).
 function linkable(model: Model, reader: Reader, note = false): DiagramNode {
   const id = reader.string('id')
   const node = model.node(id)

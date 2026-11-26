@@ -36,7 +36,7 @@ import { nodeContainerCss, nodeLabelCss } from '../styling/nodeStyleCss'
 import { ConnectionHandles } from './ConnectionHandles'
 import { useConnectionPointMenu } from './connectionPoints'
 
-// An event or a verb of a flow: a base shape with an optional mark on it, taken from the
+// An event or a verb of a flow (ADR 0080): a base shape with an optional mark on it, taken from the
 // element's kind. Resizable, connectable, never rotated, no notes, tags or icons of its own, and one
 // link to another diagram. The small shapes carry their label below them; a step carries it inside.
 

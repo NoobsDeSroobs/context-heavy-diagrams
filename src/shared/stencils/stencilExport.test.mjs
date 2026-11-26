@@ -1,4 +1,4 @@
-// Stencils in the shared model and the SVG export.
+// Stencils in the shared model and the SVG export (ADR 0080).
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { DEFAULT_SVG_EXPORT_OPTIONS, renderDiagramSvg } from '../export/renderDiagram.ts'

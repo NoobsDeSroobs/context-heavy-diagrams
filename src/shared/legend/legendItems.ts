@@ -67,8 +67,8 @@ export type ExportLegendSwatch =
   | { kind: 'entity'; color: string }
   | { kind: 'icon'; icon: IconRef }
   | { kind: 'highlight'; color: string }
-  // A kind of stencil the diagram uses: its shape and mark, in the kind's own colour. An
-  // end carries the outcome and reach it is drawn with (ADR 0193).
+  // A kind of stencil the diagram uses (ADR 0080): its shape and mark, in the kind's own colour. An
+  // end carries the outcome and reach it is drawn with (ADR 0080).
   | { kind: 'stencil'; stencilKind: string; state?: { outcome: string; reach: string } }
 
 // One row of the legend for a kind of stencil, or for one way an end finishes.
@@ -83,8 +83,8 @@ export function stencilLegendRowKey(row: StencilLegendRow): string {
 }
 
 // The rows of the legend for the stencils a diagram uses, in the order of the built-in list, so what
-// a mark means does not have to be known. A kind is one row; an end is one row for each
-// outcome and reach it is used with (ADR 0193). The rows are derived, never stored.
+// a mark means does not have to be known (ADR 0080). A kind is one row; an end is one row for each
+// outcome and reach it is used with (ADR 0080). The rows are derived, never stored.
 export function stencilLegendRows(
   nodes: { type?: string; data: { kind?: string; outcome?: unknown; reach?: unknown } }[]
 ): StencilLegendRow[] {

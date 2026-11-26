@@ -395,7 +395,7 @@ const api = {
     return ipcRenderer.invoke('windows:closeApproved', path, sessionId)
   },
 
-  // Real per-OS preferences file (see ADR 0053), replacing localStorage
+  // Real per-OS preferences file, replacing localStorage
   // — see appPreferences.ts. readPreferences returns null when the file
   // doesn't exist yet (fresh install, or upgrading from a build predating it);
   // the renderer's usePreferences falls back to its own already-present

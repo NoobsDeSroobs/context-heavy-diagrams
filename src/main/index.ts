@@ -127,7 +127,7 @@ app.whenReady().then(async () => {
   // be found. Gated on the setting because the scan is a real startup cost some users may want to
   // skip (ADR 0040). Runs after createWindow() so the first window doesn't wait on it;
   // initialWindow parents the recovery dialogs for a defined z-order (see runStartupOrphanScan).
-  // readPreferences() returning null (no settings.json yet, ADR 0053) can't wait on the renderer's
+  // readPreferences() returning null (no settings.json yet) can't wait on the renderer's
   // localStorage migration at this point in startup; DEFAULT_PREFERENCES' `true` matches what the
   // replaced file defaulted to on a miss.
   readPreferences().then((settings) => {

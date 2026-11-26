@@ -1,6 +1,6 @@
 import type { NodeStyle } from '../styling/schema.ts'
 
-// The kinds a stencil can be: events and verbs, not things. A kind is a base shape with an
+// The kinds a stencil can be (ADR 0080): events and verbs, not things. A kind is a base shape with an
 // optional mark on it, one row of this table. The list is closed and built in; a person cannot add
 // a kind, and the file stores only the id (`data.kind` of a node of type `stencil`). An id says what
 // the kind is, the base word first and the subtype after (`step-user`, `event-timer`), so related kinds sort together and a later

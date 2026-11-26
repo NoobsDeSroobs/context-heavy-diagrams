@@ -52,7 +52,7 @@ interface PropertyPanelProps {
   // and the exit; the brush itself lives in Canvas.
   styleBrushActive: boolean
   onToggleStyleBrush: () => void
-  // Changes the kind of the selected steps and events.
+  // Changes the kind of the selected steps and events (ADR 0080).
   onSetStencilKind: (nodeIds: string[], kindId: string) => void
   // Moves the label of the selected small shapes.
   onSetStencilLabelPosition: (nodeIds: string[], position: LabelPosition) => void
@@ -129,7 +129,7 @@ export default function PropertyPanel({
       : undefined
 
   // Connection points: one selected entity, container or stencil (a stencil has no metadata or
-  // references, so it has no `metadataTarget`).
+  // references, ADR 0080, so it has no `metadataTarget`).
   const connectionPointTarget: Node | undefined =
     metadataTarget?.kind === 'node'
       ? metadataTarget.node

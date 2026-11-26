@@ -24,7 +24,7 @@ export interface DiagramNode {
   // never connectable, never rotated) — see ADR 0012. Kept as a
   // plain string, not a union, since more types may arrive later.
   //
-  // 'stencil' is an event or a verb of a flow (a step, a decision, a start): resizable,
+  // 'stencil' (ADR 0080) is an event or a verb of a flow (a step, a decision, a start): resizable,
   // connectable, never rotated, can sit in a container but not parent one. Its `data.kind` names
   // the kind from the app's closed list; it has no notes, tags, metadata, references, security
   // data or icons of its own, and one link to another diagram.
