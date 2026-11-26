@@ -5,7 +5,7 @@ import type { PortalMarkKind } from '../portals/portals.ts'
 
 // The app-wide Preferences tier — per-installation, every-diagram (see the
 // glossary and ADR 0052's addendum for the "Settings" -> "Preferences"
-// rename). Moved here from the renderer — main needs this
+// rename). Moved here from the renderer (see ADR 0053) — main needs this
 // exact shape too, to read/write the real per-OS file directly
 // (app.getPath('userData')/settings.json — filename kept for existing
 // installs) rather than the renderer's own localStorage, which only a
@@ -62,7 +62,7 @@ export interface AppPreferences {
   // that were never saved (see ADR 0040) — a real cost (disk scan
   // before the first window can usefully act on it) some users may want
   // to skip. Main reads this directly from the real settings file at
-  // startup, no separate mirror file needed anymore.
+  // startup (ADR 0053), no separate mirror file needed anymore.
   scanForUnsavedRecoveryOnStartup: boolean
   // A selected edge's stroke swaps to this color entirely (overriding its
   // own explicit style and any highlight-match color), so it stays

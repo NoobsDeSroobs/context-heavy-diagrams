@@ -2865,7 +2865,7 @@ function CanvasInner(): React.JSX.Element {
       } = fromDiagramFile(diagram)
       // Anything the load repaired by itself (a dangling container reference, a missing zIndex, a
       // required tag reset, a stale security reference, ...) makes the file differ from what is on
-      // disk, so it counts as a change to save: compare what a save would write with
+      // disk, so it counts as a change to save (ADR 0128): compare what a save would write with
       // what was read.
       const wouldSave = toDiagramFile(
         syncNodeMetadata(openedNodes, openedRequiredTags, []),

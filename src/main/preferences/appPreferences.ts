@@ -8,7 +8,7 @@ import {
 } from '@shared/preferences/preferences'
 import { parseInstallOptions } from '@shared/ai/installOptions'
 
-// Real per-OS preferences file — replaces the renderer's
+// Real per-OS preferences file (see ADR 0053) — replaces the renderer's
 // former localStorage-only storage with a file under this OS's
 // own conventional per-user app-data location, resolved automatically by
 // Electron's own app.getPath('userData'). The on-disk name stays
