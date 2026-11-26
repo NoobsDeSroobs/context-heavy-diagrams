@@ -132,6 +132,7 @@ import ShortcutsDialog from '../ShortcutsDialog'
 import GlossaryDialog from '../GlossaryDialog'
 import CommandPalette from '../CommandPalette'
 import { findKeyCommand, type CommandId } from '../commands'
+import { connectionToNewEntity, reconnectToNewEntity } from './edgeDrop'
 import { classifyNodeChanges } from './nodeChangeKind'
 import AlertDialog from '../ui/AlertDialog'
 import ExportImageDialog, { type ImageExportChoice } from '../export/ExportImageDialog'
@@ -1685,10 +1686,7 @@ function CanvasInner(): React.JSX.Element {
         setEdges((eds) => {
           const withNew = addEdge(
             {
-              source: origin.nodeId,
-              sourceHandle: origin.handleId,
-              target: entityId,
-              targetHandle: 'left',
+              ...connectionToNewEntity(origin, entityId),
               type: 'labeled',
               data: { metadata: seedMetadata(requiredTags), style: newEdgeStyle }
             },
@@ -1726,19 +1724,10 @@ function CanvasInner(): React.JSX.Element {
       const point = pointFromEvent(event)
       spawnEntityAt(point.clientX, point.clientY, (entityId) =>
         setEdges((eds) =>
-          eds.map((e) => {
-            if (e.id !== edge.id) return e
-            // `handleType` here is React Flow's own "oppositeHandle" type —
-            // the FIXED end that's staying put, not the one being dragged
-            // (confirmed by reading EdgeUpdateAnchors' source: grabbing the
-            // source anchor passes the *target*'s type, and vice versa).
-            // So handleType === 'target' means the target is fixed and the
-            // source is what got dragged loose — the inverse of the
-            // naive reading.
-            return handleType === 'target'
-              ? { ...e, source: entityId, sourceHandle: 'left' }
-              : { ...e, target: entityId, targetHandle: 'left' }
-          })
+          // `handleType` here is React Flow's own "oppositeHandle" type — the FIXED end that's
+          // staying put, not the one being dragged (grabbing the source anchor passes the
+          // *target*'s type, and vice versa), so reconnectToNewEntity reads it the inverse way.
+          eds.map((e) => (e.id === edge.id ? reconnectToNewEntity(e, handleType, entityId) : e))
         )
       )
     },
