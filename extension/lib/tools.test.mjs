@@ -613,7 +613,7 @@ test(
   }
 )
 
-// --- metamodels are written like diagrams, and only metamodels (ADR 0143)
+// --- metamodels are written like diagrams, and only metamodels (ADR 0131)
 
 const METAMODEL = readFileSync(
   join(import.meta.dirname, '..', '..', 'resources', 'metamodels', 'hexagonal.chdmeta'),

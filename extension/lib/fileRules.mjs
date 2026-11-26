@@ -62,7 +62,7 @@ export const READ_BLOCKED_EXTENSIONS = new Set([
 ])
 export const WRITE_EXTENSIONS = new Set(['.chd', '.md', '.txt', '.svg'])
 // The one extra file type that can be written: a diagram metamodel, validated before it is written
-// (ADR 0143). A metamodel under its old name (.chdprofile.json) can still be read, as any .json can.
+// (ADR 0131). A metamodel under its old name (.chdprofile.json) can still be read, as any .json can.
 export const METAMODEL_SUFFIX = '.chdmeta'
 export const MAX_FILE_BYTES = 5 * 1024 * 1024
 

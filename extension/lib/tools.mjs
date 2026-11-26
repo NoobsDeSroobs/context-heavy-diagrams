@@ -120,7 +120,7 @@ function refuseInvalid(rel, validation) {
 }
 
 // A metamodel is checked from its text, with the same reader `chd check` uses; it holds no relative
-// paths, so unlike a diagram it needs no temporary file (ADR 0143).
+// paths, so unlike a diagram it needs no temporary file (ADR 0131).
 function refuseInvalidMetamodel(rel, content) {
   const loaded = parseMetamodelText(content, basename(rel))
   if ('message' in loaded) {
@@ -308,7 +308,7 @@ export function createTools({ root, allowUpdate, specSources }) {
     }
   }
 
-  // A file in the folder, or the diagram's text (ADR 0145, ADR 0138): text has no folder, so the checks
+  // A file in the folder, or the diagram's text (ADR 0131, ADR 0138): text has no folder, so the checks
   // for files its paths point at are skipped and the result says so.
   function validateDiagram({ path, content }) {
     if (content !== undefined) {

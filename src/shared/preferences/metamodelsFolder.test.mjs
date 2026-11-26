@@ -1,4 +1,4 @@
-// Run with `npm test`. The metamodels folder was called profilesFolder before the rename (ADR 0144):
+// Run with `npm test`. The metamodels folder was called profilesFolder before the rename (ADR 0131):
 // a stored choice must survive it.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
