@@ -1,4 +1,4 @@
-// Checks an unpacked Linux or macOS build (ADR 0166): the licence files are next to the program,
+// Checks an unpacked Linux or macOS build (ADR 0139): the licence files are next to the program,
 // `chd --version` prints the package version, and on macOS the app holds both architectures and a
 // valid ad-hoc signature. It starts the program only as Node (ADR 0106), which is all a CI runner
 // can do without a display. Usage: node scripts/smoke-packaged.mjs

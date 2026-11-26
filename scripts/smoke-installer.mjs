@@ -1,5 +1,5 @@
 // Installs the built Windows installer silently into a scratch folder, checks what it put there,
-// runs `chd --version`, and uninstalls again (ADR 0165). The release workflow runs it before it
+// runs `chd --version`, and uninstalls again (ADR 0139). The release workflow runs it before it
 // publishes anything. Usage: node scripts/smoke-installer.mjs [installer.exe]
 // The installer is per-user and writes to HKCU, so run it on a CI runner or a throwaway account:
 // it registers an uninstall entry and the .chd association, like a real install.
@@ -55,7 +55,7 @@ note(
   `chd --version prints ${version} (got "${chd.stdout?.trim()}")`
 )
 
-// A silent install leaves the PATH alone (ADR 0162).
+// A silent install leaves the PATH alone (ADR 0139).
 const userPath = spawnSync('reg', ['query', 'HKCU\\Environment', '/v', 'Path'], {
   encoding: 'utf8'
 }).stdout

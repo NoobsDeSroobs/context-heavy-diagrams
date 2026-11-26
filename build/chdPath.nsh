@@ -1,4 +1,4 @@
-; Adds and removes one folder in the user's PATH (ADR 0162). Included by installer.nsh and by the
+; Adds and removes one folder in the user's PATH (ADR 0139). Included by installer.nsh and by the
 ; test script (scripts/installerPath.test.mjs), which points CHD_ENV_KEY at a scratch key.
 ;
 ; The PATH is HKCU\Environment\Path, a REG_EXPAND_SZ: it is rewritten with WriteRegExpandStr so a

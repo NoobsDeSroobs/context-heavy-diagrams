@@ -12,13 +12,13 @@ files:
 asarUnpack:
   - resources/**
 # The licence and the third-party notices go where a person can read them, not only inside
-# app.asar (ADR 0165): next to the program on Windows and Linux, in Resources on macOS (a loose
+# app.asar (ADR 0139): next to the program on Windows and Linux, in Resources on macOS (a loose
 # file in the root of a .app makes codesign fail). They are listed per platform on purpose: a
 # top-level `extraFiles` would also apply on macOS.
 win:
   executableName: context-heavy-diagrams
   # chd launcher next to the exe (ADR 0106), and bin/chd.cmd, the only folder the installer
-  # can put on the PATH (ADR 0162)
+  # can put on the PATH (ADR 0139)
   extraFiles:
     - from: LICENSE
       to: LICENSE.txt
@@ -63,7 +63,7 @@ mac:
     - NSDocumentsFolderUsageDescription: Context-Heavy Diagrams opens and saves your diagram files in your Documents folder.
     - NSDownloadsFolderUsageDescription: Context-Heavy Diagrams opens and saves your diagram files in your Downloads folder.
   notarize: false
-  # One DMG for Apple Silicon and Intel (ADR 0166).
+  # One DMG for Apple Silicon and Intel (ADR 0139).
   target:
     - target: dmg
       arch: universal

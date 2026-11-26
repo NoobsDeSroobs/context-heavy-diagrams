@@ -54,7 +54,7 @@ jobs:
       - run: npm test
       # --publish never: electron-builder must not upload anything itself.
       - run: npm run build:win -- --publish never
-      # Installs the installer silently, runs `chd --version` and uninstalls (ADR 0165); a broken
+      # Installs the installer silently, runs `chd --version` and uninstalls (ADR 0139); a broken
       # installer stops the release here, before anything is published.
       - name: Smoke-test the installer
         run: node scripts/smoke-installer.mjs
@@ -83,7 +83,7 @@ jobs:
 
   # The Linux and macOS builds are published after the Windows release exists and only add files
   # to it, so a failure here never blocks the tested installer. Their labels say how far they have
-  # been tried on real hardware (ADR 0166).
+  # been tried on real hardware (ADR 0139).
   linux:
     name: Linux builds (not tested on real hardware)
     needs: windows
@@ -142,7 +142,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      # electron-builder.yml makes it one universal, ad-hoc signed DMG (ADR 0166).
+      # electron-builder.yml makes it one universal, ad-hoc signed DMG (ADR 0139).
       - run: npm run build:mac -- --publish never
       - name: Check the build
         run: node scripts/smoke-packaged.mjs

@@ -1,4 +1,4 @@
-# Builds the installers and checks them (ADR 0165, ADR 0166), without publishing anything. Run it
+# Builds the installers and checks them (ADR 0139), without publishing anything. Run it
 # by hand from the Actions tab when something the installers are made from has changed
 # (`build/`, `electron-builder.yml`, the package files, an Electron or electron-builder upgrade),
 # so a problem shows up before a release tag, not on it. No secrets, read-only token.
