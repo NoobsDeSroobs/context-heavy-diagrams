@@ -1,4 +1,4 @@
-// The label of a container on each side: the SVG export, draw.io and the layout check (ADR 0184).
+// The label of a container on each side: the SVG export, draw.io and the layout check.
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { DEFAULT_SVG_EXPORT_OPTIONS, renderDiagramSvg } from '../export/renderDiagram.ts'

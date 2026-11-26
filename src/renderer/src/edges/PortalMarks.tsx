@@ -11,7 +11,7 @@ import {
 } from '@shared/portals/portals'
 import type { Theme } from '../styling/theme'
 
-// The two ends of a portal's gap (ADR 0185's gates are the other thing drawn on an edge like this):
+// The two ends of a portal's gap (the gates of marked crossings are the other thing drawn on an edge like this):
 // a mark and the number at each. The oval at the exit is drawn under the edge, so the line comes out
 // of it, and the oval at the entry over it, so the line goes into it; everything else is drawn over.
 export default function PortalMarks({

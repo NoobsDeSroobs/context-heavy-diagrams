@@ -14,19 +14,19 @@ interface EditableLabelProps {
   onCommit: (value: string) => void
   className?: string
   inputClassName?: string
-  // Font styling from NodeStyle/EdgeStyle (ADR 0014) — applied to both the
+  // Font styling from NodeStyle/EdgeStyle — applied to both the
   // display div and the edit-mode input so the look doesn't jump on
   // double-click.
   style?: CSSProperties
-  // Opt-in multi-line editing (ADR 0074-era decision — see the multi-line
-  // labels ADR): Shift+Enter inserts a newline, Enter still commits, and the
+  // Opt-in multi-line editing:
+  // Shift+Enter inserts a newline, Enter still commits, and the
   // editor is an auto-growing <textarea>. Default false — single-line
   // <input>, unchanged — so structured fields (metadata values) stay
   // single-line. The on-canvas *display* guardrail (clip to the element's
   // box, don't grow the shape) is CSS on each label class, not here.
   multiline?: boolean
   // True asks the label to open straight into edit mode (a freshly created
-  // Entity, ADR 0107). `onAutoEditStarted` then fires once so the owner can
+  // Entity). `onAutoEditStarted` then fires once so the owner can
   // reset whatever flag drove `autoEdit`.
   autoEdit?: boolean
   onAutoEditStarted?: () => void

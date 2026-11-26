@@ -1,5 +1,5 @@
 // Run with `npm test`. Exercises the AI-folder installer, the Node validator
-// and the dev-copy sync check against real temp directories (ADR 0105).
+// and the dev-copy sync check against real temp directories.
 import { test, beforeEach, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
 import { mkdtemp, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises'

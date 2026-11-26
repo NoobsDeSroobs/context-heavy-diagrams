@@ -26,8 +26,8 @@ interface ExportImageDialogProps {
   onClose: () => void
 }
 
-// See ADR 0051 (padding and transparency live in this dialog, not in the global Preferences panel,
-// because they change from one export to the next); the SVG export (ADR 0124) asks the same
+// Padding and transparency live in this dialog, not in the global Preferences panel,
+// because they change from one export to the next. The SVG export (ADR 0124) asks the same
 // questions. Reuses AboutDialog's centered-
 // overlay shell (about-dialog-*) and RequiredTagsPanel's confirm-row
 // button styling (required-tag-value-confirm-actions) rather than

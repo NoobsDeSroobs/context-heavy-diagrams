@@ -8,7 +8,7 @@ export interface DrawioExportParams {
   theme: Theme
   enabledHighlightIds: string[]
   diagramPath: string | null
-  // The font the app draws this diagram in, when the diagram has none of its own (ADR 0130).
+  // The font the app draws this diagram in, when the diagram has none of its own.
   fontFamily?: string
   title?: string
 }

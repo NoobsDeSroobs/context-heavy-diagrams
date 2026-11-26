@@ -153,7 +153,7 @@ export function useSave(
       nodesToSave: Node[],
       opts?: { forceHub?: boolean; saveAs?: { options: SaveAsOptions; plan: SaveAsPlan } }
     ): Promise<Node[]> => {
-      // Apply any staged missing-file removals (ADR 0084) — this is the one
+      // Apply any staged missing-file removals — this is the one
       // point they reach disk. Also drop them from `legend` and close any
       // now-orphaned reference windows.
       let savedNodes = nodesToSave
@@ -164,7 +164,7 @@ export function useSave(
         legendToSave = r.legend
       }
 
-      // Save As (ADR 0160): the references go where the plan puts them, and notes that were not
+      // Save As: the references go where the plan puts them, and notes that were not
       // ticked are left out entirely, unsaved edits to them included.
       const saveAs = opts?.saveAs
       if (saveAs) {
@@ -505,7 +505,7 @@ export function useSave(
 
   const handleSave = useCallback(() => performSave(false), [performSave])
 
-  // Save As asks what to copy (ADR 0160), then saves the diagram and the copied files to the new
+  // Save As asks what to copy, then saves the diagram and the copied files to the new
   // place. A diagram that has never been saved has nothing to copy: the plain picker.
   const handleSaveAs = useCallback(async () => {
     if (!currentPath) return performSave(true)

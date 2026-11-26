@@ -14,12 +14,12 @@ import PropertyPanel from './properties/PropertyPanel'
 import type { TransformPatch } from './properties/transformPatch'
 
 // The right-side dock that's part of the diagram's own editing surface —
-// see ADR 0013. Item palette when nothing is selected, property panel once
+// Item palette when nothing is selected, property panel once
 // something is. Each mode gets its own width (set via CSS on the two
 // `*-mode` classes), not one fixed value for the dock as a whole.
 // memo()'d so unrelated CanvasInner renders (panel toggles, search,
 // context menus, pan, edge hover) don't re-render the property panel —
-// see ADR 0073. Relies on every prop being referentially stable, which
+// Relies on every prop being referentially stable, which
 // Canvas.tsx now ensures (memoized selectedNodes/selectedEdges,
 // useCallback handlers, a stable pushSnapshot).
 function DiagramDock({

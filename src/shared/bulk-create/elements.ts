@@ -1,4 +1,4 @@
-// A table turned into the elements it describes (ADR 0168): which column means what, and one
+// A table turned into the elements it describes: which column means what, and one
 // element per distinct label with the tags of its rows folded together.
 
 export type ColumnRole = 'label' | 'note' | 'container' | 'tag' | 'ignore'

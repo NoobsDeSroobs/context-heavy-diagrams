@@ -6,7 +6,7 @@ import eslintPluginReactHooks from 'eslint-plugin-react-hooks'
 import eslintPluginReactRefresh from 'eslint-plugin-react-refresh'
 
 export default defineConfig(
-  // The skill's scripts ship to users as standalone plain-JS files (ADR 0105),
+  // The skill's scripts ship to users as standalone plain-JS files,
   // not part of the typed app code; .claude/skills holds a synced copy.
   {
     ignores: [
@@ -80,7 +80,7 @@ export default defineConfig(
     }
   },
   {
-    // Renderer test code (ADR 0127): stubs are often empty on purpose.
+    // Renderer test code: stubs are often empty on purpose.
     files: [
       '**/*.test.{ts,tsx}',
       'src/renderer/src/testSetup.ts',

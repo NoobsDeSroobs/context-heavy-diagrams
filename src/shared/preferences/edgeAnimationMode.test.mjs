@@ -1,4 +1,4 @@
-// Run with `npm test`. Whether animated edges move (ADR 0141): the person's own choice wins over the
+// Run with `npm test`. Whether animated edges move: the person's own choice wins over the
 // system's reduced-motion setting, which only decides the default.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'

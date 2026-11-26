@@ -34,7 +34,7 @@ const TYPE_BADGE: Record<string, string> = {
 }
 
 // Same UtilityDock shell as Highlights/Required tags/Diagnostics/Settings —
-// see ADR 0035; unlike the legend panel this one is explicitly a
+// unlike the legend panel this one is explicitly a
 // big scrollable list, exactly what that dock already does well. No
 // catalog of its own: `rows` is a live projection of `nodes`' own zIndex,
 // nothing here is separately persisted.

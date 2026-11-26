@@ -54,7 +54,7 @@ function draw(routingStyle: string, selected: boolean, to = { x: 300, y: 180 }):
   ).container
 }
 
-// The segment handles of a step or smooth step edge (ADR 0077; the ones on the ends are ADR 0191) are shown while the edge is selected or
+// The segment handles of a step or smooth step edge are shown while the edge is selected or
 // hovered, and stays while the pointer is on the handle itself, which lies over the edge's hover surface.
 describe('segment handles of step edges', () => {
   Object.defineProperty(SVGElement.prototype, 'getTotalLength', { value: () => 100 })

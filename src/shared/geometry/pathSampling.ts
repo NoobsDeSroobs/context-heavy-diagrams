@@ -65,7 +65,7 @@ export function flattenPath(d: string): Point[] {
 }
 
 // The inverse of pointAtRatio: the fraction (0-1) of the path's length at the point of the path
-// nearest to `target`. Dragging an edge label uses it (ADR 0164). A path that doubles back over
+// nearest to `target`. Dragging an edge label uses it. A path that doubles back over
 // itself has several answers; the first of equal distance wins.
 export function ratioNearest(d: string, target: Point): number {
   const points = flattenPath(d)

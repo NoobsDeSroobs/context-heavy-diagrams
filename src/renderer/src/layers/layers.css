@@ -1,4 +1,4 @@
-/* Layer panel — see ADR 0035. */
+/* Layer panel. */
 .layer-row {
   cursor: pointer;
   display: flex;

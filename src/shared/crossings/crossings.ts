@@ -1,4 +1,4 @@
-// The edges that cross the border of a container, and where they do (ADR 0185). Derived from the diagram,
+// The edges that cross the border of a container, and where they do. Derived from the diagram,
 // never stored. A container is a lane, an element's lane is the container it has as its parent, and an
 // edge crosses a border when one end is inside the container and the other is not.
 

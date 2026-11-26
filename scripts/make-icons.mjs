@@ -1,4 +1,4 @@
-// Regenerates every app icon file from the one SVG master (ADR 0122):
+// Regenerates every app icon file from the one SVG master:
 //   npm run icons
 // Writes build/icon.png, build/icon.ico, build/icon.icns and resources/icon.png.
 // Runs under Electron because its Chromium renders the SVG; no extra dependency is needed.

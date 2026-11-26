@@ -7,7 +7,7 @@ import {
 } from '@shared/nodes/containerLabel'
 import { SelectField } from '../ui/fields'
 
-// The side of its container a label sits on (ADR 0184): the top of the text points at that side. The
+// The side of its container a label sits on: the top of the text points at that side. The
 // container's look, size and place use the same fields as any other node.
 export function ContainerFields({
   nodes,

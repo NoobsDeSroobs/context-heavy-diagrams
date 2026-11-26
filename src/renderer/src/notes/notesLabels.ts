@@ -20,7 +20,7 @@ export function noteName(node: Node | undefined): string {
   return label ? `Note "${label}"` : 'This note'
 }
 
-// What the Notes panel says about the open note (ADR 0154): 'unsaved' while it has edits that are
+// What the Notes panel says about the open note: 'unsaved' while it has edits that are
 // only in memory, 'saved' when the file on disk is what the panel shows, and nothing for a note
 // that has no file and no edits yet (or is still being read).
 export type NoteSaveState = 'unsaved' | 'saved' | null

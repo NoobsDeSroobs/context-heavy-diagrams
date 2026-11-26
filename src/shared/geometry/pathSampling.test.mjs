@@ -1,4 +1,4 @@
-// Run with `npm test`. Projecting a point onto an edge path, the inverse of pointAtRatio (ADR 0164).
+// Run with `npm test`. Projecting a point onto an edge path, the inverse of pointAtRatio.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { pointAtRatio, ratioNearest } from './pathSampling.ts'

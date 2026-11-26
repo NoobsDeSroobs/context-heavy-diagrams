@@ -29,7 +29,7 @@ export function useEdgeDirectionSets(
   { graphRef, setEdges, markDirty }: CanvasApi,
   { setPast, setFuture }: Pick<History, 'setPast' | 'setFuture'>
 ): EdgeDirectionSetsState {
-  // Flippable edge direction sets (ADR 0081) — same file-scoped/reset-on-
+  // Flippable edge direction sets — same file-scoped/reset-on-
   // load treatment as gravityPresets. `[]` (or a single set) means
   // the feature is dormant: an edge's direction is just its own
   // source/target/handles. When >= 2 sets exist, [0] is the "base" set the
@@ -93,7 +93,7 @@ export function useEdgeDirectionSets(
       const newSet: EdgeDirectionSet = {
         id: `dirset-${crypto.randomUUID()}`,
         name,
-        // ADR 0083: `style` is the reading's default edge style — seeds new
+        // `style` is the reading's default edge style — seeds new
         // edges + drives the legend row. A fresh set gets a plain arrow.
         style: source?.style
           ? { ...source.style }
@@ -125,7 +125,7 @@ export function useEdgeDirectionSets(
     [markDirty]
   )
 
-  // The set's default edge style (ADR 0083) — seeds new edges drawn while
+  // The set's default edge style — seeds new edges drawn while
   // this reading is active, and drives its legend row. Does not restyle
   // existing edges.
   const updateEdgeDirectionSetStyle = useCallback(

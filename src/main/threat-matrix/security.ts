@@ -12,7 +12,7 @@ import {
 import { openDiagramAtPath } from '../document/diagram'
 import { resolveLinkPath } from '../links/linkPaths'
 
-// Recursive security-matrix rollup (ADR 0088). Given the open diagram's path
+// Recursive security-matrix rollup. Given the open diagram's path
 // and the linked matrix entities the renderer found, walk each linked subtree
 // and return a CrawledMatrix per root column. Purely a reader — never
 // touches recent-diagrams / last-opened (unlike diagram:openPath).
@@ -44,7 +44,7 @@ async function crawlDiagram(
     const label = String(node.data?.label ?? entityId)
 
     // Re-key this entity's own assessments by normalized threat NAME (ids are
-    // per-diagram, so a parent joins on name — ADR 0088).
+    // per-diagram, so a parent joins on name).
     const rawCells = (node.data?.security ?? {}) as Record<string, RiskCell>
     const cells: Record<string, RiskCell> = {}
     for (const [threatId, cell] of Object.entries(rawCells)) {

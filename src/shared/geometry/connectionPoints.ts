@@ -55,7 +55,7 @@ export function pointCoordinates(rect: RectLike, point: ConnectionPoint): { x: n
 }
 
 // Clockwise-around-the-box order per side, used by the count-based
-// generator and by remove-with-transfer below — see ADR 0036. Offset
+// generator and by remove-with-transfer below. Offset
 // is defined left-to-right on top/bottom and top-to-bottom on left/right
 // (nearestConnectionPoint above), so walking top -> right -> bottom -> left
 // clockwise means ascending offset on top/right but descending on

@@ -14,8 +14,8 @@ import { defaultPortal, movePortalEnd, readPortal } from '@shared/portals/portal
 
 // '' means the field is absent: a real style.routingStyle value, not a placeholder (the same '' ===
 // "no override" pattern as fontFamily below). 'straight'/'step'/'smoothstep' are React Flow's
-// built-in path shapes; 'catmullRom' reuses the freeform-line curve math (ADR 0050,
-// bendablePath.ts) with this edge's manual bend points (ADR 0057). A local copy, not shared with
+// built-in path shapes; 'catmullRom' reuses the freeform-line curve math (see
+// bendablePath.ts) with this edge's manual bend points. A local copy, not shared with
 // PreferencesPanel.tsx's identical default-routing-style picker, because this file can't export a
 // second named value next to its default component export (react-refresh/only-export-components).
 const ROUTING_STYLE_OPTIONS: {
@@ -29,7 +29,7 @@ const ROUTING_STYLE_OPTIONS: {
   { value: 'catmullRom', label: 'Catmull-Rom (gravity)' }
 ]
 
-// '' is no animation: the field is absent in the file (ADR 0141).
+// '' is no animation: the field is absent in the file.
 const ANIMATION_OPTIONS: {
   value: Exclude<EdgeStyle['animation'], undefined> | ''
   label: string

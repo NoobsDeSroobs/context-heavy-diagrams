@@ -3,7 +3,7 @@ import type { IconRef, IconSlot, LegendEntry } from '@shared/diagram'
 import type { MissingFileEntry } from './DiagnosticsPanel'
 
 // Every on-disk resource path referenced by a diagram element — for the
-// Diagnostics "missing files" check (ADR 0084). `resolvedPath` is filled in
+// Diagnostics "missing files" check. `resolvedPath` is filled in
 // later, after main reports back which paths don't exist.
 export function collectResourceRefs(
   nodeList: Node[],
@@ -71,7 +71,7 @@ export function collectResourceRefs(
   return refs
 }
 
-// Apply one staged missing-file removal (ADR 0084) to a nodes+legend pair —
+// Apply one staged missing-file removal to a nodes+legend pair —
 // the same mutation each element's own UI does. Pure; used at save time
 // (persistDiagram), so a staged removal only ever reaches disk on save.
 export function applyMissingFileRemoval(

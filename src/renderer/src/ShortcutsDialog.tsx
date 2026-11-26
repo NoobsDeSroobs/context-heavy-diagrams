@@ -5,7 +5,7 @@ interface ShortcutsDialogProps {
   onClose: () => void
 }
 
-// Help -> Keyboard shortcuts (ADR 0094). A centered overlay shell shared with
+// Help -> Keyboard shortcuts. A centered overlay shell shared with
 // AboutDialog; rows come straight from the command registry, so keys are
 // shown with the right modifier for the OS and can't drift from what the
 // keydown handler actually does.

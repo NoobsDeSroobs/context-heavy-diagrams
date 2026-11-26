@@ -1,7 +1,7 @@
 import type { IconRef, IconSlot, MetadataEntry } from '../diagram'
 import { stencilSearchText } from '../stencils/kinds.ts'
 
-// Pure free-text matcher behind ADR 0062's V1 search — one
+// Pure free-text matcher behind the V1 search — one
 // combined query checked against id, label, and every tag key/value,
 // deliberately not split into per-field syntax yet (that's the deferred
 // `metadata:*python*`-style scoping the ADR logs for later). Case-
@@ -18,7 +18,7 @@ export interface SearchableElement {
   linkedDiagram?: string
   // Set for a connection, so a negated `has:` term can leave it out.
   edge?: boolean
-  // A stencil's kind name and the terms it is known by (ADR 0180), so "gateway" finds a decision.
+  // A stencil's kind name and the terms it is known by, so "gateway" finds a decision.
   kindText?: string
 }
 
@@ -41,12 +41,12 @@ export function matchesSearchQuery(query: string, element: SearchableElement): b
   return false
 }
 
-// Icon-identity search (ADR 0072): pick an icon placed in the diagram and find every node carrying
+// Icon-identity search: pick an icon placed in the diagram and find every node carrying
 // the same one. A built-in icon is identified by its id, a custom one by its relative asset path, an
 // installed one by its pack and path (all plain strings on IconRef), so "same icon" is exact
 // equality on the (source, id|path) pair,
 // with no fuzzy name matching. It is its own one-dimension search, not combined with the free-text
-// query; ADR 0062 defers criteria-combining to a real query language.
+// query; combining criteria is left to a real query language.
 export function iconRefKey(icon: IconRef): string {
   if (icon.source === 'builtin') return `builtin:${icon.id}`
   return icon.source === 'custom' ? `custom:${icon.path}` : `installed:${icon.pack}:${icon.path}`
@@ -78,7 +78,7 @@ export function searchableFromData(
   }
 }
 
-// The query language (ADR 0096): whitespace-separated terms in the one search
+// The query language: whitespace-separated terms in the one search
 // box, all ANDed — an element must satisfy every term. There is deliberately
 // no OR, NOT or grouping. A term is either free text or `name:value`:
 //   any:web  (or bare text)   id, label or a tag key/value contains it
@@ -199,7 +199,7 @@ export function parseSearchQuery(raw: string): ParsedQuery {
   return parsed
 }
 
-// The parsed query plus an optional picked icon (ADR 0072), ANDed. This is the
+// The parsed query plus an optional picked icon, ANDed. This is the
 // one predicate every search path shares (the open diagram today; linked
 // diagrams' parsed elements for drill-down search), so a term added here
 // reaches all of them.
@@ -290,7 +290,7 @@ export function elementMatchesCriteria(c: SearchCriteria, el: SearchableElement)
   return c.any.every((term) => matchesSearchQuery(term, el)) && matchesStructuredCriteria(c, el)
 }
 
-// The second, costlier tier of a match (ADR 0097): a bare/`any:` term the
+// The second, costlier tier of a match: a bare/`any:` term the
 // in-memory fields don't satisfy may be satisfied by the element's note.
 // Only meaningful for an element that fails elementMatchesCriteria; the file is
 // read only when it already passes every other term and is missing some `any`

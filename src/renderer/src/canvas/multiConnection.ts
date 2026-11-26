@@ -1,6 +1,6 @@
 import { isConnectableNodeType } from './nodeFields'
 
-// Which nodes a connection drag starts from (ADR 0059). Dragging from a selected node wires every
+// Which nodes a connection drag starts from. Dragging from a selected node wires every
 // selected, connectable node to the drop target; dragging from a node that is not selected wires only
 // that node, so a selection left over from an earlier move never adds edges. A selected node is never
 // wired to itself: the target is left out when it is known.

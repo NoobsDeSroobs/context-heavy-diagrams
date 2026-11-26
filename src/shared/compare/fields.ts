@@ -134,7 +134,7 @@ function count(value: unknown): number {
   return Array.isArray(value) ? value.length : 0
 }
 
-// A look field in words. Colours are shown as stored: the dark theme's form (ADR 0034), which is
+// A look field in words. Colours are shown as stored: the dark theme's form, which is
 // also what the comparison looks at, so the light theme's flip never reads as a change.
 function styleSpec<T extends { style?: object }>(
   key: string,
@@ -260,7 +260,7 @@ export const NODE_FIELDS: FieldSpec<DiagramNode>[] = [
     get: (n) => n.data.label,
     describe: describeLabel
   },
-  // What sort of step or event a stencil is says what it means in the flow (ADR 0180).
+  // What sort of step or event a stencil is says what it means in the flow.
   {
     name: 'kind',
     category: 'content',

@@ -55,7 +55,7 @@ export function bezierPath(source: EdgeEnd, target: EdgeEnd): string {
   return `M${source.x},${source.y} C${sourceControlX},${sourceControlY} ${targetControlX},${targetControlY} ${target.x},${target.y}`
 }
 
-// Straight lead-in/out before curving: the global edgeStraightSegmentLength setting (ADR 0032). It
+// Straight lead-in/out before curving: the global edgeStraightSegmentLength setting. It
 // matters only for the two curvy routing styles (bezier, catmull-rom); straight/step/smoothstep
 // already leave each side perpendicular. bezierPath has no lead-in, so the curve is run between two
 // points offset straight outward from the real endpoints and a straight `L` segment splices each
@@ -86,7 +86,7 @@ function bezierPathWithLeads(
   return `M${source.x},${source.y} L${offsetSource.x},${offsetSource.y} ${curve.slice(curve.indexOf('C'))} L${target.x},${target.y}`
 }
 
-// Routing (ADR 0057): 'straight' is a plain line, 'step'/'smoothstep' are the right-angled routes of
+// Routing: 'straight' is a plain line, 'step'/'smoothstep' are the right-angled routes of
 // orthogonalPath.ts through the manual waypoints, 'catmullRom' reuses the freeform-line curve
 // (bendablePath.ts) with the edge's bend points, and absent means a plain bezier.
 export function buildEdgePath(

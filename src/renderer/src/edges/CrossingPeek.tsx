@@ -4,7 +4,7 @@ import type { PeekTarget } from '../notes/useNotesPeek'
 const GAP = 14
 
 // A small card by the pointer, shown while Ctrl/Cmd is held over an edge that goes through the border of
-// a container (ADR 0185): which containers it leaves and enters, innermost first on the way out and
+// a container: which containers it leaves and enters, innermost first on the way out and
 // outermost first on the way in, and how many borders that is. Non-interactive, like the note peek.
 export default function CrossingPeek({
   target,

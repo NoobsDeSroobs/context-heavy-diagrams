@@ -1,4 +1,4 @@
-/* Reference images — see ADR 0069. */
+/* Reference images. */
 
 /* Floating viewer window (ReferenceWindow.tsx). Fixed-position, above the
    canvas and the utility dock's shadow but below modal dialogs (z 100). */

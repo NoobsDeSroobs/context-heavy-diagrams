@@ -25,7 +25,7 @@ const DASH_ARRAY: Record<Exclude<EdgeStyle['lineStyle'], undefined>, string | un
   dotted: '2 4'
 }
 
-// Live preview of the set's default edge style (ADR 0083), drawn as an
+// Live preview of the set's default edge style, drawn as an
 // arrow. Honours the configured stroke width, clamped so the tiny swatch
 // stays legible; the read-only legend row elsewhere renders at a fixed
 // width. Read-only — editing is via the ✎ button.
@@ -39,7 +39,7 @@ function DirectionSwatch({
   return (
     <svg viewBox="0 0 40 14" width="40" height="14">
       <line
-        // The line stops short of the tip of a pointed head (ADR 0197).
+        // The line stops short of the tip of a pointed head.
         x1={3 + markerTrim(style?.startMarker, width)}
         y1="7"
         x2={35 - markerTrim(style?.endMarker, width)}
@@ -56,7 +56,7 @@ function DirectionSwatch({
   )
 }
 
-// One section of DiagramSettingsPanel (see ADR 0071 / ADR 0081 / ADR 0083).
+// One section of DiagramSettingsPanel.
 // Named "readings" of the diagram's edges that differ only in arrow
 // direction — "Data flow" vs. "Trigger direction" being the canonical pair.
 // A single set is meaningful: it names the current reading, contributes a

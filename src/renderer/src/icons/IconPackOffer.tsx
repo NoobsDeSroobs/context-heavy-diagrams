@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-// The first-start question about the default icon pack (ADR 0192): a line across the top of the
+// The first-start question about the default icon pack: a line across the top of the
 // window, so the window is not covered while it waits. Main asks once per run and remembers either
 // answer.
 export default function IconPackOffer(): React.JSX.Element | null {

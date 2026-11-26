@@ -4,7 +4,7 @@ import { basename, dirname, extname, join, relative } from 'path'
 import { resolveLinkPath } from '../links/linkPaths'
 
 // Custom icons live in a sibling folder named after the diagram file, per
-// ADR 0005's convention and ADR 0006's icon storage model — e.g.
+// ADR 0005's convention — e.g.
 // my-diagram.chd -> my-diagram/assets/. Paths stored on a node are always
 // relative to the diagram file's own directory. They are only read now: a new icon goes into the
 // Misc icons pack (ADR 0188).

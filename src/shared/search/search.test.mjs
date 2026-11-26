@@ -168,7 +168,7 @@ test('structured criteria exclude the any terms and are vacuously true when none
   assert.equal(matchesStructuredCriteria(q('missing label:customer'), customerDb), true)
 })
 
-// A note may satisfy an `any` term the in-memory fields don't (ADR 0097).
+// A note may satisfy an `any` term the in-memory fields don't.
 const withNote = (raw, el, note) => {
   const reads = []
   return elementMatchesWithNotes(q(raw), el, async (rel) => {
@@ -200,7 +200,7 @@ test('notes: an empty criteria set still matches nothing', async () => {
   assert.equal((await withNote('', server, 'anything')).result, false)
 })
 
-// Negation and exact tag match (ADR 0096).
+// Negation and exact tag match.
 const gdpr = (value, extra = {}) => ({
   id: `g-${value}`,
   label: value,

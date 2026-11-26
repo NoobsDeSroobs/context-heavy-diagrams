@@ -21,8 +21,8 @@ function systemTheme(): Theme {
 
 // No explicit choice yet means "null" — deliberately never collapsed
 // into a concrete Theme, so callers can tell "nothing chosen, following
-// the OS" apart from "the OS happens to currently resolve to dark" (see
-// ADR 0027 — the whole point is never defaulting to dark on purpose).
+// the OS" apart from "the OS happens to currently resolve to dark"
+// The whole point is never defaulting to dark on purpose.
 function applyTheme(theme: Theme | null): void {
   if (theme) document.documentElement.setAttribute('data-theme', theme)
   else document.documentElement.removeAttribute('data-theme')
@@ -64,7 +64,7 @@ export function useTheme(): { theme: Theme; setTheme: (theme: Theme) => void } {
   }, [])
 
   const theme = stored ?? system
-  // The built-in default look is data (styleDefaults.ts, ADR 0117) handed to the
+  // The built-in default look is data (styleDefaults.ts) handed to the
   // stylesheet as CSS variables; set before paint so no element ever renders
   // without them, and again when the theme changes.
   useLayoutEffect(() => {

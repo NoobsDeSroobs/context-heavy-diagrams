@@ -188,7 +188,7 @@ export function createTools({ root, allowUpdate, specSources }) {
 
   // Every file the assistant may read under `start`, as { full, path, name }, in the order of the
   // paths. The walk never follows a symlink and skips dot-files, dependency folders, what a .gitignore
-  // names (ADR 0173) and the types that cannot be read; `matches` narrows it further (a glob).
+  // names and the types that cannot be read; `matches` narrows it further (a glob).
   function visibleFiles(start, matches) {
     const found = []
     let capped = false

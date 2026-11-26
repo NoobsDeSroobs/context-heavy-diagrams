@@ -16,7 +16,7 @@ interface ReferencesPanelProps {
   onClose: () => void
 }
 
-// Diagram-wide inventory of every reference image (see ADR 0069),
+// Diagram-wide inventory of every reference image,
 // same UtilityDock shell and "live projection of nodes, owns nothing" spirit
 // as LayerPanel. Read-only: adding/removing happens in the property panel or
 // a viewer window, not here.

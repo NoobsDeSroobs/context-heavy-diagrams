@@ -18,8 +18,8 @@ import {
 } from '@shared/stencils/labelPlacement'
 import { SelectField } from '../ui/fields'
 
-// The kind of the selected behaviour (ADR 0180), the one thing a stencil has that an entity does
-// not, and where the label of the small shapes sits (ADR 0183). Its look, size and place use the same
+// The kind of the selected behaviour, the one thing a stencil has that an entity does
+// not, and where the label of the small shapes sits. Its look, size and place use the same
 // fields as any other node.
 export function StencilFields({
   nodes,

@@ -243,7 +243,7 @@ test('an edge to a connection point the node does not have is not drawn, as on t
   assert.ok(!svg.includes('chd-edge'))
 })
 
-test('an edge with no handle is attached on the sides that face, in the middle (ADR 0178)', () => {
+test('an edge with no handle is attached on the sides that face, in the middle', () => {
   const svg = render(
     diagramOf([entity('a', 0, 0), entity('b', 300, 0)], [{ id: 'e', source: 'a', target: 'b' }]),
     { paddingPx: 0 }

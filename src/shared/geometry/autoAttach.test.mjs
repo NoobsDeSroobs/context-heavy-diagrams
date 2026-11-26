@@ -1,4 +1,4 @@
-// Automatic attachment: an edge end that names no point takes a facing side and a point on it (ADR 0178).
+// Automatic attachment: an edge end that names no point takes a facing side and a point on it.
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { AXIS_MARGIN, automaticHandles } from './autoAttach.ts'

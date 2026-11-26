@@ -82,7 +82,7 @@ describe('closing the window', () => {
 })
 
 // Whatever the load repairs by itself leaves the file different from what is on disk, so the diagram
-// counts as changed and closing it asks to save (ADR 0128).
+// counts as changed and closing it asks to save.
 describe('a diagram the load had to repair', () => {
   const alpha = (extra: Record<string, unknown> = {}): DiagramFile['nodes'][number] =>
     ({

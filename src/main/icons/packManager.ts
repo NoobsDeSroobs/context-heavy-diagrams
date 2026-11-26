@@ -158,7 +158,7 @@ async function stagedTabler(
 // The first-start question (ADR 0188): offer the Tabler pack once. Either answer is remembered by a
 // file in the packs folder, so the question is not asked again, and deleting the folder resets it.
 // It is asked as a banner inside the window that was opened, not as a box in front of it, so the
-// window is visible whether or not anyone answers (ADR 0192).
+// window is visible whether or not anyone answers.
 const OFFERED_FILE = '.offered'
 
 // The window that has been shown the question and has not answered. Only its answer counts.

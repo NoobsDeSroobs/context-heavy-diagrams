@@ -11,7 +11,7 @@ import { useTheme, type Theme } from '../styling/theme'
 import { themeAdaptiveColor } from '../styling/themeAdaptiveColor'
 import { useEdgeResize, type WidthRange } from '../ui/useEdgeResize'
 
-// The list's width in the review window (ADR 0158). Kept for the life of the window: that window
+// The list's width in the review window. Kept for the life of the window: that window
 // cannot write a preference (ADR 0112).
 const LIST_WIDTH: WidthRange = { default: 320, min: 240, max: 800 }
 
@@ -47,7 +47,7 @@ const REVERT_LABEL: Record<CompareStatus, string> = {
 const HEX = /#[0-9a-fA-F]{6}\b/g
 
 // One changed line. A colour in it gets a chip beside the hex, drawn as the canvas draws it in
-// this theme (stored colours are the dark theme's form, ADR 0034).
+// this theme (stored colours are the dark theme's form).
 function ChangeLine({ text, theme }: { text: string; theme: Theme }): React.JSX.Element {
   const parts: React.ReactNode[] = []
   let last = 0

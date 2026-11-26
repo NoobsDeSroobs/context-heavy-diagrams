@@ -92,7 +92,7 @@ export function registerDiagramHandlers(): void {
     return path
   })
 
-  // What a Save As would copy and whether it can be made (ADR 0160): the dialog's preview, and again
+  // What a Save As would copy and whether it can be made: the dialog's preview, and again
   // when the person confirms.
   ipcMain.handle('document:planSaveAs', (_event, request: PlanSaveAsRequest) => planSaveAs(request))
 
@@ -181,7 +181,7 @@ export function registerDiagramHandlers(): void {
     }
   )
 
-  // Side-effect-free reread for the "changes since last save" diff (ADR 0102) — same precedent as security:crawlLinked. Never calls
+  // Side-effect-free reread for the "changes since last save" diff — same precedent as security:crawlLinked. Never calls
   // recordOpenedOrSaved: opening the diff view must not touch
   // lastOpenedDirectory or the recent-diagrams list. Returns null for a
   // path that no longer resolves (deleted/moved since open) rather than

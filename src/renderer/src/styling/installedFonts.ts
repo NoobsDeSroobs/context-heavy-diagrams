@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-// The font families installed on this computer, for the font dropdowns (ADR 0130). Asked for once
+// The font families installed on this computer, for the font dropdowns. Asked for once
 // per window, on first use, and kept: the call returns every face (hundreds on a typical machine)
 // and the list does not change while the app runs.
 interface LocalFontData {

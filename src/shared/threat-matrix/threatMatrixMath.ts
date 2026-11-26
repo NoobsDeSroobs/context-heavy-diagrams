@@ -1,6 +1,6 @@
 // Pure math for the threat/risk matrix — no notion of "React" here, and no
 // filesystem. Lives in @shared (not the renderer) because the recursive
-// rollup (ADR 0088) is walked by the main-process crawler as well as the
+// rollup is walked by the main-process crawler as well as the
 // view. RiskCell / CombineMethod / AggregateMethod are schema types from
 // ./diagram; this module just does the arithmetic.
 
@@ -45,7 +45,7 @@ export function combine(a: number, b: number, method: CombineMethod): number {
 
 // Roll a list of scores up into one summary. Exported because the rollup
 // view aggregates a mix of leaf cell scores and already-derived child
-// scores in the same row/column (ADR 0088).
+// scores in the same row/column.
 export function aggregateScores(values: number[], method: AggregateMethod): number {
   if (values.length === 0) return 0
   switch (method) {
@@ -106,7 +106,7 @@ export function totalSecurityScore(
   )
 }
 
-// --- Recursive rollup across linked diagrams (ADR 0088) ---
+// --- Recursive rollup across linked diagrams ---
 
 // Threats are matched across linked files by NAME, not id (ids are
 // per-diagram). Normalize before comparing: trim, collapse internal
@@ -137,7 +137,7 @@ export interface CrawledMatrix {
   entities: CrawledEntity[]
 }
 
-// One root matrix column that has a linked diagram (ADR 0088). `resolved`
+// One root matrix column that has a linked diagram. `resolved`
 // carries the crawled subtree; `broken` means the link didn't resolve — the
 // view marks those cells rather than computing them.
 export type CrawledColumn =
@@ -153,7 +153,7 @@ export interface SecurityCrawlResult {
 }
 
 // The rolled-up threat score for one normalized threat name over a crawled
-// subtree, using the ACTIVE VIEW's two modes (ADR 0088 — modes flow down
+// subtree, using the ACTIVE VIEW's two modes (modes flow down
 // uniformly, they are not read per file). `null` when nothing downstream is
 // assessed for that threat — a real "not assessed" state, distinct from a
 // genuine low numeric score.

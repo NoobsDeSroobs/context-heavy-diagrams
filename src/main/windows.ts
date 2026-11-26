@@ -112,7 +112,7 @@ export function createWindow(initialPath?: string): BrowserWindow {
     height: 670,
     show: false,
     // Not autoHideMenuBar: that only hides the native menu until Alt is pressed,
-    // and Alt is the duplicate-drag modifier (ADR 0099). The app draws its own
+    // and Alt is the duplicate-drag modifier. The app draws its own
     // menu in the renderer; the native one stays hidden via setMenuBarVisibility.
     // Linux has no icon resource in the executable, and a dev run on any OS starts the stock
     // Electron binary. A packaged Windows or macOS build carries the icon in the executable.
@@ -182,7 +182,7 @@ function openOrFocusWindow(path: string, reuseWindow?: BrowserWindow): BrowserWi
 }
 
 // Files handed to the app from outside — a double-click in the file manager
-// (launch arguments, second-instance, macOS open-file; ADR 0108). Each gets
+// (launch arguments, second-instance, macOS open-file). Each gets
 // its own window, or focuses the one already showing it; an empty window is
 // never reused here because only the renderer knows whether one is empty.
 // Returns the windows in order so a cold start can parent its recovery

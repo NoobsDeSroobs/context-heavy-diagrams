@@ -15,12 +15,12 @@ export interface DiagramContextValue {
   // itself, so it doesn't inherit React Flow's zoom/pan transform and end
   // up scaling like a shape on the canvas.
   openIconPicker: (nodeId: string, anchorRect: DOMRect) => void
-  // "Fill…"/"Border…" context-menu items (ADR 0010) — same fixed-popup
+  // "Fill…"/"Border…" context-menu items — same fixed-popup
   // reasoning as openIconPicker above.
   openColorPicker: (nodeId: string, kind: 'fill' | 'border', anchorRect: DOMRect) => void
   // Fixed right-side dock — no anchor needed, it's not attached to the node.
   openNotesPanel: (nodeId: string) => void
-  // Reference images (see ADR 0069). openReferencesFor: entity/
+  // Reference images. openReferencesFor: entity/
   // container right-click "Reference images…" — opens a floating viewer
   // window per attached reference, or the file picker if the node has none
   // yet. addReferencesToNode / removeReferenceFromNode: the property
@@ -63,11 +63,11 @@ export interface DiagramContextValue {
   // state so node/edge components don't need either piece directly, just
   // the element's own metadata to check.
   matchHighlights: (metadata: Record<string, MetadataEntry> | undefined) => HighlightDefinition[]
-  // Global preference (preferences.ts/PreferencesPanel, ADR 0032), not
+  // Global preference (preferences.ts/PreferencesPanel), not
   // diagram content — same "thread it through context so edges don't need
   // Canvas's own state directly" reasoning as matchHighlights above.
   edgeStraightSegmentLength: number
-  // Global preference (preferences.ts/PreferencesPanel, ADR 0036) — the
+  // Global preference (preferences.ts/PreferencesPanel) — the
   // property panel's count field already clamps to this via its own `max`
   // prop, but manual right-click "add point here" needed the same limit
   // threaded down to the node components, same reasoning as
@@ -75,16 +75,16 @@ export interface DiagramContextValue {
   maxConnectionPointsPerSide: number
   // Current resolved theme — needed by every render/edit site that touches
   // an explicit fill/stroke/fontColor, for the theme-adaptive Value flip
-  // (see ADR 0034). Same threading reasoning as the two fields above.
+  //Same threading reasoning as the two fields above.
   theme: Theme
   // Which node the layer panel is currently pointing at — an "entity
-  // highlight" (see ADR 0035), a different concept from
+  // highlight", a different concept from
   // matchHighlights above ("property highlight": every entity sharing a
   // metadata value) despite the shared English word. Deliberately not
   // real selection — see the ADR for why. Session-only, null means none.
   entityHighlightNodeId: string | null
-  // The active named style palette's colors/fonts (preferences.ts, ADR 0048,
-  // multi-palette per ADR 0068 — resolved via
+  // The active named style palette's colors/fonts (preferences.ts,
+  // multi-palette — resolved via
   // effectiveStylePalette). Threaded the same way as the global preferences
   // above, so PropertyPanel's NodeStyleFields/EdgeFields can read it
   // without Canvas.tsx having to prop-drill through every intermediate
@@ -92,31 +92,31 @@ export interface DiagramContextValue {
   paletteColors: { label: string; value: string }[]
   paletteFonts: string[]
   // The font this diagram is drawn in unless an element sets its own: the diagram's, else the
-  // personal default (ADR 0130). undefined means the built-in font. The property panel shows it
+  // personal default. undefined means the built-in font. The property panel shows it
   // for an element with no font of its own.
   diagramFontFamily: string | undefined
-  // Diagram-level catalog (see ADR 0050), already resolved to this
+  // Diagram-level catalog, already resolved to this
   // app's built-in four if the diagram hasn't defined its own — see
   // lineGravityPresets.ts's effectiveGravityPresets. LineNode's point
   // context menu reads this directly rather than a hardcoded list.
   gravityPresets: GravityPreset[]
-  // Ids of every node/edge the current search overlay run matched (see
-  // ADR 0062) — empty whenever the overlay is closed or hasn't been
+  // Ids of every node/edge the current search overlay run matched
+  // — empty whenever the overlay is closed or hasn't been
   // run yet. Raw id set, not a per-element lookup function, same
   // convention as entityHighlightNodeId above: cheap enough for each
   // component to check `.has(id)` itself.
   searchMatchIds: Set<string>
-  // "Isolate" (see ADR 0063) — true means every element NOT in
+  // "Isolate" — true means every element NOT in
   // searchMatchIds should render dimmed. Deliberately a single flag, not
   // its own id set: it's always exactly "everything outside the current
   // search match set," so each node/edge component just checks
   // `isolateActive && !searchMatchIds.has(id)` itself.
   isolateActive: boolean
-  // Global preference (preferences.ts/PreferencesPanel, ADR 0063), same
+  // Global preference (preferences.ts/PreferencesPanel), same
   // threading convention as edgeStraightSegmentLength/
   // maxConnectionPointsPerSide above.
   isolateOpacity: number
-  // Gates are drawn on the edges that cross a container's border (ADR 0185).
+  // Gates are drawn on the edges that cross a container's border.
   showCrossings: boolean
   // Portals: how an edge's gap is marked (a preference), the number each portalled edge shows (typed,
   // else from the order in the file), and the length of every drawn edge, which the edges write as
@@ -130,7 +130,7 @@ export interface DiagramContextValue {
   // can offer "Select all entities"/"...containers"/etc. without Canvas.tsx
   // having to build every node's context menu itself.
   selectAllOfType: (type: 'entity' | 'container' | 'text' | 'line' | 'stencil' | 'edge') => void
-  // Multi-select resize (ADR 0098) — the three resizable node types forward
+  // Multi-select resize — the three resizable node types forward
   // their NodeResizer's start/resize/end here so Canvas can scale the rest of
   // the selection by the same percentage.
   groupResize: {
@@ -138,8 +138,8 @@ export interface DiagramContextValue {
     resize: (nodeId: string, params: ResizeParams) => void
     end: () => void
   }
-  // The node (an Entity just created by dropping an edge on empty canvas,
-  // ADR 0107) whose label should open straight into edit mode, and the call
+  // The node (an Entity just created by dropping an edge on empty canvas)
+  // whose label should open straight into edit mode, and the call
   // that clears the request once the label has taken it. Session-only.
   pendingLabelEditId: string | null
   clearPendingLabelEdit: () => void

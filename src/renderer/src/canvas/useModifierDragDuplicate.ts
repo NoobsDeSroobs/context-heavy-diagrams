@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 
-// The one modifier that turns a node drag into a duplicate-drag (ADR 0099).
+// The one modifier that turns a node drag into a duplicate-drag.
 // Deliberately a single key: Alt matches Figma, but many Linux window
 // managers grab Alt+drag to move the whole window, so the app never sees it —
 // switching to 'ctrlKey' (Ctrl/Cmd) here is the whole change if that bites.

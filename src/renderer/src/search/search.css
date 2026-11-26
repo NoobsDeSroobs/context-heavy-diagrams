@@ -1,4 +1,4 @@
-/* Search overlay (ADR 0062) — Ctrl+F-triggered, fixed top-right,
+/* Search overlay — Ctrl+F-triggered, fixed top-right,
    not anchored to any toolbar button since there isn't one yet in V1
    (deliberately provisional, see the ADR). Same panel visual language
    (background/border/shadow) as .legend-panel/.highlights-panel below,
@@ -24,14 +24,14 @@
   width: 220px;
 }
 
-/* Read-only in icon mode (ADR 0072) — kept focusable so Enter still
+/* Read-only in icon mode — kept focusable so Enter still
    cycles matches, but visibly not a text field you can type into. */
 .search-overlay-input:read-only {
   background: var(--color-background-mute);
   cursor: default;
 }
 
-/* "Search by icon" button (ADR 0072) — sits between the query field and
+/* "Search by icon" button — sits between the query field and
    the Search button. Shows the picked icon once one is chosen, with a
    small ✕ to drop back to a plain text search. */
 .search-overlay-icon-wrap {
@@ -99,7 +99,7 @@
   cursor: default;
 }
 
-/* Isolate's pressed state (ADR 0063) — same accent color as a
+/* Isolate's pressed state — same accent color as a
    search-match outline/glow, since the two are directly related (Isolate
    dims everything search *didn't* match). */
 .search-overlay-isolate.active {

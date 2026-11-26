@@ -1,6 +1,6 @@
 import type { AppPreferences } from '../preferences/preferences'
 
-// What the Windows installer's options page can seed (ADR 0108): the
+// What the Windows installer's options page can seed: the
 // installer drops `install-options.json` next to the executable and the app
 // turns it into the first-run preferences. Only whitelisted, correctly typed
 // fields survive, so a hand-edited, truncated or foreign file can never put

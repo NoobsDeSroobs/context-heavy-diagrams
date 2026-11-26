@@ -1,4 +1,4 @@
-// Font choices stored as a CSS font-family value (ADR 0130).
+// Font choices stored as a CSS font-family value.
 
 const GENERIC_FAMILIES = new Set(['serif', 'sans-serif', 'monospace', 'cursive', 'fantasy'])
 const MONOSPACE = /mono|code|courier|consolas|menlo|console|typewriter/i

@@ -1097,7 +1097,7 @@ test('a new linked diagram goes in the folder named after its parent, one level 
   assert.equal(again.results[1].link, 'shop/Orders-1.chd')
 })
 
-// --- search_files (ADR 0149)
+// --- search_files
 
 function writeSource() {
   mkdirSync(join(folder, 'server', 'src'), { recursive: true })
@@ -1216,7 +1216,7 @@ test('search_files cuts a regular expression that never finishes, and a long lin
   assert.ok(line.length < 300 && line.includes('NEEDLE') && line.includes('…'), line)
 })
 
-// --- list_files in pages and by folder, read_file by line (ADR 0149)
+// --- list_files in pages and by folder, read_file by line
 
 function writeTree() {
   mkdirSync(join(folder, 'server', 'src', 'services'), { recursive: true })
@@ -1283,7 +1283,7 @@ test('list_files takes a glob and pages with an offset and a limit, in the order
   refusal(() => tools.list_files({ limit: 0 }), /limit must be/)
 })
 
-// --- what a .gitignore names is left out (ADR 0173)
+// --- what a .gitignore names is left out
 
 function writeIgnoredTree() {
   const lines = ['# build', 'dist/', '*.log', '!keep.log', '/top-only.md']

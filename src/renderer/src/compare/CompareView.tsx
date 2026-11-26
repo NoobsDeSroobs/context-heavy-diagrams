@@ -263,7 +263,7 @@ function CompareCanvas({
         <div className="compare-body">
           <div
             className="compare-canvas"
-            // The same dimming strength as the editor's Isolate mode (ADR 0063).
+            // The same dimming strength as the editor's Isolate mode.
             style={{ '--cmp-dim-opacity': preferences.isolateOpacity } as React.CSSProperties}
           >
             <EdgeMarkerDefs />

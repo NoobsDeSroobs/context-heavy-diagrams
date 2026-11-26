@@ -1,6 +1,6 @@
 import type { MenuBarItem, MenuBarMenu } from './MenuBar'
 
-// One row of the command palette (ADR 0100).
+// One row of the command palette.
 export interface PaletteAction {
   // React key only — never persisted, never compared across renders.
   id: string
@@ -11,7 +11,6 @@ export interface PaletteAction {
 }
 
 // A keyboard-only action with a real handler but no menu item of its own —
-// see ADR 0100 for which ones and why.
 export interface ExtraPaletteAction {
   id: string
   title: string
@@ -20,7 +19,7 @@ export interface ExtraPaletteAction {
   run: () => void
 }
 
-// Flattens the live menu bar into palette rows (ADR 0100): every menu leaf
+// Flattens the live menu bar into palette rows: every menu leaf
 // item becomes one row, using its own label/accelerator/onSelect — the exact
 // same values <MenuBar> renders, so the palette can never show something the
 // menu bar disagrees with. The leaves of a submenu are listed too, titled

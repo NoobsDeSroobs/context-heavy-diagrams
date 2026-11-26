@@ -1,7 +1,7 @@
 import type { EdgeAnimation, EdgeAnimationDirection, EdgeStyle } from './schema.ts'
 import { dashPeriod, type DashPattern } from './edgeDash.ts'
 
-// The numbers behind an animated edge (ADR 0141), kept pure so they can be tested.
+// The numbers behind an animated edge, kept pure so they can be tested.
 
 export const EDGE_ANIMATIONS: readonly EdgeAnimation[] = ['flow', 'pulse']
 
@@ -82,7 +82,7 @@ export function pulseLoop(
 }
 
 // The style fields that make a line move or set its dash pattern. A legend line carries the same
-// ones as an edge (ADR 0141), so picking a legend line from an edge copies them.
+// ones as an edge, so picking a legend line from an edge copies them.
 export const LINE_MOTION_KEYS = [
   'animation',
   'animationSpeed',

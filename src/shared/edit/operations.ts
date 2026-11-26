@@ -122,7 +122,7 @@ function addNode(
   return { op: `add_${kind}`, element: briefNode(model.diagram, node) }
 }
 
-// --- behaviours (stencils, ADR 0180): a step, a decision, a start, an end
+// --- behaviours (stencils): a step, a decision, a start, an end
 
 function kindOf(reader: Reader, key: string): StencilKind {
   const id = currentKindId(reader.string(key))
@@ -253,7 +253,7 @@ function addBehaviour(model: Model, reader: Reader): OperationResult {
   }
 }
 
-// What the app's kind change does (ADR 0180): the label and the size follow the new kind only while they
+// What the app's kind change does: the label and the size follow the new kind only while they
 // are still the old kind's own, and a resized box keeps its centre; place, edges, link and style stay.
 function setKind(model: Model, reader: Reader): OperationResult {
   const node = nodeOnly(model, reader)
@@ -419,7 +419,7 @@ function connect(model: Model, reader: Reader): OperationResult {
   const to = connectable(model, reader, 'to')
   if (from.id === to.id) reader.fail('an edge needs two different elements')
   const [fromSide, toSide] = facingSides(model, from, to)
-  // "auto" names no point: the app attaches that end by itself and follows the element as it moves (ADR 0178).
+  // "auto" names no point: the app attaches that end by itself and follows the element as it moves.
   const givenFrom = reader.optionalString('fromHandle')
   const givenTo = reader.optionalString('toHandle')
   const sourceHandle = givenFrom === AUTO ? undefined : (givenFrom ?? middleHandle(from, fromSide))
@@ -449,7 +449,7 @@ function connect(model: Model, reader: Reader): OperationResult {
     const style = mergeStyle(undefined, checkedStyle(reader, reader.raw('style'), EDGE_STYLE))
     if (style) edge.style = style
   } else {
-    // An edge with no style of its own takes the look of the diagram's line for new edges (ADR 0196),
+    // An edge with no style of its own takes the look of the diagram's line for new edges,
     // as one drawn by a person does. The colour is the one the legend shows, stored as it is.
     const line = newEdgeLineEntry(model.diagram.legend)
     if (line) {
@@ -559,7 +559,7 @@ function setParentAndKeepPlace(
   node.position = { x: round(origin.x - parentOrigin.x), y: round(origin.y - parentOrigin.y) }
 }
 
-// The points of an edge whose two ends moved by the same amount go with them (ADR 0189): moving a
+// The points of an edge whose two ends moved by the same amount go with them: moving a
 // container takes the edges between its children along, so a loop round an element stays round it.
 function carryEdgePoints(model: Model, before: PlacedNode[]): void {
   const shifts = nodeShifts(before, placedNodes(model))

@@ -1,4 +1,4 @@
-; Custom NSIS pieces for the Windows installer (ADR 0108), pulled in through
+; Custom NSIS pieces for the Windows installer, pulled in through
 ; `nsis.include` in electron-builder.yml. The installer is the assisted (wizard)
 ; form so it can ask three questions on one options page:
 ;   1. Associate .chd files with this app (double-click to open).

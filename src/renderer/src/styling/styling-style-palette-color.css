@@ -1,4 +1,4 @@
-/* Style Palette panel (ADR 0048) — reuses .required-tag-value-*
+/* Style Palette panel — reuses .required-tag-value-*
    row/list/confirm classes above for its colors/fonts editors and import
    confirmation, same list-editor shape as the required-tags panel. */
 .style-palette-color-row {
@@ -67,7 +67,7 @@
   cursor: default;
 }
 
-/* Active-palette picker — see ADR 0068. Sits at the top of the
+/* Active-palette picker. Sits at the top of the
    Style Palette panel body, above the Colors/Fonts sections. */
 .style-palette-picker {
   display: flex;

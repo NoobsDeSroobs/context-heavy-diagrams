@@ -44,7 +44,7 @@ export interface ImageExportInputs {
   activeEdgeDirectionSetId: string | undefined
   security: DiagramSecurity
   enabledHighlightIds: Set<string>
-  // The canvas marks the edges that cross a container's border, so an SVG export does too (ADR 0185).
+  // The canvas marks the edges that cross a container's border, so an SVG export does too.
   showCrossings: boolean
   theme: Theme
   preferences: Pick<
@@ -65,7 +65,7 @@ export interface ImageExportState {
   handleExportDrawio: () => Promise<void>
 }
 
-// Exporting the diagram as a PNG (ADR 0051) or an SVG (ADR 0124).
+// Exporting the diagram as a PNG or an SVG (ADR 0124).
 export function useImageExport(
   { setNodes, setEdges, currentPath }: CanvasApi,
   {
@@ -91,17 +91,17 @@ export function useImageExport(
     updateNodeInternals
   }: ImageExportInputs
 ): ImageExportState {
-  // Which image export the dialog is open for, if any (PNG, ADR 0051; SVG, ADR 0124).
+  // Which image export the dialog is open for, if any (PNG; SVG, ADR 0124).
   const [exportDialogFormat, setExportDialogFormat] = useState<'png' | 'svg' | null>(null)
   const [exportPngEffectiveColorHex, setExportPngEffectiveColorHex] = useState('#ffffff')
-  // onlyRenderVisibleElements (ADR 0073) keeps React Flow from mounting
+  // onlyRenderVisibleElements keeps React Flow from mounting
   // off-screen nodes/edges — a large win on big diagrams, but PNG export
   // (handleExportPng) clones the .react-flow__viewport DOM subtree, so
   // every off-screen element would be missing from the capture. Flipped
   // true for the duration of a capture so the whole diagram is in the DOM.
   const [isExportingPng, setIsExportingPng] = useState(false)
 
-  // PNG export (ADR 0051). Selection outlines and resize/connection-point handles render inside
+  // PNG export. Selection outlines and resize/connection-point handles render inside
   // each node based on node.selected, so everything is deselected first (flushSync, so the DOM
   // updates before html-to-image reads it; a plain setNodes/setEdges would commit only after this
   // function returns). That keeps them out of the image without knowing how each node type draws
@@ -123,7 +123,7 @@ export function useImageExport(
       const previouslySelectedEdgeIds = edges.filter((e) => e.selected).map((e) => e.id)
       try {
         flushSync(() => {
-          // Mount every node/edge (onlyRenderVisibleElements, ADR 0073) so
+          // Mount every node/edge (onlyRenderVisibleElements) so
           // the .react-flow__viewport clone below isn't missing off-screen
           // content.
           setIsExportingPng(true)

@@ -1,6 +1,6 @@
 import type { SaveAsOptions, SaveAsPlan } from '@shared/document/saveAsCopy'
 
-// Ask what a Save As should copy (ADR 0160). Promise-based and callable from anywhere, like
+// Ask what a Save As should copy. Promise-based and callable from anywhere, like
 // conflictPrompt.ts: a tiny pub/sub the SaveAsDialog host subscribes to.
 
 export interface SaveAsRequest {

@@ -3,7 +3,7 @@ import type { MetadataEntry } from '../tagging/schema.ts'
 import type { LinePoint } from '../nodes/schema.ts'
 
 // A diagram-wide "reading" of every edge that differs only in arrow
-// direction — see ADR 0081. "Data flow" vs. "Trigger direction" being the
+// direction. "Data flow" vs. "Trigger direction" being the
 // canonical pair. A set never adds or removes edges; every edge exists in
 // every set, only its direction (and which connection point each end uses)
 // changes. Empty `DiagramFile.edgeDirectionSets` means the feature is
@@ -14,14 +14,14 @@ import type { LinePoint } from '../nodes/schema.ts'
 export interface EdgeDirectionSet {
   id: string
   name: string
-  // The default edge style for this reading — see ADR 0083. It does two
+  // The default edge style for this reading. It does two
   // things: (1) it seeds the style of any edge *drawn while this set is
   // active* (composed over the global default-edge-style preference), and
   // (2) it is how this reading draws as a legend row (panel + PNG export)
   // while active — label is always `name`. It does NOT restyle edges that
   // already exist; switching the active set changes direction only (ADR
   // 0081). Absent `stroke` falls back to a default for the legend swatch.
-  // Renamed from `legend` (ADR 0081) and widened — `fromDiagramFile`
+  // Renamed from `legend` and widened — `fromDiagramFile`
   // migrates the old shape (`color` -> `stroke`).
   style?: EdgeDirectionSetStyle
 }
@@ -57,7 +57,7 @@ export interface DiagramEdge {
   // 'labeled'. Plain string, same reasoning as DiagramNode.type.
   type?: string
   // On disk these always hold the *base* set's orientation
-  // (edgeDirectionSets[0]) regardless of which set is active — see ADR 0081
+  // (edgeDirectionSets[0]) regardless of which set is active
   // and `directionSets` below.
   source: string
   target: string
@@ -66,7 +66,7 @@ export interface DiagramEdge {
   label?: string
   style?: EdgeStyle
   metadata?: Record<string, MetadataEntry>
-  // Per-set orientation, keyed by EdgeDirectionSet.id — see ADR 0081. Only
+  // Per-set orientation, keyed by EdgeDirectionSet.id. Only
   // present (on disk and in memory) when the diagram has >= 2 direction
   // sets; contains an entry for every set, the base set's entry matching
   // this edge's own top-level source/target/handles. Direction-sensitive
@@ -78,7 +78,7 @@ export interface DiagramEdge {
   // always shown. An edge is shown or hidden by its own sets alone, not by its ends.
   visibilitySetIds?: string[]
   // Manual routing points, absolute canvas coordinates. Meaning depends on
-  // style.routingStyle (see ADR 0057, ADR 0077):
+  // style.routingStyle:
   //   - 'catmullRom': interior control points of a smooth curve, each
   //     `gravity` respected (bendablePath.ts).
   //   - 'step' / 'smoothstep': orthogonal waypoints the right-angled path

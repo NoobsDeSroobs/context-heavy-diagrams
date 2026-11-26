@@ -15,7 +15,7 @@ export type McpSettingsResult =
   | { outcome: 'unsupported' } // an AppImage: its files move on every start, so no path would hold
   | { outcome: 'missing' } // the server was not built into this copy of the app
 
-// Result of "Set up a folder for AI agents" (ADR 0105): main does the file
+// Result of "Set up a folder for AI agents": main does the file
 // work, the renderer turns this into the message the user reads.
 export interface AiFolderResult {
   folder: string

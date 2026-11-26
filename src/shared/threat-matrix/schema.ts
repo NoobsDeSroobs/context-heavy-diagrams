@@ -32,7 +32,7 @@ export interface SecurityScaleLevel {
 // How a probability/consequence pair becomes one cell score, and how a
 // list of cell scores becomes one row/column summary — see
 // threatMatrixMath.ts for the actual arithmetic. NOT persisted: since
-// ADR 0088 (recursive rollup) these are renderer session state on the
+// the rollup is recursive, these are renderer session state on the
 // active matrix view, applied uniformly down a linked-diagram tree; a
 // per-file mode would be either ignored or inconsistent once a traversal
 // spans files. Defaults 'multiply' / 'average'.
@@ -67,6 +67,6 @@ export interface DiagramSecurity {
   probabilityScale?: SecurityScaleLevel[]
   consequenceScale?: SecurityScaleLevel[]
   // combineMethod / aggregateMethod are deliberately NOT here — they are
-  // renderer session state, not persisted (ADR 0088). A file written by an
+  // renderer session state, not persisted. A file written by an
   // older build may still carry them; they are ignored on read.
 }

@@ -23,9 +23,9 @@ export interface SvgExportParams {
   edgeStraightSegmentLength: number
   diagramPath: string | null
   title?: string
-  // The font the app draws this diagram in, when the diagram has none of its own (ADR 0130).
+  // The font the app draws this diagram in, when the diagram has none of its own.
   fontFamily?: string
-  // Gates where an edge goes through the border of a container, as on the canvas (ADR 0185).
+  // Gates where an edge goes through the border of a container, as on the canvas.
   crossings?: boolean
   // How a portal's gap is marked, the person's preference.
   portalMark?: PortalMarkKind

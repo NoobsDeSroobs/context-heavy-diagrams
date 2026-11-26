@@ -5,7 +5,7 @@ import { flipRgbLightness } from '@shared/export/color'
 // named colors like "red" — ColorField's free-text input accepts any of
 // these, not just the swatch's hex) into concrete RGB channels, by letting
 // the browser's own CSS engine resolve it rather than hand-writing a parser
-// for every valid CSS color syntax — see ADR 0034. A single hidden, reused
+// for every valid CSS color syntax. A single hidden, reused
 // element, appended once so getComputedStyle resolves reliably rather than
 // depending on detached-element behavior.
 let probeEl: HTMLDivElement | null = null
@@ -30,7 +30,7 @@ function parseCssColor(color: string): { r: number; g: number; b: number } | nul
 }
 
 // Applies the theme-adaptive lightness flip to an explicit fill/stroke/
-// fontColor — see ADR 0034. `undefined` or a color this app's own
+// fontColor. `undefined` or a color this app's own
 // CSS engine can't resolve passes through unchanged (nothing to flip).
 // Overloaded so a definitely-a-string input (the common case, already
 // guarded by callers) doesn't force `| undefined` handling at every call

@@ -7,7 +7,7 @@ interface StylePickerProps {
   anchorRect: DOMRect
   onPick: (style: Partial<EdgeStyle>) => void
   // The diagram's own line entries, offered first when the picker sets the look of new edges
-  // (ADR 0196); `currentLineId` is the one new edges follow now. Picking it again stops that.
+  //`currentLineId` is the one new edges follow now. Picking it again stops that.
   lines?: LegendEntry[]
   currentLineId?: string
   onPickLine?: (id: string) => void
@@ -17,7 +17,7 @@ interface StylePickerProps {
 const PICKER_WIDTH = 220
 
 // Searchable named-preset picker for an edge's line style/markers — see
-// ADR 0010. Reuses IconPicker's exact fixed-positioned popup shell
+// Reuses IconPicker's exact fixed-positioned popup shell
 // (.icon-picker/.icon-picker-search/.icon-picker-scroll classes) so this
 // and the icon picker feel like the same interaction pattern, not two to
 // learn. Picking an entry just pre-fills the raw style fields (lineStyle/

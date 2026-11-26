@@ -1,4 +1,4 @@
-// Pure z-index math for the layer panel — see ADR 0035. No React
+// Pure z-index math for the layer panel. No React
 // Flow / Canvas.tsx state here on purpose, just plain data in, plain data
 // out, so the reorder algorithm's three cases (average / cascade-shift /
 // boundary-extrapolate) can be reasoned about and changed in isolation from
@@ -12,7 +12,7 @@
 export const LAYER_GAP = 10
 
 // Deep enough that the initial backfill's three ranges can't cross on first load, but not a hard
-// boundary once the user drags things around in the panel (ADR 0035: containers-behind-shapes is a
+// boundary once the user drags things around in the panel (containers-behind-shapes is a
 // default arrangement, not an enforced rule). Text sits above shapes because annotations should
 // stay readable over what they label.
 export const CONTAINER_BASE = LAYER_GAP

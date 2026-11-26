@@ -144,7 +144,7 @@
   line-height: 1.45;
 }
 
-/* Command palette (CommandPalette.tsx, ADR 0100) — top-anchored, not
+/* Command palette (CommandPalette.tsx) — top-anchored, not
    centered like About/Shortcuts: a type-and-go launcher, not a reference
    page. */
 .command-palette-overlay {

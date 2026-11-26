@@ -293,7 +293,7 @@ function simplify(points: Point[]): Point[] {
   return out
 }
 
-// The diagram with every automatic end (ADR 0178) named: a routed edge is drawn from a point of its own.
+// The diagram with every automatic end named: a routed edge is drawn from a point of its own.
 function withAutomaticHandles(diagram: DiagramFile): DiagramFile {
   const placed = [...layoutNodes(diagram).values()]
     .filter((n) => hasConnectionPoints(n.kind))

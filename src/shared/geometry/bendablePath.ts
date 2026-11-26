@@ -19,7 +19,7 @@ export interface PathPoint extends LinePoint {
 // i.e. the negation of "outward". Using the same sign for both (a real bug) made the curve approach
 // the target's side from the wrong side instead of arriving perpendicular to the shape. Everything
 // else (a line's own points, an edge's manual bend points) uses per-point Catmull-Rom gravity
-// (tension) via its neighbours (ADR 0050). A point with no direction and one neighbour uses that
+// (tension) via its neighbours. A point with no direction and one neighbour uses that
 // neighbour; an interior point uses both.
 function tangentAt(points: PathPoint[], i: number): { x: number; y: number } {
   const point = points[i]
@@ -39,8 +39,8 @@ function tangentAt(points: PathPoint[], i: number): { x: number; y: number } {
 }
 
 // Ordered point list -> SVG path string. It knows nothing of "node" or "edge" beyond PathPoint's
-// `direction`: the point of the split (ADR 0050) is that the same curve math serves a decorative
-// line's points and an edge's manual bend points (the "catmull-rom" routing style, ADR 0057). Each
+// `direction`: the point of the split is that the same curve math serves a decorative
+// line's points and an edge's manual bend points (the "catmull-rom" routing style). Each
 // segment between consecutive points becomes one cubic bezier by the standard Hermite-to-Bezier
 // conversion. A straight two-point line with no `direction` comes out straight whatever the
 // gravity: both tangents are parallel to the chord, so both control points land on it.
@@ -65,8 +65,8 @@ export function buildBendablePath(points: PathPoint[]): string {
 }
 
 // Straight lead-in/out before curving, at whichever ends have a `direction`: the global
-// edgeStraightSegmentLength setting (preferences.ts/PreferencesPanel, ADR 0032), reused by
-// catmull-rom edges (ADR 0057) alongside the bezier routing it first applied to. Offsets an
+// edgeStraightSegmentLength setting (preferences.ts/PreferencesPanel), reused by
+// catmull-rom edges alongside the bezier routing it first applied to. Offsets an
 // endpoint outward along its direction by `length` (clamped to half the distance to its real
 // neighbour in the original list, so a short segment can't overlap or fold back), builds the curve
 // between the offset points, then splices each true endpoint back on with a literal straight `L`

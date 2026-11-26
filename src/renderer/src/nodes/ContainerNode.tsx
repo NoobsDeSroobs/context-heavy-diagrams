@@ -20,7 +20,7 @@ export const CONTAINER_MIN_HEIGHT = 120
 // EntityNode, deliberately, not TextNode. See ADR 0012 for why (a container
 // plausibly needs edges attached to it directly, e.g. an external system
 // connecting to a "VPC" as a whole — rotating a connectable node reopens
-// the edge-misattachment bug ADR 0004 already solved once).
+// the edge-misattachment bug already solved once).
 //
 // A transparent body (not a filled shape) so contained nodes stay visible
 // through it — those are separate sibling elements in React Flow's render
@@ -46,7 +46,7 @@ function ContainerNode({ id, data, selected }: NodeProps): React.JSX.Element {
   const locked = data?.locked === true
   const customPoints = (data?.connectionPoints ?? []) as ConnectionPoint[]
   const style = data?.style as NodeStyle | undefined
-  // The side the label is on, and how its text lines up along that side (ADR 0184).
+  // The side the label is on, and how its text lines up along that side.
   const side = containerLabelSideOf(data?.labelPosition)
   const align = style?.textAlign ?? NODE_STYLE_DEFAULTS.container.textAlign
   const { addConnectionPointItem, onPointContextMenu } = useConnectionPointMenu(id, customPoints)

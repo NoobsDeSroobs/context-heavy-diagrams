@@ -44,7 +44,7 @@ export interface SearchState {
   resetSearch: () => void
 }
 
-// Search overlay (ADR 0062), Isolate (ADR 0063) and icon search (ADR 0072). All session-only,
+// Search overlay, Isolate and icon search. All session-only,
 // reset on load like every other panel's open/enabled state.
 export function useSearch(
   { rfInstance, setNodes, setEdges, currentPath }: CanvasApi,
@@ -63,20 +63,20 @@ export function useSearch(
   const [searchMatchIds, setSearchMatchIds] = useState<Set<string>>(new Set())
   const [searchMatchOrder, setSearchMatchOrder] = useState<string[]>([])
   const [searchMatchCursor, setSearchMatchCursor] = useState(0)
-  // Icon-identity search (ADR 0072) — when set, the query is "every node
+  // Icon-identity search — when set, the query is "every node
   // carrying this exact icon" and the free-text box is disabled; the two
-  // are deliberately not combined (ADR 0062 defers all criteria-combining
+  // are deliberately not combined (all criteria-combining is deferred
   // to a future query language). searchIconPicker holds the anchor rect of
   // the overlay's icon button while its IconBrowser popup is open.
   const [searchIcon, setSearchIcon] = useState<IconRef | null>(null)
   const [searchIconPicker, setSearchIconPicker] = useState<DOMRect | null>(null)
   // Query-token problems (unknown `has:` value, empty `tag:`) shown in the
-  // overlay so a typo isn't silently "no matches" (ADR 0096).
+  // overlay so a typo isn't silently "no matches".
   const searchQueryProblems = useMemo(() => parseSearchQuery(searchQuery).problems, [searchQuery])
   // Linked diagrams that couldn't be read during the last deep search — shown
-  // in the overlay so a broken link is never silently "no match" (ADR 0097).
+  // in the overlay so a broken link is never silently "no match".
   const [searchUnreadable, setSearchUnreadable] = useState<string[]>([])
-  // "Isolate" (ADR 0063) — search-driven only: a separate explicit toggle next to Search, not folded
+  // "Isolate" — search-driven only: a separate explicit toggle next to Search, not folded
   // into
   // running a search itself, so turning it on/off doesn't require
   // re-searching. Always cleared alongside search results (see
@@ -119,7 +119,7 @@ export function useSearch(
     setSearchRun(true)
   }, [])
 
-  // Every element that satisfies the criteria (ADR 0096, 0097): free text over id/label/tags and
+  // Every element that satisfies the criteria: free text over id/label/tags and
   // the node's note, an exact icon, has: facets, all ANDed. A note is read from its unsaved
   // in-memory copy when one is open, else from disk. With Deep search on, a node that links to
   // another diagram also matches when anything in that linked subtree does, so the match lands on
@@ -192,7 +192,7 @@ export function useSearch(
     [nodes, edges]
   )
 
-  // Shared by both trigger buttons (ADR 0063 split Search and
+  // Shared by both trigger buttons (the app splits Search and
   // Isolate into two independent actions over the same underlying match
   // computation — only what happens *after* matching differs). Returns the
   // match order, empty when no criterion is set.
@@ -211,7 +211,7 @@ export function useSearch(
     if (order.length > 0) focusSearchMatch(order[0])
   }, [computeAndSetMatches, focusSearchMatch])
 
-  // Isolate's own viewport action (ADR 0063) — frames every
+  // Isolate's own viewport action — frames every
   // match at once rather than jumping to one, the whole point of the
   // "scope the view down to a working set" framing. rfInstance.fitView
   // already computes the union bounding box for however many node ids
@@ -264,13 +264,13 @@ export function useSearch(
     // Isolate has no meaning without a live match set — see its own state
     // comment above.
     setIsolateActive(false)
-    // Any query change or close drops icon mode too (ADR 0072) — the icon
+    // Any query change or close drops icon mode too — the icon
     // and free-text searches never coexist.
     setSearchIcon(null)
     setSearchUnreadable([])
   }, [])
 
-  // Isolate (ADR 0063) is its own trigger, available from the start and not gated on Search having
+  // Isolate is its own trigger, available from the start and not gated on Search having
   // run. When off, it runs the same matching Search does against the typed query and frames every
   // match at once (fitAllMatches) instead of jumping to one. When already on, a second click turns
   // it off and leaves the match set (and Search's next/prev over it) alone: Isolate is a dimming
@@ -301,14 +301,14 @@ export function useSearch(
   }, [clearSearchResults])
 
   // Shared by the Ctrl+F keydown handler and the command palette's "Open or
-  // close search" row (ADR 0100) — one place for the toggle logic instead of
+  // close search" row — one place for the toggle logic instead of
   // two copies drifting.
   const toggleSearchOverlay = useCallback(() => {
     if (searchOverlayOpen) closeSearchOverlay()
     else setSearchOverlayOpen(true)
   }, [searchOverlayOpen, closeSearchOverlay])
 
-  // Auto-run on pick (ADR 0072) — same as IconPicker's own pick-and-close
+  // Auto-run on pick — same as IconPicker's own pick-and-close
   // flow: choosing an icon replaces whatever's in the text box, closes the
   // popup, and immediately runs the search + frames the first hit.
   const pickSearchIcon = useCallback(

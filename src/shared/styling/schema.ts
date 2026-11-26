@@ -1,11 +1,11 @@
-// Style schema — see ADR 0014. One `style` bag per node, one per edge;
+// Style schema. One `style` bag per node, one per edge;
 // absent means "current hardcoded look," same as every other optional
 // field. `MarkerKind`/`LineStyleKind` are deliberately shape-described
-// ("arrowOpen", "crowsFootMany"), not notation-named — see ADR 0014's Notes
-// for why the naming-system question is deliberately kept out of the schema.
+// ("arrowOpen", "crowsFootMany"), not notation-named (the naming-system
+// question is deliberately kept out of the schema).
 //
 // `NodeStyle` and `EdgeStyle` are built from the same small parts, side by side: text, fill, stroke
-// and line ends (ADR 0170). No part is the parent of another, and the JSON stays flat.
+// and line ends. No part is the parent of another, and the JSON stays flat.
 
 // How the text of an element or label is drawn.
 export interface TextStyle {
@@ -13,7 +13,7 @@ export interface TextStyle {
   fontColor?: string
   fontWeight?: 'normal' | 'bold'
   // Raw CSS font-family value — same "store the render value directly"
-  // approach as `fill`/`stroke`, not a semantic enum. ADR 0014's original
+  // approach as `fill`/`stroke`, not a semantic enum. The original
   // pass omitted a font-family field entirely; added after-the-fact to
   // close that gap. The property panel currently only offers generic CSS
   // families (sans-serif/serif/monospace/cursive) since a specific named
@@ -54,7 +54,7 @@ export interface LineEndsStyle {
   endMarker?: MarkerKind
 }
 
-// 'lineStyle', 'startMarker' and 'endMarker' are for 'line' nodes only (see ADR 0050): the same
+// 'lineStyle', 'startMarker' and 'endMarker' are for 'line' nodes only: the same
 // fields and vocabulary as EdgeStyle's, added here rather than making DiagramNode.style a union,
 // same precedent as LegendEntry's own 'line' kind.
 export type NodeStyle = TextStyle &
@@ -79,7 +79,7 @@ export type MarkerKind =
   | 'crowsFootZeroOrOne'
   | 'crowsFootZeroOrMany'
 
-// How an edge moves, to mark something live (ADR 0141). Absent means none, the
+// How an edge moves, to mark something live. Absent means none, the
 // only look before this field existed. 'flow': the line's dashes travel from the
 // source end towards the target end. 'pulse': a dot travels the same way along it.
 export type EdgeAnimation = 'flow' | 'pulse'
@@ -98,13 +98,13 @@ export type EdgeStyle = TextStyle &
     // Absent or 0 means one pulse at a time; a negative value is read as 0.
     pulseDistance?: number
     // The length of a dash and of the gap after it, in pixels, for a dashed, dotted or flowing line;
-    // absent means what the line style draws (ADR 0141).
+    // absent means what the line style draws.
     dashLength?: number
     dashGap?: number
     // 0-1 fraction along the rendered path, same convention as
     // ConnectionPoint's `offset` — stays meaningful if the edge's endpoints
     // move, unlike a fixed pixel offset. Absent means 0.5 (today's only
-    // behavior, the path midpoint) — see ADR 0045.
+    // behavior, the path midpoint).
     labelPosition?: number
     // A portal: the edge is drawn broken between these two fractions (0-1) of its path's length,
     // with a mark and a number at each end of the gap. Both are needed, start before end; without
@@ -113,9 +113,9 @@ export type EdgeStyle = TextStyle &
     portalStart?: number
     portalEnd?: number
     portalNumber?: number
-    // How the path is routed between the two endpoints — see ADR 0057.
+    // How the path is routed between the two endpoints.
     // 'straight'/'step'/'smoothstep' are React Flow's own built-in path
-    // entities; 'catmullRom' reuses the freeform-line curve math (ADR 0050,
+    // entities; 'catmullRom' reuses the freeform-line curve math (see
     // bendablePath.ts) with DiagramEdge.points as manual bend
     // points. Absent means today's only behavior, a plain bezier
     // (React Flow's default, plus the edgeStraightSegmentLength lead-in/out

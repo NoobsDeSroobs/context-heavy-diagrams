@@ -8,8 +8,8 @@ import {
 } from '@shared/preferences/preferences'
 import { parseInstallOptions } from '@shared/ai/installOptions'
 
-// Real per-OS preferences file (see ADR 0053) — replaces the renderer's
-// former localStorage-only storage (ADR 0032) with a file under this OS's
+// Real per-OS preferences file — replaces the renderer's
+// former localStorage-only storage with a file under this OS's
 // own conventional per-user app-data location, resolved automatically by
 // Electron's own app.getPath('userData'). The on-disk name stays
 // `settings.json` despite the "Settings" -> "Preferences" rename — it's what existing installs already have, and renaming it would
@@ -27,14 +27,14 @@ export async function readPreferences(): Promise<AppPreferences | null> {
     const raw = await readFile(preferencesFile(), 'utf-8')
     // Normalize, not a bare parse — fills in defaults for fields an older
     // stored blob predates (same "absent means default" reasoning as the
-    // .chd format, ADR 0029) and runs the stylePalette migration (ADR 0068).
+    // chd format, ADR 0029) and runs the stylePalette migration.
     return normalizePreferences(JSON.parse(raw) as Partial<AppPreferences>)
   } catch {
     return null
   }
 }
 
-// First-run defaults chosen in the Windows installer (ADR 0108): the installer
+// First-run defaults chosen in the Windows installer: the installer
 // writes install-options.json next to the executable, and this turns it into
 // the initial settings file. Strictly first-run — if a settings file already
 // exists (an upgrade, a reinstall, a user who has since changed Preferences)

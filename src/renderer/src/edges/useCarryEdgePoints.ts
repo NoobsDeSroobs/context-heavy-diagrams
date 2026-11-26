@@ -20,7 +20,7 @@ export interface CarryEdgePoints {
 }
 
 // Moving elements carries the manual points of an edge whose two ends move by the same amount
-// (ADR 0189). It watches the nodes rather than the gestures, so a drag, a container drag, a nudge,
+//It watches the nodes rather than the gestures, so a drag, a container drag, a nudge,
 // the alignment panel and a typed position all count. A render that changes the edges too (undo,
 // redo, opening a file, pasting) is not a move, and its points are left as they were saved.
 export function useCarryEdgePoints(

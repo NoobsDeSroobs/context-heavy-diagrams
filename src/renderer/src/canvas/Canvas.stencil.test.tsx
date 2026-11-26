@@ -49,7 +49,7 @@ const saved = {
   remaining: { hub: false, nodeIds: [] }
 }
 
-describe('stencils on the canvas (ADR 0180)', () => {
+describe('stencils on the canvas', () => {
   it('draws each kind with its own shape, and a mark where the kind has one', async () => {
     const { container } = renderCanvas(flow())
     await screen.findByText('Do the work')

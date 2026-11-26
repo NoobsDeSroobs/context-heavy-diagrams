@@ -1,4 +1,4 @@
-// The legend line that new edges are drawn with (ADR 0196): one entry of kind `line` may carry
+// The legend line that new edges are drawn with: one entry of kind `line` may carry
 // `forNewEdges`. Pure, shared by the editor and the assistant tools.
 import type { EdgeStyle } from '../styling/schema.ts'
 import { lineMotionOf } from '../styling/edgeAnimation.ts'
@@ -16,7 +16,7 @@ export function newEdgeLineEntry(
 // entry says; an entry with none leaves the field out, so the built-in or the personal default fills
 // it in. Opacity is not in an entry and so is never set from it. `stroke` is the colour to store on
 // the edge: the caller decides it, since an edge's stored colour is flipped for the light theme and a
-// legend colour is not (ADR 0034, ADR 0123).
+// legend colour is not.
 export function edgeStyleFromLegendLine(entry: LegendEntry, stroke?: string): EdgeStyle {
   return {
     ...(stroke !== undefined ? { stroke } : {}),
@@ -30,7 +30,7 @@ export function edgeStyleFromLegendLine(entry: LegendEntry, stroke?: string): Ed
 }
 
 // A look chosen for new edges that says nothing about the routing type (a preset, or a legend line
-// with none) keeps the routing of the personal default; one that sets it wins (ADR 0196).
+// with none) keeps the routing of the personal default; one that sets it wins.
 export function withRoutingOf(look: EdgeStyle, personal: EdgeStyle): EdgeStyle {
   const { routingStyle } = personal
   return look.routingStyle === undefined && routingStyle !== undefined

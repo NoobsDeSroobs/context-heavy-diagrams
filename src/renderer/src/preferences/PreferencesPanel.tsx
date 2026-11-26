@@ -23,7 +23,7 @@ const ROUTING_STYLE_OPTIONS: {
   { value: 'catmullRom', label: 'Catmull-Rom (gravity)' }
 ]
 
-// Whether edges set to Flow or Pulse move (ADR 0141). 'system' follows the operating system's
+// Whether edges set to Flow or Pulse move. 'system' follows the operating system's
 // reduced-motion setting (Windows "Animation effects", which is also off in a Remote Desktop
 // session); the other two are the person's own choice and win over it.
 const ANIMATE_EDGES_OPTIONS: { value: EdgeAnimationMode; label: string }[] = [
@@ -125,7 +125,7 @@ function ZoomLimitField({
   )
 }
 
-// The Ctrl-hover card's width and greatest height on one row (ADR 0156), laid out like the zoom
+// The Ctrl-hover card's width and greatest height on one row, laid out like the zoom
 // limits. The stored value is kept inside its range as the number is typed; the box keeps what was
 // typed until it loses focus.
 function HoverCardSizeField({
@@ -185,7 +185,7 @@ function HoverCardSizeField({
   )
 }
 
-// Fractional 0-1 opacity (ADR 0063). NumberField's draft has no `step`, for the same reason
+// Fractional 0-1 opacity. NumberField's draft has no `step`, for the same reason
 // ZoomLimitField above has none. Same two-class combination as ZoomLimitField:
 // .property-number-field supplies the theme-aware background, border and colour (its own width:
 // 100% is what this field doesn't want), and .preferences-zoom-limit-input, layered after it,
@@ -233,10 +233,10 @@ function IsolateOpacityField({
   )
 }
 
-// Same fixed right-side dock shell as NotesPanel/DiagnosticsPanel (ADR 0013). Global, app-wide
+// Same fixed right-side dock shell as NotesPanel/DiagnosticsPanel. Global, app-wide
 // preferences (the per-installation, every-diagram tier; see the glossary), not diagram content:
 // nothing here goes through pushSnapshot/undo, and a different diagram loading doesn't reset it.
-// See ADR 0032 for why this panel exists and ADR 0052's addendum for the "Settings" ->
+// ADR 0052's addendum covers the "Settings" ->
 // "Preferences" rename.
 //
 // Reuses NumberField from the property panel's field primitives although nothing here is a style
@@ -248,11 +248,11 @@ export default function PreferencesPanel({
   onChange,
   onClose
 }: PreferencesPanelProps): React.JSX.Element {
-  // Same rAF-coalescing as ColorField (ui/fields.tsx) — see ADR 0056. This
+  // Same rAF-coalescing as ColorField (ui/fields.tsx). This
   // input doesn't go through that shared component (see the comment below),
   // so it needs its own throttle rather than inheriting one.
   const throttledOnChange = useRafThrottledCallback(onChange)
-  // For a diagram that sets no font of its own (ADR 0130).
+  // For a diagram that sets no font of its own.
   const defaultFontOptions = useFontOptions([preferences.defaultFontFamily], 'Built-in font')
   return (
     <div className="preferences-panel">

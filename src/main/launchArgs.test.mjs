@@ -1,5 +1,5 @@
 // Run with `npm test`. Covers the command-line parsing behind double-click to
-// open (ADR 0108); the window handling around it is exercised in the app.
+// open; the window handling around it is exercised in the app.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { resolve } from 'node:path'

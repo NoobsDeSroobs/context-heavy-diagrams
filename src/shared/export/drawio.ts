@@ -333,7 +333,7 @@ export function renderDiagramDrawio(
     if (matches.length >= 2) lost.chips += 1
     const type = styledNodeType(node.type)
     // A stencil is an ellipse, a rhombus or a rectangle with its label below the small ones; the
-    // mark or band on it has no counterpart here (ADR 0180).
+    // mark or band on it has no counterpart here.
     const sk = kind === 'stencil' ? stencilKind(node.data.kind) : undefined
     if ((sk && stencilMarkOf(sk, node.data)) || sk?.shape === 'arrow') lost.stencilMarks += 1
     const styleSource = sk ? stencilStyle(node.data.kind, node.style) : node.style
@@ -350,12 +350,12 @@ export function renderDiagramDrawio(
     const rotation = kind === 'text' ? (node.rotation ?? 0) : 0
     const flat = kind === 'text' || (sk !== undefined && sk.shape !== 'arrow')
     const labelOutside = sk !== undefined && stencilLabelOutside(node.data.kind)
-    // Where a small shape's label sits (ADR 0183); a free one is exported below, as draw.io has no
+    // Where a small shape's label sits; a free one is exported below, as draw.io has no
     // label with a leader line.
     const placed = labelPositionOf(node.data.labelPosition)
     if (labelOutside && placed === 'free') lost.freeLabels += 1
     const position = placed === 'free' ? 'below' : placed
-    // The side a container's label is on (ADR 0184). Draw.io turns a label a quarter turn left only, so
+    // The side a container's label is on. Draw.io turns a label a quarter turn left only, so
     // one on the right is drawn reading the other way.
     const side = kind === 'container' ? containerLabelSideOf(node.data.labelPosition) : undefined
     if (side === 'right') lost.rightLabels += 1

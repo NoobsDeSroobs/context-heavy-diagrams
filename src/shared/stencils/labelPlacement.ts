@@ -1,4 +1,4 @@
-// Where the label of a small shape (a start, an end, an event, a choice) sits (ADR 0183). The canvas
+// Where the label of a small shape (a start, an end, an event, a choice) sits. The canvas
 // and the exports place it from the same rules, so a diagram reads the same everywhere.
 
 export const LABEL_POSITIONS = ['below', 'above', 'left', 'right', 'free'] as const

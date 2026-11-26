@@ -15,7 +15,7 @@ function normalizePath(path: string): string {
 }
 
 // A diagram's own children/assets/notes colocate in a same-named
-// sibling folder (ADR 0005/0006) — e.g. main.chd's children live in
+// sibling folder (ADR 0005) — e.g. main.chd's children live in
 // main/, not directly next to main.chd itself. Mirrors
 // linkedDiagramDirFor in links.ts.
 function colocationDirFor(diagramPath: string): string {
@@ -31,7 +31,7 @@ function colocationDirFor(diagramPath: string): string {
 // file this diagram doesn't own — so the walk never crosses outside the
 // root diagram's own colocation folder. A same-level sibling .chd is
 // therefore treated as external too, not "under" the root, even though
-// it's technically inside the same containing directory. See ADR 0024.
+// it's technically inside the same containing directory.
 function isUnderRoot(rootColocationDir: string, candidatePath: string): boolean {
   const rel = relative(rootColocationDir, candidatePath)
   return rel === '' || (!rel.startsWith('..') && !isAbsolute(rel))
@@ -56,7 +56,7 @@ function childRelativePaths(diagram: DiagramFile): string[] {
 
 // Parent wins on a key collision; a child's own extra required tags (keys
 // the parent doesn't have) survive — a sub-diagram's genuinely
-// diagram-specific fields aren't destroyed by a copy. See ADR 0024.
+// diagram-specific fields aren't destroyed by a copy.
 function mergeRequiredTags(
   parentTags: RequiredTagDefinition[],
   childTags: RequiredTagDefinition[] | undefined

@@ -27,7 +27,7 @@ export interface DiagnosticsState {
 }
 
 // The data behind the Diagnostics panel: required-tag sync notices, load-time hierarchy repairs
-// and files that no longer resolve (ADR 0084). Session-only. Whether the panel is open is one of
+// and files that no longer resolve. Session-only. Whether the panel is open is one of
 // the dock panels and lives with them.
 export function useDiagnostics({
   setNodes,
@@ -46,7 +46,7 @@ export function useDiagnostics({
   // wipe it; combined for display in `displayedDiagnostics`.
   const [hierarchyLoadNotes, setHierarchyLoadNotes] = useState<string[]>([])
   // Elements referencing a file that no longer resolves: a linked diagram, custom icon, reference
-  // image or note `.md` (ADR 0084). Refreshed by scanMissingFiles on load and by the Diagnostics
+  // image or note `.md`. Refreshed by scanMissingFiles on load and by the Diagnostics
   // "Recheck" button; it is an async fs check, so it can't be derived during render. Session-only.
   //
   // "Remove" in the panel doesn't mutate anything: it moves the entry into `stagedFileRemovals`,
@@ -72,7 +72,7 @@ export function useDiagnostics({
     [setNodes, setEdges]
   )
 
-  // Missing-file scan for the Diagnostics panel (ADR 0084): collect every
+  // Missing-file scan for the Diagnostics panel: collect every
   // on-disk resource a diagram element references — linked diagrams, custom
   // icons, reference images, notes — ask main which don't resolve,
   // and keep those. Takes the node/legend lists + diagram path explicitly
@@ -115,7 +115,7 @@ export function useDiagnostics({
     []
   )
 
-  // Diagnostics missing-file row actions (ADR 0084). None of these touch a
+  // Diagnostics missing-file row actions. None of these touch a
   // file on disk. A removal is *staged* — moved into stagedFileRemovals —
   // and only applied (to nodes/legend) when the diagram is saved, in
   // persistDiagram. "Dismiss" hides a row for the session. "Relink" is an

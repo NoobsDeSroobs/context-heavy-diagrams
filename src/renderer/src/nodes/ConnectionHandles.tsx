@@ -44,7 +44,7 @@ function SlidingHandle({
 // where nothing is stored. (Special-casing four always-present, unmovable defaults here, with no
 // style override or context menu, was the root cause of two real bugs.)
 // The target an edge is dropped on to attach to the element by itself, in the middle of it, shown
-// only while a connection is being dragged (ADR 0178).
+// only while a connection is being dragged.
 function AutoTarget(): React.JSX.Element {
   const connecting = useConnection((c) => c.inProgress)
   return (

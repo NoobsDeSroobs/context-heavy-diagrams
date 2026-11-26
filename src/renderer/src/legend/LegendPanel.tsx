@@ -26,12 +26,12 @@ import StylePicker from '../styling/StylePicker'
 interface LegendPanelProps {
   diagramPath: string | null
   legend: LegendEntry[]
-  // The active edge direction set's legend row (ADR 0081), shown pinned
+  // The active edge direction set's legend row, shown pinned
   // above the authored entries. Read-only here — its label is the set name
   // and its swatch is edited in the Edge direction sets section. `null`
   // when the diagram has no direction set.
   directionSetRow: DirectionSetLegendRow | null
-  // The kinds of step and event the diagram uses, and each way an end finishes (ADR 0180, 0193),
+  // The kinds of step and event the diagram uses, and each way an end finishes (ADR 0193),
   // shown as rows of their own that nobody maintains. `showStencilKinds` is for this session only and
   // is not saved with the diagram.
   stencilRows: StencilLegendRow[]
@@ -41,7 +41,7 @@ interface LegendPanelProps {
   onAdd: (entry: Omit<LegendEntry, 'id'>) => void
   onUpdate: (id: string, patch: Partial<Omit<LegendEntry, 'id'>>) => void
   onRemove: (id: string) => void
-  // "Line" copies an edge from the canvas (ADR 0123): the canvas calls `onPicked` with the clicked
+  // "Line" copies an edge from the canvas: the canvas calls `onPicked` with the clicked
   // edge's look, or null if the pick was cancelled there (Esc). `onCancelLinePick` is for this
   // panel ending the wait itself, including when it unmounts.
   onRequestLinePick: (onPicked: (look: LegendLineLook | null) => void) => void
@@ -52,7 +52,7 @@ interface LegendPanelProps {
 const PANEL_WIDTH = 300
 const DEFAULT_COLOR = '#e6194b'
 
-// The routing a line can carry (ADR 0196); none means the personal default routing.
+// The routing a line can carry; none means the personal default routing.
 const ROUTING_CHOICES: { value: NonNullable<LegendEntry['routingStyle']> | ''; label: string }[] = [
   { value: '', label: 'Personal default' },
   { value: 'straight', label: 'Straight' },
@@ -98,7 +98,7 @@ function LegendSwatch({
     )
   }
   // The same classes and variables as an animated edge (edges.css), so the arrow moves exactly as
-  // the edge it stands for would, and stands still when edge animation is off (ADR 0141).
+  // the edge it stands for would, and stands still when edge animation is off.
   const animation = knownAnimation(entry.animation)
   const speed = knownSpeed(entry.animationSpeed)
   const direction = knownDirection(entry.animationDirection) === 'reverse' ? 'reverse' : 'normal'
@@ -125,7 +125,7 @@ function LegendSwatch({
     >
       <line
         className={flow ? 'edge-flow' : undefined}
-        // The line stops short of the tip of a pointed head (ADR 0197).
+        // The line stops short of the tip of a pointed head.
         x1={3 + markerTrim(entry.startMarker, strokeWidth)}
         y1="8"
         x2={43 - markerTrim(entry.endMarker, strokeWidth)}

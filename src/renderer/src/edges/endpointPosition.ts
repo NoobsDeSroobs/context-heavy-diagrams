@@ -20,7 +20,7 @@ const SIDE_OUTWARD_DIRECTION: Record<ConnectionPointSide, { x: number; y: number
 
 // An edge endpoint's resolved absolute position and outward direction —
 // used only by "Add point here" below to find the nearest segment on the
-// same curve the edge actually renders with (ADR 0057). React Flow
+// same curve the edge actually renders with. React Flow
 // resolves this internally for rendering, but doesn't expose it as a
 // plain computable function, so it's derived directly from the same
 // side+offset data ConnectionHandles itself renders from

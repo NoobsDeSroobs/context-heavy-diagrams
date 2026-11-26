@@ -7,8 +7,8 @@ export interface LineStylePreset {
   style: Partial<EdgeStyle>
 }
 
-// Deliberately minimal, generic entries only — see ADR 0010 and ADR 0014's
-// Notes. The notation-base question (which naming system(s) a *real*
+// Deliberately minimal, generic entries only.
+// The notation-base question (which naming system(s) a *real*
 // catalog should draw from — UML? ERD/crow's-foot? BPMN? something
 // invented for this tool?) is explicitly deferred to a later, evidence-
 // informed discussion. Do NOT add UML/ERD/BPMN-named presets here without

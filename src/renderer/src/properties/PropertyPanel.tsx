@@ -39,37 +39,37 @@ interface PropertyPanelProps {
   onSetConnectionPointCount: (nodeId: string, side: ConnectionPointSide, totalCount: number) => void
   maxConnectionPointsPerSide: number
   // Copies one selected node's current style into preferences.defaultStyles
-  // for its type (ADR 0048) — only offered for entity/container/text, only
+  // for its type — only offered for entity/container/text, only
   // when exactly one node of that type is selected (a style is only
   // well-defined for a single node, not a multi-selection). Edges
-  // already have their own equivalent via the toolbar swatch (ADR 0045).
+  // already have their own equivalent via the toolbar swatch.
   onSetDefaultStyle: (type: 'entity' | 'container' | 'text', style: NodeStyle) => void
   requiredTags: RequiredTagDefinition[]
   beginContinuousEdit: () => void
   endContinuousEdit: () => void
   pushSnapshot: () => void
-  // Copy style / apply mode (ADR 0095): the panel only offers the entry point
+  // Copy style / apply mode: the panel only offers the entry point
   // and the exit; the brush itself lives in Canvas.
   styleBrushActive: boolean
   onToggleStyleBrush: () => void
-  // Changes the kind of the selected steps and events (ADR 0180).
+  // Changes the kind of the selected steps and events.
   onSetStencilKind: (nodeIds: string[], kindId: string) => void
-  // Moves the label of the selected small shapes (ADR 0183).
+  // Moves the label of the selected small shapes.
   onSetStencilLabelPosition: (nodeIds: string[], position: LabelPosition) => void
   // How the selected ends finish and how far they reach.
   onSetStencilState: (
     nodeIds: string[],
     change: { outcome?: string; reach?: string; flowPosition?: string }
   ) => void
-  // Moves the label of the selected containers to another side (ADR 0184).
+  // Moves the label of the selected containers to another side.
   onSetContainerLabelSide: (nodeIds: string[], side: ContainerLabelSide) => void
 }
 
 // Entity/container share NodeStyleFields' four groups; text gets the same
 // component minus fill/border, since a text node's "look" is font +
 // transform only (deliberately still allows a fill for consistency's sake —
-// see ADR 0014 — even though it's rare in practice). Rotation is text-only
-// (ADR 0004/0012 — entities/containers are never rotated).
+// even though it's rare in practice). Rotation is text-only
+// (ADR 0012 — entities/containers are never rotated).
 const TYPE_LABELS: Record<string, string> = {
   entity: 'Entities',
   container: 'Containers',
@@ -129,7 +129,7 @@ export default function PropertyPanel({
       : undefined
 
   // Connection points: one selected entity, container or stencil (a stencil has no metadata or
-  // references, ADR 0180, so it has no `metadataTarget`).
+  // references, so it has no `metadataTarget`).
   const connectionPointTarget: Node | undefined =
     metadataTarget?.kind === 'node'
       ? metadataTarget.node

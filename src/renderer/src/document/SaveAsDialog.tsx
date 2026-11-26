@@ -21,7 +21,7 @@ const SHOWN_REMOVED = 6
 const plural = (n: number, one: string, many: string): string => `${n} ${n === 1 ? one : many}`
 const removedWord = (ticked: boolean): string => (ticked ? '' : ' removed')
 
-// The Save As dialog (ADR 0160). Mounted once, by Canvas. The path is only ever set by the
+// The Save As dialog. Mounted once, by Canvas. The path is only ever set by the
 // operating system's save picker (Browse), which checks the folder and the extension itself; what the
 // copy would contain is planned by main for the chosen path and toggles, so what the dialog says is
 // what Save a copy then does.

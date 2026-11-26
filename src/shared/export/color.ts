@@ -3,7 +3,7 @@ import type { Theme } from '../styling/theme.ts'
 // Colour handling without a browser: the SVG export runs in plain Node (ADR 0124), where there is
 // no CSS engine to resolve a colour string or to blend an opacity into it. The canvas still lets
 // the browser parse colours (renderer/styles/themeAdaptiveColor.ts) and shares only the lightness
-// flip below, so the maths behind the theme flip (ADR 0034) exists once.
+// flip below, so the maths behind the theme flip exists once.
 
 export interface Rgba {
   r: number
@@ -302,7 +302,7 @@ function flipLightness(L: number, theme: Theme): number {
   return theme === 'dark' ? L : 1 - L
 }
 
-// The theme-adaptive lightness flip (ADR 0034) of one already-parsed colour, as #rrggbb.
+// The theme-adaptive lightness flip of one already-parsed colour, as #rrggbb.
 export function flipRgbLightness(rgb: { r: number; g: number; b: number }, theme: Theme): string {
   const { L, a, b } = rgbToOklab(rgb.r, rgb.g, rgb.b)
   return rgbToHex(oklabToRgb(flipLightness(L, theme), a, b))

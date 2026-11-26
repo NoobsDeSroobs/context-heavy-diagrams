@@ -3,7 +3,7 @@ import type { Theme } from '../styling/theme'
 import type { EdgeStyleDefaults } from '@shared/styling/styleDefaults'
 import { lineMotionOf, type LineMotion } from '../../../shared/styling/edgeAnimation.ts'
 
-// Picking a legend line from an edge on the canvas (ADR 0123). Pure so it can be unit-tested; the
+// Picking a legend line from an edge on the canvas. Pure so it can be unit-tested; the
 // theme flip and the built-in defaults are passed in, like displayColor in styleDefaults.ts.
 
 export type LegendLineLook = Pick<

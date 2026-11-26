@@ -22,7 +22,7 @@
   line-height: 1.4;
 }
 
-/* Missing-files section (ADR 0084) — a structured block above the generic
+/* Missing-files section — a structured block above the generic
    text notices, each row: a click-to-reveal owner, the error, a remove
    button. */
 .diagnostics-missing-files {

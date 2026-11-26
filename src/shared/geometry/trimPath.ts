@@ -1,5 +1,5 @@
 // Shortens an SVG path string at either end, so a line can stop short of the tip of a pointed
-// arrowhead (ADR 0197). Reads only the commands this app writes (M, L, C, Q: edgePath.ts,
+// arrowhead. Reads only the commands this app writes (M, L, C, Q: edgePath.ts,
 // bendablePath.ts, orthogonalPath.ts); a string it cannot read comes back unchanged.
 
 interface Point {

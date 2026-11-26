@@ -1,7 +1,7 @@
 import type { LineStyleKind } from './schema.ts'
 
 // The dash pattern of an edge or a legend line: what a line style draws, with the author's own
-// dash length and gap on top (ADR 0141). Pure and shared, so the canvas, the SVG export and the
+// dash length and gap on top. Pure and shared, so the canvas, the SVG export and the
 // legend draw the same pattern.
 
 export interface DashPattern {

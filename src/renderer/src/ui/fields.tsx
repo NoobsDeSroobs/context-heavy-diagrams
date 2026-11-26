@@ -130,7 +130,7 @@ export function ColorField({
   onChange: (value: string | undefined) => void
   onSessionStart: () => void
   onSessionEnd: () => void
-  // User/org palette swatches (ADR 0048) — optional, purely a
+  // User/org palette swatches — optional, purely a
   // quick-pick row; a click is a single discrete commit (session start+end
   // together), same treatment as the clear button below, not a drag
   // gesture like the native color input.
@@ -139,7 +139,7 @@ export function ColorField({
   const swatchValue = value && HEX_RE.test(value) ? value : '#808080'
   const [draft, setDraft, onDraftFocus, onDraftBlur] = useDraft(value ?? '', mixed)
   // A native color-input drag can fire dozens of onChange events per
-  // second — see ADR 0056. Coalescing to one commit per animation frame keeps
+  // second. Coalescing to one commit per animation frame keeps
   // the swatch fully live (60fps reads as continuous) without forcing a
   // state update, and everything downstream of it, on every single tick.
   const throttledOnChange = useRafThrottledCallback(onChange)

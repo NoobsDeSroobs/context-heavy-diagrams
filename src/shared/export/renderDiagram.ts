@@ -112,7 +112,7 @@ export interface SvgExportOptions {
   legend?: { items: ExportLegendItem[]; corner: LegendCorner }
   // Highlights (ADR 0025) are session state, so they are off unless named here, by highlightId.
   enabledHighlightIds?: string[]
-  // The global edgeStraightSegmentLength preference (ADR 0032).
+  // The global edgeStraightSegmentLength preference.
   edgeStraightSegmentLength: number
   // Icons by iconKey; an icon missing from here is left out.
   icons: Map<string, IconAsset>
@@ -120,7 +120,7 @@ export interface SvgExportOptions {
   fontFamily?: string
   // Written as the document <title>, for accessibility.
   title?: string
-  // A gate where an edge goes through the border of a container (ADR 0185). Off unless named here, as
+  // A gate where an edge goes through the border of a container. Off unless named here, as
   // on the canvas, where it is a session switch.
   crossings?: boolean
   // How a portal's gap is marked, as on the canvas (the person's preference); a tilde when absent.
@@ -195,7 +195,7 @@ function paintAttrs(name: 'fill' | 'stroke', paint: Paint | null): string {
   return ` ${name}="${esc(paint.color)}"${paint.opacity < 1 ? ` ${name}-opacity="${num(paint.opacity)}"` : ''}`
 }
 
-// A stencil's base shape with its mark on it (ADR 0180), drawn as vector shapes. `small` is the
+// A stencil's base shape with its mark on it, drawn as vector shapes. `small` is the
 // legend swatch: the arrow's band is narrower and the mark's line is a fixed 1.2 px.
 function stencilShape(
   kind: StencilKind,
@@ -248,7 +248,7 @@ function stencilShape(
 
 // ---- arrowheads ------------------------------------------------------------------------------
 
-// The end markers (ADR 0014) drawn as ordinary shapes placed at the end of the line, not as SVG
+// The end markers drawn as ordinary shapes placed at the end of the line, not as SVG
 // <marker> elements: editors such as Affinity Designer ignore markers or lose their orientation, and
 // the canvas's `context-stroke` is SVG 2. A shape is scaled by the stroke width and turned to the
 // line's direction, as a marker with markerUnits="strokeWidth" and orient="auto" would be.
@@ -296,7 +296,7 @@ function endAngles(d: string): { start: number; end: number } | null {
 }
 
 // The path a line is stroked along: `d` stopped short of the tip of a pointed head, which is drawn
-// at the end of `d` itself (ADR 0197).
+// at the end of `d` itself.
 function strokedPath(d: string, look: LineLook): string {
   return trimPath(
     d,
@@ -513,7 +513,7 @@ function drawLegend(
     } else {
       const paint = plainColor(swatch.color)
       const dash = dasharrayOf(dashPattern(swatch))
-      // At most 3 thick, as in the legend panel; the line stops short of a pointed head (ADR 0197).
+      // At most 3 thick, as in the legend panel; the line stops short of a pointed head.
       const width = Math.min(3, Math.max(1, swatch.strokeWidth ?? 2))
       const x1 = swatchX + 2 + markerTrim(swatch.startMarker, width)
       const x2 = swatchX + 26 - markerTrim(swatch.endMarker, width)
@@ -670,7 +670,7 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
 
     const lineHeight = labelLook.font.size * LINE_HEIGHT_EM
     if (kind === 'stencil' && stencilLabelOutside(node.data.kind)) {
-      // The small shapes carry their label outside (ADR 0180): where the node says (ADR 0183), as
+      // The small shapes carry their label outside: where the node says, as
       // wide as it needs. A free label is tied to its shape by a dotted line.
       const position = labelPositionOf(node.data.labelPosition)
       const beside = position === 'left' || position === 'right'
@@ -703,7 +703,7 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
         obstacles.push({ x: box.x, y: box.y, width: blockWidth, height: blockHeight })
       }
     } else if (kind === 'container') {
-      // The label sits on the side the container says, turned to face it (ADR 0184): the top of the
+      // The label sits on the side the container says, turned to face it: the top of the
       // text points at the side, except at the bottom, where it stays upright.
       const side = containerLabelSideOf(node.data.labelPosition)
       const shape = { x, y, width, height }
@@ -813,7 +813,7 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
   }
 
   // -- edges
-  // The gates where an edge goes through the border of a container (ADR 0185), drawn on the edge.
+  // The gates where an edge goes through the border of a container, drawn on the edge.
   const gatesFor = (sourceId: string, targetId: string, path: Point[]): string => {
     const crossing = edgeCrossing(sourceId, targetId, (id) => nodes.get(id)?.node.parentId)
     if (!crossing) return ''

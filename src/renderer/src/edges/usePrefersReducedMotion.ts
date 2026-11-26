@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react'
 
-// Whether the operating system asks for reduced motion (ADR 0141). Windows reports it when
+// Whether the operating system asks for reduced motion. Windows reports it when
 // "Animation effects" is off, and also in a Remote Desktop session and in many virtual machines, so
 // it is only the default for animated edges: the person's own choice in Preferences or the View menu
 // wins over it. Follows the setting live.

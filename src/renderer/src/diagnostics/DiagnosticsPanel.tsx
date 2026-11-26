@@ -9,7 +9,7 @@ import type { IconPackProblems } from './iconPackProblems'
 
 // One diagram element (node, or a legend entry) that references a file on
 // disk which no longer resolves — a linked diagram, a custom icon, a
-// reference image, or a note `.md`. See ADR 0084. Computed in Canvas
+// reference image, or a note `.md`. Computed in Canvas
 // (an async fs check via IPC), passed in here.
 export interface MissingFileEntry {
   // Stable key for React + the action dispatch back in Canvas.
@@ -61,7 +61,7 @@ interface DiagnosticsPanelProps {
   // The architecture check (ADR 0131): the chosen metamodel and what it found in the open diagram.
   conformance: ConformanceState
   conformanceResult: CheckResult | null
-  // Edge labels hidden behind the elements they join (ADR 0146), and the action to find one.
+  // Edge labels hidden behind the elements they join, and the action to find one.
   layoutEntries: LayoutEntry[]
   onRevealEdge: (entry: LayoutEntry) => void
   // Installed icons this machine cannot draw (ADR 0188), and the way to the icon pack manager.
@@ -85,10 +85,10 @@ function OwnerLabel({ mf }: { mf: MissingFileEntry }): React.JSX.Element {
   )
 }
 
-// Fixed right-side dock, same shell and toggle model as NotesPanel/RequiredTagsPanel (ADR 0013).
+// Fixed right-side dock, same shell and toggle model as NotesPanel/RequiredTagsPanel.
 // `entries` is a plain text list (first used for required-tags backfill notices, ADR 0022) so any
 // unrelated diagram-health check can reuse it without a shape change (the legend-empty advisory
-// does). The "Missing files" section (ADR 0084) is the first check needing per-row controls, so it
+// does). The "Missing files" section is the first check needing per-row controls, so it
 // has its own typed block above the list.
 //
 // Nothing here touches files on disk: "Remove" only stages the reference, and it is written out

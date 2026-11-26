@@ -16,7 +16,7 @@ export const HIGHLIGHT_BORDER_WIDTH = 3
 // the user recolors deliberately.
 export const DEFAULT_HIGHLIGHT_COLOR = '#ffffff'
 
-// A highlight with this colour marks nothing (ADR 0163): it is the way to leave an element out,
+// A highlight with this colour marks nothing: it is the way to leave an element out,
 // typically the value `N/A`, so a container does not take the colour of its group.
 export const TRANSPARENT_HIGHLIGHT_COLOR = 'transparent'
 

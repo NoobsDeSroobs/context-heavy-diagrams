@@ -20,11 +20,11 @@ export interface DiagramNode {
   // 'entity' (resizable, connectable, never rotated) | 'text' (resizable,
   // rotatable, never connectable) | 'container' (resizable, connectable,
   // never rotated, can parent other nodes) | 'line' (a freeform curved
-  // line, see ADR 0050 — position/size are the bounding box of data.points,
-  // never connectable, never rotated) — see ADR 0004, ADR 0012. Kept as a
+  // line — position/size are the bounding box of data.points,
+  // never connectable, never rotated) — see ADR 0012. Kept as a
   // plain string, not a union, since more types may arrive later.
   //
-  // 'stencil' (ADR 0180) is an event or a verb of a flow (a step, a decision, a start): resizable,
+  // 'stencil' is an event or a verb of a flow (a step, a decision, a start): resizable,
   // connectable, never rotated, can sit in a container but not parent one. Its `data.kind` names
   // the kind from the app's closed list; it has no notes, tags, metadata, references, security
   // data or icons of its own, and one link to another diagram.
@@ -32,7 +32,7 @@ export interface DiagramNode {
   position: { x: number; y: number }
   size?: { width: number; height: number }
   rotation?: number
-  // Stacking order — see ADR 0035. Higher renders on top. No
+  // Stacking order. Higher renders on top. No
   // type-based special-casing anywhere that reads this: the "containers
   // render behind entities" look most diagrams start with is just a
   // consequence of the backfilled starting values (containers seeded low,
@@ -63,7 +63,7 @@ export interface DiagramNode {
   data: {
     label: string
     icons?: Partial<Record<IconSlot, IconRef>>
-    // The element's note: a relative path to a Markdown file (ADR 0140). parseDiagram reads the
+    // The element's note: a relative path to a Markdown file. parseDiagram reads the
     // older name `details` as this field.
     notes?: string
     linkedDiagram?: string
@@ -83,12 +83,12 @@ export interface DiagramNode {
     // 'left', 'right' or 'free'; a free label's centre is `labelOffset` from the shape's centre.
     labelPosition?: string
     labelOffset?: { x: number; y: number }
-    // 'line' nodes only — see LinePoint/ADR 0050. Node-local coordinates
+    // 'line' nodes only — see LinePoint. Node-local coordinates
     // (relative to `position`, like a container child's own position),
     // ordered — array position is the only thing that identifies a point,
     // there is no separate id.
     points?: LinePoint[]
-    // Reference images (see ADR 0069) — 'entity'/'container' only.
+    // Reference images — 'entity'/'container' only.
     // Ordered list of relative paths (from this diagram file's own dir,
     // same convention as `notes`) to files under the sibling
     // assets/references/ folder. Pure working aid: shown only in floating
@@ -107,7 +107,7 @@ export interface DiagramNode {
   }
 }
 
-// A freeform line's own bend points (see ADR 0050) — see NodeStyle
+// A freeform line's own bend points — see NodeStyle
 // for the line's stroke/dash/marker styling, kept separate from geometry.
 export interface LinePoint {
   x: number

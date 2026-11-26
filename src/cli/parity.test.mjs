@@ -39,7 +39,7 @@ const SERVER_TOOL = {
   ask: 'inspect_diagram'
 }
 // The server's reading tools that the command line leaves to the shell it runs in: a shell has grep,
-// ls and cat, and the server has none (ADR 0149).
+// ls and cat, and the server has none.
 const SERVER_ONLY = {
   list_files: 'a shell lists files',
   search_files: 'a shell has grep',

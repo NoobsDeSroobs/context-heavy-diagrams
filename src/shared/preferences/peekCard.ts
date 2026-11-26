@@ -1,4 +1,4 @@
-// The size of the card shown while Ctrl (Cmd on a Mac) is held over an element (ADR 0093, 0156).
+// The size of the card shown while Ctrl (Cmd on a Mac) is held over an element.
 // A person sets the width and the greatest height; the card is as short as its content allows.
 
 export const PEEK_CARD_WIDTH = { default: 340, min: 240, max: 800 }

@@ -1,5 +1,5 @@
 // Multi-select resize: when several nodes are selected and one is resized,
-// the others scale by the same percentage, each in place (ADR 0098).
+// the others scale by the same percentage, each in place.
 
 export interface GroupResizeBox {
   x: number

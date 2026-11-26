@@ -1,6 +1,6 @@
 // v1 diagram file schema (docs/file-format.md) —
 // later work adds fields here (style, notes, linkedDiagram) additively,
-// not as a rewrite. `size`/`rotation` (see ADR 0004), `icons` (see ADR 0006).
+// not as a rewrite. `size`/`rotation`, `icons`.
 
 import type { EdgeDirectionSet, DiagramEdge } from '../edges/schema.ts'
 import type { IconPackNote } from '../icons/schema.ts'
@@ -20,7 +20,7 @@ export interface DiagramFile {
   savedWith?: string
   // Camera position (pan/zoom) is deliberately NOT persisted here — it isn't
   // diagram content, and saving it made every save's diff carry an unrelated
-  // viewport churn alongside real edits. See ADR 0090. A file written by an
+  // viewport churn alongside real edits. A file written by an
   // older build may still have a `viewport` key at this level; a reader just
   // ignores it.
   // Diagram-level free-form bag — always unlocked, no requiredTags concept
@@ -36,7 +36,7 @@ export interface DiagramFile {
   // built-in four."
   gravityPresets?: GravityPreset[]
   // Per-diagram override for the max connection points allowed on one
-  // side of a Entity/Container (see ADR 0067; ADR 0052's Diagram override ->
+  // side of a Entity/Container (ADR 0052's Diagram override ->
   // User default -> Built-in default pattern) — absent means fall back to
   // whoever opens this file's own Settings value (AppPreferences.
   // maxConnectionPointsPerSide). A real constraint on what the diagram
@@ -46,7 +46,7 @@ export interface DiagramFile {
   // *adding* more points, same "never silently destroy data" convention
   // as the rest of this format.
   maxConnectionPointsPerSide?: number
-  // The font every label in the diagram is drawn in unless the element sets its own (ADR 0130).
+  // The font every label in the diagram is drawn in unless the element sets its own.
   // A raw CSS font-family value, like NodeStyle.fontFamily. Absent means the opening app's own
   // personal default, then the built-in font.
   fontFamily?: string
@@ -55,7 +55,7 @@ export interface DiagramFile {
   // icons present on each save, so a reader may leave it out.
   iconPacks?: IconPackNote[]
   // Named readings of the diagram's edges that differ only in arrow
-  // direction — see ADR 0081 and EdgeDirectionSet above. Absent/empty means
+  // direction — see EdgeDirectionSet above. Absent/empty means
   // the feature is unused. A single set names the current reading, adds a
   // legend row, and seeds the style of edges drawn while it is active;
   // per-edge `directionSets` records and the base-orientation rule only

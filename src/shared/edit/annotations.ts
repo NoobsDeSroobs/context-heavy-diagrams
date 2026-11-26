@@ -35,7 +35,7 @@ const MAX_NOTE_CHARS = 200_000
 const isEdge = (target: Tagged): target is DiagramEdge => 'source' in target
 
 // Text and line elements carry no tags, links or notes, and a behaviour (a stencil) no tags or notes but
-// one link (ADR 0180); an entity with no type is an entity.
+// one link; an entity with no type is an entity.
 const carriesTags = (target: Tagged): boolean =>
   isEdge(target) || (target.type !== 'text' && target.type !== 'line' && target.type !== 'stencil')
 
@@ -409,7 +409,7 @@ function named(target: Tagged): string {
   return !isEdge(target) && target.type === 'stencil' ? 'behaviour' : (target.type ?? 'text')
 }
 
-// A behaviour (a stencil) takes a link but no note (ADR 0180).
+// A behaviour (a stencil) takes a link but no note.
 function linkable(model: Model, reader: Reader, note = false): DiagramNode {
   const id = reader.string('id')
   const node = model.node(id)
@@ -491,7 +491,7 @@ function removeLink(model: Model, reader: Reader): OperationResult {
   return { op: 'remove_link', element: { id: node.id }, removed: [was] }
 }
 
-// The file name of a note is the editor's own (ADR 0060, notes/notePaths.ts), made for the notes the
+// The file name of a note is the editor's own (notes/notePaths.ts), made for the notes the
 // diagram has and this one together; no operation takes a name for a note file. Another note that
 // already points at the name takes the next free number.
 function noteFileName(model: Model, node: DiagramNode, folder: string): string {

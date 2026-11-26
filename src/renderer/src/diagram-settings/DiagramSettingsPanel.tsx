@@ -21,7 +21,7 @@ interface DiagramSettingsPanelProps {
   maxConnectionPointsPerSide: number | undefined
   preferencesDefault: number
   onChangeMaxConnectionPoints: (value: number | undefined) => void
-  // --- Font (ADR 0130) ---
+  // --- Font ---
   // Raw diagram value, like the field above; the Preferences default is what undefined falls back to.
   fontFamily: string | undefined
   preferencesFontFamily: string | undefined
@@ -37,7 +37,7 @@ interface DiagramSettingsPanelProps {
   gravityPresetsUserDefault: GravityPreset[] | undefined
   onSetGravityPresetsUserDefault: (presets: GravityPreset[]) => void
   onClearGravityPresetsUserDefault: () => void
-  // --- Edge direction sets section (ADR 0081 / ADR 0083) ---
+  // --- Edge direction sets section ---
   edgeDirectionSets: EdgeDirectionSet[]
   activeEdgeDirectionSetId: string | undefined
   onSwitchEdgeDirectionSet: (id: string) => void
@@ -74,7 +74,7 @@ function useDraft(value: string): [string, (v: string) => void, () => void, () =
 // The single home for pure diagram-level state — the "Diagram settings"
 // tier (per-diagram, stored in the .chd file; see the glossary and
 // ADR 0052's addendum for the "Configuration" -> "Diagram settings"
-// rename). ADR 0067 added the first field, ADR 0071 folded the standalone
+// rename). It started with one field, then folded in the standalone
 // Required-tags and Line-bend-presets panels in here as collapsible
 // sections rather than each owning a top-level dock toggle. Deliberately
 // excludes Highlights/Legend (floating popups by design), Diagnostics/

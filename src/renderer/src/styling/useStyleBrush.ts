@@ -20,7 +20,7 @@ export interface StyleBrushState {
   onStyleBrushEdgeClick: (event: React.MouseEvent, edge: Edge) => void
 }
 
-// Copy style / "format painter" (ADR 0095). The brush is a snapshot of the
+// Copy style / "format painter". The brush is a snapshot of the
 // source's stored style taken on entry, not a live reference to the
 // selection — clicking a target changes the selection. Session-only.
 // Everything here reads the latest state through useEventCallback and the

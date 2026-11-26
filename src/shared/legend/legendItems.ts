@@ -19,7 +19,7 @@ import {
   stencilKind
 } from '../stencils/kinds.ts'
 
-// The legend row the active direction set contributes (ADR 0081): its name
+// The legend row the active direction set contributes: its name
 // drawn as an arrow, shown in the Legend panel and prepended to the image
 // exports' legend. `null` when the diagram has no direction set.
 export interface DirectionSetLegendRow {
@@ -44,7 +44,7 @@ export function directionSetLegendRow(
   if (!active) return null
   return {
     label: active.name,
-    // The legend row shows the set's own default edge style (ADR 0083), thickness included.
+    // The legend row shows the set's own default edge style, thickness included.
     color: active.style?.stroke ?? DEFAULT_DIRECTION_SET_LEGEND_COLOR,
     strokeWidth: active.style?.strokeWidth,
     lineStyle: active.style?.lineStyle,
@@ -67,7 +67,7 @@ export type ExportLegendSwatch =
   | { kind: 'entity'; color: string }
   | { kind: 'icon'; icon: IconRef }
   | { kind: 'highlight'; color: string }
-  // A kind of stencil the diagram uses (ADR 0180): its shape and mark, in the kind's own colour. An
+  // A kind of stencil the diagram uses: its shape and mark, in the kind's own colour. An
   // end carries the outcome and reach it is drawn with (ADR 0193).
   | { kind: 'stencil'; stencilKind: string; state?: { outcome: string; reach: string } }
 
@@ -83,7 +83,7 @@ export function stencilLegendRowKey(row: StencilLegendRow): string {
 }
 
 // The rows of the legend for the stencils a diagram uses, in the order of the built-in list, so what
-// a mark means does not have to be known (ADR 0180). A kind is one row; an end is one row for each
+// a mark means does not have to be known. A kind is one row; an end is one row for each
 // outcome and reach it is used with (ADR 0193). The rows are derived, never stored.
 export function stencilLegendRows(
   nodes: { type?: string; data: { kind?: string; outcome?: unknown; reach?: unknown } }[]
@@ -183,7 +183,7 @@ export function buildExportLegendItems(
     label: entry.label
   }))
 
-  // A transparent highlight has no swatch to show; it only leaves elements out (ADR 0163).
+  // A transparent highlight has no swatch to show; it only leaves elements out.
   const enabled = highlights.filter(
     (h) => enabledHighlightIds.has(highlightId(h)) && !isTransparentHighlight(h)
   )

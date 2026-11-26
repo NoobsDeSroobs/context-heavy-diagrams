@@ -1,4 +1,4 @@
-// Help -> Glossary (ADR 0157). The single source is docs/architecture/glossary.md: each `## ` heading
+// Help -> Glossary. The single source is docs/architecture/glossary.md: each `## ` heading
 // is a term, and the text under it up to its `### For developers` subheading is the plain
 // definition the app ships. Everything after that subheading is for people working on the code and
 // never leaves the file. No Node or DOM here, so the renderer and the tests read it the same way.

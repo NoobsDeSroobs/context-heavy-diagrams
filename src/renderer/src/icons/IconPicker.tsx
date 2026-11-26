@@ -25,7 +25,7 @@ const PICKER_WIDTH = 220
 // Deliberately minimal: pick an icon, pick a corner, done. No opacity/other
 // style params — those belong to the properties panel, same reasoning as
 // why text alignment was deferred there. The icon search box + grids are
-// the shared IconBrowser (see ADR 0072); this component adds only the
+// the shared IconBrowser; this component adds only the
 // corner selector and the assign/remove semantics around it.
 //
 // Fixed-positioned from the triggering node's on-screen rect (see

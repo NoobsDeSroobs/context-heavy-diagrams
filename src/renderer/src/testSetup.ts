@@ -1,4 +1,4 @@
-// Browser APIs the real canvas needs and jsdom does not have (ADR 0127). Loaded for every renderer test.
+// Browser APIs the real canvas needs and jsdom does not have. Loaded for every renderer test.
 class ResizeObserverStub {
   observe(): void {}
   unobserve(): void {}

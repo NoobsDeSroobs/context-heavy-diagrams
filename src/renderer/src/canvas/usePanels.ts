@@ -68,17 +68,17 @@ export function usePanels(
   useEffect(() => {
     setNoteShadows((prev) => pruneCleanShadows(prev, notesPanelNodeId))
   }, [notesPanelNodeId, setNoteShadows])
-  // Layer panel (ADR 0035) — same UtilityDock family as
+  // Layer panel — same UtilityDock family as
   // Highlights/Required tags/Diagnostics. No catalog of its own: it reads
   // straight off `nodes`' own zIndex, there's nothing separate to persist.
   const [layerPanelOpen, setLayerPanelOpen] = useState(false)
   // Which node the panel currently points at — an "entity highlight," see
   // DiagramContext's own comment on this field. Session-only, reset on load.
   const [entityHighlightNodeId, setEntityHighlightNodeId] = useState<string | null>(null)
-  // Reference images (ADR 0069). `referencesPanelOpen` is the
+  // Reference images. `referencesPanelOpen` is the
   // diagram-wide inventory View (same UtilityDock family as Layers).
   const [referencesPanelOpen, setReferencesPanelOpen] = useState(false)
-  // "Changes since last save" (ADR 0102) — v1 scope, nodes/edges
+  // "Changes since last save" — v1 scope, nodes/edges
   // only. null means "not computed yet" (opening the panel triggers the
   // async reread), distinct from an empty diff (no changes).
   const [changesPanelOpen, setChangesPanelOpen] = useState(false)
@@ -94,11 +94,11 @@ export function usePanels(
   // as switching tabs never destroys the other tab's content.
   const [persona, setPersona] = useState<'diagram' | 'matrix'>('diagram')
 
-  // The utility dock shows one surface at a time (ADR 0013): opening any panel in the family closes
+  // The utility dock shows one surface at a time: opening any panel in the family closes
   // the others, so each toggle names every sibling. The repetition is deliberate and low-risk, not
   // worth a generic exclusive-panel abstraction. Highlights and Legend are not in this family: both
   // are floating popups near the bottom-left <Controls>, independent of the dock. Required tags and
-  // line bend presets are collapsible sections of DiagramSettingsPanel (ADR 0071), so one toggle
+  // line bend presets are collapsible sections of DiagramSettingsPanel, so one toggle
   // covers all three.
   const openNotesPanel = useCallback(
     (nodeId: string) => {
@@ -116,9 +116,9 @@ export function usePanels(
       // synchronously here, not in the effect below: nothing asynchronous happens in this branch.
       // The functional-updater guard (no closure read of noteShadows) keeps this callback's
       // identity stable however often noteShadows changes (every keystroke while editing), which
-      // matters because it goes through DiagramContext's memoized value (ADR 0056).
+      // matters because it goes through DiagramContext's memoized value.
       // Reads the node off the React Flow instance, not a closed-over `nodes`, for the same
-      // stability reason (ADR 0073), as in openReferencesFor.
+      // stability reason, as in openReferencesFor.
       const node = rfInstance.getNode(nodeId)
       const existingPath = typeof node?.data?.notes === 'string' ? node.data.notes : undefined
       if (!existingPath || !currentPath) {
@@ -255,7 +255,7 @@ export function usePanels(
     })
   }, [])
 
-  // Persona switch (ADR 0079). Switching to the Security Matrix closes the
+  // Persona switch. Switching to the Security Matrix closes the
   // diagram-only utility-dock panels so a stale Layers/Diagnostics/etc.
   // surface isn't left floating over a view whose menu no longer offers to
   // open it. Preferences stays — it's global, valid in both personas.

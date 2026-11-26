@@ -26,7 +26,7 @@ function sortKeysDeep<T extends JsonValue>(value: T): T {
   return value
 }
 
-// Fixed key order for an EdgeDirectionSet's default style (ADR 0083);
+// Fixed key order for an EdgeDirectionSet's default style;
 // dropped entirely when it carries nothing. Also accepts (and up-converts)
 // the pre-ADR-0083 `legend` shape, so a file that never passed through the
 // renderer's load migration still serializes cleanly.
@@ -145,7 +145,7 @@ function orderedDiagramSecurity(
             description: l.description
           }))
         : undefined
-    // combineMethod / aggregateMethod are session-only, never serialized (ADR 0088).
+    // combineMethod / aggregateMethod are session-only, never serialized.
   }
 }
 
@@ -184,7 +184,7 @@ function sortedMetadata(
 // Optional fields left `undefined` are dropped by JSON.stringify, so nodes
 // without a size/rotation/icons set don't grow noisy keys in the saved file.
 export function serializeDiagram(diagram: DiagramFile): string {
-  // Edge direction sets (ADR 0081): the registry + active pointer are
+  // Edge direction sets: the registry + active pointer are
   // written from the first set (a single set names the current reading and
   // adds a legend row). Per-edge `directionSets` records are only written
   // at 2+ sets — with one set an edge's direction is just its own

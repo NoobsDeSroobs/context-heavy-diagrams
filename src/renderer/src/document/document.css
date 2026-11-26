@@ -1,4 +1,4 @@
-/* "Changes since last save" panel (ADR 0102) — same dock shell
+/* "Changes since last save" panel — same dock shell
    as Diagnostics, reuses .diagnostics-panel-toolbar/-title/-empty/
    -section-title directly (identical treatment), own row styling below
    since a changed element's row shape (kind badge + label + changed-field
@@ -169,7 +169,7 @@
   padding-left: 14px;
 }
 
-/* Save As dialog (SaveAsDialog.tsx, ADR 0160). */
+/* Save As dialog (SaveAsDialog.tsx). */
 .saveas-dialog {
   width: 600px;
 }

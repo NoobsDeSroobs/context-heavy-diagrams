@@ -31,7 +31,7 @@ const PANEL_WIDTH = 300
 // Same stringify-for-display convention as MetadataSection/RequiredTagsPanel
 // (small independent copy, not a shared import — this codebase's existing
 // pattern for this exact one-liner). null renders as "None" — the implicit
-// "not applicable" value every required tag carries (see ADR 0046) —
+// "not applicable" value every required tag carries —
 // rather than the raw JSON token; purely a display choice, the value
 // passed around everywhere else here stays real null.
 function stringifyValue(value: JsonValue): string {

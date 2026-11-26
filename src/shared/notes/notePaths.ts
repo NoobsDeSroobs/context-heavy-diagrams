@@ -2,7 +2,7 @@ import { firstFreeName, labelToFileStem } from '../labelFileName.ts'
 
 // Where a note belongs, derived from its element's label + id — the one definition, used by the save
 // planner (ADR 0092: derived at save, never stored) and by the assistant's set_note, so a person and
-// an assistant get the same name for the same element (ADR 0060). `<label stem>-<tail>.md` inside the
+// an assistant get the same name for the same element. `<label stem>-<tail>.md` inside the
 // diagram's sibling `<diagram name>/notes/` folder. Returned relative to the diagram file's
 // directory, '/'-separated, so it can be stored as-is in `data.notes`.
 
@@ -35,7 +35,7 @@ export interface NoteOwner {
 }
 
 // The file name of each element's note, unique among the notes of one diagram (compared ignoring case:
-// a folder moves between systems, ADR 0181). Elements get the short tail unless that makes two names
+// a folder moves between systems). Elements get the short tail unless that makes two names
 // alike, then those get a longer one. Only elements that have a note belong in `owners`.
 export function derivedNoteFileNames(owners: readonly NoteOwner[]): Map<string, string> {
   const stems = new Map(owners.map((o) => [o.id, labelToFileStem(o.label, 'untitled')]))
