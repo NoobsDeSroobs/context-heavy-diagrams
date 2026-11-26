@@ -385,7 +385,7 @@ export function createTools({ root, allowUpdate, specSources }) {
     return full === null ? null : noteOnDisk(full)
   }
 
-  // `chd diff` (ADR 0137): the same shared code, so the same result as `chd diff --json`. The
+  // `chd diff` (ADR 0132): the same shared code, so the same result as `chd diff --json`. The
   // earlier version is a second file in the folder, or the same file in git at a revision
   // (`chd diff <file> --rev`, ADR 0142).
   async function diffDiagrams({

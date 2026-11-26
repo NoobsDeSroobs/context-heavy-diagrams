@@ -9,7 +9,7 @@ import { previewTextChange } from './textPreview.ts'
 
 // 'link' is a path or file reference (orange); 'content' is what an element says or connects to
 // (yellow); 'style' is a look that carries meaning: colour, line, markers, animation, icons
-// (restyled, ADR 0153); 'layout' only moves or restyles it cosmetically (not tracked, the element
+// (restyled, ADR 0132); 'layout' only moves or restyles it cosmetically (not tracked, the element
 // stays dimmed).
 export type FieldCategory = 'link' | 'content' | 'style' | 'layout'
 

@@ -305,7 +305,7 @@ function CanvasInner(): React.JSX.Element {
   const [glossaryDialogOpen, setGlossaryDialogOpen] = useState(false)
   // Command palette.
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
-  // Which git revision to compare with (ADR 0134): the dialog that asks.
+  // Which git revision to compare with (ADR 0132): the dialog that asks.
   const [revisionDialogOpen, setRevisionDialogOpen] = useState(false)
   // Right-click on the ItemPalette Entity/Container button.
   const [bulkCreateType, setBulkCreateType] = useState<'entity' | 'container' | null>(null)
@@ -1106,7 +1106,7 @@ function CanvasInner(): React.JSX.Element {
     if (problem) showAlert(problem)
   })
 
-  // A revert asked for in a compare window of this diagram (ADR 0135): the same action, with the
+  // A revert asked for in a compare window of this diagram (ADR 0132): the same action, with the
   // earlier version that window shows.
   useEffect(
     () =>
@@ -1124,7 +1124,7 @@ function CanvasInner(): React.JSX.Element {
     [putElementBack]
   )
 
-  // Compare the file on disk with the same file at a git revision (ADR 0134). Whatever stops it
+  // Compare the file on disk with the same file at a git revision (ADR 0132). Whatever stops it
   // (no git, not a repository, an unknown revision) comes back as a sentence to show.
   const compareWithGit = useCallback(
     async (revision: string) => {
