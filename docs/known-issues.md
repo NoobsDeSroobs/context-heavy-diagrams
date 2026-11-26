@@ -888,8 +888,8 @@ Fixed by the paste rework described under "Pasting a copied child-of-a-container
 
 ## An edge with waypoints vanishes while most of it is in view
 
-**Status:** Worked around (2026-11-27)
-**Found:** 2026-11-27, on a portalled edge of `examples/life-parallel-selectors.chd`; it is not about portals
+**Status:** Worked around (2026-11-26)
+**Found:** 2026-11-26, on a portalled edge of `examples/life-parallel-selectors.chd`; it is not about portals
 
 **Symptom:** zooming in, or moving the window, makes a whole edge disappear while its middle is still on screen. It happens when the edge runs far from the straight line between its ends, vertically or horizontally, such as an edge bent through a waypoint.
 

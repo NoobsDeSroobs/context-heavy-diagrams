@@ -2,7 +2,7 @@
 
 What changed for people using the tool, one entry per minor or major release. The reasons are in [docs/decisions/](docs/decisions/); the full history is in `git log`.
 
-## 0.15.0 (unreleased)
+## 0.15.0 (2026-11-26)
 
 ### Added
 
@@ -22,6 +22,7 @@ What changed for people using the tool, one entry per minor or major release. Th
 ### Fixed
 
 - **The standard edge respects the routing type.** A legend line can now carry a routing type (straight, step, smoothstep, curved): picking a line from an edge copies it, the legend's Routing choice sets it, and new edges drawn with that line are laid out that way. A line without one, or a preset, no longer loses the routing set in the preferences ([ADR 0196](docs/decisions/0196-new-edges-follow-a-line-of-the-diagrams-legend.md)).
+- **An edge bent through waypoints no longer vanishes while part of it is in view.** The canvas draws only what is in the window, and judged an edge by the box round its two ends; an edge that dipped far outside that box, or swung past its waypoints, disappeared when its ends left the window. While such an edge reaches into the window, everything is now drawn. An edge that swings far outside its ends with no waypoints is not covered yet (see docs/known-issues.md).
 - **Edges no longer drift away from their elements when you zoom.** The gap grew with every zoom until the element left the window and came back; the connection points are now measured again once the zoom rests ([ADR 0129](docs/decisions/0129-connection-handles-keep-a-minimum-screen-size.md)).
 - **A double-click on a behaviour or an edge opens its label for writing**, empty or not. Before, a decision or a parallel shape with no label had nothing to click.
 - **Dragging an edge from an unselected shape no longer wires the selected one too.** After moving A, dragging from B onto A gave an edge from A to A as well. Only a drag that starts from a selected shape now wires the whole selection, and a shape is never wired to itself ([ADR 0059](docs/decisions/0059-multi-connection-line.md)).
