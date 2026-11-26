@@ -1,11 +1,10 @@
-# Checks every push to master and every pull request on both target platforms
-# (the project supports Windows and Linux equally). Nothing here publishes or
+# Checks every pull request on both target platforms (the project supports
+# Windows and Linux equally), and weekly. It does not run again on the merge
+# commit: the pull request has passed it already. Nothing here publishes or
 # deploys anything; no secrets are used.
 name: CI
 
 on:
-  push:
-    branches: [master]
   pull_request:
   # Weekly, so a newly published advisory against a shipped dependency shows up
   # even when nobody has pushed.

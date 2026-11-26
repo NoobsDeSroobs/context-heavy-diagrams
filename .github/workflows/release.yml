@@ -66,7 +66,7 @@ jobs:
           {
             cat notes.md
             printf '\n### Installing\n\nThe installer is not signed yet. Windows shows "Windows protected your PC": choose **More info**, then **Run anyway**. The SHA-256 of the installer is in `SHA256SUMS`.\n'
-            printf '\n### Linux and macOS\n\nA Linux AppImage and deb and a macOS DMG are attached when their builds succeed. **They have not been tested on real hardware**: CI checks that the program is built and that `chd --version` runs, and nothing more. Please report what you find. The macOS app is not notarised: open it with right-click, **Open**, or under System Settings, Privacy & Security, **Open Anyway**. Their SHA-256 are in `SHA256SUMS-linux` and `SHA256SUMS-macos`.\n'
+            printf '\n### Linux and macOS\n\nA Linux AppImage and deb and a macOS DMG are attached when their builds succeed. **The Linux files have not been tested on real hardware, and the macOS one only lightly** (installed on a Mac and a basic diagram drawn): CI checks that the program is built and that `chd --version` runs, and nothing more. Please report what you find. The macOS app is not notarised: open it with right-click, **Open**, or under System Settings, Privacy & Security, **Open Anyway**. Their SHA-256 are in `SHA256SUMS-linux` and `SHA256SUMS-macos`.\n'
             printf '\n### Source code\n\nThis installer is built from the source at %s/%s/tree/%s (GPL-3.0-or-later). The licence and the third-party notices are installed next to the program, as `LICENSE.txt` and `THIRD-PARTY-NOTICES.md`.\n' "$GITHUB_SERVER_URL" "$GH_REPO" "$TAG"
           } > release-notes.md
       - name: Publish the release
@@ -82,8 +82,8 @@ jobs:
           fi
 
   # The Linux and macOS builds are published after the Windows release exists and only add files
-  # to it, so a failure here never blocks the tested installer. They are labelled as not tested
-  # on real hardware (ADR 0166).
+  # to it, so a failure here never blocks the tested installer. Their labels say how far they have
+  # been tried on real hardware (ADR 0166).
   linux:
     name: Linux builds (not tested on real hardware)
     needs: windows
@@ -121,7 +121,7 @@ jobs:
           gh release upload "$TAG" "$appimage#Linux AppImage (not tested on real hardware)" "$deb#Linux deb package (not tested on real hardware)" SHA256SUMS-linux --clobber
 
   macos:
-    name: macOS build (not tested on real hardware)
+    name: macOS build (lightly tested on a Mac)
     needs: windows
     runs-on: macos-latest
     permissions:
@@ -153,4 +153,4 @@ jobs:
           dmg="context-heavy-diagrams-$version.dmg"
           [ -f "$dmg" ] || { echo "Expected file is missing"; ls; exit 1; }
           shasum -a 256 "$dmg" > SHA256SUMS-macos
-          gh release upload "$TAG" "$dmg#macOS DMG, Apple Silicon and Intel (not tested on real hardware)" SHA256SUMS-macos --clobber
+          gh release upload "$TAG" "$dmg#macOS DMG, Apple Silicon and Intel (lightly tested on a Mac)" SHA256SUMS-macos --clobber

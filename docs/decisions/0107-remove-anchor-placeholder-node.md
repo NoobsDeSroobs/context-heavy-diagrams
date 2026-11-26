@@ -79,7 +79,7 @@ the lock/metadata rules, CSS, and the format docs.
   starts from a clean slate and would have to be a new node type of its own.
 - The docs that describe the node types (the file-format spec, the AI
   instructions and the bundled skill) no longer list `anchor`.
-- Always attaching to the left point is a known simplification; choosing the
+- (Replaced by [0200](0200-a-drop-on-empty-canvas-makes-an-entity-with-an-automatic-end.md): the end is now automatic.) Always attaching to the left point is a known simplification; choosing the
   side that faces the source node would be a small polish.
 - No in-place "convert Entity to Container" action exists yet. If dropping an
   edge and wanting a container turns out to matter, that is a small separate

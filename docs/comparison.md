@@ -21,20 +21,20 @@ I got an AI to check statements made about other tools on 2026-10-20 against eac
 
 **Where they are better**
 - **Reach and polish.** Large shape and icon libraries, hundreds or thousands of templates, standard notations (BPMN, UML, ERD) and mature import and export, including from each other.
-- **Collaboration.** Visio (on the web and in Teams), Miro and FigJam are built around several people working on the same board or diagram at once.
-- **Data and automation.** Lucidchart and Visio link shapes to spreadsheets and databases; Lucidchart builds diagrams from imports; yEd and Lucidchart lay diagrams out automatically.
-- **Documentation integration.** Confluence, Jira, Microsoft 365 and Google Workspace integrations, and SVG or PDF export, so a diagram can sit inside a document.
+- **Live collaboration.** Visio (on the web and in Teams), Miro and FigJam are built around several people working on the same board or diagram at once.
+- **Data and automation.** Lucidchart and Visio link shapes to spreadsheets and databases; yEd and Lucidchart lay diagrams out automatically.
+- **Documentation integration.** Confluence, Jira, Microsoft 365 and Google Workspace integrations, and PDF export, so a diagram can sit inside a document.
 
 **Where this tool is better**
-- **Context behind each element.** Notes, tags, images and a link to a deeper diagram live on the element, and the deeper diagram opens as its own file. This is the core of the design.
+- **Context in depth.** Notes, tags, images and a link to a deeper diagram live on the element, and the deeper diagram opens as its own file. This is the core of the design, but translates poorly to flat exports.
 - **Diagrams as ordinary text files** that are small, stable and meant to be reviewed in git, with the file format published as a standalone specification. Git is the collaboration layer.
 - **Reviewing a change to a diagram, offline and from git.** A compare window shows what changed between two versions (or the file and a git revision) on the real canvas: added, removed, changed links or notes and modified elements coloured, the rest dimmed, with what changed in words, a list to step through and per-change revert. `chd diff` prints the same review for a terminal or CI. Several tools compare diagram versions inside their own cloud product (iGrafx, LeanIX and Camunda do, as does Figma for design files), and for draw.io the common route is rendering two revisions to images and comparing the pixels; this works on the plain file and on its meaning (tags, security, links, notes), not on pictures.
 - **Offline and account-free by design.** The app blocks its own network access, similar to how draw.io's desktop app is isolated apart from update checks. In comparison, Miro and FigJam are workspaces built around shared online boards.
 - **A narrow, consistent set of rules** (a node is one thing, edges stay attached) instead of a large toolbox.
 
-**Choose them** when several people edit the same diagram, when you need standard notations and big template libraries, or when the diagram has to appear in Confluence, Office or a slide deck. **Choose this tool** when the context and relationships between different views are the point, you want the diagram in git as a readable file, and privacy and security are key.
+**Choose them** when several people edit the same diagram, when you need standard notations and big template libraries, or when the diagram has to be integrated with for example Confluence. **Choose this tool** when the context and information density is important, you want the diagram in git as a readable file, and privacy and security are key.
 
-**From the author:** This tool is still quite immature, and has serious shortcomings that can be dealbreakers. Refer to the epics for a roadmap of features. That said, collecting and organising information as you map out a system, or rediscovering information on demand, has for me never been easier. A quick search, or the press of a button, and the information I needed was right there already in the needed context. No need to dive into wiki pages to reassemble it. That, to me, is the main selling point of this tool. 
+**From the author:** This tool is still quite immature, and has deliberate design decisions and shortcomings that can be dealbreakers. Refer to the epics for a roadmap of features. That said, collecting and organising information as you map out a system, or rediscovering information on demand, has for me never been easier. A quick search, or the press of a button, and the information I needed was right there already in the needed context. No need to dive into wiki pages to reassemble it. That, to me, is the main selling point of this tool. 
 
 ## Diagrams written as code
 
@@ -50,15 +50,15 @@ I got an AI to check statements made about other tools on 2026-10-20 against eac
 
 **Where they are better**
 - **Speed and layout.** You write the relationships and the tool places everything. A text change is a one-line diff in review.
-- **Native rendering where people read.** Mermaid renders in GitHub, GitLab, Notion, Obsidian, Azure DevOps wikis and others without anything exported ([integrations](https://mermaid.js.org/ecosystem/integrations-community.html)). A diagram in a README is just text.
-- **Scale and automation.** Diagrams can be generated from other data, and checked in a build.
+- **Native rendering where people read.** Mermaid renders in GitHub, GitLab, Notion, Obsidian, Azure DevOps wikis and others without anything exported ([integrations](https://mermaid.js.org/ecosystem/integrations-community.html)). A diagram in a README is just text. This tool needs a step in between: `chd export` writes the SVG in a pipeline, so CI can regenerate the image whenever the diagram changes, but the repository then holds an image beside the file, and GitHub does not draw a `.chd` itself.
+- **Scale and automation.** Diagrams can be generated from other data, and checked in a build. Here the checks and the rendering run in a build too (`chd check`, `chd validate`, `chd diff`, `chd export`), and `chd edit` applies a list of operations from a script, so a diagram can be built from data. What is missing is a direct import: a table can be pasted into the app (comma or tab separated, one element per row) but there is no CSV file import, and without automatic layout a generated diagram needs its positions chosen.
 
 **Where this tool is better**
 - **You control the picture.** Position, grouping, routing and styling are exactly what you drew, which matters when the layout carries meaning or the engine's result is not readable. The text tools' automatic layout cannot always be steered; D2, for example, gives full placement control (locked positions) only in one of its three engines.
 - **Context stays behind the element.** Notes, tags, images and a link to a deeper diagram are fields on the element, instead of extra text in the source or a separate document.
 - **Drill-down across files** with no tooling beyond opening the linked diagram.
 
-**Choose the code tools** when the diagram should render inside a README or wiki from text, be generated from data, or be written fast without caring where each box lands. **Choose this tool** when layout and per-element context matter more than speed of writing.
+**Choose the code tools** when the diagram should render natively inside a README or wiki from text, be generated from data, or when the layout of the diagram is not that important. **Choose this tool** when layout and per-element context matter more than speed of writing.
 
 **From the author:** While these are gitable and lightweight, you often end up fighting the engine and writing a lot of verbose control text. The information you care about gets a little lost in the noise, and you are still dependent on outside tooling to hold much of the context for you. They are great tools for cheaply rendering the diagram where you need it outside of dedicated software or services.
 
@@ -78,11 +78,11 @@ I got an AI to check statements made about other tools on 2026-10-20 against eac
 - **Sharing.** A static site, embedded components, or a live embed in Confluence, with collaboration in IcePanel.
 
 **Where this tool is better**
-- **No model to learn or maintain.** You draw a diagram and it is done, for any subject, with no fixed levels or notation. However, that does mean you have to be extra careful to do things properly.
+- **No model to learn or maintain.** You draw a diagram or a process flow, and it is done with no fixed levels or notation. However, that does mean you have to be extra careful to do things properly.
 - **Fully offline and free of accounts.** Nothing runs on a server and nothing leaves the computer.
 - **Per-element notes, tags and images** next to the drawing, and your own layout.
 
-**Choose these** when you work with one architecture model that they support, or need your diagrams published to a team or a wiki. **Choose this tool** when you want a flexible drawing with its context behind it.
+**Choose these** when you work with one architecture model that they support, or need your diagrams published to a team or a wiki. **Choose this tool** when you want a flexible tool that has data in depth and can handle many kinds of diagrams and flows.
 
 **From the author:** The tools above are amazing when you are working with just the correct model. If all you do is C4, for example, then Structurizr is better for what C4 does. This tool would then only be supplementary to give quick highlights, e.g. GDPR or team ownership overviews.
 
@@ -107,8 +107,9 @@ For a market view, Gartner's 2026 Magic Quadrant for Enterprise Architecture Too
 
 **Where this tool is better**
 - **Quick to get started.** No metamodel to adopt or maintain. You can start drawing straight away, in any style, for any subject.
-- **Not tied to enterprise architecture.** The same tool draws a process, a customer journey or a system design.
-- **Free, offline and file-based.** Nothing to license, host or connect, and diagrams that live in git.
+- **Not tied to enterprise architecture.** The same tool draws a process, a customer journey, a system design, or a process flow.
+- **Free, offline and file-based.** Nothing to license, host or connect, and diagrams that live in git. There is not even a way to donate.
+- **Create evolutionary stories.** Visibility sets show or hide parts of one diagram, and a story steps through them in a presenter view, e.g what we have, how it is connected, the fix. 
 
 **Choose these** when the question is "what do we have, who owns it and what breaks if it changes" across a whole organisation, or when you must follow ArchiMate. **Choose this tool** for architecture diagrams beyond EA, for when an enterprise architecture platform is not yet justified, or as a supplement to your EA tool of choice. 
 
@@ -134,13 +135,13 @@ For a market view, Gartner's 2026 Magic Quadrant for Enterprise Architecture Too
 - **Team workflow.** Collaboration, ownership, prioritisation and publishing for people who are not diagram authors.
 
 **Where this tool is better**
-- **Any journey or process, in any shape.** A journey is a sequence of boxes with notes and tags behind each step, with no fixed template to fit. A process can use the flow elements: 14 kinds of step, choice and event, inspired by BPMN, in swim lanes (containers whose label can sit on any side), with a mark where an edge hands over from one lane to another. This is a vocabulary, not the standard: there are no pools and message flows, data objects or boundary events, no import or export of BPMN files, no validation of the flow and nothing that runs it.
+- **Any journey or process, in any shape.** A journey is a sequence of boxes with notes and tags behind each step, with no fixed template to fit. A process can use the flow elements: 16 kinds of step, choice and event, inspired by BPMN, in swim lanes, with marks where an edge hands over from one lane to another. This is a vocabulary and not a standard: there are no pools and message flows, data objects or boundary events, no import or export of BPMN files, and nothing that runs it.
 - **Links into the rest of the picture.** A step can link to the system diagram behind it, so a business view and a technical view stay connected.
 - **Free, offline and file-based.**
 
 **Choose the journey tools** when you run a journey programme with personas, research, metrics and a team working in it. **Choose a BPMN tool** when the diagram must follow the standard, be exchanged with other tools or run on a process engine. **Choose this tool** for a quick, flexible journey or process sketch with recognisable flow symbols, or when the story behind each step and its link to the system diagrams matter more than strict notation.
 
-**From the author:** From my experience, the disconnect between the customer journey, persona, or business process views and any technical system views is a constant drain on productivity. You need to log in to 3 different platforms and manually make links between each different view. This tool joins them together and coalesces multiple perspective-files into one file with toggleable highlights.
+**From the author:** From my experience, the disconnect between the customer journey, persona, or business process views and any technical system views is a constant drain on productivity. You need to log in to 3 different platforms and manually make links between each different view. This tool joins them together and coalesces multiple perspective-files into one file with toggleable highlights. 
 
 ## Notes and whiteboards
 
@@ -198,26 +199,27 @@ A repository can hold the `.chd` file and let CI regenerate the SVG whenever it 
 
 ## Summary
 
-There are no or almost no unique features this tool offers. Other tools do them well and often better. If the other tool is purpose-made for what you do, then that tool is the better choice. What this tool offers is the combination of features seen across other solutions, collected into an easy-to-use and flexible package. Security, privacy and cost are also central to the design and mission statement of this tool.
+There are almost no unique features this tool offers. Other tools do them well and often better. If the other tool is purpose-made for what you do, then that tool is the better choice. What this tool offers is the combination of features seen across other solutions, collected into an easy-to-use and flexible package. Security, privacy and cost are also central to the design and mission statement of this tool.
 
 - **Context as a first-class citizen.** Markdown notes, tags, images and a link to a deeper diagram are native fields on the element, not extra objects on the canvas, so the picture stays readable and nothing needs to be moved together.
 - **Drill-down across plain files.** A linked diagram is just another file that opens on its own, with no model, server or tooling in between, and links only point downward.
+- **One diagram, several states.** Tags and highlights recolour it, visibility sets show or hide parts of it, and a story presents the sets step by step, so one file can tell how things are today and how they could be.
 - **Small gitable files** with a published specification ([file-format.md](file-format.md)), written to diff and merge cleanly in git.
 - **Images from a command.** `chd export` turns a `.chd` file into an SVG without opening the app, with the same output every time, so CI can regenerate the images in a README or wiki whenever the diagram changes.
 - **Offline by design.** The app blocks its own network access, and there is no account.
-- **AI assistants can work on the files safely.** The file specification and AI tools are built to let your AI tools interact with your diagrams on your behalf. An assistant can build a diagram step by step, flows in swim lanes included, and is told about the layout problems it causes. Designed limitations ensure, when you use the Claude Desktop (MCP) extension, that your AI tool does not overwrite, garble, or access anything you have not actively given to it. Without it, an assistant can affect anything you give it access to, outside this tool's control.
+- **AI assistants can work on the files safely.** The file specification and AI tools are built to let your AI tools interact with your diagrams on your behalf. An assistant can build a diagram step by step, flows in swim lanes, visibility sets and stories included, and is told about the layout problems it causes. Designed limitations ensure, when you use the Claude Desktop (MCP) extension, that your AI tool does not overwrite, garble, or access anything you have not actively given to it. Without it, an assistant can affect anything you give it access to, outside this tool's control.
 - **Free,** with the source under the GPL-3.0-or-later. No hidden costs or licences, not even a donation page. 
 
 ## Where this tool is behind
 
 These are the honest gaps, roughly in the order they are likely to matter.
 
-1. **Getting diagrams into wikis and documentation.** The exports are PNG and SVG, and SVG can be made from the command line. PDF export, a PNG from the command line, and an export to the open JSON Canvas format (so a diagram can open in Obsidian) would close most of this.
+1. **Getting diagrams into wikis and documentation.** The exports are PNG and SVG, and SVG can be made from the command line. PDF export, a PNG from the command line, and an export to the open JSON Canvas format are planned.
 2. **Importing.** There is no import from other tools, so moving an existing diagram in means redrawing it. This can be alleviated by using AI to redraw things.
 3. **Layout.** Everything is placed by hand, by your hand or your AI assistant's. This is a stance as much as a gap: positions are the person's job, and the file keeps them stable so a small edit stays a small diff in git. The cost is that a diagram an assistant generates needs a person to tidy the layout, though the assistant tools report the layout problems each edit causes and can route edges around elements. There is no automatic layout; one limited to new or AI-written elements is parked ([epic 0126](planning/epics/later/0126-auto-layout.md)) until it can be done without disturbing hand-laid diagrams.
-4. **Shapes and notation.** Entities, containers, text and lines, with icons, plus 13 flow elements (steps, choices and events) inspired by BPMN. There are no large shape or template libraries, no conformant BPMN (no pools and message flows, data objects or boundary events, and no import or export of BPMN files) and no ArchiMate vocabulary yet (planned, see [the planning documents](planning/README.md)).
-5. **Data and integrations.** There is no shared model across diagrams beyond tags and search, and no connection to a CMDB, cloud accounts or ticket trackers. This is a bit by design.
-6. **Collaboration and sharing.** Nothing beyond git, and no web view for a reader who does not have the app. Should be fairly straightforward to implement, but not seen as a priority.
-7. **Release state.** An early open-source release: the only installer is an unsigned one for Windows, it is built and tested mainly on Windows, Linux and macOS are not yet verified, and it has one maintainer.
+4. **Shapes and notation.** Entities, containers, text and lines, with icons, plus 16 flow elements (steps, choices and events) inspired by BPMN. There are no large shape or template libraries, no conformant BPMN (no pools and message flows, data objects or boundary events, and no import or export of BPMN files) and no ArchiMate vocabulary.
+5. **Data and integrations.** There is no shared model across diagrams beyond tags and search, and no connection to a CMDB, cloud accounts or ticket trackers. However, you can add a profile containing rules for a specific diagram type. 
+6. **Collaboration and sharing.** Nothing beyond git, and no web view for a reader without the app. A story can be presented from the app, but there is no export of it to slides or a web page. Should be fairly straightforward to implement, but not seen as a priority.
+7. **Release state.** An early open-source release: the only installer is an unsigned one for Windows, it is built and tested mainly on Windows, macOS has had a light test (installed, a basic diagram drawn), but Linux is not yet verified, and it has one maintainer.
 
 Some of these are planned (see [the planning documents](planning/README.md)). Real-time collaboration and a formal metamodel are deliberate non-goals: the tool stays a flexible drawing tool, and leaves model-driven work to the platforms above.

@@ -41,10 +41,10 @@ export interface DiagramContextValue {
   beginContinuousEdit: () => void
   endContinuousEdit: () => void
   // For discrete (non-continuous) edits made via rfInstance.updateNodeData
-  // — label commits, link/connection-point add-remove — which bypass
-  // Canvas's own onNodesChange entirely (updateNodeData calls React Flow's
-  // internal store directly), so nothing else observes them for undo
-  // history. Call this immediately before the updateNodeData call.
+  // — label commits, link/connection-point add-remove. React Flow reports
+  // those to onNodesChange as a `replace` change, which also snapshots; the
+  // second snapshot is dropped as a duplicate (see useHistory), so call this
+  // immediately before the updateNodeData call and it stays one undo step.
   pushSnapshot: () => void
   // Container's "Attach contained entities" menu item — bulk
   // version of the drag-in reparenting, for encapsulating a lot of

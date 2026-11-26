@@ -132,6 +132,8 @@ import ShortcutsDialog from '../ShortcutsDialog'
 import GlossaryDialog from '../GlossaryDialog'
 import CommandPalette from '../CommandPalette'
 import { findKeyCommand, type CommandId } from '../commands'
+import { connectionToNewEntity, reconnectToNewEntity } from './edgeDrop'
+import { classifyNodeChanges } from './nodeChangeKind'
 import AlertDialog from '../ui/AlertDialog'
 import ExportImageDialog, { type ImageExportChoice } from '../export/ExportImageDialog'
 import BulkCreateDialog from '../bulk-create/BulkCreateDialog'
@@ -258,10 +260,6 @@ function CanvasInner(): React.JSX.Element {
   // What this window last read or wrote of the diagram file: the baseline the window-focus check
   // and the save-time conflict check compare against (ADR 0091, ADR 0092).
   const hubBaselineRef = useRef<{ path: string | null; stamp: Stamp }>({ path: null, stamp: null })
-  // See loadDiagramIntoCanvas's own comment on why this exists — a short
-  // grace window after any load during which React Flow's own automatic
-  // post-mount dimension measurement doesn't count as a discrete edit.
-  const suppressAutoMeasureUntilRef = useRef(0)
   // Diagram-level metadata/requiredTags (ADR 0022) — analogous to
   // currentPath: file-scoped state with no React Flow home of its own,
   // reset on every load, carried into every save via toDiagramFile.
@@ -661,31 +659,10 @@ function CanvasInner(): React.JSX.Element {
   // changes.
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
-      const meaningful = changes.filter((change) => change.type !== 'select')
-      if (meaningful.length > 0) {
-        const starting = meaningful.some(
-          (change) =>
-            (change.type === 'position' && change.dragging === true) ||
-            (change.type === 'dimensions' && change.resizing === true)
-        )
-        const ending = meaningful.some(
-          (change) =>
-            (change.type === 'position' && change.dragging === false) ||
-            (change.type === 'dimensions' && change.resizing === false)
-        )
-        const withinLoadGrace = Date.now() < suppressAutoMeasureUntilRef.current
-        const discrete = meaningful.some(
-          (change) =>
-            change.type === 'remove' ||
-            change.type === 'add' ||
-            change.type === 'replace' ||
-            (change.type === 'position' && change.dragging === undefined) ||
-            (change.type === 'dimensions' && change.resizing === undefined && !withinLoadGrace)
-        )
-        if (starting) beginContinuousEdit()
-        else if (discrete) pushSnapshot()
-        if (ending) endContinuousEdit()
-      }
+      const { starting, ending, discrete } = classifyNodeChanges(changes)
+      if (starting) beginContinuousEdit()
+      else if (discrete) pushSnapshot()
+      if (ending) endContinuousEdit()
       // Deleting a container promotes its children instead of removing them (ADR 0012), handled
       // apart from React Flow's default remove-change application. RF cascades a delete to every
       // descendant, but onBeforeDelete (resolveDeletion, ADR 0116) has already cut that down to
@@ -1111,9 +1088,6 @@ function CanvasInner(): React.JSX.Element {
       )
       if (!result.ok) return result.message
       pushSnapshot()
-      // The nodes a reset puts back have not been measured yet; React Flow's own measuring pass
-      // must not count as a second edit (an extra undo step), as after a load.
-      suppressAutoMeasureUntilRef.current = Date.now() + 500
       setNodes(result.nodes)
       setEdges(result.edges)
       setChangesRefreshTick((tick) => tick + 1)
@@ -1712,10 +1686,7 @@ function CanvasInner(): React.JSX.Element {
         setEdges((eds) => {
           const withNew = addEdge(
             {
-              source: origin.nodeId,
-              sourceHandle: origin.handleId,
-              target: entityId,
-              targetHandle: 'left',
+              ...connectionToNewEntity(origin, entityId),
               type: 'labeled',
               data: { metadata: seedMetadata(requiredTags), style: newEdgeStyle }
             },
@@ -1753,19 +1724,10 @@ function CanvasInner(): React.JSX.Element {
       const point = pointFromEvent(event)
       spawnEntityAt(point.clientX, point.clientY, (entityId) =>
         setEdges((eds) =>
-          eds.map((e) => {
-            if (e.id !== edge.id) return e
-            // `handleType` here is React Flow's own "oppositeHandle" type —
-            // the FIXED end that's staying put, not the one being dragged
-            // (confirmed by reading EdgeUpdateAnchors' source: grabbing the
-            // source anchor passes the *target*'s type, and vice versa).
-            // So handleType === 'target' means the target is fixed and the
-            // source is what got dragged loose — the inverse of the
-            // naive reading.
-            return handleType === 'target'
-              ? { ...e, source: entityId, sourceHandle: 'left' }
-              : { ...e, target: entityId, targetHandle: 'left' }
-          })
+          // `handleType` here is React Flow's own "oppositeHandle" type — the FIXED end that's
+          // staying put, not the one being dragged (grabbing the source anchor passes the
+          // *target*'s type, and vice versa), so reconnectToNewEntity reads it the inverse way.
+          eds.map((e) => (e.id === edge.id ? reconnectToNewEntity(e, handleType, entityId) : e))
         )
       )
     },
@@ -2941,12 +2903,6 @@ function CanvasInner(): React.JSX.Element {
       setPast([])
       setFuture([])
       setHubDirty(repairedOnLoad)
-      // React Flow measures every freshly mounted node's DOM size via ResizeObserver and reports a
-      // 'dimensions' NodeChange with resizing undefined, which by shape alone looks like
-      // onNodesChange's "discrete edit" below. That was a harmless extra undo entry until
-      // pushSnapshot also marked the diagram dirty; then the auto-measurement pass falsely dirtied
-      // every load. Suppressed for a short window after any load.
-      suppressAutoMeasureUntilRef.current = Date.now() + 500
       setNodes(openedNodes)
       setEdges(openedEdges)
       // On a large diagram, React Flow's passive ResizeObserver measurement of node handle bounds

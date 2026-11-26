@@ -70,6 +70,20 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 ---
 
+## Adding an element made Undo stop working
+
+**Status:** Solved (2026-11-26). The first symptom was reported on macOS and not reproduced there; the cause of the second was found with a stack trace on every snapshot.
+
+**Symptoms:** (1) On macOS, Undo worked until an element was added; after that it did nothing, for the new element and for everything before it. (2) After renaming an element, the first Undo took the new name away, the second seemed to do nothing, and only the third went further.
+
+**Causes:** (1) React Flow measures a freshly mounted node and reports a `dimensions` change with no `resizing` flag. `onNodesChange` counted that as a discrete edit, so adding a node took a second snapshot, taken before the node was measured. The 500 ms grace window after a load only covered loads and resets. (2) A label commit takes its own snapshot and then calls `updateNodeData`, which React Flow reports to `onNodesChange` as a `replace` change, which takes another. Both held the same graph. The comment saying `updateNodeData` bypasses `onNodesChange` was wrong for React Flow 12.11.
+
+**Fix:** a `dimensions` change without `resizing` is never an edit (`classifyNodeChanges`); only a dragged resize carries the flag, and the grace window is gone. `pushSnapshot` does not push a graph that is already on top of the history. Lesson: classify a change by whether a person made it, not by its shape, and when history has a step that changes nothing, log a stack trace at every push.
+
+**References:** `src/renderer/src/canvas/nodeChangeKind.ts`, `src/renderer/src/canvas/useHistory.ts`
+
+---
+
 ## Putting nodes back outside a load adds a stray undo step
 
 **Status:** Solved (2026-10-26)
@@ -77,11 +91,11 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **Symptom:** after a reset, Ctrl+Z seemed to do nothing the first time, and Redo stayed off.
 
-**Cause:** nodes built from a file have no measured size. React Flow measures them after they are set, and the editor counts that measuring as a discrete edit (`onNodesChange`), which pushes an extra undo snapshot and clears Redo. A load already silences this for 500 ms (`suppressAutoMeasureUntilRef`).
+**Cause:** nodes built from a file have no measured size. React Flow measures them after they are set, and the editor counted that measuring as a discrete edit (`onNodesChange`), which pushed an extra undo snapshot and cleared Redo. A load silenced this for 500 ms, but nothing else did.
 
-**Fix:** a reset sets the same grace window before it applies, and keeps a replaced node's measured size. Anything else that puts unmeasured nodes into the canvas outside a load needs the same.
+**Fix:** superseded: measuring is never an edit now, see "Adding an element made Undo stop working".
 
-**References:** `src/renderer/src/canvas/Canvas.tsx` (`resetChangedElement`, `suppressAutoMeasureUntilRef`)
+**References:** `src/renderer/src/canvas/nodeChangeKind.ts`
 
 ---
 
@@ -526,7 +540,7 @@ The richest bug chain so far; the full story is in [ADR 0036](decisions/0036-con
 
 **Cause:** `onNodesChange` treated a `dimensions` change with `resizing === undefined` as a discrete edit; React Flow's own post-mount measurement emits exactly that. Harmless until `pushSnapshot()` also marked the diagram dirty.
 
-**Fix:** a 500 ms grace window after any load during which that specific change shape doesn't count; every other change type is untouched.
+**Fix:** a 500 ms grace window after any load during which that specific change shape didn't count. Replaced by "Adding an element made Undo stop working": that change shape is never an edit.
 
 **References:** [ADR 0040](decisions/0040-dirty-tracking-and-autosave-design.md)
 
