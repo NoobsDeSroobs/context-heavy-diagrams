@@ -1,8 +1,9 @@
 import type { Connection, Edge, HandleType } from '@xyflow/react'
 
 // An edge dropped on empty canvas makes an entity for its loose end. That end names no connection
-// point, so it attaches to the side that faces the other element and follows it as it moves
-// (ADR 0200). The end that was already placed keeps its point.
+// point, so it attaches to the side that faces the other element and follows it as it moves,
+// instead of sitting on a fixed point that is wrong for most drops. The end that was
+// already placed keeps its point: the person chose it.
 
 // A new edge dragged from `origin` to a new entity. `null` is how an automatic end is held.
 export function connectionToNewEntity(
