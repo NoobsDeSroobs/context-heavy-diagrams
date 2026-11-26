@@ -21,7 +21,7 @@ The example diagram gallery operationalizes this: a running gallery of one examp
 
 ## Addendum (2026-08-31): process / workflow modelling is in scope too
 
-The BPMN-as-visual-language decision ([ADR 0080](0080-bpmn-as-adopted-vocabulary-not-metamodel.md))
+The BPMN-as-visual-language decision ([ADR 0080](0080-behaviours-are-the-tools-own-flow-vocabulary-with-semantic-not-symmetric-symbols.md))
 confirmed that **process and workflow diagrams** belong in the same "as much as
 generic primitives can carry it" scope as the EA-adjacent views above —
 architecture work routinely includes mapping processes to find improvements and

@@ -1,13 +1,13 @@
 # 0192: A view-only mode
 
 ## Status
-Not Started. Parked. Logged 2026-11-17, when React Flow's own lock button was hidden from the corner panel ([ADR 0186](../../../decisions/0186-the-corner-panel-holds-what-the-canvas-shows-on-demand.md)).
+Not Started. Parked. Logged 2026-11-17, when React Flow's own lock button was hidden from the corner panel.
 
 ## Goal
 Lock a diagram against edits while everything that is for reading still works: animated edges, highlights, search and isolate, the Ctrl peeks, the legend, the crossings, panning and zooming, following a link. For presenting a diagram, reviewing one, or just not moving something by accident.
 
 ## Update 2026-11-21
-The presenter view ([ADR 0195](../../../decisions/0195-stories-are-steps-over-the-visibility-sets.md)) covers presenting, but it is the opposite of this: it makes the diagram click-through, so nothing can be selected, opened or followed, and it hides the chrome. Reading and reviewing a diagram, and not moving something by accident, stay for this epic, parked. What the presenter found helps: a node's own `draggable` beats React Flow's global switch, so a lock has to set the per-node switches too (`lockedForPresenting`). What is left is the edit paths that are not canvas gestures: the property fields, paste, undo, label editing and the palette.
+The presenter view ([ADR 0194](../../../decisions/0194-one-diagram-several-views-visibility-sets-and-stories.md)) covers presenting, but it is the opposite of this: it makes the diagram click-through, so nothing can be selected, opened or followed, and it hides the chrome. Reading and reviewing a diagram, and not moving something by accident, stay for this epic, parked. What the presenter found helps: a node's own `draggable` beats React Flow's global switch, so a lock has to set the per-node switches too (`lockedForPresenting`). What is left is the edit paths that are not canvas gestures: the property fields, paste, undo, label editing and the palette.
 
 ## Why the old button was not it
 It flipped three React Flow settings (dragging, connecting, selecting) and nothing else. Gestures of ours ignored it, a diagram with nothing selectable cannot show its properties, and it was unrelated to the per-element lock.

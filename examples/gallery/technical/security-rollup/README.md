@@ -1,7 +1,7 @@
 # Security Matrix rollup demo
 
 A three-layer worked example for the recursive Security Matrix rollup — see
-[ADR 0088](../../../../docs/decisions/0088-recursive-security-matrix-rollup.md).
+.
 Fictional Meridian Rail content.
 
 ## Layout

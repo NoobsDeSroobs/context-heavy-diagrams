@@ -58,7 +58,7 @@ npm test
 ## Rules that apply to every change
 
 - **Windows and Linux are both first-class.** No hard-coded path separators, no OS-only APIs or shell built-ins, UTF-8 files, per-OS locations via `app.getPath(...)`. Paths stored inside a file use `/`.
-- **Dependencies are tracked.** After adding or updating one, run `npm run notices` and commit `THIRD-PARTY-NOTICES.md`; `npm test` fails otherwise, and also if the new package's license is not known to be GPL-compatible ([ADR 0119](docs/decisions/0119-generated-third-party-notices.md)).
+- **Dependencies are tracked.** After adding or updating one, run `npm run notices` and commit `THIRD-PARTY-NOTICES.md`; `npm test` fails otherwise, and also if the new package's license is not known to be GPL-compatible.
 - **The app stays offline.** Nothing may make a network request. A test fails if a network API appears in `src/`, `extension/` or the command-line tool.
 - **Paths inside a `.chd` file are untrusted.** Resolve them against the diagram's folder and keep them inside it ([ADR 0115](docs/decisions/0115-paths-stored-in-diagrams-are-untrusted.md)).
 - **Anything that lets an AI assistant write a `.chd` file must check that the file is unchanged since it was read**, and a create must fail if the file exists ([ADR 0109](docs/decisions/0109-stale-edit-check-for-every-ai-write-path.md)).

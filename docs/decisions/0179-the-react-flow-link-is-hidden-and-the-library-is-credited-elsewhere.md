@@ -12,6 +12,7 @@ React Flow draws a small "React Flow" link in the bottom right corner of the can
 - **Hide the link,** on the editing canvas and in the compare window (`HIDE_ATTRIBUTION` in `flowTypes.ts`).
 - **Credit React Flow where an app credits what it is built with:** the About dialog names it, the third-party notices carry its licence text and the maintainer names it in the places the tool is presented.
 - This is a choice made against what React Flow asks; the licence permits it. If that changes, or React Flow objects, it is undone by removing one constant.
+- **This record is kept for transparency.** The choice is small and easy to undo, so it would not otherwise earn an ADR. It stays so that anyone using or forking the tool can see that it was deliberate, what the library asks for, and where the credit went instead.
 
 ## Alternatives considered
 - **Keep it.** Nothing to do, and the label sits where the minimap toggle is and shows in every screenshot of the tool.

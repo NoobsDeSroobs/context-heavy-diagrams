@@ -8,7 +8,7 @@ the "absent means unused" convention of `requiredTags` / `highlights` /
 `legend` / `gravityPresets` / `edgeDirectionSets`, so [ADR 0054](0054-progressive-disclosure-for-advanced-features.md)
 is satisfied for free.
 
-**Amended 2026-09-08 by [ADR 0088](0088-recursive-security-matrix-rollup.md):**
+**Amended 2026-09-08:**
 `combineMethod` / `aggregateMethod` are **no longer persisted** — they became
 renderer session state when recursive rollup made a per-file mode incoherent
 (a traversal spanning files needs one mode set, not one per file). Files
@@ -127,7 +127,7 @@ A shape deleted from the canvas takes its `data.security` with it, but its
 id can linger in `matrixShapeIds` / `hiddenShapeIds`. `fromDiagramFile`
 prunes ids that don't resolve to a current Shape node, with a load-time
 note (same self-cleaning approach as `recentDiagrams` in
-[ADR 0078](0078-recent-diagrams-menu.md)).
+).
 
 ### Serialization
 
@@ -149,7 +149,7 @@ Per-node `security` map: keys sorted. No `version` bump — purely additive.
   no in-app editor for them in v1.
 - **A Preferences-tier default** for scales / methods.
 - **Edge security**, container security.
-- **Recursive rollup across linked diagrams** (see [ADR 0088](0088-recursive-security-matrix-rollup.md)),
+- **Recursive rollup across linked diagrams**,
   which this ADR unblocks.
 
 ## Alternatives considered

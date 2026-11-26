@@ -8,7 +8,7 @@ Not Started.
 
 ## Tasks
 - [ ] Write down what the matrix has to do today and what is expected to be added (scales editor, more views, exports, rollups)
-- [ ] Propose a structure and the state it needs (it shares `security` and the crawl with `Canvas.tsx`; see [ADR 0126](../../decisions/0126-canvas-features-are-hooks-that-own-their-state.md))
+- [ ] Propose a structure and the state it needs (it shares `security` and the crawl with `Canvas.tsx`; see [ADR 0126](../../decisions/0126-code-is-organised-by-feature-and-what-features-share-is-explicit.md))
 - [ ] ADR, then implement
 
 ## Notes

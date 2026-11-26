@@ -1,7 +1,7 @@
 # 0142: The extension may run `git show` to read an earlier version
 
 ## Status
-Accepted (2026-11-04). Widens [ADR 0110](0110-claude-desktop-extension.md), which said the extension starts no other program; completes the git form of `chd diff` ([ADR 0137](0137-chd-diff-the-same-review-without-the-app.md)) in the extension ([ADR 0138](0138-the-mcp-server-carries-the-guidance-the-cli-carries-the-checks.md)).
+Accepted (2026-11-04). Widens [ADR 0110](0110-claude-desktop-extension.md), which said the extension starts no other program; completes the git form of `chd diff` ([ADR 0132](0132-reviewing-a-change-one-engine-a-read-only-window-and-the-same-answer-on-the-command-line.md)) in the extension ([ADR 0138](0138-assistants-build-diagrams-like-a-person-through-one-implementation-behind-the-cli-and-the-mcp-server.md)).
 
 ## Context
 The most natural review of an assistant's edit is "what differs from the last commit". `chd diff <file>` does that with git; the extension could compare only two files in the folder, so an assistant had to copy the file first. The app's compare window already starts git for the same purpose, narrowly.

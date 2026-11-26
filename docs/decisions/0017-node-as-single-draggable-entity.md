@@ -15,5 +15,5 @@ The project brief was written after the author tried multiple existing diagrammi
 
 ## Consequences
 - Every "attach more to a node" feature since has defaulted to "add a field to `data`," not "add a new node type or a linking mechanism" — details (`data.details`, a relative path to a `.md` file), icons (`data.icons`), linked diagrams (`data.linkedDiagram`) all follow this shape directly.
-- Interacted with, but was distinct from, the `AnchorNode` placeholder (removed since, see [ADR 0107](0107-remove-anchor-placeholder-node.md)): that *was* a real, separate node, used because an edge's endpoint had no other valid representation in React Flow's data model, not because this principle was relaxed.
-- Rules out, by design, any future feature that would reintroduce a "move this too" burden — e.g. a floating, independently-positioned label was explicitly considered and rejected for exactly this reason (see [ADR 0020](0020-labels-always-centered.md)).
+- Interacted with, but was distinct from, the `AnchorNode` placeholder (removed since): that *was* a real, separate node, used because an edge's endpoint had no other valid representation in React Flow's data model, not because this principle was relaxed.
+- Rules out, by design, any future feature that would reintroduce a "move this too" burden — e.g. a floating, independently-positioned label was explicitly considered and rejected for exactly this reason.

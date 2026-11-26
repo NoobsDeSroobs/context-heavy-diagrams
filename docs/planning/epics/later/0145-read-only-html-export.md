@@ -16,4 +16,4 @@ There is no way to share a diagram with someone who does not have the app, apart
 - How it relates to the offline rule: the page itself must make no network requests either.
 
 ## Related
-[Epic 0144](../../completed-epics.md#0144-svg-export-and-a-command-line-export), [epic 0114](0114-android-diagram-viewer.md) (another reader-only view).
+[Epic 0144](../../completed-epics.md#0144-svg-export-and-a-command-line-export) epic 0114 (another reader-only view).

@@ -25,7 +25,7 @@ Grow the conformance checker from "one diagram against one metamodel" to the arc
 - Rules across linked diagrams: rules that see through links, not only within one diagram.
 
 ### More styles to try
-Zero-trust or network zones (relates to cross-container edge detection, [epic 0088](../../completed-epics.md#0088-detecthighlight-edges-crossing-container-boundaries)); ArchiMate's table of allowed relationships ([epic 0148](../0148-archimate-flavoured-vocabulary-kit.md)).
+Zero-trust or network zones (relates to cross-container edge detection, [epic 0088](../../completed-epics.md#0088-detecthighlight-edges-crossing-container-boundaries)); ArchiMate's table of allowed relationships ([epic 0148](../0138-assistants-build-diagrams-like-a-person-through-one-implementation-behind-the-cli-and-the-mcp-server.md)).
 
 ### Metamodels and where they live
 - Shared house rules that live outside every repository and must reach CI. The CLI is offline ([ADR 0113](../../../decisions/0113-enforced-offline-behaviour.md)), so delivery is a CI step (a rules repository fetched on demand, or a zip kept in step with the pipeline definition); v1 assumes that.

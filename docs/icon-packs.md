@@ -89,6 +89,13 @@ The SVG and draw.io exports and the legend of an image export draw a pack's icon
 
 The app comes with the [Tabler Icons](https://tabler.io/icons) outline set (MIT licence) and writes it out as a pack named `Tabler` with one subset, `Outline`, when you install it: on the first start, when the app asks, or later with "Install Tabler icons" in the manager. A diagram's `{ "source": "builtin", "id": "server" }` means that pack's `Outline/server.svg`, and without the pack installed it is reported like any other missing pack. Picking an icon from that subset stores `builtin`, as always, so an older version and the command line (which reads the same files from the app) still draw it. The answer to the first-start question is remembered by a file named `.offered` in the packs folder; delete it, or the folder, to be asked again.
 
+## The manager and the picker
+
+- **One install runs at a time and can be cancelled.** The manager copies a pack into a staging folder and moves it into place only when everything is there, so a cancel leaves nothing half-installed. What it leaves out of a pack (icons directly in the pack folder, folders deeper than a subset, names that do not work on every system, names that differ only in capitals, files over 1 MB) it lists in a report.
+- **Removing a pack** moves it to the system trash, or to a hidden folder in the packs folder where there is none. The editor windows can open the manager and list the packs, and cannot change one; the one exception is "Add an icon", which writes into `Misc icons` only.
+- **The picker** has a collapsible section for each pack and subset, searches by name, caps the number of rows it draws in a section and draws each preview as it scrolls into view, so thousands of icons are a window onto a list and not thousands of elements.
+- **Not covered yet:** exporting a pack as a zip, meanings per icon (synonyms) in search, recolouring an icon, and listing or writing installed icons from the extension or the command line (the command-line export draws the Tabler icons and leaves out those of other packs, with a note).
+
 ## Making a pack
 
 1. Make a folder named for the pack and a folder inside it for each group of icons.

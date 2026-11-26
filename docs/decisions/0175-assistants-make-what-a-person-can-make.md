@@ -2,7 +2,7 @@
 
 ## Status
 Accepted (2026-11-15)
-Amends: the `add_connection_point` operation of [0148](0148-an-assistant-builds-a-diagram-by-operations-that-answer.md).
+Amends: the `add_connection_point` operation of [0138](0138-assistants-build-diagrams-like-a-person-through-one-implementation-behind-the-cli-and-the-mcp-server.md).
 Superseded by: none
 
 ## Context

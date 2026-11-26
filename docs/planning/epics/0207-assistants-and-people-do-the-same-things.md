@@ -13,5 +13,5 @@ A person and an assistant can do the same things and differ only in how: one ele
 - [ ] Tests, the tool descriptions, the skill and the changelog for each change.
 
 ## Notes
-- Done under 0206: a note's file name is made by the application from the label and the end of the element's id, and the tool makes every id (an operation names what it makes with a handle that lives for one call, [ADR 0199](../../decisions/0199-the-tool-makes-every-id-and-an-operation-names-what-it-makes-with-a-handle.md)).
+- Done under 0206: a note's file name is made by the application from the label and the end of the element's id, and the tool makes every id (an operation names what it makes with a handle that lives for one call, [ADR 0138](../../decisions/0138-assistants-build-diagrams-like-a-person-through-one-implementation-behind-the-cli-and-the-mcp-server.md)).
 - An accepted outlier: a file made by hand outside the application.
