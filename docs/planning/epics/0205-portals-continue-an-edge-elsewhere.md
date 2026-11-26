@@ -17,17 +17,18 @@ A complex diagram becomes criss-crossed. A **portal** lets an edge go in at one 
 - **The gap:** 60 units by default, 30 on each side of the middle of the edge (decided 2026-11-26). When an element moves, the two positions stay as they are, measured from the source, until the person changes or removes the portal; an edge that becomes too short for its gap is drawn whole.
 - **The number:** automatic, from the order of the portalled edges in the file, and the person can type another. A diagnostics check reports duplicate numbers (decided 2026-11-26).
 - **An edge label** that falls in the hidden middle is left to the person, at most a diagnostics warning (decided 2026-11-26).
-- **A portal is only a way of drawing** (decided 2026-11-26). Behind the scenes a portalled edge is a whole edge: the layout check, crossings, compare, search, review and the legend all see it whole. A layout where the edge crosses nothing is still better than one where a portal hides the crossing. The legend carries the edge's style, which means something; a portal does not.
-- **Portal points, perhaps:** a place that carries a bunch of connections to another place, between the same two points, teleporting many edges at once. To be mocked and checked.
+- **A portal is only a way of drawing** (decided 2026-11-26). Behind the scenes a portalled edge is a whole edge: the layout check, crossings, compare, search, review and the legend all see it whole. The legend carries the edge's style, which means something; a portal does not.
+- **A portal costs half a point in the layout score** (decided 2026-11-26): a crossing is -1, an edge redirected so it crosses nothing is 0, a portalled edge is -0.5, even when nothing visible crosses it. So a portal is the last option to improve a diagram: an assistant routes and moves first and cuts a portal only when that is not enough. Reading this as: the layout check judges the drawn parts of a portalled edge and adds the 0.5 for the portal, so a crossing a portal hides no longer counts as -1.
+- **The assistant tools** may set a portal, as that last option, and keep one when they edit or route an edge.
+- **Animation:** an animated edge runs along the edge as one thing and the hidden part is not drawn (decided 2026-11-26). A pulse that jumps across the gap smoothly and at once is real work and not in the first version.
 
 ## Not doing
+- **Portal points** (a place that carries a bunch of connections to another place, teleporting many edges at once): not now. If a use case turns up, it gets its own design round. The mock-up has one reading of it.
 - **Stacked layers of edges:** showing and hiding visibility sets already is that.
 - **Line hops** (a small hop where two lines cross): can be sketched as a complement, but the maintainer rarely likes the result.
 
 ## Open questions
-- Whether portal points are wanted at all (see the bullet above; the mock-up has one reading of them). Leaning: leave them out of the first version.
-- The assistant tools: whether an assistant can set and read a portal, or only keeps it when it edits or routes an edge (it must not lose it).
-- What an animated edge does across the gap.
+- The layout score: that a hidden crossing no longer counts (see the bullet above) is to be confirmed with the maintainer.
 - Format: an additive field on the edge (positions from the source, an optional typed number), with `docs/file-format.md` changing with it.
 - The relay bus of [0065](later/0065-bus-relay-node.md) is a different idea and stays parked; it may turn out to need nothing once portals exist.
 
@@ -35,6 +36,6 @@ A complex diagram becomes criss-crossed. A **portal** lets an edge go in at one 
 - [x] First sheet: [portals-on-a-real-diagram.html](../../experiments/portals-on-a-real-diagram.html), built by `docs/experiments/build-portals-on-a-real-diagram.mjs` from the Meridian Rail landscape of the gallery: six portals cut where edges cross edges or run across elements, drawn with a tilde and with an oval, light and dark, with a zoom. Edges are drawn straight there; still to mock are step and curved edges on it and the other tasks below.
 - [x] Second sheet, same page (rebuilt by the same script): straight, step and curved edges on the Meridian Rail landscape, each as it is and with portals cut; toggles for the mark (tilde or oval) and the theme, plus a zoom; hovering a mark draws the whole edge dashed; line hops as a sketch; a gap-setting demo (two sliders, clamped, and an Add portals button, which in the mock cuts at the first crossing where the decision is the middle of the edge); and one reading of a portal point. Not mocked: the drag handles on the canvas, a number typed by the person, how a label moves.
 - [x] Look at the sheet and decide the mark and the colour: no colour coding, both marks by preference (ADR 0200). Finding from it: on step and curved edges the crossings pile up along an edge, so the cut grows to 230 to 270 units (on straight edges 76 to 180). Decided 2026-11-26: one portal per edge or none, and the person sets the two ends for a bigger gap. Add portals cuts at the middle with a fixed gap and the person places it.
-- [ ] Settle the rest of the Open questions (portal points, the assistant tools, animation), try it with real diagrams. At the end, one ADR for the feature (the marks and their preference, matching by number, one portal per edge, the stored field), replacing [ADR 0200](../../decisions/0200-portal-ends-are-matched-by-a-number-and-drawn-as-a-tilde-or-an-oval.md).
+- [ ] Settle the layout score question, try it with real diagrams. At the end, one ADR for the feature (the marks and their preference, matching by number, one portal per edge, the stored field), replacing [ADR 0200](../../decisions/0200-portal-ends-are-matched-by-a-number-and-drawn-as-a-tilde-or-an-oval.md).
 - [ ] Implement: the field, the drawing, the mark preference (tilde or oval), the hover and selection, the exports, the panel, the tools and guidance, `docs/file-format.md`.
 - [ ] An example ([ADR 0151](../../decisions/0151-every-visible-feature-has-an-example-diagram.md)) and the changelog.
