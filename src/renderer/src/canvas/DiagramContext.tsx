@@ -125,7 +125,7 @@ export interface DiagramContextValue {
   portalMark?: PortalMarkKind
   portalNumbers?: ReadonlyMap<string, number>
   edgeLengths?: Map<string, () => number>
-  // See ADR 0065 — replaces the current selection with every element of one
+  // Replaces the current selection with every element of one
   // type. Exposed here so each node type's own right-click context menu
   // can offer "Select all entities"/"...containers"/etc. without Canvas.tsx
   // having to build every node's context menu itself.

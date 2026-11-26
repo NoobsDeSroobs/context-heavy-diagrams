@@ -189,7 +189,7 @@ function LineNode({ id, data, selected }: NodeProps): React.JSX.Element {
             ]),
         // Reachable via any point since right-clicking the line's own body
         // (not a point) skips a menu entirely — it adds a point immediately
-        // instead (onPathContextMenu below). See ADR 0065.
+        // instead (onPathContextMenu below).
         {
           label: 'Select all lines',
           separatorBefore: isEndpoint,

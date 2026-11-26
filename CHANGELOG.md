@@ -25,7 +25,7 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 - **The standard edge respects the routing type.** A legend line can now carry a routing type (straight, step, smoothstep, curved): picking a line from an edge copies it, the legend's Routing choice sets it, and new edges drawn with that line are laid out that way. A line without one, or a preset, no longer loses the routing set in the preferences ([ADR 0196](docs/decisions/0196-new-edges-follow-a-line-of-the-diagrams-legend.md)).
 - **An edge bent through waypoints no longer vanishes while part of it is in view.** The canvas draws only what is in the window, and judged an edge by the box round its two ends; an edge that dipped far outside that box, or swung past its waypoints, disappeared when its ends left the window. While such an edge reaches into the window, everything is now drawn. An edge that swings far outside its ends with no waypoints is not covered yet (see docs/known-issues.md).
-- **Edges no longer drift away from their elements when you zoom.** The gap grew with every zoom until the element left the window and came back; the connection points are now measured again once the zoom rests ([ADR 0129](docs/decisions/0129-connection-handles-keep-a-minimum-screen-size.md)).
+- **Edges no longer drift away from their elements when you zoom.** The gap grew with every zoom until the element left the window and came back; the connection points are now measured again once the zoom rests.
 - **A double-click on a behaviour or an edge opens its label for writing**, empty or not. Before, a decision or a parallel shape with no label had nothing to click.
 - **Dragging an edge from an unselected shape no longer wires the selected one too.** After moving A, dragging from B onto A gave an edge from A to A as well. Only a drag that starts from a selected shape now wires the whole selection, and a shape is never wired to itself ([ADR 0059](docs/decisions/0059-multi-connection-line.md)).
 
@@ -167,7 +167,7 @@ What changed for people using the tool, one entry per minor or major release. Th
 - **The size of the Ctrl-hover card can be set** under Preferences: its width and the height beyond which it is trimmed (it was fixed at 340 by 260 pixels, which is still the default). A longer note shows more of its text on a bigger card. ([ADR 0156](docs/decisions/0156-the-ctrl-hover-cards-size-is-a-preference.md))
 - **Holding Ctrl (Cmd on a Mac) over an element now names its icons** in the card, one per corner (`top left: server`), so an icon can be read and not only recognised. Tags and icons are on lines of their own, named and colour-coded (required tags violet and first, other tags sky blue, icons fuchsia), so a tag and an icon are not taken for each other. An element whose only content is icons gets the card too. ([ADR 0155](docs/decisions/0155-the-ctrl-hover-card-names-an-elements-icons.md))
 - **The window title and the Notes panel now show unsaved changes.** The title reads `<file name> — Context-Heavy Diagrams`, with a dot in front while the diagram or one of its notes is not on disk (it used to say only the app's name). The Notes panel shows **Unsaved** beside the note's name while its edits are only in memory, and **Saved** once the file has them. A note is still written when the diagram is saved, not when the panel closes. ([ADR 0154](docs/decisions/0154-unsaved-changes-show-in-the-window-title-and-the-notes-panel.md))
-- **Drag a number field's label to change its value** in the properties panel and the Preferences panel (stroke width, font size, opacity, animation speed and the rest): drag sideways, one step per pixel, Shift for fine and Ctrl for coarse. The cursor hides and the drag carries on past the window edge; one drag is one undo step, and a plain click still focuses the box for typing. ([ADR 0152](docs/decisions/0152-drag-a-number-fields-label-to-change-it.md))
+- **Drag a number field's label to change its value** in the properties panel and the Preferences panel (stroke width, font size, opacity, animation speed and the rest): drag sideways, one step per pixel, Shift for fine and Ctrl for coarse. The cursor hides and the drag carries on past the window edge; one drag is one undo step, and a plain click still focuses the box for typing.
 - **A reference for the `chd` command line** ([docs/cli-reference.md](docs/cli-reference.md)): every command, its options and exit codes, how to get `chd` on a machine, and worked examples with their output, including checking a draft or a committed version through a pipe. A test fails when a command, an option or an edit operation is missing from it.
 
 ### Changed
@@ -256,7 +256,7 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 ### Changed
 - A new app icon: Huginn and Muninn, Odin's two ravens, on a tan tile. The drawing is pure vector, so the icon stays sharp at every size.
-- Connection handles stay easy to hit when the canvas is zoomed out. ([ADR 0129](docs/decisions/0129-connection-handles-keep-a-minimum-screen-size.md))
+- Connection handles stay easy to hit when the canvas is zoomed out.
 - The View menu groups the commands for changes under **Changes**.
 
 ### File format

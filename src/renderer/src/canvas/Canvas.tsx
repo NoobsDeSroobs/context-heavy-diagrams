@@ -749,7 +749,7 @@ function CanvasInner(): React.JSX.Element {
     setContextMenu({ x, y, items })
   }, [])
 
-  // Replaces the selection with every element of one type (ADR 0065). Exposed in each type's
+  // Replaces the selection with every element of one type. Exposed in each type's
   // right-click context menu (EntityNode/ContainerNode/TextNode/LineNode/onEdgeContextMenu), not
   // the top menu bar, which has no submenu support. Whole-type only; finer filtering (e.g. "edges
   // with this routing style") is an open question.
@@ -775,7 +775,7 @@ function CanvasInner(): React.JSX.Element {
     [setNodes, setEdges, isVisibleElement]
   )
 
-  // Flips the direction of every edge in `ids` in one action (ADR 0087). reverseEdgeDirection
+  // Flips the direction of every edge in `ids` in one action. reverseEdgeDirection
   // (edges/edgeDirectionSets.ts) is a pure Edge -> Edge that swaps endpoints and handles and the
   // direction-tied visuals (points order, labelPosition); mapping it over N edges under one
   // snapshot makes the batch one undo step. With a direction set active, each edge's per-set record
@@ -825,7 +825,7 @@ function CanvasInner(): React.JSX.Element {
       const clickPoint = rfInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY })
       // Right-clicking an edge that's part of a multi-selection reverses the
       // whole selection; right-clicking an unselected edge acts on just that
-      // one and leaves the selection alone (ADR 0087).
+      // one and leaves the selection alone.
       const reverseTargetIds =
         edge.selected && edges.some((e) => e.selected && e.id !== edge.id)
           ? edges.filter((e) => e.selected).map((e) => e.id)

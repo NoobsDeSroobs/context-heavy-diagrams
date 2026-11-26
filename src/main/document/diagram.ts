@@ -39,7 +39,7 @@ async function recordOpenedOrSaved(path: string): Promise<void> {
 // Diagram files are a single file (.chd, plain JSON underneath) — see
 // docs/decisions/0005-diagram-identity-and-linking.md. Nothing about
 // opening/saving depends on foldering at all; that's the whole point of
-// this model over the folder-based one it replaced (ADR 0003).
+// this model over the folder-based one it replaced.
 const FILTERS = [{ name: 'Diagram', extensions: ['chd'] }]
 
 // The `iconPacks` list a save writes (ADR 0188): the packs the diagram's icons name, with what this

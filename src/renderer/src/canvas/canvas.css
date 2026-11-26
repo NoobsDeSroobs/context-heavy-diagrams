@@ -28,7 +28,7 @@
   font-family: var(--diagram-font-family, inherit);
 }
 
-/* See ADR 0038: React Flow's default resize handles/lines are too small to
+/* React Flow's default resize handles/lines are too small to
    reliably grab (5x5px corner dots, a 1px-wide invisible grab corridor
    along each edge). Scoped under .canvas-view-flow so this cleanly beats
    the library's own same-specificity `.react-flow__resize-control...`

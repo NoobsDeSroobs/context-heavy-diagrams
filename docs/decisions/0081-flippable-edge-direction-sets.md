@@ -134,7 +134,7 @@ Consequence: **switching the displayed set never churns the edges in git** —
 only the `activeEdgeDirectionSetId` line changes. Without this, every edge's
 source/target would flip in the file every time someone glanced at the
 diagram in the other reading. This matters because git-diff-friendliness is
-a core property of the format ([ADR 0003](0003-diagram-persistence-v1.md)).
+a core property of the format.
 
 ### In memory: live fields are the active set; `directionSets` is read lazily
 

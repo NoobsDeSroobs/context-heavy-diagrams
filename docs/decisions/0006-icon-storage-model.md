@@ -11,7 +11,7 @@ Two icon sources, both represented explicitly (not inferred):
 - **Built-in**: bundled with the app itself, referenced by a stable id (e.g. `"tabler:server"`). Centrally stored — not copied per-diagram, not something the app writes anywhere.
 - **Custom**: uploaded by the user for a specific diagram, copied into that diagram's sibling `assets/` folder (per ADR 0005's convention) and referenced by a relative path, same as any other asset reference. Requires the diagram to already be saved (there's no sibling-folder location to copy into otherwise).
 
-Schema (additive to `DiagramNode.data`, per ADR 0003):
+Schema (additive to `DiagramNode.data`):
 ```ts
 type IconRef =
   | { source: 'builtin'; id: string }

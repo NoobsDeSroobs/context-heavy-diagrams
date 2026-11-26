@@ -15,7 +15,7 @@ Rotatable nodes never have edges attached, so the edge-misattachment failure mod
 
 No `'default'` type kept for backward compatibility with `examples/hello-world/diagram.json` — explicit user call: break it now while it's cheap, rather than carry a legacy type alias that could quietly cause future feature/styling divergence. The example gets regenerated with `type: "shape"` once `ShapeNode` exists.
 
-**Schema** (additive to v1 per ADR 0003): `DiagramNode` gains optional `size: { width: number; height: number }` (mirrors React Flow's native `width`/`height`, which `NodeResizer` writes to directly — mapped in `toDiagramFile`/`fromDiagramFile`) and optional `rotation: number` (degrees; no native React Flow slot, so lives in `data.rotation` at runtime and gets hoisted to a top-level field on save, matching the brief's draft schema).
+**Schema** (additive to v1): `DiagramNode` gains optional `size: { width: number; height: number }` (mirrors React Flow's native `width`/`height`, which `NodeResizer` writes to directly — mapped in `toDiagramFile`/`fromDiagramFile`) and optional `rotation: number` (degrees; no native React Flow slot, so lives in `data.rotation` at runtime and gets hoisted to a top-level field on save, matching the brief's draft schema).
 
 ## Alternatives considered
 - **One node type, rotation allowed with connection points**: rejected — this is the option that reintroduces the edge-misattachment problem the whole split exists to avoid.

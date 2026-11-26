@@ -1,10 +1,10 @@
 # 0107: Remove the anchor placeholder node — an edge dropped on empty canvas spawns an Entity
 
 ## Status
-Accepted (2026-10-15). Supersedes [ADR 0015](0015-anchor-placeholder-node.md).
+Accepted (2026-10-15). Replaces an earlier design that added a placeholder node.
 
 ## Context
-ADR 0015 added `AnchorNode`, a 14px unlabeled placeholder, so that an edge
+An earlier decision added `AnchorNode`, a 14px unlabeled placeholder, so that an edge
 dragged (or re-dragged by its endpoint) onto empty canvas had a real node to
 point at while a popup asked "Entity / Container?". Dismissing the popup left
 the anchor behind as a persisted, dangling node.
@@ -62,7 +62,7 @@ the lock/metadata rules, CSS, and the format docs.
   being removed.
 - **Don't auto-enter label editing.** Rejected: nearly every diagramming tool
   does it, and an unlabeled-looking default "Entity" box is easy to leave behind.
-- **A truly free-floating edge endpoint** (the other alternative ADR 0015
+- **A truly free-floating edge endpoint** (the other alternative the earlier decision
   rejected). Still rejected for the same reason: it needs a second code path
   for every reader of an edge's endpoints.
 

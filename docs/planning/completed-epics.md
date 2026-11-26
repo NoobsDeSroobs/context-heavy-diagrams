@@ -6,7 +6,7 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0001: Bare Electron + React shell
 
-*Done.* A running Electron app with a React + TypeScript renderer, an embedded React Flow canvas (pan/zoom, basic node/edge creation and dragging), and save/load of a single diagram.json to/from disk via IPC. ADR: [0003](../decisions/0003-diagram-persistence-v1.md).
+*Done.* A running Electron app with a React + TypeScript renderer, an embedded React Flow canvas (pan/zoom, basic node/edge creation and dragging), and save/load of a single diagram.json to/from disk via IPC.
 
 ### 0002: Resize and rotate
 
@@ -58,11 +58,11 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0014: Dragging an edge into empty space creates a shape
 
-*Done.* Dragging a connection from a shape's handle and releasing it over empty canvas (instead of onto another node) offers to create a new shape at the drop point and connects the edge to it. ADR: [0015](../decisions/0015-anchor-placeholder-node.md).
+*Done.* Dragging a connection from a shape's handle and releasing it over empty canvas (instead of onto another node) offers to create a new shape at the drop point and connects the edge to it.
 
 ### 0015: Migrate to single-file diagram format
 
-*Done.* Rework the already-shipped folder-based persistence (epics 0001/0002/0012, iterated on twice already — see ADR 0003's two corrections) to match the identity/linking model decided in docs/decisions/0005-diagram-identity-and-linking.md: a diagram is a single… ADR: [0005](../decisions/0005-diagram-identity-and-linking.md).
+*Done.* Rework the already-shipped folder-based persistence (epics 0001/0002/0012, iterated on twice already) to match the identity/linking model decided in docs/decisions/0005-diagram-identity-and-linking.md: a diagram is a single… ADR: [0005](../decisions/0005-diagram-identity-and-linking.md).
 
 ### 0018: Selection and keyboard shortcuts
 
@@ -78,7 +78,7 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0023: Custom metadata bucket
 
-*Superseded.* A free-form, arbitrary-JSON metadata dict on nodes, edges, and the diagram itself — separate from the fields the tool already understands and manages (data.label/icons/details/linkedDiagram) — viewable and editable both through the raw .chd file and from the… ADRs: [0022](../decisions/0022-unified-tag-and-metadata-system.md), [0009](../decisions/0009-custom-metadata-bucket.md).
+*Superseded.* A free-form, arbitrary-JSON metadata dict on nodes, edges, and the diagram itself — separate from the fields the tool already understands and manages (data.label/icons/details/linkedDiagram) — viewable and editable both through the raw .chd file and from the… ADR: [0022](../decisions/0022-unified-tag-and-metadata-system.md).
 
 ### 0024: Multi-diagram tabs or windows
 
@@ -114,7 +114,7 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0033: Edge reconnection
 
-*Done.* Grab either end of an existing edge and drag it to a different attachment point, while the other end stays put — so a connection that made sense on one side of a shape (e.g. "left") can be moved to a better-fitting side (e.g. "top") after the diagram gets… ADR: [0015](../decisions/0015-anchor-placeholder-node.md).
+*Done.* Grab either end of an existing edge and drag it to a different attachment point, while the other end stays put — so a connection that made sense on one side of a shape (e.g. "left") can be moved to a better-fitting side (e.g. "top") after the diagram gets…
 
 ### 0034: Unified tag and metadata system
 
@@ -158,7 +158,7 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0044: Larger, more forgiving resize-handle hit targets
 
-*Done.* Make grabbing a shape or container's resize handle easier — without necessarily changing how small/unobtrusive the handle looks, just how forgiving it is to actually click. ADR: [0038](../decisions/0038-resize-handle-hit-target-size.md).
+*Done.* Make grabbing a shape or container's resize handle easier — without necessarily changing how small/unobtrusive the handle looks, just how forgiving it is to actually click.
 
 ### 0045: Edge label position slider
 
@@ -174,7 +174,7 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0048: Left-side tool sidebar
 
-*Cancelled.* A dedicated left-side sidebar for canvas-level tools — extending what's already there (zoom, fit-to-screen, lock-edits) with more, e.g. a toggle for the legend view (epic 0037) once that exists, "and things." ADRs: [0041](../decisions/0041-cancel-left-sidebar-reuse-popup-pattern.md), [0039](../decisions/0039-top-menu-bar.md).
+*Cancelled.* A dedicated left-side sidebar for canvas-level tools — extending what's already there (zoom, fit-to-screen, lock-edits) with more, e.g. a toggle for the legend view (epic 0037) once that exists, "and things." ADR: [0039](../decisions/0039-top-menu-bar.md).
 
 ### 0049: Top menu bar (File / Edit / View / Help)
 
@@ -226,7 +226,7 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0066: Decouple code documentation and ADRs from epic numbering
 
-*Done.* Remove references to epic numbers from in-code documentation (comments) and from ADRs — both should be able to stand on their own, understandable without needing to cross-reference docs/planning/epics/NNNN-.md for context. ADR: [0070](../decisions/0070-decouple-docs-from-epic-numbering.md).
+*Done.* Remove references to epic numbers from in-code documentation (comments) and from ADRs — both should be able to stand on their own, understandable without needing to cross-reference docs/planning/epics/NNNN-.md for context.
 
 ### 0067: DiagramContext re-renders the whole diagram on every rapid setting change
 
@@ -278,11 +278,11 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0082: Select all elements of a type
 
-*Done.* Let the user select every element of a given type (e.g. "all edges") in one action, so a bulk style/property change can be applied to all of them at once via the existing property panel — instead of shift-clicking each one individually. ADR: [0065](../decisions/0065-select-all-of-type.md).
+*Done.* Let the user select every element of a given type (e.g. "all edges") in one action, so a bulk style/property change can be applied to all of them at once via the existing property panel — instead of shift-clicking each one individually.
 
 ### 0083: Align/distribute selected elements
 
-*Done.* An Edit-menu action to arrange every selected element into an evenly-spaced column or row in one click, instead of manually dragging each one into position. ADR: [0058](../decisions/0058-align-and-distribute-selected.md).
+*Done.* An Edit-menu action to arrange every selected element into an evenly-spaced column or row in one click, instead of manually dragging each one into position.
 
 ### 0084: Multi-connection-line + reverse edge direction
 
@@ -314,7 +314,7 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0092: Epic subfolders
 
-*Done.* ADR 0061 established an x-prefix filename convention for completed epics but it was never rolled out. The user decided (2026-08-30) to use a docs/planning/epics/completed/ subfolder instead. ADRs: [0061](../decisions/0061-completed-epic-filename-marker.md), [0076](../decisions/0076-completed-epics-subfolder.md), [0002](../decisions/0002-planning-structure.md).
+*Done.* An x-prefix filename convention for completed epics was never rolled out. The user decided (2026-08-30) to use a docs/planning/epics/completed/ subfolder instead. ADR: [0002](../decisions/0002-planning-structure.md).
 
 ### 0093: Drill-down search across linked diagrams
 
@@ -362,7 +362,7 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0113: Reverse direction on an edge selection
 
-*Done.* Let the user flip the direction of several edges at once: select a group of edges (by any existing means), then reverse all of them in one action — instead of right-clicking "Reverse direction" on each edge in turn. ADR: [0087](../decisions/0087-reverse-edge-direction-on-selection.md).
+*Done.* Let the user flip the direction of several edges at once: select a group of edges (by any existing means), then reverse all of them in one action — instead of right-clicking "Reverse direction" on each edge in turn.
 
 ### 0115: File/app version compatibility and data-loss safety
 
@@ -406,7 +406,7 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0135: Remove the placeholder anchor node
 
-*Done.* Remove the anchor placeholder node as a user-facing feature. ADRs: [0107](../decisions/0107-remove-anchor-placeholder-node.md), [0015](../decisions/0015-anchor-placeholder-node.md), [0021](../decisions/0021-connection-point-removal-blocked.md), [0059](../decisions/0059-multi-connection-line.md), [0029](../decisions/0029-backward-compatible-loading-is-a-standing-rule.md), [0101](../decisions/0101-shape-to-entity-rename.md).
+*Done.* Remove the anchor placeholder node as a user-facing feature. ADRs: [0107](../decisions/0107-remove-anchor-placeholder-node.md), [0021](../decisions/0021-connection-point-removal-blocked.md), [0059](../decisions/0059-multi-connection-line.md), [0029](../decisions/0029-backward-compatible-loading-is-a-standing-rule.md), [0101](../decisions/0101-shape-to-entity-rename.md).
 
 ### 0136: Associate .chd files with the app (double-click to open)
 
@@ -517,7 +517,7 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0172: Drag to adjust number fields
 
-*Done* (merged; in the next release, 0.8.0). Dragging the label of a number or slider field changes its value: one step per pixel, Shift for fine and Ctrl for coarse, the cursor hidden by pointer lock so a long drag does not run out of screen, one undo step per drag, and a mixed selection set to the one value. It applies to every `NumberField` and `SliderField` and to the Isolate opacity preference. ADR: [0152](../decisions/0152-drag-a-number-fields-label-to-change-it.md). Left out: the zoom limits, the connection-point maximum in Diagram settings and the gravity preset values, which are bare inputs outside `NumberField`.
+*Done* (merged; in the next release, 0.8.0). Dragging the label of a number or slider field changes its value: one step per pixel, Shift for fine and Ctrl for coarse, the cursor hidden by pointer lock so a long drag does not run out of screen, one undo step per drag, and a mixed selection set to the one value. It applies to every `NumberField` and `SliderField` and to the Isolate opacity preference. Left out: the zoom limits, the connection-point maximum in Diagram settings and the gravity preset values, which are bare inputs outside `NumberField`.
 
 ### 0173: Style changes in the change review
 

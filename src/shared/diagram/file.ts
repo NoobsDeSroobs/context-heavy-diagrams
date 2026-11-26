@@ -1,4 +1,4 @@
-// v1 diagram file schema. See docs/decisions/0003-diagram-persistence-v1.md —
+// v1 diagram file schema (docs/file-format.md) —
 // later work adds fields here (style, notes, linkedDiagram) additively,
 // not as a rewrite. `size`/`rotation` (see ADR 0004), `icons` (see ADR 0006).
 

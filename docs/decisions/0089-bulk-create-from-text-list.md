@@ -21,7 +21,7 @@ Scoped to **Shape and Container only** for v1 — Text and Line are left for lat
 
 **Node data**: identical per-node defaults to `addShapeNode`/`addContainerNode` (`preferences.defaultStyles.*`, `seedMetadata(requiredTags)`), `zIndex` assigned via `nextZIndex` recomputed against the array as it grows within the same batch so stacking order among the new nodes is stable and deterministic (first line = lowest zIndex).
 
-**Undo**: one `pushSnapshot()` before the batch, one `setNodes` call — the whole paste is a single undo step, matching `reverseEdges`' established batch pattern (see [ADR 0087](0087-reverse-edge-direction-on-selection.md)).
+**Undo**: one `pushSnapshot()` before the batch, one `setNodes` call — the whole paste is a single undo step, matching `reverseEdges`' established batch pattern.
 
 **No auto-parenting**: new nodes always land top-level at the viewport center, same as the existing single-click `addShapeNode`/`addContainerNode` (not the drag-drop variant, which reparents into whatever container the drop point lands in). Dropping a batch into a specific container is left as a manual follow-up drag (multi-select supports dragging a group together) rather than new logic in v1.
 

@@ -282,7 +282,7 @@ export function useMenus(inputs: MenuInputs): {
       },
       {
         // Reaches the same action as the edge context menu's "Reverse
-        // direction" (ADR 0087), for a selection made by box-select or
+        // direction", for a selection made by box-select or
         // "Select all edges" where a right-click on one edge isn't the
         // natural gesture.
         label:

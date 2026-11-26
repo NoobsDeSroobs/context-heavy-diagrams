@@ -50,7 +50,7 @@ export interface EdgeStyle extends FontStyle {
 }
 ```
 
-`DiagramNode` gains `style?: NodeStyle`. `DiagramEdge` gains `style?: EdgeStyle`. Both additive per the schema's established versioning approach (ADR 0003) — absent `style` means "use the current hardcoded look," same as every other optional field.
+`DiagramNode` gains `style?: NodeStyle`. `DiagramEdge` gains `style?: EdgeStyle`. Both additive per the schema's established versioning approach — absent `style` means "use the current hardcoded look," same as every other optional field.
 
 **`textAlign` lives on `NodeStyle`, not `EdgeStyle`** — an edge label is a small floating text near the line, not multi-line block text; alignment doesn't meaningfully apply the way it does to a shape's label. `FontStyle` is factored out as the shared subset both actually need (`fontSize`/`fontColor`/`fontWeight`), not force-unified into one identical interface.
 

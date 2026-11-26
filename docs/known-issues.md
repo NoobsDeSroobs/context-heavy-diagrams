@@ -828,7 +828,7 @@ Fixed by the paste rework described under "Pasting a copied child-of-a-container
 
 ## Connection handles are hard to hit when zoomed far out
 
-**Status:** Solved (2026-10-22), [ADR 0129](decisions/0129-connection-handles-keep-a-minimum-screen-size.md)
+**Status:** Solved (2026-10-22)
 
 **Symptom:** on a large diagram zoomed far out, the point to start an edge drag from is too small to click.
 
@@ -859,7 +859,7 @@ Fixed by the paste rework described under "Pasting a copied child-of-a-container
 
 **Symptom:** after zooming, the line of an edge starts and ends a distance from its element instead of at the connection point, the larger the further the zoom has moved. Panning so the elements leave the window and return draws them right.
 
-**Cause:** an edge ends on the outer rim of its handle, and React Flow measures a handle once, when its node is measured. The handle is sized with the zoom (`max(6px, 10px / zoom)`, [ADR 0129](decisions/0129-connection-handles-keep-a-minimum-screen-size.md)), so after a zoom the measured rim is stale. A node that leaves the window and mounts again (`onlyRenderVisibleElements`, [ADR 0073](decisions/0073-react-flow-render-performance-round-2.md)) is measured at the new zoom, which is why that "fixed" it.
+**Cause:** an edge ends on the outer rim of its handle, and React Flow measures a handle once, when its node is measured. The handle is sized with the zoom (`max(6px, 10px / zoom)`), so after a zoom the measured rim is stale. A node that leaves the window and mounts again (`onlyRenderVisibleElements`, [ADR 0073](decisions/0073-react-flow-render-performance-round-2.md)) is measured at the new zoom, which is why that "fixed" it.
 
 **Fix:** `useZoomedConnectionHandles` measures every node again once the zoom has rested for 50 ms and the handle size has changed. During the zoom itself the gap is still off.
 
@@ -900,3 +900,20 @@ Fixed by the paste rework described under "Pasting a copied child-of-a-container
 **Still open:** an edge with no waypoints that swings far outside its ends (a step route that loops round an element) is not covered, and the padded box is an estimate of where a curve goes (the ends are taken at the middle of their boxes, and the straight lead-in at an end is not counted). If either shows up, the next step is to measure the real path of the edges that matter, or to cull edges in the app and leave React Flow's culling to the nodes.
 
 **References:** `src/renderer/src/canvas/edgeCulling.ts`, `src/renderer/src/canvas/Canvas.tsx` (`waypointEdgeOffScreen`), [ADR 0073](decisions/0073-react-flow-render-performance-round-2.md)
+
+---
+
+## `npm install` left no Electron binary after the upgrade to Electron 42 and later
+
+**Status:** Solved (2026-10)
+**Found:** 2026-10, upgrading Electron 39 to 43 to clear an `npm audit` finding in `extract-zip`
+
+**Symptom:** `electron-vite` stopped with `Error: Electron uninstall` after the upgrade; the open and save dialogs also began in the Downloads folder.
+
+**Cause:** Electron 42 dropped its `postinstall` binary download, so the binary is fetched on demand, which `electron-vite` does not trigger. Electron 43 made `showOpenDialog` and `showSaveDialog` default to Downloads when no path is given.
+
+**Fix:** `package.json` runs `install-electron` in its own `postinstall`, and the last opened folder is kept in Preferences (`lastOpenedDirectory`) and passed as `defaultPath`. If the binary is missing after an `npm audit fix` or an Electron update: `node node_modules/electron/install.js`.
+
+**Lesson:** read the breaking-changes notes of every Electron version crossed before running `npm audit fix --force`, not after.
+
+**References:** `package.json` (`postinstall`)

@@ -5,7 +5,7 @@ Decided and implemented (2026-09-16).
 
 ## Context
 
-Since [ADR 0003](0003-diagram-persistence-v1.md), `DiagramFile` has carried a top-level `viewport: { x, y, zoom }` — the canvas's pan/zoom at the moment of the last save, restored on the next open. It was already excluded from undo/redo history (panning/zooming isn't a content edit worth undoing), but it was still written on every save.
+The `.chd` `DiagramFile` carried a top-level `viewport: { x, y, zoom }` — the canvas's pan/zoom at the moment of the last save, restored on the next open. It was already excluded from undo/redo history (panning/zooming isn't a content edit worth undoing), but it was still written on every save.
 
 In practice this meant a save triggered by a real content edit — the only time a save happens, since panning/zooming alone never marks the diagram dirty — could still carry an unrelated `viewport` line in the diff if the user had also panned or zoomed during that editing session. For a tool whose stated design goal is clean, meaningful git diffs, that's a real cost for a feature that is purely cosmetic (it has no effect on what the diagram *is*).
 

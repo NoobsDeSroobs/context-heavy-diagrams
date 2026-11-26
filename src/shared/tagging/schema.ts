@@ -1,4 +1,4 @@
-// Tag/metadata schema — see ADR 0022 (supersedes ADR 0009). One
+// Tag/metadata schema — see ADR 0022. One
 // `metadata` bag per node/edge, entries either free (human-added, `lock`
 // absent) or diagram-required (see `RequiredTagDefinition` below).
 // `lockedEditable`: diagram-required, key can't be removed, value can
