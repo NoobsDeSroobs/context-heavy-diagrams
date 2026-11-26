@@ -4,10 +4,10 @@
 Accepted (2026-11-09). Builds on [ADR 0139](0139-releases-built-by-ci-from-a-version-tag.md) and [ADR 0165](0165-the-release-installs-its-own-installer-and-ships-the-licence.md).
 
 ## Context
-The release workflow published a Windows installer only; Linux and macOS users had to build from source. Nobody on the project has a Mac, and Linux has not been tried on real hardware either. Holding the builds back until someone has tested them means nobody on those systems can try the tool, and so nobody can report that it works or does not.
+The release workflow published a Windows installer only; Linux and macOS users had to build from source. Nobody on the project had a Mac, and Linux had not been tried on real hardware either. Holding the builds back until someone has tested them means nobody on those systems can try the tool, and so nobody can report that it works or does not.
 
 ## Decision
-1. **Publish them, and say what they are.** The release workflow builds a Linux AppImage and deb and a macOS DMG and attaches them to the release. Each asset's display label, the release notes and the README say they have not been tested on real hardware, and ask for reports.
+1. **Publish them, and say what they are.** The release workflow builds a Linux AppImage and deb and a macOS DMG and attaches them to the release. Each asset's display label, the release notes and the README say how far the build has been tried on real hardware, no further than it has, and ask for reports. A build nobody has run says it is not tested; one that has been installed and lightly used says so.
 2. **They never block the Windows release.** The Linux and macOS jobs start after the Windows job has published and only add files, so a failure in an untested build cannot stop the tested one; a failed job is re-run from the Actions tab.
 3. **CI checks what it can without a display.** `scripts/smoke-packaged.mjs` checks that the licence files are there and that `chd --version` prints the package version, which starts the program as Node. On macOS it also checks that the app holds both architectures and that its signature is valid.
 4. **Linux: AppImage and deb.** Snap needs snapcraft in the build; it stays in `electron-builder.yml` for a local build and is left out of CI.
@@ -22,6 +22,6 @@ The release workflow published a Windows installer only; Linux and macOS users h
 - **A single job that publishes everything.** An untested macOS build could stop the Windows installer from being published.
 
 ## Consequences
-- Nobody has run the Linux or macOS builds. Likely first-run problems are not handled: a recent Ubuntu may need `libfuse2` for the AppImage or refuse Electron's sandbox, and an Intel Mac is covered only by the universal build's other half.
-- With a Developer ID certificate and notarisation, remove `identity` and turn the hardened runtime back on in `electron-builder.yml`; the "not tested" label stays until someone has run the build.
+- The builds are only as tested as their labels say. Likely first-run problems are not handled: a recent Ubuntu may need `libfuse2` for the AppImage or refuse Electron's sandbox, and an Intel Mac is covered only by the universal build's other half.
+- With a Developer ID certificate and notarisation, remove `identity` and turn the hardened runtime back on in `electron-builder.yml`; the label moves with what has been tried, not with the signing.
 - The `chd` command is not on the PATH of a Linux or macOS install ([ADR 0162](0162-the-installer-can-put-chd-on-the-path.md)); macOS has no launcher next to the app at all.

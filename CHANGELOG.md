@@ -2,6 +2,12 @@
 
 What changed for people using the tool, one entry per minor or major release. The reasons are in [docs/decisions/](docs/decisions/); the full history is in `git log`.
 
+## 0.16.0 (unreleased)
+
+### Changed
+
+- **An edge dropped on empty canvas attaches to the new entity by itself.** Drag an edge from an element, or the end of an existing edge, and let go on empty canvas: the new entity's end now attaches to the side that faces the other element and follows it as it moves, instead of always the left point. The end you dragged from keeps its point ([ADR 0200](docs/decisions/0200-a-drop-on-empty-canvas-makes-an-entity-with-an-automatic-end.md)).
+
 ## 0.15.1 (2026-11-26)
 
 ### Fixed
