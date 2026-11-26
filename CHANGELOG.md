@@ -2,6 +2,12 @@
 
 What changed for people using the tool, one entry per minor or major release. The reasons are in [docs/decisions/](docs/decisions/); the full history is in `git log`.
 
+## 0.15.1 (2026-11-26)
+
+### Fixed
+
+- **Undo steps one edit at a time.** Adding an element could leave Undo stuck (reported on macOS), and renaming an element took two Undo presses where the second changed nothing. Each action is now one step.
+
 ## 0.15.0 (2026-11-26)
 
 ### Added

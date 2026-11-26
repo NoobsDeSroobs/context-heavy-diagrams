@@ -4,7 +4,7 @@ Where we are right now: a short pointer, not a log. The backlog is in [docs/plan
 
 ## Status
 
-MVP complete (2026-08-20). v0.2.1 was the first open-source release (2026-10-19). **v0.15.0 is the latest tag (2026-11-26); `package.json` says 0.15.0 until the next version is started.** v0.4.0 (2026-11-03) was the first release with a Windows installer, built by CI from the tag and published on the releases page (unsigned); see [CHANGELOG.md](CHANGELOG.md). v0.3.0 added the review of changes between versions, conformance checks, SVG export and a default font for a diagram. The repository is public; Linux and macOS users build from source.
+MVP complete (2026-08-20). v0.2.1 was the first open-source release (2026-10-19). **v0.15.0 is the latest tag (2026-11-26); 0.15.1 (an Undo fix) is on `release/0.15.1` and untagged until it is merged, and `package.json` says 0.15.1 until the next version is started.** v0.4.0 (2026-11-03) was the first release with a Windows installer, built by CI from the tag and published on the releases page (unsigned); see [CHANGELOG.md](CHANGELOG.md). v0.3.0 added the review of changes between versions, conformance checks, SVG export and a default font for a diagram. The repository is public; Linux and macOS users build from source.
 
 ## Now
 
@@ -32,7 +32,7 @@ Merging, pushing, tagging and anything else on the remote is the maintainer's ow
 - **Editing examples and other `.chd` files:** read and write them with `parseDiagram` and `serializeDiagram` (`src/shared/diagram`), which gives the app's exact format; do not rewrite them with a shell. Check that every note and link path resolves. Several files are CRLF in the working tree and some LF: keep each file's own endings (Prettier's `endOfLine: auto` warns on a mixed file), and use the Edit tool or a pattern that tolerates `
 ?
 `. `grep` over `$(git ls-files)` breaks on file names with spaces.
-- **Versioning:** `0.15.0` is tagged. Next: bump `package.json` and `package-lock.json` to `0.16.0` and open a `0.16.0 (unreleased)` changelog heading, on a commit after the tag ([CLAUDE.md](CLAUDE.md), Releases).
+- **Versioning:** `0.15.0` is tagged; `0.15.1` waits for its merge and tag. Then: bump `package.json` and `package-lock.json` to `0.16.0` and open a `0.16.0 (unreleased)` changelog heading, on a commit after the tag ([CLAUDE.md](CLAUDE.md), Releases).
 - **Assistant guidance still to do:** [0168](docs/planning/epics/0168-teach-assistants-to-reroute-edges.md) (a second trial round after `npm run build:extension`; what to teach about routing).
 - **Left open from loosely attached edges** (the completed entry for 0188 lists them): a mark on an automatic edge end, choosing one end from the menu, the connection-line preview.
 - The product is **Context-Heavy Diagrams**, the repo `NoobsDeSroobs/context-heavy-diagrams`.
