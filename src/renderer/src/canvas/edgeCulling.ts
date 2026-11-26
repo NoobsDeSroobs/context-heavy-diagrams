@@ -13,7 +13,7 @@ export interface Box {
 export interface WaypointEdge {
   // The boxes of the source and target elements.
   ends: Box[]
-  points: { x: number; y: number }[]
+  points: { x: number; y: number; gravity?: number }[]
 }
 
 function overlaps(a: Box, b: Box): boolean {
@@ -29,8 +29,28 @@ function around(boxes: Box[]): Box {
   }
 }
 
-// A curve through a waypoint can swing past it, so the reach is padded.
-const CURVE_MARGIN = 100
+// The room a curve may take beyond its waypoints and ends, however little else says so.
+const MIN_MARGIN = 100
+// A waypoint without a gravity of its own (bendablePath.ts).
+const DEFAULT_GRAVITY = 0.5
+
+// How far a curve can swing past the waypoints: each cubic piece stays inside its control points,
+// which lie a third of a tangent from the point, and a tangent is the span between the neighbours
+// times the gravity. The ends are taken at the middle of their boxes.
+function margin(edge: WaypointEdge): number {
+  const centre = (b: Box): { x: number; y: number } => ({
+    x: (b.x + b.x2) / 2,
+    y: (b.y + b.y2) / 2
+  })
+  const chain = [centre(edge.ends[0]), ...edge.points, centre(edge.ends[edge.ends.length - 1])]
+  let swing = 0
+  for (let i = 1; i < chain.length - 1; i++) {
+    const span = Math.hypot(chain[i + 1].x - chain[i - 1].x, chain[i + 1].y - chain[i - 1].y)
+    const gravity = (chain[i] as { gravity?: number }).gravity ?? DEFAULT_GRAVITY
+    swing = Math.max(swing, (span * gravity) / 3)
+  }
+  return Math.max(MIN_MARGIN, swing)
+}
 
 // True when some edge's waypoints and ends reach into the window while its end elements alone do
 // not, which is when React Flow would leave the edge out.
@@ -40,13 +60,9 @@ export function waypointEdgeHidden(edges: WaypointEdge[], view: Box): boolean {
     const ends = around(edge.ends)
     if (overlaps(ends, view)) return false
     const reach = around([ends, ...edge.points.map((p) => ({ x: p.x, y: p.y, x2: p.x, y2: p.y }))])
+    const room = margin(edge)
     return overlaps(
-      {
-        x: reach.x - CURVE_MARGIN,
-        y: reach.y - CURVE_MARGIN,
-        x2: reach.x2 + CURVE_MARGIN,
-        y2: reach.y2 + CURVE_MARGIN
-      },
+      { x: reach.x - room, y: reach.y - room, x2: reach.x2 + room, y2: reach.y2 + room },
       view
     )
   })

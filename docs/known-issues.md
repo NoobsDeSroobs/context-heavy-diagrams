@@ -895,8 +895,8 @@ Fixed by the paste rework described under "Pasting a copied child-of-a-container
 
 **Cause:** with `onlyRenderVisibleElements` (ADR 0073) React Flow draws an edge only while the box round its source and target elements overlaps the window (`isEdgeVisible` in `@xyflow/system`). It ignores the path in between, and offers no hook for it. A waypoint 400 units below both ends puts the path outside that box.
 
-**Workaround:** `edgeCulling.ts` and `Canvas.tsx` turn `onlyRenderVisibleElements` off while an edge with waypoints reaches into the window and its end elements do not, using the box of its waypoints and ends, padded by 100 units. The cost is that everything is drawn for as long as that holds.
+**Workaround:** `edgeCulling.ts` and `Canvas.tsx` turn `onlyRenderVisibleElements` off while an edge with waypoints reaches into the window and its end elements do not, using the box of its waypoints and ends, padded by the most a curve can swing past a waypoint (a third of the span between its neighbours times its gravity, at least 100 units). The cost is that everything is drawn for as long as that holds.
 
-**Still open:** an edge with no waypoints that swings far outside its ends (a step route that loops round an element) is not covered, and the padded box is only an estimate of where a curve goes. If either shows up, the next step is to measure the real path of the edges that matter, or to cull edges in the app and leave React Flow's culling to the nodes.
+**Still open:** an edge with no waypoints that swings far outside its ends (a step route that loops round an element) is not covered, and the padded box is an estimate of where a curve goes (the ends are taken at the middle of their boxes, and the straight lead-in at an end is not counted). If either shows up, the next step is to measure the real path of the edges that matter, or to cull edges in the app and leave React Flow's culling to the nodes.
 
 **References:** `src/renderer/src/canvas/edgeCulling.ts`, `src/renderer/src/canvas/Canvas.tsx` (`waypointEdgeOffScreen`), [ADR 0073](decisions/0073-react-flow-render-performance-round-2.md)

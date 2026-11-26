@@ -20,7 +20,25 @@ test('an edge that dips into a window its ends do not reach would be dropped', (
   assert.equal(waypointEdgeHidden([dipping], { x: -900, y: 400, x2: -300, y2: 800 }), true)
 })
 
+test('two waypoints with a high gravity send the curve far past them', () => {
+  const swinging = {
+    ends: [
+      { x: 0, y: 0, x2: 100, y2: 50 },
+      { x: 1000, y: 0, x2: 1100, y2: 50 }
+    ],
+    points: [
+      { x: 400, y: 600, gravity: 3 },
+      { x: 700, y: 600, gravity: 3 }
+    ]
+  }
+  // Beyond the waypoints by more than the fixed 100, still within what the gravity allows.
+  const view = { x: 300, y: 1000, x2: 800, y2: 1400 }
+  assert.equal(waypointEdgeHidden([swinging], view), true)
+  const tame = { ...swinging, points: swinging.points.map((p) => ({ ...p, gravity: 0.5 })) }
+  assert.equal(waypointEdgeHidden([tame], view), false)
+})
+
 test('a window clear of the edge and its waypoints needs nothing', () => {
-  assert.equal(waypointEdgeHidden([dipping], { x: 400, y: 900, x2: 900, y2: 1300 }), false)
+  assert.equal(waypointEdgeHidden([dipping], { x: 400, y: 1300, x2: 900, y2: 1700 }), false)
   assert.equal(waypointEdgeHidden([], { x: 0, y: 0, x2: 10, y2: 10 }), false)
 })
