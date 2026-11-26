@@ -60,7 +60,7 @@ const api = {
     return ipcRenderer.invoke('document:planSaveAs', request)
   },
 
-  // Custom icons (docs/decisions/0006-icon-storage-model.md) are only read and listed now: both need
+  // Custom icons are only read and listed now: both need
   // the diagram's own path to resolve its sibling assets/ folder. A new icon goes into a pack.
   listCustomIcons(diagramPath: string): Promise<string[]> {
     return ipcRenderer.invoke('icons:listCustom', diagramPath)
