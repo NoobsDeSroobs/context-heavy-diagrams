@@ -441,12 +441,14 @@ function LabeledEdge({
     [split, edgeStyle?.endMarker, drawnWidth]
   )
 
-  // A mark of the portal is moved by dragging it along the edge (the same gesture as the sliders in
-  // the property panel); a click that does not move goes to the other end of the gap.
+  // A click on a mark goes to the other end of the gap. Alt+drag moves the mark along the edge (the
+  // same gesture as the label, ADR 0164, and the sliders in the property panel); without Alt a
+  // press never moves it, so a mark is not shifted by accident.
   const onPortalMarkDown = useCallback(
     (event: ReactPointerEvent<SVGGElement>, which: 'start' | 'end'): void => {
       if (event.button !== 0 || !portal || !split) return
       event.stopPropagation()
+      const draggable = event.altKey && !event.shiftKey && !event.ctrlKey && !event.metaKey
       const el = event.currentTarget
       el.setPointerCapture(event.pointerId)
       const origin = { x: event.clientX, y: event.clientY }
@@ -458,6 +460,7 @@ function LabeledEdge({
       const onMove = (move: PointerEvent): void => {
         if (!moved && Math.hypot(move.clientX - origin.x, move.clientY - origin.y) < 3) return
         moved = true
+        if (!draggable) return
         const pointer = screenToFlowPosition({ x: move.clientX, y: move.clientY })
         const next = movePortalEnd(current, which, ratioNearest(edgePath, pointer), length)
         if (next.start === current.start && next.end === current.end) return

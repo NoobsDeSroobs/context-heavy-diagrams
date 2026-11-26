@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ReactFlowProvider, type EdgeProps } from '@xyflow/react'
 
 const setCenter = vi.fn()
+const updateEdgeData = vi.fn()
 
 vi.mock('@xyflow/react', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@xyflow/react')>()),
@@ -11,7 +12,7 @@ vi.mock('@xyflow/react', async (importOriginal) => ({
     <path data-testid="base-edge" data-id={id} d={path} />
   ),
   useReactFlow: () => ({
-    updateEdgeData: vi.fn(),
+    updateEdgeData,
     screenToFlowPosition: (p: unknown) => p,
     setCenter,
     getZoom: () => 1
@@ -30,6 +31,7 @@ Object.defineProperty(SVGElement.prototype, 'getPointAtLength', {
 afterEach(() => {
   cleanup()
   setCenter.mockClear()
+  updateEdgeData.mockClear()
 })
 
 const context = {
@@ -119,6 +121,23 @@ describe('a portal on an edge', () => {
     expect(whole.classList.contains('is-on')).toBe(false)
     fireEvent.pointerEnter(container.querySelector('.edge-portal-mark')!)
     expect(whole.classList.contains('is-on')).toBe(true)
+  })
+
+  it('moves a mark only when it is dragged with Alt held', () => {
+    SVGElement.prototype.setPointerCapture = () => {}
+    SVGElement.prototype.releasePointerCapture = () => {}
+    const drag = (altKey: boolean): void => {
+      const container = draw({ portalStart: 0.4, portalEnd: 0.6 })
+      const mark = container.querySelector('.edge-portal-mark')!
+      fireEvent.pointerDown(mark, { button: 0, clientX: 160, clientY: 30, altKey })
+      fireEvent.pointerMove(window, { clientX: 100, clientY: 30 })
+      fireEvent.pointerUp(window)
+      cleanup()
+    }
+    drag(false)
+    expect(updateEdgeData).not.toHaveBeenCalled()
+    drag(true)
+    expect(updateEdgeData).toHaveBeenCalled()
   })
 
   it('takes the typed number when no numbers are supplied, as in a window that only reads', () => {

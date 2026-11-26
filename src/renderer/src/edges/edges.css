@@ -225,7 +225,7 @@
 }
 
 .edge-portal-mark {
-  cursor: grab;
+  cursor: pointer;
 }
 
 .edge-portal-whole {
