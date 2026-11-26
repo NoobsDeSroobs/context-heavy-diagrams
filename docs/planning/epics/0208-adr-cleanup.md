@@ -6,8 +6,10 @@ Not Started. Logged 2026-11-26. Next, once the portals branch is merged.
 ## Goal
 The ADRs have grown to 200 with many small, reversible choices (a handle size, a menu item, a gesture). Keep the ones that are hard to reverse or set the design direction, drop the history and the tweaks, and merge the ones that are one decision spread over several files.
 
-## The bar
-An ADR is for a choice that would cost a file-format change, a migration or a rethink to reverse: file format, security, architecture, licence, external contracts, rules the whole project follows. Small reversible choices live in the completed-epics entry, the changelog and the code comment. An ADR is written at the end of an epic, once, per feature; an amendment is folded into the ADR it amends.
+## The bar (the maintainer, 2026-11-26)
+An ADR holds a principle, a foundational philosophy, a choice that was hard to make (such as the BPMN ones) or a critical decision that sets the direction of the application as a whole. Good: "the app is offline and private by default"; "the person is the focus and the tool exists to help them". Bad: "a label position is a number from 0 to 1"; "the tool may not query a server" (that is how the principle is enforced, not the principle). The file format spec ([docs/file-format.md](../../file-format.md)) already decides what can be designed, so a field, a gesture, a preference or a rule of how a feature behaves is not an ADR; it lives in the spec, the completed-epics entry, the changelog or the code comment. An amendment is folded into the ADR it amends.
+
+This is stricter than the first pass below, which kept anything security, offline or format related. Under this bar even those need a second look: keep the principle (offline, private, the person decides, the format is open), fold the enforcement into it.
 
 ## First pass (from titles, status lines, size and where each is cited; about a dozen read in full, the rest to be read before anything goes)
 - **Remove, small or one tweak:** 0007 (Electron bump), 0038 (resize handle size), 0041 (cancelled sidebar: one line in 0039), 0042 (selected-edge colour), 0058 (align and distribute), 0065 (select all of type), 0087 (reverse direction on a selection), 0129 (handle minimum size), 0152 (drag a number label), 0070 (now a rule in CLAUDE.md).
@@ -20,7 +22,6 @@ An ADR is for a choice that would cost a file-format change, a migration or a re
   - labels: 0183, 0184
   - visibility sets and stories: 0194, 0195
   - releases: 0139, 0162, 0165, 0166
-  - portals: 0200, replaced by the one ADR of the portals epic
 - **Read first, then decide:** 0085 (1000 words, cited nowhere), 0099, 0155, 0156, 0163, 0164, 0181.
 - **Keep:** the foundations (0005, 0016, 0011), security and offline (0055, 0082, 0109, 0112, 0113, 0115), file-format guarantees (0029, 0086, 0118), 0169, and the standing rules 0151 and 0054.
 
