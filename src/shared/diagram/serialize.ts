@@ -149,7 +149,7 @@ function orderedDiagramSecurity(
   }
 }
 
-// One action of a story step (ADR 0195): `action` and `set` first, then any fields this version does not
+// One action of a story step (ADR 0194): `action` and `set` first, then any fields this version does not
 // know in a fixed order, so a file written by a newer version keeps them and does not churn.
 function orderedAction(action: StoryAction): StoryAction {
   const { action: kind, set, ...rest } = action
@@ -232,7 +232,7 @@ export function serializeDiagram(diagram: DiagramFile): string {
       diagram.visibilitySets && diagram.visibilitySets.length > 0
         ? diagram.visibilitySets.map((v) => ({ id: v.id, name: v.name }))
         : undefined,
-    // The order of the stories, and of each story's steps, is what a person made, so it is kept (ADR 0195).
+    // The order of the stories, and of each story's steps, is what a person made, so it is kept (ADR 0194).
     stories:
       diagram.stories && diagram.stories.length > 0
         ? diagram.stories.map((s) => ({

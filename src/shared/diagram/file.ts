@@ -73,7 +73,7 @@ export interface DiagramFile {
   // `visibilitySetIds`. Absent or empty means the feature is unused. Which sets are shown is
   // session state and is not stored.
   visibilitySets?: VisibilitySet[]
-  // Stories told over the visibility sets in the presenter view (ADR 0195). Absent or empty means
+  // Stories told over the visibility sets in the presenter view (ADR 0194). Absent or empty means
   // none. Which step is shown is session state and is not stored.
   stories?: Story[]
   nodes: DiagramNode[]

@@ -287,7 +287,7 @@ function CanvasInner(): React.JSX.Element {
   // The catalogue of visibility sets (ADR 0194): file-scoped and persisted like the legend, reset
   // on load. Which sets are shown is session state and is not kept here.
   const [visibilitySets, setVisibilitySets] = useState<VisibilitySet[]>([])
-  // The stories told over those sets (ADR 0195): file-scoped and persisted the same way. The step
+  // The stories told over those sets (ADR 0194): file-scoped and persisted the same way. The step
   // being shown is session state and lives in the story hook.
   const [stories, setStories] = useState<Story[]>([])
   // Which sets are hidden right now: session state, never saved, empty when a diagram opens.
@@ -598,7 +598,7 @@ function CanvasInner(): React.JSX.Element {
     handlePersonaChange
   } = usePanels(canvasApi, { setNoteShadows, setDefaultEdgeStylePicker })
 
-  // Stories drive which sets are hidden (ADR 0195).
+  // Stories drive which sets are hidden (ADR 0194).
   const storiesUi = useStories(
     canvasApi,
     stories,
@@ -609,9 +609,9 @@ function CanvasInner(): React.JSX.Element {
     storiesPanelOpen
   )
   const storiesPresenting = storiesUi.presenting
-  // The presenter fades what appears and disappears between steps (ADR 0195).
+  // The presenter fades what appears and disappears between steps (ADR 0194).
   const storyFade = useStoryFade(storiesPresenting, nodes, edges, visibilitySets, hiddenSetIds)
-  // The presenter's bar shows when the mouse moves and goes when it is still (ADR 0195).
+  // The presenter's bar shows when the mouse moves and goes when it is still (ADR 0194).
   const presenterAwake = usePresenterActivity(storiesPresenting)
   const handlePresenterKey = storiesUi.handlePresenterKey
   const resetStories = storiesUi.reset
@@ -3197,7 +3197,7 @@ function CanvasInner(): React.JSX.Element {
       }
     }
     const onKeyDown = (event: KeyboardEvent): void => {
-      // While presenting, the presenter's keys are the only shortcuts (ADR 0195).
+      // While presenting, the presenter's keys are the only shortcuts (ADR 0194).
       if (storiesPresenting) {
         if (handlePresenterKey(event)) event.preventDefault()
         return
@@ -3615,7 +3615,7 @@ function CanvasInner(): React.JSX.Element {
       ...hierarchyAnalysis.outgrownAdvisories,
       ...legendEmptyAdvisory,
       ...strayLines,
-      // Set ids in stories that no set holds (ADR 0195): ignored, never removed.
+      // Set ids in stories that no set holds (ADR 0194): ignored, never removed.
       ...storyStrayAdvisory(stories, visibilitySets),
       // A portal number used twice, and a label hidden in a gap.
       ...portalNotices(
@@ -3927,7 +3927,7 @@ function CanvasInner(): React.JSX.Element {
               <option value="diagram">Diagram</option>
               <option value="matrix">Security Matrix (prototype)</option>
             </select>
-            {/* Stories (ADR 0195): opens the panel where a story is written and presented. */}
+            {/* Stories (ADR 0194): opens the panel where a story is written and presented. */}
             {isDiagramPersona && (
               <button
                 type="button"
@@ -4092,7 +4092,7 @@ function CanvasInner(): React.JSX.Element {
                   onReconnectStart={onReconnectStart}
                   onReconnectEnd={onReconnectEnd}
                   edgesReconnectable={!storiesPresenting}
-                  // The presenter only shows (ADR 0195): nothing is picked up, drawn, deleted or selected.
+                  // The presenter only shows (ADR 0194): nothing is picked up, drawn, deleted or selected.
                   nodesDraggable={!storiesPresenting}
                   nodesConnectable={!storiesPresenting}
                   elementsSelectable={!storiesPresenting}

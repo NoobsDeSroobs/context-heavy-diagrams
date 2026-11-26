@@ -201,7 +201,7 @@ function ActionRow({
   )
 }
 
-// The right-hand dock panel for stories (ADR 0195), laid out like the slide list of a presentation
+// The right-hand dock panel for stories (ADR 0194), laid out like the slide list of a presentation
 // program, simplified: the steps of the story in order, and for the step picked its actions, one
 // row each. Picking a step shows its state on the canvas, so the person sees what the audience will.
 export default function StoriesPanel({

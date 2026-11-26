@@ -1,4 +1,4 @@
-// The operations on stories (ADR 0195). Every result must be a file the app reads back unchanged and
+// The operations on stories (ADR 0194). Every result must be a file the app reads back unchanged and
 // the validator accepts.
 import assert from 'node:assert/strict'
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'

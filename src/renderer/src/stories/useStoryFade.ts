@@ -8,7 +8,7 @@ import { fadeBetween, type StoryFade } from '../visibility/hiding'
 // How long the presenter fades, which is the duration of the animations in stories.css.
 export const STORY_FADE_MS = 250
 
-// The elements the presenter is fading right now (ADR 0195), or null. When the hidden sets change
+// The elements the presenter is fading right now (ADR 0194), or null. When the hidden sets change
 // while presenting, what became visible fades in and what became hidden fades out, and the fade ends
 // after STORY_FADE_MS. Nothing fades for a change made outside the presenter, or when the system asks
 // for reduced motion: those are immediate.

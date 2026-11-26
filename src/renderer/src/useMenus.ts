@@ -53,7 +53,7 @@ export interface MenuInputs {
   toggleReferencesPanel: () => void
   toggleStoriesPanel: () => void
   presentStory: () => void
-  // Whether a story with at least one step can be presented now (ADR 0195).
+  // Whether a story with at least one step can be presented now (ADR 0194).
   hasStoryToPresent: boolean
   toggleStylePalettePanel: () => void
   toggleEdgeAnimation: () => void

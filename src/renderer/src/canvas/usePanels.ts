@@ -82,7 +82,7 @@ export function usePanels(
   // only. null means "not computed yet" (opening the panel triggers the
   // async reread), distinct from an empty diff (no changes).
   const [changesPanelOpen, setChangesPanelOpen] = useState(false)
-  // The stories panel (ADR 0195): the right-hand dock, one of the family.
+  // The stories panel (ADR 0194): the right-hand dock, one of the family.
   const [storiesPanelOpen, setStoriesPanelOpen] = useState(false)
   const [changesDiff, setChangesDiff] = useState<ChangesSinceSave | null>(null)
   // Persona switch (see ADR 0055) — akin to FreeCAD's workbench

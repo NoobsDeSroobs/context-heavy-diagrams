@@ -233,7 +233,7 @@ export function useImageExport(
       security,
       diagramFontFamily,
       visibilitySets,
-      // Exports draw the diagram, not its stories (ADR 0195).
+      // Exports draw the diagram, not its stories (ADR 0194).
       []
     )
     return filterToVisible(file, hiddenSetIds)

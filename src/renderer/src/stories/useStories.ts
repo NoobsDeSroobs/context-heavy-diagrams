@@ -16,7 +16,7 @@ export interface StoriesState {
   // The story the panel is on: the one picked, or the first.
   story: Story | null
   selectStory: (id: string) => void
-  // The step the editor shows on the canvas: 0 is before the first step (ADR 0195).
+  // The step the editor shows on the canvas: 0 is before the first step (ADR 0194).
   step: number
   selectStep: (step: number) => void
   // Both return why the name was refused, or null when it was taken (a name is unique, ignoring case).
@@ -49,7 +49,7 @@ export interface StoriesState {
   reset: () => void
 }
 
-// Stories (ADR 0195). The stories are file content and live in the canvas next to the sets; which
+// Stories (ADR 0194). The stories are file content and live in the canvas next to the sets; which
 // step is on screen is session state and never saved. A story only drives which sets are hidden,
 // so what it draws goes through the one rule of ADR 0194, and the editor's preview and the presenter
 // are the same thing seen from two places. The editor previews a step only while its panel is open

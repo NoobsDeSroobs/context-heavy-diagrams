@@ -9,7 +9,7 @@ interface PresenterBarProps {
   onLeave: () => void
 }
 
-// The presenter's controls (ADR 0195): over the canvas, out of sight until the mouse moves. The keys do
+// The presenter's controls (ADR 0194): over the canvas, out of sight until the mouse moves. The keys do
 // the same (arrows, space, Home, End, Escape), so the bar is for the mouse. The step count is always
 // there, small and faint in the corner, so the person can see how far the story has come.
 export default function PresenterBar({

@@ -1,4 +1,4 @@
-// Run with `npm test`. The state of a story at a step (ADR 0195).
+// Run with `npm test`. The state of a story at a step (ADR 0194).
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {

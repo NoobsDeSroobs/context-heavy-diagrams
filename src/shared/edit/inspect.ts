@@ -56,7 +56,7 @@ export interface DiagramDescription {
   legend?: LegendEntry[]
   // The visibility sets of the diagram and how many elements are in each (ADR 0194).
   visibilitySets?: { name: string; elements: number }[]
-  // Each story with its steps in words, by the names of the sets (ADR 0195).
+  // Each story with its steps in words, by the names of the sets (ADR 0194).
   stories?: { name: string; start?: string; steps: string[] }[]
 }
 

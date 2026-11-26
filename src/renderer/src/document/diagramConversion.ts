@@ -91,7 +91,7 @@ export function toDiagramFile(
     requiredTags: requiredTags.length > 0 ? requiredTags : undefined,
     // serializeDiagram drops this when it is empty (ADR 0194).
     visibilitySets: visibilitySets.length > 0 ? visibilitySets : undefined,
-    // serializeDiagram drops this when it is empty (ADR 0195).
+    // serializeDiagram drops this when it is empty (ADR 0194).
     stories: stories.length > 0 ? stories : undefined,
     nodes: nodes.map((n) => ({
       id: n.id,

@@ -184,7 +184,7 @@ export const COMMANDS = [
     title: 'Show changes since last save',
     category: 'View'
   },
-  // Stories (ADR 0195). In the presentation the arrow keys, space, Home, End and Escape step through
+  // Stories (ADR 0194). In the presentation the arrow keys, space, Home, End and Escape step through
   // the story and leave it; they are handled by the presenter, not dispatched from here.
   {
     id: 'view.present',

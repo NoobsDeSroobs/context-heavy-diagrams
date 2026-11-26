@@ -48,7 +48,7 @@ describe('withVisibility', () => {
   })
 })
 
-describe('the fade of the presenter (ADR 0195)', () => {
+describe('the fade of the presenter (ADR 0194)', () => {
   it('keeps what is leaving drawn, with the fade-out class, and marks what is entering', () => {
     const nodes = [node('a'), node('b', ['today']), node('c', ['proposed'])]
     const visible = visibleFilter(catalogue, new Set(['today']))

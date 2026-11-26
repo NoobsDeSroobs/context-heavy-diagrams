@@ -9,7 +9,7 @@ export interface VisibilitySet {
   name: string
 }
 
-// A story (ADR 0195): an ordered list of steps over the visibility sets, told in the presenter view.
+// A story (ADR 0194): an ordered list of steps over the visibility sets, told in the presenter view.
 // The diagram holds them (`DiagramFile.stories`). The step being shown is session state and is
 // never stored.
 export interface Story {
