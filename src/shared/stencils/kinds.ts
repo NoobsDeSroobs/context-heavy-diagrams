@@ -197,7 +197,7 @@ export interface StencilKind {
   // The same for the border; an arrow's band takes this colour.
   stroke?: string
   // The colours as they look in the light theme (final colours, see stencilLightColors): the flip of the
-  // dark ones above would not keep the three families at their own lightness.
+  // dark ones above would not keep the four families at their own lightness.
   light?: { fill?: string; stroke?: string }
   // What the kind is called elsewhere, for the picker's search: BPMN terms live here and nowhere
   // else, the app's own words stay neutral (ADR 0080).
