@@ -1,4 +1,4 @@
-// The checks on edges as drawn (ADR 0161): over an element, crossing, and the labels.
+// The checks on edges as drawn (ADR 0138): over an element, crossing, and the labels.
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { createEmptyDiagram } from '../diagram/index.ts'

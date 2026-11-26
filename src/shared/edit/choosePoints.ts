@@ -1,4 +1,4 @@
-// Choosing the connection points of the edges `route_edges` routes (ADR 0177). Pure: a diagram in, a
+// Choosing the connection points of the edges `route_edges` routes (ADR 0138). Pure: a diagram in, a
 // copy out with each of those edges on a point of its own, on the side facing its other end. Nothing is
 // placed by hand: a side's points stay evenly spaced, as the app spaces them (ADR 0175), and the edges
 // take them in the order of where their other ends are, so they do not cross at the element.

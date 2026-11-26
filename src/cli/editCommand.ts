@@ -27,7 +27,7 @@ import { readStdin } from './stdin.ts'
 
 // `chd edit` and `chd ask`: build a diagram step by step, and ask about its layout, from the command
 // line, with the same operations and the same answers as the Claude Desktop extension's
-// `edit_diagram`, `inspect_diagram` and `room_for_label` (ADR 0138, ADR 0148). Bundled into
+// `edit_diagram`, `inspect_diagram` and `room_for_label` (ADR 0138). Bundled into
 // resources/cli/edit.mjs by scripts/build-cli.mjs; chd.mjs loads it only for these commands.
 //
 // `edit` is an AI write path, so it carries the stale-edit check (ADR 0109): a diagram that exists is

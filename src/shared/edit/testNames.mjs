@@ -1,5 +1,5 @@
 // Test support for the edit operations. The tool makes every id, and an operation names what it
-// makes with a handle ("as": "$api") that only the rest of the same call can use (ADR 0199). Tests
+// makes with a handle ("as": "$api") that only the rest of the same call can use (ADR 0138). Tests
 // want to read their diagrams, so `applyNamed` does what a person reading the answer would do:
 //   - a plain reference ("api") to something made earlier in the same call is written as its handle
 //     ("$api"), which is how the tool is used, and

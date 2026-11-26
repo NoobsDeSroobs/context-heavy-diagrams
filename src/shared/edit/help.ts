@@ -1,6 +1,6 @@
 // What the operations of an edit are and what they take: the one text behind the extension's
 // `edit_diagram` tool and `chd edit --help`, so the two front doors cannot describe different things
-// (ADR 0148, ADR 0150). A test keeps it in step with the operations that exist.
+// (ADR 0138). A test keeps it in step with the operations that exist.
 import { STENCIL_KINDS } from '../stencils/kinds.ts'
 
 const KIND_LIST = STENCIL_KINDS.map((k) => k.id).join(', ')

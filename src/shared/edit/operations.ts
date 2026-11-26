@@ -700,11 +700,11 @@ function setEdgePoints(model: Model, reader: Reader): OperationResult {
   return result
 }
 
-// Gives edges a right-angled route around the elements (ADR 0174): the ones named, or else the ones the
+// Gives edges a right-angled route around the elements (ADR 0138): the ones named, or else the ones the
 // layout check reports as over an element or crossing another edge. Each routed edge gets bend points and
 // the "step" routing; one that cannot be routed is left as it was and named in the answer. Unless told to
 // keep them, the routed edges also move to a connection point of their own on the side facing their other
-// end (ADR 0177).
+// end (ADR 0138).
 function routeEdgesOperation(model: Model, reader: Reader): OperationResult {
   let ids: string[] | undefined
   if (reader.has('ids')) {

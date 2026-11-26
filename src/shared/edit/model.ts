@@ -140,7 +140,7 @@ export const DEFAULT_SIZE = {
 export const MIN_SIZE = 10
 export const MAX_POINTS_PER_SIDE = 12
 export const ID_PATTERN = /^[A-Za-z0-9._-]{1,64}$/
-// A handle names what an operation makes, for the other operations of the same call (ADR 0199): never
+// A handle names what an operation makes, for the other operations of the same call (ADR 0138): never
 // saved, and not an id, which cannot start with "$".
 export const HANDLE_PATTERN = /^\$[A-Za-z0-9._-]{1,32}$/
 // The fields of an operation that name an element (or a list of them) that is already there.

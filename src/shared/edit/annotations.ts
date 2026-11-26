@@ -404,7 +404,7 @@ function removeLegendEntry(model: Model, reader: Reader): OperationResult {
 
 // --- a link to another diagram and a note
 
-// How an error names an element: the palette's word for a stencil is behaviour (ADR 0187).
+// How an error names an element: the palette's word for a stencil is behaviour (ADR 0138).
 function named(target: Tagged): string {
   return !isEdge(target) && target.type === 'stencil' ? 'behaviour' : (target.type ?? 'text')
 }

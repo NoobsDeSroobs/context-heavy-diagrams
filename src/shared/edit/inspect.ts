@@ -300,7 +300,7 @@ export function layoutIssues(diagram: DiagramFile, diagramFont?: string): Layout
     }
   }
 
-  // The edges as drawn: over an element, crossing, and their labels (ADR 0161).
+  // The edges as drawn: over an element, crossing, and their labels (ADR 0138).
   issues.push(...edgeIssues(diagram, new Set(hiddenList.map((h) => h.edgeId))))
   return issues
 }

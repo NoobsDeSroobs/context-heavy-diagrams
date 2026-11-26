@@ -1,5 +1,5 @@
 // What an edit answers about the layout: the problems that involve what it touched, and a count of the
-// rest (ADR 0171).
+// rest (ADR 0138).
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { createEmptyDiagram } from '../diagram/index.ts'

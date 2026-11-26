@@ -1,4 +1,4 @@
-// Routing edges around the elements they do not join, with right angles (ADR 0174). Pure: a diagram in,
+// Routing edges around the elements they do not join, with right angles (ADR 0138). Pure: a diagram in,
 // the bend points out. The assistant decides where everything goes; this only draws the edges.
 //
 // How: a grid of "lanes" is laid over the free space between the elements (the gaps between their
@@ -71,7 +71,7 @@ export interface RouteResult {
 }
 
 export interface RouteOptions {
-  // Put each routed edge on a point of its own on the side facing its other end (ADR 0177).
+  // Put each routed edge on a point of its own on the side facing its other end (ADR 0138).
   choosePoints?: boolean
 }
 

@@ -308,7 +308,7 @@ export function createTools({ root, allowUpdate, specSources }) {
     }
   }
 
-  // A file in the folder, or the diagram's text (ADR 0145, ADR 0182): text has no folder, so the checks
+  // A file in the folder, or the diagram's text (ADR 0145, ADR 0138): text has no folder, so the checks
   // for files its paths point at are skipped and the result says so.
   function validateDiagram({ path, content }) {
     if (content !== undefined) {
