@@ -691,11 +691,11 @@ function LabeledEdge({
         />
       )}
       {split && (
-        // The whole edge, drawn dashed over the gap while the edge is selected or a mark is hovered
-        // (and while Ctrl is held over it: edges.css), so it can be followed across.
+        // The hidden part of the edge, drawn dashed between the marks while the edge is selected or
+        // a mark is hovered (and while Ctrl is held over it: edges.css), so it can be followed across.
         <path
-          d={edgePath}
-          className={`edge-portal-whole${selected || markHovered ? ' is-on' : ''}`}
+          d={split.gap}
+          className={`edge-portal-gap${selected || markHovered ? ' is-on' : ''}`}
           stroke={PORTAL_COLOR[theme]}
         />
       )}

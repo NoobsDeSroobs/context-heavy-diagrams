@@ -112,15 +112,17 @@ describe('a portal on an edge', () => {
     expect(container.querySelectorAll('.edge-portal-tilde')).toHaveLength(0)
   })
 
-  it('shows the whole edge while it is selected or a mark is hovered', () => {
+  it('shows the hidden part, only between the marks, while selected or a mark is hovered', () => {
     const selected = draw({ portalStart: 0.4, portalEnd: 0.6 }, true)
-    expect(selected.querySelector('.edge-portal-whole')!.classList.contains('is-on')).toBe(true)
+    const shown = selected.querySelector('.edge-portal-gap')!
+    expect(shown.classList.contains('is-on')).toBe(true)
+    expect(shown.getAttribute('d')).toBe('M160,30 L240,30')
     cleanup()
     const container = draw({ portalStart: 0.4, portalEnd: 0.6 })
-    const whole = container.querySelector('.edge-portal-whole')!
-    expect(whole.classList.contains('is-on')).toBe(false)
+    const gap = container.querySelector('.edge-portal-gap')!
+    expect(gap.classList.contains('is-on')).toBe(false)
     fireEvent.pointerEnter(container.querySelector('.edge-portal-mark')!)
-    expect(whole.classList.contains('is-on')).toBe(true)
+    expect(gap.classList.contains('is-on')).toBe(true)
   })
 
   it('moves a mark only when it is dragged with Alt held', () => {

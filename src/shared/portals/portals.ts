@@ -110,6 +110,8 @@ export interface PortalSplit {
   // The drawn part from the source to the gap, and from the gap to the target, as path strings.
   lead: string
   tail: string
+  // The part left undrawn, from the entry to the exit.
+  gap: string
   // Where the edge goes into the gap, and where it comes out.
   entry: Mark
   exit: Mark
@@ -232,9 +234,15 @@ export function splitPath(d: string, portal: Portal): PortalSplit | undefined {
   const back = locate(flipped, length - endAt)
   if (!back) return undefined
   const tail = reversePieces(leadPieces(flipped, back))
+  // The undrawn part: the path up to the exit, with its first `startAt` cut off the same way.
+  const toExit = reversePieces(leadPieces(walks, exit)).map((p) => sampled(p))
+  const cut = locate(toExit, endAt - startAt)
+  if (!cut) return undefined
+  const gap = reversePieces(leadPieces(toExit, cut))
   return {
     lead: formatPieces(lead),
     tail: formatPieces(tail),
+    gap: formatPieces(gap),
     entry: entry.mark,
     exit: exit.mark,
     gapPx: endAt - startAt

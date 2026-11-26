@@ -199,7 +199,7 @@
 }
 
 /* Portals: an edge drawn broken, with a mark and a number at each end of the gap. The marks are
-   drawn in the edge's own SVG; the whole edge is drawn dashed over the gap while the edge is
+   drawn in the edge's own SVG; the hidden part is drawn dashed between the marks while the edge is
    selected or a mark is hovered, and while Ctrl is held over the edge. */
 .edge-portal-tilde {
   fill: none;
@@ -228,7 +228,7 @@
   cursor: pointer;
 }
 
-.edge-portal-whole {
+.edge-portal-gap {
   fill: none;
   stroke-width: 2;
   stroke-dasharray: 6 4;
@@ -236,8 +236,8 @@
   pointer-events: none;
 }
 
-.edge-portal-whole.is-on,
-.mod-held .react-flow__edge:hover .edge-portal-whole {
+.edge-portal-gap.is-on,
+.mod-held .react-flow__edge:hover .edge-portal-gap {
   opacity: 0.9;
 }
 

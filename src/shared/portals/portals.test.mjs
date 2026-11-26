@@ -52,6 +52,7 @@ test('a straight edge is cut at the two ends of the gap', () => {
   const split = splitPath('M0,0 L400,0', { start: 0.4, end: 0.6 })
   assert.equal(split.lead, 'M0,0 L160,0')
   assert.equal(split.tail, 'M240,0 L400,0')
+  assert.equal(split.gap, 'M160,0 L240,0')
   assert.equal(split.gapPx, 80)
   assert.deepEqual([split.entry.x, split.entry.y, split.entry.angle], [160, 0, 0])
   assert.deepEqual([split.exit.x, split.exit.y, split.exit.angle], [240, 0, 0])
@@ -62,6 +63,7 @@ test('a path with a corner is cut across it and the direction follows the edge',
   const split = splitPath('M0,0 L100,0 L100,300', { start: 0.4, end: 0.6 })
   assert.equal(split.lead, 'M0,0 L100,0 L100,60')
   assert.equal(split.tail, 'M100,140 L100,300')
+  assert.equal(split.gap, 'M100,60 L100,140')
   assert.equal(split.entry.angle, 90)
 })
 
@@ -70,6 +72,7 @@ test('a curve is cut into curves of the same shape and measures about its own le
   const split = splitPath(d, { start: 0.3, end: 0.6 })
   assert.match(split.lead, /^M0,0 C/)
   assert.match(split.tail, / C[^C]*$/)
+  assert.match(split.gap, /^M[\d.]+,[\d.]+ C/)
   assert.ok(pathLength(d) > 300)
   assert.ok(split.gapPx > 0.29 * pathLength(d) && split.gapPx < 0.31 * pathLength(d))
 })
