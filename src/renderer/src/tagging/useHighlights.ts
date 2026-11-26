@@ -103,7 +103,7 @@ export function useHighlights(
 
   // Takes a whole group out: every highlight of the key, and their enabled ids. The automatic resync
   // below only follows keys that still have a highlight, so with none left the group stays gone until
-  // "Add group" makes it again (ADR 0026).
+  // "Add group" makes it again (ADR 0025).
   const removeHighlightGroup = useCallback(
     (key: string) => {
       const doomed = new Set(highlights.filter((h) => h.key === key).map(highlightId))
@@ -128,7 +128,7 @@ export function useHighlights(
   }, [])
 
   // Bulk set (not toggle) — used by a group's tri-state "select all"
-  // checkbox, ADR 0026: enabling/disabling every member at
+  // checkbox, ADR 0025: enabling/disabling every member at
   // once needs a uniform target state, not per-id toggling.
   const toggleHighlightGroup = useCallback((ids: string[], enable: boolean) => {
     setEnabledHighlightIds((prev) => {
@@ -159,7 +159,7 @@ export function useHighlights(
     return [...seen.values()]
   }, [nodes, edges])
 
-  // "Add group" and each group's manual resync button both call this with the same key (ADR 0026).
+  // "Add group" and each group's manual resync button both call this with the same key (ADR 0025).
   // It reconciles against highlightGroupSourceValues (allowedValues for a required tag, else a live
   // scan of every node/edge's metadata): a value with no entry gets a new white one, an entry whose
   // value nothing carries or allows anymore is dropped, the rest is untouched. It also prunes
@@ -181,7 +181,7 @@ export function useHighlights(
     [highlights, requiredTags, usedTags, markDirty]
   )
 
-  // Automatic resync (ADR 0026 addendum): every existing group's entries follow their source as it
+  // Automatic resync (ADR 0025): every existing group's entries follow their source as it
   // changes (a new allowed value on a required tag, a new value for a free tag appearing in the
   // diagram) without the manual ↻ button. It never creates a group for a key that has none; "Add
   // group" stays the deliberate first step.

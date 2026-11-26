@@ -25,7 +25,7 @@ export interface RequiredTagDefinition {
   lock: MetadataLock
 }
 
-// Highlight catalog — see ADR 0025/ADR 0026. Each entry pairs an exact
+// Highlight catalog — see ADR 0025. Each entry pairs an exact
 // metadata key=value match with a display color. Deliberately no
 // `enabled` field here: whether a given highlight is currently toggled on
 // is session-only state, never persisted (ADR 0025's "split persistence"

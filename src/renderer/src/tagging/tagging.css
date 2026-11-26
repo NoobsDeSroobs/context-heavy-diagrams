@@ -308,7 +308,7 @@
   flex: 1;
 }
 
-/* Grouped highlights — see ADR 0026. A key with 2+ entries
+/* Grouped highlights — see ADR 0025. A key with 2+ entries
    renders as one of these instead of a plain .highlight-row. */
 .highlight-group {
   display: flex;

@@ -15,13 +15,13 @@ interface HighlightsPanelProps {
   onAdd: (key: string, value: JsonValue, color: string) => void
   onUpdateColor: (id: string, color: string) => void
   onRemove: (id: string) => void
-  // Removes every highlight of a key, which ends its group (ADR 0026).
+  // Removes every highlight of a key, which ends its group (ADR 0025).
   onRemoveGroup: (key: string) => void
   onToggle: (id: string) => void
   // Bulk set (not toggle) for a group's "select all" checkbox.
   onToggleGroup: (ids: string[], enable: boolean) => void
   // Both creates a brand new group and resyncs an existing one — see
-  // ADR 0026: it's the same reconcile either way.
+  // ADR 0025: it's the same reconcile either way.
   onAddOrResyncGroup: (key: string) => void
   onClose: () => void
 }

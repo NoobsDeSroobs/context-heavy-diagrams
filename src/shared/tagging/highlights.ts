@@ -10,7 +10,7 @@ import type {
 export const HIGHLIGHT_BORDER_WIDTH = 3
 
 // Every newly-created highlight starts here — both "Add highlight" and
-// "Add group" (ADR 0026) — rather than a rotating palette,
+// "Add group" (ADR 0025) — rather than a rotating palette,
 // specifically so a fresh entry can never accidentally collide with a
 // color that already means something elsewhere. Deliberately neutral;
 // the user recolors deliberately.
@@ -33,7 +33,7 @@ export function highlightId(h: { key: string; value: HighlightDefinition['value'
   return `${h.key}::${JSON.stringify(h.value)}`
 }
 
-// What a group's entries are reconciled against (ADR 0026 addendum), shared by "Add group", the
+// What a group's entries are reconciled against (ADR 0025), shared by "Add group", the
 // per-group resync button and Canvas.tsx's automatic resync, so all three always agree on what a
 // group should contain. A key backed by a required tag with an `allowedValues` list uses the full
 // list, every legal value whether or not anything carries it, plus that tag's implicit "None" (ADR
@@ -52,7 +52,7 @@ export function highlightGroupSourceValues(
   return usedTags.filter((t) => t.key === key).map((t) => t.value)
 }
 
-// "Add group" (ADR 0026): reconciles the catalog's entries for one key against the values that key
+// "Add group" (ADR 0025): reconciles the catalog's entries for one key against the values that key
 // currently carries in the diagram. It adds a white entry for a value not yet covered and removes
 // an entry whose value nothing carries anymore (a stale row for a retired value is actively
 // misleading). Entries for values still in use are returned untouched, keeping their colour and
