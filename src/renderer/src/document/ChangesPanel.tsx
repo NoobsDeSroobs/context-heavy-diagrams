@@ -5,7 +5,7 @@ import {
 } from '@shared/document/changesSinceSave'
 
 // An element with unsaved Note content — sourced from noteShadows'
-// existing dirty flag (ADR 0092), not a new tracking mechanism.
+// existing dirty flag (ADR 0040), not a new tracking mechanism.
 export interface NotesChangedEntry {
   nodeId: string
   label: string

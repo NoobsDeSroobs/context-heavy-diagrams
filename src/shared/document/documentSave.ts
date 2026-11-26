@@ -1,5 +1,5 @@
 // Pure model behind saving a diagram and the files it owns as one operation
-// (docs/decisions/0092-unified-multi-file-save-and-change-detection.md).
+// (docs/decisions/0040-unsaved-work-and-outside-changes-are-never-lost-or-silently-overwritten.md).
 //
 // The diagram file is the "hub"; each note the user has touched is a "shadow" (NoteShadow):
 // an in-memory copy of one real file with its own dirty flag, kept apart from the diagram's data
@@ -156,7 +156,7 @@ export function anyNoteDirty(shadows: Record<string, NoteShadow>): boolean {
 }
 
 // Unsaved text in a note whose element is no longer in the diagram (deleted, or gone from a
-// reloaded file). It is kept and listed, never dropped silently (ADR 0092); undoing the deletion
+// reloaded file). It is kept and listed, never dropped silently (ADR 0040); undoing the deletion
 // brings the element back and the entry with it.
 export interface OrphanedNoteEdit {
   nodeId: string
@@ -329,7 +329,7 @@ export interface SaveDocumentRequest {
 }
 
 // ---------------------------------------------------------------------------
-// Resolving conflicts, per file (ADR 0092 item 4)
+// Resolving conflicts, per file (ADR 0040)
 
 // The key the diagram file itself uses in a decision map (notes use their nodeId).
 export const HUB_KEY = 'hub'

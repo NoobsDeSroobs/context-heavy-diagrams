@@ -67,7 +67,7 @@ interface DiagnosticsPanelProps {
   // Installed icons this machine cannot draw (ADR 0188), and the way to the icon pack manager.
   iconPackProblems: IconPackProblems
   onOpenIconPacks: () => void
-  // Unsaved note text whose element is gone (ADR 0092), and what can be done with it.
+  // Unsaved note text whose element is gone (ADR 0040), and what can be done with it.
   orphanedEdits: OrphanedNoteEdit[]
   onCopyOrphanedEdit: (edit: OrphanedNoteEdit) => void
   onDiscardOrphanedEdit: (edit: OrphanedNoteEdit) => void

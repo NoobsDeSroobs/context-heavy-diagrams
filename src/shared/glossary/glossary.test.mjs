@@ -17,7 +17,7 @@ More plain text.
 
 ### For developers
 
-A .md file, ADR 0092.
+A .md file, ADR 0040.
 
 ## Tag
 
@@ -37,7 +37,7 @@ test('the introduction and the developer part are not shipped', () => {
     .map((t) => t.definition)
     .join('\n')
   assert.ok(!text.includes('Intro'))
-  assert.ok(!text.includes('ADR 0092'))
+  assert.ok(!text.includes('ADR 0040'))
 })
 
 test('Windows line endings read the same', () => {

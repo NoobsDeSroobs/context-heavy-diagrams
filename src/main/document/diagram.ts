@@ -96,7 +96,7 @@ export function registerDiagramHandlers(): void {
   // when the person confirms.
   ipcMain.handle('document:planSaveAs', (_event, request: PlanSaveAsRequest) => planSaveAs(request))
 
-  // Saves the diagram and its notes as one plan (ADR 0092): check for conflicts, save everything
+  // Saves the diagram and its notes as one plan (ADR 0040): check for conflicts, save everything
   // that doesn't conflict in the crash-safe order (documentSaveExec.ts), and report what was held
   // back so the renderer can ask per file and call again with overwrite: true for just those.
   //

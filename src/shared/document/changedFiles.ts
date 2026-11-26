@@ -1,4 +1,4 @@
-// Noticing that files changed outside the app (ADR 0092): one detector over the diagram and every
+// Noticing that files changed outside the app (ADR 0040): one detector over the diagram and every
 // note that is open or has unsaved edits, so the same rule applies to each and one notice lists
 // them. Pure; the check itself (a stat per file) is `files:check` in the main process.
 

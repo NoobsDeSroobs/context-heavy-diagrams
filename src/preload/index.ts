@@ -41,10 +41,10 @@ interface RequiredTagsWalkResult {
 // Custom APIs for renderer. See docs/decisions/0005-diagram-identity-and-linking.md
 // for the single-file model. pickSavePath and saveDocument are deliberately
 // separate (not one combined "save as" call) — the save flow needs to pick
-// the path first, then plan the whole save (diagram + its notes, ADR 0092)
+// the path first, then plan the whole save (diagram + its notes, ADR 0040)
 // against it.
 const api = {
-  // Saves the diagram and its notes as one plan (ADR 0092). Everything that
+  // Saves the diagram and its notes as one plan (ADR 0040). Everything that
   // doesn't conflict is saved; `conflicts` in the outcome lists what was held back
   // — resolve per file, then call again with overwrite: true for just those.
   saveDocument(request: SaveDocumentRequest): Promise<SaveOutcome> {
@@ -123,12 +123,12 @@ const api = {
 
   // Note files (named by shared/notes/notePaths.ts).
   // Reading only: notes are *written* (and renamed to follow a label) as part
-  // of saveDocument (ADR 0092).
+  // of saveDocument (ADR 0040).
   readNotes(diagramPath: string, relativePath: string): Promise<string> {
     return ipcRenderer.invoke('notes:read', diagramPath, relativePath)
   },
 
-  // Content plus the file's change fingerprint — the note's baseline (ADR 0092).
+  // Content plus the file's change fingerprint — the note's baseline (ADR 0040).
   readNotesWithStamp(
     diagramPath: string,
     relativePath: string
@@ -150,7 +150,7 @@ const api = {
     return ipcRenderer.invoke('diagram:rereadForDiff', path)
   },
 
-  // The one "did a file change on disk since I last looked" check (ADR 0092),
+  // The one "did a file change on disk since I last looked" check (ADR 0040),
   // for the diagram (relPath null) and/or notes (folder-relative paths).
   checkFiles(
     diagramPath: string,

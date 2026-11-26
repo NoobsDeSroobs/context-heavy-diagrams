@@ -36,7 +36,7 @@ interface Inputs {
 }
 
 // Noticing that the diagram or a note changed outside the app, with one notice for every file
-// (ADR 0092, ADR 0159). The tracked files are the diagram and each note this window holds a copy
+// (ADR 0040). The tracked files are the diagram and each note this window holds a copy
 // of (open, or with unsaved edits). On window focus, and when a note panel opens, one `files:check`
 // covers them all. Reload acts on the changed files only; it asks first when that would discard
 // unsaved edits. The save-time check is separate and never reads the ignored stamps.
@@ -90,7 +90,7 @@ export function useOutsideChanges({
   })
 
   // Window focus is when an outside edit (another editor, git, an assistant) has most likely just
-  // happened: a cheap stat per file, no watcher and no polling (ADR 0091).
+  // happened: a cheap stat per file, no watcher and no polling (ADR 0040).
   useEffect(() => {
     if (!currentPath) return undefined
     const onFocus = (): void => void check()

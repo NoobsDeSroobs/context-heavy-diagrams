@@ -1,7 +1,7 @@
 import { firstFreeName, labelToFileStem } from '../labelFileName.ts'
 
 // Where a note belongs, derived from its element's label + id — the one definition, used by the save
-// planner (ADR 0092: derived at save, never stored) and by the assistant's set_note, so a person and
+// planner (ADR 0040: derived at save, never stored) and by the assistant's set_note, so a person and
 // an assistant get the same name for the same element. `<label stem>-<tail>.md` inside the
 // diagram's sibling `<diagram name>/notes/` folder. Returned relative to the diagram file's
 // directory, '/'-separated, so it can be stored as-is in `data.notes`.

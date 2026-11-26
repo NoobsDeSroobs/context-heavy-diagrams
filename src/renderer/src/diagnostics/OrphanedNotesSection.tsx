@@ -7,7 +7,7 @@ function preview(content: string): string {
   return text.length > 60 ? `${text.slice(0, 60)}…` : text
 }
 
-// The "Unsaved note edits" block of the Diagnostics panel (ADR 0092): text typed into a note whose
+// The "Unsaved note edits" block of the Diagnostics panel (ADR 0040): text typed into a note whose
 // element has since been deleted, or is not in the reloaded diagram. It is kept, so nothing typed
 // is lost without the person saying so; undoing the deletion brings the element, and the text,
 // back. Nothing is shown when there is none.

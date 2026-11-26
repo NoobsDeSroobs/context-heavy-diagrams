@@ -1,6 +1,6 @@
 import { HUB_FILE_KEY, changedFilesMessage, type ChangedFile } from '@shared/document/changedFiles'
 
-// The one notice for files that changed outside the app (ADR 0159): which ones, which of them have
+// The one notice for files that changed outside the app (ADR 0040): which ones, which of them have
 // unsaved edits here, and what to do. Review is offered when the diagram itself changed.
 export default function OutsideChangeNotice({
   files,

@@ -251,7 +251,7 @@ body {
   animation: toolbar-saved-flash-in 0.15s ease-out;
 }
 
-/* "Changed outside the app" notice (ADR 0091) — sits beside the filename in
+/* "Changed outside the app" notice (ADR 0040) — sits beside the filename in
    the toolbar; amber, not red, because nothing is lost until the user saves. */
 .toolbar-external-change {
   display: inline-flex;

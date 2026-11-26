@@ -1,7 +1,7 @@
 import type { Decision } from '@shared/document/documentSave'
 
 // Ask the user, per file, what to do about files that have unsaved edits here AND
-// changed on disk (ADR 0092). Promise-based and callable from anywhere — the same
+// changed on disk (ADR 0040). Promise-based and callable from anywhere — the same
 // idea as alerts.ts: a tiny pub/sub the ConflictDialog host subscribes to.
 // Resolves with one decision per item, or null if the user cancelled.
 

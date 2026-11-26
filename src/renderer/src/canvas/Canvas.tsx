@@ -258,7 +258,7 @@ function CanvasInner(): React.JSX.Element {
   // loadDiagramIntoCanvas exists (it is declared after persistDiagram).
   const reloadHubRef = useRef<((path: string) => Promise<void>) | null>(null)
   // What this window last read or wrote of the diagram file: the baseline the window-focus check
-  // and the save-time conflict check compare against (ADR 0091, ADR 0092).
+  // and the save-time conflict check compare against (ADR 0040).
   const hubBaselineRef = useRef<{ path: string | null; stamp: Stamp }>({ path: null, stamp: null })
   // Diagram-level metadata/requiredTags (ADR 0022) — analogous to
   // currentPath: file-scoped state with no React Flow home of its own,
@@ -622,7 +622,7 @@ function CanvasInner(): React.JSX.Element {
     presentStoryFrom()
   }, [presentStoryFrom, setVisibilitySetsPanelOpen])
 
-  // One notice for the diagram and every note that changed outside the app (ADR 0159).
+  // One notice for the diagram and every note that changed outside the app (ADR 0040).
   const outsideChanges = useOutsideChanges({
     currentPath,
     hubBaselineRef,
@@ -2021,7 +2021,7 @@ function CanvasInner(): React.JSX.Element {
         }
         return sortNodesForHierarchy(acc)
       })
-      // A note is a file written at the next Save (ADR 0092): until then it is an unsaved note with
+      // A note is a file written at the next Save (ADR 0040): until then it is an unsaved note with
       // no file yet, like one typed into a new element's panel.
       const notes = elements.flatMap((e, index) => (e.note ? [[ids[index], e.note] as const] : []))
       if (notes.length > 0) {
@@ -2865,7 +2865,7 @@ function CanvasInner(): React.JSX.Element {
       } = fromDiagramFile(diagram)
       // Anything the load repaired by itself (a dangling container reference, a missing zIndex, a
       // required tag reset, a stale security reference, ...) makes the file differ from what is on
-      // disk, so it counts as a change to save (ADR 0128): compare what a save would write with
+      // disk, so it counts as a change to save (ADR 0040): compare what a save would write with
       // what was read.
       const wouldSave = toDiagramFile(
         syncNodeMetadata(openedNodes, openedRequiredTags, []),
@@ -3638,7 +3638,7 @@ function CanvasInner(): React.JSX.Element {
   ])
 
   // "Changes since last save" Notes bucket — reuses
-  // noteShadows' existing dirty flag (ADR 0092) directly, no new tracking.
+  // noteShadows' existing dirty flag (ADR 0040) directly, no new tracking.
   const notesChangedEntries: NotesChangedEntry[] = useMemo(
     () =>
       Object.values(noteShadows)
@@ -3711,7 +3711,7 @@ function CanvasInner(): React.JSX.Element {
       })
     )
   }, [checkedDiagram, effectiveFontFamily])
-  // Unsaved note edits whose element is gone (ADR 0092): kept, listed in Diagnostics.
+  // Unsaved note edits whose element is gone (ADR 0040): kept, listed in Diagnostics.
   const orphanedEdits = useMemo(
     () => orphanedNoteEdits(noteShadows, new Set(nodes.map((n) => n.id))),
     [noteShadows, nodes]

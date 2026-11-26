@@ -64,7 +64,7 @@ export function usePanels(
   const [diagramSettingsPanelOpen, setDiagramSettingsPanelOpen] = useState(false)
   const [notesPanelNodeId, setNotesPanelNodeId] = useState<string | null>(null)
   // However the open note changes or closes (the close button, Escape, another panel, a deleted
-  // element), clean copies of the notes not open are dropped (ADR 0092).
+  // element), clean copies of the notes not open are dropped (ADR 0040).
   useEffect(() => {
     setNoteShadows((prev) => pruneCleanShadows(prev, notesPanelNodeId))
   }, [notesPanelNodeId, setNoteShadows])

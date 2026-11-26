@@ -94,7 +94,7 @@ export interface SaveState {
   performSaveNow: (nodesToSave: Node[], currentPathNow: string | null) => Promise<string | null>
 }
 
-// Saving the diagram and the notes it owns (ADR 0092).
+// Saving the diagram and the notes it owns (ADR 0040).
 export function useSave(
   { setNodes, currentPath }: CanvasApi,
   {
@@ -136,7 +136,7 @@ export function useSave(
   const [showSavedFlash, setShowSavedFlash] = useState(false)
   const savedFlashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Saves the diagram and the notes it owns as one operation (ADR 0092) and syncs canvas
+  // Saves the diagram and the notes it owns as one operation (ADR 0040) and syncs canvas
   // state to what was written. It is the one place a diagram is persisted, so every save-adjacent
   // flow (manual save, link creation, forward link navigation) goes through it.
   //
@@ -345,7 +345,7 @@ export function useSave(
         if (decisions === null) {
           aborted = true
         } else {
-          // Per-file resolution (ADR 0092): what to overwrite, what to take from disk.
+          // Per-file resolution (ADR 0040): what to overwrite, what to take from disk.
           const pendingOps = plan.ops.filter((op) => first.remaining.nodeIds.includes(op.nodeId))
           const resolution = resolveConflicts(pendingOps, decisions)
           for (const id of resolution.adoptDiskNodeIds) {
@@ -394,7 +394,7 @@ export function useSave(
       savedNodes = withPaths(savedNodes, notDone)
 
       // Notes of elements that no longer exist have nothing left to save, unless they hold edits:
-      // those stay, and Diagnostics lists them (ADR 0092).
+      // those stay, and Diagnostics lists them (ADR 0040).
       const liveIds = new Set(savedNodes.map((n) => n.id))
       setNoteShadows((prev) =>
         Object.entries(prev).every(([id, shadow]) => liveIds.has(id) || shadow.dirty)

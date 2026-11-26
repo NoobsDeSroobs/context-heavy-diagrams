@@ -1,7 +1,7 @@
 // Thrown by the save path when the user backs out of the "changed outside the
 // app" conflict popup (Cancel, or Reload — which replaces the editor content,
 // so there's nothing left to save). Not a failure: callers swallow it instead
-// of showing "Save failed". See docs/decisions/0091-external-change-detection.md.
+// of showing "Save failed". See docs/decisions/0040-unsaved-work-and-outside-changes-are-never-lost-or-silently-overwritten.md.
 export class SaveAbortedError extends Error {
   constructor() {
     super('Save aborted by the user')

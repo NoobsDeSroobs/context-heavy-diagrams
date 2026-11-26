@@ -5,7 +5,7 @@ import { fileStamp } from '../document/fileStamp'
 import { resolveLinkPath } from '../links/linkPaths'
 
 // Reading notes. *Writing* (and renaming to follow a label) is part of
-// the multi-file save in documentSaveExec.ts / diagram.ts (ADR 0092); the path
+// the multi-file save in documentSaveExec.ts / diagram.ts (ADR 0040); the path
 // a note belongs at is derived in @shared/notePaths.
 export function registerNotesHandlers(): void {
   ipcMain.handle('notes:read', async (_event, diagramPath: string, relativePath: string) => {
