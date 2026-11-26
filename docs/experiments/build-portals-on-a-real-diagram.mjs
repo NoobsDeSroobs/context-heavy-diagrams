@@ -1,8 +1,8 @@
 // Builds docs/experiments/portals-on-a-real-diagram.html: a mock-up of portals (epic 0205) on a real,
 // messy diagram, the Meridian Rail landscape of the gallery. Nothing here is the app. Edges are drawn
 // straight, as steps and as curves between their connection points, a portal is a short gap cut where an
-// edge crosses another edge or an element, and the page compares the marks (tilde or oval) and the colour
-// of a pair (one fixed light blue or one colour per pair), the line-hop alternative, setting a gap with
+// edge crosses another edge or an element, and the page compares the marks (tilde or oval, both offered by
+// preference, ADR 0200), the line-hop alternative, setting a gap with
 // two sliders and an Add portals button, and a portal point.
 // Run: node docs/experiments/build-portals-on-a-real-diagram.mjs
 import { readFileSync, writeFileSync } from 'node:fs'
@@ -283,7 +283,7 @@ const oval = (p, u) => `<ellipse cx="${f(p.x)}" cy="${f(p.y)}" rx="5.5" ry="12" 
 const num = (p, u, dir, n) => `<text x="${f(p.x + u.x * dir * 19)}" y="${f(p.y + u.y * dir * 19 + 4)}" text-anchor="middle" class="num">${n}</text>`
 const hit = (p) => `<circle cx="${f(p.x)}" cy="${f(p.y)}" r="15" class="hit"/>`
 const poly = (pts, cls = 'edge') => `<polyline points="${pts.map((p) => `${f(p.x)},${f(p.y)}`).join(' ')}" class="${cls}"/>`
-const group = (n, inner) => `<g class="mk" data-p="${n}" style="--pair:var(--c${((n - 1) % 6) + 1})">${inner}</g>`
+const group = (n, inner) => `<g class="mk" data-p="${n}">${inner}</g>`
 
 function lines(label, width, size) {
   const max = Math.max(6, Math.floor((width - 14) / (size * 0.55)))
@@ -347,7 +347,7 @@ function sheet(an, kind) {
     // the exit oval is drawn under the edge so the line comes out of it, the entry oval over it so the line goes into it
     s += group(n, oval(c.out, c.out.u) + hit(c.out))
     s += poly(sub(e.path, 0, c.d0)) + poly(sub(e.path, c.d1, e.length - 7)) + arrow(end, end.u)
-    s += `<g class="mk whole" data-p="${n}" style="--pair:var(--c${((n - 1) % 6) + 1})">${poly(e.path.pts, 'wholeline')}</g>`
+    s += `<g class="mk whole" data-p="${n}">${poly(e.path.pts, 'wholeline')}</g>`
     marks += group(n, oval(c.in, c.in.u) + tilde(c.in, c.in.u) + tilde(c.out, c.out.u) + num(c.in, c.in.u, 1, n) + num(c.out, c.out.u, -1, n) + hit(c.in))
   }
   return s + marks + '</svg>'
@@ -391,7 +391,7 @@ const shared = [f, angle, line, arrow, tilde, oval, num].map((fn) => `const ${fn
 // --- a portal point: many edges carried between the same two places
 
 const box = (x, y, text) => `<rect x="${x}" y="${y}" width="110" height="40" rx="4" class="node"/><text x="${x + 55}" y="${y + 24}" text-anchor="middle" class="label" font-size="12">${text}</text>`
-const pill = (x, text) => `<g class="mk" data-p="1" style="--pair:var(--c2)"><rect x="${x}" y="88" width="120" height="44" rx="22" class="pillbox"/>${oval({ x: x + 22, y: 110 }, { x: 1, y: 0 })}${tilde({ x: x + 22, y: 110 }, { x: 1, y: 0 })}<text x="${x + 38}" y="115" class="num">1</text><text x="${x + 76}" y="115" text-anchor="middle" class="label" font-size="11">${text}</text></g>`
+const pill = (x, text) => `<g class="mk" data-p="1"><rect x="${x}" y="88" width="120" height="44" rx="22" class="pillbox"/>${oval({ x: x + 22, y: 110 }, { x: 1, y: 0 })}${tilde({ x: x + 22, y: 110 }, { x: 1, y: 0 })}<text x="${x + 38}" y="115" class="num">1</text><text x="${x + 76}" y="115" text-anchor="middle" class="label" font-size="11">${text}</text></g>`
 const pointSheet = `<svg viewBox="0 0 900 220" data-w="900" role="img" aria-label="A portal point">
 <rect width="900" height="220" class="canvas"/>
 ${['Ticketing', 'Fares', 'Payments'].map((t, i) => box(20, 20 + i * 62, t)).join('')}
@@ -406,15 +406,15 @@ const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Portals on a real diagram</title>
 <style>
-:root{--bg:#f4f4f1;--text:#1b1b1f;--sub:#5f6368;--canvas:#f8f8f8;--node:#ffffff;--nodeStroke:#c7ccd1;--line:#6b7280;--blue:#4a9be8;--hole:#dfe9f4;--panel:#ffffff;--c1:#2f7fd1;--c2:#d1602f;--c3:#2f9d6a;--c4:#9b55c9;--c5:#b88a12;--c6:#d13f77}
-[data-theme=dark]{--bg:#161616;--text:#e8e8e0;--sub:#9aa0a6;--canvas:#222222;--node:#2d2d2d;--nodeStroke:#515c67;--line:#9aa0a6;--blue:#8ec1f3;--hole:#0e141b;--panel:#1d1d1d;--c1:#6fb0f0;--c2:#f0905f;--c3:#5fcf9a;--c4:#c995ee;--c5:#e6bc4a;--c6:#f27aa5}
+:root{--bg:#f4f4f1;--text:#1b1b1f;--sub:#5f6368;--canvas:#f8f8f8;--node:#ffffff;--nodeStroke:#c7ccd1;--line:#6b7280;--blue:#4a9be8;--hole:#dfe9f4;--panel:#ffffff}
+[data-theme=dark]{--bg:#161616;--text:#e8e8e0;--sub:#9aa0a6;--canvas:#222222;--node:#2d2d2d;--nodeStroke:#515c67;--line:#9aa0a6;--blue:#8ec1f3;--hole:#0e141b;--panel:#1d1d1d}
 body{margin:0;padding:24px;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,sans-serif}
 h1{font-size:20px;margin:0 0 4px}h2{font-size:16px;margin:32px 0 6px}p,li{color:var(--sub);max-width:900px}
 .bar{display:flex;gap:14px;align-items:center;margin:14px 0;flex-wrap:wrap}button{font:inherit;padding:4px 12px;border:1px solid var(--nodeStroke);border-radius:6px;background:var(--panel);color:var(--text);cursor:pointer}
 .bar span.k{color:var(--sub)}button.on{border-color:var(--blue);outline:1px solid var(--blue)}
 .canvas{fill:var(--canvas)}.node{fill:var(--node);stroke:var(--nodeStroke);stroke-width:1.5}.pillbox{fill:var(--node);stroke:var(--k,var(--blue));stroke-width:1.5}.label{fill:var(--text);font-family:system-ui,sans-serif}.note{fill:var(--sub);font-family:system-ui,sans-serif}
 .edge{stroke:var(--line);stroke-width:1.5;fill:none}.head{fill:var(--line)}
-html[data-colour=pair] .mk{--k:var(--pair)}html[data-colour=blue] .mk{--k:var(--blue)}
+.mk{--k:var(--blue)}
 .tilde{fill:none;stroke:var(--k);stroke-width:2.4;stroke-linecap:round}.oval{fill:var(--hole);stroke:var(--k);stroke-width:2}.num{fill:var(--k);font:600 12px system-ui,sans-serif}
 html[data-mark=tilde] .oval{display:none}html[data-mark=oval] .tilde{display:none}
 .hit{fill:transparent}.whole{pointer-events:none;opacity:0}.wholeline{fill:none;stroke:var(--k);stroke-width:2;stroke-dasharray:6 4}.hot.whole{opacity:.9}.mk.hot .tilde{stroke-width:3.6}.mk.hot .oval{stroke-width:3.2}
@@ -426,7 +426,6 @@ svg{display:block;border-radius:8px;max-width:100%;height:auto;margin:8px 0}
 <p>The Meridian Rail landscape of the gallery (${diagram.nodes.length} elements, ${diagram.edges.length} edges), a window of it where edges cross one another and run across elements, drawn with straight, step and curved edges (the edges are approximations of the app's, not the app). A portal is a short gap cut where an edge would cross something, with a mark at both ends and the same number on both. This is a mock-up (epic 0205): nothing of it is in the app.</p>
 <div class="bar"><span class="k">Theme</span><button data-set="theme" data-v="light">Light</button><button data-set="theme" data-v="dark">Dark</button>
 <span class="k">Mark</span><button data-set="mark" data-v="tilde">Tilde</button><button data-set="mark" data-v="oval">Oval</button>
-<span class="k">Colour</span><button data-set="colour" data-v="blue">One light blue</button><button data-set="colour" data-v="pair">One per pair</button>
 <label>Zoom <input id="zoom" type="range" min="30" max="110" value="100"> <span id="zoomText">100%</span></label></div>
 ${routed}
 <h2>The alternative: line hops</h2>
@@ -440,13 +439,13 @@ ${demo}<div class="panel"><h3>Edge: Source to Target</h3>
 <label>Gap ends <span id="eText"></span><input type="range" id="e" min="0" max="420" value="178"></label>
 <p style="margin:10px 0 0"><button id="add">Add portals</button></p><div class="read" id="read"></div></div>
 <h2>A portal point</h2>
-<p>One reading of the idea: three edges run into one point and three come out of the matching point, so one carried link stands for many edges. The two points share the number and the colour. What the point holds (a list of edges, or just a name), and whether the edges are real edges of the diagram or something else, is open.</p>
+<p>One reading of the idea: three edges run into one point and three come out of the matching point, so one carried link stands for many edges. The two points share the number. What the point holds (a list of edges, or just a name), and whether the edges are real edges of the diagram or something else, is open.</p>
 ${pointSheet}
 <script>
 ${shared}
 const root=document.documentElement;
-const state={theme:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light',mark:'oval',colour:'blue'};
-function apply(){root.dataset.theme=state.theme;root.dataset.mark=state.mark;root.dataset.colour=state.colour;document.querySelectorAll('[data-set]').forEach(b=>b.classList.toggle('on',state[b.dataset.set]===b.dataset.v))}
+const state={theme:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light',mark:'oval'};
+function apply(){root.dataset.theme=state.theme;root.dataset.mark=state.mark;document.querySelectorAll('[data-set]').forEach(b=>b.classList.toggle('on',state[b.dataset.set]===b.dataset.v))}
 document.querySelectorAll('[data-set]').forEach(b=>b.addEventListener('click',()=>{state[b.dataset.set]=b.dataset.v;apply()}));apply();
 const svgs=[...document.querySelectorAll('svg')],zoom=document.getElementById('zoom'),zoomText=document.getElementById('zoomText');
 function fit(){const z=zoom.value/100;zoomText.textContent=zoom.value+'%';svgs.forEach(s=>{s.style.width=Math.round(s.dataset.w*z)+'px'})}
@@ -464,7 +463,7 @@ function render(){
   if(!on.checked){h=line(P,pt(L-7))+arrow(end,u);read.textContent='A whole edge: it crosses 2 edges and runs across the Cache element.'}
   else{
     const a=pt(s),b=pt(e),skipped=events.filter(v=>v.to>=s&&v.from<=e).length;
-    h='<g class="mk" style="--pair:var(--c1)">'+oval(b,u)+'</g>'+line(P,a)+line(b,pt(L-7))+arrow(end,u)+'<g class="mk" style="--pair:var(--c1)">'+oval(a,u)+tilde(a,u)+tilde(b,u)+num(a,u,1,1)+num(b,u,-1,1)+'</g>';
+    h='<g class="mk">'+oval(b,u)+'</g>'+line(P,a)+line(b,pt(L-7))+arrow(end,u)+'<g class="mk">'+oval(a,u)+tilde(a,u)+tilde(b,u)+num(a,u,1,1)+num(b,u,-1,1)+'</g>';
     read.textContent='Hides '+(e-s)+' px and skips '+skipped+' of the 3 crossings; '+(3-skipped)+' still drawn over the edge.';
   }
   g.innerHTML=h;
