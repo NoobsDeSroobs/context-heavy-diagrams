@@ -17,7 +17,7 @@ import {
 import { renderDiagramDrawio } from '../shared/export/drawio.ts'
 
 // `chd export` (ADR 0124): a .chd file to an SVG image without opening the app, so a README or a
-// wiki image can be regenerated whenever the diagram changes, or to a draw.io file (ADR 0167).
+// wiki image can be regenerated whenever the diagram changes, or to a draw.io file (docs/architecture/export.md).
 // Bundled into resources/cli/export.mjs by scripts/build-cli.mjs; chd.mjs loads it only for this
 // command. Read-only on the diagram, so the stale-edit rule (ADR 0109) does not apply; the output
 // must be an .svg or .drawio, so it can never overwrite a diagram.

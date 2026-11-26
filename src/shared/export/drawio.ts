@@ -34,7 +34,7 @@ import { iconKey, type IconAsset } from './renderDiagram.ts'
 import { layoutEdges, layoutNodes, orientEdges, type LaidOutNode } from './model.ts'
 
 // draw.io (diagrams.net) export: a diagram turned into the mxGraph XML of a `.drawio` file by a pure
-// function, so the app and `chd export` produce the same file (ADR 0167). The file is plain,
+// function, so the app and `chd export` produce the same file (docs/architecture/export.md). The file is plain,
 // uncompressed XML with one cell per line, so it diffs and opens in draw.io, in its desktop app and
 // in anything else that reads the format. Everything is deterministic: the same inputs give the same
 // bytes.

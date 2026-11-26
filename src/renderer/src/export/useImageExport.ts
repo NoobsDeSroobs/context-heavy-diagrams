@@ -210,7 +210,7 @@ export function useImageExport(
   )
 
   // The diagram as the file would hold it, for the exports that render from data (SVG, ADR 0124,
-  // and draw.io, ADR 0167) instead of the DOM, so they need no deselecting, no mounting of
+  // and draw.io) instead of the DOM, so they need no deselecting, no mounting of
   // off-screen elements and no waiting for a frame. A node that has no stored size is given the
   // size React Flow measured for it.
   const currentDiagram = useCallback(() => {
@@ -292,7 +292,7 @@ export function useImageExport(
     ]
   )
 
-  // draw.io export (ADR 0167): no dialog, since a draw.io file has no padding, background or legend
+  // draw.io export: no dialog, since a draw.io file has no padding, background or legend
   // to choose. What draw.io cannot hold is shown after the file is written.
   const handleExportDrawio = useCallback(async () => {
     try {

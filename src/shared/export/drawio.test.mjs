@@ -1,4 +1,4 @@
-// Run with `npm test`. The draw.io export (ADR 0167): a diagram turned into mxGraph XML, what each
+// Run with `npm test`. The draw.io export: a diagram turned into mxGraph XML, what each
 // part of it becomes, what is reported as lost, and every diagram in the examples.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'

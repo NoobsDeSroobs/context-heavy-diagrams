@@ -6,7 +6,7 @@ import { writeFile } from 'fs/promises'
 // hands over a data URL (from html-to-image's toPng) rather than a raw
 // buffer since that's what the browser-side capture API already produces;
 // stripping the data: prefix here keeps that detail out of the renderer's
-// own IPC surface. SVG export (ADR 0124) and draw.io export (ADR 0167) hand over the document text.
+// own IPC surface. SVG export (ADR 0124) and draw.io export hand over the document text.
 const FILTERS = [{ name: 'PNG image', extensions: ['png'] }]
 const SVG_FILTERS = [{ name: 'SVG image', extensions: ['svg'] }]
 const DRAWIO_FILTERS = [{ name: 'draw.io diagram', extensions: ['drawio'] }]
