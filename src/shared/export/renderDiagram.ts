@@ -63,6 +63,19 @@ import {
 } from './appearance.ts'
 import { MARKER_SHAPES, MARKER_STROKE_WIDTH, markerTrim } from './markerShapes.ts'
 import { trimPath } from '../geometry/trimPath.ts'
+import {
+  PORTAL_COLOR,
+  PORTAL_MARK_WIDTH,
+  PORTAL_OVAL,
+  PORTAL_TILDE_PATH,
+  markTransform,
+  numberPoint,
+  portalNumbers,
+  readPortal,
+  splitPath,
+  type PortalMarkKind,
+  type PortalSplit
+} from '../portals/portals.ts'
 import { plainColor } from './color.ts'
 import { iconParts } from './iconMarkup.ts'
 import {
@@ -110,6 +123,8 @@ export interface SvgExportOptions {
   // A gate where an edge goes through the border of a container (ADR 0185). Off unless named here, as
   // on the canvas, where it is a session switch.
   crossings?: boolean
+  // How a portal's gap is marked, as on the canvas (the person's preference); a tilde when absent.
+  portalMark?: PortalMarkKind
 }
 
 export const DEFAULT_SVG_EXPORT_OPTIONS = {
@@ -547,6 +562,34 @@ function applyStroke(look: LineLook): string {
   )
 }
 
+// A portal's two marks and numbers as shapes, as the canvas draws them: the oval at the exit goes
+// under the edge, so the line comes out of it, and everything else over it.
+function portalShapes(
+  split: PortalSplit,
+  kind: PortalMarkKind,
+  number: number,
+  theme: Theme,
+  hole: string,
+  family: string
+): { under: string; over: string } {
+  const color = PORTAL_COLOR[theme]
+  const oval = (mark: PortalSplit['entry']): string =>
+    `<ellipse rx="${PORTAL_OVAL.rx}" ry="${PORTAL_OVAL.ry}" transform="${markTransform(mark, 'oval')}" fill="${esc(hole)}" stroke="${color}" stroke-width="2"/>`
+  const tilde = (mark: PortalSplit['entry']): string =>
+    `<path d="${PORTAL_TILDE_PATH}" transform="${markTransform(mark, 'tilde')}" fill="none" stroke="${color}" stroke-width="${PORTAL_MARK_WIDTH}" stroke-linecap="round"/>`
+  const label = (mark: PortalSplit['entry'], towardsGap: 1 | -1): string => {
+    const at = numberPoint(mark, towardsGap)
+    return `<text x="${num(at.x)}" y="${num(at.y)}" text-anchor="middle" font-family="${esc(family)}" font-size="12" font-weight="600" fill="${color}">${number}</text>`
+  }
+  return {
+    under: kind === 'oval' ? oval(split.exit) : '',
+    over:
+      (kind === 'oval' ? oval(split.entry) : tilde(split.entry) + tilde(split.exit)) +
+      label(split.entry, 1) +
+      label(split.exit, -1)
+  }
+}
+
 export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions): string {
   const theme = options.theme
   const tokens = PAGE_TOKENS[theme]
@@ -790,6 +833,7 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
       .join('')
   }
   const chipRing = tokens.background
+  const portalNumberOf = portalNumbers(diagram.edges)
   for (const laid of edges) {
     const { edge, from, to } = laid
     const matches = matchingHighlights(edge.metadata, highlights, enabled)
@@ -803,11 +847,35 @@ export function renderDiagramSvg(diagram: DiagramFile, options: SvgExportOptions
       options.edgeStraightSegmentLength
     )
     const flat = flattenPath(d)
+    // A portal draws the edge broken, with a mark and a number at each end of the gap; it is only a
+    // way of drawing (the canvas does the same from the same splitPath).
+    const portal = readPortal(edge.style)
+    const split = portal ? splitPath(d, portal) : undefined
+    let line: string
+    let marks = { under: '', over: '' }
+    if (split) {
+      const leadLook = { ...look, endMarker: 'none' as const }
+      const tailLook = { ...look, startMarker: 'none' as const }
+      line =
+        `<path d="${strokedPath(split.lead, leadLook)}" fill="none"${applyStroke(look)}/>${arrowheadsFor(split.lead, leadLook)}` +
+        `<path d="${strokedPath(split.tail, tailLook)}" fill="none"${applyStroke(look)}/>${arrowheadsFor(split.tail, tailLook)}`
+      marks = portalShapes(
+        split,
+        options.portalMark ?? 'tilde',
+        portalNumberOf.get(edge.id) ?? portal?.number ?? 1,
+        theme,
+        tokens.background,
+        family
+      )
+      for (const mark of [split.entry, split.exit]) extent.add(mark.x, mark.y, 20)
+    } else {
+      line = `<path d="${strokedPath(d, look)}" fill="none"${applyStroke(look)}/>${arrowheadsFor(d, look)}`
+    }
     drawn.push({
       z: laid.z,
       layer: 0,
       order: laid.order,
-      svg: `<g class="chd-edge" data-id="${esc(edge.id)}"><path d="${strokedPath(d, look)}" fill="none"${applyStroke(look)}/>${arrowheadsFor(d, look)}${options.crossings ? gatesFor(edge.source, edge.target, flat) : ''}</g>`
+      svg: `<g class="chd-edge" data-id="${esc(edge.id)}">${marks.under}${line}${marks.over}${options.crossings ? gatesFor(edge.source, edge.target, flat) : ''}</g>`
     })
     const pad =
       look.strokeWidth / 2 +

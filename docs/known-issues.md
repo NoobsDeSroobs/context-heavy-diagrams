@@ -20,6 +20,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 - [A native confirm() dialog left `<select>` elements unresponsive afterward](#a-native-confirm-dialog-left-select-elements-unresponsive-afterward) — Worked around.
 - [Clicking a container selects a different container that visually encloses it](#clicking-a-container-selects-a-different-container-that-visually-encloses-it) — Worked around.
 - [`validate` and `check` read as the same thing, and are not](#validate-and-check-read-as-the-same-thing-and-are-not) — Worked around (descriptions say which question each answers).
+- [An edge with waypoints vanishes while most of it is in view](#an-edge-with-waypoints-vanishes-while-most-of-it-is-in-view) — Worked around (an edge that swings far outside its ends without waypoints is not covered).
 
 ---
 
@@ -882,3 +883,20 @@ Fixed by the paste rework described under "Pasting a copied child-of-a-container
 **Direction:** rename on a breaking-change release: `validate_diagram` to `validate_structure` (the maintainer's preference) and `check_diagram` to a name about conformance, with the old names kept as aliases for a release. `validate_metamodel` stays, it validates a metamodel file. Do it if the confusion still shows up in practice, since assistants and pipelines already call the current names.
 
 **References:** `extension/createServer.mjs`, `resources/cli/chd.mjs`, `src/cli/checkCommand.ts`, [ADR 0182](decisions/0182-validate-diagram-takes-text-too.md)
+
+---
+
+## An edge with waypoints vanishes while most of it is in view
+
+**Status:** Worked around (2026-11-27)
+**Found:** 2026-11-27, on a portalled edge of `examples/life-parallel-selectors.chd`; it is not about portals
+
+**Symptom:** zooming in, or moving the window, makes a whole edge disappear while its middle is still on screen. It happens when the edge runs far from the straight line between its ends, vertically or horizontally, such as an edge bent through a waypoint.
+
+**Cause:** with `onlyRenderVisibleElements` (ADR 0073) React Flow draws an edge only while the box round its source and target elements overlaps the window (`isEdgeVisible` in `@xyflow/system`). It ignores the path in between, and offers no hook for it. A waypoint 400 units below both ends puts the path outside that box.
+
+**Workaround:** `edgeCulling.ts` and `Canvas.tsx` turn `onlyRenderVisibleElements` off while an edge with waypoints reaches into the window and its end elements do not, using the box of its waypoints and ends, padded by the most a curve can swing past a waypoint (a third of the span between its neighbours times its gravity, at least 100 units). The cost is that everything is drawn for as long as that holds.
+
+**Still open:** an edge with no waypoints that swings far outside its ends (a step route that loops round an element) is not covered, and the padded box is an estimate of where a curve goes (the ends are taken at the middle of their boxes, and the straight lead-in at an end is not counted). If either shows up, the next step is to measure the real path of the edges that matter, or to cull edges in the app and leave React Flow's culling to the nodes.
+
+**References:** `src/renderer/src/canvas/edgeCulling.ts`, `src/renderer/src/canvas/Canvas.tsx` (`waypointEdgeOffScreen`), [ADR 0073](decisions/0073-react-flow-render-performance-round-2.md)

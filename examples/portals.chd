@@ -1,0 +1,207 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "title",
+      "type": "text",
+      "position": {
+        "x": 0,
+        "y": -230
+      },
+      "size": {
+        "width": 720,
+        "height": 32
+      },
+      "style": {
+        "fontSize": 18,
+        "textAlign": "center",
+        "fontWeight": "bold"
+      },
+      "data": {
+        "label": "Portals: an edge that skips what is in its way"
+      }
+    },
+    {
+      "id": "intro",
+      "type": "text",
+      "position": {
+        "x": 0,
+        "y": -190
+      },
+      "size": {
+        "width": 720,
+        "height": 70
+      },
+      "style": {
+        "fontSize": 12,
+        "textAlign": "center"
+      },
+      "data": {
+        "label": "Two edges run across two others. Each has a portal: the edge stops at one mark and carries on at the other, and the same number is at both ends. Click a mark to go to the other end, drag it to move it, hover it to see the whole edge. The first number is made from the order in the file; the second was typed. Choose the mark you read most easily in Preferences (Portal mark)."
+      }
+    },
+    {
+      "id": "billing",
+      "type": "entity",
+      "position": {
+        "x": 240,
+        "y": -100
+      },
+      "size": {
+        "width": 120,
+        "height": 60
+      },
+      "data": {
+        "label": "Billing"
+      }
+    },
+    {
+      "id": "inventory",
+      "type": "entity",
+      "position": {
+        "x": 380,
+        "y": -100
+      },
+      "size": {
+        "width": 120,
+        "height": 60
+      },
+      "data": {
+        "label": "Inventory"
+      }
+    },
+    {
+      "id": "orders",
+      "type": "entity",
+      "position": {
+        "x": 0,
+        "y": 100
+      },
+      "size": {
+        "width": 120,
+        "height": 60
+      },
+      "data": {
+        "label": "Orders"
+      }
+    },
+    {
+      "id": "archive",
+      "type": "entity",
+      "position": {
+        "x": 600,
+        "y": 100
+      },
+      "size": {
+        "width": 120,
+        "height": 60
+      },
+      "data": {
+        "label": "Archive"
+      }
+    },
+    {
+      "id": "intake",
+      "type": "entity",
+      "position": {
+        "x": 0,
+        "y": 440
+      },
+      "size": {
+        "width": 120,
+        "height": 60
+      },
+      "data": {
+        "label": "Intake"
+      }
+    },
+    {
+      "id": "ledger",
+      "type": "entity",
+      "position": {
+        "x": 600,
+        "y": 440
+      },
+      "size": {
+        "width": 120,
+        "height": 60
+      },
+      "data": {
+        "label": "Ledger"
+      }
+    },
+    {
+      "id": "reports",
+      "type": "entity",
+      "position": {
+        "x": 240,
+        "y": 540
+      },
+      "size": {
+        "width": 120,
+        "height": 60
+      },
+      "data": {
+        "label": "Reports"
+      }
+    },
+    {
+      "id": "shipping",
+      "type": "entity",
+      "position": {
+        "x": 380,
+        "y": 540
+      },
+      "size": {
+        "width": 120,
+        "height": 60
+      },
+      "data": {
+        "label": "Shipping"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-billing",
+      "source": "billing",
+      "target": "reports",
+      "style": {
+        "routingStyle": "straight"
+      }
+    },
+    {
+      "id": "e-inventory",
+      "source": "inventory",
+      "target": "shipping",
+      "style": {
+        "routingStyle": "straight"
+      }
+    },
+    {
+      "id": "e-orders",
+      "source": "orders",
+      "target": "archive",
+      "label": "archived",
+      "style": {
+        "routingStyle": "straight",
+        "portalStart": 0.29,
+        "portalEnd": 0.75,
+        "labelPosition": 0.9
+      }
+    },
+    {
+      "id": "e-intake",
+      "source": "intake",
+      "target": "ledger",
+      "label": "booked",
+      "style": {
+        "routingStyle": "straight",
+        "portalStart": 0.3,
+        "portalEnd": 0.45,
+        "portalNumber": 7,
+        "labelPosition": 0.9
+      }
+    }
+  ]
+}

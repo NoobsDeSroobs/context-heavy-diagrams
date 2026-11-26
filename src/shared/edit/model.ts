@@ -202,6 +202,9 @@ export const EDGE_STYLE: Record<string, StyleRule> = {
   dashLength: { kind: 'number', min: 0 },
   dashGap: { kind: 'number', min: 0 },
   labelPosition: { kind: 'number', min: 0, max: 1 },
+  portalStart: { kind: 'number', min: 0, max: 1 },
+  portalEnd: { kind: 'number', min: 0, max: 1 },
+  portalNumber: { kind: 'number', min: 1 },
   routingStyle: { kind: 'enum', values: ROUTING_STYLES }
 }
 

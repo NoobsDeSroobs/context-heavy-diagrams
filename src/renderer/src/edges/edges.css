@@ -197,3 +197,50 @@
   color: var(--ev-c-text-3);
   font-size: 11px;
 }
+
+/* Portals: an edge drawn broken, with a mark and a number at each end of the gap. The marks are
+   drawn in the edge's own SVG; the hidden part is drawn dashed between the marks while the edge is
+   selected or a mark is hovered, and while Ctrl is held over the edge. */
+.edge-portal-tilde {
+  fill: none;
+  stroke-linecap: round;
+}
+
+.edge-portal-oval {
+  fill: var(--color-background);
+  stroke-width: 2;
+}
+
+.edge-portal-number {
+  font:
+    600 12px system-ui,
+    sans-serif;
+  pointer-events: none;
+  user-select: none;
+}
+
+.edge-portal-hit {
+  fill: transparent;
+  pointer-events: all;
+}
+
+.edge-portal-mark {
+  cursor: pointer;
+}
+
+.edge-portal-gap {
+  fill: none;
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.edge-portal-gap.is-on,
+.mod-held .react-flow__edge:hover .edge-portal-gap {
+  opacity: 0.9;
+}
+
+.compare-canvas .edge-portal-mark {
+  cursor: default;
+}

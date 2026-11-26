@@ -1,6 +1,7 @@
 import type { EdgeStyle, GravityPreset, NodeStyle } from '../diagram'
 import { PEEK_CARD_MAX_HEIGHT, PEEK_CARD_WIDTH, clampPeekSize } from './peekCard.ts'
 import { UTILITY_DOCK_WIDTH, clampDockWidth } from './panelWidth.ts'
+import type { PortalMarkKind } from '../portals/portals.ts'
 
 // The app-wide Preferences tier — per-installation, every-diagram (see the
 // glossary and ADR 0052's addendum for the "Settings" -> "Preferences"
@@ -189,6 +190,10 @@ export interface AppPreferences {
   // operating system's reduced-motion setting, which is what a fresh install does; 'on' and 'off'
   // are the person's own choice and win over it.
   animateEdges: EdgeAnimationMode
+  // How a portal is marked where an edge goes into its gap and comes out: a curved S across the
+  // edge, or an oval. Each person reads one more easily, so it is a preference; nothing about it is
+  // stored in a diagram.
+  portalMark: PortalMarkKind
 }
 
 export type EdgeAnimationMode = 'system' | 'on' | 'off'
@@ -235,7 +240,8 @@ export const DEFAULT_PREFERENCES: AppPreferences = {
   showZoomControls: false,
   recentDiagramsLimit: 10,
   aiFeaturesEnabled: true,
-  animateEdges: 'system'
+  animateEdges: 'system',
+  portalMark: 'tilde'
 }
 
 // Standard desktop convention; also a floor for the user-facing limit input
@@ -288,6 +294,7 @@ export function normalizePreferences(
     ...rest,
     animateEdges: readEdgeAnimationMode(raw.animateEdges)
   }
+  merged.portalMark = merged.portalMark === 'oval' ? 'oval' : 'tilde'
   if (legacyFolder && !merged.metamodelsFolder) merged.metamodelsFolder = legacyFolder
   merged.peekCardWidth = clampPeekSize(merged.peekCardWidth, PEEK_CARD_WIDTH)
   merged.peekCardMaxHeight = clampPeekSize(merged.peekCardMaxHeight, PEEK_CARD_MAX_HEIGHT)

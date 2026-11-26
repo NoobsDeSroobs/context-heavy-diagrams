@@ -10,6 +10,7 @@ import { computeFieldValue } from './fieldValue'
 import { MARKER_OPTIONS } from '../edges/edgeStyleOptions'
 import { defaultFontLabel, useFontOptions } from '../styling/useFontOptions'
 import { edgeStyleOf } from './styleAccess'
+import { defaultPortal, movePortalEnd, readPortal } from '@shared/portals/portals'
 
 // '' means the field is absent: a real style.routingStyle value, not a placeholder (the same '' ===
 // "no override" pattern as fontFamily below). 'straight'/'step'/'smoothstep' are React Flow's
@@ -60,7 +61,8 @@ export function EdgeFields({
   endContinuousEdit: () => void
   pushSnapshot: () => void
 }): React.JSX.Element {
-  const { theme, paletteColors, diagramFontFamily } = useDiagramContext()
+  const { theme, paletteColors, diagramFontFamily, portalNumbers, edgeLengths } =
+    useDiagramContext()
   const fontFamilyOptions = useFontOptions(
     edges.map((e) => edgeStyleOf(e).fontFamily),
     defaultFontLabel(diagramFontFamily)
@@ -109,6 +111,18 @@ export function EdgeFields({
     edges,
     (e) => edgeStyleOf(e).labelPosition ?? D.labelPosition
   )
+
+  // A portal is set on one edge at a time: its gap is a length along that edge's own path.
+  const single = edges.length === 1 ? edges[0] : undefined
+  const portal = single ? readPortal(edgeStyleOf(single)) : undefined
+  const edgeLength = single ? edgeLengths?.get(single.id)?.() : undefined
+  const newPortal = edgeLength ? defaultPortal(edgeLength) : undefined
+  const percent = (fraction: number): number => Math.round(fraction * 1000) / 10
+  const moveEnd = (which: 'start' | 'end', value: number | undefined): void => {
+    if (!portal || value === undefined) return
+    const next = movePortalEnd(portal, which, value / 100, edgeLength ?? 1000)
+    updateStyle({ portalStart: next.start, portalEnd: next.end })
+  }
 
   return (
     <>
@@ -271,6 +285,81 @@ export function EdgeFields({
           pushSnapshot={pushSnapshot}
         />
       </CollapsibleSection>
+      {single && (
+        <CollapsibleSection title="Portal">
+          {portal ? (
+            <>
+              <SliderField
+                label="Gap starts (%)"
+                value={percent(portal.start)}
+                mixed={false}
+                defaultValue={45}
+                onChange={(v) => moveEnd('start', v)}
+                onSessionStart={beginContinuousEdit}
+                onSessionEnd={endContinuousEdit}
+              />
+              <SliderField
+                label="Gap ends (%)"
+                value={percent(portal.end)}
+                mixed={false}
+                defaultValue={55}
+                onChange={(v) => moveEnd('end', v)}
+                onSessionStart={beginContinuousEdit}
+                onSessionEnd={endContinuousEdit}
+              />
+              <NumberField
+                label="Number"
+                value={portal.number ?? portalNumbers?.get(single.id)}
+                mixed={false}
+                min={1}
+                step={1}
+                // Typing one overrides the number made from the order in the file; clearing the field
+                // goes back to it.
+                onChange={(v) =>
+                  updateStyle({
+                    portalNumber: v === undefined || v < 1 ? undefined : Math.round(v)
+                  })
+                }
+                onSessionStart={beginContinuousEdit}
+                onSessionEnd={endContinuousEdit}
+              />
+              <button
+                type="button"
+                className="property-set-default"
+                title="Draw the whole edge again"
+                onClick={() => {
+                  pushSnapshot()
+                  updateStyle({
+                    portalStart: undefined,
+                    portalEnd: undefined,
+                    portalNumber: undefined
+                  })
+                }}
+              >
+                Remove portal
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="property-set-default"
+              disabled={!newPortal}
+              title={
+                newPortal
+                  ? 'Break the edge with a gap in the middle; move its two ends to where it belongs'
+                  : 'The edge is too short for a gap'
+              }
+              onClick={() => {
+                if (!newPortal) return
+                pushSnapshot()
+                updateStyle({ portalStart: newPortal.start, portalEnd: newPortal.end })
+              }}
+            >
+              Add portal
+            </button>
+          )}
+        </CollapsibleSection>
+      )}
       <CollapsibleSection title="Label">
         <SliderField
           label="Position"

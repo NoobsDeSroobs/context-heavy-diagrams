@@ -8,6 +8,7 @@ import type {
   EdgeStyle,
   LinePoint
 } from '@shared/diagram'
+import { mirrorEdgeStylePositions } from '@shared/portals/portals'
 import { effectiveConnectionPoints } from '../nodes/connectionPoints'
 import {
   DEFAULT_DIRECTION_SET_LEGEND_COLOR,
@@ -101,8 +102,8 @@ export function reverseEdgeDirection(edge: Edge): Edge {
   const style = edgeStyle(edge)
   const data: Record<string, unknown> = { ...edge.data }
   if (points.length > 0) data.points = [...points].reverse()
-  if (style && style.labelPosition !== undefined) {
-    data.style = { ...style, labelPosition: 1 - style.labelPosition }
+  if (style && (style.labelPosition !== undefined || style.portalStart !== undefined)) {
+    data.style = mirrorEdgeStylePositions(style)
   }
   return {
     ...edge,

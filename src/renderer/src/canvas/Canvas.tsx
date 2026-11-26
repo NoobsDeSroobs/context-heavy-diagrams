@@ -39,6 +39,7 @@ import {
   useNodesState,
   useEdgesState,
   useReactFlow,
+  useStore,
   useUpdateNodeInternals,
   type Connection,
   type Edge,
@@ -47,7 +48,8 @@ import {
   type Node,
   type NodeChange,
   type OnBeforeDelete,
-  type OnConnectStartParams
+  type OnConnectStartParams,
+  type ReactFlowState
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import {
@@ -84,6 +86,7 @@ import { useModifierHeldClass } from '../edges/useModifierHeldClass'
 import { useCarryEdgePoints } from '../edges/useCarryEdgePoints'
 import { usePrefersReducedMotion } from '../edges/usePrefersReducedMotion'
 import { edgeAnimationIsOn } from '@shared/preferences/preferences'
+import { portalNotices, portalNumbers } from '@shared/portals/portals'
 import DiagramContext, { type DiagramContextValue } from './DiagramContext'
 import ContextMenu, { type ContextMenuItem } from '../ui/ContextMenu'
 import IconPicker from '../icons/IconPicker'
@@ -162,6 +165,7 @@ import UtilityDock from '../UtilityDock'
 import AlignmentGuides from '../alignment/AlignmentGuides'
 import { SNAP_THRESHOLD_PX, boundsFrom, computeSnap } from '../alignment/alignment'
 import { buildClipboardPayload, parseClipboardPayload, remapForPaste } from './clipboard'
+import { waypointEdgeHidden } from './edgeCulling'
 import { resolveDeletion } from './containerRemoval'
 import { warnIfSavedWithNewer } from '../document/fileVersionWarning'
 import type { TransformPatch } from '../properties/transformPatch'
@@ -474,6 +478,26 @@ function CanvasInner(): React.JSX.Element {
   // Gates on the edges that cross a container's border (ADR 0185): a switch for this session, off
   // because most diagrams do not care about crossings and it adds to the canvas.
   const [showCrossings, setShowCrossings] = useState(false)
+  // The number each portalled edge shows (typed, else from the order in the file). Kept as one
+  // object until a number changes, so selecting or editing an edge does not re-render every edge
+  // through the context (ADR 0056).
+  const portalNumberKey = useMemo(
+    () =>
+      JSON.stringify([
+        ...portalNumbers(
+          edges.map((e) => ({
+            id: e.id,
+            style: (e.data?.style as EdgeStyle | undefined) ?? undefined
+          }))
+        )
+      ]),
+    [edges]
+  )
+  const portalNumberMap = useMemo(
+    () => new Map<string, number>(JSON.parse(portalNumberKey) as [string, number][]),
+    [portalNumberKey]
+  )
+  const [edgeLengths] = useState(() => new Map<string, () => number>())
   const toggleCrossings = useCallback(() => setShowCrossings((on) => !on), [])
   const stencilRows = useMemo(
     () =>
@@ -3448,6 +3472,55 @@ function CanvasInner(): React.JSX.Element {
     return storiesPresenting ? lockedForPresenting(visible) : visible
   }, [orderedEdges, isVisibleElement, storyFade, storiesPresenting])
 
+  // React Flow drops an edge when the box round its two ends is off screen, however far the path
+  // between them runs. While an edge with waypoints reaches into the window and its ends do not,
+  // everything is drawn (edgeCulling.ts, docs/known-issues.md).
+  const waypointEdges = useMemo(
+    () =>
+      edges
+        .map((e) => ({
+          source: e.source,
+          target: e.target,
+          points: (e.data?.points as LinePoint[] | undefined) ?? []
+        }))
+        .filter((e) => e.points.length > 0),
+    [edges]
+  )
+  const waypointEdgeOffScreen = useStore(
+    useCallback(
+      (state: ReactFlowState): boolean => {
+        if (waypointEdges.length === 0) return false
+        const [tx, ty, zoom] = state.transform
+        const view = {
+          x: -tx / zoom,
+          y: -ty / zoom,
+          x2: (state.width - tx) / zoom,
+          y2: (state.height - ty) / zoom
+        }
+        return waypointEdgeHidden(
+          waypointEdges.map((e) => ({
+            points: e.points,
+            ends: [e.source, e.target].flatMap((id) => {
+              const node = state.nodeLookup.get(id)
+              if (!node) return []
+              const { x, y } = node.internals.positionAbsolute
+              return [
+                {
+                  x,
+                  y,
+                  x2: x + (node.measured.width ?? node.width ?? 0),
+                  y2: y + (node.measured.height ?? node.height ?? 0)
+                }
+              ]
+            })
+          })),
+          view
+        )
+      },
+      [waypointEdges]
+    )
+  )
+
   // An edge has no zIndex of its own (ADR 0035 scoped that to Entity/Container/Text): it sits at
   // the midpoint of its endpoints' current stacking, computed here next to orderedEdges and never
   // persisted.
@@ -3588,7 +3661,15 @@ function CanvasInner(): React.JSX.Element {
       ...legendEmptyAdvisory,
       ...strayLines,
       // Set ids in stories that no set holds (ADR 0195): ignored, never removed.
-      ...storyStrayAdvisory(stories, visibilitySets)
+      ...storyStrayAdvisory(stories, visibilitySets),
+      // A portal number used twice, and a label hidden in a gap.
+      ...portalNotices(
+        edges.map((e) => ({
+          id: e.id,
+          label: typeof e.data?.label === 'string' ? e.data.label : undefined,
+          style: e.data?.style as EdgeStyle | undefined
+        }))
+      )
     ]
   }, [
     diagnostics,
@@ -3818,6 +3899,9 @@ function CanvasInner(): React.JSX.Element {
       isolateActive,
       isolateOpacity: preferences.isolateOpacity,
       showCrossings,
+      portalMark: preferences.portalMark,
+      portalNumbers: portalNumberMap,
+      edgeLengths,
       selectAllOfType,
       pendingLabelEditId,
       clearPendingLabelEdit
@@ -3853,6 +3937,9 @@ function CanvasInner(): React.JSX.Element {
       isolateActive,
       preferences.isolateOpacity,
       showCrossings,
+      preferences.portalMark,
+      portalNumberMap,
+      edgeLengths,
       selectAllOfType,
       pendingLabelEditId,
       clearPendingLabelEdit
@@ -4026,8 +4113,9 @@ function CanvasInner(): React.JSX.Element {
                   // Only mount nodes/edges intersecting the viewport — see
                   // ADR 0073. Nodes carry width/height (fromDiagramFile) so
                   // their bounds are known before measurement. Disabled
-                  // during PNG export so the capture sees the whole diagram.
-                  onlyRenderVisibleElements={!isExportingPng}
+                  // during PNG export so the capture sees the whole diagram, and while a
+                  // waypoint edge would be dropped though part of it is in view.
+                  onlyRenderVisibleElements={!isExportingPng && !waypointEdgeOffScreen}
                   onNodesChange={onNodesChange}
                   onEdgesChange={onEdgesChange}
                   onBeforeDelete={onBeforeDelete}

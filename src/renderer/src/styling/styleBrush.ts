@@ -16,7 +16,13 @@ export type StyleBrush =
 // sits along the path, and how the path is routed (a 'catmullRom' route only
 // means something together with the edge's own bend points, which are never
 // copied). A target keeps its own values for these.
-const EDGE_KEPT_KEYS = ['labelPosition', 'routingStyle'] as const
+const EDGE_KEPT_KEYS = [
+  'labelPosition',
+  'routingStyle',
+  'portalStart',
+  'portalEnd',
+  'portalNumber'
+] as const
 
 interface NodeLike {
   type?: string

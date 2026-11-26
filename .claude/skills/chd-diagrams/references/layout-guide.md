@@ -60,6 +60,12 @@ The rule covers elements that are siblings or in different containers; an edge f
 
 **Container sizing has no auto-fit** — this app never resizes a container to hug its children, and there's no stored padding/inset field. When you size a container by hand around its children, leave roughly **24–40px of clear space** between the container's own edge and its nearest child on every side. Remember the coordinate system: a child's `position` is relative to *its container's* top-left corner, not the canvas — so if the container's top-left sits at canvas `(x, y)` and you want 30px of inset, the first child's `position` is `{ x: 30, y: 30 }` regardless of where the container itself sits on the canvas.
 
+## Portals: the last option for a crossing
+
+A portal draws one edge broken, with a mark and the same number at both ends of the gap, so it need not run across what lies between. Set it on the edge's style with `portalStart` and `portalEnd` (fractions 0-1 of the edge's length; a gap of about 60 pixels is `0.5 ∓ 30/length`). It is only a way of drawing: the edge stays whole to every check, so `inspect_diagram` still reports its crossings, and a crossing on an edge that has a portal is a lower priority than any other problem.
+
+A portal is a valid solution when no better one is found. Try moving elements, moving a connection point and `route_edges` first, and never add one where those would do. Keep a portal the person set. One portal per edge: a long gap covers several crossings.
+
 ## Color and style: restraint, not a fixed palette
 
 This app ships with **no built-in colors** — a freshly created Entity/Container/Text has no `style` object at all until someone sets one (pure CSS default look), and the default style palette starts empty (this app's ADR 0048). There's no house palette to match, so don't invent fixed hex constants and treat them as this app's brand — there isn't one.
