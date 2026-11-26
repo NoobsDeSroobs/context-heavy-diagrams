@@ -84,6 +84,7 @@ import { useModifierHeldClass } from '../edges/useModifierHeldClass'
 import { useCarryEdgePoints } from '../edges/useCarryEdgePoints'
 import { usePrefersReducedMotion } from '../edges/usePrefersReducedMotion'
 import { edgeAnimationIsOn } from '@shared/preferences/preferences'
+import { portalNotices, portalNumbers } from '@shared/portals/portals'
 import DiagramContext, { type DiagramContextValue } from './DiagramContext'
 import ContextMenu, { type ContextMenuItem } from '../ui/ContextMenu'
 import IconPicker from '../icons/IconPicker'
@@ -474,6 +475,26 @@ function CanvasInner(): React.JSX.Element {
   // Gates on the edges that cross a container's border (ADR 0185): a switch for this session, off
   // because most diagrams do not care about crossings and it adds to the canvas.
   const [showCrossings, setShowCrossings] = useState(false)
+  // The number each portalled edge shows (typed, else from the order in the file). Kept as one
+  // object until a number changes, so selecting or editing an edge does not re-render every edge
+  // through the context (ADR 0056).
+  const portalNumberKey = useMemo(
+    () =>
+      JSON.stringify([
+        ...portalNumbers(
+          edges.map((e) => ({
+            id: e.id,
+            style: (e.data?.style as EdgeStyle | undefined) ?? undefined
+          }))
+        )
+      ]),
+    [edges]
+  )
+  const portalNumberMap = useMemo(
+    () => new Map<string, number>(JSON.parse(portalNumberKey) as [string, number][]),
+    [portalNumberKey]
+  )
+  const [edgeLengths] = useState(() => new Map<string, () => number>())
   const toggleCrossings = useCallback(() => setShowCrossings((on) => !on), [])
   const stencilRows = useMemo(
     () =>
@@ -3588,7 +3609,15 @@ function CanvasInner(): React.JSX.Element {
       ...legendEmptyAdvisory,
       ...strayLines,
       // Set ids in stories that no set holds (ADR 0195): ignored, never removed.
-      ...storyStrayAdvisory(stories, visibilitySets)
+      ...storyStrayAdvisory(stories, visibilitySets),
+      // A portal number used twice, and a label hidden in a gap.
+      ...portalNotices(
+        edges.map((e) => ({
+          id: e.id,
+          label: typeof e.data?.label === 'string' ? e.data.label : undefined,
+          style: e.data?.style as EdgeStyle | undefined
+        }))
+      )
     ]
   }, [
     diagnostics,
@@ -3818,6 +3847,9 @@ function CanvasInner(): React.JSX.Element {
       isolateActive,
       isolateOpacity: preferences.isolateOpacity,
       showCrossings,
+      portalMark: preferences.portalMark,
+      portalNumbers: portalNumberMap,
+      edgeLengths,
       selectAllOfType,
       pendingLabelEditId,
       clearPendingLabelEdit
@@ -3853,6 +3885,9 @@ function CanvasInner(): React.JSX.Element {
       isolateActive,
       preferences.isolateOpacity,
       showCrossings,
+      preferences.portalMark,
+      portalNumberMap,
+      edgeLengths,
       selectAllOfType,
       pendingLabelEditId,
       clearPendingLabelEdit

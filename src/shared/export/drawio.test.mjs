@@ -504,3 +504,17 @@ for (const file of chdFiles(examples)) {
     })
   }
 }
+
+test('a portalled edge is exported whole, and the note says draw.io has no portals', () => {
+  const portalled = edgeOf('e', 'a', 'b', { style: { portalStart: 0.4, portalEnd: 0.6 } })
+  const { xml, notes } = render(diagramOf([entity('a', 0, 0), entity('b', 600, 0)], [portalled]))
+  const cells = cellsOf(xml)
+  assert.ok(cells.has('e'))
+  assert.equal(xml.match(/edge="1"/g).length, 1)
+  assert.ok(notes.some((n) => n.includes('1 connection has a portal')))
+  const whole = render(diagramOf([entity('a', 0, 0), entity('b', 600, 0)], [edgeOf('e', 'a', 'b')]))
+  assert.equal(
+    whole.notes.some((n) => n.includes('portal')),
+    false
+  )
+})

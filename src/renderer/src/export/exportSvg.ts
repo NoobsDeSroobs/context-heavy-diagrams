@@ -1,6 +1,7 @@
 import type { DiagramFile } from '@shared/diagram'
 import type { Theme } from '@shared/styling/theme'
 import type { LegendCorner } from '@shared/legend/legendPlacement'
+import type { PortalMarkKind } from '@shared/portals/portals'
 import {
   collectIconRefs,
   defaultLegendItems,
@@ -26,6 +27,8 @@ export interface SvgExportParams {
   fontFamily?: string
   // Gates where an edge goes through the border of a container, as on the canvas (ADR 0185).
   crossings?: boolean
+  // How a portal's gap is marked, the person's preference.
+  portalMark?: PortalMarkKind
 }
 
 // Resolves every icon the diagram draws, then renders. A pack's icon is cleaned markup, drawn
@@ -54,6 +57,7 @@ export async function buildDiagramSvg(
     icons,
     fontFamily: params.fontFamily,
     title: params.title,
-    crossings: params.crossings
+    crossings: params.crossings,
+    portalMark: params.portalMark
   })
 }

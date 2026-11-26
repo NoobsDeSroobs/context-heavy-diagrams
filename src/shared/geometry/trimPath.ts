@@ -9,11 +9,11 @@ interface Point {
 
 // One drawn piece with the point it starts from: 1 point after the start is a line, 2 a quadratic
 // curve, 3 a cubic.
-type Piece = Point[]
+export type Piece = Point[]
 
 const NUMBER = /-?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?/gi
 
-function parse(d: string): Piece[] | null {
+export function parsePieces(d: string): Piece[] | null {
   // Anything that is not one of the four commands (an arc, a close) makes the string unreadable.
   if (/[^MLCQ0-9eE.,+\-\s]/.test(d)) return null
   const pieces: Piece[] = []
@@ -39,7 +39,7 @@ function parse(d: string): Piece[] | null {
   return pieces.length > 0 ? pieces : null
 }
 
-function format(pieces: Piece[]): string {
+export function formatPieces(pieces: Piece[]): string {
   const n = (v: number): string => String(Math.round(v * 1000) / 1000)
   const point = (p: Point): string => `${n(p.x)},${n(p.y)}`
   let d = `M${point(pieces[0][0])}`
@@ -67,7 +67,7 @@ function lengthOf(piece: Piece): number {
 }
 
 // The part of the piece from its start up to the fraction t of the way along (de Casteljau).
-function head(piece: Piece, t: number): Piece {
+export function headOfPiece(piece: Piece, t: number): Piece {
   if (piece.length === 2) return [piece[0], lerp(piece[0], piece[1], t)]
   if (piece.length === 3) {
     const [p0, p1, p2] = piece
@@ -84,7 +84,8 @@ function head(piece: Piece, t: number): Piece {
   return [p0, a, ab, lerp(ab, bc, t)]
 }
 
-const reversed = (pieces: Piece[]): Piece[] => pieces.map((p) => [...p].reverse()).reverse()
+export const reversePieces = (pieces: Piece[]): Piece[] =>
+  pieces.map((p) => [...p].reverse()).reverse()
 
 // Removes `distance` from the end of the last piece. A trim as long as the piece (or longer) is cut
 // down to half of it, so a very short edge keeps a stub.
@@ -94,18 +95,18 @@ function trimEnd(pieces: Piece[], distance: number): void {
   const length = lengthOf(last)
   if (length <= 0) return
   const kept = Math.max(length - distance, length / 2)
-  pieces[pieces.length - 1] = head(last, kept / length)
+  pieces[pieces.length - 1] = headOfPiece(last, kept / length)
 }
 
 export function trimPath(d: string, startDistance: number, endDistance: number): string {
   if (startDistance <= 0 && endDistance <= 0) return d
-  const pieces = parse(d)
+  const pieces = parsePieces(d)
   if (!pieces) return d
   trimEnd(pieces, endDistance)
   if (startDistance > 0) {
-    const flipped = reversed(pieces)
+    const flipped = reversePieces(pieces)
     trimEnd(flipped, startDistance)
-    return format(reversed(flipped))
+    return formatPieces(reversePieces(flipped))
   }
-  return format(pieces)
+  return formatPieces(pieces)
 }

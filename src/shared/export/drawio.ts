@@ -14,6 +14,7 @@ import {
 } from '../stencils/kinds.ts'
 import { containerLabelSideOf } from '../nodes/containerLabel.ts'
 import { labelPositionOf } from '../stencils/labelPlacement.ts'
+import { readPortal } from '../portals/portals.ts'
 import type { Theme } from '../styling/theme.ts'
 import {
   DEFAULT_FONT_FAMILY,
@@ -254,6 +255,7 @@ export function renderDiagramDrawio(
     extraConnectionPoints: 0,
     approximatedRoutes: 0,
     pulse: 0,
+    portals: 0,
     chips: 0,
     notes: 0,
     linkedDiagrams: 0,
@@ -489,6 +491,7 @@ export function renderDiagramDrawio(
     const routing = edge.style?.routingStyle
     if (routing !== 'straight') lost.approximatedRoutes += 1
     if (edge.style?.animation === 'pulse') lost.pulse += 1
+    if (readPortal(edge.style)) lost.portals += 1
 
     // Where the line meets each node, as a fraction of the node's box: draw.io keeps this on the
     // edge, so an edge keeps its exact attachment point even though the node does not list it.
@@ -606,6 +609,7 @@ interface Lost {
   extraConnectionPoints: number
   approximatedRoutes: number
   pulse: number
+  portals: number
   chips: number
   notes: number
   linkedDiagrams: number
@@ -638,6 +642,10 @@ function notesFor(diagram: DiagramFile, lost: Lost, enabled: Set<string>): strin
   if (lost.pulse > 0)
     out.push(
       `${plural(lost.pulse, 'connection has', 'connections have')} a pulse animation, which draw.io lacks`
+    )
+  if (lost.portals > 0)
+    out.push(
+      `${plural(lost.portals, 'connection has', 'connections have')} a portal, which draw.io lacks: the whole connection is drawn`
     )
   if (lost.chips > 0)
     out.push(

@@ -25,6 +25,7 @@ import { useNotesPeek } from '../notes/useNotesPeek'
 import { fromDiagramFile } from '../document/diagramConversion'
 import EdgeMarkerDefs from '../edges/edgeMarkers'
 import { effectiveStylePalette } from '@shared/preferences/preferences'
+import { portalNumbers } from '@shared/portals/portals'
 import { useReadOnlyPreferences } from '../preferences/useReadOnlyPreferences'
 import { useTheme } from '../styling/theme'
 import CompareList from './CompareList'
@@ -39,7 +40,10 @@ const STATUS_ORDER: CompareStatus[] = ['added', 'removed', 'links', 'content', '
 
 // Everything the node and edge components read from the editing canvas, with every action a
 // no-op: this window draws a diagram, it never changes one.
-function useReadOnlyContext(diagramPath: string | null): DiagramContextValue {
+function useReadOnlyContext(
+  diagramPath: string | null,
+  portalNumberMap: ReadonlyMap<string, number>
+): DiagramContextValue {
   const { theme } = useTheme()
   const { preferences } = useReadOnlyPreferences()
   const palette = useMemo(
@@ -77,11 +81,13 @@ function useReadOnlyContext(diagramPath: string | null): DiagramContextValue {
       isolateActive: false,
       isolateOpacity: preferences.isolateOpacity,
       showCrossings: false,
+      portalMark: preferences.portalMark,
+      portalNumbers: portalNumberMap,
       selectAllOfType: noop,
       pendingLabelEditId: null,
       clearPendingLabelEdit: noop
     }),
-    [diagramPath, preferences, theme, palette]
+    [diagramPath, preferences, theme, palette, portalNumberMap]
   )
 }
 
@@ -147,7 +153,8 @@ function CompareCanvas({
 }): React.JSX.Element {
   const { theme } = useTheme()
   const { preferences } = useReadOnlyPreferences()
-  const context = useReadOnlyContext(session.diagramPath)
+  const portalNumberMap = useMemo(() => portalNumbers(classification.view.edges), [classification])
+  const context = useReadOnlyContext(session.diagramPath, portalNumberMap)
   const { peek, bindings } = useNotesPeek()
   const [showCosmetic, setShowCosmetic] = useState(true)
   const [edgePointer, setEdgePointer] = useState({ x: 0, y: 0 })

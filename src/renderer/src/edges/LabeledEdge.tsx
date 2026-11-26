@@ -17,6 +17,14 @@ import { trimPath } from '@shared/geometry/trimPath'
 import { markerTrim } from '@shared/export/markerShapes'
 import { ratioNearest } from '@shared/geometry/pathSampling'
 import {
+  PORTAL_COLOR,
+  movePortalEnd,
+  pathLength,
+  readPortal,
+  splitPath
+} from '@shared/portals/portals'
+import PortalMarks from './PortalMarks'
+import {
   orthogonalRouteVertices,
   orthogonalSegments,
   moveOrthogonalSegment,
@@ -117,7 +125,7 @@ function LabeledEdge({
   selected,
   data
 }: EdgeProps): React.JSX.Element {
-  const { updateEdgeData, screenToFlowPosition } = useReactFlow()
+  const { updateEdgeData, screenToFlowPosition, setCenter, getZoom } = useReactFlow()
   const {
     matchHighlights,
     edgeStraightSegmentLength,
@@ -132,7 +140,10 @@ function LabeledEdge({
     isolateOpacity,
     showCrossings,
     pendingLabelEditId,
-    clearPendingLabelEdit
+    clearPendingLabelEdit,
+    portalMark = 'tilde',
+    portalNumbers,
+    edgeLengths
   } = useDiagramContext()
   const edgeStyle = data?.style as EdgeStyle | undefined
   const routingStyle = edgeStyle?.routingStyle
@@ -205,6 +216,32 @@ function LabeledEdge({
       edgeStraightSegmentLength
     ]
   )
+
+  // A portal draws the edge broken: the two drawn parts and the marks come from the shared
+  // splitPath, so the SVG export draws the same. It is only a way of drawing; the edge below is
+  // still the whole path to everything else. undefined means a whole edge.
+  const portalStart = edgeStyle?.portalStart
+  const portalEnd = edgeStyle?.portalEnd
+  const portalTyped = edgeStyle?.portalNumber
+  const portal = useMemo(
+    () => readPortal({ portalStart, portalEnd, portalNumber: portalTyped }),
+    [portalStart, portalEnd, portalTyped]
+  )
+  const split = useMemo(
+    () => (portal ? splitPath(edgePath, portal) : undefined),
+    [edgePath, portal]
+  )
+  const portalNumber = portalNumbers?.get(id) ?? portal?.number ?? 1
+  const [markHovered, setMarkHovered] = useState(false)
+  // The property panel sizes a new gap from the length of the drawn edge. Lazy: the length is only
+  // measured when asked for.
+  useEffect(() => {
+    if (!edgeLengths) return undefined
+    edgeLengths.set(id, () => pathLength(edgePath))
+    return () => {
+      edgeLengths.delete(id)
+    }
+  }, [edgeLengths, id, edgePath])
 
   // Animation (ADR 0141) runs from the source end to the target end unless reversed, so it follows
   // the arrow of the active edge direction set. Only a 'pulse' with a single dot needs the path's
@@ -380,6 +417,87 @@ function LabeledEdge({
       ),
     [edgePath, edgeStyle?.startMarker, edgeStyle?.endMarker, drawnWidth]
   )
+  // With a portal each drawn part keeps only its own end's marker, trimmed the same way.
+  const leadPath = useMemo(
+    () =>
+      split
+        ? trimPath(
+            split.lead,
+            markerTrim(edgeStyle?.startMarker ?? EDGE_STYLE_DEFAULTS.startMarker, drawnWidth),
+            0
+          )
+        : undefined,
+    [split, edgeStyle?.startMarker, drawnWidth]
+  )
+  const tailPath = useMemo(
+    () =>
+      split
+        ? trimPath(
+            split.tail,
+            0,
+            markerTrim(edgeStyle?.endMarker ?? EDGE_STYLE_DEFAULTS.endMarker, drawnWidth)
+          )
+        : undefined,
+    [split, edgeStyle?.endMarker, drawnWidth]
+  )
+
+  // A mark of the portal is moved by dragging it along the edge (the same gesture as the sliders in
+  // the property panel); a click that does not move goes to the other end of the gap.
+  const onPortalMarkDown = useCallback(
+    (event: ReactPointerEvent<SVGGElement>, which: 'start' | 'end'): void => {
+      if (event.button !== 0 || !portal || !split) return
+      event.stopPropagation()
+      const el = event.currentTarget
+      el.setPointerCapture(event.pointerId)
+      const origin = { x: event.clientX, y: event.clientY }
+      const length = pathLength(edgePath)
+      const other = which === 'start' ? split.exit : split.entry
+      let current = portal
+      let moved = false
+      let snapshotted = false
+      const onMove = (move: PointerEvent): void => {
+        if (!moved && Math.hypot(move.clientX - origin.x, move.clientY - origin.y) < 3) return
+        moved = true
+        const pointer = screenToFlowPosition({ x: move.clientX, y: move.clientY })
+        const next = movePortalEnd(current, which, ratioNearest(edgePath, pointer), length)
+        if (next.start === current.start && next.end === current.end) return
+        current = next
+        if (!snapshotted) {
+          beginContinuousEdit()
+          snapshotted = true
+        }
+        updateEdgeData(id, {
+          style: { ...edgeStyle, portalStart: next.start, portalEnd: next.end }
+        })
+      }
+      const onUp = (): void => {
+        if (snapshotted) endContinuousEdit()
+        try {
+          el.releasePointerCapture(event.pointerId)
+        } catch {
+          // already released
+        }
+        window.removeEventListener('pointermove', onMove)
+        window.removeEventListener('pointerup', onUp)
+        if (!moved) setCenter(other.x, other.y, { zoom: getZoom(), duration: 250 })
+      }
+      window.addEventListener('pointermove', onMove)
+      window.addEventListener('pointerup', onUp)
+    },
+    [
+      portal,
+      split,
+      edgePath,
+      edgeStyle,
+      id,
+      screenToFlowPosition,
+      updateEdgeData,
+      beginContinuousEdit,
+      endContinuousEdit,
+      setCenter,
+      getZoom
+    ]
+  )
 
   const labelStyle: CSSProperties = {
     ...(edgeStyle?.fontSize != null ? { fontSize: edgeStyle.fontSize } : {}),
@@ -524,39 +642,87 @@ function LabeledEdge({
 
   const gates = useEdgeGates(showCrossings, source, target, edgePath)
 
+  const portalMarks = (layer: 'under' | 'over'): React.JSX.Element | null =>
+    split ? (
+      <PortalMarks
+        split={split}
+        kind={portalMark}
+        number={portalNumber}
+        theme={theme}
+        layer={layer}
+        hot={markHovered}
+        onPointerDown={edgeLengths ? onPortalMarkDown : undefined}
+        onHover={setMarkHovered}
+      />
+    ) : null
+  const pulsePaths = split && leadPath && tailPath ? [split.lead, split.tail] : [edgePath]
+
   return (
     <>
-      <BaseEdge
-        id={id}
-        path={drawnPath}
-        style={computedStyle}
-        markerEnd={computedMarkerEnd}
-        markerStart={computedMarkerStart}
-        className={animation === 'flow' ? 'edge-flow' : undefined}
-      />
-      {pulse && (
-        // The pulses: zero-length dashes with round caps along a copy of the path, in the line's
-        // own colour, moved by the same dash animation as a flow (edges.css), which also hides
-        // them for reduced motion and in the compare window.
-        <path
-          d={edgePath}
-          className="edge-pulse"
-          fill="none"
-          strokeLinecap="round"
-          style={
-            {
-              stroke: computedStyle.stroke,
-              strokeWidth: pulseDots * 2,
-              strokeDasharray: pulse.dasharray,
-              opacity: computedStyle.opacity,
-              pointerEvents: 'none',
-              '--edge-flow-period': pulse.period,
-              '--edge-flow-duration': `${pulse.durationMs}ms`,
-              '--edge-flow-direction': animationReversed ? 'reverse' : 'normal'
-            } as CSSProperties
-          }
+      {portalMarks('under')}
+      {split && leadPath && tailPath ? (
+        <>
+          <BaseEdge
+            id={id}
+            path={leadPath}
+            style={computedStyle}
+            markerStart={computedMarkerStart}
+            className={animation === 'flow' ? 'edge-flow' : undefined}
+          />
+          <BaseEdge
+            id={`${id}-tail`}
+            path={tailPath}
+            style={computedStyle}
+            markerEnd={computedMarkerEnd}
+            className={animation === 'flow' ? 'edge-flow' : undefined}
+          />
+        </>
+      ) : (
+        <BaseEdge
+          id={id}
+          path={drawnPath}
+          style={computedStyle}
+          markerEnd={computedMarkerEnd}
+          markerStart={computedMarkerStart}
+          className={animation === 'flow' ? 'edge-flow' : undefined}
         />
       )}
+      {split && (
+        // The whole edge, drawn dashed over the gap while the edge is selected or a mark is hovered
+        // (and while Ctrl is held over it: edges.css), so it can be followed across.
+        <path
+          d={edgePath}
+          className={`edge-portal-whole${selected || markHovered ? ' is-on' : ''}`}
+          stroke={PORTAL_COLOR[theme]}
+        />
+      )}
+      {pulse &&
+        // The pulses: zero-length dashes with round caps along a copy of the path, in the line's
+        // own colour, moved by the same dash animation as a flow (edges.css), which also hides
+        // them for reduced motion and in the compare window. Across a portal each drawn part has
+        // its own, and nothing is drawn in the gap.
+        pulsePaths.map((d, index) => (
+          <path
+            key={index}
+            d={d}
+            className="edge-pulse"
+            fill="none"
+            strokeLinecap="round"
+            style={
+              {
+                stroke: computedStyle.stroke,
+                strokeWidth: pulseDots * 2,
+                strokeDasharray: pulse.dasharray,
+                opacity: computedStyle.opacity,
+                pointerEvents: 'none',
+                '--edge-flow-period': pulse.period,
+                '--edge-flow-duration': `${pulse.durationMs}ms`,
+                '--edge-flow-direction': animationReversed ? 'reverse' : 'normal'
+              } as CSSProperties
+            }
+          />
+        ))}
+      {portalMarks('over')}
       {gates.length > 0 && (
         // Gates where the edge goes through the border of a container (ADR 0185): a bar lying along the
         // border, so flat on a horizontal border and upright on a vertical one.
@@ -577,7 +743,7 @@ function LabeledEdge({
       )}
       {/* Invisible hover surface — see HOVER_HIT_WIDTH. */}
       <path
-        d={edgePath}
+        d={split ? `${split.lead} ${split.tail}` : edgePath}
         fill="none"
         stroke="transparent"
         strokeWidth={HOVER_HIT_WIDTH}

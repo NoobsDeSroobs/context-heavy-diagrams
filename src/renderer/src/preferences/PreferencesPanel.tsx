@@ -32,6 +32,11 @@ const ANIMATE_EDGES_OPTIONS: { value: EdgeAnimationMode; label: string }[] = [
   { value: 'off', label: 'Always off' }
 ]
 
+const PORTAL_MARK_OPTIONS: { value: string; label: string }[] = [
+  { value: 'tilde', label: 'Tilde: a curved line across the edge (default)' },
+  { value: 'oval', label: 'Oval: the line goes into one and out of the other' }
+]
+
 interface PreferencesPanelProps {
   preferences: AppPreferences
   onChange: (patch: Partial<AppPreferences>) => void
@@ -301,6 +306,14 @@ export default function PreferencesPanel({
           mixed={false}
           options={ANIMATE_EDGES_OPTIONS}
           onChange={(v) => onChange({ animateEdges: v })}
+          pushSnapshot={() => {}}
+        />
+        <SelectField
+          label="Portal mark"
+          value={preferences.portalMark}
+          mixed={false}
+          options={PORTAL_MARK_OPTIONS}
+          onChange={(v) => onChange({ portalMark: v === 'oval' ? 'oval' : 'tilde' })}
           pushSnapshot={() => {}}
         />
         <SelectField

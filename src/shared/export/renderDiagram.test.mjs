@@ -394,3 +394,79 @@ for (const file of chdFiles(examples)) {
     })
   }
 }
+
+// ---- portals ----------------------------------------------------------------------------------
+
+// One edge's markup: from its own group to the next edge or element.
+const edgeMarkup = (svg, id) =>
+  svg.split(`<g class="chd-edge" data-id="${id}">`)[1].split(/<g class="chd-(?:entity|edge)"/)[0]
+
+const portalDiagram = (style) =>
+  diagramOf(
+    [entity('a', 0, 0), entity('b', 600, 0)],
+    [{ id: 'e1', source: 'a', target: 'b', style: { routingStyle: 'straight', ...style } }]
+  )
+
+test('a portal draws the edge in two parts with a mark and a number at each end of the gap', () => {
+  const svg = render(portalDiagram({ portalStart: 0.4, portalEnd: 0.6, portalNumber: 3 }))
+  const edge = edgeMarkup(svg, 'e1')
+  // The line runs to 40% of the way and again from 60%, with the gap between.
+  assert.match(edge, /<path d="M120,30 L312,30"/)
+  assert.match(edge, /<path d="M408,30 L/)
+  assert.equal(edge.match(/<text /g).length, 2)
+  assert.match(edge, />3<\/text>/)
+  // The tilde is the default mark.
+  assert.match(edge, /stroke-linecap="round"/)
+  assert.doesNotMatch(edge, /<ellipse/)
+})
+
+test('the oval mark is drawn under the edge at the exit and over it at the entry', () => {
+  const svg = render(portalDiagram({ portalStart: 0.4, portalEnd: 0.6 }), { portalMark: 'oval' })
+  const edge = edgeMarkup(svg, 'e1')
+  const at = (needle) => edge.indexOf(needle)
+  assert.equal(edge.match(/<ellipse/g).length, 2)
+  assert.ok(at('<ellipse') < at('<path'), 'the exit oval comes before the line')
+  assert.ok(
+    edge.lastIndexOf('<ellipse') > edge.lastIndexOf('<path d="M'),
+    'the entry oval comes after it'
+  )
+})
+
+test('the number is made from the file order when none is typed', () => {
+  const svg = render(
+    diagramOf(
+      [entity('a', 0, 0), entity('b', 600, 0), entity('c', 0, 200), entity('d', 600, 200)],
+      [
+        { id: 'e1', source: 'a', target: 'b', style: { routingStyle: 'straight' } },
+        {
+          id: 'e2',
+          source: 'c',
+          target: 'd',
+          style: { routingStyle: 'straight', portalStart: 0.4, portalEnd: 0.6 }
+        }
+      ]
+    )
+  )
+  assert.doesNotMatch(edgeMarkup(svg, 'e1'), /<text/)
+  assert.match(edgeMarkup(svg, 'e2'), />1<\/text>/)
+})
+
+test('an edge too short for its gap, or with half a portal, is drawn whole', () => {
+  for (const style of [{ portalStart: 0.4 }, { portalStart: 0.6, portalEnd: 0.4 }]) {
+    assert.doesNotMatch(edgeMarkup(render(portalDiagram(style)), 'e1'), /<text/)
+  }
+  const short = render(
+    diagramOf(
+      [entity('a', 0, 0), entity('b', 160, 0)],
+      [
+        {
+          id: 'e1',
+          source: 'a',
+          target: 'b',
+          style: { routingStyle: 'straight', portalStart: 0.4, portalEnd: 0.6 }
+        }
+      ]
+    )
+  )
+  assert.doesNotMatch(short, /<text[^>]*font-weight="600"/)
+})

@@ -1,6 +1,7 @@
 import { createContext } from 'react'
 import type { ResizeParams } from '@xyflow/react'
 import type { GravityPreset, HighlightDefinition, MetadataEntry } from '@shared/diagram'
+import type { PortalMarkKind } from '@shared/portals/portals'
 import type { ContextMenuItem } from '../ui/ContextMenu'
 import type { Theme } from '../styling/theme'
 
@@ -117,6 +118,13 @@ export interface DiagramContextValue {
   isolateOpacity: number
   // Gates are drawn on the edges that cross a container's border (ADR 0185).
   showCrossings: boolean
+  // Portals: how an edge's gap is marked (a preference), the number each portalled edge shows (typed,
+  // else from the order in the file), and the length of every drawn edge, which the edges write as
+  // they draw (as a function, measured when asked) so the property panel can size a new gap in pixels. All optional so the compare window
+  // and the tests need not supply them; the number map is kept the same object until a number changes.
+  portalMark?: PortalMarkKind
+  portalNumbers?: ReadonlyMap<string, number>
+  edgeLengths?: Map<string, () => number>
   // See ADR 0065 — replaces the current selection with every element of one
   // type. Exposed here so each node type's own right-click context menu
   // can offer "Select all entities"/"...containers"/etc. without Canvas.tsx

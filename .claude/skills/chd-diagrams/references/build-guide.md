@@ -2,14 +2,14 @@ Building a diagram with `edit_diagram` (or `chd edit`). About a page: what you n
 
 ## What the tool does and does not do
 - It makes every id and keeps the file valid; you never write the JSON. To use something later in the same call, give it a handle (`"as": "$web"`); in the next call use the ids from the answer.
-- It places no element. Every `x` and `y` is yours, **absolute on the canvas, even inside a container** (the tool converts). Sizes: entity 120 × 80, container 320 × 180 (size a real one to fit its contents), text 120 × 48.
-- Its answer lists the problems involving what the call touched (label without room, overlap, an element out of its container, an edge across an element, crossing edges, a label on something) and how many others remain. It cannot judge alignment, even gaps or grouping: the recipes below are for that.
+- It places no element. Every `x` and `y` is yours, **absolute on the canvas, even inside a container** (the tool converts). Sizes: entity 120 × 80, container 320 × 180 (fit it to its contents), text 120 × 48.
+- Its answer lists the problems involving what the call touched (label without room, overlap, an element out of its container, an edge across an element, crossing edges, a label on something) and how many others remain. It cannot judge alignment, gaps or grouping: see the recipes below.
 
 ## Order
-1. Decide the grid on paper first: the rows and columns, and the gap each pair of neighbours needs.
-2. Ask `room_for_label` (or `chd ask room`) for each edge that has a label, with its direction and font, and take `target` as the gap. Do not use the plain gaps for elements joined by an edge.
+1. Decide the grid first: the rows and columns, and the gap each pair of neighbours needs.
+2. Ask `room_for_label` (or `chd ask room`) for each edge that has a label, with its direction and font, and take `target` as the gap. Not the plain gaps, for elements joined by an edge.
 3. One call per section (a container and what is in it, then the edges), not one per element. Containers first, then their children with `parent: "$zone"`, then `connect`. Pass the last answer's fingerprint as `base_fingerprint` and send calls one at a time: a second call with the same fingerprint fails.
-4. Fix the problems in the answer with `move` and `resize` in the next call. For an edge across an element, move the element or the edge's connection point; if that cannot be done, `route_edges` (the reported edges, or `ids`) routes it at right angles through the gaps, so leave gaps (20-60px). It puts each routed edge on a connection point of its own, in order along the side facing its other end: do not add points for those edges. A crossing is sometimes the clearest drawing: keep it and say so.
+4. Fix the problems in the answer with `move` and `resize` in the next call. For an edge across an element, move the element or the edge's connection point; if that cannot be done, `route_edges` (the reported edges, or `ids`) routes it at right angles through the gaps, so leave gaps (20-60px). It puts each routed edge on a connection point of its own, in order along the side facing its other end: do not add points for those edges. A crossing is sometimes the clearest drawing: keep it and say so. A portal is the last option (layout guide).
 5. Tags, links and notes last. At the end, `inspect_diagram` with `issues_only` shows everything still open.
 
 ## Flows: behaviours

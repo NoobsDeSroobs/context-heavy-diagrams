@@ -106,6 +106,13 @@ export type EdgeStyle = TextStyle &
     // move, unlike a fixed pixel offset. Absent means 0.5 (today's only
     // behavior, the path midpoint) — see ADR 0045.
     labelPosition?: number
+    // A portal: the edge is drawn broken between these two fractions (0-1) of its path's length,
+    // with a mark and a number at each end of the gap. Both are needed, start before end; without
+    // both the edge is drawn whole. A way of drawing only: the edge is one whole edge to everything
+    // else. `portalNumber` is a number the person typed, else it comes from the order in the file.
+    portalStart?: number
+    portalEnd?: number
+    portalNumber?: number
     // How the path is routed between the two endpoints — see ADR 0057.
     // 'straight'/'step'/'smoothstep' are React Flow's own built-in path
     // entities; 'catmullRom' reuses the freeform-line curve math (ADR 0050,

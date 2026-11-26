@@ -47,7 +47,10 @@ export interface ImageExportInputs {
   // The canvas marks the edges that cross a container's border, so an SVG export does too (ADR 0185).
   showCrossings: boolean
   theme: Theme
-  preferences: Pick<AppPreferences, 'edgeStraightSegmentLength' | 'defaultFontFamily'>
+  preferences: Pick<
+    AppPreferences,
+    'edgeStraightSegmentLength' | 'defaultFontFamily' | 'portalMark'
+  >
   flowWrapperRef: React.RefObject<HTMLDivElement | null>
   updateNodeInternals: (nodeIds: string[]) => void
 }
@@ -265,6 +268,7 @@ export function useImageExport(
           enabledHighlightIds: [...enabledHighlightIds],
           crossings: showCrossings,
           edgeStraightSegmentLength: preferences.edgeStraightSegmentLength,
+          portalMark: preferences.portalMark,
           diagramPath: currentPath,
           fontFamily: effectiveDiagramFont(diagramFontFamily, preferences.defaultFontFamily),
           title: fileName.replace(/\.chd$/, '')
@@ -283,6 +287,7 @@ export function useImageExport(
       enabledHighlightIds,
       showCrossings,
       preferences.edgeStraightSegmentLength,
+      preferences.portalMark,
       preferences.defaultFontFamily
     ]
   )

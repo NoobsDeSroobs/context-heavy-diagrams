@@ -14,6 +14,7 @@ import { pointsBoundingBox } from '../geometry/bendablePath.ts'
 import { NODE_STYLE_DEFAULTS, styledNodeType } from '../styling/styleDefaults.ts'
 import { backfillZIndex } from '../canvas/zIndexOrdering.ts'
 import { stencilKind } from '../stencils/kinds.ts'
+import { mirrorEdgeStylePositions } from '../portals/portals.ts'
 import { resolveLabelLook } from './appearance.ts'
 import { DEFAULT_FONT_FAMILY } from './appearance.ts'
 import { LINE_HEIGHT_EM, measureText, wrapText } from './textLayout.ts'
@@ -141,10 +142,9 @@ export function layoutNodes(diagram: DiagramFile): Map<string, LaidOutNode> {
 }
 
 function reverseEdge(edge: DiagramEdge): DiagramEdge {
-  const style: EdgeStyle | undefined =
-    edge.style?.labelPosition !== undefined
-      ? { ...edge.style, labelPosition: 1 - edge.style.labelPosition }
-      : edge.style
+  const style: EdgeStyle | undefined = edge.style
+    ? mirrorEdgeStylePositions(edge.style)
+    : edge.style
   return {
     ...edge,
     source: edge.target,
