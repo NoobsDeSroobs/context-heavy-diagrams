@@ -34,6 +34,7 @@ export interface PanelsState {
   openNotesPanel: (nodeId: string) => void
   toggleDiagnosticsPanel: () => void
   togglePreferencesPanel: () => void
+  showPreferencesPanel: () => void
   toggleStylePalettePanel: () => void
   toggleAlignDistributePanel: () => void
   toggleLayerPanel: () => void
@@ -154,6 +155,20 @@ export function usePanels(
     setReferencesPanelOpen(false)
     setChangesPanelOpen(false)
     setPreferencesPanelOpen((open) => !open)
+  }, [])
+
+  // Opens the panel (never closes it), for a menu item that points at a place in it.
+  const showPreferencesPanel = useCallback(() => {
+    setNotesPanelNodeId(null)
+    setStoriesPanelOpen(false)
+    setDiagnosticsPanelOpen(false)
+    setLayerPanelOpen(false)
+    setStylePalettePanelOpen(false)
+    setAlignDistributePanelOpen(false)
+    setDiagramSettingsPanelOpen(false)
+    setReferencesPanelOpen(false)
+    setChangesPanelOpen(false)
+    setPreferencesPanelOpen(true)
   }, [])
 
   const toggleStylePalettePanel = useCallback(() => {
@@ -307,6 +322,7 @@ export function usePanels(
     openNotesPanel,
     toggleDiagnosticsPanel,
     togglePreferencesPanel,
+    showPreferencesPanel,
     toggleStylePalettePanel,
     toggleAlignDistributePanel,
     toggleLayerPanel,

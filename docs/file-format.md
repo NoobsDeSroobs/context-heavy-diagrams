@@ -558,6 +558,10 @@ Everything below this point is about the format `version`.
 
 **One value/field rename, same standing rule applied:** the node `type` value `"shape"`, a legend entry's `kind` value `"shape"`, and `DiagramSecurity`'s `matrixShapeIds`/`hiddenShapeIds` field names were all renamed to `"entity"`/`matrixEntityIds`/`hiddenEntityIds`, and a node's `data.details` to `data.notes`. Not a `version` bump — the old names are accepted as synonyms on read (never written), the same additive spirit as every field above. A build from before the `notes` rename ignores that field, and drops the link to a note when it saves a file that has it.
 
+## Beta features
+
+A kind or field that is still a beta is marked "(beta)" where this document lists it. It is off by default in the application (the person switches it on in Preferences), and it may change or be removed before it becomes a normal part of the format. Switching it off, or removing it in a later release, never touches the file: what it wrote is kept and written back unchanged, like any field this version does not know. A reader that does not support a beta can ignore it on the same terms.
+
 ## Example
 
 See [`examples/hello-world.chd`](../examples/hello-world.chd) for a minimal real file, [`examples/with-metadata.chd`](../examples/with-metadata.chd) for a `requiredTags` template plus a required and a free tag on a node, and [`examples/README.md`](../examples/README.md) for what else is there.

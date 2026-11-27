@@ -7,6 +7,8 @@ import { acceleratorFor } from './commands'
 import type { MenuBarItem, MenuBarMenu } from './MenuBar'
 import { buildPaletteActions, type ExtraPaletteAction, type PaletteAction } from './paletteActions'
 import type { AppPreferences } from './preferences/preferences'
+import { BETA_FEATURES } from '@shared/features/features'
+import { BETA_FEATURES_ANCHOR } from './preferences/betaFeaturesAnchor'
 
 // What the menus need from the canvas: values to label and disable items by, and the handlers
 // they run. Every item reuses an existing handler unchanged — the menus are a way to reach
@@ -74,6 +76,8 @@ export interface MenuInputs {
   setShortcutsDialogOpen: (open: boolean) => void
   setGlossaryDialogOpen: (open: boolean) => void
   setAboutDialogOpen: (open: boolean) => void
+  // Opens the Preferences panel (without toggling it shut).
+  showPreferencesPanel: () => void
 }
 
 // Top menu bar — File/Edit/View/AI/Help, and the command palette built from
@@ -146,9 +150,18 @@ export function useMenus(inputs: MenuInputs): {
     setCommandPaletteOpen,
     setShortcutsDialogOpen,
     setGlossaryDialogOpen,
-    setAboutDialogOpen
+    setAboutDialogOpen,
+    showPreferencesPanel
   } = inputs
   const hasSelectedNodes = selectedNodes.length > 0
+
+  // Opens Preferences and brings the list of beta features into view once the panel has drawn.
+  const showBetaFeatures = (): void => {
+    showPreferencesPanel()
+    requestAnimationFrame(() =>
+      document.getElementById(BETA_FEATURES_ANCHOR)?.scrollIntoView({ block: 'start' })
+    )
+  }
 
   // File -> Recent Diagrams submenu — labelled with the last two path
   // segments (…/parent/name.chd), enough to tell two same-named diagrams in
@@ -403,6 +416,11 @@ export function useMenus(inputs: MenuInputs): {
     items: [
       { label: 'Keyboard shortcuts…', onSelect: () => setShortcutsDialogOpen(true) },
       { label: 'Glossary…', onSelect: () => setGlossaryDialogOpen(true) },
+      // Only while the release has a beta: a way to the list in Preferences, not a second place
+      // to switch them.
+      ...(BETA_FEATURES.length > 0
+        ? [{ label: 'Beta features…', onSelect: showBetaFeatures }]
+        : []),
       { label: 'About', separatorBefore: true, onSelect: () => setAboutDialogOpen(true) }
     ]
   }

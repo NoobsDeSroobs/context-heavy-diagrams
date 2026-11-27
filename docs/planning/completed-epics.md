@@ -662,3 +662,15 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 ### 0209: Edge drop gets an automatic end, CI stops on push to master
 
 *Done* (tried in the app 2026-11-26). An edge dropped on empty canvas, a new one dragged from an element or an existing one dragged by an end, makes its entity with no connection point on the new end, so it attaches to the side that faces the other element and follows it; the end that was dragged from keeps its point. Before, the new end was always the left point. `ci.yml` no longer runs on push to master, since a pull request has passed it already; pull requests and the weekly dependency audit still run it, and a conflict between two pull requests merged close together reaches master unchecked until the next one. Not done: the repository's branch protection and badges on GitHub, which are the maintainer's to look at.
+
+### 0208: ADR cleanup: keep the decisions that set direction
+
+*Done* (merged 2026-11-27). The ADRs had grown to 200 with many small, reversible choices (a handle size, a menu item, a gesture). The bar is now: a principle, a foundational philosophy, a choice that was hard to make, or a decision that sets the direction of the application as a whole; fields, gestures, preferences and how a feature behaves live in the file-format spec, the changelog and the code comments. The small ones were removed with their citations repointed or dropped, and nine groups of ADRs that were one decision spread over several files were merged, each under its lowest number (0012, 0025, 0040, 0080, 0131, 0132, 0138, 0139, 0194); 0019 and 0033 were rewritten as principles and 0188 cut to its decision core. 200 became 47. Numbers are never compacted or reused. The bar is stated in [docs/decisions/README.md](../decisions/README.md) and CLAUDE.md.
+
+### 0190: Behaviour parameters: repetition and parallel policy
+
+*Closed without new kinds* (2026-11-27). Repetition stays the plain `step-repeat`, and the label says how it repeats (three times, until paid, for each item); a dedicated kind or a typed parameter on a kind waits until real flows show a need, and the plain kind stays when they do. Failure policy for parallel paths is left as it is: BPMN's own symbols (events, the *Wait for first* and *Wait for all* joins) cover most of it, and the rest is a decision placed mid-flow. No typed parameter on a kind, so a behaviour still carries only a label and its kind. The parallel joins that did ship are in [ADR 0080](../decisions/0080-behaviours-are-the-tools-own-flow-vocabulary-with-semantic-not-symmetric-symbols.md).
+
+### 0201: Waiting for the first of several, and joins that wait for some
+
+*Closed as covered* (2026-11-27). The shipped parallel kinds (*Run in parallel*, *Wait for all*, *Wait for first*) cover waiting for all or for the first of several paths, and a race between events. A join that waits for "at least n" of m, or a dedicated race kind with an hourglass, was not added: the label carries a count, as for repetition ([0190](#0190-behaviour-parameters-repetition-and-parallel-policy)), until real flows show a need.

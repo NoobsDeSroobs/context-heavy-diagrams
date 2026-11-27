@@ -2,6 +2,7 @@
 // being built, written once so they cannot drift apart (ADR 0138). Pure: a front door adds what only
 // it knows, the path and the fingerprint.
 import type { DiagramFile } from '../diagram/index.ts'
+import { betaAnswer } from '../features/features.ts'
 import { describeDiagram, layoutIssues } from './inspect.ts'
 import { groupMessages } from './issues.ts'
 import type { OperationResult } from './model.ts'
@@ -122,7 +123,8 @@ export function inspectAnswer(
       ...unknownNote,
       nodes: nodes.filter((n) => focus.has(n.id)),
       edges: edges.filter((e) => focus.has(e.id)),
-      issues
+      issues,
+      ...betaAnswer(diagram)
     }
   }
   const truncated = nodes.length > INSPECT_LIMIT || edges.length > INSPECT_LIMIT
@@ -133,7 +135,8 @@ export function inspectAnswer(
     ...(truncated
       ? { truncated: `only the first ${INSPECT_LIMIT} nodes and edges are listed` }
       : {}),
-    issues
+    issues,
+    ...betaAnswer(diagram)
   }
 }
 

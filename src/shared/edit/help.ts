@@ -1,9 +1,11 @@
 // What the operations of an edit are and what they take: the one text behind the extension's
 // `edit_diagram` tool and `chd edit --help`, so the two front doors cannot describe different things
 // (ADR 0138). A test keeps it in step with the operations that exist.
+import { kindListText } from '../features/features.ts'
 import { STENCIL_KINDS } from '../stencils/kinds.ts'
 
-const KIND_LIST = STENCIL_KINDS.map((k) => k.id).join(', ')
+// A kind that belongs to a beta feature is marked "(beta)" in the list.
+const KIND_LIST = kindListText(STENCIL_KINDS.map((k) => k.id))
 
 export const OPERATIONS_HELP = `Operations, applied in order and all or nothing. The tool makes every id and the answer gives each one; nothing takes an id of your choosing. To use what an operation makes in a later operation of the same call, give it a handle with "as": "$name" ("$" and then letters, digits, ".", "_" or "-", up to 32) and write the handle where an id goes (id, from, to, parent, ids); each answer shows the handle beside the id it got. A handle lives only in that call: the next call uses the ids from the answers, and no handle is ever saved. Coordinates are absolute canvas pixels (x, y = top-left corner), even inside a container. An answer is short: the id of each element made or changed, with its absolute place and size after a move, resize or add; an element with no "handles" in an answer has the four default connection points (top, right, bottom, left).
 - add_entity {label, x, y, width=120, height=80, parent?, as?, style?}; add_container {label, x, y, width=320, height=180, ...}; add_text {label, x, y, width=120, height=48, ...}. parent is a container's id or a handle.

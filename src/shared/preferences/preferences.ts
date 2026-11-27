@@ -2,6 +2,7 @@ import type { EdgeStyle, GravityPreset, NodeStyle } from '../diagram'
 import { PEEK_CARD_MAX_HEIGHT, PEEK_CARD_WIDTH, clampPeekSize } from './peekCard.ts'
 import { UTILITY_DOCK_WIDTH, clampDockWidth } from './panelWidth.ts'
 import type { PortalMarkKind } from '../portals/portals.ts'
+import { normalizeFeatures } from '../features/features.ts'
 
 // The app-wide Preferences tier — per-installation, every-diagram (see the
 // glossary and ADR 0052's addendum for the "Settings" -> "Preferences"
@@ -194,6 +195,10 @@ export interface AppPreferences {
   // edge, or an oval. Each person reads one more easily, so it is a preference; nothing about it is
   // stored in a diagram.
   portalMark: PortalMarkKind
+  // Which beta features (BETA_FEATURES) the person has turned on, by id. Only registered ids are
+  // kept (normalizePreferences), so a deleted beta never leaves a stray entry behind; one never
+  // switched on is off. Nothing about it is stored in a diagram.
+  features: Record<string, boolean>
 }
 
 export type EdgeAnimationMode = 'system' | 'on' | 'off'
@@ -241,7 +246,8 @@ export const DEFAULT_PREFERENCES: AppPreferences = {
   recentDiagramsLimit: 10,
   aiFeaturesEnabled: true,
   animateEdges: 'system',
-  portalMark: 'tilde'
+  portalMark: 'tilde',
+  features: {}
 }
 
 // Standard desktop convention; also a floor for the user-facing limit input
@@ -295,6 +301,7 @@ export function normalizePreferences(
     animateEdges: readEdgeAnimationMode(raw.animateEdges)
   }
   merged.portalMark = merged.portalMark === 'oval' ? 'oval' : 'tilde'
+  merged.features = normalizeFeatures(merged.features)
   if (legacyFolder && !merged.metamodelsFolder) merged.metamodelsFolder = legacyFolder
   merged.peekCardWidth = clampPeekSize(merged.peekCardWidth, PEEK_CARD_WIDTH)
   merged.peekCardMaxHeight = clampPeekSize(merged.peekCardMaxHeight, PEEK_CARD_MAX_HEIGHT)

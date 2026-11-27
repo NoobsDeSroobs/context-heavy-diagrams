@@ -1,3 +1,4 @@
+import { kindIsOffered, type FeatureFlags } from '@shared/features/features'
 import type { Node } from '@xyflow/react'
 import {
   END_OUTCOMES,
@@ -23,11 +24,13 @@ import { SelectField } from '../ui/fields'
 // fields as any other node.
 export function StencilFields({
   nodes,
+  features,
   onSetKind,
   onSetLabelPosition,
   onSetState
 }: {
   nodes: Node[]
+  features: FeatureFlags
   onSetKind: (kindId: string) => void
   onSetLabelPosition: (position: LabelPosition) => void
   onSetState: (change: { outcome?: string; reach?: string; flowPosition?: string }) => void
@@ -57,12 +60,15 @@ export function StencilFields({
         label="Kind"
         value={only}
         mixed={kinds.size > 1}
-        options={STENCIL_KINDS.map((k) => ({
-          value: k.id,
-          label: k.name,
-          group: k.group,
-          terms: k.terms.join(' ')
-        }))}
+        // A beta's kinds are offered while it is on; one already used stays, so it still shows.
+        options={STENCIL_KINDS.filter((k) => kinds.has(k.id) || kindIsOffered(k.id, features)).map(
+          (k) => ({
+            value: k.id,
+            label: k.name,
+            group: k.group,
+            terms: k.terms.join(' ')
+          })
+        )}
         // Changing the kind takes its own undo snapshot (it also changes the label and the size).
         pushSnapshot={() => undefined}
         onChange={onSetKind}

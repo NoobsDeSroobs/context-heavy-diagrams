@@ -1,3 +1,4 @@
+import { kindIsOffered, type FeatureFlags } from '@shared/features/features'
 // Default content of the diagram dock when nothing is selected — click to
 // add an entity/container/text at the viewport center, or drag one onto the
 // canvas to place it exactly where dropped (drag-to-add;
@@ -32,11 +33,15 @@ function onItemDragStart(event: React.DragEvent<HTMLButtonElement>, type: Palett
 // with), drag places it, and right-click or the arrow opens a short list with a filter, whose search
 // also matches the BPMN terms of each kind.
 function StencilPaletteButton({
-  onAddStencil
+  onAddStencil,
+  features
 }: {
   onAddStencil: (kindId: string) => void
+  features: FeatureFlags
 }): React.JSX.Element {
-  const [kindId, setKindId] = useState('step')
+  const [chosenKindId, setKindId] = useState('step')
+  // A kind of a beta that was switched off since it was chosen falls back to the plain step.
+  const kindId = kindIsOffered(chosenKindId, features) ? chosenKindId : 'step'
   const [open, setOpen] = useState(false)
   const [filter, setFilter] = useState('')
   const rootRef = useRef<HTMLDivElement>(null)
@@ -78,6 +83,7 @@ function StencilPaletteButton({
 
   const words = filter.trim().toLowerCase().split(/\s+/).filter(Boolean)
   const shown = STENCIL_KINDS.filter((k) => {
+    if (!kindIsOffered(k.id, features)) return false
     const text = stencilSearchText(k.id).toLowerCase()
     return words.every((w) => text.includes(w))
   })
@@ -177,8 +183,10 @@ export default function ItemPalette({
   onAddLine,
   onAddStencil,
   onCreateMultipleEntities,
-  onCreateMultipleContainers
+  onCreateMultipleContainers,
+  features
 }: {
+  features: FeatureFlags
   onAddEntity: () => void
   onAddText: () => void
   onAddContainer: () => void
@@ -220,7 +228,7 @@ export default function ItemPalette({
         <span className="item-palette-icon item-palette-icon-container" />
         Container
       </button>
-      <StencilPaletteButton onAddStencil={onAddStencil} />
+      <StencilPaletteButton onAddStencil={onAddStencil} features={features} />
       <button
         type="button"
         className="item-palette-button"
