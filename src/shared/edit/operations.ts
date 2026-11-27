@@ -43,6 +43,7 @@ import {
   stencilLabelOutside,
   type StencilKind
 } from '../stencils/kinds.ts'
+import { kindListText } from '../features/features.ts'
 import { ANNOTATION_OPERATIONS, startingTags } from './annotations.ts'
 import { routeEdges } from './routeEdges.ts'
 import { edgeStyleFromLegendLine, newEdgeLineEntry } from '../legend/newEdgeLine.ts'
@@ -86,7 +87,7 @@ export {
   type ProducedFile
 } from './model.ts'
 
-const KIND_IDS = STENCIL_KINDS.map((k) => k.id).join(', ')
+const KIND_IDS = kindListText(STENCIL_KINDS.map((k) => k.id))
 
 // --- the operations
 

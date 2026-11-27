@@ -25,12 +25,13 @@ Ship a feature in a release but dark, so a person can opt in, try it and report 
 
 ## Open questions
 - The first beta to try the system on: likely the outline and table view ([0125](later/0125-outline-and-table-view.md)).
-- Whether the registry needs a "how to report" field, or reporting is always the same route.
+- The registry has an optional `report` text for how a tester reports back; whether a real beta needs it is for the first one to show.
 
 ## Tasks
-- [ ] The registry, the Preferences group and the Help item.
-- [ ] The `reviewBy` test and the off-state test pattern.
-- [ ] Labelling in the CLI and MCP (generated lists, notes) and the spec-marker test.
-- [ ] `docs/file-format.md`: how a beta field is marked.
+- [x] The registry (`src/shared/features/features.ts`, empty), the `features` preference, the Preferences group (hidden while there is no beta) and the Help item (shown only while there is one); a beta's kinds are hidden from the palette and the kind picker while it is off.
+- [x] The `reviewBy` test, the registry check and the off-state helpers (`kindIsOffered`).
+- [x] Labelling for assistants: `(beta)` in the kind lists, and a `beta` note in the `edit_diagram` / `chd edit` and `inspect_diagram` / `chd ask inspect` answers; a test that the spec marks each beta.
+- [ ] Notes in `validate` and `check`: `validate_chd.mjs` is a dependency-free script that does not read the registry. Add when the first beta needs it.
+- [x] `docs/file-format.md` and the field reference say how a beta is marked.
 - [x] The standing step in `docs/planning/README.md` and the CLAUDE.md section "Beta features" (approved and applied 2026-11-27).
-- [ ] Try it on the first real beta; an example per [ADR 0151](../../decisions/0151-every-visible-feature-has-an-example-diagram.md).
+- [ ] Try it on the first real beta; an example per [ADR 0151](../../decisions/0151-every-visible-feature-has-an-example-diagram.md), a changelog line under Added, and its own off-state test.

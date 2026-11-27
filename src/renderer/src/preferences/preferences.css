@@ -47,3 +47,15 @@
   -webkit-appearance: none;
   margin: 0;
 }
+
+/* The beta features: a group of their own at the end of the panel. */
+.preferences-beta-features {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--ev-c-gray-3);
+}
+
+.preferences-beta-features-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}

@@ -19,6 +19,7 @@ import {
   serializeDiagram
 } from '../../src/shared/diagram/index.ts'
 import { roomForLabel } from '../../src/shared/edit/inspect.ts'
+import { betaAnswer } from '../../src/shared/features/features.ts'
 import {
   editAnswerIssues,
   foldersFor,
@@ -736,6 +737,7 @@ export function createTools({ root, allowUpdate, specSources }) {
       fingerprint: written.fingerprint,
       results: applied.results,
       issues: editAnswerIssues(applied.diagram, applied.results),
+      ...betaAnswer(applied.diagram),
       warnings: written.warnings
     }
   }

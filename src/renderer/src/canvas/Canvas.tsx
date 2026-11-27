@@ -588,6 +588,7 @@ function CanvasInner(): React.JSX.Element {
     openNotesPanel,
     toggleDiagnosticsPanel,
     togglePreferencesPanel,
+    showPreferencesPanel,
     toggleStylePalettePanel,
     toggleAlignDistributePanel,
     toggleLayerPanel,
@@ -3791,6 +3792,7 @@ function CanvasInner(): React.JSX.Element {
     zoomControlsOn,
     toggleDiagramSettingsPanel,
     togglePreferencesPanel,
+    showPreferencesPanel,
     setCommandPaletteOpen,
     setShortcutsDialogOpen,
     setGlossaryDialogOpen,
@@ -4289,6 +4291,7 @@ function CanvasInner(): React.JSX.Element {
                 <AlignmentGuides guides={alignmentGuides} />
               </div>
               <DiagramDock
+                features={preferences.features}
                 selectedNodes={selectedNodes}
                 selectedEdges={selectedEdges}
                 onAddEntity={addEntityNode}

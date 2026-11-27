@@ -7,6 +7,8 @@ import { PEEK_CARD_MAX_HEIGHT, PEEK_CARD_WIDTH, clampPeekSize } from '@shared/pr
 import { useRafThrottledCallback } from '../ui/useRafThrottledCallback'
 import { useFontOptions } from '../styling/useFontOptions'
 import MetamodelsFolderSection from '../conformance/MetamodelsFolderSection'
+import { BETA_FEATURES, type BetaFeature } from '@shared/features/features'
+import BetaFeaturesSection from './BetaFeaturesSection'
 
 // '' means the field is absent (bezier, today's only historical behavior)
 // — see PropertyPanel.tsx's identical ROUTING_STYLE_OPTIONS/own comment on
@@ -41,6 +43,8 @@ interface PreferencesPanelProps {
   preferences: AppPreferences
   onChange: (patch: Partial<AppPreferences>) => void
   onClose: () => void
+  // The beta features to list; a test passes its own.
+  betaFeatures?: readonly BetaFeature[]
 }
 
 // Local draft, resynced from `value` only while not focused — same
@@ -246,7 +250,8 @@ function IsolateOpacityField({
 export default function PreferencesPanel({
   preferences,
   onChange,
-  onClose
+  onClose,
+  betaFeatures = BETA_FEATURES
 }: PreferencesPanelProps): React.JSX.Element {
   // Same rAF-coalescing as ColorField (ui/fields.tsx). This
   // input doesn't go through that shared component (see the comment below),
@@ -388,6 +393,11 @@ export default function PreferencesPanel({
             title="Color a selected edge's line swaps to, so it stays easy to track in a busy diagram"
           />
         </FieldRow>
+        <BetaFeaturesSection
+          registry={betaFeatures}
+          flags={preferences.features}
+          onChange={(features) => onChange({ features })}
+        />
       </div>
     </div>
   )

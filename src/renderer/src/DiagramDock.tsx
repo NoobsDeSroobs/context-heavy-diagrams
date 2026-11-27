@@ -1,3 +1,4 @@
+import type { FeatureFlags } from '@shared/features/features'
 import { memo } from 'react'
 import type { Edge, Node } from '@xyflow/react'
 import type {
@@ -50,8 +51,11 @@ function DiagramDock({
   pushSnapshot,
   onSetDefaultStyle,
   styleBrushActive,
-  onToggleStyleBrush
+  onToggleStyleBrush,
+  features
 }: {
+  // Which beta features are on: a beta's kinds are offered only while it is.
+  features: FeatureFlags
   selectedNodes: Node[]
   selectedEdges: Edge[]
   onAddEntity: () => void
@@ -100,6 +104,7 @@ function DiagramDock({
     >
       {hasSelection ? (
         <PropertyPanel
+          features={features}
           selectedNodes={selectedNodes}
           selectedEdges={selectedEdges}
           onUpdateNodeStyle={onUpdateNodeStyle}
@@ -124,6 +129,7 @@ function DiagramDock({
         />
       ) : (
         <ItemPalette
+          features={features}
           onAddEntity={onAddEntity}
           onAddText={onAddText}
           onAddContainer={onAddContainer}

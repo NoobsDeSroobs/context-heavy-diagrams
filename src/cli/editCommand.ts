@@ -18,6 +18,7 @@ import {
   inspectAnswer,
   MAX_OPERATIONS
 } from '../shared/edit/answers.ts'
+import { betaAnswer } from '../shared/features/features.ts'
 import { roomForLabel, type RoomQuestion } from '../shared/edit/inspect.ts'
 import { OPERATIONS_HELP } from '../shared/edit/help.ts'
 import { groupMessages } from '../shared/edit/issues.ts'
@@ -295,6 +296,7 @@ function runEditOnFile(parsed: EditArgs, operations: unknown[], env: EditEnv): u
       fingerprint: fingerprintOf(readFileSync(absolute)),
       results: applied.results,
       issues: editAnswerIssues(applied.diagram, applied.results),
+      ...betaAnswer(applied.diagram),
       warnings: groupMessages(checked.warnings.map(tidy))
     }
   } catch (error) {

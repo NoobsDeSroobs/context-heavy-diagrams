@@ -1,3 +1,4 @@
+import type { FeatureFlags } from '@shared/features/features'
 import type { Edge, Node } from '@xyflow/react'
 import type {
   ConnectionPointSide,
@@ -54,6 +55,8 @@ interface PropertyPanelProps {
   onToggleStyleBrush: () => void
   // Changes the kind of the selected steps and events (ADR 0080).
   onSetStencilKind: (nodeIds: string[], kindId: string) => void
+  // Which beta features are on, so the kind picker offers only the kinds that may be chosen.
+  features: FeatureFlags
   // Moves the label of the selected small shapes.
   onSetStencilLabelPosition: (nodeIds: string[], position: LabelPosition) => void
   // How the selected ends finish and how far they reach.
@@ -103,6 +106,7 @@ export default function PropertyPanel({
   styleBrushActive,
   onToggleStyleBrush,
   onSetStencilKind,
+  features,
   onSetStencilLabelPosition,
   onSetStencilState,
   onSetContainerLabelSide
@@ -185,6 +189,7 @@ export default function PropertyPanel({
       <div key={type}>
         <StencilFields
           nodes={nodes}
+          features={features}
           onSetKind={(kindId) => onSetStencilKind(ids, kindId)}
           onSetLabelPosition={(position) => onSetStencilLabelPosition(ids, position)}
           onSetState={(change) => onSetStencilState(ids, change)}
