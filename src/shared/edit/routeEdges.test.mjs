@@ -1,4 +1,4 @@
-// route_edges: a right-angled route round the elements an edge does not join (ADR 0174).
+// route_edges: a right-angled route round the elements an edge does not join (ADR 0138).
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { createEmptyDiagram } from '../diagram/index.ts'

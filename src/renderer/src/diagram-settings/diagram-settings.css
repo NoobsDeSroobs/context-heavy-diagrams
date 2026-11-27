@@ -1,5 +1,5 @@
 /* DiagramSettingsPanel consolidates the diagram-level (per-diagram)
-   surfaces into one dock panel (ADR 0071): a plain field at the top, then
+   surfaces into one dock panel: a plain field at the top, then
    Required tags and Line bend presets as CollapsibleSections. The sections
    bleed to the panel edges (cancelling .required-tags-panel-body's own 12px
    inset) so their divider borders read as full-width, matching how the same

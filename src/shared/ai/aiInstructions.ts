@@ -1,4 +1,4 @@
-// The short text behind AI -> "Copy AI instructions" (ADR 0104): pasted into
+// The short text behind AI -> "Copy AI instructions": pasted into
 // a chat with Claude or another assistant so it can read/edit a .chd file it is
 // shown. Deliberately small — the essentials plus the traps that corrupt files.
 // The full reference is docs/file-format.md, which stays the source of truth:

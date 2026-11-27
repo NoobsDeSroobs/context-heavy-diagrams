@@ -1,4 +1,4 @@
-// route_edges choosing the connection points of the edges it routes (ADR 0177).
+// route_edges choosing the connection points of the edges it routes (ADR 0138).
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { createEmptyDiagram } from '../diagram/index.ts'

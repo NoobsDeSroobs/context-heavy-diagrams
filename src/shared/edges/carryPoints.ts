@@ -1,6 +1,6 @@
 // Manual edge points are absolute canvas positions, so moving elements leaves them behind. When both
 // ends of an edge move by the same amount, whatever the reason (a drag, a container drag, a nudge, an
-// alignment, an assistant's move), the points go along (ADR 0189). Pure: the renderer and the
+// alignment, an assistant's move), the points go along. Pure: the renderer and the
 // assistant operations each call it with their own node and edge shapes.
 
 export interface PlacedNode {

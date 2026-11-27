@@ -27,7 +27,7 @@ import {
 // line consistently with what dragging/editing later settles into.
 export const LINE_BOUNDS_PADDING = 10
 const LINE_POINT_HANDLE_SIZE = 10
-// A line's default colour and width are data in styleDefaults.ts (ADR 0117), shared
+// A line's default colour and width are data in styleDefaults.ts, shared
 // with the property panel.
 const DEFAULT_STROKE = LINE_STYLE_DEFAULTS.stroke
 const DEFAULT_STROKE_WIDTH = LINE_STYLE_DEFAULTS.strokeWidth
@@ -79,7 +79,7 @@ function normalizeLineBounds(
 // across renders and the callbacks below that depend on it are not re-created.
 const NO_POINTS: LinePoint[] = []
 
-// A freeform curved line (see ADR 0050) — an ordered list of points,
+// A freeform curved line — an ordered list of points,
 // each with an optional "gravity" (Catmull-Rom tension) controlling how
 // much the curve bends there. Deliberately its own node type rather than
 // reusing/extending edges — see the ADR for why. Never connectable, never
@@ -189,7 +189,7 @@ function LineNode({ id, data, selected }: NodeProps): React.JSX.Element {
             ]),
         // Reachable via any point since right-clicking the line's own body
         // (not a point) skips a menu entirely — it adds a point immediately
-        // instead (onPathContextMenu below). See ADR 0065.
+        // instead (onPathContextMenu below).
         {
           label: 'Select all lines',
           separatorBefore: isEndpoint,
@@ -253,7 +253,7 @@ function LineNode({ id, data, selected }: NodeProps): React.JSX.Element {
           style={{ pointerEvents: 'stroke' }}
           onContextMenu={onPathContextMenu}
         />
-        {/* Layer panel's "point at" indicator (ADR 0035) — EntityNode/
+        {/* Layer panel's "point at" indicator — EntityNode/
             ContainerNode/TextNode do this with a CSS outline on their own
             (filled, roughly-rectangular) box, but that reads wrong on a
             sparse/concave curve where the bounding box is mostly empty

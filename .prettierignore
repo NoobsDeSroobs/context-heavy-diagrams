@@ -11,3 +11,4 @@ resources/cli/export.mjs
 resources/cli/check.mjs
 resources/extension/server.mjs
 docs/experiments
+docs/**/*.md

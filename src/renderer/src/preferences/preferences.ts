@@ -6,7 +6,7 @@ import {
 } from '@shared/preferences/preferences'
 
 // A rapid-fire source (a native color-input drag firing many onChange
-// events per second — see ADR 0056) shouldn't mean that many IPC round-
+// events per second) shouldn't mean that many IPC round-
 // trips and disk writes; only the in-memory value needs to keep pace with
 // every tick. This is purely about *persistence* timing, not visual
 // responsiveness — updatePreferences below still calls setPreferences on
@@ -27,7 +27,7 @@ export { DEFAULT_PREFERENCES, effectiveStylePalette } from '@shared/preferences/
 // and this only ever reads it once for migration.
 const LEGACY_STORAGE_KEY = 'settings'
 
-// The old localStorage-only store (ADR 0032, before ADR 0053's move to a
+// The old localStorage-only store (before ADR 0053's move to a
 // real per-OS file) — read once, only for migration. Returns null when
 // there's genuinely nothing saved (a fresh install), as distinct from
 // "saved, and happens to equal defaults" — the caller needs that

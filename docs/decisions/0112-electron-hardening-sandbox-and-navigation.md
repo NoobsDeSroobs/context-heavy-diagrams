@@ -6,7 +6,7 @@ Accepted
 ## Context
 A review ahead of the open-source release ([ADR 0111](0111-open-source-release-approach.md)) found four gaps in how the app's windows are set up. Once the project is public, people will open `.chd` files and Markdown notes written by others, so content in a diagram is no longer fully trusted.
 
-1. **`sandbox: false`.** The window's preload ran unsandboxed. The only thing that needed it was the real OS clipboard ([ADR 0049](0049-clipboard-copy-paste.md)): Electron's `clipboard` module is not available to a sandboxed preload.
+1. **`sandbox: false`.** The window's preload ran unsandboxed. The only thing that needed it was the real OS clipboard: Electron's `clipboard` module is not available to a sandboxed preload.
 2. **A broad preload bridge.** `@electron-toolkit/preload` exposed `window.electron` with generic `ipcRenderer.send/invoke/on` for *any* channel, `webFrame`, and a copy of `process.env`. The renderer used exactly one thing from it: `process.platform`.
 3. **No navigation guard.** The details panel renders Markdown with react-markdown, so a link in a note is a plain anchor. Clicking it navigated the app window itself to the remote page — in a window that has `window.api` (file read/write over IPC) exposed through the preload. The About dialog's `target="_blank"` link was handled, but ordinary navigation was not. Dropping a file onto the window had the same shape of risk (the browser default is to navigate to it).
 4. **No permission policy.** Electron's default grants some permission requests; the app never needs any.

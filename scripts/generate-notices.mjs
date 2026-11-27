@@ -1,5 +1,5 @@
 // Generates THIRD-PARTY-NOTICES.md at the repo root: the name, version, license and
-// full license text of every third-party package that ships in the app (ADR 0119).
+// full license text of every third-party package that ships in the app.
 //
 //   npm run notices           rewrite the file
 //   npm run notices -- --check   exit 1 if the committed file is out of date (npm test does this)

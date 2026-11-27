@@ -134,7 +134,7 @@ function buildSwatch(
   const strokeWidth = Math.min(3, Math.max(1, swatch.strokeWidth ?? 2))
   svg.style.overflow = 'visible'
   const line = document.createElementNS(SVG_NS, 'line')
-  // The line stops short of the tip of a pointed head (ADR 0197).
+  // The line stops short of the tip of a pointed head.
   line.setAttribute('x1', String(2 + markerTrim(swatch.startMarker, strokeWidth)))
   line.setAttribute('y1', '8')
   line.setAttribute('x2', String(26 - markerTrim(swatch.endMarker, strokeWidth)))

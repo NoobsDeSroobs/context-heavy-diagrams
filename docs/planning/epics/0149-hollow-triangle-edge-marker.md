@@ -1,7 +1,7 @@
 # 0149: A hollow triangle edge marker
 
 ## Status
-Not Started. Logged 2026-10-21. Sparse on purpose: small, and mainly a prerequisite for [epic 0148](0148-archimate-flavoured-vocabulary-kit.md).
+Not Started. Logged 2026-10-21. Sparse on purpose: small, and mainly a prerequisite for [epic 0148](0138-assistants-build-diagrams-like-a-person-through-one-implementation-behind-the-cli-and-the-mcp-server.md).
 
 ## Goal
 Add a hollow (unfilled) triangle as an edge end marker, the conventional end for realisation and specialisation (UML generalisation, ArchiMate realisation).

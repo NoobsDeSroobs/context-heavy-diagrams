@@ -5,7 +5,7 @@ import type { PortalMarkKind } from '../portals/portals.ts'
 
 // The app-wide Preferences tier — per-installation, every-diagram (see the
 // glossary and ADR 0052's addendum for the "Settings" -> "Preferences"
-// rename). Moved here from the renderer (see ADR 0053) — main needs this
+// rename). Moved here from the renderer — main needs this
 // exact shape too, to read/write the real per-OS file directly
 // (app.getPath('userData')/settings.json — filename kept for existing
 // installs) rather than the renderer's own localStorage, which only a
@@ -16,7 +16,7 @@ export interface PaletteColor {
   value: string
 }
 
-// One named set of reusable colors + fonts (see ADR 0068). Several
+// One named set of reusable colors + fonts. Several
 // are kept around at once ("Company", "GDPR", "Client"); exactly one is
 // active at a time and feeds the color fields / Font Family dropdown. The
 // `id` is the stable handle the active pointer uses, so renaming a palette
@@ -46,13 +46,13 @@ export type LegendCorner = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-ri
 // state. Deliberately one extensible object under one storage key, not one
 // key per field (theme.ts's own pattern, predating this): the next global
 // preference just adds a field here and a row in PreferencesPanel, no new
-// storage/sync plumbing. See ADR 0032 for why this exists as its own thing
+// storage/sync plumbing. It exists as its own thing
 // rather than being folded into wherever the first one happened to be
 // needed.
 export interface AppPreferences {
   // Pixels each edge travels straight out from its endpoint before
   // curving toward the other end — 0 means "no forced straight segment,"
-  // today's only behavior. See ADR 0032.
+  // today's only behavior.
   edgeStraightSegmentLength: number
   // Upper bound on the property panel's per-side connection point count
   // field — the total shown to the user, including the always-present
@@ -62,7 +62,7 @@ export interface AppPreferences {
   // that were never saved (see ADR 0040) — a real cost (disk scan
   // before the first window can usefully act on it) some users may want
   // to skip. Main reads this directly from the real settings file at
-  // startup (ADR 0053), no separate mirror file needed anymore.
+  // startup, no separate mirror file needed anymore.
   scanForUnsavedRecoveryOnStartup: boolean
   // A selected edge's stroke swaps to this color entirely (overriding its
   // own explicit style and any highlight-match color), so it stays
@@ -72,14 +72,14 @@ export interface AppPreferences {
   // from React Flow itself.
   selectedEdgeHighlightColor: string
   // Raw style fields stamped onto every newly created edge's data.style
-  // (Canvas.tsx's onConnect/onConnectEnd) — see ADR 0045. Same
-  // EdgeStyle shape StylePicker's presets already produce (ADR 0010), so
+  // (Canvas.tsx's onConnect/onConnectEnd). Same
+  // EdgeStyle shape StylePicker's presets already produce, so
   // the toolbar control reuses that exact picker rather than a new one.
   // Empty object means "today's existing look" (whatever LabeledEdge and
   // <ReactFlow>'s own defaultEdgeOptions fall back to) — an unset field
   // here doesn't get a hardcoded second default of its own.
   defaultEdgeStyle: EdgeStyle
-  // User/org-owned reusable colours and fonts (ADR 0048), kept as named palettes (ADR 0068). They
+  // User/org-owned reusable colours and fonts, kept as named palettes. They
   // appear as quick-picks in ColorField (Fill/Border/Font colour, panel and context-menu popups)
   // and the Font Family dropdown, from the palette activeStylePaletteId points at, resolved live
   // via effectiveStylePalette(). Several palettes are kept and switched in StylePalettePanel;
@@ -91,18 +91,18 @@ export interface AppPreferences {
   // id) means "fall back to the first palette, or an empty set if there
   // are none" — see effectiveStylePalette().
   activeStylePaletteId: string | null
-  // Default style stamped onto a new Entity/Container/Text (ADR 0048). Set explicitly
+  // Default style stamped onto a new Entity/Container/Text. Set explicitly
   // (StylePalettePanel's "Set as default", copying a selected element's style), never inferred from
-  // what was used last. Edges have this via defaultEdgeStyle above (ADR 0045). Absent per type
+  // what was used last. Edges have this via defaultEdgeStyle above. Absent per type
   // means today's look (Container keeps its hardcoded faint-fill fallback; Entity/Text keep ADR
   // 0014's "no style at all").
   defaultStyles: { entity?: NodeStyle; container?: NodeStyle; text?: NodeStyle }
   // Overrides React Flow's own light/dark default canvas background —
-  // ADR 0048. Global, not per-diagram (matches the rest of the
+  // Global, not per-diagram (matches the rest of the
   // style palette). Absent means today's existing theme-based background,
   // unchanged.
   canvasBackgroundColor?: string
-  // PNG export (ADR 0051): the last used values from the Export as PNG… dialog (ExportPngDialog),
+  // PNG export: the last used values from the Export as PNG… dialog (ExportPngDialog),
   // kept only so the dialog reopens prefilled; the dialog is where they are edited. paddingPx:
   // pixels around the diagram's content bounds. transparentBackground: omit the canvas background
   // instead of filling it. backgroundColorOverride: an explicit fill distinct from
@@ -130,23 +130,23 @@ export interface AppPreferences {
   minZoom: number
   maxZoom: number
   // Opacity applied to every element outside the current search match set
-  // while Isolate is active (see ADR 0063) — global, not per-diagram,
+  // while Isolate is active — global, not per-diagram,
   // same tier as every other canvas-behavior Setting here. 0 would hide
   // non-matches entirely; deliberately left as a plain opacity rather than
   // a visibility toggle so de-emphasized structure/context stays visible.
   isolateOpacity: number
   // Size of the card shown while Ctrl (Cmd on a Mac) is held over an element, in pixels: its width
-  // and the height beyond which its content is trimmed (ADR 0156). Clamped at every normalize
+  // and the height beyond which its content is trimmed. Clamped at every normalize
   // boundary.
   peekCardWidth: number
   peekCardMaxHeight: number
   // Width in pixels of the right-hand dock that holds the notes, diagnostics, changes and other side
-  // panels, set by dragging its edge (ADR 0158). Clamped at every normalize boundary.
+  // panels, set by dragging its edge. Clamped at every normalize boundary.
   utilityDockWidth: number
-  // Whether the minimap is drawn in the corner of the canvas (ADR 0158). A per-person display
+  // Whether the minimap is drawn in the corner of the canvas. A per-person display
   // choice; nothing about it is stored in a diagram.
   showMinimap: boolean
-  // Whether the zoom in and zoom out buttons are in the corner panel of the canvas (ADR 0186). Off by
+  // Whether the zoom in and zoom out buttons are in the corner panel of the canvas. Off by
   // default: the wheel, a trackpad and the keyboard zoom, so the buttons are for those without. A
   // per-person display choice; nothing about it is stored in a diagram.
   showZoomControls: boolean
@@ -157,7 +157,7 @@ export interface AppPreferences {
   // not UI.
   lastOpenedDirectory?: string
   // Absolute paths of recently opened or saved diagrams, most recent first, feeding File -> Recent
-  // Diagrams (ADR 0078). Every path that lands in a window funnels through diagram:openPath, so
+  // Diagrams. Every path that lands in a window funnels through diagram:openPath, so
   // "opened" covers File -> Open, drag-and-drop and following a linked diagram; a repeat Save
   // counts too. Deduped, clamped to `recentDiagramsLimit` at every normalize boundary. Written by
   // main; the list isn't user-facing, only its limit and "Clear Recent" are. Absent means none yet.
@@ -167,13 +167,13 @@ export interface AppPreferences {
   // dropped entries don't come back if raised again. Absent means the
   // default (10).
   recentDiagramsLimit: number
-  // User default tier for line gravity/bend presets (ADR 0066; the Diagram override -> User default
+  // User default tier for line gravity/bend presets (the Diagram override -> User default
   // -> Built-in default pattern of ADR 0052). Absent means no personal default, falling through to
   // DEFAULT_GRAVITY_PRESETS (lineGravityPresets.ts), the same "absent means default" convention as
   // everywhere else. It applies live to any open diagram without its own override, resolved
   // reactively and not baked in at load; a diagram with its own override always wins.
   gravityPresetsUserDefault?: GravityPreset[]
-  // User default tier for the font of a diagram that sets none (ADR 0130; ADR 0052's pattern). A
+  // User default tier for the font of a diagram that sets none (ADR 0052's pattern). A
   // raw CSS font-family value. Absent means the built-in font. Applies live to any open diagram
   // without its own font.
   defaultFontFamily?: string
@@ -185,7 +185,7 @@ export interface AppPreferences {
   // Default on; a future installer can seed it from its "enable AI features?"
   // question.
   aiFeaturesEnabled: boolean
-  // Whether edges set to Flow or Pulse move (ADR 0141). A viewing choice only: still draws them
+  // Whether edges set to Flow or Pulse move. A viewing choice only: still draws them
   // still, and the diagram is not changed. Applies live to every open diagram. 'system' follows the
   // operating system's reduced-motion setting, which is what a fresh install does; 'on' and 'off'
   // are the person's own choice and win over it.
@@ -267,7 +267,7 @@ export function withRecentDiagram(
 // renderer code must still show its default when main hasn't been rebuilt yet (this bit us once
 // with isolateOpacity).
 //
-// It also carries the named-palettes migration (ADR 0068): an older blob has a single
+// It also carries the named-palettes migration: an older blob has a single
 // `stylePalette: { colors, fonts }` and no `stylePalettes`, and is folded into the collection as
 // one "Default" palette. Idempotent: a migrated blob has `stylePalettes`, so the branch is skipped.
 export function normalizePreferences(

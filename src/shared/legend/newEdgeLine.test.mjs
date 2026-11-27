@@ -1,4 +1,4 @@
-// Run with `npm test`. The legend line new edges are drawn with (ADR 0196).
+// Run with `npm test`. The legend line new edges are drawn with.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
@@ -43,7 +43,7 @@ test('an edge gets the fields the entry has, the colour the caller gives, and no
     startMarker: 'none',
     endMarker: 'arrowClosed'
   })
-  // the thickness is the entry's too (ADR 0197)
+  // the thickness is the entry's too
   assert.equal(edgeStyleFromLegendLine({ ...dataFlow, strokeWidth: 5 }).strokeWidth, 5)
   // an entry that leaves a field out leaves it out, motion included
   assert.deepEqual(edgeStyleFromLegendLine(event), { lineStyle: 'dashed', animation: 'flow' })

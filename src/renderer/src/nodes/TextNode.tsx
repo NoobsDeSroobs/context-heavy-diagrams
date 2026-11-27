@@ -15,7 +15,7 @@ export const TEXT_MIN_HEIGHT = 24
 //
 // Known v1 limitation: NodeResizer's drag math doesn't account for this
 // node's own rotation, so resizing an already-rotated node can feel
-// slightly off. Accepted for now — see ADR 0004's Alternatives.
+// slightly off. Accepted for now.
 function TextNode({ id, data, selected }: NodeProps): React.JSX.Element {
   const { updateNodeData, getNode } = useReactFlow()
   const {

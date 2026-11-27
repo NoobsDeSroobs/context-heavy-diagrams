@@ -36,7 +36,7 @@ export function useThreatMatrix(
   // drops it when empty. Per-element assessment cells live on
   // node.data.security, not here.
   const [security, setSecurity] = useState<DiagramSecurity>({ threats: [], matrixEntityIds: [] })
-  // Matrix calculation modes are session-only, not persisted (ADR 0088) —
+  // Matrix calculation modes are session-only, not persisted —
   // deliberately NOT reset on file open, so they behave as a property of
   // the active matrix view and flow uniformly down a linked-diagram tree.
   const [securityCombineMethod, setSecurityCombineMethod] = useState<CombineMethod>('multiply')
@@ -52,7 +52,7 @@ export function useThreatMatrix(
     [markDirty]
   )
 
-  // Recursive rollup (ADR 0088). The crawl walks each linked matrix entity's
+  // Recursive rollup. The crawl walks each linked matrix entity's
   // subtree in the main process; the result is cached here for the session
   // and only re-fetched on entering the matrix persona or an explicit
   // Refresh — never persisted, so a derived value can't go stale.
@@ -76,7 +76,7 @@ export function useThreatMatrix(
     void window.api.crawlLinkedSecurity(currentPath, links).then(setSecurityCrawl)
   })
 
-  // Crawl on entering the matrix persona (ADR 0088). No cooldown throttle
+  // Crawl on entering the matrix persona. No cooldown throttle
   // yet — that's a follow-up; today it's this + the explicit Refresh button.
   useEffect(() => {
     if (persona === 'matrix') refreshSecurityCrawl()

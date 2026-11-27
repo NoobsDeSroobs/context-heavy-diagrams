@@ -21,7 +21,7 @@ interface PeekCardProps {
   metadata: Record<string, MetadataEntry> | undefined
   // The diagram's required tag keys: their tags come first, in their own colour.
   requiredTagKeys: ReadonlySet<string>
-  // The element's icons, named so a person can read what each one means (ADR 0155).
+  // The element's icons, named so a person can read what each one means.
   icons: Partial<Record<IconSlot, IconRef>> | undefined
   diagramPath: string | null
   // The note's in-memory text when it has been opened this session (so unsaved
@@ -32,7 +32,7 @@ interface PeekCardProps {
 type ChipKind = 'required' | 'tag' | 'icon'
 
 // A line of the card: the name of what it lists once, then the items, each in the colour of its
-// kind, so a tag and an icon are not taken for each other (ADR 0155).
+// kind, so a tag and an icon are not taken for each other.
 function Group({
   label,
   items
@@ -58,7 +58,7 @@ function formatTagValue(value: unknown): string {
 }
 
 // Read-only, non-interactive card shown while Ctrl/Cmd is held over a node
-// (ADR 0093). Mounted only while a peek is active (keyed by node id by the
+//Mounted only while a peek is active (keyed by node id by the
 // caller), so the note is read on peek rather than for every node at
 // load, and never goes stale.
 export default function PeekCard({

@@ -6,7 +6,7 @@ export function setIdsOf(element: { data?: Record<string, unknown> }): string[] 
   return Array.isArray(ids) ? (ids as string[]) : undefined
 }
 
-// The elements the presenter is fading (ADR 0195): the ones that just became visible, and the ones
+// The elements the presenter is fading (ADR 0194): the ones that just became visible, and the ones
 // that just became hidden and are kept drawn until their fade is over.
 export interface StoryFade {
   entering: ReadonlySet<string>
@@ -58,7 +58,7 @@ export function withVisibility<T extends Node | Edge>(
   return changed ? next : elements
 }
 
-// The elements as the presenter shows them (ADR 0195): nothing can be picked up, selected, deleted,
+// The elements as the presenter shows them (ADR 0194): nothing can be picked up, selected, deleted,
 // connected or focused. The global switches of React Flow are not enough, since a node's own
 // `draggable` (set for every node, from its lock) wins over them.
 export function lockedForPresenting<T extends Node | Edge>(elements: T[]): T[] {

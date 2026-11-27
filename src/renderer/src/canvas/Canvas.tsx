@@ -258,7 +258,7 @@ function CanvasInner(): React.JSX.Element {
   // loadDiagramIntoCanvas exists (it is declared after persistDiagram).
   const reloadHubRef = useRef<((path: string) => Promise<void>) | null>(null)
   // What this window last read or wrote of the diagram file: the baseline the window-focus check
-  // and the save-time conflict check compare against (ADR 0091, ADR 0092).
+  // and the save-time conflict check compare against (ADR 0040).
   const hubBaselineRef = useRef<{ path: string | null; stamp: Stamp }>({ path: null, stamp: null })
   // Diagram-level metadata/requiredTags (ADR 0022) — analogous to
   // currentPath: file-scoped state with no React Flow home of its own,
@@ -271,23 +271,23 @@ function CanvasInner(): React.JSX.Element {
   const [iconPackNotes, setIconPackNotes] = useState<IconPackNote[]>([])
   const [diagramMetadata, setDiagramMetadata] = useState<Record<string, JsonValue>>({})
   const [requiredTags, setRequiredTags] = useState<RequiredTagDefinition[]>([])
-  // Line bend preset catalog (ADR 0050) — same file-scoped,
+  // Line bend preset catalog — same file-scoped,
   // persisted treatment as highlights/legend above. Raw/possibly-empty;
   // effectiveGravityPresets resolves "empty" to this app's own built-in
   // four wherever it's actually consumed (DiagramContext's own value below).
   const [gravityPresets, setGravityPresets] = useState<GravityPreset[]>([])
-  // Diagram-level override for max connection points per side (ADR 0067;
-  // ADR 0052) — undefined means "not overridden," same file-scoped/reset-
+  // Diagram-level override for max connection points per side
+  // (ADR 0052): undefined means "not overridden," same file-scoped/reset-
   // on-load treatment as gravityPresets above.
   const [diagramMaxConnectionPointsPerSide, setDiagramMaxConnectionPointsPerSide] = useState<
     number | undefined
   >(undefined)
-  // The diagram's own font (ADR 0130), same file-scoped treatment as the override above.
+  // The diagram's own font, same file-scoped treatment as the override above.
   const [diagramFontFamily, setDiagramFontFamily] = useState<string | undefined>(undefined)
   // The catalogue of visibility sets (ADR 0194): file-scoped and persisted like the legend, reset
   // on load. Which sets are shown is session state and is not kept here.
   const [visibilitySets, setVisibilitySets] = useState<VisibilitySet[]>([])
-  // The stories told over those sets (ADR 0195): file-scoped and persisted the same way. The step
+  // The stories told over those sets (ADR 0194): file-scoped and persisted the same way. The step
   // being shown is session state and lives in the story hook.
   const [stories, setStories] = useState<Story[]>([])
   // Which sets are hidden right now: session state, never saved, empty when a diagram opens.
@@ -297,28 +297,28 @@ function CanvasInner(): React.JSX.Element {
     () => visibleFilter(visibilitySets, hiddenSetIds),
     [visibilitySets, hiddenSetIds]
   )
-  // Edge hover (the hover-revealed bend-point handles of catmull-rom edges, ADR 0057) is tracked
-  // per edge inside LabeledEdge, not here (ADR 0073): one shared hoveredEdgeId materialized onto
+  // Edge hover (the hover-revealed bend-point handles of catmull-rom edges) is tracked
+  // per edge inside LabeledEdge, not here: one shared hoveredEdgeId materialized onto
   // edge.data rebuilt the whole edges array on every hover.
   const [aboutDialogOpen, setAboutDialogOpen] = useState(false)
   const [shortcutsDialogOpen, setShortcutsDialogOpen] = useState(false)
   const [glossaryDialogOpen, setGlossaryDialogOpen] = useState(false)
-  // Command palette (ADR 0100).
+  // Command palette.
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
-  // Which git revision to compare with (ADR 0134): the dialog that asks.
+  // Which git revision to compare with (ADR 0132): the dialog that asks.
   const [revisionDialogOpen, setRevisionDialogOpen] = useState(false)
-  // See ADR 0089 — right-click on the ItemPalette Entity/Container button.
+  // Right-click on the ItemPalette Entity/Container button.
   const [bulkCreateType, setBulkCreateType] = useState<'entity' | 'container' | null>(null)
-  // Toolbar's own "current pen style" swatch (ADR 0045) — reuses
-  // StylePicker (ADR 0010) unchanged, same anchorRect convention as
+  // Toolbar's own "current pen style" swatch — reuses
+  // StylePicker unchanged, same anchorRect convention as
   // linePicker above, just targeting preferences.defaultEdgeStyle instead of
   // one edge's data.style.
   const [defaultEdgeStylePicker, setDefaultEdgeStylePicker] = useState<DOMRect | null>(null)
-  // Global app preference, not diagram content — see preferences.ts/ADR 0032.
+  // Global app preference, not diagram content — see preferences.ts.
   // Deliberately not reset by loadDiagramIntoCanvas below; only the panel's
   // open/closed UI state is.
   const { preferences, updatePreferences } = usePreferences()
-  // Whether animated edges move (ADR 0141): the person's choice if they made one, else what the
+  // Whether animated edges move: the person's choice if they made one, else what the
   // system's reduced-motion setting says. View -> Animate edges and its shortcut make an explicit
   // choice, the opposite of what is drawn now.
   const systemReducesMotion = usePrefersReducedMotion()
@@ -327,10 +327,10 @@ function CanvasInner(): React.JSX.Element {
     () => updatePreferences({ animateEdges: edgeAnimationOn ? 'off' : 'on' }),
     [updatePreferences, edgeAnimationOn]
   )
-  // The minimap is a per-person display choice (ADR 0158): the corner button and View -> Minimap
+  // The minimap is a per-person display choice: the corner button and View -> Minimap
   // flip it.
   const minimapOn = preferences.showMinimap
-  // The zoom buttons of the corner panel (ADR 0186): hidden unless the person asks for them.
+  // The zoom buttons of the corner panel: hidden unless the person asks for them.
   const zoomControlsOn = preferences.showZoomControls
   const toggleZoomControls = useCallback(
     () => updatePreferences({ showZoomControls: !zoomControlsOn }),
@@ -341,7 +341,7 @@ function CanvasInner(): React.JSX.Element {
     [updatePreferences, minimapOn]
   )
   useModifierHeldClass()
-  // What is drawn: the diagram's font, else the personal default (ADR 0130).
+  // What is drawn: the diagram's font, else the personal default.
   const effectiveFontFamily = effectiveDiagramFont(diagramFontFamily, preferences.defaultFontFamily)
   const [contextMenu, setContextMenu] = useState<{
     x: number
@@ -350,7 +350,7 @@ function CanvasInner(): React.JSX.Element {
   } | null>(null)
   const [iconPicker, setIconPicker] = useState<{ nodeId: string; anchorRect: DOMRect } | null>(null)
   // "Fill…"/"Border…" (nodes) and "Line style…" (edges) context-menu
-  // popups — see ADR 0010. Two separate pieces of state since they target
+  // popups. Two separate pieces of state since they target
   // different element kinds and render different popup components.
   const [colorPicker, setColorPicker] = useState<{
     nodeId: string
@@ -368,11 +368,11 @@ function CanvasInner(): React.JSX.Element {
   const connectionRadius = useZoomedConnectionHandles()
   const { peek, bindings: peekBindings } = useNotesPeek()
   const peekNode = peek ? rfInstance.getNode(peek.nodeId) : undefined
-  // The same hold-Ctrl peek on an edge, while crossings are marked (ADR 0185): which containers it
+  // The same hold-Ctrl peek on an edge, while crossings are marked: which containers it
   // goes between. It lives beside the note peek, as the one hook already tracks key and pointer.
   const { peek: edgePeek, bindings: edgePeekBindings } = useNotesPeek()
   const updateNodeInternals = useUpdateNodeInternals()
-  // Scopes the PNG export (ADR 0051) capture to this window's own
+  // Scopes the PNG export capture to this window's own
   // .react-flow__viewport rather than a bare document-wide query — no
   // functional difference today (one ReactFlow per window), just avoids
   // relying on that staying true.
@@ -380,9 +380,9 @@ function CanvasInner(): React.JSX.Element {
 
   // Latest nodes/edges mirrored into a ref (from an effect), so callbacks that only read the
   // current graph (pushSnapshot, undo/redo, openNotesPanel) needn't list nodes/edges in their
-  // useCallback deps. Those callbacks go through the memoized DiagramContext value (ADR 0056);
+  // useCallback deps. Those callbacks go through the memoized DiagramContext value;
   // churning their identity on every change re-rendered every node and edge on every edit, drag and
-  // hover (ADR 0073). Reading a ref inside a callback, not during render, is allowed by the
+  // hover. Reading a ref inside a callback, not during render, is allowed by the
   // react-hooks lint rules; same pattern as useNotesPeek and openReferencesFor.
   const graphRef = useRef<{ nodes: Node[]; edges: Edge[] }>({ nodes: [], edges: [] })
   useEffect(() => {
@@ -391,7 +391,7 @@ function CanvasInner(): React.JSX.Element {
 
   // Which node/handle a connection drag started from — set in onConnectStart,
   // read (and cleared) in onConnectEnd to spawn a new entity when the drag is
-  // released over empty canvas instead of a valid handle. See ADR 0107.
+  // released over empty canvas instead of a valid handle.
   const connectStartRef = useRef<{ nodeId: string; handleId: string | null } | null>(null)
 
   // The Entity just created by an empty-canvas edge drop (spawnEntityAt),
@@ -470,15 +470,15 @@ function CanvasInner(): React.JSX.Element {
     toggleLegendPanel
   } = useLegend(canvasApi)
 
-  // The legend rows for the kinds of step and event in use (ADR 0180). Hiding them is for this
+  // The legend rows for the kinds of step and event in use (ADR 0080). Hiding them is for this
   // session only: nothing about it is saved with the diagram.
   const [showStencilLegend, setShowStencilLegend] = useState(true)
-  // Gates on the edges that cross a container's border (ADR 0185): a switch for this session, off
+  // Gates on the edges that cross a container's border: a switch for this session, off
   // because most diagrams do not care about crossings and it adds to the canvas.
   const [showCrossings, setShowCrossings] = useState(false)
   // The number each portalled edge shows (typed, else from the order in the file). Kept as one
   // object until a number changes, so selecting or editing an edge does not re-render every edge
-  // through the context (ADR 0056).
+  // through the context.
   const portalNumberKey = useMemo(
     () =>
       JSON.stringify([
@@ -598,7 +598,7 @@ function CanvasInner(): React.JSX.Element {
     handlePersonaChange
   } = usePanels(canvasApi, { setNoteShadows, setDefaultEdgeStylePicker })
 
-  // Stories drive which sets are hidden (ADR 0195).
+  // Stories drive which sets are hidden (ADR 0194).
   const storiesUi = useStories(
     canvasApi,
     stories,
@@ -609,9 +609,9 @@ function CanvasInner(): React.JSX.Element {
     storiesPanelOpen
   )
   const storiesPresenting = storiesUi.presenting
-  // The presenter fades what appears and disappears between steps (ADR 0195).
+  // The presenter fades what appears and disappears between steps (ADR 0194).
   const storyFade = useStoryFade(storiesPresenting, nodes, edges, visibilitySets, hiddenSetIds)
-  // The presenter's bar shows when the mouse moves and goes when it is still (ADR 0195).
+  // The presenter's bar shows when the mouse moves and goes when it is still (ADR 0194).
   const presenterAwake = usePresenterActivity(storiesPresenting)
   const handlePresenterKey = storiesUi.handlePresenterKey
   const resetStories = storiesUi.reset
@@ -622,7 +622,7 @@ function CanvasInner(): React.JSX.Element {
     presentStoryFrom()
   }, [presentStoryFrom, setVisibilitySetsPanelOpen])
 
-  // One notice for the diagram and every note that changed outside the app (ADR 0159).
+  // One notice for the diagram and every note that changed outside the app (ADR 0040).
   const outsideChanges = useOutsideChanges({
     currentPath,
     hubBaselineRef,
@@ -665,7 +665,7 @@ function CanvasInner(): React.JSX.Element {
       if (ending) endContinuousEdit()
       // Deleting a container promotes its children instead of removing them (ADR 0012), handled
       // apart from React Flow's default remove-change application. RF cascades a delete to every
-      // descendant, but onBeforeDelete (resolveDeletion, ADR 0116) has already cut that down to
+      // descendant, but onBeforeDelete (resolveDeletion) has already cut that down to
       // what was asked for: the container plus any child selected too. So a `remove` for a
       // non-container is a real deletion and passes through; a container's removal is replaced by
       // reparenting its surviving children.
@@ -702,7 +702,7 @@ function CanvasInner(): React.JSX.Element {
 
   // Narrows React Flow's cascading delete to what was actually asked for: a
   // deleted container's children are promoted (and keep their edges) unless they
-  // were selected too (ADR 0012, ADR 0116). Runs for the Delete key, cut and
+  // were selected too (ADR 0012). Runs for the Delete key, cut and
   // anything else that goes through deleteElements.
   const onBeforeDelete = useCallback<OnBeforeDelete>(
     async ({ nodes: cascadedNodes, edges: cascadedEdges }) =>
@@ -726,7 +726,7 @@ function CanvasInner(): React.JSX.Element {
     setContextMenu({ x, y, items })
   }, [])
 
-  // Replaces the selection with every element of one type (ADR 0065). Exposed in each type's
+  // Replaces the selection with every element of one type. Exposed in each type's
   // right-click context menu (EntityNode/ContainerNode/TextNode/LineNode/onEdgeContextMenu), not
   // the top menu bar, which has no submenu support. Whole-type only; finer filtering (e.g. "edges
   // with this routing style") is an open question.
@@ -752,7 +752,7 @@ function CanvasInner(): React.JSX.Element {
     [setNodes, setEdges, isVisibleElement]
   )
 
-  // Flips the direction of every edge in `ids` in one action (ADR 0087). reverseEdgeDirection
+  // Flips the direction of every edge in `ids` in one action. reverseEdgeDirection
   // (edges/edgeDirectionSets.ts) is a pure Edge -> Edge that swaps endpoints and handles and the
   // direction-tied visuals (points order, labelPosition); mapping it over N edges under one
   // snapshot makes the batch one undo step. With a direction set active, each edge's per-set record
@@ -802,7 +802,7 @@ function CanvasInner(): React.JSX.Element {
       const clickPoint = rfInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY })
       // Right-clicking an edge that's part of a multi-selection reverses the
       // whole selection; right-clicking an unselected edge acts on just that
-      // one and leaves the selection alone (ADR 0087).
+      // one and leaves the selection alone.
       const reverseTargetIds =
         edge.selected && edges.some((e) => e.selected && e.id !== edge.id)
           ? edges.filter((e) => e.selected).map((e) => e.id)
@@ -913,7 +913,7 @@ function CanvasInner(): React.JSX.Element {
             let newRoutingStyle: EdgeStyle['routingStyle']
             if (routingStyle === 'step' || routingStyle === 'smoothstep') {
               // Keep the right-angled routing; the new waypoint just gets
-              // forced into the orthogonal path (ADR 0077). Insert it in the
+              // forced into the orthogonal path. Insert it in the
               // gap of [source, ...points, target] it's nearest to.
               //
               // The point goes onto the drawn route, not where the pointer happened to be a few
@@ -949,7 +949,7 @@ function CanvasInner(): React.JSX.Element {
               // straight / bezier / absent, or catmull-rom with no points
               // yet: only one segment exists, so the new point is trivially
               // the only entry. Adding it is what opts the edge into
-              // catmull-rom routing in the first place (ADR 0057) — no prior
+              // catmull-rom routing in the first place — no prior
               // trip to the property panel required.
               newPoints = [newPoint]
               newRoutingStyle = 'catmullRom'
@@ -1010,7 +1010,7 @@ function CanvasInner(): React.JSX.Element {
     ]
   )
 
-  // Recomputes the disk-vs-memory diff (ADR 0102) — a
+  // Recomputes the disk-vs-memory diff — a
   // side-effect-free reread (never recordOpenedOrSaved) via
   // rereadDiagramForDiff, diffed against the same toDiagramFile() shape the
   // real save path uses. A never-saved diagram (currentPath null) diffs
@@ -1077,7 +1077,7 @@ function CanvasInner(): React.JSX.Element {
       earlier: DiagramFile,
       element: { kind: 'node' | 'edge'; id: string; changeType: ChangedElement['changeType'] }
     ): string | null => {
-      // Edges are shown in the active reading's orientation (ADR 0081); the earlier one must be too.
+      // Edges are shown in the active reading's orientation; the earlier one must be too.
       const earlierGraph = fromDiagramFile({ ...earlier, activeEdgeDirectionSetId })
       const result = resetElement(
         graphRef.current,
@@ -1106,7 +1106,7 @@ function CanvasInner(): React.JSX.Element {
     if (problem) showAlert(problem)
   })
 
-  // A revert asked for in a compare window of this diagram (ADR 0135): the same action, with the
+  // A revert asked for in a compare window of this diagram (ADR 0132): the same action, with the
   // earlier version that window shows.
   useEffect(
     () =>
@@ -1124,7 +1124,7 @@ function CanvasInner(): React.JSX.Element {
     [putElementBack]
   )
 
-  // Compare the file on disk with the same file at a git revision (ADR 0134). Whatever stops it
+  // Compare the file on disk with the same file at a git revision (ADR 0132). Whatever stops it
   // (no git, not a repository, an unknown revision) comes back as a sentence to show.
   const compareWithGit = useCallback(
     async (revision: string) => {
@@ -1170,7 +1170,7 @@ function CanvasInner(): React.JSX.Element {
 
   // Select just this node and frame the viewport on it. Used by the
   // References inventory panel and the Diagnostics broken-links section
-  // (ADR 0084) — nothing reference-specific about it.
+  // — nothing reference-specific about it.
   const revealNode = useCallback(
     (nodeId: string) => {
       setNodes((nds) =>
@@ -1263,7 +1263,7 @@ function CanvasInner(): React.JSX.Element {
   } = useSearch(canvasApi, searchableNodes, searchableEdges, noteShadowsRef)
 
   // Gathers this diagram's own direct linked-node relative paths (deeper
-  // levels are discovered from disk during the walk — see ADR 0024),
+  // levels are discovered from disk during the walk),
   // previews the reachable subtree, confirms with the user, then copies.
   // A link resolving outside this diagram's own directory tree is never
   // followed or written to — reported as excluded, not silently skipped.
@@ -1348,12 +1348,12 @@ function CanvasInner(): React.JSX.Element {
     })
   }, [notesPanelNodeId, noteShadows, nodes, currentPath, setNoteShadows])
 
-  // Style seeded onto a brand-new edge (ADR 0045 / ADR 0083): the global
+  // Style seeded onto a brand-new edge: the global
   // default-edge-style preference, overlaid with the active edge direction
   // set's own default style if one is set. An edge drawn while a reading is
   // active is thus born in that reading's look; existing edges are never
   // touched.
-  // The legend line new edges follow (ADR 0196), when the diagram has marked one: its look replaces the
+  // The legend line new edges follow, when the diagram has marked one: its look replaces the
   // personal default, so a new edge means what the legend says. The colour is the one the legend shows
   // in the theme now, stored the way an edge stores a colour.
   const newEdgeLine = useMemo(() => newEdgeLineEntry(legend), [legend])
@@ -1389,12 +1389,12 @@ function CanvasInner(): React.JSX.Element {
   // The dragged node's edge keeps the exact handle dropped onto (connection.sourceHandle). Every
   // other selected node reuses that handle's clockwise ordinal on the same side
   // (pointOrdinal/connectionPointAtOrdinal in connectionPoints.ts), clamped to the points that side
-  // has, rather than picking its own point nearest the target (ADR 0059 addendum: nearest-to-target
+  // has, rather than picking its own point nearest the target (nearest-to-target
   // looked inconsistent, since unrelated entities rarely face the target the same way, while "the
   // same point" reads as deliberate).
   const onConnect = useCallback(
     (dropped: Connection) => {
-      // The central target names no point: that end attaches by itself (ADR 0178).
+      // The central target names no point: that end attaches by itself.
       const connection: Connection = {
         ...dropped,
         sourceHandle: dropped.sourceHandle === AUTO_HANDLE ? null : dropped.sourceHandle,
@@ -1435,7 +1435,7 @@ function CanvasInner(): React.JSX.Element {
           )
         }, eds)
         // Seed the new edge's per-set direction records right away when the
-        // diagram has 2+ direction sets (ADR 0081), rather than lazily at
+        // diagram has 2+ direction sets, rather than lazily at
         // the next switch — otherwise reversing the edge before any switch
         // would bake the reversed orientation into *every* set.
         return edgeDirectionSets.length >= 2
@@ -1521,7 +1521,7 @@ function CanvasInner(): React.JSX.Element {
     [rfInstance]
   )
 
-  // Drag-and-drop counterpart to the addXNode callbacks below (ADR 0064): those spawn near the
+  // Drag-and-drop counterpart to the addXNode callbacks below: those spawn near the
   // viewport centre via spawnPosition, this places a node centred under the drop point and
   // reparents it into a container as onNodeDragStop does. It can't use
   // rfInstance.getIntersectingNodes because the new node isn't registered with React Flow at drop
@@ -1658,7 +1658,7 @@ function CanvasInner(): React.JSX.Element {
 
   // Shared tail of onConnectEnd/onReconnectEnd once isVoidDrop has confirmed a drop on genuine
   // empty canvas: create an Entity centred on the drop point (same defaults and container
-  // reparenting as a palette drop, ADR 0107), let the caller wire whichever edge end needs it (the
+  // reparenting as a palette drop), let the caller wire whichever edge end needs it (the
   // one part that differs between a new edge and an existing edge's endpoint), and drop the Entity
   // straight into label editing. The Entity and the edge share one undo step (addNodeAtPosition
   // takes the snapshot).
@@ -1805,7 +1805,7 @@ function CanvasInner(): React.JSX.Element {
     ])
   }, [setNodes, pushSnapshot, spawnPosition, preferences.defaultStyles.text])
 
-  // A stencil of the given kind (ADR 0180) near the viewport centre.
+  // A stencil of the given kind (ADR 0080) near the viewport centre.
   const addStencilNode = useCallback(
     (kindId: string) => {
       pushSnapshot()
@@ -1830,7 +1830,7 @@ function CanvasInner(): React.JSX.Element {
     [setNodes, pushSnapshot, spawnPosition]
   )
 
-  // Changes the kind of these stencils, one undo step (ADR 0180).
+  // Changes the kind of these stencils, one undo step (ADR 0080).
   const setStencilKind = useCallback(
     (nodeIds: string[], kindId: string) => {
       const ids = new Set(nodeIds)
@@ -1872,7 +1872,7 @@ function CanvasInner(): React.JSX.Element {
   )
 
   // Moves the label of these small shapes to another side, or sets it free where it is, one undo
-  // step (ADR 0183). A label made free keeps its place, so it does not jump.
+  // step. A label made free keeps its place, so it does not jump.
   const setStencilLabelPosition = useCallback(
     (nodeIds: string[], position: LabelPosition) => {
       const ids = new Set(nodeIds)
@@ -1908,7 +1908,7 @@ function CanvasInner(): React.JSX.Element {
     [setNodes, pushSnapshot]
   )
 
-  // Moves the label of these containers to another side, one undo step (ADR 0184).
+  // Moves the label of these containers to another side, one undo step.
   const setContainerLabelSide = useCallback(
     (nodeIds: string[], side: ContainerLabelSide) => {
       const ids = new Set(nodeIds)
@@ -1941,8 +1941,8 @@ function CanvasInner(): React.JSX.Element {
         // dashed border) rather than fully transparent — a freshly-added
         // container should read as "a container" at a glance, not require
         // opening the property panel first to see anything at all. Only
-        // the fallback when the user hasn't set a real default (see
-        // ADR 0048) — once they have, their own choice wins outright
+        // the fallback when the user hasn't set a real default
+        // — once they have, their own choice wins outright
         // rather than merging with this hardcoded one.
         data: {
           label: 'Container',
@@ -1957,7 +1957,7 @@ function CanvasInner(): React.JSX.Element {
     ])
   }, [setNodes, pushSnapshot, spawnPosition, requiredTags, preferences.defaultStyles.container])
 
-  // Bulk counterpart to addEntityNode/addContainerNode — see ADR 0089, and ADR 0168 for the
+  // Bulk counterpart to addEntityNode/addContainerNode for a
   // table paste, whose elements arrive with their metadata and note. One
   // pushSnapshot/setNodes for the whole batch (one undo step), laid out in
   // a grid centered on the viewport rather than spawnPosition's small
@@ -2021,7 +2021,7 @@ function CanvasInner(): React.JSX.Element {
         }
         return sortNodesForHierarchy(acc)
       })
-      // A note is a file written at the next Save (ADR 0092): until then it is an unsaved note with
+      // A note is a file written at the next Save (ADR 0040): until then it is an unsaved note with
       // no file yet, like one typed into a new element's panel.
       const notes = elements.flatMap((e, index) => (e.note ? [[ids[index], e.note] as const] : []))
       if (notes.length > 0) {
@@ -2043,7 +2043,7 @@ function CanvasInner(): React.JSX.Element {
     ]
   )
 
-  // A default 2-point horizontal line — see ADR 0050. Points are
+  // A default 2-point horizontal line. Points are
   // node-local (relative to position), padded the same way normalizeLineBounds
   // in LineNode.tsx keeps them after any edit, so a freshly spawned line
   // and a freshly edited one look consistent.
@@ -2243,7 +2243,7 @@ function CanvasInner(): React.JSX.Element {
         // (a parent cycle → React Flow can't position the nodes → they
         // collapse to the canvas origin), and a candidate whose bounds
         // *enclose* the container shouldn't be swallowed by it either — see
-        // ADR 0075. getIntersectingNodes(_, false) matches a node that fully
+        // ADR 0012. getIntersectingNodes(_, false) matches a node that fully
         // covers the container as well as one fully inside it.
         const containerIsDescendantOf = (ofId: string): boolean => {
           let current: Node | undefined = container
@@ -2287,7 +2287,7 @@ function CanvasInner(): React.JSX.Element {
     [pushSnapshot, rfInstance, setNodes]
   )
 
-  // One-click inverse of drag-out / "Attach contained entities" (ADR 0075):
+  // One-click inverse of drag-out / "Attach contained entities" (ADR 0012):
   // clears a node's parentId and rebases its position from parent-relative
   // to absolute so it doesn't jump. Any node type can be a container child.
   const detachFromParent = useCallback(
@@ -2320,8 +2320,8 @@ function CanvasInner(): React.JSX.Element {
     setEdges((eds) => eds.map((e) => (e.selected ? { ...e, selected: false } : e)))
   }, [setNodes, setEdges])
 
-  // No clipboard involved (deliberately simpler than real copy/paste — see
-  // ADR 0049), just clones selected nodes in place with a small offset and
+  // No clipboard involved (deliberately simpler than real copy/paste),
+  // just clones selected nodes in place with a small offset and
   // selects the clones so they're immediately draggable. Edges between
   // duplicated nodes are not duplicated — same reasoning as the clipboard
   // work: that's real clipboard-shaped complexity this shortcut isn't
@@ -2343,7 +2343,7 @@ function CanvasInner(): React.JSX.Element {
     })
   }, [nodes, setNodes, pushSnapshot])
 
-  // Multi-select resize (ADR 0098): every selected node shows its own
+  // Multi-select resize: every selected node shows its own
   // NodeResizer, but React Flow only resizes the one being dragged. These
   // callbacks (called from each node's NodeResizer via context) make the
   // other selected, unlocked, resizable nodes scale by the same percentage in
@@ -2407,7 +2407,7 @@ function CanvasInner(): React.JSX.Element {
     }
   }, [setNodes])
 
-  // Modifier+drag duplicate (ADR 0099), called by useModifierDragDuplicate once the pointer has
+  // Modifier+drag duplicate, called by useModifierDragDuplicate once the pointer has
   // moved. Clones the dragged selection (or just the grabbed node if unselected) plus every
   // descendant of a cloned container, in place, and selects the clones so the replayed drag moves
   // them; the originals keep their ids, edges and position. Edges between cloned nodes are cloned
@@ -2524,7 +2524,7 @@ function CanvasInner(): React.JSX.Element {
   // text actually changes (a new copy, or something copied elsewhere).
   const lastPasteRef = useRef<{ text: string; count: number } | null>(null)
 
-  // Real clipboard copy/paste — see ADR 0049. Copy is a pure read (no
+  // Real clipboard copy/paste. Copy is a pure read (no
   // undo snapshot needed, diagram state doesn't change); paste/cut do.
   const copySelection = useCallback(() => {
     const selected = nodes.filter((n) => n.selected)
@@ -2559,7 +2559,7 @@ function CanvasInner(): React.JSX.Element {
     pushSnapshot()
     // sortNodesForHierarchy: a pasted container + its children can arrive in
     // any order, and React Flow requires a parent earlier in the array than
-    // its children — see remapForPaste (ADR 0075). Captured out of the
+    // its children — see remapForPaste (ADR 0012). Captured out of the
     // updater (rather than closing over `nodes`) so the post-paste scan
     // below sees the actual applied result, not a possibly-stale snapshot.
     let nextNodes: Node[] = []
@@ -2639,7 +2639,7 @@ function CanvasInner(): React.JSX.Element {
     [setEdges]
   )
 
-  // Layer panel drag-reorder (ADR 0035) — a discrete action, not
+  // Layer panel drag-reorder — a discrete action, not
   // a continuous drag session, so this snapshots itself rather than
   // relying on a caller's beginContinuousEdit/endContinuousEdit pair (same
   // "snapshot right before the one-shot mutation" treatment as the icon
@@ -2688,13 +2688,12 @@ function CanvasInner(): React.JSX.Element {
     [setEdges]
   )
 
-  // Connection point count field (ADR 0036) — a discrete,
+  // Connection point count field — a discrete,
   // structural action rather than a style patch: it can both reposition
   // and delete/create points on the target node, and reassign edges off
   // any point it removes. `totalCount` is the side's whole point count,
   // same number the property panel shows and edits directly — no
-  // default/custom split to convert between (see ADR 0036's second
-  // revision for why that split was removed).
+  // default/custom split to convert between (that split was removed).
   const setConnectionPointCount = useCallback(
     (nodeId: string, side: ConnectionPointSide, totalCount: number) => {
       const node = nodes.find((n) => n.id === nodeId)
@@ -2745,7 +2744,7 @@ function CanvasInner(): React.JSX.Element {
     [setNodes]
   )
 
-  // Locked (ADR 0043): blocks drag/resize/rotate and accidental delete via the
+  // Locked: blocks drag/resize/rotate and accidental delete via the
   // canvas, see docs/file-format.md's `locked` field. `false` is written
   // as `undefined`, not stored explicitly — matches every other "absent
   // means off" optional node field (rotation, connectionPoints, etc.),
@@ -2866,7 +2865,7 @@ function CanvasInner(): React.JSX.Element {
       } = fromDiagramFile(diagram)
       // Anything the load repaired by itself (a dangling container reference, a missing zIndex, a
       // required tag reset, a stale security reference, ...) makes the file differ from what is on
-      // disk, so it counts as a change to save (ADR 0128): compare what a save would write with
+      // disk, so it counts as a change to save (ADR 0040): compare what a save would write with
       // what was read.
       const wouldSave = toDiagramFile(
         syncNodeMetadata(openedNodes, openedRequiredTags, []),
@@ -2885,7 +2884,7 @@ function CanvasInner(): React.JSX.Element {
         openedStories
       )
       // savedWith and iconPacks are written by the save itself, and a zIndex the file leaves out is a
-      // default (ADR 0035) that never changes how the diagram looks (diagrams written by hand or by
+      // default that never changes how the diagram looks (diagrams written by hand or by
       // an assistant usually omit it), so none of them counts.
       const filledZIndex = new Map(wouldSave.nodes.map((n) => [n.id, n.zIndex]))
       const asRead: DiagramFile = {
@@ -2984,7 +2983,7 @@ function CanvasInner(): React.JSX.Element {
       // Defensive, per ADR 0022 — reconcile against hand-edited drift on
       // every load, not just when the template is edited from within the app.
       runSync(openedRequiredTags)
-      // ADR 0084 — surface missing referenced files in Diagnostics.
+      // Surface missing referenced files in Diagnostics.
       void scanMissingFiles(openedNodes, openedLegend, path)
     },
     [
@@ -3108,14 +3107,14 @@ function CanvasInner(): React.JSX.Element {
       // See handleClose's own comment for what "Close" actually does here
       // (discard back to blank, not close the OS window).
       'file.close': handleClose,
-      // Search overlay (ADR 0062) — provisional V1 entry point,
+      // Search overlay — provisional V1 entry point,
       // no permanent toolbar button yet (see the ADR). Not deferring to text
       // fields: same as Ctrl+S/O/N/W, opening/closing search is a reasonable
       // thing to do regardless of what else has focus.
       'search.toggle': toggleSearchOverlay,
-      // Command palette (ADR 0100).
+      // Command palette.
       'view.commandPalette': () => setCommandPaletteOpen(true),
-      // "Changes since last save" (ADR 0102).
+      // "Changes since last save".
       'view.changesSinceLastSave': toggleChangesPanel,
       'view.toggleEdgeAnimation': toggleEdgeAnimation,
       'selection.selectAll': selectAll,
@@ -3198,7 +3197,7 @@ function CanvasInner(): React.JSX.Element {
       }
     }
     const onKeyDown = (event: KeyboardEvent): void => {
-      // While presenting, the presenter's keys are the only shortcuts (ADR 0195).
+      // While presenting, the presenter's keys are the only shortcuts (ADR 0194).
       if (storiesPresenting) {
         if (handlePresenterKey(event)) event.preventDefault()
         return
@@ -3289,13 +3288,13 @@ function CanvasInner(): React.JSX.Element {
   ])
 
   // Drives the diagram dock's mode (item palette vs. property panel) — see
-  // ADR 0013. Memoized on nodes/edges (ADR 0073) so unrelated CanvasInner
+  // Memoized on nodes/edges so unrelated CanvasInner
   // renders (panel toggles, colour-picker state, search) don't hand
   // DiagramDock a fresh array and re-render it + PropertyPanel every time.
   const selectedNodes = useMemo(() => nodes.filter((n) => n.selected), [nodes])
   const selectedEdges = useMemo(() => edges.filter((e) => e.selected), [edges])
 
-  // Each node's persisted stacking order (ADR 0035). No type-based special-casing here: the
+  // Each node's persisted stacking order. No type-based special-casing here: the
   // "containers behind entities" look comes only from the load-time backfill's starting values
   // (applyZIndexBackfill/nextZIndex), not from a render-time rule, so a container dragged above an
   // entity in the layer panel renders above it from then on. React Flow still adds its own
@@ -3331,7 +3330,7 @@ function CanvasInner(): React.JSX.Element {
   // Memoized on `nodes` — a fresh Map every render put a new reference in
   // the edge-derive effect's dependency array below, making that effect
   // (and its setEdges call) run on *every* CanvasInner render regardless of
-  // whether nodes/edges changed (ADR 0073).
+  // whether nodes/edges changed.
   const nodeZIndexById = useMemo(
     () => new Map(nodes.map((n) => [n.id, (n.zIndex as number | undefined) ?? 0])),
     [nodes]
@@ -3364,7 +3363,7 @@ function CanvasInner(): React.JSX.Element {
       })
   }, [nodes])
   // An edge end with no connection point named attaches by itself and follows the element as it
-  // moves (ADR 0178).
+  // moves.
   const autoHandles = useMemo(
     () =>
       resolveAutoHandles(
@@ -3477,7 +3476,7 @@ function CanvasInner(): React.JSX.Element {
     )
   )
 
-  // An edge has no zIndex of its own (ADR 0035 scoped that to Entity/Container/Text): it sits at
+  // An edge has no zIndex of its own (only Entity/Container/Text have one): it sits at
   // the midpoint of its endpoints' current stacking, computed here next to orderedEdges and never
   // persisted.
   //
@@ -3511,8 +3510,8 @@ function CanvasInner(): React.JSX.Element {
   }, [edges, nodeZIndexById, setEdges])
 
   // Plain-data projection for LayerPanel, keeping it decoupled from React Flow's Node type. Sorted
-  // highest zIndex first, matching the panel's top-is-frontmost convention (ADR 0035).
-  // Container-nesting analysis for the Layers panel and Diagnostics (ADR 0075):
+  // highest zIndex first, matching the panel's top-is-frontmost convention.
+  // Container-nesting analysis for the Layers panel and Diagnostics (ADR 0012):
   // - parentLabelById: the immediate parent's label, for the "in: X" badge
   // - invertedZIds: nodes React Flow renders above their own parent even though raw data.zIndex
   //   would put them below (the parentZ + 1 rule in @xyflow/system's calculateChildXYZ). The Layers
@@ -3576,7 +3575,7 @@ function CanvasInner(): React.JSX.Element {
   )
 
   // Flat "entity → one reference path" list backing the References inventory
-  // panel (ADR 0069) — a live projection of node data, owns nothing.
+  // panel — a live projection of node data, owns nothing.
   const referenceRows = useMemo(
     () =>
       nodes.flatMap((n) => {
@@ -3616,7 +3615,7 @@ function CanvasInner(): React.JSX.Element {
       ...hierarchyAnalysis.outgrownAdvisories,
       ...legendEmptyAdvisory,
       ...strayLines,
-      // Set ids in stories that no set holds (ADR 0195): ignored, never removed.
+      // Set ids in stories that no set holds (ADR 0194): ignored, never removed.
       ...storyStrayAdvisory(stories, visibilitySets),
       // A portal number used twice, and a label hidden in a gap.
       ...portalNotices(
@@ -3638,8 +3637,8 @@ function CanvasInner(): React.JSX.Element {
     stories
   ])
 
-  // "Changes since last save" Notes bucket (ADR 0102) — reuses
-  // noteShadows' existing dirty flag (ADR 0092) directly, no new tracking.
+  // "Changes since last save" Notes bucket — reuses
+  // noteShadows' existing dirty flag (ADR 0040) directly, no new tracking.
   const notesChangedEntries: NotesChangedEntry[] = useMemo(
     () =>
       Object.values(noteShadows)
@@ -3699,7 +3698,7 @@ function CanvasInner(): React.JSX.Element {
         : null,
     [checkedDiagram, conformance.metamodel]
   )
-  // Edge labels hidden behind the elements they join (ADR 0146), measured in the font the canvas
+  // Edge labels hidden behind the elements they join, measured in the font the canvas
   // draws them in: the diagram's, else the personal default.
   const layoutEntries = useMemo<LayoutEntry[]>(() => {
     if (!checkedDiagram) return []
@@ -3712,7 +3711,7 @@ function CanvasInner(): React.JSX.Element {
       })
     )
   }, [checkedDiagram, effectiveFontFamily])
-  // Unsaved note edits whose element is gone (ADR 0092): kept, listed in Diagnostics.
+  // Unsaved note edits whose element is gone (ADR 0040): kept, listed in Diagnostics.
   const orphanedEdits = useMemo(
     () => orphanedNoteEdits(noteShadows, new Set(nodes.map((n) => n.id))),
     [noteShadows, nodes]
@@ -3730,10 +3729,10 @@ function CanvasInner(): React.JSX.Element {
     iconPackProblems.missingPacks.length +
     iconPackProblems.missingIcons.length
 
-  // Mode-aware menu bar (ADR 0079): what the Security Matrix persona hides is decided in
+  // Mode-aware menu bar: what the Security Matrix persona hides is decided in
   // buildMenus.
   const isDiagramPersona = persona === 'diagram'
-  // The legend row the active edge direction set contributes (ADR 0081) —
+  // The legend row the active edge direction set contributes —
   // shown in the Legend panel and prepended to the PNG export legend
   // whenever any direction set exists. `null` when the feature is dormant.
   const directionSetRow = directionSetLegendRow(edgeDirectionSets, activeEdgeDirectionSetId)
@@ -3798,7 +3797,7 @@ function CanvasInner(): React.JSX.Element {
     setAboutDialogOpen
   })
 
-  // Whichever named palette is active (ADR 0068), resolved live —
+  // Whichever named palette is active, resolved live —
   // memoized on the two fields it depends on so the Context value below
   // keeps a stable identity between unrelated settings changes.
   const activeStylePalette = useMemo(
@@ -3807,7 +3806,7 @@ function CanvasInner(): React.JSX.Element {
   )
 
   // useCallback (not an inline arrow on <DiagramDock>) so memo(DiagramDock)
-  // can actually bail on unrelated CanvasInner renders (ADR 0073).
+  // can actually bail on unrelated CanvasInner renders.
   const setDefaultStyle = useCallback(
     (type: 'entity' | 'container' | 'text', style: NodeStyle) =>
       updatePreferences({ defaultStyles: { ...preferences.defaultStyles, [type]: style } }),
@@ -3817,7 +3816,7 @@ function CanvasInner(): React.JSX.Element {
   // Memoized so a high-frequency state change elsewhere in CanvasInner (e.g. dragging a native
   // colour-input handle, dozens of onChange events per second) doesn't re-render every node and
   // edge just because this object got a new identity: consumers subscribe via useContext, which
-  // bypasses their React.memo wrapper (that only guards parent prop changes). See ADR 0056. Every
+  // bypasses their React.memo wrapper (that only guards parent prop changes). Every
   // function here is useCallback-stable, and effectiveGravityPresets() returns its input reference
   // when non-empty, so this recomputes only when a value really changed.
   const diagramContextValue: DiagramContextValue = useMemo(
@@ -3905,7 +3904,7 @@ function CanvasInner(): React.JSX.Element {
   return (
     <DiagramContext.Provider value={diagramContextValue}>
       {/* Outer app shell: [canvas view [diagram dock]] [utility dock], nested
-          not flat — see ADR 0013. */}
+          not flat. */}
       <IconPackOffer />
       <div
         className={`app-shell${storiesPresenting ? ' is-presenting' : ''}${
@@ -3928,7 +3927,7 @@ function CanvasInner(): React.JSX.Element {
               <option value="diagram">Diagram</option>
               <option value="matrix">Security Matrix (prototype)</option>
             </select>
-            {/* Stories (ADR 0195): opens the panel where a story is written and presented. */}
+            {/* Stories (ADR 0194): opens the panel where a story is written and presented. */}
             {isDiagramPersona && (
               <button
                 type="button"
@@ -3975,7 +3974,7 @@ function CanvasInner(): React.JSX.Element {
               onIgnore={outsideChanges.ignore}
             />
             {/* Default-edge-style swatch — diagram-only; nothing in the
-                Security Matrix persona draws edges (ADR 0079). */}
+                Security Matrix persona draws edges. */}
             {isDiagramPersona && (
               <button
                 type="button"
@@ -4028,7 +4027,7 @@ function CanvasInner(): React.JSX.Element {
                     : ''
                 }${legendLinePick ? ' legend-line-pick' : ''}`}
                 ref={flowWrapperRef}
-                // Read by canvas.css for everything drawn in the diagram (ADR 0130); a CSS variable
+                // Read by canvas.css for everything drawn in the diagram; a CSS variable
                 // so a font change re-renders no node. undefined leaves the built-in font.
                 style={{ '--diagram-font-family': effectiveFontFamily } as React.CSSProperties}
                 onDragOver={onCanvasDragOver}
@@ -4067,7 +4066,7 @@ function CanvasInner(): React.JSX.Element {
                   edgeTypes={edgeTypes}
                   proOptions={HIDE_ATTRIBUTION}
                   // Only mount nodes/edges intersecting the viewport — see
-                  // ADR 0073. Nodes carry width/height (fromDiagramFile) so
+                  // Nodes carry width/height (fromDiagramFile) so
                   // their bounds are known before measurement. Disabled
                   // during PNG export so the capture sees the whole diagram, and while a
                   // waypoint edge would be dropped though part of it is in view.
@@ -4093,7 +4092,7 @@ function CanvasInner(): React.JSX.Element {
                   onReconnectStart={onReconnectStart}
                   onReconnectEnd={onReconnectEnd}
                   edgesReconnectable={!storiesPresenting}
-                  // The presenter only shows (ADR 0195): nothing is picked up, drawn, deleted or selected.
+                  // The presenter only shows (ADR 0194): nothing is picked up, drawn, deleted or selected.
                   nodesDraggable={!storiesPresenting}
                   nodesConnectable={!storiesPresenting}
                   elementsSelectable={!storiesPresenting}
@@ -4124,7 +4123,7 @@ function CanvasInner(): React.JSX.Element {
                   deleteKeyCode={storiesPresenting ? null : ['Delete', 'Backspace']}
                   multiSelectionKeyCode="Shift" // frees Ctrl/Cmd+click for linked-diagram navigation
                   colorMode={theme}
-                  // Overrides React Flow's light/dark default background (ADR 0048). Plain
+                  // Overrides React Flow's light/dark default background. Plain
                   // `backgroundColor` does nothing visible: the paint comes from <Background>'s
                   // absolutely positioned SVG (.react-flow__background), which reads the CSS custom
                   // property --xy-background-color on whichever ancestor defines it
@@ -4132,7 +4131,7 @@ function CanvasInner(): React.JSX.Element {
                   // drops it from the style object), so the theme default applies when none is set.
                   style={
                     {
-                      // Theme-adaptive (ADR 0034) like every other
+                      // Theme-adaptive like every other
                       // explicit color in this app — a background picked
                       // while looking at one theme shouldn't stay bit-for-
                       // bit identical (and potentially illegible) after
@@ -4141,7 +4140,7 @@ function CanvasInner(): React.JSX.Element {
                         preferences.canvasBackgroundColor,
                         theme
                       ),
-                      // Read directly by LabeledEdge's stroke when selected (ADR 0056), kept off
+                      // Read directly by LabeledEdge's stroke when selected, kept off
                       // DiagramContext on purpose: it matters only to the selected edge (usually
                       // zero or one of many), so threading it through Context would re-render every
                       // edge on every change. A CSS variable updates the browser's paint with no
@@ -4152,10 +4151,10 @@ function CanvasInner(): React.JSX.Element {
                   fitView
                 >
                   <Background />
-                  {/* The corner panel (ADR 0186): the canvas's own buttons, then what it can show on demand:
+                  {/* The corner panel: the canvas's own buttons, then what it can show on demand:
                       the highlights, the crossings and, last, the legend. The zoom buttons are off
                       unless asked for in View -> Display, and React Flow's own lock is hidden: it
-                      only stops what React Flow itself does (ADR 0186). */}
+                      only stops what React Flow itself does. */}
                   <Controls showZoom={zoomControlsOn} showInteractive={false}>
                     <ControlButton
                       title={`Visibility sets${visibilitySets.length > 0 ? ` (${visibilitySets.length})` : ''}${hiddenSetIds.size > 0 ? ', some hidden' : ''}`}
@@ -4411,12 +4410,12 @@ function CanvasInner(): React.JSX.Element {
                 // default — picking a preset here means "this preset is
                 // now the default," same as picking one for a single edge
                 // replaces that edge's look rather than layering on top.
-                // The routing type is not part of a preset, so it stays (ADR 0196).
+                // The routing type is not part of a preset, so it stays.
                 updatePreferences({
                   defaultEdgeStyle: withRoutingOf(patch, preferences.defaultEdgeStyle)
                 })
                 // A preset is the look of new edges from now on, so the diagram's marked line stops
-                // being it (ADR 0196).
+                // being it.
                 if (newEdgeLine) {
                   setLegend((prev) => withNewEdgeLine(prev, null))
                   markDirty()

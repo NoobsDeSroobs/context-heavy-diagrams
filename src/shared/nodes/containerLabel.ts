@@ -1,4 +1,4 @@
-// Which side of a container its label sits on, and how the text is turned there (ADR 0184). The canvas
+// Which side of a container its label sits on, and how the text is turned there. The canvas
 // and the exports place the label from the same rules.
 
 export const CONTAINER_LABEL_SIDES = ['top', 'left', 'right', 'bottom'] as const

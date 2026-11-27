@@ -1,5 +1,5 @@
 // Edge labels that do not fit in the gap between the two elements their edge joins, with the line and
-// its end graphics still visible either side of them (ADR 0146). One implementation for everything that checks
+// its end graphics still visible either side of them. One implementation for everything that checks
 // this: `chd validate` and the Claude Desktop extension run it through the skill's script, which gets
 // a generated copy of this file (scripts/build-cli.mjs), and the app's Diagnostics panel imports it.
 //
@@ -175,7 +175,7 @@ export function labelNeededGap(
 // the gap), a label position outside the edge, a text-only line, an edge between a container and its
 // own content, overlapping elements, and an edge that leaves by the far side of an element (it loops
 // round).
-// `diagramFont` is the diagram's own font, which an edge label inherits (ADR 0130).
+// `diagramFont` is the diagram's own font, which an edge label inherits.
 export function hiddenLabels(
   nodes: readonly ClearanceNode[],
   edges: readonly ClearanceEdge[],

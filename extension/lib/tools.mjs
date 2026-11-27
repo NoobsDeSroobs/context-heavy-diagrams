@@ -120,7 +120,7 @@ function refuseInvalid(rel, validation) {
 }
 
 // A metamodel is checked from its text, with the same reader `chd check` uses; it holds no relative
-// paths, so unlike a diagram it needs no temporary file (ADR 0143).
+// paths, so unlike a diagram it needs no temporary file (ADR 0131).
 function refuseInvalidMetamodel(rel, content) {
   const loaded = parseMetamodelText(content, basename(rel))
   if ('message' in loaded) {
@@ -188,7 +188,7 @@ export function createTools({ root, allowUpdate, specSources }) {
 
   // Every file the assistant may read under `start`, as { full, path, name }, in the order of the
   // paths. The walk never follows a symlink and skips dot-files, dependency folders, what a .gitignore
-  // names (ADR 0173) and the types that cannot be read; `matches` narrows it further (a glob).
+  // names and the types that cannot be read; `matches` narrows it further (a glob).
   function visibleFiles(start, matches) {
     const found = []
     let capped = false
@@ -308,7 +308,7 @@ export function createTools({ root, allowUpdate, specSources }) {
     }
   }
 
-  // A file in the folder, or the diagram's text (ADR 0145, ADR 0182): text has no folder, so the checks
+  // A file in the folder, or the diagram's text (ADR 0131, ADR 0138): text has no folder, so the checks
   // for files its paths point at are skipped and the result says so.
   function validateDiagram({ path, content }) {
     if (content !== undefined) {
@@ -385,7 +385,7 @@ export function createTools({ root, allowUpdate, specSources }) {
     return full === null ? null : noteOnDisk(full)
   }
 
-  // `chd diff` (ADR 0137): the same shared code, so the same result as `chd diff --json`. The
+  // `chd diff` (ADR 0132): the same shared code, so the same result as `chd diff --json`. The
   // earlier version is a second file in the folder, or the same file in git at a revision
   // (`chd diff <file> --rev`, ADR 0142).
   async function diffDiagrams({

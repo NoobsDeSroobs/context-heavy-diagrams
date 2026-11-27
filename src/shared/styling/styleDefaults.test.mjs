@@ -1,4 +1,4 @@
-// Run with `npm test`. The built-in default look is data (ADR 0117); these tests
+// Run with `npm test`. The built-in default look is data; these tests
 // pin what the panel shows, what the CSS receives, and that the few places that
 // still repeat a default (the React Flow fallback edge colour) cannot drift.
 import { test } from 'node:test'

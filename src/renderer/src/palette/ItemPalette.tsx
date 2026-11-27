@@ -1,12 +1,12 @@
 // Default content of the diagram dock when nothing is selected — click to
 // add an entity/container/text at the viewport center, or drag one onto the
-// canvas to place it exactly where dropped (drag-to-add, see ADR 0064;
+// canvas to place it exactly where dropped (drag-to-add;
 // click-to-add came first). These replace the
 // toolbar's old Add-entity/Add-container/Add-text buttons rather than
 // duplicating them.
 //
 // Right-click on Entity/Container opens the bulk-create dialog instead —
-// see ADR 0089. onClick keeps its existing single-add meaning.
+// onClick keeps its existing single-add meaning.
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -20,7 +20,7 @@ export type PaletteItemType = 'entity' | 'container' | 'text' | 'line' | 'stenci
 // somewhere else in the OS (a file, browser text selection, etc.) landing
 // on the canvas by accident.
 export const PALETTE_ITEM_DRAG_TYPE = 'application/x-chd-item-type'
-// The kind of a stencil being dragged (ADR 0180), beside PALETTE_ITEM_DRAG_TYPE's 'stencil'.
+// The kind of a stencil being dragged (ADR 0080), beside PALETTE_ITEM_DRAG_TYPE's 'stencil'.
 export const PALETTE_STENCIL_KIND_DRAG_TYPE = 'application/x-chd-stencil-kind'
 
 function onItemDragStart(event: React.DragEvent<HTMLButtonElement>, type: PaletteItemType): void {
@@ -28,7 +28,7 @@ function onItemDragStart(event: React.DragEvent<HTMLButtonElement>, type: Palett
   event.dataTransfer.effectAllowed = 'copy'
 }
 
-// The palette's entry for stencils (ADR 0180): click adds the kind last used (a step to begin
+// The palette's entry for stencils (ADR 0080): click adds the kind last used (a step to begin
 // with), drag places it, and right-click or the arrow opens a short list with a filter, whose search
 // also matches the BPMN terms of each kind.
 function StencilPaletteButton({

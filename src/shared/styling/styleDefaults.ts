@@ -1,7 +1,7 @@
 import type { EdgeStyle, MarkerKind, NodeStyle } from '../diagram'
 import type { Theme } from './theme.ts'
 
-// The built-in look of an element that has no style of its own, as DATA (ADR 0117).
+// The built-in look of an element that has no style of its own, as DATA.
 //
 // A stored style holds only what the author changed; everything else is "the default". Defaults are
 // defined once, here, and everything reads them: the CSS gets its values from
@@ -11,7 +11,7 @@ import type { Theme } from './theme.ts'
 // visibly coloured element).
 //
 // Colours are listed per theme because the built-in light look was hand-picked, not computed from
-// the dark one; making a default purely derived (ADR 0034's flip) means dropping its `light` entry.
+// the dark one; making a default purely derived (the theme flip) means dropping its `light` entry.
 // Opacity is 0-100, like the stored fields.
 
 export interface ThemedValue {
@@ -125,7 +125,7 @@ export function styledNodeType(type: string | undefined): StyledNodeType {
 }
 
 // The colour to SHOW for a stored-or-default colour field. A stored colour is
-// the dark-theme baseline and is flipped for the current theme (ADR 0034,
+// the dark-theme baseline and is flipped for the current theme (
 // `flip` is themeAdaptiveColor, passed in so this stays testable without a
 // DOM); an unset one is the built-in default for that theme.
 export function displayColor(

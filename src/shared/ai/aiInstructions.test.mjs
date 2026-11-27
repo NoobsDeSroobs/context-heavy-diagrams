@@ -4,7 +4,7 @@ import assert from 'node:assert/strict'
 import { AI_INSTRUCTIONS } from './aiInstructions.ts'
 
 // Guards the invariants the text exists to teach, and keeps it "small" — a
-// paste that runs to pages defeats the purpose (see ADR 0104).
+// paste that runs to pages defeats the purpose.
 test('AI instructions cover the format traps and stay short', () => {
   for (const needle of [
     'parentId',

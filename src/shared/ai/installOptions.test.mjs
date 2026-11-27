@@ -1,5 +1,5 @@
 // Run with `npm test`. Covers the parsing of the installer's install-options.json
-// (ADR 0108); where the file is read from and when it seeds is main-process glue.
+//where the file is read from and when it seeds is main-process glue.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { parseInstallOptions } from './installOptions.ts'

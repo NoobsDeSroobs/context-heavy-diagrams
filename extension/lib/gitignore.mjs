@@ -1,4 +1,4 @@
-// What a walk of the folder leaves out because a .gitignore names it (ADR 0173). Both list_files and
+// What a walk of the folder leaves out because a .gitignore names it. Both list_files and
 // search_files use it, so they see the same files. The .gitignore files are read here and nowhere else:
 // their text is never returned, and no other dot-file becomes readable.
 import { lstatSync, readFileSync } from 'node:fs'

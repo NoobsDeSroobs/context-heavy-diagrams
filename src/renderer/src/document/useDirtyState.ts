@@ -5,7 +5,7 @@ import { anyNoteDirty, type NoteShadow } from '@shared/document/documentSave'
 // toDiagramFile() serializes, not derived from the undo stack, which covers only nodes/edges and
 // not requiredTags/highlights/legend/noteShadows. Session-only state (enabledHighlightIds,
 // panel-open flags, ...) never touches it.
-// Dirty state is per file (ADR 0092): the diagram, the "hub", has its own flag and each detail
+// Dirty state is per file (ADR 0040): the diagram, the "hub", has its own flag and each detail
 // note has one inside its shadow. `isDirty` (close prompt, autosave, reload confirms) is "any of
 // them".
 export function useDirtyState(): {

@@ -1,4 +1,4 @@
-/* Edge direction sets section (ADR 0081 / ADR 0083) — reuses the
+/* Edge direction sets section — reuses the
    .required-tag-value-* row shape, with a read-only style preview + an ✎
    button (opens .edge-direction-set-style-editor) ahead of the name. */
 .edge-direction-set-row {

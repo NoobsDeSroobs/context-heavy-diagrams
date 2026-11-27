@@ -34,7 +34,7 @@ supposed to match.
   opt-out. This epic is about a tag declaring itself "doesn't apply below
   this depth" (or "applies but should stay in sync"), not about how the
   copy operation itself works.
-- [epic 0059](0059-aggregate-tags-up-to-parent-diagram.md) is the mirror
+- epic 0059 is the mirror
   direction — rolling *values* up from children to a parent. Different
   problem: that's about summarizing child data at the parent; this one is
   about *not duplicating* parent-level facts down into children in the

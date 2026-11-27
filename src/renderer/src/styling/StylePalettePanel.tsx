@@ -13,7 +13,7 @@ interface StylePalettePanelProps {
   defaultEdgeStyle: EdgeStyle
   canvasBackgroundColor: string | undefined
   // Needed to flip the canvas background swatch the same way every other
-  // explicit color in this app does (ADR 0034) — this stored
+  // explicit color in this app does — this stored
   // value is always a dark-theme baseline, same convention as fill/stroke/
   // fontColor, regardless of which theme is active when it's picked.
   theme: Theme
@@ -213,9 +213,9 @@ function PaletteNameField({
 }
 
 // Diagram-level? No — global, app-wide preference like PreferencesPanel, not
-// diagram content (ADR 0048, reshaped into a named collection by
-// ADR 0068). Same fixed right-side dock shell as RequiredTags/
-// PreferencesPanel/DiagnosticsPanel — see ADR 0013.
+// diagram content (since reshaped into a named
+// collection). Same fixed right-side dock shell as RequiredTags/
+// PreferencesPanel/DiagnosticsPanel.
 export default function StylePalettePanel({
   palettes,
   activePaletteId,
@@ -295,7 +295,7 @@ export default function StylePalettePanel({
       showAlert('Not a valid style palette file (missing colors/fonts arrays).')
       return
     }
-    // Import adds a new named palette (ADR 0068) rather than overwriting —
+    // Import adds a new named palette rather than overwriting —
     // that's the whole point of keeping several around. Name seeded from
     // the file name, editable inline afterwards.
     const id = newPaletteId()

@@ -1,4 +1,4 @@
-// The command registry (ADR 0094): one list of every keyboard shortcut and
+// The command registry: one list of every keyboard shortcut and
 // mouse gesture the app supports. Three things read it — Canvas's global
 // keydown handler (matches a key event to a command id), the menu bar's
 // accelerator labels, and the Help -> Keyboard shortcuts dialog — so none of
@@ -169,7 +169,7 @@ export const COMMANDS = [
     category: 'View',
     binding: { key: '0', mod: true }
   },
-  // Command palette (ADR 0100) — the widely-used single-key convention
+  // Command palette — the widely-used single-key convention
   // (Slack/Linear/Notion/Raycast) over VS Code's three-key Ctrl+Shift+P.
   {
     id: 'view.commandPalette',
@@ -177,14 +177,14 @@ export const COMMANDS = [
     category: 'View',
     binding: { key: 'k', mod: true }
   },
-  // "Changes since last save" (ADR 0102) — no shortcut decided
+  // "Changes since last save" — no shortcut decided
   // yet, reachable via the View menu and the command palette.
   {
     id: 'view.changesSinceLastSave',
     title: 'Show changes since last save',
     category: 'View'
   },
-  // Stories (ADR 0195). In the presentation the arrow keys, space, Home, End and Escape step through
+  // Stories (ADR 0194). In the presentation the arrow keys, space, Home, End and Escape step through
   // the story and leave it; they are handled by the presenter, not dispatched from here.
   {
     id: 'view.present',
@@ -192,7 +192,7 @@ export const COMMANDS = [
     category: 'View',
     binding: { key: 'f5' }
   },
-  // Animated edges (ADR 0141). Off, an edge still moves while Mod is held over it.
+  // Animated edges. Off, an edge still moves while Mod is held over it.
   {
     id: 'view.toggleEdgeAnimation',
     title: 'Turn edge animation on or off (off, hold Mod over an edge to see it move)',

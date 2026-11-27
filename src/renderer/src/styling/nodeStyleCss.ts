@@ -5,7 +5,7 @@ import { withOpacity } from './colorOpacity'
 import { themeAdaptiveColor } from './themeAdaptiveColor'
 
 // Turns a NodeStyle bag into the two style objects a node component actually
-// needs — see ADR 0014. Only sets properties the style actually specifies,
+// needs. Only sets properties the style actually specifies,
 // so an absent field falls through to the component's own CSS class
 // (border-style: dashed on containers, etc.) rather than clobbering it with
 // an inline default.
@@ -17,7 +17,7 @@ import { themeAdaptiveColor } from './themeAdaptiveColor'
 //
 // `fill`/`stroke`/`fontColor` pass through themeAdaptiveColor first — the
 // stored value is always the dark-theme-baseline color, this is where it
-// becomes what actually gets painted for the current theme (ADR 0034).
+// becomes what actually gets painted for the current theme.
 export function nodeContainerCss(style: NodeStyle | undefined, theme: Theme): CSSProperties {
   if (!style) return {}
   const css: CSSProperties = {}

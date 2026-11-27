@@ -1,6 +1,6 @@
 import type { MarkerKind } from '../diagram'
 
-// The edge-end markers (ADR 0014) as data, so the canvas (renderer/edges/edgeMarkers.tsx draws these
+// The edge-end markers as data, so the canvas (renderer/edges/edgeMarkers.tsx draws these
 // as <marker> elements with `context-stroke`) and the SVG export (ADR 0124, which writes one
 // literal-colour copy per colour) cannot drift apart.
 //
@@ -10,7 +10,7 @@ import type { MarkerKind } from '../diagram'
 // handles both ends: forward for markerEnd, flipped 180° for markerStart, so one definition serves
 // both.
 //
-// Deliberately approximate, not pixel-correct ERD/UML notation (ADR 0014's Notes on why the
+// Deliberately approximate, not pixel-correct ERD/UML notation (the
 // notation question is out of scope): the shapes only need to be recognizably right.
 
 export type MarkerElement =

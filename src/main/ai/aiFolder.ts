@@ -2,7 +2,7 @@ import { mkdir, readdir, readFile, rm, stat, writeFile } from 'fs/promises'
 import { dirname, join } from 'path'
 import type { AiFolderResult } from '../../shared/ai/aiFolderResult'
 
-// Writes the bundled AI material (resources/ai, ADR 0105) into a user-chosen
+// Writes the bundled AI material (resources/ai) into a user-chosen
 // folder: AGENTS.md, CLAUDE.md and the chd-diagrams skill under
 // .claude/skills. Everything we write carries AI_MARKER (a comment in the .md
 // files, a stamp file inside the skill folder), and that marker is the only

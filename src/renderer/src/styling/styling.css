@@ -1,4 +1,4 @@
-/* Copy style / apply mode (ADR 0095). The wrapper carries
+/* Copy style / apply mode. The wrapper carries
    style-brush-<type>; elements that accept the brush get a copy cursor, every
    other node a not-allowed one (later rules of equal specificity win). */
 .style-brush-active .react-flow__node,

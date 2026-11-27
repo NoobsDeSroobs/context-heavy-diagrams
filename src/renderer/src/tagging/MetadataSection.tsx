@@ -16,7 +16,7 @@ function stringifyValue(value: JsonValue): string {
 
 // Display only — the actual stored/edited value stays real JSON null
 // either way (stringifyValue(null) === "null", still what the <select>
-// below binds/parses through). See ADR 0046.
+// below binds/parses through).
 function displayValue(value: JsonValue): string {
   return value === null ? 'None' : stringifyValue(value)
 }
@@ -130,7 +130,7 @@ export default function MetadataSection({
                 onChange={(event) => commitValue(key, event.target.value)}
               >
                 {/* Always available without being added to allowedValues
-                    itself — see ADR 0046. value="null" round-trips
+                    itself. value="null" round-trips
                     through commitValue's existing parseValue (JSON.parse)
                     straight back to real null, no special-casing needed
                     there. */}

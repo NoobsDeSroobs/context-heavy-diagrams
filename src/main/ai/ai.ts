@@ -10,7 +10,7 @@ import { mcpServerSettings } from '../../shared/ai/mcpSettings'
 import { readPreferences } from '../preferences/appPreferences'
 import { installAiFiles } from './aiFolder'
 
-// AI -> "Set up a folder for AI agents…" (ADR 0105). The OS folder picker is
+// AI -> "Set up a folder for AI agents…". The OS folder picker is
 // the user's consent: nothing is written anywhere they didn't just choose.
 // app.getAppPath() is the project root in dev and app.asar when packaged;
 // resources/ai/** ships in both (electron-builder.yml, asarUnpack: resources/**).

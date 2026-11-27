@@ -167,7 +167,7 @@ function repairedHandle(
   return ids.includes(handle) ? handle : undefined
 }
 
-// The file stores every edge in the first direction set's orientation (ADR 0081) and the app shows
+// The file stores every edge in the first direction set's orientation and the app shows
 // the saved active set on open; this re-expresses the edges the way the app shows them. Mirrors
 // renderer/edges/edgeDirectionSets.ts (reverseEdgeDirection, applyDirectionToEdge).
 export function orientEdges(diagram: DiagramFile): DiagramEdge[] {

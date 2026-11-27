@@ -76,7 +76,7 @@ export function parseClipboardPayload(text: string): ClipboardPayload | null {
 // consistently) and repositions the group as a unit, keeping each node's offset from the group's
 // centroid, so a multi-node copy pastes in the same arrangement recentred on `center` (the original
 // absolute position could be far outside the current viewport, especially when pasting into another
-// diagram; ADR 0049). Connection point ids are left alone: they are only looked up together with
+// diagram). Connection point ids are left alone: they are only looked up together with
 // their owning node's id, so two nodes both having a "cp-3" is normal, not a collision.
 //
 // A node's four resource-path fields (`linkedDiagram`, `notes`, a custom `icons[slot].path`, each
@@ -136,7 +136,7 @@ function retargetNodeData(
   return next
 }
 
-// `parentId` (container nesting, ADR 0012 / ADR 0075): if the node's parent
+// `parentId` (container nesting, ADR 0012): if the node's parent
 // container is also in the payload, the link is remapped through `idMap` and
 // the child's parent-relative `position` is left untouched (still valid
 // relative to the remapped parent). If it isn't — an orphaned child, or a
@@ -197,7 +197,7 @@ export function remapForPaste(
   })
 
   const edges = payload.edges.map((e) => {
-    // Drop any per-set direction records (ADR 0081) — their stored
+    // Drop any per-set direction records — their stored
     // source/target node ids point at the *original* nodes, not the
     // remapped copies. The pasted edge re-seeds every set from its own
     // (correctly remapped) live direction at the next save or set switch.

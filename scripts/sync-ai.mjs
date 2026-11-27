@@ -1,5 +1,5 @@
 // Refreshes the repo's own Claude Code copy of the skill (.claude/skills) from
-// its source of truth, resources/ai/skills (ADR 0105). Edit the source, run
+// its source of truth, resources/ai/skills. Edit the source, run
 // `npm run sync-ai`; `npm test` fails if the two drift apart.
 import { cpSync, mkdirSync, rmSync } from 'node:fs'
 import { dirname, join } from 'node:path'

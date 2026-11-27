@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 
 // Puts `mod-held` on the page while Ctrl (Cmd on a Mac) is down, so a stylesheet can react to the
 // key with no React state: with Animate edges off, an edge still moves while the key is held over
-// it (edges.css, ADR 0141), the same hover-with-modifier idea as the note peek (ADR 0093). A class
+// it (edges.css), the same hover-with-modifier idea as the note peek. A class
 // on <html> rather than state in the canvas, so pressing the key re-renders nothing.
 export function useModifierHeldClass(): void {
   useEffect(() => {

@@ -29,7 +29,7 @@ top because the app can see the folder around the file.
 - Multiple parents → a list, not one "parent". Broken/moved links → nothing.
 
 ## Related
-- [Epic 0123](0123-semantic-zoom-and-parent-context.md) (zoom out to see one
+- Epic 0123 (zoom out to see one
   level above) needs exactly this parent-resolution as a prerequisite.
 - [Epic 0093](../completed-epics.md#0093-drill-down-search-across-linked-diagrams) shares the
   tree-crawl machinery.

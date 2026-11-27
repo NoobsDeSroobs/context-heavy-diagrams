@@ -68,7 +68,7 @@ A portal is a valid solution when no better one is found. Try moving elements, m
 
 ## Color and style: restraint, not a fixed palette
 
-This app ships with **no built-in colors** — a freshly created Entity/Container/Text has no `style` object at all until someone sets one (pure CSS default look), and the default style palette starts empty (this app's ADR 0048). There's no house palette to match, so don't invent fixed hex constants and treat them as this app's brand — there isn't one.
+This app ships with **no built-in colors** — a freshly created Entity/Container/Text has no `style` object at all until someone sets one (pure CSS default look), and the default style palette starts empty. There's no house palette to match, so don't invent fixed hex constants and treat them as this app's brand — there isn't one.
 
 What generalizes anyway, as a starting convention for a hand-authored diagram:
 

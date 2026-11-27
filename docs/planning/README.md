@@ -1,7 +1,5 @@
 # Planning: epics & tasks
 
-See [docs/decisions/0002-planning-structure.md](../decisions/0002-planning-structure.md) for why this structure was chosen.
-
 ## Epics
 
 One file per epic, named `NNNN-short-title.md`, numbered sequentially in the order they were defined (not necessarily execution order — check status). New epics are created in `epics/`.

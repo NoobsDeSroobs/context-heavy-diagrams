@@ -23,8 +23,8 @@ type Layout = 'auto' | 'list' | 'table'
 const PREVIEW_ROWS = 5
 const MAX_LISTED = 5
 
-// Right-click entry point on ItemPalette's Entity/Container buttons — see ADR 0089 for the list of
-// labels and ADR 0168 for the table. Styled after ExportImageDialog's centered-overlay shell
+// Right-click entry point on ItemPalette's Entity/Container buttons: a list of
+// labels, or a pasted table. Styled after ExportImageDialog's centered-overlay shell
 // rather than the click-anchored popups (ColorPickerPopup/IconPicker); a multi-line paste target
 // reads better centered than pinned to a small button's corner.
 export default function BulkCreateDialog({

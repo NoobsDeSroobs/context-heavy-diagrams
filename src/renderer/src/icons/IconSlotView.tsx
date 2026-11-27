@@ -32,7 +32,7 @@ export default function IconSlotView(props: IconSlotViewProps): React.JSX.Elemen
 // An installed icon (ADR 0188) is drawn inline like a built-in one, from the pack's own SVG cleaned
 // by the page, so each icon decides its colouring: a shape in `currentColor` takes the text colour
 // (the slot's CSS sets it on the svg) and an icon with colours of its own keeps them. A pack that is
-// not installed, or lacks the icon, leaves the empty slot; the diagnostics say which (ADR 0084).
+// not installed, or lacks the icon, leaves the empty slot; the diagnostics say which.
 function InstalledIconSlot({
   pack,
   path,
@@ -69,7 +69,7 @@ function StoredIconSlot({
     if (icon.source === 'custom' && diagramPath) {
       // A missing custom-icon file just renders nothing (the fallback
       // <span> below) — the Diagnostics "missing files" section is where a
-      // dead reference is surfaced (ADR 0084), not an uncaught rejection.
+      // dead reference is surfaced, not an uncaught rejection.
       window.api
         .readIconAsDataUrl(diagramPath, icon.path)
         .then((url) => {

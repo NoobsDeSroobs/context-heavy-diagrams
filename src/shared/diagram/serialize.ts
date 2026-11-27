@@ -26,7 +26,7 @@ function sortKeysDeep<T extends JsonValue>(value: T): T {
   return value
 }
 
-// Fixed key order for an EdgeDirectionSet's default style (ADR 0083);
+// Fixed key order for an EdgeDirectionSet's default style;
 // dropped entirely when it carries nothing. Also accepts (and up-converts)
 // the pre-ADR-0083 `legend` shape, so a file that never passed through the
 // renderer's load migration still serializes cleanly.
@@ -145,11 +145,11 @@ function orderedDiagramSecurity(
             description: l.description
           }))
         : undefined
-    // combineMethod / aggregateMethod are session-only, never serialized (ADR 0088).
+    // combineMethod / aggregateMethod are session-only, never serialized.
   }
 }
 
-// One action of a story step (ADR 0195): `action` and `set` first, then any fields this version does not
+// One action of a story step (ADR 0194): `action` and `set` first, then any fields this version does not
 // know in a fixed order, so a file written by a newer version keeps them and does not churn.
 function orderedAction(action: StoryAction): StoryAction {
   const { action: kind, set, ...rest } = action
@@ -184,7 +184,7 @@ function sortedMetadata(
 // Optional fields left `undefined` are dropped by JSON.stringify, so nodes
 // without a size/rotation/icons set don't grow noisy keys in the saved file.
 export function serializeDiagram(diagram: DiagramFile): string {
-  // Edge direction sets (ADR 0081): the registry + active pointer are
+  // Edge direction sets: the registry + active pointer are
   // written from the first set (a single set names the current reading and
   // adds a legend row). Per-edge `directionSets` records are only written
   // at 2+ sets — with one set an edge's direction is just its own
@@ -232,7 +232,7 @@ export function serializeDiagram(diagram: DiagramFile): string {
       diagram.visibilitySets && diagram.visibilitySets.length > 0
         ? diagram.visibilitySets.map((v) => ({ id: v.id, name: v.name }))
         : undefined,
-    // The order of the stories, and of each story's steps, is what a person made, so it is kept (ADR 0195).
+    // The order of the stories, and of each story's steps, is what a person made, so it is kept (ADR 0194).
     stories:
       diagram.stories && diagram.stories.length > 0
         ? diagram.stories.map((s) => ({

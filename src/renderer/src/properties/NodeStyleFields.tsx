@@ -17,7 +17,7 @@ import { defaultFontLabel, useFontOptions } from '../styling/useFontOptions'
 import { nodeStyleOf, nodeDefaultsOf } from './styleAccess'
 
 // Fill/Border/Font/Transform — shared between entity and container nodes per
-// ADR 0014's grouping (container fill is customizable now, deliberately no
+// the grouping (container fill is customizable now, deliberately no
 // longer hardcoded-transparent). `includeTextAlign` distinguishes the one
 // field difference from TextFields below (font-only, no fill/border).
 export function NodeStyleFields({

@@ -1,4 +1,4 @@
-// Run with `npm test`. Pasting a table to create elements (ADR 0168): the table parser, which
+// Run with `npm test`. Pasting a table to create elements: the table parser, which
 // column means what, how rows merge into elements, and how tags meet the required tags.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'

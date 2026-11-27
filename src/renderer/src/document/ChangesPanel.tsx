@@ -5,7 +5,7 @@ import {
 } from '@shared/document/changesSinceSave'
 
 // An element with unsaved Note content — sourced from noteShadows'
-// existing dirty flag (ADR 0092), not a new tracking mechanism. See ADR 0102.
+// existing dirty flag (ADR 0040), not a new tracking mechanism.
 export interface NotesChangedEntry {
   nodeId: string
   label: string
@@ -148,7 +148,7 @@ function Section({
 }
 
 // Fixed right-side dock, same shell/toggle model as Diagnostics/Layers (ADR
-// 0013) — see ADR 0102. v1 covers nodes/edges only; the
+// 0013). v1 covers nodes/edges only; the
 // top-level collections (highlights, legend, requiredTags, …) are a
 // deliberate fast-follow, not shown here.
 export default function ChangesPanel({

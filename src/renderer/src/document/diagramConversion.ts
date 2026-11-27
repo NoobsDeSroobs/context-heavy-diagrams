@@ -52,7 +52,7 @@ export function toDiagramFile(
   visibilitySets: VisibilitySet[],
   stories: Story[]
 ): DiagramFile {
-  // Edge direction sets (ADR 0081): on disk, every edge is stored in the
+  // Edge direction sets: on disk, every edge is stored in the
   // *base* (first) set's orientation regardless of which set is active, so
   // switching the displayed reading never churns the edges in git. Refresh
   // the active set's per-edge records from the live fields, then — if a
@@ -91,7 +91,7 @@ export function toDiagramFile(
     requiredTags: requiredTags.length > 0 ? requiredTags : undefined,
     // serializeDiagram drops this when it is empty (ADR 0194).
     visibilitySets: visibilitySets.length > 0 ? visibilitySets : undefined,
-    // serializeDiagram drops this when it is empty (ADR 0195).
+    // serializeDiagram drops this when it is empty (ADR 0194).
     stories: stories.length > 0 ? stories : undefined,
     nodes: nodes.map((n) => ({
       id: n.id,
@@ -188,11 +188,11 @@ export function fromDiagramFile(diagram: DiagramFile): {
   hierarchyNotes: string[]
 } {
   // healHierarchy repairs a dangling/cyclic parentId before the nodes reach
-  // React Flow (ADR 0075); sortNodesForHierarchy then defensively re-orders in
+  // React Flow (ADR 0012); sortNodesForHierarchy then defensively re-orders in
   // case an external writer didn't honor the parent-before-child requirement
   // (see docs/file-format.md's parentId entry). applyZIndexBackfill runs on
   // that *final* order, not the raw file order, so "array position" means the
-  // same thing it does for today's actual rendering — see ADR 0035.
+  // same thing it does for today's actual rendering.
   const healed = healHierarchy(
     diagram.nodes.map((n) => ({
       id: n.id,
@@ -239,11 +239,11 @@ export function fromDiagramFile(diagram: DiagramFile): {
   )
   const finalNodes = applyZIndexBackfill(sortNodesForHierarchy(healed.nodes))
 
-  // Edge direction sets (ADR 0081). The file's edges are in base ([0])
+  // Edge direction sets. The file's edges are in base ([0])
   // orientation with per-set records in `directionSets`. Seed any missing
   // record from the live (base) fields, then — if a non-base set is the
   // saved active one — re-express the live edges in that set's orientation.
-  // migrateDirectionSetStyle: pre-ADR-0083 `legend` -> `style` (ADR 0083).
+  // migrateDirectionSetStyle: pre-ADR-0083 `legend` -> `style`.
   const directionSets = (diagram.edgeDirectionSets ?? []).map(migrateDirectionSetStyle)
   let edges: Edge[] = diagram.edges.map((e) => ({
     id: e.id,
@@ -314,7 +314,7 @@ export function fromDiagramFile(diagram: DiagramFile): {
       hiddenEntityIds: src.hiddenEntityIds?.filter((id) => matrixSet.has(id)),
       probabilityScale: src.probabilityScale,
       consequenceScale: src.consequenceScale
-      // combineMethod / aggregateMethod: session-only, ignored on read (ADR 0088)
+      // combineMethod / aggregateMethod: session-only, ignored on read
     }
     let droppedCells = 0
     securedNodes = finalNodes.map((n) => {

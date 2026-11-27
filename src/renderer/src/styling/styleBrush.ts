@@ -1,8 +1,8 @@
 import type { EdgeStyle, NodeStyle } from '@shared/diagram'
 
 // Copy-style ("format painter") core — pure, so it can be unit-tested. See
-// ADR 0095. A brush is a snapshot of one element's *stored* style taken when
-// the mode is entered (never the theme-flipped display values, ADR 0034, and
+// A brush is a snapshot of one element's *stored* style taken when
+// the mode is entered (never the theme-flipped display values, and
 // never a reference to the selection — clicking a target changes the
 // selection, so the source must not depend on it).
 

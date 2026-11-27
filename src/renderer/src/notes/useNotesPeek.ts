@@ -15,7 +15,7 @@ export interface NotesPeekBindings {
   onNodeMouseLeave: (event: MouseEvent, node: { id: string }) => void
 }
 
-// Tracks "a node is hovered AND Ctrl/Cmd is held" (ADR 0093). Both inputs
+// Tracks "a node is hovered AND Ctrl/Cmd is held". Both inputs
 // arrive independently — the key can go down while the pointer is already
 // resting on a node, so no mouseenter fires — hence refs for each plus one
 // recompute() that derives the visible target from all of them.

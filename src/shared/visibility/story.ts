@@ -1,4 +1,4 @@
-// The state of a story at a step (ADR 0195), the one place that decides which sets a story hides.
+// The state of a story at a step (ADR 0194), the one place that decides which sets a story hides.
 // Words as in visibility.ts: a set is shown or hidden. The result feeds `visibleFilter`, so the rule
 // of ADR 0194 is still the only thing that decides whether an element is visible.
 import type { Story, StoryAction, StoryStep, VisibilitySet } from './schema.ts'
@@ -126,7 +126,7 @@ export function describeStep(step: StoryStep, names: ReadonlyMap<string, string>
     : 'No actions'
 }
 
-// The simplest story (ADR 0195): one step per set, in the order of the catalogue, each showing the
+// The simplest story (ADR 0194): one step per set, in the order of the catalogue, each showing the
 // next set and hiding nothing.
 export function storyFromSets(catalogue: readonly VisibilitySet[]): StoryStep[] {
   return catalogue.map((set) => ({ actions: [{ action: 'show', set: set.id }] }))

@@ -1,8 +1,8 @@
-/* An edge's own manual bend points, catmull-rom routing only (ADR 0057) —
+/* An edge's own manual bend points, catmull-rom routing only —
    plain positioned divs portalled via EdgeLabelRenderer (not React Flow
    Handles; those are for connections, these just reposition a point).
    Hover-revealed like .line-node-point above, but the actual hover state
-   is per-edge local useState in LabeledEdge.tsx (ADR 0073), set from an
+   is per-edge local useState in LabeledEdge.tsx, set from an
    invisible hit-path that edge renders itself — an edge's SVG path and its
    portalled point divs are separate DOM subtrees with no CSS containment
    relationship a plain :hover selector could hook a reveal onto, unlike
@@ -30,7 +30,7 @@
   cursor: grabbing;
 }
 
-/* step/smoothstep routing's draggable segments (ADR 0077) — a short bar at
+/* step/smoothstep routing's draggable segments — a short bar at
    each interior segment's midpoint, portalled via EdgeLabelRenderer like the
    catmull-rom bend points above. Mounted only while the edge is hovered,
    selected, or mid-drag (LabeledEdge.tsx). A horizontal segment is dragged
@@ -62,7 +62,7 @@
    z-index of its own from React Flow (auto, ~0) — so without this
    override, a label or bend point paints (and hit-tests) behind any node
    or edge it overlaps whenever that node/edge's own z-index is positive.
-   That's the bug this fixes (see ADR 0030).
+   That's the bug this fixes.
    This value is a manual ceiling, not derived from the real one — it went
    stale once before (originally 5000, sized for a ~4000 ceiling
    at the time) and nothing re-checks it automatically, so if this still
@@ -92,7 +92,7 @@
   stroke-width: 1;
 }
 
-/* Animated edges (ADR 0141). LabeledEdge.tsx sets the dash pattern, --edge-flow-period (one repeat
+/* Animated edges. LabeledEdge.tsx sets the dash pattern, --edge-flow-period (one repeat
    of it, in user units), --edge-flow-duration (which carries the speed) and --edge-flow-direction.
    'flow' animates the edge's own dashes; 'pulse' animates a second stroke of round, zero-length
    dashes laid over it. Either way the dashes move by exactly one period per loop, from the path's
@@ -110,7 +110,7 @@
 }
 
 /* Nothing moves with Animate edges off, or on "Follow the system" when the system asks for reduced
-   motion; Canvas.tsx decides that (ADR 0141) and puts .edges-still on the canvas. The person's own
+   motion; Canvas.tsx decides that and puts .edges-still on the canvas. The person's own
    choice of "Always on" wins over the system, which also reports reduced motion in a Remote Desktop
    session and in many virtual machines, so there is no media query here. The compare window is a
    still review of two versions and never moves. The line stays dashed or plain; a pulse is hidden. */
@@ -127,7 +127,7 @@
 }
 
 /* While still, holding Ctrl (Cmd on a Mac) over an edge shows it moving, the way holding it over an
-   element shows its note (ADR 0093). useModifierHeldClass puts .mod-held on the page while the key
+   element shows its note. useModifierHeldClass puts .mod-held on the page while the key
    is down; the edge is the hovered <g class="react-flow__edge">, whose hit path is part of it. A
    deliberate, momentary request, so it also applies when the system asks for reduced motion. */
 .mod-held .edges-still .react-flow__edge:hover .edge-flow,
@@ -173,7 +173,7 @@
   z-index: 5;
 }
 
-/* The card shown by the pointer while Ctrl/Cmd is held over an edge that crosses a container (ADR 0185). */
+/* The card shown by the pointer while Ctrl/Cmd is held over an edge that crosses a container. */
 .crossing-peek {
   position: fixed;
   z-index: 60;

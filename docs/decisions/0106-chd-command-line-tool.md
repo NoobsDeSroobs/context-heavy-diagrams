@@ -1,13 +1,13 @@
 # 0106: The `chd` command-line tool — Electron-as-Node launchers, no separate binary
 
 ## Status
-Accepted (2026-10-15). The decision not to register `chd` on the PATH is replaced for the Windows installer by [ADR 0162](0162-the-installer-can-put-chd-on-the-path.md).
+Accepted (2026-10-15). The decision not to register `chd` on the PATH is replaced for the Windows installer by [ADR 0139](0139-releases-are-built-by-ci-from-a-version-tag-and-say-how-far-they-have-been-tried.md).
 
 ## Context
 Two audiences need to run our format knowledge from a terminal: an AI agent that
 should be able to read the spec and validate its own edits, and a user whose
 machine has no Node or Python. The validator already exists as plain Node
-([ADR 0105](0105-bundled-ai-material-and-folder-setup.md)), but it needs a system
+, but it needs a system
 `node`. The app itself is an Electron GUI binary: on Windows a GUI-subsystem exe
 prints nothing to the console it was started from, so `app.exe --help` cannot
 be the CLI.

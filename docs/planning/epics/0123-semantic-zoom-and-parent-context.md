@@ -12,7 +12,7 @@ zoom level:
    becoming unreadable boxes.
 2. **Zoom out past the diagram's edge to see its parent context** — the level
    above, resolved by the app (not stored in the file), akin to
-   [epic 0122](0122-open-parent-and-backlinks.md). Depends on it.
+   epic 0122. Depends on it.
 
 ## Ideas to prototype (nothing decided)
 - Below a threshold: hide icons and edge labels, keep label + highlight colour.

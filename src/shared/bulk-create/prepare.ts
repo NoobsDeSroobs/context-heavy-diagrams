@@ -2,7 +2,7 @@ import type { JsonValue, MetadataEntry, RequiredTagDefinition } from '../tagging
 import { seedMetadata } from '../tagging/metadataSync.ts'
 import type { BulkElement } from './elements.ts'
 
-// The elements of a paste, ready to become nodes (ADR 0168): each with the metadata it starts
+// The elements of a paste, ready to become nodes: each with the metadata it starts
 // with, the required tags' defaults with the pasted tags laid over them.
 export interface PreparedElement {
   label: string

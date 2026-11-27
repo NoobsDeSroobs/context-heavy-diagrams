@@ -14,7 +14,7 @@
   border-bottom: 1px solid var(--ev-c-gray-2);
 }
 
-/* "Set as default style" (ADR 0048) — a plain button, not a
+/* "Set as default style" — a plain button, not a
    CollapsibleSection row, since it's a one-shot action rather than a
    field. */
 .property-set-default {
@@ -93,7 +93,7 @@
   color: var(--ev-c-text-2);
 }
 
-/* Palette quick-pick row (ADR 0048) — drops to its own full-
+/* Palette quick-pick row — drops to its own full-
    width line below the label+color-input row via flex-wrap above, rather
    than squeezing into the same row. */
 .property-palette-swatches {

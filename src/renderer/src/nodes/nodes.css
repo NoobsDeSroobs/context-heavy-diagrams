@@ -4,7 +4,7 @@
   height: 100%;
   box-sizing: border-box;
   /* The default look comes from styleDefaults.ts via CSS variables set at startup
-     (applyDefaultStyleVars, ADR 0117); an element's own style overrides it inline. */
+     (applyDefaultStyleVars); an element's own style overrides it inline. */
   border: var(--default-entity-stroke-width) solid var(--default-entity-stroke);
   border-radius: 6px;
   background: var(--default-entity-fill);
@@ -27,7 +27,7 @@
   color: var(--color-text);
 }
 
-/* Locked indicator (ADR 0043, docs/file-format.md's `locked` field) —
+/* Locked indicator (docs/file-format.md's `locked` field) —
    centered horizontally, straddling the node's own top edge (half above,
    half below). Shared by ShapeNode/
    ContainerNode/TextNode via LockBadge.tsx; a small round backing so the
@@ -78,7 +78,7 @@
   overflow-wrap: anywhere;
 }
 
-/* A stencil (ADR 0180): a base shape from the element's kind, with a mark on it. It reads the entity's
+/* A stencil (ADR 0080): a base shape from the element's kind, with a mark on it. It reads the entity's
    default look; a kind may bring its own fill (inline, from the kind). The small shapes carry their
    label below them. */
 .stencil-node {
@@ -165,7 +165,7 @@
   overflow-wrap: anywhere;
 }
 
-/* The label of a small shape sits outside it, where its position says (ADR 0183). */
+/* The label of a small shape sits outside it, where its position says. */
 .stencil-node-label-box {
   position: absolute;
   width: max-content;
@@ -245,7 +245,7 @@
   padding: 4px 8px;
 }
 
-/* The label of a container sits on the side the container says (ADR 0184), lined up along it by the
+/* The label of a container sits on the side the container says, lined up along it by the
    text alignment. On the left and right the text is turned so that its top points at the side: a
    quarter turn left reads from the bottom up, a quarter turn right from the top down. At the bottom it
    stays upright. */
@@ -375,7 +375,7 @@
   height: max(6px, calc(10px / var(--canvas-zoom, 1)));
 }
 
-/* The central target an edge is dropped on to attach to the element by itself (ADR 0178): out of the
+/* The central target an edge is dropped on to attach to the element by itself: out of the
    way and unreachable, except while a connection is being dragged. */
 .entity-node .react-flow__handle.chd-auto-target,
 .container-node .react-flow__handle.chd-auto-target,
@@ -395,7 +395,7 @@
   pointer-events: all;
 }
 
-/* Line node's own point handles (ADR 0050) — plain positioned
+/* Line node's own point handles — plain positioned
    divs, not React Flow Handles (those are for connections; these just
    reposition a point), so they get their own hover-reveal rule matching
    the one above. */
@@ -430,7 +430,7 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  /* Neutral base so an optional style.stroke/strokeWidth (ADR 0014 — rare
+  /* Neutral base so an optional style.stroke/strokeWidth (rare
      but valid on text nodes) has a border-style to actually render against;
      border-width 0 keeps it invisible until a style override sets one. */
   border-style: solid;
@@ -487,7 +487,7 @@
 }
 
 /* Canvas-side counterpart of a .layer-row.pointed click — an "entity
-   highlight" (ADR 0035), a different concept from the *property*
+   highlight", a different concept from the *property*
    highlight system (ADR 0025, .highlight-chips/matchHighlights)
    despite the shared word. A simple outline, deliberately distinct from
    both the selection outline and the property-highlight border override. */
@@ -499,7 +499,7 @@
   outline-offset: 2px;
 }
 
-/* Search-result indicator (ADR 0062) — a distinct outline from
+/* Search-result indicator — a distinct outline from
    entity-highlighted just above (different width/offset so the two never
    look identical if both were somehow true at once) and, unlike the
    property-highlight border override, never touches the element's own

@@ -6,23 +6,23 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0001: Bare Electron + React shell
 
-*Done.* A running Electron app with a React + TypeScript renderer, an embedded React Flow canvas (pan/zoom, basic node/edge creation and dragging), and save/load of a single diagram.json to/from disk via IPC. ADR: [0003](../decisions/0003-diagram-persistence-v1.md).
+*Done.* A running Electron app with a React + TypeScript renderer, an embedded React Flow canvas (pan/zoom, basic node/edge creation and dragging), and save/load of a single diagram.json to/from disk via IPC.
 
 ### 0002: Resize and rotate
 
-*Done.* Two custom node types replace the React Flow default: ShapeNode (resizable, multiple connection points, never rotatable) and TextNode (resizable, rotatable, no connection points). ADR: [0004](../decisions/0004-shape-text-node-split.md).
+*Done.* Two custom node types replace the React Flow default: ShapeNode (resizable, multiple connection points, never rotatable) and TextNode (resizable, rotatable, no connection points).
 
 ### 0003: Styling panel
 
-*Done.* A right-side "diagram dock" that shows an item palette when nothing is selected (add a shape/container/text) and switches to a context-sensitive property panel when something is — driving fill, border, font, exact transform, and (for edges) line/marker… ADRs: [0010](../decisions/0010-named-searchable-style-presets.md), [0013](../decisions/0013-dock-layout-architecture.md), [0014](../decisions/0014-node-and-edge-style-schema.md).
+*Done.* A right-side "diagram dock" that shows an item palette when nothing is selected (add a shape/container/text) and switches to a context-sensitive property panel when something is — driving fill, border, font, exact transform, and (for edges) line/marker…
 
 ### 0004: Containers
 
-*Done.* Container shapes that group nodes using React Flow's parent/child relationships, so child nodes move together with their container automatically — without becoming a separate "grouping" mechanism that's hard to edit individual elements within. ADR: [0012](../decisions/0012-container-node-design.md).
+*Done.* Container shapes that group nodes using React Flow's parent/child relationships, so child nodes move together with their container automatically — without becoming a separate "grouping" mechanism that's hard to edit individual elements within. ADR: [0012](../decisions/0012-containers-are-connectable-not-rotatable-deletion-promotes-children-and-the-hierarchy-is-kept-honest.md).
 
 ### 0005: Dark / light mode
 
-*Done.* App-wide dark and light themes. ADR: [0027](../decisions/0027-theme-default-follows-system.md).
+*Done.* App-wide dark and light themes.
 
 ### 0006: Undo / redo
 
@@ -30,7 +30,7 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0007: Icon slots
 
-*Done.* Per-ShapeNode corner icon slots (top-left/top-right/bottom-left/bottom-right), supporting both a built-in icon set and user-uploaded custom icons. ADR: [0006](../decisions/0006-icon-storage-model.md).
+*Done.* Per-ShapeNode corner icon slots (top-left/top-right/bottom-left/bottom-right), supporting both a built-in icon set and user-uploaded custom icons.
 
 ### 0008: Detail sublayer
 
@@ -42,7 +42,7 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0010: SVG/PNG export
 
-*Done.* Export the current diagram to SVG/PNG with a configurable margin, for sharing a view outside this app (e.g. embedding it in Confluence). ADR: [0051](../decisions/0051-png-export.md).
+*Done.* Export the current diagram to SVG/PNG with a configurable margin, for sharing a view outside this app (e.g. embedding it in Confluence).
 
 ### 0011: Alignment and snapping
 
@@ -50,19 +50,19 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0012: Editable labels on shapes and edges
 
-*Done.* Double-click a shape, text node, or edge to write/edit a text label directly on it. Raised during epic 0002 design discussion, deliberately kept out of that epic's scope. ADR: [0020](../decisions/0020-labels-always-centered.md).
+*Done.* Double-click a shape, text node, or edge to write/edit a text label directly on it. Raised during epic 0002 design discussion, deliberately kept out of that epic's scope.
 
 ### 0013: Configurable connection points
 
-*Done.* Beyond the default 4 fixed connection points per ShapeNode (one per side, centered — built in epic 0002), let users add more. ADRs: [0021](../decisions/0021-connection-point-removal-blocked.md), [0010](../decisions/0010-named-searchable-style-presets.md).
+*Done.* Beyond the default 4 fixed connection points per ShapeNode (one per side, centered — built in epic 0002), let users add more.
 
 ### 0014: Dragging an edge into empty space creates a shape
 
-*Done.* Dragging a connection from a shape's handle and releasing it over empty canvas (instead of onto another node) offers to create a new shape at the drop point and connects the edge to it. ADR: [0015](../decisions/0015-anchor-placeholder-node.md).
+*Done.* Dragging a connection from a shape's handle and releasing it over empty canvas (instead of onto another node) offers to create a new shape at the drop point and connects the edge to it.
 
 ### 0015: Migrate to single-file diagram format
 
-*Done.* Rework the already-shipped folder-based persistence (epics 0001/0002/0012, iterated on twice already — see ADR 0003's two corrections) to match the identity/linking model decided in docs/decisions/0005-diagram-identity-and-linking.md: a diagram is a single… ADR: [0005](../decisions/0005-diagram-identity-and-linking.md).
+*Done.* Rework the already-shipped folder-based persistence (epics 0001/0002/0012, iterated on twice already) to match the identity/linking model decided in docs/decisions/0005-diagram-identity-and-linking.md: a diagram is a single… ADR: [0005](../decisions/0005-diagram-identity-and-linking.md).
 
 ### 0018: Selection and keyboard shortcuts
 
@@ -70,7 +70,7 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0020: Autosave / crash recovery and unsaved-changes protection
 
-*Done.* Periodic recovery snapshots so unsaved work survives a crash, plus a proper "save before closing?" prompt. Raised during epic 0008 design discussion, explicitly deferred by the user ("for a later epic though, I feel"). ADR: [0040](../decisions/0040-dirty-tracking-and-autosave-design.md).
+*Done.* Periodic recovery snapshots so unsaved work survives a crash, plus a proper "save before closing?" prompt. Raised during epic 0008 design discussion, explicitly deferred by the user ("for a later epic though, I feel"). ADR: [0040](../decisions/0040-unsaved-work-and-outside-changes-are-never-lost-or-silently-overwritten.md).
 
 ### 0021: YAML frontmatter for detail files
 
@@ -78,7 +78,7 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0023: Custom metadata bucket
 
-*Superseded.* A free-form, arbitrary-JSON metadata dict on nodes, edges, and the diagram itself — separate from the fields the tool already understands and manages (data.label/icons/details/linkedDiagram) — viewable and editable both through the raw .chd file and from the… ADRs: [0022](../decisions/0022-unified-tag-and-metadata-system.md), [0009](../decisions/0009-custom-metadata-bucket.md).
+*Superseded.* A free-form, arbitrary-JSON metadata dict on nodes, edges, and the diagram itself — separate from the fields the tool already understands and manages (data.label/icons/details/linkedDiagram) — viewable and editable both through the raw .chd file and from the… ADR: [0022](../decisions/0022-unified-tag-and-metadata-system.md).
 
 ### 0024: Multi-diagram tabs or windows
 
@@ -86,11 +86,11 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0025: Copy / paste
 
-*Done.* Real clipboard copy/paste for nodes (and edges between copied nodes) — Ctrl+C/Ctrl+V/Ctrl+X. ADR: [0049](../decisions/0049-clipboard-copy-paste.md).
+*Done.* Real clipboard copy/paste for nodes (and edges between copied nodes) — Ctrl+C/Ctrl+V/Ctrl+X.
 
 ### 0026: Tagging and overlay visualization
 
-*Done.* Tag nodes and edges with freeform labels, then visualize the diagram by tag via a set of user-defined, individually-toggleable highlights — each one a tag + a color. ADRs: [0025](../decisions/0025-tagging-and-overlay-visualization.md), [0008](../decisions/0008-tool-scope-includes-ea-adjacent-diagrams.md), [0024](../decisions/0024-propagate-required-tags-to-children.md).
+*Done.* Tag nodes and edges with freeform labels, then visualize the diagram by tag via a set of user-defined, individually-toggleable highlights — each one a tag + a color. ADRs: [0025](../decisions/0025-highlights-recolour-by-tag-value-the-catalogue-is-saved-and-what-is-on-is-not.md), [0008](../decisions/0008-tool-scope-includes-ea-adjacent-diagrams.md).
 
 ### 0027: App branding and licensing
 
@@ -102,19 +102,19 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0029: Drag-to-add from the item panel
 
-*Done.* Let the item panel (epic 0003's in-diagram dock, default/no-selection content) support dragging a shape/container/text icon directly onto the canvas and dropping it at that exact position — the standard "stencil palette" interaction from tools like… ADR: [0064](../decisions/0064-drag-to-add-container-detection.md).
+*Done.* Let the item panel (epic 0003's in-diagram dock, default/no-selection content) support dragging a shape/container/text icon directly onto the canvas and dropping it at that exact position — the standard "stencil palette" interaction from tools like…
 
 ### 0030: Custom style palettes & default element styles
 
-*Done.* Two related, naturally-sequenced features on top of epic 0003's property panel and pickers: ADR: [0048](../decisions/0048-style-palette-and-defaults.md).
+*Done.* Two related, naturally-sequenced features on top of epic 0003's property panel and pickers:
 
 ### 0032: Edge routing style and manual bend points
 
-*Done.* Let an edge be routed differently than today's one hardcoded bezier curve: React Flow's own built-in straight/step/smoothstep path shapes, or a catmull-rom curve (reusing epic 0064's freeform-line math) with manually-placed bend points — a way to steer an… ADRs: [0057](../decisions/0057-edge-routing-style.md), [0050](../decisions/0050-freeform-line-as-node-type.md).
+*Done.* Let an edge be routed differently than today's one hardcoded bezier curve: React Flow's own built-in straight/step/smoothstep path shapes, or a catmull-rom curve (reusing epic 0064's freeform-line math) with manually-placed bend points — a way to steer an…
 
 ### 0033: Edge reconnection
 
-*Done.* Grab either end of an existing edge and drag it to a different attachment point, while the other end stays put — so a connection that made sense on one side of a shape (e.g. "left") can be moved to a better-fitting side (e.g. "top") after the diagram gets… ADR: [0015](../decisions/0015-anchor-placeholder-node.md).
+*Done.* Grab either end of an existing edge and drag it to a different attachment point, while the other end stays put — so a connection that made sense on one side of a shape (e.g. "left") can be moved to a better-fitting side (e.g. "top") after the diagram gets…
 
 ### 0034: Unified tag and metadata system
 
@@ -122,11 +122,11 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0035: Propagate required tags to linked children
 
-*Done.* A "Copy to children" button on the Required Tags panel that pushes the current diagram's requiredTags template down its entire link subtree, so a complex view built from many linked sub-diagrams doesn't need the same required tags redefined by hand in every… ADR: [0024](../decisions/0024-propagate-required-tags-to-children.md).
+*Done.* A "Copy to children" button on the Required Tags panel that pushes the current diagram's requiredTags template down its entire link subtree, so a complex view built from many linked sub-diagrams doesn't need the same required tags redefined by hand in every…
 
 ### 0036: Grouped highlights
 
-*Done.* An "Add group" action in the Highlights panel: pick a tag key (e.g. ADR: [0026](../decisions/0026-grouped-highlights.md).
+*Done.* An "Add group" action in the Highlights panel: pick a tag key (e.g. ADR: [0025](../decisions/0025-highlights-recolour-by-tag-value-the-catalogue-is-saved-and-what-is-on-is-not.md).
 
 ### 0037: Diagram legend
 
@@ -134,15 +134,15 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0038: Drag file into window to open
 
-*Done.* Drop a .chd file onto an open app window to open it, as an alternative to the existing File → Open dialog. ADRs: [0040](../decisions/0040-dirty-tracking-and-autosave-design.md), [0023](../decisions/0023-multi-window-diagram-model.md).
+*Done.* Drop a .chd file onto an open app window to open it, as an alternative to the existing File → Open dialog. ADRs: [0040](../decisions/0040-unsaved-work-and-outside-changes-are-never-lost-or-silently-overwritten.md), [0023](../decisions/0023-multi-window-diagram-model.md).
 
 ### 0039: Per-side connection point counts
 
-*Done.* Alongside the existing right-click "Add connection point here" (which places one point near the click position), let the user configure a count of connection points per side — e.g. 4 on the right, 2 on the bottom, 1 on the top, 0 on the left — evenly spread… ADR: [0036](../decisions/0036-connection-point-count-and-transfer.md).
+*Done.* Alongside the existing right-click "Add connection point here" (which places one point near the click position), let the user configure a count of connection points per side — e.g. 4 on the right, 2 on the bottom, 1 on the top, 0 on the left — evenly spread…
 
 ### 0040: Theme-adaptive color value flip
 
-*Done.* When the app's theme changes, an explicitly-set color (fill, stroke, fontColor on a Node or Edge) should stay recognizably "the same color" but adapt its lightness so it stays legible against the new background — not stay bit-for-bit identical (today's… ADR: [0034](../decisions/0034-theme-adaptive-color-value-flip.md).
+*Done.* When the app's theme changes, an explicitly-set color (fill, stroke, fontColor on a Node or Edge) should stay recognizably "the same color" but adapt its lightness so it stays legible against the new background — not stay bit-for-bit identical (today's…
 
 ### 0041: Reload diagram from disk
 
@@ -154,11 +154,11 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0043: Layer order (z-height) control
 
-*Done.* A way to control the stacking order of canvas objects (which one renders on top when two overlap) — not just a blind "bring to front" action, but real visibility into what's currently stacked where. ADRs: [0035](../decisions/0035-layer-order-control.md), [0030](../decisions/0030-edge-label-z-index-override.md).
+*Done.* A way to control the stacking order of canvas objects (which one renders on top when two overlap) — not just a blind "bring to front" action, but real visibility into what's currently stacked where.
 
 ### 0044: Larger, more forgiving resize-handle hit targets
 
-*Done.* Make grabbing a shape or container's resize handle easier — without necessarily changing how small/unobtrusive the handle looks, just how forgiving it is to actually click. ADR: [0038](../decisions/0038-resize-handle-hit-target-size.md).
+*Done.* Make grabbing a shape or container's resize handle easier — without necessarily changing how small/unobtrusive the handle looks, just how forgiving it is to actually click.
 
 ### 0045: Edge label position slider
 
@@ -170,15 +170,15 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0047: Forced straight segment near edge endpoints
 
-*Done.* Force every edge to travel straight outward from each endpoint for a configurable number of pixels (the user's own suggestion: 5-10px, adjustable in an options/settings menu) before curving toward the other end — rather than curving immediately from the… ADR: [0032](../decisions/0032-global-settings-panel.md).
+*Done.* Force every edge to travel straight outward from each endpoint for a configurable number of pixels (the user's own suggestion: 5-10px, adjustable in an options/settings menu) before curving toward the other end — rather than curving immediately from the…
 
 ### 0048: Left-side tool sidebar
 
-*Cancelled.* A dedicated left-side sidebar for canvas-level tools — extending what's already there (zoom, fit-to-screen, lock-edits) with more, e.g. a toggle for the legend view (epic 0037) once that exists, "and things." ADRs: [0041](../decisions/0041-cancel-left-sidebar-reuse-popup-pattern.md), [0039](../decisions/0039-top-menu-bar.md).
+*Cancelled.* A dedicated left-side sidebar for canvas-level tools — extending what's already there (zoom, fit-to-screen, lock-edits) with more, e.g. a toggle for the legend view (epic 0037) once that exists, "and things."
 
 ### 0049: Top menu bar (File / Edit / View / Help)
 
-*Done.* Move Open / Save / Save As / Reload and similar actions out of the current single-row toolbar into a conventional desktop-app top menu bar with classic categories — File, Edit, View, Help, etc. ADR: [0039](../decisions/0039-top-menu-bar.md).
+*Done.* Move Open / Save / Save As / Reload and similar actions out of the current single-row toolbar into a conventional desktop-app top menu bar with classic categories — File, Edit, View, Help, etc.
 
 ### 0050: Details panel defaults to preview, not edit
 
@@ -186,7 +186,7 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0053: Installable distribution for non-technical users
 
-*Superseded.* Right now, running this app requires installing Node/npm, cloning the repo, and launching it from a terminal (npm install, npm run dev/npm start) — fine for the user as the developer, a hard blocker for anyone non-technical. ADR: [0044](../decisions/0044-app-versioning-scheme.md).
+*Superseded.* Right now, running this app requires installing Node/npm, cloning the repo, and launching it from a terminal (npm install, npm run dev/npm start) — fine for the user as the developer, a hard blocker for anyone non-technical.
 
 ### 0054: Move app settings into a real per-OS config location
 
@@ -194,15 +194,15 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0055: Required tags
 
-*Done.* Two coupled improvements to the required-tags panel's per-tag editing: 1. Replace the current allowed-values field — a single comma-separated text input (RequiredTagsPanel.tsx, tag.allowedValues?.join(', ') in, split-on-comma out) — with a real list editor. ADR: [0047](../decisions/0047-allowed-values-list-editor.md).
+*Done.* Two coupled improvements to the required-tags panel's per-tag editing: 1. Replace the current allowed-values field — a single comma-separated text input (RequiredTagsPanel.tsx, tag.allowedValues?.join(', ') in, split-on-comma out) — with a real list editor.
 
 ### 0057: About/Help menu and app versioning scheme
 
-*Done.* Two coupled pieces: 1. A real versioning scheme for the app itself (not to be confused with the .chd file format's own version field, currently always 1 — see docs/file-format.md. ADR: [0044](../decisions/0044-app-versioning-scheme.md).
+*Done.* Two coupled pieces: 1. A real versioning scheme for the app itself (not to be confused with the .chd file format's own version field, currently always 1 — see docs/file-format.md.
 
 ### 0058: An implicit "None" value for required tags
 
-*Done.* Every required tag should have an implicit "not applicable" value available — the user's own framing: "None should not have to be added to the list of options for it to be there, but it should be there such that the highlights and dropdowns can select and… ADR: [0046](../decisions/0046-implicit-none-for-required-tags.md).
+*Done.* Every required tag should have an implicit "not applicable" value available — the user's own framing: "None should not have to be added to the list of options for it to be there, but it should be there such that the highlights and dropdowns can select and…
 
 ### 0060: Threat/risk matrix (security view) — mode-switch, prototype phase done
 
@@ -210,27 +210,27 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0061: Toolbar polish
 
-*Done.* Two small, related toolbar tweaks, both in the same top-toolbar strip (Canvas.tsx's .toolbar — MenuBar, saved-flash indicator, current-file display, theme toggle, in that order today): ADR: [0045](../decisions/0045-default-edge-style-setting.md).
+*Done.* Two small, related toolbar tweaks, both in the same top-toolbar strip (Canvas.tsx's .toolbar — MenuBar, saved-flash indicator, current-file display, theme toggle, in that order today):
 
 ### 0062: Search — find and highlight matching elements
 
-*Done.* A search feature: type a query, and any element that matches "in some way" gets highlighted (the user's own framing — deliberately broad, not scoped to one field). ADR: [0062](../decisions/0062-search-scope-and-matching.md).
+*Done.* A search feature: type a query, and any element that matches "in some way" gets highlighted (the user's own framing — deliberately broad, not scoped to one field).
 
 ### 0063: "Isolate" — de-emphasize elements outside a working set
 
-*Done.* Originally framed as a "dim mode" tied to the highlight system. ADR: [0063](../decisions/0063-isolate-mode.md).
+*Done.* Originally framed as a "dim mode" tied to the highlight system.
 
 ### 0064: Simple curved freeform line (bezier)
 
-*Done.* A simple curved freeform line as a new top-level item category, distinct from edges (which always connect two node endpoints). ADR: [0050](../decisions/0050-freeform-line-as-node-type.md).
+*Done.* A simple curved freeform line as a new top-level item category, distinct from edges (which always connect two node endpoints).
 
 ### 0066: Decouple code documentation and ADRs from epic numbering
 
-*Done.* Remove references to epic numbers from in-code documentation (comments) and from ADRs — both should be able to stand on their own, understandable without needing to cross-reference docs/planning/epics/NNNN-.md for context. ADR: [0070](../decisions/0070-decouple-docs-from-epic-numbering.md).
+*Done.* Remove references to epic numbers from in-code documentation (comments) and from ADRs — both should be able to stand on their own, understandable without needing to cross-reference docs/planning/epics/NNNN-.md for context.
 
 ### 0067: DiagramContext re-renders the whole diagram on every rapid setting change
 
-*Done.* Make rapid, high-frequency state changes (a native <input type="color"> drag firing many onChange events per second is the reported trigger, but likely any similarly frequent update) not tank frame rate on a large diagram. ADR: [0056](../decisions/0056-diagram-context-rerender-performance.md).
+*Done.* Make rapid, high-frequency state changes (a native <input type="color"> drag firing many onChange events per second is the reported trigger, but likely any similarly frequent update) not tank frame rate on a large diagram.
 
 ### 0068: Privacy/security pass before public release
 
@@ -242,15 +242,15 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0072: Gravity presets — add a User default tier
 
-*Done.* Gravity presets (epic 0064/ADR 0050) already resolve Diagram override (DiagramFile.gravityPresets) → Built-in default (DEFAULT_GRAVITY_PRESETS in lineGravityPresets.ts), but there's no User default in between — no way to set your own preferred preset list… ADRs: [0066](../decisions/0066-gravity-presets-user-default.md), [0050](../decisions/0050-freeform-line-as-node-type.md), [0052](../decisions/0052-settings-ownership-tiers.md).
+*Done.* Gravity presets (epic 0064) already resolve Diagram override (DiagramFile.gravityPresets) → Built-in default (DEFAULT_GRAVITY_PRESETS in lineGravityPresets.ts), but there's no User default in between — no way to set your own preferred preset list… ADRs: [0052](../decisions/0052-settings-ownership-tiers.md).
 
 ### 0073: Max connection points per side
 
-*Done.* maxConnectionPointsPerSide (epic 0039) is currently Settings-only — one value, per person, applied everywhere. ADRs: [0067](../decisions/0067-max-connection-points-diagram-override.md), [0052](../decisions/0052-settings-ownership-tiers.md).
+*Done.* maxConnectionPointsPerSide (epic 0039) is currently Settings-only — one value, per person, applied everywhere. ADRs: [0052](../decisions/0052-settings-ownership-tiers.md).
 
 ### 0074: Multiple named style palettes, with an active-palette selector
 
-*Done.* The style palette (epic 0030/ADR 0048) stays Settings-only per ADR 0052 — no diagram-local copy, since a shape's actual color is already captured at the Properties level. ADRs: [0068](../decisions/0068-multiple-named-style-palettes.md), [0052](../decisions/0052-settings-ownership-tiers.md), [0066](../decisions/0066-gravity-presets-user-default.md).
+*Done.* The style palette (epic 0030) stays Settings-only per ADR 0052 — no diagram-local copy, since a shape's actual color is already captured at the Properties level. ADRs: [0052](../decisions/0052-settings-ownership-tiers.md).
 
 ### 0075: Warn when a diagram has edges but no legend entries
 
@@ -258,11 +258,11 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0076: Rename "Shape" to "Entity"
 
-*Done.* The user's own framing: a Shape and a Container remain conceptually different things even if every style property is set identically between them — a Container represents grouping/boundary, a Shape represents a standalone entity. "Shape" undersells that… ADRs: [0101](../decisions/0101-shape-to-entity-rename.md), [0029](../decisions/0029-backward-compatible-loading-is-a-standing-rule.md), [0082](../decisions/0082-security-data-schema.md), [0054](../decisions/0054-progressive-disclosure-for-advanced-features.md), [0055](../decisions/0055-security-data-lives-on-diagram-elements.md).
+*Done.* The user's own framing: a Shape and a Container remain conceptually different things even if every style property is set identically between them — a Container represents grouping/boundary, a Shape represents a standalone entity. "Shape" undersells that… ADRs: [0029](../decisions/0029-backward-compatible-loading-is-a-standing-rule.md), [0082](../decisions/0082-security-data-schema.md), [0054](../decisions/0054-progressive-disclosure-for-advanced-features.md), [0055](../decisions/0055-security-data-lives-on-diagram-elements.md).
 
 ### 0078: BPMN as a basis for this app's visual language
 
-*Done.* BPMN as an adopted visual _vocabulary_, for recognisability and pickup — not a grammar, metamodel, or execution model. Full reasoning in ADR 0080. ADRs: [0080](../decisions/0080-bpmn-as-adopted-vocabulary-not-metamodel.md), [0008](../decisions/0008-tool-scope-includes-ea-adjacent-diagrams.md), [0031](../decisions/0031-icon-annotation-is-a-standing-requirement.md).
+*Done.* BPMN as an adopted visual _vocabulary_, for recognisability and pickup — not a grammar, metamodel, or execution model. Full reasoning in ADR 0080. ADRs: [0080](../decisions/0080-behaviours-are-the-tools-own-flow-vocabulary-with-semantic-not-symmetric-symbols.md), [0008](../decisions/0008-tool-scope-includes-ea-adjacent-diagrams.md), [0031](../decisions/0031-icon-annotation-is-a-standing-requirement.md).
 
 ### 0079: Security data as a diagram-element property (real persistence)
 
@@ -270,23 +270,23 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0080: Mode-aware top menu bar
 
-*Done.* The top menu bar (MenuBar/Canvas.tsx's menus array, epic 0049) currently shows the same File/Edit/View/Help regardless of which persona (Diagram / Security Matrix) is active. ADR: [0079](../decisions/0079-mode-aware-menu-bar.md).
+*Done.* The top menu bar (MenuBar/Canvas.tsx's menus array, epic 0049) currently shows the same File/Edit/View/Help regardless of which persona (Diagram / Security Matrix) is active.
 
 ### 0081: Recursive matrix population and automation
 
-*Done.* Stop requiring every service/column in the matrix to be manually typed, and every level of a diagram hierarchy to be manually re-assessed. ADRs: [0088](../decisions/0088-recursive-security-matrix-rollup.md), [0082](../decisions/0082-security-data-schema.md).
+*Done.* Stop requiring every service/column in the matrix to be manually typed, and every level of a diagram hierarchy to be manually re-assessed. ADRs: [0082](../decisions/0082-security-data-schema.md).
 
 ### 0082: Select all elements of a type
 
-*Done.* Let the user select every element of a given type (e.g. "all edges") in one action, so a bulk style/property change can be applied to all of them at once via the existing property panel — instead of shift-clicking each one individually. ADR: [0065](../decisions/0065-select-all-of-type.md).
+*Done.* Let the user select every element of a given type (e.g. "all edges") in one action, so a bulk style/property change can be applied to all of them at once via the existing property panel — instead of shift-clicking each one individually.
 
 ### 0083: Align/distribute selected elements
 
-*Done.* An Edit-menu action to arrange every selected element into an evenly-spaced column or row in one click, instead of manually dragging each one into position. ADR: [0058](../decisions/0058-align-and-distribute-selected.md).
+*Done.* An Edit-menu action to arrange every selected element into an evenly-spaced column or row in one click, instead of manually dragging each one into position.
 
 ### 0084: Multi-connection-line + reverse edge direction
 
-*Done.* Two separate, small edge-drawing conveniences the user asked for back to back in the same session: 1. ADR: [0059](../decisions/0059-multi-connection-line.md).
+*Done.* Two separate, small edge-drawing conveniences the user asked for back to back in the same session: 1.
 
 ### 0085: Drag-select mode as a Setting
 
@@ -294,19 +294,19 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0086: Minor UI improvements
 
-*Done.* Grab-bag epic for small, low-effort UI/UX improvements that come up during regular use — each individually too small to justify its own epic, collected here and picked off as convenient. ADR: [0077](../decisions/0077-orthogonal-edge-segment-dragging.md).
+*Done.* Grab-bag epic for small, low-effort UI/UX improvements that come up during regular use — each individually too small to justify its own epic, collected here and picked off as convenient.
 
 ### 0087: Detail file naming reflects label, not type
 
-*Done.* Detail files (epic 0008) were named <node-id>.md — effectively <type>-<uuid>.md (e.g. shape-3f9a1b2c-....md) — which made it very hard to tell which file on disk belonged to which element in the diagram. ADR: [0060](../decisions/0060-detail-file-naming-convention.md).
+*Done.* Detail files (epic 0008) were named <node-id>.md — effectively <type>-<uuid>.md (e.g. shape-3f9a1b2c-....md) — which made it very hard to tell which file on disk belonged to which element in the diagram.
 
 ### 0089: Flippable edge direction — data flow vs. invoker/trigger direction
 
-*Done.* Sometimes an edge's arrow should show the direction data actually flows; sometimes it should show who authenticates/triggers the interaction (often the opposite direction — a client polling a server is data flowing server→client but triggered client→server). ADRs: [0081](../decisions/0081-flippable-edge-direction-sets.md), [0071](../decisions/0071-consolidate-diagram-configuration-panel.md).
+*Done.* Sometimes an edge's arrow should show the direction data actually flows; sometimes it should show who authenticates/triggers the interaction (often the opposite direction — a client polling a server is data flowing server→client but triggered client→server).
 
 ### 0090: Reference images attached to shapes
 
-*Done.* Let the user attach one or more images to a shape as reference material — a screenshot, a logo, a diagram fragment, a photo of a whiteboard — viewable in a floating, closable panel while working, never rendered on the canvas or included in exports. ADRs: [0069](../decisions/0069-reference-images.md), [0052](../decisions/0052-settings-ownership-tiers.md), [0006](../decisions/0006-icon-storage-model.md).
+*Done.* Let the user attach one or more images to a shape as reference material — a screenshot, a logo, a diagram fragment, a photo of a whiteboard — viewable in a floating, closable panel while working, never rendered on the canvas or included in exports. ADRs: [0052](../decisions/0052-settings-ownership-tiers.md).
 
 ### 0091: Remember last opened path, recent diagrams under File
 
@@ -314,27 +314,27 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0092: Epic subfolders
 
-*Done.* ADR 0061 established an x-prefix filename convention for completed epics but it was never rolled out. The user decided (2026-08-30) to use a docs/planning/epics/completed/ subfolder instead. ADRs: [0061](../decisions/0061-completed-epic-filename-marker.md), [0076](../decisions/0076-completed-epics-subfolder.md), [0002](../decisions/0002-planning-structure.md).
+*Done.* An x-prefix filename convention for completed epics was never rolled out. The user decided (2026-08-30) to use a docs/planning/epics/completed/ subfolder instead.
 
 ### 0093: Drill-down search across linked diagrams
 
-*Done.* Extend epic 0062's search to reach into linked child diagrams (epic 0009's linked-diagram navigation), not just the currently-open one — useful when a diagram tree is large or not well-maintained enough for the user to already know where something lives. ADR: [0097](../decisions/0097-deep-search-across-linked-diagrams.md).
+*Done.* Extend epic 0062's search to reach into linked child diagrams (epic 0009's linked-diagram navigation), not just the currently-open one — useful when a diagram tree is large or not well-maintained enough for the user to already know where something lives.
 
 ### 0094: Search by icon
 
-*Done.* Extend epic 0062's search to match on icon identity, not just label/id/tag/details. ADR: [0072](../decisions/0072-search-by-icon.md).
+*Done.* Extend epic 0062's search to match on icon identity, not just label/id/tag/details.
 
 ### 0095: Recent diagrams under File
 
-*Done.* A submenu (or flyout list) of recently opened diagrams under File, letting the user reopen one without a picker round-trip — standard desktop-app convention. ADR: [0078](../decisions/0078-recent-diagrams-menu.md).
+*Done.* A submenu (or flyout list) of recently opened diagrams under File, letting the user reopen one without a picker round-trip — standard desktop-app convention.
 
 ### 0096: Consolidate diagram-level Configuration panels into DiagramConfigPanel
 
-*Done.* Epic 0073 built a new DiagramConfigPanel (src/renderer/src/components/DiagramConfigPanel.tsx) as the first home for a pure diagram-level Configuration value with no existing panel to live in. ADRs: [0071](../decisions/0071-consolidate-diagram-configuration-panel.md), [0052](../decisions/0052-settings-ownership-tiers.md), [0067](../decisions/0067-max-connection-points-diagram-override.md).
+*Done.* Epic 0073 built a new DiagramConfigPanel (src/renderer/src/components/DiagramConfigPanel.tsx) as the first home for a pure diagram-level Configuration value with no existing panel to live in. ADRs: [0052](../decisions/0052-settings-ownership-tiers.md).
 
 ### 0099: Search / isolate by reference presence
 
-*Done.* Make "has one or more reference images" (epic 0090) a matchable facet in the search overlay (epic 0062/ADR 0062), combinable with the existing free-text / tag matching — the user's illustrative example: hasPicture = true & tag=GDPR.PII. ADRs: [0096](../decisions/0096-search-facets-and-shared-match-predicate.md), [0069](../decisions/0069-reference-images.md).
+*Done.* Make "has one or more reference images" (epic 0090) a matchable facet in the search overlay (epic 0062), combinable with the existing free-text / tag matching — the user's illustrative example: hasPicture = true & tag=GDPR.PII.
 
 ### 0100: Rename "Configuration" → "Diagram settings" and "Settings" → "Preferences"
 
@@ -342,79 +342,79 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0101: React Flow render performance, round 2
 
-*Done.* Make ordinary interactions on a large diagram (the 82-node/84-edge Meridian Rail landscape) stop being laggy — picking a colour, selecting shapes, marquee-select, hovering edges. ADRs: [0056](../decisions/0056-diagram-context-rerender-performance.md), [0073](../decisions/0073-react-flow-render-performance-round-2.md).
+*Done.* Make ordinary interactions on a large diagram (the 82-node/84-edge Meridian Rail landscape) stop being laggy — picking a colour, selecting shapes, marquee-select, hovering edges.
 
 ### 0102: Multi-line element labels
 
-*Done.* Let a shape / container / text-node / edge label hold more than one line — Shift+Enter inserts a newline, Enter still commits. ADR: [0074](../decisions/0074-multi-line-labels.md).
+*Done.* Let a shape / container / text-node / edge label hold more than one line — Shift+Enter inserts a newline, Enter still commits.
 
 ### 0103: Container hierarchy integrity and visibility
 
-*Done.* Fix the class of bugs where a container's parent/child (parentId) data drifts out of sync with what the user sees, and make those relationships visible in the Layers panel so they can be spotted and understood instead of only surfacing as mystery misbehaviour. ADR: [0075](../decisions/0075-container-hierarchy-integrity.md).
+*Done.* Fix the class of bugs where a container's parent/child (parentId) data drifts out of sync with what the user sees, and make those relationships visible in the Layers panel so they can be spotted and understood instead of only surfacing as mystery misbehaviour. ADR: [0012](../decisions/0012-containers-are-connectable-not-rotatable-deletion-promotes-children-and-the-hierarchy-is-kept-honest.md).
 
 ### 0106: Per-set edge style (e.g. "Trigger direction" always dashed)
 
-*Done.* Let each edge direction set carry its own default line/marker style, not just its own direction — so a diagram can draw its "Data flow" edges solid black and its "Trigger direction" edges dashed blue without hand-styling every edge. ADRs: [0081](../decisions/0081-flippable-edge-direction-sets.md), [0083](../decisions/0083-per-set-edge-style-as-creation-template.md).
+*Done.* Let each edge direction set carry its own default line/marker style, not just its own direction — so a diagram can draw its "Data flow" edges solid black and its "Trigger direction" edges dashed blue without hand-styling every edge.
 
 ### 0108: Diagnostics — list missing referenced files
 
-*Done.* A "Missing files" section in the Diagnostics panel listing every diagram element that references a file on disk which no longer resolves — a linked diagram, a custom icon, a reference image, a details .md, or a legend entry's custom icon. ADRs: [0084](../decisions/0084-diagnostics-missing-files.md), [0085](../decisions/0085-paste-resource-path-retargeting.md).
+*Done.* A "Missing files" section in the Diagnostics panel listing every diagram element that references a file on disk which no longer resolves — a linked diagram, a custom icon, a reference image, a details .md, or a legend entry's custom icon.
 
 ### 0113: Reverse direction on an edge selection
 
-*Done.* Let the user flip the direction of several edges at once: select a group of edges (by any existing means), then reverse all of them in one action — instead of right-clicking "Reverse direction" on each edge in turn. ADR: [0087](../decisions/0087-reverse-edge-direction-on-selection.md).
+*Done.* Let the user flip the direction of several edges at once: select a group of edges (by any existing means), then reverse all of them in one action — instead of right-clicking "Reverse direction" on each edge in turn.
 
 ### 0115: File/app version compatibility and data-loss safety
 
-*Superseded.* When a .chd file and the app opening it are version-mismatched badly enough that a correct round-trip can't be guaranteed, the user must: 1. be told clearly and specifically (not a generic parse error), 2. be told which app version to download, and 3. never… ADRs: [0029](../decisions/0029-backward-compatible-loading-is-a-standing-rule.md), [0086](../decisions/0086-fail-safe-default-resolution.md), [0044](../decisions/0044-app-versioning-scheme.md).
+*Superseded.* When a .chd file and the app opening it are version-mismatched badly enough that a correct round-trip can't be guaranteed, the user must: 1. be told clearly and specifically (not a generic parse error), 2. be told which app version to download, and 3. never… ADRs: [0029](../decisions/0029-backward-compatible-loading-is-a-standing-rule.md), [0086](../decisions/0086-fail-safe-default-resolution.md).
 
 ### 0118: Create multiple shapes/containers from a pasted text list
 
-*Done.* Right-click the Shape or Container button in the "Add to diagram" dock palette to open a small text window; paste or type a list of lines, and each non-blank line becomes the label of one new shape (or container) — a fast path for adding several named… ADR: [0089](../decisions/0089-bulk-create-from-text-list.md).
+*Done.* Right-click the Shape or Container button in the "Add to diagram" dock palette to open a small text window; paste or type a list of lines, and each non-blank line becomes the label of one new shape (or container) — a fast path for adding several named…
 
 ### 0119: Details peek card while holding Ctrl/Cmd over an element
 
-*Done.* Let the canvas act as a browsing surface for the context already captured in Details/tags/links: hold Ctrl (Cmd on Mac) while hovering an element and a small read-only card appears next to it showing what's behind it — without right-click → "See details", and… ADR: [0093](../decisions/0093-details-peek-card-on-modifier-hold.md).
+*Done.* Let the canvas act as a browsing surface for the context already captured in Details/tags/links: hold Ctrl (Cmd on Mac) while hovering an element and a small read-only card appears next to it showing what's behind it — without right-click → "See details", and…
 
 ### 0120: Help → Keyboard shortcuts & gestures page
 
-*Done.* A page under the Help menu listing every hotkey and mouse gesture the app supports, with a one-line description each, shown with the right modifier for the OS (Ctrl on Windows/Linux, Cmd on Mac). ADR: [0094](../decisions/0094-command-registry-and-shortcuts-help.md).
+*Done.* A page under the Help menu listing every hotkey and mouse gesture the app supports, with a one-line description each, shown with the right modifier for the OS (Ctrl on Windows/Linux, Cmd on Mac).
 
 ### 0121: Copy style / "format painter" apply mode
 
-*Done.* Style one shape, edge, or container the way you want, then apply that style by clicking other elements of the same type, instead of re-setting fill / stroke / thickness / font on each one through the property panel. ADRs: [0095](../decisions/0095-copy-style-apply-mode.md), [0034](../decisions/0034-theme-adaptive-color-value-flip.md).
+*Done.* Style one shape, edge, or container the way you want, then apply that style by clicking other elements of the same type, instead of re-setting fill / stroke / thickness / font on each one through the property panel.
 
 ### 0127: Command palette
 
-*Done.* A keyboard-invoked, searchable launcher for app actions (type "export png", "open diagnostics" → Enter). It is a different thing from the Help → shortcuts page (a static reference), but both read the same command registry. ADR: [0100](../decisions/0100-command-palette-reuses-the-menu-bar.md).
+*Done.* A keyboard-invoked, searchable launcher for app actions (type "export png", "open diagnostics" → Enter). It is a different thing from the Help → shortcuts page (a static reference), but both read the same command registry.
 
 ### 0128: External change detection and save-conflict warning
 
-*Done.* Never silently clobber, or silently miss, a change made outside the app — without the app trying to be a merge tool. ADRs: [0091](../decisions/0091-external-change-detection.md), [0040](../decisions/0040-dirty-tracking-and-autosave-design.md).
+*Done.* Never silently clobber, or silently miss, a change made outside the app — without the app trying to be a merge tool. ADRs: [0040](../decisions/0040-unsaved-work-and-outside-changes-are-never-lost-or-silently-overwritten.md).
 
 ### 0129: Unified multi-file save and change tracking
 
-*Done.* The user's hunch: saving is a set of parallel, type-specific functions (save_diagram(), save_details(), …) each with its own change-checking, when it should be one flow — find every file with unsaved changes, check each against disk in one place, save each —… ADRs: [0092](../decisions/0092-unified-multi-file-save-and-change-detection.md), [0084](../decisions/0084-diagnostics-missing-files.md), [0040](../decisions/0040-dirty-tracking-and-autosave-design.md), [0091](../decisions/0091-external-change-detection.md).
+*Done.* The user's hunch: saving is a set of parallel, type-specific functions (save_diagram(), save_details(), …) each with its own change-checking, when it should be one flow — find every file with unsaved changes, check each against disk in one place, save each —… ADRs: [0040](../decisions/0040-unsaved-work-and-outside-changes-are-never-lost-or-silently-overwritten.md).
 
 ### 0131: Multi-select resize scales every selected node
 
-*Done.* With several nodes selected, dragging any one node's resize handle resizes all of them by the same percentage, each in place — no reflow of the layout. ADR: [0098](../decisions/0098-multi-select-resize-percentage-scaling.md).
+*Done.* With several nodes selected, dragging any one node's resize handle resizes all of them by the same percentage, each in place — no reflow of the layout.
 
 ### 0132: Modifier+drag duplicates the dragged selection
 
-*Done.* Holding a modifier while dragging a node (or the selection) leaves the original untouched and drags a fresh copy, like Figma/draw.io. ADR: [0099](../decisions/0099-modifier-drag-duplicate.md).
+*Done.* Holding a modifier while dragging a node (or the selection) leaves the original untouched and drags a fresh copy, like Figma/draw.io.
 
 ### 0135: Remove the placeholder anchor node
 
-*Done.* Remove the anchor placeholder node as a user-facing feature. ADRs: [0107](../decisions/0107-remove-anchor-placeholder-node.md), [0015](../decisions/0015-anchor-placeholder-node.md), [0021](../decisions/0021-connection-point-removal-blocked.md), [0059](../decisions/0059-multi-connection-line.md), [0029](../decisions/0029-backward-compatible-loading-is-a-standing-rule.md), [0101](../decisions/0101-shape-to-entity-rename.md).
+*Done.* Remove the anchor placeholder node as a user-facing feature. ADRs: [0029](../decisions/0029-backward-compatible-loading-is-a-standing-rule.md).
 
 ### 0136: Associate .chd files with the app (double-click to open)
 
-*Done.* After installing, double-clicking a .chd file in the file manager opens it in this app — in a new window if the app is already running — and .chd files show a recognisable icon. ADR: [0108](../decisions/0108-chd-file-association-and-single-instance.md).
+*Done.* After installing, double-clicking a .chd file in the file manager opens it in this app — in a new window if the app is already running — and .chd files show a recognisable icon.
 
 ### 0140: Pick a legend line from an edge
 
-*Done.* In the Legend panel, "Line" waits for a click on an edge and copies its line style, markers and colour into the new entry (Esc cancels; the preset picker remains as a fallback). ADR: [0123](../decisions/0123-legend-line-picked-from-an-edge.md).
+*Done.* In the Legend panel, "Line" waits for a click on an edge and copies its line style, markers and colour into the new entry (Esc cancels; the preset picker remains as a fallback).
 
 ### 0142: Clear the open Dependabot alerts in the build tooling
 
@@ -422,11 +422,11 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0133: AI onboarding
 
-*Done.* A person who has just installed the app can work with an AI assistant on their diagrams without hand-feeding it a spec, a skill or an MCP server: a top-level AI menu, copy-paste instructions, "Enable AI assistance in a folder…" (the bundled skill plus `AGENTS.md`), the `chd` command line (`spec`, `validate`, `hash`), and a Claude Desktop extension, all behind one stale-edit rule. ADRs: [0103](../decisions/0103-ai-menu-and-feature-preference.md), [0104](../decisions/0104-copy-ai-instructions.md), [0105](../decisions/0105-bundled-ai-material-and-folder-setup.md), [0106](../decisions/0106-chd-command-line-tool.md), [0109](../decisions/0109-stale-edit-check-for-every-ai-write-path.md), [0110](../decisions/0110-claude-desktop-extension.md). Closed with these left open: the folder setup run from a packaged build, the extension on macOS, `chd` on the PATH (and Linux launcher checks: `readlink -f`, the exec bit, deb/AppImage/snap layouts), a real-console check of `chd` output on Windows, and refreshing a folder's copy of the skill after an app upgrade (today: re-run the menu item).
+*Done.* A person who has just installed the app can work with an AI assistant on their diagrams without hand-feeding it a spec, a skill or an MCP server: a top-level AI menu, copy-paste instructions, "Enable AI assistance in a folder…" (the bundled skill plus `AGENTS.md`), the `chd` command line (`spec`, `validate`, `hash`), and a Claude Desktop extension, all behind one stale-edit rule. ADRs: [0103](../decisions/0103-ai-menu-and-feature-preference.md), [0106](../decisions/0106-chd-command-line-tool.md), [0109](../decisions/0109-stale-edit-check-for-every-ai-write-path.md), [0110](../decisions/0110-claude-desktop-extension.md). Closed with these left open: the folder setup run from a packaged build, the extension on macOS, `chd` on the PATH (and Linux launcher checks: `readlink -f`, the exec bit, deb/AppImage/snap layouts), a real-console check of `chd` output on Windows, and refreshing a folder's copy of the skill after an app upgrade (today: re-run the menu item).
 
 ### 0137: Open-source release
 
-*Done.* v0.2.1 (2026-10-19) is the first open-source release: the repository is public with its history and docs, no installers are published, and early adopters build from source. It brought the licence and notices, the CLA and AI-use disclosure, the offline and sandbox hardening, the file/app version warning, CI and Dependabot, the product name and the icon, and folded in five earlier epics (0027, 0053, 0068, 0070, 0115). ADRs: [0111](../decisions/0111-open-source-release-approach.md), [0112](../decisions/0112-electron-hardening-sandbox-and-navigation.md), [0113](../decisions/0113-enforced-offline-behaviour.md), [0114](../decisions/0114-product-name-context-heavy-diagrams.md), [0115](../decisions/0115-paths-stored-in-diagrams-are-untrusted.md), [0117](../decisions/0117-built-in-style-defaults-are-data.md), [0118](../decisions/0118-saved-with-version-marker.md), [0119](../decisions/0119-generated-third-party-notices.md), [0120](../decisions/0120-completed-epics-collapse-into-an-index.md), [0121](../decisions/0121-history-rewritten-before-first-release.md), [0122](../decisions/0122-app-icon-generated-from-one-svg.md). Closed with these left open: SPDX headers in the source files (optional), a social preview image, the Linux build and smoke test (file association, `chd`, Alt+drag duplicate, AppImage/deb; open to contributors, and the README states the status), and macOS, which stays unverified.
+*Done.* v0.2.1 (2026-10-19) is the first open-source release: the repository is public with its history and docs, no installers are published, and early adopters build from source. It brought the licence and notices, the CLA and AI-use disclosure, the offline and sandbox hardening, the file/app version warning, CI and Dependabot, the product name and the icon, and folded in five earlier epics (0027, 0053, 0068, 0070, 0115). ADRs: [0111](../decisions/0111-open-source-release-approach.md), [0112](../decisions/0112-electron-hardening-sandbox-and-navigation.md), [0113](../decisions/0113-enforced-offline-behaviour.md), [0115](../decisions/0115-paths-stored-in-diagrams-are-untrusted.md), [0118](../decisions/0118-saved-with-version-marker.md), [0120](../decisions/0120-completed-epics-collapse-into-an-index.md). Closed with these left open: SPDX headers in the source files (optional), a social preview image, the Linux build and smoke test (file association, `chd`, Alt+drag duplicate, AppImage/deb; open to contributors, and the README states the status), and macOS, which stays unverified.
 
 ### 0141: How this tool compares with other diagramming tools
 
@@ -438,50 +438,50 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0152: Split the large files (helpers, CSS, property panel)
 
-*Done* (confirmed 2026-10-22). The module-level helpers of `Canvas.tsx` moved to feature modules (6,914 to 6,096 lines, three with tests), `main.css` (4,160 lines) became 34 stylesheets beside their features, and `PropertyPanel.tsx` (949 lines) was split into one file per component. All moves are verbatim; the built CSS has the same rules. Design: [ADR 0126](../decisions/0126-canvas-features-are-hooks-that-own-their-state.md) (for the follow-up hooks). Follow-ups: 0153 to 0156.
+*Done* (confirmed 2026-10-22). The module-level helpers of `Canvas.tsx` moved to feature modules (6,914 to 6,096 lines, three with tests), `main.css` (4,160 lines) became 34 stylesheets beside their features, and `PropertyPanel.tsx` (949 lines) was split into one file per component. All moves are verbatim; the built CSS has the same rules. Design: [ADR 0126](../decisions/0126-code-is-organised-by-feature-and-what-features-share-is-explicit.md) (for the follow-up hooks). Follow-ups: 0153 to 0156.
 
 ### 0153: Hook and component tests
 
-*Done* (confirmed 2026-10-23). Vitest with jsdom and Testing Library for the renderer, next to the existing `node --test` suite (`npm test` runs both, CI too). Tests for the helper modules `node --test` could not load (`nodeFields`, `hierarchy`, `screenGeometry`, `endpointPosition`, `noteShadows`, the `toDiagramFile` / `fromDiagramFile` round trip over a diagram using every feature and over every example), and a harness that renders the real `Canvas` with a fake preload bridge, with tests for closing with and without changes, add, undo and redo, delete, save and search. They checked every step of 0154. Not covered: dragging a connection between two handles and anything that depends on layout or CSS, which is for 0155. Found on the way: opening a diagram that the load had to repair did not count as a change, so closing it asked to save; every repair at load now counts. ADRs: [0127](../decisions/0127-vitest-for-renderer-tests.md), [0128](../decisions/0128-a-diagram-repaired-on-load-counts-as-changed.md). Follow-up: 0154.
+*Done* (confirmed 2026-10-23). Vitest with jsdom and Testing Library for the renderer, next to the existing `node --test` suite (`npm test` runs both, CI too). Tests for the helper modules `node --test` could not load (`nodeFields`, `hierarchy`, `screenGeometry`, `endpointPosition`, `noteShadows`, the `toDiagramFile` / `fromDiagramFile` round trip over a diagram using every feature and over every example), and a harness that renders the real `Canvas` with a fake preload bridge, with tests for closing with and without changes, add, undo and redo, delete, save and search. They checked every step of 0154. Not covered: dragging a connection between two handles and anything that depends on layout or CSS, which is for 0155. Found on the way: opening a diagram that the load had to repair did not count as a change, so closing it asked to save; every repair at load now counts. ADRs: [0040](../decisions/0040-unsaved-work-and-outside-changes-are-never-lost-or-silently-overwritten.md). Follow-up: 0154.
 
 ### 0154: Canvas feature hooks
 
-*Done* (confirmed 2026-10-23). `Canvas.tsx` went from 6,103 to 3,739 lines. Each feature is now a hook in its own feature folder that owns its state and gets what it needs from the canvas through one `CanvasApi` object: undo/redo, dirty state, search, references, copy style, legend line pick, legend, highlights, diagnostics, edge direction sets, threat matrix data, the dock panels, the window lifecycle (initial load, recovery, autosave, close prompt, drop), saving, the File commands, external-change detection, link navigation, the menus and image export. All moves are verbatim and the tests from 0153 ran after each one; the maintainer smoke-tested after each batch. Kept in `Canvas.tsx` on purpose: `loadDiagramIntoCanvas` (the one place that sets every piece of canvas state) and the graph-editing core (connect, reconnect, drag, container attachment, node creation); splitting those is open if it is ever needed. Design: [ADR 0126](../decisions/0126-canvas-features-are-hooks-that-own-their-state.md). Found on the way: copy style and the arrowhead looked broken in a long dev session after hot reloads and were fine after a clean restart (known-issues), and PNG export cropped edges that run past the outermost node (fixed).
+*Done* (confirmed 2026-10-23). `Canvas.tsx` went from 6,103 to 3,739 lines. Each feature is now a hook in its own feature folder that owns its state and gets what it needs from the canvas through one `CanvasApi` object: undo/redo, dirty state, search, references, copy style, legend line pick, legend, highlights, diagnostics, edge direction sets, threat matrix data, the dock panels, the window lifecycle (initial load, recovery, autosave, close prompt, drop), saving, the File commands, external-change detection, link navigation, the menus and image export. All moves are verbatim and the tests from 0153 ran after each one; the maintainer smoke-tested after each batch. Kept in `Canvas.tsx` on purpose: `loadDiagramIntoCanvas` (the one place that sets every piece of canvas state) and the graph-editing core (connect, reconnect, drag, container attachment, node creation); splitting those is open if it is ever needed. Design: [ADR 0126](../decisions/0126-code-is-organised-by-feature-and-what-features-share-is-explicit.md). Found on the way: copy style and the arrowhead looked broken in a long dev session after hot reloads and were fine after a clean restart (known-issues), and PNG export cropped edges that run past the outermost node (fixed).
 
 ### 0150: Review changes between two versions of a diagram
 
-*Done* (confirmed 2026-10-27; released in v0.3.0). A compare window draws the later version on the real canvas, read-only, with added, removed, link-or-note-changed and modified elements coloured and badged and the rest dimmed, hover details with old and new values, a list to step through (security first) with session ticks, and a revert per change that the editor window makes as an undoable edit. The earlier version is this window's own copy (the "changed outside the app" banner, **View → Changes → Review changes on disk**) or a git revision. The changes panel gained Reset, Remove and Restore. Ids replaced by an assistant's rewrite can be matched on request. `chd diff` prints the same review for a terminal and CI. Left out on purpose: tracking moves and resizes, the conformance findings a change introduces, an image diff. ADRs: [0132](../decisions/0132-the-compare-window-is-a-read-only-canvas-with-its-own-bridge.md), [0133](../decisions/0133-what-counts-as-a-change-in-a-review.md), [0134](../decisions/0134-baselines-for-a-review-the-windows-own-copy-or-git.md), [0135](../decisions/0135-a-revert-from-a-review-is-made-in-the-editor-window.md), [0136](../decisions/0136-id-matching-is-a-guess-offered-on-request.md), [0137](../decisions/0137-chd-diff-the-same-review-without-the-app.md). Leftovers, not verified: a real AI edit followed through the whole flow (every live run used scratch copies); Linux and macOS (the git reader and the `PATH` of an app started from a dock, `chd diff` from an installed build, the second preload in a packaged build); many notes changed at once (one `git show` each, six in parallel); a removed container whose children survive; id matching where many elements share a name and type; reverting while the editor has unsaved edits. The icon's 16 to 32 px frames have little margin around the raven's head; a small-size variant from the artist is a possible follow-up.
+*Done* (confirmed 2026-10-27; released in v0.3.0). A compare window draws the later version on the real canvas, read-only, with added, removed, link-or-note-changed and modified elements coloured and badged and the rest dimmed, hover details with old and new values, a list to step through (security first) with session ticks, and a revert per change that the editor window makes as an undoable edit. The earlier version is this window's own copy (the "changed outside the app" banner, **View → Changes → Review changes on disk**) or a git revision. The changes panel gained Reset, Remove and Restore. Ids replaced by an assistant's rewrite can be matched on request. `chd diff` prints the same review for a terminal and CI. Left out on purpose: tracking moves and resizes, the conformance findings a change introduces, an image diff. ADRs: [0132](../decisions/0132-reviewing-a-change-one-engine-a-read-only-window-and-the-same-answer-on-the-command-line.md). Leftovers, not verified: a real AI edit followed through the whole flow (every live run used scratch copies); Linux and macOS (the git reader and the `PATH` of an app started from a dock, `chd diff` from an installed build, the second preload in a packaged build); many notes changed at once (one `git show` each, six in parallel); a removed container whose children survive; id matching where many elements share a name and type; reverting while the editor has unsaved edits. The icon's 16 to 32 px frames have little margin around the raven's head; a small-size variant from the artist is a possible follow-up.
 
 ### 0117: "Changes since last save" overview
 
-*Done* (merged; the compare window of 0150 builds on it). An on-demand view of what changed in the open diagram against the last saved file, usable without saving. Scope and mechanism: [ADR 0102](../decisions/0102-changes-since-last-save-scope.md). The hand test in the running app was never recorded here.
+*Done* (merged; the compare window of 0150 builds on it). An on-demand view of what changed in the open diagram against the last saved file, usable without saving. The hand test in the running app was never recorded here.
 
 ### 0138: Architecture conformance checks
 
-*Done* (merged; released in v0.3.0). A diagram is checked against a profile, a rules file that declares what an arrow means, shown in a Conformance section of Diagnostics and run from `chd check <file> --profile <file-or-built-in-name>`. Version one covers hexagonal (`dependsOn`) and the data-flow diagram (`flowsTo`); rule kinds are forbidden edge, required edge, containment, must-have-property and a maximum element count. Profiles are never stored in a diagram. ADR: [0131](../decisions/0131-conformance-profiles.md); format: [metamodel-format.md](../metamodel-format.md). Parked in [0157](epics/later/0157-conformance-checks-beyond-v1.md): C4 and levels, layered and cycle rules, waivers, linked-diagram scope. Leftovers, not verified: `chd check` from an installed build, Linux and macOS, and the New profile save dialog by hand.
+*Done* (merged; released in v0.3.0). A diagram is checked against a profile, a rules file that declares what an arrow means, shown in a Conformance section of Diagnostics and run from `chd check <file> --profile <file-or-built-in-name>`. Version one covers hexagonal (`dependsOn`) and the data-flow diagram (`flowsTo`); rule kinds are forbidden edge, required edge, containment, must-have-property and a maximum element count. Profiles are never stored in a diagram. ADR: [0131](../decisions/0131-a-diagram-metamodel-is-a-rules-file-applied-to-a-diagram-never-stored-in-it.md); format: [metamodel-format.md](../metamodel-format.md). Parked: C4 and levels, layered and cycle rules, waivers, linked-diagram scope. Leftovers, not verified: `chd check` from an installed build, Linux and macOS, and the New profile save dialog by hand.
 
 ### 0139: A diagram-wide default font, and which fonts are available
 
-*Done* (merged; released in v0.3.0). One default font per diagram, stored in the file, with a personal default in Preferences behind it, and the fonts installed on the computer offered first in the font lists; picked fonts are stored as a stack. A bundled curated set was left out on purpose. ADR: [0130](../decisions/0130-diagram-default-font-and-installed-fonts.md). Leftovers: the installed-font list on Linux and macOS, and an optional Diagnostics warning for a font that is not available on the machine.
+*Done* (merged; released in v0.3.0). One default font per diagram, stored in the file, with a personal default in Preferences behind it, and the fonts installed on the computer offered first in the font lists; picked fonts are stored as a stack. A bundled curated set was left out on purpose. Leftovers: the installed-font list on Linux and macOS, and an optional Diagnostics warning for a font that is not available on the machine.
 ### 0144: SVG export and a command-line export
 
-*Done* (the app's export live-tested on Windows in the dev and an installed build, 2026-10-21; released in v0.3.0). **File → Export as SVG…** writes the diagram as an SVG, and `chd export` writes the same SVG from a `.chd` file without opening the app, so images in wikis and READMEs can be regenerated in CI. Both use one pure renderer in `src/shared`. ADR: [0124](../decisions/0124-svg-export-from-a-shared-pure-renderer.md); PNG export in the app is [ADR 0051](../decisions/0051-png-export.md). Leftovers, not verified: `chd export` from an installed build (the launcher; its built-in icons come from `app.asar`), Linux and macOS (the save dialog and the command), `chd export` to PNG (a WASM rasteriser) and a PDF export.
+*Done* (the app's export live-tested on Windows in the dev and an installed build, 2026-10-21; released in v0.3.0). **File → Export as SVG…** writes the diagram as an SVG, and `chd export` writes the same SVG from a `.chd` file without opening the app, so images in wikis and READMEs can be regenerated in CI. Both use one pure renderer in `src/shared`. ADR: [0124](../decisions/0124-svg-export-from-a-shared-pure-renderer.md); PNG export in the app is. Leftovers, not verified: `chd export` from an installed build (the launcher; its built-in icons come from `app.asar`), Linux and macOS (the save dialog and the command), `chd export` to PNG (a WASM rasteriser) and a PDF export.
 
 ### 0166: The MCP server and the command line share their checks
 
-*Done* (merged; released in v0.6.0). Every check lives once in shared code and is reachable from `chd`; the Claude Desktop extension has `check_diagram`, `diff_diagrams` (also against a git revision) and `validate_metamodel`, a draft can be checked as text or on standard input, and a parity test runs both front doors over the same diagrams and fails if they disagree. The conformance profile became a diagram metamodel (`.chdmeta`). ADRs: [0138](../decisions/0138-the-mcp-server-carries-the-guidance-the-cli-carries-the-checks.md), [0142](../decisions/0142-the-extension-may-run-git-show-to-read-an-earlier-version.md), [0143](../decisions/0143-the-extension-writes-diagram-metamodels.md), [0144](../decisions/0144-a-conformance-profile-is-called-a-diagram-metamodel.md), [0145](../decisions/0145-a-draft-is-checked-and-compared-without-being-written.md). Leftover: the `chd mcp` launch command, in [0159](#0159-an-ai-menu-that-serves-more-than-claude).
+*Done* (merged; released in v0.6.0). Every check lives once in shared code and is reachable from `chd`; the Claude Desktop extension has `check_diagram`, `diff_diagrams` (also against a git revision) and `validate_metamodel`, a draft can be checked as text or on standard input, and a parity test runs both front doors over the same diagrams and fails if they disagree. The conformance profile became a diagram metamodel (`.chdmeta`). ADRs: [0138](../decisions/0138-assistants-build-diagrams-like-a-person-through-one-implementation-behind-the-cli-and-the-mcp-server.md), [0142](../decisions/0142-the-extension-may-run-git-show-to-read-an-earlier-version.md), [0131](../decisions/0131-a-diagram-metamodel-is-a-rules-file-applied-to-a-diagram-never-stored-in-it.md). Leftover: the `chd mcp` launch command, in [0159](#0159-an-ai-menu-that-serves-more-than-claude).
 
 ### 0162: Minimum distance between connected elements
 
-*Done* (merged; released in v0.6.0). Two elements joined by an edge keep a gap that grows with the label: the layout guide, the validator warning (`chd validate`, `validate_diagram`), a Layout section in Diagnostics, and the loosened gallery diagrams all follow one measurement of the label. ADRs: [0146](../decisions/0146-elements-joined-by-an-edge-keep-a-gap-for-the-label.md), [0147](../decisions/0147-a-check-shared-with-the-skill-script-has-one-source-and-a-committed-copy.md). Leftovers, not verified: Linux is not eye-checked, the loosened gallery wants an eye-check in the app, and the capitals and monospace widths warn slightly early (the export's width estimate errs wide). Follow-up: [0176](epics/0176-assistant-preferences.md).
+*Done* (merged; released in v0.6.0). Two elements joined by an edge keep a gap that grows with the label: the layout guide, the validator warning (`chd validate`, `validate_diagram`), a Layout section in Diagnostics, and the loosened gallery diagrams all follow one measurement of the label. ADRs: [0147](../decisions/0147-one-implementation-of-every-check-for-the-app-the-cli-and-the-mcp-server.md). Leftovers, not verified: Linux is not eye-checked, the loosened gallery wants an eye-check in the app, and the capitals and monospace widths warn slightly early (the export's width estimate errs wide). Follow-up:.
 
 ### 0165: An editing tool for assistants
 
-*Done* (merged; released in v0.7.0). An assistant builds a diagram by doing what a person does, one operation at a time, and each operation answers with what it made: entities, containers, text, lines, connections and connection points, styles, nesting, edge routing points, tags, required tags, highlights, the legend, links to existing or new drill-down diagrams (nested in a folder named after the parent), notes, and removal. The core is pure shared code; the Claude Desktop extension runs it on a file as `edit_diagram` with `inspect_diagram` and `room_for_label`, and the command line as `chd edit` and `chd ask`, with a parity test that requires the same answers and the same bytes. The extension also searches file text without a shell (`search_files`) and lists and reads large folders in pages and by line. Tried twice on the Immich repository (second run 238k tokens of context against 285k). ADRs: [0148](../decisions/0148-an-assistant-builds-a-diagram-by-operations-that-answer.md), [0149](../decisions/0149-the-extension-searches-file-text-in-process.md), [0150](../decisions/0150-chd-edit-and-chd-ask-build-a-diagram-from-the-command-line.md). Left out: icons and the security matrix as operations (until there is a need). Follow-ups: [0177](#0177-fewer-tokens-for-an-assistant-that-builds-diagrams-with-the-tools), [0178](#0178-reading-large-repositories-through-the-extension), [0179](epics/0179-align-a-connection-point-with-another-element.md), [0180](#0180-a-transparent-highlight-for-na), [0181](#0181-second-round-of-assistant-tooling-feedback).
+*Done* (merged; released in v0.7.0). An assistant builds a diagram by doing what a person does, one operation at a time, and each operation answers with what it made: entities, containers, text, lines, connections and connection points, styles, nesting, edge routing points, tags, required tags, highlights, the legend, links to existing or new drill-down diagrams (nested in a folder named after the parent), notes, and removal. The core is pure shared code; the Claude Desktop extension runs it on a file as `edit_diagram` with `inspect_diagram` and `room_for_label`, and the command line as `chd edit` and `chd ask`, with a parity test that requires the same answers and the same bytes. The extension also searches file text without a shell (`search_files`) and lists and reads large folders in pages and by line. Tried twice on the Immich repository (second run 238k tokens of context against 285k). ADRs: [0138](../decisions/0138-assistants-build-diagrams-like-a-person-through-one-implementation-behind-the-cli-and-the-mcp-server.md). Left out: icons and the security matrix as operations (until there is a need). Follow-ups: [0177](#0177-fewer-tokens-for-an-assistant-that-builds-diagrams-with-the-tools), [0178](#0178-reading-large-repositories-through-the-extension), [0179](epics/0179-align-a-connection-point-with-another-element.md), [0180](#0180-a-transparent-highlight-for-na), [0181](#0181-second-round-of-assistant-tooling-feedback).
 
 ### 0158: Notes: the name for the Markdown files behind an element
 
-*Done* (merged; released in v0.5.0). "Notes" is the one word from the file on disk to the interface: stored as `data.notes` (`data.details` is still read), new notes go in a `notes/` folder, and an older note is moved there on the next save. Leftover, not verified: the live check of the rename in the app was never recorded. ADR: [0140](../decisions/0140-the-markdown-files-behind-an-element-are-called-notes.md).
+*Done* (merged; released in v0.5.0). "Notes" is the one word from the file on disk to the interface: stored as `data.notes` (`data.details` is still read), new notes go in a `notes/` folder, and an older note is moved there on the next save. Leftover, not verified: the live check of the rename in the app was never recorded.
 
 ### 0160: README and documentation changes from outside feedback
 
@@ -489,11 +489,11 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0164: Tooling fixes from the first assistant trial runs
 
-*Done* (merged; released in v0.5.0). The validator checks edge handles and warns on legacy names; the extension names the folder it serves and `get_format_spec all` returns the core rules and an index; the guidance covers provenance paths, what to do without `chd`, and writing a diagram metamodel. Leftover: the trial's missing command-line note could not be traced for certain (a run from source is the likely cause). ADR: [0138](../decisions/0138-the-mcp-server-carries-the-guidance-the-cli-carries-the-checks.md).
+*Done* (merged; released in v0.5.0). The validator checks edge handles and warns on legacy names; the extension names the folder it serves and `get_format_spec all` returns the core rules and an index; the guidance covers provenance paths, what to do without `chd`, and writing a diagram metamodel. Leftover: the trial's missing command-line note could not be traced for certain (a run from source is the likely cause). ADR: [0138](../decisions/0138-assistants-build-diagrams-like-a-person-through-one-implementation-behind-the-cli-and-the-mcp-server.md).
 
 ### 0171: Animated edges
 
-*Done* (merged; released in v0.5.0, the reduced-motion fix in v0.5.1). An edge can be animated (`flow` or `pulse`) with speed, direction, pulse distance and dash length and gap; the copy-style brush carries it, a legend line can move, and exports show it still. **View → Animate edges** (Ctrl+Shift+A) and the preference follow the system, always on or always off. ADR: [0141](../decisions/0141-animated-edges-are-an-edge-style-field.md). Leftovers, not verified: the eye-checks (the pulse dot on step and curved routing, a selected edge, a dotted line, switching the direction set, light and dark theme, the flow loop's seam) and a measurement of a diagram with many animated edges.
+*Done* (merged; released in v0.5.0, the reduced-motion fix in v0.5.1). An edge can be animated (`flow` or `pulse`) with speed, direction, pulse distance and dash length and gap; the copy-style brush carries it, a legend line can move, and exports show it still. **View → Animate edges** (Ctrl+Shift+A) and the preference follow the system, always on or always off. Leftovers, not verified: the eye-checks (the pulse dot on step and curved routing, a selected edge, a dotted line, switching the direction set, light and dark theme, the flow loop's seam) and a measurement of a diagram with many animated edges.
 
 ### 0022: Example diagram gallery
 
@@ -501,7 +501,7 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0110: AI-assisted diagram reformat
 
-*Superseded* (closed 2026-11-07). A way to tidy the layout of a diagram an assistant drew roughly. The layout guidance in the bundled skill, the layout checks in `chd edit` and `room_for_label`, and the operations that place elements deliberately mean an assistant builds the layout right the first time. A tidy-up action that moves things after the fact remains the parked auto-layout idea in epic 0126. ADRs: [0148](../decisions/0148-an-assistant-builds-a-diagram-by-operations-that-answer.md), [0150](../decisions/0150-chd-edit-and-chd-ask-build-a-diagram-from-the-command-line.md).
+*Superseded* (closed 2026-11-07). A way to tidy the layout of a diagram an assistant drew roughly. The layout guidance in the bundled skill, the layout checks in `chd edit` and `room_for_label`, and the operations that place elements deliberately mean an assistant builds the layout right the first time. A tidy-up action that moves things after the fact remains the parked auto-layout idea in epic 0126. ADRs: [0138](../decisions/0138-assistants-build-diagrams-like-a-person-through-one-implementation-behind-the-cli-and-the-mcp-server.md).
 
 ### 0019: Installable vendor icon packs
 
@@ -517,87 +517,87 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0172: Drag to adjust number fields
 
-*Done* (merged; in the next release, 0.8.0). Dragging the label of a number or slider field changes its value: one step per pixel, Shift for fine and Ctrl for coarse, the cursor hidden by pointer lock so a long drag does not run out of screen, one undo step per drag, and a mixed selection set to the one value. It applies to every `NumberField` and `SliderField` and to the Isolate opacity preference. ADR: [0152](../decisions/0152-drag-a-number-fields-label-to-change-it.md). Left out: the zoom limits, the connection-point maximum in Diagram settings and the gravity preset values, which are bare inputs outside `NumberField`.
+*Done* (merged; in the next release, 0.8.0). Dragging the label of a number or slider field changes its value: one step per pixel, Shift for fine and Ctrl for coarse, the cursor hidden by pointer lock so a long drag does not run out of screen, one undo step per drag, and a mixed selection set to the one value. It applies to every `NumberField` and `SliderField` and to the Isolate opacity preference. Left out: the zoom limits, the connection-point maximum in Diagram settings and the gravity preset values, which are bare inputs outside `NumberField`.
 
 ### 0173: Style changes in the change review
 
-*Done* (merged; in the next release, 0.8.0). A look that carries meaning (fill, border colour, width and opacity, line style, markers, an edge's colour, width and animation, icons) is now a change in a review, as a Restyled class with its own colour, badge, count and heading in `chd diff`, told with the old and new value. Font, text alignment, label position and routing keep the paint-brush marker only. The changes list shows every changed line, with a chip beside each colour. An example pair is in `examples/review/`. ADR: [0153](../decisions/0153-a-look-that-carries-meaning-is-a-change-in-a-review.md).
+*Done* (merged; in the next release, 0.8.0). A look that carries meaning (fill, border colour, width and opacity, line style, markers, an edge's colour, width and animation, icons) is now a change in a review, as a Restyled class with its own colour, badge, count and heading in `chd diff`, told with the old and new value. Font, text alignment, label position and routing keep the paint-brush marker only. The changes list shows every changed line, with a chip beside each colour. An example pair is in `examples/review/`. ADR: [0132](../decisions/0132-reviewing-a-change-one-engine-a-read-only-window-and-the-same-answer-on-the-command-line.md).
 
 ### 0175: A command-line reference sheet with examples
 
-*Done* (merged; in the next release, 0.8.0). [docs/cli-reference.md](../cli-reference.md) lists every `chd` command with its options, exit codes and worked examples, including the pipe forms (a draft on standard input, a version out of git) and a pipeline step that fails on exit code 1. A test reads the help text of each command and fails when a command, an option or an edit operation is missing from the sheet. `chd help edit` now lists the edit operations. It is linked from the README and from `chd --help`. ADR: [0150](../decisions/0150-chd-edit-and-chd-ask-build-a-diagram-from-the-command-line.md). Left open: a link from Help in the app (with the menu review) and a check of the Windows notes (PowerShell 5.1 re-encoding, the launcher path) on a machine with the installed app.
+*Done* (merged; in the next release, 0.8.0). [docs/cli-reference.md](../cli-reference.md) lists every `chd` command with its options, exit codes and worked examples, including the pipe forms (a draft on standard input, a version out of git) and a pipeline step that fails on exit code 1. A test reads the help text of each command and fails when a command, an option or an edit operation is missing from the sheet. `chd help edit` now lists the edit operations. It is linked from the README and from `chd --help`. ADR: [0138](../decisions/0138-assistants-build-diagrams-like-a-person-through-one-implementation-behind-the-cli-and-the-mcp-server.md). Left open: a link from Help in the app (with the menu review) and a check of the Windows notes (PowerShell 5.1 re-encoding, the launcher path) on a machine with the installed app.
 
 ### 0185: Show unsaved changes
 
-*Done* (in the next release, 0.8.0). The window title reads `<file name> — Context-Heavy Diagrams` with a dot in front while the diagram or one of its notes is not on disk, and the Notes panel says Unsaved or Saved beside the note's name. Two states, not three: an edit is kept in memory at once and reaches the file when the diagram is saved. ADR: [0154](../decisions/0154-unsaved-changes-show-in-the-window-title-and-the-notes-panel.md).
+*Done* (in the next release, 0.8.0). The window title reads `<file name> — Context-Heavy Diagrams` with a dot in front while the diagram or one of its notes is not on disk, and the Notes panel says Unsaved or Saved beside the note's name. Two states, not three: an edit is kept in memory at once and reaches the file when the diagram is saved.
 
 ### 0182: Icon names in the Ctrl-hover card
 
-*Done* (in the next release, 0.8.0). Holding Ctrl (Cmd on a Mac) over an element names its icons, one per corner (`top left: server`), in a card whose tags and icons are on coloured, labelled lines (required tags first, then other tags, then icons). The card's width and the height beyond which it is trimmed are preferences. ADRs: [0155](../decisions/0155-the-ctrl-hover-card-names-an-elements-icons.md), [0156](../decisions/0156-the-ctrl-hover-cards-size-is-a-preference.md).
+*Done* (in the next release, 0.8.0). Holding Ctrl (Cmd on a Mac) over an element names its icons, one per corner (`top left: server`), in a card whose tags and icons are on coloured, labelled lines (required tags first, then other tags, then icons). The card's width and the height beyond which it is trimmed are preferences.
 
 ### 0159: An AI menu that serves more than Claude
 
-*Done* (in the next release, 0.8.0). The AI menu reads Copy AI instructions, Set up a folder for AI agents… and Install the MCP server for (Claude Desktop…, Other apps: copy server settings…). The server the Claude Desktop extension runs also ships unpacked and starts with `chd mcp <folder> [--allow-update]`; the copied settings start the app's executable as plain Node, so Linux has a route to the server too. ADRs: [0110](../decisions/0110-claude-desktop-extension.md), [0138](../decisions/0138-the-mcp-server-carries-the-guidance-the-cli-carries-the-checks.md). Left open: a try of the copied settings on Linux and in Claude Code or Cursor, and an AppImage, which has no stable path and is told to use another package.
+*Done* (in the next release, 0.8.0). The AI menu reads Copy AI instructions, Set up a folder for AI agents… and Install the MCP server for (Claude Desktop…, Other apps: copy server settings…). The server the Claude Desktop extension runs also ships unpacked and starts with `chd mcp <folder> [--allow-update]`; the copied settings start the app's executable as plain Node, so Linux has a route to the server too. ADRs: [0110](../decisions/0110-claude-desktop-extension.md), [0138](../decisions/0138-assistants-build-diagrams-like-a-person-through-one-implementation-behind-the-cli-and-the-mcp-server.md). Left open: a try of the copied settings on Linux and in Claude Code or Cursor, and an AppImage, which has no stable path and is told to use another package.
 
 ### 0174: A review of the menus, and a glossary in Help
 
-*Done* (in the next release, 0.8.0). A line separates the kinds of entry in File, Edit, View and Help; **New** (Diagram, Diagram metamodel…) and **Export** (PNG…, SVG…) are submenus; the command palette lists submenu entries as `New: Diagram`. **Help → Glossary…** shows the plain part of each term in `docs/architecture/glossary.md`, with a filter box. ADR: [0157](../decisions/0157-menus-are-grouped-and-the-glossary-is-in-help.md). Left open: a link to the command-line reference from Help, which needs the sheet compiled into the app like the glossary.
+*Done* (in the next release, 0.8.0). A line separates the kinds of entry in File, Edit, View and Help; **New** (Diagram, Diagram metamodel…) and **Export** (PNG…, SVG…) are submenus; the command palette lists submenu entries as `New: Diagram`. **Help → Glossary…** shows the plain part of each term in `docs/architecture/glossary.md`, with a filter box. Left open: a link to the command-line reference from Help, which needs the sheet compiled into the app like the glossary.
 
 ### 0184: Adjustable width for the diagnostics and changes panels
 
-*Done* (in the next release, 0.8.0). The right-hand dock that holds the notes, diagnostics, changes, layers and preferences panels has a drag handle on its left edge (also the arrow keys, and a double-click for the default); one width for every panel, kept as a preference between 280 and 900 px. The list in the review window has the same handle, kept while that window is open because it cannot write preferences. ADR: [0158](../decisions/0158-side-panel-width-and-the-minimap-are-preferences.md).
+*Done* (in the next release, 0.8.0). The right-hand dock that holds the notes, diagnostics, changes, layers and preferences panels has a drag handle on its left edge (also the arrow keys, and a double-click for the default); one width for every panel, kept as a preference between 280 and 900 px. The list in the review window has the same handle, kept while that window is open because it cannot write preferences.
 
 ### 0169: A setting to hide the minimap
 
-*Done* (in the next release, 0.8.0). A small button on the minimap's corner and **View → Minimap** show or hide it; the choice is a preference, on by default. ADR: [0158](../decisions/0158-side-panel-width-and-the-minimap-are-preferences.md).
+*Done* (in the next release, 0.8.0). A small button on the minimap's corner and **View → Minimap** show or hide it; the choice is a preference, on by default.
 
 ### 0167: An assistant can see the diagram it drew
 
-*Done* (0.8.0). No PNG in this tool: a rasteriser means a new dependency (resvg-wasm plus a bundled font) or an installed browser, for a picture not every client shows its model. Turning an SVG into a PNG is a separate tool that takes any SVG. Instead the layout check judges each edge on the path that is drawn (curves, bend points, routing style): an edge across an element, edges crossing, and an edge label on an element, an edge or another label. `chd edit`, `chd ask inspect` and the MCP `edit_diagram` and `inspect_diagram` answer with it, and the skill's layout guide tells an assistant to run it after drawing. Run over the 34 example diagrams it names real problems (checked against renders) in at most 12 ms. ADR: [0161](../decisions/0161-the-layout-check-judges-edges-as-they-are-drawn.md). Left open: whether `chd export` should default to the app's theme, transparent, or stay light and say so (its default light export puts black text on dark fills; `--theme dark` is right), and rerouting edges, which is [0168](epics/0168-teach-assistants-to-reroute-edges.md).
+*Done* (0.8.0). No PNG in this tool: a rasteriser means a new dependency (resvg-wasm plus a bundled font) or an installed browser, for a picture not every client shows its model. Turning an SVG into a PNG is a separate tool that takes any SVG. Instead the layout check judges each edge on the path that is drawn (curves, bend points, routing style): an edge across an element, edges crossing, and an edge label on an element, an edge or another label. `chd edit`, `chd ask inspect` and the MCP `edit_diagram` and `inspect_diagram` answer with it, and the skill's layout guide tells an assistant to run it after drawing. Run over the 34 example diagrams it names real problems (checked against renders) in at most 12 ms. ADR: [0138](../decisions/0138-assistants-build-diagrams-like-a-person-through-one-implementation-behind-the-cli-and-the-mcp-server.md). Left open: whether `chd export` should default to the app's theme, transparent, or stay light and say so (its default light export puts black text on dark fills; `--theme dark` is right), and rerouting edges, which is.
 
 ### 0186: `chd` on the PATH, as a choice in the installer
 
-*Done* (0.8.0). The Windows installer's options page has a third checkbox, unticked by default, that adds `<install folder>\bin` to the user's PATH (`HKCU\Environment\Path`, kept as `REG_EXPAND_SZ`); `bin\chd.cmd` is a one-line shim that calls the launcher one folder up. The uninstaller removes exactly that entry, an update leaves it alone, and a PATH too long for NSIS strings is left untouched. `scripts/installerPath.test.mjs` runs the same NSIS code against a scratch registry key. Tried by the maintainer with the built installer. ADR: [0162](../decisions/0162-the-installer-can-put-chd-on-the-path.md). Left open: Linux and macOS, and an update must move the entry if the install-folder choice (0161) is ever added.
+*Done* (0.8.0). The Windows installer's options page has a third checkbox, unticked by default, that adds `<install folder>\bin` to the user's PATH (`HKCU\Environment\Path`, kept as `REG_EXPAND_SZ`); `bin\chd.cmd` is a one-line shim that calls the launcher one folder up. The uninstaller removes exactly that entry, an update leaves it alone, and a PATH too long for NSIS strings is left untouched. `scripts/installerPath.test.mjs` runs the same NSIS code against a scratch registry key. Tried by the maintainer with the built installer. ADR: [0139](../decisions/0139-releases-are-built-by-ci-from-a-version-tag-and-say-how-far-they-have-been-tried.md). Left open: Linux and macOS, and an update must move the entry if the install-folder choice (0161) is ever added.
 
 ### 0180: A transparent highlight for "N/A"
 
-*Done* (0.9.0). A highlight whose colour is `transparent` marks nothing, so a container tagged `N/A` is not painted the colour of its children. It is dropped before the one-or-several rule, has no legend row, and needs no file-format change. The highlights panel has a ∅ button for "no colour" and shows a struck-through swatch; the `edit_diagram` help tells an assistant to use it. Example: `examples/highlight-not-applicable.chd`. Tried by the maintainer in the app. ADR: [0163](../decisions/0163-a-transparent-highlight-leaves-an-element-out.md). Left open: putting "no colour" inside a custom colour popover instead of a separate button (the native picker cannot hold it).
+*Done* (0.9.0). A highlight whose colour is `transparent` marks nothing, so a container tagged `N/A` is not painted the colour of its children. It is dropped before the one-or-several rule, has no legend row, and needs no file-format change. The highlights panel has a ∅ button for "no colour" and shows a struck-through swatch; the `edit_diagram` help tells an assistant to use it. Example: `examples/highlight-not-applicable.chd`. Tried by the maintainer in the app. Left open: putting "no colour" inside a custom colour popover instead of a separate button (the native picker cannot hold it).
 
 ### 0163: The MCP server connected to the running app
 
-*Done as a spike, ending in no-go* (2026-11-10). The app opens no listener. Measured on Windows: a Node named pipe is readable by Everyone and the anonymous logon, so a token would be the only protection; a Unix socket rests on file permissions; both trip the offline tripwire. The gain (the open diagram, the selection, unsaved state) is small, because the unsaved-edit gap is already covered by the changed-outside-the-app notice, and the larger payoff, watching an assistant edit live, was judged spectacle. The reference app (EffectCraft) uses an unauthenticated loopback TCP channel switched on by a launch flag. The design points for a later live-editing mode are kept in the ADR. ADR: [0169](../decisions/0169-no-live-connection-between-the-mcp-server-and-the-app.md). What the person points at reaches an assistant through the existing copy (Ctrl+C puts the selection on the clipboard as JSON, [ADR 0049](../decisions/0049-clipboard-copy-paste.md)), which the maintainer judged enough; a leaner "copy for an assistant" (the `.chd` node shape, no notes or links) was considered and dropped, to be raised again if the existing copy proves too noisy.
+*Done as a spike, ending in no-go* (2026-11-10). The app opens no listener. Measured on Windows: a Node named pipe is readable by Everyone and the anonymous logon, so a token would be the only protection; a Unix socket rests on file permissions; both trip the offline tripwire. The gain (the open diagram, the selection, unsaved state) is small, because the unsaved-edit gap is already covered by the changed-outside-the-app notice, and the larger payoff, watching an assistant edit live, was judged spectacle. The reference app (EffectCraft) uses an unauthenticated loopback TCP channel switched on by a launch flag. The design points for a later live-editing mode are kept in the ADR. ADR: [0169](../decisions/0169-no-live-connection-between-the-mcp-server-and-the-app.md). What the person points at reaches an assistant through the existing copy (Ctrl+C puts the selection on the clipboard as JSON), which the maintainer judged enough; a leaner "copy for an assistant" (the `.chd` node shape, no notes or links) was considered and dropped, to be raised again if the existing copy proves too noisy.
 
 ### 0170: Drag an edge label along the edge
 
-*Done* (0.9.0). Hold Alt and drag a connection's label: it follows the drawn path (curves, steps and bend points included) and writes `style.labelPosition`, so the file format is unchanged. One undo step per drag; a plain drag or click leaves the label alone. Tried by the maintainer on Windows. ADR: [0164](../decisions/0164-alt-drag-slides-an-edge-label-along-its-edge.md). Left open: Alt+drag on Linux, where some window managers take it to move the window (the Position slider is the fallback).
+*Done* (0.9.0). Hold Alt and drag a connection's label: it follows the drawn path (curves, steps and bend points included) and writes `style.labelPosition`, so the file format is unchanged. One undo step per drag; a plain drag or click leaves the label alone. Tried by the maintainer on Windows. Left open: Alt+drag on Linux, where some window managers take it to move the window (the Position slider is the fallback).
 
 ### 0147: Paste a table to create many elements
 
-*Done* (0.9.0). The bulk-create dialog reads a pasted table (tab-separated from a spreadsheet, or comma-separated with quotes) as well as a list of labels. The header decides each column (Name = label, Description = note, Domain/Group/Container/Parent = container, anything else a tag) and a preview lets the person change it. Rows with the same label merge; a description becomes a note file written at the next Save; a value a required tag does not allow is left at the default and listed. Example: `examples/paste-a-table.csv`. Tried by the maintainer with a real paste. ADR: [0168](../decisions/0168-create-elements-from-a-pasted-table.md). Left open: putting the elements into containers from the container column (kept as a tag for now), connections from a table (`from, to, label` rows, its own epic) and a "Create from CSV file…" menu item.
+*Done* (0.9.0). The bulk-create dialog reads a pasted table (tab-separated from a spreadsheet, or comma-separated with quotes) as well as a list of labels. The header decides each column (Name = label, Description = note, Domain/Group/Container/Parent = container, anything else a tag) and a preview lets the person change it. Rows with the same label merge; a description becomes a note file written at the next Save; a value a required tag does not allow is left at the default and listed. Example: `examples/paste-a-table.csv`. Tried by the maintainer with a real paste. Left open: putting the elements into containers from the container column (kept as a tag for now), connections from a table (`from, to, label` rows, its own epic) and a "Create from CSV file…" menu item.
 
 ### 0130: Multi-file save follow-ups
 
-*Done* (in the next release, 0.8.0). One notice lists every file changed outside the app (the diagram, and any note that is open or has unsaved edits) with Review changes, Reload and Ignore, and Reload touches only those files. Unsaved text in a note whose element was deleted is kept and listed in Diagnostics with Copy text and Discard. A note's clean copy is dropped on every way the panel closes. Save As is a dialog that copies or removes every reference (notes, images and custom icons, linked diagrams) into a folder named after the new diagram. ADRs: [0159](../decisions/0159-one-notice-for-every-file-that-changed-outside-the-app.md), [0160](../decisions/0160-save-as-copies-into-a-folder-named-after-the-new-diagram.md), and [0092](../decisions/0092-unified-multi-file-save-and-change-detection.md) updated. Left open: the check on Linux (file-stamp granularity, the native dialogs including the save picker's replace prompt, the recovery folder).
+*Done* (in the next release, 0.8.0). One notice lists every file changed outside the app (the diagram, and any note that is open or has unsaved edits) with Review changes, Reload and Ignore, and Reload touches only those files. Unsaved text in a note whose element was deleted is kept and listed in Diagnostics with Copy text and Discard. A note's clean copy is dropped on every way the panel closes. Save As is a dialog that copies or removes every reference (notes, images and custom icons, linked diagrams) into a folder named after the new diagram. ADRs: [0040](../decisions/0040-unsaved-work-and-outside-changes-are-never-lost-or-silently-overwritten.md) updated. Left open: the check on Linux (file-stamp granularity, the native dialogs including the save picker's replace prompt, the recovery folder).
 
 ### 0161: Published installers, built by CI on a version tag
 
-*Done in part, closed 2026-11-11.* Pushing a `vMAJOR.MINOR.PATCH` tag on `master` makes `release.yml` check the version, run lint and the tests, build the Windows installer, install it silently and run `chd --version`, write `SHA256SUMS` and publish a GitHub Release with the changelog section as notes; two more jobs add a Linux AppImage and deb and a macOS universal DMG, labelled untested on real hardware. The licence and third-party notices sit next to the program, the README has a Download section, and v0.4.0 passed a clean-machine test. ADRs: [0139](../decisions/0139-releases-built-by-ci-from-a-version-tag.md), [0165](../decisions/0165-the-release-installs-its-own-installer-and-ships-the-licence.md), [0166](../decisions/0166-linux-and-macos-builds-published-as-untested.md). Not done, on purpose and for later: applying to SignPath Foundation for free signing (it needs downloads to show; the application needs a code signing policy page, a privacy statement, MFA and reputation evidence, and the signing decision gets an ADR once it is answered); a choice of install folder (the old uninstaller runs with `--updated` when a new install goes to another folder and skips the custom steps, so the PATH entry and the association would stay on the old folder). The Linux and macOS jobs have not run on a real tag; the first release after this is their check.
+*Done in part, closed 2026-11-11.* Pushing a `vMAJOR.MINOR.PATCH` tag on `master` makes `release.yml` check the version, run lint and the tests, build the Windows installer, install it silently and run `chd --version`, write `SHA256SUMS` and publish a GitHub Release with the changelog section as notes; two more jobs add a Linux AppImage and deb and a macOS universal DMG, labelled untested on real hardware. The licence and third-party notices sit next to the program, the README has a Download section, and v0.4.0 passed a clean-machine test. ADRs: [0139](../decisions/0139-releases-are-built-by-ci-from-a-version-tag-and-say-how-far-they-have-been-tried.md). Not done, on purpose and for later: applying to SignPath Foundation for free signing (it needs downloads to show; the application needs a code signing policy page, a privacy statement, MFA and reputation evidence, and the signing decision gets an ADR once it is answered); a choice of install folder (the old uninstaller runs with `--updated` when a new install goes to another folder and skips the custom steps, so the PATH entry and the association would stay on the old folder). The Linux and macOS jobs have not run on a real tag; the first release after this is their check.
 
 ### 0177: Fewer tokens for an assistant that builds diagrams with the tools
 
-*Done* (merged, in the 0.10.0 changes). `inspect_diagram` and `chd ask inspect` take `issues_only`, `ids` and `container`; an edit answers with the layout problems that involve what it touched and a count of the rest; a one-page `build` topic (`get_format_spec`, `chd spec build`) is what an assistant reads to build with `edit_diagram`, and the server instructions say so; edit answers carry new ids and changed fields instead of the whole element; the server tells an assistant which build it is. `scripts/spec-comparison/` holds a task, a scoring script and the Meridian Rail brief: in two rounds (one rater, small numbers) the `build` page did about as well as the full 78 KB spec on 5% of its text, and no spec did clearly worse. Trimming the echo of `connect` was decided against (about 2k tokens on a 250-operation build). The Meridian run is the benchmark for rerouting edges (0168). ADRs: [0171](../decisions/0171-an-edit-answers-with-the-problems-it-touched.md), [0172](../decisions/0172-building-with-edit-diagram-reads-a-one-page-topic.md).
+*Done* (merged, in the 0.10.0 changes). `inspect_diagram` and `chd ask inspect` take `issues_only`, `ids` and `container`; an edit answers with the layout problems that involve what it touched and a count of the rest; a one-page `build` topic (`get_format_spec`, `chd spec build`) is what an assistant reads to build with `edit_diagram`, and the server instructions say so; edit answers carry new ids and changed fields instead of the whole element; the server tells an assistant which build it is. `scripts/spec-comparison/` holds a task, a scoring script and the Meridian Rail brief: in two rounds (one rater, small numbers) the `build` page did about as well as the full 78 KB spec on 5% of its text, and no spec did clearly worse. Trimming the echo of `connect` was decided against (about 2k tokens on a 250-operation build). The Meridian run is the benchmark for rerouting edges (0168). ADRs: [0138](../decisions/0138-assistants-build-diagrams-like-a-person-through-one-implementation-behind-the-cli-and-the-mcp-server.md).
 
 ### 0178: Reading large repositories through the extension
 
-*Done* (merged, in the 0.10.0 changes). `list_files` has a folder view, a glob and paging, `read_file` reads a range of lines, and `search_files` searches text in the server itself ([0149](../decisions/0149-the-extension-searches-file-text-in-process.md)); this epic added the rule that listings and searches leave out what the `.gitignore` files in the folder name, say which folders they left out, and answer with path and size only, 100 files a page. On five repositories that took this repository's listing from 6,176 files to 845 and a page from about 37,000 to 8,400 characters. ADR: [0173](../decisions/0173-listings-and-searches-leave-out-what-gitignore-names.md). Not done, on purpose: the command line gets no listing or search (an agent with a shell has its own), `.gitignore` files above the chosen folder are not read, and the Immich C4 task was not re-run to compare tokens, as this is a functionality and control change.
+*Done* (merged, in the 0.10.0 changes). `list_files` has a folder view, a glob and paging, `read_file` reads a range of lines, and `search_files` searches text in the server itself; this epic added the rule that listings and searches leave out what the `.gitignore` files in the folder name, say which folders they left out, and answer with path and size only, 100 files a page. On five repositories that took this repository's listing from 6,176 files to 845 and a page from about 37,000 to 8,400 characters. Not done, on purpose: the command line gets no listing or search (an agent with a shell has its own), `.gitignore` files above the chosen folder are not read, and the Immich C4 task was not re-run to compare tokens, as this is a functionality and control change.
 
 ### 0181: Second round of assistant tooling feedback
 
-*Done* (merged, in the 0.10.0 changes). Small gaps from the second Immich trial and the spec comparison: `list_files` says when folders below its depth limit were left out, and the layout checks now flag an edge label on a container's wall (including one squeezed outside a container that has room) and one that covers a container's own title ([0161](../decisions/0161-the-layout-check-judges-edges-as-they-are-drawn.md)). Dropped on purpose: creating a diagram with the setup (required tags, highlights, legend) copied from an existing one, since a human can do it in one Save As and it is rarely needed.
+*Done* (merged, in the 0.10.0 changes). Small gaps from the second Immich trial and the spec comparison: `list_files` says when folders below its depth limit were left out, and the layout checks now flag an edge label on a container's wall (including one squeezed outside a container that has room) and one that covers a container's own title ([0138](../decisions/0138-assistants-build-diagrams-like-a-person-through-one-implementation-behind-the-cli-and-the-mcp-server.md)). Dropped on purpose: creating a diagram with the setup (required tags, highlights, legend) copied from an existing one, since a human can do it in one Save As and it is rarely needed.
 
 ### 0151: Style types as sister interfaces
 
-*Done* (merged, in the 0.10.0 changes). `NodeStyle` and `EdgeStyle` are built from sister parts, `TextStyle`, `FillStyle`, `StrokeStyle` and `LineEndsStyle`, instead of both extending `FontStyle`. The JSON stays flat, so no format change. ADR: [0170](../decisions/0170-style-types-are-sister-parts.md).
+*Done* (merged, in the 0.10.0 changes). `NodeStyle` and `EdgeStyle` are built from sister parts, `TextStyle`, `FillStyle`, `StrokeStyle` and `LineEndsStyle`, instead of both extending `FontStyle`. The JSON stays flat, so no format change.
 
 ### 0187: The React Flow label in the corner of the canvas
 
@@ -605,15 +605,15 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0188: Edges that attach loosely to their connection points
 
-*Done* (in the 0.10.0 changes; tried by the maintainer in the app on 2026-11-15, "keep this feel"). Springy points: each connection point slides up to 10 px along its side from its evenly spaced slot, so an edge between nearly aligned elements runs straight; nothing is stored, so a person's and an assistant's diagram behave alike ([0176](../decisions/0176-connection-points-slide-a-little-to-straighten-edges.md)). Automatic attachment: an edge end with no connection point picks the side facing the other element and a free point on it, in the order of the other ends, and follows when elements move; the dashed central target while connecting, **Attach automatically** and **Fix to current points** in the edge menu, `"auto"` for assistants ([0178](../decisions/0178-edge-ends-with-no-connection-point-attach-themselves.md)). Examples: `springy-points.chd`, `automatic-attachment.chd`. A chain-of-springs variant was tried and dropped. Not done: a mark on an automatic end; choosing one end of an edge from the menu (dragging an end does it); the dashed preview line when dragging from several selected elements ignores slid and automatic ends; edges with bend points are not routed again when an end moves; the canvas still works out where an edge ends itself, with the shared pick and slides, rather than through one function used everywhere. Side effect for [0179](epics/0179-align-a-connection-point-with-another-element.md): what it was for is mostly covered.
+*Done* (in the 0.10.0 changes; tried by the maintainer in the app on 2026-11-15, "keep this feel"). Springy points: each connection point slides up to 10 px along its side from its evenly spaced slot, so an edge between nearly aligned elements runs straight; nothing is stored, so a person's and an assistant's diagram behave alike. Automatic attachment: an edge end with no connection point picks the side facing the other element and a free point on it, in the order of the other ends, and follows when elements move; the dashed central target while connecting, **Attach automatically** and **Fix to current points** in the edge menu, `"auto"` for assistants. Examples: `springy-points.chd`, `automatic-attachment.chd`. A chain-of-springs variant was tried and dropped. Not done: a mark on an automatic end; choosing one end of an edge from the menu (dragging an end does it); the dashed preview line when dragging from several selected elements ignores slid and automatic ends; edges with bend points are not routed again when an end moves; the canvas still works out where an edge ends itself, with the shared pick and slides, rather than through one function used everywhere. Side effect for [0179](epics/0179-align-a-connection-point-with-another-element.md): what it was for is mostly covered.
 
 ### 0105: Behaviour, the flow elements
 
-*Done* (in the 0.11.0 changes; tried in the app by the maintainer on real flows, and an order-to-cash flow built with the assistant tools was judged good enough to release, 2026-11-17). A new element, Behaviour (a node of `type` `stencil` with a `kind`), for what happens in a flow: five steps, three choices and five events, inspired by BPMN and not limited to it ([ADR 0180](../decisions/0180-stencils-are-light-elements-for-events-and-verbs.md)). The marks are drawn as SVG, a behaviour has one link and no notes or tags, the legend has a row per kind in use, the kind list is searchable by name and BPMN term, and the list is closed. The label of a small shape has a position ([0189](epics/0189-where-a-label-goes.md)), lanes are containers whose hand-offs the crossing marks show ([0088](#0088-detecthighlight-edges-crossing-container-boundaries)), and assistants build and read all of it ([ADR 0187](../decisions/0187-assistants-build-behaviours-and-read-crossings.md)). Example: `examples/process-flow-stencils.chd`. Not done: stencil sets that can be switched on and off as a group (a threat-modelling overlay of trust boundaries and attackers on an ordinary diagram, like the edge direction sets of [ADR 0081](../decisions/0081-flippable-edge-direction-sets.md)), which was only thinking, with the question of what happens to edges to a hidden symbol open; more kinds (start and end variants with a mark, boundary events, data objects, pools with message flows, annotations) wait for real flows to need them; repetition and parallel policy is [0190](epics/0190-behaviour-parameters-repetition-and-parallel-policy.md).
+*Done* (in the 0.11.0 changes; tried in the app by the maintainer on real flows, and an order-to-cash flow built with the assistant tools was judged good enough to release, 2026-11-17). A new element, Behaviour (a node of `type` `stencil` with a `kind`), for what happens in a flow: five steps, three choices and five events, inspired by BPMN and not limited to it ([ADR 0080](../decisions/0080-behaviours-are-the-tools-own-flow-vocabulary-with-semantic-not-symmetric-symbols.md)). The marks are drawn as SVG, a behaviour has one link and no notes or tags, the legend has a row per kind in use, the kind list is searchable by name and BPMN term, and the list is closed. The label of a small shape has a position, lanes are containers whose hand-offs the crossing marks show ([0088](#0088-detecthighlight-edges-crossing-container-boundaries)), and assistants build and read all of it ([ADR 0138](../decisions/0138-assistants-build-diagrams-like-a-person-through-one-implementation-behind-the-cli-and-the-mcp-server.md)). Example: `examples/process-flow-stencils.chd`. Not done: stencil sets that can be switched on and off as a group (a threat-modelling overlay of trust boundaries and attackers on an ordinary diagram, like the edge direction sets of), which was only thinking, with the question of what happens to edges to a hidden symbol open; more kinds (start and end variants with a mark, boundary events, data objects, pools with message flows, annotations) wait for real flows to need them; repetition and parallel policy is.
 
 ### 0195: Edge points follow the elements they bend around
 
-*Done* (merged 2026-11-18). A manual edge point stays where it was put when elements move, so a loop drawn round two elements was cut through them when their container moved. Now, when both ends of an edge move by the same amount (a drag, a container drag, a multi-selection, nudges, align, a typed position, an assistant's `move`), its points move too, as one undo step with the move; and with Ctrl/Cmd held as a drag starts, the points of an edge with one moved end that are nearer that end than the other come along. Resizes leave points alone. ADRs: [0189](../decisions/0189-edge-points-move-with-elements-that-move-together.md), [0190](../decisions/0190-ctrl-drag-takes-the-nearest-points-along.md). The jog a one-sided move can leave on a two-point step edge is part of epic 0196.
+*Done* (merged 2026-11-18). A manual edge point stays where it was put when elements move, so a loop drawn round two elements was cut through them when their container moved. Now, when both ends of an edge move by the same amount (a drag, a container drag, a multi-selection, nudges, align, a typed position, an assistant's `move`), its points move too, as one undo step with the move; and with Ctrl/Cmd held as a drag starts, the points of an edge with one moved end that are nearer that end than the other come along. Resizes leave points alone. The jog a one-sided move can leave on a two-point step edge is part of epic 0196.
 
 ### 0183: Installable icon packs
 
@@ -621,27 +621,27 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0196: Grab every segment of a right-angled edge
 
-*Done* (merged 2026-11-18, in 0.12.0). Step and smooth step edges have a handle on every straight segment, including the ones touching the two elements; dragging one leaves the element by a stub, so a connection between two facing elements goes round both in one drag. A point on a straight run splits it into two segments that move on their own with a bridge at the point. The route leaves and arrives by the side the edge is attached to, so one point no longer makes a spike. "Add point here" puts the point on the drawn route, "Remove point" is offered near a point, and "Reset route" removes the points and the label's slide. Dots on the points were tried and removed. ADR: [0191](../decisions/0191-right-angled-edges-leave-and-arrive-by-their-side.md).
+*Done* (merged 2026-11-18, in 0.12.0). Step and smooth step edges have a handle on every straight segment, including the ones touching the two elements; dragging one leaves the element by a stub, so a connection between two facing elements goes round both in one drag. A point on a straight run splits it into two segments that move on their own with a bridge at the point. The route leaves and arrives by the side the edge is attached to, so one point no longer makes a spike. "Add point here" puts the point on the drawn route, "Remove point" is offered near a point, and "Reset route" removes the points and the label's slide. Dots on the points were tried and removed.
 
 ### 0088: Detect/highlight edges crossing container boundaries
 
-*Done* (first slice in 0.11.0; tried by the maintainer on real flows, 2026-11-17). A lane is the container an element has as its parent, nested containers count one border each, and every edge counts. An edge that leaves its lane is shown by a gate along the border, on a session switch that is off by default (View, Display, Mark crossings) and on a Ctrl hover over the edge; it is derived and nothing goes in the file. The SVG export draws the gates, `inspect_diagram` lists the crossings, and `examples/crossings.chd` shows them. ADRs: [0185](../decisions/0185-edges-that-cross-a-container-are-marked-with-a-gate.md), [0187](../decisions/0187-assistants-build-behaviours-and-read-crossings.md). Left, not scheduled: a second mode where the gate and the whole edge stand out, and a list of the crossings with counts per pair of containers whose rows select their edges. A rule that forbids a crossing is a check of a diagram metamodel, not part of this.
+*Done* (first slice in 0.11.0; tried by the maintainer on real flows, 2026-11-17). A lane is the container an element has as its parent, nested containers count one border each, and every edge counts. An edge that leaves its lane is shown by a gate along the border, on a session switch that is off by default (View, Display, Mark crossings) and on a Ctrl hover over the edge; it is derived and nothing goes in the file. The SVG export draws the gates, `inspect_diagram` lists the crossings, and `examples/crossings.chd` shows them. ADRs: [0138](../decisions/0138-assistants-build-diagrams-like-a-person-through-one-implementation-behind-the-cli-and-the-mcp-server.md). Left, not scheduled: a second mode where the gate and the whole edge stand out, and a list of the crossings with counts per pair of containers whose rows select their edges. A rule that forbids a crossing is a check of a diagram metamodel, not part of this.
 
 ### 0199: Event position: starts a flow, or in the flow
 
-*Done* (merged 2026-11-20, in 0.13.0). An event says whether it begins a flow or sits in one: a **Position** row in Properties (*Starts a flow*, *In the flow*), stored as `flowPosition`, a named state written only when it is not the default. A start draws one ring and an event in the flow two; the canvas, the legend, the SVG and PNG exports and the draw.io export read the same field. The CLI (`set_behaviour_position`), the extension and the assistant guidance can set it, and the example shows a timer that starts a flow next to one in a flow. ADR: [0193](../decisions/0193-behaviour-symbols-one-colour-per-family-and-an-end-that-says-how-it-ended.md). A check that flags a start with an incoming edge, or an end with an outgoing one, is parked as 0198.
+*Done* (merged 2026-11-20, in 0.13.0). An event says whether it begins a flow or sits in one: a **Position** row in Properties (*Starts a flow*, *In the flow*), stored as `flowPosition`, a named state written only when it is not the default. A start draws one ring and an event in the flow two; the canvas, the legend, the SVG and PNG exports and the draw.io export read the same field. The CLI (`set_behaviour_position`), the extension and the assistant guidance can set it, and the example shows a timer that starts a flow next to one in a flow. ADR: [0080](../decisions/0080-behaviours-are-the-tools-own-flow-vocabulary-with-semantic-not-symmetric-symbols.md). A check that flags a start with an incoming edge, or an end with an outgoing one, is parked as 0198.
 
 ### 0202: Visibility sets
 
-*Done* (merged 2026-11-21, in 0.14.0). Named sets show or hide parts of a diagram, like the layers of a drawing tool: one diagram that holds how things are today and how they could be, shown one at a time. A diagram has a catalogue of sets and each node and edge may list the sets it belongs to; an element in no set is always visible, otherwise it is visible when any of its sets is shown, and nothing is inferred from an edge's ends or a child's container. Hidden elements stay in the file and cannot be selected, searched or isolated. The panel is in the bottom left corner; which sets are shown is session state, and the exports draw what is shown. The CLI and extension have five operations. `examples/stories.chd` shows sets. ADR: [0194](../decisions/0194-visibility-sets-hide-and-show-parts-of-a-diagram.md). Left: undo of the sets themselves (making, renaming and deleting a set), which stays outside the undo history.
+*Done* (merged 2026-11-21, in 0.14.0). Named sets show or hide parts of a diagram, like the layers of a drawing tool: one diagram that holds how things are today and how they could be, shown one at a time. A diagram has a catalogue of sets and each node and edge may list the sets it belongs to; an element in no set is always visible, otherwise it is visible when any of its sets is shown, and nothing is inferred from an edge's ends or a child's container. Hidden elements stay in the file and cannot be selected, searched or isolated. The panel is in the bottom left corner; which sets are shown is session state, and the exports draw what is shown. The CLI and extension have five operations. `examples/stories.chd` shows sets. ADR: [0194](../decisions/0194-one-diagram-several-views-visibility-sets-and-stories.md). Left: undo of the sets themselves (making, renaming and deleting a set), which stays outside the undo history.
 
 ### 0203: Stories and the presenter view
 
-*Done* (merged 2026-11-21, in 0.14.0). A story tells a diagram one step at a time over the visibility sets. A diagram holds several stories; a story has a start state and steps, each an ordered list of actions (show a set, hide a set, or all sets) applied on top of every set hidden. The editor is a panel in the right-hand dock whose preview runs only while it is open; **Present** (F5) takes the window over, fades elements in and out, shows a small step count and its controls only when the mouse moves, and cannot select, move or delete anything. The CLI and extension have seven story operations, the start state being step 0, and `examples/stories.chd` has two stories. ADR: [0195](../decisions/0195-stories-are-steps-over-the-visibility-sets.md). Left, not scheduled: captions on steps, a real full-screen mode, undo for story edits, exporting a whole story (an image per step), and more actions (grow, highlight, emphasise), which would need the state function to return more than the hidden sets.
+*Done* (merged 2026-11-21, in 0.14.0). A story tells a diagram one step at a time over the visibility sets. A diagram holds several stories; a story has a start state and steps, each an ordered list of actions (show a set, hide a set, or all sets) applied on top of every set hidden. The editor is a panel in the right-hand dock whose preview runs only while it is open; **Present** (F5) takes the window over, fades elements in and out, shows a small step count and its controls only when the mouse moves, and cannot select, move or delete anything. The CLI and extension have seven story operations, the start state being step 0, and `examples/stories.chd` has two stories. ADR: [0194](../decisions/0194-one-diagram-several-views-visibility-sets-and-stories.md). Left, not scheduled: captions on steps, a real full-screen mode, undo for story edits, exporting a whole story (an image per step), and more actions (grow, highlight, emphasise), which would need the state function to return more than the hidden sets.
 
 ### 0204: Remove a highlight group
 
-*Done* (merged 2026-11-21, in 0.14.0). The header of a highlight group has a cross that removes every highlight of its key, after a confirmation, since removing the rows one by one never worked: a group puts its rows back while their values are allowed or in use. With none left the key is no longer a group, so the automatic resync leaves it alone until "Add group" makes it again. ADR: [0026](../decisions/0026-grouped-highlights.md), addendum.
+*Done* (merged 2026-11-21, in 0.14.0). The header of a highlight group has a cross that removes every highlight of its key, after a confirmation, since removing the rows one by one never worked: a group puts its rows back while their values are allowed or in use. With none left the key is no longer a group, so the automatic resync leaves it alone until "Add group" makes it again. ADR: [0025](../decisions/0025-highlights-recolour-by-tag-value-the-catalogue-is-saved-and-what-is-on-is-not.md), addendum.
 
 ### 0077: Swim lanes
 
@@ -649,11 +649,11 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0051: Non-rectangular shapes and a large-icon category
 
-*Cancelled* (will not do, closed 2026-11-21). Shapes other than rectangles, and a node that is one large icon. Shapes stay rectangular and carry an icon ([ADR 0031](../decisions/0031-icon-annotation-is-a-standing-requirement.md), [ADR 0080](../decisions/0080-bpmn-as-adopted-vocabulary-not-metamodel.md)); the freeform line was split out as 0064, and behaviours have their own stencils. A need for large icon-only nodes would come back as a new epic.
+*Cancelled* (will not do, closed 2026-11-21). Shapes other than rectangles, and a node that is one large icon. Shapes stay rectangular and carry an icon ([ADR 0031](../decisions/0031-icon-annotation-is-a-standing-requirement.md), [ADR 0080](../decisions/0080-behaviours-are-the-tools-own-flow-vocabulary-with-semantic-not-symmetric-symbols.md)); the freeform line was split out as 0064, and behaviours have their own stencils. A need for large icon-only nodes would come back as a new epic.
 
 ### 0206: Note file names with a short tail
 
-*Done* (live-tested 2026-11-25). A note file is named `<label>-<last six characters of the id's UUID>.md`, made by one function that the editor's save and an assistant's `set_note` both use, so one element gets one name and the type prefix of an id never reaches it. The names are made for all the notes of a diagram together, so two never share a file (a clash takes a longer tail), and `set_note` takes no name. The tool now makes every id: the add operations take a handle (`"as": "$name"`) that the rest of the same call can use, and refuse an `id`. ADR: [0060](../decisions/0060-detail-file-naming-convention.md) (amended), [0199](../decisions/0199-the-tool-makes-every-id-and-an-operation-names-what-it-makes-with-a-handle.md). What is left of the principle behind it, that an assistant and a person do the same things, is 0207.
+*Done* (live-tested 2026-11-25). A note file is named `<label>-<last six characters of the id's UUID>.md`, made by one function that the editor's save and an assistant's `set_note` both use, so one element gets one name and the type prefix of an id never reaches it. The names are made for all the notes of a diagram together, so two never share a file (a clash takes a longer tail), and `set_note` takes no name. The tool now makes every id: the add operations take a handle (`"as": "$name"`) that the rest of the same call can use, and refuse an `id`. ADR: [0138](../decisions/0138-assistants-build-diagrams-like-a-person-through-one-implementation-behind-the-cli-and-the-mcp-server.md). What is left of the principle behind it, that an assistant and a person do the same things, is 0207.
 
 ### 0205: Portals
 
@@ -661,4 +661,4 @@ When an epic is done and confirmed, add an entry here (newest at the bottom) and
 
 ### 0209: Edge drop gets an automatic end, CI stops on push to master
 
-*Done* (tried in the app 2026-11-26). An edge dropped on empty canvas, a new one dragged from an element or an existing one dragged by an end, makes its entity with no connection point on the new end, so it attaches to the side that faces the other element and follows it; the end that was dragged from keeps its point. Before, the new end was always the left point. ADR: [0200](../decisions/0200-a-drop-on-empty-canvas-makes-an-entity-with-an-automatic-end.md) (supersedes a line of 0178 and a note of 0107). `ci.yml` no longer runs on push to master, since a pull request has passed it already; pull requests and the weekly dependency audit still run it, and a conflict between two pull requests merged close together reaches master unchecked until the next one. Not done: the repository's branch protection and badges on GitHub, which are the maintainer's to look at.
+*Done* (tried in the app 2026-11-26). An edge dropped on empty canvas, a new one dragged from an element or an existing one dragged by an end, makes its entity with no connection point on the new end, so it attaches to the side that faces the other element and follows it; the end that was dragged from keeps its point. Before, the new end was always the left point. `ci.yml` no longer runs on push to master, since a pull request has passed it already; pull requests and the weekly dependency audit still run it, and a conflict between two pull requests merged close together reaches master unchecked until the next one. Not done: the repository's branch protection and badges on GitHub, which are the maintainer's to look at.

@@ -1,4 +1,4 @@
-/* The stories panel (ADR 0195) is a right-hand dock panel like the layers panel: a toolbar and a
+/* The stories panel (ADR 0194) is a right-hand dock panel like the layers panel: a toolbar and a
    scrolling body. The presenter's bar floats over the canvas. */
 .stories-panel {
   width: 100%;
@@ -215,7 +215,7 @@
   border-top: 2px solid transparent;
 }
 
-/* the presenter (ADR 0195): the editor's frame steps aside, and nothing on the canvas is touched */
+/* the presenter (ADR 0194): the editor's frame steps aside, and nothing on the canvas is touched */
 .app-shell.is-presenting .toolbar,
 .app-shell.is-presenting .diagram-dock,
 .app-shell.is-presenting .utility-dock,
@@ -237,7 +237,7 @@
   pointer-events: none !important;
 }
 
-/* the fade between steps (ADR 0195); the time is STORY_FADE_MS in useStoryFade.ts. An edge's label is
+/* the fade between steps (ADR 0194); the time is STORY_FADE_MS in useStoryFade.ts. An edge's label is
    outside the edge's own element and carries the class itself. */
 @keyframes story-fade-in {
   from {

@@ -232,7 +232,7 @@ export function useWindowLifecycle(
     closeCheckStateRef.current = { isDirty, currentPath, nodes }
   })
 
-  // One-line change-count for the close-prompt's native dialog (ADR 0102) —
+  // One-line change-count for the close-prompt's native dialog —
   // reads the same autosaveStateRef the autosave snapshot uses,
   // for the same "don't rebind this listener on every nodes/edges change"
   // reason. Best-effort: any failure (e.g. an unreadable file) just omits

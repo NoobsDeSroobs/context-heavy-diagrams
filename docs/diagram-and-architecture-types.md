@@ -6,7 +6,7 @@ The tool is notation-agnostic by design ([ADR 0008](decisions/0008-tool-scope-in
 
 ## 1. Diagram types
 
-"Fit" says how well the tool draws the type today: **Good** (drawn naturally, an example exists or is easy), **Workable** (possible with a convention or a workaround), **Awkward** (possible but laborious), **Not supported**. The tool's shapes are rectangular, with icons and labels carrying meaning ([ADR 0080](decisions/0080-bpmn-as-adopted-vocabulary-not-metamodel.md)).
+"Fit" says how well the tool draws the type today: **Good** (drawn naturally, an example exists or is easy), **Workable** (possible with a convention or a workaround), **Awkward** (possible but laborious), **Not supported**. The tool's shapes are rectangular, with icons and labels carrying meaning ([ADR 0080](decisions/0080-behaviours-are-the-tools-own-flow-vocabulary-with-semantic-not-symmetric-symbols.md)).
 
 ### Software and system architecture
 

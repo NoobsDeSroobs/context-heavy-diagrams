@@ -1,4 +1,4 @@
-// The operations that set and use the line new edges are drawn with (ADR 0196). Every result must be
+// The operations that set and use the line new edges are drawn with. Every result must be
 // a file the app reads back unchanged and the validator accepts.
 import assert from 'node:assert/strict'
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
@@ -109,7 +109,7 @@ test('connect without a style takes the marked line, and a style of its own wins
   assert.deepEqual(byId.own, { stroke: '#ff0000' })
 })
 
-test('the thickness of the legend line is kept by the file and given to new edges (ADR 0197)', () => {
+test('the thickness of the legend line is kept by the file and given to new edges', () => {
   const { diagram } = run(
     base(),
     { op: 'set_new_edge_line', id: 'event' },
@@ -130,7 +130,7 @@ test('the thickness of the legend line is kept by the file and given to new edge
   assert.equal('strokeWidth' in removed.legend.find((e) => e.id === 'event'), false)
 })
 
-test('the routing of the legend line is kept by the file and given to new edges (ADR 0196)', () => {
+test('the routing of the legend line is kept by the file and given to new edges', () => {
   const { diagram } = run(
     base(),
     { op: 'set_legend_entry', id: 'event', routingStyle: 'step' },

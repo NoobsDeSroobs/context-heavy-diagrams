@@ -45,7 +45,7 @@ function stripControlChars(value: string): string {
 
 // A stem is cut at 60 characters (readability) and at 200 UTF-8 bytes: Linux
 // and macOS limit one file name to 255 bytes, and a note adds "-<uuid>.md"
-// (40 bytes) to the stem (ADR 0181).
+// (40 bytes) to the stem.
 const MAX_STEM_CHARS = 60
 const MAX_STEM_BYTES = 200
 
@@ -66,7 +66,7 @@ export function truncateStem(value: string): string {
   return kept.join('')
 }
 
-// Multi-line labels (ADR 0074): only the first non-empty line contributes
+// Multi-line labels: only the first non-empty line contributes
 // to the filename — later lines are a qualifier / context, not part of the
 // thing's identity, and don't belong in a filename.
 export function labelToFileStem(label: string, fallback: string): string {
@@ -87,7 +87,7 @@ export function labelToFileStem(label: string, fallback: string): string {
 // "<stem><extension>", or "<stem>-1<extension>", "<stem>-2<extension>"... for
 // the first name `isTaken` does not report. Callers compare names ignoring
 // case: macOS and Windows treat "Foo.chd" and "foo.chd" as one file, and a
-// folder moves between systems (ADR 0181).
+// folder moves between systems.
 export function firstFreeName(
   stem: string,
   extension: string,

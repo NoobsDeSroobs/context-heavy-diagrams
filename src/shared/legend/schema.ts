@@ -11,7 +11,7 @@ import type { LineMotion } from '../styling/edgeAnimation.ts'
 // background chip was also rejected — same ambiguity as a colored box).
 export type LegendEntryKind = 'line' | 'icon' | 'entity'
 // A 'line' entry also carries an edge's animation, speed, direction, pulse distance and dash length
-// and gap (ADR 0141), so the legend arrow moves like the edge it stands for.
+// and gap, so the legend arrow moves like the edge it stands for.
 export interface LegendEntry extends LineMotion {
   id: string
   kind: LegendEntryKind
@@ -19,18 +19,18 @@ export interface LegendEntry extends LineMotion {
   // 'line' and 'entity' kinds only.
   color?: string
   // 'line' kind only — same fields/vocabulary as EdgeStyle's, reusing the
-  // existing named line-style preset picker (ADR 0010) rather than a
+  // existing named line-style preset picker rather than a
   // parallel one.
   lineStyle?: LineStyleKind
-  // How thick the line is drawn, in pixels, as an edge's `style.strokeWidth` (ADR 0197). Absent means
+  // How thick the line is drawn, in pixels, as an edge's `style.strokeWidth`. Absent means
   // the built-in thickness.
   strokeWidth?: number
   startMarker?: MarkerKind
   endMarker?: MarkerKind
-  // How an edge drawn with this line is laid out, as an edge's `style.routingStyle` (ADR 0196). Absent
+  // How an edge drawn with this line is laid out, as an edge's `style.routingStyle`. Absent
   // means the personal default routing. The legend sample is always drawn straight.
   routingStyle?: 'straight' | 'step' | 'smoothstep' | 'catmullRom'
-  // 'line' kind only: new edges are drawn with this line (ADR 0196). At most one entry has it.
+  // 'line' kind only: new edges are drawn with this line. At most one entry has it.
   forNewEdges?: boolean
   // 'icon' kind only.
   icon?: IconRef

@@ -39,7 +39,7 @@ async function recordOpenedOrSaved(path: string): Promise<void> {
 // Diagram files are a single file (.chd, plain JSON underneath) — see
 // docs/decisions/0005-diagram-identity-and-linking.md. Nothing about
 // opening/saving depends on foldering at all; that's the whole point of
-// this model over the folder-based one it replaced (ADR 0003).
+// this model over the folder-based one it replaced.
 const FILTERS = [{ name: 'Diagram', extensions: ['chd'] }]
 
 // The `iconPacks` list a save writes (ADR 0188): the packs the diagram's icons name, with what this
@@ -92,11 +92,11 @@ export function registerDiagramHandlers(): void {
     return path
   })
 
-  // What a Save As would copy and whether it can be made (ADR 0160): the dialog's preview, and again
+  // What a Save As would copy and whether it can be made: the dialog's preview, and again
   // when the person confirms.
   ipcMain.handle('document:planSaveAs', (_event, request: PlanSaveAsRequest) => planSaveAs(request))
 
-  // Saves the diagram and its notes as one plan (ADR 0092): check for conflicts, save everything
+  // Saves the diagram and its notes as one plan (ADR 0040): check for conflicts, save everything
   // that doesn't conflict in the crash-safe order (documentSaveExec.ts), and report what was held
   // back so the renderer can ask per file and call again with overwrite: true for just those.
   //
@@ -181,7 +181,7 @@ export function registerDiagramHandlers(): void {
     }
   )
 
-  // Side-effect-free reread for the "changes since last save" diff (ADR 0102) — same precedent as security:crawlLinked. Never calls
+  // Side-effect-free reread for the "changes since last save" diff — same precedent as security:crawlLinked. Never calls
   // recordOpenedOrSaved: opening the diff view must not touch
   // lastOpenedDirectory or the recent-diagrams list. Returns null for a
   // path that no longer resolves (deleted/moved since open) rather than

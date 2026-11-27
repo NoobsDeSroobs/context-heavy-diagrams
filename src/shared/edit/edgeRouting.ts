@@ -1,6 +1,6 @@
 // What is wrong with the edges of a diagram as they are drawn: an edge over an element it does not
 // join, two edges crossing, and an edge label sitting on an element, on another edge, on another
-// label, on a container's wall or on its title (ADR 0161). It judges the path the canvas and the SVG export draw (buildEdgePath), curves,
+// label, on a container's wall or on its title (ADR 0138). It judges the path the canvas and the SVG export draw (buildEdgePath), curves,
 // bend points and routing style included, not a straight line between the two ends.
 import type { DiagramFile } from '../diagram/index.ts'
 import {

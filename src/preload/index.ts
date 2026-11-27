@@ -41,10 +41,10 @@ interface RequiredTagsWalkResult {
 // Custom APIs for renderer. See docs/decisions/0005-diagram-identity-and-linking.md
 // for the single-file model. pickSavePath and saveDocument are deliberately
 // separate (not one combined "save as" call) — the save flow needs to pick
-// the path first, then plan the whole save (diagram + its notes, ADR 0092)
+// the path first, then plan the whole save (diagram + its notes, ADR 0040)
 // against it.
 const api = {
-  // Saves the diagram and its notes as one plan (ADR 0092). Everything that
+  // Saves the diagram and its notes as one plan (ADR 0040). Everything that
   // doesn't conflict is saved; `conflicts` in the outcome lists what was held back
   // — resolve per file, then call again with overwrite: true for just those.
   saveDocument(request: SaveDocumentRequest): Promise<SaveOutcome> {
@@ -55,12 +55,12 @@ const api = {
     return ipcRenderer.invoke('diagram:pickSavePath', suggested)
   },
 
-  // What a Save As would copy, and whether it can be made (ADR 0160).
+  // What a Save As would copy, and whether it can be made.
   planSaveAs(request: PlanSaveAsRequest): Promise<SaveAsPlan> {
     return ipcRenderer.invoke('document:planSaveAs', request)
   },
 
-  // Custom icons (docs/decisions/0006-icon-storage-model.md) are only read and listed now: both need
+  // Custom icons are only read and listed now: both need
   // the diagram's own path to resolve its sibling assets/ folder. A new icon goes into a pack.
   listCustomIcons(diagramPath: string): Promise<string[]> {
     return ipcRenderer.invoke('icons:listCustom', diagramPath)
@@ -97,7 +97,7 @@ const api = {
     return () => ipcRenderer.off('iconPacks:changed', listener)
   },
 
-  // The first-start question about the default icon pack (ADR 0192): main asks once, the window
+  // The first-start question about the default icon pack: main asks once, the window
   // shows it and answers. Yes installs the pack that comes with the app, in the manager; nothing
   // else can be installed this way, and an answer from a window that was not asked is ignored.
   onIconPackOffer(callback: () => void): () => void {
@@ -110,7 +110,7 @@ const api = {
     return ipcRenderer.invoke('iconPacks:answerOffer', accept)
   },
 
-  // Reference images (see ADR 0069) — same sibling-folder model as
+  // Reference images — same sibling-folder model as
   // custom icons, into assets/references/. pickAndCopy allows multi-select
   // and returns every copied file's relative path (null on cancel).
   pickAndCopyReferences(diagramPath: string): Promise<string[] | null> {
@@ -121,14 +121,14 @@ const api = {
     return ipcRenderer.invoke('references:readAsDataUrl', diagramPath, relativePath)
   },
 
-  // Note files — see ADR 0060 for the label+uuid naming convention.
+  // Note files (named by shared/notes/notePaths.ts).
   // Reading only: notes are *written* (and renamed to follow a label) as part
-  // of saveDocument (ADR 0092).
+  // of saveDocument (ADR 0040).
   readNotes(diagramPath: string, relativePath: string): Promise<string> {
     return ipcRenderer.invoke('notes:read', diagramPath, relativePath)
   },
 
-  // Content plus the file's change fingerprint — the note's baseline (ADR 0092).
+  // Content plus the file's change fingerprint — the note's baseline (ADR 0040).
   readNotesWithStamp(
     diagramPath: string,
     relativePath: string
@@ -143,14 +143,14 @@ const api = {
     return ipcRenderer.invoke('diagram:openPath', path)
   },
 
-  // Side-effect-free reread for "changes since last save" (ADR 0102) —
+  // Side-effect-free reread for "changes since last save" —
   // unlike openDiagramAtPath, never records the file as
   // opened/recent. Resolves null if the path no longer resolves.
   rereadDiagramForDiff(path: string): Promise<DiagramFile | null> {
     return ipcRenderer.invoke('diagram:rereadForDiff', path)
   },
 
-  // The one "did a file change on disk since I last looked" check (ADR 0092),
+  // The one "did a file change on disk since I last looked" check (ADR 0040),
   // for the diagram (relPath null) and/or notes (folder-relative paths).
   checkFiles(
     diagramPath: string,
@@ -172,7 +172,7 @@ const api = {
   },
 
   // Bulk existence check for the Diagnostics "missing files" section
-  // (ADR 0084) — linked diagrams, custom icons, reference images, notes
+  // — linked diagrams, custom icons, reference images, notes
   // files. One result per input relative path, in input order.
   checkResourceFiles(
     diagramPath: string,
@@ -181,7 +181,7 @@ const api = {
     return ipcRenderer.invoke('resources:checkExist', diagramPath, relativePaths)
   },
 
-  // Recursive security-matrix rollup (ADR 0088) — walk each linked matrix
+  // Recursive security-matrix rollup — walk each linked matrix
   // entity's subtree and return a CrawledMatrix per root column. Read-only;
   // never records the visited files as "opened". `links` is the subset of
   // the diagram's matrix entities that carry a `data.linkedDiagram`.
@@ -192,7 +192,7 @@ const api = {
     return ipcRenderer.invoke('security:crawlLinked', diagramPath, links)
   },
 
-  // Deep search (ADR 0097) — the criteria the open diagram was just searched
+  // Deep search — the criteria the open diagram was just searched
   // with, run over the subtree behind each of the open diagram's links; returns
   // which links have a match somewhere below. Read-only.
   searchLinkedDiagrams(
@@ -320,7 +320,7 @@ const api = {
   },
 
   // Propagating a required-tags template down the link tree — see
-  // ADR 0024. directChildRelativePaths comes from the caller's own
+  // directChildRelativePaths comes from the caller's own
   // live node state (may include unsaved link edits); every deeper level
   // is discovered by reading each reached diagram's own file.
   previewRequiredTagsChildren(
@@ -385,7 +385,7 @@ const api = {
     return () => ipcRenderer.off('window:closeRequested', listener)
   },
 
-  // `detail` (ADR 0102): an optional one-line change-count
+  // `detail`: an optional one-line change-count
   // ("3 modified, 1 added") shown in the native dialog's detail text.
   requestCloseDecision(detail?: string): Promise<'save' | 'discard' | 'cancel'> {
     return ipcRenderer.invoke('windows:requestCloseDecision', detail)
@@ -395,7 +395,7 @@ const api = {
     return ipcRenderer.invoke('windows:closeApproved', path, sessionId)
   },
 
-  // Real per-OS preferences file (see ADR 0053), replacing localStorage
+  // Real per-OS preferences file, replacing localStorage
   // — see appPreferences.ts. readPreferences returns null when the file
   // doesn't exist yet (fresh install, or upgrading from a build predating it);
   // the renderer's usePreferences falls back to its own already-present
@@ -417,13 +417,13 @@ const api = {
   },
 
   // About screen — package.json's version via Electron's own
-  // app.getVersion(), see ADR 0044. Not cached here; called once per About
+  // app.getVersion(). Not cached here; called once per About
   // open, cheap enough not to bother.
   getAppVersion(): Promise<string> {
     return ipcRenderer.invoke('app:getVersion')
   },
 
-  // AI -> Set up a folder for AI agents (ADR 0105): folder picker + file
+  // AI -> Set up a folder for AI agents: folder picker + file
   // writes happen in main; null means the user cancelled the picker.
   enableAiInFolder(): Promise<AiFolderResult | null> {
     return ipcRenderer.invoke('ai:enableInFolder')
@@ -463,7 +463,7 @@ const api = {
     return ipcRenderer.invoke('metamodels:create')
   },
 
-  // Style palette export/import (see ADR 0048) — returns false/null
+  // Style palette export/import — returns false/null
   // on cancel, same "no error, just nothing happened" convention as
   // diagram:pickSavePath.
   exportStylePalette(json: string): Promise<boolean> {
@@ -474,7 +474,7 @@ const api = {
     return ipcRenderer.invoke('stylePalette:importFromFile')
   },
 
-  // PNG export (see ADR 0051) — dataUrl is a data:image/png;base64,...
+  // PNG export — dataUrl is a data:image/png;base64,...
   // string from html-to-image's toPng(), same false-on-cancel convention
   // as exportStylePalette.
   exportPngToFile(dataUrl: string, suggestedFilename: string): Promise<boolean> {
@@ -489,7 +489,7 @@ const api = {
     return ipcRenderer.invoke('export:drawioToFile', xml, suggestedFilename)
   },
 
-  // Copy/paste (see ADR 0049) — the real OS clipboard. The preload is
+  // Copy/paste — the real OS clipboard. The preload is
   // sandboxed (ADR 0112), which has no `clipboard` module, so main does it
   // (main/canvas/clipboard.ts); the read is synchronous because paste is.
   copyToClipboard(text: string): void {

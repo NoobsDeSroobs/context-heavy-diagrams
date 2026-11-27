@@ -473,7 +473,7 @@ test('moving a container takes the points of the edges between its children alon
   assertValid(diagram)
 })
 
-test('a handle names what an operation makes, for the rest of that call only (ADR 0199)', () => {
+test('a handle names what an operation makes, for the rest of that call only (ADR 0138)', () => {
   const { diagram, results } = applyOperations(
     start(),
     [

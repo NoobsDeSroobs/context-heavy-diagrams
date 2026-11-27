@@ -1,7 +1,7 @@
 // Searching the text of the files in the folder, in plain Node: no shell and no other program, so it
-// works the same on every system (ADR 0149). It reads what list_files lists and nothing else: the same
+// works the same on every system. It reads what list_files lists and nothing else: the same
 // folder, the same skipped names, never a symlink, never a dot-file, never what a .gitignore names
-// (ADR 0173), never the types that cannot be read.
+//never the types that cannot be read.
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, sep } from 'node:path'
 import { createContext, Script } from 'node:vm'

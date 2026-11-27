@@ -8,7 +8,7 @@ export interface AlertContent {
   textToShow: string
   // What the dialog's Copy button puts on the clipboard. Same as textToShow
   // unless a caller needs them to differ (e.g. a short confirmation on screen
-  // while the Copy button re-copies a longer payload, ADR 0104).
+  // while the Copy button re-copies a longer payload).
   textToCopy: string
 }
 

@@ -12,7 +12,7 @@
   cursor: default;
 }
 
-/* Shell for the standalone icon search popup (ADR 0072) — the SearchOverlay's
+/* Shell for the standalone icon search popup — the SearchOverlay's
    "search by icon" button opens this, wrapping the same IconBrowser that
    IconPicker uses. Same fixed-floating-box treatment as .icon-picker, minus
    the corner selector and actions row. */

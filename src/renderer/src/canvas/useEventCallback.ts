@@ -9,7 +9,7 @@ import { useCallback, useEffect, useRef } from 'react'
 // user action, never during render or a layout effect — the latest `fn` is
 // only guaranteed current after the passive effect below has run). In this
 // codebase the motivating case is a handler threaded through the memoized
-// DiagramContext value (ADR 0056 / ADR 0073): if its identity churns, so
+// DiagramContext value: if its identity churns, so
 // does the context value, re-rendering every node and edge.
 //
 // Same ref-in-an-effect shape as useRafThrottledCallback — a ref write

@@ -5,7 +5,7 @@ import { connectionRadiusForZoom, handleSizeForZoom } from './screenGeometry'
 // How long the zoom has to rest before the handles are measured again.
 const REMEASURE_DELAY_MS = 50
 
-// Keeps connection handles hittable when zoomed out (ADR 0129). Handles are sized in flow units, so
+// Keeps connection handles hittable when zoomed out. Handles are sized in flow units, so
 // they shrink with the zoom. The live zoom goes to the canvas as `--canvas-zoom`, which nodes.css
 // divides the handle size by; it is written straight to the DOM so a zoom tick re-renders nothing.
 // Returns the `connectionRadius` prop for the drop side, which changes in only a few steps.

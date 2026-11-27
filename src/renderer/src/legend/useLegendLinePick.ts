@@ -15,7 +15,7 @@ export interface LegendLinePickState {
   onEdgeClick: (event: React.MouseEvent, edge: Edge) => void
 }
 
-// Legend "Line" picker (ADR 0123): while the Legend panel waits for an edge to copy, it leaves
+// Legend "Line" picker: while the Legend panel waits for an edge to copy, it leaves
 // its callback here. A click on an edge hands it that edge's look; Esc hands it null. Takes the
 // click before the style brush, so an active brush never paints the edge being picked.
 export function useLegendLinePick(

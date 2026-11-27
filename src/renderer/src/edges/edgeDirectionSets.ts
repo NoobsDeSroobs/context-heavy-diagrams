@@ -35,7 +35,7 @@ export function migrateDirectionSetStyle(set: EdgeDirectionSet): EdgeDirectionSe
   return { id: set.id, name: set.name, style }
 }
 
-// The active set's default edge style (ADR 0083), or `{}` when there is no
+// The active set's default edge style, or `{}` when there is no
 // set or the active set carries no style. Merged over the global
 // default-edge-style preference at the two brand-new-edge sites in
 // Canvas.tsx, so an edge drawn while a reading is active is born in that
@@ -48,7 +48,7 @@ export function activeDirectionSetStyle(
   return active?.style ?? {}
 }
 
-// Flippable edge direction — see ADR 0081. A diagram can carry several
+// Flippable edge direction. A diagram can carry several
 // named "readings" of its edges (DiagramFile.edgeDirectionSets) that differ
 // only in arrow direction. Every edge exists in every set; the per-set
 // orientation lives in `edge.data.directionSets` keyed by set id.
@@ -88,7 +88,7 @@ export function edgeLiveDirection(edge: Edge): EdgeDirection {
 //   - Markers are left alone. `startMarker` renders at `source` and
 //     `endMarker` at `target`, so swapping the endpoints moves the arrow to
 //     the other end on its own. Swapping the marker *fields* too would undo
-//     that and make the reversal a visual no-op (the ADR 0083 bug).
+//     that and make the reversal a visual no-op (the old reversal bug).
 //   - The catmull-rom `points` list is walked [source, ...points, target],
 //     so it has to be reversed to trace the same curve.
 //   - A custom `labelPosition` is a 0..1 ratio measured from `source`, so it

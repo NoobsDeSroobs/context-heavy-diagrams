@@ -1,4 +1,4 @@
-// The installer's PATH functions (build/chdPath.nsh, ADR 0162), compiled with the NSIS that
+// The installer's PATH functions (build/chdPath.nsh, ADR 0139), compiled with the NSIS that
 // electron-builder downloads and run against a scratch registry key, never the real PATH.
 // Skipped off Windows, and where electron-builder has not downloaded NSIS yet (any `npm run
 // build:win` fetches it).

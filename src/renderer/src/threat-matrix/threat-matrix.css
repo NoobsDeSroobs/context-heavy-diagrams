@@ -206,7 +206,7 @@
   );
 }
 
-/* A derived column (ADR 0088) — rolled up from a linked diagram, read-only.
+/* A derived column — rolled up from a linked diagram, read-only.
    Muted + italic so it reads as "computed, not yours to edit"; click opens
    a breakdown popup rather than the cell editor. */
 .threat-matrix-cell-derived {

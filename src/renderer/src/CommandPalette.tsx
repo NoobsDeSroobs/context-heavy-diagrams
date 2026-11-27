@@ -6,7 +6,7 @@ interface CommandPaletteProps {
   onClose: () => void
 }
 
-// Ctrl/Cmd+K — see ADR 0100. A slim, top-anchored overlay (Spotlight/Raycast
+// Ctrl/Cmd+K. A slim, top-anchored overlay (Spotlight/Raycast
 // convention), not the centered ShortcutsDialog/AboutDialog shell: this is a
 // type-and-go launcher you dismiss the instant you've run something, not a
 // reference page you browse. `actions` is already flattened+built by the

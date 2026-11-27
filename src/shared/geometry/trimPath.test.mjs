@@ -1,4 +1,4 @@
-// Run with `npm test`. A line stops short of the tip of a pointed arrowhead (ADR 0197).
+// Run with `npm test`. A line stops short of the tip of a pointed arrowhead.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { trimPath } from './trimPath.ts'

@@ -15,7 +15,7 @@ import { computeFieldValue } from './fieldValue'
 import { MARKER_OPTIONS } from '../edges/edgeStyleOptions'
 import { nodeStyleOf } from './styleAccess'
 
-// 'line' nodes (see ADR 0050) — same Start/Line/End shape as
+// 'line' nodes — same Start/Line/End shape as
 // EdgeFields above, reading/writing NodeStyle instead of EdgeStyle (they
 // share the same lineStyle/startMarker/endMarker fields), plus Locked
 // since a line has a real position/bounding box unlike an edge. No Fill/

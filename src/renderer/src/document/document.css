@@ -1,4 +1,4 @@
-/* "Changes since last save" panel (ADR 0102) — same dock shell
+/* "Changes since last save" panel — same dock shell
    as Diagnostics, reuses .diagnostics-panel-toolbar/-title/-empty/
    -section-title directly (identical treatment), own row styling below
    since a changed element's row shape (kind badge + label + changed-field
@@ -79,7 +79,7 @@
   padding-left: 2px;
 }
 
-/* Per-file save-conflict dialog (ConflictDialog.tsx, ADR 0092) — the alert
+/* Per-file save-conflict dialog (ConflictDialog.tsx, ADR 0040) — the alert
    dialog's shell with one row per conflicting file. */
 .conflict-dialog {
   width: 560px;
@@ -169,7 +169,7 @@
   padding-left: 14px;
 }
 
-/* Save As dialog (SaveAsDialog.tsx, ADR 0160). */
+/* Save As dialog (SaveAsDialog.tsx). */
 .saveas-dialog {
   width: 600px;
 }

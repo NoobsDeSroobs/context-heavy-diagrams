@@ -41,7 +41,7 @@ export interface DescribedEdge extends EdgeSummary {
   tags?: Record<string, JsonValue>
   visibilitySets?: string[]
   // Only for an edge that crosses the border of a container: the route by container name ("Sales →
-  // Finance", "outside" for none), information and not an issue (ADR 0185).
+  // Finance", "outside" for none), information and not an issue.
   crossing?: string
   style?: Record<string, unknown>
 }
@@ -56,7 +56,7 @@ export interface DiagramDescription {
   legend?: LegendEntry[]
   // The visibility sets of the diagram and how many elements are in each (ADR 0194).
   visibilitySets?: { name: string; elements: number }[]
-  // Each story with its steps in words, by the names of the sets (ADR 0195).
+  // Each story with its steps in words, by the names of the sets (ADR 0194).
   stories?: { name: string; start?: string; steps: string[] }[]
 }
 
@@ -241,7 +241,7 @@ export function layoutIssues(diagram: DiagramFile, diagramFont?: string): Layout
   // box, which the canvas and the export break in the middle. The wrapping is the export's.
   for (const node of diagram.nodes) {
     if (node.type === 'line' || !node.data.label || !node.size) continue
-    // A stencil's small shapes carry their label below them, not inside (ADR 0180).
+    // A stencil's small shapes carry their label below them, not inside (ADR 0080).
     if (node.type === 'stencil' && stencilLabelOutside(node.data.kind)) continue
     const type = styledNodeType(node.type)
     const defaults = NODE_STYLE_DEFAULTS[type]
@@ -251,11 +251,11 @@ export function layoutIssues(diagram: DiagramFile, diagramFont?: string): Layout
       family: node.style?.fontFamily ?? diagramFont
     }
     const stroke = node.style?.strokeWidth ?? defaults.strokeWidth
-    // A step's arrow band takes room on the left, and its mark on the right (ADR 0180).
+    // A step's arrow band takes room on the left, and its mark on the right (ADR 0080).
     const insets =
       node.type === 'stencil' ? stencilLabelInsets(node.data.kind) : { left: 0, right: 0 }
     const margin = 16
-    // A container's label runs along the side it is on, which for a turned label is its height (ADR 0184).
+    // A container's label runs along the side it is on, which for a turned label is its height.
     const side = node.type === 'container' ? containerLabelSideOf(node.data.labelPosition) : 'top'
     const run = side === 'left' || side === 'right' ? node.size.height : node.size.width
     const available = Math.max(0, run - stroke * 2 - margin - insets.left - insets.right)
@@ -300,7 +300,7 @@ export function layoutIssues(diagram: DiagramFile, diagramFont?: string): Layout
     }
   }
 
-  // The edges as drawn: over an element, crossing, and their labels (ADR 0161).
+  // The edges as drawn: over an element, crossing, and their labels (ADR 0138).
   issues.push(...edgeIssues(diagram, new Set(hiddenList.map((h) => h.edgeId))))
   return issues
 }

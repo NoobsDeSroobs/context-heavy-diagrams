@@ -15,7 +15,7 @@ interface EdgeDirectionSetStyleEditorProps {
 const EDITOR_WIDTH = 260
 
 // no-op session/snapshot hooks — a direction set's default style is not an
-// undo step (ADR 0081 / ADR 0083); onUpdateStyle already marks the document
+// undo step; onUpdateStyle already marks the document
 // dirty.
 const noop = (): void => {}
 

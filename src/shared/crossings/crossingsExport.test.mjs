@@ -1,4 +1,4 @@
-// Gates in the SVG export (ADR 0185).
+// Gates in the SVG export.
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { DEFAULT_SVG_EXPORT_OPTIONS, renderDiagramSvg } from '../export/renderDiagram.ts'

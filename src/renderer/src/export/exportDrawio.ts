@@ -8,12 +8,12 @@ export interface DrawioExportParams {
   theme: Theme
   enabledHighlightIds: string[]
   diagramPath: string | null
-  // The font the app draws this diagram in, when the diagram has none of its own (ADR 0130).
+  // The font the app draws this diagram in, when the diagram has none of its own.
   fontFamily?: string
   title?: string
 }
 
-// Resolves every icon the diagram draws, then renders (ADR 0167). An icon that cannot be read is
+// Resolves every icon the diagram draws, then renders. An icon that cannot be read is
 // left out, not fatal, as in the SVG export.
 export async function buildDiagramDrawio(
   diagram: DiagramFile,

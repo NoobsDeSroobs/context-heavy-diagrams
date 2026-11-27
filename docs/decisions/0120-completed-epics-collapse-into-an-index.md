@@ -1,14 +1,14 @@
 # 0120: Completed epics collapse into one index
 
 ## Status
-Accepted. Supersedes the `completed/` folder part of [ADR 0076](0076-completed-epics-subfolder.md) (its definition of "completed" stands).
+Accepted. Replaces a `completed/` folder of finished epics.
 
 ## Context
 After 100+ epics the `epics/completed/` folder held about 550 KB of task checklists, live-test notes and mid-work narration. The lasting knowledge in them is already in the ADRs (the decision and its reasons), `docs/known-issues.md` (the hard bugs) and the code. For someone arriving at the repository the folder was mostly noise, and for an assistant it was a lot of text to skim past.
 
 ## Decision
 - **A finished epic leaves the tree.** Its entry goes into [`docs/planning/completed-epics.md`](../planning/completed-epics.md): the number and title, how it ended (done, retired, superseded or cancelled), a sentence or two on what it delivered, and links to the ADRs it produced. The epic's file is then deleted. Its full text stays in git history.
-- **"Completed" keeps ADR 0076's meaning:** done **and** confirmed working (live-tested, or merged), plus retired, superseded and cancelled.
+- **"Completed" means:** done **and** confirmed working (live-tested, or merged), plus retired, superseded and cancelled.
 - **Numbers are never reused.** The index is ordered by number and each entry is a heading, so other documents can link to `completed-epics.md#NNNN-title`.
 - **Open epics are unchanged.** `docs/planning/epics/` holds the near backlog and `epics/later/` the parked ideas, both with their task lists.
 

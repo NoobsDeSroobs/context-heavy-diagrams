@@ -9,7 +9,7 @@ interface IconBrowserProps {
 
 // The icon-browsing core shared by IconPicker (assign an icon to a node
 // corner) and SearchOverlay's icon search (find every node already using
-// this icon) — see ADR 0072 for icon search, ADR 0006 for the icon model.
+// this icon).
 // Owns only the search box plus the installed-pack (Tabler included) and this-diagram's-custom
 // grids; the caller owns everything wrapped around it (IconPicker's corner
 // selector, the search popup's shell, and what a pick actually does).

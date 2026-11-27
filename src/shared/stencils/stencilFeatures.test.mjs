@@ -1,4 +1,4 @@
-// Stencils in search, the legend, the draw.io export, the review of changes and conformance (ADR 0180).
+// Stencils in search, the legend, the draw.io export, the review of changes and conformance (ADR 0080).
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { matchesSearchQuery, searchableFromData } from '../search/search.ts'

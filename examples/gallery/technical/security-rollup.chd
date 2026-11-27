@@ -2,7 +2,7 @@
   "version": 1,
   "metadata": {
     "layers": "Business domain (this file) -> Services -> Technical components (leaves)",
-    "purpose": "Showcase the recursive Security Matrix rollup (ADR 0088) across three layers.",
+    "purpose": "Showcase the recursive Security Matrix rollup across three layers.",
     "scenario": "Meridian Rail"
   },
   "legend": [

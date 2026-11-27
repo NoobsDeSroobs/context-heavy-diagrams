@@ -392,7 +392,7 @@ Absent/empty `edgeDirectionSets` = the whole mechanism dormant — no `direction
 
 ## Visibility sets
 
-`visibilitySets` (top-level) is a catalogue of named sets, so one diagram can hold more than one picture ("Today", "Proposed") that a person shows one at a time. A node or an edge is in a set when its own `visibilitySetIds` lists the set's `id`.
+`visibilitySets` (top-level) is a catalogue of named sets, so one diagram can hold more than one view ("Today", "Proposed") that a person shows one at a time. A node or an edge is in a set when its own `visibilitySetIds` lists the set's `id`.
 
 ```json
 "visibilitySets": [ { "id": "vis-1", "name": "Today" }, { "id": "vis-2", "name": "Proposed" } ]

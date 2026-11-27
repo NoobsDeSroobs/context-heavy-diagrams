@@ -1,4 +1,4 @@
-// Deep search across linked diagrams (ADR 0097): the pure tree walk. For each
+// Deep search across linked diagrams: the pure tree walk. For each
 // link the open diagram carries, it follows `linkedDiagram` links depth-first
 // through diagrams that aren't open and answers one question: does anything in
 // that subtree match? The answer lands on the *linking node* in the open

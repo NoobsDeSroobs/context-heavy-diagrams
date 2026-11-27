@@ -1,4 +1,4 @@
-// The label-clearance check (ADR 0146) and the committed copy of it that the skill's script imports.
+// The label-clearance check and the committed copy of it that the skill's script imports.
 import assert from 'node:assert/strict'
 import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'

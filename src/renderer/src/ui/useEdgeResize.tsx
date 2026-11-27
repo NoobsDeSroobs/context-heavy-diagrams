@@ -9,7 +9,7 @@ export interface WidthRange {
 
 const KEY_STEP = 16
 
-// The drag handle on the inner edge of a pane that is docked to the right (ADR 0158): drag to
+// The drag handle on the inner edge of a pane that is docked to the right: drag to
 // resize, arrow keys for a step (Shift for a larger one), double-click for the default. The pane
 // follows the pointer while dragging; `onCommit` is called once, on release (or per key press), so
 // a width that is kept somewhere is written once per drag. Used by the side dock and by the review

@@ -30,7 +30,7 @@ interface SearchOverlayProps {
   onClose: () => void
 }
 
-// Ctrl+F-triggered overlay — see ADR 0062. Deliberately not anchored
+// Ctrl+F-triggered overlay. Deliberately not anchored
 // to any toolbar button (there isn't one yet, on purpose — see the ADR's
 // "provisional entry point" note); a plain fixed position top-right, same
 // visual language (position/z-index/colors) as LegendPanel/HighlightsPanel.

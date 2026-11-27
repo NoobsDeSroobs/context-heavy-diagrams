@@ -192,7 +192,7 @@ export function resolveEdgeLabelLook(
   }
 }
 
-// A freeform line node (ADR 0050): the same fields as an edge's, with its own defaults, and no
+// A freeform line node: the same fields as an edge's, with its own defaults, and no
 // highlight (lines carry no metadata).
 export function resolveLineNodeLook(style: NodeStyle | undefined, theme: Theme): LineLook {
   return {

@@ -111,18 +111,18 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **Worked around** in the compare window: its copy moves such an end to the nearest point the node has (`src/shared/compare/drawable.ts`), and says so, so the review never loses an edge. The editor and the exports still do not draw it.
 
-**If it bites:** repair at load, as the container references are healed ([ADR 0075](decisions/0075-container-hierarchy-integrity.md)), reusing `makeEdgesDrawable`; a repair would count as a change to save ([ADR 0128](decisions/0128-a-diagram-repaired-on-load-counts-as-changed.md)).
+**If it bites:** repair at load, as the container references are healed ([ADR 0012](decisions/0012-containers-are-connectable-not-rotatable-deletion-promotes-children-and-the-hierarchy-is-kept-honest.md)), reusing `makeEdgesDrawable`; a repair would count as a change to save ([ADR 0040](decisions/0040-unsaved-work-and-outside-changes-are-never-lost-or-silently-overwritten.md)).
 
 ---
 
 ## Opening a diagram with highlight groups asks to save when it is closed
 
-**Status:** Solved (2026-10-22, [ADR 0128](decisions/0128-a-diagram-repaired-on-load-counts-as-changed.md))
+**Status:** Solved (2026-10-22, [ADR 0040](decisions/0040-unsaved-work-and-outside-changes-are-never-lost-or-silently-overwritten.md))
 **Found:** 2026-10-21 (a save-or-discard dialog after toggling the legend and a highlight)
 
 **Symptom:** open an older diagram that has highlight groups (the gallery examples with highlights did), change nothing, close the window: the app asks whether to save. Toggling the legend, the highlights panel or a highlight was never the cause.
 
-**Cause:** the automatic highlight resync (ADR 0026 addendum) runs while `Canvas.tsx` renders and calls `markDirty()` when it changes the catalog; for older files it adds the implicit "None" (`null`) entry or a newly allowed value. Every other repair at load (container references, required tags, security references) was silent, so the same kind of change sometimes asked to save and usually did not.
+**Cause:** the automatic highlight resync (ADR 0025) runs while `Canvas.tsx` renders and calls `markDirty()` when it changes the catalog; for older files it adds the implicit "None" (`null`) entry or a newly allowed value. Every other repair at load (container references, required tags, security references) was silent, so the same kind of change sometimes asked to save and usually did not.
 
 **Fix:** a diagram the load had to repair now always counts as changed (a comparison of what a save would write with what was read, in `loadDiagramIntoCanvas`), and the four example files that needed repairs were saved in sync. `Canvas.test.tsx` opens every example and fails if one would ask to save.
 
@@ -132,7 +132,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 ## Alt+drag duplicate may be swallowed by Linux window managers
 
-**Status:** Open, untested on Linux. The same applies to Alt+drag on an edge label ([ADR 0164](decisions/0164-alt-drag-slides-an-edge-label-along-its-edge.md)); the label's slider in the properties panel does the same job without a modifier.
+**Status:** Open, untested on Linux. The same applies to Alt+drag on an edge label; the label's slider in the properties panel does the same job without a modifier.
 **Found:** 2026-09-24, while designing the duplicate-drag feature (not yet observed — no Linux machine available)
 
 **Symptom (expected):** on Linux desktops where the window manager grabs Alt+drag to move windows (GNOME/Mutter, KDE/KWin and XFCE by default), the app never receives the Alt mouse-down, so Alt+drag duplicate does nothing and the whole window moves instead.
@@ -141,13 +141,13 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **If it bites:** switch `DUPLICATE_DRAG_MODIFIER` in `src/renderer/src/canvas/useModifierDragDuplicate.ts` to `'ctrlKey'` (one line; also update the `create.duplicateDrag` label in `commands.ts`) — Ctrl+drag is not grabbed by those window managers and no click or hover use of it conflicts (but Ctrl+drag now also takes along the bend points nearest the dragged element; the two would need telling apart, for example Ctrl+Shift). Choosing the modifier per OS is the alternative the author wants to avoid. Also verify on Linux that `setMenuBarVisibility(false)` in `src/main/windows.ts` keeps Alt from revealing the native menu.
 
-**References:** [ADR 0099](decisions/0099-modifier-drag-duplicate.md), `src/renderer/src/canvas/useModifierDragDuplicate.ts`
+**References:**, `src/renderer/src/canvas/useModifierDragDuplicate.ts`
 
 ---
 
 ## A colour typed in light mode comes back changed (the theme flip is not exactly reversible)
 
-**Status:** Won't fix (decided 2026-10-23). Measured 2026-10-17 (pre-existing; found while verifying ADR 0117). It is cosmetic, only slightly off for saturated colours typed in light mode, the panel and the drawing agree, and nobody has been bothered by it; solving for the baseline would add colour-search code for no real gain. Revisit only if someone reports a colour that matters coming back wrong.
+**Status:** Won't fix (decided 2026-10-23). Measured 2026-10-17 (pre-existing; found while verifying the default look). It is cosmetic, only slightly off for saturated colours typed in light mode, the panel and the drawing agree, and nobody has been bothered by it; solving for the baseline would add colour-search code for no real gain. Revisit only if someone reports a colour that matters coming back wrong.
 
 **Symptom:** in light mode, select an element, type `#ff0000` into a colour field, and the field settles on `#c83a2d`; the element is drawn that colour, not the red that was typed. Switching to dark mode shows `#9f0000` for the same stored value, and back to light shows `#c83a2d` again, so the panel and the drawing always agree with each other, just not with what was typed.
 
@@ -157,7 +157,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **Direction considered:** solve for the baseline instead of flipping the typed value, e.g. search the stored-form colour whose light-mode conversion is closest to what was typed (hue and chroma fixed, lightness found numerically), or accept the typed value exactly in the current theme and store the nearest baseline. Needs a decision on how close is close enough, and a test over a grid of colours.
 
-**References:** `src/renderer/src/styling/themeAdaptiveColor.ts`, `src/renderer/src/properties/PropertyPanel.tsx` (the `onChange` of each `ColorField`), [ADR 0034](decisions/0034-theme-adaptive-color-value-flip.md)
+**References:** `src/renderer/src/styling/themeAdaptiveColor.ts`, `src/renderer/src/properties/PropertyPanel.tsx` (the `onChange` of each `ColorField`)
 
 ---
 
@@ -172,7 +172,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **Workaround:** replaced the native `confirm()` with an in-panel confirmation (the row being removed becomes an inline message plus Confirm/Cancel buttons). **Any feature that shows a native `confirm()`/`alert()` and then expects the user to keep using `<select>` elements in the same view should watch for this and prefer an in-app confirmation.**
 
-**References:** [ADR 0047](decisions/0047-allowed-values-list-editor.md), `src/renderer/src/tagging/RequiredTagsSection.tsx`
+**References:**, `src/renderer/src/tagging/RequiredTagsSection.tsx`
 
 ---
 
@@ -185,9 +185,9 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **Root cause:** in the file, B is a **child** of A (`parentId`) but is the geometrically larger box that fully encloses A, so the data hierarchy is inverted relative to the visual nesting (B was resized past its parent; resizing doesn't un-parent). React Flow forces a child's effective z-index to at least `parentZ + 1` regardless of the explicit `zIndex` (`calculateChildXYZ` in `@xyflow/system`, kept even with `zIndexMode: 'manual'`), so B renders and hit-tests above A while this app's Layers panel, which reads raw `data.zIndex`, correctly says A is on top. Nothing reconciled the two.
 
-**What was done (ADR 0075):** a standing Diagnostics advisory names both containers when a child extends outside its parent; the Layers panel keeps sorting on raw `data.zIndex` (that is what drag-to-restack edits) but marks rows where raw and effective order disagree (`in: <parent>` with a warning icon); a right-click **Detach from parent** is available on any nested node. Auto-un-parenting was declined (the child may overflow deliberately); load-time healing covers only dangling or cyclic `parentId`.
+**What was done (ADR 0012):** a standing Diagnostics advisory names both containers when a child extends outside its parent; the Layers panel keeps sorting on raw `data.zIndex` (that is what drag-to-restack edits) but marks rows where raw and effective order disagree (`in: <parent>` with a warning icon); a right-click **Detach from parent** is available on any nested node. Auto-un-parenting was declined (the child may overflow deliberately); load-time healing covers only dangling or cyclic `parentId`.
 
-**References:** [ADR 0035](decisions/0035-layer-order-control.md), [ADR 0075](decisions/0075-container-hierarchy-integrity.md), `src/shared/canvas/zIndexOrdering.ts`, `src/renderer/src/layers/LayerPanel.tsx`
+**References:**, [ADR 0012](decisions/0012-containers-are-connectable-not-rotatable-deletion-promotes-children-and-the-hierarchy-is-kept-honest.md), `src/shared/canvas/zIndexOrdering.ts`, `src/renderer/src/layers/LayerPanel.tsx`
 
 ---
 
@@ -299,7 +299,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **Reopen with** the diagram and a listing of its folder; first confirm the path really does not resolve before touching scan code.
 
-**References:** [ADR 0084](decisions/0084-diagnostics-missing-files.md), `src/main/links/linkPaths.ts`
+**References:**, `src/main/links/linkPaths.ts`
 
 ---
 
@@ -316,7 +316,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 ## "Reverse direction" did nothing visible on a styled edge
 
-**Status:** Solved (2026-09-04, ADR 0083)
+**Status:** Solved (2026-09-04)
 
 **Symptom:** right-click → Reverse direction appeared to do nothing (or showed arrowheads at both ends on an earlier build).
 
@@ -332,7 +332,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 ## Hovering a single edge on a large diagram re-renders every node and edge several times over
 
-**Status:** Solved (2026-08-29, ADR 0073), live-confirmed
+**Status:** Solved (2026-08-29), live-confirmed
 **Found:** 2026-08-24 on a large diagram (82 nodes, 84 edges)
 
 **Symptom:** marquee-select stuttered; merely hovering an edge produced ~340 `LabeledEdge` and ~280 `EntityNode` renders.
@@ -343,7 +343,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **Lesson:** a memoised context value is only as stable as the *callbacks* inside it; look at their dependencies, not just the value's own dependency list. Counting renders from outside has diminishing returns; reading identity chains is faster.
 
-**References:** [ADR 0056](decisions/0056-diagram-context-rerender-performance.md), [ADR 0073](decisions/0073-react-flow-render-performance-round-2.md), `src/renderer/src/canvas/useEventCallback.ts`
+**References:**, `src/renderer/src/canvas/useEventCallback.ts`
 
 ---
 
@@ -371,7 +371,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **Fix:** raised to `2_000_000` with headroom, and the rule's comment now names the source constants (`TEXT_BASE`, `SELECTED_EDGE_Z_BOOST`) and says it is a manually maintained ceiling. First thing to re-check if this class of bug returns.
 
-**References:** [ADR 0030](decisions/0030-edge-label-z-index-override.md), `src/shared/canvas/zIndexOrdering.ts`
+**References:**, `src/shared/canvas/zIndexOrdering.ts`
 
 ---
 
@@ -403,7 +403,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **Lesson:** the browser automation's cursor movement did not reproduce real pointer sequences reliably; temporary `console.log` on every `mouseenter`/`click` gave the ground truth.
 
-**References:** [ADR 0039](decisions/0039-top-menu-bar.md), `src/renderer/src/MenuBar.tsx`
+**References:**, `src/renderer/src/MenuBar.tsx`
 
 ---
 
@@ -449,7 +449,7 @@ Add an entry whenever a bug takes real investigation to track down, or a design 
 
 **Status:** Solved (2026-08-21/22)
 
-The richest bug chain so far; the full story is in [ADR 0036](decisions/0036-connection-point-count-and-transfer.md) (five dated revisions). In short:
+The richest bug chain so far; the full story is (five dated revisions). In short:
 
 1. **Spacing overlap:** offsets were computed for the custom points only, ignoring the always-present default at 0.5, so even counts overlapped it and odd counts clustered around it.
 2. **Wrong-neighbour edge transfers:** the default point was a separate hard-coded concept outside the array the ordering logic reasoned about. Fixed by putting it in the same per-side array as everything else. **Lesson: a "keep this one element fixed to avoid a bigger rework" compromise on something meant to be uniform becomes exactly where the bugs hide.**
@@ -478,7 +478,7 @@ The richest bug chain so far; the full story is in [ADR 0036](decisions/0036-con
 
 **Fix:** a visible insertion line computed from the cursor position, and drag-over/drop handled on the whole list container with the slot computed geometrically, since the gaps had no handler at all.
 
-**References:** [ADR 0035](decisions/0035-layer-order-control.md), `src/renderer/src/layers/LayerPanel.tsx`
+**References:**, `src/renderer/src/layers/LayerPanel.tsx`
 
 ---
 
@@ -502,7 +502,7 @@ The richest bug chain so far; the full story is in [ADR 0036](decisions/0036-con
 
 **Status:** Closed, accepted by design (2026-10-17)
 
-**Explanation:** not a bug. Every explicit colour's lightness is mirrored around one midpoint on each theme change, which reads as a whole-diagram inversion. A contrast-driven approach (adjust only colours with a legibility problem) would avoid it but was rejected in [ADR 0034](decisions/0034-theme-adaptive-color-value-flip.md) as more complexity than wanted. That alternative is the documented direction if it becomes a real complaint.
+**Explanation:** not a bug. Every explicit colour's lightness is mirrored around one midpoint on each theme change, which reads as a whole-diagram inversion. A contrast-driven approach (adjust only colours with a legibility problem) would avoid it but was rejected as more complexity than wanted. That alternative is the documented direction if it becomes a real complaint.
 
 ---
 
@@ -514,7 +514,7 @@ The richest bug chain so far; the full story is in [ADR 0036](decisions/0036-con
 
 **Fix:** mirror Oklab Lightness instead (`flip(L) = 1 - L`, hue and chroma held).
 
-**References:** [ADR 0034](decisions/0034-theme-adaptive-color-value-flip.md), `src/renderer/src/styling/themeAdaptiveColor.ts`
+**References:**, `src/renderer/src/styling/themeAdaptiveColor.ts`
 
 ---
 
@@ -542,7 +542,7 @@ The richest bug chain so far; the full story is in [ADR 0036](decisions/0036-con
 
 **Fix:** a 500 ms grace window after any load during which that specific change shape didn't count. Replaced by "Adding an element made Undo stop working": that change shape is never an edit.
 
-**References:** [ADR 0040](decisions/0040-dirty-tracking-and-autosave-design.md)
+**References:** [ADR 0040](decisions/0040-unsaved-work-and-outside-changes-are-never-lost-or-silently-overwritten.md)
 
 ---
 
@@ -604,7 +604,7 @@ The richest bug chain so far; the full story is in [ADR 0036](decisions/0036-con
 
 **Lesson:** several React Flow defaults (edge stroke, node background, handle colour) follow a `var(--xy-*-props, var(--xy-*, var(--xy-*-default)))` chain; check for the custom property before assuming a plain style reaches the paint layer.
 
-**References:** [ADR 0048](decisions/0048-style-palette-and-defaults.md)
+**References:**
 
 ---
 
@@ -618,7 +618,7 @@ The richest bug chain so far; the full story is in [ADR 0036](decisions/0036-con
 
 **Lesson:** for any node whose shape doesn't fill its box, `Node.style` is the escape hatch for default box-based hit-testing.
 
-**References:** [ADR 0050](decisions/0050-freeform-line-as-node-type.md), `src/renderer/src/nodes/LineNode.tsx`
+**References:**, `src/renderer/src/nodes/LineNode.tsx`
 
 ---
 
@@ -642,7 +642,7 @@ The richest bug chain so far; the full story is in [ADR 0036](decisions/0036-con
 
 **Lesson:** anything that captures only a subtree must check whether it relies on DOM state that lives outside it.
 
-**References:** [ADR 0051](decisions/0051-png-export.md), `src/renderer/src/export/exportPng.ts`
+**References:**, `src/renderer/src/export/exportPng.ts`
 
 ---
 
@@ -656,7 +656,7 @@ The richest bug chain so far; the full story is in [ADR 0036](decisions/0036-con
 
 **Lesson:** a custom property and the standard property that consumes it via `var()` are not interchangeable to read back.
 
-**References:** [ADR 0051](decisions/0051-png-export.md), `src/renderer/src/export/exportPng.ts`
+**References:**, `src/renderer/src/export/exportPng.ts`
 
 ---
 
@@ -676,13 +676,13 @@ The richest bug chain so far; the full story is in [ADR 0036](decisions/0036-con
 
 ## Pasting a copied child-of-a-container node can land it far off screen
 
-**Status:** Solved (ADR 0075, 2026-08-30)
+**Status:** Solved (ADR 0012, 2026-08-30)
 
 **Cause:** a child's `position` is relative to its parent, but `remapForPaste` applied absolute centroid math to it and never touched `parentId`: a child pasted without its container kept a dangling reference, and one pasted with it still pointed at the old id.
 
 **Fix:** if the parent is in the payload, `parentId` is remapped through the same id map and the relative position is kept; otherwise `parentId` is stripped and the node pastes top-level. The centroid uses top-level nodes only, and a load-time `healHierarchy` pass drops dangling `parentId`s from files saved in this state. Copy/paste with containers confirmed working by the author (2026-10-17).
 
-**References:** [ADR 0075](decisions/0075-container-hierarchy-integrity.md), [ADR 0049](decisions/0049-clipboard-copy-paste.md), `src/renderer/src/canvas/clipboard.ts`
+**References:** [ADR 0012](decisions/0012-containers-are-connectable-not-rotatable-deletion-promotes-children-and-the-hierarchy-is-kept-honest.md), `src/renderer/src/canvas/clipboard.ts`
 
 ---
 
@@ -692,7 +692,7 @@ The richest bug chain so far; the full story is in [ADR 0036](decisions/0036-con
 
 **Cause:** the candidate filter could pick a node that is the container's own *parent* (it fully contains the container), creating a parent cycle; React Flow then reads an unpositioned parent as `{0,0}` and collapses the node to the origin. The drag-to-reparent path already had an ancestry check.
 
-**Fix:** reject ancestors of the container and any candidate whose bounds enclose it ([ADR 0075](decisions/0075-container-hierarchy-integrity.md)).
+**Fix:** reject ancestors of the container and any candidate whose bounds enclose it ([ADR 0012](decisions/0012-containers-are-connectable-not-rotatable-deletion-promotes-children-and-the-hierarchy-is-kept-honest.md)).
 
 ---
 
@@ -712,7 +712,7 @@ The richest bug chain so far; the full story is in [ADR 0036](decisions/0036-con
 
 ## Deleting / cutting a container + its selected children removes only the container, keeps the children
 
-**Status:** Solved (2026-10-17, [ADR 0116](decisions/0116-deleting-a-container-and-its-selected-children.md)), pending live test
+**Status:** Solved (2026-10-17), pending live test
 
 **Cause:** deleting a container promotes its children (ADR 0012), and the rule filtered out the removal of any descendant of a removed container even when the child was explicitly selected too.
 
@@ -740,7 +740,7 @@ Fixed by the paste rework described under "Pasting a copied child-of-a-container
 
 **Lesson:** in this export path, treat anything resolved indirectly (CSS variables, paint-context keywords) as suspect even when it works on screen; use literal, already-resolved values.
 
-**References:** [ADR 0014](decisions/0014-node-and-edge-style-schema.md), `src/renderer/src/export/exportPng.ts`
+**References:**, `src/renderer/src/export/exportPng.ts`
 
 ---
 
@@ -752,7 +752,7 @@ Fixed by the paste rework described under "Pasting a copied child-of-a-container
 
 **Fix:** `computeMatchIds` sets a truthy placeholder `details` whenever a live shadow exists for the node. "Deep search" being greyed out in the same session was unrelated and by design (it needs a saved path). Also noted in the same pass: `src/main/details/details.ts` joined paths itself instead of using the shared `resolveLinkPath`; fixed there, with a milder gap in `icons.ts`/`references.ts` left for later.
 
-**References:** [ADR 0097](decisions/0097-deep-search-across-linked-diagrams.md), `src/shared/search/search.ts`
+**References:**, `src/shared/search/search.ts`
 
 ---
 
@@ -794,13 +794,13 @@ Fixed by the paste rework described under "Pasting a copied child-of-a-container
 
 ## Property panel shows blank fields for style values that are unset
 
-**Status:** Solved (2026-10-17, ADR 0117), verified in the packaged app
+**Status:** Solved (2026-10-17), verified in the packaged app
 
 **Symptom:** an element with no explicit style showed empty colour, width and font fields, as if it had no colour or border.
 
 **Cause:** the panel read only the stored style; the built-in default look lived in CSS and in constants inside the edge component, where the panel could not see it.
 
-**Fix:** the built-in default look is now data ([ADR 0117](decisions/0117-built-in-style-defaults-are-data.md)), read by the panel, by the CSS through generated custom properties, and by the edge and line components. The drawn look is unchanged (51 of 52 measured properties identical, the 52nd a flaw in the old baseline).
+**Fix:** the built-in default look is now data, read by the panel, by the CSS through generated custom properties, and by the edge and line components. The drawn look is unchanged (51 of 52 measured properties identical, the 52nd a flaw in the old baseline).
 
 ---
 
@@ -842,7 +842,7 @@ Fixed by the paste rework described under "Pasting a copied child-of-a-container
 
 ## Connection handles are hard to hit when zoomed far out
 
-**Status:** Solved (2026-10-22), [ADR 0129](decisions/0129-connection-handles-keep-a-minimum-screen-size.md)
+**Status:** Solved (2026-10-22)
 
 **Symptom:** on a large diagram zoomed far out, the point to start an edge drag from is too small to click.
 
@@ -854,7 +854,7 @@ Fixed by the paste rework described under "Pasting a copied child-of-a-container
 
 ## Animated edges did not move on a computer that asks for reduced motion
 
-**Status:** Solved (2026-11-04), [ADR 0141](decisions/0141-animated-edges-are-an-edge-style-field.md)
+**Status:** Solved (2026-11-04)
 
 **Symptom:** on one computer, edges set to Flow or Pulse never moved, with Animate edges on or off, and holding Ctrl over an edge did nothing. On the maintainer's main computer the same file moved.
 
@@ -873,7 +873,7 @@ Fixed by the paste rework described under "Pasting a copied child-of-a-container
 
 **Symptom:** after zooming, the line of an edge starts and ends a distance from its element instead of at the connection point, the larger the further the zoom has moved. Panning so the elements leave the window and return draws them right.
 
-**Cause:** an edge ends on the outer rim of its handle, and React Flow measures a handle once, when its node is measured. The handle is sized with the zoom (`max(6px, 10px / zoom)`, [ADR 0129](decisions/0129-connection-handles-keep-a-minimum-screen-size.md)), so after a zoom the measured rim is stale. A node that leaves the window and mounts again (`onlyRenderVisibleElements`, [ADR 0073](decisions/0073-react-flow-render-performance-round-2.md)) is measured at the new zoom, which is why that "fixed" it.
+**Cause:** an edge ends on the outer rim of its handle, and React Flow measures a handle once, when its node is measured. The handle is sized with the zoom (`max(6px, 10px / zoom)`), so after a zoom the measured rim is stale. A node that leaves the window and mounts again (`onlyRenderVisibleElements`) is measured at the new zoom, which is why that "fixed" it.
 
 **Fix:** `useZoomedConnectionHandles` measures every node again once the zoom has rested for 50 ms and the handle size has changed. During the zoom itself the gap is still off.
 
@@ -896,7 +896,7 @@ Fixed by the paste rework described under "Pasting a copied child-of-a-container
 
 **Direction:** rename on a breaking-change release: `validate_diagram` to `validate_structure` (the maintainer's preference) and `check_diagram` to a name about conformance, with the old names kept as aliases for a release. `validate_metamodel` stays, it validates a metamodel file. Do it if the confusion still shows up in practice, since assistants and pipelines already call the current names.
 
-**References:** `extension/createServer.mjs`, `resources/cli/chd.mjs`, `src/cli/checkCommand.ts`, [ADR 0182](decisions/0182-validate-diagram-takes-text-too.md)
+**References:** `extension/createServer.mjs`, `resources/cli/chd.mjs`, `src/cli/checkCommand.ts`, [ADR 0138](decisions/0138-assistants-build-diagrams-like-a-person-through-one-implementation-behind-the-cli-and-the-mcp-server.md)
 
 ---
 
@@ -907,10 +907,27 @@ Fixed by the paste rework described under "Pasting a copied child-of-a-container
 
 **Symptom:** zooming in, or moving the window, makes a whole edge disappear while its middle is still on screen. It happens when the edge runs far from the straight line between its ends, vertically or horizontally, such as an edge bent through a waypoint.
 
-**Cause:** with `onlyRenderVisibleElements` (ADR 0073) React Flow draws an edge only while the box round its source and target elements overlaps the window (`isEdgeVisible` in `@xyflow/system`). It ignores the path in between, and offers no hook for it. A waypoint 400 units below both ends puts the path outside that box.
+**Cause:** with `onlyRenderVisibleElements` React Flow draws an edge only while the box round its source and target elements overlaps the window (`isEdgeVisible` in `@xyflow/system`). It ignores the path in between, and offers no hook for it. A waypoint 400 units below both ends puts the path outside that box.
 
 **Workaround:** `edgeCulling.ts` and `Canvas.tsx` turn `onlyRenderVisibleElements` off while an edge with waypoints reaches into the window and its end elements do not, using the box of its waypoints and ends, padded by the most a curve can swing past a waypoint (a third of the span between its neighbours times its gravity, at least 100 units). The cost is that everything is drawn for as long as that holds.
 
 **Still open:** an edge with no waypoints that swings far outside its ends (a step route that loops round an element) is not covered, and the padded box is an estimate of where a curve goes (the ends are taken at the middle of their boxes, and the straight lead-in at an end is not counted). If either shows up, the next step is to measure the real path of the edges that matter, or to cull edges in the app and leave React Flow's culling to the nodes.
 
-**References:** `src/renderer/src/canvas/edgeCulling.ts`, `src/renderer/src/canvas/Canvas.tsx` (`waypointEdgeOffScreen`), [ADR 0073](decisions/0073-react-flow-render-performance-round-2.md)
+**References:** `src/renderer/src/canvas/edgeCulling.ts`, `src/renderer/src/canvas/Canvas.tsx` (`waypointEdgeOffScreen`)
+
+---
+
+## `npm install` left no Electron binary after the upgrade to Electron 42 and later
+
+**Status:** Solved (2026-10)
+**Found:** 2026-10, upgrading Electron 39 to 43 to clear an `npm audit` finding in `extract-zip`
+
+**Symptom:** `electron-vite` stopped with `Error: Electron uninstall` after the upgrade; the open and save dialogs also began in the Downloads folder.
+
+**Cause:** Electron 42 dropped its `postinstall` binary download, so the binary is fetched on demand, which `electron-vite` does not trigger. Electron 43 made `showOpenDialog` and `showSaveDialog` default to Downloads when no path is given.
+
+**Fix:** `package.json` runs `install-electron` in its own `postinstall`, and the last opened folder is kept in Preferences (`lastOpenedDirectory`) and passed as `defaultPath`. If the binary is missing after an `npm audit fix` or an Electron update: `node node_modules/electron/install.js`.
+
+**Lesson:** read the breaking-changes notes of every Electron version crossed before running `npm audit fix --force`, not after.
+
+**References:** `package.json` (`postinstall`)

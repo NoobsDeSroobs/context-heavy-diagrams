@@ -1,5 +1,5 @@
 // Automatic attachment: an edge end that names no connection point is attached by the renderer, and this
-// is the rule (ADR 0178). The end takes the side of its element that faces the other element and a
+// is the rule. The end takes the side of its element that faces the other element and a
 // point on that side: points other edges do not use first, in the order of where the other ends are, so
 // the edges do not cross at the element. It is worked out from where the elements are, every time, so
 // it follows them as they move; nothing is stored. Pure: the canvas, the exports and the layout checks

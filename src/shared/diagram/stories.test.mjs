@@ -1,4 +1,4 @@
-// Run with `npm test`. The persisted form of stories (ADR 0195): written when used, left out when
+// Run with `npm test`. The persisted form of stories (ADR 0194): written when used, left out when
 // empty, order kept, and read back unchanged.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'

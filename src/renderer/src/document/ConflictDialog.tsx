@@ -11,7 +11,7 @@ interface Pending {
   resolve: (d: ConflictDecisions | null) => void
 }
 
-// The per-file save-conflict dialog (ADR 0092). Mounted once, by Canvas. Every file
+// The per-file save-conflict dialog (ADR 0040). Mounted once, by Canvas. Every file
 // that has unsaved edits here AND changed on disk gets its own choice — Keep mine
 // (overwrite the disk version) or Take disk (drop my edits, adopt the file) — so a
 // single blanket answer never throws work away. Nothing is preselected: overwriting

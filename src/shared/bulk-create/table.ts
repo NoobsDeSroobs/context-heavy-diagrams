@@ -1,4 +1,4 @@
-// A pasted table (ADR 0168): tab-separated, as copied from a spreadsheet, or comma-separated with
+// A pasted table: tab-separated, as copied from a spreadsheet, or comma-separated with
 // the quoting of RFC 4180. Pure text in, rows of cells out; nothing here knows what a column means.
 
 export type Delimiter = '\t' | ','

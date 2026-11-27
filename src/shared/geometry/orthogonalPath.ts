@@ -2,7 +2,7 @@ import type { LinePoint } from '../diagram'
 import type { Side } from './side'
 
 // Right-angled ("step" / "smoothstep") edge routing with manual, draggable
-// segments — ADR 0077. Deliberately self-contained and with NO dependency on
+// segments. Deliberately self-contained and with NO dependency on
 // bendablePath.ts (the catmull-rom curve module): the two routing families
 // share only the persisted `DiagramEdge.points` array shape, never code, so a
 // change here cannot regress catmull-rom-routed edges. `gravity` on a point is

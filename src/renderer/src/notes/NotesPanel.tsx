@@ -6,7 +6,7 @@ import type { NoteSaveState } from './notesLabels'
 interface NotesPanelProps {
   title: string
   content: string
-  // Whether the edits are on disk yet (ADR 0154).
+  // Whether the edits are on disk yet.
   saveState: NoteSaveState
   onChange: (content: string) => void
   onClose: () => void

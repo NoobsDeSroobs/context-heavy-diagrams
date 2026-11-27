@@ -2,7 +2,7 @@ import type { MarkerKind } from '@shared/diagram'
 
 // Shared option lists for edge/line marker + line-style selects — used by
 // the Property panel's EdgeFields/LineFields and by the edge direction
-// set's default-style editor (ADR 0083). Plain data, its own module so it
+// set's default-style editor. Plain data, its own module so it
 // can be imported without pulling in a component (Fast Refresh
 // only-export-components).
 export const MARKER_OPTIONS: { value: MarkerKind; label: string }[] = [

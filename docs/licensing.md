@@ -6,7 +6,7 @@ Things that need the user's own business/legal judgment, not an engineering deci
 
 The obviously most useful built-in icons for IT architecture diagrams would be the official vendor packs — but bundling/redistributing them inside this tool's own (eventually open-source) binary is a different thing than one person using them in their own diagram, and needs each vendor's actual licensing/usage terms reviewed before shipping.
 
-**Current stance**: not bundled, not built. [ADR 0006](decisions/0006-icon-storage-model.md) uses a permissively-licensed generic set (Tabler Icons, MIT) as the only built-in icon source for now. Vendor icons remain fully usable via the custom-upload path — the user supplies their own downloaded copy, we don't redistribute anything.
+**Current stance**: not bundled, not built. uses a permissively-licensed generic set (Tabler Icons, MIT) as the only built-in icon source for now. Vendor icons remain fully usable via the custom-upload path — the user supplies their own downloaded copy, we don't redistribute anything.
 
 **Not blocked any more:** packs the person installs from their own files ([epic 0183](planning/completed-epics.md#0183-installable-icon-packs)) distribute nothing. Bundling a vendor pack would still need the vendor's terms.
 

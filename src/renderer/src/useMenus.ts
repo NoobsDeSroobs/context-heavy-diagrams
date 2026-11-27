@@ -10,7 +10,7 @@ import type { AppPreferences } from './preferences/preferences'
 
 // What the menus need from the canvas: values to label and disable items by, and the handlers
 // they run. Every item reuses an existing handler unchanged — the menus are a way to reach
-// actions, not a set of actions (ADR 0039).
+// actions, not a set of actions.
 export interface MenuInputs {
   preferences: Pick<AppPreferences, 'recentDiagrams' | 'recentDiagramsLimit' | 'aiFeaturesEnabled'>
   currentPath: string | null
@@ -53,20 +53,20 @@ export interface MenuInputs {
   toggleReferencesPanel: () => void
   toggleStoriesPanel: () => void
   presentStory: () => void
-  // Whether a story with at least one step can be presented now (ADR 0195).
+  // Whether a story with at least one step can be presented now (ADR 0194).
   hasStoryToPresent: boolean
   toggleStylePalettePanel: () => void
   toggleEdgeAnimation: () => void
-  // Whether animated edges move now (ADR 0141), which is what the menu item's check mark shows.
+  // Whether animated edges move now, which is what the menu item's check mark shows.
   edgeAnimationOn: boolean
   toggleMinimap: () => void
-  // Marks the edges that cross a container's border with a gate (ADR 0185), for this session.
+  // Marks the edges that cross a container's border with a gate, for this session.
   toggleCrossings: () => void
-  // Whether the zoom buttons are in the corner panel (ADR 0186), which is what the item's check mark shows.
+  // Whether the zoom buttons are in the corner panel, which is what the item's check mark shows.
   toggleZoomControls: () => void
   zoomControlsOn: boolean
   crossingsOn: boolean
-  // Whether the minimap is drawn (ADR 0158), which is what the menu item's check mark shows.
+  // Whether the minimap is drawn, which is what the menu item's check mark shows.
   minimapOn: boolean
   toggleDiagramSettingsPanel: () => void
   togglePreferencesPanel: () => void
@@ -76,8 +76,8 @@ export interface MenuInputs {
   setAboutDialogOpen: (open: boolean) => void
 }
 
-// Top menu bar (ADR 0039) — File/Edit/View/AI/Help, and the command palette (ADR 0100) built from
-// it. Mode-aware (ADR 0079): the Security Matrix persona is still a render-only prototype with no
+// Top menu bar — File/Edit/View/AI/Help, and the command palette built from
+// it. Mode-aware: the Security Matrix persona is still a render-only prototype with no
 // Canvas-level actions (its controls live inside ThreatMatrixView), so "matrix" just hides what
 // doesn't apply: the Edit menu, the diagram-specific View panels and the exports. File basics,
 // Preferences and About are shared. Matrix-specific menus come back once the matrix has persisted
@@ -185,7 +185,7 @@ export function useMenus(inputs: MenuInputs): {
     onSelect: () => void window.api.openIconPackManager()
   }
 
-  // Menu groups are marked off by a line (ADR 0157): open and create, then save and export, then
+  // Menu groups are marked off by a line: open and create, then save and export, then
   // the open file itself.
   const fileMenu: MenuBarMenu = {
     label: 'File',
@@ -282,7 +282,7 @@ export function useMenus(inputs: MenuInputs): {
       },
       {
         // Reaches the same action as the edge context menu's "Reverse
-        // direction" (ADR 0087), for a selection made by box-select or
+        // direction", for a selection made by box-select or
         // "Select all edges" where a right-click on one edge isn't the
         // natural gesture.
         label:
@@ -417,7 +417,7 @@ export function useMenus(inputs: MenuInputs): {
       onSelect: () => {
         window.api.copyToClipboard(AI_INSTRUCTIONS)
         // The dialog's Copy button re-copies the instructions, not this
-        // confirmation text (ADR 0104).
+        // confirmation text.
         showAlert(
           'Copied the AI instructions to your clipboard. Paste them into a chat with Claude (or another AI assistant), then attach or paste your .chd file.',
           AI_INSTRUCTIONS
@@ -510,7 +510,7 @@ export function useMenus(inputs: MenuInputs): {
     helpMenu
   ]
 
-  // Command palette (ADR 0100): every menu leaf above, flattened, plus the
+  // Command palette: every menu leaf above, flattened, plus the
   // few keyboard-only actions that have a real handler but no menu item of
   // their own (see the ADR for why exactly these six).
   const extraPaletteActions: ExtraPaletteAction[] = isDiagramPersona

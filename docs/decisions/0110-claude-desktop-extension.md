@@ -2,10 +2,10 @@
 
 ## Status
 Accepted (2026-10-16). Corrected (2026-11-06): the read rule is a blacklist, as
-intended from the start; the first text wrongly read as a short allowlist. Widened by [ADR 0142](0142-the-extension-may-run-git-show-to-read-an-earlier-version.md) (it may run `git show`) and [ADR 0143](0143-the-extension-writes-diagram-metamodels.md) (it may write `.chdmeta` files). Amended by [ADR 0173](0173-listings-and-searches-leave-out-what-gitignore-names.md): the server reads `.gitignore` files, only to narrow what it lists and searches. Extended (2026-11-08): the same server also runs through `chd mcp` for any MCP client ([ADR 0138](0138-the-mcp-server-carries-the-guidance-the-cli-carries-the-checks.md)).
+intended from the start; the first text wrongly read as a short allowlist. Widened by [ADR 0142](0142-the-extension-may-run-git-show-to-read-an-earlier-version.md) (it may run `git show`) and [ADR 0131](0131-a-diagram-metamodel-is-a-rules-file-applied-to-a-diagram-never-stored-in-it.md) (it may write `.chdmeta` files). Amended: the server reads `.gitignore` files, only to narrow what it lists and searches. Extended (2026-11-08): the same server also runs through `chd mcp` for any MCP client ([ADR 0138](0138-assistants-build-diagrams-like-a-person-through-one-implementation-behind-the-cli-and-the-mcp-server.md)).
 
 ## Context
-The folder route ([ADR 0105](0105-bundled-ai-material-and-folder-setup.md)) and
+The folder route and
 the `chd` command line ([ADR 0106](0106-chd-command-line-tool.md)) serve an agent
 that works in a folder and has a shell. A person using the Claude Desktop chat
 has neither: no shell, and no way to hand the assistant the format knowledge or a

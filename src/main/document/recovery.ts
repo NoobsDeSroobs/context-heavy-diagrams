@@ -20,7 +20,7 @@ interface RecoveryEnvelope {
   diagram: DiagramFile
   noteDrafts: Record<string, string>
   // Each draft's note baseline (path, stamp, text) so a restored note can still
-  // detect an outside change (ADR 0092). Absent in older snapshots.
+  // detect an outside change (ADR 0040). Absent in older snapshots.
   noteBaselines?: Record<string, NoteBaseline>
 }
 

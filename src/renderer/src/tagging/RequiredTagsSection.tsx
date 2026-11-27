@@ -6,7 +6,7 @@ interface RequiredTagsSectionProps {
   requiredTags: RequiredTagDefinition[]
   // Live scan of every node/edge's current metadata (Canvas.tsx's own
   // `usedTags`, already computed for HighlightsPanel) — reused here to
-  // warn before an edit would invalidate an in-use value. See ADR 0047.
+  // warn before an edit would invalidate an in-use value.
   usedTags: { key: string; value: JsonValue }[]
   onChange: (tags: RequiredTagDefinition[]) => void
   onCopyToChildren: () => void
@@ -31,7 +31,7 @@ function parseDefaultValue(raw: string): JsonValue | undefined {
 }
 
 // The default-value dropdown's option value for "None", using the same "null" token round-trip as
-// MetadataSection's per-element dropdown (ADR 0046): JSON.parse("null") yields a real null via
+// MetadataSection's per-element dropdown: JSON.parse("null") yields a real null via
 // parseDefaultValue above, so commit needs no special case. undefined and explicit null both mean
 // "None": the app treats an absent defaultValue as null everywhere (docs/file-format.md), so the
 // dropdown shouldn't distinguish them.
@@ -43,7 +43,7 @@ function defaultValueToken(value: JsonValue | undefined): string {
 // None is always known; a string present in allowedValues is known;
 // anything else (a stale value left over from before allowedValues
 // existed or was last edited — this field was never validated against
-// allowedValues, see ADR 0047) is an orphan that still needs a visible
+// allowedValues) is an orphan that still needs a visible
 // slot so it isn't silently dropped out from under an existing file.
 function isKnownDefaultValue(value: JsonValue | undefined, allowedValues: string[]): boolean {
   if (value == null) return true
@@ -94,7 +94,7 @@ function commitOnEnter(event: React.KeyboardEvent<HTMLInputElement>): void {
 // as one-shot actions), plus a trailing always-blank row: typing into it and blurring or pressing
 // Enter appends a value, and the row goes blank for the next. That isn't per keystroke (one sync
 // per character is the bug useFieldDraft avoids) but stays buttonless, with no "Add" click between
-// values. See ADR 0047.
+// values.
 // A pending remove/rename of an in-use value: see AllowedValuesEditor for why this replaced
 // window.confirm().
 interface PendingChange {
@@ -393,7 +393,7 @@ function RequiredTagRow({
   )
 }
 
-// One section of DiagramSettingsPanel: ADR 0022 for the required-tags model, ADR 0071 for why this
+// One section of DiagramSettingsPanel: ADR 0022 is the required-tags model, and this
 // (and line bend presets) fold into one diagram-configuration panel instead of each owning a dock
 // toggle. Body only: the enclosing CollapsibleSection provides the title and expand chrome,
 // DiagramSettingsPanel the panel shell and close button. Text fields are draft-until-blur

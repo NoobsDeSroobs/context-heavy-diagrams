@@ -19,7 +19,7 @@ export function seedMetadata(
 
 function isValidForTag(value: JsonValue, def: RequiredTagDefinition): boolean {
   // null is always valid, regardless of allowedValues — the implicit
-  // "None" value every required tag carries (see ADR 0046), without
+  // "None" value every required tag carries, without
   // needing to be added to allowedValues itself. Without this, a
   // deliberately-None element would get silently reset back to a real
   // defaultValue on the very next sync pass — exactly backwards from the

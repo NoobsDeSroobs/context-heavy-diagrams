@@ -3,7 +3,7 @@ import { vi } from 'vitest'
 import type { DiagramFile } from '@shared/diagram'
 import Canvas from './Canvas'
 
-// Test helper (ADR 0127): the real Canvas in jsdom with a stand-in for the preload bridge. Every
+// Test helper: the real Canvas in jsdom with a stand-in for the preload bridge. Every
 // bridge method resolves to nothing and every `onX` subscription returns a no-op unsubscribe;
 // pass `over` to replace what a test cares about.
 type Api = Record<string, unknown>

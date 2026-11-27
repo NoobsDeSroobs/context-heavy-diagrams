@@ -113,7 +113,7 @@ export function nearestConnectionPointWithCoordinates(
 // the dragged-from handle to "3rd of 5 on top" once, then replicate that
 // ordinal onto every other selected entity via connectionPointAtOrdinal
 // below, rather than each entity picking its own nearest point independently
-// (see ADR 0059's addendum — nearest-to-target looked inconsistent in real
+// (nearest-to-target looked inconsistent in real
 // use, since unrelated entities rarely face the target the same way).
 export function pointOrdinal(
   storedPoints: ConnectionPoint[],
@@ -169,7 +169,7 @@ export function reassignConnectionPointHandles(
   })
 }
 
-// The count-per-side generator (ADR 0036). `targetTotalCount` is the side's whole point count,
+// The count-per-side generator. `targetTotalCount` is the side's whole point count,
 // exactly what the property panel shows and edits. It starts from the side's effective points
 // (synthesizing the implicit centred point first if the side was never touched). Growing keeps
 // every existing point (same id, so its edges stay attached) and appends new empty ones at the
@@ -328,7 +328,7 @@ export function useConnectionPointMenu(
   // Right-click on any point, including one that is still only implicit (identity is resolved
   // through the same effective-points view removeCustomPointWithTransfer uses), removes it,
   // distinct from the node-wide menu that adds one; stopPropagation keeps the two from both firing
-  // for one click. ADR 0036 replaced the block-if-edge-attached guard with edge transfer, so
+  // for one click. Edge transfer replaced the block-if-edge-attached guard, so
   // removing a wired point needs no prior disconnect; the only refusal left is a side's last point.
   const onPointContextMenu = useCallback(
     (event: MouseEvent<HTMLDivElement>, point: ConnectionPoint) => {

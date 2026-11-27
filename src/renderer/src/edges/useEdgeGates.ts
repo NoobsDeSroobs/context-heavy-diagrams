@@ -13,7 +13,7 @@ interface Boundary {
 const sameBoundaries = (a: Boundary[] | null, b: Boundary[] | null): boolean =>
   a === b || (a !== null && b !== null && JSON.stringify(a) === JSON.stringify(b))
 
-// The gates where an edge goes through the border of a container (ADR 0185), from the containers' places
+// The gates where an edge goes through the border of a container, from the containers' places
 // in the canvas. Subscribes to nothing while `enabled` is false, and re-renders the edge only when the
 // borders it crosses move or change size.
 export function useEdgeGates(

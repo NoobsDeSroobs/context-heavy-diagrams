@@ -43,7 +43,7 @@ export function registerLinkHandlers(): void {
   })
 
   // Bulk existence check for the Diagnostics "missing files" section
-  // (ADR 0084) — linked diagrams, custom icons, reference images and
+  // — linked diagrams, custom icons, reference images and
   // notes all resolve the same way (resolveLinkPath). Same
   // resolve + fs.access as windows:openLinked, over a (deduped) list.
   // Returns one entry per input path, in input order.

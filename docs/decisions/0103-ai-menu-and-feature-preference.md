@@ -14,11 +14,11 @@ told they exist — and to hide them entirely if they don't want AI features.
 - A **top-level menu labelled "AI"**, placed between View and Help
   (File · Edit · View · AI · Help). It is built in `Canvas.tsx` alongside the
   other menus, so its leaves flatten into the command palette for free
-  ([ADR 0100](0100-command-palette-reuses-the-menu-bar.md)).
+.
 - Visibility is controlled by an **app preference, `aiFeaturesEnabled`**
   (default `true`, in `AppPreferences`), toggled from the Preferences panel.
   The Windows installer seeds it from an "enable AI features?" question
-  ([ADR 0108](0108-chd-file-association-and-single-instance.md)); that is why
+; that is why
   it is a preference rather than a build flag. Being a preference, it
   follows the standing "seeded with defaults at every boundary" rule via
   `normalizePreferences`.

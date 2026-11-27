@@ -17,7 +17,7 @@ export interface ReferencesState {
   openReferencesFor: (nodeId: string) => void
 }
 
-// Reference images (ADR 0069). The floating viewer windows are pure session state, one entry per
+// Reference images. The floating viewer windows are pure session state, one entry per
 // (entity, image path), gone on reload; the paths on node.data.references are the only persisted
 // part. The diagram-wide inventory panel's open flag lives with the other panels.
 export function useReferences({
@@ -98,7 +98,7 @@ export function useReferences({
     (nodeId: string) => {
       // Read live node data off the React Flow instance rather than closing
       // over `nodes` — keeps this callback stable so it doesn't bust the
-      // memoized DiagramContext value on every node change (ADR 0056).
+      // memoized DiagramContext value on every node change.
       const node = rfInstance.getNode(nodeId)
       const refs = Array.isArray(node?.data?.references) ? (node.data.references as string[]) : []
       if (refs.length === 0) {

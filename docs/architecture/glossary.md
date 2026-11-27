@@ -1,6 +1,6 @@
 # Glossary
 
-The terms this project uses precisely, so that "settings" does not quietly mean three things. The app shows this file under **Help → Glossary…**: for each `##` term, the text up to its `### For developers` subheading, and nothing else. So that text is plain: no type names, no ADR numbers, no links (name another term instead). The code-level detail goes under `### For developers`. A test fails for a term with no plain part, and for a link or an ADR number in one ([ADR 0157](../decisions/0157-menus-are-grouped-and-the-glossary-is-in-help.md)). See [ADR 0052](../decisions/0052-settings-ownership-tiers.md) for the reasoning behind the settings tiers.
+The terms this project uses precisely, so that "settings" does not quietly mean three things. The app shows this file under **Help → Glossary…**: for each `##` term, the text up to its `### For developers` subheading, and nothing else. So that text is plain: no type names, no ADR numbers, no links (name another term instead). The code-level detail goes under `### For developers`. A test fails for a term with no plain part, and for a link or an ADR number in one. See [ADR 0052](../decisions/0052-settings-ownership-tiers.md) for the reasoning behind the settings tiers.
 
 ## Entity
 
@@ -8,7 +8,7 @@ A box that stands for one thing in what the diagram models: a service, a system,
 
 ### For developers
 
-The `entity` node type (called Shape before 2026-09-30, [ADR 0101](../decisions/0101-shape-to-entity-rename.md); a pre-rename file's `"shape"` is accepted as a synonym on load, per [docs/file-format.md](../file-format.md)). The meaning lives in the node's *type*, not its appearance: an Entity styled to look like a Container is still an Entity. Its `linkedDiagram` leads to the diagram where it is a Container.
+The `entity` node type (called Shape before 2026-09-30; a pre-rename file's `"shape"` is accepted as a synonym on load, per [docs/file-format.md](../file-format.md)). The meaning lives in the node's *type*, not its appearance: an Entity styled to look like a Container is still an Entity. Its `linkedDiagram` leads to the diagram where it is a Container.
 
 ## Container
 
@@ -28,7 +28,7 @@ A named reading of a diagram's arrows. The same edges can be read as "Data flow"
 
 ### For developers
 
-`edgeDirectionSets` and `activeEdgeDirectionSetId` at the top of the file ([ADR 0081](../decisions/0081-flippable-edge-direction-sets.md), per-set style in [ADR 0083](../decisions/0083-per-set-edge-style-as-creation-template.md)). Edited in the Edge direction sets section of the Diagram settings panel.
+`edgeDirectionSets` and `activeEdgeDirectionSetId` at the top of the file. Edited in the Edge direction sets section of the Diagram settings panel.
 
 ## Notes
 
@@ -36,7 +36,7 @@ The Markdown text behind an element: what you would otherwise squeeze into the b
 
 ### For developers
 
-A `.md` file the node's `data.notes` points at, kept in an in-memory shadow while it is edited and written on diagram Save ([ADR 0092](../decisions/0092-unified-multi-file-save-and-change-detection.md), [ADR 0154](../decisions/0154-unsaved-changes-show-in-the-window-title-and-the-notes-panel.md)). Called details before 0.4.0.
+A `.md` file the node's `data.notes` points at, kept in an in-memory shadow while it is edited and written on diagram Save ([ADR 0040](../decisions/0040-unsaved-work-and-outside-changes-are-never-lost-or-silently-overwritten.md)). Called details before 0.4.0.
 
 ## Tags
 
@@ -68,7 +68,7 @@ The order in which elements are drawn: what lies above what. The Layers panel li
 
 ### For developers
 
-A read-only projection of each node's `zIndex` ([ADR 0075](../decisions/0075-container-hierarchy-integrity.md) for the parent rule). Like Diagnostics it owns no state, so it is not a settings tier.
+A read-only projection of each node's `zIndex` ([ADR 0012](../decisions/0012-containers-are-connectable-not-rotatable-deletion-promotes-children-and-the-hierarchy-is-kept-honest.md) for the parent rule). Like Diagnostics it owns no state, so it is not a settings tier.
 
 ## Linked diagram
 
@@ -92,7 +92,7 @@ Settings that belong to the whole diagram and are saved in its file: required ta
 
 ### For developers
 
-**Scope: one diagram.** Stored at the top level of `DiagramFile`, everything except `nodes` and `edges`: `requiredTags`, `highlights`, `legend`, `gravityPresets`, `maxConnectionPointsPerSide`, `metadata`. The camera position is deliberately not part of this tier; it is not persisted at all ([ADR 0090](../decisions/0090-drop-viewport-persistence.md)). Edited by `DiagramSettingsPanel`. Older docs and comments call this tier "Configuration".
+**Scope: one diagram.** Stored at the top level of `DiagramFile`, everything except `nodes` and `edges`: `requiredTags`, `highlights`, `legend`, `gravityPresets`, `maxConnectionPointsPerSide`, `metadata`. The camera position is deliberately not part of this tier; it is not persisted at all. Edited by `DiagramSettingsPanel`. Older docs and comments call this tier "Configuration".
 
 ## Preferences
 
@@ -116,4 +116,4 @@ The complete set of rules one kind of diagram follows, such as hexagonal, data f
 
 ### For developers
 
-A `.chdmeta` file ([ADR 0131](../decisions/0131-conformance-profiles.md), [format](../metamodel-format.md), naming in [ADR 0144](../decisions/0144-a-conformance-profile-is-called-a-diagram-metamodel.md)). The check is the **conformance check** (`chd check`, and Diagnostics in the app). It was called a *profile* before 0.6.0.
+A `.chdmeta` file ([ADR 0131](../decisions/0131-a-diagram-metamodel-is-a-rules-file-applied-to-a-diagram-never-stored-in-it.md), [format](../metamodel-format.md), naming in [ADR 0131](../decisions/0131-a-diagram-metamodel-is-a-rules-file-applied-to-a-diagram-never-stored-in-it.md)). The check is the **conformance check** (`chd check`, and Diagnostics in the app). It was called a *profile* before 0.6.0.

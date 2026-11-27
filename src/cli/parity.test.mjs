@@ -39,7 +39,7 @@ const SERVER_TOOL = {
   ask: 'inspect_diagram'
 }
 // The server's reading tools that the command line leaves to the shell it runs in: a shell has grep,
-// ls and cat, and the server has none (ADR 0149).
+// ls and cat, and the server has none.
 const SERVER_ONLY = {
   list_files: 'a shell lists files',
   search_files: 'a shell has grep',
@@ -396,7 +396,7 @@ test('every server tool is either behind a chd command or listed as server-only'
 })
 
 // --- building a diagram: chd edit / chd ask and edit_diagram / inspect_diagram / room_for_label
-// (ADR 0148). The same operations must give the same answers and the same bytes. The command line
+// (ADR 0138). The same operations must give the same answers and the same bytes. The command line
 // works in a folder of its own with the same file name, so what an operation stores is the same.
 
 const BUILD = [

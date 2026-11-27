@@ -39,7 +39,7 @@ Very large (fetch, cache, auth, trust, coverage-aware aggregation), in real tens
 - Rollups run **cache-first**: show results immediately with per-repo "as of" timestamps, refresh in the background. Needs concurrency, progress and cancel for large trees.
 - Offline: use the stale cache with a clear badge.
 - A link may pin a tag/SHA (immutable, never stale) or track a branch (current, but can change under you). Per-link choice; default probably the branch.
-- Compatible with [ADR 0088](../../../decisions/0088-recursive-security-matrix-rollup.md)'s "derived values are computed live, never persisted": the fetch cache holds source files only.
+- Compatible with's "derived values are computed live, never persisted": the fetch cache holds source files only.
 
 ### Tri-state coverage (the false-negative problem)
 A rollup or search over a tree that can't be fully read must never report a confident "no". Evaluation is per node, in this order, and composes upward (Kleene OR), so each domain gets its own result:
@@ -53,7 +53,7 @@ Notes:
 - Accepting that these boundaries exist means the **process** must include checking those unreachable repos outside the tool. The Unknown list is the worklist for that ("request access to / ask the owner of these").
 - Universal questions ("are *all* services classified?") invert the order: any False is decisive, otherwise unknown propagates.
 - Numeric rollups (e.g. max threat score) with unreadable subtrees become bounds ("at least N"), not a plain N.
-- **This gap already exists locally**: ADR 0088's crawl turns a broken link deeper in a subtree into a warning and lets that shape contribute nothing, so today's rollup can already give a confident-looking miss. Tri-state could be retrofitted to the local crawl and search predicate ([ADR 0096](../../../decisions/0096-search-facets-and-shared-match-predicate.md)) independently of any URL work, and may be worth doing first.
+- **This gap already exists locally**: the rollup's crawl turns a broken link deeper in a subtree into a warning and lets that shape contribute nothing, so today's rollup can already give a confident-looking miss. Tri-state could be retrofitted to the local crawl and search predicate independently of any URL work, and may be worth doing first.
 
 ### Access
 - Value scales with what the reader can see. Read access is not write access, so an org can grant broad read on diagram-owning repos without exposing production write paths. The tool can't fix this and doesn't try; it can only report the limit honestly (tri-state above).

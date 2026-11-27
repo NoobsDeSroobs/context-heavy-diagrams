@@ -44,7 +44,7 @@ interface OrientedEdge {
 
 // Only entities, containers and text nodes can have a role; freeform lines and stencils never do.
 function nodeKind(node: DiagramNode): NodeKind | null {
-  // A stencil has no tags, so no role either (ADR 0180).
+  // A stencil has no tags, so no role either (ADR 0080).
   if (node.type === 'line' || node.type === 'stencil') return null
   return node.type === 'container' || node.type === 'text' ? node.type : 'entity'
 }

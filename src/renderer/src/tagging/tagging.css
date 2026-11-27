@@ -184,7 +184,7 @@
   padding: 2px 4px;
 }
 
-/* Allowed-values list editor (ADR 0047) — nested inside the
+/* Allowed-values list editor — nested inside the
    entry's own CollapsibleSection, collapsed by default. */
 .required-tag-values-list {
   display: flex;
@@ -231,7 +231,7 @@
   flex: 0 0 auto;
 }
 
-/* "No color": the picker shows a struck-through empty swatch (ADR 0163). */
+/* "No color": the picker shows a struck-through empty swatch. */
 .highlight-row-swatch.is-none {
   background: linear-gradient(
     to top right,
@@ -308,7 +308,7 @@
   flex: 1;
 }
 
-/* Grouped highlights — see ADR 0026. A key with 2+ entries
+/* Grouped highlights — see ADR 0025. A key with 2+ entries
    renders as one of these instead of a plain .highlight-row. */
 .highlight-group {
   display: flex;

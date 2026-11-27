@@ -28,7 +28,7 @@ export function connectionRadiusForZoom(zoom: number): number {
 }
 
 // The size of a connection handle in flow units at a zoom: at least 10 screen px, never under 6. The
-// same formula as the handle rule in nodes.css (ADR 0129).
+// same formula as the handle rule in nodes.css.
 export function handleSizeForZoom(zoom: number): number {
   if (!(zoom > 0)) return 10
   return Math.max(6, 10 / zoom)

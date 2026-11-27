@@ -52,7 +52,7 @@ test('the thickness is copied when the edge sets one; opacity is not part of a l
   assert.equal('strokeWidth' in legendLineFromEdgeStyle({}, 'dark', flip, defaults), false)
 })
 
-test('the routing is copied when the edge sets one, and left out when it does not (ADR 0196)', () => {
+test('the routing is copied when the edge sets one, and left out when it does not', () => {
   const look = legendLineFromEdgeStyle({ routingStyle: 'step' }, 'dark', flip, defaults)
   assert.equal(look.routingStyle, 'step')
   assert.equal('routingStyle' in legendLineFromEdgeStyle({}, 'dark', flip, defaults), false)

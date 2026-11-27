@@ -1,5 +1,5 @@
 // Run with `npm test`. THIRD-PARTY-NOTICES.md is generated from the dependency tree
-// (scripts/generate-notices.mjs, ADR 0119): this fails when a dependency was added,
+// (scripts/generate-notices.mjs): this fails when a dependency was added,
 // removed or updated without regenerating it, or when a shipped package has a license
 // that is not known to be compatible with GPL-3.0-or-later.
 import { test } from 'node:test'

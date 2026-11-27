@@ -133,7 +133,7 @@
   font-weight: bold;
 }
 
-/* Ctrl/Cmd-hover peek card (ADR 0093): read-only, never intercepts the pointer. */
+/* Ctrl/Cmd-hover peek card: read-only, never intercepts the pointer. */
 .peek-card {
   position: fixed;
   z-index: 60;

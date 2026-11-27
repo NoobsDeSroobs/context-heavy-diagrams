@@ -1,4 +1,4 @@
-// The editing operations on stories (ADR 0195): make, rename and remove a story, add and remove its
+// The editing operations on stories (ADR 0194): make, rename and remove a story, add and remove its
 // steps, and add and remove the actions of a step. A story and a set are named by their names, as the
 // editor shows them (the ids are hidden and an assistant never needs them); a story name is unique
 // ignoring case, as the editor insists. Part of the same pure core as operations.ts.

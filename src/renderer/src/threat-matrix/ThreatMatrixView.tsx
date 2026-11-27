@@ -33,12 +33,12 @@ export interface ThreatMatrixViewProps {
   // when the feature is unused), so the view never deals with null.
   security: DiagramSecurity
   // Calculation modes — session state owned by Canvas, NOT persisted
-  // (ADR 0088). Changing them recomputes the view; no file write.
+  //Changing them recomputes the view; no file write.
   combineMethod: CombineMethod
   aggregateMethod: AggregateMethod
   onCombineMethodChange: (next: CombineMethod) => void
   onAggregateMethodChange: (next: AggregateMethod) => void
-  // Recursive rollup (ADR 0088) — `null` until the first crawl resolves.
+  // Recursive rollup — `null` until the first crawl resolves.
   // Keyed by root matrix entity id; only entities with a `linkedDiagram` appear.
   crawl: SecurityCrawlResult | null
   onRefreshCrawl: () => void
@@ -93,7 +93,7 @@ const BREAKDOWN_WIDTH = 260
 
 // The Security Matrix — a read-time view over every member entity's own
 // `data.security`, the diagram-level `security` config (ADR 0082), and the
-// recursive rollup of every linked matrix entity's subtree (ADR 0088). It
+// recursive rollup of every linked matrix entity's subtree. It
 // owns no persisted state: edits go back through the callbacks; the crawl
 // result is a session cache passed in from Canvas.
 export default function ThreatMatrixView({
@@ -139,7 +139,7 @@ export default function ThreatMatrixView({
   }
 
   // One cell's number + provenance. Derived cells recompute live from the
-  // crawl using the active modes (ADR 0088) — no recrawl on a mode change.
+  // crawl using the active modes — no recrawl on a mode change.
   const cellInfo = (threat: SecurityThreat, entityId: string): CellInfo => {
     const col = columnInfo(entityId)
     if (col.kind === 'broken') return { value: null, kind: 'broken' }
@@ -175,7 +175,7 @@ export default function ThreatMatrixView({
     aggregateMethod
   )
 
-  // Completeness (ADR 0082/0088) — over EVERY matrix entity x EVERY threat,
+  // Completeness (ADR 0082) — over EVERY matrix entity x EVERY threat,
   // hidden included. A leaf gap is a missing hand assessment; a derived gap
   // is a hole downstream (nothing assessed there, or a broken link).
   let missingLeaf = 0
@@ -191,7 +191,7 @@ export default function ThreatMatrixView({
   const missingCells = missingLeaf + missingDownstream
 
   // Threat names assessed only in linked subtrees, not in this matrix's own
-  // catalog — surfaced, not silently dropped (ADR 0088).
+  // catalog — surfaced, not silently dropped.
   const downstreamOnlyThreats = useMemo(() => {
     if (!crawl) return [] as string[]
     const catalog = new Set(security.threats.map((t) => normalizeThreatName(t.name)))
@@ -272,7 +272,7 @@ export default function ThreatMatrixView({
     .filter((n) => n.type === 'entity' && !security.matrixEntityIds.includes(n.id))
     .map((n) => ({ id: n.id, label: String(n.data?.label ?? n.id) }))
 
-  // Bulk-add every entity not already in the matrix (ADR 0088, item 1) —
+  // Bulk-add every entity not already in the matrix —
   // one action instead of picking them one at a time. Scope filtering
   // (in/out-of-scope tag, per-entity opt-out) comes with the tag-mapping work.
   const addAllEntities = (): void => {

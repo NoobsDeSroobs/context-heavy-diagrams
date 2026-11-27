@@ -53,7 +53,7 @@ import { markerUrl } from './markerIds'
 
 // The default stroke width and colour (a little thicker than React Flow's stock
 // 1px, and a concrete colour so a PNG export has something to copy) are data in
-// styleDefaults.ts (ADR 0117), shared with the property panel. They are always
+// styleDefaults.ts, shared with the property panel. They are always
 // applied inline (see computedStyle below), because a selected edge's width is
 // "whatever it already is, plus a bit" and needs a real number to start from.
 // base.css still carries the same colour for React Flow's own fallback edge; a
@@ -64,11 +64,11 @@ const DEFAULT_STROKE_WIDTH = EDGE_STYLE_DEFAULTS.strokeWidth
 // selected edge just gets both effects layered.
 const SELECTED_STROKE_WIDTH_DELTA = 2
 const BEND_POINT_HANDLE_SIZE = 10
-// Draggable segment handle for step/smoothstep routing (ADR 0077) — a short
+// Draggable segment handle for step/smoothstep routing — a short
 // bar laid along the segment, long side across the drag direction.
 const SEGMENT_HANDLE_LONG = 28
 const SEGMENT_HANDLE_SHORT = 10
-// Width of the invisible hover hit-path (ADR 0073) — matches React Flow's
+// Width of the invisible hover hit-path — matches React Flow's
 // own default edge interactionWidth (20) so hovering near the edge behaves
 // the same as clicking near it. Rendered on top of BaseEdge so it, not
 // BaseEdge's own interaction path, is the topmost element under the pointer
@@ -77,7 +77,7 @@ const SEGMENT_HANDLE_SHORT = 10
 const HOVER_HIT_WIDTH = 20
 const HOVER_GRACE_MS = 150
 
-// Point at an arbitrary fraction of the path's arc length (ADR 0045),
+// Point at an arbitrary fraction of the path's arc length,
 // also used for the plain midpoint (ratio 0.5), so a label
 // stays centered on the *whole* rendered path, straight lead-in segments
 // included, not just its curved middle portion. SVG path geometry doesn't
@@ -102,10 +102,10 @@ function pathLengthOf(pathD: string): number {
 const NO_POINTS: LinePoint[] = []
 
 // The label sits at `style.labelPosition` along the path (midpoint when unset); Alt+drag on it
-// moves it (ADR 0164). The label is always rendered, even empty, so there is something to
+// moves it. The label is always rendered, even empty, so there is something to
 // double-click to add one.
 //
-// Style (ADR 0014): `style`/`markerEnd` arriving as props are React Flow's resolution of
+// Style: `style`/`markerEnd` arriving as props are React Flow's resolution of
 // defaultEdgeOptions (Canvas.tsx) for an edge with no style override, used as-is when data.style
 // leaves a field unset, so an unstyled edge keeps today's look. `markerStart` has no such default
 // (RF only auto-generates markerEnd), so it is only set through an explicit style override.
@@ -153,7 +153,7 @@ function LabeledEdge({
   // Bend-point visibility: hovered or selected or a point is actively being
   // dragged right now — the last case so a fast drag that strays off the
   // path mid-gesture doesn't hide the very point being dragged. Hover is
-  // per-edge local state (ADR 0073), set from the invisible hit-path
+  // per-edge local state, set from the invisible hit-path
   // rendered below — it used to be a single hoveredEdgeId in Canvas.tsx
   // materialized onto edge.data, which rewrote the whole edges array on
   // every hover.
@@ -193,7 +193,7 @@ function LabeledEdge({
     [isOrthogonal, sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition, bendPoints]
   )
 
-  // Routing (ADR 0057) lives in the shared buildEdgePath, which the SVG export calls too (ADR
+  // Routing lives in the shared buildEdgePath, which the SVG export calls too (ADR
   // 0124), so the exported file draws the same geometry.
   const edgePath = useMemo(
     () =>
@@ -243,7 +243,7 @@ function LabeledEdge({
     }
   }, [edgeLengths, id, edgePath])
 
-  // Animation (ADR 0141) runs from the source end to the target end unless reversed, so it follows
+  // Animation runs from the source end to the target end unless reversed, so it follows
   // the arrow of the active edge direction set. Only a 'pulse' with a single dot needs the path's
   // length, for its speed.
   const animation = knownAnimation(edgeStyle?.animation)
@@ -277,7 +277,7 @@ function LabeledEdge({
     [edgePath, labelRatio]
   )
 
-  // Alt+drag on the label slides it along the path (ADR 0164). A native capture-phase listener, as
+  // Alt+drag on the label slides it along the path. A native capture-phase listener, as
   // for the duplicate drag, so the press never reaches the label editor or React Flow's pane pan.
   // The point grabbed stays under the pointer, and the undo step opens on the first real change,
   // so an Alt+click leaves none.
@@ -375,7 +375,7 @@ function LabeledEdge({
     // ADR 0025. Width is handled by baseStrokeWidth above instead of
     // here, so it can still be added to when also selected.
     ...(highlightMatches.length === 1 ? { stroke: highlightMatches[0].color } : {}),
-    // Search-result indicator (ADR 0062) — a glow via filter
+    // Search-result indicator — a glow via filter
     // rather than a stroke/outline override, specifically so it coexists
     // with whatever highlightMatches already did above instead of fighting
     // it for the same `stroke` property. Edges have no CSS `outline`
@@ -392,11 +392,11 @@ function LabeledEdge({
     // lose track of even with correct handle priority (docs/known-issues.md).
     //
     // A CSS variable (set once on the <ReactFlow> wrapper in Canvas.tsx), not a DiagramContext
-    // field (ADR 0056): it matters only to the selected edge, so reading it through Context would
+    // field: it matters only to the selected edge, so reading it through Context would
     // re-render every edge when it changes. The browser resolves the variable directly, with no
     // re-render even for the selected edge.
     ...(selected ? { stroke: 'var(--selected-edge-highlight-color)' } : {}),
-    // "Isolate" (ADR 0063) — layered last, same as every other
+    // "Isolate" — layered last, same as every other
     // override here; opacity doesn't conflict with anything above it so
     // ordering only matters for readability, not correctness.
     ...isolateStyle(id, isolateActive, searchMatchIds, isolateOpacity)
@@ -406,7 +406,7 @@ function LabeledEdge({
   const computedMarkerStart =
     edgeStyle?.startMarker !== undefined ? markerUrl(edgeStyle.startMarker) : markerStart
   // The line stops short of the tip of a pointed head, so the tip is not blunted by the end of the
-  // line (ADR 0197). An edge with no marker of its own is drawn with the built-in ones.
+  // line. An edge with no marker of its own is drawn with the built-in ones.
   const drawnWidth = Number(computedStyle.strokeWidth)
   const drawnPath = useMemo(
     () =>
@@ -442,7 +442,7 @@ function LabeledEdge({
   )
 
   // A click on a mark goes to the other end of the gap. Alt+drag moves the mark along the edge (the
-  // same gesture as the label, ADR 0164, and the sliders in the property panel); without Alt a
+  // same gesture as the label, and the sliders in the property panel); without Alt a
   // press never moves it, so a mark is not shifted by accident.
   const onPortalMarkDown = useCallback(
     (event: ReactPointerEvent<SVGGElement>, which: 'start' | 'end'): void => {
@@ -572,7 +572,7 @@ function LabeledEdge({
     [pushSnapshot, openContextMenu, gravityPresets, updateEdgeData, id, bendPoints]
   )
 
-  // Draggable segments for step/smoothstep routing (ADR 0077). Each handle
+  // Draggable segments for step/smoothstep routing. Each handle
   // sits at a segment midpoint; dragging moves that whole segment along its
   // normal, keeping every corner at 90°. The vertex list is frozen at
   // pointer-down so the segment index the gesture holds stays valid even as
@@ -727,7 +727,7 @@ function LabeledEdge({
         ))}
       {portalMarks('over')}
       {gates.length > 0 && (
-        // Gates where the edge goes through the border of a container (ADR 0185): a bar lying along the
+        // Gates where the edge goes through the border of a container: a bar lying along the
         // border, so flat on a horizontal border and upright on a vertical one.
         <g className="edge-crossing-gates" pointerEvents="none">
           {gates.map((g, i) => (

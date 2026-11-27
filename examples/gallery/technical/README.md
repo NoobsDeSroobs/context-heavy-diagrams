@@ -21,4 +21,4 @@ The other containers, external systems and people shown in a component diagram r
 
 ## Security Matrix rollup
 
-`security-rollup.chd` and [`security-rollup/`](security-rollup/README.md): a seven-file, three-layer tree (business domain, services, technical components) showing the recursive Security Matrix rollup ([ADR 0088](../../../docs/decisions/0088-recursive-security-matrix-rollup.md)): derived columns, a deliberately broken sub-diagram link, a directly assessed element that has no sub-diagram, a threat that only exists downstream, and calculation modes that flow down the whole tree.
+`security-rollup.chd` and [`security-rollup/`](security-rollup/README.md): a seven-file, three-layer tree (business domain, services, technical components) showing the recursive Security Matrix rollup: derived columns, a deliberately broken sub-diagram link, a directly assessed element that has no sub-diagram, a threat that only exists downstream, and calculation modes that flow down the whole tree.

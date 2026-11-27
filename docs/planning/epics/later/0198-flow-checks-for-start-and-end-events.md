@@ -8,8 +8,8 @@ Flag the diagram mistakes that the meaning of a start and an end event already r
 
 ## Tasks
 - [ ] An end event with an outgoing edge is flagged: an end finishes its path and starts nothing.
-- [ ] Once the start/in-flow toggle exists ([0194](../0194-improve-on-the-bpmn-notation.md)): an event set to "starts a flow" with an incoming edge, and an event set to "in the flow" with none, are flagged as not agreeing with their position.
-- [ ] Decide where the checks live: a built-in Diagnostics section, or rules a diagram metamodel can switch on ([0157](0157-conformance-checks-beyond-v1.md)), so `chd check` reports them too.
+- [ ] Once the start/in-flow toggle exists ([0194](../0194-one-diagram-several-views-visibility-sets-and-stories.md)): an event set to "starts a flow" with an incoming edge, and an event set to "in the flow" with none, are flagged as not agreeing with their position.
+- [ ] Decide where the checks live: a built-in Diagnostics section, or rules a diagram metamodel can switch on, so `chd check` reports them too.
 
 ## Notes
 - Not enforced anywhere: drawing is never refused, the check only reports.

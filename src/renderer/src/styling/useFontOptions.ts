@@ -12,7 +12,7 @@ export function defaultFontLabel(diagramFont: string | undefined): string {
 
 // Everything a font dropdown offers: the "no override" entry, the generic families, the active
 // palette's fonts, the fonts installed on this computer, then any stored font that is none of those
-// (ADR 0130). A font picked by name from the installed list is stored as a stack with a fallback.
+//A font picked by name from the installed list is stored as a stack with a fallback.
 // `defaultLabel` names what "no override" means where the dropdown is.
 export function useFontOptions(
   storedFonts: readonly (string | undefined)[],

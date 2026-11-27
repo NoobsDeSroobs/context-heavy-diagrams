@@ -15,7 +15,7 @@ import {
 import { openDiagramAtPath } from '../document/diagram'
 import { resolveLinkPath } from '../links/linkPaths'
 
-// Deep search (ADR 0097). Purely a reader, like security:crawlLinked — it never
+// Deep search. Purely a reader, like security:crawlLinked — it never
 // touches recent-diagrams / last-opened. The renderer sends the open diagram's
 // *in-memory* outgoing links (so an unsaved link is searched) and the parsed
 // criteria; matching runs here on the same predicate the open diagram uses, so

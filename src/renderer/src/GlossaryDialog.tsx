@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown'
 import { filterGlossary, parseGlossary, type GlossaryTerm } from '@shared/glossary/glossary'
 import glossarySource from '../../../docs/architecture/glossary.md?raw'
 
-// The terms come from the one glossary file (ADR 0157): only the plain part of each, read at build
+// The terms come from the one glossary file: only the plain part of each, read at build
 // time, so the window and the file cannot disagree.
 const TERMS = parseGlossary(glossarySource)
 

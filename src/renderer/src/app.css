@@ -10,14 +10,14 @@ body {
   overflow: hidden;
 }
 
-/* A strip above the app shell, such as the first-start icon pack question (ADR 0192), takes its line and
+/* A strip above the app shell, such as the first-start icon pack question, takes its line and
    the shell the rest. */
 #root {
   display: flex;
   flex-direction: column;
 }
 
-/* Two-slot dock layout — see ADR 0013. Nested, not flat:
+/* Two-slot dock layout. Nested, not flat:
    [canvas-view [diagram-dock]] [utility-dock]. Both docks are real flex
    layout (React Flow auto-resizes via ResizeObserver), zero-width when
    empty. */
@@ -93,7 +93,7 @@ body {
   background: var(--ev-button-alt-hover-bg);
 }
 
-/* Top menu bar (see ADR 0039) — flat File/Edit/View labels, not the toolbar's
+/* Top menu bar — flat File/Edit/View labels, not the toolbar's
    own pill-button look, so this reads as a menu bar rather than another
    row of toolbar buttons. Scoped under .toolbar so these beat `.toolbar
    button`'s higher-specificity 1-class-plus-tag selector rather than
@@ -169,7 +169,7 @@ body {
   color: var(--ev-c-text-3);
 }
 
-/* Submenu flyout (ADR 0078) — one level deep. The anchor is the positioned
+/* Submenu flyout — one level deep. The anchor is the positioned
    parent the flyout hangs off; it must fill the row so hovering anywhere on
    the item keeps the flyout open. */
 .menu-bar-submenu-anchor {
@@ -222,7 +222,7 @@ body {
   font-family: 'Menlo', 'Lucida Console', monospace;
 }
 
-/* Default-edge-style "current pen style" indicator (ADR 0045) —
+/* Default-edge-style "current pen style" indicator —
    a persistently visible preview, not a setting you have to open a dialog
    to even see the current value of. */
 .toolbar-edge-style-swatch {
@@ -251,7 +251,7 @@ body {
   animation: toolbar-saved-flash-in 0.15s ease-out;
 }
 
-/* "Changed outside the app" notice (ADR 0091) — sits beside the filename in
+/* "Changed outside the app" notice (ADR 0040) — sits beside the filename in
    the toolbar; amber, not red, because nothing is lost until the user saves. */
 .toolbar-external-change {
   display: inline-flex;
@@ -268,7 +268,7 @@ body {
   cursor: pointer;
 }
 
-/* The first-start question about the default icon pack (ADR 0192): one line across the top of the
+/* The first-start question about the default icon pack: one line across the top of the
    window, above the canvas, which gets a line shorter while it is there. */
 .icon-pack-offer {
   flex: 0 0 auto;
@@ -309,7 +309,7 @@ body {
 }
 
 /* Retrofitted from a position:fixed overlay into a flex child of
-   .utility-dock — see ADR 0013. Internal layout (toolbar + body) unchanged,
+   .utility-dock. Internal layout (toolbar + body) unchanged,
    just its outer positioning. .utility-dock owns the width. */
 .utility-dock {
   position: relative;

@@ -1,6 +1,6 @@
 import type { NodeStyle } from '../styling/schema.ts'
 
-// The kinds a stencil can be (ADR 0180): events and verbs, not things. A kind is a base shape with an
+// The kinds a stencil can be (ADR 0080): events and verbs, not things. A kind is a base shape with an
 // optional mark on it, one row of this table. The list is closed and built in; a person cannot add
 // a kind, and the file stores only the id (`data.kind` of a node of type `stencil`). An id says what
 // the kind is, the base word first and the subtype after (`step-user`, `event-timer`), so related kinds sort together and a later
@@ -197,7 +197,7 @@ export interface StencilKind {
   // The same for the border; an arrow's band takes this colour.
   stroke?: string
   // The colours as they look in the light theme (final colours, see stencilLightColors): the flip of the
-  // dark ones above would not keep the three families at their own lightness.
+  // dark ones above would not keep the four families at their own lightness.
   light?: { fill?: string; stroke?: string }
   // What the kind is called elsewhere, for the picker's search: BPMN terms live here and nowhere
   // else, the app's own words stay neutral (ADR 0080).

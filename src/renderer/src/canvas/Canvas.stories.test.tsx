@@ -57,7 +57,7 @@ const openPanel = (): void => {
   fireEvent.click(screen.getByRole('button', { name: 'Stories' }))
 }
 
-describe('stories on the canvas (ADR 0195)', () => {
+describe('stories on the canvas (ADR 0194)', () => {
   it('shows the state of the step picked in the editor', async () => {
     renderCanvas(diagram())
     await screen.findByText('Alpha')

@@ -7,7 +7,7 @@ export interface LayoutEntry extends HiddenLabel {
   targetName: string
 }
 
-// The "Layout" block of the Diagnostics panel (ADR 0146): the edge labels that are partly hidden behind
+// The "Layout" block of the Diagnostics panel: the edge labels that are partly hidden behind
 // the elements they join. Click a row to find the edge on the canvas. Nothing is shown when there are
 // none.
 export default function LayoutSection({

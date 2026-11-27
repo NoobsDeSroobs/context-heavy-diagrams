@@ -1,7 +1,7 @@
 # 0151: Every visible feature has an example diagram
 
 ## Status
-Accepted (2026-11-07). Replaces the open-ended gallery programme described in [ADR 0028](0028-example-gallery-shared-landscape-and-domain-folders.md); the gallery itself stays.
+Accepted (2026-11-07). Replaces the open-ended gallery programme described; the gallery itself stays.
 
 ## Context
 The example gallery was run as a continuous effort: a long list of diagram types to attempt, revisited whenever a feature landed. It never finished and did not fit the life of a task, and the list of types to draw said little about which features had a diagram that shows them.

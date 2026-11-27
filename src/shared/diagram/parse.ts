@@ -11,7 +11,7 @@ import { LEGACY_KIND_IDS } from '../stencils/kinds.ts'
 // carried 'shape': a node's own `type`, a legend entry's `kind`, and
 // DiagramSecurity's matrix-membership id lists.
 export function normalizeLegacyFields(diagram: DiagramFile): DiagramFile {
-  // A node's note path was stored as `data.details` until ADR 0140 renamed it to `notes`. When
+  // A node's note path was stored as `data.details` until it was renamed to `notes`. When
   // both are present `notes` wins.
   const hasLegacyNotesKey = diagram.nodes.some((n) => 'details' in n.data)
   const withNotes = hasLegacyNotesKey

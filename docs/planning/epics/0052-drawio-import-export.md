@@ -1,7 +1,7 @@
 # 0052: Draw.io (diagrams.net) import/export
 
 ## Status
-In Progress. **Export is done (0.9.0, tried by the maintainer in draw.io)**; import has not been started and is bigger than first thought, so it waits for its own design pass. The design pass for export is [ADR 0167](../../decisions/0167-drawio-export.md): the connection-point worry below turned out not to be a fork, since draw.io keeps the exact attachment on each edge (`exitX`, `entryX`).
+In Progress. **Export is done (0.9.0, tried by the maintainer in draw.io)**; import has not been started and is bigger than first thought, so it waits for its own design pass. The design of the export is in [docs/architecture/export.md](../../architecture/export.md): the connection-point worry below turned out not to be a fork, since draw.io keeps the exact attachment on each edge (`exitX`, `entryX`).
 
 ## Goal
 Interop with draw.io / diagrams.net — read and/or write its `.drawio` file format, in service of this app's existing low-lock-in stance (see `docs/file-format.md`'s own design intent).
@@ -18,7 +18,7 @@ Which direction is actually harder was debated in the raising conversation and l
 Which direction to build first — or whether both are worth it — needs a real design pass, not a guess. Whichever is chosen, a lossy case needs an explicit fidelity contract (what gets dropped or approximated, and how the user is told) rather than silent data loss, consistent with [ADR 0029](../../decisions/0029-backward-compatible-loading-is-a-standing-rule.md)'s spirit even though that ADR is about this app's own format, not a foreign one.
 
 ## Tasks
-- [x] Design pass for export: the fidelity contract (what is dropped or approximated, and how the person is told) and the mapping ([ADR 0167](../../decisions/0167-drawio-export.md))
+- [x] Design pass for export: the fidelity contract (what is dropped or approximated, and how the person is told) and the mapping ([docs/architecture/export.md](../../architecture/export.md))
 - [x] `renderDiagramDrawio` in `src/shared/export/drawio.ts`, with tests over every example
 - [x] `chd export --format drawio` (or an output ending in `.drawio`), notes on stderr
 - [x] File → Export → draw.io…, notes shown after the file is written

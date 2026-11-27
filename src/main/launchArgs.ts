@@ -2,7 +2,7 @@ import { isAbsolute, resolve } from 'path'
 
 const DIAGRAM_EXTENSION = '.chd'
 
-// Picks the diagram files out of a process command line (ADR 0108): the OS
+// Picks the diagram files out of a process command line: the OS
 // hands a double-clicked file to the app as a plain argument, on a cold launch
 // (process.argv) and on a second launch (the second-instance event's argv).
 // Only arguments ending in .chd count — that skips the executable's own path,

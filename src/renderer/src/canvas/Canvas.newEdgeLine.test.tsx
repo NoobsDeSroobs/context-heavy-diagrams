@@ -46,7 +46,7 @@ const diagram = (marked?: string): DiagramFile => ({
 const swatch = (): HTMLElement =>
   screen.getByRole('button', { name: 'Default style for newly drawn edges' })
 
-describe('the line new edges are drawn with (ADR 0196)', () => {
+describe('the line new edges are drawn with', () => {
   it('lists the diagram lines first, marks the one picked, and says so on the button', async () => {
     renderCanvas(diagram())
     await screen.findByText('Alpha')
@@ -91,7 +91,7 @@ describe('the line new edges are drawn with (ADR 0196)', () => {
     )
   })
 
-  it('previews each line as it will look: colour, thickness and ends (ADR 0197)', async () => {
+  it('previews each line as it will look: colour, thickness and ends', async () => {
     renderCanvas(diagram('data'))
     await screen.findByText('Alpha')
     // the button shows the line in use, not a name

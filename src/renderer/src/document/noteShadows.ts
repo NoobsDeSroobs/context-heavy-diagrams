@@ -22,7 +22,7 @@ export function shadowsFromSnapshot(snapshot: RecoverySnapshot): Record<string, 
   return out
 }
 
-// A note nobody edited needs no in-memory copy: the next open reads the file fresh (ADR 0092). Drops
+// A note nobody edited needs no in-memory copy: the next open reads the file fresh (ADR 0040). Drops
 // every clean shadow except the one of the note that is open, and returns the same object when
 // there is nothing to drop so a state update with it does not re-render.
 export function pruneCleanShadows(

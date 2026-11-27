@@ -12,11 +12,11 @@ export interface MenuBarItem {
   // A thin rule rendered above this item — for grouping within a menu, same
   // idea as ContextMenu's own `separatorBefore`.
   separatorBefore?: boolean
-  // One level of nesting only (File -> Recent Diagrams -> …, ADR 0078).
+  // One level of nesting only (File -> Recent Diagrams -> …).
   // An item with a submenu ignores `onSelect` — it only opens the flyout.
   submenu?: MenuBarItem[]
   // A submenu whose entries the command palette does not list: Recent Diagrams, whose entries are
-  // files, not named actions (ADR 0100).
+  // files, not named actions.
   notInPalette?: boolean
   onSelect?: () => void
 }
@@ -104,7 +104,7 @@ function DropdownItem({
   )
 }
 
-// Custom in-renderer menu bar (ADR 0039), deliberately not a native Electron menu (see the ADR for
+// Custom in-renderer menu bar, deliberately not a native Electron menu (see the ADR for
 // the tradeoff): every item reuses an existing handler, so no new main/renderer IPC is needed
 // beyond File -> Close. Click-outside/Escape and the "close before running the action" ordering are
 // copied from ContextMenu.tsx: an item's onSelect() that opens new UI (a dialog, another popup)

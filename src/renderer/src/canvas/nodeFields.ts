@@ -17,7 +17,7 @@ function needsLineStyleFix(n: Node): boolean {
 }
 
 // Maps locked (data.locked, see docs/file-format.md) onto React Flow's per-node draggable/deletable
-// overrides, and zIndex (ADR 0035) onto its own field. selectable is left alone on purpose: a
+// overrides, and zIndex onto its own field. selectable is left alone on purpose: a
 // locked node must stay selectable and highlightable.
 //
 // Pure: returns `n` itself when every derived field already matches (the common case), a new object
@@ -49,8 +49,7 @@ export function deriveNodeFields(n: Node): Node {
 // comment) — so unlike deriveNodeFields this takes the already-resolved
 // value as a plain param rather than recomputing it itself. Same "return
 // `e` itself when nothing changed" contract otherwise. (Hover used to be
-// materialized here too; it's per-edge local state in LabeledEdge now —
-// ADR 0073.)
+// materialized here too; it's per-edge local state in LabeledEdge now.)
 export function deriveEdgeFields(e: Edge, zIndex: number): Edge {
   if (e.zIndex === zIndex) return e
   return { ...e, zIndex }
@@ -67,7 +66,7 @@ export function newNodeId(prefix: string): string {
 
 // Adapter between React Flow's Node shape (zIndex lives in data.zIndex) and
 // zIndexOrdering.ts's plain, React-Flow-agnostic ZIndexed shape — see
-// ADR 0035. Only touches nodes that actually needed a value; a fully
+// Only touches nodes that actually needed a value; a fully
 // backfilled array is returned as-is (same node references, no new objects)
 // so this is a safe no-op to call on every load.
 export function applyZIndexBackfill(nodes: Node[]): Node[] {
@@ -85,7 +84,7 @@ export function applyZIndexBackfill(nodes: Node[]): Node[] {
   )
 }
 
-// Same data.zIndex extraction as applyZIndexBackfill, for a freshly created node (ADR 0035). "Above
+// Same data.zIndex extraction as applyZIndexBackfill, for a freshly created node. "Above
 // everything" is scoped to the node's own tier (CONTAINER_BASE/ENTITY_BASE/TEXT_BASE), so a new
 // node lands inside its tier like the backfilled default: behind entities if it's a container,
 // above them if it's text. Scoping to every node regardless of type, with no tier floor, put a

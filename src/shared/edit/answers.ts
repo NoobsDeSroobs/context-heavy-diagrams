@@ -22,7 +22,7 @@ export function editIssues(diagram: DiagramFile, only?: ReadonlySet<string>): st
 
 // What an edit answers about the layout: the problems that involve an element the call touched (made,
 // changed or named, with whatever sits inside a touched container), then one line with the number of
-// the others, which `inspect` lists when asked (ADR 0171).
+// the others, which `inspect` lists when asked (ADR 0138).
 export function editAnswerIssues(
   diagram: DiagramFile,
   results: readonly OperationResult[]
