@@ -62,6 +62,10 @@ Flag anything that can only be verified on one OS so someone can test it there.
 - **`CHANGELOG.md`** gets an entry for every MINOR or MAJOR release: short, written for the people who use the tool (added, changed, file format), linking to the ADRs for the reasons. A PATCH release needs an entry only if people must know something.
 - **Tags:** each release gets an annotated `vMAJOR.MINOR.PATCH` tag on master, on the commit that brings the release in. Pull requests are squash-merged, so never tag a commit on a feature branch. Pushing the tag makes CI build and publish the Windows installer ([ADR 0139](docs/decisions/0139-releases-are-built-by-ci-from-a-version-tag-and-say-how-far-they-have-been-tried.md)), so the version bump and the changelog entry must already be on master.
 
+## Beta features
+
+A beta feature is shipped off by default and opt-in through Preferences, so the maintainer can gather testing before deciding. Each is in the registry in `src/shared/` with a `reviewBy` date; a test fails once that date has passed. Only the maintainer promotes a beta to core, postpones it (a new date) or deletes it, and he decides all three. Every time an epic is finished, before the next one is picked, go over the betas that are left and put each decision to him. A beta that adds a kind, a field or an operation is labelled beta in the CLI, the MCP server, the skill files and `docs/file-format.md`. A beta that is off hides only the way in, never the data.
+
 ## Documentation conventions
 
 Split between in-code and high-level docs:

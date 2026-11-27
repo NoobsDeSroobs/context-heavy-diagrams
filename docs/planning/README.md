@@ -7,6 +7,7 @@ One file per epic, named `NNNN-short-title.md`, numbered sequentially in the ord
 - **`epics/`** — the near backlog: `Not Started`, `In Progress`, `Blocked`, and `Done`-but-not-yet-confirmed epics you'd actually pick the next one from.
 - **[`completed-epics.md`](completed-epics.md)** — one entry per epic that is `Done` **and** confirmed working (live-tested, or merged), plus `Retired` / `Superseded` / `Cancelled` ones. When an epic reaches that state, add its entry there and delete its file; the full text stays in git history ([ADR 0120](../decisions/0120-completed-epics-collapse-into-an-index.md)).
 - **`epics/later/`** — real epics parked far out: "much later" ideas and externally-blocked work.
+- **Betas:** a beta feature ([0124](epics/0124-beta-features-and-their-toggles.md)) is not an epic of its own to finish; it has a `reviewBy` date in the registry. When an epic is finished, list the betas still open with their dates and ask the maintainer to delete, postpone or promote each one before the next epic starts.
 
 Move an epic between `epics/` and `epics/later/` with `git mv`; it keeps its filename and number. Epic numbers are never reused, including those of completed epics.
 
