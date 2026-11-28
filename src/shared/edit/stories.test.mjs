@@ -298,3 +298,23 @@ test('the validator checks the start state like a step', () => {
     result.warnings.join('\n')
   )
 })
+
+test('a focus is added by set name or for all, described, and accepted by the validator', () => {
+  const { diagram, results } = run(
+    base(),
+    { op: 'add_story', name: 'Tour' },
+    { op: 'add_story_action', story: 'Tour', step: 0, action: 'focus', set: 'today' },
+    { op: 'add_story_step', story: 'Tour', actions: [{ action: 'show', set: 'Proposed' }] },
+    { op: 'add_story_action', story: 'Tour', step: 1, action: 'Focus', all: true }
+  )
+  assert.deepEqual(results[3].story, {
+    name: 'Tour',
+    start: 'Focus on Today',
+    steps: ['Show Proposed · Focus on All sets']
+  })
+  const [today] = diagram.visibilitySets.map((s) => s.id)
+  assert.deepEqual(diagram.stories[0].start, { actions: [{ action: 'focus', set: today }] })
+  const { errors, warnings } = check(diagram)
+  assert.deepEqual(errors, [])
+  assert.deepEqual(warnings, [])
+})

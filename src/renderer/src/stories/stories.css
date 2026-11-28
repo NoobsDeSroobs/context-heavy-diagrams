@@ -226,15 +226,23 @@
 }
 
 /* React Flow and the nodes set pointer-events inline, and a line or an edge label on a child, so only
-   !important on the element and everything in it makes the diagram click-through: a drag then pans
-   the canvas, and nothing is picked, opened or hovered. */
-.app-shell.is-presenting .react-flow__node,
+   !important on everything in an element makes it click-through: a drag then pans the canvas, and
+   nothing inside is picked or opened. What stays reachable is only what a reading needs: a node's own
+   wrapper (not a line's, whose box is mostly empty) and the hover surfaces of an edge, so the peek
+   card and the edge's hover reading work. Their click, double-click and context menu are ignored in
+   Canvas.tsx. */
 .app-shell.is-presenting .react-flow__node *,
-.app-shell.is-presenting .react-flow__edge,
 .app-shell.is-presenting .react-flow__edge *,
 .app-shell.is-presenting .react-flow__edgelabel-renderer *,
-.app-shell.is-presenting .react-flow__handle {
+.app-shell.is-presenting .react-flow__handle,
+.app-shell.is-presenting .react-flow__node-line {
   pointer-events: none !important;
+}
+
+.app-shell.is-presenting .react-flow__node:not(.react-flow__node-line),
+.app-shell.is-presenting .react-flow__edge .react-flow__edge-interaction,
+.app-shell.is-presenting .react-flow__edge .edge-hover-surface {
+  pointer-events: auto !important;
 }
 
 /* the fade between steps (ADR 0194); the time is STORY_FADE_MS in useStoryFade.ts. An edge's label is

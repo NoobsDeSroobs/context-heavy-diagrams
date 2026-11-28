@@ -4,10 +4,12 @@
 import type { Story, StoryAction, StoryStep, VisibilitySet } from './schema.ts'
 
 // The actions this version knows, in the order a person is offered them. Each is about a set. An
-// action that is not here is ignored when a story is played and kept in the file.
+// action that is not here is ignored when a story is played and kept in the file. `focus` does not
+// change what is hidden: the presenter moves the view to the visible elements of its set.
 export const STORY_ACTIONS = [
   { id: 'show', label: 'Show' },
-  { id: 'hide', label: 'Hide' }
+  { id: 'hide', label: 'Hide' },
+  { id: 'focus', label: 'Focus on' }
 ] as const
 
 export type StoryActionId = (typeof STORY_ACTIONS)[number]['id']
@@ -42,7 +44,7 @@ export function applyStep(
 ): Set<string> {
   const next = new Set(hidden)
   for (const action of actionsOf(step)) {
-    if (!isKnownAction(action)) continue
+    if (!isKnownAction(action) || action.action === 'focus') continue
     const ids = action.set === ALL_SETS ? all : [action.set as string]
     for (const id of ids) {
       if (action.action === 'hide') next.add(id)
@@ -68,6 +70,23 @@ export function hiddenAtStep(
   for (let i = 0; i < upTo; i += 1) hidden = applyStep(hidden, story.steps[i], known)
   for (const id of hidden) if (!known.has(id)) hidden.delete(id)
   return hidden
+}
+
+// What the view is on at a step: the set of the last `focus` at or before it (the start state counts),
+// the meta target "All sets" for everything visible, or null when no step has focused yet, so the view
+// stays where the person has it. Going back is the same replay, so it restores the earlier frame.
+export function focusAtStep(story: Story, step: number): string | null {
+  const upTo = Math.max(0, Math.min(Math.trunc(step) || 0, story.steps.length))
+  const steps = story.start
+    ? [story.start, ...story.steps.slice(0, upTo)]
+    : story.steps.slice(0, upTo)
+  let focus: string | null = null
+  for (const s of steps) {
+    for (const action of actionsOf(s)) {
+      if (isKnownAction(action) && action.action === 'focus') focus = action.set as string
+    }
+  }
+  return focus
 }
 
 // A step after an action is added to it, at the end or at a place (0-based).

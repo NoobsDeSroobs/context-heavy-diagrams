@@ -4,7 +4,17 @@ What changed for people using the tool, one entry per minor or major release. Th
 
 ## 0.16.0 (unreleased)
 
+### Added
+
+- **A story step can move the view.** A new story action, **Focus on**, takes a visibility set (or all sets) and glides the presenter's view to the elements of it that are visible at that step, with some room around them. Going back restores the earlier frame, and a story with no focus leaves the view alone. The view jumps instead of gliding when the system asks for reduced motion. The assistants' `add_story_action` offers it too, and `examples/stories.chd` uses it. See [ADR 0194](docs/decisions/0194-one-diagram-several-views-visibility-sets-and-stories.md).
+
 ### Changed
+
+- **Hovering works in the presenter.** Ctrl (Cmd) and hover shows the peek card on an element, and an edge reacts to the pointer again (which containers it crosses, its animation). Clicking, dragging, selecting, double-clicking, right-clicking and following links still do nothing there, and a drag still pans.
+
+### File format
+
+- A story action may be `focus` (with `set`, a set id or `"*"`), documented in [docs/file-format.md](docs/file-format.md). An older app ignores the action, keeps it, and plays the story without moving the view.
 
 - **An edge dropped on empty canvas attaches to the new entity by itself.** Drag an edge from an element, or the end of an existing edge, and let go on empty canvas: the new entity's end now attaches to the side that faces the other element and follows it as it moves, instead of always the left point. The end you dragged from keeps its point.
 

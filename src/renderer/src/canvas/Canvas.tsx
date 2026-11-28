@@ -188,6 +188,7 @@ import { useVisibilitySets } from '../visibility/useVisibilitySets'
 import VisibilitySetsPanel from '../visibility/VisibilitySetsPanel'
 import { useStories } from '../stories/useStories'
 import { useStoryFade } from '../stories/useStoryFade'
+import { useStoryFocus } from '../stories/useStoryFocus'
 import { usePresenterActivity } from '../stories/usePresenterActivity'
 import { storyStrayAdvisory } from '@shared/visibility/story'
 import StoriesPanel from '../stories/StoriesPanel'
@@ -612,6 +613,15 @@ function CanvasInner(): React.JSX.Element {
   const storiesPresenting = storiesUi.presenting
   // The presenter fades what appears and disappears between steps (ADR 0194).
   const storyFade = useStoryFade(storiesPresenting, nodes, edges, visibilitySets, hiddenSetIds)
+  // A step can move the view to what it is about (ADR 0194).
+  useStoryFocus(
+    storiesPresenting,
+    storiesUi.story,
+    storiesUi.presentStep,
+    visibilitySets,
+    nodes,
+    edges
+  )
   // The presenter's bar shows when the mouse moves and goes when it is still (ADR 0194).
   const presenterAwake = usePresenterActivity(storiesPresenting)
   const handlePresenterKey = storiesUi.handlePresenterKey
@@ -4079,8 +4089,9 @@ function CanvasInner(): React.JSX.Element {
                   onNodeDragStart={onNodeDragStart}
                   onNodeDrag={onNodeDrag}
                   onNodeDragStop={onNodeDragStop}
-                  onNodeClick={onStyleBrushNodeClick}
-                  onEdgeClick={onEdgeClick}
+                  // The presenter lets a hover through and nothing else (ADR 0194).
+                  onNodeClick={storiesPresenting ? undefined : onStyleBrushNodeClick}
+                  onEdgeClick={storiesPresenting ? undefined : onEdgeClick}
                   onNodeDoubleClick={onLabelDoubleClick}
                   onEdgeDoubleClick={onLabelDoubleClick}
                   onEdgeMouseEnter={edgePeekBindings.onNodeMouseEnter}
@@ -4113,7 +4124,7 @@ function CanvasInner(): React.JSX.Element {
                   // (PreferencesPanel.tsx) rather than hardcoded.
                   minZoom={preferences.minZoom}
                   maxZoom={preferences.maxZoom}
-                  onEdgeContextMenu={onEdgeContextMenu}
+                  onEdgeContextMenu={storiesPresenting ? undefined : onEdgeContextMenu}
                   connectionMode={ConnectionMode.Loose}
                   defaultEdgeOptions={DEFAULT_EDGE_OPTIONS}
                   connectionLineComponent={MultiConnectionLine}

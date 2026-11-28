@@ -389,3 +389,57 @@ describe('stories on the canvas (ADR 0194)', () => {
     expect((await screen.findByRole('alert')).textContent).toContain('already exists')
   })
 })
+
+describe('a focus action (ADR 0194)', () => {
+  const withFocus = (): DiagramFile => {
+    const file = diagram()
+    file.stories = [
+      {
+        id: 's1',
+        name: 'Integration',
+        steps: [
+          {
+            actions: [
+              { action: 'show', set: 'today' },
+              { action: 'focus', set: 'today' }
+            ]
+          },
+          {
+            actions: [
+              { action: 'show', set: 'proposed' },
+              { action: 'focus', set: '*' }
+            ]
+          }
+        ]
+      }
+    ]
+    return file
+  }
+
+  it('is offered in the panel and described in words', async () => {
+    renderCanvas(withFocus())
+    await screen.findByText('Alpha')
+    openPanel()
+    expect(
+      await screen.findByRole('button', { name: /^1\s*Show Today · Focus on Today/ })
+    ).toBeTruthy()
+    expect(
+      screen.getByRole('button', { name: /^2\s*Show Proposed · Focus on All sets/ })
+    ).toBeTruthy()
+  })
+
+  it('hides nothing and the presenter plays on through it', async () => {
+    renderCanvas(withFocus())
+    await screen.findByText('Alpha')
+    openPanel()
+    fireEvent.click(await screen.findByRole('button', { name: /Present/ }))
+    await waitFor(() => expect(screen.queryByText('Alpha')).toBeNull())
+    fireEvent.keyDown(window, { key: 'ArrowRight' })
+    await screen.findByText('Alpha')
+    expect(screen.queryByText('Beta')).toBeNull()
+    fireEvent.keyDown(window, { key: 'ArrowRight' })
+    await screen.findByText('Beta')
+    // Alpha stays: a focus is not a hide
+    expect(screen.getByText('Alpha')).toBeTruthy()
+  })
+})
