@@ -86,7 +86,9 @@ function actionsFrom(model: Model, reader: Reader): StoryAction[] {
   if (!Array.isArray(raw)) reader.fail('"actions" must be a list of { action, set }')
   return raw.map((item) => {
     if (typeof item !== 'object' || item === null) {
-      reader.fail('each of "actions" must be { action: "show" | "hide", set: <set name> }')
+      reader.fail(
+        'each of "actions" must be { action: "show" | "hide" | "focus", set: <set name> }'
+      )
     }
     const { action, set, all } = item as Record<string, unknown>
     return actionFrom(model, reader, action, set, all)

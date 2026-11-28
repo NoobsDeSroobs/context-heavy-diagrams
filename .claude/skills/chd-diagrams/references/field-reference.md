@@ -410,7 +410,7 @@ Absent/empty `edgeDirectionSets` = the whole mechanism dormant — no `direction
 
 ## Stories
 
-`stories` (top-level) is a list of stories: ways to tell the diagram one step at a time over the visibility sets, in the app's presenter view. Each has a name and an ordered list of steps; a step is an ordered list of actions (show a set, hide a set), applied on top of what the steps before it left.
+`stories` (top-level) is a list of stories: ways to tell the diagram one step at a time over the visibility sets, in the app's presenter view. Each has a name and an ordered list of steps; a step is an ordered list of actions (show a set, hide a set, focus the view on a set), applied on top of what the steps before it left.
 
 ```json
 "stories": [
@@ -427,7 +427,7 @@ Absent/empty `edgeDirectionSets` = the whole mechanism dormant — no `direction
 | `name` | string | yes | What the person sees. Unique ignoring case (the app refuses a duplicate). |
 | `steps` | array of `{ actions? }` | yes | In the order they are told. `actions` is left out when empty; `{}` does nothing. |
 
-An action is `{ "action": "show" | "hide", "set": <visibility set id> }`. A later version may add actions with fields of their own; a reader ignores an action it does not know and a tool that rewrites the file keeps it as it was.
+An action is `{ "action": "show" | "hide" | "focus", "set": <visibility set id> }` (`"*"` for all sets). `focus` hides nothing: in the presenter it moves and scales the view to the visible elements of the set (for `"*"`, everything visible), and the frame at a step is the last `focus` at or before it; with none, the view stays where it is. A later version may add actions with fields of their own; a reader ignores an action it does not know and a tool that rewrites the file keeps it as it was.
 
 - Step 0 is the start state, before the first step: every set is hidden and then the optional `start` step of the story (the same shape as a step) runs; an element in no set is always shown. Step *n* is step *n* − 1 with the *n*th step applied: its actions run in order, so the last action on a set wins.
 - Which step is on screen is not stored.

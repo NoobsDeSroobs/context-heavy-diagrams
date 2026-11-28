@@ -1,7 +1,7 @@
 # 0211: The presenter allows reading, and a story can focus the view
 
 ## Status
-Not Started. Logged 2026-11-27. Independent of the examples revamp (0193), which carries on through its steps 4 to 6 first; this is built with whatever else those steps find missing, before the diagrams are made. The tutorial there needs both parts.
+Built 2026-11-28 on the branch `epic/0211-presenter-reading-and-focus`, checked in the running app (Ctrl-hover shows the peek card in the presenter, a click selects nothing, a drag pans, a step glides to its frame and going back restores it); awaiting the maintainer's merge. Independent of the examples revamp (0193), whose tutorial needs both parts.
 
 ## Goal
 Make the presenter view a read-only view in which reading still works, and let a story move the view to what a step is about, so a guided file can show its areas one after another.
@@ -25,9 +25,9 @@ A new story action, `focus`, with a visibility set or all. It moves and scales t
 - **Surfaces:** the schema and its tests; the story state and the presenter; the Stories panel (a picker for the action, and the editor's preview of a step); the edit operations `add_story_action` and its help text; the extension and CLI; the skill files and the field reference; an example (the tutorial `welcome.chd` of the examples revamp, which replaces `examples/stories.chd`; [ADR 0151](../../decisions/0151-every-visible-feature-has-an-example-diagram.md)); the changelog, as a feature and as an additive file-format change.
 
 ## Tasks
-- [ ] Part 1: let hover through in the presenter; test that the peek card shows on a node and an edge, and that click, drag, select and link-following still do nothing.
-- [ ] Part 2: schema and state, the glide, the panel, the edit operations and help, the extension and CLI, the skill and file-format spec, tests.
-- [ ] Extend the stories example to use `focus`, and note both parts in the changelog.
+- [x] Part 1: hover reaches a node's own wrapper and an edge's two hover surfaces in the presenter (`stories.css`), and the click, double-click and context-menu handlers of nodes and edges are not bound while presenting. Not covered by a test: jsdom has no stylesheet, so it was checked in the running app (peek card on a node, a click selects nothing, a drag on a node pans, double and right click open nothing, the edge's hover surface is the element under the pointer). The Ctrl-hover on an edge needs Mark crossings and the hover animation was not looked at.
+- [x] Part 2: the `focus` action (shared `story.ts`, `focus.ts`), the glide (`useStoryFocus.ts`, 600 ms, one frame of room of 15 percent), the Stories panel, the edit operations and help, the skill files (and the `.claude` copy through `npm run sync-ai`), the file-format spec; the CLI and extension bundles pick it up from the shared code. Tests: the pure state, the frame, the edit operation and the canvas.
+- [x] The stories example uses `focus` (until `welcome.chd` replaces it), and both parts are in the changelog.
 - [ ] Then go on with 0193 step 7, whose tutorial needs both.
 
 ## Notes
@@ -35,5 +35,6 @@ A new story action, `focus`, with a visibility set or all. It moves and scales t
   - **An optional padding on `focus`,** in canvas pixels: the first choice, since it is one number on an action that already exists. It cannot add a region on one side only.
   - **A rectangle** (four numbers, x, y, width and height, in canvas coordinates) as the target instead of a set: full control. The editor draws the rectangle while its step or action is selected (never in the presenter or an export), and a "use the current view" button fills it from what the author sees, so nobody types numbers. It does not follow the elements if they move later, and an assistant has to compute it.
   - **A grow or shrink action** relative to the current frame: adds a "current frame" to the vocabulary for what padding on the focus already does; not planned.
-- Whether the editor's preview of a step (not the presenter) should glide as well is open; the presenter is the first need.
+- Whether the editor's preview of a step (not the presenter) should glide as well is open; the presenter is the first need. It does not today.
+- **As built:** the glide jumps for the system's reduced-motion setting only, as the fade does; there is no general motion setting of the person's own (the one for edges is about edges). The room round a frame is a constant (15 percent of it), not yet tuned against a one-box set; padding and the rectangle are still to be built if the examples show the need. A set with no visible element, or one that is gone, moves nothing. An edge of the set counts through its two ends.
 - Who may promote anything to an ADR is the maintainer; nothing here needs one unless the presenter's rule changes from "only shows" to something else, which it does not: reading is still showing.

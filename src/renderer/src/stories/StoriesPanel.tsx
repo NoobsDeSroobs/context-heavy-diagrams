@@ -297,9 +297,9 @@ export default function StoriesPanel({
       <div className="stories-panel-body">
         <p className="stories-panel-hint">
           A story shows a diagram one step at a time. A step has actions, such as show a set or hide
-          one, run in order on top of what the steps before it did. The start state runs first, on
-          top of every set hidden. Only while this panel is open does the canvas show the step
-          picked.
+          one, run in order on top of what the steps before it did. Focus on moves the view to the
+          visible elements of a set, in the presenter only. The start state runs first, on top of
+          every set hidden. Only while this panel is open does the canvas show the step picked.
         </p>
         {unassigned > 0 && (
           <p className="stories-panel-hint" role="note">

@@ -208,7 +208,7 @@ Dropped: the security rollup (the matrix has no example until it is complete and
 
 ## Needed from the tool (collected as the steps go)
 The examples are where a missing feature shows up. They are collected here and built together after step 6, not one at a time.
-- [0211](0211-presenter-allows-reading-and-focuses-the-view.md): hover works in the presenter (the peek card, the Ctrl-hover on an edge) and a story can focus the view. The tutorial needs both.
+- [0211](0211-presenter-allows-reading-and-focuses-the-view.md) (built, awaiting merge): hover works in the presenter (the peek card, the Ctrl-hover on an edge) and a story can focus the view. The tutorial needs both.
 - [0210](0210-metadata-and-context-on-behaviours.md): what a behaviour carries; drawing the Immich flow with today's tools is its first task, and what the steps lack goes there.
 ## What reads the examples (do not break)
 Tests read `examples/conformance/` by name (`checkCommand`, `parity`), `Canvas.test.tsx` and `diagramConversion.test.ts` read example files, and `drawio.test.mjs` walks every example (a new one is covered by itself). `hello-world` is the round-trip fixture that the docs link to (`with-icons` is named only by the examples README, `with-metadata` by the spec, which moves to `welcome.chd`). `paste-a-table.csv` is named in a bulk-create test. Dropped files are still named in places: `life-parallel-selectors` in `known-issues.md` (history; a test names it in a comment) and `gallery/technical/security-rollup` in the README and the getting-started page, which are reworded. Check each reference before a file goes.

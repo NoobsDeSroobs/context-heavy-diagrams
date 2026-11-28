@@ -6,6 +6,7 @@ import {
   applyStep,
   describeAction,
   describeStep,
+  focusAtStep,
   hiddenAtStep,
   newStoryId,
   storyFromSets,
@@ -258,4 +259,62 @@ test('the start state runs its actions on top of every set hidden, before step 1
   assert.deepEqual(sorted(storySetIds(framed)), ['other', 'today'])
   const everything = { id: 's5', name: 'All', start: { actions: [show(ALL_SETS)] }, steps: [] }
   assert.deepEqual([...hiddenAtStep(everything, catalogue, 0)], [])
+})
+
+// focus (ADR 0194): the view follows the last focus at or before a step
+const focus = (set) => ({ action: 'focus', set })
+
+test('a focus changes nothing that is hidden', () => {
+  assert.deepEqual(sorted(applyStep(new Set(['a']), { actions: [focus('a')] })), ['a'])
+  assert.deepEqual(sorted(applyStep(new Set(), { actions: [focus(ALL_SETS)] }, ['a', 'b'])), [])
+})
+
+test('the focus at a step is the last one at or before it, the start state included', () => {
+  const told = {
+    id: 's2',
+    name: 'Tour',
+    start: { actions: [focus('today')] },
+    steps: [
+      { actions: [show('links')] },
+      { actions: [focus('links')] },
+      { actions: [focus(ALL_SETS)] }
+    ]
+  }
+  assert.equal(focusAtStep(told, 0), 'today')
+  assert.equal(focusAtStep(told, 1), 'today')
+  assert.equal(focusAtStep(told, 2), 'links')
+  assert.equal(focusAtStep(told, 3), ALL_SETS)
+  // beyond the ends is clamped, and going back restores the earlier frame
+  assert.equal(focusAtStep(told, 99), ALL_SETS)
+  assert.equal(focusAtStep(told, -4), 'today')
+})
+
+test('no focus means the view stays where the person has it', () => {
+  assert.equal(focusAtStep(story, 3), null)
+  const later = { id: 's3', name: 'Late', steps: [{}, { actions: [focus('today')] }] }
+  assert.equal(focusAtStep(later, 1), null)
+  assert.equal(focusAtStep(later, 2), 'today')
+})
+
+test('the last focus of a step wins, and an unknown action is not one', () => {
+  const told = {
+    id: 's4',
+    name: 'Two',
+    steps: [
+      { actions: [focus('today'), focus('links')] },
+      { actions: [{ action: 'zoom', set: 'x' }] }
+    ]
+  }
+  assert.equal(focusAtStep(told, 1), 'links')
+  assert.equal(focusAtStep(told, 2), 'links')
+})
+
+test('a focus is described in words and counts as a set the story uses', () => {
+  const names = new Map([['today', 'Today']])
+  assert.equal(describeAction(focus('today'), names), 'Focus on Today')
+  assert.equal(describeAction(focus(ALL_SETS), names), 'Focus on All sets')
+  assert.deepEqual(
+    sorted(storySetIds({ id: 's5', name: 'F', steps: [{ actions: [focus('today')] }] })),
+    ['today']
+  )
 })

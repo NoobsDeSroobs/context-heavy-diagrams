@@ -24,6 +24,10 @@
             {
               "action": "show",
               "set": "vis-t0d4y1"
+            },
+            {
+              "action": "focus",
+              "set": "vis-t0d4y1"
             }
           ]
         },
@@ -44,6 +48,10 @@
             {
               "action": "show",
               "set": "vis-pr0p5d"
+            },
+            {
+              "action": "focus",
+              "set": "*"
             }
           ]
         }

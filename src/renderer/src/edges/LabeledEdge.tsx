@@ -746,6 +746,7 @@ function LabeledEdge({
       )}
       {/* Invisible hover surface — see HOVER_HIT_WIDTH. */}
       <path
+        className="edge-hover-surface"
         d={split ? `${split.lead} ${split.tail}` : edgePath}
         fill="none"
         stroke="transparent"

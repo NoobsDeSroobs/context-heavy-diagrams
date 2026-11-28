@@ -460,7 +460,7 @@ This is diagram-level data, not an app preference — reproducing the diagram fo
 
 ## Stories
 
-`stories` (top-level) is a list of stories: ways to tell the diagram one step at a time, over the [visibility sets](#visibility-sets) ([ADR 0194](decisions/0194-one-diagram-several-views-visibility-sets-and-stories.md)). Each is a name and an ordered list of steps; a step is an ordered list of actions (show a set, hide a set), applied on top of what the steps before it left.
+`stories` (top-level) is a list of stories: ways to tell the diagram one step at a time, over the [visibility sets](#visibility-sets) ([ADR 0194](decisions/0194-one-diagram-several-views-visibility-sets-and-stories.md)). Each is a name and an ordered list of steps; a step is an ordered list of actions (show a set, hide a set, focus the view on a set), applied on top of what the steps before it left.
 
 ```json
 "stories": [
@@ -493,12 +493,14 @@ An action:
 
 | Field | Type | Required | Meaning |
 |---|---|---|---|
-| `action` | string | yes | What to do. This version knows `show` and `hide`. |
-| `set` | string | for `show` and `hide` | The `id` of the [visibility set](#visibility-sets) the action is about, or `"*"` for all sets: every set in the `visibilitySets` catalogue when the step runs, so a set added later is included. Set ids are generated and never `"*"`; a reader that does not know it finds an id no set holds and ignores the action. |
+| `action` | string | yes | What to do. This version knows `show`, `hide` and `focus`. |
+| `set` | string | for `show`, `hide` and `focus` | The `id` of the [visibility set](#visibility-sets) the action is about, or `"*"` for all sets: every set in the `visibilitySets` catalogue when the step runs, so a set added later is included (for `focus`, everything visible). Set ids are generated and never `"*"`; a reader that does not know it finds an id no set holds and ignores the action. |
 
 A later version may add actions, with fields of their own. A reader ignores an action it does not know, and a tool that rewrites the file keeps its fields as they were. This app writes `action` and `set` first and any other fields in alphabetical order.
 
 **The state at a step.** Step 0 is the start state, before the first step: every set in the catalogue is hidden and then the actions of `start` run, so only the elements in no set and in the sets `start` shows are visible. Step *n* is step *n* − 1 with the *n*th step applied: its actions run in order, a `hide` hides the set and a `show` shows it, so the last action on a set wins. The state depends only on the step number, so going back or jumping to a step is the same replay from step 0. Which elements that makes visible is the [rule of visibility sets](#visibility-sets). An id that is not in the `visibilitySets` catalogue is ignored.
+
+**Focus.** A `focus` changes nothing that is hidden. It tells the presenter view to move and scale the view so the elements of its set that are visible at that step fill it, with some room round them; an edge of the set counts through its two ends. The frame at a step is the `focus` that comes last at or before it (the actions of `start` count), so going back restores the earlier frame, and a story with no `focus` leaves the view where the person has it. A set that has no visible element, or that the catalogue does not hold, moves nothing. The view glides there over a fraction of a second, or jumps when the system asks for reduced motion. A version before this one ignores the action and keeps it, so such a file still opens and plays without moving the view.
 
 **Which step is shown is not stored.** The presenter view starts at step 0 and the step is session state. A reader that does not know the field ignores it. The order of the stories and of the steps is kept.
 
